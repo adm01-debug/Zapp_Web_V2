@@ -1,9 +1,15 @@
 import { toastError } from './catalogMocks';
+import { useCallback, useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
+import { toast } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductManagement } from '../ExternalProductManagement';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
+
+// jsdom não implementa scrollIntoView; a paginação chama ao trocar de página
+// (mesmo stub usado em CT25/CT68/CT69/TalkXTable).
+if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 
 const mockProduct = (overrides: Partial<ExternalProduct> = {}): ExternalProduct => ({
   id: 'p1', name: 'Caneta Plástica Azul', description: null, short_description: 'Caneta azul',
@@ -101,6 +107,7 @@ describe('ExternalProductManagement', () => {
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
     toastError.mockReset();
+    vi.mocked(toast.success).mockClear();
     mockFavorites.mockReset();
     mockFavorites.mockReturnValue({
       favorites: [],
@@ -240,6 +247,48 @@ describe('ExternalProductManagement', () => {
     };
     expect(options.filterKey).toBe('todos');
     expect(options.filters).toEqual({});
+  });
+
+  it('R2-MOD-041: "Exportar catálogo" leva a busca da listagem (não só o filtro do rail)', async () => {
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.change(screen.getByPlaceholderText('Buscar por nome, SKU ou marca...'), {
+      target: { value: 'caneta' },
+    });
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
+
+    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
+    const options = exportCatalogCsvMock.mock.calls[0][0] as { filters: Record<string, unknown> };
+    expect(options.filters).toEqual({ search: 'caneta' });
+  });
+
+  it('R2-MOD-041: busca, categoria e estoque baixo chegam TODOS ao export', async () => {
+    // low_stock > 0 é o que faz o alerta (e o botão de filtro) existirem.
+    mockUseCatalogStats.mockReturnValue({
+      data: { total: 2, low_stock: 7, in_stock: 2, featured: 1, new_30d: 1, last_sync_at: new Date().toISOString() },
+      isLoading: false,
+      error: null,
+    });
+    renderManagement();
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.change(screen.getByPlaceholderText('Buscar por nome, SKU ou marca...'), {
+      target: { value: 'caneta' },
+    });
+    await new Promise((r) => setTimeout(r, 350));
+    fireEvent.click(screen.getByRole('button', { name: 'Canetas' }));
+    await new Promise((r) => setTimeout(r, 350));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos com estoque baixo' }));
+    await new Promise((r) => setTimeout(r, 350));
+
+    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
+
+    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
+    const options = exportCatalogCsvMock.mock.calls[0][0] as { filters: Record<string, unknown> };
+    expect(options.filters).toEqual({ search: 'caneta', category_id: 'cat1', low_stock: true });
   });
 
   it('E34: clicar no chip de categoria aplica o filtro e reflete na URL', async () => {
@@ -592,6 +641,65 @@ describe('ExternalProductManagement', () => {
       expect(toggle).toHaveBeenCalledTimes(1);
       expect(toggle).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', name: 'Caneta Plástica Azul' }));
     });
+
+    it('R2-MOD-043: "Favoritar N" só anuncia o sucesso depois de a escrita confirmar', async () => {
+      const pending: Array<(ok: boolean) => void> = [];
+      const toggle = vi.fn(() => new Promise<boolean>((resolve) => { pending.push(resolve); }));
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      // A escrita segue pendente: nada de confirmação na tela ainda.
+      expect(toggle).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+
+      await act(async () => { pending.forEach((resolve) => resolve(true)); });
+
+      await waitFor(() =>
+        expect(vi.mocked(toast.success)).toHaveBeenCalledWith('2 produto(s) adicionado(s) aos favoritos'),
+      );
+    });
+
+    it('R2-MOD-043: "Favoritar N" avisa quando a persistência falha, em vez de confirmar', async () => {
+      const toggle = vi.fn().mockResolvedValue(false);
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith('2 produto(s) não foram salvos nos favoritos. Tente novamente.'),
+      );
+      expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+    });
+
+    it('R2-MOD-043: anuncia só a quantidade que a escrita confirmou', async () => {
+      const toggle = vi.fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      mockFavorites.mockReturnValue({
+        favorites: [], favoriteIds: new Set<string>(), isFavorite: () => false,
+        isLoading: false, toggle,
+      });
+      renderManagement();
+
+      abrirBarra();
+      fireEvent.click(screen.getByRole('button', { name: 'Favoritar 2' }));
+
+      await waitFor(() =>
+        expect(vi.mocked(toast.success)).toHaveBeenCalledWith('1 produto(s) adicionado(s) aos favoritos'),
+      );
+      expect(toastError).toHaveBeenCalledWith('1 produto(s) não foram salvos nos favoritos. Tente novamente.');
+    });
   });
 
   describe('CT-84: ajuda do catálogo no header', () => {
@@ -607,6 +715,60 @@ describe('ExternalProductManagement', () => {
       expect(screen.getByText('Como usar o catálogo')).toBeInTheDocument();
       expect(screen.getByTestId('catalog-help-steps').querySelectorAll('li')).toHaveLength(5);
     });
+  });
+
+  // R2-MOD-009 — na gestão, o efeito de paginação só buscava com `page > 0`;
+  // voltar para a 1ª deixava os produtos da página anterior na grade.
+  it('R2-MOD-009: voltar para a 1ª página emite a consulta (offset 0) e devolve os produtos da 1ª', async () => {
+    const TOTAL = 60;
+    const emitidos: Array<Record<string, unknown>> = [];
+    // Identidades estáveis: a tela reexecuta efeitos que têm estas funções nas
+    // deps (o hook real as memoiza com useCallback).
+    const fetchCategories = vi.fn();
+    const fetchSuppliers = vi.fn();
+    // Hook "com servidor": a página exibida é a que o próprio componente
+    // consultou (offset do último fetchProducts) — os cards provam a consulta.
+    mockUseExternalCatalog.mockImplementation(() => {
+      const [params, setParams] = useState<Record<string, unknown> | null>(null);
+      const fetchProducts = useCallback((p: Record<string, unknown> = {}) => {
+        emitidos.push(p);
+        setParams(p);
+      }, []);
+      const offset = Number(params?.offset ?? 0);
+      const limit = Number(params?.limit ?? 24);
+      const products = Array.from(
+        { length: Math.max(0, Math.min(limit, TOTAL - offset)) },
+        (_, i) => mockProduct({ id: `p${offset + i + 1}`, name: `Produto ${offset + i + 1}`, sku: `SKU-${offset + i + 1}` })
+      );
+      return baseHookReturn({ products, totalProducts: TOTAL, fetchProducts, fetchCategories, fetchSuppliers });
+    });
+
+    // URL limpa: a leitura de `?page=`/`?tab=` no mount não pode herdar o que
+    // outros testes deste arquivo deixaram na history.
+    window.history.replaceState(null, '', '/');
+    try {
+      renderManagement();
+      await new Promise((r) => setTimeout(r, 350));
+      expect(screen.getByText('Produto 1')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 25')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('Próxima página'));
+      expect(await screen.findByText('Produto 25')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 1')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('Página anterior'));
+      // volta para a 1ª: busca de novo e mostra os mesmos produtos do começo
+      expect(await screen.findByText('Produto 1')).toBeInTheDocument();
+      expect(screen.queryByText('Produto 25')).not.toBeInTheDocument();
+      // a consulta de retorno saiu: 2ª página (offset 24) e, depois, a 1ª (0)
+      expect(emitidos.slice(-2).map((c) => c.offset)).toEqual([24, 0]);
+    } finally {
+      // o describe CT-70 (irmão deste) não tem beforeEach próprio: sem
+      // restaurar aqui, o hook falso vazaria para ele.
+      mockUseExternalCatalog.mockReset();
+      mockUseExternalCatalog.mockReturnValue(baseHookReturn());
+      window.history.replaceState(null, '', '/');
+    }
   });
 });
 

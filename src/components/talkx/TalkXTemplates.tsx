@@ -21,17 +21,23 @@ import { IconTile, WhatsAppBubble, RailCard, RailAction, TalkXEmptyState, TalkXS
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
 
-interface Props { onUseTemplate: (templateId: string) => void }
+interface Props {
+  onUseTemplate: (templateId: string) => void;
+  /** R2-MOD-039: pedido do menu do topo ("Templates ▾ → Novo template") para abrir o editor vazio. */
+  startNew?: boolean;
+  /** Chamado quando esse editor é fechado (inclusive ao salvar), para o topo limpar o pedido. */
+  onStartNewHandled?: () => void;
+}
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
 
 type ViewMode = 'list' | 'edit';
 
-export function TalkXTemplates({ onUseTemplate }: Props) {
+export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: Props) {
   const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(8);
+  const [pageSize, setPageSize] = useState(8);
   const [mode, setMode] = useState<ViewMode>('list');
   const [editing, setEditing] = useState<TalkXTemplate | null>(null);
   const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
@@ -54,6 +60,12 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
 
   const openNew = () => { setEName(''); setEDesc(''); setECat('geral'); setEContent(''); setEMediaUrl(''); setEMediaType(''); setEHasMedia(false); setEStatus('approved'); setETags([]); setEditing(null); setMode('edit'); };
   const openEdit = (t: TalkXTemplate) => { setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category); setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? ''); setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setEditing(t); setMode('edit'); };
+
+  // R2-MOD-039: o menu do topo ("Templates ▾ → Novo template") abre o editor VAZIO. O modo
+  // é DERIVADO do pedido (não sincronizado por efeito, para não disparar render em cascata),
+  // e o editor do novo template tem `key` própria para não herdar os campos do template que
+  // estivesse aberto — "novo" aqui é sempre em branco.
+  const viewMode: ViewMode = startNew ? 'edit' : mode;
 
   const save = async () => {
     if (!eName.trim() || !eContent.trim()) return;
@@ -91,13 +103,14 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
   }), [templates, most]);
 
 
-  if (mode === 'edit') {
+  if (viewMode === 'edit') {
     return (
       <TalkXTemplateEditor
+        key={startNew ? 'novo-template' : (editing?.id ?? 'novo-template')}
         templates={templates}
         isLoading={isLoading}
-        editing={editing}
-        onClose={() => setMode('list')}
+        editing={startNew ? null : editing}
+        onClose={() => { setMode('list'); onStartNewHandled?.(); }}
       />
     );
   }
@@ -144,7 +157,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
           </div>
         )}
         </TalkXQueryBoundary>
-        {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="templates" />}
+        {filtered.length > 0 && <TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="templates" />}
       </div>
 
       <div className="space-y-4 min-w-0">
@@ -161,7 +174,7 @@ export function TalkXTemplates({ onUseTemplate }: Props) {
         <RailCard icon={FileText} title="Ações rápidas">
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero ou com IA" onClick={openNew} />
-            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? openEdit(selected) : openNew()} />
+            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
 
           </div>
         </RailCard>

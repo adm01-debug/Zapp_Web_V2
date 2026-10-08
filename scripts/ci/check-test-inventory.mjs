@@ -40,14 +40,26 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v26-template-version.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
+  // identidade da origem (título+dono+contato+horários) com bijeção. Promover quando o
+  // docker descartável estiver disponível no runner do db-guard.yml.
+  'scripts/db-audit/reminders-migracao-identidade.test.sh',
   'scripts/db-audit/pg-cron-escalonamento.test.sh',
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
+  // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
+  'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
+  // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
+  // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/replay-local-harness.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
@@ -68,6 +80,10 @@ export const ALLOWLIST_NODE = new Set([
   'scripts/ui-audit/contacts-navy-header.unit.mjs',
   'scripts/ui-audit/layout-guard.unit.mjs',
   'scripts/ui-audit/view-container-padding.unit.mjs',
+  // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
+  // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
+  // `run:` de ci.yml é do dono do workflow.
+  'scripts/db-tests/run-all.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────

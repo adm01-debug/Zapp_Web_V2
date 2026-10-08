@@ -24,6 +24,10 @@ export function useQueuesComparison(dateRange: DateRange) {
   const [queuesPerformance, setQueuesPerformance] = useState<QueuePerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const isMountedRef = useRef(true);
+  // Número da consulta em andamento: trocar o período começa outra comparação e só a última
+  // pode publicar resultado (ou liberar o carregamento). Sem isso, a resposta de um período
+  // antigo que chega atrasada sobrescrevia a comparação mais recente.
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -33,6 +37,9 @@ export function useQueuesComparison(dateRange: DateRange) {
   }, []);
 
   const fetchComparison = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    const isCurrent = () => isMountedRef.current && requestIdRef.current === requestId;
+
     try {
       setLoading(true);
 
@@ -43,8 +50,11 @@ export function useQueuesComparison(dateRange: DateRange) {
         .eq('is_active', true);
 
       if (queuesError) throw queuesError;
+      // Consulta já substituída por outra troca de período: não segue consultando o banco nem
+      // mexe no carregamento (a consulta mais nova é quem manda no loading).
+      if (!isCurrent()) return;
       if (!queues || queues.length === 0) {
-        if (isMountedRef.current) {
+        if (isCurrent()) {
           setQueuesPerformance([]);
           setLoading(false);
         }
@@ -133,13 +143,16 @@ export function useQueuesComparison(dateRange: DateRange) {
       // Sort by total contacts descending
       performance.sort((a, b) => b.totalContacts - a.totalContacts);
 
-      if (isMountedRef.current) {
-        setQueuesPerformance(performance);
-      }
+      // Revalida antes de publicar: a comparação de um período já substituído não sobrescreve
+      // o resultado mais recente.
+      if (!isCurrent()) return;
+      setQueuesPerformance(performance);
     } catch (error) {
       log.error('Error fetching queues comparison:', error);
     } finally {
-      if (isMountedRef.current) {
+      // Só a consulta mais recente libera o carregamento; uma resposta obsoleta sai sem mexer
+      // nele (a consulta que a substituiu é quem o libera).
+      if (isCurrent()) {
         setLoading(false);
       }
     }

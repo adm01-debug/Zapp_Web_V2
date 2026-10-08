@@ -10,6 +10,7 @@ import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/re
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
+  supabaseMock as h,
   makeQueryClient,
   makeTaskRow,
   makeWrapper,
@@ -273,5 +274,80 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
 
     fireEvent.keyDown(document.body, { key: 'Escape', code: 'Escape' });
     await waitFor(() => expect(new URLSearchParams(window.location.search).get('task')).toBeNull());
+  });
+
+  it('#R2-MOD-049: trocar o contato no Sheet persiste contact_id no update', async () => {
+    // Dois contatos carregados: o que já está na tarefa e o de destino que o
+    // combobox oferece (a lista de opções sai dos contatos das tarefas em tela).
+    const contato = (id: string, name: string) => ({ id, name, phone: null, avatar_url: null });
+    setSelectResult({
+      data: [
+        makeTaskRow({
+          id: 't1', title: 'Ligar para o cliente', status: 'todo', position: 0,
+          contact_id: 'c-ana', contact: contato('c-ana', 'Ana Souza'),
+        }),
+        makeTaskRow({
+          id: 't2', title: 'Enviar proposta', status: 'todo', position: 1,
+          contact_id: 'c-bruno', contact: contato('c-bruno', 'Bruno Lima'),
+        }),
+      ],
+      error: null,
+    });
+    window.history.replaceState(null, '', '/');
+    renderModulo();
+
+    const card = await waitFor(() => {
+      const el = document.querySelector('[data-item-id="t1"]');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    fireEvent.click(card);
+
+    // Troca o Contato no Sheet (Radix abre pelo teclado no jsdom).
+    const trigger = await screen.findByTestId('sheet-contato');
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown', code: 'ArrowDown' });
+    fireEvent.click(await screen.findByRole('option', { name: 'Bruno Lima' }));
+
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    // A escrita que chega ao banco tem de levar a coluna contact_id — antes da
+    // correção o patch saía vazio e o vínculo antigo permanecia.
+    await waitFor(() => expect(h.update).toHaveBeenCalled());
+    expect(h.update.mock.calls[0][0]).toMatchObject({ contact_id: 'c-bruno' });
+  });
+
+  it('#R2-MOD-049: escolher "Sem contato" no Sheet grava contact_id nulo', async () => {
+    setSelectResult({
+      data: [
+        makeTaskRow({
+          id: 't1', title: 'Ligar para o cliente', status: 'todo', position: 0,
+          contact_id: 'c-ana',
+          contact: { id: 'c-ana', name: 'Ana Souza', phone: null, avatar_url: null },
+        }),
+      ],
+      error: null,
+    });
+    window.history.replaceState(null, '', '/');
+    renderModulo();
+
+    const card = await waitFor(() => {
+      const el = document.querySelector('[data-item-id="t1"]');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    fireEvent.click(card);
+
+    const trigger = await screen.findByTestId('sheet-contato');
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown', code: 'ArrowDown' });
+    fireEvent.click(await screen.findByRole('option', { name: 'Sem contato' }));
+
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    await waitFor(() => expect(h.update).toHaveBeenCalled());
+    // desvincular também é uma mudança: a coluna vai a nulo em vez de o patch
+    // sair vazio e o vínculo antigo continuar.
+    expect(h.update.mock.calls[0][0]).toHaveProperty('contact_id', null);
   });
 });

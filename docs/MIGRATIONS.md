@@ -466,7 +466,7 @@ e falha se houver divergencia. Ele nao executa codigo de pull request nem expoe
 
 O replay local das 768 migrations (`scripts/db-audit/replay-local.sh`, relatorio em
 `docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md`) aponta arquivos que **nao aplicam**. Cada um foi
-investigado no banco canonico — o erro no log **nao** decide se ha trabalho a fazer. Situacao dos seis:
+investigado no banco canonico — o erro no log **nao** decide se ha trabalho a fazer. Situacao dos sete:
 
 | Arquivo | Erro no replay | Situacao real |
 |---|---|---|
@@ -476,6 +476,7 @@ investigado no banco canonico — o erro no log **nao** decide se ha trabalho a 
 | `20260925170000_add_reminders_pending_to_tab_counts.sql` | `cannot change return type` | **Superada — abandono formalizado** (decisao `20261003-121143`, opcao b). `get_conversation_tab_counts` em producao devolve 3 colunas; `reminders_pending` **nunca existiu**. Causa: `create or replace` nao muda tipo de retorno e o `DROP FUNCTION` que resolveria esta comentado no arquivo irmao. Impacto zero — nao ha codigo consumindo o campo. **Nao introduzir codigo especulativo:** se a aba algum dia precisar de lembretes pendentes, entra por **versao nova** (`DROP FUNCTION` + `CREATE` da funcao com a coluna, mais o consumo no app). |
 | `20260928140200_tab_counts_tasks_own.sql` | `cannot change return type` | Mesma funcao e mesma situacao do anterior — superada pelo mesmo motivo. |
 | `20260926410000_add_fk_support_indexes.sql` | `relation ... already exists` | **Nao idempotente**, inerte no banco real (o indice ja existe). **Nada a reparar.** |
+| `20260927570000_talkx_e27_realtime_campaign_events.sql` | `relation 'talkx_campaign_events' is already member of publication` (42710) | **Artefato de ordem/idempotencia (E27).** O E27 publicou as tres tabelas do Talk X (`talkx_campaign_events`, `talkx_segments`, `talkx_templates`) em DOIS arquivos com o mesmo conteudo: `20260927500001` e este. O primeiro aplica; o segundo cai em 42710. Medido em PostgreSQL 17 descartavel: sozinha, esta migration **aplica sem erro** — a causa **nao** e o estado da imagem/base, e sim a irma duplicada. A publicacao termina com as tres tabelas, ou seja **o efeito pretendido esta intacto e nenhuma migration nova e necessaria**: uma versao aplicada depois nao desfaz a falha do arquivo anterior. Decisao `20261001-114300-7eb1`, opcao 2 — **nao** editar a migration aplicada para ficar idempotente (a guarda recusa `modified`); a divergencia fica registrada aqui e em `scripts/db-audit/replay-known-failures.json` (categoria `ordem-idempotencia`). Prova: `bash scripts/db-audit/talkx-e27-replay-divergence.test.sh`. |
 
 ### Como medir isso (o metodo importa)
 

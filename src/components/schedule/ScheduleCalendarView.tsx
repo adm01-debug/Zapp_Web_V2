@@ -31,6 +31,7 @@ import {
   Image,
   File,
   Mic,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScheduledMessages, ScheduledMessage } from '@/hooks/chat/useScheduledMessages';
@@ -44,7 +45,21 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
-  const { messages, isLoading, cancelMessage } = useScheduledMessages();
+
+  // R2-MOD-029: a consulta é a faixa que o cartão está exibindo — a grade do mês,
+  // incluindo os dias das pontas que aparecem nela. Trocar de mês muda a faixa e
+  // recarrega exatamente o que está na tela (antes a consulta era global e o
+  // histórico ocupava a única página, escondendo os pendentes futuros).
+  const janela = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const inicio = startOfWeek(monthStart, { locale: ptBR });
+    const fim = new Date(endOfWeek(monthEnd, { locale: ptBR }));
+    fim.setHours(23, 59, 59, 999);
+    return { from: inicio.toISOString(), to: fim.toISOString() };
+  }, [currentMonth]);
+
+  const { messages, isLoading, isError, refetch, cancelMessage } = useScheduledMessages(undefined, janela);
   const { agents } = useAgents();
 
   const pendingMessages = useMemo(() => {
@@ -89,6 +104,24 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
       default: return <MessageSquare className="w-3 h-3" />;
     }
   };
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Calendário de Agendamentos</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+          {/* Falha de leitura não pode parecer agenda vazia (R2-MOD-029). */}
+          <p className="text-sm text-muted-foreground">Não foi possível carregar os agendamentos</p>
+          <Button variant="outline" size="sm" onClick={() => { void refetch(); }}>
+            Tentar novamente
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -140,6 +173,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
                 <Button 
                   variant="ghost" 
                   size="icon"
+                  aria-label="Mês anterior"
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -150,6 +184,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
                 <Button 
                   variant="ghost" 
                   size="icon"
+                  aria-label="Próximo mês"
                   onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 >
                   <ChevronRight className="w-4 h-4" />

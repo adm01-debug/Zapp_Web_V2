@@ -338,6 +338,21 @@ export function mapResolvedRecipients(rows: Array<Record<string, unknown>>): Mul
     }));
 }
 
+// R2-DB-003 (cartao t_891763fa): a linha do 'resolve' so pode carregar
+// metadados da empresa quando o Singu a classificou como elegivel. A versao
+// antiga de multiplix_resolve_recipients devolvia company_name, contact_id,
+// empresa_papeis e last_interaction_at ate para 'fora_do_escopo' — e aqui o
+// spread repassava tudo ao cliente. A RPC nova redige na fonte (espelho em
+// _foreign/singu), mas a ordem de deploy pode deixar o Singu na versao velha
+// (mesmo motivo pelo qual a assinatura do F22 vai em cabecalho), entao a edge
+// redige de novo: nao elegivel sai so com company_id (eco do id que o chamador
+// enviou) e elegibilidade ja traduzida; elegivel sai inteira como antes.
+export function redactResolvedRecipient(row: Record<string, unknown>): Record<string, unknown> {
+  const elegibilidade = fromSinguEligibility(row?.elegibilidade);
+  if (elegibilidade === 'eligible') return { ...row, elegibilidade };
+  return { company_id: row?.company_id ?? null, elegibilidade };
+}
+
 export interface MultiplixAudienceInjected {
   /** Relogio injetavel (F26): o teste controla o TTL sem esperar 5 min reais. */
   now?: () => number;
@@ -540,10 +555,9 @@ export async function handleMultiplixAudienceRequest(
       // FRONTEIRA PT->EN tambem aqui: o front consome o MESMO enum canonico do
       // banco (`MultiplixResolvedRecipient.elegibilidade`), entao a resposta do
       // 'resolve' nao vaza o literal PT do Singu — o mapa e a unica traducao.
-      data = resolvedRows.map((row) => ({
-        ...row,
-        elegibilidade: fromSinguEligibility(row?.elegibilidade),
-      }));
+      // R2-DB-003: a traducao vem junto com a redacao — linha nao elegivel sai
+      // so com company_id + elegibilidade, sem metadados da empresa.
+      data = resolvedRows.map((row) => redactResolvedRecipient(row));
     } else if (action === 'create_draft') {
       const draftParams = CreateDraftParamsSchema.safeParse(params);
       if (!draftParams.success) return errorResponse('Invalid create_draft parameters', 400, req);

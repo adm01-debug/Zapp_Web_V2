@@ -13,10 +13,11 @@ interface QueueCardProps {
   onAddMember: (queue: QueueWithMembers) => void;
   onRemoveMember: (queueId: string, profileId: string) => void;
   onSetGoals: (queue: QueueWithMembers) => void;
+  onEdit: (queue: QueueWithMembers) => void;
   onDelete: (queue: QueueWithMembers) => void;
 }
 
-export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSetGoals, onDelete }: QueueCardProps) {
+export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSetGoals, onEdit, onDelete }: QueueCardProps) {
   const navigate = useNavigate();
   const activeMembers = queue.members.filter(m => m.is_active && m.profile?.is_active);
 
@@ -35,7 +36,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
             </div>
           </div>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted/30"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted/30" aria-label={`Ações da fila ${queue.name}`}><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-card border-border/30">
               <DropdownMenuItem className="hover:bg-primary/10" onClick={() => navigate(`/queue/${queue.id}`)}><Eye className="w-4 h-4 mr-2" />Ver Detalhes</DropdownMenuItem>
               <DropdownMenuItem className="hover:bg-primary/10" onClick={() => onSetGoals(queue)}>
@@ -43,7 +44,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
                 {alertCount > 0 && <Badge variant="destructive" className="ml-auto text-xs px-1.5">{alertCount}</Badge>}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="hover:bg-primary/10"><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-primary/10" onClick={() => onEdit(queue)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive hover:bg-destructive/10" onClick={() => onDelete(queue)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

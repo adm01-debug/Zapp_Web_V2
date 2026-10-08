@@ -155,6 +155,31 @@ describe('ProductThumb', () => {
     expect(document.querySelector('img')).toBeNull();
   });
 
+  // #430 — a cascata terminava revertendo para a URL quebrada assim que o
+  // fallback carregava (o `stage` virava 'loaded' e o src voltava a ser o original).
+  it('#430 fallback que carrega fica na tela, sem voltar para a URL quebrada', () => {
+    render(<ProductThumb src="https://example.com/quebrada.jpg" fallbackSrc="https://example.com/fallback.jpg" alt="Produto" />);
+    fireEvent.error(screen.getByAltText('Produto'));
+    const img = screen.getByAltText('Produto') as HTMLImageElement;
+    expect(img.src).toBe('https://example.com/fallback.jpg');
+    fireEvent.load(img);
+    expect((screen.getByAltText('Produto') as HTMLImageElement).src).toBe('https://example.com/fallback.jpg');
+  });
+
+  // #430 — o `stage` era estado de montagem: o erro da foto anterior sobrevivia
+  // à troca de foto e a foto nova não aparecia (mesmo nó <ProductThumb> na galeria).
+  it('#430 trocar de foto depois do erro mostra a imagem nova', () => {
+    const { rerender } = render(
+      <ProductThumb src="https://example.com/quebrada.jpg" fallbackSrc="https://example.com/fallback.jpg" alt="Foto" />
+    );
+    fireEvent.error(screen.getByAltText('Foto'));
+    fireEvent.error(screen.getByAltText('Foto'));
+    expect(document.querySelector('img')).toBeNull();
+
+    rerender(<ProductThumb src="https://example.com/nova.jpg" fallbackSrc="https://example.com/fallback.jpg" alt="Foto" />);
+    expect((screen.getByAltText('Foto') as HTMLImageElement).src).toBe('https://example.com/nova.jpg');
+  });
+
   it('URL do Cloudflare Images gera srcSet com as 5 larguras reais', () => {
     render(<ProductThumb src="https://imagedelivery.net/vKMs9Ow8bA_enuhLXZ2HAw/sm-po-13153-main/public" alt="Açucareiro" />);
     const img = screen.getByAltText('Açucareiro') as HTMLImageElement;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockInvoke = vi.hoisted(() => vi.fn());
@@ -53,6 +53,22 @@ import { toast } from 'sonner';
 import { getLogger } from '@/lib/logger';
 const log = getLogger('GroupsView.test');
 
+// DropdownMenuTrigger do Radix abre no pointerdown, não no click — um clique
+// real de mouse sempre dispara os dois eventos nessa ordem.
+function openViaPointer(el: Element) {
+  fireEvent.pointerDown(el);
+  fireEvent.pointerUp(el);
+  fireEvent.click(el);
+}
+
+const grupo = (over: Record<string, unknown>) => ({
+  description: 'Desc', participant_count: 10, avatar_url: null, is_admin: false,
+  whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01',
+  ...over,
+});
+const GRUPO_A = grupo({ id: 'g1', group_id: '1@g.us', name: 'Meu Grupo' });
+const GRUPO_B = grupo({ id: 'g2', group_id: '2@g.us', name: 'Grupo B' });
+
 describe('GroupsView', () => {
   beforeEach(() => { vi.clearAllMocks(); mockOrder.mockResolvedValue({ data: [], error: null }); mockUpsert.mockResolvedValue({ error: null }); });
 
@@ -61,13 +77,13 @@ describe('GroupsView', () => {
   it('shows empty state when no groups', async () => { render(<GroupsView />); await waitFor(() => { expect(screen.getByTestId('empty-state')).toBeInTheDocument(); }); });
 
   it('renders groups when data loads', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', description: 'Desc', participant_count: 10, avatar_url: null, is_admin: true, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', is_admin: true })], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('Meu Grupo')).toBeInTheDocument(); expect(screen.getByText('10 participantes')).toBeInTheDocument(); });
   });
 
   it('filters groups by search', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'Marketing', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }, { id: 'g2', group_id: '2@g.us', name: 'Vendas', description: null, participant_count: 8, avatar_url: null, is_admin: false, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'Marketing', participant_count: 5 }), grupo({ id: 'g2', group_id: '2@g.us', name: 'Vendas', participant_count: 8 })], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => expect(screen.getByText('Marketing')).toBeInTheDocument());
     fireEvent.change(screen.getByPlaceholderText('Buscar por nome ou ID do grupo...'), { target: { value: 'Vendas' } });
@@ -100,25 +116,25 @@ describe('GroupsView', () => {
   });
 
   it('shows Admin badge', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'AG', description: null, participant_count: 5, avatar_url: null, is_admin: true, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'AG', participant_count: 5, is_admin: true })], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('Admin')).toBeInTheDocument(); });
   });
 
   it('shows connection name for linked groups', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'L', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: 'c1', created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WBiz', phone_number: '5511', instance_id: 'i1' }], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'L', participant_count: 5, whatsapp_connection_id: 'c1' })], error: null }).mockResolvedValueOnce({ data: [{ id: 'c1', name: 'WBiz', phone_number: '5511', instance_id: 'i1' }], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('WBiz')).toBeInTheDocument(); });
   });
 
   it('shows "Não vinculado" for unlinked groups', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'O', description: null, participant_count: 3, avatar_url: null, is_admin: false, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'O', participant_count: 3 })], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('Não vinculado')).toBeInTheDocument(); });
   });
 
   it('shows select all when groups exist', async () => {
-    mockOrder.mockResolvedValueOnce({ data: [{ id: 'g1', group_id: '1@g.us', name: 'G1', description: null, participant_count: 5, avatar_url: null, is_admin: false, whatsapp_connection_id: null, created_at: '2025-01-01', updated_at: '2025-01-01' }], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    mockOrder.mockResolvedValueOnce({ data: [grupo({ id: 'g1', group_id: '1@g.us', name: 'G1', participant_count: 5 })], error: null }).mockResolvedValueOnce({ data: [], error: null });
     render(<GroupsView />);
     await waitFor(() => { expect(screen.getByText('Selecionar todos')).toBeInTheDocument(); });
   });
@@ -169,7 +185,44 @@ describe('GroupsView', () => {
     const campo = await screen.findByPlaceholderText('Digite a mensagem para enviar a todos os grupos selecionados...');
     fireEvent.change(campo, { target: { value: 'Olá' } });
     fireEvent.click(screen.getByText('Enviar'));
-    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Enviado para 0 grupo(s), 1 falha(s)'); });
+    await waitFor(() => { expect(toast.warning).toHaveBeenCalledWith('Nenhum envio deu certo (1 falha(s)) — mensagem e seleção mantidas'); });
+    expect(toast.warning).toHaveBeenCalledTimes(1);
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  // Regressão R2-API-061 (#233): o item "Enviar mensagem" do menu do card
+  // precisa INCLUIR o grupo no público de forma idempotente. Antes o callback
+  // chamava toggleGroupSelection, então com o grupo já selecionado ele era
+  // retirado dos destinatários.
+  it('mantém nos destinatários o grupo já selecionado ao usar "Enviar mensagem" no menu', async () => {
+    mockOrder.mockResolvedValueOnce({ data: [GRUPO_A], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    const { container } = render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Meu Grupo')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Meu Grupo'));
+    expect(screen.getByText('Enviar para 1 grupo(s)')).toBeInTheDocument();
+
+    openViaPointer(container.querySelector('button[aria-haspopup="menu"]')!);
+    fireEvent.click(await screen.findByText('Enviar mensagem'));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('1', { selector: 'strong' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Meu Grupo')).toBeInTheDocument();
+  });
+
+  it('com A e B selecionados, o menu de A não converte o público em somente B', async () => {
+    mockOrder.mockResolvedValueOnce({ data: [GRUPO_A, GRUPO_B], error: null }).mockResolvedValueOnce({ data: [], error: null });
+    const { container } = render(<GroupsView />);
+    await waitFor(() => expect(screen.getByText('Grupo B')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Selecionar todos'));
+    expect(screen.getByText('Enviar para 2 grupo(s)')).toBeInTheDocument();
+
+    openViaPointer(container.querySelectorAll('button[aria-haspopup="menu"]')[0]);
+    fireEvent.click(await screen.findByText('Enviar mensagem'));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('2', { selector: 'strong' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Meu Grupo, Grupo B')).toBeInTheDocument();
   });
 });

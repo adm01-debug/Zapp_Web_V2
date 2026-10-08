@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Trash2, Sticker, Plus, Loader2, Clock } from 'lucide-react';
+import { Star, Trash2, Sticker, Plus, Loader2, ImageOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { CategorySelector } from './CategorySelector';
 import { CATEGORY_LABELS, type StickerItem } from './StickerTypes';
 
@@ -25,6 +26,62 @@ const gridColsMap = {
   md: 'grid-cols-4',
   lg: 'grid-cols-3',
 };
+
+/**
+ * #345 (R2-INB-052): a tabela `stickers` tambem guarda locators de bucket privado
+ * (`whatsapp-media`, `public=false` desde 20260905030000_private_media_buckets.sql) e
+ * assinaturas ja expiradas — gravados pelo balao da mensagem e pelo envio de midia. A grade
+ * escrevia `image_url` cru no `<img>` e a miniatura quebrava, enquanto o balao mostrava a
+ * MESMA figurinha porque usa o resolvedor. Aqui o locator passa pelo resolvedor; URL nao
+ * canonica (`https://cdn...`, origem fora do `SUPABASE_URL`) e locator do bucket publico
+ * `stickers` continuam identicos, porque o hook devolve a propria fonte.
+ *
+ * O hook mora neste componente de nivel de modulo (nunca dentro de `stickers.map(...)`, que
+ * quebraria `react-hooks/rules-of-hooks`). Em erro de imagem faz UM `refresh` automatico com
+ * guarda em `useRef` e depois cai num placeholder estavel — sem laco de `onError` e sem toast.
+ */
+function StickerThumb({ source, alt, className }: { source: string; alt: string; className: string }) {
+  const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(source);
+  const src = resolvedUrl;
+  // Falha amarrada ao `src` que falhou: quando o refresh troca a URL, o placeholder cai sozinho.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const refreshedRef = useRef(false);
+  const failed = failedSrc !== null && failedSrc === src;
+
+  if (isLoading && !src) {
+    return <span data-testid="sticker-thumb-skeleton" className={cn(className, 'animate-pulse bg-muted')} aria-hidden="true" />;
+  }
+
+  if (failed || !src) {
+    return (
+      <span
+        className={cn(className, 'flex items-center justify-center')}
+        title="Figurinha indisponível"
+        data-testid="sticker-thumb-error"
+      >
+        <ImageOff className="w-1/3 h-1/3 text-muted-foreground" aria-hidden="true" />
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        if (refreshedRef.current) {
+          setFailedSrc(src);
+          return;
+        }
+        refreshedRef.current = true;
+        void refresh().then((next) => { if (!next) setFailedSrc(src); });
+      }}
+    />
+  );
+}
 
 export function StickerGrid({
   stickers,
@@ -122,12 +179,10 @@ export function StickerGrid({
                         sticker.is_favorite && 'ring-1 ring-primary/20'
                       )}
                     >
-                      <img
-                        src={sticker.image_url}
+                      <StickerThumb
+                        source={sticker.image_url}
                         alt={sticker.name || 'Figurinha'}
                         className="w-full h-full object-contain p-1"
-                        loading="lazy"
-                        decoding="async"
                       />
                       
                       {/* Category badge */}
@@ -210,7 +265,11 @@ export function StickerGrid({
             <AlertDialogDescription>
               {deleteTarget && (
                 <span className="flex items-center gap-3 mt-2">
-                  <img src={deleteTarget.image_url} alt="" className="w-12 h-12 object-contain rounded bg-muted p-1"  loading="lazy" decoding="async"/>
+                  <StickerThumb
+                    source={deleteTarget.image_url}
+                    alt=""
+                    className="w-12 h-12 object-contain rounded bg-muted p-1"
+                  />
                   <span>
                     "{deleteTarget.name || 'Figurinha'}" será removida permanentemente. 
                     Esta ação não pode ser desfeita.

@@ -1,6 +1,4 @@
 import { Suspense, lazy } from 'react';
-import { log } from '@/lib/logger';
-import { toast } from '@/hooks/ui/use-toast';
 import { Conversation, Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
@@ -36,12 +34,19 @@ interface ChatDialogsProps {
   onForwardToTargets: ForwardCallback;
   onSendLocation: (location: LocationMessage) => Promise<void> | void;
   onSetInputValue: (value: string | ((prev: string) => string)) => void;
+  /**
+   * R2-INB-018: mesmo contrato de seleção/navegação da instância da Inbox. A
+   * busca embutida no chat (Ctrl+K) abre o resultado na conversa dele — antes
+   * só registrava log e mostrava "Resultado selecionado", sem trocar de conversa.
+   */
+  onSelectConversation?: (contactId: string) => void;
 }
 
 export function ChatDialogs({
   dialogs, openDialog, closeDialog, conversation, forwardMessage,
   contactId, onTransfer, onScheduleMessage, onSendInteractiveMessage,
   onForwardToTargets, onSendLocation, onSetInputValue, interactiveSendUnavailableReason,
+  onSelectConversation,
 }: ChatDialogsProps) {
   // CT-14 — mesmo caminho de envio do catálogo, com o contato da conversa aberta.
   const presetContact = {
@@ -55,7 +60,14 @@ export function ChatDialogs({
       <Suspense fallback={null}>
         {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void} />}
         {dialogs.scheduleDialog && <ScheduleMessageDialog open={dialogs.scheduleDialog} onOpenChange={(v) => v ? openDialog('scheduleDialog') : closeDialog('scheduleDialog')} onSchedule={onScheduleMessage} />}
-        {dialogs.globalSearch && <GlobalSearch open={dialogs.globalSearch} onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')} onSelectResult={(result) => { log.debug('Selected:', result); toast({ title: 'Resultado selecionado', description: result.title }); }} />}
+        {dialogs.globalSearch && (
+          <GlobalSearch
+            open={dialogs.globalSearch}
+            onOpenChange={(v) => v ? openDialog('globalSearch') : closeDialog('globalSearch')}
+            onSelectResult={(result) => { if (result.contactId) onSelectConversation?.(result.contactId); }}
+            onManageQuickReplies={() => openDialog('quickReplies')}
+          />
+        )}
         {dialogs.interactiveBuilder && <InteractiveMessageBuilder open={dialogs.interactiveBuilder} onOpenChange={(v) => v ? openDialog('interactiveBuilder') : closeDialog('interactiveBuilder')} onSend={onSendInteractiveMessage} sendUnavailableReason={interactiveSendUnavailableReason} />}
         {dialogs.forwardDialog && <ForwardMessageDialog open={dialogs.forwardDialog} onOpenChange={(v) => v ? openDialog('forwardDialog') : closeDialog('forwardDialog')} message={forwardMessage} onForward={onForwardToTargets} />}
         {dialogs.locationPicker && <LocationPicker open={dialogs.locationPicker} onOpenChange={(v) => v ? openDialog('locationPicker') : closeDialog('locationPicker')} onSend={onSendLocation} />}

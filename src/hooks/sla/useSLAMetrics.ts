@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, subDays, startOfWeek, startOfMonth } from 'date-fns';
+import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 
 export type PeriodFilter = 'today' | 'week' | 'month' | 'all';
 
@@ -28,13 +29,28 @@ export interface SLADashboardData {
   byAgent: AgentSLAMetric[];
 }
 
-function getStartDate(period: PeriodFilter): Date {
-  const now = new Date();
+/** Linhas de `conversation_sla` usadas no cálculo (o join traz o agente dono do contato). */
+interface SLARow {
+  id: string;
+  first_response_at: string | null;
+  first_response_breached: boolean | null;
+  contacts: { assigned_to: string | null } | null;
+}
+
+/** Tamanho de página da leitura (o teto do PostgREST por requisição é 1000). */
+const SLA_PAGE_SIZE = 1000;
+
+/**
+ * Início do recorte de cada período do seletor ("Hoje", "Esta Semana", "Este Mês", "Todos").
+ * `null` = sem limite inferior — é o que o rótulo "Todos" promete (R2-SLA-002); antes o recorte
+ * parava em 365 dias e os registros mais antigos sumiam do total anunciado.
+ */
+export function getPeriodStart(period: PeriodFilter, now: Date = new Date()): Date | null {
   switch (period) {
     case 'today': return startOfDay(now);
     case 'week': return startOfWeek(now, { weekStartsOn: 1 });
     case 'month': return startOfMonth(now);
-    case 'all': return subDays(now, 365);
+    case 'all': return null;
   }
 }
 
@@ -44,20 +60,33 @@ function buildMetric(onTime: number, breached: number): SLAMetric {
 }
 
 async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> {
-  const startDate = getStartDate(period).toISOString();
+  const start = getPeriodStart(period);
+  const startIso = start ? start.toISOString() : null;
 
-  const [slaResult, profilesResult] = await Promise.all([
-    supabase
-      .from('conversation_sla')
-      .select('*, contacts!inner(assigned_to)')
-      .gte('created_at', startDate),
+  const [slaRead, profilesResult] = await Promise.all([
+    // Leitura paginada: sem `.range()` o PostgREST corta a consulta no teto de linhas do projeto
+    // e o total do período passa a ser calculado sobre uma amostra.
+    fetchAllRows<SLARow>(
+      (from, to) => {
+        const base = supabase
+          .from('conversation_sla')
+          .select('*, contacts!inner(assigned_to)');
+        const scoped = startIso ? base.gte('created_at', startIso) : base;
+        // Ordem por chave única (`id`): sem ordem determinística a leitura paginada pode
+        // repetir ou pular linhas.
+        return scoped.order('id', { ascending: true }).range(from, to);
+      },
+      { pageSize: SLA_PAGE_SIZE }
+    ),
     supabase.from('profiles').select('id, name, avatar_url'),
   ]);
 
-  if (slaResult.error) throw slaResult.error;
+  if (slaRead.incomplete) {
+    throw slaRead.error ?? new Error('Leitura de conversation_sla excedeu o teto de paginação');
+  }
   if (profilesResult.error) throw profilesResult.error;
 
-  const slaData = slaResult.data || [];
+  const slaData = slaRead.rows;
   const profiles = profilesResult.data || [];
 
   // Overall

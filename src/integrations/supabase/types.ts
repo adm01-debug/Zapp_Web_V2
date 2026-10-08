@@ -9218,14 +9218,17 @@ export type Database = {
           id: string
           inactivity_timeout: number | null
           language: string | null
+          mention_sound_enabled: boolean | null
           mention_sound_type: string | null
           message_sound_type: string | null
+          new_message_sound_enabled: boolean | null
           quiet_hours_enabled: boolean | null
           quiet_hours_end: string | null
           quiet_hours_start: string | null
           sentiment_alert_enabled: boolean | null
           sentiment_alert_threshold: number | null
           sentiment_consecutive_count: number | null
+          sla_breach_sound_enabled: boolean | null
           sla_sound_type: string | null
           sound_enabled: boolean | null
           sound_volume: number
@@ -9255,14 +9258,17 @@ export type Database = {
           id?: string
           inactivity_timeout?: number | null
           language?: string | null
+          mention_sound_enabled?: boolean | null
           mention_sound_type?: string | null
           message_sound_type?: string | null
+          new_message_sound_enabled?: boolean | null
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
           sentiment_alert_enabled?: boolean | null
           sentiment_alert_threshold?: number | null
           sentiment_consecutive_count?: number | null
+          sla_breach_sound_enabled?: boolean | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
           sound_volume?: number
@@ -9292,14 +9298,17 @@ export type Database = {
           id?: string
           inactivity_timeout?: number | null
           language?: string | null
+          mention_sound_enabled?: boolean | null
           mention_sound_type?: string | null
           message_sound_type?: string | null
+          new_message_sound_enabled?: boolean | null
           quiet_hours_enabled?: boolean | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
           sentiment_alert_enabled?: boolean | null
           sentiment_alert_threshold?: number | null
           sentiment_consecutive_count?: number | null
+          sla_breach_sound_enabled?: boolean | null
           sla_sound_type?: string | null
           sound_enabled?: boolean | null
           sound_volume?: number
@@ -9355,6 +9364,7 @@ export type Database = {
         Row: {
           alert_type: string
           created_at: string | null
+          dedupe_key: string | null
           dismissed_by: string | null
           id: string
           is_read: boolean | null
@@ -9365,6 +9375,7 @@ export type Database = {
         Insert: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
@@ -9375,6 +9386,7 @@ export type Database = {
         Update: {
           alert_type?: string
           created_at?: string | null
+          dedupe_key?: string | null
           dismissed_by?: string | null
           id?: string
           is_read?: boolean | null
@@ -11327,6 +11339,22 @@ export type Database = {
           user_roles_list: string
         }[]
       }
+      get_inbox_contact_summaries: {
+        Args: { p_contact_ids: string[] }
+        Returns: {
+          contact_id: string
+          last_message_content: string
+          last_message_created_at: string
+          last_message_external_id: string
+          last_message_id: string
+          last_message_is_read: boolean
+          last_message_media_url: string
+          last_message_sender: string
+          last_message_status: string
+          last_message_type: string
+          unread_count: number
+        }[]
+      }
       get_instance_token: { Args: { p_instance_id: string }; Returns: string }
       get_last_message_dates: {
         Args: { contact_ids: string[] }
@@ -11425,6 +11453,7 @@ export type Database = {
           avatar_url: string
           created_at: string
           department: string
+          department_id: string | null
           email: string
           id: string
           is_active: boolean
@@ -11709,7 +11738,13 @@ export type Database = {
         Returns: number
       }
       persist_conversation_analysis: {
-        Args: { p_analysis: Json; p_analyzed_at?: string; p_contact_id: string }
+        Args: {
+          p_analysis: Json
+          p_analyzed_at: string
+          p_contact_id: string
+          p_expected_projection_updated_at: string
+          p_should_project: boolean
+        }
         Returns: Json
       }
       persist_multiplix_item_message_snapshot: {

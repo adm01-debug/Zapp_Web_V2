@@ -119,6 +119,11 @@ export interface CatalogRailProps {
    * sem ela o export sai com o catálogo inteiro (`catalogo_todos_*.csv`),
    * que é o comportamento honesto enquanto o pai não passar o filtro. */
   exportFilter?: CatalogRailFilterKey | null;
+  /** R2-MOD-041 — os demais filtros ATIVOS da listagem (busca, categoria,
+   * fornecedor, preço, cor, material, estoque baixo, bestseller). Sem eles o
+   * CSV saía só com o filtro do rail e perdia "quase todos os filtros" que o
+   * usuário vê na grade. Somam-se aos do `exportFilter` (nunca o substituem). */
+  exportFilters?: Record<string, unknown>;
   /** CT-23 — aplica o filtro de estoque baixo (1 a 10 unidades). Opcional de
    * propósito: sem este callback o alerta aparece SEM botão, em vez de um
    * botão que não faz nada (regra do plano: nada morto). */
@@ -429,7 +434,7 @@ function RailAlerts({ stats, nowMs, dismissed, onDismiss, onApplyLowStock }: {
   );
 }
 
-export function CatalogRail({ stats, loading, products, onApplyFilter, recentSends, topSent, onOpenProduct, exportFilter, onApplyLowStock }: CatalogRailProps) {
+export function CatalogRail({ stats, loading, products, onApplyFilter, recentSends, topSent, onOpenProduct, exportFilter, exportFilters, onApplyLowStock }: CatalogRailProps) {
   // Relógio capturado UMA vez, no inicializador de estado (nunca no corpo do
   // render): o alerta de sync não muda sozinho entre re-renders e o teste
   // controla o valor com data fixa.
@@ -451,9 +456,12 @@ export function CatalogRail({ stats, loading, products, onApplyFilter, recentSen
     try {
       // CT-20: o módulo mostra o toast de loading/sucesso/erro e só baixa o
       // arquivo quando todas as páginas voltaram (sem CSV parcial).
+      // R2-MOD-041: o filtro do rail (exportFilter) e os filtros da listagem
+      // (exportFilters) SOMAM — antes só o do rail chegava à edge e o CSV
+      // saía quase inteiro (busca, categoria, preço, cor... ficavam de fora).
       await exportCatalogCsv({
         filterKey: exportFilter ?? 'todos',
-        filters: filterKeyToEdgeParams(exportFilter),
+        filters: { ...filterKeyToEdgeParams(exportFilter), ...exportFilters },
       });
     } finally {
       setExporting(false);

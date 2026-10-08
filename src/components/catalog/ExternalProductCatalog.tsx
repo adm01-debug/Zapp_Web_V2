@@ -123,7 +123,12 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   const [sendVariantColor, setSendVariantColor] = useState<string | undefined>(undefined);
   // CT-28 — seleção em massa da lista exibida (grade ou lista).
   const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // R2-MOD-010 — a seleção guarda o PRODUTO escolhido, não só o id: a barra
+  // anuncia `selectedById.size` e o envio/exportação precisam entregar
+  // exatamente esses produtos, inclusive os que saíram da tela por causa de um
+  // filtro, da busca ou do chip "Meus favoritos" (antes o payload era a
+  // interseção com a lista exibida e o número anunciado mentia).
+  const [selectedById, setSelectedById] = useState<Map<string, ExternalProduct>>(new Map());
   const [bulkSendOpen, setBulkSendOpen] = useState(false);
 
   const { favorites, isFavorite, toggle: toggleFavorite } = useCatalogFavorites();
@@ -153,12 +158,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
   // `doFetch` muda de identidade a cada mudanca de filtro OU de `page` (o
   // useCallback acima lista os dois), e `isOpen` alterna ao abrir/fechar. Os
-  // efeitos abaixo so podem reagir ao proprio gatilho (abrir / filtro /
-  // pagina): se `doFetch` entrasse nas deps do efeito de filtros, paginar
-  // resetaria `page` para 0 de novo; se `isOpen` entrasse ali, abrir o dialog
-  // dispararia um fetch duplicado (o efeito de abertura ja buscou). Por isso
-  // os dois valores sao lidos via ref (sempre o ultimo valor), o que mantem
-  // os arrays de deps corretos sem eslint-disable.
+  // efeitos abaixo so podem reagir ao proprio gatilho (abrir / filtro): se
+  // `doFetch` entrasse nas deps do efeito de filtros, ele reexecutaria em
+  // loop; se `isOpen` entrasse ali, abrir o dialog dispararia um fetch
+  // duplicado (o efeito de abertura ja buscou). Por isso os dois valores sao
+  // lidos via ref (sempre o ultimo valor), o que mantem os arrays de deps
+  // corretos sem eslint-disable. R2-MOD-009 — a paginacao tambem le
+  // `doFetchRef` (o handler de `TalkXPagination` busca a pagina clicada): sem
+  // isso, voltar para a 1ª nao emitia consulta nenhuma.
   const doFetchRef = useRef(doFetch);
   const isOpenRef = useRef(isOpen);
   useEffect(() => {
@@ -187,10 +194,11 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     return () => clearTimeout(t);
   }, [search, categoryId, supplierId, onlyInStock]);
 
-  // Re-fetch on page change.
-  useEffect(() => {
-    if (isOpenRef.current && page > 0) doFetchRef.current();
-  }, [page]);
+  // R2-MOD-009 — a consulta por página saiu do efeito que só buscava com
+  // `page > 0` e passou para o handler de `TalkXPagination` (abaixo): o efeito
+  // ignorava a volta para a 1ª página (offset 0), então os produtos da página
+  // anterior ficavam na tela. Os demais `setPage(0)` (filtros e tamanho de
+  // página) já emitem a própria consulta logo depois.
 
   // CT-61 — mesmos atalhos da tela de Catálogo, válidos só com o dialog aberto
   // (o catálogo do chat fica montado mesmo fechado): `/` e Ctrl/Cmd+F focam a
@@ -321,36 +329,49 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     const p = displayedProducts.find((x) => x.id === id);
     if (p) void toggleFavorite({ id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
   }, [displayedProducts, toggleFavorite]);
-  const toggleSelect = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+  const toggleSelect = (id: string) => {
+    // O id chega de um card renderizado (portanto da lista exibida): é o
+    // produto dele que vira a "foto" guardada na seleção — o envio deixa de
+    // depender de o produto continuar na tela.
+    const product = displayedProducts.find((p) => p.id === id);
+    setSelectedById((prev) => {
+      const next = new Map(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (product) next.set(id, product);
       return next;
     });
-  const clearSelection = () => setSelectedIds(new Set());
+  };
+  const clearSelection = () => setSelectedById(new Map());
   /**
    * R2-MOD-007 — encerra o envio em lote removendo da seleção só os produtos
    * concluídos; falhados/parciais continuam marcados para reenvio.
    */
   const removeFromSelection = (ids: string[]) => {
     if (ids.length === 0) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    setSelectedById((prev) => {
+      const next = new Map(prev);
       ids.forEach((id) => next.delete(id));
       return next;
     });
   };
   const toggleSelectAll = () =>
-    setSelectedIds((prev) => {
-      const ids = displayedProducts.map((p) => p.id);
-      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
-      const next = new Set(prev);
-      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+    setSelectedById((prev) => {
+      const allSelected = displayedProducts.length > 0 && displayedProducts.every((p) => prev.has(p.id));
+      const next = new Map(prev);
+      displayedProducts.forEach((p) => (allSelected ? next.delete(p.id) : next.set(p.id, p)));
       return next;
     });
-  const allPageSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedIds.has(p.id));
-  const selectedProducts = displayedProducts.filter((p) => selectedIds.has(p.id));
+  const allPageSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedById.has(p.id));
+  /**
+   * R2-MOD-010 — a seleção INTEIRA, na ordem em que foi marcada, e não a
+   * interseção com a lista exibida: é ela que o contador anuncia e que o envio
+   * em lote, o CSV e o "Favoritar N" consomem. Quando o produto volta à tela,
+   * vale o dado fresco dela (preço/nome/imagem); fora da tela, vale a foto
+   * guardada no momento da marcação.
+   */
+  const selectedProducts = Array.from(selectedById.values()).map(
+    (snapshot) => displayedProducts.find((p) => p.id === snapshot.id) ?? snapshot
+  );
 
   /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
   const handleExportSelection = () => {
@@ -359,13 +380,27 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   };
 
-  /** CT-28 — "Favoritar N": favorita só quem ainda não é favorito. */
-  const handleFavoriteSelection = () => {
+  /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só quem ainda não é favorito
+   * e só confirma depois da escrita (mesmo contrato da tela de Catálogo:
+   * `toggle` devolve o resultado de cada persistência). */
+  const handleFavoriteSelection = async () => {
     const toFavorite = selectedProducts.filter((p) => !isFavorite(p.id));
-    toFavorite.forEach((p) => {
-      void toggleFavorite({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
-    });
-    if (toFavorite.length > 0) toast.success(`${toFavorite.length} produto(s) adicionado(s) aos favoritos`);
+    if (toFavorite.length === 0) return;
+    // Cada persistência é avaliada sozinha: uma rejeição inesperada não marca
+    // as demais como falha (nada de erro quando parte já foi aplicada).
+    const results = await Promise.all(
+      toFavorite.map(async (p) => {
+        try {
+          return await toggleFavorite({ id: p.id, name: p.name, sku: p.sku, primary_image_url: p.primary_image_url });
+        } catch {
+          return false;
+        }
+      })
+    );
+    const saved = results.filter(Boolean).length;
+    const failed = toFavorite.length - saved;
+    if (saved > 0) toast.success(`${saved} produto(s) adicionado(s) aos favoritos`);
+    if (failed > 0) toast.error(`${failed} produto(s) não foram salvos nos favoritos. Tente novamente.`);
   };
 
   /** CT-28 — entra/sai do modo seleção (sair limpa a seleção). */
@@ -560,7 +595,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                         onSend={handleSend}
                         isFavorite={isFavorite(product.id)}
                         onToggleFavorite={handleToggleFavorite}
-                        isSelected={selectedIds.has(product.id)}
+                        isSelected={selectedById.has(product.id)}
                         onToggleSelect={selectMode ? toggleSelect : undefined}
                       />
                     ))}
@@ -624,7 +659,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                               onSend={handleSend}
                               isFavorite={isFavorite(product.id)}
                               onToggleFavorite={handleToggleFavorite}
-                              isSelected={selectedIds.has(product.id)}
+                              isSelected={selectedById.has(product.id)}
                               onToggleSelect={selectMode ? toggleSelect : undefined}
                               // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
                               priority={index < 4}
@@ -662,7 +697,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                           onSend={handleSend}
                           isFavorite={isFavorite(product.id)}
                           onToggleFavorite={handleToggleFavorite}
-                          isSelected={selectedIds.has(product.id)}
+                          isSelected={selectedById.has(product.id)}
                           onToggleSelect={selectMode ? toggleSelect : undefined}
                           // CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high.
                           priority={index < 4}
@@ -691,8 +726,17 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   page={page + 1}
                   pageSize={pageSize}
                   total={totalProducts}
-                  // trocar de página limpa a seleção (os ids antigos saem da tela)
-                  onPage={(p) => { setPage(p - 1); clearSelection(); }}
+                  // R2-MOD-009 — a navegação é a única fonte da consulta por
+                  // página: emitimos a busca da página clicada já aqui (offset
+                  // `(p-1)*pageSize`), inclusive ao voltar para a 1ª (offset 0),
+                  // que antes não consultava nada e deixava os produtos da
+                  // página anterior. `doFetchRef` traz os filtros atuais.
+                  onPage={(p) => {
+                    setPage(p - 1);
+                    // trocar de página limpa a seleção (os ids antigos saem da tela)
+                    clearSelection();
+                    doFetchRef.current({ offset: (p - 1) * pageSize });
+                  }}
                   onPageSize={handlePageSize}
                   noun="produtos"
                 />
@@ -701,9 +745,9 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
             {/* CT-28 — barra de seleção em massa (grade e lista): só existe
                 enquanto há itens selecionados no modo seleção. */}
-            {selectMode && selectedIds.size > 0 && (
+            {selectMode && selectedById.size > 0 && (
               <CatalogBulkBar
-                count={selectedIds.size}
+                count={selectedById.size}
                 pageTotal={displayedProducts.length}
                 allPageSelected={allPageSelected}
                 onToggleSelectAll={toggleSelectAll}

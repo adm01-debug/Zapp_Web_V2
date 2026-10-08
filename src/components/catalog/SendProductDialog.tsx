@@ -695,6 +695,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             isSending={isSending}
             sendBlockedReason={sendReadiness.reason}
             checkingSendReadiness={sendReadiness.checking}
+            onRetrySendReadiness={sendReadiness.unavailable ? sendReadiness.retry : null}
             onBack={() => setStep('configure')}
             onSend={handleSendToContact}
           />

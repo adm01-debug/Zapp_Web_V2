@@ -26,6 +26,16 @@ interface Message {
   agent_id?: string | null;
 }
 
+type RlsCommand = 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE';
+type RlsPolicyCommand = RlsCommand | 'ALL';
+
+interface MessagePolicy {
+  name: string;
+  command: RlsPolicyCommand;
+  using?: string;
+  check?: string;
+}
+
 const isAdminOrSupervisor = (role: AppRole) =>
   role === 'admin' || role === 'supervisor';
 
@@ -55,6 +65,49 @@ function canInsertMessage(user: User, contact: Contact | undefined, msg: Message
     return isAdminOrSupervisor(user.role);
   }
   return true;
+}
+
+const VISIBILIDADE_MESSAGES = [
+  'contact.assigned_to = auth.uid()',
+  'contact.assigned_to IS NULL',
+  'is_admin_or_supervisor(auth.uid())',
+];
+const PREDICADO_VISIBILIDADE_MESSAGES = VISIBILIDADE_MESSAGES.join(' OR ');
+
+function normSql(sql: string): string {
+  return sql
+    .replace(/[()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function ramosDeOr(predicado: string): string[] {
+  return predicado
+    .split(/\s+OR\s+/i)
+    .map(normSql)
+    .filter(Boolean)
+    .sort();
+}
+
+function cobreComando(policy: MessagePolicy, command: RlsCommand): boolean {
+  return policy.command === 'ALL' || policy.command === command;
+}
+
+function predicadoEfetivo(policy: MessagePolicy, command: RlsCommand): string {
+  if (command === 'INSERT') return policy.check ?? policy.using ?? 'true';
+  return policy.using ?? 'true';
+}
+
+function predicadoEquivaleAoContratoMessages(predicado: string): boolean {
+  return JSON.stringify(ramosDeOr(predicado)) === JSON.stringify(ramosDeOr(PREDICADO_VISIBILIDADE_MESSAGES));
+}
+
+function deleteSemContratoMessages(policies: MessagePolicy[]): string[] {
+  return policies
+    .filter((policy) => cobreComando(policy, 'DELETE'))
+    .filter((policy) => !predicadoEquivaleAoContratoMessages(predicadoEfetivo(policy, 'DELETE')))
+    .map((policy) => policy.name);
 }
 
 const admin: User = { id: 'u-admin', role: 'admin', authenticated: true };
@@ -136,6 +189,54 @@ describe('RLS: messages — read access via contact ownership', () => {
     expect(canSelectMessage(anon, contactOfA)).toBe(false);
     expect(canSelectMessage(anon, unassigned)).toBe(false);
     void msgOnA; void msgOnB;
+  });
+});
+
+describe('RLS: messages — DELETE policy contract', () => {
+  it('aceita ausencia total de policy que cubra DELETE', () => {
+    const policies: MessagePolicy[] = [
+      { name: 'messages_select', command: 'SELECT', using: PREDICADO_VISIBILIDADE_MESSAGES },
+      { name: 'messages_insert', command: 'INSERT', check: PREDICADO_VISIBILIDADE_MESSAGES },
+    ];
+
+    expect(policies.some((policy) => cobreComando(policy, 'DELETE'))).toBe(false);
+    expect(deleteSemContratoMessages(policies)).toEqual([]);
+  });
+
+  it('FOR DELETE precisa reproduzir o predicado completo de visibilidade', () => {
+    const policies: MessagePolicy[] = [
+      { name: 'messages_delete', command: 'DELETE', using: PREDICADO_VISIBILIDADE_MESSAGES },
+      { name: 'messages_delete_sem_fila', command: 'DELETE', using: VISIBILIDADE_MESSAGES.slice(0, 2).join(' OR ') },
+    ];
+
+    expect(policies.every((policy) => cobreComando(policy, 'DELETE'))).toBe(true);
+    expect(deleteSemContratoMessages(policies)).toEqual(['messages_delete_sem_fila']);
+  });
+
+  it('FOR ALL cobre DELETE e nao contorna a exigencia do contrato', () => {
+    const policies: MessagePolicy[] = [
+      { name: 'messages_all_irrestrito', command: 'ALL', using: 'true', check: PREDICADO_VISIBILIDADE_MESSAGES },
+      { name: 'messages_all_contratado', command: 'ALL', using: PREDICADO_VISIBILIDADE_MESSAGES },
+    ];
+
+    expect(policies.map((policy) => cobreComando(policy, 'DELETE'))).toEqual([true, true]);
+    expect(predicadoEfetivo(policies[0], 'DELETE')).toBe('true');
+    expect(deleteSemContratoMessages(policies)).toEqual(['messages_all_irrestrito']);
+  });
+
+  it('recusa FOR ALL com true OR predicado contratado mesmo contendo todos os trechos esperados', () => {
+    const policy: MessagePolicy = {
+      name: 'messages_all_true_or_contrato',
+      command: 'ALL',
+      using: `true OR ${PREDICADO_VISIBILIDADE_MESSAGES}`,
+    };
+    const predicado = predicadoEfetivo(policy, 'DELETE');
+
+    for (const trechoEsperado of VISIBILIDADE_MESSAGES) {
+      expect(predicado).toContain(trechoEsperado);
+    }
+    expect(cobreComando(policy, 'DELETE')).toBe(true);
+    expect(deleteSemContratoMessages([policy])).toEqual(['messages_all_true_or_contrato']);
   });
 });
 

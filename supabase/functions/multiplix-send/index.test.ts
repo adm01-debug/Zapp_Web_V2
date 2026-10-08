@@ -170,6 +170,14 @@ interface MockOpts {
   windowClosesAfterStart?: boolean;
   /** MX07: resposta da RPC get_instance_token (null = instância sem token cadastrado) */
   instanceToken?: string | null;
+  /** R2-API-013: a RPC do heartbeat se comporta como o PostgrestBuilder do supabase-js --
+   * builder THENABLE LAZY, que so despacha a requisicao quando alguem consome a promessa. */
+  lazyHeartbeat?: boolean;
+  /** R2-API-013: resultado da RPC heartbeat_multiplix_item (default: { data: true, error: null }). */
+  heartbeatResult?: { data?: unknown; error?: Error | null };
+  /** R2-API-013: segura a renovacao em voo ate o teste chamar releaseHeartbeat (prova de que
+   * um tick novo nao empilha outro heartbeat por cima do que ainda esta pendente). */
+  heartbeatPending?: boolean;
 }
 
 interface MockCtx {
@@ -187,6 +195,13 @@ interface MockCtx {
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
   suppressionChecks: number;
+  /** R2-API-013: builders de heartbeat CRIADOS (com o cliente lazy, criar nao despacha). */
+  heartbeatBuilders: number;
+  /** R2-API-013: builders de heartbeat CONSUMIDOS (.then/await) -- e o que renova o lease. */
+  heartbeatConsumed: number;
+  /** R2-API-013: portao da renovacao em voo, liberado por releaseHeartbeat. */
+  heartbeatGate: Promise<void>;
+  releaseHeartbeat: () => void;
 }
 
 // Chainable query builder: a cadeia devolve o proprio builder e o builder e
@@ -419,6 +434,26 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             }
             return Promise.resolve({ data: { action: "rescheduled", attempt }, error: null });
           }
+          case "heartbeat_multiplix_item": {
+            const resultado = {
+              data: opts.heartbeatResult?.data ?? true,
+              error: opts.heartbeatResult?.error ?? null,
+            };
+            if (!opts.lazyHeartbeat) return Promise.resolve(resultado);
+            // Fiel ao PostgrestBuilder: CRIAR o builder nao faz request nenhum. So o consumo
+            // (then/await) despacha -- e e o consumo que este stub conta.
+            ctx.heartbeatBuilders++;
+            const executar = () => {
+              ctx.heartbeatConsumed++;
+              return opts.heartbeatPending ? ctx.heartbeatGate.then(() => resultado) : Promise.resolve(resultado);
+            };
+            return {
+              then: (onFulfilled?: (valor: unknown) => unknown, onRejected?: (motivo: unknown) => unknown) =>
+                executar().then(onFulfilled, onRejected),
+              catch: (onRejected?: (motivo: unknown) => unknown) => executar().catch(onRejected),
+              finally: (aoFinalizar?: () => void) => executar().finally(aoFinalizar),
+            };
+          }
           default:
             return Promise.resolve({ data: true, error: null });
         }
@@ -464,6 +499,10 @@ function newCtx(opts: MockOpts): MockCtx {
   if (opts.connection === undefined) {
     opts.connection = { id: "conn-0001", status: "connected", instance_id: "instance-abc" };
   }
+  // R2-API-013: portao do heartbeat. Com heartbeatPending a renovacao fica em voo ate o teste
+  // liberar -- e assim que se observa um tick chegando com o anterior ainda pendente.
+  let liberarHeartbeat: () => void = () => {};
+  const heartbeatGate = new Promise<void>((resolve) => { liberarHeartbeat = () => resolve(); });
   return {
     rpcCalls: [],
     events: [],
@@ -476,6 +515,10 @@ function newCtx(opts: MockOpts): MockCtx {
     recipientSelects: 0,
     suppressionChecks: 0,
     signCalls: [],
+    heartbeatBuilders: 0,
+    heartbeatConsumed: 0,
+    heartbeatGate,
+    releaseHeartbeat: () => liberarHeartbeat(),
   };
 }
 
@@ -2504,4 +2547,370 @@ Deno.test("F65: voice_asset_id apontando ativo INVALIDADO segue pendente (multip
     `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
   );
   assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+});
+
+// ---------------------------------------------------------------------------
+// R2-API-013 (reauditoria 03/10/2026): o heartbeat do lease era um builder RPC
+// descartado (`void supabase.rpc(...)`) e o opt-out tardio nao encerrava o
+// timer. Estes testes usam um cliente LAZY (fiel ao PostgrestBuilder: criar o
+// builder nao despacha nada) e timers VIRTUAIS: o relogio de 30 s nao avanca
+// sozinho -- o teste dispara o tick e observa se a renovacao realmente saiu,
+// com o lease de 90 s ainda valido.
+// ---------------------------------------------------------------------------
+
+/** R2-API-013: leitura dos contadores do heartbeat por funcao (tipo number declarado) --
+ * o mesmo campo e comparado com valores diferentes ao longo do teste, e o estreitamento do
+ * `asserts condition` compararia '0' com '1' depois da primeira assercao. */
+function heartbeatCriados(ctx: MockCtx): number {
+  return ctx.heartbeatBuilders;
+}
+
+function heartbeatConsumidas(ctx: MockCtx): number {
+  return ctx.heartbeatConsumed;
+}
+
+/** Cede as microtasks pendentes do handler sem depender de relogio real. */
+function aguardarMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** Timers VIRTUAIS do heartbeat: o intervalo so dispara quando o teste chama o tick. */
+function stubHeartbeatTimers() {
+  const ticks: Array<() => void> = [];
+  const periodos: number[] = [];
+  const ativos = new Set<number>();
+  const setIntervalOriginal = globalThis.setInterval;
+  const clearIntervalOriginal = globalThis.clearInterval;
+  let proximoId = 1;
+  globalThis.setInterval = ((cb: () => void, ms?: number) => {
+    const id = proximoId++;
+    ativos.add(id);
+    ticks.push(cb);
+    periodos.push(Number(ms ?? 0));
+    return id;
+  }) as unknown as typeof globalThis.setInterval;
+  globalThis.clearInterval = ((id?: number) => {
+    if (id !== undefined) ativos.delete(id);
+  }) as unknown as typeof globalThis.clearInterval;
+  return {
+    ticks,
+    periodos,
+    ativos,
+    restore: () => {
+      globalThis.setInterval = setIntervalOriginal;
+      globalThis.clearInterval = clearIntervalOriginal;
+    },
+  };
+}
+
+/** Roda o handler com timers virtuais e o provedor pedido, e devolve o ctx do mock mais os
+ * timers -- o teste dispara os ticks e julga a renovacao; restoreTimers fica para o finally. */
+async function runComHeartbeatVirtual(
+  opts: MockOpts,
+  provedor: () => { restore: () => void } = stubProviderFetch,
+): Promise<{ ctx: MockCtx; timers: ReturnType<typeof stubHeartbeatTimers>; status: number; restoreTimers: () => void }> {
+  const ctx = newCtx(opts);
+  const timers = stubHeartbeatTimers();
+  const provider = provedor();
+  let status = 0;
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    status = res.status;
+  } finally {
+    provider.restore();
+  }
+  return { ctx, timers, status, restoreTimers: timers.restore };
+}
+
+/** Disparo de 1 destinatario que cai no opt-out TARDIO (entre o claim e o POST): o item e
+ * concluido no caminho de `continue` -- que era justamente o que deixava o timer vivo. */
+function optsOptOutTardio(phone: string): MockOpts {
+  return {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, phone)],
+    suppressedPhones: [],
+    suppressAfterFirstCheck: true,
+  };
+}
+
+Deno.test("R2-API-013: cada tick do heartbeat CONSOME a RPC (builder descartado nao renova o lease)", async () => {
+  const opts: MockOpts = { ...optsOptOutTardio("5511955550301"), lazyHeartbeat: true };
+  const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+  try {
+    assert(status === 200, `esperado 200, recebido ${status}`);
+    assert(timers.ticks.length === 1, `o worker nao armou o timer do heartbeat (${timers.ticks.length})`);
+    assert(
+      timers.periodos[0] === 30_000,
+      `o tick tem de sair em 30 s (um terco do lease de 90 s), veio ${timers.periodos[0]} ms`,
+    );
+    assert(ctx.suppressionChecks >= 2, `esperava o opt-out tardio (2 checagens), houve ${ctx.suppressionChecks}`);
+    // Antes do tick nada foi criado nem despachado: o builder e criado dentro do tick.
+    assert(heartbeatCriados(ctx) === 0, `builder criado fora do tick: ${heartbeatCriados(ctx)}`);
+    assert(heartbeatConsumidas(ctx) === 0, `renovacao consumida fora do tick: ${heartbeatConsumidas(ctx)}`);
+
+    timers.ticks[0](); // 30 s de relogio virtual
+    await aguardarMicrotasks();
+
+    assert(heartbeatCriados(ctx) === 1, `o tick criou ${heartbeatCriados(ctx)} builder(s) de heartbeat`);
+    assert(
+      heartbeatConsumidas(ctx) === 1,
+      `o tick descartou o builder RPC (renovacoes consumidas=${heartbeatConsumidas(ctx)}); ` +
+        "o lease de 90 s venceria sem nenhuma renovacao sair",
+    );
+    const hb = rpcs(ctx, "heartbeat_multiplix_item");
+    assert(hb.length === 1, `esperava 1 chamada a RPC de heartbeat, houve ${hb.length}`);
+    assert(hb[0].args.p_item_id === "item-recipient-1", `p_item_id inesperado: ${String(hb[0].args.p_item_id)}`);
+    assert(
+      hb[0].args.p_claim_token === "claim-item-recipient-1",
+      `p_claim_token inesperado: ${String(hb[0].args.p_claim_token)}`,
+    );
+    assert(hb[0].args.p_lease_seconds === 90, `p_lease_seconds esperado 90, veio ${String(hb[0].args.p_lease_seconds)}`);
+  } finally {
+    restoreTimers();
+  }
+});
+
+Deno.test("R2-API-013: tick com renovacao EM VOO nao empilha outro heartbeat (sem sobreposicao)", async () => {
+  const opts: MockOpts = {
+    ...optsOptOutTardio("5511955550302"),
+    lazyHeartbeat: true,
+    heartbeatPending: true,
+  };
+  const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+  try {
+    assert(status === 200, `esperado 200, recebido ${status}`);
+    assert(timers.ticks.length === 1, `o worker nao armou o timer do heartbeat (${timers.ticks.length})`);
+
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(heartbeatConsumidas(ctx) === 1, `o primeiro tick nao consumiu a renovacao (${heartbeatConsumidas(ctx)})`);
+
+    // Dois ticks com a renovacao anterior pendente: nenhum pode despachar outro heartbeat.
+    timers.ticks[0]();
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(
+      heartbeatConsumidas(ctx) === 1,
+      `heartbeats sobrepostos: ${heartbeatConsumidas(ctx)} renovacoes despachadas com a anterior em voo`,
+    );
+
+    ctx.releaseHeartbeat();
+    await aguardarMicrotasks();
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(
+      heartbeatConsumidas(ctx) === 2,
+      `com a renovacao concluida o proximo tick tem de renovar de novo, veio ${heartbeatConsumidas(ctx)}`,
+    );
+  } finally {
+    restoreTimers();
+  }
+});
+
+Deno.test("R2-API-013: o timer do heartbeat morre em toda saida do item (inclusive opt-out tardio)", async () => {
+  // (a) opt-out tardio: o `continue` da ultima checagem de supressao pulava o stopHeartbeat e
+  // o timer seguia renovando um item ja concluido.
+  const tardio = await runComHeartbeatVirtual(optsOptOutTardio("5511955550303"));
+  try {
+    assert(tardio.status === 200, `esperado 200, recebido ${tardio.status}`);
+    assert(
+      tardio.ctx.suppressionChecks >= 2,
+      `esperava o opt-out tardio, houve ${tardio.ctx.suppressionChecks} checagens`,
+    );
+    assert(tardio.timers.ticks.length === 1, "o heartbeat nao foi armado neste cenario");
+    assert(
+      tardio.timers.ativos.size === 0,
+      `timer do heartbeat vazou no opt-out tardio: ${tardio.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    tardio.restoreTimers();
+  }
+
+  // (b) envio concluido: o item sai por record_multiplix_item_sent e o timer tambem para.
+  const sucesso = await runComHeartbeatVirtual(
+    {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550304")],
+    },
+    stubProviderSuccess,
+  );
+  try {
+    assert(sucesso.status === 200, `esperado 200 no envio concluido, recebido ${sucesso.status}`);
+    assert(
+      rpcs(sucesso.ctx, "record_multiplix_item_sent").length === 1,
+      "o envio de sucesso nao concluiu (nada a limpar)",
+    );
+    assert(
+      sucesso.timers.ativos.size === 0,
+      `timer do heartbeat vazou no envio concluido: ${sucesso.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    sucesso.restoreTimers();
+  }
+
+  // (c) erro antes do POST (provedor indisponivel): o ramo de reschedule tambem encerra.
+  const erroPre = await runComHeartbeatVirtual({
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550305")],
+  });
+  try {
+    assert(erroPre.status === 200, `esperado 200 no erro tratado, recebido ${erroPre.status}`);
+    assert(
+      erroPre.timers.ativos.size === 0,
+      `timer do heartbeat vazou no caminho de erro: ${erroPre.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    erroPre.restoreTimers();
+  }
+
+  // (d) erro do item -> catch -> reagendamento -> `await sleep(interval)` -> continue.
+  // A regressao era o timer ficar VIVO na janela entre o erro tratado e o fim do
+  // sleep (o finally so roda depois do sleep): um tick nessa janela renovava um
+  // item ja devolvido a fila e logava 'multiplix_heartbeat_not_renewed' falso.
+  // Como send_interval_min/max sao 0, o sleep do catch e um setTimeout(0) — para
+  // enxergar a janela o teste CAPTURA os timeouts e retem o do catch ate depois
+  // das assercoes.
+  const setTimeoutReal = globalThis.setTimeout;
+  const timeoutsCapturados: Array<{ cb: () => void; ms: number }> = [];
+  globalThis.setTimeout = ((cb: (...a: unknown[]) => void, ms?: number, ...a: unknown[]) => {
+    timeoutsCapturados.push({ cb: () => cb(...a), ms: Number(ms ?? 0) });
+    return timeoutsCapturados.length; // id simbolico — o clearTimeout real nao o encontra (inofensivo)
+  }) as unknown as typeof globalThis.setTimeout;
+  const timersErro = stubHeartbeatTimers();
+  const optsErro: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550307")],
+    // voice_ai sem ativo renderizado lanca multiplix_block_pending_media dentro do
+    // try, ANTES do POST — o catch cai no ramo !providerPostAttempted (reagendamento).
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+    lazyHeartbeat: true,
+  };
+  const ctxErro = newCtx(optsErro);
+  try {
+    // Um macrotask real drena TODAS as microtasks pendentes — e assim que o teste
+    // bombeia o worker sem depender do setTimeout (que ficou capturado).
+    const ceder = () => new Promise<void>((resolve) => setTimeoutReal(resolve, 0));
+    const execucao = handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(optsErro, ctxErro));
+    // Tratador anexado desde ja: qualquer rejeicao do handler fica guardada em
+    // vez de virar unhandledrejection no meio do bombeio.
+    const fim = execucao.then((res) => ({ res }), (err: unknown) => ({ err }));
+
+    // Dispara os timeouts capturados ate o item ser REAGENDADO. O primeiro
+    // timeout que nasce depois disso e o `await sleep(interval)` do catch —
+    // ele fica retido para o teste olhar dentro da janela.
+    let sleepDoCatch: (() => void) | null = null;
+    for (let volta = 0; volta < 1_000 && sleepDoCatch === null; volta++) {
+      await ceder();
+      if (ctxErro.reschedules.length === 0) {
+        while (timeoutsCapturados.length > 0) timeoutsCapturados.shift()!.cb();
+      } else if (timeoutsCapturados.length > 0) {
+        sleepDoCatch = timeoutsCapturados.shift()!.cb;
+      }
+    }
+    assert(
+      ctxErro.reschedules.length === 1 &&
+        String(ctxErro.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+      `esperava o item reagendado pelo catch (ramo pre-dispatch), houve ${JSON.stringify(ctxErro.reschedules)}`,
+    );
+    assert(sleepDoCatch !== null, "o catch nao chegou ao `await sleep(interval)`");
+    assert(timersErro.ticks.length === 1, "o heartbeat nao foi armado neste cenario");
+
+    // DENTRO da janela: item ja reagendado e sleep do catch ainda pendente. O tick
+    // virtual so dispara se o timer ainda estiver ATIVO — que e o que a regressao
+    // permitia (clearInterval so viria no finally, depois do sleep).
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0,
+      `timer do heartbeat vivo durante o sleep do catch: ${timersErro.ativos.size} ativo(s)`,
+    );
+    assert(
+      heartbeatConsumidas(ctxErro) === 0,
+      `tick na janela do erro tratado renovou o lease de um item ja reagendado (${heartbeatConsumidas(ctxErro)} consumidas)`,
+    );
+
+    sleepDoCatch(); // libera o sleep do catch -> finally -> continue -> fim da passada
+    const fimResult = await fim;
+    assert("res" in fimResult, `o handler rejeitou depois do erro tratado: ${String((fimResult as { err: unknown }).err)}`);
+    assert(fimResult.res.status === 200, `esperado 200 depois do erro tratado, recebido ${fimResult.res.status}`);
+
+    // DEPOIS da janela: nao pode sobrar timer nem sair renovacao tardia.
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0 && heartbeatConsumidas(ctxErro) === 0,
+      `heartbeat tardio depois do continue do catch: timers=${timersErro.ativos.size}, consumidas=${heartbeatConsumidas(ctxErro)}`,
+    );
+  } finally {
+    timersErro.restore();
+    globalThis.setTimeout = setTimeoutReal;
+  }
+});
+
+Deno.test("R2-API-013: falha da RPC de heartbeat e tratada (nao derruba o envio nem vira rejeicao solta)", async () => {
+  const rejeicoes: unknown[] = [];
+  const onRejeicao = (evento: PromiseRejectionEvent) => { rejeicoes.push(evento.reason); };
+  globalThis.addEventListener("unhandledrejection", onRejeicao);
+  try {
+    // Dois modos de falha da renovacao: erro da RPC e resultado `false` (lease perdido).
+    const casos: Array<{ nome: string; aviso: string; resultado: { data?: unknown; error?: Error | null } }> = [
+      {
+        nome: "erro da RPC",
+        aviso: "multiplix_heartbeat_failed",
+        resultado: { data: null, error: new Error("lease_token divergente") },
+      },
+      {
+        nome: "lease nao renovado (false)",
+        aviso: "multiplix_heartbeat_not_renewed",
+        resultado: { data: false, error: null },
+      },
+    ];
+    for (const caso of casos) {
+      const opts: MockOpts = {
+        ...optsOptOutTardio("5511955550306"),
+        lazyHeartbeat: true,
+        heartbeatResult: caso.resultado,
+      };
+      const avisos: string[] = [];
+      const warnOriginal = console.warn;
+      console.warn = ((...args: unknown[]) => {
+        avisos.push(args.map((arg) => String(arg)).join(" "));
+      }) as typeof console.warn;
+      const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+      try {
+        assert(status === 200, `[${caso.nome}] esperado 200, recebido ${status}`);
+        assert(timers.ticks.length === 1, `[${caso.nome}] o heartbeat nao foi armado`);
+        timers.ticks[0]();
+        await aguardarMicrotasks();
+        assert(
+          heartbeatConsumidas(ctx) === 1,
+          `[${caso.nome}] a renovacao que falhou tambem precisa ser consumida (${heartbeatConsumidas(ctx)})`,
+        );
+        assert(
+          avisos.some((aviso) => aviso.includes(caso.aviso)),
+          `[${caso.nome}] a renovacao perdida nao foi reportada ao operador (avisos: ${JSON.stringify(avisos)})`,
+        );
+        assert(
+          ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+          `[${caso.nome}] a falha do heartbeat contaminou a conclusao do item`,
+        );
+      } finally {
+        console.warn = warnOriginal;
+        restoreTimers();
+      }
+    }
+    await aguardarMicrotasks();
+    assert(rejeicoes.length === 0, `heartbeat que falhou virou rejeicao solta: ${String(rejeicoes[0])}`);
+  } finally {
+    globalThis.removeEventListener("unhandledrejection", onRejeicao);
+  }
 });

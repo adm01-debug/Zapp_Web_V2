@@ -56,17 +56,20 @@ export function QueuesComparisonDashboard() {
   }));
 
   // Normalize data for radar chart (0-100 scale)
+  // R2-QUE-008: mesma regra do QueuesComparisonCharts — a série do radar é
+  // identificada pelo ID da fila, nunca pelo nome (filas homônimas colidiriam na
+  // mesma chave). Este bloco não é renderizado hoje, mas mantém o padrão correto.
   const maxContacts = Math.max(...queuesPerformance.map(q => q.totalContacts), 1);
   const maxMessages = Math.max(...queuesPerformance.map(q => q.totalMessages), 1);
   const maxAgents = Math.max(...queuesPerformance.map(q => q.agentsCount), 1);
   const maxAvgMessages = Math.max(...queuesPerformance.map(q => q.avgMessagesPerContact), 1);
 
   const radarData = [
-    { metric: 'Contatos', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.totalContacts / maxContacts) * 100)])) },
-    { metric: 'Mensagens', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.totalMessages / maxMessages) * 100)])) },
-    { metric: 'Atendentes', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.agentsCount / maxAgents) * 100)])) },
-    { metric: 'Média Msgs', ...Object.fromEntries(queuesPerformance.map(q => [q.name, Math.round((q.avgMessagesPerContact / maxAvgMessages) * 100)])) },
-    { metric: 'Atribuídos', ...Object.fromEntries(queuesPerformance.map(q => [q.name, q.totalContacts > 0 ? Math.round((q.assignedContacts / q.totalContacts) * 100) : 0])) },
+    { metric: 'Contatos', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.totalContacts / maxContacts) * 100)])) },
+    { metric: 'Mensagens', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.totalMessages / maxMessages) * 100)])) },
+    { metric: 'Atendentes', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.agentsCount / maxAgents) * 100)])) },
+    { metric: 'Média Msgs', ...Object.fromEntries(queuesPerformance.map(q => [q.id, Math.round((q.avgMessagesPerContact / maxAvgMessages) * 100)])) },
+    { metric: 'Atribuídos', ...Object.fromEntries(queuesPerformance.map(q => [q.id, q.totalContacts > 0 ? Math.round((q.assignedContacts / q.totalContacts) * 100) : 0])) },
   ];
 
   // Calculate totals

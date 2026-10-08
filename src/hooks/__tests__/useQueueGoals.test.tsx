@@ -16,8 +16,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+const toastSpy = vi.hoisted(() => vi.fn());
+
 vi.mock('@/hooks/ui/use-toast', () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastSpy }),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -107,5 +109,65 @@ describe('useQueueGoals', () => {
     const { result } = renderHook(() => useQueueGoals());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(Object.keys(result.current.goals)).toHaveLength(0);
+  });
+
+  // R2-QUE-005 (#452): o erro da gravacao era engolido no catch e `saveGoal`
+  // resolvia normalmente, entao o consumidor nao tinha como saber que a
+  // gravacao falhou e fechava o formulario assim mesmo.
+  it('saveGoal devolve false e avisa o erro quando a gravacao e recusada', async () => {
+    const denied = { message: 'permission denied for table queue_goals', code: '42501' };
+    const eq = vi.fn().mockResolvedValue({ error: denied });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockResolvedValue({ data: mockGoals, error: null }),
+      update: vi.fn().mockReturnValue({ eq }),
+      insert: vi.fn().mockResolvedValue({ error: denied }),
+    }));
+
+    const { result } = renderHook(() => useQueueGoals());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const saved = await result.current.saveGoal('q1', { max_waiting_contacts: 25 });
+
+    expect(saved).toBe(false);
+    expect(eq).toHaveBeenCalledWith('queue_id', 'q1');
+    expect(toastSpy).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+    expect(toastSpy).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Metas salvas' }));
+  });
+
+  it('saveGoal devolve false quando o INSERT de uma fila sem meta e recusado', async () => {
+    const denied = { message: 'permission denied for table queue_goals', code: '42501' };
+    const insert = vi.fn().mockResolvedValue({ error: denied });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockResolvedValue({ data: mockGoals, error: null }),
+      update: vi.fn().mockReturnValue({ eq: vi.fn() }),
+      insert,
+    }));
+
+    const { result } = renderHook(() => useQueueGoals());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const saved = await result.current.saveGoal('q-sem-meta', { max_waiting_contacts: 25 });
+
+    expect(saved).toBe(false);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ queue_id: 'q-sem-meta', max_waiting_contacts: 25 })
+    );
+  });
+
+  it('saveGoal devolve true quando a gravacao e confirmada (nao pode regredir)', async () => {
+    const eq = vi.fn().mockResolvedValue({ error: null });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockResolvedValue({ data: mockGoals, error: null }),
+      update: vi.fn().mockReturnValue({ eq }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    }));
+
+    const { result } = renderHook(() => useQueueGoals());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const saved = await result.current.saveGoal('q1', { max_waiting_contacts: 25 });
+
+    expect(saved).toBe(true);
+    expect(toastSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Metas salvas' }));
   });
 });

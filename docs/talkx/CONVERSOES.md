@@ -22,13 +22,34 @@ headers:
 | Header               | Valor                                                              |
 | -------------------- | ------------------------------------------------------------------ |
 | `x-talkx-timestamp`  | Timestamp UNIX em **milissegundos** (aceito com tolerância de ±5 min) |
-| `x-talkx-signature`  | `HMAC-SHA256(secret, corpo_cru)` em hex, minúsculo                  |
+| `x-talkx-signature`  | `HMAC-SHA256(secret, payload_canonico)` em hex, minúsculo           |
 
-A assinatura é calculada sobre o **corpo bruto** (os bytes exatos enviados, sem
-reformatação). A comparação é em tempo constante.
+A assinatura (**esquema v1**) é calculada sobre a representação canônica:
+
+```
+v1\n<timestamp>\n<external_ref>\n<corpo_cru>
+```
+
+ou seja, `["v1", timestamp, external_ref, corpo_cru].join("\n")`, onde
+`timestamp` é o valor exato enviado em `x-talkx-timestamp`, `external_ref` é o
+campo `external_ref` do JSON e `corpo_cru` são os bytes exatos enviados, sem
+reformatação. A comparação é em tempo constante.
+
+O timestamp e o `external_ref` **fazem parte da assinatura v1**: reenviar o
+mesmo corpo com a mesma assinatura e um timestamp novo → **401** (replay
+bloqueado), e trocar o `external_ref` depois de assinar → **401**.
+
+Para coexistência com o emissor externo já publicado, o formato anterior à v1
+(`HMAC-SHA256(secret, corpo_cru)`) também é aceito até a data configurada em
+`TALKX_LEGACY_SIGNATURE_ACCEPT_UNTIL` (ISO 8601 ou epoch em milissegundos). Se a
+variável não vier preenchida, o padrão local é `2026-10-20T23:59:59.999-03:00`
+(14 dias da decisão de 06/10). Cada requisição legada aceita registra aviso de
+depreciação no log. Depois da data-limite, só o esquema v1 é aceito.
 
 - Sem os headers, ou timestamp fora da janela, ou assinatura inválida → **401**.
 - Corpo acima de 4 KB → **413**.
+- `external_ref` ausente, vazio ou não-string no esquema v1 → **400**. No
+  formato legado ele continua opcional até a data-limite.
 
 ## Corpo da requisição (JSON)
 
@@ -51,7 +72,7 @@ reformatação). A comparação é em tempo constante.
 | `action`        | string   | sim         | sempre `"convert"`                                                |
 | `recipient_id`  | string   | sim         | vem do parâmetro `r` da URL do link                               |
 | `value`         | number   | não         | valor da conversão; `texto`/negativo/não-finito → **422**          |
-| `external_ref`  | string   | não         | chave de idempotência — repetir o mesmo valor devolve `duplicate` |
+| `external_ref`  | string   | **sim no v1** | identidade estável do evento; entra na assinatura v1 e é a chave de idempotência — no legado permanece opcional até a data-limite |
 | `source`        | string   | não         | canal (padrão `"webhook"`)                                        |
 | `link_id`       | string   | não         | link clicado; rejeitado se for de outra campanha                  |
 | `currency`      | string   | não         | moeda (padrão `"BRL"`)                                            |
@@ -64,6 +85,7 @@ reformatação). A comparação é em tempo constante.
 | ------ | ------------------------------------- | ------------------------------------------------ |
 | 200    | `{ "success": true, "campaign_id": ... }` | conversão gravada                            |
 | 200    | `{ "duplicate": true, "campaign_id": ... }` | `external_ref` repetido — **não** duplica   |
+| 400    | —                                     | JSON inválido, `action` != `"convert"`, `recipient_id` ausente ou `external_ref` ausente/vazio no v1 |
 | 401    | —                                     | autenticação ausente/inválida/vencida           |
 | 404    | —                                     | `recipient_id` não encontrado                   |
 | 413    | —                                     | corpo acima de 4 KB                             |
@@ -92,7 +114,10 @@ async function registrarConversao({ recipientId, value, externalRef, linkId, sou
   });
 
   const timestamp = String(Date.now());
-  const signature = createHmac("sha256", TALKX_CONVERT_SECRET).update(body).digest("hex");
+  // Esquema v1: a assinatura cobre versão + timestamp + external_ref + corpo,
+  // então cada reenvio exige assinatura nova e um replay capturado não vale.
+  const payloadCanonico = ["v1", timestamp, externalRef, body].join("\n");
+  const signature = createHmac("sha256", TALKX_CONVERT_SECRET).update(payloadCanonico).digest("hex");
 
   const res = await fetch(TALKX_LINK_ENDPOINT, {
     method: "POST",
@@ -120,7 +145,11 @@ async function registrarConversao({ recipientId, value, externalRef, linkId, sou
 
 ## Por que `external_ref`
 
-O `external_ref` é a chave de idempotência. Se o site reenviar o webhook (retry,
-reload, double-submit do checkout), a repetição com o mesmo `external_ref` devolve
+O `external_ref` é a identidade estável do evento e a chave de idempotência —
+**obrigatório no esquema v1**. Durante a janela de coexistência, o formato legado
+pode omitir esse campo para não quebrar o emissor já publicado; depois da
+data-limite, só o v1 é aceito. Se o site reenviar o webhook (retry, reload,
+double-submit do checkout), a repetição com o mesmo `external_ref` devolve
 `duplicate: true` e **não** cria uma segunda linha de conversão — a receita da
-campanha não infla.
+campanha não infla. Como ele entra na assinatura v1, ninguém pode trocar a
+identidade do evento de um corpo já assinado.

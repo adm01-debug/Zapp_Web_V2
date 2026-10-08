@@ -3,7 +3,7 @@
     "anon_execute": [
         "multiplix_audiences_validate_shared_roles()"
     ],
-    "generated_at": "2026-10-06",
+    "generated_at": "2026-10-07",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -130,6 +130,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 259,
-    "authenticated_execute_count": 139
+    "service_role_execute_count": 260,
+    "authenticated_execute_count": 140
 }

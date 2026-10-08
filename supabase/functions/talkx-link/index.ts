@@ -13,6 +13,54 @@ import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
 
+// R2-API-035: versão do esquema de assinatura. O HMAC-SHA256 (hex minúsculo)
+// cobre "v1\n<timestamp_ms>\n<external_ref>\n<corpo_cru>" — o par corpo+
+// assinatura capturado não vale com timestamp nem external_ref trocados.
+export const SIGNATURE_VERSION = "v1";
+export const LEGACY_SIGNATURE_ACCEPT_UNTIL_ENV = "TALKX_LEGACY_SIGNATURE_ACCEPT_UNTIL";
+export const DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL = "2026-10-20T23:59:59.999-03:00";
+
+export function buildSignaturePayload(timestamp: string, externalRef: string, rawBody: string): string {
+  return [SIGNATURE_VERSION, timestamp, externalRef, rawBody].join("\n");
+}
+
+function parseLegacySignatureAcceptUntil(env: TalkxLinkDeps["env"]): { raw: string; ms: number } {
+  const configured = env.get(LEGACY_SIGNATURE_ACCEPT_UNTIL_ENV)?.trim();
+  const raw = configured || DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL;
+  const ms = /^\d+$/.test(raw) ? Number(raw) : Date.parse(raw);
+  if (!Number.isFinite(ms)) {
+    console.warn(`[talkx-link] ${LEGACY_SIGNATURE_ACCEPT_UNTIL_ENV} inválido; assinatura legada desativada`);
+    return { raw, ms: 0 };
+  }
+  return { raw, ms };
+}
+
+async function verifyTalkxConvertSignature(params: {
+  rawBody: string;
+  signature: string;
+  secret: string;
+  timestamp: string;
+  externalRef: unknown;
+  env: TalkxLinkDeps["env"];
+}): Promise<{ scheme: "v1" | "legacy"; legacyAcceptUntil?: string } | null> {
+  const externalRefForSignature = typeof params.externalRef === "string" ? params.externalRef : "";
+  const v1Valid = await verifyHmacSignature(
+    buildSignaturePayload(params.timestamp, externalRefForSignature, params.rawBody),
+    params.signature,
+    params.secret,
+  );
+  if (v1Valid) {
+    return { scheme: "v1" };
+  }
+
+  const legacyWindow = parseLegacySignatureAcceptUntil(params.env);
+  if (Date.now() > legacyWindow.ms) {
+    return null;
+  }
+  const legacyValid = await verifyHmacSignature(params.rawBody, params.signature, params.secret);
+  return legacyValid ? { scheme: "legacy", legacyAcceptUntil: legacyWindow.raw } : null;
+}
+
 interface TalkxLinkDeps {
   supabase: SupabaseClient;
   env: { get: (name: string) => string | undefined };
@@ -104,18 +152,18 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("Payload too large", { status: 413 });
     }
 
-    // X022: autenticação — timestamp (±5 min) + assinatura HMAC-SHA256 do corpo.
+    // X022: autenticação — timestamp fresco (±5 min). A assinatura HMAC é
+    // verificada depois do parse porque a v1 cobre também o external_ref do
+    // corpo; durante a janela configurável, o formato legado (HMAC do corpo)
+    // continua aceito para coexistência com Bitrix/site.
     const timestampHeader = req.headers.get("x-talkx-timestamp");
     const signatureHeader = req.headers.get("x-talkx-signature");
     if (!timestampHeader || !signatureHeader) {
       return new Response("Unauthorized", { status: 401 });
     }
+    const now = Date.now();
     const timestamp = Number(timestampHeader);
-    if (!Number.isFinite(timestamp) || Math.abs(Date.now() - timestamp) > CONVERT_WINDOW_MS) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-    const signatureValid = await verifyHmacSignature(rawBody, signatureHeader, convertSecret);
-    if (!signatureValid) {
+    if (!Number.isFinite(timestamp) || Math.abs(now - timestamp) > CONVERT_WINDOW_MS) {
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -129,7 +177,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       value?: unknown;
       source?: string;
       link_id?: string;
-      external_ref?: string;
+      external_ref?: unknown;
       currency?: string;
       occurred_at?: string;
       attribution?: unknown;
@@ -142,6 +190,27 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     if (!recipient_id) {
       return new Response("recipient_id required", { status: 400 });
     }
+
+    const signatureCheck = await verifyTalkxConvertSignature({
+      rawBody,
+      signature: signatureHeader,
+      secret: convertSecret,
+      timestamp: timestampHeader,
+      externalRef: external_ref,
+      env,
+    });
+    if (!signatureCheck) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    if (signatureCheck.scheme === "v1" && (typeof external_ref !== "string" || external_ref.trim() === "")) {
+      return new Response("external_ref required", { status: 400 });
+    }
+    if (signatureCheck.scheme === "legacy") {
+      console.warn(
+        `[talkx-link] assinatura Talk X legada aceita temporariamente; atualizar emissor para v1 antes de ${signatureCheck.legacyAcceptUntil}`,
+      );
+    }
+    const externalRefForRpc = typeof external_ref === "string" && external_ref.trim() !== "" ? external_ref : null;
 
     // X022: validação de valor antes do banco — texto/negativo/não-finito → 422.
     if (value !== undefined && value !== null) {
@@ -165,7 +234,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     // IDOR de link e atribuição), nunca INSERT direto no edge.
     const { data: convResult, error: convErr } = await supabase.rpc("record_talkx_conversion", {
       p_campaign_id:  rec.campaign_id,
-      p_external_ref: external_ref ?? null,
+      p_external_ref: externalRefForRpc,
       p_value:        (typeof value === "number" ? value : null),
       p_source:       source ?? "webhook",
       p_currency:     currency ?? null,

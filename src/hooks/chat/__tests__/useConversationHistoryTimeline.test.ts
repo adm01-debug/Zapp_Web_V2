@@ -1,6 +1,42 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement, type ReactNode } from 'react';
 import { buildTimeline, type TimelineRawRows } from '@/hooks/chat/useConversationHistoryTimeline';
 import { localDayKey } from '@/lib/localDay';
+
+// --- dublê do Supabase: só para provar que a coluna da conclusão viaja na consulta ---
+const capturas = vi.hoisted(() => ({ colunas: [] as Array<{ tabela: string; colunas: string }> }));
+
+const LINHAS = vi.hoisted(() => ({
+  conversation_tasks: [
+    // modelo ATUAL: a conclusão vem no status `done` (workItem.types)
+    { id: 't-done', title: 'Orçamento enviado', status: 'done', completed_at: '2026-09-08T12:00:00Z', created_at: '2026-09-08T10:00:00Z' },
+    // linha legada: status diferente, mas com carimbo de conclusão
+    { id: 't-carimbo', title: 'Retorno do cliente', status: 'pending', completed_at: '2026-09-08T13:00:00Z', created_at: '2026-09-08T11:00:00Z' },
+    // sem conclusão nenhuma
+    { id: 't-aberta', title: 'Ligar amanhã', status: 'pending', completed_at: null, created_at: '2026-09-08T14:00:00Z' },
+  ],
+}));
+
+vi.mock('@/integrations/supabase/client', () => {
+  const cadeia = (tabela: string) => {
+    const c: Record<string, unknown> = {};
+    const resultado = { data: (LINHAS as Record<string, unknown[]>)[tabela] ?? [], error: null };
+    c.select = (colunas: string) => { capturas.colunas.push({ tabela, colunas }); return c; };
+    c.eq = () => c;
+    c.order = () => c;
+    c.limit = () => c;
+    c.gte = () => Promise.resolve(resultado);
+    c.in = () => Promise.resolve({ data: [], error: null });
+    // thenable: o hook aguarda a própria cadeia quando não há recorte de data
+    c.then = (onFulfilled: (v: unknown) => unknown) => Promise.resolve(resultado).then(onFulfilled);
+    return c;
+  };
+  return { supabase: { from: (tabela: string) => cadeia(tabela) } };
+});
+
+import { useConversationHistoryTimeline } from '@/hooks/chat/useConversationHistoryTimeline';
 
 function emptyRows(overrides: Partial<TimelineRawRows> = {}): TimelineRawRows {
   return { messages: [], events: [], notes: [], tasks: [], deals: [], activities: [], ...overrides };
@@ -120,5 +156,70 @@ describe('buildTimeline', () => {
     const { days, metrics } = buildTimeline(emptyRows());
     expect(days).toEqual([]);
     expect(metrics).toEqual({ total: 0, lastContactAt: null, avgResponseMin: null, avgResponsePrevMin: null, resolutions: 0 });
+  });
+});
+
+/**
+ * P2 / Journey: a pílula da tarefa olhava só `status === 'completed'` (modelo legado).
+ * O modelo atual grava `done` e carimba `completed_at`; sem normalizar, tarefa feita
+ * aparecia como "Pendente" no histórico da conversa.
+ */
+describe('buildTimeline — pílula de tarefa concluída (modelo atual)', () => {
+  const pilulaDaTarefa = (task: TimelineRawRows['tasks'][number]) => {
+    const { days } = buildTimeline(emptyRows({ tasks: [task] }));
+    const evento = days.flatMap((d) => d.events).find((e) => e.kind === 'task');
+    expect(evento).toBeDefined();
+    return evento!.pill;
+  };
+
+  it('status `done` (modelo atual) vira Concluída/success, não Pendente/warning', () => {
+    expect(pilulaDaTarefa({ id: 't1', title: 'Orçamento enviado', status: 'done', created_at: '2026-09-08T10:00:00Z' }))
+      .toEqual({ label: 'Concluída', tone: 'success' });
+  });
+
+  it('`completed_at` preenchido conclui a tarefa mesmo com status legado diferente', () => {
+    expect(pilulaDaTarefa({ id: 't2', title: 'Retorno do cliente', status: 'in_progress', completed_at: '2026-09-08T12:00:00Z', created_at: '2026-09-08T10:00:00Z' }))
+      .toEqual({ label: 'Concluída', tone: 'success' });
+  });
+
+  it('status `completed` (legado) continua Concluída/success — comportamento anterior preservado', () => {
+    expect(pilulaDaTarefa({ id: 't3', title: 'Antiga', status: 'completed', created_at: '2026-09-08T10:00:00Z' }))
+      .toEqual({ label: 'Concluída', tone: 'success' });
+  });
+
+  it('tarefa sem conclusão continua Pendente/warning', () => {
+    expect(pilulaDaTarefa({ id: 't4', title: 'Ligar amanhã', status: 'pending', completed_at: null, created_at: '2026-09-08T10:00:00Z' }))
+      .toEqual({ label: 'Pendente', tone: 'warning' });
+    expect(pilulaDaTarefa({ id: 't5', title: 'Fazendo', status: 'doing', created_at: '2026-09-08T10:00:00Z' }))
+      .toEqual({ label: 'Pendente', tone: 'warning' });
+  });
+});
+
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(
+    QueryClientProvider,
+    { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) },
+    children,
+  );
+
+describe('useConversationHistoryTimeline — completed_at viaja na consulta', () => {
+  it('a consulta de conversation_tasks pede a coluna completed_at', async () => {
+    const { result } = renderHook(() => useConversationHistoryTimeline('contato-1', 0, 'tasks', 200), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const consultas = capturas.colunas.filter((c) => c.tabela === 'conversation_tasks');
+    expect(consultas).toHaveLength(1);
+    expect(consultas[0].colunas).toContain('completed_at');
+  });
+
+  it('o hook real entrega Concluída para done/carimbo e Pendente para a tarefa aberta', async () => {
+    const { result } = renderHook(() => useConversationHistoryTimeline('contato-1', 0, 'tasks', 200), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const eventos = result.current.data!.days.flatMap((d) => d.events);
+    const porId = new Map(eventos.map((e) => [e.id, e]));
+    expect(porId.get('task-t-done')?.pill).toEqual({ label: 'Concluída', tone: 'success' });
+    expect(porId.get('task-t-carimbo')?.pill).toEqual({ label: 'Concluída', tone: 'success' });
+    expect(porId.get('task-t-aberta')?.pill).toEqual({ label: 'Pendente', tone: 'warning' });
   });
 });

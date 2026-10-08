@@ -59,15 +59,50 @@ export function CommandPalette({
     return result;
   }, [query, filteredCommands, searchResults]);
 
-  const allItems = React.useMemo(() => groupedCommands.flatMap(g => g.items), [groupedCommands]);
+  // Acesso rápido (busca vazia): é a lista que a tela exibe, então é a MESMA coleção que
+  // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
+  // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
+  const quickAccessItems = React.useMemo(
+    () => (query ? [] : defaultNavigationCommands.slice(0, 5)),
+    [query]
+  );
+
+  const allItems = React.useMemo(
+    () => (query ? groupedCommands.flatMap(g => g.items) : quickAccessItems),
+    [query, groupedCommands, quickAccessItems]
+  );
+
+  // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
+  // estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar
+  // resultado — sem esta trava, a resposta do catálogo ANTIGO substituía os resultados da consulta
+  // atual (quem respondia por último mandava). Só a última intenção do operador vence; mesmo padrão
+  // do `selectionSeqRef` de `src/components/inbox/location-picker/useAddressAutocomplete.ts`.
+  const searchSeqRef = React.useRef(0);
 
   const debouncedSearch = useDebounce(async (q: string) => {
-    if (!onSearch || q.length < 2) { setSearchResults([]); return; }
+    // A busca em voo pertence ao termo vigente quando ela SAI; se o termo mudar enquanto ela
+    // responde, a resposta é descartada (inclusive o fim do spinner, que passa a ser do termo novo).
+    const seq = searchSeqRef.current;
+    if (!onSearch || q.length < 2) { setSearchResults([]); setIsSearching(false); return; }
     setIsSearching(true);
-    try { setSearchResults(await onSearch(q)); } catch (e) { log.error('Search error:', e); setSearchResults([]); } finally { setIsSearching(false); }
+    try {
+      const results = await onSearch(q);
+      if (seq !== searchSeqRef.current) return;
+      setSearchResults(results);
+    } catch (e) {
+      if (seq !== searchSeqRef.current) return;
+      log.error('Search error:', e);
+      setSearchResults([]);
+    } finally {
+      if (seq === searchSeqRef.current) setIsSearching(false);
+    }
   }, 300);
 
-  const handleQueryChange = (v: string) => { setQuery(v); setSelectedIndex(0); debouncedSearch(v); };
+  const handleQueryChange = (v: string) => {
+    // Termo novo invalida qualquer consulta em voo do termo anterior.
+    searchSeqRef.current += 1;
+    setQuery(v); setSelectedIndex(0); debouncedSearch(v);
+  };
 
   const executeCommand = (item: CommandItem) => {
     if (item.disabled) return;
@@ -143,7 +178,7 @@ export function CommandPalette({
               <div>
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
-                  {defaultNavigationCommands.slice(0, 5).map((cmd, idx) => (
+                  {quickAccessItems.map((cmd, idx) => (
                     <button key={cmd.id} onClick={() => executeCommand(cmd)}
                       className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">

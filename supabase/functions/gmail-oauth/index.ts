@@ -92,6 +92,7 @@ export interface GmailOAuthDeps {
     exchangeCode: (code: string) => Promise<TokenResponse>;
     refreshToken: (refreshToken: string) => Promise<TokenResponse>;
     fetchProfile: (accessToken: string) => Promise<{ emailAddress: string }>;
+    revoke: (token: string) => Promise<Response>;
   };
 }
 
@@ -201,25 +202,76 @@ export async function handleGmailOAuth(req: Request, deps: GmailOAuthDeps): Prom
 
       case "disconnect": {
         if (!account_id) return errorResponse("Missing account_id", 400, req);
-        const { data: account } = await supabase.from("gmail_accounts").select("id, user_id").eq("id", account_id).eq("user_id", user.id).single();
+        const { data: account, error: accountError } = await supabase
+          .from("gmail_accounts")
+          .select("id, user_id")
+          .eq("id", account_id)
+          .eq("user_id", user.id)
+          .single();
+        if (accountError) {
+          if (accountError.code === "PGRST116") return errorResponse("Gmail account not found", 404, req);
+          log.error("Falha ao buscar a conta Gmail para desconexao", {
+            error: accountError.message ?? "erro desconhecido",
+          });
+          return errorResponse("Falha ao buscar a conta Gmail", 500, req);
+        }
+        if (!account) return errorResponse("Gmail account not found", 404, req);
 
-        if (account) {
+        let revoked: boolean | null = null;
+        let revokeStatus: number | null = null;
+        const { data: tokenRows, error: tokenError } = await supabase.rpc("get_gmail_tokens", {
+          p_account_id: account.id,
+        });
+        if (tokenError) {
+          log.error("Falha ao ler tokens Gmail para desconexao", {
+            error: tokenError.message ?? "erro desconhecido",
+          });
+          return jsonResponse({
+            success: false,
+            disconnected: false,
+            revoked: false,
+            partial: true,
+            warning: "Nao foi possivel ler os tokens do Gmail para revogar o acesso no Google; a conta local foi preservada para nova tentativa.",
+          }, 500, req);
+        }
+
+        const storedTokens = tokenRows?.[0] as { access_token: string; refresh_token: string } | undefined;
+        if (storedTokens) {
           try {
-            const storedTokens = await getTokens(supabase, account.id);
-            await fetch(`https://oauth2.googleapis.com/revoke?token=${storedTokens.access_token}`, {
-              method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            }).catch(() => {});
-          } catch { /* tokens may not exist */ }
-          // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
-          await supabase.from("gmail_accounts").update({
-            is_active: false,
-            access_token_encrypted: null,
-            refresh_token_encrypted: null,
-          }).eq("id", account_id);
+            const revokeRes = await deps.google.revoke(storedTokens.access_token);
+            revokeStatus = revokeRes.status;
+            revoked = revokeRes.ok;
+          } catch {
+            revoked = false;
+          }
+        }
+
+        // Clear encrypted tokens and deactivate: never call store_gmail_tokens with empty string (raises EXCEPTION)
+        const { data: deactivated, error: deactivateError } = await supabase.from("gmail_accounts").update({
+          is_active: false,
+          access_token_encrypted: null,
+          refresh_token_encrypted: null,
+        }).eq("id", account_id).select("id");
+        if (deactivateError) throw deactivateError;
+        // Zero linhas afetadas = nada foi desconectado: nao pode virar success.
+        if (!deactivated?.length) throw new Error("Desconexao do Gmail nao aplicada");
+
+        if (revoked === false) {
+          // Desconexão parcial: a conta saiu daqui, mas o Google não confirmou a
+          // revogação — o cliente precisa saber que sobrou credencial ativa lá.
+          log.error("Revogacao Google nao confirmada", { status: revokeStatus });
+          log.done(200, { action });
+          return jsonResponse({
+            success: true,
+            disconnected: true,
+            revoked: false,
+            partial: true,
+            warning: "A conta foi desconectada aqui, mas a revogacao do acesso no Google nao foi confirmada.",
+          }, 200, req);
         }
 
         log.done(200, { action });
-        return jsonResponse({ success: true }, 200, req);
+        return jsonResponse({ success: true, disconnected: true, revoked }, 200, req);
       }
 
       case "list-accounts": {
@@ -270,6 +322,9 @@ if (import.meta.main) {
         exchangeCode: (code) => exchangeCode(code, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI),
         refreshToken: (refreshToken) => refreshAccessToken(refreshToken, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
         fetchProfile: getGmailProfile,
+        revoke: (token) => fetch(`https://oauth2.googleapis.com/revoke?token=${token}`, {
+          method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }),
       },
     });
   });

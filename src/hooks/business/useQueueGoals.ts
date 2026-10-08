@@ -65,7 +65,14 @@ export function useQueueGoals() {
     };
   }, [fetchGoals]);
 
-  const saveGoal = async (queueId: string, goalData: Partial<QueueGoal>) => {
+  /**
+   * Grava as metas da fila e devolve `true` SOMENTE quando a gravacao foi
+   * confirmada pelo banco. Antes, o erro era engolido no `catch` e a funcao
+   * resolvia normalmente, entao o consumidor nao tinha como saber da recusa e
+   * fechava o formulario (R2-QUE-005). Agora a recusa resolve em `false` e o
+   * chamador mantem o rascunho na tela.
+   */
+  const saveGoal = async (queueId: string, goalData: Partial<QueueGoal>): Promise<boolean> => {
     try {
       const existingGoal = goals[queueId];
 
@@ -93,6 +100,7 @@ export function useQueueGoals() {
       });
 
       await fetchGoals();
+      return true;
     } catch (error) {
       log.error('Error saving queue goal:', error);
       toast({
@@ -100,6 +108,7 @@ export function useQueueGoals() {
         description: 'Não foi possível salvar as metas.',
         variant: 'destructive',
       });
+      return false;
     }
   };
 

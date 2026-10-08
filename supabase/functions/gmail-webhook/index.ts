@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
-import { extractAttachments } from "../_shared/gmail-helpers.ts";
+import { extractAttachments, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -184,11 +184,13 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
     if (!historyResponse.ok) {
       if (historyResponse.status === 404) {
         log.warn("History ID expired, marking for full resync");
-        await supabase.from("gmail_accounts").update({
-          sync_status: "pending",
-          history_id: null,
-          last_error: "History ID expired - full resync needed",
-        }).eq("id", account.id);
+        // R2-API-011A: CAS sobre o history_id LIDO — se outro fluxo já moveu o
+        // cursor, o 404 atrasado não pode limpar/retroceder o cursor novo.
+        const reset = await resetGmailHistoryCursor(supabase, account.id, account.history_id);
+        if (reset === "conflict") {
+          log.info("History cursor moved by another flow; keeping newer cursor");
+          return jsonResponse({ acknowledged: true, resync_needed: false, conflict: true }, 200, req);
+        }
 
         return jsonResponse({ acknowledged: true, resync_needed: true }, 200, req);
       }

@@ -6,6 +6,8 @@ export interface StickerItem {
   is_favorite: boolean;
   use_count: number;
   owner_id?: string | null;
+  /** Recência real da figurinha (mesma base usada na pasta pessoal). */
+  created_at?: string | null;
 }
 
 export const CATEGORY_LABELS: Record<string, { emoji: string; label: string }> = {

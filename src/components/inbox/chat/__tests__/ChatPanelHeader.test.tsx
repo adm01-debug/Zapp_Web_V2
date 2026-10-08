@@ -125,13 +125,38 @@ describe('ChatPanelHeader', () => {
     expect(screen.getByText('MS')).toBeInTheDocument();
   });
 
-  it('shows Online when contact is not typing', () => {
-    render(
+  // ── R2-INB-030 ────────────────────────────────────────────────────────────
+  // Antes: o header mostrava o rótulo verde "Online" sempre que o contato NÃO
+  // estava digitando, e o selo verde sobre o avatar era incondicional — nenhum
+  // sinal de presença participava da decisão. Agora, sem sinal de presença do
+  // contato, o header exibe o estado neutro (desconhecido) e nunca afirma Online.
+
+  it('R2-INB-030: sem sinal de presença, não afirma Online e mostra estado neutro', () => {
+    const { container } = render(
       <Wrapper>
         <ChatPanelHeader {...baseProps} isContactTyping={false} />
       </Wrapper>
     );
-    expect(screen.getByText('Online')).toBeInTheDocument();
+    // Não estar digitando não é sinal de presença online.
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+    // O que fica no lugar é o estado desconhecido/neutro, nomeado para o leitor de tela.
+    expect(screen.getByTestId('contact-presence')).toHaveAttribute(
+      'aria-label',
+      'Presença do contato não informada'
+    );
+    // O selo verde de "online" sobre o avatar sai junto (era renderizado sem sinal).
+    expect(container.querySelector('.bg-\\[hsl\\(var\\(--online\\)\\)\\]')).toBeNull();
+  });
+
+  it('R2-INB-030: digitando, mostra o indicador de digitação e nenhuma afirmação de presença', () => {
+    render(
+      <Wrapper>
+        <ChatPanelHeader {...baseProps} isContactTyping={true} />
+      </Wrapper>
+    );
+    expect(screen.getByText('digitando')).toBeInTheDocument();
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contact-presence')).not.toBeInTheDocument();
   });
 
   it('renders only the Mais ações button in the header (Ligar/Vídeo/Adicionar participante moved to contact sidebar)', () => {

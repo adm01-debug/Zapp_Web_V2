@@ -90,12 +90,16 @@ describe('IA-026 / IA-027 · persistência atômica com trava de recência', () 
   });
 
   it('falha de gravação não vira sucesso silencioso', () => {
-    expect(source).toMatch(/if \(persistError\)/);
+    expect(source).toContain("outcome.kind === 'error'");
     expect(source).not.toMatch(/log\.warn\("Failed to persist conversation analysis"/);
   });
 
   it('expõe se a projeção do contato foi aplicada (trava de recência)', () => {
-    expect(source).toMatch(/projected = persistedResult\?\.projected === true/);
+    expect(source).toMatch(/projected = outcome\.projected/);
+    // A normalização `=== true` vive no caminho compartilhado de produção
+    // (R2-INF-023): confere que ela não foi afrouxada lá.
+    const pipeline = readFileSync(resolve(root, 'supabase/functions/_shared/ai-conversation-pipeline.ts'), 'utf8');
+    expect(pipeline).toMatch(/projected: result\?\.projected === true/);
   });
 });
 

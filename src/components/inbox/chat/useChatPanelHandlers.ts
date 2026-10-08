@@ -20,6 +20,7 @@ import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { CHAR_LIMIT } from './useChatInputLogic';
 
 /** Tipos de mensagem do chat com representação textual direta no transporte. */
 const TEXTUAL_FORWARD_TYPES: ReadonlySet<Message['type']> = new Set(['text', 'interactive']);
@@ -132,10 +133,29 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   const handleCancelEdit = useCallback(() => { setEditingMessage(null); setInputValue(''); }, []);
 
+  /**
+   * R2-INB-016 (item 312) — limite de caracteres do editor. O botão Enviar já era
+   * desabilitado por `isOverLimit`, mas o Enter chamava `handleSend` direto: o mesmo
+   * payload acima do limite anunciado saía sem resistência. A recusa (com aviso, sem
+   * descartar o texto) vive aqui, no comando de envio compartilhado, para que botão,
+   * Enter e edição tenham o mesmo resultado.
+   */
+  const recusarAcimaDoLimite = useCallback((tamanho: number) => {
+    if (tamanho <= CHAR_LIMIT) return false;
+    toast({
+      title: 'Mensagem muito longa',
+      description: `Reduza para até ${CHAR_LIMIT} caracteres para enviar.`,
+      variant: 'destructive',
+    });
+    return true;
+  }, []);
+
   // handleSend now reads from refs → deps are stable → no re-render cascade
   const handleSend = useCallback(async () => {
     const currentInput = inputValueRef.current;
     if (!currentInput.trim() || isSendingRef.current) return;
+    // Vale para o envio E para a edição (o editor é a mesma fonte do texto).
+    if (recusarAcimaDoLimite(currentInput.length)) return;
 
     const currentEditing = editingMessageRef.current;
     if (currentEditing) {
@@ -187,7 +207,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       setInputValue(originalText);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
     } finally { setIsSending(false); }
-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef]);
+  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);

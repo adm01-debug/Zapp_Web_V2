@@ -98,7 +98,6 @@ function ChatPanelHeaderBase({
               {conversation.contact.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
             </AvatarFallback>
           </Avatar>
-          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[hsl(var(--online))] border-2 border-card" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
@@ -127,8 +126,18 @@ function ChatPanelHeaderBase({
             )}
           </div>
           <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground flex-wrap">
+            {/* R2-INB-030: não estar digitando NÃO é sinal de presença online. Sem um
+                sinal de presença do contato, o cabeçalho mostra o estado neutro
+                (desconhecido) em vez de afirmar "Online"; o indicador de digitação
+                continua sendo o único sinal real exibido aqui. */}
             {isContactTyping ? <TypingIndicatorCompact isVisible={true} /> : (
-              <span className="flex items-center gap-1.5 font-medium text-success"><span className="w-1.5 h-1.5 rounded-full bg-success" />Online</span>
+              <span
+                data-testid="contact-presence"
+                role="img"
+                aria-label="Presença do contato não informada"
+                title="Presença do contato não informada"
+                className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40"
+              />
             )}
             {typeConfig && (
               <>

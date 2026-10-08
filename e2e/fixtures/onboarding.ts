@@ -2,7 +2,11 @@ import type { Page } from '@playwright/test';
 
 /**
  * Modal de boas-vindas ("Bem-vindo, <nome>!") que monta DEPOIS do carregamento
- * do app: `role="dialog" aria-label="Boas-vindas"`, `div.fixed.inset-0.z-[9999]`.
+ * do app: `role="dialog" aria-modal="true"`, nome acessível vindo do h2 via
+ * `aria-labelledby="welcome-modal-title"` (→ "Bem-vindo..."), sobre um backdrop
+ * `div.fixed.inset-0.z-[9999]` que NÃO é diálogo (item 385/R2-INF-043: aqui se
+ * procurava um `aria-label="Boas-vindas"` que o componente já não tem — a
+ * fixture não achava o modal, saía sem dispensar e o overlay engolia o clique).
  *
  * Achado medido em 02/10 nos specs de contatos (e antes no catalogo): ele cobre
  * a tela e **intercepta o ponteiro**. O sintoma no Playwright e' enganoso --
@@ -22,11 +26,19 @@ import type { Page } from '@playwright/test';
  */
 export const OVERLAY_ONBOARDING = 'div.fixed.inset-0.z-\\[9999\\]';
 
+/**
+ * Nome acessível do diálogo do modal. Vem do h2 do card por
+ * `aria-labelledby="welcome-modal-title"` → "Bem-vindo[, <nome>]!". O antigo
+ * `aria-label="Boas-vindas"` morava no OVERLAY e sumiu quando o overlay deixou
+ * de ser um segundo `role=dialog` aninhado (item 385/R2-INF-043).
+ */
+export const TITULO_ONBOARDING = /bem-vindo/i;
+
 export async function dispensarOnboarding(
   page: Page,
   { timeout = 12_000 }: { timeout?: number } = {},
 ): Promise<void> {
-  const modal = page.getByRole('dialog', { name: 'Boas-vindas' });
+  const modal = page.getByRole('dialog', { name: TITULO_ONBOARDING });
 
   // Espera o modal aparecer; se nunca vier, segue (custo unico, limitado).
   await modal.waitFor({ state: 'visible', timeout }).catch(() => {});

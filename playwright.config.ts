@@ -87,6 +87,16 @@ export default defineConfig({
       },
     },
     {
+      // onboarding-dispensar.spec.ts — prova do duplo `dispensarOnboarding`
+      // (e2e/fixtures/onboarding.ts, item 385/R2-INF-043). Sessão FALSA
+      // (`installFakeSession`) + backend do app shell mockado e a rede real
+      // barrada (`bloquearRedeReal`), mesmo padrão deslogado de
+      // `chromium-mapa` e `chromium-a11y`: roda sem setup e sem secrets.
+      name: 'chromium-onboarding-dispensar',
+      testMatch: /onboarding-dispensar\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       // Demais specs assumem uma sessão já logada, produzida pelo projeto
       // "setup" e salva em e2e/.auth/user.json.
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não

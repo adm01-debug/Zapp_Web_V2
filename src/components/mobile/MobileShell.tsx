@@ -33,10 +33,16 @@ export function MobileShell({
   unreadNotifications,
 }: MobileShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { isKeyboardOpen } = useKeyboardHeight();
+
+  // R2-PLAT-010: o botão Buscar não tinha consumidor (o estado mobileSearchOpen
+  // nunca era lido). Aqui ele passa a despachar o comando compartilhado que abre
+  // a paleta de busca, o MESMO usado pela Sidebar no desktop.
+  const handleSearchOpen = useCallback(() => {
+    document.dispatchEvent(new CustomEvent('open-global-search'));
+  }, []);
 
   const handleMarkAllNotificationsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -52,7 +58,7 @@ export function MobileShell({
     <>
       <MobileHeader
         onMenuOpen={() => setMobileMenuOpen(true)}
-        onSearchOpen={() => setMobileSearchOpen(true)}
+        onSearchOpen={handleSearchOpen}
         onNotificationsOpen={() => setNotificationsOpen(true)}
         currentView={currentView}
         agentName={profile?.name || userEmail || 'Usuário'}

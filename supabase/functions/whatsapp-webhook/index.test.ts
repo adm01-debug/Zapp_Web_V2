@@ -18,6 +18,9 @@
 //       `[mensagem <type>]` (string vazia não é nullish);
 //   (h) `from` sem nenhum dígito -> ZERO POST no RPC (não cria contato com
 //       telefone vazio) e resposta != 200 (evento não atribuído).
+//   (i) contato sem `profile.name` (ou sem `profile`) -> a entrada É
+//       persistida com p_push_name nulo; o lote não pode ser descartado por
+//       causa de um nome de perfil que a Meta não manda.
 //
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/whatsapp-webhook/index.test.ts
 
@@ -468,4 +471,55 @@ Deno.test("(h) from sem nenhum dígito não chama o RPC e responde != 200 (event
       db.restore();
     }
   });
+});
+
+Deno.test("(i) contato sem profile.name (ou sem profile) não descarta o lote: a entrada é persistida", async () => {
+  // A Meta manda `contacts[].profile.name` só quando existe. Exigir o nome no
+  // schema derrubava o payload INTEIRO para o ramo "Invalid payload format"
+  // (200 + warning), perdendo a mensagem sem gravar nada — o mesmo defeito do
+  // cartão (confirma a entrada sem persistir).
+  const contatos = [
+    { wa_id: "5511987654321", profile: {} },
+    { wa_id: "5511987654321" },
+  ];
+  for (const contact of contatos) {
+    await withEnv(ENV, async () => {
+      const db = installFakeDb({ channelConnections: [CONN_ROW], messages: [] });
+      try {
+        const corpo = JSON.stringify({
+          object: "whatsapp_business_account",
+          entry: [{
+            id: "waba-1",
+            changes: [{
+              field: "messages",
+              value: {
+                messaging_product: "whatsapp",
+                metadata: { display_phone_number: "5511999990000", phone_number_id: PHONE_NUMBER_ID },
+                contacts: [contact],
+                messages: [
+                  { from: "5511987654321", id: "wamid.SEM-NOME", timestamp: "1728000000", type: "text", text: { body: "oi" } },
+                ],
+              },
+            }],
+          }],
+        });
+        const res = await handleWhatsappWebhook(await postAssinado(corpo));
+        assertEquals(
+          res.status,
+          200,
+          `contato sem profile.name não é payload inválido (contato=${JSON.stringify(contact)})`,
+        );
+        const rpc = rpcCalls(db.calls);
+        assertEquals(rpc.length, 1, "a mensagem tem de ser persistida mesmo sem profile.name");
+        assertEquals((rpc[0].body as Record<string, unknown>).p_phone, "5511987654321");
+        assertEquals(
+          (rpc[0].body as Record<string, unknown>).p_push_name,
+          null,
+          "sem profile.name o push_name vai nulo e o RPC cai no telefone",
+        );
+      } finally {
+        db.restore();
+      }
+    });
+  }
 });

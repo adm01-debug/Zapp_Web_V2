@@ -1,13 +1,32 @@
+/**
+ * R2-MOD-029 (#404) — a leitura dos agendamentos não pode ser engolida pelo histórico.
+ *
+ * O hook é a única fonte da Agenda (`ScheduleCalendarView`). Antes ele pedia TODOS
+ * os status, sem faixa e sem páginas, ordenados por `scheduled_at` crescente: o
+ * PostgREST devolve só a primeira página (teto de 1000 linhas), o histórico
+ * (enviado/cancelado antigo) ocupava essa página inteira e os pendentes futuros
+ * nunca chegavam à tela. O erro de leitura também não era exposto.
+ *
+ * O servidor falso (`@/test/mocks/scheduledMessagesServer`) reproduz o teto de
+ * linhas do PostgREST e registra o que foi pedido.
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  createScheduledMessagesServer,
+  fakeScheduledMessage,
+  POSTGREST_PAGE,
+  type FakeScheduledMessageRow,
+  type ScheduledMessagesServer,
+} from '@/test/mocks/scheduledMessagesServer';
 
-const mockFrom = vi.fn();
+const held = vi.hoisted(() => ({ server: null as ScheduledMessagesServer | null }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
+    from: (table: string) => held.server?.from(table),
     auth: {
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
@@ -39,68 +58,115 @@ function createWrapper() {
   );
 }
 
-const mockMessages = [
-  { id: 'sm1', contact_id: 'c1', content: 'Follow up', scheduled_at: '2024-12-01T10:00:00Z', status: 'pending', created_at: '2024-01-01', message_type: 'text' },
-  { id: 'sm2', contact_id: 'c2', content: 'Reminder', scheduled_at: '2024-12-02T10:00:00Z', status: 'sent', created_at: '2024-01-01', message_type: 'text' },
-];
+/** Faixa que a Agenda pede (um mês, como o calendário monta). */
+const JANELA = { from: '2026-10-01T00:00:00.000Z', to: '2026-10-31T23:59:59.999Z' };
+
+function pendente(id: string, scheduledAt: string, contactId = 'c1'): FakeScheduledMessageRow {
+  return fakeScheduledMessage({ id, content: `Pendente ${id}`, contact_id: contactId, scheduled_at: scheduledAt });
+}
+
+/** Histórico antigo (enviado) — o que ocupava a primeira página do PostgREST. */
+function historico(n: number): FakeScheduledMessageRow[] {
+  const base = Date.UTC(2024, 0, 1, 8, 0, 0);
+  return Array.from({ length: n }, (_, i) =>
+    fakeScheduledMessage({
+      id: `hist-${i}`,
+      status: 'sent',
+      scheduled_at: new Date(base + i * 60_000).toISOString(),
+    }),
+  );
+}
 
 describe('useScheduledMessages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: mockMessages, error: null }),
-        }),
-        order: vi.fn().mockResolvedValue({ data: mockMessages, error: null }),
-      }),
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockMessages[0], error: null }),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    });
+    held.server = createScheduledMessagesServer([
+      pendente('sm1', '2026-10-02T10:00:00.000Z', 'c1'),
+    ]);
   });
 
   it('fetches scheduled messages', async () => {
-    const { result } = renderHook(() => useScheduledMessages('c1'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useScheduledMessages('c1', JANELA), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
     expect(result.current.messages).toBeDefined();
+    expect(result.current.messages.map((m) => m.id)).toEqual(['sm1']);
   });
 
   it('handles fetch error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: null, error: new Error('Network error') }),
-        }),
-        order: vi.fn().mockResolvedValue({ data: null, error: new Error('Network error') }),
-      }),
-    });
+    held.server = createScheduledMessagesServer([], { error: { message: 'Network error' } });
 
-    const { result } = renderHook(() => useScheduledMessages('c1'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useScheduledMessages('c1', JANELA), { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isError).toBe(true);
     });
+    expect(result.current.messages).toHaveLength(0);
   });
 
   it('returns empty messages without contactId', async () => {
+    held.server = createScheduledMessagesServer(historico(10));
+
     const { result } = renderHook(() => useScheduledMessages(), { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
+    // Só pendentes entram na lista: histórico enviado não é agendamento da Agenda.
+    expect(result.current.messages).toHaveLength(0);
+  });
+
+  it('põe a leitura só nos pendentes e dentro da faixa pedida', async () => {
+    held.server = createScheduledMessagesServer([
+      pendente('dentro', '2026-10-10T10:00:00.000Z'),
+      pendente('fora', '2026-11-10T10:00:00.000Z'),
+    ]);
+
+    const { result } = renderHook(() => useScheduledMessages(undefined, JANELA), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.messages.map((m) => m.id)).toEqual(['dentro']);
+    const [pedido] = held.server.queries;
+    expect(pedido.eq).toContainEqual(['status', 'pending']);
+    expect(pedido.gte).toContainEqual(['scheduled_at', JANELA.from]);
+    expect(pedido.lte).toContainEqual(['scheduled_at', JANELA.to]);
+    expect(pedido.order).toEqual(['scheduled_at:asc', 'id:asc']);
+  });
+
+  it('histórico acima do teto do PostgREST não esconde os pendentes da faixa', async () => {
+    held.server = createScheduledMessagesServer([
+      ...historico(POSTGREST_PAGE + 500),
+      pendente('futuro-1', '2026-10-10T14:30:00.000Z'),
+      pendente('futuro-2', '2026-10-12T09:15:00.000Z'),
+    ]);
+
+    const { result } = renderHook(() => useScheduledMessages(undefined, JANELA), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.messages).toHaveLength(2);
+    });
+    expect(result.current.messages.map((m) => m.id)).toEqual(['futuro-1', 'futuro-2']);
+  });
+
+  it('pagina até o fim quando os pendentes passam de uma página', async () => {
+    const base = Date.UTC(2026, 9, 1, 0, 0, 0);
+    const muitos = Array.from({ length: POSTGREST_PAGE + 5 }, (_, i) =>
+      pendente(`p-${i}`, new Date(base + i * 1000).toISOString()),
+    );
+    held.server = createScheduledMessagesServer(muitos);
+
+    const { result } = renderHook(() => useScheduledMessages(undefined, JANELA), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.messages).toHaveLength(POSTGREST_PAGE + 5);
+    });
+    expect(held.server.queries.some((q) => q.range?.[0] === POSTGREST_PAGE)).toBe(true);
   });
 });

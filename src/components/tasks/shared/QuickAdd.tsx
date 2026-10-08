@@ -9,6 +9,7 @@ import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 import type { Priority, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { ContactCombobox } from './ContactCombobox';
+import { comporLocal, diaLocal, horaLocal } from './localDateTime';
 
 interface Props {
   onAdd: (input: WorkItemInput) => Promise<void>;
@@ -20,21 +21,6 @@ interface Props {
   compact?: boolean;
 }
 
-/** `yyyy-MM-dd`/`HH:mm` locais de um ISO (mesma convenção do WorkItemSheet). */
-function diaLocal(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-function horaLocal(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-/** `dia` + `hora` locais → ISO; sem hora, o prazo vale o dia inteiro (23:59). */
-function compor(dia: string, hora: string): string {
-  const [y, m, d] = dia.split('-').map(Number);
-  const [h, min] = (hora || '23:59').split(':').map(Number);
-  return new Date(y, m - 1, d, h, min, 0, 0).toISOString();
-}
 /** Rótulo curto do prazo no chip Data: "Sex 03/10" (etapa 37). */
 function rotuloDia(iso: string): string {
   const d = new Date(iso);
@@ -123,6 +109,11 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   const limpar = () => {
     setTitle('');
     setDueDate(defaultDueDate ?? null);
+    // #424: a criação pode resolver DEPOIS de o dia ser trocado, e este closure
+    // guarda o padrão do dia A. Marcar `diaAplicado` com ele faz o ajuste de
+    // render abaixo reaplicar — já no dia B — o padrão vigente, em vez de
+    // devolver o prazo do dia anterior.
+    setDiaAplicado(defaultDueDate);
     setRemindAt(null);
     setPriority('medium');
     setEscolhido(null);
@@ -190,7 +181,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
             locale={ptBR}
             selected={dueDate ? new Date(dueDate) : undefined}
             onSelect={(d) => setDueDate(
-              d ? compor(diaLocal(d.toISOString()), dueDate ? horaLocal(dueDate) : '23:59') : null
+              d ? comporLocal(diaLocal(d.toISOString()), dueDate ? horaLocal(dueDate) : '23:59') : null
             )}
           />
           <div className="flex items-center gap-2 border-t border-border/50 p-2">
@@ -201,7 +192,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
               value={dueDate ? horaLocal(dueDate) : ''}
               onChange={(e) => {
                 const dia = dueDate ? diaLocal(dueDate) : diaLocal(new Date().toISOString());
-                setDueDate(compor(dia, e.target.value));
+                setDueDate(comporLocal(dia, e.target.value));
               }}
               className="h-8 w-[100px] bg-input"
             />
@@ -235,7 +226,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
               aria-label="Dia do alarme"
               value={remindAt ? diaLocal(remindAt) : ''}
               onChange={(e) => setRemindAt(e.target.value
-                ? compor(e.target.value, remindAt ? horaLocal(remindAt) : '09:00')
+                ? comporLocal(e.target.value, remindAt ? horaLocal(remindAt) : '09:00')
                 : null)}
               className="h-8 flex-1 bg-input"
             />
@@ -246,7 +237,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
               value={remindAt ? horaLocal(remindAt) : ''}
               onChange={(e) => {
                 const dia = remindAt ? diaLocal(remindAt) : diaLocal(new Date().toISOString());
-                setRemindAt(compor(dia, e.target.value));
+                setRemindAt(comporLocal(dia, e.target.value));
               }}
               className="h-8 w-[100px] bg-input"
             />

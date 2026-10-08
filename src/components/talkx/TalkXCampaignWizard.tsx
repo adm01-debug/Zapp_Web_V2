@@ -48,13 +48,21 @@ export type WizardState = ReturnType<typeof useCampaignEditor>;
 
 export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
+  const { hasUnsavedChanges } = ed;
 
-  // E61: beforeunload se campanha tem dados nao salvos
+  // E61/E73: avisa na saída da ABA apenas quando existe alteração realmente
+  // pendente. Antes bastava ter nome ou contato selecionado — um rascunho já
+  // salvo era anunciado como não salvo — e, ao mesmo tempo, nada protegia a
+  // navegação interna (Voltar/histórico), que não dispara beforeunload.
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => { if (ed.name.trim().length > 0 || ed.selectedContacts.length > 0) { e.preventDefault(); } };
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges()) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [ed.name, ed.selectedContacts.length]);
+  }, [hasUnsavedChanges]);
   const step = ed.step;
 
   const maximumAllowedStep = (() => {

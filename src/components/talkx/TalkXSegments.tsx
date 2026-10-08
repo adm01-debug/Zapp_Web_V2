@@ -30,7 +30,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(8);
+  const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
@@ -73,8 +73,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     setSaving(true);
     try {
       const count = await countAudience(editingRules);
-      if (selected) await updateSegment.mutateAsync({ id: selected.id, name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
-      else await createSegment.mutateAsync({ name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+      if (selected) {
+        // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
+        // evita mostrar — e reabrir no construtor — a cópia que estava em tela
+        // antes de salvar.
+        const saved = await updateSegment.mutateAsync({ id: selected.id, name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+        setSelected(saved);
+      } else {
+        await createSegment.mutateAsync({ name: editingName, description: editingDesc || null, rules: editingRules, estimated_count: count });
+      }
       setMode('list');
     } catch (e) {
       // Erro real do banco (RLS, rede) precisa chegar ao usuário.
@@ -177,7 +184,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={() => {}} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
         </section>
       </div>
 

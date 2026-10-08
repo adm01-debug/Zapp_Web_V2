@@ -166,7 +166,7 @@ export default function ChatPopup() {
     async (blob: Blob): Promise<boolean> => {
       if (!contactId) return false;
       try {
-        const fileName = `audio_${contactId}_${Date.now()}.webm`;
+        const fileName = `${contactId}/audio_${Date.now()}.webm`;
         const { error: uploadError } = await supabase.storage
           .from('whatsapp-media')
           .upload(fileName, blob, { contentType: blob.type || 'audio/webm' });

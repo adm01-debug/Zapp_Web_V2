@@ -164,7 +164,15 @@ export function GoalsConfigDialog({ open, onOpenChange }: GoalsConfigDialogProps
   };
 
   const handleReset = () => {
-    setGoals(DEFAULT_GOALS);
+    // Restaurar padrões devolve os VALORES padrão, mas preserva o `id` das
+    // configurações já carregadas: sem o `id` o Salvar cairia no insert e
+    // bateria no UNIQUE(profile_id, goal_type) de `goals_configurations`.
+    setGoals(prev =>
+      DEFAULT_GOALS.map(defaultGoal => {
+        const current = prev.find(g => g.goal_type === defaultGoal.goal_type);
+        return current?.id ? { ...defaultGoal, id: current.id } : defaultGoal;
+      })
+    );
     toast.info('Metas restauradas para valores padrão');
   };
 

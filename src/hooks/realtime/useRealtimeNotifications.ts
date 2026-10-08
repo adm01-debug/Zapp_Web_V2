@@ -31,7 +31,12 @@ export function useRealtimeNotifications() {
       const notificationsActive = notifSettings.soundEnabled || notifSettings.browserNotifications;
       if (!notificationsActive && isQuietHours()) return;
 
-      if (soundEnabledRef.current && !isQuietHours()) {
+      // O som de mensagem exige o par que os irmãos já exigiam (useSLANotifications:54 com
+      // `slaBreachSound`, useSentimentAlerts:77 com `mentionSound`): a chave GLOBAL de som E o
+      // controle do EVENTO. `newMessageSound` era o único dos três controles de "Tipos de
+      // Notificação" que nenhum consumidor lia — desligá-lo não silenciava nada. Ele governa o
+      // SOM (como os dois irmãos); o aviso em tela segue `browserNotifications`/`soundEnabled`.
+      if (soundEnabledRef.current && notifSettings.newMessageSound && !isQuietHours()) {
         playNotificationSound('message', notifSettings.messageSoundType, notifSettings.soundVolume);
       }
 
@@ -56,6 +61,7 @@ export function useRealtimeNotifications() {
     },
     [
       notifSettings.soundEnabled,
+      notifSettings.newMessageSound,
       notifSettings.browserNotifications,
       notifSettings.messageSoundType,
       notifSettings.soundVolume,

@@ -15,9 +15,19 @@ export interface TalkXInsight {
   meta?: Record<string, unknown>;
 }
 
+/** Campanha vencedora por engajamento, já com a métrica explicitada. */
+export interface BestTemplate {
+  name: string;
+  replyRate: number;
+  campaignId: string;
+  /** Respostas e envios que sustentam a taxa (amostra exibida no insight). */
+  sent: number;
+  replied: number;
+}
+
 export interface InsightRaw {
   bestHour: { hour: number; replyRate: number; sample: number } | null;
-  bestTemplate: { name: string; replyRate: number; campaignId: string; sent: number; replied: number } | null;
+  bestTemplate: BestTemplate | null;
   inactiveContactPct: number | null;
   lowClickCampaigns: number;
   finishedCampaigns: number;
@@ -54,6 +64,22 @@ export const LOW_CLICK_MIN_CAMPAIGNS = 3;
 export const CLICK_SAMPLE_LIMIT = 5000;
 /** Teto defensivo de campanhas concluídas lidas para o cálculo de baixo clique. */
 export const CAMPAIGN_SAMPLE_LIMIT = 500;
+
+/**
+ * Vocabulário vigente de public.talkx_campaigns.status (CHECK de
+ * 20260929420000_fix_talkx_transition_overload_and_status_check.sql):
+ * draft, scheduled, sending, paused, completed, cancelled.
+ * "finished" NÃO existe — filtrar por ele não devolve nenhuma linha.
+ */
+export const TALKX_COMPLETED_STATUS = 'completed';
+
+/** Linha da view talkx_campaign_metrics usada como candidata a "maior engajamento". */
+export interface TemplateCandidate {
+  campaign_name?: string | null;
+  replied_count?: number | null;
+  sent_count?: number | null;
+  id?: string | null;
+}
 
 /**
  * Melhor hora por TAXA de resposta, com amostra mínima por hora.
@@ -93,22 +119,41 @@ export function pickBestHour(
  * Template campeão por TAXA de resposta (replied/sent), não por número absoluto de
  * respostas: com ordenação por volume, a campanha com mais respostas ganhava mesmo
  * tendo taxa pior — o nome prometia "maior engajamento" sem comparar taxa (IA-168).
+ *
+ * A métrica é a MESMA para todos os candidatos, com amostra mínima de envios e
+ * desempate determinístico para que a eleição não dependa da ordem devolvida pelo
+ * banco: 1) maior taxa, 2) maior nº de respostas, 3) maior nº de envios,
+ * 4) nome (A→Z), 5) id (A→Z).
  */
 export function pickBestTemplate(
-  rows: Array<{ id?: string | null; campaign_name?: string | null; replied_count?: number | null; sent_count?: number | null }>,
+  rows: TemplateCandidate[],
   minSent = METRIC_MIN_SENT,
 ): InsightRaw['bestTemplate'] {
-  let best: { name: string; replyRate: number; campaignId: string; sent: number; replied: number } | null = null;
-  for (const r of rows) {
-    const sent = r.sent_count ?? 0;
-    const replied = r.replied_count ?? 0;
-    if (sent < minSent) continue;
-    const rate = replied / sent;
-    if (!best || rate > best.replyRate) {
-      best = { name: r.campaign_name ?? 'Campanha', replyRate: rate, campaignId: r.id ?? '', sent, replied };
-    }
-  }
-  return best && best.replyRate > 0 ? best : null;
+  const scored = rows
+    .map((r) => ({
+      id: r.id ?? '',
+      name: r.campaign_name ?? 'Campanha',
+      sent: r.sent_count ?? 0,
+      replied: r.replied_count ?? 0,
+    }))
+    // amostra mínima: campanha com menos envios que o piso não concorre
+    .filter((c) => c.sent >= minSent)
+    .map((c) => ({ ...c, rate: c.replied / c.sent }))
+    .filter((c) => c.rate > 0);
+
+  if (scored.length === 0) return null;
+
+  scored.sort(
+    (a, b) =>
+      b.rate - a.rate ||
+      b.replied - a.replied ||
+      b.sent - a.sent ||
+      a.name.localeCompare(b.name) ||
+      a.id.localeCompare(b.id),
+  );
+
+  const top = scored[0];
+  return { name: top.name, replyRate: top.rate, campaignId: top.id, sent: top.sent, replied: top.replied };
 }
 
 /**
@@ -239,7 +284,7 @@ export async function fetchInsightData(): Promise<InsightRaw> {
   // CHECK de talkx_campaigns, então a contagem anterior era sempre zero.
   const finishedRows = must<Array<{ id?: string | null; sent_count?: number | null }>>(
     await supabase
-      .from('talkx_campaigns').select('id, sent_count').eq('status', 'completed').gte('created_at', since90).limit(CAMPAIGN_SAMPLE_LIMIT),
+      .from('talkx_campaigns').select('id, sent_count').eq('status', TALKX_COMPLETED_STATUS).gte('created_at', since90).limit(CAMPAIGN_SAMPLE_LIMIT),
     'campanhas concluídas',
   );
   const finishedCampaigns = finishedRows.length;
@@ -318,3 +363,7 @@ export function useTalkXInsights() {
     retry: 1,
   });
 }
+
+// `fetchInsightData` e `buildInsights` já saem exportados nas próprias declarações:
+// o bloco `export { ... }` do commit anterior virou export duplicado nesta integração
+// e foi removido (o build do Vite rejeita "Duplicated export").

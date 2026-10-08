@@ -19,8 +19,12 @@ interface HighContrastContextType {
   toggleHighContrast: () => void;
   contrastLevel: number;
   setContrastLevel: (level: number) => void;
+  /** Preferência do usuário para movimento reduzido — FONTE ÚNICA também lida pelas
+   *  transições de rota (`useTransitionPreferences`); ver R2-INF-037. */
   reducedMotion: boolean;
   toggleReducedMotion: () => void;
+  /** Escrita explícita da MESMA preferência (o controle usa `toggleReducedMotion`). */
+  setReducedMotion: (value: boolean) => void;
   largeText: boolean;
   toggleLargeText: () => void;
 }
@@ -135,6 +139,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
         setContrastLevel,
         reducedMotion,
         toggleReducedMotion,
+        setReducedMotion,
         largeText,
         toggleLargeText,
       }}

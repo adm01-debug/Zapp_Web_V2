@@ -1,10 +1,41 @@
 # Inbox — Plano SalesView + Journey: 50 etapas
 
 **Gerado em:** 2026-10-02 · **Base do levantamento:** `main` `e6fd391` (`fix(inbox): destaque do HighlightedText…`, #1594)
-**Estado:** proposto — nenhuma etapa executada. Revisado em 02/10 após o Codex review na PR #1603: fases passam a ser seriais (2 e 3 tocam `ConversationTabContent.tsx`, `ConversationTabs.tsx` e `ContactAccordionSections.tsx`) e a SalesView mantém o botão "+ Novo" montado também no estado vazio (S14). Segunda rodada do Codex (mesmo dia): "+ Novo" invalida o cache do CRM 360° (S15), a grade de 4 colunas fica só nas abas centrais enquanto o sidebar ainda renderiza os widgets (S14/S24) e a varredura de vocabulário exclui os rótulos de pedido do CRM externo (S45). Terceira rodada: o tile "Compras (n)" só conta status `approved`/`completed` enquanto "+ Novo" grava `pending`, então o rótulo passa a dizer "Compras concluídas" e o aceite do S15 não promete que ele suba (S14/S15); as Estatísticas não ganham o subtítulo "desde o início" porque Tempo médio e Conversas são amostras de 200/500 mensagens (S24/S26). Passa a ser o plano vigente para o painel central e o painel direito do inbox quando a etapa S01 for executada.
+**Estado (retrato de 02/10/2026 — ver "Atualização posterior" logo abaixo):** proposto — nenhuma etapa executada na data deste levantamento. Revisado em 02/10 após o Codex review na PR #1603: fases passam a ser seriais (2 e 3 tocam `ConversationTabContent.tsx`, `ConversationTabs.tsx` e `ContactAccordionSections.tsx`) e a SalesView mantém o botão "+ Novo" montado também no estado vazio (S14). Segunda rodada do Codex (mesmo dia): "+ Novo" invalida o cache do CRM 360° (S15), a grade de 4 colunas fica só nas abas centrais enquanto o sidebar ainda renderiza os widgets (S14/S24) e a varredura de vocabulário exclui os rótulos de pedido do CRM externo (S45). Terceira rodada: o tile "Compras (n)" só conta status `approved`/`completed` enquanto "+ Novo" grava `pending`, então o rótulo passa a dizer "Compras concluídas" e o aceite do S15 não promete que ele suba (S14/S15); as Estatísticas não ganham o subtítulo "desde o início" porque Tempo médio e Conversas são amostras de 200/500 mensagens (S24/S26). Passa a ser o plano vigente para o painel central e o painel direito do inbox quando a etapa S01 for executada.
 **Pedido de Joaquim (literal, 02/10):** *"mesclar a função 'pedidos' com a função 'resumo comercial', deixar todas essas informações juntas somente no topo da página do chat panel e deixar apenas o nome de 'salesview' — o nome pedidos vai desaparecer, mas a função continua integrada à função resumo comercial; no sidebar do contato excluir o 'resumo comercial' para liberar espaço e não ficar redundante. Fazer algo semelhante com a função 'estatísticas' do sidebar: excluir dali e integrar ao 'histórico' da barra superior com o nome 'Journey'."*
 
 Entendimento confirmado em sessão (02/10): nomes em inglês mesmo (**SalesView**, **Journey**); a duplicata "Estatísticas" e "Compras & Propostas" dentro de "Mais detalhes" também saem do sidebar; os KPIs por período que a aba Histórico já tem continuam, lado a lado com as Estatísticas gerais do contato.
+
+---
+
+## Atualização posterior — estado reconciliado (reconciliação SV-004)
+
+> **Retrato datado, não o estado vigente.** Tudo neste documento — o cabeçalho, o retrato da seção 1, o
+> placar da seção 7 e os apêndices de verificação no fim — é o levantamento de **02/10/2026**. O
+> cabeçalho abre dizendo "nenhuma etapa executada"; isso descreve o snapshot daquela data, não o estado
+> atual, e foi superado pelos sucessores abaixo. As tabelas e números datados foram preservados como
+> histórico, não reescritos.
+
+A reconciliação **SV-004** (`docs/reconciliation/FINDINGS.json`; relatório
+`docs/reconciliation/reports/modules/SALESVIEW_JOURNEY.md`) confirma que as cinco PRs de fase já estão
+**integradas**: **#1608** (S01–S10), **#1613** (S11–S20), **#1619** (S21–S31), **#1626** (S32–S40) e
+**#1628** (S41–S50) — cada merge SHA está no placar da seção 7.
+
+Cinco entregas posteriores mudam a conclusão dos apêndices e **não** devem ser reimplementadas
+(reimplementá-las duplicaria trabalho já corrigido ou removeria funcionalidade legítima):
+
+| Sucessor | O que muda |
+|---|---|
+| **#1640** | Percentuais com variação real e `ContactPurchasesPanel` via React Query — os "%" inventados e a leitura dupla de `contact_purchases` deixaram de valer. |
+| **#1797** / **#1807** | A aba preferida volta na primeira conversa aberta depois do reload (item 6 do S41) e o item 4 foi medido: o período chega à consulta. |
+| **#1829** / **#1847** | O painel de acessibilidade passou a ser montado e a preferência de contraste do sistema passou a ter efeito — a media query morta foi corrigida. |
+
+O que **permanece aberto** depois destes sucessores: a medição de contraste **por elemento** no modo
+alto-contraste (S43); a impressão do S38 do acordeão recolhido/expandido sem buraco visual (a rodada de
+02/10 não fechou esse print); o item **7** do S41 (0 erros de console em todo o fluxo), pois a verificação
+ainda registrava 401 de outro fluxo e chunks obsoletos; e a geometria do banner de conexão do WhatsApp
+sobre a barra de abas, risco transversal que esta frente não remediu no deploy atual. Nada disto autoriza
+reimplementar a fusão, a restauração da aba ou o controle de contraste.
 
 ---
 
@@ -369,13 +400,58 @@ Decisão de negócio que **não** cabe neste plano e vai para "Próximos passos"
 
 | Etapa | Estado | Evidência |
 |---|---|---|
-| S01–S10 (Fase 1) | [x] | PR #1608 mergeada 02/10 (`7b6a69e3`) |
-| S11–S20 (Fase 2) | [x] | PR #1613 mergeada 02/10 (`30ef8e79`) |
-| S21–S31 (Fase 3) | [x] | PR #1619 mergeada 02/10 (`f4f3c26b`) |
-| S32–S40 (Fase 4) | [~] | PR #1626 mergeada 02/10 (`c97429f0`); S38 print sem buraco visual — **pendente** (credencial E2E desatualizada, sem login) |
-| S41–S50 (Fase 5) | [~] | S44–S48 executados. **S41 fechado** (item 4 medido — período chega à consulta — e item 6 corrigido e verificado no app, PRs #1807/#1797). **S42 fechado** (9 prints). **S43 parcial:** tema claro passa; alto-contraste com efeito provado nos tokens; contraste por elemento pendente; 2 defeitos achados (media query morta, toggle não montado) |
+| S01 · Branch e verificação de sobreposição | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S02 · Rótulo SalesView na barra | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S03 · Rótulo Journey na barra | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S04 · Nome do painel no error boundary | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S05 · Comentário do badge em `RealtimeInboxView` | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S06 · Título e subtítulo da aba | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S07 · Rótulos dos atalhos no CRM 360° | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S08 · Nomes de teste e comentários que diziam "Pedidos"/"Histórico" | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S09 · Teste de contrato dos rótulos | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S10 · Fechamento da Fase 1: gates, PR, merge | [x] | Fase 1 · #1608 · 02/10 · `7b6a69e3` |
+| S11 · Branch da Fase 2 a partir de `main` com a Fase 1 mergeada | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S12 · Rename `OrdersTab.tsx` → `SalesViewTab.tsx` | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S13 · Mover `ComercialSummaryWidget` para `tabs/` | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S14 · Resumo comercial sempre visível no topo da SalesView | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S15 · `profileId` e atualização do resumo após "+ Novo" | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S16 · Badge da SalesView conta compras + propostas em aberto | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S17 · Ícone da SalesView | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S18 · Teste unitário de `SalesViewTab` | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S19 · Atualizar `INBOX_360_STATUS.md` | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S20 · Fechamento da Fase 2 | [x] | Fase 2 · #1613 · 02/10 · `30ef8e79` |
+| S21 · Branch da Fase 3 | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S22 · Rename `HistoryTab.tsx` → `JourneyTab.tsx` | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S23 · Mover `ContactStatsSection` para `tabs/` | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S24 · Estatísticas no topo da Journey | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S25 · Remover variação e sparkline inventados | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S26 · Rótulos honestos nas estatísticas | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S27 · `KpiStrip` por período ganha rótulo de contexto | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S28 · Ícone e empty state da Journey | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S29 · Testes do `JourneyTab` | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S30 · Teste unitário de `ContactStatsStrip` | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S31 · Fechamento da Fase 3 | [x] | Fase 3 · #1619 · 02/10 · `f4f3c26b` |
+| S32 · Branch da Fase 4 | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S33 · Remover o card "Resumo Comercial" do accordion | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S34 · Remover "Compras & Propostas" de Mais detalhes | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S35 · Remover "Estatísticas" de Mais detalhes | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S36 · Catálogo de seções e defaults | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S37 · Fim dos imports temporários | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S38 · Botão "Recolher tudo" e estado vazio do accordion | [~] | Fase 4 · #1626 · 02/10 · `c97429f0` — print do acordeão recolhido/expandido sem buraco visual **não fechado** na rodada (credencial E2E desatualizada, sem login) |
+| S39 · Documentar no `PAINEL_STATUS.md` | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S40 · Fechamento da Fase 4 | [x] | Fase 4 · #1626 · 02/10 · `c97429f0` |
+| S41 · Verificação de comportamento em produção | [~] | Fase 5 · #1628 · `4bac545ca` — itens 4 e 6 fechados/medidos (#1797/#1807); **item 7 (0 erros de console) segue sem fechar** (401 de outro fluxo e chunks obsoletos) |
+| S42 · Prints antes/depois no repo | [x] | Fase 5 · #1628 · `4bac545ca` — 9 prints, com as ressalvas declaradas (`03` é o estado vazio; sem par no tema escuro) |
+| S43 · Contraste no tema claro e alto-contraste | [~] | Fase 5 · #1628 · `4bac545ca` — tema claro passa e o alto-contraste tem efeito; **contraste por elemento pendente**; os 2 defeitos medidos (media query morta, toggle não montado) foram corrigidos por #1829/#1847 |
+| S44 · `graphify update .` | [x] | Fase 5 · #1628 · `4bac545ca` — executado, com as limitações do relatório (`graphify-out` não versionado) |
+| S45 · Varredura final de vocabulário | [x] | Fase 5 · #1628 · `4bac545ca` |
+| S46 · `CLAUDE.md` — uma linha no bloco de lições de UI | [x] | Fase 5 · #1628 · `4bac545ca` |
+| S47 · Placar deste plano | [x] | Fase 5 · #1628 · `4bac545ca` — ampliado das 5 linhas de fase para as 50 etapas na reconciliação SV-004 (aqui) |
+| S48 · Remover `docs/design/inbox-03-orders.png` se existir | [x] | Fase 5 · #1628 · `4bac545ca` — conferido, nada a remover |
+| S49 · Fechamento da Fase 5 | [x] | Fase 5 · #1628 · `4bac545ca` |
+| S50 · Reporte ao Joaquim | [x] | Fase 5 · #1628 · `4bac545ca` — reporte enviado, com o bloco "Próximos passos" |
 
-*Atualizar esta tabela a cada merge (S47).*
+*Legenda: `[x]` executada · `[~]` parcial (motivo na própria linha) · `[ ]` não executada. A evidência de cada etapa é a PR de fase que a incluiu (merge SHA e data): ela registra que a etapa entrou no merge, **não** que cada uma das 50 foi validada individualmente — isso existe só onde a linha traz medição própria (S38, S41, S42, S43), como o relatório de reconciliação exige. A contagem agregada por fase saiu de cena em 06/10 (reconciliação SV-004).*
 
 ---
 
@@ -388,13 +464,20 @@ Nesta rodada os dois existem e a medição foi feita contra a produção — res
 - **S38 / S42** — [x] 9 prints em `docs/design/salesview-journey/` (1280x900, o maior com 342 KB).
   Ressalvas declaradas: `03-salesview-cheio.png` é o estado vazio (a conta QA não tem contato com
   compras) e o par no tema escuro não foi produzido (o tema padrão da conta é claro).
-- **S41** — [~] itens **1, 2, 3 e 5 fecham** com evidência (abas, faixa de resumo, `created_by` gravado
-  e conferido no banco, sidebar sem os 3 blocos); item **4 bloqueado** (aba Journey não carrega em
-  produção: chunk `JourneyTab-B1r1ugA1.js` = **404**); item **6 não confirmado** (o reload não restaura
-  nem a conversa aberta).
-- **S43** — [x] tema claro **passa** medido (15,68:1 principal, 5,59:1 secundário). Alto-contraste **tem efeito** (`--foreground 221 20% 12%` -> `0 0% 0%`, classe `high-contrast light`), medido em 03/10; o registro de 02/10 era falso negativo meu. **Dois defeitos medidos:** `@media (prefers-contrast: high)` nunca casa (valor inválido; a spec usa `more`) e o toggle `#high-contrast` não está montado em nenhuma tela. Contraste por elemento no modo alto-contraste: pendente.
-  **não demonstrado** (a classe `.high-contrast` não alterou as cores computadas dos blocos novos).
+- **S41** — [~] na rodada, itens **1, 2, 3 e 5 fecharam** com evidência (abas, faixa de resumo, `created_by`
+  gravado e conferido no banco, sidebar sem os 3 blocos); item **4** aparecia bloqueado (aba Journey não
+  carregava em produção: chunk `JourneyTab-B1r1ugA1.js` = **404** — **histórico, superado**: era bundle
+  antigo servido depois do redeploy, e as capturas posteriores mostram a Journey funcional, com o chunk
+  servido em 200); item **6 não confirmado** na ocasião (o reload não restaurava a conversa aberta) —
+  **corrigido depois em #1797 e medido em #1807**; item **7** (0 erros de console em todo o fluxo)
+  **segue aberto**: a medição ainda registrava 401 de outro fluxo e chunks obsoletos.
+- **S43** — [x] tema claro **passa** medido (15,68:1 principal, 5,59:1 secundário). Alto-contraste **tem efeito** (`--foreground 221 20% 12%` -> `0 0% 0%`, classe `high-contrast light`), medido em 03/10; o registro de 02/10 era falso negativo meu. **Dois defeitos medidos na ocasião** — `@media (prefers-contrast: high)` que nunca casava (valor inválido; a spec usa `more`) e o toggle `#high-contrast` não montado em nenhuma tela: ambos **histórico, corrigidos depois** por #1829 (painel montado + media query) e #1847 (preferência de contraste do sistema com efeito real). Contraste por elemento no modo alto-contraste: **segue pendente**; as PRs posteriores corrigiram o controle/toggle e a preferência do sistema, mas não fecharam essa medição por elemento.
+  *Registro de 02/10, preservado como histórico: "não demonstrado" (a classe `.high-contrast` não alterou as cores computadas dos blocos novos) — superado pela medição de 03/10, que mostrou o efeito real.*
 
-**Bugs de produção abertos por esta verificação:** (1) aba Journey servindo chunk inexistente (404);
+**Bugs de produção registrados por esta verificação (leitura de 02/10; ler na sequência de correções):**
+(1) aba Journey servindo chunk inexistente (**404** — **histórico, superado**: era bundle antigo após
+redeploy, não defeito intrínseco da aba; a Journey passou a servir o chunk em 200 e a aba restaura, ver
+#1797/#1807 e a linhagem em `docs/reconciliation/reports/modules/SALESVIEW_JOURNEY.md`);
 (2) o banner de conexão do WhatsApp (`z-index: 90`, 44px) cobre 83% da barra de abas e intercepta os
-cliques de SalesView/Journey.
+cliques de SalesView/Journey — **não remedido nesta rodada**: risco transversal a revalidar, sem nova
+medição no deploy atual.

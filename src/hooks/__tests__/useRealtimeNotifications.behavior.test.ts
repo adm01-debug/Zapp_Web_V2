@@ -33,6 +33,17 @@ describe('useRealtimeNotifications — efeito do alerta', () => {
     expect(playNotificationSound).toHaveBeenCalledWith('message', 'chime', 55);
   });
 
+  it('não toca o som de mensagem quando o controle "Novas Mensagens" está desligado', () => {
+    settingsCfg.newMessageSound = false;
+    const { result } = renderHook(() => useRealtimeNotifications());
+
+    act(() => {
+      result.current.notifyAboutIncomingMessage(contato, mensagemNova());
+    });
+
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+
   it('não toca mensagem enviada por mim', () => {
     const { result } = renderHook(() => useRealtimeNotifications());
 

@@ -14,6 +14,13 @@ export const periodBuckets: Record<TimePeriod, number> = {
 
 export const HEALTHY_STATUSES = ['connected', 'healthy'];
 
+/** Janela prometida pelo SLA de 24h (rótulo "Últimas 24 horas"). */
+export const SLA_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** Janela prometida pelo heatmap de disponibilidade de 7 dias. */
+export const AVAILABILITY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+/** Teto da consulta de health logs; acima dele a janela fica parcial. */
+export const HEALTH_LOGS_LIMIT = 2000;
+
 export interface DiagnosticResult {
   timestamp: string;
   diagnostics: Array<{
@@ -68,7 +75,8 @@ export interface WebhookConfig {
 }
 
 export interface UptimeInfo {
-  percentage: number;
+  /** `null` = nenhum check na janela anunciada (dado insuficiente, nunca aprovação). */
+  percentage: number | null;
   totalChecks: number;
   healthyChecks: number;
   lastDowntime: string | null;

@@ -64,6 +64,95 @@ interface ChatPanelProps {
   onLoadOlderMessages?: () => Promise<void> | void;
 }
 
+/**
+ * R2-INB-026 — identidade real do agente logado para a presença de digitação.
+ *
+ * O painel chamava `useTypingPresence` com `currentUserId: 'agent'` e
+ * `currentUserName: conversation.assignedTo?.name`: a identidade literal fazia todos
+ * os agentes caírem na mesma chave de presença e o nome exibido era o do agente
+ * ATRIBUÍDO à conversa — que normalmente é quem está olhando a tela. Resultado: o
+ * aviso de colega digitando mostrava o nome errado e a outra aba do próprio agente
+ * aparecia como colega.
+ *
+ * Aqui a identidade sai da sessão autenticada (id do usuário + nome do perfil), pela
+ * mesma fonte que o painel já usa (`supabase.auth`), sem depender do `AuthProvider`:
+ * quem monta o ChatPanel isolado (popup, testes) continua funcionando e, sem sessão,
+ * não há identidade inventada — a presença fica sem identidade e não anuncia ninguém.
+ */
+interface LoggedAgentIdentity {
+  userId: string;
+  name: string;
+}
+
+interface LoggedAgentUser {
+  id?: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}
+
+/** `supabase.auth` pode chegar mockado sem estes membros nos consumidores de teste. */
+interface MaybeSupabaseAuth {
+  getSession?: () => Promise<{
+    data?: { session?: { user?: LoggedAgentUser } | null } | null;
+    error?: unknown;
+  }>;
+  onAuthStateChange?: (
+    callback: (event: string, session: { user?: LoggedAgentUser } | null) => void,
+  ) => { data?: { subscription?: { unsubscribe?: () => void } } } | undefined;
+}
+
+function useLoggedAgentIdentity(): LoggedAgentIdentity | null {
+  const [identity, setIdentity] = useState<LoggedAgentIdentity | null>(null);
+
+  useEffect(() => {
+    const auth = (supabase as { auth?: MaybeSupabaseAuth }).auth;
+    let cancelled = false;
+
+    const apply = async (user: LoggedAgentUser | null | undefined) => {
+      if (!user?.id) {
+        if (!cancelled) setIdentity(null);
+        return;
+      }
+      const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : '';
+      let name = metadataName || user.email || '';
+      try {
+        const { data } = await supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle();
+        if (data?.name) name = data.name;
+      } catch (err) {
+        // Sem o nome do perfil a identidade continua correta e o rótulo cai nos
+        // metadados (ou no e-mail); a falha não é engolida em silêncio.
+        log.warn('[ChatPanel] nome do perfil indisponível para a presença de digitação', err);
+      }
+      if (!cancelled) setIdentity({ userId: user.id, name });
+    };
+
+    void (async () => {
+      let response: Awaited<ReturnType<NonNullable<MaybeSupabaseAuth['getSession']>>> | undefined;
+      try {
+        response = await auth?.getSession?.();
+      } catch (err) {
+        log.error('[ChatPanel] falha ao ler a sessão para a presença de digitação', err);
+        return;
+      }
+      // Cliente mockado sem `auth` (consumidores de teste isolados): sem identidade.
+      if (!response) return;
+      if (response.error) log.warn('[ChatPanel] sessão indisponível para a presença de digitação', response.error);
+      await apply(response.data?.session?.user ?? null);
+    })();
+
+    const subscription = auth?.onAuthStateChange?.((_event, session) => {
+      void apply(session?.user ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription?.data?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  return identity;
+}
+
 type DialogKey = 'quickReplies' | 'slashCommands' | 'transferDialog' | 'scheduleDialog' | 
   'callDialog' | 'globalSearch' | 'chatSearch' | 'interactiveBuilder' | 'forwardDialog' | 
   'locationPicker' | 'aiAssistant' | 'catalogDirect' | 'whisper' | 'templatesWithVars' | 
@@ -119,8 +208,13 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
 
-  const { isContactTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
-    conversationId: conversation.id, currentUserId: 'agent', currentUserName: conversation.assignedTo?.name || 'Agente',
+  // R2-INB-026: identidade REAL do agente logado. O literal 'agent' colidia a
+  // presença de todos os agentes e `conversation.assignedTo?.name` exibia o nome do
+  // agente ATRIBUÍDO à conversa — normalmente quem está olhando a tela — como se
+  // fosse o colega que digita.
+  const loggedAgent = useLoggedAgentIdentity();
+  const { isContactTyping, isColleagueTyping, typingUsers, handleTypingStart, handleTypingStop } = useTypingPresence({
+    conversationId: conversation.id, currentUserId: loggedAgent?.userId, currentUserName: loggedAgent?.name || undefined,
   });
   const { quickReplies: dbQuickReplies, incrementUseCount } = useQuickReplies();
   const { settings, updateSettings, saveSettings } = useUserSettings();
@@ -287,7 +381,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
 
-        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} typingUserName={typingUsers[0]?.name || conversation.contact.name}
+        <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
+          typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
@@ -326,6 +421,9 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           interactiveSendUnavailableReason={handlers.interactiveSendUnavailableReason}
           onForwardToTargets={handlers.handleForwardToTargets} onSendLocation={handlers.handleSendLocation}
           onSetInputValue={handlers.setInputValue}
+          // R2-INB-018: Ctrl+K abre a busca global dentro do chat; selecionar um
+          // resultado tem de abrir a conversa dele (mesmo contrato do cabeçalho).
+          onSelectConversation={onSelectPinned}
         />
       </div>
 

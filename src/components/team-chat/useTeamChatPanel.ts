@@ -278,8 +278,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     void navigator.clipboard.writeText(content).then(() => toast.success('Copiado!'));
   }, []);
 
-  const handleAudioSend = useCallback(async (blob: Blob) => {
-    if (!profile?.id) return;
+  // R2-INB-058 (#350-B): o chamador precisa saber se o áudio foi enviado.
+  // `undefined` era lido como sucesso pelo TextToAudioButton, que descartava a
+  // prévia. Agora todo caminho devolve boolean: true SÓ após a mutação confirmar.
+  const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
+    if (!profile?.id) return false;
     try {
       const locator = await uploadTeamMedia({
         profileId: profile.id,
@@ -289,7 +292,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         contentType: 'audio/webm',
         upsert: false,
       });
-      if (!locator) return;
+      if (!locator) return false;
       await sendMutation.mutateAsync({
         conversationId: conversation.id,
         content: '🎤 Mensagem de áudio',
@@ -297,9 +300,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         mediaBucket: locator.mediaBucket,
         mediaType: 'audio',
       });
+      return true;
     } catch (err) {
       log.error('Erro ao enviar áudio', err);
       toast.error('Erro ao enviar áudio');
+      return false;
     }
   }, [profile, conversation.id, sendMutation]);
 
