@@ -13,17 +13,23 @@ export function useTeamConversations() {
     queryFn: async () => {
       if (!profile) return [];
 
-      const { data: memberships, error: memErr } = await supabase
-        .from('team_conversation_members')
-        .select('conversation_id, last_read_at, is_muted, is_pinned, is_archived, member_role')
-        .eq('profile_id', profile.id);
+      // SL-016 (F53): a caixa de entrada vem da RPC `get_team_inbox`, numa
+      // chamada só. Antes o hook montava a lista com três consultas
+      // (`team_conversation_members` + `get_team_conversation_previews` +
+      // `get_team_unread_counts`) e o não-lido saía de uma contagem à parte da
+      // última mensagem exibida na lista.
+      const { data: inboxRows, error: inboxError } = await supabase.rpc('get_team_inbox');
+      if (inboxError) throw inboxError;
+      if (!inboxRows?.length) return [];
 
-      if (memErr) throw memErr;
-      if (!memberships?.length) return [];
+      const convIds = inboxRows.map(row => row.conversation_id);
 
-      const convIds = memberships.map(m => m.conversation_id);
-
-      const [convResult, membersResult, previewsResult, unreadResult] = await Promise.all([
+      // `created_by`, `created_at` e `avatar_url` não vêm na RPC e continuam
+      // vindo da tabela: o painel usa `created_by` para saber se o usuário criou
+      // o grupo e a lista usa `avatar_url`. Os membros também seguem sendo
+      // carregados — a lista de participantes e o estado de mute do painel saem
+      // de `members`.
+      const [convResult, membersResult] = await Promise.all([
         supabase
           .from('team_conversations')
           .select('*')
@@ -33,33 +39,19 @@ export function useTeamConversations() {
           .from('team_conversation_members')
           .select('*, profile:profiles(id, name, email, avatar_url, is_active)')
           .in('conversation_id', convIds),
-        supabase.rpc('get_team_conversation_previews'),
-        supabase.rpc('get_team_unread_counts'),
       ]);
 
       if (convResult.error) throw convResult.error;
+      if (membersResult.error) throw membersResult.error;
+
       const conversations = convResult.data || [];
       const allMembers = membersResult.data || [];
 
-      const previewMap = new Map<string, {
-        last_message_id: string;
-        last_message_content: string;
-        last_message_type: string;
-        last_message_sender_id: string;
-        last_message_created_at: string;
-      }>();
-      for (const p of (previewsResult.data || [])) {
-        previewMap.set(p.conversation_id, p);
-      }
-
-      const unreadMap = new Map<string, number>();
-      for (const u of (unreadResult.data || [])) {
-        unreadMap.set(u.conversation_id, Number(u.unread_count) || 0);
-      }
+      const inboxMap = new Map(inboxRows.map(row => [row.conversation_id, row]));
 
       const enriched: TeamConversation[] = conversations.map(conv => {
         const members = ((allMembers || []).filter(m => m.conversation_id === conv.id)) as unknown as TeamMember[];
-        const preview = previewMap.get(conv.id);
+        const inbox = inboxMap.get(conv.id);
 
         let displayName = conv.name;
         if (conv.type === 'direct' && !conv.name) {
@@ -67,13 +59,18 @@ export function useTeamConversations() {
           displayName = other?.profile?.name || 'Chat Direto';
         }
 
-        const lastMsg: TeamMessage | null = preview
+        // A RPC devolve o texto, o remetente e o instante da última mensagem,
+        // mas não o id nem o tipo dela. Nenhum consumidor do módulo lê
+        // `last_message.id` nem `last_message.message_type` (a lista usa só
+        // `created_at` e `content`), então o preview usa o id da conversa como
+        // marcador estável e o tipo genérico 'text'.
+        const lastMsg: TeamMessage | null = inbox?.last_message_at
           ? {
-              id: preview.last_message_id,
+              id: conv.id,
               conversation_id: conv.id,
-              sender_id: preview.last_message_sender_id,
-              content: preview.last_message_content,
-              message_type: preview.last_message_type,
+              sender_id: inbox.last_sender_id,
+              content: inbox.last_message_text ?? '',
+              message_type: 'text',
               status: 'delivered',
               media_url: null,
               media_type: null,
@@ -81,8 +78,8 @@ export function useTeamConversations() {
               media_path: null,
               reply_to_id: null,
               is_edited: false,
-              created_at: preview.last_message_created_at,
-              updated_at: preview.last_message_created_at,
+              created_at: inbox.last_message_at,
+              updated_at: inbox.last_message_at,
             }
           : null;
 
@@ -95,7 +92,7 @@ export function useTeamConversations() {
             : conv.avatar_url,
           members,
           last_message: lastMsg,
-          unread_count: unreadMap.get(conv.id) || 0,
+          unread_count: Number(inbox?.unread_count ?? 0),
         };
       });
 

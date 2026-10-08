@@ -3,27 +3,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * TC-010 (#165) — "marcação de leitura e envio podem perder estado após erro
- * silencioso".
+ * silencioso" — revalidado em SL-016, quando a gravação passou a ser UMA RPC
+ * (`mark_team_conversation_read`) em vez de dois writes separados.
  *
- * O hook fixava a chave em `markedRef` ANTES de concluir os writes e
- * descartava o resultado deles (`.then()` sem callback). Resultado: um erro de
- * rede/RLS no upsert do recibo não era notado, a `markedRef` já estava
- * avançada e o efeito NUNCA mais tentava gravar — a conversa ficava "lida" só
- * na tela, sem recibo no banco, sem retentativa e sem log.
+ * O hook fixava a chave em `markedRef` ANTES de concluir a gravação e
+ * descartava o resultado (`.then()` sem callback). Resultado: um erro de
+ * rede/RLS não era notado, a `markedRef` já estava avançada e o efeito NUNCA
+ * mais tentava gravar — a conversa ficava "lida" só na tela, sem recibo no
+ * banco, sem retentativa e sem log.
  *
- * A prova é a contagem de escritas: com a falha, o ciclo seguinte tem de
+ * A prova é a contagem de chamadas da RPC: com a falha, o ciclo seguinte tem de
  * tentar de novo (marcação não avançou); com o sucesso, o ciclo seguinte não
  * regrava (marcação avançou).
  */
 const f = vi.hoisted(() => {
-  const state = { failWrites: false, upserts: 0 };
+  const state = { failWrites: false, marcas: 0 };
   return {
     state,
-    upsert: vi.fn(() => {
-      state.upserts += 1;
-      return Promise.resolve({ error: state.failWrites ? { message: 'rls negou' } : null });
+    rpc: vi.fn((nome: string) => {
+      if (nome !== 'mark_team_conversation_read') return Promise.resolve({ data: null, error: null });
+      state.marcas += 1;
+      return Promise.resolve({
+        data: null,
+        error: state.failWrites ? { message: 'rls negou' } : null,
+      });
     }),
-    membersUpdate: vi.fn(() => Promise.resolve({ error: state.failWrites ? { message: 'rls negou' } : null })),
     messages: [
       { id: 'm-2', sender_id: 'outro-profile', conversation_id: 'conv-1', content: 'oi' },
       { id: 'm-1', sender_id: 'profile-1', conversation_id: 'conv-1', content: 'meu' },
@@ -35,6 +39,10 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'profile-1' } }),
 }));
 
+vi.mock('@/lib/logger', () => ({
+  getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
+}));
+
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: f.messages, isLoading: false }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
@@ -42,12 +50,7 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: (table: string) => {
-      if (table === 'team_message_receipts') {
-        return { upsert: f.upsert };
-      }
-      return { update: () => ({ eq: () => ({ eq: f.membersUpdate }) }) };
-    },
+    rpc: f.rpc,
     channel: () => ({ on: () => ({ subscribe: () => undefined }) }),
     removeChannel: vi.fn(),
   },
@@ -55,43 +58,43 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
-// Deixa as promessas dos writes resolverem antes de observar o próximo ciclo.
+// Deixa as promessas da gravação resolverem antes de observar o próximo ciclo.
 const flush = async () => {
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
 };
 
-describe('useTeamMessages — persistência do recibo de leitura (TC-010)', () => {
+describe('useTeamMessages — persistência da marcação de leitura (TC-010/SL-016)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     f.state.failWrites = false;
-    f.state.upserts = 0;
+    f.state.marcas = 0;
   });
 
-  it('grava o recibo e fixa a marcação: o ciclo seguinte não regrava', async () => {
+  it('marca a leitura pela RPC e fixa a marcação: o ciclo seguinte não regrava', async () => {
     const { rerender } = renderHook(() => useTeamMessages('conv-1'));
 
-    await waitFor(() => expect(f.upsert).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(f.membersUpdate).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(f.rpc).toHaveBeenCalledTimes(1));
+    expect(f.rpc).toHaveBeenCalledWith('mark_team_conversation_read', {
+      p_conversation_id: 'conv-1',
+    });
     await flush();
 
     rerender();
     await flush();
 
-    expect(f.upsert).toHaveBeenCalledTimes(1);
-    expect(f.membersUpdate).toHaveBeenCalledTimes(1);
+    expect(f.rpc).toHaveBeenCalledTimes(1);
   });
 
   it('NÃO fixa a marcação quando a gravação falha — o ciclo seguinte tenta de novo', async () => {
     f.state.failWrites = true;
     const { rerender } = renderHook(() => useTeamMessages('conv-1'));
 
-    await waitFor(() => expect(f.upsert).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(f.rpc).toHaveBeenCalledTimes(1));
     await flush();
 
     // A gravação falhou (rede/RLS): a leitura não pode ficar marcada como
     // salva. O próximo ciclo do efeito tem de tentar gravar outra vez.
     rerender();
-    await waitFor(() => expect(f.upsert).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(f.membersUpdate).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(f.rpc).toHaveBeenCalledTimes(2));
   });
 });

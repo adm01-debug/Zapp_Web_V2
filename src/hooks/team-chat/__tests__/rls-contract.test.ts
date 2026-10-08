@@ -31,9 +31,11 @@ import { TestQueryWrapper } from '@/test/mocks/queryClient';
  */
 
 type Aresta = { table: string; op: string; payload?: unknown };
+type ChamadaRpc = { nome: string; args?: unknown };
 
 const f = vi.hoisted(() => {
   const arestas: Aresta[] = [];
+  const rpcs: ChamadaRpc[] = [];
 
   // Cadeia minima do PostgREST: registra a operacao e devolve a si mesma, para
   // que `insert().select().single()` e `update().eq()` funcionem. Cadeia sem
@@ -56,12 +58,16 @@ const f = vi.hoisted(() => {
     return no;
   }
 
-  return { arestas, cadeia };
+  return { arestas, cadeia, rpcs };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => f.cadeia(table),
+    rpc: (nome: string, args?: unknown) => {
+      f.rpcs.push({ nome, args });
+      return Promise.resolve({ data: [], error: null });
+    },
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => {},
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
@@ -81,6 +87,7 @@ import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 type Manifesto = {
   columns: Record<string, string>;
   constraints: Record<string, string>;
+  functions: Record<string, string>;
 };
 
 const manifesto = JSON.parse(
@@ -96,24 +103,6 @@ function colunasReais(tabela: string): string[] {
 }
 
 /** "a, b(c, d), e" -> ["a", "b(c, d)", "e"] (virgula interna nao separa). */
-function dividirTopo(select: string): string[] {
-  const partes: string[] = [];
-  let atual = '';
-  let profundidade = 0;
-  for (const caractere of select) {
-    if (caractere === '(') profundidade += 1;
-    if (caractere === ')') profundidade -= 1;
-    if (caractere === ',' && profundidade === 0) {
-      partes.push(atual);
-      atual = '';
-      continue;
-    }
-    atual += caractere;
-  }
-  partes.push(atual);
-  return partes.map((parte) => parte.trim()).filter((parte) => parte.length > 0);
-}
-
 function ultimaAresta(table: string, op: string): Aresta {
   const aresta = [...f.arestas].reverse().find((a) => a.table === table && a.op === op);
   if (!aresta) throw new Error(`nenhuma operacao ${op} em ${table} foi registrada`);
@@ -127,6 +116,7 @@ function chavesDe(payload: unknown): string[] {
 describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
   beforeEach(() => {
     f.arestas.length = 0;
+    f.rpcs.length = 0;
   });
 
   it('o snapshot do banco enxerga as tabelas do Team Chat (nao passa por vacuidade)', () => {
@@ -158,36 +148,21 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
     expect(chaves.filter((chave) => !colunasReais('department_invites').includes(chave))).toEqual([]);
   });
 
-  it('a leitura de team_messages pede colunas e relacao que existem no banco', async () => {
+  it('a leitura de mensagens passa por RPC que existe no snapshot do banco', async () => {
     renderHook(() => useTeamMessages('conv-1'), { wrapper: TestQueryWrapper });
 
-    await waitFor(() => expect(f.arestas.some((a) => a.table === 'team_messages' && a.op === 'select')).toBe(true));
-    const select = String(ultimaAresta('team_messages', 'select').payload);
+    await waitFor(() =>
+      expect(f.rpcs.some((chamada) => chamada.nome === 'get_team_messages_page')).toBe(true),
+    );
 
-    const colunasPedidas: string[] = [];
-    const relacoesPedidas: string[] = [];
-
-    for (const parte of dividirTopo(select)) {
-      if (parte === '*') continue;
-      if (parte.includes('!')) {
-        // "sender:profiles!team_messages_sender_id_fkey(id, name)" — embed do PostgREST:
-        // a FK e declarada na tabela consultada (team_messages) e tem de existir
-        // no banco, senao a query falha em runtime.
-        const alvo = parte.slice(parte.indexOf(':') + 1);
-        const [, resto] = alvo.split('!');
-        const fk = (resto ?? '').split('(')[0].trim();
-        relacoesPedidas.push(fk);
-        continue;
-      }
-      colunasPedidas.push(parte);
-    }
-
-    expect(colunasPedidas.length).toBeGreaterThan(0);
-    expect(relacoesPedidas.length).toBeGreaterThan(0);
-    expect(colunasPedidas.filter((coluna) => !colunasReais('team_messages').includes(coluna))).toEqual([]);
-    expect(
-      relacoesPedidas.filter((fk) => !(`relation:team_messages.${fk}` in manifesto.constraints)),
-    ).toEqual([]);
+    // O esperado vem do snapshot do banco (fonte que o teste NAO controla): todo
+    // nome de RPC que o front chama tem de existir em `functions`, e nao passa
+    // por vacuidade porque a chamada observada acima ja foi exigida.
+    expect(f.rpcs.length).toBeGreaterThan(0);
+    const semCorrespondente = f.rpcs
+      .map((chamada) => chamada.nome)
+      .filter((nome) => !Object.keys(manifesto.functions).some((chave) => chave.startsWith(`f:${nome}(`)));
+    expect(semCorrespondente).toEqual([]);
   });
 
   it.todo(

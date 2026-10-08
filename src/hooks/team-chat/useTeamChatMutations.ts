@@ -129,11 +129,16 @@ export function useToggleMuteConversation() {
   return useMutation({
     mutationFn: async ({ conversationId, muted }: { conversationId: string; muted: boolean }) => {
       if (!profile) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('team_conversation_members')
-        .update({ is_muted: muted })
-        .eq('conversation_id', conversationId)
-        .eq('profile_id', profile.id);
+      // TC-007 + SL-016 (F44): a preferência é escrita pela RPC
+      // `set_team_member_pref`, na MESMA membership que o painel lê
+      // (`team_conversation_members.is_muted`). O UPDATE direto anterior não
+      // distinguia "silenciado" de "0 linhas afetadas": sem membership o RLS
+      // filtrava sem erro e a tela mostrava um mute que não existia no banco. A
+      // RPC levanta `not_member` nesse caso, então o erro aparece.
+      const { error } = await supabase.rpc('set_team_member_pref', {
+        p_conversation_id: conversationId,
+        p_is_muted: muted,
+      });
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-conversations'] }); },
