@@ -1037,7 +1037,9 @@ test.beforeAll(async ({ request }) => {
     }
   }
   throw ultimoErro;
-});
+  // O teto do próprio hook: o default do Playwright para hooks é 30 s, e uma
+  // passada de aquecimento (74 funções de ponta) leva mais que isso.
+}, 20 * 60_000);
 
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
