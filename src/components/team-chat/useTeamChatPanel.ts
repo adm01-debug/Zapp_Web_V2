@@ -204,6 +204,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // inteira) e a lista exibida durante a busca é o resultado dela.
   const searchTerm = debouncedSearchQuery.trim();
   const [serverSearch, setServerSearch] = useState<{ term: string; results: TeamMessage[] } | null>(null);
+  // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
+  // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
+  // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
+  // SEPARADO (e preso ao termo que o produziu), para a tela poder dizer a verdade.
+  const [serverSearchError, setServerSearchError] = useState<{ term: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!searchTerm) return;
@@ -217,7 +222,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       if (cancelado) return;
       if (error) {
         log.error('Erro ao buscar mensagens no servidor', error);
-        setServerSearch({ term: searchTerm, results: [] });
+        // Nada de `results: []` aqui: lista vazia é resultado de busca legítimo,
+        // falha do servidor não. Limpar o resultado anterior evita que ele seja
+        // exibido como se fosse a resposta deste termo.
+        setServerSearch(null);
+        setServerSearchError({ term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
         return;
       }
       // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
@@ -252,7 +261,12 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
   // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
   // anunciar um resultado que ainda não existe.
-  const isSearching = searchActive && serverSearch?.term !== searchTerm;
+  // A falha do servidor tem precedência: com erro não se está mais "buscando" (a
+  // resposta chegou) e o que a tela mostra é a falha, não um resultado.
+  const searchError = searchActive && serverSearchError?.term === searchTerm
+    ? serverSearchError.message
+    : null;
+  const isSearching = searchActive && !searchError && serverSearch?.term !== searchTerm;
 
   const filteredMessages = useMemo(() => {
     if (!searchActive) return messages;
@@ -448,6 +462,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     messages,
     filteredMessages,
     isSearching,
+    searchError,
     isLoading,
     isMuted,
     canTransfer,

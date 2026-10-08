@@ -127,4 +127,41 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
 
     expect(result.current.isSearching).toBe(false);
   });
+
+  it('falha da RPC vira estado de erro, não "busca sem resultado"', async () => {
+    // O defeito recusado: a falha era gravada como `results: []`, indistinguível
+    // de uma busca legítima que não achou nada — a tela anunciava "Nenhuma
+    // mensagem encontrada" para um servidor fora do ar.
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'RPC indisponível' } });
+
+    const { result } = renderHook(() => useTeamChatPanel(convA));
+    act(() => { result.current.setSearchQuery('contrato'); });
+    await esperarDebounce();
+
+    // O erro é exposto como estado próprio...
+    expect(result.current.searchError).toBeTruthy();
+    expect(result.current.searchError).toMatch(/não foi possível buscar/i);
+    // ...e a resposta (com falha) NÃO deixa a tela presa em "buscando".
+    expect(result.current.isSearching).toBe(false);
+    // A lista vazia não é o veredito da busca: o aviso de erro é.
+    expect(result.current.filteredMessages).toEqual([]);
+  });
+
+  it('a falha some quando a busca seguinte é bem-sucedida', async () => {
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'RPC indisponível' } });
+    const { result } = renderHook(() => useTeamChatPanel(convA));
+    act(() => { result.current.setSearchQuery('contrato'); });
+    await esperarDebounce();
+    expect(result.current.searchError).toBeTruthy();
+
+    h.rpc.mockResolvedValue({
+      data: [{ id: 'm-antiga', sender_id: 'user-3', content: 'contrato assinado', created_at: '2026-01-05T09:00:00+00:00', sender_name: 'Ana' }],
+      error: null,
+    });
+    act(() => { result.current.setSearchQuery('contrato renova'); });
+    await esperarDebounce();
+
+    expect(result.current.searchError).toBeNull();
+    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
+  });
 });
