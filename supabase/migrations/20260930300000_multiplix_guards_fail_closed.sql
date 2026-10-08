@@ -30,7 +30,8 @@
 -- A partir daí o corpo do guard é idêntico ao de 20260929590000 — nenhuma regra de negócio mudou
 -- (draft-only no INSERT, conteúdo congelado fora do rascunho, contadores do worker, etc.).
 --
--- Só estas duas funções entram: das 17 funções Multiplix que citam `auth.role()`, as outras 15 usam
+-- Só estas duas funções entram: das 15 funções Multiplix que citam `auth.role()` (contagem por FUNÇÃO
+-- distinta — 13 RPCs + estes 2 triggers — no catálogo canônico em 30/09/2026), as outras 13 usam
 -- `<> 'service_role' THEN RAISE EXCEPTION 'service_role_required'`, isto é, já são fail-closed (verificado
 -- no canônico; `transition_multiplix_dispatch` e `sweep_multiplix_stuck_recipients`, por exemplo).
 --
