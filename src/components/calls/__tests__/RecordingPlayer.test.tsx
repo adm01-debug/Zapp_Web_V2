@@ -75,6 +75,15 @@ function respostaAudio(corpo = 'ID3-audio') {
   return Promise.resolve(new Response(corpo, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }));
 }
 
+// `expect.any(Blob)` compara com o Blob GLOBAL do jsdom, mas `Response.blob()` do Node devolve o Blob do Node (outro realm):
+// no CI a checagem de classe falha mesmo com o objeto certo. Aqui se confere o que importa: tem bytes e o tipo do audio.
+function expectBlobDeAudio(mockCriar: ReturnType<typeof vi.fn>) {
+  expect(mockCriar).toHaveBeenCalled();
+  const recebido = mockCriar.mock.calls[0][0] as Blob;
+  expect(recebido.size).toBeGreaterThan(0);
+  expect(recebido.type).toBe('audio/mpeg');
+}
+
 function prepararAmbiente() {
   gravacao.atual = null;
   getSession.mockReset().mockResolvedValue({ data: { session: { access_token: 'jwt-local' } }, error: null });
@@ -116,7 +125,7 @@ describe('RecordingPlayer (T67)', () => {
         cache: 'no-store',
       }),
     );
-    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expectBlobDeAudio(createObjectURL);
     const audio = audioDoPlayer(container);
     expect(audio.getAttribute('src')).toBe('blob:gravacao-1');
     const htmlSemXmlnsSvg = JSON.stringify(document.body.innerHTML).replace(
@@ -261,7 +270,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     const audio = audioDoPlayer(container);
     const link = container.querySelector('a[download]') as HTMLAnchorElement | null;
 
-    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expectBlobDeAudio(createObjectURL);
     await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:gravacao-1'), { timeout: 10_000 });
     expect(link?.getAttribute('href')).toBe('blob:gravacao-1');
     expect(audio.getAttribute('src')).not.toMatch(/^https?:/);
