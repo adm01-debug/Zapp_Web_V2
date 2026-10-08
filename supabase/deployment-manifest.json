@@ -551,8 +551,8 @@
     },
     {
       "path": "supabase/functions/get-call-recording/index.ts",
-      "bytes": 4645,
-      "sha256": "5ba90705954488851434e3e4787431d85a64ad907c8f8b63956fa18831aa156d"
+      "bytes": 6230,
+      "sha256": "99defc59c94f367a754daef44c7027134dc3fc6ccdd5beed50130ca07792c1de"
     },
     {
       "path": "supabase/functions/get-mapbox-token/index.ts",
@@ -1412,7 +1412,7 @@
       "name": "get-call-recording",
       "entrypoint": "supabase/functions/get-call-recording/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b08ca050f2bd0cc3ebd19697ca620e8c15a590f52023ef2004c97a0470a5ab32",
+      "source_sha256": "ccdeb130171ef945945639aaa70595c68f097aa9e067c590c536fb45877beb98",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1908,5 +1908,5 @@
       ]
     }
   ],
-  "manifest_sha256": "16e34f9c21f8addb33053f134284ad0d45228a57438042d7726b2197e893a83d"
+  "manifest_sha256": "e2251ee0283ec16562ceeca73cd143829930138d18981f1fb7486fa87dc532ce"
 }
