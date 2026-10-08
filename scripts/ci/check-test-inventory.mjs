@@ -27,6 +27,33 @@ function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
+function arquivosNoDisco(relDir) {
+  const base = join(root, relDir);
+  const encontrados = [];
+  function visitar(dir, prefixo) {
+    for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+      const relativo = prefixo ? `${prefixo}/${entrada.name}` : entrada.name;
+      const absoluto = join(dir, entrada.name);
+      if (entrada.isDirectory()) visitar(absoluto, relativo);
+      else if (entrada.isFile()) encontrados.push(`${relDir}/${relativo}`);
+    }
+  }
+  visitar(base, '');
+  return encontrados.sort();
+}
+
+function arquivosVersionados(relDir) {
+  const executavelGit = resolverExecutavel('git');
+  const resultado = spawnSync(executavelGit, ['ls-files', relDir], { cwd: root, encoding: 'utf8' });
+  if (typeof resultado.stdout === 'string') {
+    return resultado.stdout.split('\n').filter(Boolean);
+  }
+  // A suite roda no GitHub via `deno test` sem --allow-run; nesse contexto a
+  // importacao do verificador nao pode depender de child process. No checkout do
+  // CI, disco e git contem o mesmo conjunto relevante para o inventario.
+  return arquivosNoDisco(relDir);
+}
+
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
 const ALLOWLIST = new Set([
   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
@@ -48,6 +75,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // #299 (R2-DB-014): harness em PostgreSQL 17 descartavel com docker;
+  // promover em db-guard.yml quando o runner de banco puder executar este custo.
+  'scripts/db-audit/talkx-cancel-em-voo-mantem-confirmacao.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
@@ -88,10 +118,9 @@ export const ALLOWLIST_NODE = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
-  .filter(f => f.endsWith('.test.ts'));
+function testesTsNoDisco() {
+  return arquivosVersionados('supabase/functions').filter(f => f.endsWith('.test.ts'));
+}
 
 const ciYaml = read('.github/workflows/ci.yml');
 
@@ -101,10 +130,9 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
-  .filter(f => f.endsWith('.test.sh'));
+function testesShNoDisco() {
+  return arquivosVersionados('scripts/db-audit').filter(f => f.endsWith('.test.sh'));
+}
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
 const testShInGuard = new Set(
@@ -158,10 +186,7 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
 
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
-    .stdout
-    .split('\n')
-    .filter(f => SUFIXO_SUITE_NODE.test(f));
+  return arquivosVersionados('scripts').filter(f => SUFIXO_SUITE_NODE.test(f));
 }
 
 /** Todo caminho/globo de suite Node declarado nos blocos `run:` dos workflows do repositório. */
@@ -190,14 +215,14 @@ export function orfaosDoInventario() {
     const testTsInCi = new Set(
       [...ciYaml.matchAll(/\bsupabase\/functions\/\S+\.test\.ts\b/g)].map(m => m[0])
     );
-    for (const f of testTsOnDisk) {
+    for (const f of testesTsNoDisco()) {
       if (!testTsInCi.has(f) && !ALLOWLIST.has(f)) {
         orphans.push({ file: f, yaml: 'ci.yml' });
       }
     }
   }
 
-  for (const f of testShOnDisk) {
+  for (const f of testesShNoDisco()) {
     if (!testShInGuard.has(f) && !ALLOWLIST.has(f)) {
       orphans.push({ file: f, yaml: 'db-guard.yml' });
     }

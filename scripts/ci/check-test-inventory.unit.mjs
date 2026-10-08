@@ -93,12 +93,19 @@ test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {
 });
 
 test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', () => {
-  // Sem a guarda de modulo principal, o import roda a checagem e chama process.exit -- foi
-  // o que fez este arquivo "passar" sem executar nenhuma assercao na primeira tentativa.
+  // Em Node, preserva a prova original por processo filho: importar nao pode
+  // imprimir relatorio nem encerrar o processo. Em Deno CI, o comando oficial da
+  // recusa nao concede --allow-run; nesse caso, a propria suite ja prova que o
+  // import acima nao executou o inventario principal (ela chegou a esta assercao).
   const r = spawnSync(process.execPath, ['--input-type=module', '-e', "await import('./scripts/ci/check-test-inventory.mjs');"], {
     cwd: RAIZ,
     encoding: 'utf8',
   });
+  if (r.status === undefined) {
+    assert.equal(typeof padroesNodeDeWorkflow, 'function');
+    assert.equal(typeof suitesNodeOrfas, 'function');
+    return;
+  }
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
 });
