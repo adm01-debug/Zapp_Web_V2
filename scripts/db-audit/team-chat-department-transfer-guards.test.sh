@@ -55,6 +55,18 @@ expect_error_as() {
   [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$l"
 }
+expect_value_as() {
+  local l="$1" e="$2" j="$3" s="$4" a
+  a="$(as_user "$j" "$s" | tail -n1)"
+  [[ "$a" == "$e" ]] || { printf '%s\n' "$a" >&2; fail "$l: esperado '$e', obtido '$a'"; }
+  printf '[PASS] %s\n' "$l"
+}
+expect_returning_as() {   # quantas linhas de DADOS o comando devolveu (RETURNING), como o papel real
+  local l="$1" e="$2" j="$3" s="$4" n
+  n="$(as_user "$j" "$s" | grep -cE '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || true)"
+  [[ "$n" == "$e" ]] || fail "$l: esperado $e linha(s) de retorno, obtido $n"
+  printf '[PASS] %s\n' "$l"
+}
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
@@ -385,4 +397,31 @@ expect_error_as 'C.4 ...e a guarda de ator-membro tambem volta na reaplicacao' \
   'actor_not_a_member' "$OTTO" \
   "SELECT public.transfer_team_conversation_ownership('$G_EX','$P_MARIA');"
 
-printf '\nPASS: QA5-10 — departamento exige membro/admin na criacao, ex-membro nao transfere e ultimo owner so sai depois de transferir.\n'
+printf '\n============ BLOCO D — DELETE ... RETURNING: o caminho que o hook usa ============\n'
+# Observação do revisor na aprovação de 08/10: o hook passou a apagar com `.delete().select('id')`
+# (DELETE ... RETURNING). Medido aqui nos DOIS atores possíveis, para o caso não virar falso erro
+# nem falso sucesso.
+# D.1-D.4 — admin/supervisor FORA da conversa.
+expect_value_as 'D.1 admin fora da conversa NAO ve a conversa (policy de SELECT de team_conversations)' '0' \
+  "$ADM" "SELECT count(*) FROM public.team_conversations WHERE id='$G_ADM';"
+expect_value_as 'D.2 ...nem as linhas de membro dela' '0' \
+  "$ADM" "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_ADM';"
+expect_returning_as 'D.3 o DELETE+RETURNING desse admin devolve 0 linha (o hook mostraria erro)' '0' \
+  "$ADM" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_ADM' AND profile_id='$P_EVA' RETURNING id;"
+expect_value 'D.4 ...e NAO apagou nada: a linha do membro continua la (nao ha falso sucesso)' '1' \
+  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_ADM' AND profile_id='$P_EVA';"
+# D.5-D.6 — mesmo sendo OWNER, quem nao e admin so apaga a propria linha (a policy e propria-ou-admin).
+expect_returning_as 'D.5 owner sem papel admin NAO remove outro membro: 0 linhas' '0' \
+  "$DORA" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA' RETURNING id;"
+expect_value 'D.6 ...e a linha do outro membro fica intacta' '1' \
+  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA';"
+# D.7-D.9 — admin MEMBRO da conversa: o unico ator que a tela alcanca para remover alguem.
+psql_sql "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_MC','a0000000-0000-0000-0000-000000000006','member');" >/dev/null
+expect_value_as 'D.7 admin membro VE as linhas de membro da conversa' '4' \
+  "$ADM" "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC';"
+expect_returning_as 'D.8 admin membro remove outro membro e RECEBE a linha no RETURNING (o hook ve o sucesso)' '1' \
+  "$ADM" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA' RETURNING id;"
+expect_value 'D.9 ...e a remocao foi mesmo aplicada' '0' \
+  "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_MC' AND profile_id='$P_MARIA';"
+
+printf '\nPASS: QA5-10 — departamento exige membro/admin na criacao, ex-membro nao transfere, ultimo owner so sai depois de transferir e o DELETE filtrado aparece como erro.\n'
