@@ -1,10 +1,12 @@
 import type { ShortcutBinding } from '@/hooks/ui/useCustomShortcuts';
 
 /**
- * Etapa 77: rotas que montam o módulo de Tarefas (`?view=tasks` e `?view=pipeline`).
- * É o escopo dos 7 atalhos abaixo — fora dessas views o registry os ignora.
+ * Etapa 77: rotas que montam o módulo de Tarefas. Etapa E09: só `?view=tasks` —
+ * o Quadro passou a ser um modo DENTRO de Tarefas (`tasks-mode`), então a antiga
+ * view `pipeline` deixou de valer.
+ * É o escopo dos 7 atalhos abaixo — fora dessa view o registry os ignora.
  */
-export const TASKS_VIEWS = ['tasks', 'pipeline'];
+export const TASKS_VIEWS = ['tasks'];
 
 export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   // Chat shortcuts
@@ -36,7 +38,8 @@ export const DEFAULT_SHORTCUTS: ShortcutBinding[] = [
   { id: 'clear-selection', name: 'Limpar seleção', description: 'Remove a seleção atual', defaultKey: 'Escape', defaultModifiers: {}, category: 'selection' },
   { id: 'mark-read', name: 'Marcar como lido', description: 'Marca selecionados como lidos', defaultKey: 'r', defaultModifiers: {}, category: 'selection' },
   { id: 'bulk-archive', name: 'Arquivar selecionados', description: 'Arquiva todas as conversas selecionadas', defaultKey: 'e', defaultModifiers: { ctrlKey: true, shiftKey: true }, category: 'selection' },
-  // Task shortcuts (etapa 77) — valem só em `?view=tasks` e `?view=pipeline`.
+  // Task shortcuts (etapa 77) — valem só em `?view=tasks` (E09: a antiga view
+  // `pipeline` saiu do escopo; o Quadro é um modo de Tarefas).
   // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não
   // conhece o estado de tela do módulo); a guarda de input é a do handler
   // global, que ignora qualquer um destes ids dentro de INPUT/TEXTAREA.

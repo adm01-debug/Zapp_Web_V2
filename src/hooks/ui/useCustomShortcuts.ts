@@ -28,7 +28,8 @@ export interface ShortcutBinding {
   /**
    * Etapa 77: views (`?view=`) em que o atalho vale. Ausente = global.
    * O `useGlobalKeyboardShortcuts` ignora o atalho fora do escopo — é assim que
-   * os 7 atalhos de Tarefas ficam presos a `tasks`/`pipeline`.
+   * os 7 atalhos de Tarefas ficam presos a `tasks` (E09: o Quadro virou um modo
+   * de Tarefas, então `pipeline` saiu do escopo).
    */
   scope?: string[];
   /**
