@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 
 // Mocks comuns aos testes de controle de volume (toast/logger/framer-motion/ResizeObserver).
 import '@/test/volumeControlMocks';
@@ -19,6 +19,8 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 import { SoundVolumeControl } from '../SoundVolumeControl';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { log } from '@/lib/logger';
+import { toast } from '@/hooks/ui/use-toast';
 
 const renderControl = () =>
   render(
@@ -31,12 +33,18 @@ const renderControl = () =>
 const botao = () => screen.getByRole('button', { name: /Volume dos alertas|Sons de alerta mudos/ });
 /** A roda do mouse é ouvida no <span> que embrulha o botão (rootRef). */
 const embalagem = () => botao().parentElement as HTMLElement;
+/** Roda do mouse: `deltaY < 0` sobe, `deltaY > 0` desce (5 de cada vez). */
+const girarRoda = (deltaY: number) =>
+  act(() => {
+    embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true }));
+  });
 
 describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
   beforeEach(() => {
     h.settings.soundEnabled = true;
     h.settings.soundVolume = 70;
-    h.updateSettings.mockClear();
+    h.updateSettings.mockReset();
+    h.updateSettings.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -44,52 +52,44 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     vi.useRealTimers();
   });
 
-  it('sobe o volume de 5 em 5 com a roda para cima', () => {
+  it('sobe o volume de 5 em 5 com a roda para cima', async () => {
     renderControl();
-    act(() => {
-      embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
-    });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 });
+    girarRoda(-100);
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 }));
   });
 
-  it('desce o volume de 5 em 5 com a roda para baixo', () => {
+  it('desce o volume de 5 em 5 com a roda para baixo', async () => {
     renderControl();
-    act(() => {
-      embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }));
-    });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 65 });
+    girarRoda(100);
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 65 }));
   });
 
-  it('as setas ↑/↓ ajustam o volume com o foco no botão (e não em qualquer lugar)', () => {
+  it('as setas ↑/↓ ajustam o volume com o foco no botão (e não em qualquer lugar)', async () => {
     renderControl();
 
     fireEvent.keyDown(document.body, { key: 'ArrowUp' });
     expect(h.updateSettings).not.toHaveBeenCalled();
 
     fireEvent.keyDown(botao(), { key: 'ArrowUp' });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 });
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 }));
 
     h.updateSettings.mockClear();
     fireEvent.keyDown(botao(), { key: 'ArrowDown' });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 65 });
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 65 }));
   });
 
-  it('o volume para no mínimo 10 (não desce abaixo)', () => {
+  it('o volume para no mínimo 10 (não desce abaixo)', async () => {
     h.settings.soundVolume = 10;
     renderControl();
-    act(() => {
-      embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }));
-    });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 10 });
+    girarRoda(100);
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 10 }));
   });
 
-  it('o volume para no máximo 100 (não sobe acima)', () => {
+  it('o volume para no máximo 100 (não sobe acima)', async () => {
     h.settings.soundVolume = 100;
     renderControl();
-    act(() => {
-      embalagem().dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
-    });
-    expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 100 });
+    girarRoda(-100);
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 100 }));
   });
 
   it('clique alterna o mudo (soundEnabled) — e não mexe no volume', () => {
@@ -169,5 +169,135 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     h.settings.soundEnabled = false;
     renderControl();
     expect(screen.getByTestId('sound-volume-low-dot')).toBeInTheDocument();
+  });
+
+  // ─── S36–S39 / D06: gravação agrupada, desfazer, indicador e separação do mudo ───
+
+  it('S36/D06: a tela anda na hora, mas vários passos do mesmo movimento viram UMA gravação', async () => {
+    renderControl();
+
+    girarRoda(-100);
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 75%');
+
+    girarRoda(-100);
+    girarRoda(-100);
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 85%');
+
+    // A gravação sai ~400 ms depois do ÚLTIMO movimento, com o valor final — um POST,
+    // não um por passo (era o defeito B6: 7 gravações em ~10 ações).
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 85 }));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(h.updateSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('S37: gravação rejeitada volta ao valor anterior, encerra salvando e não duplica toast', async () => {
+    h.updateSettings.mockRejectedValueOnce(new Error('rede'));
+
+    renderControl();
+    fireEvent.keyDown(botao(), { key: 'Enter' });
+    await screen.findByRole('slider', { name: 'Volume dos alertas' });
+
+    girarRoda(-100);
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 75%');
+
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 }));
+    await waitFor(() => expect(botao()).toHaveAccessibleName('Volume dos alertas: 70%'));
+    await waitFor(() => expect(screen.queryByTestId('sound-volume-saving')).not.toBeInTheDocument());
+
+    expect(log.warn).toHaveBeenCalledWith(
+      'Failed to commit sidebar sound volume:',
+      expect.objectContaining({ message: 'rede' }),
+    );
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('S37: pendente é solto após gravar e a tela volta a seguir as preferências', async () => {
+    renderControl();
+
+    girarRoda(-100);
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 75%');
+
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 }));
+
+    // Gravação bem-sucedida com o mock parado: o valor pendente é solto, então a tela
+    // volta a seguir `settings` (70%) até o hook/React Query publicar a preferência nova.
+    await waitFor(() => expect(botao()).toHaveAccessibleName('Volume dos alertas: 70%'));
+  });
+
+  it('S38: o indicador de "salvando" aparece durante a gravação sem travar o slider', async () => {
+    let liberar: (() => void) | undefined;
+    h.updateSettings.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          liberar = () => resolve();
+        }),
+    );
+
+    renderControl();
+    fireEvent.keyDown(botao(), { key: 'Enter' });
+    const slider = await screen.findByRole('slider', { name: 'Volume dos alertas' });
+
+    girarRoda(-100);
+    expect(screen.queryByTestId('sound-volume-saving')).not.toBeInTheDocument();
+
+    expect(await screen.findByTestId('sound-volume-saving')).toBeInTheDocument();
+    // O aviso é do indicador, não um bloqueio: o slider continua utilizável.
+    expect(slider).not.toHaveAttribute('data-disabled');
+
+    await act(async () => {
+      liberar?.();
+    });
+    await waitFor(() => expect(screen.queryByTestId('sound-volume-saving')).not.toBeInTheDocument());
+  });
+
+  it('S36/D06: desmontar cancela a gravação agendada', async () => {
+    const { unmount } = renderControl();
+    girarRoda(-100);
+    unmount();
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(h.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('S39: mudo e volume não se misturam — desmutar devolve o último volume (nunca 0)', async () => {
+    h.settings.soundVolume = 45;
+    const { rerender } = renderControl();
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 45%');
+
+    fireEvent.click(botao());
+    expect(h.updateSettings).toHaveBeenCalledWith({ soundEnabled: false });
+    expect(h.updateSettings).not.toHaveBeenCalledWith(expect.objectContaining({ soundVolume: expect.any(Number) }));
+
+    h.settings.soundEnabled = false; // o hook aplica a preferência
+    rerender(
+      <TooltipProvider>
+        <SoundVolumeControl />
+      </TooltipProvider>,
+    );
+    expect(botao()).toHaveAccessibleName('Sons de alerta mudos');
+
+    fireEvent.keyDown(botao(), { key: 'Enter' });
+    const slider = await screen.findByRole('slider', { name: 'Volume dos alertas' });
+    // O 0 não é um valor alcançável no controle dos alertas: mudo não é "volume zero".
+    expect(slider).toHaveAttribute('aria-valuemin', '10');
+
+    h.settings.soundEnabled = true; // desmuta
+    rerender(
+      <TooltipProvider>
+        <SoundVolumeControl />
+      </TooltipProvider>,
+    );
+    expect(botao()).toHaveAccessibleName('Volume dos alertas: 45%');
+  });
+
+  it('S39: ajustar o volume com o alerta mudo não desmuta', async () => {
+    h.settings.soundEnabled = false;
+    renderControl();
+
+    girarRoda(-100);
+    await waitFor(() => expect(h.updateSettings).toHaveBeenCalledWith({ soundVolume: 75 }));
+    expect(h.updateSettings).not.toHaveBeenCalledWith(
+      expect.objectContaining({ soundEnabled: expect.any(Boolean) }),
+    );
   });
 });

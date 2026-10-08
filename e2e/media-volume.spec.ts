@@ -29,8 +29,13 @@ import {
 //   inventado em produção). Essa parte é coberta por
 //   `src/components/inbox/__tests__/MediaVolume.test.tsx` (E07/E12/E44) e pelo
 //   teste do elemento em `src/lib/__tests__/mediaVolumeElement.test.ts`.
-const LABEL_VOLUME = MEDIA_VOLUME_LABEL;
+// S28 — o rótulo do fone passou a trazer o volume no fim ("Volume dos áudios e vídeos:
+// 80%"), como o do alto-falante; mudo continua com rótulo próprio. `LABEL_VOLUME` casa o
+// estado SEM mudo (prefixo, porque o valor muda a cada passo) e `LABEL_CONTROLE` casa os
+// dois estados, para achar o botão sem saber em que estado ele está.
+const LABEL_VOLUME = new RegExp(`^${MEDIA_VOLUME_LABEL}`);
 const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
+const LABEL_CONTROLE = new RegExp(`${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED}`);
 const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
 const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
 const CHAVE_VOLUME = MEDIA_VOLUME_STORAGE_KEYS.volume;
@@ -64,7 +69,7 @@ test.describe('Volume das mídias de conversa', () => {
     // apareciam como *flaky* (1ª tentativa vermelha, retry verde).
     test.skip(browserName !== 'chromium', 'spec roda no project chromium-authenticated');
 
-    const controle = page.getByRole('button', { name: new RegExp(`${LABEL_VOLUME}|${LABEL_MUDO}`) });
+    const controle = page.getByRole('button', { name: LABEL_CONTROLE });
     await expect(controle).toBeVisible();
 
     await controle.focus();
@@ -103,7 +108,7 @@ test.describe('Volume das mídias de conversa', () => {
     await page.getByTestId('status-chip-all').click();
     await page.locator('[data-testid="conversation-item"]').first().click();
 
-    const controleDepois = page.getByRole('button', { name: new RegExp(`${LABEL_VOLUME}|${LABEL_MUDO}`) });
+    const controleDepois = page.getByRole('button', { name: LABEL_CONTROLE });
     await controleDepois.focus();
     await controleDepois.press('Enter');
 
