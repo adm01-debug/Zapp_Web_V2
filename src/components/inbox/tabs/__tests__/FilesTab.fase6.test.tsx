@@ -128,12 +128,12 @@ beforeEach(() => {
 });
 
 describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
-  it('com 959 px e preferência 5, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', () => {
-    seedPrefs(5);
+  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', () => {
+    seedPrefs(8);
     const rect = mockWidth(959);
     renderTab([IMAGE, DOC]);
 
-    // antes: capacidade 5 (min(pref 5, capacidade 5)) — o grid mede o contêiner real
+    // antes: capacidade 5 (min(pref 8, capacidade 5)) — o grid mede o contêiner real
     expect(gridClass()).toContain('grid-cols-5');
 
     fireEvent.click(screen.getByText('contrato.pdf'));
@@ -144,16 +144,16 @@ describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
     rect.mockRestore();
   });
 
-  it('com 1150 px abre lado a lado (260 px) e o grid cai de 5 para 4', () => {
-    seedPrefs(5);
-    const rect = mockWidth(1150);
+  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', () => {
+    seedPrefs(8);
+    const rect = mockWidth(1474);
     renderTab([IMAGE, DOC]);
 
-    expect(gridClass()).toContain('grid-cols-5');
+    expect(gridClass()).toContain('grid-cols-8');
 
     fireEvent.click(screen.getByText('contrato.pdf'));
 
-    expect(gridClass()).toContain('grid-cols-4');
+    expect(gridClass()).toContain('grid-cols-6');
     expect(screen.getByTestId('file-detail-panel-inline')).toBeInTheDocument();
     expect(screen.queryByTestId('file-detail-sheet')).not.toBeInTheDocument();
     // o mesmo conteúdo nos dois modos
@@ -272,21 +272,5 @@ describe('FilesTab fase 6 — exclusão com AlertDialog (etapa 35)', () => {
     // sem refetch devolver (etapa 09), o item só sai quando a query invalida; aqui o efeito
     // observável é a seleção zerar — a invalidação das chaves é coberta no teste do hook.
     expect(await screen.findByText('0 selecionados')).toBeInTheDocument();
-  });
-});
-
-describe('FilesTab — Arquivos → Layout → Colunas', () => {
-  it('o popover Layout mostra só as 3 opções de coluna do domínio (3, 4 e 5)', () => {
-    const rect = mockWidth(959);
-    renderTab([IMAGE, DOC]);
-
-    fireEvent.click(screen.getByTestId('files-layout-trigger'));
-
-    expect(screen.getByText('Colunas')).toBeInTheDocument();
-    const radios = within(screen.getByRole('radiogroup')).getAllByRole('radio');
-    expect(radios.map((radio) => radio.getAttribute('aria-label'))).toEqual(['3 colunas', '4 colunas', '5 colunas']);
-    expect(screen.queryByTestId('files-columns-6')).toBeNull();
-    expect(screen.queryByTestId('files-columns-8')).toBeNull();
-    rect.mockRestore();
   });
 });

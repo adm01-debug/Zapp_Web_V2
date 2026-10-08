@@ -56,17 +56,17 @@ describe('columnsCapacity', () => {
 });
 
 describe('effectiveColumns', () => {
-  it('tabela do plano: larguras 683/959/1151/1282/1474 com a preferencia maxima (5) devolvem 3/5/5/5/5', () => {
+  it('tabela do plano: larguras 683/959/1151/1282/1474 com preferencia 8 devolvem 3/5/6/6/8', () => {
     const larguras = [683, 959, 1151, 1282, 1474];
-    const esperado = [3, 5, 5, 5, 5];
+    const esperado = [3, 5, 6, 6, 8];
     larguras.forEach((largura, i) => {
-      expect(effectiveColumns(columnsCapacity(largura), 5)).toBe(esperado[i]);
+      expect(effectiveColumns(columnsCapacity(largura), 8)).toBe(esperado[i]);
     });
   });
 
-  it('capacidade 7 nao vira 7: a maior opcao valida e 5', () => {
+  it('capacidade 7 nao vira 7: a maior opcao valida e 6', () => {
     expect(columnsCapacity(1282)).toBe(7);
-    expect(effectiveColumns(7, 5)).toBe(5);
+    expect(effectiveColumns(7, 8)).toBe(6);
   });
 
   it('preferencia menor que a capacidade manda: 4 colunas em 1474 px continua 4', () => {
@@ -74,7 +74,7 @@ describe('effectiveColumns', () => {
   });
 
   it('abaixo de 3 colunas de capacidade, usa a propria capacidade (adaptacao automatica)', () => {
-    expect(effectiveColumns(2, 5)).toBe(2);
+    expect(effectiveColumns(2, 8)).toBe(2);
     expect(effectiveColumns(1, 4)).toBe(1);
   });
 });
@@ -92,19 +92,21 @@ describe('useFilesContainerColumns', () => {
       { n: 3, fits: true },
       { n: 4, fits: true },
       { n: 5, fits: true },
+      { n: 6, fits: false },
+      { n: 8, fits: false },
     ]);
   });
 
   it('nao altera a preferencia: ela e entrada, nao saida', () => {
     const ref = createRef<HTMLDivElement>();
-    const element = containerOf(959);
+    const element = containerOf(1200);
     (ref as { current: HTMLDivElement | null }).current = element;
 
     const { result, rerender } = renderHook(({ preferred }) => useFilesContainerColumns(ref, preferred), {
-      initialProps: { preferred: 5 as FilesColumns },
+      initialProps: { preferred: 8 as FilesColumns },
     });
-    expect(result.current.capacity).toBe(5);
-    expect(result.current.effective).toBe(5);
+    expect(result.current.capacity).toBe(6);
+    expect(result.current.effective).toBe(6); // limitado pela capacidade, nao muda o preferido
 
     rerender({ preferred: 3 });
     expect(result.current.effective).toBe(3);
@@ -112,9 +114,9 @@ describe('useFilesContainerColumns', () => {
 
   it('antes da primeira medida respeita a preferencia e nao desabilita opcao nenhuma', () => {
     const ref = createRef<HTMLDivElement>(); // sem elemento: nada a medir
-    const { result } = renderHook(() => useFilesContainerColumns(ref, 5));
+    const { result } = renderHook(() => useFilesContainerColumns(ref, 6));
     expect(result.current.capacity).toBeNull();
-    expect(result.current.effective).toBe(5);
+    expect(result.current.effective).toBe(6);
     expect(result.current.available.every((option) => option.fits)).toBe(true);
   });
 
@@ -123,7 +125,7 @@ describe('useFilesContainerColumns', () => {
     const element = containerOf(683);
     (ref as { current: HTMLDivElement | null }).current = element;
 
-    const { result } = renderHook(() => useFilesContainerColumns(ref, 5));
+    const { result } = renderHook(() => useFilesContainerColumns(ref, 8));
     expect(result.current.effective).toBe(3);
 
     element.getBoundingClientRect = () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });
@@ -133,6 +135,6 @@ describe('useFilesContainerColumns', () => {
     });
 
     expect(result.current.capacity).toBe(8);
-    expect(result.current.effective).toBe(5);
+    expect(result.current.effective).toBe(8);
   });
 });

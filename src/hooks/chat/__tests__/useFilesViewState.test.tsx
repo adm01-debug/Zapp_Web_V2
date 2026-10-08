@@ -68,28 +68,18 @@ describe('useFilesViewState — preferencias (localStorage)', () => {
     expect(result.current.columns).toBe(4);
   });
 
-  it('preferencia salva de 6 ou 8 colunas (removidas do dominio) reabre no default 4', () => {
-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 1, viewMode: 'grid', columns: 6 }));
-    const seis = renderHook(() => useFilesViewState(USER, CONTACT));
-    expect(seis.result.current.columns).toBe(4);
-
-    localStorage.setItem(filesViewStorageKey(USER), JSON.stringify({ v: 1, viewMode: 'grid', columns: 8 }));
-    const oito = renderHook(() => useFilesViewState(USER, CONTACT));
-    expect(oito.result.current.columns).toBe(4);
-  });
-
   it('persiste viewMode e columns, sem tocar nas chaves do catalogo do Promo Gifts', () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
     const getItem = vi.spyOn(Storage.prototype, 'getItem');
     const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
 
     act(() => result.current.setViewMode('list'));
-    act(() => result.current.setColumns(5));
+    act(() => result.current.setColumns(6));
 
     expect(JSON.parse(localStorage.getItem(filesViewStorageKey(USER))!)).toEqual({
       v: 1,
       viewMode: 'list',
-      columns: 5,
+      columns: 6,
     });
 
     const touchedKeys = [...setItem.mock.calls, ...getItem.mock.calls].map((call) => String(call[0]));

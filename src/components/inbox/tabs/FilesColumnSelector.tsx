@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
  * nao escreve em `localStorage` e nao faz clamp por conta propria (quem decide o que cabe e
  * o hook de contêiner; quem persiste e o hook de estado).
  *
- * As opcoes (3, 4 e 5) ficam **sempre visiveis**: a que nao cabe aparece `aria-disabled` com o motivo,
+ * As 5 opcoes ficam **sempre visiveis**: a que nao cabe aparece `aria-disabled` com o motivo,
  * para o operador entender o que precisa recolher em vez de achar que a opcao nao existe.
  */
 
@@ -17,6 +17,8 @@ const ICON_SHAPE: Record<FilesColumns, { cols: number; rows: number }> = {
   3: { cols: 3, rows: 2 },
   4: { cols: 4, rows: 2 },
   5: { cols: 5, rows: 2 },
+  6: { cols: 3, rows: 3 },
+  8: { cols: 4, rows: 3 },
 };
 
 function GridIcon({ cols, rows = 2 }: { cols: number; rows?: number }) {

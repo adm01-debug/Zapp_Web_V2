@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { FilesLayoutPopover } from '../FilesLayoutPopover';
 import type { ColumnOption } from '@/hooks/chat/useFilesContainerColumns';
 
-const OPCOES: ColumnOption[] = ([3, 4, 5] as const).map((n) => ({ n, fits: true }));
+const OPCOES: ColumnOption[] = ([3, 4, 5, 6, 8] as const).map((n) => ({ n, fits: true }));
 
 function abrir(props: Partial<React.ComponentProps<typeof FilesLayoutPopover>> = {}) {
   const onChange = vi.fn();
@@ -65,14 +65,14 @@ describe('FilesLayoutPopover (etapa 12)', () => {
   });
 
   it('não guarda estado próprio: o valor das colunas vem das props', () => {
-    const { onChange } = abrir({ columns: 5 });
+    const { onChange } = abrir({ columns: 6 });
     const radios = screen.getAllByRole('radio');
-    expect(radios).toHaveLength(3);
-    expect(screen.getByTestId('files-columns-5')).toHaveAttribute('aria-checked', 'true');
+    expect(radios).toHaveLength(5);
+    expect(screen.getByTestId('files-columns-6')).toHaveAttribute('aria-checked', 'true');
 
     fireEvent.click(screen.getByTestId('files-columns-3'));
     expect(onChange).toHaveBeenCalledWith(3);
     // segue marcando o valor das props (controlado), não o clicado
-    expect(screen.getByTestId('files-columns-5')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByTestId('files-columns-6')).toHaveAttribute('aria-checked', 'true');
   });
 });
