@@ -360,4 +360,29 @@ expect_ok_as 'B.20 depois de transferir, OTTO (agora member) sai de verdade' \
 expect_value 'B.21 saida aplicada e o grupo ficou com owner (DORA)' '1' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_LEAVE' AND member_role='owner' AND profile_id='$P_DORA';"
 
+printf '\n============ BLOCO C — rollback da migration (volta ao corpo de 20261004185228) ============\n'
+# O bloco de rollback e EXTRAIDO da propria migration (nunca reescrito a mao) e executado
+# no mesmo container: se ele nao devolver o comportamento anterior, o rollback e fachada.
+grep -E '^--   create or replace function' "$migration_fix" | sed 's/^--   //' > "$tmp_dir/rollback.sql"
+[[ -s "$tmp_dir/rollback.sql" ]] || fail 'nao consegui extrair o bloco de rollback da migration'
+[[ "$(grep -c 'create or replace function' "$tmp_dir/rollback.sql")" = '2' ]] \
+  || fail 'o bloco de rollback nao trouxe as DUAS funcoes'
+psql_file "$tmp_dir/rollback.sql" >/dev/null
+psql_file "$tmp_dir/seed.sql" >/dev/null
+
+CONV_C="$(as_user "$EVA" "SELECT public.create_team_group_conversation(NULL, '{}'::uuid[], '$DEP1');" | tail -n1)"
+[[ "$CONV_C" =~ ^[0-9a-f-]{36}$ ]] || fail "C.1 o rollback nao devolveu o defeito da criacao: $CONV_C"
+printf '[PASS] %s\n' 'C.1 (DEFEITO de volta) EVA, fora do DEP1, cria de novo a conversa do departamento'
+expect_ok_as 'C.2 (DEFEITO de volta) OTTO, ex-membro que segue created_by, transfere de novo G_EX' \
+  "$OTTO" "SELECT public.transfer_team_conversation_ownership('$G_EX','$P_MARIA');"
+
+psql_file "$migration_fix" >/dev/null
+psql_file "$tmp_dir/seed.sql" >/dev/null
+expect_error_as 'C.3 reaplicar a migration torna a guarda efetiva de novo (idempotente)' \
+  'department_membership_required' "$EVA" \
+  "SELECT public.create_team_group_conversation(NULL, '{}'::uuid[], '$DEP1');"
+expect_error_as 'C.4 ...e a guarda de ator-membro tambem volta na reaplicacao' \
+  'actor_not_a_member' "$OTTO" \
+  "SELECT public.transfer_team_conversation_ownership('$G_EX','$P_MARIA');"
+
 printf '\nPASS: QA5-10 — departamento exige membro/admin na criacao, ex-membro nao transfere e ultimo owner so sai depois de transferir.\n'
