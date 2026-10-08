@@ -125,6 +125,16 @@ const ROTA_PAPEL_ERRO = {
 const ROTA_RATE = { match: "/rest/v1/rpc/ai_rate_limit_hit", body: 1 };
 const ROTA_PROVIDERS = { match: "/rest/v1/ai_providers", body: [PROVIDER_ROW] };
 const ROTA_PROFILES = { match: "/rest/v1/profiles", body: [] };
+// IA-009: o kill switch lê `feature_flags` NO SERVIDOR antes de despachar. Aqui as
+// chaves estão LIGADAS de propósito — este arquivo prova o fluxo normal do proxy, e o
+// bloqueio por flag tem teste próprio em `_shared/ai-kill-switch.test.ts`.
+const ROTA_FLAGS = {
+  match: "/rest/v1/feature_flags",
+  body: [
+    { key: "ai.capability.ai-proxy", enabled: true },
+    { key: "ai.provider.openai", enabled: true },
+  ],
+};
 // O select de cota (HEAD) lê `content-range`; o insert (POST) grava a linha.
 const ROTA_USAGE = {
   match: "/rest/v1/ai_usage_logs",
@@ -142,7 +152,7 @@ const ROTA_OPENAI = {
   },
 };
 
-const ROTAS_BASE = [ROTA_AUTH, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI];
+const ROTAS_BASE = [ROTA_AUTH, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI, ROTA_FLAGS];
 
 function makeRequest(body: unknown): Request {
   return new Request("https://stub.supabase.co/functions/v1/ai-proxy", {
@@ -311,3 +321,96 @@ Deno.test("R2-API-032 caso 5 (controlo): test:false do MESMO usuário comum segu
     }
   });
 });
+
+Deno.test("IA-009 ai-proxy: origem desligada → 503/AI_DISABLED sem chamar o provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const flagsDesligadas = {
+      match: "/rest/v1/feature_flags",
+      body: [
+        { key: "ai.capability.ai-proxy", enabled: true },
+        { key: "ai.provider.openai", enabled: false },
+      ],
+    };
+    const stub = withFetch([...ROTAS_BASE.filter((r) => r !== ROTA_FLAGS), ROTA_PAPEL_NEGADO, flagsDesligadas]);
+    try {
+      const res = await handleAiProxy(makeRequest({
+        messages: [{ role: "user", content: "ola" }],
+        test: false,
+      }));
+      assert(res.status === 503, `origem desligada precisa devolver 503, veio ${res.status}`);
+      const corpo = await res.json() as { error?: { code?: string } };
+      assert(corpo.error?.code === "AI_DISABLED", `codigo do bloqueio precisa ser AI_DISABLED: ${JSON.stringify(corpo)}`);
+      assert(
+        paraOpenAI(stub.chamadas).length === 0,
+        `provedor desligado nao pode ser chamado: ${paraOpenAI(stub.chamadas).map((c) => c.url).join(",")}`,
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("IA-009 ai-proxy: destino de fallback desligado não troca fornecedor e sobe o erro da origem", async () => {
+  await withEnv({ ...ENV_OK, GEMINI_TEST_KEY: "chave-gemini-teste" } as typeof ENV_OK & { GEMINI_TEST_KEY: string }, async () => {
+    const fallbackId = "7f2b7f8e-cccc-4000-8000-0000000000cc";
+    const originComFallback = {
+      ...PROVIDER_ROW,
+      config: { allow_fallback: true, fallback_provider_id: fallbackId },
+    };
+    const fallback = {
+      ...PROVIDER_ROW,
+      id: fallbackId,
+      name: "Gemini fallback desligado",
+      provider_type: "google_gemini",
+      api_endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini:generateContent",
+      api_key_secret_name: "GEMINI_TEST_KEY",
+      model: "gemini-fallback",
+      is_default: false,
+    };
+    const rotasProvidersComFallback = { match: "/rest/v1/ai_providers", body: [originComFallback, fallback] };
+    const flagsComFallbackDesligado = {
+      match: "/rest/v1/feature_flags",
+      body: [
+        { key: "ai.capability.ai-proxy", enabled: true },
+        { key: "ai.provider.openai", enabled: true },
+        { key: "ai.provider.gemini", enabled: false },
+      ],
+    };
+    const origemFalha = {
+      match: "api.openai.com/v1/chat/completions",
+      status: 500,
+      body: { error: "falha-real-da-origem" },
+    };
+    const fallbackNaoPodeSerChamado = {
+      match: "generativelanguage.googleapis.com/v1beta/models/gemini:generateContent",
+      body: { erro: "fallback nao deveria ser chamado" },
+    };
+    const stub = withFetch([
+      ...ROTAS_BASE.filter((r) => r !== ROTA_FLAGS && r !== ROTA_PROVIDERS && r !== ROTA_OPENAI),
+      rotasProvidersComFallback,
+      flagsComFallbackDesligado,
+      origemFalha,
+      fallbackNaoPodeSerChamado,
+      ROTA_PAPEL_NEGADO,
+    ]);
+    try {
+      const res = await handleAiProxy(makeRequest({
+        messages: [{ role: "user", content: "ola" }],
+        test: false,
+      }));
+      assert(res.status === 502, `sem fallback valido, erro real da origem deve subir como 502, veio ${res.status}`);
+      assert(
+        paraOpenAI(stub.chamadas).length >= 1,
+        "a origem precisa ser tentada antes de decidir fallback",
+      );
+      const chamadasFallback = stub.chamadas.filter((c) => new URL(c.url.replace(/^SEM_STUB /, "")).hostname === "generativelanguage.googleapis.com");
+      assert(
+        chamadasFallback.length === 0,
+        `destino de fallback desligado nao pode ser chamado: ${chamadasFallback.map((c) => c.url).join(",")}`,
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+

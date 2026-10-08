@@ -95,6 +95,7 @@ interface Cenario {
   fluxos: Linha[];
   mensagens: Linha[];
   artigos?: Linha[];
+  flags?: Linha[];
 }
 
 interface CenarioVivo {
@@ -186,6 +187,14 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
       use_for: ["auto_reply"],
       config: {},
     }],
+    // IA-009: o kill switch passou a ler `feature_flags` NO SERVIDOR (a flag era só do
+    // cliente). Aqui as chaves estão LIGADAS: este arquivo prova o ATENDIMENTO do bot, e
+    // o bloqueio por flag tem teste próprio em `_shared/ai-kill-switch.test.ts`.
+    // `ai.bot.<conexão>` ausente = sem pausa (desenho §2.4).
+    feature_flags: cenario.flags ?? [
+      { key: "ai.capability.chatbot_l1", enabled: true },
+      { key: "ai.provider.openai", enabled: true },
+    ],
     knowledge_base_articles: cenario.artigos ?? [],
     ai_usage_logs: [],
   };
@@ -449,3 +458,50 @@ Deno.test("IA-CHATBOT-001: connectionId de TIPO ERRADO (não-string) é rejeitad
     },
   );
 });
+
+Deno.test("IA-009 chatbot-l1: ai.bot.<connectionId> false pausa sem flow, histórico nem provedor", async () => {
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [mensagem("HISTORICO-A", CONEXAO_A, "2026-01-01T00:00:20Z")],
+      flags: [
+        { key: "ai.capability.chatbot_l1", enabled: true },
+        { key: `ai.bot.${CONEXAO_A}`, enabled: false },
+      ],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A);
+
+      igual(status, 200, "pausa do bot nao e erro HTTP");
+      igual(corpo.handled, false, "bot pausado nao pode atender");
+      igual(corpo.reason, "ai_disabled", "motivo publico do kill switch");
+      igual(consulta(vivo, "chatbot_flows").length, 0, "bot pausado nao pode consultar flow");
+      igual(consulta(vivo, "messages").length, 0, "bot pausado nao pode consultar historico");
+      igual(consulta(vivo, "rpc/search_knowledge_base").length, 0, "bot pausado nao pode consultar RAG");
+      igual(vivo.prompts.length, 0, "bot pausado nao pode chamar o provedor");
+    },
+  );
+});
+
+Deno.test("IA-009 chatbot-l1: sem linha de pausa da conexão o atendimento segue normal", async () => {
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [mensagem("HISTORICO-A", CONEXAO_A, "2026-01-01T00:00:20Z")],
+      flags: [
+        { key: "ai.capability.chatbot_l1", enabled: true },
+        { key: "ai.provider.openai", enabled: true },
+      ],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A);
+
+      igual(status, 200, "resposta do handler");
+      igual(corpo.handled, true, "sem linha de pausa, o bot atende normalmente");
+      igual(consulta(vivo, "chatbot_flows").length, 1, "flow precisa continuar sendo consultado");
+      igual(consulta(vivo, "messages").length, 1, "historico precisa continuar sendo consultado");
+      igual(vivo.prompts.length, 1, "provedor precisa ser chamado no caminho normal");
+    },
+  );
+});
+
