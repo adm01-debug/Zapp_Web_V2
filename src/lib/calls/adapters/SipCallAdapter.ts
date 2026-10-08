@@ -29,6 +29,18 @@ interface SdhLike {
   peerConnection?: RTCPeerConnection;
 }
 
+/**
+ * Fatia das opções do `SessionDescriptionHandler` que este adapter usa. Tipar
+ * localmente evita depender do namespace `Web` do sip.js: o tipo do `api` só
+ * declara `constraints` (`node_modules/sip.js/lib/api/session-description-handler.d.ts:67-69`)
+ * e `hold` vive no `platform/web`.
+ */
+interface OpcoesDeMidia {
+  constraints?: object;
+  /** `true` = direção `sendonly` (espera); `false` = `sendrecv`. */
+  hold?: boolean;
+}
+
 function handlerOf(session: Session): SdhLike | undefined {
   return session.sessionDescriptionHandler as SdhLike | undefined;
 }
@@ -128,6 +140,54 @@ export class SipCallAdapter implements CallAdapter {
     tracks.forEach((track) => { track.enabled = !muted; });
     // Estado lido de volta das tracks, não o que foi pedido.
     return tracks.every((track) => !track.enabled);
+  }
+
+  async setHold(session: Session, emEspera: boolean): Promise<boolean> {
+    if (session.state !== 'Established') {
+      this.logger?.warn(`Espera ignorada: sessão em "${session.state}" (só vale estabelecida).`);
+      return false;
+    }
+    try {
+      // O re-INVITE troca a direção da mídia no SDP: `hold: true` põe
+      // `a=sendonly` (a central para de mandar áudio para cá) e `false` volta
+      // para `a=sendrecv`. Entra pela mesma via do convite inicial
+      // (`sessionDescriptionHandlerOptions`).
+      const opcoesDeMidia: OpcoesDeMidia = { hold: emEspera };
+      await session.invite({ sessionDescriptionHandlerOptions: opcoesDeMidia });
+      return true;
+    } catch (error) {
+      this.logger?.error('Hold error:', error);
+      return false;
+    }
+  }
+
+  async refer(session: Session, destino: Session | string): Promise<boolean> {
+    if (session.state !== 'Established') {
+      this.logger?.warn(`Transferência ignorada: sessão em "${session.state}" (só vale estabelecida).`);
+      return false;
+    }
+    try {
+      if (typeof destino === 'string') {
+        // Transferência cega: o REFER aponta para o destino no MESMO domínio da
+        // linha (o mesmo host que `createInviter` usa). `makeURI` devolve
+        // `undefined` quando a URI não fecha — aí não há REFER a mandar.
+        const { UserAgent: SipUserAgent } = await import('sip.js');
+        const uri = SipUserAgent.makeURI(`sip:${destino}@${session.localIdentity.uri.host}`);
+        if (!uri) {
+          this.logger?.warn(`Transferência ignorada: "${destino}" não forma URI SIP.`);
+          return false;
+        }
+        await session.refer(uri);
+        return true;
+      }
+      // Perna em consulta: `refer(Session)` manda REFER com `Replaces` — a
+      // segunda chamada assume a vaga desta (transferência assistida).
+      await session.refer(destino);
+      return true;
+    } catch (error) {
+      this.logger?.error('Refer error:', error);
+      return false;
+    }
   }
 
   sendDTMF(session: Session, digit: string): boolean {

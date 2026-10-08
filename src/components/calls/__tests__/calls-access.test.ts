@@ -18,7 +18,11 @@
  * - o T13 deixou de ser `it.todo`: a anotação tem que sair pela RPC
  *   `set_call_agent_notes` e os 4 métodos legados têm que estar `@deprecated`;
  * - `Math.random()` reintroduzido em `persistence.ts` deixava tudo verde (só o
- *   Sonar S2245 pegava) — agora há assert de fonte, ignorando comentários.
+ *   Sonar S2245 pegava) — agora há assert de fonte, ignorando comentários;
+ * - a espera/transferência/conferência saiu de `it.todo` (SL-018): o dono é
+ *   `lib/calls/controleDaChamada.ts` sobre o transporte do `SipCallAdapter`, e
+ *   a conferência é **recusada com motivo** (`conferencia_sem_ponte`) nesta
+ *   linha, que não tem ponte de conferência — recusa explícita, não no-op.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -227,6 +231,27 @@ describe('Telefonia — asserções pendentes, com a etapa dona', () => {
 });
 
 describe('Telefonia — lacunas herdadas (não cobertas pelas 100 etapas)', () => {
-  it.todo('espera, transferência e conferência de chamada');
+  it('espera, transferência e conferência têm dono e transporte (SL-018)', () => {
+    // Era `it.todo`: nomeava a lacuna sem afirmar nada. O comportamento é
+    // exercitado em `lib/calls/__tests__/controleDaChamada.test.ts` (regras) e
+    // `lib/calls/adapters/__tests__/SipCallAdapter.controle.test.ts` (SIP);
+    // aqui se trava o dono e o transporte, para o `it.todo` não voltar.
+    const controle = semComentarios(readFileSync(join(SRC, 'lib/calls/controleDaChamada.ts'), 'utf8'));
+    expect(controle).toMatch(/export class ControleDeChamada/);
+    for (const operacao of ['esperar', 'retomar', 'transferir', 'transferirAssistida']) {
+      expect(controle, operacao).toMatch(new RegExp(`async ${operacao}\\(`));
+    }
+    // Conferência é síncrona de propósito e recusada COM MOTIVO — esta linha
+    // não tem ponte de conferência. Um no-op silencioso passaria neste assert.
+    expect(controle).toMatch(/conferenciar\(\): ResultadoDeControle/);
+    expect(controle).toMatch(/conferencia_sem_ponte/);
+
+    // O transporte fala SIP de verdade: re-INVITE com `hold` e REFER.
+    const adapter = semComentarios(readFileSync(join(SRC, 'lib/calls/adapters/SipCallAdapter.ts'), 'utf8'));
+    expect(adapter).toMatch(/const opcoesDeMidia: OpcoesDeMidia = \{ hold: emEspera \}/);
+    expect(adapter).toMatch(/sessionDescriptionHandlerOptions: opcoesDeMidia/);
+    expect(adapter).toMatch(/await session\.refer\(/);
+  });
+
   it.todo('enforcement de SRTP explícito nas opções do SessionDescriptionHandler');
 });

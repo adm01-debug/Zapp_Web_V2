@@ -74,6 +74,23 @@ export interface CallAdapter {
   setMuted(session: Session, muted: boolean): boolean | null;
 
   /**
+   * Espera (hold): re-INVITE com a direção da mídia em `sendonly`
+   * (`sessionDescriptionHandlerOptions.hold`) — `false` retoma (`sendrecv`).
+   * Só vale com a sessão estabelecida; fora disso devolve `false` sem tocar no
+   * transporte (um re-INVITE antes do 200 OK derruba o próprio convite).
+   */
+  setHold(session: Session, emEspera: boolean): Promise<boolean>;
+
+  /**
+   * REFER — a perna é entregue a outro destino. `destino` como **`string`**
+   * (já em forma discável) é transferência cega: o adapter monta a URI no
+   * domínio da própria linha. Como **`Session`** o sip.js manda REFER com
+   * `Replaces`: é a transferência assistida para a perna em consulta. `false`
+   * = a central não aceitou (ou a sessão não estava estabelecida).
+   */
+  refer(session: Session, destino: Session | string): Promise<boolean>;
+
+  /**
    * Envia um dígito DTMF. Só vale com a sessão estabelecida: fora disso é
    * no-op com `warn` (teclado apertado durante o toque não pode virar dígito
    * fantasma depois). Devolve `false` quando não há sender de áudio.
