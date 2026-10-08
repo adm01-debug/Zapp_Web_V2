@@ -23,6 +23,24 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   }),
 }));
 
+// O shell mobile passou a ler a central de notificações do MESMO hook do popover
+// da sidebar (`useNotifications` → `useAuth`/supabase) — é o defeito #449. Este
+// teste é sobre o botão Buscar do cabeçalho, então a fonte de notificações entra
+// mockada, igual ao Sidebar.test.tsx; o MobileShell e a CommandPalette seguem reais.
+vi.mock('@/hooks/system/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    loading: false,
+    unreadCount: 0,
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+    deleteNotification: vi.fn(),
+    clearAll: vi.fn(),
+    createNotification: vi.fn(),
+    refetch: vi.fn(),
+  }),
+}));
+
 const PLACEHOLDER = 'Buscar módulo… (ex: pipeline, chatbot)';
 
 // O cmdk chama scrollIntoView no item ativo; o jsdom não implementa a função.
