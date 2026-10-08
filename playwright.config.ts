@@ -102,7 +102,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|contatos-baseline\.spec\.ts|talkx-launch\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -135,6 +135,17 @@ export default defineConfig({
       // chromium-contacts-visual. Roda no job e2e do ci.yml.
       name: 'chromium-a11y',
       testMatch: /a11y-contraste\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // MC-001 (plano de Contatos, 100 etapas): baseline MEDIDO do módulo —
+      // tempo de carga, nº de requisições, peso do JS, erros de console e
+      // achados de acessibilidade (axe-core). Mesmo padrão de `chromium-a11y`:
+      // sessão FALSA (`installFakeSession`) + backend mockado + rede real
+      // barrada, então roda DESLOGADO (sem `setup`, sem secrets) e com UM
+      // comando: `bun run test:e2e:contatos-baseline`.
+      name: 'chromium-contatos-baseline',
+      testMatch: /contatos-baseline\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

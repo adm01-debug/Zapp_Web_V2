@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:contatos-baseline": "playwright test --project=chromium-contatos-baseline",
     "test:e2e:report": "playwright show-report",
     "typecheck": "tsc -b --force",
     "db:guard": "node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs",
