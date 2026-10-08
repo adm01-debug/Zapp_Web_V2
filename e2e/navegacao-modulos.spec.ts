@@ -1006,20 +1006,53 @@ function relatarRodada(
   for (const linha of relatar(onde, defeitos)) console.warn(`  ${linha}`);
 }
 
+/**
+ * AQUECIMENTO DO CONJUNTO LOCAL — UMA VEZ PARA O ARQUIVO INTEIRO.
+ *
+ * Medido em 08/10 no conjunto local t-a0ace86a (rodadas 1 e 2 deste cartão):
+ * chamado DENTRO de cada teste, o aquecimento (74 funções de ponta, uma por vez)
+ * rodava duas vezes na mesma rodada — a segunda já com um worker residente por
+ * função — e o pico de memória matava o navegador no primeiro módulo do teste
+ * seguinte ("Target page, context or browser has been closed"). Aqui ele roda uma
+ * vez, antes dos dois testes, e continua com a mesma trava: função que não
+ * arrancar CONTINUA REPROVANDO (e a varredura continua reprovando qualquer 503 —
+ * esta lista não afrouxa nada).
+ *
+ * A passada é repetida (até 4) porque o arranque do runtime de Edge do conjunto
+ * local falha de forma intermitente ao desempacotar o cache Deno: na rodada 2 a
+ * primeira passada deixou `ai-suggest-reply` em BOOT_ERROR e a passada seguinte,
+ * do mesmo conjunto, arrancou as 74. Repetir aqui ESTABILIZA o conjunto antes de
+ * medir; não é tolerância: se a função não arrancar em nenhuma das passadas,
+ * o teste reprova.
+ */
+test.beforeAll(async ({ request }) => {
+  let ultimoErro: unknown;
+  for (let passada = 1; passada <= 4; passada += 1) {
+    try {
+      await aquecerRuntime(request);
+      return;
+    } catch (erro) {
+      ultimoErro = erro;
+      console.warn(`[AQUECIMENTO] passada ${passada} não fechou limpa — repetindo a passada inteira`);
+    }
+  }
+  throw ultimoErro;
+});
+
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
-    request,
   }) => {
     // A varredura é longa (42 módulos + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
-    // Antes de medir: o runtime de Edge do conjunto precisa estar quente (uma vez
-    // por teste; na 2ª vez o cache já está quente e custa segundos).
-    await aquecerRuntime(request);
+    // O aquecimento do runtime do conjunto local roda UMA vez para o arquivo
+    // inteiro (test.beforeAll, mais abaixo): repeti-lo dentro de cada teste
+    // dobrava a carga sobre o runtime e o pico de memoria matava o navegador no
+    // meio do segundo teste (medido em 08/10, rodadas 1 e 2 do cartao).
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
@@ -1086,10 +1119,8 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
 
   test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
-    request,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
-    await aquecerRuntime(request);
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
