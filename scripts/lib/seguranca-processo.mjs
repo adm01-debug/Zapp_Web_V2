@@ -47,7 +47,14 @@ export function resolverExecutavel(comando) {
     try {
       fs.accessSync(candidato, fs.constants.X_OK);
       return candidato;
-    } catch {
+    } catch (erro) {
+      if (erro?.name === 'NotCapable' && String(erro?.message || '').includes('Requires sys access')) {
+        // Deno sem --allow-sys=uid bloqueia fs.access(X_OK/F_OK), mas permite stat
+        // com --allow-read. O CI executa esta guarda via `deno test`; nesse caso,
+        // basta preservar o primeiro arquivo que existe no PATH (o shell faria a
+        // validacao de execucao ao criar o processo filho).
+        if (fs.existsSync(candidato)) return candidato;
+      }
       // Nao esta neste diretorio: segue a busca, igual ao shell.
     }
   }
