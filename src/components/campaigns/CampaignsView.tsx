@@ -130,6 +130,10 @@ export function CampaignsView() {
                 const status = statusConfig[campaign.status] || statusConfig.draft;
                 const StatusIcon = status.icon;
                 const progress = getProgress(campaign);
+                // R2-MOD-005: sem audiência materializada não existe para quem
+                // enviar — antes o clique só trocava o status e a campanha
+                // aparecia "Enviando" sem nenhum contato por trás.
+                const semAudiencia = (campaign.total_contacts ?? 0) <= 0;
 
                 return (
                   <motion.div key={campaign.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
@@ -159,11 +163,19 @@ export function CampaignsView() {
                                 <span className="text-xs text-muted-foreground font-mono">{progress}%</span>
                               </div>
                             )}
+                            {campaign.status === 'draft' && semAudiencia && (
+                              <p className="mt-2 text-xs text-warning">
+                                Sem audiência materializada: não há para quem iniciar o envio.
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 ml-4" onClick={e => e.stopPropagation()}>
                             {campaign.status === 'draft' && (
                               <Button size="icon" variant="ghost" className="h-8 w-8 text-success hover:text-success"
-                                onClick={() => updateCampaign.mutate({ id: campaign.id, status: 'sending' })} aria-label="Iniciar campanha">
+                                onClick={() => updateCampaign.mutate({ id: campaign.id, status: 'sending' })}
+                                disabled={semAudiencia}
+                                title={semAudiencia ? 'Iniciar indisponível: a campanha ainda não tem audiência materializada (0 contatos).' : undefined}
+                                aria-label={semAudiencia ? 'Iniciar campanha indisponível: sem audiência materializada' : 'Iniciar campanha'}>
                                 <Play className="w-4 h-4" />
                               </Button>
                             )}
