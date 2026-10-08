@@ -105,4 +105,25 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith('third');
   });
+
+  // Correção (Unit Tests do CI): o disparo pendente tem de ser cancelado no desmontagem.
+  // Sem isso, o temporizador de 300 ms da paleta de comandos dispara depois que o
+  // componente/ambiente de teste já saiu e o callback roda sem jsdom ("window is not defined"),
+  // deixando o vitest com erro não tratado e código de saída 1 mesmo com os testes verdes.
+  it('não dispara o callback pendente depois que o componente desmonta', () => {
+    const callback = vi.fn();
+    const { result, unmount } = renderHook(() => useDebounce(callback, 300));
+
+    act(() => {
+      result.current('consulta');
+    });
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(callback).not.toHaveBeenCalled();
+  });
 });
