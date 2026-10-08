@@ -56,6 +56,10 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // R2-DB-012 (item 297): prova local com Docker real da reclassificacao de IA que
+  // preserva etiqueta humana homonima; nao entra no db-guard enquanto a suite
+  // depender de docker run/exec direto e mutacao em container proprio.
+  'scripts/db-audit/ai-replace-tags-humana.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
@@ -84,28 +88,41 @@ export const ALLOWLIST_NODE = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
-  .filter(f => f.endsWith('.test.ts'));
+function testTsNoDisco() {
+  return spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
+    .stdout
+    .split('\n')
+    .filter(f => f.endsWith('.test.ts'));
+}
 
-const ciYaml = read('.github/workflows/ci.yml');
+function ciYaml() {
+  return read('.github/workflows/ci.yml');
+}
 
 // E49: se ci.yml usa o glob, todos os .test.ts são cobertos automaticamente.
 const CI_TS_GLOB = "supabase/functions/**/*.test.ts";
-const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
+function ciUsaGlob() {
+  return ciYaml().includes(CI_TS_GLOB);
+}
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
-  .filter(f => f.endsWith('.test.sh'));
+function testShNoDisco() {
+  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
+    .stdout
+    .split('\n')
+    .filter(f => f.endsWith('.test.sh'));
+}
 
-const dbGuardYaml = read('.github/workflows/db-guard.yml');
-const testShInGuard = new Set(
-  [...dbGuardYaml.matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map(m => m[0])
-);
+function dbGuardYaml() {
+  return read('.github/workflows/db-guard.yml');
+}
+
+function testShNoGuard() {
+  return new Set(
+    [...dbGuardYaml().matchAll(/\bscripts\/db-audit\/\S+\.test\.sh\b/g)].map(m => m[0])
+  );
+}
 
 // ── 3. Suites Node: disco vs passos de workflow ───────────────────────────────
 // O caminho da suite conta como coberto quando aparece dentro de um bloco `run:` de algum
@@ -180,20 +197,22 @@ export function suitesNodeOrfas() {
  */
 export function orfaosDoInventario() {
   const orphans = [];
+  const ciUsesGlob = ciUsaGlob();
 
   if (!ciUsesGlob) {
     // Sem glob: comparação individual de .test.ts contra a lista em ci.yml.
     const testTsInCi = new Set(
-      [...ciYaml.matchAll(/\bsupabase\/functions\/\S+\.test\.ts\b/g)].map(m => m[0])
+      [...ciYaml().matchAll(/\bsupabase\/functions\/\S+\.test\.ts\b/g)].map(m => m[0])
     );
-    for (const f of testTsOnDisk) {
+    for (const f of testTsNoDisco()) {
       if (!testTsInCi.has(f) && !ALLOWLIST.has(f)) {
         orphans.push({ file: f, yaml: 'ci.yml' });
       }
     }
   }
 
-  for (const f of testShOnDisk) {
+  const testShInGuard = testShNoGuard();
+  for (const f of testShNoDisco()) {
     if (!testShInGuard.has(f) && !ALLOWLIST.has(f)) {
       orphans.push({ file: f, yaml: 'db-guard.yml' });
     }
@@ -210,6 +229,7 @@ export function orfaosDoInventario() {
 
 function principal() {
   const orphans = orfaosDoInventario();
+  const ciUsesGlob = ciUsaGlob();
 
   if (orphans.length === 0) {
     const nodeMsg = `${suitesNodeNoDisco().length} suite(s) Node cobertas por bloco run: (${ALLOWLIST_NODE.size} na allowlist)`;
@@ -230,6 +250,10 @@ function principal() {
   return 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const executadoComoPrograma = typeof globalThis.Deno === 'undefined'
+  ? import.meta.url === `file://${process.argv[1]}`
+  : import.meta.main;
+
+if (executadoComoPrograma) {
   process.exit(principal());
 }
