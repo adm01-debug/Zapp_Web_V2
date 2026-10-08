@@ -20,7 +20,7 @@ export type FilesViewMode = 'grid' | 'list' | 'table';
 export type FilesSort = 'recent' | 'old' | 'biggest' | 'alpha';
 export type FilesTypeFilter = 'all' | ContactMediaKind;
 
-export const FILES_COLUMNS = [3, 4, 5, 6, 8] as const;
+export const FILES_COLUMNS = [3, 4, 5] as const;
 export type FilesColumns = (typeof FILES_COLUMNS)[number];
 
 export const VIEW_MODES: readonly FilesViewMode[] = ['grid', 'list', 'table'];

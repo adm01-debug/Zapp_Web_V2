@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { FilesToolbar } from '../FilesToolbar';
 import type { ColumnOption } from '@/hooks/chat/useFilesContainerColumns';
 
-const OPCOES: ColumnOption[] = ([3, 4, 5, 6, 8] as const).map((n) => ({ n, fits: true }));
+const OPCOES: ColumnOption[] = ([3, 4, 5] as const).map((n) => ({ n, fits: true }));
 
 function renderToolbar(overrides: Partial<React.ComponentProps<typeof FilesToolbar>> = {}) {
   const props: React.ComponentProps<typeof FilesToolbar> = {
