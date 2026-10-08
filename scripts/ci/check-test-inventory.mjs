@@ -88,9 +88,50 @@ export const ALLOWLIST_NODE = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+/**
+ * Lista arquivos versionados para o inventario. No workflow real o script roda com Node
+ * e usa `git ls-files` (ignora arquivos locais nao rastreados). O comando de reproducao
+ * do revisor roda este arquivo com Deno sem --allow-run/--allow-sys; nesse ambiente,
+ * cair para a arvore do checkout preserva a guarda sem exigir permissao de processo.
+ */
+function arquivosDoInventario(prefixo) {
+  if (typeof globalThis.Deno !== 'undefined') {
+    return arquivosNoDisco(prefixo);
+  }
+
+  const resultado = spawnSync(resolverExecutavel('git'), ['ls-files', prefixo], { cwd: root, encoding: 'utf8' });
+  if (resultado.error) throw resultado.error;
+  if (resultado.status !== 0) {
+    throw new Error(`git ls-files ${prefixo} falhou: ${resultado.stderr || resultado.status}`);
+  }
+  return resultado.stdout.split('\n').filter(Boolean);
+}
+
+function arquivosNoDisco(prefixo) {
+  const encontrados = [];
+
+  function visitar(rel) {
+    for (const entrada of readdirSync(join(root, rel), { withFileTypes: true })) {
+      if (entrada.name === 'node_modules' || entrada.name === '.git') continue;
+      const filho = `${rel}/${entrada.name}`;
+      if (entrada.isDirectory()) {
+        visitar(filho);
+      } else if (entrada.isFile()) {
+        encontrados.push(filho);
+      }
+    }
+  }
+
+  try {
+    readdirSync(join(root, prefixo));
+  } catch {
+    return [];
+  }
+  visitar(prefixo);
+  return encontrados.sort();
+}
+
+const testTsOnDisk = arquivosDoInventario('supabase/functions')
   .filter(f => f.endsWith('.test.ts'));
 
 const ciYaml = read('.github/workflows/ci.yml');
@@ -101,9 +142,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testShOnDisk = arquivosDoInventario('scripts/db-audit')
   .filter(f => f.endsWith('.test.sh'));
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
@@ -158,12 +197,9 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
 
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
-    .stdout
-    .split('\n')
+  return arquivosDoInventario('scripts')
     .filter(f => SUFIXO_SUITE_NODE.test(f));
 }
-
 /** Todo caminho/globo de suite Node declarado nos blocos `run:` dos workflows do repositório. */
 export function padroesNodeDosWorkflows() {
   const dir = join(root, '.github/workflows');
