@@ -1,10 +1,16 @@
 -- team_receipts_reactions_conversation_id_forced
--- Rollback: restaura o trigger de recibos que só derivava quando conversation_id vinha NULL e remove o trigger novo de reações:
+-- Rollback: desfaz a correção funcional, os triggers e o endurecimento de ACL desta migration.
+-- Rollback:   -- (a) PRIVILÉGIOS: a função de reações é CRIADA aqui, então a ACL dela sai junto no DROP;
+-- Rollback:   --     a de recibos volta ao estado canônico por REVOKE explícito (sem EXECUTE para
+-- Rollback:   --     public/anon/authenticated — mesma regra de 20260930113613:49-53).
+-- Rollback:   drop trigger if exists team_reactions_force_conversation_id_trig on public.team_message_reactions;
+-- Rollback:   revoke execute on function public.team_reactions_force_conversation_id() from public, anon, authenticated;
+-- Rollback:   drop function if exists public.team_reactions_force_conversation_id();
+-- Rollback:   revoke execute on function public.team_receipts_fill_conversation_id() from public, anon, authenticated;
 -- Rollback:   create or replace function public.team_receipts_fill_conversation_id() returns trigger language plpgsql security definer set search_path to 'public' as $f$ begin if new.conversation_id is null then select tm.conversation_id into new.conversation_id from public.team_messages tm where tm.id = new.message_id; end if; if new.conversation_id is null then raise exception 'conversation_id_required: message % has no conversation_id', new.message_id; end if; return new; end; $f$;
 -- Rollback:   drop trigger if exists team_receipts_fill_conversation_id_trig on public.team_message_receipts;
 -- Rollback:   create trigger team_receipts_fill_conversation_id_trig before insert on public.team_message_receipts for each row execute function public.team_receipts_fill_conversation_id();
--- Rollback:   drop trigger if exists team_reactions_force_conversation_id_trig on public.team_message_reactions;
--- Rollback:   drop function if exists public.team_reactions_force_conversation_id();
+-- Rollback:   -- (b) DADOS do backfill não são revertidos (não há como saber o cid antigo de cada linha).
 --
 -- Item 164 / TC-009 (P2) + R2-DB-011 — docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md:148-160.
 -- Defeito: recibos e reações NÃO forçavam conversation_id derivado da mensagem.
@@ -56,8 +62,13 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.team_receipts_fill_conversation_id() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.team_receipts_fill_conversation_id() TO authenticated;
+-- ACL: função de trigger dispara SEM depender de EXECUTE (mesma regra de
+-- 20260930113613_revoke_anon_default_privileges_and_gamification_rpcs.sql:49-53 —
+-- "Funcao de trigger nao depende de EXECUTE para disparar"). Então nenhum papel de
+-- cliente (authenticated/anon/PUBLIC) recebe EXECUTE direto nela: só o dono
+-- (postgres) mantém o privilégio. O REVOKE de authenticated é explícito porque é o
+-- afrouxamento que a versão anterior desta migration introduziu.
+REVOKE EXECUTE ON FUNCTION public.team_receipts_fill_conversation_id() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS team_receipts_fill_conversation_id_trig ON public.team_message_receipts;
 CREATE TRIGGER team_receipts_fill_conversation_id_trig
@@ -83,8 +94,7 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.team_reactions_force_conversation_id() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.team_reactions_force_conversation_id() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.team_reactions_force_conversation_id() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS team_reactions_force_conversation_id_trig ON public.team_message_reactions;
 CREATE TRIGGER team_reactions_force_conversation_id_trig
