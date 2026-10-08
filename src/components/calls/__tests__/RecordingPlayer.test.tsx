@@ -70,7 +70,9 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
 function respostaAudio(corpo = 'ID3-audio') {
-  return Promise.resolve(new Response(new Blob([corpo], { type: 'audio/mpeg' }), { status: 200 }));
+  // Corpo em TEXTO (nao em Blob do jsdom): o Response do Node nem sempre entende o Blob do jsdom e entregaria 0 bytes
+  // (o hook trata 0 bytes como 'sem gravacao'), o que so aparecia no CI.
+  return Promise.resolve(new Response(corpo, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }));
 }
 
 function prepararAmbiente() {
