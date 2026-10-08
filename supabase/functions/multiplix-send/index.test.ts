@@ -2914,3 +2914,68 @@ Deno.test("R2-API-013: falha da RPC de heartbeat e tratada (nao derruba o envio 
     globalThis.removeEventListener("unhandledrejection", onRejeicao);
   }
 });
+
+// ------------------------------------------------------------------- F43 (correlação)
+//
+// Prova da metade "correlation_id por request, logger sem conteudo" do F43. O
+// teste chama o HANDLER real DUAS vezes (cron com fila vazia: uma linha
+// 'completed' por request) e le o console, que e a unica superficie de rastreio
+// dos dois edges. Nada aqui depende de telefone/texto coincidir por acaso: o
+// corpo do log e inspecionado campo a campo.
+Deno.test("F43: correlationId é gerado por request (ids distintos) e o log não carrega conteúdo", async () => {
+  const capturado: string[] = [];
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  const capturar = (...args: unknown[]) => {
+    capturado.push(args.map((arg) => String(arg)).join(" "));
+  };
+  console.log = capturar as typeof console.log;
+  console.warn = capturar as typeof console.warn;
+  console.error = capturar as typeof console.error;
+  try {
+    // Fila VAZIA: o handler percorre o portao de entrada e registra 'completed'
+    // sem POST nenhum (o stub de provedor do harness derrubaria um envio de verdade).
+    const opts = (): MockOpts => ({
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending" }),
+      recipients: [],
+    });
+    await runWithProviderBlocked(opts());
+    await runWithProviderBlocked(opts());
+  } finally {
+    console.log = originalLog;
+    console.warn = originalWarn;
+    console.error = originalError;
+  }
+
+  const ids = capturado
+    .map((linha) => {
+      try {
+        return (JSON.parse(linha) as { correlationId?: unknown }).correlationId;
+      } catch {
+        return undefined;
+      }
+    })
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+  // 1) uma linha de correlacao por request e nenhum id reaproveitado entre eles.
+  assert(ids.length >= 2, `esperava ao menos 2 linhas com correlationId, veio ${ids.length}`);
+  assert(new Set(ids).size === ids.length, `correlationId reutilizado entre requests: ${JSON.stringify(ids)}`);
+
+  // 2) NENHUMA linha pode carregar campo de conteudo/dado de cliente.
+  const proibidas = ["phone", "contact_phone", "personalized_message", "text", "message", "nome", "name", "telefone"];
+  for (const linha of capturado) {
+    const evento = (() => {
+      try {
+        return JSON.parse(linha) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    })();
+    if (evento === null) continue;
+    for (const chave of proibidas) {
+      assert(!(chave in evento), `log carregou campo de conteudo '${chave}': ${linha}`);
+    }
+  }
+});
