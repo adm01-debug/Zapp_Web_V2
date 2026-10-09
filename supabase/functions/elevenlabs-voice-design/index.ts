@@ -1,4 +1,5 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, enforceRateLimit, isValidUUID } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
@@ -46,6 +47,26 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
     }
 
     if (action === 'create') {
+      // SL-007 (IA-003 B3): criar voz é escrita PERSISTENTE na conta ElevenLabs
+      // compartilhada da empresa. Antes, qualquer usuário autenticado criava voz
+      // permanente, sem checagem de papel e sem rastro de autoria. Agora exige
+      // admin/supervisor pela RPC canônica `is_admin_or_supervisor` e deixa a
+      // autoria em `audit_logs`. O gate é SÓ da criação: `preview` (efêmera, não
+      // persiste na conta) continua atendida a qualquer autenticado.
+      const supabaseUser = await createAuthedClient(req);
+      const { data: isAdmin, error: roleError } = await supabaseUser.rpc("is_admin_or_supervisor", {
+        _user_id: auth.userId,
+      });
+      if (roleError) {
+        // Fail-closed: papel não verificado não vira permissão.
+        log.error("Falha ao verificar papel", { error: roleError.message });
+        return internalErrorResponse(roleError, req);
+      }
+      if (isAdmin !== true) {
+        log.warn("Criação de voz negada por papel");
+        return errorResponse("Only admins can create voices", 403, req);
+      }
+
       const parsed = parseBody(ElevenLabsVoiceDesignCreateSchema, body);
       if (!parsed.success) return validationErrorResponse(parsed, req);
 
@@ -66,7 +87,28 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
       }
 
       const data = await response.json();
-      log.done(200, { voiceId: data.voice_id });
+      const voiceId = typeof data.voice_id === 'string' ? data.voice_id.slice(0, 200) : null;
+
+      // A trilha é gravada com a service role: `audit_logs` bloqueia INSERT direto
+      // de `authenticated` (policy "Block direct audit log inserts", WITH CHECK
+      // false) — mesmo desenho do `elevenlabs-webhook`. `user_id` guarda o autor.
+      const supabaseAdmin = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+      const { error: auditError } = await supabaseAdmin.from('audit_logs').insert({
+        user_id: auth.userId,
+        action: 'elevenlabs_voice_created',
+        entity_type: 'elevenlabs',
+        // `entity_id` é uuid no banco: o id textual do provedor vai em `details`.
+        entity_id: voiceId !== null && isValidUUID(voiceId) ? voiceId : null,
+        details: { voice_id: voiceId, voice_name },
+      });
+      if (auditError) {
+        // A voz JÁ existe no provedor; o que falhou foi a trilha. Responder 200
+        // aqui esconderia uma criação permanente sem rastro de quem a fez.
+        log.error("Falha ao registrar auditoria da criação de voz", { error: auditError.message, voiceId });
+        return internalErrorResponse(auditError, req);
+      }
+
+      log.done(200, { voiceId });
       return jsonResponse(data, 200, req);
     }
 
