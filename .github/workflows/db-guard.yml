@@ -911,12 +911,15 @@ jobs:
 
       # X176 (TL-164): as três RPCs de leitura da supressão (listagem paginada, KPIs e
       # atividade) não existiam — a tela lia a tabela inteira e somava em memória. O passo
-      # aplica a migration real em PostgreSQL 17 descartável e executa como os papéis reais
-      # (authenticated com JWT, anon, service_role): prova o 42883 antes, o 42501 do agente
-      # e do anon depois, os KPIs (opt-outs do período, suprimidos ativos sem expirado nem
-      # removido, protegidas), a paginação com total constante, os filtros e a busca por
-      # nome/e-mail/dígitos de telefone, a entrada inválida (22023), a atividade lida dos
-      # eventos de entidade e o rollback executado a partir do próprio arquivo da migration.
+      # aplica a migration real em PostgreSQL 17 descartável e executa como os papéis reais:
+      # prova o supervisor como papel real pelo JWT (authenticated) lendo listagem, KPIs e
+      # atividade; service_role NÃO tem EXECUTE nas três — caminho escolhido da entrega, a
+      # barreira exige admin/supervisor e service_role não tem auth.uid() — e o anon também
+      # fica sem EXECUTE. Ainda prova o 42883 antes, o 42501 do agente depois, os KPIs
+      # (opt-outs do período, suprimidos ativos sem expirado nem removido, protegidas), a
+      # paginação com total constante, os filtros e a busca por nome/e-mail/dígitos de
+      # telefone, a entrada inválida (22023), a atividade lida dos eventos de entidade e o
+      # rollback executado a partir do próprio arquivo da migration.
       - name: Provar as RPCs de leitura da supressão do Talk X (X176)
         env:
           TALKX_SUPPRESSION_READ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

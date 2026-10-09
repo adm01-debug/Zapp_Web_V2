@@ -39,7 +39,8 @@
 --     A contagem do lote de importação NÃO é devolvida: ela exigiria a coluna
 --     `talkx_blacklist.import_batch_id`, que é DDL do X177 — fora do meu cartão (diff maior que
 --     o título). O evento leva o número no campo `message`, que a função devolve.
---   * ACL: as três nascem fechadas para PUBLIC/anon e abertas só para authenticated/service_role.
+--   * ACL: as três nascem fechadas para PUBLIC/anon/service_role e abertas SÓ para
+--     authenticated (service_role não tem auth.uid() e não passa pela barreira admin/supervisor).
 --
 -- Classe: contrato (CREATE OR REPLACE FUNCTION x3 + REVOKE/GRANT + CREATE INDEX).
 -- Idempotente/replayável: CREATE OR REPLACE + CREATE INDEX IF NOT EXISTS + REVOKE/GRANT explícitos.
@@ -166,8 +167,8 @@ BEGIN
          AND (p_ate IS NULL OR b.created_at < (p_ate + 1)::timestamp with time zone)
          AND (
            v_busca IS NULL
-           OR c.name ILIKE '%' || replace(replace(v_busca, '\', '\\'), '%', '\%') || '%' ESCAPE '\'
-           OR c.email ILIKE '%' || replace(replace(v_busca, '\', '\\'), '%', '\%') || '%' ESCAPE '\'
+           OR c.name ILIKE '%' || replace(replace(replace(v_busca, '\', '\\'), '%', '\%'), '_', '\_') || '%' ESCAPE '\'
+           OR c.email ILIKE '%' || replace(replace(replace(v_busca, '\', '\\'), '%', '\%'), '_', '\_') || '%' ESCAPE '\'
            OR (NULLIF(regexp_replace(v_busca, '\D', '', 'g'), '') IS NOT NULL
                AND regexp_replace(COALESCE(c.phone, b.phone), '\D', '', 'g')
                    LIKE '%' || regexp_replace(v_busca, '\D', '', 'g') || '%')
@@ -229,7 +230,9 @@ END;
 $fn$;
 
 REVOKE ALL ON FUNCTION public.talkx_suppression_list(text, text[], text[], uuid, date, date, text, text, text, integer, integer) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.talkx_suppression_list(text, text[], text[], uuid, date, date, text, text, text, integer, integer) TO authenticated, service_role;
+-- service_role NAO tem EXECUTE: a barreira exige admin/supervisor e service_role nao tem
+-- auth.uid(); a leitura e da tela por sessao autenticada.
+GRANT EXECUTE ON FUNCTION public.talkx_suppression_list(text, text[], text[], uuid, date, date, text, text, text, integer, integer) TO authenticated;
 
 -- ============================================================================
 -- (b) KPIs: valor, valor do período anterior e série de 8 pontos
@@ -284,11 +287,12 @@ BEGIN
    WHERE b.removed_at IS NULL
      AND (b.expires_at IS NULL OR b.expires_at > v_now);
 
+  -- estoque é comparável no INÍCIO do período (v_start), não na janela anterior (v_prev_start)
   SELECT count(*) INTO v_active_prev
     FROM public.talkx_blacklist b
-   WHERE b.created_at <= v_prev_start
-     AND (b.removed_at IS NULL OR b.removed_at > v_prev_start)
-     AND (b.expires_at IS NULL OR b.expires_at > v_prev_start);
+   WHERE b.created_at <= v_start
+     AND (b.removed_at IS NULL OR b.removed_at > v_start)
+     AND (b.expires_at IS NULL OR b.expires_at > v_start);
 
   SELECT COALESCE(jsonb_agg(cnt::integer ORDER BY g), '[]'::jsonb) INTO v_active_series
     FROM generate_series(0, 7) AS g
@@ -347,10 +351,11 @@ BEGIN
     FROM public.talkx_campaigns c
    WHERE c.started_at IS NOT NULL AND c.respect_suppression;
 
+  -- estoque é comparável no INÍCIO do período (v_start), não na janela anterior (v_prev_start)
   SELECT count(*) INTO v_prot_prev
     FROM public.talkx_campaigns c
    WHERE c.started_at IS NOT NULL AND c.respect_suppression
-     AND c.started_at <= v_prev_start;
+     AND c.started_at <= v_start;
 
   SELECT COALESCE(jsonb_agg(cnt::integer ORDER BY g), '[]'::jsonb) INTO v_prot_series
     FROM generate_series(0, 7) AS g
@@ -387,7 +392,9 @@ END;
 $fn$;
 
 REVOKE ALL ON FUNCTION public.talkx_suppression_stats(integer) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.talkx_suppression_stats(integer) TO authenticated, service_role;
+-- service_role NAO tem EXECUTE: a barreira exige admin/supervisor e service_role nao tem
+-- auth.uid(); a leitura e da tela por sessao autenticada.
+GRANT EXECUTE ON FUNCTION public.talkx_suppression_stats(integer) TO authenticated;
 
 -- ============================================================================
 -- (c) atividade recente lida dos eventos de entidade suppression*
@@ -482,4 +489,6 @@ END;
 $fn$;
 
 REVOKE ALL ON FUNCTION public.talkx_suppression_activity(integer, integer) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.talkx_suppression_activity(integer, integer) TO authenticated, service_role;
+-- service_role NAO tem EXECUTE: a barreira exige admin/supervisor e service_role nao tem
+-- auth.uid(); a leitura e da tela por sessao autenticada.
+GRANT EXECUTE ON FUNCTION public.talkx_suppression_activity(integer, integer) TO authenticated;

@@ -6,10 +6,14 @@
 #   * public.talkx_suppression_list(...)      -> {total, rows} paginado no servidor
 #   * public.talkx_suppression_stats(p_days)  -> valor, valor anterior e série de 8 pontos
 #   * public.talkx_suppression_activity(...)  -> eventos de entidade suppression*
-# Executa como os papéis REAIS (authenticated com JWT, anon, service_role) — nunca como
-# postgres nas asserções — com RLS ligada e as policies vivas reproduzidas no fixture.
+# Executa como os papéis REAIS — admin e supervisor pelo JWT (authenticated), anon e
+# service_role pelo papel do banco — nunca como postgres nas asserções — com RLS ligada
+# e as policies vivas reproduzidas no fixture. Caminho de service_role nesta entrega:
+# SEM EXECUTE nas três RPCs (a barreira exige admin/supervisor e service_role não tem
+# auth.uid()); o passo prova o GRANT negado e o permission denied, não uma chamada.
 # Roteiro (cada bloco tem o estado ANTERIOR e o estado com a migration):
-#   BLOCO A — agente (sem papel) recebe 42501 nas três; anon não tem EXECUTE;
+#   BLOCO A — agente (sem papel) recebe 42501 nas três; anon e service_role não têm
+#             EXECUTE; supervisor lê as três com o JWT real;
 #   BLOCO B — KPIs: opt-outs do período = 3 (o de 40 dias fora), ativos não contam expirado
 #             nem removido, proteção conta só campanha iniciada com respect_suppression;
 #   BLOCO C — listagem: total constante entre páginas, limite/offset, filtro de status,
@@ -233,6 +237,7 @@ INSERT INTO public.contacts (id, name, email, phone) VALUES
 
 INSERT INTO public.talkx_campaigns (id, name, status, respect_suppression, started_at) VALUES
   ('40000000-0000-0000-0000-000000000001', 'Campanha Protegida', 'running',  true,  now() - interval '2 days'),
+  ('40000000-0000-0000-0000-000000000004', 'Campanha Antiga', 'finished', true, now() - interval '45 days'),
   ('40000000-0000-0000-0000-000000000002', 'Campanha Solta',     'running',  false, now() - interval '1 day'),
   ('40000000-0000-0000-0000-000000000003', 'Campanha Rascunho',  'draft',    true,  NULL);
 
@@ -306,6 +311,16 @@ expect_value() { # expect_value <rótulo> <esperado> <sql>
   fi
   printf '[PASS] %s\n' "$l"
 }
+expect_value_as() { # expect_value_as <rótulo> <esperado> <jwt> <sql>
+  local l="$1" e="$2" jwt="$3" s="$4" raw a
+  raw="$(as_user "$jwt" "$s" 2>&1 || true)"
+  a="$(printf '%s\n' "$raw" | tail -n1)"
+  if [ "$a" != "$e" ]; then
+    printf '%s\n' "$raw" | tr '\n' ' ' >&2; printf '\n' >&2
+    fail "$l: esperado '$e', obtido '$a'"
+  fi
+  printf '[PASS] %s\n' "$l"
+}
 expect_error() { # expect_error <rótulo> <trecho> <jwt|papel> <sql>
   local l="$1" needle="$2" quem="$3" s="$4" out st
   set +e
@@ -350,27 +365,33 @@ printf '== migration aplicada\n'
 printf '\n-- BLOCO A: barreira por papel e ACL\n'
 expect_value 'anon NAO tem EXECUTE na listagem'    'f' "SELECT has_function_privilege('anon', '$LIST($LIST_SIG)', 'EXECUTE')"
 expect_value 'authenticated tem EXECUTE na listagem' 't' "SELECT has_function_privilege('authenticated', '$LIST($LIST_SIG)', 'EXECUTE')"
-expect_value 'service_role tem EXECUTE na listagem'  't' "SELECT has_function_privilege('service_role', '$LIST($LIST_SIG)', 'EXECUTE')"
+expect_value 'service_role NAO tem EXECUTE na listagem'  'f' "SELECT has_function_privilege('service_role', '$LIST($LIST_SIG)', 'EXECUTE')"
+expect_value 'service_role NAO tem EXECUTE nos KPIs'     'f' "SELECT has_function_privilege('service_role', 'public.talkx_suppression_stats(integer)', 'EXECUTE')"
+expect_value 'service_role NAO tem EXECUTE na atividade' 'f' "SELECT has_function_privilege('service_role', 'public.talkx_suppression_activity(integer, integer)', 'EXECUTE')"
 expect_value 'anon NAO tem EXECUTE nos KPIs'         'f' "SELECT has_function_privilege('anon', 'public.talkx_suppression_stats(integer)', 'EXECUTE')"
 expect_value 'anon NAO tem EXECUTE na atividade'     'f' "SELECT has_function_privilege('anon', 'public.talkx_suppression_activity(integer, integer)', 'EXECUTE')"
 expect_error 'anon recebe permission denied na listagem' 'permission denied' anon "SELECT $LIST()"
+expect_error 'service_role recebe permission denied na listagem' 'permission denied' service_role "SELECT $LIST()"
 expect_error 'agente recebe 42501 na listagem'  'talkx_suppression_read_role_required' agente "SELECT $LIST()"
 expect_error 'agente recebe 42501 nos KPIs'     'talkx_suppression_read_role_required' agente "SELECT public.talkx_suppression_stats(30)"
 expect_error 'agente recebe 42501 na atividade' 'talkx_suppression_read_role_required' agente "SELECT public.talkx_suppression_activity(5, 0)"
-expect_value 'supervisor tambem lê a listagem'  '10' "SELECT public.talkx_suppression_list() ->> 'total'"
-expect_value 'service_role lê os KPIs'          '3'  "SELECT public.talkx_suppression_stats(30) -> 'optouts' ->> 'value'"
+expect_value_as 'supervisor lê a listagem (papel real)'  '10' "$SUPERVISOR" "SELECT public.talkx_suppression_list() ->> 'total'"
+expect_value_as 'supervisor lê os KPIs (papel real)'     '3'  "$SUPERVISOR" "SELECT public.talkx_suppression_stats(30) -> 'optouts' ->> 'value'"
+expect_value_as 'supervisor lê a atividade (papel real)' '3'  "$SUPERVISOR" "SELECT public.talkx_suppression_activity() ->> 'total'"
 
 printf '\n-- BLOCO B: KPIs (valor, período anterior e série de 8 pontos)\n'
 expect_value 'opt-outs do período = 3 (o de 40 dias fica fora)' '3'  "SELECT public.talkx_suppression_stats(30) -> 'optouts' ->> 'value'"
 expect_value 'suprimidos ativos = 10 (sem expirado nem removido)' '10' "SELECT public.talkx_suppression_stats(30) -> 'active' ->> 'value'"
 expect_value 'bloqueios manuais = 2'                             '2'  "SELECT public.talkx_suppression_stats(30) -> 'manual' ->> 'value'"
-expect_value 'campanhas protegidas = 1 (só a iniciada com respect_suppression)' '1' "SELECT public.talkx_suppression_stats(30) -> 'protected' ->> 'value'"
-expect_value 'total de campanhas iniciadas = 2'                  '2'  "SELECT public.talkx_suppression_stats(30) ->> 'total_campaigns'"
+expect_value 'campanhas protegidas = 2 (iniciadas com respect_suppression)' '2' "SELECT public.talkx_suppression_stats(30) -> 'protected' ->> 'value'"
+expect_value 'total de campanhas iniciadas = 3'                  '3'  "SELECT public.talkx_suppression_stats(30) ->> 'total_campaigns'"
 expect_value 'lista de campanhas com supressao = 1'              '1'  "SELECT jsonb_array_length(public.talkx_suppression_stats(30) -> 'campaigns')"
 expect_value 'campanha do filtro tem nome'                       'Campanha Protegida' "SELECT public.talkx_suppression_stats(30) -> 'campaigns' -> 0 ->> 'name'"
 expect_value 'serie de ativos tem 8 pontos'  '8' "SELECT jsonb_array_length(public.talkx_suppression_stats(30) -> 'active' -> 'series')"
 expect_value 'serie de opt-outs tem 8 pontos' '8' "SELECT jsonb_array_length(public.talkx_suppression_stats(30) -> 'optouts' -> 'series')"
 expect_value 'opt-outs do período anterior = 1 (o de 40 dias)' '1' "SELECT public.talkx_suppression_stats(30) -> 'optouts' ->> 'previous'"
+expect_value 'suprimidos ativos do período anterior = 1 (estoque em v_start)' '1' "SELECT public.talkx_suppression_stats(30) -> 'active' ->> 'previous'"
+expect_value 'campanhas protegidas do período anterior = 1 (estoque em v_start)' '1' "SELECT public.talkx_suppression_stats(30) -> 'protected' ->> 'previous'"
 expect_value 'janela do período devolvida'    '30' "SELECT public.talkx_suppression_stats(30) ->> 'period_days'"
 
 printf '\n-- BLOCO C: listagem paginada\n'
@@ -395,6 +416,7 @@ expect_value 'filtro por origem'               '3' "SELECT public.talkx_suppress
 expect_value 'filtro por motivo'               '4' "SELECT public.talkx_suppression_list(NULL, NULL, ARRAY['opt_out'], NULL, NULL, NULL, 'todos') ->> 'total'"
 expect_value 'ordenacao por contato (asc)'     'Alice Souza' "SELECT public.talkx_suppression_list(NULL, NULL, NULL, NULL, NULL, NULL, 'todos', 'contato', 'asc', 1, 0) -> 'rows' -> 0 ->> 'contact_name'"
 expect_value 'busca com curinga NAO vira curinga' '0' "SELECT public.talkx_suppression_list('%', NULL, NULL, NULL, NULL, NULL, 'todos') ->> 'total'"
+expect_value 'busca com _ NAO vira curinga' '0' "SELECT public.talkx_suppression_list('bruno_lima', NULL, NULL, NULL, NULL, NULL, 'todos') ->> 'total'"
 
 printf '\n-- BLOCO D: entrada invalida (22023)\n'
 expect_error 'limite 0 recusado'            'invalid_talkx_suppression_limit'     admin "SELECT $LIST(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,0)"
