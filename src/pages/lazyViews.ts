@@ -29,7 +29,7 @@ export const PaymentLinksView = lazyWithRetry(() => import('@/components/payment
 export const WhatsAppFlowsBuilder = lazyWithRetry(() => import('@/components/whatsapp-flows/WhatsAppFlowsBuilder').then(m => ({ default: m.WhatsAppFlowsBuilder })));
 export const MetaCAPIView = lazyWithRetry(() => import('@/components/meta-capi/MetaCAPIView').then(m => ({ default: m.MetaCAPIView })));
 export const DiagnosticsView = lazyWithRetry(() => import('@/components/diagnostics/DiagnosticsView').then(m => ({ default: m.DiagnosticsView })));
-export const VoIPPanel = lazyWithRetry(() => import('@/components/calls/VoIPPanel').then(m => ({ default: m.VoIPPanel })));
+export const TelefoniaView = lazyWithRetry(() => import('@/components/calls/TelefoniaView').then(m => ({ default: m.TelefoniaView })));
 export const AutoExportManager = lazyWithRetry(() => import('@/components/reports/AutoExportManager').then(m => ({ default: m.AutoExportManager })));
 export const GoogleCalendarIntegration = lazyWithRetry(() => import('@/components/integrations/GoogleCalendarIntegration').then(m => ({ default: m.GoogleCalendarIntegration })));
 export const ThemeCustomizer = lazyWithRetry(() => import('@/components/settings/ThemeCustomizer').then(m => ({ default: m.ThemeCustomizer })));

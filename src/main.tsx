@@ -44,7 +44,7 @@ if (!rootElement) {
 // shows a friendly UI instead of a blank screen.
 //
 // E38: StrictMode ligado. O código ja tinha defesas escritas PARA ele
-// (useSupabaseRealtime, VoIPPanel, team-chat citam o remount em comentario),
+// (useSupabaseRealtime, TelefoniaView, team-chat citam o remount em comentario),
 // mas ele nunca foi montado — entao nenhuma dessas defesas era exercitada.
 // Em 19.3 o StrictMode monta/desmonta e re-renderiza duas vezes em dev,
 // expondo efeitos sem cleanup e impurezas de render. E so em desenvolvimento.
