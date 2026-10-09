@@ -350,3 +350,54 @@ test('plano: E11 marcada concluida explicita reconciliacao na nota de execucao',
   const bloco = plano.slice(inicio, plano.indexOf('- [ ] **E12**', inicio));
   assert.match(bloco, /Reconciliado em 05\/10\/2026: concluída \(ver Reconciliação TRA-009\)\./);
 });
+
+// ── REL-1 (SL-155) — seção "Catálogo" do CLAUDE.md ──────────────────────────────
+// A lacuna: o CLAUDE.md só citava o módulo Catálogo de passagem (`e2e/catalog.spec.ts` e os bancos
+// externos na §1) e não tinha seção própria. O handoff do módulo registrou a sugestão como NÃO
+// aplicada (`docs/catalogo/HANDOFF_v1.md` §4: bancos; edge `promogifts-catalog` com rate limit por
+// ação; fluxo único de envio; "merge ≠ deploy da edge"). Esta guarda trava as duas pontas: exige a
+// seção e confere as ações declaradas nela contra o enum da própria edge — mudou a edge, o teste
+// fica vermelho e obriga a atualizar o CLAUDE.md na mesma PR.
+
+const EDGE_CATALOGO = join(RAIZ, 'supabase', 'functions', 'promogifts-catalog', 'index.ts');
+
+/** Corpo da seção `## Catálogo ...` do CLAUDE.md (até o próximo `## `). `null` se ausente. */
+function secaoCatalogo(texto) {
+  const ls = linhas(texto);
+  const ini = ls.findIndex((l) => /^##\s+Catálogo\b/.test(l));
+  if (ini === -1) return null;
+  const corpo = [];
+  for (let i = ini + 1; i < ls.length; i += 1) {
+    if (/^##\s/.test(ls[i])) break;
+    corpo.push(ls[i]);
+  }
+  return corpo.join('\n');
+}
+
+/** Ações do contrato da edge, lidas do enum do schema (fonte da verdade). */
+function acoesDaEdge(edge) {
+  const m = /action:\s*z\.enum\(\[([^\]]+)\]\)/.exec(edge);
+  return m ? [...m[1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]) : [];
+}
+
+test('CLAUDE.md: seção "Catálogo" cobre o handoff e confere com a edge', async () => {
+  const secao = secaoCatalogo(await readFile(CLAUDE, 'utf8'));
+  assert.ok(secao !== null, 'CLAUDE.md não tem a seção "## Catálogo"');
+  const chato = achata(secao);
+  // (a) bancos: o externo somente leitura, apontado pela §1 (que já traz o projeto oficial).
+  assert.match(chato, /somente leitura/i, 'a seção não diz que o banco externo é somente leitura');
+  assert.match(chato, /§1/, 'a seção não aponta a §1 para os bancos');
+  // (b) edge, as 6 ações e o rate limit POR AÇÃO.
+  assert.ok(secao.includes('promogifts-catalog'), 'a seção não cita a edge do Catálogo');
+  const acoes = acoesDaEdge(await readFile(EDGE_CATALOGO, 'utf8'));
+  assert.equal(acoes.length, 6, 'a edge promogifts-catalog deixou de ter 6 ações');
+  for (const a of acoes) assert.ok(secao.includes(`\`${a}\``), `a seção não lista a ação ${a}`);
+  assert.match(chato, /rate limit por a[çc][ãa]o/i, 'a seção não registra o rate limit POR AÇÃO');
+  // (c) fluxo único de envio.
+  assert.ok(secao.includes('SendProductDialog'), 'a seção não cita o SendProductDialog');
+  assert.ok(secao.includes('catalog_send_events'), 'a seção não cita o log de envios');
+  // (d) "merge ≠ deploy da edge".
+  assert.match(chato, /merge\s*≠\s*deploy/i, 'a seção não registra a regra "merge ≠ deploy"');
+  assert.ok(secao.includes('deploy-functions.yml'), 'a regra não aponta o workflow do deploy');
+  assert.match(chato, /main/, 'a regra não diz que o deploy sai da main');
+});
