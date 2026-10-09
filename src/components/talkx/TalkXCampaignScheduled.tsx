@@ -20,29 +20,13 @@ import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/st
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
+import { TALKX_TIMEZONES, talkxTimezoneLabel } from './talkxTimezones';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
 
-const TIMEZONES = [
-  ['America/Sao_Paulo', 'America/São Paulo'],
-  ['America/Manaus', 'America/Manaus'],
-  ['America/Belem', 'America/Belém'],
-  ['America/Fortaleza', 'America/Fortaleza'],
-  ['America/Recife', 'America/Recife'],
-  ['America/Cuiaba', 'America/Cuiabá'],
-  ['America/Porto_Velho', 'America/Porto Velho'],
-  ['America/Rio_Branco', 'America/Rio Branco'],
-  ['America/New_York', 'America/New York'],
-  ['America/Chicago', 'America/Chicago'],
-  ['America/Los_Angeles', 'America/Los Angeles'],
-  ['America/Buenos_Aires', 'America/Buenos Aires'],
-  ['America/Santiago', 'America/Santiago'],
-  ['America/Bogota', 'America/Bogotá'],
-  ['America/Lima', 'America/Lima'],
-  ['Europe/London', 'Europe/London'],
-  ['Europe/Lisbon', 'Europe/Lisboa'],
-  ['UTC', 'UTC'],
-] as const;
+// X133 — a lista de fusos desta tela era uma CÓPIA da que vivia em
+// `TalkXWizardDelivery`, com os nomes IANA crus. Agora as duas leem
+// `TALKX_TIMEZONES` (fonte única), então o rótulo é o mesmo nos dois lugares.
 
 interface Props {
   campaignId: string; // P1: recebe ID, deriva da query -- evita stale
@@ -305,7 +289,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 />
               </div>
             </div>
-            <p className="text-2xs text-muted-foreground">Data e horário no fuso {localTz}.</p>
+            <p className="text-2xs text-muted-foreground">Data e horário no fuso {talkxTimezoneLabel(localTz)}.</p>
 
             <div>
               <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
@@ -314,8 +298,8 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIMEZONES.map(([tz, label]) => (
-                    <SelectItem key={tz} value={tz}>{label}</SelectItem>
+                  {TALKX_TIMEZONES.map((timezone) => (
+                    <SelectItem key={timezone.value} value={timezone.value}>{timezone.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -346,7 +330,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                   <div>
                     <p className="text-xs font-semibold text-primary">Envios apenas neste período</p>
                     <p className="text-2xs text-muted-foreground">
-                      Fora da janela, o envio pausa e retoma automaticamente no próximo início ({windowStart}), no fuso {localTz}.
+                      Fora da janela, o envio pausa e retoma automaticamente no próximo início ({windowStart}), no fuso {talkxTimezoneLabel(localTz)}.
                     </p>
                   </div>
                 </div>
@@ -358,7 +342,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <IconTile icon={CalendarDays as never} size={36} />
                 <div>
                   <p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p>
-                  <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00 no fuso {localTz}.</p>
+                  <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00 no fuso {talkxTimezoneLabel(localTz)}.</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -456,7 +440,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               <div className="space-y-1.5">
                 <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
                 <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
-                <MetaRow icon={Timer} label="Fuso" value={localTz} />
+                <MetaRow icon={Timer} label="Fuso" value={talkxTimezoneLabel(localTz)} />
                 {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
                 <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
               </div>

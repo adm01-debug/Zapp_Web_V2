@@ -2,11 +2,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [migration, sender, editor, delivery, scheduled, windowShared, scheduler, resumePolicy, recipientProcessor] = await Promise.all([
+const [migration, sender, editor, delivery, deliverySections, scheduled, windowShared, scheduler, resumePolicy, recipientProcessor] = await Promise.all([
   readFile(new URL('../../supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-send/index.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/useCampaignEditor.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),
+  // X133: o corpo do passo Entrega (agendamento, janela, horário comercial,
+  // velocidade) saiu de `Delivery` para as seções reutilizáveis — a guarda passa
+  // a seguir o DONO da lógica em vez do arquivo que apenas monta a tela.
+  readFile(new URL('../../src/components/talkx/TalkXDeliverySections.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../src/components/talkx/TalkXCampaignScheduled.tsx', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/_shared/talkx-window.ts', import.meta.url), 'utf8'),
   readFile(new URL('../../supabase/functions/talkx-scheduler/index.ts', import.meta.url), 'utf8'),
@@ -48,8 +52,15 @@ test('Talk X wizard preserves the selected timezone through payload and review',
   assert.match(editor, /campaign\?\.schedule_timezone \|\| DEFAULT_SCHEDULE_TIMEZONE/);
   assert.match(editor, /sendWindowStart >= sendWindowEnd/);
   assert.match(editor, /horário selecionado é ambíguo/);
-  assert.match(delivery, /min=\{ed\.minimumScheduledAt\}/);
+  // X133 — o campo de agendamento (mínimo calculado no fuso da campanha) agora
+  // mora em `TalkXDeliverySections`; a guarda segue o dono da lógica.
+  assert.match(delivery, /minimumScheduledAt=\{ed\.minimumScheduledAt\}/);
+  assert.match(deliverySections, /min=\{minDate\}/);
+  assert.match(deliverySections, /min=\{minTime\}/);
+  assert.match(deliverySections, /minDate = minimumScheduledAt\?\.slice\(0, 10\)/);
+  assert.match(deliverySections, /minTime = date && minDate && date === minDate \? minimumScheduledAt\?\.slice\(11, 16\) : undefined/);
   assert.doesNotMatch(delivery, /new Date\(ed\.scheduledAt\)\.toISOString\(\)/);
+  assert.doesNotMatch(deliverySections, /new Date\(\s*ed\.scheduledAt\s*\)\.toISOString\(\)/);
   assert.match(scheduled, /schedule_timezone \|\| DEFAULT_SCHEDULE_TIMEZONE/);
   assert.match(scheduled, /schedule_timezone: localTz/);
 });

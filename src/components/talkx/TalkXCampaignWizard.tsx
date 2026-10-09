@@ -23,10 +23,9 @@ import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
-import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { toast } from 'sonner';
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -319,7 +318,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
           <div>
             <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
             <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
@@ -360,16 +359,9 @@ function StepAudience({ ed }: { ed: WizardState }) {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs text-foreground-secondary">Conexão WhatsApp</Label>
-            <Select value={ed.connectionId} onValueChange={ed.setConnectionId}>
-              <SelectTrigger aria-label="Conexão WhatsApp" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
-              <SelectContent>
-                {(ed.connections ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number || 'sem número'})</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+        {/* X133 — a "Conexão WhatsApp" saiu do passo 1 (V25): agora é uma seção do
+            passo Entrega, junto das regras de envio que ela governa. */}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
           <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div>
@@ -392,9 +384,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
           </div>
         </div>
         {(ed.connections ?? []).length === 0 && (
-          <div className="mt-3">
-            <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
-          </div>
+          <p className="mt-3 text-2xs text-foreground-secondary">Nenhuma conexão WhatsApp ativa — escolha a conexão no passo Entrega.</p>
         )}
       </SectionCard>
 

@@ -8,6 +8,7 @@ import { fromTable } from '@/lib/supabaseHelpers';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
+import { DEFAULT_TALKX_TIMEZONE } from './talkxTimezones';
 
 export const VARIABLES = [
   { key: '{{nome}}', label: 'Primeiro Nome', desc: 'Insere o primeiro nome do contato' },
@@ -36,7 +37,9 @@ export const MEDIA_TYPES = [
 export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
-export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+// X133 — a constante do fuso padrão é a MESMA do seletor (lista única em
+// `talkxTimezones`); o valor gravado continua `America/Sao_Paulo`, como a coluna.
+export const DEFAULT_SCHEDULE_TIMEZONE = DEFAULT_TALKX_TIMEZONE;
 
 /**
  * X124 — limites do nome da campanha (coluna `talkx_campaigns.name`). Vivem
@@ -453,6 +456,24 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (!connectionId && connections && connections.length > 0) setConnectionId(connections[0].id);
   }, [connections, connectionId]);
 
+  // X133 — limite diário da conexão (`number_reputation.daily_limit`), só LEITURA:
+  // o passo Entrega mostra o limite e em quantos dias ele cobre o público.
+  const { data: connectionDailyLimit } = useQuery({
+    queryKey: ['talkx-connection-daily-limit', connectionId],
+    enabled: !!connectionId,
+    queryFn: async () => {
+      const { data } = await supabase.from('number_reputation')
+        .select('daily_limit')
+        .eq('whatsapp_connection_id', connectionId)
+        .maybeSingle();
+      return (data?.daily_limit as number | null) ?? null;
+    },
+  });
+
+  // `talkx_campaigns.max_per_minute` chega no `select('*')`, mas ainda não está
+  // declarada em TalkXCampaign. Nada é gravado a partir daqui — é só exibição.
+  const campaignMaxPerMinute = (campaign as { max_per_minute?: number | null } | null)?.max_per_minute ?? null;
+
   // V25 — responsáveis elegíveis: perfis ativos. Exibimos `name` (fallback
   // e-mail) e gravamos `id` (uuid de profiles.id), como em TalkXSuppression.
   // X124 — quem responde pela campanha é admin ou supervisor: o papel entra no
@@ -738,12 +759,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setSelectedContacts((prev) => allSelected ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]);
   }, [filteredContacts, selectedContacts]);
 
+  // X133/V25 — a conexão é escolhida no passo Entrega, então ela valida o passo 3
+  // (antes travava o passo 1, onde o seletor nem existe mais).
   const canProceed = useMemo(() => ({
-    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
     // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
     2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
-    3: scheduleConfigIsValid,
+    3: scheduleConfigIsValid && !!connectionId,
     4: confirmConsent && confirmContent && confirmSuppression,
   }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
@@ -1012,6 +1035,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
+    // X133 — limites exibidos no passo Entrega (leitura): teto por minuto da
+    // campanha e teto diário da conexão.
+    campaignMaxPerMinute, connectionDailyLimit,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, tags, filteredContacts,
     previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
