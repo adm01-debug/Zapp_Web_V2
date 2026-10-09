@@ -7,10 +7,17 @@
 // recusa. Aceite do achado: "arquivo ou roteiro abusivo é rejeitado sem processamento
 // descontrolado".
 //
+// SL-008 (achado B4) — a mesma função também aceitava voz/modelo LIVRES (FormData não
+// passa por schema zod): dava para acionar uma voz clonada da conta compartilhada e o
+// modelo mais caro. Aceite:
+//   - voz fora do catálogo da interface -> 400 ANTES de chamar o provedor;
+//   - modelo fora da lista -> 400 antes de chamar o provedor;
+//   - voz do catálogo sem modelo -> o provedor recebe o modelo do produto.
+//
 // A prova roda o handler REAL com o `fetch` global stubado por trecho de URL:
 // `/auth/v1/user` (requireAuth), `/rest/v1/rpc/consume_rate_limit` (enforceRateLimit) e
-// `api.elevenlabs.io` — este último é o alvo do achado: os casos de recusa exigem ZERO
-// chamada a ele.
+// `api.elevenlabs.io` — este último é o alvo dos dois achados: os casos de recusa exigem
+// ZERO chamada a ele.
 //
 // Run with:
 //   deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
@@ -22,12 +29,14 @@ import {
   sniffStsAudioFormat,
   validateStsUpload,
 } from "./index.ts";
+import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
 const USER_ID = "20000000-0000-0000-0000-00000000000c";
+const VOZ_FORA_DA_LISTA = "voz-clonada-fora-da-lista";
 
 type Route = { match: string; make: () => Response };
 type Call = { url: string; init?: RequestInit };
@@ -139,7 +148,9 @@ function stsRequest(
   });
 }
 
-function formFor(file: File, voiceId = "voz-de-teste"): FormData {
+// Voz do catálogo por padrão (lista fechada do SL-008): os testes de upload/formato
+// (IA-122) não são sobre a voz, então usam sempre uma voz permitida.
+function formFor(file: File, voiceId: string = ELEVENLABS_VOICE_IDS[0]): FormData {
   const form = new FormData();
   form.append("audio", file, "audio.ogg");
   form.append("voiceId", voiceId);
@@ -163,6 +174,19 @@ function fakeFile(size: number, head: Uint8Array): File {
         head.buffer.slice(head.byteOffset, head.byteOffset + head.byteLength),
     }),
   } as unknown as File;
+}
+
+// SL-008: FormData com voiceId/modelId independentes, para os testes da lista fechada.
+function audioFormData(voiceId?: string, modelId?: string): FormData {
+  const formData = new FormData();
+  formData.append("audio", new File([oggBytes()], "audio.ogg", { type: "audio/ogg" }));
+  if (voiceId !== undefined) formData.append("voiceId", voiceId);
+  if (modelId !== undefined) formData.append("modelId", modelId);
+  return formData;
+}
+
+function makeRequest(formData: FormData, withAuth = true): Request {
+  return stsRequest(formData, withAuth);
 }
 
 Deno.test("IA-122: content-length acima do teto -> 413 ANTES de ler o corpo e sem POST", async () => {
@@ -273,19 +297,20 @@ Deno.test("IA-122: assinatura reconhecida nos bytes (ogg/wav/webm/m4a/mp3) e nul
   assert(sniffStsAudioFormat(mp3) === "mp3", "frame MPEG tinha de ser reconhecido");
 });
 
-Deno.test("IA-122: upload válido segue e devolve o áudio do provedor (1 POST)", async () => {
+Deno.test("IA-122: upload válido (voz do catálogo) segue e devolve o áudio do provedor (1 POST)", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
+      const vozPermitida = ELEVENLABS_VOICE_IDS[0];
       const res = await handleElevenLabsSts(
-        stsRequest(formFor(new File([oggBytes()], "audio.ogg", { type: "audio/ogg" }), "voz-ok")),
+        stsRequest(formFor(new File([oggBytes()], "audio.ogg", { type: "audio/ogg" }), vozPermitida)),
       );
 
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
       const externas = callsTo(stub.calls, PROVIDER);
       assert(externas.length === 1, `esperado 1 POST ao provedor, veio ${externas.length}`);
       assert(
-        externas[0].url.includes("/v1/speech-to-speech/voz-ok"),
+        externas[0].url.includes(`/v1/speech-to-speech/${vozPermitida}`),
         `endpoint inesperado: ${externas[0].url}`,
       );
       assert(
@@ -309,6 +334,88 @@ Deno.test("IA-122: sem bearer continua 401 e não toca o provedor", async () => 
       );
       assert(res.status === 401, `esperado 401, veio ${res.status}`);
       assert(callsTo(stub.calls, PROVIDER).length === 0, "sem autenticação não se chama o provedor");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-008 (B4): voz fora da lista fechada -> 400 antes do POST ao provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsSts(makeRequest(audioFormData(VOZ_FORA_DA_LISTA)));
+
+      assert(res.status === 400, `esperado 400, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "voz recusada pela lista fechada não pode tocar o provedor",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-008 (B4): modelo fora da lista -> 400 antes do POST, mesmo com voz do catálogo", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0], "eleven_v3")),
+      );
+
+      assert(res.status === 400, `esperado 400, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "modelo recusado pela lista fechada não pode tocar o provedor",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-008 (B4): voz do catálogo sem modelo -> provedor recebe o modelo do produto", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsSts(makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0])));
+
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+      const externas = callsTo(stub.calls, PROVIDER);
+      assert(externas.length === 1, `esperado 1 POST ao provedor, veio ${externas.length}`);
+      assert(
+        externas[0].url.includes(`/v1/speech-to-speech/${ELEVENLABS_VOICE_IDS[0]}`),
+        `endpoint inesperado: ${externas[0].url}`,
+      );
+      const corpo = externas[0].init?.body as FormData;
+      assert(
+        corpo.get("model_id") === "eleven_multilingual_sts_v2",
+        `modelo do produto esperado, veio ${String(corpo.get("model_id"))}`,
+      );
+
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      assert(bytes.byteLength === 4, `áudio esperado com 4 bytes, veio ${bytes.byteLength}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-008 (B4): sem bearer continua 401 e não toca o provedor (caminho voiceId/modelId)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsSts(
+        makeRequest(audioFormData(ELEVENLABS_VOICE_IDS[0]), false),
+      );
+
+      assert(res.status === 401, `esperado 401, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, PROVIDER).length === 0,
+        "sem autenticação não se chama o provedor",
+      );
     } finally {
       stub.restore();
     }

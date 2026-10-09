@@ -14,11 +14,14 @@
 // `/auth/v1/user` (requireAuth), `/rest/v1/rpc/consume_rate_limit`
 // (enforceRateLimit) e `api.elevenlabs.io` — este último é o alvo do achado e o
 // corpo enviado é capturado e conferido.
+// SL-008 (achado B4) — as vozes do diálogo vêm da lista fechada de
+// `_shared/schemas.ts`; os casos usam ids do catálogo da interface.
 import {
   handleElevenLabsDialogue,
   MAX_DIALOGUE_CHARS,
   MAX_DIALOGUE_VOICES,
 } from "./index.ts";
+import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -145,9 +148,10 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
+      const [vozA, vozB] = ELEVENLABS_VOICE_IDS;
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: "voz-a", text: "Bom dia" },
-        { voice_id: "voz-b", text: "Boa tarde" },
+        { voice_id: vozA, text: "Bom dia" },
+        { voice_id: vozB, text: "Boa tarde" },
       ])));
 
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
@@ -161,8 +165,8 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
       const payload = JSON.parse(String(externas[0].init?.body)) as Record<string, unknown>;
       assert(
         JSON.stringify(payload.inputs) === JSON.stringify([
-          { text: "Bom dia", voice_id: "voz-a" },
-          { text: "Boa tarde", voice_id: "voz-b" },
+          { text: "Bom dia", voice_id: vozA },
+          { text: "Boa tarde", voice_id: vozB },
         ]),
         `inputs (obrigatório do provedor) inesperado: ${JSON.stringify(payload)}`,
       );
@@ -191,7 +195,7 @@ Deno.test(`R2-API-024: mais de ${MAX_DIALOGUE_VOICES} vozes distintas -> 400 ant
     const stub = withFetch(ROTAS_OK);
     try {
       const script = Array.from({ length: MAX_DIALOGUE_VOICES + 1 }, (_, i) => ({
-        voice_id: `voz-${i}`,
+        voice_id: ELEVENLABS_VOICE_IDS[i],
         text: `fala ${i}`,
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -218,8 +222,8 @@ Deno.test(`R2-API-024: texto somado acima de ${MAX_DIALOGUE_CHARS} caracteres ->
     try {
       const metade = "a".repeat(Math.ceil((MAX_DIALOGUE_CHARS + 1) / 2));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: "voz-a", text: metade },
-        { voice_id: "voz-b", text: metade },
+        { voice_id: ELEVENLABS_VOICE_IDS[0], text: metade },
+        { voice_id: ELEVENLABS_VOICE_IDS[1], text: metade },
       ])));
 
       assert(res.status === 400, `esperado 400, veio ${res.status}`);
@@ -244,7 +248,7 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
     try {
       const porFala = Math.floor(MAX_DIALOGUE_CHARS / MAX_DIALOGUE_VOICES);
       const script = Array.from({ length: MAX_DIALOGUE_VOICES }, (_, i) => ({
-        voice_id: `voz-${i}`,
+        voice_id: ELEVENLABS_VOICE_IDS[i],
         text: "b".repeat(porFala),
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -264,12 +268,31 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
   });
 });
 
+Deno.test("SL-008 (B4): voz fora da lista fechada -> 422 antes do POST ao provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
+        { voice_id: "voz-clonada-fora-da-lista", text: "oi" },
+      ])));
+
+      assert(res.status === 422, `esperado 422, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, "api.elevenlabs.io").length === 0,
+        "voz recusada pela lista fechada não pode tocar o provedor",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
 Deno.test("R2-API-024: sem bearer continua 401 e não toca o provedor", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
       const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "oi" }]), false),
+        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "oi" }]), false),
       );
       assert(res.status === 401, `esperado 401, veio ${res.status}`);
       assert(
@@ -307,8 +330,8 @@ Deno.test("SL-013: diálogo pago deixa UMA linha em ai_usage_logs (unidade carac
     const stub = withFetch(ROTAS_OK);
     try {
       const script = [
-        { voice_id: "voz-a", text: "Bom dia" }, // 7 caracteres
-        { voice_id: "voz-b", text: "Boa tarde" }, // 9 caracteres
+        { voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }, // 7 caracteres
+        { voice_id: ELEVENLABS_VOICE_IDS[1], text: "Boa tarde" }, // 9 caracteres
       ];
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
@@ -357,7 +380,7 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
     ]);
     try {
       const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "Bom dia" }])),
+        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }])),
       );
       assert(res.status === 500, `esperado 500 do provedor, veio ${res.status}`);
 
