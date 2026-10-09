@@ -1,15 +1,20 @@
 /**
  * TL-027 (inventario F46) — "ligar selecao a UI de composicao".
  *
- * O F46 vive no servidor (`multiplix-dispatch/actions/audience.ts`: o conjunto
- * e montado em UM lugar). A parte de TELAS que o inventario aponta como faltante
- * e esta: a selecao feita na busca e o publico da UI de composicao — o front
- * manda a INTENCAO (os company_ids marcados) e quem resolve/decide quem recebe e
- * a edge (`multiplix-audience` re-resolve sob o escopo do JWT).
+ * O F46 vive no servidor (`multiplix-dispatch`: o conjunto e montado em UM
+ * lugar). A parte de TELAS que o inventario aponta como faltante e esta: a
+ * selecao feita na busca vira o publico da UI de composicao — o front manda a
+ * INTENCAO (os company_ids marcados) e quem resolve/decide quem recebe e a edge
+ * (`multiplix-dispatch`, acao `draft.create`, que re-resolve sob o escopo do
+ * JWT).
  *
- * Este teste NAO usa mock das telas: renderiza `MultiplixView` e
- * `MultiplixComposerDialog` REAIS, com os hooks REAIS, mockando so a rede (o
- * cliente Supabase). O que ele trava:
+ * Este teste NAO mocka as telas nem os hooks: renderiza `MultiplixView` e
+ * `MultiplixComposerDialog` REAIS e mocka so a rede (o cliente Supabase) e o
+ * virtualizador da tabela — o jsdom nao tem layout (clientHeight 0) e o
+ * `@tanstack/react-virtual` (F74) nao devolveria janela nenhuma; e o mesmo
+ * padrao ja aceito em `MultiplixView.lista-virtualizada.test.tsx`, e o duble
+ * segue delegando nas opcoes do componente (`count`/`estimateSize`). O que ele
+ * trava:
  *   1. so as empresas MARCADAS viajam para a criacao do disparo (o desmarcado
  *      nao entra — a exclusao da UI vence a inclusao);
  *   2. o front NAO resolve publico no navegador: sai a selecao (`company_ids`) e
@@ -35,6 +40,25 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+
+// F74: a tabela de publico passou a ser virtualizada. Sem layout o virtualizador
+// real devolve janela vazia no jsdom; o duble entrega a janela e o componente
+// real continua decidindo quem entra nela (`count` = linhas carregadas).
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (options: { count: number; estimateSize: (i: number) => number }) => {
+    const size = options.estimateSize(0);
+    const visible = Math.min(options.count, 25);
+    return {
+      getTotalSize: () => options.count * size,
+      getVirtualItems: () =>
+        Array.from({ length: visible }, (_, index) => ({
+          index, size, start: index * size, end: (index + 1) * size, key: index, lane: 0,
+        })),
+      measure: () => {},
+      measureElement: () => {},
+    };
+  },
+}));
 
 // O alvo e a composicao: o monitor (outra tela) fica fora.
 vi.mock('@/components/multiplix/MultiplixMonitor', () => ({
@@ -73,15 +97,19 @@ const ROWS = [
 ];
 
 interface InvokeMock {
-  body?: { action?: string; params?: Record<string, unknown> };
+  body?: {
+    action?: string;
+    params?: Record<string, unknown>;
+    payload?: Record<string, unknown>;
+  };
 }
 type InvokeArgs = [string, InvokeMock];
 
 /** Corpo das chamadas de criacao de disparo que sairam do front. */
 function createDraftCalls(): Array<Record<string, unknown>> {
   return (functionsInvoke.mock.calls as unknown as InvokeArgs[])
-    .filter(([, opts]) => opts?.body?.action === 'create_draft')
-    .map(([, opts]) => opts.body!.params ?? {});
+    .filter(([fn, opts]) => fn === 'multiplix-dispatch' && opts?.body?.action === 'draft.create')
+    .map(([, opts]) => (opts.body!.payload ?? {}) as Record<string, unknown>);
 }
 
 /** Acoes de publico pedidas pela tela (o F46 quer o conjunto SO no servidor). */
@@ -96,18 +124,22 @@ beforeEach(() => {
   authGetSession.mockResolvedValue({ data: { session: { access_token: 'tok-123' } } });
   functionsInvoke.mockImplementation((fn: string, opts: InvokeMock) => {
     const action = opts?.body?.action;
-    if (fn === 'multiplix-dispatch') return Promise.resolve({ data: { data: [] }, error: null });
+    if (fn === 'multiplix-dispatch') {
+      if (action === 'draft.create') {
+        // Envelope real da edge: `{ data: { data: <linha da RPC> } }`.
+        return Promise.resolve({
+          data: { data: { dispatch_id: 'd9', recipient_count: 2, created: true } },
+          error: null,
+        });
+      }
+      // `dispatch.list` (disparos recentes): vazio — o alvo aqui e a composicao.
+      return Promise.resolve({ data: { data: [] }, error: null });
+    }
     if (action === 'list_ramos' || action === 'list_ufs') {
       return Promise.resolve({ data: { data: [] }, error: null });
     }
     if (action === 'search') return Promise.resolve({ data: { data: ROWS }, error: null });
     if (action === 'count') return Promise.resolve({ data: { data: ROWS.length }, error: null });
-    if (action === 'create_draft') {
-      return Promise.resolve({
-        data: { data: { dispatch_id: 'd9', recipient_count: 2, created: true } },
-        error: null,
-      });
-    }
     return Promise.resolve({ data: { data: null }, error: null });
   });
 });
@@ -152,9 +184,9 @@ describe('MultiplixView + MultiplixComposerDialog — o publico do disparo e a s
     await composeDraft();
 
     await waitFor(() => expect(createDraftCalls().length).toBe(1));
-    const params = createDraftCalls()[0];
-    expect(params.company_ids).toEqual(['c1']);
-    expect(params.contact_ids).toEqual([]);
+    const payload = createDraftCalls()[0];
+    expect(payload.company_ids).toEqual(['c1']);
+    expect(payload.contact_ids).toEqual([]);
     // Nada de montar conjunto no navegador: quem resolve o publico e o servidor.
     expect(audienceActions()).toEqual([]);
   });
