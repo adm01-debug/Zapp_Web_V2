@@ -49,6 +49,17 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 
+// X090 (TL-122): o menu ⋮ e o controle de status do cartão leem o papel do usuário
+// (`useUserRole`) e o dono da linha (`useAuth().profile.id`); fora do AuthProvider o
+// `useAuth` lança, então a galeria dubla os dois como as outras provas da tela.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
+}));
+
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'p-hugo' } }),
+}));
+
 import { TalkXTemplates } from '../TalkXTemplates';
 import { fmtTime } from '../kit/format';
 

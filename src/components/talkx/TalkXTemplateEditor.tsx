@@ -27,9 +27,16 @@ interface Props {
   isLoading: boolean;
   editing: TalkXTemplate | null;
   onClose: () => void;
+  /**
+   * X090 — recebe a CÓPIA recém-criada pelo "Duplicar" do cabeçalho: o editor
+   * não carrega a cópia sozinho (ela não está na lista dele), então quem abre é
+   * o fluxo de fora — `TalkXTemplates` responde com `openEdit`, abrindo a cópia
+   * no editor. Sem esta prop, "Duplicar" não teria para onde levar a cópia.
+   */
+  onOpenCopy?: (copy: TalkXTemplate) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenCopy }: Props) {
   const { createTemplate, updateTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
 
@@ -354,12 +361,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {/* X090: Duplicar/Testar/Excluir do cabeçalho vêm do menu ⋮ unificado.
-                Duplicar cria a cópia e fecha o editor — a cópia ainda não está na
-                biblioteca deste editor, então ela aparece na lista. */}
+                Duplicar cria a cópia e a ABRE pelo `onOpenCopy` do fluxo de fora
+                (`TalkXTemplates` → `openEdit`); antes o handler só fechava o
+                editor e a cópia ficava sem ser aberta. */}
             {(activeTemplate ?? editing) && (
               <TalkXTemplateActionsMenu
                 template={(activeTemplate ?? editing) as TalkXTemplate}
-                onOpenCopy={() => onClose()}
+                onOpenCopy={onOpenCopy}
                 onTest={() => setShowTest(true)}
                 onDeleted={() => onClose()}
                 label="Ações do template"
@@ -389,14 +397,19 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <div>
               <Label className="text-xs text-foreground-secondary">Status</Label>
               {/* X090: o `<Select>` livre de status saiu. A transição exige papel
-                  (autor envia para revisão; admin/supervisor aprova/devole) e o
-                  `onChanged` mantém o campo do formulário alinhado, para o próximo
-                  "Salvar template" não reverter a aprovação. */}
+                  (o autor envia para revisão; admin/supervisor aprova/devole) e o
+                  `onChanged` mantém o campo do formulário alinhado E renova o
+                  `expectedUpdatedAt` com o `updated_at` que a RPC devolveu — sem
+                  isso o próximo "Salvar template" bateria em
+                  `talkx_template_stale_version`. */}
               {(activeTemplate ?? editing) ? (
                 <div className="mt-1.5 h-10 flex items-center">
                   <TalkXTemplateStatusControl
                     template={(activeTemplate ?? editing) as TalkXTemplate}
-                    onChanged={setEStatus}
+                    onChanged={(status, updated) => {
+                      setEStatus(status);
+                      if (updated?.updated_at) setExpectedUpdatedAt(updated.updated_at);
+                    }}
                   />
                 </div>
               ) : (
@@ -654,7 +667,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       </aside>
 
       {/* E47/X090: janela de teste compartilhada — recebe o texto EM EDIÇÃO, para
-          o teste sair com o que está na tela (ainda não salvo). */}
+          o teste sair com o que está na tela (ainda não salvo), e as variáveis
+          personalizadas da tela, que o `talkx-send` usa para preencher o texto. */}
       {(activeTemplate ?? editing) && showTest && (
         <TalkXTemplateTestDialog
           template={(activeTemplate ?? editing) as TalkXTemplate}
@@ -663,6 +677,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           contentOverride={eContent}
           mediaUrlOverride={eHasMedia ? (eMediaUrl || null) : null}
           mediaTypeOverride={eHasMedia ? (eMediaType || null) : null}
+          customVariables={eCustomVars}
         />
       )}
     </div>

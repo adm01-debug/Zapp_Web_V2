@@ -47,6 +47,12 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, isSpecialAgent: false, roles: [] }),
 }));
 
+// X090: o controle de status lê o dono da linha (`useAuth().profile.id`) para
+// decidir "Enviar para revisão".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'p-hugo' } }),
+}));
+
 type TalkXTemplate = {
   id: string; name: string; description: string | null; category: string; content: string;
   media_url: string | null; media_type: string | null; tags: string[]; status: 'draft' | 'review' | 'approved';

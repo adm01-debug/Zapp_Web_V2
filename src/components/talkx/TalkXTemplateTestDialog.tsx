@@ -14,7 +14,7 @@
  * (`supabase/functions/talkx-send/index.ts`), então a janela não pede uma
  * escolha que o servidor ignoraria.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Send, CheckCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -36,9 +36,16 @@ interface Props {
   contentOverride?: string;
   mediaUrlOverride?: string | null;
   mediaTypeOverride?: string | null;
+  /**
+   * Variáveis personalizadas do template. O EDITOR manda as da tela (podem
+   * ainda não estar salvas); sem esta prop, valem as da linha
+   * (`template.custom_variables`). Sem elas o `talkx-send` recebia o texto com
+   * `{{variavel}}` sem valor.
+   */
+  customVariables?: string[];
 }
 
-export function TalkXTemplateTestDialog({ template, open, onClose, contentOverride, mediaUrlOverride, mediaTypeOverride }: Props) {
+export function TalkXTemplateTestDialog({ template, open, onClose, contentOverride, mediaUrlOverride, mediaTypeOverride, customVariables }: Props) {
   const { testTemplate, fetchVariants } = useTalkXTemplates();
   const { profile } = useAuth();
 
@@ -58,6 +65,14 @@ export function TalkXTemplateTestDialog({ template, open, onClose, contentOverri
 
   /** Override = o editor manda o texto que está na tela (ainda não salvo). */
   const hasOverride = typeof contentOverride === 'string' && contentOverride.length > 0;
+
+  // Variáveis personalizadas que vão junto do texto: as do editor (override) ou
+  // as da própria linha do template. O `talkx-send` precisa delas para trocar
+  // `{{variavel}}` pelo valor antes de enviar.
+  const customVars = useMemo(
+    () => customVariables ?? template.custom_variables ?? [],
+    [customVariables, template.custom_variables],
+  );
 
   useEffect(() => {
     if (!open || hasOverride) return;
@@ -91,14 +106,14 @@ export function TalkXTemplateTestDialog({ template, open, onClose, contentOverri
     setTesting(true);
     setResult(null);
     try {
-      await testTemplate({ templateContent: content, mediaUrl, mediaType, phone: clean });
+      await testTemplate({ templateContent: content, mediaUrl, mediaType, phone: clean, customVariables: customVars });
       setResult({ ok: true, msg: `Mensagem enviada para ${clean}` });
     } catch (e) {
       setResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
     } finally {
       setTesting(false);
     }
-  }, [phone, content, mediaUrl, mediaType, testTemplate]);
+  }, [phone, content, mediaUrl, mediaType, testTemplate, customVars]);
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>

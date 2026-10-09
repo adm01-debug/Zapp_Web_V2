@@ -64,6 +64,12 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
 }));
 
+// X090: o controle de status lê o dono da linha (`useAuth().profile.id`) para
+// decidir "Enviar para revisão".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'p-hugo' } }),
+}));
+
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
