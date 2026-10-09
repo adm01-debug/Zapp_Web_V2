@@ -16,12 +16,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
+import 'vitest-axe/extend-expect';
 import { FileUploader } from '@/components/inbox/FileUploader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useFileUploadLogic } from '@/components/inbox/useFileUploadLogic';
-
-expect.extend(toHaveNoViolations);
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
