@@ -56,9 +56,9 @@ const tplB: TalkXTemplate = {
   ...tplA, id: 'tpl-B', name: 'Template B', content: 'corpo do template B',
 };
 
-const variant = (id: string, templateId: string, content: string) => ({
-  id, template_id: templateId, label: 'A' as const, content, media_url: null, media_type: null,
-  weight: 100, created_at: '2026-01-01T00:00:00Z',
+const variant = (id: string, templateId: string, content: string, label: 'A' | 'B' | 'C' = 'A', weight = 100) => ({
+  id, template_id: templateId, label, content, media_url: null, media_type: null,
+  weight, created_at: '2026-01-01T00:00:00Z',
 });
 
 const version = (id: string, templateId: string, name: string) => ({
@@ -222,8 +222,7 @@ describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recus
     await flush();
 
     const textarea = screen.getAllByDisplayValue('variante-A-conteudo')[0];
-    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
-    fireEvent.click(row.querySelector('button') as HTMLElement);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir variante A' })[0]);
     await flush();
 
     expect(deleteVariant).not.toHaveBeenCalled();
@@ -239,8 +238,7 @@ describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recus
     await flush();
 
     const textarea = screen.getAllByDisplayValue('variante-A-conteudo')[0];
-    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
-    fireEvent.click(row.querySelector('button') as HTMLElement);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir variante A' })[0]);
     expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
 
     switchToB();
@@ -270,7 +268,7 @@ describe('R2-MOD-024 — mutação de origem estranha ao template ativo é recus
 });
 
 describe('R2-MOD-024 — variante do template ativo continua salvando e excluindo', () => {
-  it('onBlur chama saveVariant e o clique em x chama deleteVariant', async () => {
+  it('o blur não grava; "Salvar variações" grava o conjunto e o clique em x exclui', async () => {
     fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do ativo')]);
     countVariantRecipients.mockResolvedValue(0);
 
@@ -281,25 +279,30 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
 
     const textarea = screen.getAllByDisplayValue('variante do ativo')[0];
 
-    // salvar: onBlur da variante que pertence ao template ativo
+    // X097: não existe mais save no blur — o conjunto sai pelo botão
     fireEvent.blur(textarea);
+    await flush();
+    expect(saveVariant).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar variações' }));
     await flush();
     expect(saveVariant).toHaveBeenCalledTimes(1);
     expect(saveVariant.mock.calls[0][0]).toBe('tpl-A');
     expect(saveVariant.mock.calls[0][1]).toMatchObject({ id: 'var-A', template_id: 'tpl-A' });
 
     // excluir: o clique em "x" da linha da variante
-    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
-    fireEvent.click(row.querySelector('button') as HTMLElement);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir variante A' })[0]);
     await flush();
     expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });
 
-  it('interrompe o rebalanceamento de A após trocar para B durante o primeiro save', async () => {
+  it('interrompe o save do conjunto ao trocar para B durante a primeira gravação', async () => {
     const pendingSave = deferred<void>();
     fetchVariants.mockImplementation((id: string) => Promise.resolve(
-      id === 'tpl-A' ? [variant('var-A', 'tpl-A', 'variante do ativo')] : [],
+      id === 'tpl-A'
+        ? [variant('var-A', 'tpl-A', 'variante do ativo', 'A', 100), variant('var-B', 'tpl-A', 'segunda variante do ativo', 'B', 0)]
+        : [],
     ));
     saveVariant.mockImplementationOnce(() => pendingSave.promise).mockResolvedValue(undefined);
 
@@ -307,7 +310,7 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     fireEvent.click(variantsToggle());
     await flush();
 
-    fireEvent.click(screen.getAllByRole('button', { name: '+ Adicionar variante B' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar variações' }));
     expect(saveVariant).toHaveBeenCalledTimes(1);
     expect(saveVariant).toHaveBeenCalledWith('tpl-A', expect.objectContaining({ id: 'var-A', template_id: 'tpl-A' }));
 
@@ -315,6 +318,7 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     await act(async () => { pendingSave.resolve(); await pendingSave.promise; });
     await flush();
 
+    // a segunda variante do template antigo não é gravada depois da troca
     expect(saveVariant).toHaveBeenCalledTimes(1);
   });
 });
@@ -372,12 +376,11 @@ describe('R2-MOD-024 — inventário dos caminhos que trocam o template ativo', 
     expect(fetchVersionHistory).toHaveBeenLastCalledWith('tpl-B');
     expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === 'v2 · Versao B').length).toBeGreaterThan(0);
 
-    fireEvent.blur(textarea);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar variações' }));
     await flush();
     expect(saveVariant).toHaveBeenCalledWith('tpl-B', expect.objectContaining({ id: 'var-B', template_id: 'tpl-B' }));
 
-    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
-    fireEvent.click(row.querySelector('button') as HTMLElement);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Excluir variante A' })[0]);
     await flush();
     expect(countVariantRecipients).toHaveBeenCalledWith('var-B');
     expect(deleteVariant).toHaveBeenCalledWith('var-B');
