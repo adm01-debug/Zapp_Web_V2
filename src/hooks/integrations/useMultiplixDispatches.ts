@@ -10,7 +10,12 @@ import { supabase } from '@/integrations/supabase/client';
 // (e nao duplicada aqui), para o `instanceof` do composer seguir valendo.
 // `createMultiplixDraft` NAO entra: a criacao usa `invokeMultiplixDispatch`
 // (abaixo, F44) — o import morto do cartao original foi removido no rebase.
-import { MultiplixOverLimitError, type MultiplixResolvedRecipient, type MultiplixSearchFilters } from './useMultiplixAudience';
+import {
+  createMultiplixDraft,
+  MultiplixOverLimitError,
+  type MultiplixResolvedRecipient,
+  type MultiplixSearchFilters,
+} from './useMultiplixAudience';
 
 export interface MultiplixDispatch {
   id: string;
