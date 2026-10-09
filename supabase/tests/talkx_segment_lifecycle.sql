@@ -78,40 +78,54 @@ begin
 end $$;
 
 -- =====================================================================================
--- T2 — status fora da lista e rejeitado
+-- T2 — status fora da lista e rejeitado (e so os tres valores passam)
 -- =====================================================================================
 do $$
 declare
-  v_barrado boolean := false;
+  v_valor   text;
+  v_barrado boolean;
+  v_frouxos text := '';
+  v_ruins   text[] := array['published','archived','ACTIVE',''];
 begin
-  begin
-    update public.talkx_segments set status = 'published'
-     where id = 'b0000000-0000-0000-0000-000000000001';
-  exception when check_violation then
-    v_barrado := true;
-  end;
-  if not v_barrado then
-    raise exception 'T2 FALHOU: status fora da lista (published) foi aceito';
+  foreach v_valor in array v_ruins loop
+    v_barrado := false;
+    begin
+      update public.talkx_segments set status = v_valor
+       where id = 'b0000000-0000-0000-0000-000000000001';
+    exception when check_violation then
+      v_barrado := true;
+    end;
+    if not v_barrado then
+      v_frouxos := v_frouxos || '[' || v_valor || ']';
+    end if;
+  end loop;
+  if v_frouxos <> '' then
+    raise exception 'T2 FALHOU: o CHECK aceitou valor fora da lista: %', v_frouxos;
   end if;
-  raise notice 'T2 OK: status fora de draft/active/inactive rejeitado pelo CHECK';
+  raise notice 'T2 OK: published, archived, ACTIVE e vazio rejeitados pelo CHECK';
 end $$;
 
--- T2b — o CHECK aceita exatamente os tres valores (nenhum a mais)
+-- T2b — os dois valores que JA existiam continuam aceitos (linha legada nao quebra)
 do $$
 declare
-  v_def text;
+  v_status text;
 begin
-  select pg_get_constraintdef(c.oid) into v_def
-    from pg_constraint c
-    join pg_class t on t.oid = c.conrelid
-   where t.relname = 'talkx_segments' and c.conname = 'talkx_segments_status_check';
-  if v_def is null or v_def not like '%draft%' or v_def not like '%active%' or v_def not like '%inactive%' then
-    raise exception 'T2b FALHOU: CHECK de status nao lista draft/active/inactive (%)', v_def;
+  update public.talkx_segments set status = 'inactive'
+   where id = 'b0000000-0000-0000-0000-000000000001';
+  select status into v_status from public.talkx_segments
+   where id = 'b0000000-0000-0000-0000-000000000001';
+  if v_status <> 'inactive' then
+    raise exception 'T2b FALHOU: inactive (valor legado) nao foi aceito (status=%)', v_status;
   end if;
-  if v_def like '%published%' or v_def like '%archived%' then
-    raise exception 'T2b FALHOU: CHECK de status aceita valor a mais (%)', v_def;
+
+  update public.talkx_segments set status = 'active'
+   where id = 'b0000000-0000-0000-0000-000000000001';
+  select status into v_status from public.talkx_segments
+   where id = 'b0000000-0000-0000-0000-000000000001';
+  if v_status <> 'active' then
+    raise exception 'T2b FALHOU: active (valor legado) nao foi aceito (status=%)', v_status;
   end if;
-  raise notice 'T2b OK: CHECK de status = %', v_def;
+  raise notice 'T2b OK: inactive e active (valores legados) seguem aceitos e persistem';
 end $$;
 
 -- =====================================================================================
