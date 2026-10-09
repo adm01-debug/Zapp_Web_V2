@@ -381,6 +381,11 @@ jobs:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-reaction-membership.test.sh
 
+      - name: Simular view team_message_read_state — all_read por mensagem (N-070)
+        env:
+          TEAM_READ_STATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-message-read-state.test.sh
+
       - name: Simular drop do indice redundante de messages.external_id (perf)
         env:
           DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
