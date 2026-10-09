@@ -64,6 +64,21 @@ async function copyReceivedStickerToLibrary(
   return destination;
 }
 
+/**
+ * SL-197 (inventário 029 · Inbox/Chat / Resiliência) — métrica de retry por mensagem.
+ *
+ * `messages.delivery_attempt_count` é o contador de tentativas de entrega do banco
+ * (incrementado a cada claim em `claim_message_delivery`) e a linha crua chega ao
+ * balão via `useRealtimeMessages`/`buildConversation`. Só a mensagem ENVIADA tem
+ * tentativas de entrega, e só há o que mostrar quando houve REENVIO: com 1 tentativa
+ * o valor é o caminho normal e exibir o número em todo balão viraria ruído.
+ */
+function tentativasDeEnvio(message: Message): number | null {
+  if (message.sender !== 'agent') return null;
+  const total = message.delivery_attempt_count;
+  return typeof total === 'number' && total > 1 ? total : null;
+}
+
 interface MessageBubbleProps {
   message: Message;
   isFirstInGroup: boolean;
@@ -100,6 +115,7 @@ export const MessageBubble = memo(function MessageBubble({
   const { toast } = useToast();
   const { profile } = useAuth();
   const isSent = message.sender === 'agent';
+  const tentativas = tentativasDeEnvio(message);
   const senderName = isSent ? 'Você' : message.senderName || 'Contato';
   const agentInitials = profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'EU';
 
@@ -308,6 +324,14 @@ export const MessageBubble = memo(function MessageBubble({
                   {message.isEdited && <span className="text-[9px] italic mr-0.5">editada</span>}
                   <span className="text-2xs font-medium">{formatMessageTime(message.timestamp)}</span>
                   {isSent && <MessageStatusIcon status={message.status} />}
+                  {tentativas !== null && (
+                    <span
+                      className="text-2xs font-medium tabular-nums"
+                      title={`${tentativas} tentativas de envio`}
+                    >
+                      {tentativas} tentativas
+                    </span>
+                  )}
                 </div>
               </motion.div>
             )}
