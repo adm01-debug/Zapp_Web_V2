@@ -261,3 +261,36 @@ Deno.test(
     assert(!fetchCalled, "nada pode ir ao provedor quando a autorização nega");
   },
 );
+
+
+Deno.test(
+  "IA-014: fonte de produção mantém chamada direta de visibilidade antes do download",
+  async () => {
+    let downloadCalled = false;
+    const deps = baseDeps({
+      authorize: () => Promise.resolve({ kind: "user", userId: "u-1" }),
+      assertMessageVisible: () =>
+        Promise.resolve({ ok: false, status: 403, error: "Áudio sem permissão" }),
+      downloadAudio: () => {
+        downloadCalled = true;
+        return Promise.resolve({
+          buffer: OGG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        });
+      },
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 403, "o handler real deve negar antes do download");
+    assert(!downloadCalled, "o handler real não pode baixar antes de autorizar");
+
+    const source = await Deno.readTextFile(new URL("./index.ts", import.meta.url));
+    const semImports = source.replace(/^import[\s\S]*?;\s*$/gm, "");
+    const visibilidade = semImports.indexOf("await assertMessageVisibleToCaller(");
+    const download = semImports.indexOf("await downloadAudio(");
+
+    assert(visibilidade > -1, "produção deve chamar assertMessageVisibleToCaller diretamente");
+    assert(download > -1, "produção deve chamar downloadAudio diretamente");
+    assert(visibilidade < download, "produção deve autorizar a mensagem antes de baixar o objeto");
+  },
+);
