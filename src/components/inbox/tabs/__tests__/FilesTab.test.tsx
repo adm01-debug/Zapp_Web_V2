@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import type { SenderProfileMap } from '@/lib/fileSenderIdentity';
 import { __resetFilesViewSession } from '@/hooks/chat/useFilesViewState';
 
 const mockUseContactMedia = vi.fn();
 const mockUseContactMediaCounts = vi.fn();
+const mockUseMediaSenderProfiles = vi.fn();
+const mockUseDownloadPermission = vi.fn();
+const mockUseAuth = vi.fn();
 
 vi.mock('@/hooks/chat/useContactMedia', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMedia')>('@/hooks/chat/useContactMedia');
@@ -23,7 +27,15 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
+  useAuth: (...args: unknown[]) => mockUseAuth(...args),
+}));
+
+vi.mock('@/hooks/chat/useMediaSenderProfiles', () => ({
+  useMediaSenderProfiles: (...args: unknown[]) => mockUseMediaSenderProfiles(...args),
+}));
+
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: (...args: unknown[]) => mockUseDownloadPermission(...args),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -46,6 +58,14 @@ const ITEMS: ContactMediaItem[] = [
   { id: 'm2', url: 'https://x/b.pdf', type: 'document', filename: 'contrato.pdf', displayName: 'contrato.pdf', extension: 'pdf', senderLabel: 'Atendente', created_at: '2026-01-11T10:00:00.000Z', caption: null, mimetype: 'application/pdf', size: 2048, meta: null, sender: 'agent' },
 ];
 
+/** R04: o `agent_id` que liga o cartão ao atendente que enviou o arquivo. */
+const ITENS_COM_AUTOR: ContactMediaItem[] = [
+  ITEMS[0],
+  { ...ITEMS[1], agentId: 'p-2' },
+];
+
+const FOTO = 'https://cdn.test/foto.png';
+
 interface MediaOverrides {
   hasMore?: boolean;
   isFetchingNextPage?: boolean;
@@ -56,6 +76,12 @@ interface MediaOverrides {
 interface RenderOverrides extends MediaOverrides {
   /** #144/OTH-002: força a query de contagens a falhar (erro != zero confirmado). */
   countsError?: boolean;
+  /** R04: perfis devolvidos em lote pelo `useMediaSenderProfiles`. */
+  senderProfiles?: SenderProfileMap;
+  /** R04: `profiles.id` do usuário logado (decide "Você" no cartão). */
+  profileId?: string | null;
+  /** R04/D06: resultado do `useDownloadPermission`. */
+  canDownload?: boolean;
 }
 
 function renderTab(items: ContactMediaItem[] = ITEMS, overrides: RenderOverrides = {}) {
@@ -83,6 +109,12 @@ function renderTab(items: ContactMediaItem[] = ITEMS, overrides: RenderOverrides
     isError: overrides.countsError ?? false,
     refetch: vi.fn(),
   });
+  mockUseAuth.mockReturnValue({
+    user: { id: 'user-1' },
+    profile: overrides.profileId ? { id: overrides.profileId } : undefined,
+  });
+  mockUseMediaSenderProfiles.mockReturnValue({ profiles: overrides.senderProfiles ?? {}, isLoading: false });
+  mockUseDownloadPermission.mockReturnValue({ canDownload: overrides.canDownload ?? false, isLoading: false });
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -185,5 +217,47 @@ describe('FilesTab', () => {
     renderTab();
     expect(screen.queryByTestId('files-pagination-notice')).not.toBeInTheDocument();
     expect(screen.queryByTestId('files-load-more')).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * R04 — "foto de quem enviou" no cartão: o lote de perfis (D04) e a permissão de download
+ * (D06) nascem UMA vez na aba e chegam ao cartão por props, sem consulta por cartão.
+ */
+describe('FilesTab — remetente e download do cartão (R04, D01/D04/D06)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const PERFIL: SenderProfileMap = { 'p-2': { id: 'p-2', name: 'Ana Atendente', avatar_url: FOTO } };
+
+  it('D04: o lote é pedido pela TELA (todos os agent_id de uma vez), não por cartão', () => {
+    renderTab(ITENS_COM_AUTOR, { senderProfiles: PERFIL });
+
+    // Se fosse por cartão, cada chamada traria um id só — aqui vem a lista da tela inteira.
+    const idsDoLote = mockUseMediaSenderProfiles.mock.calls[0][0] as unknown[];
+    expect(idsDoLote).toContain('p-2');
+    expect(idsDoLote).toHaveLength(ITENS_COM_AUTOR.length);
+
+    // A identidade do lote chega ao cartão real (foto + nome de quem enviou).
+    const cartao = within(screen.getByTestId('files-item-m2'));
+    expect(cartao.getByTestId('sender-avatar-name')).toHaveTextContent('Ana Atendente');
+    expect(cartao.getByTestId('sender-avatar-photo')).toHaveAttribute('src', FOTO);
+  });
+
+  it('D01: o perfil do usuário logado chega ao cartão e vira "Você"', () => {
+    renderTab(ITENS_COM_AUTOR, { senderProfiles: PERFIL, profileId: 'p-2' });
+
+    expect(within(screen.getByTestId('files-item-m2')).getByTestId('sender-avatar-name'))
+      .toHaveTextContent('Você');
+  });
+
+  it('D06: sem permissão o cartão mostra o cadeado; com permissão, o botão Baixar', () => {
+    const { unmount } = renderTab(ITENS_COM_AUTOR, { canDownload: false });
+    const cartao = () => within(screen.getByTestId('files-item-m2'));
+    expect(cartao().getByRole('button', { name: /bloqueado por política de segurança/i })).toBeInTheDocument();
+    expect(cartao().queryByRole('button', { name: 'Baixar' })).not.toBeInTheDocument();
+    unmount();
+
+    renderTab(ITENS_COM_AUTOR, { canDownload: true });
+    expect(cartao().getByRole('button', { name: 'Baixar' })).toBeInTheDocument();
   });
 });

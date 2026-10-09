@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useContactMedia, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { useContactMediaCounts, type ContactMediaCounts } from '@/hooks/chat/useContactMediaCounts';
+import { useMediaSenderProfiles } from '@/hooks/chat/useMediaSenderProfiles';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { useFilesInfiniteScroll } from '@/hooks/chat/useFilesInfiniteScroll';
 import {
   columnsCapacity,
@@ -85,7 +87,7 @@ interface FilesTabProps {
 }
 
 export function FilesTab({ contactId, contactName }: FilesTabProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const view = useFilesViewState(user?.id, contactId);
   const containerRef = useRef<HTMLDivElement>(null);
   const { effective: containerEffective, width: containerWidth, available: containerOptions } =
@@ -104,6 +106,13 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   // Etapa 42: chips contam no banco (contagem exata por tipo), nao nos itens carregados.
   // #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—).
   const { counts, isError: countsError } = useContactMediaCounts(contactId);
+
+  // R04 / D04: quem enviou cada arquivo. Os perfis dos atendentes sao resolvidos em UMA
+  // consulta em lote para a tela toda (o cartao nunca consulta por conta propria) e a
+  // identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de
+  // download tambem e resolvida uma vez aqui e decide "baixar" x "cadeado" no cartao.
+  const { profiles: senderProfiles } = useMediaSenderProfiles(items.map((item) => item.agentId));
+  const { canDownload } = useDownloadPermission();
 
   // F05 (F01): o período escolhido vira o intervalo [de, até] no fuso do navegador. `null` =
   // "Qualquer data" — nada muda em relação ao comportamento anterior ao filtro.
@@ -424,6 +433,9 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
               effectiveColumns={effective}
               containerWidth={gridWidth}
               contactName={contactName}
+              senderProfiles={senderProfiles}
+              currentUserId={profile?.id ?? null}
+              downloadAllowed={canDownload}
               loading={showSkeleton}
               selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
               actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
