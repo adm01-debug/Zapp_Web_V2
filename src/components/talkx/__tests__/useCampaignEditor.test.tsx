@@ -282,6 +282,95 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.selectedContacts).toEqual(['contact-1']);
   });
 
+  it('hidrata TODOS os destinatários do rascunho, além da primeira página do PostgREST (#103)', async () => {
+    // O PostgREST devolve no máximo 1000 linhas por resposta: o mock reproduz
+    // esse teto — sem `.range()` só a primeira página volta; com `.range()` a
+    // fatia pedida. O dataset tem 2500 destinatários (3 páginas).
+    const PAGE_CAP = 1000;
+    const TOTAL = 2500;
+    const recipients = Array.from({ length: TOTAL }, (_, i) => ({ id: `recipient-${i}`, contact_id: `contato-${i}` }));
+    const rangeCalls: [number, number][] = [];
+    const fromSpy = supabase.from as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockImplementation((table: string) => {
+      if (table !== 'talkx_recipients') throw new Error(`tabela inesperada: ${table}`);
+      let from: number | null = null;
+      let to: number | null = null;
+      const q: Record<string, unknown> = {
+        select: () => q,
+        eq: () => q,
+        order: () => q,
+        range: (f2: number, t: number) => { from = f2; to = t; rangeCalls.push([f2, t]); return q; },
+        then: (resolve: (v: unknown) => unknown) => Promise.resolve(resolve({
+          data: from === null ? recipients.slice(0, PAGE_CAP) : recipients.slice(from, (to ?? 0) + 1),
+          error: null,
+        })),
+      };
+      return q;
+    });
+    try {
+      const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft' };
+      renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+      const queryFn = capturedQuery('talkx-draft-recipient-ids')?.queryFn;
+      if (!queryFn) throw new Error('a consulta de destinatários precisa expor queryFn');
+
+      const ids = (await queryFn({ signal: new AbortController().signal })) as string[];
+
+      expect(rangeCalls.length).toBeGreaterThan(1);
+      expect(ids).toHaveLength(TOTAL);
+      expect(new Set(ids).size).toBe(TOTAL);
+    } finally {
+      fromSpy.mockReset();
+    }
+  });
+
+  it('a hidratação da audiência não é edição: sem ação do usuário nada é gravado, e renomear preserva todos os contatos (#103)', async () => {
+    // Audiência maior que o teto do PostgREST (1500 > 1000): a hidratação não
+    // pode disparar autosave nem fazer a gravação levar só a primeira página.
+    const TOTAL = 1500;
+    const persistedIds = Array.from({ length: TOTAL }, (_, i) => ({ contact_id: `contato-${i}` }));
+    f.persistedRecipientIds = persistedIds;
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho', status: 'draft',
+      owner: 'profile-1', whatsapp_connection_id: 'connection-1',
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    expect(result.current.selectedContacts).toHaveLength(TOTAL);
+
+    // Hidratação não é edição do usuário: sem nenhuma ação, nada pode ser gravado.
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.saveDraft).not.toHaveBeenCalled();
+    expect(f.update).not.toHaveBeenCalled();
+
+    // Edição apenas de nome: o autosave grava com a audiência hidratada INTEIRA.
+    act(() => result.current.setName('Rascunho renomeado'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'draft-1',
+      audience_filters: expect.objectContaining({
+        contact_ids: persistedIds.map((recipient) => recipient.contact_id),
+      }),
+    }));
+  });
+
+  it('mudança intencional de público continua gerando payload com a NOVA audiência (#103)', async () => {
+    f.persistedRecipientIds = [{ contact_id: 'contato-1' }, { contact_id: 'contato-2' }];
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho', status: 'draft',
+      owner: 'profile-1', whatsapp_connection_id: 'connection-1',
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    expect(result.current.selectedContacts).toEqual(['contato-1', 'contato-2']);
+
+    act(() => result.current.toggleContact('contato-2'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    const calls = f.update.mock.calls;
+    const payload = calls[calls.length - 1]?.[0] as { audience_filters?: { contact_ids?: string[] } } | undefined;
+    expect(payload?.audience_filters?.contact_ids).toEqual(['contato-1']);
+  });
+
   it('autosaves a changed manual selection against the existing draft identity', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => result.current.setName('Campanha de teste'));
