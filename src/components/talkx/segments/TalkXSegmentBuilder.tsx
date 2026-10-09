@@ -1,15 +1,15 @@
 import React from 'react';
 import {
-  ArrowLeft, BarChart3, Bookmark, Check, Copy, Plus, RefreshCw, Redo2, Undo2, X,
+  ArrowLeft, BarChart3, Bookmark, Check, ChevronDown, ChevronUp, Copy, MoreVertical, Plus, RefreshCw, Redo2, Trash2, Undo2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 import { PrimaryButton, GhostButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import {
-  RULE_FIELDS, splitRules, useAudienceEstimate, type RuleField, type SegmentRule,
+  RULE_FIELDS, rulesJoin, splitRules, useAudienceEstimate, type RuleField, type SegmentRule,
 } from '@/hooks/integrations/useTalkXSegments';
 import { IconTile, RailCard, fmtInt } from '../talkxShared';
 import { toast } from 'sonner';
@@ -131,41 +131,78 @@ export function TalkXSegmentBuilder({
           </div>
           <div className="space-y-4">
             {rules.groups.map((g, gi) => (
-              <div
-                key={g.id}
-                className={cn('rounded-xl border overflow-hidden transition-colors', dragOverGroupId === g.id ? 'border-primary/60 bg-primary/10' : 'border-border/60 bg-input/20')}
-                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOverGroupId(g.id); }}
-                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const dropped = RULE_FIELDS.find((x) => x.value === e.dataTransfer.getData('text/plain'));
-                  if (dropped) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.value) });
-                  setDragOverGroupId(null); setDraggingField(null);
-                }}
-              >
-                <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
-                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E', 'O', 'G'][Math.min(gi, 2)]}</span>
-                  <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
-                  <Select value={g.match} onValueChange={(v) => dispatch({ type: 'setMatch', id: g.id, match: v as 'and' | 'or' })}>
-                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
-                  </Select>
-                  <button type="button" onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })} aria-label="Duplicar grupo" title="Duplicar grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-primary-glow"><Copy className="w-3.5 h-3.5" /></button>
-                  {rules.groups.length > 1 && <button type="button" onClick={() => dispatch({ type: 'removeGroup', id: g.id })} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
+              <React.Fragment key={g.id}>
+                {/* X105 (TL-130): conector ÚNICO entre grupos — os grupos são combinados
+                    por `rulesJoin` (hoje sempre OU; o motor ainda não lê `join` entre
+                    grupos), nunca por posição ou pelo `match` de um grupo específico. */}
+                {gi > 0 && (
+                  <div
+                    role="separator"
+                    aria-label={`Conector entre grupos: ${rulesJoin(rules) === 'and' ? 'E' : 'OU'}`}
+                    className="flex items-center gap-2 py-0.5"
+                  >
+                    <span aria-hidden className="h-px flex-1 bg-border/60" />
+                    <span className="h-6 px-2.5 inline-flex items-center rounded-full border border-border/60 bg-muted/30 text-2xs font-bold text-foreground-secondary">
+                      {rulesJoin(rules) === 'and' ? 'E' : 'OU'}
+                    </span>
+                    <span aria-hidden className="h-px flex-1 bg-border/60" />
+                  </div>
+                )}
+                <div
+                  className={cn('rounded-xl border overflow-hidden transition-colors', dragOverGroupId === g.id ? 'border-primary/60 bg-primary/10' : 'border-border/60 bg-input/20')}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOverGroupId(g.id); }}
+                  onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const dropped = RULE_FIELDS.find((x) => x.value === e.dataTransfer.getData('text/plain'));
+                    if (dropped) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.value) });
+                    setDragOverGroupId(null); setDraggingField(null);
+                  }}
+                >
+                  <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
+                    {/* Selo do grupo: o E/OU vem do `match` do grupo (azul = E, roxo = OU),
+                        nunca da posição — antes `['E','O','G'][índice]` mostrava "O" para
+                        um 2º grupo AND e "G" para o 3º grupo, qualquer que fosse o match. */}
+                    <span
+                      aria-label={`Grupo ${gi + 1}: ${g.match === 'and' ? 'E (AND)' : 'OU (OR)'}`}
+                      className={cn('min-w-7 h-7 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center shrink-0', g.match === 'and' ? 'bg-primary/20 text-primary-glow' : 'bg-dash-violet/15 text-dash-violet')}
+                    >{g.match === 'and' ? 'E' : 'OU'}</span>
+                    <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button type="button" aria-label={`Menu do grupo ${gi + 1}`} className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><MoreVertical className="w-4 h-4" /></button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuItem onClick={() => dispatch({ type: 'setMatch', id: g.id, match: g.match === 'and' ? 'or' : 'and' })}>{g.match === 'and' ? <ChevronDown className="w-4 h-4 mr-2" /> : <ChevronUp className="w-4 h-4 mr-2" />}Alternar para {g.match === 'and' ? 'OU' : 'E'}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })}><Copy className="w-4 h-4 mr-2" />Duplicar grupo</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem disabled={gi === 0} onClick={() => dispatch({ type: 'moveGroup', id: g.id, delta: -1 })}><ChevronUp className="w-4 h-4 mr-2" />Mover para cima</DropdownMenuItem>
+                        <DropdownMenuItem disabled={gi === rules.groups.length - 1} onClick={() => dispatch({ type: 'moveGroup', id: g.id, delta: 1 })}><ChevronDown className="w-4 h-4 mr-2" />Mover para baixo</DropdownMenuItem>
+                        <DropdownMenuItem disabled={rules.groups.length === 1} className="text-dash-red" onClick={() => dispatch({ type: 'removeGroup', id: g.id })}><Trash2 className="w-4 h-4 mr-2" />Remover grupo</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="p-4 space-y-2.5">
+                    {/* Árvore: uma linha vertical com um nó por condição — as condições do
+                        grupo leem como uma lista ligada, e não como linhas soltas. */}
+                    <div className="relative space-y-2.5 pl-5">
+                      {g.rules.length > 0 && <span aria-hidden data-talkx-line className="absolute left-[9px] top-3 bottom-3 w-px bg-border" />}
+                      {g.rules.map((r) => (
+                        <div key={r.id} className="relative">
+                          <span aria-hidden data-talkx-node className="absolute -left-[15px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-border" />
+                          <RuleRow
+                            rule={r}
+                            onChange={(patch: Partial<SegmentRule>) => dispatch({ type: 'updateRule', groupId: g.id, ruleId: r.id, patch })}
+                            onRemove={() => dispatch({ type: 'removeRule', groupId: g.id, ruleId: r.id })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
+                    <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
+                  </div>
                 </div>
-                <div className="p-4 space-y-2.5">
-                  {g.rules.map((r) => (
-                    <RuleRow
-                      key={r.id}
-                      rule={r}
-                      onChange={(patch: Partial<SegmentRule>) => dispatch({ type: 'updateRule', groupId: g.id, ruleId: r.id, patch })}
-                      onRemove={() => dispatch({ type: 'removeRule', groupId: g.id, ruleId: r.id })}
-                    />
-                  ))}
-                  {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
-                  <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
-                </div>
-              </div>
+              </React.Fragment>
             ))}
           </div>
           <div className="flex items-center gap-2 mt-4">

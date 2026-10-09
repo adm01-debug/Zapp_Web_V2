@@ -50,6 +50,7 @@ export type SegmentBuilderAction =
   | { type: 'addGroup'; match: 'and' | 'or'; id?: string }
   | { type: 'removeGroup'; id: string }
   | { type: 'duplicateGroup'; id: string }
+  | { type: 'moveGroup'; id: string; delta: -1 | 1 }
   | { type: 'setMatch'; id: string; match: 'and' | 'or' }
   | { type: 'addRule'; groupId: string; rule?: SegmentRule }
   | { type: 'removeRule'; groupId: string; ruleId: string }
@@ -153,15 +154,19 @@ export function segmentBuilderReducer(state: SegmentBuilderState, action: Segmen
     case 'addGroup': {
       const id = action.id ?? newId();
       const groups = [...state.rules.groups, { id, match: action.match, rules: [] }];
-      return { ...state, rules: { groups }, activeGroupId: id, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+      return { ...state, rules: { ...state.rules, groups }, activeGroupId: id, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
     }
     case 'removeGroup': {
-      const kept = state.rules.groups.filter((g) => g.id !== action.id);
-      // Nunca fica sem grupo: a tela perde o lugar de adicionar condição.
-      const groups = kept.length > 0 ? kept : [{ id: newId(), match: 'and' as const, rules: [] }];
+      // X105 (TL-130): um segmento precisa de pelo menos um grupo — a última
+      // remoção é RECUSADA (o item do menu já aparece desabilitado; aqui é a
+      // segunda trava, para quem despachar a ação direto). Diferente de
+      // substituir pelo grupo vazio: isso jogaria fora as condições do único
+      // grupo que sobrou, sem o usuário ter pedido para limpar nada.
+      if (state.rules.groups.length <= 1) return state;
+      const groups = state.rules.groups.filter((g) => g.id !== action.id);
       return {
         ...state,
-        rules: { groups },
+        rules: { ...state.rules, groups },
         activeGroupId: state.activeGroupId === action.id ? null : state.activeGroupId,
         past: pushPast(state.past, builderContent(state)),
         future: [],
@@ -180,23 +185,31 @@ export function segmentBuilderReducer(state: SegmentBuilderState, action: Segmen
       const index = state.rules.groups.findIndex((g) => g.id === action.id);
       const groups = [...state.rules.groups];
       groups.splice(index + 1, 0, copy);
-      return { ...state, rules: { groups }, activeGroupId: copy.id, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+      return { ...state, rules: { ...state.rules, groups }, activeGroupId: copy.id, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+    }
+    case 'moveGroup': {
+      const from = state.rules.groups.findIndex((g) => g.id === action.id);
+      const to = from + action.delta;
+      if (from < 0 || to < 0 || to >= state.rules.groups.length) return state;
+      const groups = [...state.rules.groups];
+      [groups[from], groups[to]] = [groups[to], groups[from]];
+      return { ...state, rules: { ...state.rules, groups }, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
     }
     case 'setMatch': {
       const groups = state.rules.groups.map((g) => (g.id === action.id ? { ...g, match: action.match } : g));
-      return { ...state, rules: { groups }, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+      return { ...state, rules: { ...state.rules, groups }, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
     }
     case 'addRule': {
       const groups = state.rules.groups.map((g) =>
         g.id === action.groupId ? { ...g, rules: [...g.rules, action.rule ?? newRule()] } : g,
       );
-      return { ...state, rules: { groups }, activeGroupId: action.groupId, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+      return { ...state, rules: { ...state.rules, groups }, activeGroupId: action.groupId, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
     }
     case 'removeRule': {
       const groups = state.rules.groups.map((g) =>
         g.id === action.groupId ? { ...g, rules: g.rules.filter((r) => r.id !== action.ruleId) } : g,
       );
-      return { ...state, rules: { groups }, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
+      return { ...state, rules: { ...state.rules, groups }, past: pushPast(state.past, builderContent(state)), future: [], lastEditKey: null, lastEditAt: 0 };
     }
     case 'updateRule': {
       const groups = state.rules.groups.map((g) =>
@@ -205,7 +218,7 @@ export function segmentBuilderReducer(state: SegmentBuilderState, action: Segmen
           : g,
       );
       const keys = Object.keys(action.patch).sort().join(',');
-      return applyEdit(state, { rules: { groups } }, `rule:${action.groupId}:${action.ruleId}:${keys}`, action.at ?? Date.now());
+      return applyEdit(state, { rules: { ...state.rules, groups } }, `rule:${action.groupId}:${action.ruleId}:${keys}`, action.at ?? Date.now());
     }
     case 'clear': {
       // Já sem condição nenhuma: um passo aqui marcaria "alteração pendente"

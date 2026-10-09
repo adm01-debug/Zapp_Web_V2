@@ -31,8 +31,18 @@ export type RuleOp =
 
 export interface SegmentRule { id: string; field: RuleField; op: RuleOp; value: string }
 export interface SegmentRuleGroup { id: string; match: 'and' | 'or'; rules: SegmentRule[] }
+/**
+ * Conector ENTRE grupos: um único valor para o segmento inteiro, sem
+ * precedência mista. O motor combina os grupos com OU — a RPC de audiência
+ * monta `AND (grupo1 OU grupo2 …)`
+ * (`supabase/migrations/20261002391230_talkx_audience_rpc.sql:277`), então 'or'
+ * é o padrão e o divisor do construtor mostra exatamente o que ele aplica. Este
+ * campo é o único lugar que o divisor lê; 'and' entre grupos só passa a valer
+ * quando a etapa de banco ensinar a RPC a ler `join`.
+ */
+export type SegmentJoin = 'and' | 'or';
 /** Grupos são combinados com OU entre si (como no mockup "Grupo 1 OU Grupo 2"). */
-export interface SegmentRules { groups: SegmentRuleGroup[] }
+export interface SegmentRules { groups: SegmentRuleGroup[]; join?: SegmentJoin }
 
 export interface TalkXSegment {
   id: string;
@@ -98,8 +108,16 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
   date: [{ value: 'in_last_days', label: 'nos últimos (dias)' }, { value: 'not_in_last_days', label: 'há mais de (dias)' }],
 };
 
-export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }] });
+export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }], join: 'or' });
 export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
+
+/**
+ * O conector que vale para o segmento inteiro. Regras gravadas antes deste
+ * campo (e as que o wizard monta) não trazem `join`: o padrão 'or' mantém o que
+ * o motor sempre aplicou e evita que a tela prometa um E que a contagem/entrega
+ * não fazem.
+ */
+export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin => (rules?.join === 'and' ? 'and' : 'or');
 
 /**
  * Uma condição só é utilizável quando tem valor para o seu tipo: texto/enum/array
