@@ -158,13 +158,42 @@ recalibre nunca teve efeito visual). Corrigido elevando a especificidade do bloc
 Confirmado por leitura direta do cascade gerado (import order + seletores); não depende
 mais de revisão visual pra ser considerado corrigido — é uma garantia estrutural de CSS.
 
+## Revisão das telas densas pós-F3 (08/10/2026) — item 12 fechado
+
+O item 12 pedia inspeção em tela das trocas de meia-medida do F3 (o medo: a troca mudar a
+quebra de linha dentro das tabelas densas). Fechado em 08/10/2026 com medição em navegador, e
+não com leitura de código — bancada local servida em `127.0.0.1`, sem sessão e sem banco.
+
+- **Objeto:** os 188 pares (classe antes → classe depois) extraídos do diff do próprio F3
+  (`8709667b0`, 24 arquivos de `src/`): `12.5→xs` 104 · `11.5→11px` 46 · `10.5→10px` 22 ·
+  `13.5→sm` 11 · `9.5→9px` 4 · `7.5→8px` 1. São 188, e não 193, porque o diff do F3 em `src/`
+  contém 188 trocas de meia-medida (o número do plano somava pontos fechados junto do D5/D6).
+- **CSS:** o real deste projeto (compilado de `tailwind.config.ts` + `src/index.css`), com a
+  fonte Plus Jakarta Sans carregada (`document.fonts.status = "loaded"`). Fonte/entrelinha
+  resolvidas conferem com o mapeamento do F3: `12.5px/18.75px → 12px/16px`,
+  `13.5px/20.25px → 14px/20px`, `11.5px/17.25px → 11px/16.5px`, `10.5px/15.75px → 10px/15px`,
+  `9.5px/14.25px → 9px/13.5px`, `7.5px/11.25px → 8px/12px`.
+- **Medição:** cada par com o mesmo texto e a mesma largura de coluna (1160/900/560/320/220/160/120 px),
+  252 cruzamentos: **5 mudanças de quebra (2,0%), todas em coluna estreita (120/220 px) e 4 delas
+  para MENOS linhas** (texto menor passa a caber em 1 linha). A única que ganhou linha
+  (`7.5→8px`, a troca de 1 ocorrência no repo — selo "online" do avatar em `talkxShared.tsx`)
+  fica em 1 linha em 120/220/320 px com o texto real do elemento. Crachá de altura fixa `h-6`
+  (ContactsTable): 84 pares, corte de rótulo **4 → 3** — a troca `10.5→10px` desfez um corte; os
+  3 restantes já cortavam antes, não são regressão da troca.
+- **Conclusão:** nenhuma troca do F3 aumentou a quebra de linha de conteúdo real das telas
+  densas, e nenhuma passou a cortar texto. A guarda de tipografia (`scripts/qa/medir-tipografia.cjs
+  --check`) roda verde com teto 0 e é sensível a meia-medida dentro de `<td>` (prova por mutação).
+
 ## Pendente
 
-- **F3 item 12** — revisão visual das telas densas. 193 trocas de meia-medida mudam quebra
-  de linha em tabela; nenhuma foi inspecionada em tela.
+Nada pendente nesta linha de trabalho: F0–F7 fechados e o item 12 fechado na seção acima.
 
-  **4 tentativas de automação nesta linha de trabalho, todas bloqueadas por infra de
-  browser, nunca pela paridade em si:**
+## Histórico: tentativas bloqueadas por infra de browser (22–23/09/2026)
+
+As 4 tentativas abaixo foram de **automação de tela logada**, bloqueadas por infra de browser,
+nunca pela paridade em si. Ficam registradas porque motivaram o item 12 ficar aberto por 2
+semanas; a medição de 08/10/2026 acima não depende de sessão e por isso fechou o item.
+
   1. Cloudflare Browser Rendering — token inválido/expirado (precisa permissão "Browser
      Rendering: Edit" renovada).
   2. Bright Data (scraping_browser) — sessão rejeitou consistentemente `fill`/`type` no
@@ -178,13 +207,9 @@ mais de revisão visual pra ser considerado corrigido — é uma garantia estrut
 
   Testado também: sem computador vinculado a esta sessão (sem device bridge) e o conector
   `Chrome_Browser` disponível é só leitura/scraping (sem `click`/`fill`), não serve para
-  formulário de login.
-
-  Usuário QA `qa.visual@promobrindes.com.br` com senha redefinida de novo em 23/09 (Supabase
-  Auth Admin API), pronta para a próxima tentativa. **Ação necessária fora desta sessão**:
-  renovar/corrigir o `CF_API_TOKEN` com permissão "Browser Rendering: Edit" (destrava
-  Playwright Workers e Cloudflare Browser MCP de uma vez), e/ou reautenticar o Bright Data
-  MCP via `/mcp` numa sessão interativa. Sem isso, a revisão visual só é viável manualmente.
+  formulário de login. Usuário QA `qa.visual@promobrindes.com.br` segue disponível caso uma
+  inspeção de tela LOGADA venha a ser pedida (renovar `CF_API_TOKEN` com "Browser Rendering:
+  Edit" destrava Playwright Workers e Cloudflare Browser MCP de uma vez).
 
 ## Fix pós-auditoria: guard-rail cego a `rem`/`em` (2026-09-23)
 
