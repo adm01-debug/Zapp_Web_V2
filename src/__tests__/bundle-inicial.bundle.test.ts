@@ -3,19 +3,17 @@
  * grafo ESTÁTICO do entry (o que o `index.html` pré-carrega e o
  * `bundle-budget.mjs` mede como `initial-js`).
  *
- * Dois hóspedes medidos em 09/10/2026:
+ * Hóspede medido em 09/10/2026: `sonner` — o viewport de toasts é overlay de
+ * segundo plano: nenhum toast existe antes do first paint e o `toast()`
+ * bufferiza chamadas feitas antes do <Toaster> montar (Observer do pacote).
+ * Mesmo assim `App.tsx` importava `@/components/ui/sonner` estaticamente e
+ * `useGlobalKeyboardShortcuts` importava `toast` — juntos colocavam a lib
+ * (~9 KB gzip) no inicial.
  *
- * 1. `sonner` — o viewport de toasts é overlay de segundo plano: nenhum toast
- *    existe antes do first paint e o `toast()` bufferiza chamadas feitas antes
- *    do <Toaster> montar (Observer do pacote). Mesmo assim `App.tsx` importava
- *    `@/components/ui/sonner` estaticamente e `useGlobalKeyboardShortcuts`
- *    importava `toast` — juntos colocavam a lib (~9 KB gzip) no inicial.
- *
- * 2. A pilha de sessão de telefonia (`CallSessionProvider` → `useSipClient` →
- *    `useSipConnection`/máquina/adapters, ~126 KB de fonte) montada estaticamente
- *    no boot, embora TODOS os consumidores de `useCallSession` sejam chunks
- *    lazy — é a folga que a nota do próprio `performance-budget.json` prevê
- *    ("quando o dialer sair do grafo inicial").
+ * A pilha de sessão de telefonia (`CallSessionProvider`) continua no grafo
+ * estático de propósito: ela envolve o app inteiro, e deixá-la lazy poria todos
+ * os filhos atrás de um chunk dinâmico (cascata no first paint e falha da
+ * telefonia derrubando o app). Por isso não há caso dela aqui.
  *
  * O teste empacota o app de verdade com o MESMO `vite build` do CI (vite.config
  * real, modo produção) e percorre o fechamento de imports estáticos a partir do
@@ -45,7 +43,6 @@ interface BuildChunk {
 }
 
 const MARCA_SONNER = /node_modules[\\/]sonner[\\/]|src[\\/]components[\\/]ui[\\/]sonner\.tsx/;
-const MARCA_TELEFONIA = /src[\\/](providers[\\/]CallSessionProvider\.tsx|hooks[\\/]communication[\\/]useSipClient\.ts|hooks[\\/]sip[\\/]useSipConnection\.ts|lib[\\/]calls[\\/]session\.ts)/;
 
 function modulosDoChunk(chunk: BuildChunk): string[] {
   return chunk.moduleIds ?? Object.keys(chunk.modules ?? {});
@@ -99,37 +96,32 @@ function grafoEstatico(chunks: BuildChunk[]): Set<string> {
 }
 
 describe('bundle inicial', () => {
-  it.each([
-    ['sonner (toasts são overlay lazy)', MARCA_SONNER],
-    ['pilha de sessão de telefonia (consumidores são todos lazy)', MARCA_TELEFONIA],
-  ])('%s não entra no grafo estático do entry', async (_rotulo, marca) => {
+  it('sonner (toasts são overlay lazy) não entra no grafo estático do entry', async () => {
     const chunks = await empacotarApp();
     const estaticos = grafoEstatico(chunks);
 
     const vazou = chunks.filter(
       (chunk) =>
         estaticos.has(chunk.fileName) &&
-        modulosDoChunk(chunk).some((id) => marca.test(id)),
+        modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id)),
     );
 
     expect(
       vazou.map((chunk) => chunk.fileName),
-      'módulo que não é do first paint voltou ao bundle inicial — importe com lazy()/import()',
+      'sonner voltou ao bundle inicial — importe com lazy()/import()',
     ).toEqual([]);
   }, 120_000);
 
-  it('controle: sonner e telefonia continuam empacotados, fora do entry', async () => {
+  it('controle: sonner continua empacotado, fora do entry', async () => {
     const chunks = await empacotarApp();
 
     // Sem este controle, um pacote sem o código passaria no teste acima.
-    for (const [rotulo, marca] of [['sonner', MARCA_SONNER], ['telefonia', MARCA_TELEFONIA]] as const) {
-      const presentes = chunks.filter((chunk) =>
-        modulosDoChunk(chunk).some((id) => marca.test(id)),
-      );
-      expect(presentes.length, `${rotulo} sumiu do pacote inteiro`).toBeGreaterThan(0);
-      for (const chunk of presentes) {
-        expect(chunk.isEntry, `${chunk.fileName} com ${rotulo} não pode ser entry`).not.toBe(true);
-      }
+    const presentes = chunks.filter((chunk) =>
+      modulosDoChunk(chunk).some((id) => MARCA_SONNER.test(id)),
+    );
+    expect(presentes.length, 'sonner sumiu do pacote inteiro').toBeGreaterThan(0);
+    for (const chunk of presentes) {
+      expect(chunk.isEntry, `${chunk.fileName} com sonner não pode ser entry`).not.toBe(true);
     }
   }, 120_000);
 });

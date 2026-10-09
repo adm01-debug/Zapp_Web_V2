@@ -8,22 +8,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { getLogger } from "@/lib/logger";
-import { lazyWithRetry } from "@/lib/lazyWithRetry";
-import { Suspense, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { QuarantineMonitorProvider } from "@/providers/QuarantineMonitorProvider";
-
-// A pilha de sessão de telefonia (useSipClient, máquina de sessão, adapters,
-// guarda de microfone — ~126 KB de fonte) não é do first paint: TODOS os
-// consumidores de useCallSession() são chunks lazy (components/calls/*). O
-// provider continua montado na raiz — chamadas de entrada seguem tocando —, só
-// que o chunk chega por import() dinâmico e sai do bundle inicial
-// (bundle-budget.mjs, t_fd52bf49). O Suspense segura os filhos até o provider
-// existir: nenhum consumidor renderiza sem o contexto. É a folga que a nota do
-// performance-budget.json prevê ("quando o dialer sair do grafo inicial").
-const CallSessionProvider = lazyWithRetry(() =>
-  import("@/providers/CallSessionProvider").then(m => ({ default: m.CallSessionProvider }))
-);
+import { CallSessionProvider } from "@/providers/CallSessionProvider";
 
 const log = getLogger('AppProviders');
 
@@ -88,11 +76,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                 <ThemeSync />
                 <ThemeInitializer />
                 <QuarantineMonitorProvider>
-                  <Suspense fallback={null}>
-                    <CallSessionProvider>
-                      {children}
-                    </CallSessionProvider>
-                  </Suspense>
+                  <CallSessionProvider>
+                    {children}
+                  </CallSessionProvider>
                 </QuarantineMonitorProvider>
               </TooltipProvider>
             </AccessibleToastProvider>
