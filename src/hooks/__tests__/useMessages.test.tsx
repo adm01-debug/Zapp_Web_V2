@@ -205,11 +205,20 @@ describe('useMessages', () => {
     });
     // O banco devolve DESC (mais recente primeiro); ChatService reverte.
     const desc = <T,>(rows: T[]) => [...rows].reverse();
-    function queueChain(responses: unknown[]) {
-      const next = () => Promise.resolve(responses.shift());
+    // A fila pode ser fixa (`unknown[]`) ou uma fábrica que recebe o TETO REAL de
+    // página: o número sai do `range(from, to)` que o ChatService monta a partir do
+    // teto do hook, nunca de uma constante repetida no teste — o SL-099 baixou esse
+    // teto de 1000 para 100 e o invariante que importa é "página cheia ⇒ hasOlder",
+    // não "a página tem 1000 linhas".
+    function queueChain(responses: unknown[] | ((tetoDaPagina: number) => unknown[])) {
+      let fila: unknown[] | null = Array.isArray(responses) ? responses : null;
+      const next = () => Promise.resolve(fila?.shift());
       const chain: Record<string, ReturnType<typeof vi.fn>> = {};
       for (const m of ['select', 'eq', 'or', 'order']) chain[m] = vi.fn(() => chain);
-      chain.range = vi.fn(next);
+      chain.range = vi.fn((from: number, to: number) => {
+        if (!fila) fila = (responses as (tetoDaPagina: number) => unknown[])(to - from + 1);
+        return next();
+      });
       chain.limit = vi.fn(next);
       return chain;
     }
@@ -244,27 +253,36 @@ describe('useMessages', () => {
     });
 
     it('mantém as páginas antigas já carregadas por loadOlderMessages', async () => {
-      const pagina = Array.from({ length: 1000 }, (_, i) => row(`n${i}`, 100 + i));
-      const antigas = Array.from({ length: 5 }, (_, i) => row(`o${i}`, i));
-      const nova = row('nova', 2000);
-      mockFrom.mockReturnValue(queueChain([
-        { data: desc(pagina), error: null },
-        { data: desc(antigas), error: null },
-        { data: desc([...pagina.slice(1), nova]), error: null },
-      ]));
+      let teto = 0;
+      // A página vem do teto REAL do hook (`range`), não de um literal: a primeira
+      // requisição cheia define o tamanho; as demais respostas seguem a mesma fila.
+      mockFrom.mockReturnValue(queueChain((tetoDaPagina) => {
+        teto = tetoDaPagina;
+        const pagina = Array.from({ length: tetoDaPagina }, (_, i) => row(`n${i}`, 100 + i));
+        const antigas = Array.from({ length: 5 }, (_, i) => row(`o${i}`, i));
+        const nova = row('nova', 2000);
+        return [
+          { data: desc(pagina), error: null },
+          { data: desc(antigas), error: null },
+          { data: desc([...pagina.slice(1), nova]), error: null },
+        ];
+      }));
 
       const { result } = renderHook(() => useMessages({ contactId: 'c1' }), { wrapper: createWrapper() });
-      await waitFor(() => expect(result.current.messages).toHaveLength(1000));
+      await waitFor(() => {
+        expect(teto).toBeGreaterThan(0);
+        expect(result.current.messages).toHaveLength(teto);
+      });
       expect(result.current.hasOlder).toBe(true);
 
       await act(async () => { await result.current.loadOlderMessages(); });
-      expect(result.current.messages).toHaveLength(1005);
+      expect(result.current.messages).toHaveLength(teto + 5);
       expect(result.current.hasOlder).toBe(false);
 
       await act(async () => { await result.current.refetch(); });
 
       const ids = result.current.messages.map((m) => m.id);
-      expect(ids).toHaveLength(1006);
+      expect(ids).toHaveLength(teto + 6);
       expect(ids.slice(0, 6)).toEqual(['o0', 'o1', 'o2', 'o3', 'o4', 'n0']);
       expect(ids[ids.length - 1]).toBe('nova');
       expect(result.current.hasOlder).toBe(false);
