@@ -1,8 +1,18 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+
+// A lib sonner (~9 KB gzip) não pode entrar no bundle inicial: estes toasts só
+// existem depois de um atalho de teclado, então o import() dinâmico adia o chunk
+// para o primeiro uso — fora do modulepreload do index.html (bundle-budget,
+// t_fd52bf49). O <Toaster> lazy do App monta logo após o paint e o Observer do
+// sonner bufferiza qualquer toast emitido antes disso — nada se perde.
+function toastAtalho(mensagem: string) {
+  void import('sonner')
+    .then(({ toast }) => toast.info(mensagem, { duration: 1500 }))
+    .catch((erro) => console.warn('[atalhos] toast não disparou:', erro));
+}
 
 interface GlobalShortcutAction {
   id: string;
@@ -32,7 +42,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     },
     'go-to-inbox': () => {
       navigate('/');
-      toast.info('📥 Inbox', { duration: 1500 });
+      toastAtalho('📥 Inbox');
     },
     'go-to-dashboard': () => {
       // #447: só `navigate('/')` + toast anunciava Dashboard sem selecionar a
@@ -43,15 +53,15 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       // shell: volta para a raiz já com a view no caminho.
       if (location.pathname !== '/') navigate('/?view=dashboard');
       navigateToView('dashboard');
-      toast.info('📊 Dashboard', { duration: 1500 });
+      toastAtalho('📊 Dashboard');
     },
     'go-to-contacts': () => {
       navigate('/');
-      toast.info('👥 Contatos', { duration: 1500 });
+      toastAtalho('👥 Contatos');
     },
     'go-to-settings': () => {
       navigate('/');
-      toast.info('⚙️ Configurações', { duration: 1500 });
+      toastAtalho('⚙️ Configurações');
     },
     'toggle-theme': () => {
       document.dispatchEvent(new CustomEvent('toggle-theme'));
