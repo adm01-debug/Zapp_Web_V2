@@ -1026,3 +1026,17 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # N-016 (P2 · CI/DevOps): replay de todas as migrations num Postgres
+      # descartavel. O script sobe a imagem do Supabase, aplica todas as
+      # migrations em ordem, classifica as falhas contra replay-known-failures.json
+      # e devolve exit 0 (verde), 1 (drift novo — falha fora do allowlist) ou
+      # 2 (setup indisponivel). O docker-shim do E47 intercepta docker run/exec/rm
+      # e roteia para o servico compartilhado — mas o replay inicia seu proprio
+      # container com nome unico e rotulo de posse, entao o shim nao interfere.
+      # SKIP_DOCKER_SHIM=1 e necessario porque o replay-local.sh chama docker
+      # diretamente (nao via shim) para subir o container descartavel.
+      - name: Replay de todas as migrations no db-guard (N-016)
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/replay-local.sh
