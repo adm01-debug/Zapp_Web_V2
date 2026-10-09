@@ -152,6 +152,16 @@ CREATE TABLE public.team_conversation_members (
   CONSTRAINT team_conversation_members_member_role_check CHECK (member_role IN ('owner', 'admin', 'member'))
 );
 
+-- Espelho do gatilho REAL de team_conversations (20260402130912, linha 114, e a funcao de
+-- 20251215024517, linha 188): BEFORE UPDATE FOR EACH ROW que regrava updated_at. Sem ele aqui o
+-- teste nao mediria o efeito do gatilho na transferencia (caso B.22-B.25).
+CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger
+  LANGUAGE plpgsql SET search_path = public
+  AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+CREATE TRIGGER update_team_conversations_updated_at
+  BEFORE UPDATE ON public.team_conversations
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 CREATE OR REPLACE FUNCTION public.current_profile_id() RETURNS uuid
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public', 'pg_temp'
   AS $function$ SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1; $function$;
@@ -371,6 +381,23 @@ expect_ok_as 'B.20 depois de transferir, OTTO (agora member) sai de verdade' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_LEAVE' AND profile_id='$P_OTTO';"
 expect_value 'B.21 saida aplicada e o grupo ficou com owner (DORA)' '1' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_LEAVE' AND member_role='owner' AND profile_id='$P_DORA';"
+
+# --- caso "efeito do gatilho de updated_at" (aviso do juiz barato nas entregas anteriores) -----
+# NÃO há backfill: a única escrita em team_conversations é a transferência, que atualiza UMA linha
+# (WHERE id = p_conversation_id). Marco o instante ANTES e conto as conversas renovadas DEPOIS: tem
+# de ser 1, e a renovada tem de ser a que foi transferida. (O gatilho BEFORE UPDATE regrava
+# updated_at em toda linha atualizada, então o carimbo tem de ser por comparação de instante.)
+T0="$(psql_sql "SELECT clock_timestamp()::text;")"
+expect_value 'B.22 nenhuma conversa renovada desde o marco (baseline limpo)' '0' \
+  "SELECT count(*) FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
+expect_ok_as 'B.23 owner transfere G_MC (dispara o gatilho de updated_at)' \
+  "$DORA" "SELECT public.transfer_team_conversation_ownership('$G_MC','$P_CARLOS');"
+expect_value 'B.24 ...e SO a conversa transferida teve updated_at renovado (1 linha: nao ha backfill)' '1' \
+  "SELECT count(*) FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
+expect_value 'B.25 ...e a renovada e exatamente a conversa transferida' "$G_MC" \
+  "SELECT id FROM public.team_conversations WHERE updated_at > '$T0'::timestamptz;"
+expect_value 'B.26 created_by migrou para o novo dono' "$P_CARLOS" \
+  "SELECT created_by FROM public.team_conversations WHERE id='$G_MC';"
 
 printf '\n============ BLOCO C — rollback da migration (volta ao corpo de 20261004185228) ============\n'
 # O bloco de rollback e EXTRAIDO da propria migration (nunca reescrito a mao) e executado
