@@ -1,10 +1,10 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolution-session-routes.ts';
-import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { isAuthorizedCronOrUser, unauthorizedResponse, timingSafeStringEqual } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleConnectionHealthCheck(
@@ -39,6 +39,31 @@ export async function handleConnectionHealthCheck(
       },
     });
     if (!authorized) return unauthorizedResponse(headers);
+
+    // Cron com segredo dedicado: pode disparar a checagem sem restrição de
+    // papel e sem limite de taxa (é o consumidor legítimo automatizado).
+    const cronSecret = req.headers.get('x-cron-secret');
+    if (!cronSecret) {
+      // Chamada de usuário (não cron): exige admin/supervisor e aplica limite.
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      const isServiceKeyCall = serviceKey !== '' && timingSafeStringEqual(token, serviceKey);
+
+      if (!isServiceKeyCall) {
+        // Identidade do chamante para o cheque de papel e o rate limit.
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !user) return unauthorizedResponse(headers);
+
+        const { data: isStaff } = await supabase.rpc('is_admin_or_supervisor', {
+          _user_id: user.id,
+        });
+        if (!isStaff) return errorResponse('Forbidden', 403, req);
+
+        const ip = getClientIP(req);
+        const rl = checkRateLimit(`connection-health-check:${ip}`, 6, 60_000);
+        if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
+      }
+    }
 
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');

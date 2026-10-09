@@ -213,7 +213,7 @@ function makeRequest(): Request {
 }
 
 /** Roda o handler com o fetch global trocado pelo fake (e restaurado depois). */
-async function run(fake: Fake): Promise<Response> {
+async function run(fake: Fake, req?: Request, deps?: unknown): Promise<Response> {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
     const path = new URL(String(input)).pathname;
@@ -222,7 +222,7 @@ async function run(fake: Fake): Promise<Response> {
     return Promise.resolve(fake.fetchImpl({ path, apikey }));
   }) as typeof fetch;
   try {
-    return await handleConnectionHealthCheck(makeRequest(), makeDeps(fake));
+    return await handleConnectionHealthCheck(req ?? makeRequest(), deps ?? makeDeps(fake));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -368,4 +368,105 @@ Deno.test('E28: 401 do provedor vira no_credentials — sem alerta de queda e se
     !fake.connUpdates.some((u) => 'status' in u),
     `401 não pode sobrescrever o status da conexão: ${JSON.stringify(fake.connUpdates)}`,
   );
+});
+
+// ---------------------------------------------------------------------------
+// SL-053 / N-162: chamada por usuário exige admin/supervisor e tem limite.
+// ---------------------------------------------------------------------------
+
+const AGENT_TOKEN = 'bearer-agent-token-non-admin';
+const ADMIN_TOKEN = 'bearer-admin-token';
+
+function makeUserRequest(token: string, ip = '10.0.0.1'): Request {
+  return new Request('https://edge.test/connection-health-check', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'x-forwarded-for': ip,
+    },
+  });
+}
+
+function makeDepsWithUser(fake: Fake, userId: string, isAdmin: boolean, extraRpcCalls: Record<string, unknown> = {}) {
+  return {
+    serviceKey: 'eyJtest.servicekey.forauth',
+    supabase: {
+      rpc(name: string, params?: Row) {
+        fake.rpcCalls.push(name);
+        if (name === 'get_connection_health_check_cron_secret') {
+          return Promise.resolve({ data: CRON_SECRET, error: null });
+        }
+        if (name === 'get_instance_token') {
+          if (fake.tokenRpcError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
+          const instance = params?.p_instance_id as string;
+          return Promise.resolve({ data: fake.tokens[instance] ?? null, error: null });
+        }
+        if (name === 'is_admin_or_supervisor') {
+          return Promise.resolve({ data: isAdmin, error: null });
+        }
+        if (name in extraRpcCalls) return Promise.resolve(extraRpcCalls[name]);
+        return Promise.resolve({ data: null, error: null });
+      },
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: { id: userId } }, error: null }),
+      },
+      from: (table: string) => builder(fake, table),
+    },
+  };
+}
+
+// ─── Testes de autorização e rate limit (N-162) ──────────────────────────
+
+Deno.test('N-162: Bearer de agente (sem admin/supervisor) recebe 403', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+
+  const res = await run(fake, makeUserRequest(AGENT_TOKEN), makeDepsWithUser(fake, 'user-1', false));
+  assert(res.status === 403, `esperado 403 para agente, veio ${res.status}`);
+});
+
+Deno.test('N-162: Admin com Bearer passa pela autorização', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  const res = await run(fake, makeUserRequest(ADMIN_TOKEN), makeDepsWithUser(fake, 'user-admin', true));
+  assert(res.status === 200, `esperado 200 para admin, veio ${res.status}`);
+});
+
+Deno.test('N-162: Cron com segredo dedicado continua funcionando (sem restrição de papel)', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  const res = await run(fake, makeRequest(), makeDeps(fake));
+  assert(res.status === 200, `esperado 200 para cron, veio ${res.status}`);
+});
+
+Deno.test('N-162: 429 quando ultrapassa 6 requisições por minuto por usuário', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+
+  // Usa IP exclusivo para este teste — o contador de rate limit é
+  // em memória e compartilhado entre testes na mesma isolate.
+  const IP_UNICO = '10.0.0.99';
+
+  // As primeiras 6 requisições devem passar (200).
+  for (let i = 0; i < 6; i++) {
+    const res = await run(fake, makeUserRequest(ADMIN_TOKEN, IP_UNICO), makeDepsWithUser(fake, 'user-admin', true));
+    assert(res.status === 200, `requisição ${i + 1}: esperado 200, veio ${res.status}`);
+  }
+  // A 7ª requisição deve ser bloqueada com 429.
+  const res = await run(fake, makeUserRequest(ADMIN_TOKEN, IP_UNICO), makeDepsWithUser(fake, 'user-admin', true));
+  assert(res.status === 429, `esperado 429 na 7ª requisição, veio ${res.status}`);
 });
