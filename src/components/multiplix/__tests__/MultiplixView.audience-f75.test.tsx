@@ -138,6 +138,8 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
 
     expect(screen.getByTestId('aviso-selecao')).toHaveTextContent('1 fora do filtro atual · seleção preservada');
     expect(screen.getByTestId('disparo')).toHaveTextContent('disparo:c1,c2');
+    // o mesmo número no texto que a TELA renderiza (não só na prop do filho)
+    expect(screen.getByText(/empresa\(s\) no disparo/).textContent).toContain('2');
   });
 
   it('deixa marcar exclusão explícita e a exclusão vence a seleção no disparo', () => {
@@ -150,6 +152,8 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     expect(screen.getByText(/exclusão vence a seleção/)).toBeInTheDocument();
     expect(screen.getByTestId('disparo')).toHaveTextContent('disparo:c1');
     expect(screen.getByTestId('disparo')).not.toHaveTextContent('c2');
+    // e o rodapé da TELA mostra 1 de 2 indo para o disparo
+    expect(screen.getByText(/empresa\(s\) no disparo/).textContent).toContain('1');
   });
 
   it('salva público tipo regra só depois do aviso, com os filtros do painel', () => {
