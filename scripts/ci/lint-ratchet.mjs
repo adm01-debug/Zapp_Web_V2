@@ -570,6 +570,17 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       console.log(`Arquivo renomeado reconhecido: ${baselineFile} -> ${currentFile}`);
     }
 
+    // O registro da divida so desce quando alguem baixa o baseline: divida que cai nao falha o gate, e enquanto a
+    // entrada velha continuar registrada uma ocorrencia que voltar no MESMO lugar casa com ela e passa em
+    // silencio. O aviso nao muda o codigo de saida: so mostra a divida ja paga que continua contada.
+    if (comparison.removed.length > 0) {
+      console.log(
+        `AVISO: ${comparison.removed.length} ocorrencia(s) do baseline nao existem mais no codigo — divida ja paga ` +
+          "que o registro ainda conta. Baixe o baseline (`node scripts/ci/lint-ratchet.mjs --update-baseline`) para o " +
+          "registro voltar a refletir o codigo.",
+      );
+    }
+
     if (comparison.added.length === 0) {
       console.log("OK: nenhuma nova divida de lint foi introduzida.");
       return 0;
