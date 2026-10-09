@@ -6,6 +6,7 @@ import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
  import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
+import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 
 interface AuthContextType {
   user: User | null;
@@ -145,6 +146,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         queryClient.clear();
         clearOfflineCache();
         clearEmailDraftSessions();
+        // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
+        // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.
+        clearInboxDraftSessions();
       }
     });
 
@@ -212,6 +216,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        queryClient.clear();
        clearOfflineCache();
        clearEmailDraftSessions();
+       // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
+       // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
+       clearInboxDraftSessions();
      }
    };
 

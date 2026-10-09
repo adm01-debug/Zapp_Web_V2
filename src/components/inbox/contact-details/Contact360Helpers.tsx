@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { calendarDayKey, parseDayKey } from '@/lib/localDay';
+import { isSafeExternalHref, isSafeHttpUrl } from '@/lib/urlSafety';
 import type {
   Contact360RFM, Contact360Customer, Contact360Company,
   Contact360Contact, Contact360Interaction, Contact360Stakeholder,
@@ -109,12 +110,19 @@ export function RFMBadge({ rfm }: { rfm: Contact360RFM }) {
 export function CompanyCard({ company }: { company: Contact360Company }) {
   const displayName = company.nome_fantasia || company.nome_crm || company.razao_social;
   const formatCurrency = (v: number | null) => v != null ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null;
+  /**
+   * SEC-FRONTEND-02: `website` e `logo_url` vêm do CRM externo ("Gestão de Clientes")
+   * sem validação de esquema — um `javascript:` gravado lá rodava no clique, na origem
+   * do app. Sem passar no guard, o link não é renderizado e a logo cai no ícone.
+   */
+  const websiteUrl = isSafeExternalHref(company.website) ? company.website : null;
+  const logoUrl = isSafeHttpUrl(company.logo_url) ? company.logo_url : null;
 
   return (
     <div className="space-y-2 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 rounded-xl p-3 border border-primary/10">
       <div className="flex items-start gap-3">
-        {company.logo_url ? (
-          <img src={company.logo_url} alt={displayName || ''} className="w-10 h-10 rounded-lg object-contain bg-background border border-border/30"  loading="lazy" decoding="async"/>
+        {logoUrl ? (
+          <img src={logoUrl} alt={displayName || ''} className="w-10 h-10 rounded-lg object-contain bg-background border border-border/30"  loading="lazy" decoding="async"/>
         ) : (
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building className="w-5 h-5 text-primary" /></div>
         )}
@@ -132,9 +140,9 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
         {company.capital_social != null && company.capital_social > 0 && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><DollarSign className="w-3 h-3 shrink-0" /><span className="truncate">{formatCurrency(company.capital_social)}</span></div>}
         {company.data_fundacao && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><Calendar className="w-3 h-3 shrink-0" /><span className="truncate">{calendarDayLabel(company.data_fundacao)}</span></div>}
         {company.inscricao_estadual && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5 col-span-2"><Shield className="w-3 h-3 shrink-0" /><span className="truncate">IE: {company.inscricao_estadual}</span></div>}
-        {company.website && (
-          <a href={company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline col-span-2 bg-primary/5 rounded-md p-1.5">
-            <Globe className="w-3 h-3 shrink-0" /><span className="truncate">{company.website.replace(/https?:\/\/(www\.)?/, '')}</span><ExternalLink className="w-3 h-3 shrink-0 ml-auto" />
+        {websiteUrl && (
+          <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline col-span-2 bg-primary/5 rounded-md p-1.5">
+            <Globe className="w-3 h-3 shrink-0" /><span className="truncate">{websiteUrl.replace(/https?:\/\/(www\.)?/, '')}</span><ExternalLink className="w-3 h-3 shrink-0 ml-auto" />
           </a>
         )}
       </div>
@@ -241,11 +249,19 @@ export function SocialLinks({ social }: { social: { plataforma: string; url: str
   const icons: Record<string, React.ReactNode> = { instagram: <Instagram className="w-3.5 h-3.5" />, linkedin: <Linkedin className="w-3.5 h-3.5" />, facebook: <Facebook className="w-3.5 h-3.5" /> };
   return (
     <div className="flex flex-wrap gap-1.5">
-      {social.map((s, i) => (
-        <a key={i} href={s.url || '#'} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1 transition-colors" title={`${s.plataforma}: ${s.handle || ''}`}>
-          {icons[s.plataforma] || <Globe className="w-3.5 h-3.5" />}<span className="truncate max-w-[100px]">{s.handle || s.plataforma}</span>
-        </a>
-      ))}
+      {social.map((s, i) => {
+        /**
+         * SEC-FRONTEND-02: `s.url` vem do CRM externo — sem protocolo seguro a entrada
+         * continua visível (mesmo ícone e rótulo), mas sem `href`: nenhum `javascript:`
+         * gravado lá roda no clique, na origem do app.
+         */
+        const safeUrl = isSafeExternalHref(s.url) ? s.url : undefined;
+        return (
+          <a key={i} href={safeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1 transition-colors" title={`${s.plataforma}: ${s.handle || ''}`}>
+            {icons[s.plataforma] || <Globe className="w-3.5 h-3.5" />}<span className="truncate max-w-[100px]">{s.handle || s.plataforma}</span>
+          </a>
+        );
+      })}
     </div>
   );
 }
