@@ -218,7 +218,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `warroom_alerts` | Alertas do war-room (tipo, origem e leitura) | ativo | `src/hooks/__tests__/useWarRoomAlerts.test.tsx`, `src/hooks/business/useWarRoomAlerts.ts`, `supabase/functions/_shared/__tests__/evolution-connection-state.test.ts` … |
 | `webauthn_challenges` | Desafios WebAuthn pendentes, com validade | ativo | `supabase/functions/webauthn/index.ts` |
 | `webhook_failures` | Falhas de webhook registradas (endpoint, evento e payload truncado) | parcial | `.github/workflows/db-migrate.yml`, `scripts/db-audit/check-webhook-failures-acl.sql`, `scripts/db-audit/check-webhook-failures-acl.test.sh` … |
-| `webhook_rate_limits` | Contador de webhooks por instância e tipo de evento, em janela | roadmap | — |
+| `webhook_rate_limits` | Contador de webhooks por instância e tipo de evento, em janela | ativo | `supabase/functions/metrics/index.test.ts`, `supabase/functions/metrics/index.ts` |
 | `whatsapp_connection_queues` | Vínculo entre conexão de WhatsApp e fila de atendimento | ativo | `src/hooks/__tests__/useConnectionQueues.test.tsx`, `src/hooks/inbox/useConnectionQueues.ts`, `scripts/db-audit/enqueue-connection-scope.test.sh` … |
 | `whatsapp_connections` | Conexões de WhatsApp (instância, telefone, estado e QR) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/alerts/EvolutionDisconnectBanner.tsx`, `src/components/connections/NumberReputationMonitor.tsx` … |
 | `whatsapp_flows` | Fluxos do WhatsApp (JSON de telas e publicação) | ativo | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
@@ -231,8 +231,12 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 A auditoria de 28/08/2026 (§8) mediu o mesmo tipo de acoplamento. Cruzando com o que este
 inventário apura hoje:
 
-- `crisis_room_alerts` e `webhook_rate_limits` (§8.1, "sem NENHUMA referência de código") estão
-  aqui como `roadmap`. A consolidação das duas continua pendente (etapas 71–72 da auditoria).
+- `crisis_room_alerts` e `webhook_rate_limits` (§8.1, "sem NENHUMA referência de código") não estão
+  na mesma situação hoje: `crisis_room_alerts` continua `roadmap` e as decisões das etapas 71–72 da
+  auditoria seguem abertas (`docs/audits/INVENTARIO_MELHORIAS_2026-10-07.tsv:73`); já
+  `webhook_rate_limits` passou a `ativo` — a Edge `metrics` a consulta
+  (`supabase/functions/metrics/index.ts:67`) e o teste dela a inclui no mock
+  (`supabase/functions/metrics/index.test.ts:53`).
 - `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
