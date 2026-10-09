@@ -319,3 +319,42 @@ Deno.test("SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão", 
     "decisão pelo metadado declarado",
   );
 });
+
+// ─── Caminho NEGADO da autorização por objeto (IA-014) ────────────────────────
+// O handler só classifica o tipo DEPOIS de autorizar; a injeção de `deps` não
+// pode virar atalho que pula a autorização. Este teste roda o handler REAL no
+// caminho de USUÁRIO e prova que a negação da visibilidade barra ANTES do
+// download do objeto e ANTES de qualquer chamada ao provedor.
+Deno.test(
+  "IA-014: mensagem não visível é NEGADA e o objeto não é baixado nem vai ao provedor",
+  async () => {
+    let downloadCalled = false;
+    let fetchCalled = false;
+    const deps = baseDeps({
+      authorize: () => Promise.resolve({ kind: "user", userId: "u-1" }),
+      assertMessageVisible: () =>
+        Promise.resolve({
+          ok: false,
+          status: 404,
+          error: "Áudio não encontrado ou sem permissão",
+        }),
+      downloadAudio: () => {
+        downloadCalled = true;
+        return Promise.resolve({
+          buffer: OGG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        });
+      },
+      fetch: ((_input: RequestInfo | URL) => {
+        fetchCalled = true;
+        return Promise.resolve(new Response("{}", { status: 200 }));
+      }) as typeof fetch,
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 404, "deve recusar com o status da autorização");
+    assert(!downloadCalled, "o objeto não pode ser baixado antes de autorizar");
+    assert(!fetchCalled, "a negação não pode chegar ao provedor de STT");
+  },
+);
