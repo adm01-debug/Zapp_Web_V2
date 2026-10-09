@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,
-  Star, Clock, Loader2, RefreshCw, History, Link2, Settings, Boxes,
+  Star, Clock, Loader2, RefreshCw, History, Link2, Settings,
   BatteryCharging, BatteryLow, BatteryMedium, BatteryFull,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,14 +37,13 @@ interface ConnectionCardProps {
   onBusinessHours: (id: string, name: string) => void;
   onQueues: (id: string, name: string) => void;
   onSettings: (instanceName: string, name: string) => void;
-  onIntegrations: (instanceName: string, name: string) => void;
   onSyncHistory: (connection: WhatsAppConnection) => void;
 }
 
 export function ConnectionCard({
   connection, syncingHistory,
   onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,
-  onBusinessHours, onQueues, onSettings, onIntegrations, onSyncHistory,
+  onBusinessHours, onQueues, onSettings, onSyncHistory,
 }: ConnectionCardProps) {
   const status = statusConfig[connection.status] || statusConfig.disconnected;
   const StatusIcon = status.icon;
@@ -147,7 +146,6 @@ export function ConnectionCard({
                   {connection.instance_id && (
                     <>
                       <DropdownMenuItem onClick={() => onSettings(connection.instance_id!, connection.name)}><Settings className="w-4 h-4 mr-2" />Configurações & Perfil</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onIntegrations(connection.instance_id!, connection.name)}><Boxes className="w-4 h-4 mr-2" />Integrações (IA/Bots)</DropdownMenuItem>
                       <DropdownMenuItem disabled={syncingHistory === connection.id} onClick={() => onSyncHistory(connection)}>
                         {syncingHistory === connection.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <History className="w-4 h-4 mr-2" />}
                         Sincronizar Histórico

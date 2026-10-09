@@ -6,8 +6,7 @@ import { useEvolutionIntegrations } from '../evolution/useEvolutionIntegrations'
 
 export type {
   SendMessageParams, ContactCard, PollParams, ListSection, ButtonItem,
-  WebhookConfig, SettingsConfig, PrivacySettings, TypebotConfig, OpenAIConfig,
-  DifyConfig, FlowiseConfig, EvolutionBotConfig, ChatwootConfig, CreateInstanceParams,
+  WebhookConfig, SettingsConfig, PrivacySettings, CreateInstanceParams,
   CreateConnectionParams, CreateConnectionResult,
 } from './evolutionApi.types';
 
