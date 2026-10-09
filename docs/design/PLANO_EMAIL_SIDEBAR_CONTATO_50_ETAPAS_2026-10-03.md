@@ -265,7 +265,7 @@ Ao pé desta seção estão as pendências nominais: ausência de prova de produ
 
 ### Pendências nominais (não são aprovação)
 
-1. Aceite do contrato empresarial contra o **Singu vivo** (leitura autorizada) — bloqueio externo, ES-03.
+1. Aceite do contrato empresarial contra o **Singu vivo** (leitura autorizada) — bloqueio externo, ES-03; responsável: administração do CRM Singu (Promo Brindes); critério de desbloqueio: entrega da leitura autorizada (schema/payload de empresa, redes sociais, descrição e relações cliente/fornecedor/transportadora por `company_id`, com exemplos anonimizados), sem nenhum DDL deste repositório no banco externo.
 2. **Smoke autenticado** de uma empresa conhecida, após deploy — ES-49.
 3. **Publicação da edge** e **aplicação das migrations** no projeto canônico, com SHA posterior ao código — ES-49.
 4. **Matriz de permissões com atendente real** — ES-04: os status HTTP 403/404 já são exercidos localmente com atendente sintético (`supabase/functions/crm-integration/index.test.ts`); o aceite com atendente real (Singu vivo/edge publicada) segue pendência nominal. **Playwright/responsivo/acessibilidade** do painel — ES-45 — tem spec ativa (`e2e/email-navy-visual.spec.ts`: matriz por viewport, axe, temas claro/escuro/alto contraste, teclado e 320 px) e aguarda a homologação visual com dados reais.
