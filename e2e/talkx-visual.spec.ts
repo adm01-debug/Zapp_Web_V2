@@ -9,6 +9,7 @@ import {
   fixtureDaTela,
   fixturesComDados,
   fixturesVazias,
+  ESCRITA_NAO_PREVISTA,
 } from './fixtures/talkx-demo';
 import type { TalkXDemoData } from './fixtures/talkx-demo';
 
@@ -211,6 +212,22 @@ for (const tela of TELAS) {
  */
 async function preparar(page: Page, fixture: string, tema: Tema, abrir: (page: Page) => Promise<void>) {
   await mockTalkXVisual(page, fixture);
+  // O harness do demo (e2e/fixtures/talkx-demo.ts) só serve as tabelas `talkx_*` a
+  // partir da fixture; o resto do app shell responde vazio (catch-all). A
+  // `whatsapp_connections` TAMBÉM é dado da régua — o passo 1 do assistente só
+  // avança (canProceed[1]) com uma conexão ativa —, então a servimos da PRÓPRIA
+  // fixture. Continuam dados sintéticos, nunca produção. Rota registrada DEPOIS
+  // do harness: em Playwright a última rota registrada vence o catch-all.
+  const conexoes = (loadDemoData(fixture) as Record<string, unknown>).whatsapp_connections ?? [];
+  await page.route(/\/rest\/v1\/whatsapp_connections/, (route) =>
+    route.request().method() === 'GET' || route.request().method() === 'HEAD'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(conexoes) })
+      : route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: ESCRITA_NAO_PREVISTA }),
+        }),
+  );
   await page.addInitScript((t: Tema) => {
     window.localStorage.setItem('theme', t);
   }, tema);
@@ -242,6 +259,7 @@ type Ativo = {
   tag: string;
   role: string | null;
   nome: string;
+  placeholder: string;
   visivel: boolean;
   top: number;
   left: number;
@@ -258,6 +276,7 @@ async function ativo(page: Page): Promise<Ativo | null> {
       tag: el.tagName.toLowerCase(),
       role: el.getAttribute('role'),
       nome: nome.slice(0, 60),
+      placeholder: (el as HTMLInputElement).placeholder ?? '',
       visivel: r.width > 0 && r.height > 0,
       top: Math.round(r.top),
       left: Math.round(r.left),
@@ -442,15 +461,24 @@ test.describe('acessibilidade por teclado', () => {
     const aba = await focarPorTeclado(page, (a) => a.role === 'tab', 200);
     expect(aba, 'o Tab precisa alcançar a lista de abas').not.toBeNull();
 
+    // O Radix move o foco na seta e a seleção dispara `goTab` (URL + troca de
+    // `TabsContent`): o foco assenta de forma ASSÍNCRONA — medido no Chromium, no
+    // mesmo tick o foco ainda está na aba antiga e só ~150 ms depois chega à nova.
+    // Por isso a régua ESPERA o foco chegar (poll) em vez de lê-lo no mesmo tick.
+    // A exigência continua a mesma (o foco tem de MUDAR de aba); o que deixa de
+    // ser exigido é que a troca seja síncrona — ler no tick errado reprovava a
+    // tela por corrida de render, não por defeito de teclado.
     await page.keyboard.press('ArrowRight');
-    const proxima = await ativo(page);
-    expect(proxima?.role, 'a seta leva o foco para outra aba').toBe('tab');
-    expect(proxima!.nome).not.toBe(aba!.nome);
+    await expect
+      .poll(async () => (await ativo(page))?.nome, { message: 'a seta leva o foco para outra aba' })
+      .not.toBe(aba!.nome);
+    expect((await ativo(page))?.role, 'o foco da seta precisa parar numa aba').toBe('tab');
 
     await page.keyboard.press('ArrowLeft');
-    const voltou = await ativo(page);
-    expect(voltou?.role).toBe('tab');
-    expect(voltou!.nome).toBe(aba!.nome);
+    await expect
+      .poll(async () => (await ativo(page))?.nome, { message: 'a seta de volta devolve o foco à aba anterior' })
+      .toBe(aba!.nome);
+    expect((await ativo(page))?.role).toBe('tab');
   });
 
   test('as ações de linha são alcançáveis e acionáveis sem mouse (tela 01)', async ({ page }) => {
@@ -468,9 +496,15 @@ test.describe('acessibilidade por teclado', () => {
   });
 
   test('o assistente de campanha avança do público à revisão sem mouse (telas 08 e 09)', async ({ page }) => {
-    // Passo 1 — a origem do público é um botão (SourceCard): o teclado escolhe o
+    // Passo 1 — Informações da campanha tem de ter nome (>= 3 caracteres) e
+    // conexão ativa (a fixture 08 traz `whatsapp_connections`), e a origem do
+    // público é um botão (SourceCard): o teclado digita o nome, escolhe o
     // segmento e avança um passo sem nenhum clique de mouse.
     await preparar(page, fixtureDaTela('08')!, 'dark', TELAS[7].abrir!);
+
+    const campoNome = await focarPorTeclado(page, (a) => a.placeholder.startsWith('Ex: Lançamento'), 240);
+    expect(campoNome, 'o campo Nome da campanha precisa ser alcançável pelo Tab').not.toBeNull();
+    await page.keyboard.type('Campanha por teclado');
 
     const fonte = await focarPorTeclado(page, (a) => a.nome.includes('Segmento salvo'), 240);
     expect(fonte, 'a origem "Segmento salvo" precisa ser alcançável pelo Tab').not.toBeNull();

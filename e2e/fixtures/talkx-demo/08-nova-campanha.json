@@ -315,5 +315,14 @@
       }
     }
   ],
-  "talkx_campaigns": []
+  "talkx_campaigns": [],
+  "whatsapp_connections": [
+    {
+      "id": "conn-demo-01",
+      "name": "WhatsApp Comercial",
+      "phone_number": "+55 11 90000-0001",
+      "status": "connected",
+      "instance_id": "inst-demo-talkx-01"
+    }
+  ]
 }
