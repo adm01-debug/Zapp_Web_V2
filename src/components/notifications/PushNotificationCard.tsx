@@ -90,6 +90,7 @@ export function PushNotificationCard() {
             checked={isSubscribed}
             onCheckedChange={() => toggleSubscription()}
             disabled={isLoading || permission === 'denied'}
+            aria-label="Notificações push"
           />
         </div>
       </CardHeader>
