@@ -404,6 +404,7 @@ export default function TalkXView() {
             onUseTemplate={(templateId) => openNew({ templateId })}
             startNew={templateStartNew}
             onStartNewHandled={() => setTemplateStartNew(false)}
+            onOpenMonitor={(id) => { setMonitorId(id); setTopView('monitor'); }}
           />
         </TabsContent>
         <TabsContent value="suppression" className="mt-4">

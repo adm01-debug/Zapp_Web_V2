@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
-  X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+  X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -11,8 +11,16 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
+import {
+  useTalkXTemplateLibraryStats,
+  useTalkXTemplateStats,
+  pointsDelta,
+  TALKX_TEMPLATE_STATS_PERIODS,
+} from '@/hooks/integrations/useTalkXTemplateStats';
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
 import { TalkXMessagePreview } from './TalkXMessagePreview';
+import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { KpiCard } from './kit/kpi';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -23,9 +31,11 @@ interface Props {
   isLoading: boolean;
   editing: TalkXTemplate | null;
   onClose: () => void;
+  /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
+  onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
   const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
 
@@ -78,6 +88,47 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
   const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? editing;
+
+  // X091 — KPIs das telas 04 e 05 nas RPCs de métricas (X086). A faixa do topo usa
+  // os números da biblioteca; o card "Desempenho deste template" segue o template
+  // ATIVO (não a prop `editing`) e o período escolhido (7/30/90 dias).
+  const { stats: libStats } = useTalkXTemplateLibraryStats(30, 3);
+  const [statsDias, setStatsDias] = useState(30);
+  const { stats: templateStats } = useTalkXTemplateStats(activeTemplateId, statsDias);
+
+  // X091 — widget "Em andamento" do cabeçalho: a campanha em envio MAIS RECENTE
+  // (`status='sending'`, por `started_at`). Sem campanha em envio ele não aparece.
+  const { campaigns } = useTalkX();
+  const sendingCampaign = campaigns
+    .filter((c) => c.status === 'sending')
+    .sort((a, b) => new Date(b.started_at ?? b.created_at).getTime() - new Date(a.started_at ?? a.created_at).getTime())[0] ?? null;
+  const horaInicio = sendingCampaign
+    ? new Date(sendingCampaign.started_at ?? sendingCampaign.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  const fmtPct1 = (n: number | null | undefined) =>
+    (n == null ? null : `${n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`);
+  const fmtDelta1 = (n: number) => Math.abs(n).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  /** Variação em pontos percentuais — nula abaixo da base mínima (A9) nos dois períodos. */
+  const pp = (cur: number | null | undefined, prev: number | null | undefined, invertida = false) => {
+    const delta = pointsDelta(cur, prev, templateStats?.sent, templateStats?.previous?.sent);
+    if (delta == null) return null;
+    const bom = invertida ? delta <= 0 : delta >= 0;
+    return { text: `${delta >= 0 ? '↑' : '↓'} ${fmtDelta1(delta)} p.p.`, tone: bom ? 'text-success' : 'text-destructive' };
+  };
+  const enviosDelta = (() => {
+    const cur = templateStats?.sent;
+    const prev = templateStats?.previous?.sent;
+    if (cur == null || prev == null || prev < 50 || cur < 50) return null;
+    const variacao = ((cur - prev) / prev) * 100;
+    return { text: `${variacao >= 0 ? '↑' : '↓'} ${fmtDelta1(variacao)}%`, tone: variacao >= 0 ? 'text-success' : 'text-destructive' };
+  })();
+  const perfTiles = [
+    { label: 'Envios', value: templateStats?.sent == null ? null : fmtInt(templateStats.sent), delta: enviosDelta, hint: 'Mensagens enviadas com o template no período' },
+    { label: 'Taxa de resposta', value: fmtPct1(templateStats?.reply_rate_pct), delta: pp(templateStats?.reply_rate_pct, templateStats?.previous?.reply_rate_pct), hint: 'Destinatários que responderam ÷ enviados no período' },
+    { label: 'Taxa de conversão', value: fmtPct1(templateStats?.conversion_rate_pct), delta: pp(templateStats?.conversion_rate_pct, templateStats?.previous?.conversion_rate_pct), hint: 'Conversões das campanhas do template ÷ enviados no período' },
+    { label: 'Taxa de rejeição', value: fmtPct1(templateStats?.rejection_rate_pct), delta: pp(templateStats?.rejection_rate_pct, templateStats?.previous?.rejection_rate_pct, true), hint: 'Pedidos de saída (opt-out) de campanhas do template ÷ enviados. Falha de envio não é rejeição.' },
+  ];
 
   // Dirty-check: qualquer campo alterado em relação ao original
   const isDirty = activeTemplate
@@ -349,6 +400,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
+        {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior" />
+          <KpiCard icon={Check} color="green" index={1} label="Templates aprovados" value={libStats?.approved ?? null} bars={libStats?.approved_series ?? null} hint={libStats?.approved != null && libStats.total ? `${Math.round((libStats.approved / libStats.total) * 100)}% do total` : 'Aprovados entre os templates'} />
+          <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
+          <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />
+        </div>
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button
@@ -367,6 +425,18 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <p className="text-xl font-bold font-display text-foreground">{editing ? 'Editar template' : 'Novo template'}</p>
             <p className="text-xs text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
           </div>
+          {sendingCampaign && (
+            <button
+              type="button"
+              onClick={() => onOpenMonitor?.(sendingCampaign.id)}
+              title={`Abrir o monitor de "${sendingCampaign.name}"`}
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border/60 bg-input/40 text-2xs font-medium text-foreground-secondary hover:text-foreground hover:border-primary/40 shrink-0"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true" />
+              Em andamento · Talk X · Iniciada às {horaInicio}
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          )}
           <div className="flex items-center gap-2 shrink-0">
             {editing && (
               <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
@@ -524,6 +594,43 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
           </div>
         </section>
+
+        {/* X091 — "Desempenho deste template". Fica fora do rail para aparecer em
+            qualquer largura, segue o template ATIVO e o período do seletor. */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold text-foreground">Desempenho deste template</p>
+              <p className="text-xs text-foreground-secondary mt-0.5">
+                {activeTemplate ? `Envios, resposta, conversão e rejeição de "${activeTemplate.name}"` : 'Salve o template para acompanhar o desempenho'}
+              </p>
+            </div>
+            <Select value={String(statsDias)} onValueChange={(v) => setStatsDias(Number(v))}>
+              <SelectTrigger aria-label="Período do desempenho" className="h-8 w-[140px] bg-input/40 border-border/70 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {TALKX_TEMPLATE_STATS_PERIODS.map((d) => <SelectItem key={d} value={String(d)}>Últimos {d} dias</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {!activeTemplateId ? (
+            <p className="text-xs text-foreground-secondary">Salve o template para acompanhar o desempenho.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+              {perfTiles.map((t) => (
+                <div key={t.label} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1" title={t.hint}>
+                  <p className="text-sm font-bold text-foreground tabular-nums">{t.value ?? 'Sem dados ainda'}</p>
+                  <p className="text-3xs text-foreground-secondary">{t.label}</p>
+                  {t.delta && <p className={cn('text-3xs font-semibold', t.delta.tone)}>{t.delta.text}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {(activeTemplate?.tags ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {(activeTemplate?.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Variantes A/B — responsivo (xl:hidden, visível abaixo de xl) */}
@@ -633,21 +740,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
           )}
         </div>
-        {editing && (
-          <RailCard icon={BarChart3} title="Desempenho" subtitle={`${fmtInt(editing.use_count)} usos totais`}>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              {([['—', 'Taxa resposta'], ['—', 'Conversão'], ['—', 'Rejeição'], [fmtInt(editing.use_count), 'Envios']]).map(([v, l]) => (
-                <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2 px-1">
-                  <p className="text-sm font-bold text-foreground tabular-nums">{v}</p>
-                  <p className="text-3xs text-foreground-secondary">{l}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {(editing.tags ?? []).map((t) => <Badge key={t} variant="outline" className="text-3xs">#{t}</Badge>)}
-            </div>
-          </RailCard>
-        )}
       </aside>
 
       {/* E47: Test Dialog */}
