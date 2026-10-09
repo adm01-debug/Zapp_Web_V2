@@ -216,8 +216,9 @@ export function QueuesComparisonDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px]">
-                <Table>
+              <div className="overflow-x-auto">
+                <ScrollArea className="h-[300px]">
+                  <Table>
                   <TableHeader>
                     <TableRow className="border-border/20">
                       <TableHead>Fila</TableHead>
@@ -228,7 +229,7 @@ export function QueuesComparisonDashboard() {
                       <TableHead className="text-right">Média/Contato</TableHead>
                       <TableHead className="text-right">Atendentes</TableHead>
                       <TableHead className="text-right">Taxa Atrib.</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead><span className="sr-only">Ações</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -284,6 +285,7 @@ export function QueuesComparisonDashboard() {
                   </TableBody>
                 </Table>
               </ScrollArea>
+            </div>
             </CardContent>
           </Card>
         </>

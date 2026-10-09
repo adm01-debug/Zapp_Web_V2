@@ -63,7 +63,7 @@ export const SLAHistoryDashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Histórico de Violações SLA</h2>
+          <h1 className="text-2xl font-bold">Histórico de Violações SLA</h1>
           <p className="text-muted-foreground">Análise de tendências e padrões de violações</p>
         </div>
         <div className="flex items-center gap-3">
