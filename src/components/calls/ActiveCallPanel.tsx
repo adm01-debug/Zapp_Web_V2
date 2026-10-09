@@ -105,7 +105,7 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
                   <Button
                     size="icon"
                     className="h-12 w-12 rounded-full bg-success hover:bg-success/90"
-                    onClick={sessao.acceptIncomingCall}
+                    onClick={sessao.accept}
                     aria-label="Atender"
                     data-testid="tel-accept"
                   >
@@ -115,7 +115,7 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
                     variant="destructive"
                     size="icon"
                     className="h-12 w-12 rounded-full"
-                    onClick={sessao.rejectIncomingCall}
+                    onClick={sessao.reject}
                     disabled={!voip.canReject}
                     aria-label="Recusar"
                     data-testid="tel-reject"
@@ -153,7 +153,7 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
                     variant="destructive"
                     size="icon"
                     className="h-12 w-12 rounded-full"
-                    onClick={sessao.hangUp}
+                    onClick={sessao.hangup}
                     aria-label="Encerrar"
                     data-testid="tel-hangup"
                   >

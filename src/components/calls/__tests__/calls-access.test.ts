@@ -133,6 +133,25 @@ describe('Telefonia — acesso e fronteiras (T07)', () => {
     }
   });
 
+  it('SL-109: os controles de chamada da UI falam com a MÁQUINA, não com os métodos crus do `useSipClient`', () => {
+    // Split-brain de discagem (achado ACH-1 do `TELEFONIA_STATUS.md`): os
+    // componentes montavam `makeCall`/`hangUp`/`acceptIncomingCall` — os métodos
+    // crus do `useSipClient`, que só falam com o SIP. Sem o dispatch da máquina,
+    // atender pelo painel deixava a sessão presa em `ringing_in` (o `ESTABLISHED`
+    // do motor é transição inválida ali) e encerrar gravava `hangup_remote` no
+    // lugar de `hangup_local`. A fronteira é a API do provider:
+    // `accept`/`reject`/`hangup` (e `toggleMute`/`sendDTMF`, que não mudam estado).
+    // O único dono legítimo dos métodos crus é o próprio provider.
+    const CRUS = /\.(?:acceptIncomingCall|rejectIncomingCall|hangUp)\b/;
+    const componentes = fontesDe(join(SRC, 'components/calls'));
+    // Sem esta guarda de escopo, um caminho errado deixaria o assert vazio.
+    expect(componentes.length).toBeGreaterThan(5);
+    const suspeitos = componentes.filter((arquivo) =>
+      CRUS.test(semComentarios(readFileSync(arquivo, 'utf8'))),
+    );
+    expect(suspeitos).toEqual([]);
+  });
+
   it('o casamento de telefone nunca volta ao sufixo de 8 dígitos (invariante do T14)', () => {
     // O fallback removido era `ilike('%' + últimos 8 dígitos)`. Se voltar,
     // chamadas de outro DDD são vinculadas ao contato errado.
