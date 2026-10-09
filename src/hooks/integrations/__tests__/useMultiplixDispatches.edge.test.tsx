@@ -27,7 +27,13 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('../useMultiplixAudience', () => ({ createMultiplixDraft: vi.fn() }));
+// F44: a criacao passou para a edge de dominio `multiplix-dispatch`; do modulo
+// irma o hook importa apenas o erro nomeado do teto (F17) — o mock preserva os
+// exports reais e neutraliza o `createMultiplixDraft`, que nao e mais usado.
+vi.mock('../useMultiplixAudience', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../useMultiplixAudience')>()),
+  createMultiplixDraft: vi.fn(),
+}));
 
 import { supabase } from '@/integrations/supabase/client';
 import {

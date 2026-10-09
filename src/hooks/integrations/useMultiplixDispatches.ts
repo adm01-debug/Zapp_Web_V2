@@ -2,7 +2,13 @@ import { useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { createMultiplixDraft } from './useMultiplixAudience';
+// F44: a criacao do disparo passa a viver na MESMA edge de dominio das leituras
+// (`multiplix-dispatch`/`draft.create`, a acao que absorve o F08) — antes ela ia
+// pela edge irma `multiplix-audience`, deixando dois caminhos de criacao.
+// O erro de teto de destinatarios (F17) continua sendo a MESMA classe que o
+// `MultiplixComposerDialog` captura por `instanceof`; por isso ela e importada
+// (e nao duplicada aqui), para o `instanceof` do composer seguir valendo.
+import { MultiplixOverLimitError } from './useMultiplixAudience';
 
 export interface MultiplixDispatch {
   id: string;
@@ -79,7 +85,17 @@ async function toMultiplixDispatchError(error: unknown): Promise<Error> {
   const context = (error as { context?: Response })?.context;
   if (!context || typeof context.clone !== 'function') return new Error(fallback);
   try {
-    const body = await context.clone().json() as { error?: string; message?: string };
+    const body = await context.clone().json() as {
+      error?: string; message?: string; count?: number; limit?: number;
+    };
+    // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
+    // o numero real (`{error, count, limit}`). Traduzir para o erro que o
+    // composer ja captura mantem a confirmacao explicita funcionando — sem este
+    // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
+    // botao de confirmar.
+    if (body?.error === 'multiplix_over_recipient_limit') {
+      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
+    }
     const code = body?.error ?? body?.message;
     if (code) return new MultiplixDispatchEdgeError(code, body?.message ?? code);
   } catch {
@@ -312,6 +328,16 @@ export interface CreateMultiplixDispatchResult {
 }
 
 /**
+ * Linha devolvida por `draft.create` (a RPC `multiplix_create_draft` retorna uma
+ * tabela; a edge achata para um objeto dentro do envelope `{ data }`).
+ */
+interface DraftCreateRow {
+  dispatch_id?: string | null;
+  recipient_count?: number;
+  created?: boolean;
+}
+
+/**
  * Identidade do pedido de criacao: os campos que definem QUAL disparo este
  * pedido cria. `startNow`/`confirmOverLimit` ficam de fora de proposito — eles
  * dizem o que fazer DEPOIS de criar, nao qual disparo e.
@@ -347,12 +373,17 @@ export function useCreateMultiplixDispatch() {
         attemptRef.current = { key: crypto.randomUUID(), identity };
       }
       const clientRequestId = attemptRef.current.key;
-      // F08: a criacao vive no servidor. A edge multiplix-audience re-resolve o
-      // publico no Singu com o escopo do JWT e chama a RPC transacional
-      // multiplix_create_draft (dispatch + destinatarios numa transacao,
-      // idempotente por client_request_id). O navegador nao decide mais quem
-      // recebe nem escreve direto em multiplix_dispatches/multiplix_recipients.
-      const draft = await createMultiplixDraft({
+      // F44 (absorve F08): a criacao vive na edge de DOMINIO das leituras
+      // `multiplix-dispatch`, acao `draft.create`. Ela resolve o `profiles.id` do
+      // dono a partir do JWT (o `created_by` guarda profiles.id, nao o auth.uid),
+      // re-resolve o publico no Singu com o escopo do JWT e chama a RPC
+      // transacional multiplix_create_draft (dispatch + destinatarios numa
+      // transacao, idempotente por client_request_id). O navegador so manda a
+      // REFERENCIA (company_ids/contact_ids): nunca destinatarios nem o destino.
+      //
+      // A resposta da edge chega no envelope `{ data: {...} }` (o mesmo envelope
+      // das acoes de lista), entao o corpo e desembrulhado aqui.
+      const body = await invokeMultiplixDispatch('draft.create', {
         name: input.name,
         message_template: input.messageTemplate,
         company_ids: input.companyIds,
@@ -361,7 +392,11 @@ export function useCreateMultiplixDispatch() {
         scheduled_at: input.scheduledAt ?? null,
         confirm_over_limit: input.confirmOverLimit ?? false,
       });
-      if (!draft.dispatch_id) throw new Error('Disparo criado sem identificador');
+
+      const envelope = (body ?? null) as { data?: DraftCreateRow | DraftCreateRow[] | null } | null;
+      const created = envelope?.data ?? null;
+      const draft = (Array.isArray(created) ? created[0] : created) as DraftCreateRow | null;
+      if (!draft?.dispatch_id) throw new Error('Disparo criado sem identificador');
       const dispatchId = draft.dispatch_id;
 
       if (input.startNow) {
@@ -383,7 +418,11 @@ export function useCreateMultiplixDispatch() {
         });
       }
 
-      return { id: dispatchId, recipientCount: draft.recipient_count, created: draft.created };
+      return {
+        id: dispatchId,
+        recipientCount: draft.recipient_count ?? 0,
+        created: draft.created !== false,
+      };
     },
     // Libera a chave so no SUCESSO: duas chamadas simultaneas (duplo clique)
     // compartilham a chave e viram UM disparo, e um reenvio depois de uma falha
