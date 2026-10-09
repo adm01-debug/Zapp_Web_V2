@@ -207,7 +207,7 @@ export function DashboardFilters({
         <>
         {/* Fila */}
         <Select value={filters.queueId || 'all'} onValueChange={handleQueueChange}>
-          <SelectTrigger data-testid="filter-queue" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectTrigger data-testid="filter-queue" aria-label="Filtrar por fila" className="h-[34px] w-[135px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
             <SelectValue placeholder="Todas as filas" />
           </SelectTrigger>
           <SelectContent>
@@ -228,7 +228,7 @@ export function DashboardFilters({
 
         {/* Agente */}
         <Select value={filters.agentId || 'all'} onValueChange={handleAgentChange}>
-          <SelectTrigger data-testid="filter-agent" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
+          <SelectTrigger data-testid="filter-agent" aria-label="Filtrar por agente" className="h-[34px] w-[158px] rounded-lg bg-input border-border text-[13px] font-medium shrink-0">
             <SelectValue placeholder="Todos os agentes" />
           </SelectTrigger>
           <SelectContent>
