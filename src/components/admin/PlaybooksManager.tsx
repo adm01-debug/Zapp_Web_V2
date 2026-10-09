@@ -244,7 +244,7 @@ export function PlaybooksManager() {
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Nome do playbook" />
             <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição" rows={2} />
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+              <SelectTrigger aria-label="Categoria"><SelectValue placeholder="Categoria" /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
@@ -256,7 +256,7 @@ export function PlaybooksManager() {
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-3xs">Passo {idx + 1}</Badge>
                     {steps.length > 1 && (
-                      <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => removeStep(idx)}>
+                      <Button variant="ghost" size="icon" className="w-6 h-6" aria-label="Remover passo" onClick={() => removeStep(idx)}>
                         <Trash2 className="w-3 h-3 text-destructive" />
                       </Button>
                     )}

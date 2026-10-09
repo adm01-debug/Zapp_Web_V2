@@ -253,7 +253,7 @@ export function TrainingMode() {
                   className="text-sm"
                   onKeyDown={e => e.key === 'Enter' && sendResponse()}
                 />
-                <Button size="icon" onClick={sendResponse} disabled={!input.trim()}>
+                <Button size="icon" aria-label="Enviar resposta" onClick={sendResponse} disabled={!input.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
