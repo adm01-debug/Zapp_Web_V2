@@ -16,6 +16,7 @@
  * resolve o mesmo problema (nenhuma linha repetida nem pulada entre páginas).
  */
 import { toast } from 'sonner';
+import { downloadFileWithPermission } from '@/lib/downloadFile';
 
 // ─── Constantes do contrato (E29.1-E29.5) ──────────────────────
 
@@ -218,19 +219,16 @@ export function defaultCatalogExportFetcher(filters: Record<string, unknown> = {
 
 // ─── Download ──────────────────────────────────────────────────
 
-/** Grava o CSV no disco do usuário. Só é chamado com o conteúdo COMPLETO. */
-export function triggerCsvDownload(csv: string, filename: string): void {
+/** Grava o CSV no disco do usuário. Só é chamado com o conteúdo COMPLETO.
+ *
+ * Y29 / SEC-SAIDAS_DE_INFORMACAO-01: a gravação passa pela única porta do app
+ * (`downloadFileWithPermission`), que consulta `profiles.can_download` — o
+ * valor vem do chamador (`useDownloadPermission`). Sem permissão NÃO há
+ * `createObjectURL` nem clique e a função devolve `false`, para o chamador não
+ * anunciar um download que não houve. */
+export function triggerCsvDownload(csv: string, filename: string, canDownload: boolean): boolean {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.rel = 'noopener';
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  return downloadFileWithPermission(blob, filename, { canDownload });
 }
 
 // ─── Orquestração (toast loading → success) ────────────────────
@@ -240,12 +238,19 @@ export interface CatalogExportOptions {
   filterKey?: string | null;
   /** Filtros explícitos da tela; vence sobre `filterKey`. */
   filters?: Record<string, unknown>;
+  /**
+   * Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — `profiles.can_download` lido por
+   * `useDownloadPermission()`. Ausente = SEM permissão (fail-closed): o CSV
+   * não é gravado.
+   */
+  canDownload?: boolean;
   /** Injetável para teste; default = edge real. */
   fetchPage?: CatalogExportPageFetcher;
   /** Injetável para teste (nome do arquivo determinístico). */
   date?: Date;
-  /** Injetável para teste (não faz o download real). */
-  download?: (csv: string, filename: string) => void;
+  /** Injetável para teste (não faz o download real). Devolver `false` =
+   * nada foi gravado (o toast de sucesso não aparece). */
+  download?: (csv: string, filename: string) => boolean | void;
 }
 
 /**
@@ -257,7 +262,9 @@ export async function exportCatalogCsv(options: CatalogExportOptions = {}): Prom
   const filename = catalogExportFilename(options.filterKey, options.date ?? new Date());
   const filters = options.filters ?? filterKeyToEdgeParams(options.filterKey);
   const fetchPage = options.fetchPage ?? defaultCatalogExportFetcher(filters);
-  const download = options.download ?? triggerCsvDownload;
+  // Y29 — sem permissão declarada, o default é NÃO gravar (fail-closed).
+  const canDownload = options.canDownload ?? false;
+  const download = options.download ?? ((csv: string, name: string) => triggerCsvDownload(csv, name, canDownload));
 
   const toastId = toast.loading(`Preparando exportação de até ${CATALOG_EXPORT_MAX_ROWS.toLocaleString('pt-BR')} produtos...`);
 
@@ -275,7 +282,13 @@ export async function exportCatalogCsv(options: CatalogExportOptions = {}): Prom
     return { ok: false, rows: 0, filename, error: 'empty', downloaded: false };
   }
 
-  download(buildCatalogCsv(rows), filename);
+  const wrote = download(buildCatalogCsv(rows), filename);
+  // Sem permissão, a porta recusa gravar (devolve `false`) e já avisou o
+  // usuário: nada de toast de sucesso para um arquivo que não saiu.
+  if (wrote === false) {
+    toast.dismiss(toastId);
+    return { ok: false, rows: rows.length, filename, error: 'download-blocked', downloaded: false };
+  }
   toast.success(`${rows.length.toLocaleString('pt-BR')} produto(s) exportado(s) em ${filename}`, { id: toastId });
   return { ok: true, rows: rows.length, filename, downloaded: true };
 }

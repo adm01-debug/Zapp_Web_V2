@@ -49,6 +49,13 @@ const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());
 const mockExternalProduct = vi.hoisted(() => vi.fn());
 
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/integrations/useExternalCatalog')>(
     '@/hooks/integrations/useExternalCatalog'

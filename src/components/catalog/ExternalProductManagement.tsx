@@ -62,6 +62,7 @@ const CatalogBulkSendDialog = lazy(() =>
 // catálogo do chat: as linhas são exatamente os produtos selecionados na tela
 // (nada é buscado na edge; o export do filtro inteiro é o do rail).
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -288,6 +289,10 @@ export const ExternalProductManagement: React.FC = () => {
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
   const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
 
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — todo CSV desta tela (histórico de
+  // envios e "Exportar seleção") passa pelo gate `profiles.can_download`.
+  const { canDownload } = useDownloadPermission();
+
   // E56 — recentes/mais enviados do rail (catalog_send_events).
   const { recent: recentSends, topSent } = useCatalogRecentSends();
 
@@ -383,9 +388,13 @@ export const ExternalProductManagement: React.FC = () => {
    * e não tem contato/agente/status. */
   const handleExportSentHistory = useCallback(() => {
     if (filteredSendRows.length === 0) return;
-    triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), sendHistoryFilename(new Date()));
+    // Y29 / SEC-SAIDAS_DE_INFORMACAO-02 — o CSV leva nome de contato e de
+    // agente: sem `can_download` nada é gerado (a porta única avisa) e o toast
+    // de sucesso não aparece.
+    const wrote = triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), sendHistoryFilename(new Date()), canDownload);
+    if (wrote === false) return;
     toast.success(`${filteredSendRows.length} envio(s) exportado(s) em CSV`);
-  }, [filteredSendRows]);
+  }, [filteredSendRows, canDownload]);
 
   // E47: seleção em massa
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -436,9 +445,10 @@ export const ExternalProductManagement: React.FC = () => {
    * reusando os builders puros do CT-20 (sem tocar na edge). */
   const handleExportSelection = useCallback(() => {
     if (selectedProducts.length === 0) return;
-    triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()));
+    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()), canDownload);
+    if (wrote === false) return;
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
-  }, [selectedProducts]);
+  }, [selectedProducts, canDownload]);
 
   /** CT-28 / R2-MOD-043 — "Favoritar N": favorita só os selecionados que ainda
    * não são favoritos e só anuncia DEPOIS da escrita. `toggle` devolve o

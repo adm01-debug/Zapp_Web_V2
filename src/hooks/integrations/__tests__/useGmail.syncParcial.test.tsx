@@ -22,6 +22,13 @@ const { invokeMock, getSessionMock } = vi.hoisted(() => ({
   getSessionMock: vi.fn(async () => ({ data: { session: { access_token: 'tok' } } })),
 }));
 
+
+// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getSession: getSessionMock },

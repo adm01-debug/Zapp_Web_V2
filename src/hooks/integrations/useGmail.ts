@@ -6,6 +6,8 @@ import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmail
 import { callGmailFunction } from '../gmail/gmailApi';
 import { RESERVED_HASHES } from '@/hooks/system/useNavigationHistory';
 import { normalizeEmailBase64 } from '@/lib/emailAttachments';
+import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { chunkEmailIds, collectEmailPages } from '@/lib/emailPagination';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import {
@@ -49,6 +51,9 @@ function getOAuthReturnView(): string {
 export function useGmail(accountId?: string, requestedThreadId?: string | null, listQuery?: EmailThreadListQuery) {
   const queryClient = useQueryClient();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o anexo só desce para o disco com
+  // `profiles.can_download` (mesmo gate de MediaPreview/ImagePreview).
+  const { canDownload } = useDownloadPermission();
 
   const { data: accounts = [], isLoading: accountsLoading, error: accountsError, refetch: refetchAccounts } = useQuery({
     queryKey: ['gmail-accounts'],
@@ -415,18 +420,25 @@ export function useGmail(accountId?: string, requestedThreadId?: string | null, 
 
   const downloadAttachment = useMutation({
     mutationFn: async (attachment: EmailAttachment & { gmail_message_id: string }) => {
+      // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — sem permissão o conteúdo do anexo
+      // nem é buscado: o gate vem ANTES da requisição e nada é gravado.
+      if (!canDownload) {
+        notifyDownloadBlocked();
+        return null;
+      }
       const data = await getAttachmentContent(attachment);
       return { attachment, data };
     },
-    onSuccess: ({ attachment, data }) => {
+    onSuccess: (result) => {
+      if (!result) return;
+      const { attachment, data } = result;
       const binary = atob(data);
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: attachment.mime_type || 'application/octet-stream' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.filename || 'anexo';
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadFileWithPermission(
+        new Blob([bytes], { type: attachment.mime_type || 'application/octet-stream' }),
+        attachment.filename || 'anexo',
+        { canDownload },
+      );
     },
     onError: (error: Error) => toast.error(`Não foi possível baixar o anexo: ${error.message}`),
   });

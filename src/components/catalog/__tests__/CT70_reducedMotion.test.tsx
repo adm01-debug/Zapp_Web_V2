@@ -27,6 +27,13 @@ import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 // real, então as asserções são sobre o DOM que ele de fato produz).
 const reduceMotion = { value: false };
 
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
   return { ...actual, useReducedMotion: () => reduceMotion.value };

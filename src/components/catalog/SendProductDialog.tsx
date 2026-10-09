@@ -34,6 +34,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlertCard, personalizePreview } from '@/components/talkx/talkxShared';
 import { useContactSearch, useSendToContact, type ContactResult } from './useSendProduct';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { notifyDownloadBlocked } from '@/lib/downloadFile';
 import { ContactSelectionStep } from './ContactSelectionStep';
 // CT-37 — PhonePreview (prévia estilo WhatsApp) subiu para catalogShared,
 // junto com a classe .catalog-phone e os tokens --wa-*.
@@ -160,6 +162,9 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   } = useContactSearch(step, presetContact);
 
   const { profile } = useAuth();
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — as fotos do produto só descem para o
+  // disco com `profiles.can_download` (mesmo gate do preview do inbox).
+  const { canDownload } = useDownloadPermission();
   // CT-06 — "Tentar de novo" reabre o dialog no passo de contato (o envio pode
   // ter fechado o dialog no caminho de onConfirmSend) sem perder a seleção.
   const handleRetry = React.useCallback(() => {
@@ -334,6 +339,9 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   const handleDownloadImages = async () => {
     const urls = Array.from(selectedImages);
     if (urls.length === 0) { toast.error('Nenhuma foto selecionada'); return; }
+    // Y29 — sem permissão nem o fetch das fotos acontece: a porta única avisa e
+    // a função retorna (nada de "não foi possível baixar" mentindo a causa).
+    if (!canDownload) { notifyDownloadBlocked(); return; }
     const baseName = fullProduct.name.replace(/\s+/g, '_');
     // CT-39 — sem JSZip/fflate/archiver no bundle (nenhuma dependência nova é
     // autorizada), o "zip" do plano vira o download individual previsto no
@@ -341,7 +349,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
     // URL cross-origin, imagedelivery.net) e o toast só promete o que saiu de
     // verdade.
     const results = await Promise.all(
-      urls.map((url, i) => downloadImageAsBlob(url, `${baseName}_${i + 1}.jpg`))
+      urls.map((url, i) => downloadImageAsBlob(url, `${baseName}_${i + 1}.jpg`, canDownload))
     );
     const downloaded = results.filter(Boolean).length;
     if (downloaded === 0) {

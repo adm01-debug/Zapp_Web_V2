@@ -6,6 +6,8 @@ import { Stethoscope, CheckCircle2, XCircle, AlertTriangle, Loader2, Wrench, Clo
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import type { DiagnosticResult } from './hooks/useEvolutionMonitoring';
 
 interface Props {
@@ -43,7 +45,10 @@ function ScoreGauge({ score }: { score: number }) {
   );
 }
 
-function exportReportTxt(d: DiagnosticResult) {
+/** Y29 — o relatório TXT sai pela porta única de gravação, com o gate
+ * `profiles.can_download` recebido do componente. Sem permissão nada é
+ * gravado (a porta avisa) e o retorno é `false`. */
+function exportReportTxt(d: DiagnosticResult, canDownload: boolean): boolean {
   const lines = [
     `=== RELATÓRIO DIAGNÓSTICO EVOLUTION API ===`,
     `Data: ${new Date(d.timestamp).toLocaleString('pt-BR')}`,
@@ -57,12 +62,12 @@ function exportReportTxt(d: DiagnosticResult) {
     lines.push('');
   });
   const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `diagnostico-${new Date().toISOString().slice(0, 10)}.txt`; a.click();
-  URL.revokeObjectURL(url);
+  return downloadFileWithPermission(blob, `diagnostico-${new Date().toISOString().slice(0, 10)}.txt`, { canDownload });
 }
 
-async function exportReportPdf(d: DiagnosticResult) {
+async function exportReportPdf(d: DiagnosticResult, canDownload: boolean) {
+  // Y29 — sem permissão o PDF nem é montado (nada de trabalho nem de arquivo).
+  if (!canDownload) { notifyDownloadBlocked(); return; }
   try {
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
@@ -102,7 +107,10 @@ async function exportReportPdf(d: DiagnosticResult) {
       y += 6;
     });
 
-    doc.save(`diagnostico-evolution-${new Date().toISOString().slice(0, 10)}.pdf`);
+    // Y29 — o PDF também sai pela porta única: `doc.output('blob')` + gate,
+    // em vez de `doc.save()` (que grava no disco por dentro da lib, sem gate).
+    const blob = doc.output('blob') as Blob;
+    downloadFileWithPermission(blob, `diagnostico-evolution-${new Date().toISOString().slice(0, 10)}.pdf`, { canDownload });
     toast.success('PDF exportado com sucesso!');
   } catch {
     toast.error('Erro ao gerar PDF');
@@ -112,6 +120,9 @@ async function exportReportPdf(d: DiagnosticResult) {
 interface CheckItem { label: string; status: 'ok' | 'warning' | 'error'; detail: string; action?: { label: string; onClick: () => void }; }
 
 export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnostic, onReconfigureWebhook, reconfiguring }: Props) {
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — os relatórios TXT/PDF (webhook, URL de
+  // instância, fluxo de mensagens) passam pelo gate `profiles.can_download`.
+  const { canDownload } = useDownloadPermission();
   const buildChecklist = (): CheckItem[] => {
     if (!diagnostic) return [];
     const items: CheckItem[] = [];
@@ -144,10 +155,10 @@ export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnos
         </Button>
         {diagnostic && (
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportTxt(diagnostic)}>
+            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportTxt(diagnostic, canDownload)}>
               <Download className="w-3.5 h-3.5 mr-1" />TXT
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportPdf(diagnostic)}>
+            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportPdf(diagnostic, canDownload)}>
               <FileText className="w-3.5 h-3.5 mr-1" />PDF
             </Button>
             <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{new Date(diagnostic.timestamp).toLocaleString('pt-BR')}</span>

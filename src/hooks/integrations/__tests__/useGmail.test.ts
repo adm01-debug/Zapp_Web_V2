@@ -8,6 +8,13 @@ import { callGmailFunction } from '@/hooks/gmail/gmailApi';
 import { supabase } from '@/integrations/supabase/client';
 import { createGmailOAuthState, storeGmailOAuthReturnContext } from '@/lib/gmailOAuth';
 
+
+// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/hooks/gmail/gmailApi');
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
