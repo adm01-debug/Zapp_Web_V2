@@ -1,8 +1,11 @@
-import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
+import {
+  type AiIdentity,
+  requireAiIdentityOrService,
+} from "../_shared/ai-auth.ts";
 import {
   assertMessageVisibleToCaller,
-  resolveAuthorizedAudioUrl,
   type AudioObjectAuthzResult,
+  resolveAuthorizedAudioUrl,
 } from "../_shared/ai-audio-authz.ts";
 import {
   checkRateLimit,
@@ -137,12 +140,18 @@ export function resolveTranscriptionAudioFormat(
   if (detected) {
     // SL-195a: os magic bytes do ARQUIVO vencem o `content-type` informado e a
     // extensão da URL — os dois são entradas não confiáveis (um `.mp3` que serve
-    // OGG era enviado como audio/mpeg). O container EBML/WebM é classificado
-    // como vídeo pelo detector por ser ambíguo, mas neste endpoint é a gravação
-    // de ÁUDIO do navegador e vai como `audio/webm`.
-    const mimeType = detected.mime === "video/webm" ? "audio/webm" : detected.mime;
-    const extension = EXTENSION_BY_MIME[mimeType] ?? "bin";
-    return { mimeType, fileName: `audio.${extension}`, source: "magic" };
+    // OGG era enviado como audio/mpeg). Contêineres EBML/WebM e ISO-BMFF/MP4
+    // podem ser classificados como vídeo por serem ambíguos; neste endpoint de
+    // transcrição eles representam gravação de áudio e são enviados como áudio.
+    const mimeType = detected.mime === "video/webm"
+      ? "audio/webm"
+      : detected.mime === "video/mp4"
+      ? "audio/mp4"
+      : detected.mime;
+    const extension = EXTENSION_BY_MIME[mimeType];
+    if (extension) {
+      return { mimeType, fileName: `audio.${extension}`, source: "magic" };
+    }
   }
   const { mimeType, fileName } = formatFromMetadata(audioUrl, contentType);
   return { mimeType, fileName, source: "metadata" };
@@ -158,13 +167,20 @@ export interface TranscribeAudioDeps {
   /** Resolve a identidade do chamador (default: `requireAiIdentityOrService`). */
   authorize?: (req: Request) => Promise<AiIdentity | Response>;
   /** Rate limit local por IP (default: `checkRateLimit`). */
-  rateLimit?: (key: string, max: number, windowMs: number) => { allowed: boolean };
+  rateLimit?: (
+    key: string,
+    max: number,
+    windowMs: number,
+  ) => { allowed: boolean };
   /** IP do chamador (default: `getClientIP(req)`). */
   clientIp?: string;
   /** Leitura de env (default: `requireEnv`). */
   env?: (key: string) => string | undefined;
   /** Download do objeto autorizado (default: `downloadAudio`). */
-  downloadAudio?: (audioUrl: string, log: Logger) => Promise<DownloadAudioResult>;
+  downloadAudio?: (
+    audioUrl: string,
+    log: Logger,
+  ) => Promise<DownloadAudioResult>;
   /** Checagem de visibilidade da mensagem (default: `assertMessageVisibleToCaller`). */
   assertMessageVisible?: (
     req: Request,
@@ -224,7 +240,8 @@ export async function handleTranscribeAudio(
     // autorização do objeto pertence ao pipeline que já validou a origem.
     let audioUrl = requestedAudioUrl;
     if (identity.kind === "user") {
-      const assertVisible = deps.assertMessageVisible ?? assertMessageVisibleToCaller;
+      const assertVisible = deps.assertMessageVisible ??
+        assertMessageVisibleToCaller;
       const objectAuthz = await assertVisible(req, messageId);
       if (!objectAuthz.ok) {
         return errorResponse(objectAuthz.error, objectAuthz.status, req);
