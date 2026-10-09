@@ -164,7 +164,7 @@ Fecha a etapa quando: (1) existir **uma** linha com `provider_call_id` **não nu
 - [x] **T73** — Edge `get-call-recording` (JWT → RLS → stream com `Range`, sem expor URL; rate limit). **Aceite:** A → 200; B → 403; sem JWT → 401.
 - [x] **T74** — Fechamento Fase 7: commit "fase 7 — reconciliação" ou "fase 7 pulada — sem fonte"; `CAPACIDADES.md` atualizado. **Aceite:** seção 11.
 
-### 11.6 FASE 7 — Gravações: reconciliação com o Bitrix24 (T71–T74) — PR (a publicar)
+### 11.6 FASE 7 — Gravações: reconciliação com o Bitrix24 (T71–T74) — PR #1864
 
 **Entrega:** as duas Edge Functions que ligam a gravação do provedor ao histórico — com a honestidade de que a **fonte** ainda
 depende de um segredo que não está configurado.
@@ -225,7 +225,8 @@ depende de um segredo que não está configurado.
 - [x] **T98** — Decisões D1–D7 finais na seção 10 com data e quem decidiu; o que **não** está prometido (saída por WhatsApp, gravação se D3=b, ramal por agente, seleção de dispositivo de áudio) listado no corpo da última PR. **Aceite:** seção 10 completa.
   **FEITO 08/10.** Seção 10 fechada: D1–D7 seguem com valor, data e quem decidiu; o parágrafo **"Fechamento do T98"** as declara **finais** (nenhuma revista depois de 29/09 — D3, 29/09, e D8, 02/10, são as duas alterações do Joaquim) e a subseção **10.1 "O que não está prometido"** lista os quatro limites nomeados neste item, cada um com a origem (D1/D2/D3) e o estado real do código. **Divergência declarada:** o plano pedia a lista "no corpo da última PR"; a Arquitetura V2 entrega local (sem PR), então a lista durável mora na própria seção 10, que o T02 já define como fonte de verdade. Trava por contrato: `tests/contracts/telefonia-decisoes.contract.test.ts`.
 - [ ] **T99** — CLAUDE.md ganha seção "Telefonia" (provedor SIP, secret, RPCs canônicas, `notes` × `agent_notes`, pasta de docs, regra "merge ≠ deploy de Edge"). **Aceite:** seção presente, sem tocar o resto.
-- [ ] **T100** — Encerramento: este arquivo com checklist final, links das PRs e "Pendências/resíduos" honesto; `TELEFONIA_STATUS.md` recebe linha final "superado por …". **Aceite:** ambos no mesmo PR.
+- [x] **T100** — Encerramento: este arquivo com checklist final, links das PRs e "Pendências/resíduos" honesto; `TELEFONIA_STATUS.md` recebe linha final "superado por …". **Aceite:** ambos no mesmo PR.
+  **FEITO 08/10 (SL-245).** A seção **12** fecha este arquivo com os três itens do aceite: **checklist final** (73 de 100 etapas marcadas; as 27 abertas listadas na 12.1 com o que trava cada uma), **links das PRs** (as 8 PRs das fases 0–7 com o sha — a tabela e os títulos das subseções da seção 11 foram preenchidos) e **"Pendências/resíduos"** (12.1 pendências, 12.2 resíduos). Do outro lado, `docs/design/TELEFONIA_STATUS.md` ganhou no fim a linha final **"superado por `docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md`"**, e a nota do topo dele (T01) continua apontando para o mesmo plano. **Divergência declarada:** o aceite pede "ambos no mesmo PR"; na Arquitetura V2 a entrega é local, sem PR — os dois arquivos entram no **mesmo commit**. **Trava por contrato:** `tests/contracts/telefonia-encerramento.contract.test.ts` — com os documentos anteriores, **6 dos 12 casos ficam vermelhos**; com o fechamento, 12/12 verdes.
 
 ---
 
@@ -261,15 +262,17 @@ O T98 mandava listar isto "no corpo da última PR"; na Arquitetura V2 a entrega 
 |---|---|---|---|---|---|
 | 0 | T01–T08 | docs + script + DML (T03) | CI verde; T03 com `RETURNING` | **#1181** | merge pelo `hermes-tarefa-mergear` (sem DDL pendente) |
 | 1 | T09–T22 | motor (toca `AppProviders`, Edge) | **Aguarda Joaquim** (T22) | **#1193, #1246, #1285, #1328, #1365, #1384, #1431, #1440, #1449, #1476, #1488** (T09–T21 mergeados e provados na main) + **#1494** (T22) | T22 aguarda o Joaquim: o plano diz "PR aberta chamando Joaquim" |
-| 2 | T23–T32 | canais + webhook + inbox | **Aguarda Joaquim** (Edge) | — | — |
-| 3 | T33–T42 | shell/header/KPIs | CI verde | — | — |
-| 4 | T43–T54 | histórico | CI verde | — | — |
-| 5 | T55–T61 | nova ligação | CI verde | — | — |
-| 6 | T62–T70 | painéis + `AppShell` | **Aguarda Joaquim** (T69) | — | — |
-| 7 | T71–T74 | gravações (condicional) | Edge → Joaquim | — | — |
+| 2 | T23–T32 | canais + webhook + inbox | **Aguarda Joaquim** (Edge) | **#1585** (`0335b0ca4`) | mergeada na branch do dia |
+| 3 | T33–T42 | shell/header/KPIs | CI verde | **#1703** (`c7c3512e6`) | mergeada na branch do dia |
+| 4 | T43–T54 | histórico | CI verde | **#1830** (`fc4d7879a`) | mergeada na branch do dia |
+| 5 | T55–T61 | nova ligação | CI verde | **#1851** (`c8b8354b6`) | mergeada na branch do dia |
+| 6 | T62–T70 | painéis + `AppShell` | **Aguarda Joaquim** (T69) | **#1858** (`7eff0b592`) | mergeada na branch do dia |
+| 7 | T71–T74 | gravações (condicional) | Edge → Joaquim | **#1864** (`81efc3c2a`) | mergeada na branch do dia |
 | 8 | T75–T80 | motion/a11y/responsivo | CI verde | — | — |
 | 9 | T81–T88 | QA + testes | CI verde | — | — |
 | 10 | T89–T100 | entrega + homologação | Joaquim (deploy, homologação) | — | — |
+
+> Preenchido no **T100 (08/10/2026)**: as fases 0–7 estão fechadas e mergeadas na branch do dia, com o sha de cada PR; as fases 8–10 seguem abertas (sem PR) e o gate de produção das fases que tocam Edge (`get-sip-password`, `evolution-webhook`) continua com o Joaquim. O bloco **"Estado em 02/10 (atualização)"**, mais abaixo, é o retrato daquela data e não foi reescrito.
 
 ### 11.1 FASE 2 — Canais e click-to-call (T23–T32) — PR #1585
 
@@ -462,7 +465,7 @@ roda e estoura pedindo provider; e o caminho de `useCallSession` é `@/providers
 (não `@/hooks/...`). Forma também importa: `calls` precisa ser **array** onde o componente faz
 `.find`, e função onde ele chama.
 
-### 11.3 FASE 4 — Histórico (T43–T54) — PR
+### 11.3 FASE 4 — Histórico (T43–T54) — PR #1830
 
 **PR:** `feat(telefonia): historico com card, abas, tabela, filtros e paginacao (T43-T53)` · branch
 `hermes/telefonia-fase4-historico-2610031003f8d9` · base `origin/main` · **1 PR de front**, merge no gate T54.
@@ -503,7 +506,7 @@ medições anteriores que davam 401 eram **erro do medidor** (faltava o `apikey`
 dev server da tarefa, login pela UI, `qa/tel/06-after.png` (1672×1050, 2738 cores distintas, 98% de pixels
 claros). **Lição:** declarar bloqueio sem medir enterra entrega — medir uma vez custa um `curl`.
 
-### 11.4 FASE 5 — Painel lateral: Nova ligação (T55–T61) — PR (a publicar)
+### 11.4 FASE 5 — Painel lateral: Nova ligação (T55–T61) — PR #1851
 
 **Entrega:** o slot lateral deixa de ser um discador solto e passa a ser um painel de nova ligação de 408 px,
 com escolha de canal, busca de contato, teclado reusável e um CTA que **explica** por que não dá para ligar.
@@ -547,3 +550,48 @@ o CTA permanece travado **porque a conta de QA não tem telefone configurado**, 
 - **`POST /functions/v1/get-sip-password` responde 401 e depois 503** no boot da tela (produção). É a função que
   provisiona a senha SIP; sem ela nenhuma conta fica com linha configurada — e foi o que esta prova mostrou.
   Alheio à Fase 5, mas é o bloqueio de verdade para ligar por VoIP.
+
+---
+
+## 12. Encerramento (T100) — 08/10/2026
+
+**Checklist final.** **73 das 100 etapas** deste arquivo estão marcadas `[x]`; **27 seguem abertas** e estão
+listadas na **12.1**. A contagem e a lista são a leitura literal do checklist em **08/10/2026**: os cartões da
+2ª leva (`docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md`) fecham etapa por etapa, e cada `[x]` entra com a
+evidência no próprio item, na entrega que integra.
+
+**Links das PRs.** O mapa é a seção **11** deste arquivo, agora com as PRs das fases 0–7 fechadas e mergeadas
+na branch do dia: `#1181` (`ecc47a88e`) · `#1494` (`4c4402248`) · `#1585` (`0335b0ca4`) · `#1703` (`c7c3512e6`) ·
+`#1830` (`fc4d7879a`) · `#1851` (`c8b8354b6`) · `#1858` (`7eff0b592`) · `#1864` (`81efc3c2a`).
+
+**Pendências/resíduos:** as duas subseções abaixo. O oposto também fica dito — **este arquivo continua aberto**:
+o encerramento do T100 é documental, e o módulo só é "pronto" quando o **T96** (homologação de áudio com um
+agente real) rodar. Do outro lado, o ledger antigo `docs/design/TELEFONIA_STATUS.md` recebeu a **linha final
+"superado por `<este arquivo>`"** e não recebe mais etapas.
+
+### 12.1 Pendências (o que falta, e o que trava)
+
+| Etapas | Fase | O que falta | Trava / dono |
+|---|---|---|---|
+| T06 | 0 | `00-before.png` + `consoleErrors` da tela | evidência de QA — o bloqueio de autenticação caiu em 03/10 (cabeçalho) |
+| T11 | 1 | chamada real de aceite na persistência SIP | linha provisionada + agente ao telefone |
+| T75–T80 | 8 | motion, a11y, responsivo, contraste, `eslint-baseline`, fecho da fase | cartões da 2ª leva |
+| T81–T88 | 9 | scripts de QA (`measure`/`colors`/`func`/`axe`), E2E, fecho da fase | cartões da 2ª leva |
+| T89–T91 | 10 | gates completos, alias `VoIPPanel`, remoção de `useCalls`/`useCallHistory` | cartões da 2ª leva |
+| T92–T93 | 10 | revisão final de `CAPACIDADES`/`CONTRATO`; snapshot `final.json` | o snapshot exige o banco canônico (produção) — proibido a agente |
+| T94–T95 | 10 | deploy das Edge Functions e verificação de produção | **Joaquim** (produção) |
+| T96–T97 | 10 | homologação de áudio com agente real; reconciliação das linhas presas em `ringing` | **Joaquim** + agente ao telefone |
+| T98–T99 | 10 | decisões finais na seção 10; seção "Telefonia" no `CLAUDE.md` | cartões da 2ª leva |
+
+### 12.2 Resíduos (limites assumidos, registrados e não corrigidos aqui)
+
+- **Sem rede automatizada contra regressão do motor**: nenhum teste unitário renderiza `AppProviders`/`App`
+  (registrado no fecho da Fase 1) e não existe spec de VoIP em `e2e/` — inventário de 07/10, achado `ACH-3`.
+- **Seleção de dispositivo de áudio de saída** (`setSinkId`/alto-falante) não existe — achado `ACH-2`.
+- **Split-brain de discagem** (métodos crus do `useSipClient` em componentes antigos) segue **não verificado**
+  — achado `ACH-1`, `NAO_VERIFICAVEL`: medição pendente, não regressão conhecida.
+- **Homologação de áudio não é executável por agente**: o roteiro e a tabela de recibos existem
+  (`docs/telefonia/HOMOLOGACAO.md`, T87), mas as 9 linhas seguem **vazias** — nenhum recibo foi inventado.
+- **Defeito de produção alheio ao módulo**: `POST /functions/v1/get-sip-password` respondia `401` e depois `503`
+  no boot da tela; sem a função publicada nenhuma conta fica com linha configurada (T94/T95).
+
