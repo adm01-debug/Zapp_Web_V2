@@ -166,6 +166,33 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     expect(screen.getByTestId('sheet-avisado')).toHaveTextContent('Avisado em');
   });
 
+  // #425 / R2-MOD-057: o executor (`notify_due_tasks`) ignora done/cancelled —
+  // o Sheet do card não pode oferecer alarme nem "Adiar" nesses estados.
+  it('tarefa concluída não oferece alarme nem "Adiar", e diz por quê', async () => {
+    const p = props({ item: { ...base, status: 'done' } });
+    render(<WorkItemSheet {...p} />);
+
+    expect(screen.queryByTestId('sheet-alarme')).toBeNull();
+    expect(screen.queryByTestId('sheet-adiar')).toBeNull();
+    expect(screen.queryByTestId('sheet-alarme-hora')).toBeNull();
+    expect(screen.getByTestId('sheet-alarme-indisponivel')).toHaveTextContent(/reabra/i);
+
+    // sem controle de alarme não há caminho de snooze a partir do Sheet
+    expect(p.onSnooze).not.toHaveBeenCalled();
+    expect(p.onSetReminder).not.toHaveBeenCalled();
+  });
+
+  it('tarefa cancelada também não oferece alarme; em "todo" o campo segue', () => {
+    const { unmount } = render(<WorkItemSheet {...props({ item: { ...base, status: 'cancelled' } })} />);
+    expect(screen.queryByTestId('sheet-alarme')).toBeNull();
+    expect(screen.getByTestId('sheet-alarme-indisponivel')).toBeTruthy();
+    unmount();
+
+    render(<WorkItemSheet {...props()} />);
+    expect(screen.getByTestId('sheet-alarme')).toBeTruthy();
+    expect(screen.queryByTestId('sheet-alarme-indisponivel')).toBeNull();
+  });
+
   // --- Etapa 88: ampliação das três travas (motivo obrigatório, Fazendo cheio,
   //     Salvar sem mudança). Os casos acima cobrem o caminho feliz; os de baixo
   //     cobrem as bordas que ele deixava passar. ---

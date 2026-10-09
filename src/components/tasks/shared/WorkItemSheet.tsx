@@ -32,6 +32,7 @@ import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { useNarrowViewport } from './pointerMedia';
 import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime';
+import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
@@ -137,6 +138,10 @@ function Formulario({
 
   const doingCheio = doingCount >= 3 && item.status !== 'doing';
   const motivoObrigatorio = status === 'waiting';
+  // #425 / R2-MOD-057: o executor (`notify_due_tasks`) ignora done/cancelled —
+  // em estado terminal o Sheet não oferece alarme nem "Adiar" (o card já esconde
+  // o RemindChip aí); mostra o motivo no lugar dos controles.
+  const lembreteElegivel = aceitaLembrete(item.status);
 
   const mudou = useMemo(() => {
     const due = compor(dia, hora);
@@ -326,69 +331,77 @@ function Formulario({
 
         <div>
           <Label>Alarme</Label>
-          <div className="mt-1.5 flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-testid="sheet-alarme"
-                  autoFocus={focusField === 'remind_at'}
-                  className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
+          {lembreteElegivel ? (
+            <>
+              <div className="mt-1.5 flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      data-testid="sheet-alarme"
+                      autoFocus={focusField === 'remind_at'}
+                      className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
+                    >
+                      {avisadoEm && alarmeDia
+                        ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
+                        : <CalendarIcon className="mr-2 h-4 w-4" />}
+                      {alarmeDia
+                        ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
+                        : 'Sem alarme'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      locale={ptBR}
+                      selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
+                      onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
+                    />
+                    <div className="flex items-center gap-2 border-t border-border/50 p-2">
+                      <Input
+                        type="time"
+                        data-testid="sheet-alarme-hora"
+                        value={alarmeHora}
+                        onChange={(e) => setAlarmeHora(e.target.value)}
+                        className="h-8 bg-input/40"
+                      />
+                      <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
+                      Adiar <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
+                    <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
+                    <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              {avisadoEm && (
+                <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
+                  Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
+                </p>
+              )}
+              {alarmeDia && (
+                <button
+                  type="button"
+                  data-testid="sheet-remover-alarme"
+                  onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
+                  className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
                 >
-                  {avisadoEm && alarmeDia
-                    ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
-                    : <CalendarIcon className="mr-2 h-4 w-4" />}
-                  {alarmeDia
-                    ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
-                    : 'Sem alarme'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  locale={ptBR}
-                  selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
-                  onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
-                />
-                <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                  <Input
-                    type="time"
-                    data-testid="sheet-alarme-hora"
-                    value={alarmeHora}
-                    onChange={(e) => setAlarmeHora(e.target.value)}
-                    className="h-8 bg-input/40"
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
-                  Adiar <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
-                <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
-                <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          {avisadoEm && (
-            <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
-              Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
+                  Remover alarme
+                </button>
+              )}
+            </>
+          ) : (
+            <p data-testid="sheet-alarme-indisponivel" className="mt-1.5 text-2xs text-muted-foreground">
+              {MOTIVO_SEM_LEMBRETE}
             </p>
-          )}
-          {alarmeDia && (
-            <button
-              type="button"
-              data-testid="sheet-remover-alarme"
-              onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
-              className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
-            >
-              Remover alarme
-            </button>
           )}
         </div>
 
