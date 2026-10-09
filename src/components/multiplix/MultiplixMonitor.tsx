@@ -40,6 +40,28 @@ const RECIPIENT_STATUS: Record<string, { label: string; tone: 'success' | 'dange
   skipped: { label: 'Sem WhatsApp', tone: 'muted' },
 };
 
+/**
+ * F80: texto legivel das falhas de LEITURA do disparo. A consulta devolve o erro
+ * NOMEADO da edge (`MultiplixDispatchEdgeError.code`) nos casos que ela mesma
+ * decide; sem a traducao o operador leria o codigo cru
+ * ("multiplix_dispatch_not_found") em vez de entender o que aconteceu.
+ */
+const DISPATCH_LOAD_ERROR_TEXT: Record<string, string> = {
+  multiplix_dispatch_not_found: 'O disparo não foi encontrado. Ele pode ter sido removido ou pertencer a outro usuário.',
+  multiplix_list_shape: 'O servidor respondeu num formato inesperado. Tente de novo em instantes.',
+  rate_limited: 'Muitas consultas seguidas. Aguarde alguns instantes e tente de novo.',
+  'Not authenticated': 'Sua sessão expirou. Entre novamente para abrir o disparo.',
+};
+
+function dispatchLoadErrorText(error: unknown): string {
+  if (error instanceof MultiplixDispatchEdgeError) {
+    return DISPATCH_LOAD_ERROR_TEXT[error.code] ?? error.message;
+  }
+  if (error instanceof Error) {
+    return DISPATCH_LOAD_ERROR_TEXT[error.message] ?? error.message;
+  }
+  return 'Falha ao ler o disparo.';
+}
 
 /**
  * F49 — a revalidacao que o `confirm` roda ANTES de congelar devolve erro
@@ -72,14 +94,27 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
 
-  const { data: dispatch } = useMultiplixDispatch(dispatchId);
+  // F80: a leitura do disparo tem TRES estados na tela — carregando, erro e pronto.
+  // Antes so o `data` era lido: qualquer falha (disparo removido, sem permissao,
+  // edge/rede fora) deixava `dispatch` indefinido e a tela ficava no skeleton para
+  // sempre, sem dizer o que houve nem oferecer saida.
+  const {
+    data: dispatch,
+    error: dispatchError,
+    isError: dispatchFailed,
+    isFetching: dispatchRefetching,
+    refetch: refetchDispatch,
+  } = useMultiplixDispatch(dispatchId);
   // R2-MOD-022: FALHA e VAZIO sao estados diferentes. O default `= []` engolia a
   // rejeicao da consulta e a tela anunciava "Nenhum destinatario encontrado" numa
   // leitura que falhou — o operador lia um disparo sem destinatarios onde havia erro.
+  // F80: CARREGANDO tambem nao e vazio — a primeira pagina em andamento nao pode
+  // ser anunciada como lista vazia confirmada.
   const {
     data: recipientsData,
     isError: recipientsFailed,
     error: recipientsError,
+    isPending: recipientsLoading,
   } = useMultiplixRecipients(dispatchId, statusFilter);
   const recipients = recipientsData?.rows ?? [];
   const recipientsTotal = recipientsData?.total ?? null;
@@ -92,7 +127,11 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   // 'skipped' (empresa sem WhatsApp) -- sem isso, um disparo com destinatarios
   // pulados nunca chega a 100% e "Restantes" fica preso contando quem ja foi
   // resolvido como sem destino.
-  const { data: skippedCount = 0 } = useQuery({
+  // F80: `fetchMultiplixRecipientsTotal` FALHA ALTO quando o servidor nao devolve
+  // o total exato (ver o hook). Engolir essa falha no default `= 0` desfazia o que
+  // a funcao promete: o progresso fechava abaixo do real, com "Restantes" inflado,
+  // sem nenhum aviso. Aqui a falha da contagem e um estado proprio da tela.
+  const { data: skippedCount = 0, isError: skippedCountFailed } = useQuery({
     queryKey: ['multiplix-skipped-count', dispatchId],
     queryFn: () => fetchMultiplixRecipientsTotal(dispatchId, 'skipped'),
     enabled: !!dispatchId,
@@ -134,7 +173,49 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     }
   };
 
-  if (!dispatch) return <div className="space-y-4 animate-pulse">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-2xl" />)}</div>;
+  // F80: LER o disparo pode falhar (removido, de outro usuario, edge/rede fora) —
+  // e falha explicada na tela, com saida. Antes este caminho caia no skeleton
+  // abaixo e ficava nele para sempre: o operador esperava uma resposta que nunca
+  // vinha, sem mensagem e sem botao.
+  // `!dispatch` no teste de proposito: o refetch de 5s pode falhar num soluco de
+  // rede DEPOIS de a tela ja estar carregada — nesse caso o disparo continua na
+  // tela (dado bom e mais recente que o erro) e so a leitura sem NENHUM dado vira
+  // a tela de erro.
+  if (dispatchFailed && !dispatch) {
+    return (
+      <div className="space-y-4 min-w-0">
+        <button type="button" onClick={onBack} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 w-fit">
+          <ArrowLeft className="w-4 h-4" />Voltar aos disparos
+        </button>
+        <div className="rounded-2xl bg-card border border-dash-red/40 bg-dash-red/5 p-4 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-dash-red shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Não foi possível carregar o disparo</p>
+            <p role="status" className="text-xs text-foreground-secondary break-words mt-0.5">{dispatchLoadErrorText(dispatchError)}</p>
+            <button
+              type="button"
+              onClick={() => void refetchDispatch()}
+              disabled={dispatchRefetching}
+              className="mt-2 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 disabled:opacity-60"
+            >
+              {dispatchRefetching ? 'Tentando de novo…' : 'Tentar de novo'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dispatch) {
+    return (
+      // motion-safe: o pulso do placeholder so anima com movimento permitido
+      // (`prefers-reduced-motion` desliga) — regra de efeito sutil do projeto.
+      <div role="status" className="space-y-4 motion-safe:animate-pulse">
+        <span className="sr-only">Carregando disparo…</span>
+        {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-2xl" />)}
+      </div>
+    );
+  }
 
   const outcomeUnknown = dispatch.outcome_unknown_count ?? 0;
   const processed = dispatch.sent_count + dispatch.failed_count + outcomeUnknown + skippedCount;
@@ -201,6 +282,15 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
+        {/* F80: a contagem de "sem WhatsApp" pode falhar sozinha (o servidor sem o
+            total exato) — e o progresso/restantes saem errados. Falha silenciosa
+            nao: o operador precisa saber que o numero esta incompleto. */}
+        {skippedCountFailed && (
+          <p className="text-2xs text-dash-amber flex items-center gap-1.5 mt-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            Não foi possível contar os contatos sem WhatsApp; o progresso e o total de restantes podem estar incompletos.
+          </p>
+        )}
         {/* F10c: o worker grava o motivo da pausa automatica — sem isto o
             operador ve "Pausado" sem saber se pode retomar (cota/window) ou se
             precisa religar a conexao. */}
@@ -279,7 +369,12 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
               </div>
             );
           })}
-          {!recipientsFailed && recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
+          {/* F80: CARREGANDO nao e VAZIO — a primeira pagina em andamento espera em
+              vez de confirmar "nenhum destinatario". */}
+          {!recipientsFailed && recipientsLoading && (
+            <p role="status" className="text-center py-8 text-muted-foreground text-xs">Carregando destinatários…</p>
+          )}
+          {!recipientsFailed && !recipientsLoading && recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
         </div>
       </section>
 
