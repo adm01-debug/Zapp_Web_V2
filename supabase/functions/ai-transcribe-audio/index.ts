@@ -240,9 +240,13 @@ export async function handleTranscribeAudio(
     // autorização do objeto pertence ao pipeline que já validou a origem.
     let audioUrl = requestedAudioUrl;
     if (identity.kind === "user") {
-      const assertVisible = deps.assertMessageVisible ??
-        assertMessageVisibleToCaller;
-      const objectAuthz = await assertVisible(req, messageId);
+      // `deps` só é usado pelo teste offline. Sem injeção — o caminho de PRODUÇÃO
+      // — a chamada real fica literal no fonte, porque o contrato de ordem do
+      // repositório (tests/contracts/ai-endpoints-auth.contract.test.ts) lê o
+      // FONTE: exige a checagem de visibilidade ANTES do download do objeto.
+      const objectAuthz = deps.assertMessageVisible
+        ? await deps.assertMessageVisible(req, messageId)
+        : await assertMessageVisibleToCaller(req, messageId);
       if (!objectAuthz.ok) {
         return errorResponse(objectAuthz.error, objectAuthz.status, req);
       }
@@ -264,8 +268,11 @@ export async function handleTranscribeAudio(
     }
 
     // Download audio (prefers service-role storage download for own URLs)
-    const download = deps.downloadAudio ?? downloadAudio;
-    const downloadResult = await download(audioUrl, log);
+    // Sem injeção (caminho de PRODUÇÃO) a chamada real fica literal no fonte — é
+    // o que o contrato de ordem acima confere.
+    const downloadResult = deps.downloadAudio
+      ? await deps.downloadAudio(audioUrl, log)
+      : await downloadAudio(audioUrl, log);
     if ("error" in downloadResult) {
       return errorResponse(downloadResult.error, 400, req);
     }
