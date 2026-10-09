@@ -1,5 +1,6 @@
 // Shared proxy logic for Evolution API edge function
 import { translateV2ToGo } from "./evolution-go-routes.ts";
+import { instanceNameFromV2Path } from "./evolution-instance-token.ts";
 
 // GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
 // O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
@@ -105,6 +106,12 @@ export async function proxyToEvolution(
   // E22: chave do circuit breaker (normalmente o nome da instância). Cai em
   // instanceInPath ou '__admin' quando o chamador não informa.
   cbKey?: string,
+  // TRA-002 / #18: token da instância resolvido pelo chamador a partir da
+  // conexão (evolution-instance-token.ts). Sem ele, o fallback
+  // EVOLUTION_INSTANCE_TOKEN só vale quando o nome NO PATH é o da instância
+  // padrão — a GO seleciona a instância pela credencial, então a da padrão não
+  // pode autenticar rota de outra conexão.
+  instanceToken?: string,
 ): Promise<Response> {
   const breakerKey = cbKey || instanceInPath || '__admin';
   if (cbIsOpen(breakerKey)) {
@@ -133,9 +140,29 @@ export async function proxyToEvolution(
       goPath = go.path;
       if (go.contentType) contentType = go.contentType;
       if (go.auth === "instance") {
-        const instToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
-        if (!instToken) console.error(`[Evolution GO] EVOLUTION_INSTANCE_TOKEN ausente — usando a key global em rota de instância (${go.path}); o GO responderá 401.`);
-        apikey = instToken ?? evolutionApiKey;
+        const instName = instanceNameFromV2Path(v2Path);
+        if (instanceToken) {
+          apikey = instanceToken;
+        } else if (
+          Deno.env.get("EVOLUTION_INSTANCE_TOKEN") &&
+          instName === Deno.env.get("EVOLUTION_INSTANCE_NAME")
+        ) {
+          // Fallback de transição: EVOLUTION_INSTANCE_TOKEN é a credencial da
+          // instância PADRÃO. Só vale quando a rota é dela — o nome no path v2
+          // se perde na tradução, então é a última chance de reconhecer a dona.
+          console.error(`[Evolution GO] instanceToken não resolvido para a instância padrão ${instName} (${go.path}) — fallback EVOLUTION_INSTANCE_TOKEN.`);
+          apikey = Deno.env.get("EVOLUTION_INSTANCE_TOKEN")!;
+        } else {
+          // TRA-002 / #18: NUNCA usar a key global nem a credencial da padrão em
+          // rota de outra conexão — a GO executaria na instância errada.
+          console.error(`[Evolution GO] rota de instância sem credencial resolvida (${v2Path})`);
+          return new Response(JSON.stringify({
+            error: true,
+            message: `Credencial da instância '${instName || "desconhecida"}' não configurada.`,
+          }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
       console.log(`[Evolution GO] translated → ${method} ${path}`);
     }
