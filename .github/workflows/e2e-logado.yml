@@ -183,25 +183,23 @@ jobs:
       # que o E2E usa em conversation.spec.ts / messaging.spec.ts.
       # A UNIQUE constraint (contact_id, dia) impede duplicatas no mesmo dia,
       # mas a tabela cresce 1 row/CI-run sem este step.
-      # Requer o secret SUPABASE_SERVICE_ROLE_KEY (chave nao exposta ao publico).
-      # Se o secret nao estiver configurado, o step e ignorado (continue-on-error).
+      # E25: a limpeza NAO usa mais a service role. O DELETE vive na RPC
+      # public.e2e_cleanup_conversation_closures() (SECURITY DEFINER; so o contato
+      # fixo do fixture e so o usuario de teste via auth.uid()), e o script
+      # scripts/ci/e2e-teardown.mjs a chama com o login de E2E_TEST_EMAIL /
+      # E2E_TEST_PASSWORD -- as mesmas credenciais do Playwright. A chave mestra do
+      # banco (ignora RLS) sai do CI.
+      # A URL vem do mesmo secret que o ci.yml ja entrega ao app.
+      # Sem as credenciais o script e PULADO (exit 0), como no step antigo.
       - name: 🧹 E2E teardown - limpar fixture de conversation_closures
         if: always()
         continue-on-error: true
         env:
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "SUPABASE_SERVICE_ROLE_KEY nao configurado - teardown pulado"
-            exit 0
-          fi
-          curl --proto '=https' --tlsv1.2 -sf -X DELETE \
-            "https://tnnnlkbymytvtqngbbqh.supabase.co/rest/v1/conversation_closures?contact_id=eq.04dff4dc-c6b1-4283-ac22-bd8639804759" \
-            -H "apikey: $SERVICE_ROLE_KEY" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            && echo "teardown OK" \
-            || echo "teardown falhou - nao bloqueia CI"
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: node scripts/ci/e2e-teardown.mjs e2e_cleanup_conversation_closures
 
       # Teardown: catalog_send_events e log append-only -- depois do CT-02 o
       # `authenticated` so tem SELECT/INSERT, entao o cliente NAO consegue apagar
