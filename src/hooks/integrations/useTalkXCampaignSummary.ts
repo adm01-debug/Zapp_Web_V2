@@ -64,7 +64,7 @@ function toCount(value: unknown): number {
  * deliberadamente elegíveis + bloqueados: o mock da tela 08 fecha
  * (1.187 + 61 = 1.248) e a soma nunca depende de o servidor mandar `matched`.
  */
-export function summaryCountsFromServer(payload: TalkXAudienceCountPayload): TalkXCampaignSummaryCounts {
+function summaryCountsFromServer(payload: TalkXAudienceCountPayload): TalkXCampaignSummaryCounts {
   const eligible = toCount(payload?.eligible);
   const suppressed = toCount(payload?.suppressed);
   return { total: eligible + suppressed, eligible, suppressed };
