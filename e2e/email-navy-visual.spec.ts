@@ -239,7 +239,17 @@ test('superfícies do Email herdam os mesmos tokens do sistema em claro e escuro
 test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) => {
   await abrirEmail(page);
   const search = page.getByRole('textbox', { name: 'Busca global do Email' });
+  // A lista mostra o resultado ANTERIOR até a busca chegar ao servidor (a espera curta de
+  // 300 ms junta as teclas) e fica vazia enquanto a resposta não volta. Assertar antes disso
+  // passava por dois motivos que não são "a lista filtrou": a lista antiga ainda na tela (com
+  // o termo já digitado) e a lista vazia do carregamento. Era assim que este teste passava na
+  // 1ª tentativa de forma intermitente nos PRs #1908/#1910. Esperar a resposta do termo
+  // digitado prende as asserções ao resultado REAL da busca — sem `waitForTimeout` e sem
+  // inflar teto de tempo.
+  const respostaDaBusca = page.waitForResponse(response =>
+    response.url().includes('/rest/v1/email_threads') && response.url().includes('Sentry'));
   await search.fill('Sentry');
+  await respostaDaBusca;
   await expect(page.getByText('SENTRY-GREEN-BASKET-VQ — 2 new alerts')).toBeVisible();
   await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3')).toBeHidden();
 
