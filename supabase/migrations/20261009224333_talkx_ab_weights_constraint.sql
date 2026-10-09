@@ -2,6 +2,7 @@
 -- Rollback: drop trigger, function e colunas A/B adicionadas pela migration.
 -- Rollback (SQL executável, na ordem):
 --   DROP TRIGGER IF EXISTS talkx_template_variants_weight_sum ON public.talkx_template_variants;
+--   DROP FUNCTION IF EXISTS public.talkx_assign_variant(uuid, uuid);
 --   DROP FUNCTION IF EXISTS public.talkx_validate_template_variant_weights();
 --   ALTER TABLE public.talkx_campaigns DROP COLUMN IF EXISTS ab_winner_decided_by;
 --   ALTER TABLE public.talkx_campaigns DROP COLUMN IF EXISTS ab_winner_decided_at;
@@ -50,3 +51,47 @@ ALTER TABLE public.talkx_campaigns
 
 REVOKE ALL ON FUNCTION public.talkx_validate_template_variant_weights() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.talkx_validate_template_variant_weights() TO service_role;
+
+-- Atribuicao estavel: o mesmo contato recebe a mesma variante em 2 snapshots.
+-- Usa hash do contact_id mod 100 para escolher a variante com base nos pesos.
+CREATE OR REPLACE FUNCTION public.talkx_assign_variant(
+  p_contact_id uuid,
+  p_template_id uuid
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_hash integer;
+  v_variant_id uuid;
+  v_accumulated integer := 0;
+BEGIN
+  SELECT (abs(hashtext(p_contact_id::text)) % 100) INTO v_hash;
+
+  FOR v_variant_id IN
+    SELECT id FROM public.talkx_template_variants
+    WHERE template_id = p_template_id
+    ORDER BY label
+  LOOP
+    v_accumulated := v_accumulated + (
+      SELECT weight FROM public.talkx_template_variants
+      WHERE id = v_variant_id AND template_id = p_template_id
+    );
+    IF v_hash < v_accumulated THEN
+      RETURN v_variant_id;
+    END IF;
+  END LOOP;
+
+  -- Fallback: retorna a ultima variante se o hash nao caiu em nenhuma (deve nao acontecer se os pesos somam 100).
+  SELECT id INTO v_variant_id FROM public.talkx_template_variants
+  WHERE template_id = p_template_id
+  ORDER BY label DESC
+  LIMIT 1;
+  RETURN v_variant_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.talkx_assign_variant(uuid, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.talkx_assign_variant(uuid, uuid) TO service_role;
