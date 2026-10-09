@@ -31,6 +31,7 @@ import {
   handlePreview,
   handleValidate,
   type EligibilityBucket,
+  RECIPIENTS_PAGE_SIZE,
 } from '../inspect.ts';
 import { DispatchError, type ActionContext } from '../../index.ts';
 import { MULTIPLIX_ELIGIBILITY_VALUES } from '../../../_shared/multiplix-eligibility.ts';
@@ -84,39 +85,102 @@ async function expectNamedError(
 
 type Row = Record<string, unknown>;
 
-class FakeQuery implements PromiseLike<{ data: unknown; error: unknown }> {
+/** Opcoes do duble: simulam o PostgREST (teto de linhas) e um publico instavel. */
+interface FakeDbOptions {
+  /** Teto de linhas do PostgREST: corta a RESPOSTA em silencio (default: sem teto). */
+  maxRows?: number;
+  /** Forca o `count` autoritativo por chamada com `count=exact` (publico mudando na leitura); `null` simula PostgREST sem contagem. */
+  countByCall?: Array<number | null>;
+}
+
+interface FakeState {
+  countCalls: number;
+}
+
+class FakeQuery implements PromiseLike<{ data: unknown; error: unknown; count: number | null }> {
   private filters: Array<[string, unknown]> = [];
   private orderCol: string | null = null;
   private singleRow = false;
   private columns: string[] | null = null;
+  private rangeFrom: number | null = null;
+  private rangeTo: number | null = null;
+  private wantCount = false;
 
-  constructor(private readonly tables: Record<string, Row[]>, private readonly table: string) {}
+  constructor(
+    private readonly tables: Record<string, Row[]>,
+    private readonly table: string,
+    private readonly options: FakeDbOptions,
+    private readonly state: FakeState,
+  ) {}
 
   // O supabase-js PROJETA as colunas pedidas: coluna fora do select nao volta
   // na linha — fiel ao PostgREST. Ignorar `columns` aqui foi o furo que deixou
   // a guarda de preview morrer sem o teste ver (`dispatch_id` nao era lido).
-  select(columns?: string): this {
+  select(columns?: string, options?: { count?: string }): this {
     this.columns = typeof columns === 'string'
       ? columns.split(',').map((column) => column.trim()).filter((column) => column.length > 0)
       : null;
+    this.wantCount = options?.count === 'exact';
     return this;
   }
   eq(column: string, value: unknown): this { this.filters.push([column, value]); return this; }
   order(column: string): this { this.orderCol = column; return this; }
+  range(from: number, to: number): this { this.rangeFrom = from; this.rangeTo = to; return this; }
   limit(_count: number): this { return this; }
   maybeSingle(): this { this.singleRow = true; return this; }
   single(): this { this.singleRow = true; return this; }
 
-  private result(): { data: unknown; error: unknown } {
+  /** `count(*)` autoritativo do filtro (o total do content-range do PostgREST). */
+  private authoritativeCount(total: number): number | null {
+    const forced = this.options.countByCall;
+    const index = this.state.countCalls;
+    this.state.countCalls += 1;
+    if (forced && forced.length > 0) return forced[Math.min(index, forced.length - 1)];
+    return total;
+  }
+
+  private result(): { data: unknown; error: unknown; count: number | null } {
     let rows = [...(this.tables[this.table] ?? [])];
     for (const [column, value] of this.filters) rows = rows.filter((row) => row[column] === value);
     if (this.orderCol) {
       const column = this.orderCol;
-      rows.sort((a, b) => Number(a[column] ?? 0) - Number(b[column] ?? 0));
+      rows.sort((a, b) => {
+        const av = a[column];
+        const bv = b[column];
+        if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+        return String(av ?? '').localeCompare(String(bv ?? ''));
+      });
     }
+
+    // Contagem ANTES do corte de linhas (o total do content-range).
+    const total = rows.length;
+    const count = this.wantCount ? this.authoritativeCount(total) : null;
+
+    // PostgREST com count=exact: um range cujo offset esta no total ou alem
+    // responde 416 Requested Range Not Satisfiable — NAO uma pagina vazia sem
+    // erro. O duble precisa reproduzir isso: sem o 416, o laco de paginacao que
+    // pede a pagina extra (offset == count) "passa" no teste e estoura 502 em
+    // producao (a falha real do publico multiplo exato da pagina). A unica
+    // excecao e a tabela vazia com offset 0, que responde 200 com [].
+    const bound = count ?? total;
+    if (this.rangeFrom !== null && this.rangeFrom >= bound && !(this.rangeFrom === 0 && bound === 0)) {
+      return {
+        data: null,
+        error: { code: 'PGRST103', message: 'requested range is not satisfiable', status: 416 },
+        count,
+      };
+    }
+
+    // `range` seleciona a janela pedida; o teto do PostgREST corta a RESPOSTA
+    // de todo jeito (com ou sem `range`), em silencio.
+    const from = this.rangeFrom ?? 0;
+    const requested = this.rangeTo === null ? Number.POSITIVE_INFINITY : this.rangeTo - from + 1;
+    const cap = this.options.maxRows ?? Number.POSITIVE_INFINITY;
+    let page = rows.slice(from, from + Math.min(requested, cap));
+
     if (this.columns) {
       const columns = this.columns;
-      rows = rows.map((row) => {
+      page = page.map((row) => {
         const projected: Row = {};
         for (const column of columns) {
           if (column in row) projected[column] = row[column];
@@ -124,27 +188,28 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: unknown }> {
         return projected;
       });
     }
-    return this.singleRow ? { data: rows[0] ?? null, error: null } : { data: rows, error: null };
+    return { data: this.singleRow ? page[0] ?? null : page, error: null, count };
   }
 
-  then<TResult1 = { data: unknown; error: unknown }, TResult2 = never>(
-    onfulfilled?: ((value: { data: unknown; error: unknown }) => TResult1 | PromiseLike<TResult1>) | null,
+  then<TResult1 = { data: unknown; error: unknown; count: number | null }, TResult2 = never>(
+    onfulfilled?: ((value: { data: unknown; error: unknown; count: number | null }) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): Promise<TResult1 | TResult2> {
     return Promise.resolve(this.result()).then(onfulfilled, onrejected);
   }
 }
 
-function fakeSupabase(tables: Record<string, Row[]>): unknown {
-  return { from: (table: string) => new FakeQuery(tables, table) };
+function fakeSupabase(tables: Record<string, Row[]>, options: FakeDbOptions = {}): unknown {
+  const state: FakeState = { countCalls: 0 };
+  return { from: (table: string) => new FakeQuery(tables, table, options, state) };
 }
 
-function ctxFor(payload: Row, tables: Record<string, Row[]>): ActionContext {
+function ctxFor(payload: Row, tables: Record<string, Row[]>, options: FakeDbOptions = {}): ActionContext {
   return {
     action: 'inspect',
     payload,
     userId: 'user-me',
-    supabase: fakeSupabase(tables) as ActionContext['supabase'],
+    supabase: fakeSupabase(tables, options) as ActionContext['supabase'],
     correlationId: 'corr-test',
     req: new Request('https://edge.test/multiplix-dispatch', { method: 'POST' }),
   };
@@ -657,6 +722,238 @@ Deno.test('F50 estimate: sem aptos os numeros zeram (nao inventam consumo)', asy
   const voice = data.voice as Record<string, unknown>;
   assert(voice.characters === 0 && voice.renderings === 0, `consumo deveria zerar: ${JSON.stringify(voice)}`);
 });
+
+// ---------------------------------------------------------------------------
+// R2-API-030 — resumo/estimativa sobre o publico INTEIRO (nao so a 1a pagina)
+// ---------------------------------------------------------------------------
+
+const BIG_TOTAL = 2_500;
+// O teto do PostgREST e o MESMO tamanho de pagina que a producao usa (caso
+// perigoso: pagina cheia sem contagem parece o fim do publico). Vem do codigo de
+// producao de proposito — se o tamanho de pagina mudar, o teste acompanha.
+const POSTGREST_MAX_ROWS = RECIPIENTS_PAGE_SIZE;
+
+/** Id deterministico e ordenavel como o `ORDER BY id` da leitura paginada. */
+function bigRecipientId(index: number): string {
+  return `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
+}
+
+/**
+ * Fixture ACIMA do teto do PostgREST: 2.500 destinatarios, sendo que as classes
+ * fora de 'eligible' e parte dos roteiros de voz so existem na ULTIMA pagina
+ * (>1.000). O roteiro de voz e personalizado por empresa, entao o numero de
+ * versoes distintas so fecha se TODAS as paginas entrarem na conta.
+ */
+function bigAudienceTables(): Record<string, Row[]> {
+  const tables = baseTables();
+  const recipients: Row[] = [];
+  for (let i = 0; i < BIG_TOTAL; i += 1) {
+    const recipient: Row = {
+      id: bigRecipientId(i),
+      dispatch_id: DISPATCH_ID,
+      company_id: `c${i}`,
+      company_name_snapshot: `Empresa ${i}`,
+      destino_e164: `55119${String(10_000_000 + i)}`,
+      singu_contact_id: `p${i}`,
+      eligibility: 'eligible',
+      eligibility_reason: 'eligible',
+      inclusion_reason: null,
+      status: 'pending',
+      variables_snapshot: { assunto: `Assunto ${i}` },
+    };
+    // Indices 2.000..2.499 = ULTIMA pagina: classes que NAO existem na 1a.
+    if (i === 2_000) recipient.eligibility = 'suppressed';
+    if (i === 2_001) recipient.eligibility = 'out_of_scope';
+    if (i === 2_002) {
+      // empresa com contato_id mas sem destino -> company_without_person
+      recipient.eligibility = 'no_destination';
+      recipient.eligibility_reason = 'missing_destination';
+      recipient.destino_e164 = null;
+      recipient.singu_contact_id = null;
+    }
+    if (i === 2_003) {
+      // pessoa existe (contato), mas o destino sumiu -> no_destination
+      recipient.eligibility = 'no_destination';
+      recipient.eligibility_reason = 'missing_destination';
+      recipient.destino_e164 = null;
+    }
+    recipients.push(recipient);
+  }
+  tables.multiplix_recipients = recipients;
+  // UM bloco de voz PERSONALIZADO: 1 roteiro final distinto por empresa apta.
+  tables.multiplix_blocks = [{
+    id: 'b0000002', dispatch_id: DISPATCH_ID, block_order: 0, block_type: 'voice_ai',
+    content: { voice: { script: 'Bom dia {{empresa}}, assunto {{assunto}}', voice_id: 'voz-1' } },
+    personalization_mode: 'personalized', content_version: 2, asset_id: null,
+  }];
+  return tables;
+}
+
+/** Aptos da fixture grande: 2.000 da 1a pagina + 496 da ultima = 2.496. */
+const BIG_ELIGIBLE = BIG_TOTAL - 4;
+
+/**
+ * Publico de `total` linhas TODAS aptas — o tamanho exato e o que interessa
+ * (multiplo exato da pagina: a leitura so fecha se o laco parar no total
+ * autoritativo SEM pedir a pagina extra).
+ */
+function exactPageRecipients(total: number): Row[] {
+  const recipients: Row[] = [];
+  for (let i = 0; i < total; i += 1) {
+    recipients.push({
+      id: bigRecipientId(i),
+      dispatch_id: DISPATCH_ID,
+      company_id: `c${i}`,
+      company_name_snapshot: `Empresa ${i}`,
+      destino_e164: `55119${String(10_000_000 + i)}`,
+      singu_contact_id: `p${i}`,
+      eligibility: 'eligible',
+      eligibility_reason: 'eligible',
+      inclusion_reason: null,
+      status: 'pending',
+      variables_snapshot: {},
+    });
+  }
+  return recipients;
+}
+
+Deno.test('R2-API-030: summary cobre TODAS as paginas (nao trata a 1a como publico inteiro)', async () => {
+  const tables = bigAudienceTables();
+  const response = await handleEligibilitySummary(
+    ctxFor({ dispatch_id: DISPATCH_ID }, tables, { maxRows: POSTGREST_MAX_ROWS }),
+  );
+  assert(response.status === 200, `status inesperado: ${response.status}`);
+  const { data } = await bodyOf(response) as { data: Record<string, unknown> };
+
+  assert(data.total === BIG_TOTAL, `total deveria ser ${BIG_TOTAL} (todas as paginas), veio ${String(data.total)}`);
+  const soma = Number(data.eligible) + Number(data.no_destination) + Number(data.suppressed) +
+    Number(data.out_of_scope) + Number(data.company_without_person);
+  assert(soma === BIG_TOTAL, `baldes (${soma}) deveriam somar ${BIG_TOTAL}`);
+
+  // Classes que SO existem na ultima pagina precisam aparecer no resumo.
+  assertEquals(
+    {
+      eligible: data.eligible, no_destination: data.no_destination, suppressed: data.suppressed,
+      out_of_scope: data.out_of_scope, company_without_person: data.company_without_person,
+    },
+    { eligible: BIG_ELIGIBLE, no_destination: 1, suppressed: 1, out_of_scope: 1, company_without_person: 1 },
+    'baldes do publico inteiro inesperados',
+  );
+
+  const rows = data.rows as Array<Record<string, unknown>>;
+  assert(rows.length === BIG_TOTAL, `uma linha por destinatario de TODAS as paginas: ${rows.length}`);
+  assert(
+    rows.some((row) => row.recipient_id === bigRecipientId(BIG_TOTAL - 1)),
+    'faltou a ultima linha do publico (ultima pagina)',
+  );
+});
+
+Deno.test('R2-API-030: estimate cobre TODAS as paginas (mensagens/roteiros/consumo completos)', async () => {
+  const tables = bigAudienceTables();
+  const response = await handleEstimate(
+    ctxFor({ dispatch_id: DISPATCH_ID }, tables, { maxRows: POSTGREST_MAX_ROWS }),
+  );
+  assert(response.status === 200, `status inesperado: ${response.status}`);
+  const { data } = await bodyOf(response) as { data: Record<string, unknown> };
+
+  assert(data.eligible_recipients === BIG_ELIGIBLE,
+    `aptos: ${String(data.eligible_recipients)} != ${BIG_ELIGIBLE}`);
+  assert(data.blocks === 1, `blocos: ${String(data.blocks)} != 1`);
+  assert(data.messages === BIG_ELIGIBLE, `mensagens: ${String(data.messages)} != ${BIG_ELIGIBLE}`);
+  // 1 roteiro final DISTINTO por empresa apta: so fecha com todas as paginas.
+  assert(data.script_versions === BIG_ELIGIBLE,
+    `versoes de roteiro: ${String(data.script_versions)} != ${BIG_ELIGIBLE}`);
+  const voice = data.voice as Record<string, unknown>;
+  assert(voice.renderings === BIG_ELIGIBLE,
+    `renderizacoes de voz: ${String(voice.renderings)} != ${BIG_ELIGIBLE}`);
+});
+
+Deno.test('R2-API-030: leitura incompleta vira erro nomeado (nunca total parcial)', async () => {
+  const tables = bigAudienceTables();
+  // O PostgREST corta a resposta em 600 linhas (< pagina pedida): a leitura nao
+  // fecha com a contagem autoritativa e o resumo NAO pode sair com total parcial.
+  // O corpo sai NOMEADO (o `errorResponse` mascararia o 5xx como "Internal server
+  // error"): o operador precisa saber que nao foi o publico inteiro.
+  const response = await handleEligibilitySummary(
+    ctxFor({ dispatch_id: DISPATCH_ID }, tables, { maxRows: 600 }),
+  );
+  assert(response.status === 502, `status inesperado: ${response.status}`);
+  const body = await bodyOf(response);
+  assert(body.error === 'multiplix_recipients_incomplete', `corpo inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test('R2-API-030: publico que muda durante a leitura vira erro nomeado', async () => {
+  const tables = bigAudienceTables();
+  // Contagem autoritativa cai entre a 1a e a 2a pagina (alguem saiu no meio):
+  // melhor falhar nomeado que devolver um total misto.
+  const response = await handleEligibilitySummary(
+    ctxFor({ dispatch_id: DISPATCH_ID }, tables, {
+      maxRows: POSTGREST_MAX_ROWS,
+      countByCall: [BIG_TOTAL, BIG_TOTAL - 1],
+    }),
+  );
+  assert(response.status === 502, `status inesperado: ${response.status}`);
+  const body = await bodyOf(response);
+  assert(body.error === 'multiplix_recipients_unstable', `corpo inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test('R2-API-030: sem contagem autoritativa o resumo se recusa (nao trata a pagina como publico inteiro)', async () => {
+  const tables = bigAudienceTables();
+  // PostgREST sem contagem (content-range sem total): nao ha como provar que a
+  // leitura fechou — melhor recusar nomeado que apresentar a 1a pagina como
+  // publico inteiro (exatamente o defeito do R2-API-030).
+  const response = await handleEligibilitySummary(
+    ctxFor({ dispatch_id: DISPATCH_ID }, tables, {
+      maxRows: POSTGREST_MAX_ROWS,
+      countByCall: [null],
+    }),
+  );
+  assert(response.status === 502, `status inesperado: ${response.status}`);
+  const body = await bodyOf(response);
+  assert(body.error === 'multiplix_recipients_incomplete', `corpo inesperado: ${JSON.stringify(body)}`);
+});
+
+for (const total of [RECIPIENTS_PAGE_SIZE, 2 * RECIPIENTS_PAGE_SIZE]) {
+  Deno.test(`R2-API-030: publico de exatamente ${total} (multiplo exato da pagina) fecha 200 sem pedir a pagina extra`, async () => {
+    // Caso da recusa: total multiplo exato do teto do PostgREST (1.000, 2.000...).
+    // A ultima pagina vem CHEIA, e o laco que so para em pagina curta pede a
+    // proxima — range com offset == count, ao qual o PostgREST real com
+    // count=exact responde 416 (o duble acima reproduz isso). Sem a correcao
+    // o 416 vira MULTIPLIX_RECIPIENTS_LOOKUP estourado do handler (502).
+    const tables = baseTables();
+    tables.multiplix_recipients = exactPageRecipients(total);
+    const options = { maxRows: POSTGREST_MAX_ROWS };
+
+    let summaryResponse: Response;
+    try {
+      summaryResponse = await handleEligibilitySummary(ctxFor({ dispatch_id: DISPATCH_ID }, tables, options));
+    } catch (error) {
+      throw new Error(
+        `total ${total}: o laco pediu a pagina alem do fim (offset >= count -> 416): ${String(error)}`,
+      );
+    }
+    assert(summaryResponse.status === 200, `total ${total}: resumo respondeu ${summaryResponse.status}`);
+    const { data: summary } = await bodyOf(summaryResponse) as { data: Record<string, unknown> };
+    assert(summary.total === total, `total ${total}: resumo fechou com total ${String(summary.total)}`);
+    const rows = summary.rows as Array<Record<string, unknown>>;
+    assert(rows.length === total, `total ${total}: ${rows.length} linhas detalhadas`);
+
+    let estimateResponse: Response;
+    try {
+      estimateResponse = await handleEstimate(ctxFor({ dispatch_id: DISPATCH_ID }, tables, options));
+    } catch (error) {
+      throw new Error(
+        `total ${total}: estimate pediu a pagina alem do fim (offset >= count -> 416): ${String(error)}`,
+      );
+    }
+    assert(estimateResponse.status === 200, `total ${total}: estimativa respondeu ${estimateResponse.status}`);
+    const { data: estimate } = await bodyOf(estimateResponse) as { data: Record<string, unknown> };
+    assert(
+      estimate.eligible_recipients === total,
+      `total ${total}: estimativa leu ${String(estimate.eligible_recipients)} aptos`,
+    );
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Escopo
