@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { isAuthorizedCronOrUser, unauthorizedResponse, timingSafeStringEqual } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleBatchFetchAvatars(
@@ -39,6 +39,24 @@ export async function handleBatchFetchAvatars(
       },
     });
     if (!authorized) return unauthorizedResponse(headers);
+
+    // N-165: user calls exigem admin/supervisor; cron e service-key est\u00e3o isentos.
+    const cronHeader = req.headers.get('x-cron-secret');
+    const authHeader = req.headers.get('Authorization');
+    const isCron = cronHeader !== null;
+    const isServiceKey = authHeader?.startsWith('Bearer ')
+      && timingSafeStringEqual(authHeader.slice(7), serviceKey);
+    if (!isCron && !isServiceKey) {
+      const token = authHeader!.slice(7);
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) return unauthorizedResponse(headers);
+      const { data: isStaff, error: roleError } = await supabase.rpc('is_admin_or_supervisor', {
+        _user_id: user.id,
+      });
+      if (roleError || isStaff !== true) {
+        return errorResponse('Only admins or supervisors can batch-fetch avatars', 403, req);
+      }
+    }
 
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
