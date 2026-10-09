@@ -39,6 +39,74 @@ const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
   low: { label: 'Baixa', color: 'bg-success text-success-foreground' },
 };
 
+/** Formato devolvido por `ai-classify-tickets` (IA-114). `confidence` é razão 0..1. */
+interface ServerClassification {
+  contactId: string;
+  category: string;
+  priority: string;
+  confidence?: unknown;
+}
+
+const PRIORITY_RANK: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+
+/**
+ * IA-114 — a categoria/prioridade exibida vem do servidor. Como um contato pode ter
+ * mais de uma etiqueta, a consolidação é determinística: maior severidade; no empate,
+ * maior confiança; ainda no empate, categoria em ordem alfabética. Assim a ordem de
+ * chegada das etiquetas não muda arbitrariamente o resultado.
+ */
+const normalizeServerConfidence = (server: ServerClassification): number | null => {
+  return normalizeScore(server.confidence, { min: 0, max: 1, scale: 'ratio' }).value;
+};
+
+function consolidateServerResults(results: ServerClassification[]): Map<string, ServerClassification> {
+  const byContact = new Map<string, ServerClassification>();
+  for (const result of results) {
+    const current = byContact.get(result.contactId);
+    if (!current) {
+      byContact.set(result.contactId, result);
+      continue;
+    }
+    const resultConfidence = normalizeServerConfidence(result) ?? -1;
+    const currentConfidence = normalizeServerConfidence(current) ?? -1;
+    const rankDiff = (PRIORITY_RANK[result.priority] ?? 0) - (PRIORITY_RANK[current.priority] ?? 0);
+    const wins = rankDiff > 0
+      || (rankDiff === 0 && resultConfidence > currentConfidence)
+      || (rankDiff === 0 && resultConfidence === currentConfidence && result.category < current.category);
+    if (wins) byContact.set(result.contactId, result);
+  }
+  return byContact;
+}
+
+function applyServerClassifications(
+  list: ClassifiedTicket[],
+  results: ServerClassification[],
+): { tickets: ClassifiedTicket[]; appliedCount: number } {
+  const byContact = consolidateServerResults(results);
+  let appliedCount = 0;
+  const tickets = list.map(ticket => {
+    const server = byContact.get(ticket.contactId);
+    if (!server) return ticket;
+    appliedCount += 1;
+    const confidence = normalizeServerConfidence(server);
+    return {
+      ...ticket,
+      category: server.category,
+      priority: server.priority,
+      confidence: confidence === null ? null : confidence * 100,
+    };
+  });
+  return { tickets, appliedCount };
+}
+
+function countByCategory(list: ClassifiedTicket[]): Record<string, number> {
+  const stats: Record<string, number> = {};
+  list.forEach(t => {
+    stats[t.category] = (stats[t.category] || 0) + 1;
+  });
+  return stats;
+}
+
 export function AutoTicketClassifier() {
   const [autoClassify, setAutoClassify] = useState(true);
   const [tickets, setTickets] = useState<ClassifiedTicket[]>([]);
@@ -64,7 +132,7 @@ export function AutoTicketClassifier() {
     return 'low';
   };
 
-  const loadClassifiedTickets = useCallback(async () => {
+  const loadClassifiedTickets = useCallback(async (): Promise<ClassifiedTicket[] | null> => {
     setLoading(true);
     try {
       // Fetch AI-tagged contacts
@@ -74,41 +142,44 @@ export function AutoTicketClassifier() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (!error && tags) {
-        const grouped = new Map<string, ClassifiedTicket>();
-        tags.forEach((tag: Record<string, unknown>) => {
-          const contactId = tag.contact_id as string;
-          const contact = tag.contacts as Record<string, string> | null;
-          // Confiança ausente/inválida não vira 0,7: fica null e a UI omite (IA-023).
-          const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
-          if (!grouped.has(contactId)) {
-            grouped.set(contactId, {
-              contactId,
-              contactName: contact?.name || 'Desconhecido',
-              category: classifyTag(tag.tag_name as string),
-              priority: derivePriority(tag.tag_name as string, confidence.value ?? 0),
-              confidence: confidence.value === null ? null : confidence.value * 100,
-              tags: [tag.tag_name as string],
-              lastMessage: '',
-            });
-          } else {
-            const existing = grouped.get(contactId)!;
-            existing.tags.push(tag.tag_name as string);
-          }
-        });
-
-        const list = Array.from(grouped.values());
-        setTickets(list);
-
-        // Compute category stats
-        const stats: Record<string, number> = {};
-        list.forEach(t => {
-          stats[t.category] = (stats[t.category] || 0) + 1;
-        });
-        setCategoryStats(stats);
+      if (error) {
+        toast.error('Erro ao carregar tickets classificados');
+        return null;
       }
+      if (!tags) {
+        toast.error('A lista de tickets classificados não pôde ser carregada');
+        return null;
+      }
+
+      const grouped = new Map<string, ClassifiedTicket>();
+      tags.forEach((tag: Record<string, unknown>) => {
+        const contactId = tag.contact_id as string;
+        const contact = tag.contacts as Record<string, string> | null;
+        // Confiança ausente/inválida não vira 0,7: fica null e a UI omite (IA-023).
+        const confidence = normalizeScore(tag.confidence, { min: 0, max: 1, scale: 'ratio' });
+        if (!grouped.has(contactId)) {
+          grouped.set(contactId, {
+            contactId,
+            contactName: contact?.name || 'Desconhecido',
+            category: classifyTag(tag.tag_name as string),
+            priority: derivePriority(tag.tag_name as string, confidence.value ?? 0),
+            confidence: confidence.value === null ? null : confidence.value * 100,
+            tags: [tag.tag_name as string],
+            lastMessage: '',
+          });
+        } else {
+          const existing = grouped.get(contactId)!;
+          existing.tags.push(tag.tag_name as string);
+        }
+      });
+
+      const list = Array.from(grouped.values());
+      setTickets(list);
+      setCategoryStats(countByCategory(list));
+      return list;
     } catch (err) {
       toast.error('Erro ao carregar tickets classificados');
+      return null;
     } finally {
       setLoading(false);
     }
@@ -119,6 +190,12 @@ export function AutoTicketClassifier() {
     loadClassifiedTickets();
   }, [loadClassifiedTickets]);
 
+  /**
+   * IA-114 — consome o resultado do servidor em vez de recalculá-lo localmente.
+   * Antes o retorno de `ai-classify-tickets` era descartado e a categoria/prioridade
+   * exibidas vinham só das heurísticas locais; no erro o toast ainda dizia
+   * "classificação local aplicada com sucesso", escondendo a falha.
+   */
   const runBatchClassification = async () => {
     setClassifying(true);
     try {
@@ -126,11 +203,33 @@ export function AutoTicketClassifier() {
         body: { limit: 50 }
       });
       if (error) throw error;
-      toast.success('Classificação em lote concluída!');
-      await loadClassifiedTickets();
+
+      const results = Array.isArray(data?.results) ? (data.results as ServerClassification[]) : [];
+      if (results.length === 0) {
+        toast.error('O servidor não devolveu classificações; os valores locais foram mantidos.');
+        return;
+      }
+
+      const list = await loadClassifiedTickets();
+      if (list === null) {
+        // Falha de recarga já foi avisada em `loadClassifiedTickets`; aplicar sobre
+        // lista desconhecida apagaria a tela e ainda poderia dizer "sucesso".
+        return;
+      }
+      if (list.length === 0) {
+        toast.error('Nenhum ticket carregado para aplicar as classificações do servidor.');
+        return;
+      }
+      const { tickets: applied, appliedCount } = applyServerClassifications(list, results);
+      if (appliedCount === 0) {
+        toast.error('O servidor não devolveu classificações para os tickets carregados; os valores locais foram mantidos.');
+        return;
+      }
+      setTickets(applied);
+      setCategoryStats(countByCategory(applied));
+      toast.success(`Classificação do servidor aplicada a ${appliedCount} ticket(s).`);
     } catch {
-      toast.success('Classificação local aplicada com sucesso!');
-      await loadClassifiedTickets();
+      toast.error('A classificação do servidor não pôde ser aplicada; os valores locais foram mantidos.');
     } finally {
       setClassifying(false);
     }
