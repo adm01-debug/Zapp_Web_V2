@@ -34,6 +34,54 @@ export type BlacklistInput = {
   source_message_id?: string | null;
 };
 
+/** Um dos quatro números da tela: valor da janela, valor do período anterior e a série das mini-barras. */
+export type TalkXSuppressionStat = {
+  value: number;
+  /** Período anterior de mesma duração. Zero (ou ausente) esconde a variação no card. */
+  previous: number;
+  /** Série de 8 pontos para as mini-barras do KPI. */
+  series: number[];
+};
+
+/**
+ * X176/X179 — resposta de `talkx_suppression_stats(p_days)`: suprimidos ativos
+ * (sem expirados nem removidos), opt-outs da janela (`reason_code='opt_out'`, o
+ * que inclui `auto_optout`), bloqueios manuais e campanhas iniciadas que
+ * respeitam a lista — mais o total de campanhas iniciadas, denominador do
+ * medidor do Centro de proteção.
+ */
+export type TalkXSuppressionStats = {
+  active: TalkXSuppressionStat;
+  optouts: TalkXSuppressionStat;
+  manual: TalkXSuppressionStat;
+  protected: TalkXSuppressionStat & { total_started: number };
+};
+
+/** RPC que ainda não está em `types.ts` (a migration é de outra trilha). */
+type TalkXSuppressionStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+/**
+ * X179 — os KPIs e o painel de proteção passam a ler `talkx_suppression_stats`
+ * (X176) em vez de contar o que a lista carregou: "Opt-outs 30 dias" era
+ * `origin === 'optout'` sem janela e ignorando `auto_optout`, e "Campanhas
+ * protegidas" não tinha fonte. Sem resposta do servidor a tela não inventa
+ * número: o card mostra "—".
+ */
+export function useTalkXSuppressionStats(days = 30) {
+  return useQuery({
+    queryKey: ['talkx-suppression-stats', days],
+    queryFn: async () => {
+      const rpc = supabase.rpc as unknown as TalkXSuppressionStatsRpc;
+      const { data, error } = await rpc('talkx_suppression_stats', { p_days: days });
+      if (error) throw new Error(error.message);
+      return (data ?? null) as TalkXSuppressionStats | null;
+    },
+  });
+}
+
 export function useTalkXSuppression() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ['talkx-suppression'] });
