@@ -144,7 +144,9 @@ describe('TalkXView tab deep links (X007)', () => {
       expect(new URLSearchParams(window.location.search).get('tab')).toBe('analytics');
       expect(new URLSearchParams(window.location.search).get('sub')).toBe('configuracoes');
     });
-    expect(screen.getByTestId('settings')).toBeInTheDocument();
+    // X194: a tela chega por chunk (React.lazy) — a espera é a mesma verificação, só
+    // depois de o chunk resolver; antes era síncrono porque a tela vinha no import.
+    expect(await screen.findByTestId('settings')).toBeInTheDocument();
   });
 
   it('voltar no navegador restaura a aba', async () => {
