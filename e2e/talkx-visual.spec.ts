@@ -65,11 +65,14 @@ type Tela = {
  * reprovar a tela por um boot lento (nenhuma asserção é afrouxada: o alvo tem
  * de aparecer).
  */
-async function abrirComEspera(page: Page, url: string, alvo: () => Locator, tentativas = 3) {
+async function abrirComEspera(page: Page, url: string, alvo: () => Locator, tentativas = 4) {
   for (let i = 1; i <= tentativas; i += 1) {
-    await page.goto(url);
+    // `domcontentloaded` em vez de `load`: com o Vite compilando sob demanda, o
+    // `load` espera o grafo inteiro de módulos e estoura o próprio timeout da
+    // navegação, o que reprovava a tela por boot lento em vez de por defeito.
+    await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
     if (await alvo().isVisible({ timeout: 20_000 }).catch(() => false)) return;
-    if (i < tentativas) await page.waitForTimeout(1_000);
+    if (i < tentativas) await page.waitForTimeout(1_500);
   }
   await expect(alvo(), `a tela não abriu em ${tentativas} tentativas (${url})`).toBeVisible({
     timeout: 20_000,
@@ -232,7 +235,23 @@ async function preparar(page: Page, fixture: string, tema: Tema, abrir: (page: P
     window.localStorage.setItem('theme', t);
   }, tema);
   await abrir(page);
-  await page.waitForTimeout(400);
+  // Avisos do sonner são transientes e NÃO são a tela: presentes no instante da
+  // varredura, o alvo do axe vira `div[data-title=""]` (o aviso com título vazio)
+  // e o MESMO teste passa ou falha de uma rodada para outra — foi o que fez as
+  // telas 04 e 06 oscilarem. A régua mede a tela em repouso: espera a região de
+  // avisos ficar vazia por duas leituras seguidas (um aviso aberto sai sozinho).
+  const avisos = page.locator('[data-sonner-toast]');
+  await expect
+    .poll(
+      async () => {
+        if ((await avisos.count()) > 0) return false;
+        await page.waitForTimeout(300);
+        return (await avisos.count()) === 0;
+      },
+      { timeout: 10_000, intervals: [500] },
+    )
+    .toBe(true);
+  await page.waitForTimeout(200);
 }
 
 type Violacao = { id: string; impact: string | null; nos: number; alvos: string[] };
@@ -394,9 +413,16 @@ test.describe('acessibilidade por teclado', () => {
         const el = document.activeElement as HTMLElement | null;
         if (!el || el === document.body) return null;
         const tablist = document.querySelector('[role="tablist"]');
-        let raiz: HTMLElement | null = tablist as HTMLElement | null;
-        while (raiz && !raiz.contains(el)) raiz = raiz.parentElement;
-        if (!raiz) return null;
+        if (!tablist) return null;
+        // A raiz do módulo é o ancestral comum entre a barra de abas e o painel
+        // ativo: só os controles DENTRO dela entram na régua (a casca do app tem
+        // controles próprios, que não são desta tela). Antes o laço subia até o
+        // `body`, então a barra de navegação do app e o `Close toast` do portal
+        // entravam na lista e a volta ao topo do documento virava uma falsa
+        // falha de ordem.
+        let raiz: HTMLElement | null = tablist.parentElement;
+        while (raiz && !raiz.querySelector('[role="tabpanel"]')) raiz = raiz.parentElement;
+        if (!raiz || raiz === document.body || !raiz.contains(el)) return null;
         const todos = Array.from(document.querySelectorAll<HTMLElement>('*'));
         const nome = (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim();
         return { indice: todos.indexOf(el), nome: nome.slice(0, 40) };
