@@ -264,7 +264,9 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
   it('mostra as ações do status e confirma "Retomar" pelo modal', async () => {
     render(<TalkXOverview {...props} />);
 
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'Ações' }));
+    // TL-115: a TalkXTable nomeia o gatilho pelo rótulo da linha ("Ações de <nome>"),
+    // não mais o "Ações" genérico da tabela manual que esta tela tinha antes.
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Ações de Campanha pausada' }));
     expect(await screen.findByRole('menuitem', { name: 'Retomar' })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Duplicar' })).toBeTruthy();
     // "Excluir" não vale para campanha pausada (a regra do banco só aceita
