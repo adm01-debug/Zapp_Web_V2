@@ -22,6 +22,7 @@ const h = vi.hoisted(() => {
     filteredMessages: [],
     isLoading: false,
     isMuted: false,
+    canTransfer: false,
     isFetchingOlder: false,
     hasOlderMessages: false,
     fetchOlderMessages: vi.fn(),
@@ -89,6 +90,7 @@ describe('TeamChatPanel — entrada por código no departamento (F79)', () => {
     h.accept.isError = false;
     h.accept.error = null;
     h.panel.profile = { id: 'user-1', department_id: 'dep-outro' };
+    h.panel.canTransfer = false;
   });
 
   it('oferece a entrada por código para quem está fora do departamento, com o conteúdo bloqueado', () => {
@@ -96,8 +98,17 @@ describe('TeamChatPanel — entrada por código no departamento (F79)', () => {
     expect(screen.getByText('Conteúdo Protegido')).toBeInTheDocument();
     expect(screen.getByLabelText('Código do convite')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Entrar/ })).toBeInTheDocument();
+    // F79: a ação tem o nome do plano ("Entrar via Código"), não só "Entrar".
+    expect(screen.getByRole('button', { name: 'Entrar via código' })).toBeInTheDocument();
     // O conteúdo continua fechado para quem não é membro.
     expect(screen.queryByRole('log')).toBeNull();
+  });
+
+  it('admin/supervisor abre o canal do departamento sem pedir o código (F80)', () => {
+    h.panel.canTransfer = true;
+    renderPanel();
+    expect(screen.getByRole('log')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Código do convite')).toBeNull();
   });
 
   it('submete o código do convite pela função do hook do departamento', () => {
