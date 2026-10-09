@@ -1,15 +1,20 @@
 -- talkx_v4_x041_atribuicao_negocio_ganho_receita_roi
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_attribute_purchases(timestamptz);
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_revenue(uuid);
--- Rollback: DELETE FROM public.talkx_conversions WHERE source = 'deal';
--- Rollback: ALTER TABLE public.talkx_conversions DROP CONSTRAINT IF EXISTS talkx_conversions_source_check;
--- Rollback: ALTER TABLE public.talkx_conversions ADD CONSTRAINT talkx_conversions_source_check
--- Rollback:   CHECK (source IS NULL OR source IN ('whatsapp','manual','import','api','checkout'));
--- Rollback: DELETE FROM public.talkx_settings WHERE key = 'attribution_window_days';
--- Rollback: DROP INDEX IF EXISTS public.contact_purchases_source_external_id_key;
--- Rollback: ALTER TABLE public.contact_purchases DROP COLUMN IF EXISTS source, DROP COLUMN IF EXISTS external_id;
--- Rollback: (o CREATE OR REPLACE de record_talkx_conversion volta com a reemissão de
--- Rollback:  20261002691230 sem o valor 'deal' na lista de origens)
+-- Rollback: recria record_talkx_conversion com o corpo ANTERIOR (abaixo, sem 'deal'),
+-- Rollback: restaura o CHECK de origem do X021, apaga a conversão de origem 'deal', a chave
+-- Rollback: attribution_window_days, o índice e as colunas source/external_id de contact_purchases,
+-- Rollback: e dropa as duas funções novas.
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_attribute_purchases(timestamptz);
+--   drop function if exists public.talkx_campaign_revenue(uuid);
+--   -- corpo ANTERIOR de record_talkx_conversion (reemissão 20261002691230, SEM 'deal'):
+--   create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'BRL', p_link_id uuid default null, p_recipient_id uuid default null, p_occurred_at timestamptz default now(), p_attribution jsonb default null) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $function$ declare v_max_value numeric; v_link_campaign uuid; v_id uuid; begin if auth.role() is distinct from 'service_role' then raise exception 'talkx_conversion_service_role_only' using errcode = '42501'; end if; v_max_value := coalesce((select (value #>> '{}')::numeric from public.talkx_settings where key = 'conversion_max_value'), 100000); if p_value < 0 then raise exception 'talkx_conversion_value_negative' using errcode = '22023'; end if; if p_value > v_max_value then raise exception 'talkx_conversion_value_exceeds_max' using errcode = '22023'; end if; if p_source not in ('whatsapp','manual','import','api','checkout') then raise exception 'talkx_conversion_invalid_source' using errcode = '22023'; end if; if p_link_id is not null then select campaign_id into v_link_campaign from public.talkx_links where id = p_link_id; if v_link_campaign is distinct from p_campaign_id then raise exception 'talkx_conversion_link_campaign_mismatch' using errcode = '23503'; end if; end if; if p_occurred_at > now() + interval '1 hour' then raise exception 'talkx_conversion_occurred_at_in_future' using errcode = '22023'; end if; insert into public.talkx_conversions (campaign_id, recipient_id, link_id, value, source, external_ref, occurred_at, currency, attribution) values (p_campaign_id, p_recipient_id, p_link_id, p_value, p_source, p_external_ref, p_occurred_at, p_currency, p_attribution) on conflict (campaign_id, source, external_ref) where external_ref is not null and source is not null do nothing returning id into v_id; if v_id is null then return jsonb_build_object('status', 'duplicate'); end if; return jsonb_build_object('status', 'recorded', 'id', v_id); end; $function$;
+--   delete from public.talkx_conversions where source = 'deal';
+--   alter table public.talkx_conversions drop constraint if exists talkx_conversions_source_check;
+--   alter table public.talkx_conversions add constraint talkx_conversions_source_check check (source is null or source in ('whatsapp','manual','import','api','checkout'));
+--   delete from public.talkx_settings where key = 'attribution_window_days';
+--   drop index if exists public.contact_purchases_source_external_id_key;
+--   alter table public.contact_purchases drop column if exists source;
+--   alter table public.contact_purchases drop column if exists external_id;
 --
 -- X041 · Registrar negócio ganho como conversão na janela de atribuição; receita e ROI.
 -- Fecha CAP-065 (conversão automática) e CAP-068. Camada: banco + cron. DDL: sim.
