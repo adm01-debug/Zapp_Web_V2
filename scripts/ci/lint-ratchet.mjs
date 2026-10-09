@@ -570,6 +570,19 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       console.log(`Arquivo renomeado reconhecido: ${baselineFile} -> ${currentFile}`);
     }
 
+    // O baseline e um retrato: quando um cartao paga divida o codigo muda, mas a entrada antiga continua registrada.
+    // Divida que cai nao pode reprovar o gate (o codigo de saida nao muda aqui), mas o registro acima da varredura
+    // nao pode passar em silencio: enquanto a entrada velha existir, uma ocorrencia que VOLTAR no MESMO lugar casa
+    // com ela e entra sem aparecer como nova. O aviso so mostra que o registro precisa descer ate o numero real.
+    if (comparison.removed.length > 0) {
+      console.log(
+        `AVISO: ${comparison.removed.length} ocorrencia(s) do baseline nao existem mais na varredura ` +
+          `(registro=${comparison.baselineCount}, codigo=${comparison.currentCount}) — o registro ainda conta divida ` +
+          "ja paga. Baixe o registro ate o numero da varredura (`--update-baseline`, ou removendo so as entradas " +
+          "pagas para nao carregar o diff).",
+      );
+    }
+
     if (comparison.added.length === 0) {
       console.log("OK: nenhuma nova divida de lint foi introduzida.");
       return 0;

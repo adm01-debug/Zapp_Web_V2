@@ -552,3 +552,54 @@ test("--staged nao combina com --update-baseline", (t) => {
     cleanup();
   }
 });
+
+// O registro do ratchet e um retrato: quando um cartao paga divida o codigo muda, mas a entrada antiga continua no
+// baseline. Enquanto ela existir, uma ocorrencia que VOLTAR no mesmo lugar casa com ela e passa em silencio — por
+// isso o CLI precisa avisar que o registro esta acima da varredura (sem mudar o codigo de saida: divida paga nao
+// pode reprovar o gate).
+function capturaSaida(t) {
+  const linhas = [];
+  t.mock.method(console, "log", (...args) => {
+    linhas.push(args.join(" "));
+  });
+  t.mock.method(console, "error", () => {});
+  return linhas;
+}
+
+test("avisa quando o registro conta divida ja paga", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    // src/pago.ts esta no registro e nao aparece na varredura: e divida PAGA que o registro ainda conta.
+    const vivo = result(root, "src/vivo.ts", "missing();\n");
+    const pago = result(root, "src/pago.ts", "missing();\n");
+    writeFileSync(path.join(root, "baseline.json"), JSON.stringify(createBaseline([vivo, pago], root)), "utf8");
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([vivo]), "utf8");
+    const linhas = capturaSaida(t);
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.ok(
+      linhas.some((linha) => linha.includes("AVISO: 1 ocorrencia(s) do baseline nao existem mais na varredura")),
+      `esperava o aviso da divida paga; saida: ${linhas.join(" | ")}`,
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("nao avisa quando o registro bate com a varredura", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    const vivo = result(root, "src/vivo.ts", "missing();\n");
+    writeFileSync(path.join(root, "baseline.json"), JSON.stringify(createBaseline([vivo], root)), "utf8");
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([vivo]), "utf8");
+    const linhas = capturaSaida(t);
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.deepEqual(
+      linhas.filter((linha) => linha.startsWith("AVISO")),
+      [],
+    );
+  } finally {
+    cleanup();
+  }
+});
