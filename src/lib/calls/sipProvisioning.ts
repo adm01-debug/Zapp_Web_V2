@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
+import { toast } from '@/lib/lazyToast';
 
 export interface SipProvisioning {
   server: string;
