@@ -287,6 +287,16 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(props.onSelect).not.toHaveBeenCalled();
   });
 
+  it('etapa 20: Space no checkbox alterna sem abrir prévia nem detalhes', () => {
+    const { props } = renderCard(ITEM, { selectionMode: true, selectionChecked: false });
+    const checkbox = screen.getByRole('checkbox', { name: 'Selecionar planilha-total.png' });
+
+    fireEvent.click(checkbox);
+    expect(props.onToggleSelection).toHaveBeenCalledTimes(1);
+    expect(props.onPreview).not.toHaveBeenCalled();
+    expect(props.onSelect).not.toHaveBeenCalled();
+  });
+
   it('etapa 19: o menu traz Baixar desabilitado com o motivo e Excluir só do atendente', () => {
     renderCard();
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais ações' }), { button: 0, ctrlKey: false });
