@@ -937,6 +937,17 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // navegador e troca de rota seguem o mesmo contrato).
   useEffect(() => () => { void flushPendingAutosave(); }, [flushPendingAutosave]);
 
+  /**
+   * TL-138: o operador escolheu "Descartar rascunho" no aviso de saída. Sem
+   * limpar a pendência aqui, o próprio flush de desmontagem acima gravaria a
+   * edição que ele acabou de mandar jogar fora — o botão mentiria.
+   */
+  const discardPendingChanges = useCallback(() => {
+    if (autosaveTimerRef.current) { clearTimeout(autosaveTimerRef.current); autosaveTimerRef.current = null; }
+    pendingChangesRef.current = false;
+    autosaveInitialRef.current = autosaveFieldsRef.current;
+  }, []);
+
   const retryAutosave = useCallback(async () => {
     setAutosaveStatus('saving');
     setAutosaveError(null);
@@ -983,6 +994,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audienceRules, setAudienceRules, addAudienceRule, updateAudienceRule, removeAudienceRule, setGroupMatch, audienceCount,
     lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
     hasUnsavedChanges, flushPendingAutosave, // E73: proteção da saída sem beforeunload
+    discardPendingChanges, // TL-138: saída com "Descartar rascunho" não pode ser desfeita pelo flush
     scheduleTimezone, setScheduleTimezone: changeScheduleTimezone, scheduleConfigError, minimumScheduledAt, // E69
     mediaUrl, setMediaUrl, mediaType, setMediaType,
     hasMedia, isScheduled, scheduledAt, setScheduledAt,

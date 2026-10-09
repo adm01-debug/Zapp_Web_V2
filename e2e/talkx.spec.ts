@@ -202,8 +202,11 @@ test.describe('Talk X module', () => {
     // Step 2 header ("Mensagem") should be active in the stepper.
     await expect(page.getByText('Mensagem').first()).toBeVisible();
 
-    // Close the wizard before cleanup.
+    // Close the wizard before cleanup. TL-138: com alteração pendente (nome,
+    // conexão e segmento preenchidos) a saída para no aviso do kit; aqui o
+    // teste descarta o que foi digitado e volta para a lista.
     await page.getByRole('button', { name: 'Voltar', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Descartar rascunho' }).click();
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 });

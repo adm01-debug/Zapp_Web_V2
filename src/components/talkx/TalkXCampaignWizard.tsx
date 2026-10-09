@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
   Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
@@ -10,6 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -65,6 +69,9 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
   }, [hasUnsavedChanges]);
   const step = ed.step;
 
+  // TL-138 — saída com pendência (o modal só abre quando `hasUnsavedChanges` é verdadeiro).
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+
   const maximumAllowedStep = (() => {
     if (!ed.canProceed[1]) return 1;
     if (!ed.canProceed[2]) return 2;
@@ -76,6 +83,23 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
     ed.setStep(safeStep);
     onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+  };
+
+  // TL-138 — o stepper passa a ser navegável por teclado: as setas andam entre os
+  // passos até o último JÁ liberado (o mesmo teto do clique, `maximumAllowedStep`,
+  // então o teclado não pula validação), o foco acompanha e `aria-current="step"`
+  // marca onde o operador está. Enter/Espaço seguem acionando o clique nativo.
+  const stepButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleStepKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+    const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    if (!forward && !backward) return;
+    event.preventDefault();
+    const lastAllowedIndex = Math.max(0, STEPS.findIndex((item) => item.n === maximumAllowedStep));
+    const targetIndex = Math.min(Math.max(index + (forward ? 1 : -1), 0), lastAllowedIndex);
+    stepButtonRefs.current[targetIndex]?.focus();
+    requestStep(STEPS[targetIndex].n);
   };
 
   // O estado da URL pode mudar por histórico do navegador ou por um link
@@ -106,6 +130,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     }
   };
 
+  // TL-138 — saída com pendência: o `beforeunload` já só disparava com alteração
+  // real, mas sair pelo botão do wizard (ou pela trilha) desmontava o editor sem
+  // nenhum aviso. Sem pendência a saída continua imediata.
+  const requestExit = () => {
+    if (!ed.hasUnsavedChanges()) { onClose(); return; }
+    setExitDialogOpen(true);
+  };
+
+  const confirmSaveAndExit = async () => {
+    setExitDialogOpen(false);
+    await saveDraft();
+  };
+
+  const confirmDiscardAndExit = () => {
+    setExitDialogOpen(false);
+    // Sem descartar a pendência aqui, o flush de desmontagem (E73) gravaria
+    // exatamente a edição que o operador acabou de mandar jogar fora.
+    ed.discardPendingChanges();
+    onClose();
+  };
+
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* E61: Breadcrumb */}
@@ -114,7 +159,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
         <span className="text-border">›</span>
         <span>Campanhas</span>
         <span className="text-border">›</span>
-        <span>Nova Campanha</span>
+        <span>{campaign ? `Editar ${campaign.name}` : 'Nova campanha'}</span>
         <span className="text-border">›</span>
         <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
       </nav>
@@ -122,19 +167,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
             {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-          <button type="button" onClick={onClose} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
+          <button type="button" onClick={requestExit} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
           <IconTile icon={step === 4 ? Check : Zap} color={step === 4 ? 'green' : 'blue'} size={48} />
           <div className="min-w-0">
             <h1 className="text-2xl font-bold font-display text-foreground tracking-[-0.02em] leading-tight truncate">{step === 4 ? 'Revisão Final' : campaign ? 'Editar campanha' : 'Nova campanha'}</h1>
             <p className="text-xs text-foreground-secondary">{step === 4 ? 'Confira todos os detalhes da sua campanha antes de lançar.' : 'Configure público, mensagem e entrega com segurança.'}</p>
           </div>
         </div>
-        <ol className="flex items-center gap-2 xl:gap-0 flex-wrap">
+        <ol aria-label="Passos da campanha" className="flex items-center gap-2 xl:gap-0 flex-wrap">
           {STEPS.map((s, i) => {
             const done = step > s.n; const active = step === s.n;
             return (
               <li key={s.n} className="flex items-center">
-                <button type="button" onClick={() => (done || s.n < step) && requestStep(s.n)} className="flex items-center gap-2.5 group">
+                <button
+                  type="button"
+                  ref={(node) => { stepButtonRefs.current[i] = node; }}
+                  onClick={() => (done || s.n < step) && requestStep(s.n)}
+                  onKeyDown={(event) => handleStepKeyDown(event, i)}
+                  tabIndex={active ? 0 : -1}
+                  aria-current={active ? 'step' : undefined}
+                  className="flex items-center gap-2.5 group"
+                >
                   <span className={cn('w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border transition-colors', active ? 'bg-primary border-primary text-white shadow-[0_0_0_4px_hsl(var(--primary)/.2)]' : done ? 'bg-dash-green border-dash-green text-white' : 'border-border/70 text-muted-foreground bg-input/40')}>
                     {done ? <Check className="w-4 h-4" /> : s.n}
                   </span>
@@ -157,8 +210,8 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
           {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
 
-          {/* Footer */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* TL-138: rodapé fixo — Voltar / Salvar rascunho / Continuar sempre à vista */}
+          <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 flex-wrap rounded-xl border border-border/70 bg-background/95 px-3 py-2.5 backdrop-blur">
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
@@ -190,6 +243,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
 
         {step < 4 && <WizardRail ed={ed} />}
       </div>
+
+      {/* TL-138 — saída com pendência: o modal do kit só aparece quando existe
+          alteração real ainda não confirmada no servidor (mesmo critério que o
+          `beforeunload` desta tela já usava). */}
+      <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              {campaign
+                ? `As alterações em "${campaign.name}" ainda não foram salvas. Salve o rascunho antes de sair ou descarte o que foi alterado.`
+                : 'Esta campanha ainda não foi salva. Salve o rascunho antes de sair ou descarte o que foi digitado.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setExitDialogOpen(false)}>Continuar editando</AlertDialogCancel>
+            <GhostButton icon={X} onClick={confirmDiscardAndExit} className="text-destructive hover:bg-destructive/10 border-destructive/30">Descartar rascunho</GhostButton>
+            <AlertDialogAction onClick={() => { void confirmSaveAndExit(); }}>Salvar e sair</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

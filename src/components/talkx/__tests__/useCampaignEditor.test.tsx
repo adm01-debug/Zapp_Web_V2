@@ -1083,7 +1083,7 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Campanha interrompida' }));
   });
 
-  it('clicar Voltar antes do autosave grava a edição antes de o wizard sair de cena', async () => {
+  it('clicar Voltar com alteração pendente para no aviso e grava ao escolher salvar', async () => {
     function ExitHarness() {
       const [open, setOpen] = useState(true);
       return open
@@ -1093,7 +1093,13 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     render(<ExitHarness />);
     fireEvent.change(screen.getByPlaceholderText(NAME_INPUT), { target: { value: 'Campanha Voltar' } });
 
+    // TL-138: com alteração pendente a saída deixa de ser imediata — o wizard
+    // para no aviso do kit e só desmonta depois da escolha do operador.
     await act(async () => { screen.getByRole('button', { name: 'Voltar' }).click(); });
+    expect(screen.getByText('Você tem alterações não salvas')).toBeInTheDocument();
+    expect(screen.queryByText('Lista de campanhas')).not.toBeInTheDocument();
+
+    await act(async () => { screen.getByRole('button', { name: 'Salvar e sair' }).click(); });
     await flushMicrotasks();
 
     expect(screen.getByText('Lista de campanhas')).toBeInTheDocument();
