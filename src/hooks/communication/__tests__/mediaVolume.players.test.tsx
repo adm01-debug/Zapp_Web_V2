@@ -179,24 +179,24 @@ interface Montagem {
  * A bateria do cartão sobre o elemento REAL de um player. Devolve o elemento para o
  * teste continuar medindo depois dela.
  *
- * `aplicaNoMount` fica de fora só no `MediaPreviewDialog`, que tem o defeito medido no
- * relato (o visualizador não aplica o volume no mount; ver o comentário dos testes de
- * S41). Nos demais players a bateria prova também que o valor já vale antes de
- * qualquer mudança do store.
+ * A bateria prova que o valor já vale no mount, antes de qualquer mudança do store.
  */
 function bateriaDoVolume(
   montar: () => Montagem,
   obterElemento: (montagem: Montagem) => HTMLMediaElement,
-  opcoes: { aplicaNoMount?: boolean } = {},
 ): HTMLMediaElement {
-  const { aplicaNoMount = true } = opcoes;
   const montagem = montar();
   const elemento = obterElemento(montagem);
 
   // 1) o volume global chega no mount, já com a curva perceptual do app
-  if (aplicaNoMount) {
-    expect(elemento.volume, 'volume no mount').toBeCloseTo(toGain(AJUSTE_PADRAO), 5);
-  }
+  expect(elemento.volume, 'volume no mount').toBeCloseTo(toGain(AJUSTE_PADRAO), 5);
+
+  // 1b) os listeners do elemento também já estão ligados no mount: sujo o volume à mão e um
+  // `loadedmetadata` (a URL renovou, o elemento recarregou) devolve o valor do store. Um
+  // player que só se ligasse depois de um re-render falharia aqui.
+  elemento.volume = 0.2;
+  elemento.dispatchEvent(new Event('loadedmetadata'));
+  expect(elemento.volume, 'loadedmetadata no mount').toBeCloseTo(toGain(AJUSTE_PADRAO), 5);
 
   act(() => setVolume(AJUSTE_ALTERADO));
   expect(elemento.volume, 'volume global alterado').toBeCloseTo(toGain(AJUSTE_ALTERADO), 5);
@@ -351,16 +351,9 @@ afterEach(() => {
 
 describe('S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das mídias', () => {
   /**
-   * ACHADO MEDIDO (relato do cartão; cartão de acompanhamento t_fe46ce81): o visualizador é o
-   * ÚNICO player em que o volume não vale no mount. O conteúdo do Radix vive num portal
-   * que só monta no SEGUNDO commit (`@radix-ui/react-portal@1.1.17`:
-   * `useState(false)` + `useLayoutEffect(() => setMounted(true), [])`), e esse commit não
-   * re-renderiza o `MediaPreviewDialog` — então o `useLayoutEffect` do volume roda uma vez
-   * com a ref nula e não roda mais até o componente re-renderizar. Com URL pública (sem
-   * assinatura, como aqui) NADA re-renderiza: a mídia abre em 100% do sistema. Assim que o
-   * store muda (qualquer ajuste de volume) ou a URL assinada chega, o elemento entra no
-   * volume global — é o que a bateria prova abaixo. Ligar o mount aqui seria "passar a
-   * reprovar" o defeito depois de corrigido, então a bateria mede o que o cartão pede.
+   * O visualizador usa o portal com contêiner explícito: o conteúdo nasce no primeiro commit
+   * do Radix e o `useMediaElementVolume` recebe a ref no mount. Por isso esta bateria exige o
+   * volume inicial, antes de alterar o store ou disparar eventos do elemento.
    */
   it('o vídeo do visualizador obedece ao volume global (S41)', () => {
     bateriaDoVolume(
@@ -368,7 +361,6 @@ describe('S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das m�
         <MediaPreviewDialog item={itemDaGaleria('video', 'entrada.mp4')} open onOpenChange={() => {}} />,
       ),
       () => midiaDoPlayer(),
-      { aplicaNoMount: false },
     );
   });
 
@@ -378,7 +370,6 @@ describe('S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das m�
         <MediaPreviewDialog item={itemDaGaleria('audio', 'recado.mp3')} open onOpenChange={() => {}} />,
       ),
       () => midiaDoPlayer(),
-      { aplicaNoMount: false },
     );
   });
 });
