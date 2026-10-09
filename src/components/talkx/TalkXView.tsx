@@ -1,8 +1,9 @@
 import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, HelpCircle,
+  LayoutDashboard, HelpCircle, Activity,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,7 +13,7 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { ModuleHeader, IconTile, TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXHelpCenter } from './help/TalkXHelpCenter';
 import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
@@ -26,11 +27,32 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { TalkXMonitorHeader } from './tracking/TalkXMonitorHeader';
 import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
 import { goTab, readTab, readSub } from './talkxTabRoute';
 import type { WizardStep } from './useCampaignEditor';
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+
+/**
+ * X145 — regra do seletor de campanha da aba "Monitor": a campanha pedida pela URL
+ * (quando está ativa), senão a `sending` mais recente, senão a `paused` mais recente.
+ * Sem nenhuma ativa devolve `null` e a aba mostra o estado vazio do kit.
+ */
+function pickMonitorCampaign(campaigns: TalkXCampaign[], preferredId?: string | null): TalkXCampaign | null {
+  const recency = (campaign: TalkXCampaign) => {
+    const when = campaign.started_at ?? campaign.created_at;
+    const time = when ? new Date(when).getTime() : 0;
+    return Number.isNaN(time) ? 0 : time;
+  };
+  const active = campaigns.filter((c) => c.status === 'sending' || c.status === 'paused');
+  if (preferredId) {
+    const preferred = active.find((c) => c.id === preferredId);
+    if (preferred) return preferred;
+  }
+  const byRecency = [...active].sort((a, b) => recency(b) - recency(a));
+  return byRecency.find((c) => c.status === 'sending') ?? byRecency.find((c) => c.status === 'paused') ?? null;
+}
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -63,6 +85,15 @@ export default function TalkXView() {
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
   const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
+  // X145 — estado da aba "Monitor" (a aba vive na URL: ?view=talkx&tab=monitor).
+  // O dia começa em hoje, no mesmo formato do filtro do cabeçalho (yyyy-MM-dd).
+  const [monitorDay, setMonitorDay] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [monitorSegment, setMonitorSegment] = useState('all');
+  const [monitorStatus, setMonitorStatus] = useState('all');
+  const [monitorRefreshToken, setMonitorRefreshToken] = useState(0);
+  const [monitorTabCampaignId, setMonitorTabCampaignId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('campaign'),
+  );
 
   const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
     if (replace) replaceTalkXWizardRoute(route);
@@ -180,6 +211,23 @@ export default function TalkXView() {
     }
     return m;
   }, [teamProfiles]);
+
+  // X145 — o que a aba "Monitor" mostra: a campanha do seletor, as candidatas do chip
+  // e as segmentações da campanha (o vínculo por campanha que a tela conhece é
+  // `talkx_campaigns.segment_id`; sem ele o filtro de segmentação não é oferecido).
+  const monitorCampaign = useMemo(
+    () => pickMonitorCampaign(campaigns, monitorTabCampaignId),
+    [campaigns, monitorTabCampaignId],
+  );
+  const monitorActiveCampaigns = useMemo(
+    () => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'),
+    [campaigns],
+  );
+  const monitorSegments = useMemo(() => {
+    const segmentId = monitorCampaign?.segment_id;
+    if (!segmentId) return [];
+    return [{ value: segmentId, label: segments.find((s) => s.id === segmentId)?.name ?? 'Segmento da campanha' }];
+  }, [monitorCampaign?.segment_id, segments]);
 
   // X026: duplicar agora cria o rascunho no banco (RPC duplicate_talkx_campaign) e
   // abre o editor sobre a linha devolvida — não é mais um objeto só de cliente.
@@ -344,6 +392,14 @@ export default function TalkXView() {
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />Visão geral
             </TabsTrigger>
+            <TabsTrigger value="monitor"
+              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
+                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
+                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
+                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
+            >
+              <Activity className="w-4 h-4 shrink-0" />Monitor
+            </TabsTrigger>
             <TabsTrigger value="suppression"
               className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
                 data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
@@ -395,6 +451,51 @@ export default function TalkXView() {
             onDelete={(id) => deleteCampaign.mutate(id)}
             onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
           />
+        </TabsContent>
+        <TabsContent value="monitor" className="mt-4">
+          {/* X145: carregando -> erro -> vazio -> conteúdo. Sem isso, uma leitura de
+              campanhas que falhou aparecia como "nenhuma campanha em andamento". */}
+          <TalkXQueryBoundary
+            query={{ isLoading, isError, error: campaignsError }}
+            entity="campanhas"
+            onRetry={() => { void refetchCampaigns(); }}
+            skeleton={<TalkXSkeletonRows rows={4} />}
+            isEmpty={!monitorCampaign}
+            empty={(
+              <TalkXEmptyState
+                title="Nenhuma campanha em andamento"
+                description="Assim que uma campanha começar a enviar, o acompanhamento em tempo real aparece aqui."
+                actionLabel="Nova campanha"
+                onAction={() => openNew()}
+              />
+            )}
+          >
+            {monitorCampaign && (
+              <div className="space-y-4 min-w-0">
+                <TalkXMonitorHeader
+                  campaign={monitorCampaign}
+                  activeCampaigns={monitorActiveCampaigns}
+                  onSelectCampaign={setMonitorTabCampaignId}
+                  segments={monitorSegments}
+                  segment={monitorSegment}
+                  onSegmentChange={setMonitorSegment}
+                  status={monitorStatus}
+                  onStatusChange={setMonitorStatus}
+                  day={monitorDay}
+                  onDayChange={setMonitorDay}
+                  onRefresh={() => setMonitorRefreshToken((token) => token + 1)}
+                />
+                <TalkXLiveMonitor
+                  campaignId={monitorCampaign.id}
+                  statusFilter={monitorStatus}
+                  onStatusFilterChange={setMonitorStatus}
+                  segmentId={monitorSegment}
+                  day={monitorDay}
+                  refreshToken={monitorRefreshToken}
+                />
+              </div>
+            )}
+          </TalkXQueryBoundary>
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
           <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />

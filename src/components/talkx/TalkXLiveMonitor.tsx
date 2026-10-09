@@ -4,6 +4,7 @@ import {
   SkipForward, Activity, RefreshCw, Zap, Inbox,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { endOfDay, parseISO, startOfDay } from 'date-fns';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
@@ -21,11 +22,26 @@ import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectio
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
-interface Props { campaignId: string; onBack?: () => void }
+interface Props {
+  campaignId: string;
+  onBack?: () => void;
+  /** X145 — filtros do cabeçalho da aba Monitor (tracking/TalkXMonitorHeader.tsx).
+   *  `statusFilter`/`onStatusFilterChange` são o MESMO estado do select do card de
+   *  destinatários: recortam a lista, nunca os KPIs nem o gráfico.
+   *  `day` é o dia local (yyyy-MM-dd) escolhido no filtro de dia. */
+  statusFilter?: string;
+  onStatusFilterChange?: (value: string) => void;
+  segmentId?: string;
+  day?: string;
+  /** Muda de valor a cada clique em "Atualizar": refaz as leituras desta tela. */
+  refreshToken?: number;
+}
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+export function TalkXLiveMonitor({
+  campaignId, onBack, statusFilter: statusFilterProp, onStatusFilterChange, segmentId, day, refreshToken,
+}: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
@@ -34,7 +50,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     events, isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj, refetch: refetchEvents,
   } = useTalkXEvents(campaignId);
   const [tab, setTab] = useState<MonitorTab>('overview');
-  const [statusFilter, setStatusFilter] = useState('all');
+  // X145: quando o cabeçalho da aba Monitor manda o filtro, ele é a fonte; sem ele o
+  // select do card de destinatários continua sendo o dono do estado.
+  const [localStatusFilter, setLocalStatusFilter] = useState('all');
+  const statusFilter = statusFilterProp ?? localStatusFilter;
+  const setStatusFilter = onStatusFilterChange ?? setLocalStatusFilter;
   const [elapsedSec, setElapsedSec] = useState(0);
 
   const {
@@ -63,12 +83,20 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     error: recipientsErrorObj,
     refetch: refetchRecipients,
   } = useQuery({
-    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
+    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter, segmentId ?? 'all', day ?? 'all'],
     queryFn: async () => {
       let q = supabase.from('talkx_recipients')
         .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      if (segmentId && segmentId !== 'all') q = q.eq('segment_id', segmentId);
+      if (day) {
+        // X145: o recorte do dia não pode esconder quem ainda está na fila (sem `sent_at`):
+        // a campanha em andamento mostra o que saiu no dia + o que ainda espera.
+        const from = startOfDay(parseISO(day)).toISOString();
+        const to = endOfDay(parseISO(day)).toISOString();
+        q = q.or(`sent_at.is.null,and(sent_at.gte.${from},sent_at.lte.${to})`);
+      }
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
@@ -103,8 +131,19 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
 
-  // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  // Real rate data from hook (E02) — replaced Math.random with actual DB data.
+  // X145: o filtro de status do cabeçalho/dos destinatários recorta a LISTA, nunca o
+  // gráfico nem os KPIs — por isso o ritmo é lido sem o status.
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId);
+
+  // X145: o botão "Atualizar" do cabeçalho refaz as leituras desta tela.
+  useEffect(() => {
+    if (!refreshToken) return;
+    void refetchCampaign();
+    void refetchRecipients();
+    void refetchRate();
+    void refetchEvents();
+  }, [refreshToken, refetchCampaign, refetchRecipients, refetchRate, refetchEvents]);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
