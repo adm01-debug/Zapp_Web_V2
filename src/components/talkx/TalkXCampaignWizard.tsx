@@ -397,7 +397,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
                     {/* X124 — a lista traz o avatar e o nome do perfil; sem nome
                         cadastrado o e-mail continua sendo a identificação. */}
                     <span className="flex items-center gap-2">
-                      <InitialsAvatar name={p.name || p.email || '?'} size={22} />
+                      <InitialsAvatar name={p.name || p.email || '?'} size={24} />
                       <span className="min-w-0 truncate">{p.name || p.email || 'Sem nome'}</span>
                     </span>
                   </SelectItem>
