@@ -6,7 +6,6 @@ import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
 import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
 import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
-import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
@@ -17,7 +16,6 @@ interface UseInboxFiltersProps {
 }
 
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
-  const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
   const [chipTab, setChipTabState] = useState<ChipTab>('attending');
   const [mainTab, setMainTab] = useState<MainTab>('open');
   const [subTab, setSubTab] = useState<SubTab | null>('attending');
@@ -85,32 +83,30 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       result = result.filter(c => !snoozedIds.has(c.contact.id));
     }
 
-    // Tab-based filtering
+    // Tab-based filtering — ADR-005 (passo 3): o estado da conversa vem do campo
+    // persistido `contacts.conversation_status`, e não mais da derivação por
+    // `messages.length` (que mostrava como "aberta" toda conversa com mensagem e
+    // como "resolvida" apenas a que nunca teve nenhuma).
     if (mainTab === 'open') {
-      result = fsmEnabled
-        // Modo FSM: filtra por conversation_status E exige mensagens para não
-        // inflar a inbox com contacts históricos sem atividade
-        ? result.filter(c =>
-            (c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
-            && c.messages.length > 0
-          )
-        : result.filter(c => c.messages.length > 0);
+      // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
+      // é o guarda de atividade que mantém fora da inbox o contato histórico que
+      // nunca conversou (buildConversation sintetiza 1 mensagem quando há agregado).
+      result = result.filter(c =>
+        (c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
+        && c.messages.length > 0
+      );
       if (subTab === 'attending') {
         if (!showAll) {
           result = result.filter(c => c.contact.assigned_to === profileId);
         }
       } else if (subTab === 'waiting') {
-        result = fsmEnabled
-          ? result.filter(c => c.contact.conversation_status === 'waiting')
-          : result.filter(c => !c.contact.assigned_to);
+        result = result.filter(c => c.contact.conversation_status === 'waiting');
       }
       if (selectedQueueId) {
         result = result.filter(c => c.contact.queue_id === selectedQueueId);
       }
     } else if (mainTab === 'resolved') {
-      result = fsmEnabled
-        ? result.filter(c => c.contact.conversation_status === 'resolved')
-        : result.filter(c => c.messages.length === 0);
+      result = result.filter(c => c.contact.conversation_status === 'resolved');
     }
 
     if (chipTab === 'unread') {
@@ -133,15 +129,17 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       );
     }
 
-    // Status filter
+    // Status filter — mesmos estados do FSM persistido: "Pendentes" = waiting
+    // (aguardando atendente) e "Resolvidas" = resolved. A derivação antiga
+    // ("sem mensagem = resolvida") não vale mais.
     if (filters.status.length > 0) {
       result = result.filter((c) => {
         const hasUnread = c.unreadCount > 0;
         const isAssigned = !!c.contact.assigned_to;
         if (filters.status.includes('unread') && hasUnread) return true;
         if (filters.status.includes('read') && !hasUnread && isAssigned) return true;
-        if (filters.status.includes('pending') && !isAssigned && c.messages.length > 0) return true;
-        if (filters.status.includes('resolved') && c.messages.length === 0) return true;
+        if (filters.status.includes('pending') && c.contact.conversation_status === 'waiting') return true;
+        if (filters.status.includes('resolved') && c.contact.conversation_status === 'resolved') return true;
         return false;
       });
     }
@@ -184,7 +182,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, fsmEnabled, snoozedIds]);
+  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, snoozedIds]);
 
   return {
     chipTab, setChipTab,

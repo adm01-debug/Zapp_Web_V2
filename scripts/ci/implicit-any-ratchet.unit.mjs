@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -251,5 +251,46 @@ test("adversario: linha de continuacao indentada com 'error TS' nao vira diagnos
     assert.doesNotMatch(stderr, /ERRO no implicit-any ratchet/u);
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// SL-090 (S2-2): o ratchet roda "tsc -p tsconfig.app.json --noImplicitAny" e a
+// flag na linha de comando valia para ele SOZINHO. O projeto de verdade
+// (tsc -b --force, usado pelo typecheck-ratchet, pelo CI e pelo editor) seguia
+// com noImplicitAny DESLIGADO em tsconfig.app.json: parametro sem tipo era
+// aceito fora do ratchet, que continuava verde por conta propria. Este teste
+// compila no COMPILADOR REAL um caso com 'any' implicito herdando o
+// tsconfig.app.json do repositorio e exige o TS7006 - com a flag em false a
+// compilacao passa e o teste falha.
+const RAIZ_DO_REPO = path.join(AQUI, "..", "..");
+const COMPILADOR = path.join(RAIZ_DO_REPO, "node_modules", "typescript", "bin", "tsc");
+
+test("o tsconfig.app.json do repositorio reprova 'any' implicito (TS7006) no compilador real", () => {
+  assert.ok(existsSync(COMPILADOR), `TypeScript local nao encontrado em ${COMPILADOR}`);
+  const raiz = fixture();
+  try {
+    mkdirSync(path.join(raiz, "src"), { recursive: true });
+    writeFileSync(path.join(raiz, "src", "caso.ts"), "export function somaSemTipo(a) {\n  return a;\n}\n", "utf8");
+    // Projeto minimo que HERDA o tsconfig.app.json real: se a flag estiver
+    // desligada la, este caso compila limpo e nenhum TS7006 aparece.
+    writeFileSync(
+      path.join(raiz, "tsconfig.json"),
+      `${JSON.stringify(
+        { extends: path.join(RAIZ_DO_REPO, "tsconfig.app.json"), compilerOptions: { types: [] }, include: ["src"] },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    const resultado = spawnSync(process.execPath, [COMPILADOR, "-p", path.join(raiz, "tsconfig.json"), "--noEmit"], {
+      cwd: raiz,
+      encoding: "utf8",
+      maxBuffer: MAX_BUFFER,
+    });
+    const saida = `${resultado.stdout ?? ""}\n${resultado.stderr ?? ""}`;
+    assert.match(saida, /error TS7006/u, `o projeto do app aceitou parametro sem tipo: ${saida}`);
+  } finally {
+    rmSync(raiz, { recursive: true, force: true });
   }
 });

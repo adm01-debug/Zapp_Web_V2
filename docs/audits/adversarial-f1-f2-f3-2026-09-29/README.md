@@ -1,5 +1,15 @@
 # Auditoria adversarial das Fases 1–3 (2026-09-29)
 
+> **ERRATA (2026-10-08) — contagem da suíte.** A medição **4244 passed / 0 failed / 40 todo** registrada neste
+> relatório saiu de uma árvore contaminada por arquivos não rastreados (a própria onda 1 declara workspace
+> compartilhado com os artefatos de A1/A4). No SHA auditado `694bf084` a contagem correta é
+> **4217 passed | 40 todo (4257)**, com **305 arquivos de teste** (304 passed + 1 skipped) — provado por duas
+> fontes independentes: `git ls-tree -r --name-only 694bf084 -- src | grep -cE '\.(test|spec)\.(ts|tsx)$'` =
+> **305** e o log do CI no próprio merge (job `109526860279`: `Tests  4217 passed | 40 todo (4257)` /
+> `Test Files  304 passed | 1 skipped (305)`). **Toda menção a 4244 neste relatório deve ser lida como 4217**
+> (e a "subdeclaração de 91 testes", como 64). Correção da onda 2:
+> `../adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W1-META-AUDITORIA.md` §5.
+
 Auditoria independente, pós-merge, das três PRs do plano de finalização entregues em 29/09/2026:
 
 | Fase | PR | Merge | Escopo |
@@ -14,7 +24,7 @@ Auditoria independente, pós-merge, das três PRs do plano de finalização entr
 
 | Afirmação | Veredicto | Medição |
 |---|---|---|
-| suíte = 4153 passed | **FALSO** | 4244 passed / 0 failed / 40 todo |
+| suíte = 4153 passed | **FALSO** | 4244 passed / 0 failed / 40 todo → **errata 08/10: 4217 passed / 40 todo, 305 arquivos** (ver ERRATA) |
 | eslint = 0 | PARCIAL | 0 erros, 1 warning pré-existente (`no-restricted-imports`, idêntico no pai `ac5d6299`) |
 | migrations no ledger com o SQL real | **CONFIRMADO** | `file_sql_sha256 == ledger_sql_sha256` nas duas |
 | ACL de `search_contacts` restaurada | **CONFIRMADO** | `proacl` sem grantee vazio; `has_function_privilege('anon',…)=false` |

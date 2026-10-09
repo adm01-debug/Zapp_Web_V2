@@ -154,10 +154,18 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const handleSend = useCallback(async () => {
     const currentInput = inputValueRef.current;
     if (!currentInput.trim() || isSendingRef.current) return;
-    // Vale para o envio E para a edição (o editor é a mesma fonte do texto).
-    if (recusarAcimaDoLimite(currentInput.length)) return;
 
     const currentEditing = editingMessageRef.current;
+    // R2-INB-016 (item 312): o limite mede o payload REAL deste envio — o mesmo número do
+    // contador e do botão Enviar. O envio mede o corpo com a assinatura aplicada
+    // (`medirPayloadDeEnvio` em useChatInputLogic: corpo sem espaços nas pontas + prefixo da
+    // assinatura aplicável); a edição não passa por `applySignature` (ramo abaixo), então mede
+    // o corpo do editor. O payload medido é o payload transportado: é ele que desce para
+    // `onSendMessage`, em vez de ser recalculado depois da recusa.
+    const corpoDoEnvio = currentInput.trim();
+    const payloadDoEnvio = currentEditing ? corpoDoEnvio : applySignature(corpoDoEnvio);
+    if (recusarAcimaDoLimite(payloadDoEnvio.length)) return;
+
     if (currentEditing) {
       const externalId = currentEditing.external_id;
       const contactJid = contactPhone ? `${contactPhone}@s.whatsapp.net` : '';
@@ -186,8 +194,9 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     // Desfazer) guardam o texto ORIGINAL — restaurar o texto assinado fazia o
     // retry prefixar de novo (assinatura duplicada) e mudava o `content`, que
     // participa da chave de idempotência do serviço de envio.
-    const originalText = currentInput.trim();
-    const messageContent = applySignature(originalText);
+    // R2-INB-016: os dois valores são os que o limite mediu no topo do comando.
+    const originalText = corpoDoEnvio;
+    const messageContent = payloadDoEnvio;
     const wasReply = replyToMessageRef.current;
     setIsSending(true); setInputValue(''); setReplyToMessage(null); handleTypingStop();
     if (wasReply) log.debug('Sending reply to:', wasReply.id);

@@ -83,8 +83,16 @@ export function useFileUploadLogic(opts: {
   connectionId?: string;
   onFileSelect?: (file: File, category: string) => void;
   onFileSent?: (messageData: FileMessageData) => void;
+  /**
+   * Ref do `<input type="file">` escondido, de propriedade de quem renderiza o
+   * componente. Fica FORA do objeto devolvido pelo hook de proposito: um objeto de
+   * retorno que carrega uma ref e tratado como ref-like pelo compilador do React e
+   * qualquer leitura de propriedade dele durante o render vira `react-hooks/refs`
+   * (eram 75 achados so neste arquivo, SL-202).
+   */
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }) {
-  const { contactId, connectionId, onFileSelect, onFileSent } = opts;
+  const { contactId, connectionId, onFileSelect, onFileSent, fileInputRef } = opts;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
@@ -95,7 +103,6 @@ export function useFileUploadLogic(opts: {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState<'uploading' | 'sending' | null>(null);
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   // Objetos ja gravados + id logico por arquivo, ate a entrega confirmar. Sem isso o
   // retry refazia o upload (novo locator -> nova actionKey) e apagava o objeto que uma
   // linha ja enfileirada referencia (R2-INB-006).
@@ -287,7 +294,7 @@ export function useFileUploadLogic(opts: {
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (files.length === 0) return;
     handleExternalFiles(files);
-  }, [handleExternalFiles]);
+  }, [handleExternalFiles, fileInputRef]);
 
   const removeFromQueue = useCallback((id: string) => {
     setFileQueue(prev => {
@@ -303,7 +310,7 @@ export function useFileUploadLogic(opts: {
 
   return {
     isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
-    uploading, uploadProgress, uploadStage, currentQueueIndex, fileInputRef,
+    uploading, uploadProgress, uploadStage, currentQueueIndex,
     apiLoading, canSend, validFilesCount, totalQueueProgress,
     handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
     handleExternalFile, handleExternalFiles, removeFromQueue,

@@ -4,6 +4,8 @@ import { Logger, checkRateLimit, getClientIP, getCorsHeaders, handleCors } from 
 import { proxyToEvolution, resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
+// E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
+import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
   qrFromV2Connect,
@@ -79,11 +81,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
   };
 
   const bodyForAction = await json();
-  const action = (pathAction === 'evolution-api' && bodyForAction.action)
-    ? String(bodyForAction.action) : pathAction;
+  // E45 (SL-050): o corpo passa pelo schema ANTES de virar decisão. Ação fora
+  // da lista suportada (quando vem no corpo) e instância com tipo inválido saem
+  // no formato único de validação — 422 + VALIDATION_ERROR, ver docs/contracts.md
+  // — e nada disso chega ao provedor. Antes, `{}`/array/JSON `null` viravam
+  // decisão sem validação (o `null` estourava TypeError fora do try).
+  const parsedBody = parseBody(EvolutionApiRequestSchema, bodyForAction);
+  if (!parsedBody.success) return validationErrorResponse(parsedBody, req);
+  const action = (pathAction === 'evolution-api' && parsedBody.data.action)
+    ? String(parsedBody.data.action) : pathAction;
 
   try {
-    const body = await json();
+    const body: Record<string, unknown> = parsedBody.data;
     const instance = String(body.instanceName || body.instance || '');
 
     // ─── E17 (plano multi-conexão): instância obrigatória em ação de instância ───
@@ -91,10 +100,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // na GO). Toda outra ação usa `${instance}` no path traduzido — vazio hoje
     // casaria como path malformado (GO 404) ou, pior, caía silenciosamente na
     // PRINCIPAL em rotas GET sem sufixo.
-    if (action !== 'list-instances' && action !== 'bootstrap-instance-token' && !instance) {
-      return new Response(JSON.stringify({ error: true, message: 'instance (instanceName) é obrigatório para esta ação.' }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (evolutionApiRequiresInstance(action) && !instance) {
+      // E45: instância ausente é falha de payload — sai no formato único de
+      // validação (422 + VALIDATION_ERROR, docs/contracts.md), não na
+      // convenção de erro de negócio do proxy (200 + error:true).
+      return validationErrorResponse([{
+        path: 'instanceName',
+        message: 'instance (instanceName) é obrigatório para esta ação.',
+        code: 'custom',
+      }], req);
     }
 
     // ─── R2-API-001 (P1): matriz de autorização por ação, aplicada ANTES de

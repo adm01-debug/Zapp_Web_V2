@@ -32,16 +32,21 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   calcularCusto,
+  chaveDeLog,
+  classificarStatusDoErroDeLog,
   contaParaQuota,
   extractAiRequestId,
   extrairUsageDoStream,
   identidadeDaAcao,
+  logAiUsage,
   logAiUsageDetached,
   medirStream,
   normalizeAttempt,
   normalizeCorrelationId,
   normalizeModality,
   reconciliarConsumo,
+  registrarConsumoDeDiagnostico,
+  reprocessarLogEssencial,
   tarifaAplicavel,
   type LinhaDeConsumo,
   type StreamOutcome,
@@ -162,6 +167,46 @@ Deno.test("logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao 
 // ---------------------------------------------------------------------------
 // (b) sem waitUntil: a promessa é AGUARDADA (só resolve depois do insert)
 // ---------------------------------------------------------------------------
+Deno.test("registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test", async () => {
+  const restaurarEnv = stubEnv();
+  const { capturas, restaurar } = stubFetch();
+  try {
+    await registrarConsumoDeDiagnostico({
+      userId: null,
+      providerId: "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c",
+      providerType: "openai-compatible",
+      providerName: "Fornecedor Teste",
+      model: "modelo-diagnostico",
+      ok: false,
+      code: "diag_timeout",
+      inputTokens: 3,
+      outputTokens: 0,
+      durationMs: 42,
+      requestId: "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c",
+    });
+
+    const linha = linhaEnviada(capturas);
+    assert(linha, "o diagnóstico precisa registrar consumo no ai_usage_logs");
+    assertEquals(linha.function_name, "ai-proxy");
+    assertEquals(linha.status, "error");
+    assertEquals(linha.error_message, "diag_timeout");
+    assertEquals(linha.input_tokens, 3);
+    assertEquals(linha.output_tokens, 0);
+    assertEquals(linha.request_id, UUID);
+    const metadata = linha.metadata as Record<string, unknown>;
+    assertEquals(metadata.provider_test, true);
+    assertEquals(metadata.provider_id, "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c");
+    assertEquals(metadata.provider_type, "openai-compatible");
+    assertEquals(metadata.provider_name, "Fornecedor Teste");
+    assertEquals(metadata.purpose, "provider_test");
+    assertEquals(metadata.modality, "text");
+    assertEquals(metadata.test_code, "diag_timeout");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
 Deno.test("logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir", async () => {
   const restaurarEnv = stubEnv();
   const prevEdge = edgeGlobal.EdgeRuntime;
@@ -994,4 +1039,589 @@ Deno.test("IA-055 zero medido ≠ preço ausente, e valor inválido não passa",
   });
   assertEquals(tarifaRuim.custo, null);
   assertEquals(tarifaRuim.motivo, "tarifa_invalida");
+});
+
+// ---------------------------------------------------------------------------
+// (j) IA-TIMEOUT-001 — outbox durável do log essencial
+// ---------------------------------------------------------------------------
+// A base mantém a chave de conteúdo de 3abda0372, mas troca o marcador volátil
+// por uma pendência em `ai_usage_outbox`. O banco falso abaixo reproduz apenas
+// o contrato PostgREST das duas tabelas, sem rede externa nem credencial real.
+function stubOutbox(opts: {
+  logStatuses?: number[];
+  profileStatus?: number;
+  logLookup?: Record<string, unknown>[];
+  outboxPostStatus?: number;
+  outboxPatchStatus?: number;
+} = {}) {
+  const capturas: Captura[] = [];
+  const outbox: Array<Record<string, unknown>> = [];
+  let logStatuses = opts.logStatuses ?? [201];
+  let logPosts = 0;
+  let outboxPostStatus = opts.outboxPostStatus ?? 201;
+  let outboxPatchStatus = opts.outboxPatchStatus ?? 200;
+  const profileStatus = opts.profileStatus ?? 200;
+  const original = globalThis.fetch;
+
+  const json = (valor: unknown, status = 200) => Promise.resolve(
+    new Response(JSON.stringify(valor), {
+      status,
+      headers: { "content-type": "application/json" },
+    }),
+  );
+
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    const metodo = init?.method ?? "GET";
+    let corpo: unknown = null;
+    try {
+      corpo = init?.body ? JSON.parse(String(init.body)) : null;
+    } catch {
+      corpo = init?.body ?? null;
+    }
+    capturas.push({ metodo, url, corpo });
+
+    if (url.includes("/rest/v1/profiles")) {
+      return profileStatus >= 300
+        ? json({ message: "profiles indisponivel" }, profileStatus)
+        : json([]);
+    }
+    if (url.includes("/rest/v1/ai_usage_logs") && metodo === "POST") {
+      // Linha marcada como venenosa falha SEMPRE, qualquer que seja o status
+      // configurado: é assim que o teste semeia pendência que nunca entrega.
+      const marcador = ((corpo as Record<string, unknown> | null)?.metadata ?? {}) as
+        Record<string, unknown>;
+      const status = marcador.venenosa === true
+        ? 500
+        : logStatuses[Math.min(logPosts, logStatuses.length - 1)];
+      logPosts += 1;
+      return json(status >= 300 ? { message: "insert falhou" } : [], status);
+    }
+    if (url.includes("/rest/v1/ai_usage_logs") && metodo === "GET") {
+      return json(opts.logLookup ?? []);
+    }
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "POST") {
+      // Conflito simulado: o PostgREST recusa o INSERT (ex.: 409 de unicidade).
+      if (outboxPostStatus >= 300) {
+        return json({ message: "conflito na outbox" }, outboxPostStatus);
+      }
+      const pendencia = corpo as Record<string, unknown>;
+      outbox.push({
+        id: `pendencia-${outbox.length + 1}`,
+        event_id: null,
+        tentativas: 0,
+        processed_at: null,
+        created_at: new Date(1_700_000_000_000 + outbox.length * 1000).toISOString(),
+        ...pendencia,
+      });
+      return json([pendencia], 201);
+    }
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "GET") {
+      // O stub HONRA o contrato PostgREST que a função usa: filtro
+      // `processed_at=is.null`, `tentativas=lt.N`, `order=` e `limit`.
+      // Sem isso o teste de fila travada não provaria nada.
+      const parametros = new URL(url).searchParams;
+      let itens = outbox.filter((item) => item.processed_at === null);
+
+      const filtroTentativas = parametros.get("tentativas");
+      if (filtroTentativas?.startsWith("lt.")) {
+        const teto = Number(filtroTentativas.slice(3));
+        itens = itens.filter((item) => Number(item.tentativas ?? 0) < teto);
+      }
+
+      const ordenacao = (parametros.get("order") ?? "")
+        .split(",")
+        .map((termo) => termo.trim())
+        .filter(Boolean);
+      if (ordenacao.length > 0) {
+        itens = [...itens].sort((a, b) => {
+          for (const termo of ordenacao) {
+            const [coluna, direcao] = termo.split(".");
+            const va = a[coluna] as string | number | null | undefined;
+            const vb = b[coluna] as string | number | null | undefined;
+            if (va === vb) continue;
+            const cmp = va == null ? 1 : vb == null ? -1 : va < vb ? -1 : 1;
+            return direcao === "desc" ? -cmp : cmp;
+          }
+          return 0;
+        });
+      }
+
+      const limiteParam = Number(parametros.get("limit"));
+      if (Number.isFinite(limiteParam) && limiteParam > 0) {
+        itens = itens.slice(0, limiteParam);
+      }
+      return json(itens);
+    }
+    if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
+      // Baixa recusada: o PATCH responde erro e NADA é gravado (nem id, nem
+      // processed_at) — é o caso que prova que a baixa só conta se confirmada.
+      if (outboxPatchStatus >= 300) {
+        return json({ message: "baixa recusada" }, outboxPatchStatus);
+      }
+      const id = url.match(/(?:[?&])id=eq\.([^&]+)/)?.[1];
+      const campos = corpo as Record<string, unknown>;
+      for (const item of outbox) {
+        if (!id || item.id === decodeURIComponent(id)) Object.assign(item, campos);
+      }
+      return json([], 200);
+    }
+    return json([]);
+  }) as typeof fetch;
+
+  return {
+    capturas,
+    outbox,
+    setLogStatuses(statuses: number[]) {
+      logStatuses = statuses;
+      logPosts = 0;
+    },
+    setOutboxPostStatus(status: number) {
+      outboxPostStatus = status;
+    },
+    setOutboxPatchStatus(status: number) {
+      outboxPatchStatus = status;
+    },
+    restaurar() {
+      globalThis.fetch = original;
+    },
+  };
+}
+
+const postsNaOutbox = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_outbox"));
+
+const postsNoLog = (capturas: Captura[]) =>
+  capturas.filter((c) => c.metodo === "POST" && c.url.includes("/rest/v1/ai_usage_logs"));
+
+Deno.test("IA-TIMEOUT-001 classifica status/código do erro de insert sem transformar 4xx em transitório", () => {
+  assertEquals(classificarStatusDoErroDeLog({ status: "429" }), 429);
+  assertEquals(classificarStatusDoErroDeLog({ code: "PGRST204" }), 400);
+  assertEquals(classificarStatusDoErroDeLog({ code: "23505" }), 400);
+  assertEquals(classificarStatusDoErroDeLog({ code: "57P03" }), 503);
+  assertEquals(classificarStatusDoErroDeLog({ code: "codigo-desconhecido" }), 503);
+});
+
+Deno.test("IA-TIMEOUT-001 falha transitória retenta e termina gravada sem pendência", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 201] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 2, "o 500 transitório precisa ser retentado");
+    assertEquals(postsNaOutbox(stub.capturas).length, 0, "sucesso na retentativa não é pendência");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 resposta perdida depois da escrita não duplica nem cria pendência", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 201], logLookup: [{ id: "log-existente" }] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 1, "a checagem encontrou a linha; não pode reinserir");
+    assertEquals(postsNaOutbox(stub.capturas).length, 0, "a linha já existe; nada ficou pendente");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 falha de gravação cria pendência durável com a linha completa", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 3, "a gravação tenta até o teto");
+    const postsOutbox = postsNaOutbox(stub.capturas);
+    assertEquals(postsOutbox.length, 1, "a falha precisa persistir na outbox");
+    const pendenciaEnviada = postsOutbox[0].corpo as Record<string, unknown>;
+    assert(!("event_id" in pendenciaEnviada), "o POST da outbox deve usar só payload/motivo");
+    assertEquals(stub.outbox.length, 1);
+    assertEquals(stub.outbox[0].processed_at, null, "a nova pendência nasce não processada");
+    const payload = stub.outbox[0].payload as Record<string, unknown>;
+    const linha = payload.linha as Record<string, unknown>;
+    assertEquals(linha.function_name, ENTRADA.functionName);
+    assertEquals(linha.input_tokens, ENTRADA.inputTokens);
+    assertEquals(linha.output_tokens, ENTRADA.outputTokens);
+    assertEquals(linha.status, ENTRADA.status);
+    assertEquals(typeof (linha.metadata as Record<string, unknown>).log_key, "string");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 sucesso não cria pendência na outbox", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 1);
+    assertEquals(postsNaOutbox(stub.capturas).length, 0, "consumo entregue não é pendência");
+    assertEquals(stub.outbox.length, 0);
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 falha em profiles mantém insert direto com profile_id nulo", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ profileStatus: 500 });
+  try {
+    await logAiUsage({ ...ENTRADA, userId: UUID });
+
+    assertEquals(postsNoLog(stub.capturas).length, 1, "falha em profiles não pode impedir o insert do consumo");
+    assertEquals(postsNaOutbox(stub.capturas).length, 0, "profile_id nulo ainda é linha válida, não pendência");
+    const linha = linhaEnviada(stub.capturas);
+    assert(linha, "o insert direto precisa levar a linha completa");
+    assertEquals(linha.function_name, ENTRADA.functionName);
+    assertEquals(linha.user_id, UUID);
+    assertEquals(linha.profile_id, null);
+    assertEquals(linha.input_tokens, ENTRADA.inputTokens);
+    assertEquals(linha.output_tokens, ENTRADA.outputTokens);
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 reprocessamento lê a outbox, entrega e só então dá baixa", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500] });
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox[0].processed_at, null);
+
+    stub.setLogStatuses([201]);
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado, { lidos: 1, entregues: 1, pendentes: 0, esgotadas: 0, falha: null });
+    assert(stub.outbox[0].processed_at !== null, "a baixa vem depois da entrega confirmada");
+    const leitura = stub.capturas.find(
+      (c) => c.metodo === "GET" && c.url.includes("/rest/v1/ai_usage_outbox") && c.url.includes("processed_at=is.null"),
+    );
+    assert(leitura, "o reprocessamento precisa buscar as pendências na outbox");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 falha persistente no reprocesso continua pendente", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500] });
+  try {
+    await logAiUsage(ENTRADA);
+    stub.setLogStatuses([500, 500, 500]);
+
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado, { lidos: 1, entregues: 0, pendentes: 1, esgotadas: 0, falha: null });
+    assertEquals(stub.outbox[0].processed_at, null, "falha não pode receber baixa");
+    assertEquals(stub.outbox[0].tentativas, 1, "a pendência registra a tentativa sem sair da fila");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (k) IA-TIMEOUT-001 — a fila não trava: venenosas não escondem a válida
+// ---------------------------------------------------------------------------
+// O defeito corrigido: a leitura `order=created_at.asc&limit=N` colocava as
+// pendências mais ANTIGAS na frente. Se as primeiras N fossem venenosas
+// (falham sempre), a pendência válida mais nova nunca era lida. A correção
+// ordena por `tentativas.asc` antes de `created_at.asc` e dá baixa EXPLÍCITA
+// (motivo + processed_at) no que esgota o teto ou chega com payload inválido.
+Deno.test("IA-TIMEOUT-001 venenosas em excesso não travam a fila: a válida mais nova é entregue", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    // SEIS venenosas (mais que o limite 3), mais antigas, já retentadas.
+    for (let i = 0; i < 6; i++) {
+      stub.outbox.push({
+        id: `venenosa-${i}`,
+        event_id: null,
+        tentativas: 1 + (i % 2),
+        processed_at: null,
+        created_at: `2026-10-01T00:00:0${i}.000Z`,
+        payload: {
+          linha: {
+            function_name: "ai-proxy",
+            input_tokens: 1,
+            output_tokens: 1,
+            status: "success",
+            metadata: { venenosa: true },
+          },
+        },
+      });
+    }
+    // UMA válida, a MAIS NOVA de todas: com a leitura antiga ela ficava fora
+    // da página (as 3 primeiras por created_at são venenosas).
+    stub.outbox.push({
+      id: "valida-mais-nova",
+      event_id: null,
+      tentativas: 0,
+      processed_at: null,
+      created_at: "2026-10-02T00:00:00.000Z",
+      payload: {
+        linha: {
+          function_name: "ai-proxy",
+          input_tokens: 7,
+          output_tokens: 3,
+          status: "success",
+          metadata: {},
+        },
+      },
+    });
+
+    const resultado = await reprocessarLogEssencial(3);
+
+    const leitura = stub.capturas.find(
+      (c) => c.metodo === "GET" && c.url.includes("/rest/v1/ai_usage_outbox"),
+    );
+    assert(leitura, "o reprocessamento precisa ler a outbox");
+    assert(
+      leitura.url.includes("order=tentativas.asc,created_at.asc"),
+      `a leitura tem de ordenar por tentativas antes de created_at: ${leitura.url}`,
+    );
+
+    assertEquals(
+      resultado.entregues,
+      1,
+      "a pendência válida tinha de ser entregue mesmo atrás de 6 venenosas",
+    );
+    const valida = stub.outbox.find((item) => item.id === "valida-mais-nova");
+    assert(
+      valida?.processed_at !== null && valida?.processed_at !== undefined,
+      "a pendência válida precisa receber baixa depois da entrega confirmada",
+    );
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 pendência que atinge o teto sai da fila com baixa EXPLÍCITA", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    // Venenosa na penúltima tentativa: a próxima falha cruza o teto.
+    stub.outbox.push({
+      id: "no-teto",
+      event_id: null,
+      tentativas: 4,
+      processed_at: null,
+      created_at: "2026-10-01T00:00:00.000Z",
+      payload: {
+        linha: {
+          function_name: "ai-proxy",
+          input_tokens: 1,
+          output_tokens: 1,
+          status: "success",
+          metadata: { venenosa: true },
+        },
+      },
+    });
+
+    const resultado = await reprocessarLogEssencial(10);
+
+    assertEquals(resultado.esgotadas, 1, "o teto tem de gerar baixa definitiva, não mais pendência");
+    assertEquals(resultado.pendentes, 0);
+    const item = stub.outbox[0];
+    assertEquals(item.motivo, "tentativas_esgotadas", "a baixa precisa declarar o motivo");
+    assert(item.processed_at !== null, "baixa silenciosa é proibida: processed_at tem de ser gravado");
+    assertEquals(item.tentativas, 5);
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 payload inválido sai da fila com baixa e motivo, sem tentar insert", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [201] });
+  try {
+    stub.outbox.push({
+      id: "sem-linha",
+      event_id: null,
+      tentativas: 0,
+      processed_at: null,
+      created_at: "2026-10-01T00:00:00.000Z",
+      payload: { motivo_original: "gravado_sem_linha" },
+    });
+
+    const resultado = await reprocessarLogEssencial(10);
+
+    assertEquals(resultado.esgotadas, 1);
+    assertEquals(postsNoLog(stub.capturas).length, 0, "payload inválido não pode virar insert");
+    const item = stub.outbox[0];
+    assertEquals(item.motivo, "payload_invalido");
+    assert(item.processed_at !== null, "a baixa explícita grava processed_at");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (l) IA-TIMEOUT-001 — logAiUsage resolve mesmo quando a montagem explode
+// ---------------------------------------------------------------------------
+// O defeito corrigido: `montarLinhaDeConsumo` (e os normalizadores que ele
+// chama) e os `Deno.env.get` ficavam FORA do try/catch — uma entrada com
+// metadata quebrado fazia a função REJEITAR apesar do contrato "nunca lança".
+Deno.test("IA-TIMEOUT-001 logAiUsage resolve sem lançar quando a montagem da linha explode", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox();
+  const erros: string[] = [];
+  const consoleOriginal = console.error;
+  console.error = (...args: unknown[]) => erros.push(args.map(String).join(" "));
+  try {
+    // `metadata` com getter que lança: o spread de `buildUsageMetadata` dentro
+    // de `montarLinhaDeConsumo` explode ANTES de qualquer linha existir.
+    const metadataQuebrado: Record<string, unknown> = {};
+    Object.defineProperty(metadataQuebrado, "explode", {
+      enumerable: true,
+      get() {
+        throw new Error("metadata corrompido");
+      },
+    });
+
+    await logAiUsage({ ...ENTRADA, metadata: metadataQuebrado });
+
+    assert(
+      erros.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "sem linha para a outbox, o motivo tem de sair pelo marcador de log",
+    );
+    assertEquals(
+      postsNaOutbox(stub.capturas).length,
+      0,
+      "sem linha montada não há o que enfileirar — e nenhuma pendência inválida nasce",
+    );
+  } finally {
+    console.error = consoleOriginal;
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (m) IA-TIMEOUT-001 — o enfileiramento e a baixa só contam com resposta ok
+// ---------------------------------------------------------------------------
+// O defeito corrigido: o enfileiramento da pendência tratava a resposta do
+// PostgREST como sucesso sem olhar `resposta.ok`, e a baixa da outbox podia ser
+// contada antes do PATCH confirmar. Nos dois caminhos a falha ficava muda: o
+// consumo pago saía do sistema sem pendência durável e sem marcador.
+Deno.test("IA-TIMEOUT-001 POST na outbox em conflito não conta como pendência e emite o marcador de último recurso", async () => {
+  const restaurarEnv = stubEnv();
+  // 409: o INSERT da pendência conflita (unicidade) e a outbox NÃO aceitou a linha.
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPostStatus: 409 });
+  const erros: string[] = [];
+  const consoleOriginal = console.error;
+  console.error = (...args: unknown[]) => erros.push(args.map(String).join(" "));
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 3, "o insert do log esgota o teto de tentativas");
+    assertEquals(postsNaOutbox(stub.capturas).length, 1, "a falha tenta enfileirar a pendência");
+    assertEquals(
+      stub.outbox.length,
+      0,
+      "INSERT em conflito não pode ser contado como pendência durável",
+    );
+    assert(
+      erros.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "sem pendência na outbox, a falha tem de sair pelo marcador de último recurso",
+    );
+  } finally {
+    console.error = consoleOriginal;
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 baixa recusada pelo PATCH deixa o item pendente e não conta entrega", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPatchStatus: 500 });
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox.length, 1, "a linha completa ficou pendente na outbox");
+
+    // A entrega em `ai_usage_logs` passa a funcionar, mas a BAIXA continua
+    // recusada: sem `processed_at` gravado, o item não pode sair da fila.
+    stub.setLogStatuses([201]);
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.entregues, 0, "entrega sem baixa confirmada não é entrega");
+    assertEquals(resultado.pendentes, 1, "com a baixa recusada, o item segue pendente");
+    assertEquals(
+      stub.outbox[0].processed_at,
+      null,
+      "PATCH recusado não pode marcar processed_at",
+    );
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (n) IA-TIMEOUT-001 — a SEGUNDA escrita da outbox também tem de responder
+// ---------------------------------------------------------------------------
+// O defeito corrigido: no reprocessamento, o PATCH que só registra a tentativa
+// (`tentativas` +1) era aguardado e o RESULTADO era jogado fora. Se o PostgREST
+// recusasse esse PATCH, o item continuava pendente (correto), mas a recusa
+// desaparecia: nem no retorno da execução, nem no log. É o mesmo padrão de
+// "segunda escrita ignorada" que derruba a fila em silêncio. Agora o retorno de
+// `atualizarPendencia` é olhado em TODOS os chamadores e a recusa sai no
+// `resultado.falha` da execução.
+Deno.test("IA-TIMEOUT-001 PATCH de tentativas recusado não sai em silêncio: a recusa fica no resultado", async () => {
+  const restaurarEnv = stubEnv();
+  // A entrega continua falhando (insert do log em 500) E o PATCH que registra a
+  // tentativa é recusado: exatamente o caminho que antes seguia sem rastro.
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPatchStatus: 500 });
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox.length, 1, "a falha de insert enfileira a pendência");
+
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.entregues, 0, "nada foi entregue");
+    assertEquals(resultado.pendentes, 1, "sem o registro da tentativa o item segue pendente");
+    assertEquals(
+      resultado.falha,
+      "patch_tentativas_recusado",
+      "PATCH recusado não pode ser descartado: a recusa tem de sair no resultado",
+    );
+    assertEquals(stub.outbox[0].tentativas, 0, "o PATCH recusado não alterou a linha");
+    assertEquals(stub.outbox[0].processed_at, null, "recusa de PATCH não pode dar baixa");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 PATCH de tentativas confirmado registra a tentativa e não inventa falha", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.pendentes, 1, "a falha de entrega mantém o item na fila");
+    assertEquals(resultado.falha, null, "com o PATCH confirmado não há falha a registrar");
+    assertEquals(stub.outbox[0].tentativas, 1, "o PATCH confirmado registra a tentativa");
+    assertEquals(stub.outbox[0].processed_at, null, "pendência não recebe baixa sem entrega");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
 });

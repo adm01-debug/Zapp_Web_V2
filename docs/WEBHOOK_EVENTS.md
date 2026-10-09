@@ -293,7 +293,34 @@ POST https://[PROJECT_ID].supabase.co/functions/v1/evolution-webhook
 
 **Eventos:** `TYPEBOT_START`, `TYPEBOT_CHANGE_STATUS`
 
-**Status:** 🔴 NÃO IMPLEMENTADO
+**Payload:**
+```json
+{
+  "event": "TYPEBOT_CHANGE_STATUS",
+  "instance": "wpp2",
+  "data": {
+    "remoteJid": "5511999999999@s.whatsapp.net",
+    "typebotId": "meu-bot",
+    "status": "opened"
+  }
+}
+```
+
+**Status:** ✅ IMPLEMENTADO — `evolution-webhook` → `handleTypebotEvent`
+
+**Ações no ZAPP-WEB:**
+1. Resolve a conexão da instância e o contato pelo `remoteJid` (JID sem telefone real,
+   como `@lid`, é ignorado; contato inexistente não é criado)
+2. Registra a transição da sessão na trilha da conversa (`conversation_events`,
+   `event_type = 'bot_session'`) com `metadata.session_status` = `opened` / `paused` / `closed`
+
+`TYPEBOT_START` não traz status: a sessão é registrada como `opened`. Status fora
+desse vocabulário é ignorado (não é gravado cru).
+
+**Tabelas afetadas:**
+- `conversation_events`
+
+**Prova:** `supabase/functions/_shared/__tests__/evolution-typebot-events.test.ts`
 
 ---
 

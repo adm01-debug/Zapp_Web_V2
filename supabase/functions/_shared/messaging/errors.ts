@@ -213,6 +213,22 @@ export const BACKOFF_CEILING_MS: readonly number[] = [30_000, 120_000, 600_000];
 /** Quantas tentativas antes de dead letter (a 4ª falha aposenta o item). */
 export const MAX_ATTEMPTS = 4;
 
+/**
+ * Degrau de backoff para o total de tentativas JÁ feitas (0-based), com teto no
+ * último degrau. É a conta que os dois motores de envio usam no caminho
+ * pré-dispatch (`talkx-send` e `multiplix-send`).
+ *
+ * Antes cada motor indexava `BACKOFF_CEILING_MS` por conta própria (uma cópia
+ * local da tabela em `multiplix-send`, um array inline em `talkx-send`) — a
+ * política podia divergir em silêncio entre os dois. Agora existe ESTA conta e
+ * mais nenhuma: a tabela e o índice saem do mesmo lugar (SL-054).
+ * Entrada ilegível não inventa degrau: cai no primeiro (retry mínimo).
+ */
+export function backoffDelayForAttempts(attemptsSoFar: number): number {
+  const n = Number.isFinite(attemptsSoFar) ? Math.max(0, Math.floor(attemptsSoFar)) : 0;
+  return BACKOFF_CEILING_MS[Math.min(n, BACKOFF_CEILING_MS.length - 1)];
+}
+
 export interface BackoffDecision {
   action: "retry" | "dead_letter";
   /** Tentativa que acabou de falhar (1-based). */

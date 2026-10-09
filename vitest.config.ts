@@ -36,6 +36,17 @@ export default defineConfig({
         // lines 91.97 / branches 79.13. Mesmo glob de coverage.include acima.
         "{src/lib/mapbox*.{ts,tsx},src/components/inbox/location-picker/**/*.{ts,tsx},src/components/contacts/ContactForm.tsx}":
           { lines: 85, branches: 75 },
+        // SL-123: piso POR ARQUIVO. Um glob com um único arquivo é medido só nesse
+        // arquivo, então cada entrada abaixo é um piso por arquivo. O agregado acima é
+        // puxado pelo `lib` (95,50 linhas) e escondia os dois arquivos deste cartão.
+        // `perFile: true` não fecha isto: é chave GLOBAL do Vitest e passaria a exigir os
+        // pisos globais (36/35/43/31) de cada arquivo do coverage.include — inclusive os
+        // que não têm teste e entram a 0% na rodada completa.
+        // ContactForm.tsx: medido 74,50 linhas / 58,27 branches (2026-10-02).
+        // mapboxLoader.ts: era 0% (os testes de UI mockam o módulo inteiro); 100% com
+        // src/lib/__tests__/mapboxLoader.test.ts (2026-10-08).
+        "src/components/contacts/ContactForm.tsx": { lines: 70, branches: 55 },
+        "src/lib/mapboxLoader.ts": { lines: 85, branches: 75 },
       },
     },
   },

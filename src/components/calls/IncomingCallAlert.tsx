@@ -19,6 +19,24 @@ import { getLogger } from '@/lib/logger';
 const log = getLogger('IncomingCallAlert');
 
 /**
+ * Teto de ganho do toque da chamada recebida (achado B10 / etapa S45 do plano
+ * `docs/plans/PLANO_CONTROLES_VOLUME_SIDEBAR_50_ETAPAS_2026-10-07.md`).
+ *
+ * O toque soa em `soundVolume/100 * RING_GAIN_CAP` — no MÁXIMO 20 % de ganho, bem
+ * abaixo do ganho cheio dos outros alertas do sistema.
+ *
+ * **MOTIVO (histórico; não há justificativa registrada).** O valor nasceu no commit
+ * gerado `eb269c0b5` ("Som alerta som operou", 20/03/2026), quando o ganho FIXO de
+ * `0.15` passou a acompanhar `settings.soundVolume` — `soundVolume/100 * 0.2`. Nem o
+ * commit, nem ADR, nem doc do projeto explicam a escolha do 0,2. O plano de controles
+ * de volume registra este teto como intencionalidade **NÃO confirmada** (B10 + decisão
+ * D09): o dono ainda não respondeu se quer mudar e o padrão combinado é **MANTER**.
+ * Não mexa neste valor sem decisão do dono; o cartão Q10 só documenta e prova o
+ * comportamento atual (teste em `__tests__/IncomingCallAlert.volume.test.tsx`).
+ */
+export const RING_GAIN_CAP = 0.2;
+
+/**
  * ÂNCORA (não unificar): o toque da chamada entrante é um **alerta**, não mídia de
  * conversa. Sai por WebAudio (oscilador → gain → `ctx.destination`) com o ganho vindo de
  * `settings.soundVolume` — o mesmo caminho de `utils/notificationSound*.ts` — e o
@@ -124,7 +142,7 @@ export const IncomingCallAlert = forwardRef<HTMLDivElement>(
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = 440;
-        const vol = (notifSettings.soundVolume ?? 70) / 100 * 0.2;
+        const vol = (notifSettings.soundVolume ?? 70) / 100 * RING_GAIN_CAP;
         gain.gain.value = vol;
         osc.connect(gain);
         gain.connect(ctx.destination);

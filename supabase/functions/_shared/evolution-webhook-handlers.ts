@@ -21,6 +21,11 @@ export {
   handleMessagesSet, handleMessagesEdited,
 } from "./evolution-webhook-msg-handlers.ts";
 
+// E26: janela curta de deduplicacao do alerta de queda. A GO entrega o evento em dobro
+// (e o retry do webhook reenvia o POST) em segundos; 60 s cobre a duplicata sem esconder
+// uma queda nova de verdade (que so vem depois de uma reconexao).
+const ALERT_DEDUP_WINDOW_MS = 60_000;
+
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: EvolutionDbClient, instance: string, baseData: Record<string, unknown>) {
   const rawState = (baseData.status ?? baseData.state) as string;
@@ -78,13 +83,30 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
   console.log(`Connection ${instance} status: ${status}`);
 
   if (status === 'disconnected' && prevConn?.status === 'connected') {
-    const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
-    await supabase.from('warroom_alerts').insert({
-      alert_type: 'critical',
-      title: `🔴 Conexão ${instance} desconectou`,
-      message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
-      source: 'evolution-webhook',
-    });
+    // E26 (dedup): a GO entrega o evento de queda em dobro e o retry do webhook reenvia o
+    // POST, entao o MESMO alerta saia 2x no War Room. O guard de transicao acima nao segura
+    // a corrida em que as duas entregas leem o status ANTES de qualquer uma gravar.
+    // Antes de inserir, olha se ja existe alerta identico (mesmo source+title) na janela
+    // curta — sem DDL, a consulta resolve.
+    const title = `🔴 Conexão ${instance} desconectou`;
+    const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
+    const { data: recentAlert } = await supabase.from('warroom_alerts')
+      .select('id')
+      .eq('source', 'evolution-webhook')
+      .eq('title', title)
+      .gte('created_at', since)
+      .limit(1);
+    if (recentAlert?.length) {
+      console.log(`Alerta de queda de ${instance} deduplicado (E26)`);
+    } else {
+      const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
+      await supabase.from('warroom_alerts').insert({
+        alert_type: 'critical',
+        title,
+        message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
+        source: 'evolution-webhook',
+      });
+    }
   }
 
   // F60 (gatilho): motivo TERMINAL nao e soluço de rede — a instancia esta fora e nao volta
@@ -225,19 +247,25 @@ export async function handleChatsUpdate(supabase: EvolutionDbClient, instance: s
   }
 }
 
-export async function handleLabelsEdit(supabase: EvolutionDbClient, _instance: string, data: unknown) {
+export async function handleLabelsEdit(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const labelData = isRecord(data) ? data : {};
   const labelId = labelData.id as string;
   const labelName = labelData.name as string;
   const deleted = labelData.deleted as boolean;
   if (!labelId) return;
 
+  // O id de label é por instância (cada conta renumera de 0..N). Sem escopo, o
+  // prefixo wa:<id>: renomearia/apagaria o label homônimo de OUTRAS conexões.
+  // Resolve a conexão pela instância; sem conexão, não há contatos para tocar.
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) return;
+
   const prefix = `wa:${labelId}:`;
   if (deleted) {
-    await supabase.rpc('remove_wa_label_from_all_contacts', { p_label_prefix: prefix });
+    await supabase.rpc('remove_wa_label_from_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix });
   } else {
     const tagName = `wa:${labelId}:${labelName || `Label ${labelId}`}`;
-    await supabase.rpc('rename_wa_label_on_all_contacts', { p_label_prefix: prefix, p_new_tag: tagName });
+    await supabase.rpc('rename_wa_label_on_all_contacts', { p_connection_id: connection.id, p_label_prefix: prefix, p_new_tag: tagName });
   }
 }
 
@@ -322,6 +350,76 @@ export async function handleCallEvent(supabase: EvolutionDbClient, instance: str
     p_direction: direcao,
   });
   if (persistError) throw new Error('Unable to persist incoming call event');
+}
+
+// SL-190 — eventos TYPEBOT_* (`typebot.start`, `typebot.change.status`).
+//
+// O roteador não tinha ramo para eles (lacuna: docs/WEBHOOK_EVENTS.md, "TYPEBOT_*
+// — NÃO IMPLEMENTADO"), embora a Evolution esteja configurada a enviá-los
+// (`evolution-api` set-webhook registra TYPEBOT_START/TYPEBOT_CHANGE_STATUS):
+// o evento chegava, ganhava 200 e era descartado sem nenhum efeito. Aqui a
+// transição da SESSÃO do Typebot do contato é gravada em `conversation_events`
+// — a trilha da conversa que já registra atribuição, transferência e
+// encerramento — para deixar de ser um evento perdido, sem tabela nova e sem
+// tocar quem chama o provedor.
+//
+// Só o vocabulário documentado entra (`opened`/`paused`/`closed`); `typebot.start`
+// não traz status e vale como `opened` (a sessão começou). Status desconhecido é
+// IGNORADO em vez de gravado cru — a coluna é livre, mas gravar lixo degradaria
+// quem lê a trilha. JID sem telefone real (@lid/@g.us) e contato inexistente
+// também não gravam: um evento de bot não cria contato.
+export const TYPEBOT_SESSION_STATUSES: ReadonlySet<string> = new Set(['opened', 'paused', 'closed']);
+
+export async function handleTypebotEvent(
+  supabase: EvolutionDbClient,
+  instance: string,
+  data: unknown,
+  event: string,
+) {
+  const typebotData = isRecord(data) ? data : {};
+  const jid = (typebotData.remoteJid as string) || (typebotData.id as string);
+  const phone = jid ? normalizePhone(jid) : null;
+
+  const rawStatus = typeof typebotData.status === 'string' ? typebotData.status.trim().toLowerCase() : '';
+  const sessionStatus = TYPEBOT_SESSION_STATUSES.has(rawStatus)
+    ? rawStatus
+    : event === 'typebot.start' ? 'opened' : '';
+
+  // Um evento sem destino ou com status fora do vocabulário é descartado de
+  // propósito — mas NOMEANDO o motivo: descarte mudo é justamente o defeito que
+  // este cartão fecha (o evento chegava, ganhava 200 e sumia sem rastro).
+  if (!jid || !phone || !sessionStatus) {
+    const motivo = !jid ? 'sem-remoteJid' : !phone ? 'jid-sem-telefone' : 'status-fora-do-vocabulario';
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=${motivo}`);
+    return;
+  }
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) {
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=sem-conexao`);
+    return;
+  }
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) {
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=contato-inexistente`);
+    return;
+  }
+
+  const typebotId = typeof typebotData.typebotId === 'string' && typebotData.typebotId ? typebotData.typebotId : null;
+  const { error } = await supabase.from('conversation_events').insert({
+    contact_id: contact.id,
+    event_type: 'bot_session',
+    metadata: {
+      source: 'typebot',
+      provider_event: event,
+      session_status: sessionStatus,
+      typebot_id: typebotId,
+    },
+  });
+  // Fail-closed: falha ao persistir sobe como erro (o webhook devolve 500 e o
+  // provedor reprocessa) em vez de encerrar o evento como sucesso silencioso.
+  if (error) throw new Error('Unable to persist typebot session event');
 }
 
 // deno-lint-ignore no-explicit-any

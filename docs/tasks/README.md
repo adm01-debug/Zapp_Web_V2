@@ -1,16 +1,16 @@
 # Módulo de Tarefas
 
 Workspace de trabalho pessoal do atendente: transforma conversa em tarefa com prazo, prioridade e
-lembrete. Entra pelo `?view=tasks` (atalho `Alt+T` a partir da conversa) e vive em
+lembrete. Entra pelo `?view=tasks` (atalho `Alt+K` a partir da conversa) e vive em
 `src/components/tasks/**` + `src/hooks/tasks/**`.
 
 ## Modos
 
 | Modo | Atalho | O que é |
 | --- | --- | --- |
-| Lista | `1` | Agrupada por seção (Caixa de entrada, Hoje, Esta semana, Fazendo, Aguardando, Concluídas 7 dias, Canceladas) |
-| Quadro | `2` | 6 colunas, uma por status, com trava de WIP |
-| Agenda | `3` | Agrupada por dia |
+| Lista | `1` | Agrupada por prazo: Atrasadas, Hoje, Amanhã, Próximas, Sem prazo, Concluídas (7 dias) |
+| Quadro | `2` | 5 colunas (Caixa de entrada, A fazer, Fazendo, Aguardando, Concluído), com trava de WIP em Fazendo |
+| Agenda | `3` | Faixa de 7 dias; o dia escolhido agrupa Alarmes, Prazos e Sem hora |
 
 Trocar de modo **não refaz request**: os três modos leem o mesmo conjunto já buscado.
 
@@ -53,7 +53,7 @@ o toast e a central de notificações. Adiar 15 min reescreve `remind_at`.
 
 ## Atalhos
 
-Sete, com escopo `tasks`/`pipeline`: `tasks-focus-quickadd`, `tasks-mode`, `tasks-search`,
+Sete, com escopo `tasks`: `tasks-focus-quickadd`, `tasks-mode`, `tasks-search`,
 `tasks-open-sheet`, `tasks-complete`, `tasks-cancel`, `tasks-help`. As **teclas** ficam em
 `src/hooks/shortcuts/defaultShortcuts.ts` (eager); os **rótulos** moram em
 `src/hooks/shortcuts/taskShortcutLabels.ts`, carregado por `import()` dinâmico para não pesar no

@@ -45,8 +45,11 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
             {users.map((user) => {
               const RoleIcon = roleIconMap[user.role];
               const accessInfo = accessLevelConfig[user.access_level || 'basic'];
+              // Nome que entra no aria-label dos controles da linha; a mesma
+              // queda para e-mail/`Usuário` que o Avatar já usa evita rótulo vazio.
+              const nome = user.name || user.email || 'Usuário';
               return (
-                <TableRow key={user.id} className={!user.is_active ? 'opacity-50' : ''}>
+                <TableRow key={user.id} className={!user.is_active ? 'bg-muted/50' : ''}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="w-8 h-8">
@@ -70,7 +73,7 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                   <TableCell>
                     {isAdmin ? (
                       <Select value={user.role} onValueChange={(v) => onRoleChange(user.user_id, v as AppRole)}>
-                        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-32" aria-label={`Alterar role de ${nome}`}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="supervisor">Supervisor</SelectItem>
@@ -96,11 +99,15 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                   {isAdmin && (
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => onEditUser(user)}>
+                        <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => onEditUser(user)} aria-label={`Editar ${nome}`}>
                           <Edit className="w-4 h-4" />
                         </Button>
                         <ForceLogoutButton userId={user.user_id} userName={user.name} />
-                        <Switch checked={user.is_active !== false} onCheckedChange={() => onToggleActive(user)} />
+                        <Switch
+                          checked={user.is_active !== false}
+                          onCheckedChange={() => onToggleActive(user)}
+                          aria-label={`Ativar/desativar ${nome}`}
+                        />
                       </div>
                     </TableCell>
                   )}

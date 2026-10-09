@@ -18,6 +18,7 @@ import { RemindChip }    from './RemindChip';
 import { ContactChip }   from './ContactChip';
 import { AgingDot }      from './AgingDot';
 import { MoveToMenu, MoveTargets } from '../board/MoveToMenu';
+import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 
 interface Props {
   item: WorkItem;
@@ -53,6 +54,9 @@ export const WorkItemCard = React.memo(function WorkItemCard({
 }: Props) {
   const aging = ['doing','waiting'].includes(item.status) ? agingDays(item) : 0;
   const isDone = item.status === 'done' || item.status === 'cancelled';
+  // #425 / R2-MOD-057: o executor do alarme ignora done/cancelled — nesses
+  // estados o card não oferece lembrete (aqui o chip e o "Lembrar-me" do kebab).
+  const lembreteElegivel = aceitaLembrete(item.status);
   // Etapa 56: na Agenda o card é uma linha só, de 44px (h-11).
   const isAgenda = mode === 'agenda';
   // Etapa 32: o contato vem do item quando o chamador não o monta.
@@ -96,7 +100,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
         />
       )}
       {item.due_date && !isDone && <DueChip dueDate={item.due_date} />}
-      {item.remind_at && !isDone && (
+      {item.remind_at && lembreteElegivel && (
         <RemindChip
           remindAt={item.remind_at}
           notifiedAt={item.notified_at}
@@ -130,7 +134,18 @@ export const WorkItemCard = React.memo(function WorkItemCard({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>Lembrar-me</DropdownMenuSubTrigger>
+          {/* #425 / R2-MOD-057: em estado terminal o adiamento não dispara (o
+              executor ignora done/cancelled) — a opção fica desabilitada com o
+              motivo, em vez de anunciar "Aviso adiado" para um alarme morto. */}
+          <DropdownMenuSubTrigger
+            disabled={!lembreteElegivel}
+            aria-disabled={lembreteElegivel ? undefined : 'true'}
+            aria-label={lembreteElegivel ? undefined : `Lembrar-me — ${MOTIVO_SEM_LEMBRETE}`}
+            title={lembreteElegivel ? undefined : MOTIVO_SEM_LEMBRETE}
+            className={lembreteElegivel ? undefined : 'pointer-events-none opacity-50'}
+          >
+            Lembrar-me
+          </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSnooze?.(15); }}>15 min</DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSnooze?.(60); }}>1 h</DropdownMenuItem>
@@ -240,7 +255,10 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onOpenContact(); }}
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
+              // num controle invisível — o anel de foco do `button:focus-visible` some
+              // junto com o `opacity-0`, que apaga também a sombra).
+              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >

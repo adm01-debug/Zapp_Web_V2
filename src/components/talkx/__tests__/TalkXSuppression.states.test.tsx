@@ -26,10 +26,18 @@ vi.mock('@/integrations/supabase/client', () => {
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   fromTable: () => {
+    // Cadeia "thenable": a consulta pode terminar em qualquer método encadeado.
     const chain: Record<string, unknown> = {};
+    const resposta = () => Promise.resolve({ data: [], error: null, count: 0 });
     chain.select = () => chain;
-    chain.order = () => Promise.resolve({ data: [], error: null });
-    chain.limit = () => Promise.resolve({ data: [], error: null });
+    chain.in = () => chain;
+    chain.eq = () => chain;
+    chain.order = () => chain;
+    chain.limit = () => chain;
+    // X184: a tela passou a ler a trilha de supressão (eventos de entidade) por
+    // fatia — aqui a trilha responde vazia, e o que este teste mede é o erro da LISTA.
+    chain.range = () => resposta();
+    chain.then = (ok: (v: unknown) => unknown, err?: (e: unknown) => unknown) => resposta().then(ok, err);
     return chain;
   },
 }));

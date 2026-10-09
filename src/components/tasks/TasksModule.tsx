@@ -19,20 +19,11 @@ import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
 
-interface Props {
-  defaultMode?: TaskMode;
-  /** B7 (etapa 47): a rota `?view=pipeline` manda o Quadro e ignora o modo salvo. */
-  forceMode?: boolean;
-}
-
 const STORAGE_KEY = 'tasks-mode';
 
-export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) {
-  const savedMode = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) as TaskMode) || defaultMode;
-  // B7 (etapa 47): com `forceMode` o modo da rota (`?view=pipeline`) vence o
-  // modo salvo. A gravacao continua so em `setMode`, que e o trocar de modo
-  // pelo usuario — visitar a rota nao reescreve a preferencia dele.
-  const [mode, setModeState] = useState<TaskMode>(forceMode ? defaultMode : savedMode);
+export function TasksModule() {
+  const savedMode = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) as TaskMode) || 'list';
+  const [mode, setModeState] = useState<TaskMode>(savedMode);
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null);
   /** Etapa 28 (B2): o Sheet aberto por DnD/kebab já vem pedindo o motivo.
    *  Etapa 31: o "Escolher…" do RemindChip abre focado no alarme. */
@@ -188,7 +179,7 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
 
   // Etapa 77: os 7 atalhos do módulo vivem no registry global
   // (`useGlobalKeyboardShortcuts` + `defaultShortcuts`), com escopo
-  // `view in ('tasks','pipeline')` e guarda de input. Aqui só chega o comando,
+  // `view === 'tasks'` e guarda de input. Aqui só chega o comando,
   // pelo evento `tasks-shortcut` — o módulo não instala listener de teclado.
   const aplicarAtalho = useCallback((id: string, key?: string) => {
     if (id === 'tasks-focus-quickadd') { quickAddRef.current?.focus(); return; }
@@ -367,8 +358,8 @@ export function TasksModule({ defaultMode = 'list', forceMode = false }: Props) 
         item={itemAberto}
         open={itemAberto !== null}
         onOpenChange={(o) => { if (!o) fecharSheet(); }}
-        onSave={(it, patch) => { void hook.update(it.id, patch); }}
-        onMove={(it, to, waitingReason) => { void move(it, to, waitingReason ? { waitingReason } : undefined); }}
+        onSave={(it, patch) => hook.update(it.id, patch)}
+        onMove={(it, to, waitingReason) => move(it, to, waitingReason ? { waitingReason } : undefined)}
         onSnooze={(it, minutes) => { void hook.snooze(it, minutes); }}
         onSetReminder={(it, iso) => { void hook.setReminder(it, iso); }}
         onCancel={(it) => { void hook.cancel(it); }}

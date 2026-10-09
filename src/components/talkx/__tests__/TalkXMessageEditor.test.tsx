@@ -28,11 +28,42 @@ describe('TalkXMessageEditor (V26)', () => {
     expect(onChange).toHaveBeenLastCalledWith('*texto*');
   });
 
+  it('insere lista numerada na posição do cursor', () => {
+    const onChange = vi.fn();
+    render(<TalkXMessageEditor value="abc" onChange={onChange} />);
+
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    textarea.setSelectionRange(0, 3);
+
+    fireEvent.click(screen.getByTitle('Lista numerada (1. item)'));
+    expect(onChange).toHaveBeenLastCalledWith('\n1. abc');
+  });
+
+  it('insere lista numerada sem seleção usando o texto de exemplo', () => {
+    const onChange = vi.fn();
+    render(<TalkXMessageEditor value="" onChange={onChange} />);
+    fireEvent.click(screen.getByTitle('Lista numerada (1. item)'));
+    expect(onChange).toHaveBeenLastCalledWith('\n1. item');
+  });
+
   it('insere link na posição do cursor', () => {
     const onChange = vi.fn();
     render(<TalkXMessageEditor value="" onChange={onChange} />);
     fireEvent.click(screen.getByTitle('Link (https://)'));
     expect(onChange).toHaveBeenLastCalledWith('https://');
+  });
+
+  it('insere no cursor o emoji escolhido no seletor do sistema', async () => {
+    const onChange = vi.fn();
+    render(<TalkXMessageEditor value="" onChange={onChange} />);
+
+    fireEvent.click(screen.getByTitle('Emoji'));
+    // O seletor do sistema (src/components/ui/emoji-picker.tsx) abre com busca e
+    // as categorias; o emoji clicado vai para o cursor, não para uma lista fixa.
+    expect(await screen.findByPlaceholderText(/Buscar emoji/)).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: '😊' }));
+
+    expect(onChange).toHaveBeenLastCalledWith('😊');
   });
 
   it('expoe insertAtCursor no handle (painéis de variáveis externos)', () => {

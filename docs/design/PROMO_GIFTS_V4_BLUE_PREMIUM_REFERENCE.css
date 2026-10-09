@@ -1,0 +1,57 @@
+/*
+PROMO GIFTS V4 — BLUE PREMIUM
+REFERENCE ONLY.
+
+Do not paste blindly into production.
+Map these values to existing semantic tokens after inspecting:
+- src/index.css
+- src/styles/brand-tokens.css
+- tailwind.config.ts
+
+New code should prefer repository semantic classes and brand-primary.
+*/
+
+:root {
+  --pg-bg-deep: #081019;
+  --pg-bg: #0A1118;
+  --pg-surface-1: #111A24;
+  --pg-surface-2: #16212D;
+  --pg-surface-3: #1B2937;
+  --pg-elevated: #0D1722;
+
+  --pg-text: #F5F8FC;
+  --pg-text-secondary: #BBC5D2;
+  --pg-text-muted: #7F8B9B;
+  --pg-text-disabled: #566171;
+
+  --pg-accent: #0B6EFD;
+  --pg-accent-hover: #2780FF;
+  --pg-accent-active: #075CD6;
+  --pg-accent-soft: rgba(11, 110, 253, 0.12);
+  --pg-accent-border: rgba(11, 110, 253, 0.45);
+
+  --pg-success: #20D895;
+  --pg-warning: #F5B83B;
+  --pg-danger: #FF4D5E;
+  --pg-info: #45B8FF;
+
+  --pg-border: rgba(154, 180, 210, 0.15);
+  --pg-border-hover: rgba(154, 180, 210, 0.28);
+  --pg-divider: rgba(154, 180, 210, 0.10);
+
+  --pg-radius-input: 10px;
+  --pg-radius-button: 10px;
+  --pg-radius-card: 14px;
+  --pg-radius-panel: 16px;
+  --pg-radius-dialog: 18px;
+
+  --pg-shadow-card: 0 1px 2px rgba(0,0,0,.18);
+  --pg-shadow-hover: 0 8px 22px rgba(0,0,0,.22);
+  --pg-shadow-elevated: 0 12px 32px rgba(0,0,0,.32);
+  --pg-shadow-dialog: 0 24px 70px rgba(0,0,0,.52);
+  --pg-shadow-selected:
+    0 0 0 1px rgba(11,110,253,.30),
+    0 0 22px rgba(11,110,253,.12);
+
+  --pg-ease: cubic-bezier(.2,.8,.2,1);
+}

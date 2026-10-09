@@ -5,6 +5,7 @@ import {
   getConnectionByInstance, getContactByPhone,
 } from "./evolution-helpers.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
+import { EvolutionMessagesUpdateStatusSchema } from "./schemas.ts";
 
 // deno-lint-ignore no-explicit-any
 export async function handleSendMessage(supabase: EvolutionDbClient, instance: string, data: unknown, baseData: Record<string, unknown>) {
@@ -105,7 +106,22 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string; fromMe?: boolean } | null;
-    const rawStatus = (entry.status as string) || (baseData.status as string) || '';
+    // R2-API-016: status validado POR EVENTO antes de processar a entrada.
+    // O envelope v1 aceita `data` unknown (eventos desconhecidos da Evolution GO
+    // são ACKados com 200), então o cast cego anterior fazia `status.toLowerCase()`
+    // num valor não string — número (ex.: state=3 serializado por outra versão do
+    // provedor) ou objeto lançava TypeError e derrubava o LOTE inteiro: o webhook
+    // devolvia 500 e os recibos VÁLIDOS do mesmo payload eram perdidos/reentregues.
+    // A precedência continua a mesma (valor falsy da entrada cai para o base); o
+    // que não for string não vazia é descartado com log explícito, sem tocar o
+    // banco, e as entradas seguintes do lote seguem normalmente.
+    const statusSource = entry.status || baseData.status;
+    const statusResult = EvolutionMessagesUpdateStatusSchema.safeParse(statusSource);
+    if (!statusResult.success) {
+      console.warn(`messages.update: entry ${key?.id ?? '(sem id)'} skipped -- status ausente ou malformado (${typeof statusSource})`);
+      continue;
+    }
+    const rawStatus = statusResult.data;
     const newStatus = statusMap[rawStatus] || rawStatus.toLowerCase();
 
     if (newStatus && key?.id) {

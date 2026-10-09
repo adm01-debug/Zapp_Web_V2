@@ -1,7 +1,7 @@
 # Talk X / Campanhas — Guia de Operação (v1.0)
 
 > **Atualizado:** 2026-09-27 · **Versão:** `talkx-v1.0.0`  
-> Referência: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md` (fases F0–F1 concluídas).
+> Referência: `docs/talkx/_arquivo/PLANO_IMPLEMENTACAO_TALKX_100.md` (fases F0–F1 concluídas; plano substituído, no arquivo).
 
 ---
 
@@ -229,9 +229,15 @@ O que fazer por tipo:
 - **`outcome_unknown`** — exige decisão humana (§8.4); não é ação automática.
 - **`high_failure_rate`** — falha alta em 15 min: verifique instância/credencial de
   WhatsApp (§5) e `net._http_response` (§7.1) antes de retomar.
-- **`cron_degraded`** — 3 execuções seguidas do cron com falha (ex.: `job startup
-  timeout`): o motor para de avançar. Ver §7.1; reduza a cadência/custo do tick,
-  não duplique jobs.
+- **`cron_degraded`** — o sensor avalia as últimas 10 execuções do cron e abre o
+  alerta quando **≥5 execuções seguidas falharam** (`status='failed'`, contadas da
+  mais recente para trás) **ou** quando a execução mais recente falhou com
+  `job startup timeout` — um único timeout já indica o banco sem backend livre
+  (exaustão de backends; ver `docs/ops/runbook-pg-cron-capacidade.md`). O payload
+  traz `reason` (`timeout` | `consecutive_failures`), `consecutive_failures`,
+  `timeouts` e `last_return_message`, atualizado a cada avaliação enquanto o
+  alerta segue aberto. O motor para de avançar: ver §7.1; reduza a cadência/custo
+  do tick, não duplique jobs.
 
 O fechamento é automático: quando o sinal some, a próxima chamada de
 `talkx_engine_alerts()` preenche `resolved_at`. Alertas globais (ex.: `cron_degraded`)
@@ -250,7 +256,8 @@ O aviso no grupo interno é feito pelo fluxo N8N **`talkx-alerts`** (export em
 A coluna `category` é do tipo `text` (sem enum no banco). Para adicionar uma nova categoria:
 
 1. Adicionar o novo valor ao array `TEMPLATE_CATEGORIES` em
-   `src/components/talkx/talkxShared.tsx`.
+   `src/components/talkx/kit/constants.ts` (o arquivo é reexportado pelo barrel
+   `src/components/talkx/talkxShared.ts`).
 2. Abrir PR → merge `main` — sem migration de banco necessária.
 
 ### 8.2 Desabilitar o módulo temporariamente

@@ -14,6 +14,7 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
+  backoffDelayForAttempts,
   type MediaKind,
   type MessageKind,
   newCorrelationId,
@@ -79,11 +80,13 @@ function kindForMedia(kind: MediaKind): MessageKind {
 
 type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
 
-// MX05: UMA tabela de backoff para o worker inteiro — a mesma do kernel
-// (errors.ts): 30 s, 2 min, 10 min. O primeiro degrau e o piso deterministico
-// quando o planRetry nao devolve retryAfter (decisao dead_letter): retry
-// imediato e proibido; quem decide o teto continua sendo a RPC.
-const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
+// SL-054: o backoff do DLQ é COMPARTILHADO (kernel, `BACKOFF_CEILING_MS`:
+// 30 s, 2 min, 10 min) — a MESMA tabela do `nextBackoff`/`planRetry`. Antes
+// este worker mantinha a própria cópia da política; corrigir um motor deixava o
+// outro para trás em silêncio (mesmo caso que originou o
+// `_shared/messaging/timing.ts`). O primeiro degrau é o piso determinístico
+// quando o planRetry não devolve retryAfter (decisão dead_letter): retry
+// imediato é proibido; quem decide o teto continua sendo a RPC.
 
 // F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
 // Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
@@ -908,7 +911,7 @@ export async function handleMultiplixSend(
               // `new Date()` agendaria o retry para AGORA — proibido. O piso e o
               // primeiro degrau deterministico do backoff; quem transforma em
               // falha definitiva e a RPC, nao o relogio do worker.
-              const retryAfter = decision.retryAfter ?? new Date(Date.now() + RETRY_BACKOFF_MS[0]).toISOString();
+              const retryAfter = decision.retryAfter ?? new Date(Date.now() + backoffDelayForAttempts(0)).toISOString();
               const { data: schedResult, error: rescheduleError } = await supabase.rpc("reschedule_multiplix_item", {
                 p_item_id: item.item_id,
                 p_claim_token: claim.claim_token,
@@ -991,7 +994,7 @@ export async function handleMultiplixSend(
           clearTimeout(sendTimeout);
           if (!providerPostAttempted) {
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
-            const delayMs = RETRY_BACKOFF_MS[Math.min(attemptSoFar, RETRY_BACKOFF_MS.length - 1)];
+            const delayMs = backoffDelayForAttempts(attemptSoFar);
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
             const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
@@ -1053,8 +1056,18 @@ export async function handleMultiplixSend(
       // horas e podia estourar o limite de tempo no meio do disparo.
       break passLoop;
     }
+    // MX03 (TL-034): a conclusao tem de olhar a fila que ESTE worker consome — os
+    // ITENS (`multiplix_delivery_items`). A antiga
+    // `complete_multiplix_dispatch_if_drained` conta pending/sending em
+    // `multiplix_recipients`, fila que `record_multiplix_item_sent` /
+    // `complete_multiplix_item` NAO alimentam: com todo item terminal o recipient
+    // seguia 'pending' e o disparo NUNCA concluia (o cron reinvocava a toa, e
+    // contadores/UI ficavam inconsistentes). A equivalente por item e
+    // `complete_multiplix_dispatch_if_items_drained` (f32b §10); a antiga esta
+    // marcada DEPRECATED em 20261001231230:677 e continua existindo so para os
+    // workers ainda nao migrados.
     const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_multiplix_dispatch_if_drained", { p_dispatch_id: dispatchId },
+      "complete_multiplix_dispatch_if_items_drained", { p_dispatch_id: dispatchId },
     );
     if (completionError) throw new Error(`multiplix_dispatch_completion_failed: ${completionError.message}`);
 

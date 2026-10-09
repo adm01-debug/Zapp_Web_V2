@@ -6,7 +6,8 @@
  * se já tivesse sido favoritado quando ainda vivia dentro de um grupo.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import type { ComponentProps } from 'react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -59,9 +60,23 @@ vi.mock('@/components/notifications/SoundVolumeControl', () => ({ SoundVolumeCon
 // e o badge de Tarefas consome `useMyWorkItemsBadge` (useAuth/useQuery). Este teste
 // é sobre a estrutura de navegação, então os dois entram mockados.
 vi.mock('@/components/notifications/NotificationsPopover', () => ({ NotificationsPopover: () => null }));
+/**
+ * Badge de Tarefas (useMyWorkItemsBadge/Info) e contador de e-mail não lido
+ * (useUnreadEmailCount, U01) são as duas fontes de número da barra: aqui o alvo é
+ * o encaixe de cada selo no item certo, então as duas entram mockadas e cada
+ * teste escolhe o número que a fonte entrega.
+ */
+const fontes = vi.hoisted(() => ({
+  badgeInfo: { count: 0, hasOverdue: false },
+  emailUnread: { count: 0, status: 'ok' as 'loading' | 'ok' | 'erro' },
+  useUnreadEmailCount: vi.fn(),
+}));
 vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
-  useMyWorkItemsBadge: () => 0,
-  useMyWorkItemsBadgeInfo: () => ({ count: 0, hasOverdue: false }),
+  useMyWorkItemsBadge: () => fontes.badgeInfo.count,
+  useMyWorkItemsBadgeInfo: () => fontes.badgeInfo,
+}));
+vi.mock('@/hooks/gmail/useUnreadEmailCount', () => ({
+  useUnreadEmailCount: fontes.useUnreadEmailCount,
 }));
 vi.mock('@/components/layout/SidebarUserPill', () => ({ SidebarUserPill: () => null }));
 vi.mock('@/components/layout/SidebarBackButton', () => ({ SidebarBackButton: () => null }));
@@ -78,11 +93,13 @@ vi.mock('@/components/theme/HighContrastToggle', async (importOriginal) => ({
 
 import { Sidebar } from '@/components/layout/Sidebar';
 
-function baseProps() {
+type SidebarProps = ComponentProps<typeof Sidebar>;
+
+function baseProps(): SidebarProps {
   return { currentView: 'inbox', onViewChange: vi.fn() };
 }
 
-function renderSidebar(props = baseProps()) {
+function renderSidebar(props: SidebarProps = baseProps()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -96,6 +113,10 @@ beforeEach(() => {
   mockPermissions = ['multiplix.dispatch.create'];
   mockFavorites = [];
   mockToggleFavorite.mockClear();
+  fontes.badgeInfo = { count: 0, hasOverdue: false };
+  fontes.emailUnread = { count: 0, status: 'ok' };
+  fontes.useUnreadEmailCount.mockReset();
+  fontes.useUnreadEmailCount.mockImplementation(() => fontes.emailUnread);
 });
 
 describe('Sidebar — nav primária e grupos compartilham uma única área de rolagem', () => {
@@ -153,6 +174,33 @@ describe('Sidebar — nav primária e grupos compartilham uma única área de ro
   });
 });
 
+/**
+ * F71 — o item do menu e "Multiplix · NOVO". O selo e da ENTRADA: quem nao tem
+ * `multiplix.dispatch.create` nao ve entrada nem selo (o gate nao mudou, o selo
+ * apenas acompanha). O nome acessivel do botao carrega o selo porque o
+ * `aria-label` do botao mascara o texto interno para o leitor de tela.
+ */
+describe('Sidebar — selo "NOVO" da entrada do Multiplix (F71)', () => {
+  it('quem tem a permissão vê "Multiplix · NOVO", com o selo lido no nome acessível', () => {
+    const { container } = renderSidebar();
+    const entrada = container.querySelector('[data-tour="multiplix"]');
+
+    expect(entrada).not.toBeNull();
+    expect(entrada?.textContent).toContain('Multiplix');
+    expect(entrada?.textContent).toContain('NOVO');
+    expect(entrada).toHaveAccessibleName('Multiplix (novo)');
+  });
+
+  it('sem a permissão não existe entrada nem selo (nada de "NOVO" solto no menu)', () => {
+    mockRoles = ['supervisor', 'admin'];
+    mockPermissions = [];
+    const { container } = renderSidebar();
+
+    expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
+    expect(container.textContent).not.toContain('NOVO');
+  });
+});
+
 describe('Sidebar — Favoritos não duplica item que já vive na nav primária', () => {
   it('Multiplix favoritado não aparece de novo na seção Favoritos (já é sempre visível)', () => {
     mockFavorites = ['multiplix'];
@@ -196,5 +244,75 @@ describe('Sidebar — acessibilidade alcançável pela interface', () => {
     expect(gatilho).not.toBeNull();
     expect(container.textContent).toContain('Controles rápidos');
     expect(container.contains(gatilho as HTMLElement)).toBe(true);
+  });
+});
+
+/**
+ * U01 — selo do item Email. O dono vê na barra lateral quantas conversas de e-mail
+ * ainda não foram lidas (todas as contas, via RLS). O item Email não tinha selo; o
+ * Chat (`inboxBadge`) e o Tarefas (`useMyWorkItemsBadgeInfo`) já tinham, e a regra
+ * dos dois não pode mudar. O número exibido vem do encaixe de `useUnreadEmailCount`.
+ */
+describe('Sidebar — selo do item Email (U01)', () => {
+  const itemDaBarra = (container: HTMLElement, id: string) =>
+    container.querySelector(`[data-tour="${id}"]`) as HTMLElement;
+
+  it('mostra a quantidade de conversas não lidas no item Email, na cor do Chat', () => {
+    fontes.emailUnread = { count: 4, status: 'ok' };
+    const { container } = renderSidebar();
+
+    const email = itemDaBarra(container, 'email-chat');
+    expect(email).not.toBeNull();
+    const selo = within(email).getByText('4');
+    expect(selo.className).toContain('bg-destructive');
+    expect(selo.className).not.toContain('bg-warning');
+    expect(email.getAttribute('aria-label')).toBe('Email (4 não lidas)');
+    // o item Email está visível na barra: o contador é consultado (item sem acesso não consulta)
+    expect(fontes.useUnreadEmailCount).toHaveBeenCalledWith(true);
+  });
+
+  it('sem conversas não lidas (0) o item Email fica sem selo', () => {
+    fontes.emailUnread = { count: 0, status: 'ok' };
+    const { container } = renderSidebar();
+
+    const email = itemDaBarra(container, 'email-chat');
+    expect(email).not.toBeNull();
+    expect(within(email).queryByText('0')).toBeNull();
+    expect(email.getAttribute('aria-label')).toBe('Email');
+  });
+
+  it('acima de 99 o selo mostra "99+"', () => {
+    fontes.emailUnread = { count: 100, status: 'ok' };
+    const { container } = renderSidebar();
+
+    expect(within(itemDaBarra(container, 'email-chat')).getByText('99+')).not.toBeNull();
+  });
+
+  it('falha na contagem não mostra selo e não quebra a barra', () => {
+    fontes.emailUnread = { count: 0, status: 'erro' };
+    const { container } = renderSidebar();
+
+    const email = itemDaBarra(container, 'email-chat');
+    expect(within(email).queryByText('0')).toBeNull();
+    // a barra continua inteira, com os outros itens no lugar
+    expect(itemDaBarra(container, 'inbox')).not.toBeNull();
+    expect(itemDaBarra(container, 'tasks')).not.toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Menu de navegação principal' })).not.toBeNull();
+  });
+
+  it('os selos de Chat e Tarefas seguem iguais (e com as cores de cada um)', () => {
+    fontes.emailUnread = { count: 4, status: 'ok' };
+    fontes.badgeInfo = { count: 3, hasOverdue: false };
+    const { container } = renderSidebar({ currentView: 'inbox', onViewChange: vi.fn(), inboxBadge: 5 });
+
+    const seloChat = within(itemDaBarra(container, 'inbox')).getByText('5');
+    expect(seloChat.className).toContain('bg-destructive');
+    expect(seloChat.className).not.toContain('bg-warning');
+
+    const seloTarefas = within(itemDaBarra(container, 'tasks')).getByText('3');
+    expect(seloTarefas.className).toContain('bg-warning');
+    expect(seloTarefas.className).not.toContain('bg-destructive');
+
+    expect(within(itemDaBarra(container, 'email-chat')).getByText('4')).not.toBeNull();
   });
 });

@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import type { UserAgent, Registerer, Invitation } from 'sip.js';
-import { toast } from 'sonner';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
+import { toast } from '@/lib/lazyToast';
 import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
 import { isLeader } from '@/lib/calls/tabLeaderStore';
 
@@ -99,6 +100,17 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         authorizationUsername: config.user,
         logLevel: 'warn',
         displayName: config.user,
+        // SL-002: estas são as opções do `SessionDescriptionHandler` no sip.js
+        // (o `sessionDescriptionHandlerOptions` de cada sessão só carrega as
+        // `constraints`). Elas viram o `RTCPeerConnection` de TODA sessão
+        // (session.js:1143 -> plataforma web). O `RTCPeerConnection` não tem
+        // chave de "recusar RTP em claro" — a prova disso é o perfil do SDP
+        // negociado, checada em `SipCallAdapter.midiaCriptografada`. O que se
+        // exige aqui é o transporte: RTCP muxado (um só caminho de mídia, o da
+        // sessão DTLS) e bundle obrigatório.
+        sessionDescriptionHandlerFactoryOptions: {
+          peerConnectionConfiguration: { rtcpMuxPolicy: 'require', bundlePolicy: 'max-bundle' },
+        },
         delegate: {
           onInvite: (invitation) => onIncomingInvitationRef.current?.(invitation),
         },

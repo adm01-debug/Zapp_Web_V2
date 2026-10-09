@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { clearReloadFlag, isChunkLoadError } from '@/components/errors/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
 interface ErrorBoundaryWithRetryProps {
@@ -48,6 +49,14 @@ export class ErrorBoundaryWithRetry extends React.Component<ErrorBoundaryWithRet
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.props.onError?.(error, errorInfo);
 
+    // Chunk com fetch falho nao se resolve remontando: a instancia React.lazy
+    // guarda a rejeicao e re-lanca a MESMA sem novo fetch — o auto-retry aqui
+    // so repete o erro. Re-lancar entrega o erro ao ErrorBoundary global
+    // (AppProviders), que ja recarrega a pagina uma vez por sessao.
+    if (isChunkLoadError(error)) {
+      throw error;
+    }
+
     const maxRetries = this.props.maxAutoRetries ?? 2;
 
     // Auto-retry with exponential backoff
@@ -72,6 +81,14 @@ export class ErrorBoundaryWithRetry extends React.Component<ErrorBoundaryWithRet
   }
 
   handleManualRetry = () => {
+    // Falha de chunk com o fallback ja na tela: remontar re-lanca a mesma
+    // rejeicao do lazy. O unico caminho que funciona e recarregar a pagina,
+    // igual ao handleReload do boundary global (limpando a flag da sessao).
+    if (this.state.error && isChunkLoadError(this.state.error)) {
+      clearReloadFlag();
+      window.location.reload();
+      return;
+    }
     this.setState({
       hasError: false,
       error: null,

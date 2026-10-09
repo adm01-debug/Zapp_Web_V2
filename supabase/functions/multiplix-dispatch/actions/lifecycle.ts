@@ -334,6 +334,35 @@ function groupItems(items: Row[], key: string): Map<string, Row[]> {
   return groups;
 }
 
+/**
+ * Metadados de retorno do DESTINATARIO (F62): o PRIMEIRO item respondido (menor
+ * `replied_at`) e a atribuicao DESSE MESMO item — horario e atribuicao saem do
+ * mesmo evento, entao o par nunca se contradiz. `linked` = a resposta citou uma
+ * mensagem nossa (external_id casou); `inferred` = correlacao por janela +
+ * telefone (ver `attribute_multiplix_item_reply`). Sem retorno, as duas chaves
+ * existem e sao NULAS (a tela distingue "sem resposta" de "campo ausente").
+ */
+function recipientReply(rows: Row[]): { replied_at: string | null; reply_attribution: string | null } {
+  let first: Row | null = null;
+  let firstAt = Number.POSITIVE_INFINITY;
+  for (const row of rows) {
+    const value = row.replied_at;
+    if (value === null || value === undefined) continue;
+    const parsed = Date.parse(String(value));
+    // Timestamp ilegivel nunca ganha de um valido, mas sozinho ainda e reportado.
+    const at = Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
+    if (first === null || at < firstAt) {
+      first = row;
+      firstAt = at;
+    }
+  }
+  if (first === null) return { replied_at: null, reply_attribution: null };
+  return {
+    replied_at: (first.replied_at as string | null) ?? null,
+    reply_attribution: (first.reply_attribution as string | null) ?? null,
+  };
+}
+
 export async function handleStatus(ctx: ActionContext): Promise<Response> {
   const parsed = StatusSchema.safeParse(ctx.payload);
   if (!parsed.success) {
@@ -352,7 +381,9 @@ export async function handleStatus(ctx: ActionContext): Promise<Response> {
   const items = await fetchPaged(
     ctx,
     'multiplix_delivery_items',
-    'recipient_id,block_id,status,sent_at,delivered_at,read_at,replied_at',
+    // `replied_at` + `reply_attribution` sao a fonte do retorno por destinatario
+    // (F62): o horario e a atribuicao (`linked`/`inferred`) saem daqui.
+    'recipient_id,block_id,status,sent_at,delivered_at,read_at,replied_at,reply_attribution',
     p.dispatch_id,
   );
   const recipients = p.include_recipients === false
@@ -380,6 +411,8 @@ export async function handleStatus(ctx: ActionContext): Promise<Response> {
       company_name: recipient.company_name_snapshot ?? null,
       eligibility: recipient.eligibility ?? null,
       ...tally([]),
+      // destinatario sem item: as chaves de retorno existem e sao NULAS.
+      ...recipientReply([]),
     });
   }
   for (const [recipientId, rows] of groupItems(items, 'recipient_id')) {
@@ -390,8 +423,10 @@ export async function handleStatus(ctx: ActionContext): Promise<Response> {
       company_name: null,
       eligibility: null,
       ...tally([]),
+      ...recipientReply([]),
     };
-    byRecipient.set(recipientId, { ...entry, ...tally(rows) });
+    // O horario/atribuicao do retorno completam o corte, sem tocar nos contadores.
+    byRecipient.set(recipientId, { ...entry, ...tally(rows), ...recipientReply(rows) });
   }
 
   // Corte por bloco.

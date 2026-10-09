@@ -4,6 +4,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { MODALITIES, type AiModality } from "./ai-capabilities.ts";
+import { verifyHmacSignature } from "./hmac-validation.ts";
 
 interface AiUsageEntry {
   functionName: string;
@@ -244,46 +245,6 @@ export async function logAiUsageDetached(entry: AiUsageEntry): Promise<void> {
   await promise;
 }
 
-/** Log AI usage to database (fire-and-forget, non-blocking) */
-export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRoleKey) return;
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Auto-resolve profile_id if not provided
-    const profileId = entry.profileId || await resolveProfileId(supabase, entry.userId);
-
-    await supabase.from('ai_usage_logs').insert({
-      user_id: entry.userId || null,
-      profile_id: profileId,
-      function_name: entry.functionName,
-      model: entry.model || null,
-      // IA-053 — TRI-ESTADO dos tokens: número medido (inclusive 0) ou NULL
-      // quando não houve medição. Antes, `|| 0` fazia "não medido" virar zero e
-      // o caminho de streaming entrava nos relatórios com custo zero.
-      input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
-      output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
-      duration_ms: entry.durationMs || null,
-      status: entry.status || 'success',
-      error_message: entry.errorMessage || null,
-      // IA-052 — rota efetiva anexada aqui, num lugar só: nenhum chamador
-      // precisa lembrar do formato, e o que o servidor mediu não se perde.
-      metadata: buildUsageMetadata(entry),
-      // IA-051 — correlação ponta a ponta. Passa pelo normalizador para que
-      // nenhum dado pessoal atravesse este caminho, mesmo por engano.
-      request_id: normalizeCorrelationId(entry.requestId),
-      job_id: normalizeCorrelationId(entry.jobId),
-      attempt: normalizeAttempt(entry.attempt),
-    });
-  } catch (e) {
-    // Never throw — logging failures must not break the main flow
-    console.warn(`[ai-usage] Failed to log: ${e instanceof Error ? e.message : String(e)}`);
-  }
-}
-
 /**
  * R2-API-032 — consumo REAL do diagnóstico de provedor do `ai-proxy` (`test: true`).
  *
@@ -327,6 +288,606 @@ export async function registrarConsumoDeDiagnostico(diag: {
     requestId: diag.requestId ?? null,
     metadata: { provider_test: true, test_code: diag.code ?? null },
   });
+}
+
+// ---------------------------------------------------------------------------
+// IA-TIMEOUT-001 — log essencial durável com pendência na outbox
+// ---------------------------------------------------------------------------
+// Mantém a base de 3abda0372: chave estável e retentativa só do transitório.
+// A diferença é a garantia exigida pelo schema pai: toda falha remanescente vai
+// para `ai_usage_outbox`, e o reprocessamento lê a própria fila e só dá baixa
+// depois de confirmar a entrega em `ai_usage_logs`.
+
+/** Teto de tentativas do insert do log essencial (1 + reenvios). */
+const MAX_TENTATIVAS_LOG = 3;
+
+/**
+ * Teto de reprocessamentos de uma pendência da outbox. Acima dele a pendência
+ * recebe BAIXA EXPLÍCITA (`motivo` + `processed_at`): uma linha venenosa não
+ * pode ficar para sempre na frente da fila bloqueando pendências válidas.
+ */
+const MAX_TENTATIVAS_REPROCESSO = 5;
+
+/**
+ * Chave de idempotência da linha de log: SHA-256 hex dos campos estáveis.
+ * O próprio `metadata.log_key` não entra no cálculo.
+ */
+export async function chaveDeLog(linha: Record<string, unknown>): Promise<string> {
+  const metadata = (linha.metadata ?? {}) as Record<string, unknown>;
+  const provider: Record<string, unknown> = {};
+  for (const chave of Object.keys(metadata).filter((k) => k.startsWith("provider_")).sort()) {
+    provider[chave] = metadata[chave];
+  }
+  const estavel = {
+    function_name: linha.function_name ?? null,
+    user_id: linha.user_id ?? null,
+    model: linha.model ?? null,
+    input_tokens: linha.input_tokens ?? null,
+    output_tokens: linha.output_tokens ?? null,
+    duration_ms: linha.duration_ms ?? null,
+    status: linha.status ?? null,
+    error_message: linha.error_message ?? null,
+    request_id: linha.request_id ?? null,
+    job_id: linha.job_id ?? null,
+    attempt: linha.attempt ?? null,
+    provider,
+  };
+  const resumo = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(estavel)),
+  );
+  return [...new Uint8Array(resumo)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function cabecalhosRest(serviceRoleKey: string): Record<string, string> {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+  };
+}
+
+const CODIGOS_TRANSITORIOS_DE_LOG = new Set([
+  "08000",
+  "08003",
+  "08006",
+  "53300",
+  "57014",
+  "57P01",
+  "57P02",
+  "57P03",
+  "58000",
+  "58030",
+]);
+
+export function classificarStatusDoErroDeLog(error: { status?: unknown; code?: unknown }): number {
+  const statusBruto = error.status;
+  const status = typeof statusBruto === "number" ? statusBruto : Number(statusBruto);
+  if (Number.isInteger(status) && status >= 100 && status <= 599) return status;
+
+  const code = typeof error.code === "string" ? error.code.trim().toUpperCase() : "";
+  if (CODIGOS_TRANSITORIOS_DE_LOG.has(code)) return 503;
+  if (/^PGRST\d+$/u.test(code) || /^[0-9A-Z]{5}$/u.test(code)) return 400;
+
+  // Sem status/código reconhecido, permanece transitório: melhor retentar e
+  // enfileirar na outbox do que classificar como perda permanente sem evidência.
+  return 503;
+}
+
+interface ResultadoInsertLogEssencial {
+  ok: boolean;
+  status: number;
+}
+
+async function inserirLinhaDeLog(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+): Promise<ResultadoInsertLogEssencial> {
+  const supabase = createClient(url, chave);
+  const { error } = await supabase.from("ai_usage_logs").insert(linha);
+  if (!error) return { ok: true, status: 201 };
+
+  return {
+    ok: false,
+    status: classificarStatusDoErroDeLog(error as { status?: unknown; code?: unknown }),
+  };
+}
+
+/** Há linha com esta `log_key`? Lança quando a própria checagem falha. */
+async function existeLinhaDeLog(url: string, chave: string, logKey: string): Promise<boolean> {
+  const resposta = await fetch(
+    `${url}/rest/v1/ai_usage_logs?select=id&metadata-%3E%3Elog_key=eq.${encodeURIComponent(logKey)}&limit=1`,
+    { headers: cabecalhosRest(chave) },
+  );
+  const corpo = await resposta.text();
+  if (!resposta.ok) throw new Error(`checagem de log_key falhou: HTTP ${resposta.status}`);
+  const linhas = JSON.parse(corpo) as unknown;
+  return Array.isArray(linhas) && linhas.length > 0;
+}
+
+function statusTransitorioDeLog(status: number): boolean {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
+async function gravarLogEssencial(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  logKey: string,
+): Promise<"gravado" | "falhou"> {
+  for (let tentativa = 0; tentativa < MAX_TENTATIVAS_LOG; tentativa++) {
+    if (tentativa > 0) {
+      try {
+        if (await existeLinhaDeLog(url, chave, logKey)) return "gravado";
+      } catch {
+        continue;
+      }
+    }
+    try {
+      const resposta = await inserirLinhaDeLog(url, chave, linha);
+      if (resposta.ok) return "gravado";
+      if (!statusTransitorioDeLog(resposta.status)) return "falhou";
+    } catch {
+      // Sem resposta: a próxima volta confere a existência antes de reenviar.
+    }
+  }
+  return "falhou";
+}
+
+/**
+ * Enfileira na outbox a linha do log essencial que NÃO pôde ser entregue.
+ *
+ * `true` SÓ quando o PostgREST confirma a escrita (`resposta.ok`): conflito de
+ * unicidade, alvo inexistente, 4xx/5xx ou rede fora contam como FALHA e sobem
+ * para `registrarFalhaDeLog`, que emite o marcador de último recurso. Nenhum
+ * caminho pode tratar a tentativa de escrita como pendência durável sem isso.
+ */
+async function gravarNaOutbox(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  motivo: string,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(`${url}/rest/v1/ai_usage_outbox`, {
+      method: "POST",
+      headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+      body: JSON.stringify({ payload: { linha }, motivo }),
+    });
+    try { await resposta.text(); } catch { /* resposta sem corpo */ }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Atualiza (ou dá baixa em) uma pendência da outbox pelo `id`.
+ *
+ * `true` SÓ quando o PATCH confirma (`resposta.ok`). Todo chamador é obrigado a
+ * olhar o retorno: PATCH recusado = a linha continua como estava.
+ */
+async function atualizarPendencia(
+  url: string,
+  chave: string,
+  id: string,
+  campos: Record<string, unknown>,
+): Promise<boolean> {
+  try {
+    const resposta = await fetch(
+      `${url}/rest/v1/ai_usage_outbox?id=eq.${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        headers: { ...cabecalhosRest(chave), Prefer: "return=minimal" },
+        body: JSON.stringify(campos),
+      },
+    );
+    try { await resposta.text(); } catch { /* resposta sem corpo */ }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+export interface ResultadoReprocessamentoLogEssencial {
+  lidos: number;
+  entregues: number;
+  pendentes: number;
+  /**
+   * Baixas definitivas COM motivo: payload inválido ou teto de tentativas
+   * atingido. Não é entrega, não é pendência: é saída explícita da fila.
+   */
+  esgotadas: number;
+  falha: string | null;
+}
+
+/**
+ * Lê pendências da outbox, tenta entregá-las e só preenche `processed_at`
+ * depois de a linha existir em `ai_usage_logs`. Falha de entrega ou de baixa
+ * deixa o item pendente para a próxima execução.
+ *
+ * A fila é lida por `tentativas.asc,created_at.asc`: quem menos tentou vai
+ * primeiro, então pendências venenosas (que falham sempre) não trava a fila —
+ * a pendência válida mais nova não fica atrás delas. E quem esgota o teto de
+ * tentativas ou chega com payload inválido sai da fila com baixa EXPLÍCITA
+ * (`motivo` + `processed_at`), nunca por descarte silencioso.
+ */
+export async function reprocessarLogEssencial(
+  limite = 50,
+): Promise<ResultadoReprocessamentoLogEssencial> {
+  const resultado: ResultadoReprocessamentoLogEssencial = {
+    lidos: 0,
+    entregues: 0,
+    pendentes: 0,
+    esgotadas: 0,
+    falha: null,
+  };
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    resultado.falha = "env_ausente";
+    return resultado;
+  }
+
+  let pendencias: Array<Record<string, unknown>>;
+  try {
+    const resposta = await fetch(
+      `${supabaseUrl}/rest/v1/ai_usage_outbox?select=id,payload,tentativas` +
+        `&processed_at=is.null&order=tentativas.asc,created_at.asc` +
+        `&limit=${Math.max(1, Math.floor(limite))}`,
+      { headers: cabecalhosRest(serviceRoleKey) },
+    );
+    const corpo = await resposta.text();
+    if (!resposta.ok) {
+      resultado.falha = `leitura_http_${resposta.status}`;
+      return resultado;
+    }
+    const parsed = JSON.parse(corpo) as unknown;
+    if (!Array.isArray(parsed)) {
+      resultado.falha = "leitura_invalida";
+      return resultado;
+    }
+    pendencias = parsed as Array<Record<string, unknown>>;
+  } catch (e) {
+    resultado.falha = `leitura:${e instanceof Error ? e.message : String(e)}`;
+    return resultado;
+  }
+
+  resultado.lidos = pendencias.length;
+  for (const pendencia of pendencias) {
+    const id = typeof pendencia.id === "string" ? pendencia.id : "";
+    const payload = pendencia.payload as Record<string, unknown> | null;
+    const linha = payload?.linha as Record<string, unknown> | null;
+    const tentativas = Math.max(0, Math.floor(Number(pendencia.tentativas ?? 0)) || 0);
+    const agora = new Date().toISOString();
+
+    if (!id) {
+      // Sem id não há como dar baixa (o PATCH é por id): fica pendente e o
+      // motivo vai para o log, nunca para o silêncio.
+      console.error("[ai-usage] pendência da outbox sem id não pode receber baixa");
+      resultado.pendentes += 1;
+      continue;
+    }
+
+    // Baixa explícita: payload inválido ou teto atingido sai da fila com
+    // `motivo` gravado — nunca descarte silencioso nem loop infinito.
+    if (!linha || typeof linha.function_name !== "string" || tentativas >= MAX_TENTATIVAS_REPROCESSO) {
+      const motivo = tentativas >= MAX_TENTATIVAS_REPROCESSO
+        ? "tentativas_esgotadas"
+        : "payload_invalido";
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        motivo,
+        tentativas: tentativas + 1,
+        processed_at: agora,
+      });
+      if (baixou) resultado.esgotadas += 1;
+      else resultado.pendentes += 1;
+      continue;
+    }
+
+    let entregue = false;
+    try {
+      const logKey = await chaveDeLog(linha);
+      const linhaFinal = {
+        ...linha,
+        metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
+      };
+      entregue = await existeLinhaDeLog(supabaseUrl, serviceRoleKey, logKey) ||
+        await gravarLogEssencial(supabaseUrl, serviceRoleKey, linhaFinal, logKey) === "gravado";
+    } catch {
+      entregue = false;
+    }
+
+    if (entregue) {
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        processed_at: agora,
+      });
+      if (baixou) {
+        resultado.entregues += 1;
+        continue;
+      }
+      resultado.pendentes += 1;
+      continue;
+    }
+
+    const novasTentativas = tentativas + 1;
+    if (novasTentativas >= MAX_TENTATIVAS_REPROCESSO) {
+      // Última falha antes do teto: baixa definitiva com motivo, para a
+      // pendência não virar letra morta nem travar a fila na próxima leitura.
+      const baixou = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+        motivo: "tentativas_esgotadas",
+        tentativas: novasTentativas,
+        processed_at: agora,
+      });
+      if (baixou) resultado.esgotadas += 1;
+      else resultado.pendentes += 1;
+      continue;
+    }
+
+    // O PATCH de tentativas também responde: descartar `resposta.ok` era o único
+    // ponto em que a outbox recusava uma escrita SEM ninguém saber — o item
+    // ficava pendente (correto), mas a recusa saía muda. Ela passa a sair no
+    // resultado da execução, junto das demais falhas de leitura.
+    const registrouTentativas = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+      tentativas: novasTentativas,
+    });
+    if (!registrouTentativas) resultado.falha = "patch_tentativas_recusado";
+    resultado.pendentes += 1;
+  }
+  return resultado;
+}
+
+function montarLinhaDeConsumo(
+  entry: AiUsageEntry,
+  profileId: string | null,
+): Record<string, unknown> {
+  return {
+    user_id: entry.userId || null,
+    profile_id: profileId,
+    function_name: entry.functionName,
+    model: entry.model || null,
+    input_tokens: entry.usageUnknown === true ? null : (entry.inputTokens ?? 0),
+    output_tokens: entry.usageUnknown === true ? null : (entry.outputTokens ?? 0),
+    duration_ms: entry.durationMs || null,
+    status: entry.status || "success",
+    error_message: entry.errorMessage || null,
+    metadata: buildUsageMetadata(entry),
+    request_id: normalizeCorrelationId(entry.requestId),
+    job_id: normalizeCorrelationId(entry.jobId),
+    attempt: normalizeAttempt(entry.attempt),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// SL-195c2 — evento de IA não confirmado vai para `public.outbox_events`
+// (contrato do pai `t_c33d0cbc`), assinado com HMAC-SHA256
+// ---------------------------------------------------------------------------
+// O insert em `ai_usage_logs` falhou de vez e a linha virou pendência em
+// `ai_usage_outbox`. Esse é o "evento de IA que ficou sem confirmação": além da
+// pendência de entrega, a Edge grava o EVENTO em `outbox_events` com
+// `event_id` estável (`chaveDeLog`) e assinatura HMAC sobre a serialização
+// canônica da linha — o banco confere o formato e a unicidade
+// (origem, event_id) faz o `ON CONFLICT DO NOTHING`; a verificação
+// criptográfica fica na Edge, por `verifyHmacSignature`.
+
+/** Nome da variável de ambiente com o segredo HMAC da outbox de IA. */
+export const SEGREDO_DA_OUTBOX_DE_IA = "AI_OUTBOX_HMAC_SECRET";
+
+/** `tipo` gravado na coluna homônima de `outbox_events` para stats de IA. */
+export const TIPO_EVENTO_DE_IA = "ia.stats";
+
+/**
+ * Serialização determinística: chaves em ordem alfabética (recursivo),
+ * arrays na ordem, sem espaços. Objeto cíclico LANÇA — não pode travar nem
+ * devolver string ambígua, porque a assinatura cobre exatamente estes bytes.
+ */
+export function serializarEstatisticasCanonicas(valor: unknown): string {
+  const emProfundidade = new Set<unknown>();
+  const canonico = (v: unknown): unknown => {
+    if (v === null || typeof v !== "object") return v;
+    if (emProfundidade.has(v)) {
+      throw new Error("serializarEstatisticasCanonicas: referência circular");
+    }
+    emProfundidade.add(v);
+    try {
+      if (Array.isArray(v)) return v.map(canonico);
+      const ordenado: Record<string, unknown> = {};
+      for (const chave of Object.keys(v as Record<string, unknown>).sort()) {
+        ordenado[chave] = canonico((v as Record<string, unknown>)[chave]);
+      }
+      return ordenado;
+    } finally {
+      emProfundidade.delete(v);
+    }
+  };
+  return JSON.stringify(canonico(valor));
+}
+
+/** HMAC-SHA256 do corpo, hex minúsculo (64 caracteres), sem prefixo. */
+export async function assinarCorpoDoEvento(corpo: string, segredo: string): Promise<string> {
+  const codificador = new TextEncoder();
+  const chave = await crypto.subtle.importKey(
+    "raw",
+    codificador.encode(segredo),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const assinatura = await crypto.subtle.sign("HMAC", chave, codificador.encode(corpo));
+  return [...new Uint8Array(assinatura)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Monta a linha de `outbox_events` (colunas do contrato do pai). O corpo
+ * assinado é a STRING canônica guardada em `payload.corpo`: depois que o jsonb
+ * do banco reordenar as chaves, qualquer verificador reconhece os bytes
+ * assinados com `verifyHmacSignature(payload.corpo, linha.assinatura, segredo)`.
+ */
+async function montarEventoDeEstatisticasDeIa({ linha, motivo, logKey }: {
+  linha: Record<string, unknown>;
+  motivo: string;
+  logKey: string;
+}): Promise<Record<string, unknown>> {
+  const origemBruta = linha.function_name == null ? "" : String(linha.function_name);
+  const corpo = serializarEstatisticasCanonicas(linha);
+  const payload = { corpo, motivo, log_key: logKey };
+  return {
+    origem: origemBruta.trim() === "" ? "ai-usage" : origemBruta,
+    event_id: logKey,
+    tipo: TIPO_EVENTO_DE_IA,
+    payload,
+    assinatura: await assinarCorpoDoEvento(
+      corpo,
+      Deno.env.get(SEGREDO_DA_OUTBOX_DE_IA) ?? "",
+    ),
+    algoritmo: "sha256",
+    tentativas: 0,
+  };
+}
+
+/**
+ * Grava o evento de IA não confirmado em `outbox_events`. Idempotente por
+ * constraint: o `resolution=ignore-duplicates` do PostgREST é o
+ * `ON CONFLICT DO NOTHING` sobre UNIQUE (origem, event_id) — nunca "consulta
+ * antes". NUNCA lança: o chamador é o caminho do log essencial.
+ *
+ * Fail-closed: sem `AI_OUTBOX_HMAC_SECRET` (ou com a própria assinatura
+ * falhando na verificação) NÃO sai requisição — a coluna `assinatura` é
+ * NOT NULL com CHECK de formato, e inventar uma assinatura é pior que não
+ * gravar.
+ */
+async function gravarEstatisticaNaoConfirmada({ url, serviceRoleKey, linha, motivo, logKey }: {
+  url: string;
+  serviceRoleKey: string;
+  linha: Record<string, unknown>;
+  motivo: string;
+  logKey: string;
+}): Promise<boolean> {
+  try {
+    const segredo = Deno.env.get(SEGREDO_DA_OUTBOX_DE_IA);
+    if (!segredo || segredo.trim() === "") {
+      console.error(
+        `[ai-usage][OUTBOX-EVENTO-NAO-ASSINADO] ${SEGREDO_DA_OUTBOX_DE_IA} ausente — evento ${logKey} não gravado`,
+      );
+      return false;
+    }
+
+    const evento = await montarEventoDeEstatisticasDeIa({ linha, motivo, logKey });
+    const payload = evento.payload as { corpo: string };
+    const confere = await verifyHmacSignature(
+      payload.corpo,
+      String(evento.assinatura),
+      segredo,
+    );
+    if (!confere) {
+      console.error(
+        `[ai-usage][OUTBOX-EVENTO-NAO-ASSINADO] verificação da própria assinatura falhou — evento ${logKey} não gravado`,
+      );
+      return false;
+    }
+
+    const resposta = await fetch(
+      `${url}/rest/v1/outbox_events?on_conflict=origem,event_id`,
+      {
+        method: "POST",
+        headers: {
+          ...cabecalhosRest(serviceRoleKey),
+          Prefer: "return=minimal,resolution=ignore-duplicates",
+        },
+        body: JSON.stringify(evento),
+      },
+    );
+    try {
+      await resposta.text();
+    } catch {
+      // Resposta sem corpo: o que importa é o status.
+    }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function registrarFalhaDeLog(
+  url: string,
+  chave: string,
+  linha: Record<string, unknown>,
+  motivo: string,
+): Promise<void> {
+  // SL-195c2 — além da pendência de entrega (abaixo, inalterada), o evento de
+  // IA que ficou sem confirmação vai para `outbox_events` assinado. A falha
+  // dessa gravação é declarada pelo marcador; nada aqui enfraquece o caminho
+  // original do log essencial.
+  try {
+    const logKey = await chaveDeLog(linha);
+    const gravou = await gravarEstatisticaNaoConfirmada({
+      url,
+      serviceRoleKey: chave,
+      linha,
+      motivo,
+      logKey,
+    });
+    if (!gravou) {
+      console.error(`[ai-usage][OUTBOX-EVENTO-PERDIDO] evento ${logKey} (motivo: ${motivo})`);
+    }
+  } catch {
+    console.error(`[ai-usage][OUTBOX-EVENTO-PERDIDO] evento não montável (motivo: ${motivo})`);
+  }
+
+  if (await gravarNaOutbox(url, chave, linha, motivo)) return;
+  try {
+    console.error(
+      `[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo, linha })}`,
+    );
+  } catch {
+    // Linha não serializável (ex.: referência circular): o motivo ainda sai.
+    console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${motivo} (linha não serializável)`);
+  }
+}
+
+/** Log AI usage to database (essencial: nunca lança, nunca perde em silêncio) */
+export async function logAiUsage(entry: AiUsageEntry): Promise<void> {
+  // Env e linha ficam FORA do try só na declaração: a LEITURA de `Deno.env` e
+  // a MONTAGEM da linha (`montarLinhaDeConsumo`/normalizadores) acontecem
+  // dentro do try/catch — o contrato é resolver sem lançar mesmo quando a
+  // entrada é inválida a ponto de a montagem explodir.
+  let supabaseUrl: string | undefined;
+  let serviceRoleKey: string | undefined;
+  let linha: Record<string, unknown> | null = null;
+  try {
+    supabaseUrl = Deno.env.get("SUPABASE_URL");
+    serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) return;
+
+    // A linha nasce completa antes do enriquecimento. Assim até uma falha na
+    // resolução de profile_id tem um payload pronto e reprocessável na outbox.
+    linha = montarLinhaDeConsumo(entry, entry.profileId || null);
+
+    const logKey = await chaveDeLog(linha);
+    linha = {
+      ...linha,
+      metadata: { ...((linha.metadata ?? {}) as Record<string, unknown>), log_key: logKey },
+    };
+
+    if (!entry.profileId && entry.userId) {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      linha.profile_id = await resolveProfileId(supabase, entry.userId);
+    }
+
+    if (await gravarLogEssencial(supabaseUrl, serviceRoleKey, linha, logKey) === "falhou") {
+      await registrarFalhaDeLog(supabaseUrl, serviceRoleKey, linha, "insert_exaurido");
+    }
+  } catch (e) {
+    const motivo = e instanceof Error ? e.message : String(e);
+    if (!linha || !supabaseUrl || !serviceRoleKey) {
+      // Sem linha (montagem/normalização explodiu) ou sem rota de persistência
+      // não há outbox possível: a evidência é o marcador no log da função.
+      console.error(`[ai-usage][LOG-ESSENCIAL-PERDIDO] ${JSON.stringify({ motivo })}`);
+      return;
+    }
+    await registrarFalhaDeLog(supabaseUrl, serviceRoleKey, linha, `pre_insert:${motivo}`);
+  }
 }
 
 // ---------------------------------------------------------------------------

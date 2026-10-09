@@ -24,6 +24,27 @@ interface ChurnRisk {
   reasons: string[];
 }
 
+/**
+ * Formato devolvido por `ai-churn-analysis` (IA-112). É o resultado CANÔNICO que
+ * a tela passa a exibir: o cálculo local (abaixo) só preenche a primeira leitura.
+ */
+interface AiChurnResult {
+  contactId: string;
+  riskScore: number;
+  riskLevel: ChurnRisk['riskLevel'];
+  daysSinceLastMessage: number;
+  totalMessageCount?: number;
+  reasons?: string[];
+}
+
+const computeStats = (list: ChurnRisk[]) => ({
+  total: list.length,
+  critical: list.filter(r => r.riskLevel === 'critical').length,
+  high: list.filter(r => r.riskLevel === 'high').length,
+  medium: list.filter(r => r.riskLevel === 'medium').length,
+  low: list.filter(r => r.riskLevel === 'low').length,
+});
+
 export function ChurnPredictionDashboard() {
   const [risks, setRisks] = useState<ChurnRisk[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,13 +126,7 @@ export function ChurnPredictionDashboard() {
       churnRisks.sort((a, b) => b.riskScore - a.riskScore);
       setRisks(churnRisks);
 
-      setStats({
-        total: churnRisks.length,
-        critical: churnRisks.filter(r => r.riskLevel === 'critical').length,
-        high: churnRisks.filter(r => r.riskLevel === 'high').length,
-        medium: churnRisks.filter(r => r.riskLevel === 'medium').length,
-        low: churnRisks.filter(r => r.riskLevel === 'low').length,
-      });
+      setStats(computeStats(churnRisks));
     } catch (err) {
       toast.error('Erro ao analisar risco de churn');
     } finally {
@@ -124,18 +139,62 @@ export function ChurnPredictionDashboard() {
     analyzeChurnRisk();
   }, [analyzeChurnRisk]);
 
+  /**
+   * IA-112 — o número que a tela mostra depois de "Análise IA" é o que o backend
+   * calculou. Antes o retorno era descartado e a tela só recalculava localmente,
+   * de modo que o botão não mudava nada; no erro o toast ainda dizia "análise
+   * local concluída com sucesso", escondendo a falha.
+   */
+  const applyAiResults = (results: AiChurnResult[]): number => {
+    const byContact = new Map(results.map(r => [r.contactId, r]));
+    let appliedCount = 0;
+    const merged = risks.map(risk => {
+      const ai = byContact.get(risk.contactId);
+      if (!ai) return risk;
+      appliedCount += 1;
+      return {
+        ...risk,
+        riskScore: ai.riskScore,
+        riskLevel: ai.riskLevel,
+        daysSinceLastMessage: ai.daysSinceLastMessage,
+        totalMessages: ai.totalMessageCount ?? risk.totalMessages,
+        reasons: ai.reasons && ai.reasons.length > 0 ? ai.reasons : risk.reasons,
+      };
+    });
+    if (appliedCount === 0) return 0;
+    merged.sort((a, b) => b.riskScore - a.riskScore);
+    setRisks(merged);
+    setStats(computeStats(merged));
+    return appliedCount;
+  };
+
   const runAIAnalysis = async () => {
+    const contactIds = risks.slice(0, 20).map(r => r.contactId);
+    if (contactIds.length === 0) {
+      toast.error('Nenhum contato carregado para analisar.');
+      return;
+    }
     setAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-churn-analysis', {
-        body: { contactIds: risks.slice(0, 20).map(r => r.contactId) }
+        body: { contactIds }
       });
       if (error) throw error;
-      toast.success('Análise de IA concluída!');
-      await analyzeChurnRisk();
+
+      const results = Array.isArray(data?.results) ? (data.results as AiChurnResult[]) : [];
+      if (results.length === 0) {
+        toast.error('A IA não devolveu resultados de churn; os números locais foram mantidos.');
+        return;
+      }
+
+      const appliedCount = applyAiResults(results);
+      if (appliedCount === 0) {
+        toast.error('A IA não devolveu resultados para os contatos carregados; os números locais foram mantidos.');
+        return;
+      }
+      toast.success(`Análise de IA aplicada a ${appliedCount} contato(s).`);
     } catch {
-      // Fallback: show results from local analysis
-      toast.success('Análise local concluída com sucesso!');
+      toast.error('A análise de IA não pôde ser aplicada; os números locais foram mantidos.');
     } finally {
       setAnalyzing(false);
     }

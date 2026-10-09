@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Bold, Italic, List, Smile, Hash, Link2 } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Smile, Hash, Link2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { cn } from '@/lib/utils';
+import { parsePlaceholderToken, parsePlaceholders } from './kit/placeholders';
 
 /**
  * V26 — editor de mensagem único do Talk X.
@@ -17,20 +19,20 @@ import { cn } from '@/lib/utils';
  * exatamente sobre o texto digitado.
  */
 
-/** Emojis comuns do WhatsApp — inseridos no cursor. */
-const EMOJIS = ['😊', '😂', '🎉', '👍', '🙏', '❤️', '🔥', '✨', '📌', '✅', '🚀', '🎁', '⏰', '📎', '💰', '💬'];
-
 const TOOL_BUTTON =
   'h-7 w-7 rounded flex items-center justify-center text-foreground-secondary hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:pointer-events-none';
 
 /** Um segmento inteiro de placeholder, para quebrar o texto no highlight. */
 const PLACEHOLDER_TOKEN = /\{\{[^}]*\}\}/;
-/** Captura o nome de qualquer `{{ ... }}` (mesma forma que `personalizePreview`). */
-const PLACEHOLDER_CAPTURE = /\{\{\s*([^}]+?)\s*\}\}/g;
 
-/** Compara variáveis sem depender de chaves, espaços ou caixa: `{{Nome}}` ≡ `nome`. */
+/**
+ * Compara variáveis pela CHAVE, sem depender de chaves, espaços, caixa ou do
+ * padrão de fallback: `{{Nome|cliente}}` ≡ `nome` (mesma gramática da prévia,
+ * `kit/placeholders`). O token inteiro NÃO é a variável — usá-lo acusava como
+ * desconhecida uma sintaxe que `personalizePreview` resolve (R2-MOD-062).
+ */
 function normalizeVariable(raw: string): string {
-  return raw.replace(/[{}]/g, '').trim().toLowerCase();
+  return parsePlaceholderToken(raw).key;
 }
 
 export interface TalkXMessageEditorHandle {
@@ -96,7 +98,7 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
 
     const usedVariables = useMemo(() => {
       const found = new Set<string>();
-      for (const match of value.matchAll(PLACEHOLDER_CAPTURE)) found.add(normalizeVariable(match[1]));
+      for (const { key } of parsePlaceholders(value)) if (key) found.add(key);
       return Array.from(found);
     }, [value]);
 
@@ -125,22 +127,15 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
           <button type="button" title="Negrito (*texto*)" disabled={disabled} onClick={() => insertAtCursor('*', '*', 'texto')} className={TOOL_BUTTON}><Bold className="w-3.5 h-3.5" /></button>
           <button type="button" title="Itálico (_texto_)" disabled={disabled} onClick={() => insertAtCursor('_', '_', 'texto')} className={TOOL_BUTTON}><Italic className="w-3.5 h-3.5" /></button>
           <button type="button" title="Lista (- item)" disabled={disabled} onClick={() => insertAtCursor('\n- ', '', 'item')} className={TOOL_BUTTON}><List className="w-3.5 h-3.5" /></button>
+          <button type="button" title="Lista numerada (1. item)" disabled={disabled} onClick={() => insertAtCursor('\n1. ', '', 'item')} className={TOOL_BUTTON}><ListOrdered className="w-3.5 h-3.5" /></button>
           <div className="w-px h-4 bg-border/60 mx-0.5" />
-          {/* Emoji */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Emoji — seletor do sistema (busca por texto e categorias) */}
+          <EmojiPicker
+            onEmojiSelect={(emoji) => insertAtCursor(emoji)}
+            trigger={
               <button type="button" title="Emoji" disabled={disabled} className={TOOL_BUTTON}><Smile className="w-3.5 h-3.5" /></button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
-              <div className="grid grid-cols-8 gap-0.5">
-                {EMOJIS.map((emoji) => (
-                  <DropdownMenuItem key={emoji} className="h-6 w-6 items-center justify-center p-0 text-base" onClick={() => insertAtCursor(emoji)}>
-                    {emoji}
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          />
           {/* Link */}
           <button type="button" title="Link (https://)" disabled={disabled} onClick={() => insertAtCursor('https://')} className={TOOL_BUTTON}><Link2 className="w-3.5 h-3.5" /></button>
           {/* Inserir variável no cursor */}

@@ -552,3 +552,50 @@ test("--staged nao combina com --update-baseline", (t) => {
     cleanup();
   }
 });
+
+function capturaSaida(t) {
+  const linhas = [];
+  t.mock.method(console, "log", (...args) => {
+    linhas.push(args.join(" "));
+  });
+  t.mock.method(console, "error", () => {});
+  return linhas;
+}
+
+test("avisa quando o baseline registra divida ja paga", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    // src/removida.ts esta registrado no baseline e nao existe mais: e divida JA paga, ainda contada.
+    const atual = result(root, "src/a.ts", "missing();\n");
+    const paga = result(root, "src/removida.ts", "missing();\n");
+    writeFileSync(path.join(root, "baseline.json"), JSON.stringify(createBaseline([atual, paga], root)), "utf8");
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([atual]), "utf8");
+    const linhas = capturaSaida(t);
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.ok(
+      linhas.some((linha) => linha.includes("AVISO: 1 ocorrencia(s) do baseline nao existem mais")),
+      `esperava o aviso com a contagem da divida paga; saida: ${linhas.join(" | ")}`,
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("nao avisa quando o baseline bate com a varredura", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    const atual = result(root, "src/a.ts", "missing();\n");
+    writeFileSync(path.join(root, "baseline.json"), JSON.stringify(createBaseline([atual], root)), "utf8");
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([atual]), "utf8");
+    const linhas = capturaSaida(t);
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.deepEqual(
+      linhas.filter((linha) => linha.startsWith("AVISO")),
+      [],
+    );
+  } finally {
+    cleanup();
+  }
+});

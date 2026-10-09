@@ -3,7 +3,7 @@ import { LayoutScrollProvider } from '@/contexts/LayoutScrollContext';
 
 interface ViewContainerProps {
   children: React.ReactNode;
-  /** Pass true for views that manage their own full-screen layout (inbox, pipeline…) */
+  /** Pass true for views that manage their own full-screen layout (inbox, tasks…) */
   fullScreen?: boolean;
   /** Current view id — trocar de view volta a rolagem para o topo */
   viewId?: string;

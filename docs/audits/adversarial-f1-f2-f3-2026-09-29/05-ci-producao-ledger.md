@@ -5,6 +5,17 @@
 **Alvo auditado:** F1 (PR #1173, merge `a4d85736c61e093de005964ea88b763979f5e385`), F2 (PR #1182, merge `2b8c7994085ba6893ac5c1cffff9e652b5ed021b`), F3 (PR #1195, merge `694bf0849c199bb5366e23e2c0cf861a3c386460`)
 **Data/hora da auditoria:** 2026-09-29, 14:14→14:35 (America/Sao_Paulo, UTC−03:00); execuções de CI em UTC.
 
+> **ERRATA (2026-10-08) — contagem da suíte (achado A5-1).** A medição **4244 passed / 40 todo** registrada
+> neste relatório saiu de uma árvore contaminada por arquivos não rastreados (o caveat de ambiente abaixo
+> declara que este chat rodou num workspace compartilhado com os artefatos de A1/A4). No SHA auditado
+> `694bf084` a contagem correta é **4217 passed | 40 todo (4257)**, com **305 arquivos de teste** (304 passed +
+> 1 skipped) — provado por duas fontes independentes: `git ls-tree -r --name-only 694bf084 -- src | grep -cE
+> '\.(test|spec)\.(ts|tsx)$'` = **305** e o log do CI no próprio merge (job `109526860279`:
+> `Tests  4217 passed | 40 todo (4257)` / `Test Files  304 passed | 1 skipped (305)`).
+> **Toda menção a 4244 neste relatório deve ser lida como 4217** (e a "subdeclaração de 91 testes", como 64).
+> A saída literal do vitest em §a.3 fica preservada como foi medida; vale a ressalva acima. Correção da
+> onda 2: `../adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W1-META-AUDITORIA.md` §5.
+
 ## ⚠️ Caveat de ambiente (declarado, não escondido)
 
 O workspace indicado na tarefa era `…/audit-a5-ci-26092914142369`, mas o HERMES-GUARD deste chat recusou toda escrita/leitura lá:
@@ -21,14 +32,14 @@ Toda a auditoria foi executada no workspace permitido `audit-a3-tempo-2609291414
 
 | # | Alegação | Veredito | Números reais |
 |---|---|---|---|
-| 1 | tsc=0, eslint=0, suíte=4153/0, lint-ratchet novas=0, db:guard novas=0 | **PARCIALMENTE FALSO** | tsc=0 ✅ · eslint **0 erros, 1 warning** (pré-existente) ⚠️ · suíte **4244 passed / 0 failed / 40 todo** ❌ (não 4153) · lint-ratchet novas=0 ✅ · db:guard novas=0 ✅ (mas comparação com o ledger **pulada** localmente) ⚠️ |
+| 1 | tsc=0, eslint=0, suíte=4153/0, lint-ratchet novas=0, db:guard novas=0 | **PARCIALMENTE FALSO** | tsc=0 ✅ · eslint **0 erros, 1 warning** (pré-existente) ⚠️ · suíte **4244 passed / 0 failed / 40 todo** ❌ (não 4153; errata 08/10: **4217**) · lint-ratchet novas=0 ✅ · db:guard novas=0 ✅ (mas comparação com o ledger **pulada** localmente) ⚠️ |
 | 2 | 2 migrations da F1 aplicadas no banco e no ledger | **CONFIRMADO COM HASH** | ambos os `ledger_sql_sha256` == `file_sql_sha256`; SQL canônico idêntico; objetos existem no banco |
 | 3 | "Nada ficou pendente de DDL" | **CONFIRMADO em um sentido, INCOMPLETO no outro** | repo→ledger: **NENHUM** pendente (612/612). ledger→repo: **44 DDLs no banco fora do Git** — e por isso o **DB Live Guard está VERMELHO em main hoje** (pré-existente) |
 | 4 | O deploy do merge foi para produção | **CONFIRMADO** | produção = `https://zapp-web-v2.vercel.app`, `buildId=0ab84095…`, bundle publicado contém os 3 marcadores |
 | 5 | As 3 PRs mergearam com checks verdes | **CONFIRMADO** | 3× PR: 0 checks vermelhos; em main hoje: DB Live Guard ❌ e E2E logado ❌ (ambos **pré-existentes/não ligados ao diff**) |
 | 6 | Sem branch órfão, main com os 3 merges na ordem | **CONFIRMADO com ressalva** | nenhum `hermes/mapa-*`; 1 branch **stale** não deletada (`hermes/contatos-f1-banco-…`); 3 merges na ordem F1→F2→F3 |
 
-**Nenhum achado CRÍTICO.** O fix está no ar, o ledger bate byte-a-byte, e não há DDL pendente do meu lado. O achado relevante é a **contagem da suíte declarada (4153) ≠ real (4244)**.
+**Nenhum achado CRÍTICO.** O fix está no ar, o ledger bate byte-a-byte, e não há DDL pendente do meu lado. O achado relevante é a **contagem da suíte declarada (4153) ≠ real (4244; errata 08/10: 4217)**.
 
 ## Estado de `main` durante a auditoria (mudou no meio)
 
@@ -78,7 +89,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 Se "eslint = 0" significa **0 erros**, a alegação está correta. Se significa **0 problemas**, é falsa (1 warning). Classificação: **BAIXO**.
 
-### a.3 — Suíte completa → **4244 passed / 0 failed / 40 todo** ❌ (declarado 4153)
+### a.3 — Suíte completa → **4244 passed / 0 failed / 40 todo** ❌ (declarado 4153; errata 08/10: **4217** com **305** arquivos)
 
 ```
 $ bun run test          # = vitest run, no SHA 694bf084
@@ -89,7 +100,7 @@ $ bun run test          # = vitest run, no SHA 694bf084
 TEST_EXIT=0
 ```
 
-- **Real: 4244 passed, 0 failed, 40 todo.**
+- **Real: 4244 passed, 0 failed, 40 todo.** — *errata 08/10: no SHA `694bf084` o real é **4217 passed | 40 todo (4257)**, 305 arquivos (304 passed + 1 skipped); o 4244 veio de árvore contaminada (ver ERRATA).*
 - **Declarado: 4153 passed / 0 failed.**
 - Diferença: **+91 testes** (a declaração está **subestimada**).
 - "0 failed" ✅ (o que importa para o gate); a contagem em si **não bate**.
@@ -440,7 +451,7 @@ Posições (0 = topo): **`pos=28` F1 → `pos=12` F2 → `pos=2` F3**, e agora `
 
 | # | Severidade | Achado | Evidência |
 |---|---|---|---|
-| A5-1 | **MÉDIO** | **Contagem da suíte declarada (4153) ≠ real no SHA auditado (4244 passed / 0 failed / 40 todo).** Subdeclaração de 91 testes. "0 failed" confere; o número não. Provável execução antiga (os 3 merges somam +42 casos explícitos). | `bun run test` no `694bf084`, exit 0 |
+| A5-1 | **MÉDIO** | **Contagem da suíte declarada (4153) ≠ real no SHA auditado (4244 passed / 0 failed / 40 todo; errata 08/10: 4217).** Subdeclaração de 91 testes (errata 08/10: 64). "0 failed" confere; o número não. Provável execução antiga (os 3 merges somam +42 casos explícitos). | `bun run test` no `694bf084`, exit 0 |
 | A5-2 | **MÉDIO** | **`db:guard novas=0` local não cobre paridade com o banco** — o próprio script diz `DESTINO_URL ausente … comparacao com ledger pulada`. A paridade com o ledger é responsabilidade do `DB Live Guard`, que está **VERMELHO em `main`** (embora por causas pré-existentes: `20260907230000` + 44 DDLs de team_chat fora do Git). | `bun run db:guard`; logs dos runs `36600996857`/`36576488152` |
 | A5-3 | **MÉDIO** | **`E2E logado` ficou vermelho em `694bf084`** (3 failed em `messaging.spec.ts`/`reactions.spec.ts`), sendo que o pai `d35e9225` estava verde. **Não demonstrei** causa no meu diff (specs alheias, também falham em `b71bd414`, não meu); padrão de flakiness. Declarar "checks verdes" é verdade para as PRs, mas **não** para o `main` pós-merge nesse workflow. | logs `36602996648` vs `36600606147` |
 | A5-4 | **BAIXO** | **"eslint = 0"** ignora 1 warning pré-existente (`no-restricted-imports` em `useContactsCRUD.ts`). Verdadeiro só como "0 erros". | `npx eslint` (exit 0, 1 warning); warning presente no pai `ac5d6299` |

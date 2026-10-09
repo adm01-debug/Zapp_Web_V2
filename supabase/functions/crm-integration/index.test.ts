@@ -449,3 +449,206 @@ Deno.test('service credential cannot drive the scoped Email company context', as
   }));
   assertStatus(response.status, 400);
 });
+
+// ── ES-04/ES-45 · matriz de permissões do vínculo empresa↔contato ──────────────
+//
+// O cenário "Atendente negado" da matriz OTH-013 registrava a pendência de um
+// teste que exercesse os STATUS HTTP do vínculo manual: o teste do hook prova só
+// o estado seguro do front, não o que o navegador recebe da fronteira do
+// servidor. Aqui o HANDLER REAL (`handleCRMIntegrationRequest`) é dirigido com um
+// atendente SINTÉTICO e a rede dublada na fronteira (`globalThis.fetch`) — sem
+// banco, sem produção e sem credencial real —, no mesmo caminho que a Edge
+// percorre em produção, até o status HTTP da resposta.
+
+const LINK_USER_ID = '90000000-0000-4000-8000-000000000001';
+const LINK_THREAD_ID = '91000000-0000-4000-8000-000000000002';
+const LINK_ACCOUNT_ID = '92000000-0000-4000-8000-000000000003';
+const LINK_OTHER_ACCOUNT_ID = '93000000-0000-4000-8000-000000000004';
+const LINK_CONTACT_ID = '94000000-0000-4000-8000-000000000005';
+
+interface LinkRoute { match: string; body: unknown; status?: number }
+
+/**
+ * Dubla a FRONTEIRA de rede (nunca o alvo): casa a rota pelo PATH exato, para
+ * `https://evil.invalid/rest/v1/contacts` não contar como o PostgREST do projeto.
+ * Requisição sem rota vira 599 e fica registrada em `seen` — assim o teste
+ * enxerga qualquer leitura que não deveria ter acontecido.
+ */
+function withLinkFetch(routes: LinkRoute[]) {
+  const original = globalThis.fetch;
+  const seen: string[] = [];
+  globalThis.fetch = ((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+    const parsed = new URL(url);
+    const route = routes.find((candidate) => candidate.match === parsed.pathname);
+    if (!route) {
+      seen.push(url);
+      return Promise.resolve(new Response('nao stubado', { status: 599 }));
+    }
+    seen.push(url);
+    return Promise.resolve(new Response(JSON.stringify(route.body), {
+      status: route.status ?? 200, headers: { 'content-type': 'application/json' },
+    }));
+  }) as typeof fetch;
+  return { seen, restore: () => { globalThis.fetch = original; } };
+}
+
+const LINK_ENV: Record<string, string> = {
+  SUPABASE_URL: 'https://stub.supabase.co',
+  SUPABASE_SERVICE_ROLE_KEY: 'chave-de-servico-de-teste',
+  SUPABASE_ANON_KEY: 'chave-anon-de-teste',
+  EXTERNAL_SUPABASE_URL: 'https://pgxfvjmuubtbowutlide.supabase.co',
+  EXTERNAL_SUPABASE_SERVICE_ROLE_KEY:
+    `header.${btoa(JSON.stringify({ ref: 'pgxfvjmuubtbowutlide', role: 'service_role' })).replace(/=/g, '')}.assinatura`,
+};
+
+/** Credencial sintética: token de atendente que NÃO é o do serviço nem o do cron. */
+async function withLinkEnv(fn: () => Promise<void>) {
+  const saved = Object.keys(LINK_ENV).map((key) => [key, Deno.env.get(key)] as const);
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  for (const [key, value] of Object.entries(LINK_ENV)) Deno.env.set(key, value);
+  Deno.env.delete('CRON_SECRET');
+  try {
+    await fn();
+  } finally {
+    for (const [key, value] of saved) {
+      if (value === undefined) Deno.env.delete(key);
+      else Deno.env.set(key, value);
+    }
+    if (cronSecret !== undefined) Deno.env.set('CRON_SECRET', cronSecret);
+  }
+}
+
+const LINK_ROTA_AUTH: LinkRoute = { match: '/auth/v1/user', body: { id: LINK_USER_ID, aud: 'authenticated' } };
+const LINK_ROTA_RATE: LinkRoute = { match: '/rest/v1/rpc/consume_rate_limit', body: { allowed: true, remaining: 59 } };
+const LINK_ROTA_FLAG: LinkRoute = { match: '/rest/v1/feature_flags', body: { enabled: true } };
+const LINK_ROTA_THREAD: LinkRoute = {
+  match: '/rest/v1/email_threads',
+  body: { id: LINK_THREAD_ID, gmail_account_id: LINK_ACCOUNT_ID, contact_id: LINK_CONTACT_ID },
+};
+const LINK_ROTA_CONTA: LinkRoute = {
+  match: '/rest/v1/gmail_accounts',
+  body: { id: LINK_ACCOUNT_ID, email_address: 'atendimento@zapp.local' },
+};
+const LINK_ROTA_CONTATO: LinkRoute = { match: '/rest/v1/contacts', body: { id: LINK_CONTACT_ID, phone: '+55 (11) 98888-1111' } };
+const LINK_ROTA_MENSAGENS: LinkRoute = { match: '/rest/v1/email_messages', body: [] };
+
+const LINK_PERMISSAO_NEGADA: LinkRoute = { match: '/rest/v1/rpc/user_has_permission', body: false };
+const LINK_PERMISSAO_CONCEDIDA: LinkRoute = { match: '/rest/v1/rpc/user_has_permission', body: true };
+
+function linkRequest(): Request {
+  return new Request('https://stub.supabase.co/functions/v1/crm-integration', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', Authorization: 'Bearer token-sintetico-do-atendente' },
+    body: JSON.stringify({
+      action: 'linkEmailContactCompany',
+      accountId: LINK_ACCOUNT_ID, threadId: LINK_THREAD_ID, externalContactId: 'contato-externo-1',
+    }),
+  });
+}
+
+Deno.test('matriz de permissões: atendente SEM a permissão nomeada recebe 403 mesmo com thread, conta e contato visíveis', async () => {
+  await withLinkEnv(async () => {
+    // A thread, a conta e o contato desta fixture EXISTEM — o pedido idêntico
+    // com a permissão concedida passa da visibilidade (teste logo abaixo).
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_ROTA_FLAG, LINK_PERMISSAO_NEGADA,
+      LINK_ROTA_THREAD, LINK_ROTA_CONTA, LINK_ROTA_CONTATO,
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(linkRequest());
+      assertStatus(response.status, 403);
+      const body = await response.json() as { error?: string };
+      if (body.error !== 'You do not have permission to link CRM companies') {
+        throw new Error(`403 com motivo inesperado: ${JSON.stringify(body)}`);
+      }
+      // "Proibido" tem de ser distinguível de "não existe": sem a permissão a
+      // Edge responde ANTES de ler o objeto protegido, para o atendente negado
+      // não descobrir pelo 404 que a thread/conta/contato existem.
+      const leituras = stub.seen.filter((url) => /email_threads|gmail_accounts|\/rest\/v1\/contacts/.test(url));
+      if (leituras.length > 0) throw new Error(`sem permissão a Edge não pode ler o objeto protegido: ${leituras.join(', ')}`);
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('matriz de permissões: o mesmo pedido com a permissão concedida passa da visibilidade (o objeto protegido existe)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_ROTA_FLAG, LINK_PERMISSAO_CONCEDIDA,
+      LINK_ROTA_THREAD, LINK_ROTA_CONTA, LINK_ROTA_CONTATO, LINK_ROTA_MENSAGENS,
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(linkRequest());
+      // Sem participante externo nas mensagens a Edge para em 409. O que este
+      // teste prova é a NEGAÇÃO da negação: a mesma fixture não recebe 403 nem
+      // 404, ou seja, thread/conta/contato são visíveis ao atendente autorizado
+      // — é a contraprova que torna o 403 do teste anterior "existe e é negado".
+      assertStatus(response.status, 409);
+      const body = await response.json() as { error?: string };
+      if (body.error !== 'External email participant is unavailable') {
+        throw new Error(`esperado 409 de participante ausente, veio: ${JSON.stringify(body)}`);
+      }
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('matriz de permissões: atendente AUTORIZADO recebe 404 quando a thread não pertence à conta informada', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_ROTA_FLAG, LINK_PERMISSAO_CONCEDIDA,
+      { match: '/rest/v1/email_threads', body: { id: LINK_THREAD_ID, gmail_account_id: LINK_OTHER_ACCOUNT_ID, contact_id: LINK_CONTACT_ID } },
+      LINK_ROTA_CONTA, LINK_ROTA_CONTATO, LINK_ROTA_MENSAGENS,
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(linkRequest());
+      assertStatus(response.status, 404);
+      const body = await response.json() as { error?: string };
+      if (body.error !== 'Email contact context is not visible') {
+        throw new Error(`404 com motivo inesperado: ${JSON.stringify(body)}`);
+      }
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('matriz de permissões: atendente AUTORIZADO recebe 404 quando o contato da thread não é visível', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_ROTA_FLAG, LINK_PERMISSAO_CONCEDIDA,
+      LINK_ROTA_THREAD, LINK_ROTA_CONTA,
+      { match: '/rest/v1/contacts', body: null }, LINK_ROTA_MENSAGENS,
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(linkRequest());
+      assertStatus(response.status, 404);
+      const body = await response.json() as { error?: string };
+      if (body.error !== 'Email contact context is not visible') {
+        throw new Error(`404 com motivo inesperado: ${JSON.stringify(body)}`);
+      }
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test('matriz de permissões: sem permissão a resposta é 403 e não 404 para thread inexistente (não vaza existência)', async () => {
+  await withLinkEnv(async () => {
+    const stub = withLinkFetch([
+      LINK_ROTA_AUTH, LINK_ROTA_RATE, LINK_ROTA_FLAG, LINK_PERMISSAO_NEGADA,
+      { match: '/rest/v1/email_threads', body: null }, { match: '/rest/v1/gmail_accounts', body: null },
+    ]);
+    try {
+      const response = await handleCRMIntegrationRequest(linkRequest());
+      // O mesmo pedido sem permissão responde IGUAL para thread visível e para
+      // thread inexistente: o status não revela quais objetos existem.
+      assertStatus(response.status, 403);
+    } finally {
+      stub.restore();
+    }
+  });
+});

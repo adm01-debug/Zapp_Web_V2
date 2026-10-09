@@ -27,7 +27,9 @@ interface SecondaryToolbarProps {
   onToggleRichToolbar: () => void;
   isRecordingAudio: boolean;
   onSendSticker: (url: string) => void;
-  onSendAudioMeme: (url: string) => void;
+  /** Pode ser assíncrono e falhar por rejeição: o VoiceChangerPicker usa isso
+      para só descartar a prévia da voz transformada depois do sucesso (#350). */
+  onSendAudioMeme: (url: string) => void | Promise<void>;
   onOpenCatalog?: () => void;
   onAudioSend: (blob: Blob) => void;
   contactName?: string;

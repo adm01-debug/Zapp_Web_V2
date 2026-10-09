@@ -11,6 +11,9 @@ import {
   type ReactNode,
 } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle
+// inicial (este provider é montado no boot e é alcançado pelo entry).
+import { toast } from '@/lib/lazyToast';
 
 import { useSipClient } from '@/hooks/communication/useSipClient';
 import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
@@ -36,7 +39,7 @@ import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
  * `dial/accept/reject/hangup/toggleMute/sendDTMF/openDialer`.
  *
  * Compatibilidade (o que o aceite exige antes da Fase 4): a UI antiga
- * (`VoIPPanel`, `DialPad`, `ActiveCallBar`) lê `useCallSession()`, então o valor
+ * (`TelefoniaView`, `DialPad`, `ActiveCallBar`) lê `useCallSession()`, então o valor
  * continua trazendo **todos** os campos do `useSipClient()` — `sipStatus`,
  * `callStatus`, `callDuration`, `isMuted`, `currentNumber`, `callDirection`,
  * `currentCallId` — e ganha `session` + a API nova por cima. Nenhum campo
@@ -56,7 +59,7 @@ import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
  * `onEnd` real que chega depois (`corrigirFim`) em vez de engoli-lo.
  */
 
-/** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `VoIPPanel`. */
+/** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `TelefoniaView`. */
 export const VOIP_VIEW_SEARCH = '?view=voip';
 
 /**
@@ -70,6 +73,18 @@ export const VOIP_VIEW_SEARCH = '?view=voip';
  */
 export const RING_TIMEOUT_MS = 30_000;
 
+/**
+ * C02 — pedido de chamada de SAÍDA feito no inbox ("Ligar" do painel do
+ * contato e do cabeçalho do chat). O diálogo global (`OutboundCallDialog`,
+ * montado no App) abre a partir daqui e disca SEM navegar para a Telefonia.
+ */
+export interface ChamadaSaida {
+  phone: string;
+  name?: string;
+  contactId?: string;
+  avatar?: string;
+}
+
 export type CallSessionApi = ReturnType<typeof useSipClient> & {
   /** Estado da sessão (máquina de `session.ts`). */
   session: CallSessionState;
@@ -77,7 +92,13 @@ export type CallSessionApi = ReturnType<typeof useSipClient> & {
   dispatch: (event: CallSessionEvent) => void;
   /** Id da sessão corrente (o mesmo de `DIAL`/`INVITE_RECEIVED`). */
   sessionId: string | null;
-  dial: (phone: string) => void;
+  /**
+   * Disca `phone`. `opcoes.abrirDiscador` default `true` (DialPad, Telefonia e
+   * "Ligar de volta" do histórico navegam para `?view=voip`); `false` é o
+   * caminho do cartão do contato (C02), que disca sem sair da tela.
+   * Resolve `false` quando a guarda do microfone recusa — quem chamou fecha.
+   */
+  dial: (phone: string, opcoes?: { abrirDiscador?: boolean }) => Promise<boolean>;
   accept: () => Promise<void>;
   reject: () => Promise<void>;
   hangup: () => void;
@@ -87,6 +108,10 @@ export type CallSessionApi = ReturnType<typeof useSipClient> & {
    * `null` quando nao ha pedido pendente.
    */
   numeroPendente: string | null;
+  /** Pedido de saída do inbox aguardando o diálogo global (C02). */
+  chamadaSaida: ChamadaSaida | null;
+  /** Limpa o pedido de saída — o `onEnd`/fechar do `OutboundCallDialog`. */
+  limparChamadaSaida: () => void;
 };
 
 const CallSessionContext = createContext<CallSessionApi | undefined>(undefined);
@@ -366,35 +391,79 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dial = useCallback(
-    async (phone: string) => {
+    async (phone: string, opcoes?: { abrirDiscador?: boolean }): Promise<boolean> => {
       // T17: o microfone é conferido ANTES do `DIAL`. Despachar primeiro e
       // falhar depois deixaria a máquina presa em `dialing` — nada a encerraria,
-      // e o agente ficaria com uma chamada fantasma na tela.
-      if (!(await sip.garantirMicrofone())) return;
+      // e o agente ficaria com uma chamada fantasma na tela. O `false` devolvido
+      // (C02) deixa quem chamou fechar o diálogo — o motivo já foi ao toast pela
+      // própria guarda (`useMicrophoneGuard`), então aqui não se repete aviso.
+      if (!(await sip.garantirMicrofone())) return false;
       reiniciarSeTerminal();
       // T11: UM id por chamada — o mesmo uuid no evento `DIAL` (máquina), no
       // `sessionId` do evento e no `p_id` das 3 gravações do banco.
       const id = novoId();
       dispatch({ type: 'DIAL', sessionId: id, channel: 'voip', phone });
-      openDialer();
+      // C02: `abrirDiscador:false` disca SEM navegar para `?view=voip` — é o
+      // caminho do cartão do contato (o diálogo global `OutboundCallDialog`).
+      // O default segue `true`: DialPad, Telefonia e "Ligar de volta" do
+      // histórico continuam abrindo o painel como antes.
+      if (opcoes?.abrirDiscador !== false) openDialer();
       await sip.makeCall(phone, id);
+      return true;
     },
     [openDialer, novoId, reiniciarSeTerminal, sip],
   );
 
   const [numeroPendente, setNumeroPendente] = useState<string | null>(null);
+  const [chamadaSaida, setChamadaSaida] = useState<ChamadaSaida | null>(null);
+  const limparChamadaSaida = useCallback(() => setChamadaSaida(null), []);
 
   /**
    * T29 - UNICO consumidor do clique-para-discar. Quem pede a ligacao
    * (`ContactActionButtons`, `ContactHeaderSection`, `ChatHeader`) so emite
    * `zapp:start-call`; o que fazer com o pedido e decidido aqui, num lugar so.
    *
-   * `autoDial` ausente/falso (o padrao do contrato) NAO disca: guarda o numero e
-   * abre `?view=voip` - quem aperta o botao do painel e o agente. `autoDial:true`
-   * (botao "Ligar de volta" do historico) disca direto.
+   * C02 — `source:'inbox'` com canal `voip` ("Ligar via Telefone" do painel do
+   * contato e do cabeçalho do chat) NÃO navega nem disca aqui: o pedido vira
+   * `chamadaSaida` e quem disca é o diálogo global (`OutboundCallDialog` →
+   * `CallDialog` → `dial(phone, { abrirDiscador: false })`). Com uma sessão já
+   * em curso o pedido é recusado com aviso — sem segundo cartão e sem tocar
+   * na chamada.
+   *
+   * O pedido `whatsapp` do inbox NÃO é interceptado (C02 não inventa caminho
+   * novo para o WhatsApp): segue o fluxo de sempre — `numeroPendente` +
+   * `openDialer`, que abre a Telefonia com o número preenchido.
+   *
+   * `autoDial` ausente/falso (o padrao do contrato, fora do inbox) NAO disca:
+   * guarda o numero e abre `?view=voip` - quem aperta o botao do painel e o
+   * agente. `autoDial:true` (botao "Ligar de volta" do historico) disca direto.
    */
   useEffect(() => {
     return onStartCall((pedido: StartCallPayload) => {
+      if (pedido.source === 'inbox' && pedido.channel === 'voip') {
+        const statusAtual = estadoRef.current.status;
+        if (statusAtual !== 'idle' && !isTerminal(statusAtual)) {
+          // Chamada em curso: nada de segundo cartão. (O motor também recusaria
+          // o 2º convite com toast — aqui o aviso sai antes e a sessão não é
+          // tocada.)
+          toast.warning('Já existe uma chamada em andamento.', {
+            description: 'Encerre a chamada atual antes de ligar para outro contato.',
+          });
+          return;
+        }
+        // Uma sessão deixada em `ended` pela chamada anterior tornaria o novo
+        // `DIAL` transição inválida — o RESET devolve a máquina a `idle`.
+        reiniciarSeTerminal();
+        setChamadaSaida({
+          phone: pedido.phone,
+          name: typeof pedido.name === 'string' && pedido.name !== '' ? pedido.name : undefined,
+          contactId:
+            typeof pedido.contactId === 'string' && pedido.contactId !== '' ? pedido.contactId : undefined,
+          avatar:
+            typeof pedido.avatar === 'string' && pedido.avatar !== '' ? pedido.avatar : undefined,
+        });
+        return;
+      }
       setNumeroPendente(pedido.phone);
       if (pedido.autoDial) {
         void dial(pedido.phone);
@@ -402,7 +471,7 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
       }
       openDialer();
     });
-  }, [dial, openDialer]);
+  }, [dial, openDialer, reiniciarSeTerminal]);
 
   const accept = useCallback(async () => {
     // `ACCEPT` só vale a partir de `ringing_in` → `connecting`; sem ele o
@@ -488,8 +557,10 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
       hangup,
       openDialer,
       numeroPendente,
+      chamadaSaida,
+      limparChamadaSaida,
     }),
-    [sip, session, dial, accept, reject, hangup, openDialer, numeroPendente],
+    [sip, session, dial, accept, reject, hangup, openDialer, numeroPendente, chamadaSaida, limparChamadaSaida],
   );
 
   return (
@@ -500,8 +571,12 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+export function useOptionalCallSession(): CallSessionApi | undefined {
+  return useContext(CallSessionContext);
+}
+
 export function useCallSession(): CallSessionApi {
-  const ctx = useContext(CallSessionContext);
+  const ctx = useOptionalCallSession();
   if (!ctx) throw new Error('useCallSession deve ser usado dentro de CallSessionProvider');
   return ctx;
 }

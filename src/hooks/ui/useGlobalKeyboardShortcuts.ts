@@ -1,7 +1,13 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import { useCustomShortcuts } from './useCustomShortcuts';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
+
+// Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`
+// do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html
+// (bundle-budget, t_fd52bf49) e, com a lib já carregada — o caso de qualquer
+// atalho depois do boot —, a chamada é síncrona, como era com o import estático.
 
 interface GlobalShortcutAction {
   id: string;
@@ -34,7 +40,14 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       toast.info('📥 Inbox', { duration: 1500 });
     },
     'go-to-dashboard': () => {
-      navigate('/');
+      // #447: só `navigate('/')` + toast anunciava Dashboard sem selecionar a
+      // view. A navegação canônica é o `navigateToView` — grava `?view=dashboard`
+      // e emite `zapp:navigate`, o evento que o shell e as instâncias de
+      // `useNavigationHistory` escutam para trocar a tela.
+      // Fora da raiz (/sla, /admin/roles) o `?view=` sozinho não levaria ao
+      // shell: volta para a raiz já com a view no caminho.
+      if (location.pathname !== '/') navigate('/?view=dashboard');
+      navigateToView('dashboard');
       toast.info('📊 Dashboard', { duration: 1500 });
     },
     'go-to-contacts': () => {

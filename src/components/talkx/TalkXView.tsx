@@ -10,9 +10,12 @@ import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
-import { ModuleHeader, IconTile, TalkXSkeletonRows } from './talkxShared';
+import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
-import { TalkXHelp } from './TalkXHelp';
+import { TalkXHelpCenter } from './help/TalkXHelpCenter';
+import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
 import { TalkXOverview } from './TalkXOverview';
 import { TalkXCampaignWizard } from './TalkXCampaignWizard';
 import { TalkXLiveMonitor } from './TalkXLiveMonitor';
@@ -34,6 +37,12 @@ export default function TalkXView() {
   const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
+  // X048 — a Visão geral aplica o estado "Conexão WhatsApp desconectada" acima
+  // da tabela quando NÃO existe conexão ativa (o botão leva para a tela que
+  // resolve). `null` = ainda checando/consulta falhou: sem resposta confiável o
+  // estado não aparece (nunca um falso "desconectado" na tela).
+  const { whatsapp: whatsappService } = useTalkXServiceStatus();
+  const whatsappDisconnected = whatsappService.connected === false;
   const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
   const [activeTab, setActiveTab] = useState<string>(() => readTab(window.location.search));
   const [activeSub, setActiveSub] = useState<string | undefined>(() => readSub(window.location.search));
@@ -43,7 +52,9 @@ export default function TalkXView() {
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXWizardRoute(window.location.search).route);
-  const [helpOpen, setHelpOpen] = useState(false);
+  // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
+  // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
+  const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
   // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
   // pedindo o editor VAZIO (antes chamava openNew, que é o wizard de campanha). O pedido
   // é limpo quando a aba o atende, para não reabrir o editor sozinho depois.
@@ -99,6 +110,7 @@ export default function TalkXView() {
       const tab = readTab(window.location.search);
       setActiveTab(tab);
       setActiveSub(readSub(window.location.search));
+      setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
       // R2-MOD-039: o pedido de "novo template" não sobrevive à saída da aba de templates;
       // voltar pela Biblioteca mostra a lista, não o editor que ficou aberto.
       if (tab !== 'templates') setTemplateStartNew(false);
@@ -146,6 +158,17 @@ export default function TalkXView() {
     setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
   }, [writeWizardRoute]);
+
+  // X189: a Ajuda é uma tela do módulo com rota própria; o endereço vive na URL
+  // para o botão voltar do navegador andar um passo por vez (lista → artigo).
+  const changeHelpRoute = useCallback((next: TalkXHelpRoute) => {
+    pushTalkXHelpRoute(next);
+    setHelpRoute(next);
+  }, []);
+  const closeHelp = useCallback(() => {
+    pushTalkXHelpRoute(null);
+    setHelpRoute(null);
+  }, []);
 
   const creators = useMemo(() => {
     const m: Record<string, string> = {};
@@ -278,6 +301,14 @@ export default function TalkXView() {
     );
   }
 
+  if (helpRoute) {
+    return (
+      <div className="min-h-full w-full min-w-0 bg-background">
+        <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-full w-full min-w-0 bg-background space-y-5">
       <ModuleHeader
@@ -293,7 +324,7 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              type="button" onClick={() => setHelpOpen(true)}
+              type="button" onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
               <HelpCircle className="w-4 h-4" />Ajuda
@@ -302,8 +333,6 @@ export default function TalkXView() {
           </div>
         }
       />
-      <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
-
       <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
@@ -351,9 +380,14 @@ export default function TalkXView() {
         </div>
 
         <TabsContent value="overview" className="mt-4">
+          {whatsappDisconnected && (
+            <div className="mb-4" data-talkx-whatsapp-state="disconnected">
+              <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+            </div>
+          )}
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
-            isError={isError} error={campaignsError} onRetry={() => { void refetchCampaigns(); }}
+            isError={isError} error={campaignsError} onRetry={() => refetchCampaigns()}
             onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={openRunning} onDuplicate={duplicateCampaign}
             onStart={(id) => { void startCampaign(id); }}
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}

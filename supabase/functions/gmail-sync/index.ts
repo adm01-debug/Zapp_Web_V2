@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
 import { ensureValidToken, gmailFetch, reconcileEmailThreads, runGmailFullSync, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
@@ -30,7 +31,75 @@ interface GmailHistoryPage {
   nextPageToken?: string;
 }
 
-serve(async (req) => {
+export interface GmailIncrementalSyncOutcome {
+  status: number;
+  payload: Record<string, unknown>;
+}
+
+// R2-API-011B — sync incremental com avanço de cursor por compare-and-swap: o
+// UPDATE só grava se o history_id da linha ainda for o lido no início da
+// tentativa (account.history_id). 0 linhas = outro fluxo já moveu o cursor →
+// conflito: não sobrescreve, não marca a conta como erro, só devolve
+// cursor_advanced=false. Erro real do UPDATE é propagado (o fluxo não declara
+// sucesso com o cursor não gravado).
+export async function runGmailIncrementalSync(
+  supabase: SupabaseClient,
+  account: { id: string; history_id: string },
+  accessToken: string,
+  log: Logger,
+): Promise<GmailIncrementalSyncOutcome> {
+  const changedMessageIds = new Set<string>();
+  const deletedMessageIds = new Set<string>();
+  let pageToken: string | undefined;
+  let latestHistoryId = account.history_id;
+  let pages = 0;
+  do {
+    const params = new URLSearchParams({ startHistoryId: account.history_id });
+    for (const historyType of ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"]) params.append("historyTypes", historyType);
+    if (pageToken) params.set("pageToken", pageToken);
+    const historyData = await gmailFetch<GmailHistoryPage>(accessToken, `/history?${params.toString()}`);
+    for (const record of historyData.history || []) {
+      for (const added of record.messagesAdded || []) changedMessageIds.add(added.message.id);
+      for (const labeled of record.labelsAdded || []) changedMessageIds.add(labeled.message.id);
+      for (const unlabeled of record.labelsRemoved || []) changedMessageIds.add(unlabeled.message.id);
+      for (const deleted of record.messagesDeleted || []) deletedMessageIds.add(deleted.message.id);
+    }
+    latestHistoryId = historyData.historyId || latestHistoryId;
+    pageToken = historyData.nextPageToken;
+    pages += 1;
+    if (pages >= 100 && pageToken) throw new Error("Gmail history exceeded the safe pagination limit");
+  } while (pageToken);
+
+  for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
+  const changedResult = await syncMessageIds(supabase, account.id, accessToken, log, [...changedMessageIds]);
+  if (changedResult.failed > 0) {
+    await supabase.from("gmail_accounts").update({ sync_status: "error", last_sync_at: new Date().toISOString(), last_error: `${changedResult.failed} eventos incrementais falharam; cursor preservado` }).eq("id", account.id);
+    return { status: 207, payload: { success: false, cursor_advanced: false, changed_messages: changedMessageIds.size, ...changedResult } };
+  }
+
+  const affectedDeletedThreadIds: string[] = [];
+  if (deletedMessageIds.size > 0) {
+    const ownedDeleted = await supabase.from("email_messages").select("id,thread_id,gmail_message_id").eq("gmail_account_id", account.id).in("gmail_message_id", [...deletedMessageIds]);
+    if (ownedDeleted.error) throw new Error("Failed to resolve deleted Gmail messages locally");
+    affectedDeletedThreadIds.push(...(ownedDeleted.data || []).map(message => message.thread_id).filter(Boolean));
+    if (ownedDeleted.data?.length) {
+      const deletion = await supabase.from("email_messages").delete().eq("gmail_account_id", account.id).in("id", ownedDeleted.data.map(message => message.id));
+      if (deletion.error) throw new Error("Failed to delete Gmail messages locally");
+    }
+    await reconcileEmailThreads(supabase, account.id, affectedDeletedThreadIds);
+  }
+  const { data: advanced, error: cursorError } = await supabase.from("gmail_accounts").update({
+    history_id: latestHistoryId,
+    sync_status: "synced",
+    last_sync_at: new Date().toISOString(),
+    last_error: null,
+  }).eq("id", account.id).eq("history_id", account.history_id).select("id");
+  if (cursorError) throw new Error("Failed to persist Gmail history cursor");
+  const cursorAdvanced = Boolean(advanced && advanced.length > 0);
+  return { status: 200, payload: { success: true, cursor_advanced: cursorAdvanced, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages } };
+}
+
+export async function handleGmailSync(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
@@ -98,55 +167,9 @@ serve(async (req) => {
 
       case "sync-incremental": {
         if (!account.history_id) { log.done(400); return errorResponse("No history_id. Run full sync first.", 400, req); }
-        const changedMessageIds = new Set<string>();
-        const deletedMessageIds = new Set<string>();
-        let pageToken: string | undefined;
-        let latestHistoryId = account.history_id;
-        let pages = 0;
-        do {
-          const params = new URLSearchParams({ startHistoryId: account.history_id });
-          for (const historyType of ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"]) params.append("historyTypes", historyType);
-          if (pageToken) params.set("pageToken", pageToken);
-          const historyData = await gmailFetch<GmailHistoryPage>(accessToken, `/history?${params.toString()}`);
-          for (const record of historyData.history || []) {
-            for (const added of record.messagesAdded || []) changedMessageIds.add(added.message.id);
-            for (const labeled of record.labelsAdded || []) changedMessageIds.add(labeled.message.id);
-            for (const unlabeled of record.labelsRemoved || []) changedMessageIds.add(unlabeled.message.id);
-            for (const deleted of record.messagesDeleted || []) deletedMessageIds.add(deleted.message.id);
-          }
-          latestHistoryId = historyData.historyId || latestHistoryId;
-          pageToken = historyData.nextPageToken;
-          pages += 1;
-          if (pages >= 100 && pageToken) throw new Error("Gmail history exceeded the safe pagination limit");
-        } while (pageToken);
-
-        for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
-        const changedResult = await syncMessageIds(supabase, account.id, accessToken, log, [...changedMessageIds]);
-        if (changedResult.failed > 0) {
-          await supabase.from("gmail_accounts").update({ sync_status: "error", last_sync_at: new Date().toISOString(), last_error: `${changedResult.failed} eventos incrementais falharam; cursor preservado` }).eq("id", account.id);
-          log.done(207, { changed: changedMessageIds.size, failed: changedResult.failed });
-          return jsonResponse({ success: false, cursor_advanced: false, changed_messages: changedMessageIds.size, ...changedResult }, 207, req);
-        }
-
-        const affectedDeletedThreadIds: string[] = [];
-        if (deletedMessageIds.size > 0) {
-          const ownedDeleted = await supabase.from("email_messages").select("id,thread_id,gmail_message_id").eq("gmail_account_id", account.id).in("gmail_message_id", [...deletedMessageIds]);
-          if (ownedDeleted.error) throw new Error("Failed to resolve deleted Gmail messages locally");
-          affectedDeletedThreadIds.push(...(ownedDeleted.data || []).map(message => message.thread_id).filter(Boolean));
-          if (ownedDeleted.data?.length) {
-            const deletion = await supabase.from("email_messages").delete().eq("gmail_account_id", account.id).in("id", ownedDeleted.data.map(message => message.id));
-            if (deletion.error) throw new Error("Failed to delete Gmail messages locally");
-          }
-          await reconcileEmailThreads(supabase, account.id, affectedDeletedThreadIds);
-        }
-        await supabase.from("gmail_accounts").update({
-          history_id: latestHistoryId,
-          sync_status: "synced",
-          last_sync_at: new Date().toISOString(),
-          last_error: null,
-        }).eq("id", account.id);
-        log.done(200, { changedMessages: changedMessageIds.size, deletedMessages: deletedMessageIds.size, synced: changedResult.synced, pages });
-        return jsonResponse({ success: true, cursor_advanced: true, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages }, 200, req);
+        const outcome = await runGmailIncrementalSync(supabase, account, accessToken, log);
+        log.done(outcome.status, { changedMessages: outcome.payload.changed_messages, deletedMessages: outcome.payload.deleted_messages, synced: outcome.payload.synced, pages: outcome.payload.history_pages, cursorAdvanced: outcome.payload.cursor_advanced });
+        return jsonResponse(outcome.payload, outcome.status, req);
       }
 
       case "get-thread": {
@@ -195,4 +218,8 @@ serve(async (req) => {
     log.done(500);
     return errorResponse(error instanceof Error ? error.message : "Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  serve(handleGmailSync);
+}

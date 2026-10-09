@@ -177,6 +177,19 @@ export class CallEngine {
     }
 
     if (state === 'Established') {
+      // SL-002: a mídia negociada tem de ser cifrada. A checagem vem ANTES do
+      // bookkeeping para a sessão em claro não aparecer como "ativa" nem virar
+      // chamada atendida no banco: ela é encerrada como AÇÃO nossa, com o
+      // motivo na tela. `null` (SDP ilegível) não é veredito — segue como
+      // antes, e o `warn` do adapter fica no log.
+      if (this.adapter.midiaCriptografada(session) === false) {
+        this.sink.onError('Chamada encerrada: a mídia negociada não usa SRTP (sem perfil criptografado).');
+        // Mesma ordem do watchdog: `encerrar` ANTES do `bye()` para um
+        // `Terminated` síncrono não trocar o desfecho por `hangup_remote`.
+        this.encerrar({ endedBy: 'hangup_local', sipCode: null });
+        this.adapter.hangup(session, direction);
+        return;
+      }
       // Resposta final 2xx: o Timer B do INVITE cumpriu o papel — desarma o
       // watchdog para ele não derrubar uma conversa longa.
       this.clearWatchdog();

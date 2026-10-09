@@ -27,3 +27,32 @@ O plano assumiu "Outfit (títulos) / Plus Jakarta Sans (corpo)". Os tokens reais
 **inverso**: `--zapp-font-display: 'Plus Jakarta Sans', 'Outfit', ...` (display/títulos) e
 `--zapp-font-sans: 'Outfit', ...` (corpo). Confirmar visualmente contra o protótipo HTML antes de
 aplicar em E119 — não usar a suposição do plano.
+
+## Receita de módulo completa (F94) — `lazyViews` + rota + nav + permissão + flag
+
+São 4 passos, nesta ordem, para um módulo virar item de menu acessível. Os valores abaixo são os do
+**Multiplix**, conferidos em `src/pages/lazyViews.ts`, `src/pages/ViewRouter.tsx` e
+`src/services/navigation.service.ts` na ponta de dia de 2026-10-08.
+
+1. **View lazy** — `src/pages/lazyViews.ts`:
+
+   ```ts
+   export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
+   ```
+
+2. **Rota** — `src/pages/ViewRouter.tsx`: registrar `'multiplix': Views.MultiplixView` no mapa de views.
+   Sem essa linha o `?view=multiplix` não renderiza nada.
+
+3. **Navegação + permissão** — `src/services/navigation.service.ts`: entrada da nav primária
+   `{ id: 'multiplix', icon: Send, label: 'Multiplix', permission: 'multiplix.dispatch.create' }`.
+   O gate é a permissão **nomeada** (não o papel): `NavigationService.canAccess` nega por padrão e
+   `filterNavItems` esconde o item de quem não tem a permissão. O mesmo par (id, permissão) vale para o
+   menu e para o acesso direto por `?view=multiplix`.
+
+4. **Flag (kill switch)** — o mecanismo já existe (`src/hooks/system/useFeatureFlag.ts`:
+   `useFeatureFlag(key, fallback)` sobre a tabela `feature_flags`). **Hoje o Multiplix não tem chave de
+   flag** — o único gate é a permissão nomeada do passo 3. Criar/reusar um kill switch exige uma linha em
+   `feature_flags`, que é trilha de banco (DDL/seed) e não entra num plano de front.
+
+Regra de ouro: **nenhum componente de UI novo** — o módulo usa `src/components/ui/` e os utilitários de
+`@/components/talkx/talkxShared` (`ModuleHeader`, `StatusPill`, `fmtInt`).

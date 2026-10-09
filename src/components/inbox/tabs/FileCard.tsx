@@ -5,6 +5,8 @@ import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
+import { AudioPlayButton } from './AudioPlayButton';
+import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -97,10 +99,12 @@ export function FileCard({
       {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
           Sem "Copiar link"; "Baixar" vive no menu, desabilitado e com o motivo à vista. */}
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
+        {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
+        {item.type === 'audio' && <AudioPlayButton item={item} />}
         <button
           type="button"
           aria-label="Visualizar"
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={FILE_ACTION_BUTTON}
           onClick={onPreview}
         >
           <Eye className="w-3.5 h-3.5" />
@@ -110,7 +114,7 @@ export function FileCard({
           aria-label="Encaminhar"
           title="Disponível em breve"
           disabled
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground/50 cursor-not-allowed"
+          className={FILE_ACTION_BUTTON_DISABLED}
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>

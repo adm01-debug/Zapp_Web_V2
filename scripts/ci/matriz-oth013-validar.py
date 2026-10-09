@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -69,6 +70,25 @@ def walk(value: Any):
             yield from walk(child)
 
 
+PENDING_MARKER = "### Pendências nominais (não são aprovação)"
+PENDING_ITEM = re.compile(r"^\d+\.\s")
+BLOCK_CLAUSES = (
+    ("bloqueio externo", "motivo"),
+    ("responsável:", "responsável"),
+    ("critério de desbloqueio:", "critério de desbloqueio"),
+)
+
+
+def pending_entry(plan: str, task_id: str) -> str:
+    if PENDING_MARKER not in plan:
+        fail("seção 'Pendências nominais' ausente")
+    block = plan.split(PENDING_MARKER, 1)[1]
+    rows = [line for line in block.splitlines() if PENDING_ITEM.match(line) and task_id in line]
+    if len(rows) != 1:
+        fail(f"esperada uma pendência nominal para {task_id}; encontradas {len(rows)}")
+    return rows[0]
+
+
 def matrix_row(plan: str, label: str) -> str:
     prefix = f"| {label} |"
     rows = [line for line in plan.splitlines() if line.startswith(prefix)]
@@ -106,6 +126,14 @@ def main() -> None:
     if missing_paths:
         fail("caminhos versionados ausentes: " + ", ".join(missing_paths))
 
+    es03 = pending_entry(plan, "ES-03")
+    for needle, label in BLOCK_CLAUSES:
+        if needle not in es03:
+            fail(
+                f"pendência nominal ES-03 sem {label}: a regra de fechamento exige "
+                "motivo, responsável e critério de desbloqueio"
+            )
+
     findings = json.loads(FINDINGS_PATH.read_text(encoding="utf-8"), object_pairs_hook=no_duplicate_keys)
     matches = [item for item in walk(findings) if item.get("id") == "OTH-013"]
     if len(matches) != 1:
@@ -126,6 +154,7 @@ def main() -> None:
 
     print(
         "OK: OTH-013 válido; 6 campos, 4 cenários e 14 caminhos conferidos; "
+        "pendência nominal ES-03 com motivo, responsável e critério de desbloqueio; "
         "status/proof_detail/documentation_fix pertencem ao objeto sem chaves JSON duplicadas"
     )
 

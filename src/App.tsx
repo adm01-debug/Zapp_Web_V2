@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { getLogger } from "@/lib/logger";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter } from "react-router-dom";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { SkipLinks } from "@/components/ui/skip-link";
@@ -31,6 +30,12 @@ const IncomingCallAlert = lazy(() =>
   import("@/components/calls/IncomingCallAlert")
     .then(m => ({ default: m.IncomingCallAlert }))
 );
+// C02: o cartão da chamada de SAÍDA iniciada no inbox — mesmo slot global do
+// alerta de entrada (overlay, não é provider de contexto).
+const OutboundCallDialog = lazy(() =>
+  import("@/components/calls/OutboundCallDialog")
+    .then(m => ({ default: m.OutboundCallDialog }))
+);
 const EasterEggsProvider = lazy(() =>
   import("@/components/effects/EasterEggs")
     .then(m => ({ default: m.EasterEggsProvider }))
@@ -44,6 +49,14 @@ const InAppNotificationProvider = lazy(() =>
 const TeamChatNotificationsListener = lazy(() =>
   import("@/components/team-chat/TeamChatNotificationsListener")
     .then(m => ({ default: m.TeamChatNotificationsListener }))
+);
+// O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
+// o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
+// nada se perde na janela de carregamento. Estático, ele colocava a lib (~9 KB
+// gzip) no bundle inicial — medido pelo bundle-budget.mjs em 09/10/2026.
+const Sonner = lazy(() =>
+  import("@/components/ui/sonner")
+    .then(m => ({ default: m.Toaster }))
 );
 
 /**
@@ -62,11 +75,13 @@ function DeferredProviders() {
     <Suspense fallback={null}>
       <RealtimeSentimentAlertProvider />
       <IncomingCallAlert />
+      <OutboundCallDialog />
       <TeamChatNotificationsListener />
       <InAppNotificationProvider>
         {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
         <EasterEggsProvider>{null}</EasterEggsProvider>
       </InAppNotificationProvider>
+      <Sonner />
     </Suspense>
   );
 }
@@ -145,7 +160,6 @@ function AppContent() {
           </Suspense>
         </ErrorBoundary>
         <Toaster />
-        <Sonner />
         <AppRoutes />
       </GlobalKeyboardProvider>
     </BrowserRouter>

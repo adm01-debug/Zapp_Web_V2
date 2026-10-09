@@ -91,6 +91,25 @@ test('rejects code subscriptions absent from the reviewed publication baseline',
   assert.deepEqual(result.absentFromPublication, ['public.audit_logs']);
 });
 
+test('fails closed for a spread that precedes the properties and for a duplicated property', () => {
+  for (const source of [
+    `channel.on('postgres_changes', { ...override, schema: 'public', table: 'notifications' }, handler);`,
+    `channel.on('postgres_changes', { table: 'messages', table: 'audit_logs' }, handler);`,
+  ]) {
+    const result = extractRealtimeSubscriptions(source);
+    assert.equal(result.subscriptions.length, 0);
+    assert.equal(result.unresolved.length, 1);
+  }
+});
+
+test('resolves an event alias declared with a type assertion', () => {
+  const result = extractRealtimeSubscriptions(
+    `const event = 'postgres_changes' as const; channel.on(event, { table: 'messages' }, handler);`,
+  );
+  assert.deepEqual(result.subscriptions, ['public.messages']);
+  assert.deepEqual(result.unresolved, []);
+});
+
 test('the repository has no unresolved or dead Realtime subscriptions', () => {
   const result = evaluateRealtimeSubscriptions();
   assert.deepEqual(result.unresolved, []);

@@ -8,8 +8,42 @@
  * honesto (nada de "0 s") e o caminho de retry enquanto a espera é transitória.
  */
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SuggestionList, type SuggestionListProps } from '../SuggestionList';
+
+// SL-080: só a prova de ponta (hook real + lista real) precisa do cliente Mapbox mockado — o
+// `/suggest` é o que se mede. Os casos de render puro da lista não tocam nesses módulos.
+const geo = vi.hoisted(() => ({
+  suggestPlaces: vi.fn(),
+  searchPlaces: vi.fn(),
+  getCachedSuggest: vi.fn(),
+  isSearchBudgetOk: vi.fn(),
+  getSearchSession: vi.fn(),
+  peekSearchSession: vi.fn(),
+  noteSuggestCall: vi.fn(),
+  endSearchSession: vi.fn(),
+}));
+
+vi.mock('@/lib/mapboxGeocode', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/mapboxGeocode')>();
+  return {
+    ...actual,
+    suggestPlaces: (...args: unknown[]) => geo.suggestPlaces(...args),
+    searchPlaces: (...args: unknown[]) => geo.searchPlaces(...args),
+    getCachedSuggest: (...args: unknown[]) => geo.getCachedSuggest(...args),
+  };
+});
+vi.mock('@/lib/mapboxSession', () => ({
+  getSearchSession: () => geo.getSearchSession(),
+  peekSearchSession: () => geo.peekSearchSession(),
+  noteSuggestCall: () => geo.noteSuggestCall(),
+  noteRetrieveCall: () => {},
+  endSearchSession: () => geo.endSearchSession(),
+}));
+vi.mock('@/lib/mapboxCostGuard', () => ({ isSearchBudgetOk: () => geo.isSearchBudgetOk() }));
+vi.mock('@/lib/audit', () => ({ logAudit: () => {} }));
+
+import { useAddressAutocomplete } from '../useAddressAutocomplete';
 
 function props(extra: Partial<SuggestionListProps> = {}): SuggestionListProps {
   return {
@@ -240,5 +274,111 @@ describe('SuggestionList — movimento reduzido E63 (variante motion-reduce:)', 
     render(<SuggestionList {...props({ status: 'paused', blocked: 'rate_limited', pausedUntil: Date.now() + 45_000 })} />);
     const animados = [...screen.getByTestId('lista-sugestoes').querySelectorAll('[class*="animate-"]')];
     expect(animados).toEqual([]);
+  });
+});
+
+/**
+ * SL-080 (A3-04, segunda leva) — medido de novo no bundle atual: o botão e a contagem existem, mas
+ * a pausa de 429 expirava em SILÊNCIO. O aviso ficava parado no fim da espera e a busca só voltava
+ * se o operador digitasse de novo ou clicasse em "Tentar novamente" (o texto até dizia "já pode
+ * tentar de novo", mas nada voltava sozinho).
+ * A prova que fecha a lacuna é a de ponta: o hook REAL alimentando a lista REAL, medindo o
+ * `/suggest` voltar a sair sem NENHUMA ação do operador (nem tecla, nem clique).
+ */
+const sugestaoA = {
+  id: 'a',
+  name: 'Rua A',
+  address: 'Rua A, 1, São Paulo',
+  kind: 'street',
+} as unknown as SuggestionListProps['suggestions'][number];
+
+function ListaComAutocomplete() {
+  const ac = useAddressAutocomplete({ token: 'tok', enabled: true });
+  return (
+    <div>
+      {/* O operador digita de verdade: é essa tecla (e só ela) que abre a busca. */}
+      <input
+        aria-label="Endereço"
+        value={ac.query}
+        onChange={(e) => ac.setQuery(e.target.value)}
+      />
+      <SuggestionList
+        listboxId="lista"
+        status={ac.status}
+        query={ac.query}
+        suggestions={ac.suggestions}
+        highlightedIndex={ac.highlightedIndex}
+        retrievingId={ac.retrievingId}
+        error={ac.error}
+        blocked={ac.blocked}
+        pausedUntil={ac.pausedUntil}
+        retrieveError={ac.retrieveError}
+        onSelect={(index) => { void ac.select(index); }}
+        onRetry={() => ac.retrySuggest()}
+      />
+    </div>
+  );
+}
+
+describe('SuggestionList — SL-080: a pausa de 429 retoma a busca sozinha', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    geo.suggestPlaces.mockReset().mockResolvedValue({ ok: false, kind: 'rate_limited' });
+    geo.searchPlaces.mockReset().mockResolvedValue({ ok: false, kind: 'not_found' });
+    geo.getCachedSuggest.mockReset().mockReturnValue(undefined);
+    geo.peekSearchSession.mockReset().mockReturnValue(null);
+    geo.getSearchSession.mockReset().mockReturnValue('sessao-1');
+    geo.isSearchBudgetOk.mockReset().mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Anda o relógio de 1 em 1 s (como o do aviso faz no navegador) e deixa os efeitos rodarem. */
+  async function avancar(segundos: number) {
+    for (let i = 0; i < segundos; i++) {
+      await act(async () => { vi.advanceTimersByTime(1000); });
+    }
+    await act(async () => {});
+  }
+
+  it('espera vencida: a busca volta sem digitar nem clicar, e o aviso sai da tela', async () => {
+    render(<ListaComAutocomplete />);
+    fireEvent.change(screen.getByLabelText('Endereço'), { target: { value: 'rua a' } });
+    await act(async () => { vi.advanceTimersByTime(300); });
+
+    // 429: pausa com prazo na tela (E27), um `/suggest` só.
+    expect(screen.getByText(/Sugestões pausadas por \d+ s/)).toBeTruthy();
+    expect(geo.suggestPlaces).toHaveBeenCalledTimes(1);
+
+    // Dentro da espera o relógio anda e a busca NÃO é re-requestada (o backoff anti-hammering segue).
+    await avancar(30);
+    expect(geo.suggestPlaces).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Sugestões pausadas por \d+ s/)).toBeTruthy();
+
+    // Passados os 60 s: sem tecla e sem clique, a busca tem de voltar sozinha.
+    geo.suggestPlaces.mockResolvedValue({ ok: true, suggestions: [sugestaoA] });
+    await avancar(31);
+
+    expect(geo.suggestPlaces).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(/Sugestões pausadas/)).toBeNull();
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+  });
+
+  it('teto de custo do mês não retoma sozinho (nova tentativa não muda o limite)', async () => {
+    const onRetry = vi.fn();
+    render(<SuggestionList {...props({ blocked: 'cost_guard', pausedUntil: Date.now() - 1_000, onRetry })} />);
+
+    await avancar(5);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it('espera já vencida retoma UMA vez (não fica tentando a cada segundo)', async () => {
+    const onRetry = vi.fn();
+    render(<SuggestionList {...props({ blocked: 'rate_limited', pausedUntil: Date.now() - 1_000, onRetry })} />);
+
+    await avancar(5);
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,7 @@
 /**
  * Etapa 77 — escopo e guarda de input dos 7 atalhos do módulo de Tarefas.
+ * Etapa E09 — o escopo passou a ser só `tasks`: o Quadro vive DENTRO de Tarefas
+ * (como modo do `tasks-mode`), então a view `pipeline` não dispara mais nada.
  *
  * O registry global é o único lugar que decide se um atalho vale: ele lê a view
  * da URL canônica (`?view=`) e ignora quem está fora do `scope`. A guarda de
@@ -59,9 +61,12 @@ describe('etapa 77 — registry dos atalhos de Tarefas', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('registra exatamente 7 atalhos, todos com escopo em tasks/pipeline', () => {
+  it('registra exatamente 7 atalhos, todos com escopo em `tasks`', () => {
+    // E09: o Quadro é um modo DENTRO de Tarefas — a view `pipeline` não vale mais.
+    expect(TASKS_VIEWS).toEqual(['tasks']);
     const doModulo = DEFAULT_SHORTCUTS.filter(s => s.scope === TASKS_VIEWS);
     expect(doModulo).toHaveLength(7);
+    expect(doModulo.every(s => s.scope?.includes('tasks'))).toBe(true);
     expect(doModulo.map(s => s.id)).toEqual([
       'tasks-focus-quickadd', 'tasks-mode', 'tasks-search', 'tasks-open-sheet',
       'tasks-complete', 'tasks-cancel', 'tasks-help',
@@ -91,10 +96,11 @@ describe('etapa 77 — registry dos atalhos de Tarefas', () => {
     }
   });
 
-  it('em ?view=pipeline também vale (é a rota do Quadro)', () => {
+  it('em ?view=pipeline nada dispara (o Quadro agora é um modo de Tarefas)', () => {
     montar('pipeline');
-    teclar('n');
-    expect(espiao.recebidos).toEqual([{ id: 'tasks-focus-quickadd', key: undefined }]);
+    for (const key of ['n', '1', '2', '3', '/', 'e', 'x', 'Delete']) teclar(key);
+    teclar('?', { shiftKey: true });
+    expect(espiao.recebidos).toHaveLength(0);
   });
 
   it('fora das rotas de Tarefas o registry ignora os atalhos', () => {

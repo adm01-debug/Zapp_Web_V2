@@ -403,6 +403,29 @@ nenhum, ja que a linha extra nao muda o plano de execucao. Criar uma migration N
 reescrever a funcao inteira seria pior: duplicaria ~70 linhas de corpo para tirar uma linha
 repetida. **Fica como esta** — aqui registrado para que ninguem gaste tempo investigando depois.
 
+---
+
+### A ia131 nao pode ser reescrita para "preservar modalidades" (registrado em 09/10/2026)
+
+`20261006100606_ia131_audio_stt_openrouter.sql` (habilita `audio_stt` no OpenRouter, item 133)
+esta **aplicada** — entrou na main pelo lote #1905 — e e imutavel (regra 7). Uma revisao anterior
+pediu reescrever o `jsonb_set` dela para acrescentar so `audio_stt` sem sobrescrever o array. Essa
+correcao **nao pode entrar**, por duas razoes medidas:
+
+1. O passo "Rejeitar edicao de migration ja existente" do `.github/workflows/db-guard.yml` reprova
+   todo PR que traga um `supabase/migrations/*.sql` existente com status `modified`. A versao em
+   `main` e a da branch do dia sao identicas (`sha256 a0a30c2152942857198a6b9832b24347ef08a9322035c8355643284197d0987d`),
+   entao qualquer edicao do arquivo vira PR VERMELHO — nao e opiniao do revisor, e guarda.
+2. O efeito temido nao acontece **nesta** cadeia: a `20260930780000_ia033` (passo anterior, mesma
+   linha) grava `capabilities.modalities = ["vision"]` e a `ia131` fecha em `["vision","audio_stt"]`.
+   A modalidade declarada antes continua declarada e as chaves top-level do `config` (`headers`,
+   `routing`) seguem la — provado, em PostgreSQL 17 descartavel, por
+   `bash scripts/db-audit/ia131-audio-stt-cadeia.test.sh`.
+
+Uma migration NOVA com o mesmo `update` idempotente seria no-op em toda base que ja rodou a ia131
+(e so acrescentaria uma versao permanente ao ledger), por isso **fica como esta** — aqui registrado
+para que ninguem gaste tempo investigando depois.
+
 ## 5. Operacao pontual nao e migration
 
 `VACUUM`, limpeza de bloat, backfill de uma vez — nada disso deve virar migration

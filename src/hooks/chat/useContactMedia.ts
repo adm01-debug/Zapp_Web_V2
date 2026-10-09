@@ -5,9 +5,13 @@ import { SUPABASE_URL } from '@/config/supabase';
 import { getMediaType, getFilename } from '@/components/inbox/media-gallery/mediaUtils';
 import { parseSupabaseStorageObjectUrl, PRIVATE_MEDIA_BUCKETS } from '@/lib/storage_object_reference';
 
-export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document';
+export type ContactMediaKind = 'image' | 'video' | 'audio' | 'document' | 'sticker';
 
-/** `senderLabel` do atendente. Nunca "Você": a consulta nao traz o autor da mensagem. */
+/**
+ * `senderLabel` do atendente quando o autor ainda nao foi resolvido. O cartao passou a
+ * trazer `agentId` (a consulta ja devolve `messages.agent_id`), e quem decide "Voce"/nome/foto
+ * e `resolveSenderIdentity` (src/lib/fileSenderIdentity.ts) — este rotulo e o fallback.
+ */
 export const AGENT_SENDER_LABEL = 'Atendente';
 
 export interface ContactMediaItem {
@@ -21,6 +25,17 @@ export interface ContactMediaItem {
   extension: string | null;
   /** Rotulo do remetente quando ele e o atendente; `null` = contato (a UI usa o nome dele). */
   senderLabel: string | null;
+  /**
+   * Autor da mensagem: `messages.agent_id` (FK para `profiles.id`). Nulo quando o
+   * contato enviou ou quando o atendente mandou pelo celular/automacao (`sender='agent'`
+   * sem agent_id). E o dado que liga o arquivo a quem o enviou (R01).
+   *
+   * OPCIONAL de proposito: dezenas de literais de `ContactMediaItem` vivem nos testes de
+   * componentes de outros cartoes (FileCard/FilesTab/FileThumb...), que este cartao nao pode
+   * tocar; exigir o campo quebraria o typecheck deles. `mapRowToItem` SEMPRE o preenche
+   * (`?? null`), entao em runtime a UI nunca ve `undefined`.
+   */
+  agentId?: string | null;
   created_at: string;
   caption: string | null;
   mimetype: string | null;
@@ -71,7 +86,7 @@ const SIGNED_URL_TTL_SECONDS = 3600;
 export const MEDIA_PAGE_SIZE = 60;
 const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
 const TYPE_LABEL: Record<ContactMediaKind, string> = {
-  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
+  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento', sticker: 'Figurinha',
 };
 
 /**
@@ -81,7 +96,7 @@ const TYPE_LABEL: Record<ContactMediaKind, string> = {
 const NOT_DELETED_OR = 'is_deleted.is.null,is_deleted.eq.false';
 
 const SELECT_COLUMNS =
-  'id, media_url, message_type, media_type, media_mimetype, media_filename, media_size, media_meta, caption, content, sender, ptt, created_at';
+  'id, media_url, message_type, media_type, media_mimetype, media_filename, media_size, media_meta, caption, content, sender, agent_id, ptt, created_at';
 
 /** Nome tecnico do WhatsApp: hex/underscore sem nenhuma palavra (ex.: 3EB0E6947FC0A0ECAED14D_1790283276022). */
 const TECHNICAL_FILENAME = /^[0-9a-fA-F_-]{14,}$/;
@@ -142,6 +157,10 @@ function classify(
   url: string,
   ptt: boolean | null,
 ): ContactMediaKind {
+  // Figurinha tem tipo próprio no banco (`message_type = 'sticker'`, gravado pelo webhook) e
+  // decide ANTES do MIME e da extensão: ela chega como `image/webp` — ou sem MIME nenhum —
+  // e sem esta linha cairia em "Imagens" (484 figurinhas contra 3.600 imagens no banco real).
+  if (messageType === 'sticker') return 'sticker';
   const mt = mediaType || mimetype || '';
   if (mt.startsWith('image/')) return 'image';
   if (mt.startsWith('video/')) return 'video';
@@ -200,6 +219,7 @@ interface MediaRow {
   caption: string | null;
   content: string | null;
   sender: string | null;
+  agent_id: string | null;
   ptt: boolean | null;
   created_at: string;
 }
@@ -216,6 +236,7 @@ function mapRowToItem(m: MediaRow): ContactMediaItem {
     displayName: displayNameOf(m.media_filename ?? null, type, m.created_at, url),
     extension: extensionOf(m.media_filename ?? null, url),
     senderLabel: m.sender === 'agent' ? AGENT_SENDER_LABEL : null,
+    agentId: m.agent_id ?? null,
     created_at: m.created_at,
     // useFileUploadLogic grava a legenda em 'content', nao em 'caption'
     caption: m.caption ?? m.content ?? null,

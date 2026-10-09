@@ -1,5 +1,6 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { handleEvolutionApi } from "./index.ts";
+import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
@@ -403,5 +404,133 @@ Deno.test("R2-API-014: update-privacy parcial mergeia com o snapshot lido — ne
     });
   } finally {
     await fake.stop();
+  }
+});
+
+// ─── E45 / SL-050 (P2) ──────────────────────────────────────────────────────
+// O corpo de `evolution-api` não passava por nenhum schema (grep zod na pasta:
+// 0). `instanceName`/`action` eram lidos crus, `{}`/array/nulo viravam decisão
+// e o corpo ia inteiro ao provedor. Depois: o corpo é validado com
+// `EvolutionApiRequestSchema` (_shared/schemas.ts) e a recusa sai no formato
+// único de validação (422 + VALIDATION_ERROR — docs/contracts.md), sem nenhum
+// I/O no provedor.
+
+/** Corpo com a ação NO CORPO (path `evolution-api` puro, como o front faz). */
+function bareControlRequest(body: Record<string, unknown>): Request {
+  return new Request("http://localhost/functions/v1/evolution-api", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": TEST_JWT,
+      "x-real-ip": nextIp(),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+Deno.test("E45: ação desconhecida no corpo devolve 422 e não chega ao provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      bareControlRequest({ action: "acao-que-nao-existe", instanceName: "PRINCIPAL" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assertEquals(res.status, 422, "ação fora da lista deve ser recusada na validação");
+    const json = await res.json();
+    assertEquals(json?.error?.code, "VALIDATION_ERROR");
+    assertEquals(json?.error?.fields?.[0]?.path, "action");
+    assertEquals(fake.posts.length, 0, "corpo inválido não pode chegar ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E45: ação de instância sem instanceName devolve 422 e não chega ao provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    // chamador COM papel: o 422 tem de vir da validação do corpo (instância
+    // obrigatória por ação — E17), não do gate de autorização.
+    const res = await handleEvolutionApi(
+      controlRequest("send-text", { number: "5511999999999", text: "oi" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assertEquals(res.status, 422, "instância ausente deve ser recusada na validação");
+    const json = await res.json();
+    assertEquals(json?.error?.code, "VALIDATION_ERROR");
+    assertEquals(json?.error?.fields?.[0]?.path, "instanceName");
+    assertEquals(fake.posts.length, 0, "corpo inválido não pode chegar ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E45: corpo válido com a ação no corpo segue para o provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      bareControlRequest({
+        action: "set-webhook",
+        instanceName: "PRINCIPAL",
+        url: "https://x/functions/v1/evolution-webhook",
+        enabled: true,
+      }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assertEquals(res.status, 200, "corpo válido não pode ser recusado");
+    assert(fake.posts.length >= 1, "corpo válido deve alcançar o provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E45: ação global (list-instances) continua sem exigir instância", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("list-instances", {}),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      },
+    );
+    const json = await res.json();
+    assert(
+      json?.error?.code !== "VALIDATION_ERROR",
+      `list-instances é isenta de instância (E17): ${JSON.stringify(json)}`,
+    );
+    assertEquals(res.status, 200);
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E45: a lista de ações do schema cobre toda ação que o handler implementa", async () => {
+  // Guarda contra a única falha grave deste cartão: recusar em 422 uma ação que
+  // o handler suporta. O fonte do handler é a fonte da verdade (mesma extração
+  // do teste de exaustividade da matriz de autorização, em
+  // _shared/__tests__/evolution-control-authz.test.ts).
+  const source = await Deno.readTextFile(new URL("./index.ts", import.meta.url));
+  const actions = new Set(
+    [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
+  );
+  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
+  for (const action of actions) {
+    assert(
+      EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
+      `o schema recusa a ação suportada '${action}'`,
+    );
   }
 });

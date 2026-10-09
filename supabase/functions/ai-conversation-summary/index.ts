@@ -5,6 +5,7 @@ import { normalizeSentiment, normalizeUrgency, urgencyToOperationalPriority } fr
 import { normalizeScore } from "../_shared/ai-values.ts";
 import { ConversationSummaryOutput, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
+import { buildSummaryContactContext } from "./contact-context.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { CHURN_RISK_TOOL_SCHEMA, CONVERSATION_STATUS_TOOL_SCHEMA, KEY_POINTS_TOOL_SCHEMA, NEXT_STEPS_TOOL_SCHEMA, SENTIMENT_TOOL_SCHEMA, type ConversationToolDefinition, applyVocabularyConversion, buildConversationModelBody, buildConversationText, collectValueIssues, contractRejectionEvidence, conversationRunEnvelope, loadContactProjectionVersion, loadContactPromptContext, noModelPayloadResponse, persistConversationAnalysisGuarded, persistenceFailureEnvelope, projectionGuardArgs, requestConversationModelJson, resolveVisibleContactId, summarizeContractIssues } from "../_shared/ai-conversation-pipeline.ts";
@@ -63,17 +64,21 @@ Deno.serve(async (req) => {
       const { contact, recentAnalyses } = await loadContactPromptContext({
         supabase,
         contactId: visibleContactId,
-        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes',
+        // IA-061/IA-065: o resumo precisa do MESMO contexto profissional da
+        // análise — `contact_type` (papel do interlocutor) sai daqui.
+        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
         analysisColumns: 'sentiment, summary, created_at',
       });
 
-      if (contact) {
-        contactContext = `\nContexto: ${contact.name || 'Cliente'}, Empresa: ${contact.company || 'N/A'}, Tags: ${contact.tags?.join(', ') || 'Nenhuma'}`;
-      }
-
-      if (recentAnalyses.length > 0) {
-        contactContext += `\nHistórico: ${recentAnalyses.map(a => `[${a.sentiment}] ${a.summary}`).join(' | ')}`;
-      }
+      // IA-061: o recorte do resumo é montado pela MESMA rotina que normaliza o
+      // histórico no vocabulário canônico (IA-021) — o contexto dos dois modos
+      // não pode divergir. A rotina é pura e testada em `contact-context.test.ts`.
+      contactContext = buildSummaryContactContext({
+        contact,
+        recentAnalyses,
+        periodDays,
+        messageCount: messages.length,
+      });
     }
 
     const conversationText = buildConversationText(messages, contactName);

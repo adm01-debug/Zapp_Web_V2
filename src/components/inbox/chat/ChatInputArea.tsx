@@ -62,7 +62,9 @@ interface ChatInputAreaProps {
   onOpenSchedule: () => void;
   onOpenLocationPicker: () => void;
   onSendSticker: (stickerUrl: string) => void;
-  onSendAudioMeme: (audioUrl: string) => void;
+  /** Pode ser assíncrono e falhar por rejeição (ver #350): o VoiceChangerPicker
+      só descarta a prévia da voz transformada quando o envio confirma o sucesso. */
+  onSendAudioMeme: (audioUrl: string) => void | Promise<void>;
   onSendCustomEmoji: (emojiUrl: string) => void;
   onOpenCatalog?: () => void;
   onSelectSuggestion: (text: string) => void;
@@ -93,6 +95,9 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
+    // R2-INB-016 (item 312): a barra recebe o par da assinatura (ligada + nome do agente) que
+    // o ChatPanel já entrega, para que contador e botão contem o payload assinado.
+    signatureEnabled, signatureName,
   });
 
   const { isOpen: mentionOpen, cursorPos: mentionCursorPos, checkForMention, handleSelect: handleMentionSelect, close: closeMention } = useMentions(inputRef);

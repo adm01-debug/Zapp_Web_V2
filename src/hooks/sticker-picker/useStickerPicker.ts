@@ -7,6 +7,7 @@ import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { toast } from 'sonner';
 import { type StickerItem, type PendingUpload, CATEGORY_LABELS } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { converterFigurinhaParaWebp, precisaConverterParaWebp } from '@/lib/stickerImage';
 
 const log = getLogger('StickerPicker');
 const RECENT_LIMIT = 8;
@@ -18,7 +19,7 @@ const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
 const DELETABLE_STICKER_BUCKETS = ['stickers'] as const;
 
 export function useStickerPicker(onSendSticker: (url: string) => void) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [stickers, setStickers] = useState<StickerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -26,11 +27,54 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showRecent, setShowRecent] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null);
+  const [pendingUpload, setPendingUploadState] = useState<PendingUpload | null>(null);
   const [gridSize, setGridSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // R2-INB-043: a imagem já está no bucket `stickers` antes de existir preview e a linha
+  // só nasce no Salvar. Estes refs permitem desfazer (rollback) o upload não confirmado ao
+  // fechar/desmontar o picker e invalidar uma conclusão tardia, que antes recriava o
+  // preview fora do ciclo aberto deixando o objeto órfão.
+  const openRef = useRef(false);
+  const pendingUploadRef = useRef<PendingUpload | null>(null);
+  const uploadEpochRef = useRef(0);
+  const confirmingRef = useRef(false);
+
+  const discardUnconfirmedUpload = useCallback(async (clearState: boolean) => {
+    // Invalida qualquer upload em voo desta abertura: conclusão após o fechamento não
+    // recria o preview e limpa o objeto que ela mesma acabou de enviar.
+    uploadEpochRef.current += 1;
+    // Salvar em andamento conserva o objeto e o preview — a linha está nascendo.
+    if (confirmingRef.current) return;
+    const pending = pendingUploadRef.current;
+    pendingUploadRef.current = null;
+    if (clearState) setPendingUploadState(null);
+    if (pending) {
+      const { error } = await supabase.storage.from('stickers').remove([pending.storagePath]);
+      if (error) log.error('[StickerPicker] Falha ao limpar objeto não confirmado:', error);
+    }
+  }, []);
+
+  // `setPendingUpload` é exposto ao consumidor (o picker zera o preview ao fechar): mantém o
+  // ref espelhado e, ao descartar, passa pelo mesmo rollback — nada de estado fora do ref.
+  const setPendingUpload = useCallback((next: PendingUpload | null) => {
+    if (next === null) { void discardUnconfirmedUpload(true); return; }
+    pendingUploadRef.current = next;
+    setPendingUploadState(next);
+  }, [discardUnconfirmedUpload]);
+
+  // Fechar o picker (clique externo, atalho Ctrl+Shift+S ou envio) desfaz o upload não
+  // confirmado: o wrapper roda o rollback no MESMO gesto, antes de o preview ser descartado.
+  const setOpen = useCallback((next: boolean | ((prev: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(openRef.current) : next;
+    openRef.current = value;
+    setOpenState(value);
+    if (!value) void discardUnconfirmedUpload(true);
+  }, [discardUnconfirmedUpload]);
+
+  // Desmontagem: remove o objeto não confirmado sem mexer em estado de componente saindo.
+  useEffect(() => () => { void discardUnconfirmedUpload(false); }, [discardUnconfirmedUpload]);
 
   const fetchStickers = useCallback(async () => {
     setLoading(true);
@@ -64,7 +108,7 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
     const handler = (e: KeyboardEvent) => { if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); setOpen(prev => !prev); } };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [setOpen]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(false); }, []);
@@ -73,34 +117,73 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
   const processFile = async (file: File) => {
     if (!file.type.startsWith('image/')) { toast.error('Arquivo não é uma imagem válida'); return; }
     if (file.size > 500 * 1024) { toast.error('Arquivo excede 500KB.'); return; }
+    const epoch = ++uploadEpochRef.current;
     setUploading(true);
     try {
-      const ext = getFileExtensionWithDefault(file.name, 'webp');
+      // Item 069: o WhatsApp/Evolution GO só aceita figurinha em WebP, e o picker aceita
+      // PNG/JPEG na entrada. A imagem é reencodada AQUI, antes de virar objeto do bucket —
+      // subir os bytes originais deixava a figurinha inválida para envio.
+      let arquivo = file;
+      if (precisaConverterParaWebp(file)) {
+        arquivo = await converterFigurinhaParaWebp(file);
+        if (arquivo === file) log.warn('[StickerPicker] Conversão para WebP não aplicada; subindo o arquivo original:', file.type);
+      }
+      const ext = getFileExtensionWithDefault(arquivo.name, 'webp');
       const storagePath = `sticker_${Date.now()}_${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('stickers').upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
+      const { error: uploadError } = await supabase.storage.from('stickers').upload(storagePath, arquivo, { contentType: arquivo.type, cacheControl: '31536000' });
       if (uploadError) { toast.error('Erro ao enviar arquivo'); return; }
       const { data: urlData } = supabase.storage.from('stickers').getPublicUrl(storagePath);
+      // Fechou/desmontou (ou um envio mais novo superou este) enquanto o upload estava em
+      // voo: não recria o preview fora do ciclo ativo e devolve o objeto recém-enviado
+      // para limpeza, em vez de deixá-lo órfão (R2-INB-043).
+      if (epoch !== uploadEpochRef.current) {
+        const { error } = await supabase.storage.from('stickers').remove([storagePath]);
+        if (error) log.error('[StickerPicker] Falha ao limpar upload superado:', error);
+        return;
+      }
       let aiCategory = 'enviadas';
       try {
         toast.info('🔍 Classificando figurinha com IA...');
         const { data: classifyData, error: classifyErr } = await supabase.functions.invoke('classify-sticker', { body: { image_url: urlData.publicUrl } });
         if (!classifyErr && classifyData?.category) aiCategory = classifyData.category;
       } catch (err) { log.error('Unexpected error in useStickerPicker:', err); }
-      setPendingUpload({ file, imageUrl: urlData.publicUrl, storagePath, aiCategory, selectedCategory: aiCategory, name: file.name.replace(/\.[^.]+$/, '') });
+      if (epoch !== uploadEpochRef.current) {
+        const { error } = await supabase.storage.from('stickers').remove([storagePath]);
+        if (error) log.error('[StickerPicker] Falha ao limpar upload superado:', error);
+        return;
+      }
+      const pending: PendingUpload = { file: arquivo, imageUrl: urlData.publicUrl, storagePath, aiCategory, selectedCategory: aiCategory, name: file.name.replace(/\.[^.]+$/, '') };
+      pendingUploadRef.current = pending;
+      setPendingUploadState(pending);
     } catch { toast.error('Erro ao processar figurinha'); } finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) void processFile(file); };
 
   const handleConfirmUpload = async (pending: PendingUpload) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error: insertError } = await supabase.from('stickers').insert({ name: pending.name, image_url: pending.imageUrl, category: pending.selectedCategory, is_favorite: false, use_count: 0, uploaded_by: user?.id || null });
-    if (insertError) { log.error('[StickerPicker] Insert error:', insertError); toast.error('Erro ao salvar figurinha'); return; }
-    toast.success(`✅ Figurinha "${pending.name}" salva como "${CATEGORY_LABELS[pending.selectedCategory]?.label}"!`);
-    setPendingUpload(null); fetchStickers();
+    // Enquanto a linha nasce, um fechamento do picker NÃO pode desfazer o objeto (R2-INB-043).
+    confirmingRef.current = true;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: insertError } = await supabase.from('stickers').insert({ name: pending.name, image_url: pending.imageUrl, category: pending.selectedCategory, is_favorite: false, use_count: 0, uploaded_by: user?.id || null });
+      if (insertError) { log.error('[StickerPicker] Insert error:', insertError); toast.error('Erro ao salvar figurinha'); return; }
+      toast.success(`✅ Figurinha "${pending.name}" salva como "${CATEGORY_LABELS[pending.selectedCategory]?.label}"!`);
+      pendingUploadRef.current = null;
+      setPendingUploadState(null); fetchStickers();
+    } finally {
+      confirmingRef.current = false;
+    }
   };
 
-  const handleCancelUpload = async () => { if (pendingUpload) await supabase.storage.from('stickers').remove([pendingUpload.storagePath]); setPendingUpload(null); };
+  const handleCancelUpload = async () => {
+    const pending = pendingUploadRef.current;
+    pendingUploadRef.current = null;
+    setPendingUploadState(null);
+    if (pending) {
+      const { error } = await supabase.storage.from('stickers').remove([pending.storagePath]);
+      if (error) log.error('[StickerPicker] Falha ao remover upload cancelado:', error);
+    }
+  };
 
   const handleSend = async (sticker: StickerItem) => {
     onSendSticker(sticker.image_url); setOpen(false);
@@ -108,26 +191,67 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
   };
 
   const toggleFavorite = async (e: React.MouseEvent, sticker: StickerItem) => {
-    e.stopPropagation(); const newVal = !sticker.is_favorite;
+    e.stopPropagation(); const previous = sticker.is_favorite; const newVal = !previous;
     setStickers(prev => prev.map(s => s.id === sticker.id ? { ...s, is_favorite: newVal } : s));
-    await supabase.from('stickers').update({ is_favorite: newVal }).eq('id', sticker.id);
+    // O `select('id')` devolve as linhas afetadas: sem ele, o RLS filtra em silêncio (0 linhas, sem
+    // error) e a escrita rejeitada passaria por sucesso.
+    const { data, error } = await supabase.from('stickers').update({ is_favorite: newVal }).eq('id', sticker.id).select('id');
+    if (error || !data || data.length === 0) {
+      log.error('[StickerPicker] Falha ao atualizar favorito:', error);
+      setStickers(prev => prev.map(s => s.id === sticker.id ? { ...s, is_favorite: previous } : s));
+      toast.error('Não foi possível atualizar o favorito');
+      return;
+    }
     toast.success(newVal ? '⭐ Adicionada aos favoritos' : 'Removida dos favoritos');
   };
 
   const handleCategoryChange = async (sticker: StickerItem, newCategory: string) => {
+    const previous = sticker.category;
     setStickers(prev => prev.map(s => s.id === sticker.id ? { ...s, category: newCategory } : s));
-    await supabase.from('stickers').update({ category: newCategory }).eq('id', sticker.id);
+    const { data, error } = await supabase.from('stickers').update({ category: newCategory }).eq('id', sticker.id).select('id');
+    if (error || !data || data.length === 0) {
+      log.error('[StickerPicker] Falha ao atualizar categoria:', error);
+      setStickers(prev => prev.map(s => s.id === sticker.id ? { ...s, category: previous } : s));
+      toast.error('Não foi possível atualizar a categoria');
+      return;
+    }
     toast.success(`Categoria: "${CATEGORY_LABELS[newCategory]?.label || newCategory}"`);
   };
 
   const handleDelete = async (e: React.MouseEvent, sticker: StickerItem) => {
-    e.stopPropagation(); setStickers(prev => prev.filter(s => s.id !== sticker.id));
-    // A linha do catálogo sempre sai; o objeto físico só sai quando o locator é reconhecidamente
-    // do bucket próprio `stickers`. URL de outro bucket (whatsapp-media), de outra origem ou
-    // malformada é fail-safe: preserva o objeto e apenas remove a entrada.
+    e.stopPropagation();
+    const previousIndex = stickers.findIndex(s => s.id === sticker.id);
+    setStickers(prev => prev.filter(s => s.id !== sticker.id));
+
+    // A LINHA do catálogo sai primeiro e a escrita é conferida (error ou 0 linhas = falha).
+    // Só depois de a linha sair o objeto físico entra em jogo — e apenas quando o locator é
+    // reconhecidamente do bucket próprio `stickers`. URL de outro bucket (whatsapp-media), de
+    // outra origem ou malformada é fail-safe: preserva o objeto. Assim nunca sobra uma entrada
+    // apontando para um objeto já removido.
+    const { data, error } = await supabase.from('stickers').delete().eq('id', sticker.id).select('id');
+    if (error || !data || data.length === 0) {
+      log.error('[StickerPicker] Falha ao excluir figurinha:', error);
+      setStickers(prev => {
+        if (prev.some(s => s.id === sticker.id)) return prev;
+        const next = [...prev];
+        next.splice(previousIndex < 0 ? next.length : previousIndex, 0, sticker);
+        return next;
+      });
+      toast.error('Não foi possível remover a figurinha');
+      return;
+    }
+
     const object = parseSupabaseStorageObjectUrl(sticker.image_url, DELETABLE_STICKER_BUCKETS, STORAGE_ORIGINS);
-    if (object) await supabase.storage.from(object.bucket).remove([object.path]);
-    await supabase.from('stickers').delete().eq('id', sticker.id); toast.success('Figurinha removida');
+    if (object) {
+      const { error: removeError } = await supabase.storage.from(object.bucket).remove([object.path]);
+      if (removeError) {
+        // A entrada já saiu; o objeto ficou órfão. Isso não é sucesso pleno: registra e avisa.
+        log.error('[StickerPicker] Linha removida, mas o objeto ficou órfão:', removeError);
+        toast.error('Figurinha removida, mas o arquivo ficou órfão no armazenamento');
+        return;
+      }
+    }
+    toast.success('Figurinha removida');
   };
 
   const filtered = useMemo(() => {

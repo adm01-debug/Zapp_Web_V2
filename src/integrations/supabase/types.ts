@@ -323,6 +323,7 @@ export type Database = {
           attempt_count: number
           available_at: string
           created_at: string
+          effect_started_at: string | null
           expires_at: string | null
           finished_at: string | null
           function_name: string
@@ -348,6 +349,7 @@ export type Database = {
           attempt_count?: number
           available_at?: string
           created_at?: string
+          effect_started_at?: string | null
           expires_at?: string | null
           finished_at?: string | null
           function_name: string
@@ -373,6 +375,7 @@ export type Database = {
           attempt_count?: number
           available_at?: string
           created_at?: string
+          effect_started_at?: string | null
           expires_at?: string | null
           finished_at?: string | null
           function_name?: string
@@ -2827,6 +2830,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          migrated_from_reminder_id: string | null
           notified_at: string | null
           position: number
           priority: string
@@ -2848,6 +2852,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          migrated_from_reminder_id?: string | null
           notified_at?: string | null
           position?: number
           priority?: string
@@ -2869,6 +2874,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          migrated_from_reminder_id?: string | null
           notified_at?: string | null
           position?: number
           priority?: string
@@ -2914,6 +2920,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_tasks_migrated_from_reminder_id_fkey"
+            columns: ["migrated_from_reminder_id"]
+            isOneToOne: false
+            referencedRelation: "reminders"
             referencedColumns: ["id"]
           },
         ]
@@ -10523,6 +10536,7 @@ export type Database = {
         Args: { p_contact_id: string; p_message_id: string; p_phone: string }
         Returns: Json
       }
+      backfill_reminders_to_conversation_tasks: { Args: never; Returns: number }
       calculate_level: { Args: { xp_amount: number }; Returns: number }
       can_delete_contacts: {
         Args: { p_ids: string[] }
@@ -10565,6 +10579,7 @@ export type Database = {
           attempt_count: number
           available_at: string
           created_at: string
+          effect_started_at: string | null
           expires_at: string | null
           finished_at: string | null
           function_name: string
@@ -11311,10 +11326,19 @@ export type Database = {
         Args: { p_department_id: string }
         Returns: string
       }
+      get_department_whatsapp_config: {
+        Args: { p_department_id: string }
+        Returns: {
+          has_api_key: boolean
+          instance_id: string
+          mode: string
+        }[]
+      }
       get_department_whatsapp_credentials: {
         Args: { p_department_id: string }
         Returns: Json
       }
+      get_department_whatsapp_mode: { Args: { p_department_id: string }; Returns: string }
       get_gmail_tokens: {
         Args: { p_account_id: string }
         Returns: {
@@ -11453,7 +11477,7 @@ export type Database = {
           avatar_url: string
           created_at: string
           department: string
-          department_id: string | null
+          department_id: string
           email: string
           id: string
           is_active: boolean
@@ -11474,6 +11498,16 @@ export type Database = {
       }
       get_visible_agent_ids: { Args: { _user_id: string }; Returns: string[] }
       grant_agent_achievement: {
+        Args: {
+          p_description: string
+          p_name: string
+          p_profile_id: string
+          p_type: string
+          p_xp_reward: number
+        }
+        Returns: Json
+      }
+      grant_agent_achievement_internal: {
         Args: {
           p_description: string
           p_name: string
@@ -11633,6 +11667,10 @@ export type Database = {
       log_talkx_campaign_checklist: {
         Args: { p_campaign_id: string; p_items: Json }
         Returns: string
+      }
+      mark_ai_job_effect_started: {
+        Args: { p_id: string; p_lease_token: string }
+        Returns: boolean
       }
       mark_first_response: {
         Args: { p_contact_id: string }

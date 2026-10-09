@@ -38,7 +38,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 
 import { MediaVolumeControl } from '../MediaVolumeControl';
-import { MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED } from '@/lib/volumeLabels';
+import { MEDIA_VOLUME_LABEL, MEDIA_VOLUME_LABEL_MUTED, MEDIA_VOLUME_SLIDER_LABEL } from '@/lib/volumeLabels';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -126,8 +126,16 @@ function AudioComUrl({ url }: { url: string }) {
   return <audio ref={ref} key={url} src={url} data-audio-url={url} />;
 }
 
-const labelAtual = () =>
-  screen.getByRole('button', { name: new RegExp(`${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED}`) });
+/**
+ * S28 — o rótulo do fone traz o volume no fim ("Volume dos áudios e vídeos: 80%"), como
+ * o do alto-falante; mudo tem rótulo próprio ("Áudios e vídeos mudos"). Por isso a busca
+ * é por prefixo: o nome acessível exato depende do valor atual. O `^` também separa o
+ * gatilho dos botões − / + do painel, que trazem o mesmo texto no MEIO do rótulo
+ * ("Diminuir Volume dos áudios e vídeos em 5%") e não são o gatilho.
+ */
+const REGEX_LABEL_MIDIA = new RegExp(`^(${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED})`);
+const labelAtual = () => screen.getByRole('button', { name: REGEX_LABEL_MIDIA });
+const acharLabelAtual = () => screen.findByRole('button', { name: REGEX_LABEL_MIDIA });
 
 describe('volume das mídias — controle, aplicação e separação dos alertas', () => {
   beforeEach(() => {
@@ -325,11 +333,11 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     const { unmount } = render(
       <AudioMessagePlayer audioUrl="https://test.com/audio.webm" messageId="msg-1" isSent={false} />,
     );
-    expect(await screen.findByLabelText(MEDIA_VOLUME_LABEL)).toBeInTheDocument();
+    expect(await acharLabelAtual()).toBeInTheDocument();
     unmount();
 
     render(<AudioMessagePlayer audioUrl="https://test.com/audio.webm" messageId="msg-2" isSent={true} />);
-    expect(await screen.findByLabelText(MEDIA_VOLUME_LABEL)).toBeInTheDocument();
+    expect(await acharLabelAtual()).toBeInTheDocument();
   });
 
   // ─── E13/E15/E16/E42: o controle em si ──────────────────────────────────
@@ -340,7 +348,7 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
 
     fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
 
-    const slider = await screen.findByRole('slider', { name: 'Volume das mídias' });
+    const slider = await screen.findByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL });
     expect(slider).toHaveAttribute('aria-valuenow', '45');
     expect(slider).toHaveAttribute('aria-valuemin', '0');
     expect(slider).toHaveAttribute('aria-valuemax', '100');
@@ -348,24 +356,85 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
     expect(screen.getByTestId('media-volume-value').textContent).toBe('45%');
   });
 
-  it('E13/D4: clique no ícone alterna mudo e desmutar devolve o volume anterior', () => {
+  it('E13/D4: o clique ABRE o painel; silenciar e desmutar pela tela devolve o volume anterior', async () => {
     setVolume(60);
     render(<MediaVolumeControl />);
 
     expect(labelAtual()).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(labelAtual());
+    expect(labelAtual()).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Silenciar' }));
     expect(getSnapshot().muted).toBe(true);
     expect(screen.getByLabelText(MEDIA_VOLUME_LABEL_MUTED)).toHaveAttribute('aria-pressed', 'true');
 
-    fireEvent.click(screen.getByLabelText(MEDIA_VOLUME_LABEL_MUTED));
+    fireEvent.click(screen.getByRole('button', { name: 'Ativar som' }));
     expect(getSnapshot().muted).toBe(false);
     expect(getSnapshot().volume).toBe(60);
   });
 
-  it('E14/E15: a roda do mouse sobre o ícone anda de 5 em 5 e impede a rolagem da página', () => {
+  // ─── S28/S29/S39: rótulos do fone e separação do mudo ───────────────────
+
+  it('S28: o rótulo acessível do fone traz o volume — como o do alto-falante', () => {
+    act(() => setVolume(80));
+    render(<MediaVolumeControl />);
+
+    expect(labelAtual()).toHaveAccessibleName(`${MEDIA_VOLUME_LABEL}: 80%`);
+
+    act(() => setVolume(35));
+    expect(labelAtual()).toHaveAccessibleName(`${MEDIA_VOLUME_LABEL}: 35%`);
+  });
+
+  it('S28: com a mídia muda o rótulo anuncia o mudo (e não o volume)', () => {
+    act(() => setVolume(80));
+    act(() => setMuted(true));
+    render(<MediaVolumeControl />);
+
+    const controle = labelAtual();
+    expect(controle).toHaveAccessibleName(MEDIA_VOLUME_LABEL_MUTED);
+    expect(controle).not.toHaveAccessibleName(/80%/);
+  });
+
+  it('S29: o painel do fone abre com o nome completo do controle, não com "Volume"', async () => {
+    act(() => setVolume(45));
+    render(<MediaVolumeControl />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
+
+    expect(MEDIA_VOLUME_SLIDER_LABEL).not.toBe('Volume');
+    expect(screen.getByText(MEDIA_VOLUME_SLIDER_LABEL)).toBeInTheDocument();
+    expect(await screen.findByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL })).toBeInTheDocument();
+  });
+
+  it('S39: com a mídia muda o ajuste mexe só no volume (não desmuta) e desmutar devolve o último volume', async () => {
+    act(() => setVolume(60));
+    act(() => setMuted(true));
+    render(<MediaVolumeControl />);
+    const container = labelAtual().parentElement as HTMLElement;
+
+    // B5/D01 — a roda só ajusta com o painel ABERTO, e o clique abre o painel (não desmuta).
+    fireEvent.click(labelAtual());
+    expect(getSnapshot().muted).toBe(true);
+
+    act(() => {
+      container.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
+    });
+    // Mudo e volume são estados separados: o ajuste não desmuta e não zera o volume.
+    expect(getSnapshot().volume).toBe(65);
+    expect(getSnapshot().muted).toBe(true);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ativar som' })); // desmudo pelo botão do painel
+    expect(getSnapshot().muted).toBe(false);
+    expect(getSnapshot().volume).toBe(65);
+    expect(labelAtual()).toHaveAccessibleName(`${MEDIA_VOLUME_LABEL}: 65%`);
+  });
+
+  it('E14/E15: com o painel aberto a roda do mouse anda de 5 em 5 e impede a rolagem da página', () => {
     act(() => setVolume(50));
     render(<MediaVolumeControl />);
+    // B5 — a roda só ajusta com o painel ABERTO.
+    fireEvent.click(labelAtual());
     const container = labelAtual().parentElement as HTMLElement;
 
     const scrollParaCima = new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true });
@@ -384,6 +453,8 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
   it('E15/E42: nas bordas o valor para em 0 e 100 (sem estourar nem virar NaN)', () => {
     act(() => setVolume(0));
     render(<MediaVolumeControl />);
+    // B5 — a roda só ajusta com o painel ABERTO.
+    fireEvent.click(labelAtual());
     const container = labelAtual().parentElement as HTMLElement;
 
     act(() => {
@@ -455,7 +526,7 @@ describe('volume das mídias — controle, aplicação e separação dos alertas
 
     fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
     expect(await screen.findByText('Vídeo sem áudio')).toBeInTheDocument();
-    expect(screen.getByRole('slider', { name: 'Volume das mídias' })).toHaveAttribute('data-disabled');
+    expect(screen.getByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL })).toHaveAttribute('data-disabled');
   });
 
   // ─── E10: ciclo de vida do AudioContext da mídia ────────────────────────

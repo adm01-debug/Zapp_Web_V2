@@ -18,10 +18,11 @@ export interface ContactMediaCounts {
   video: number;
   audio: number;
   document: number;
+  sticker: number;
 }
 
 export const EMPTY_CONTACT_MEDIA_COUNTS: ContactMediaCounts = {
-  all: 0, image: 0, video: 0, audio: 0, document: 0,
+  all: 0, image: 0, video: 0, audio: 0, document: 0, sticker: 0,
 };
 
 export const contactMediaCountsKey = (contactId: string | null | undefined) =>
@@ -40,6 +41,7 @@ const MESSAGE_TYPES_BY_KIND: Record<ContactMediaKind, string[]> = {
   video: ['video'],
   audio: ['audio', 'ptt'],
   document: ['document'],
+  sticker: ['sticker'],
 };
 
 function countByKind(contactId: string, kind?: ContactMediaKind) {
@@ -54,15 +56,16 @@ function countByKind(contactId: string, kind?: ContactMediaKind) {
 }
 
 export async function fetchContactMediaCounts(contactId: string): Promise<ContactMediaCounts> {
-  const [all, image, video, audio, document] = await Promise.all([
+  const [all, image, video, audio, document, sticker] = await Promise.all([
     countByKind(contactId),
     countByKind(contactId, 'image'),
     countByKind(contactId, 'video'),
     countByKind(contactId, 'audio'),
     countByKind(contactId, 'document'),
+    countByKind(contactId, 'sticker'),
   ]);
 
-  const failure = [all, image, video, audio, document].find((result) => result.error);
+  const failure = [all, image, video, audio, document, sticker].find((result) => result.error);
   if (failure?.error) throw failure.error;
 
   return {
@@ -71,6 +74,7 @@ export async function fetchContactMediaCounts(contactId: string): Promise<Contac
     video: video.count ?? 0,
     audio: audio.count ?? 0,
     document: document.count ?? 0,
+    sticker: sticker.count ?? 0,
   };
 }
 

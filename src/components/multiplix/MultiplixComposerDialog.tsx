@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,36 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
 
   const busy = createDispatch.isPending;
 
+  // F78 (TL-010): a conta do disparo tem de ficar SEMPRE visivel —
+  // "N contatos x M blocos = N x M mensagens". N e a selecao da tela (cada
+  // empresa selecionada e um destino; o servidor devolve a contagem real de
+  // destinatarios depois de resolver o publico). M e o numero de blocos da
+  // composicao: hoje so existe o bloco de texto ABAIXO, e ele so conta quando
+  // tem conteudo — bloco vazio nao vira mensagem. Os blocos de voz/arquivo
+  // entram por F76/F77 e a conta acompanha sozinha.
+  const contactCount = selectedCompanyIds.length;
+  const blockCount = messageTemplate.trim() ? 1 : 0;
+  const messageCount = contactCount * blockCount;
+  // "mensagem" no plural troca o "m" final por "ns"; o singular fica igual.
+  const messageCountLabel = messageCount === 1 ? '1 mensagem' : `${messageCount} mensagens`;
+
+  // F78 (TL-010): titulo sugerido (publico + assunto), EDITAVEL e OPCIONAL —
+  // sem nome digitado o disparo sai com a sugestao, entao da para enviar sem
+  // nomear. O assunto e a primeira linha da mensagem; o publico, a selecao.
+  const suggestedName = useMemo(() => {
+    const assunto = messageTemplate.trim().split(/\r?\n/)[0]?.trim().slice(0, 60) ?? '';
+    return ['Multiplix', `${contactCount} contato${contactCount === 1 ? '' : 's'}`, assunto]
+      .filter(Boolean)
+      .join(' · ');
+  }, [contactCount, messageTemplate]);
+
+  // F78 (TL-010): a exigencia de titulo NAO foi dispensada — ela continua de pe,
+  // agora sobre o titulo EFETIVO (o digitado ou a sugestao). Sem digitacao o
+  // disparo sai com a sugestao, entao "da para enviar sem nomear" sem furar o
+  // contrato da edge (name = z.string().trim().min(1),
+  // supabase/functions/multiplix-audience/index.ts:293).
+  const tituloEfetivo = name.trim() || suggestedName;
+
   const reset = () => {
     setName('');
     setMessageTemplate('');
@@ -43,10 +73,12 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
   // F08: o composer nao resolve o publico nem insere destinatarios — manda os
   // company_ids e a edge re-resolve com o escopo do JWT e cria na transacao.
   const submit = async (startNow: boolean, confirmOverLimit = false) => {
-    if (!name.trim() || !messageTemplate.trim() || selectedCompanyIds.length === 0) return;
+    // O bloco de texto continua obrigatorio (unico bloco que existe) e o titulo
+    // efetivo nunca e vazio — o contrato do composer nao afrouxou.
+    if (!messageTemplate.trim() || !tituloEfetivo || selectedCompanyIds.length === 0) return;
     try {
       const result = await createDispatch.mutateAsync({
-        name: name.trim(),
+        name: tituloEfetivo,
         messageTemplate: messageTemplate.trim(),
         companyIds: selectedCompanyIds,
         startNow,
@@ -85,9 +117,24 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
+            {/* F78 (TL-010): a conta do disparo fica SEMPRE visivel, com ou sem
+                selecao/composicao — N contatos x M blocos = N x M mensagens. */}
+            <p
+              data-testid="multiplix-contagem-mensagens"
+              aria-live="polite"
+              className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground"
+            >
+              {`${contactCount} contato${contactCount === 1 ? '' : 's'} × ${blockCount} bloco${blockCount === 1 ? '' : 's'} = ${messageCountLabel}`}
+            </p>
+
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Nome do disparo</span>
+              <span className="text-xs text-muted-foreground">Nome do disparo (opcional)</span>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Convite feira 2026" />
+              {/* F78 (TL-010): sem nome digitado o disparo sai com o titulo
+                  sugerido (publico + assunto) — nao trava o envio. */}
+              <p className="text-xs text-muted-foreground">
+                Título sugerido: <span className="text-foreground">{suggestedName}</span>
+              </p>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -111,14 +158,14 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
-              disabled={busy || !name.trim() || !messageTemplate.trim()}
+              disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
               onClick={() => submit(false)}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Salvar rascunho
             </Button>
             <Button
-              disabled={busy || !name.trim() || !messageTemplate.trim()}
+              disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
               onClick={() => setConfirmStartOpen(true)}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

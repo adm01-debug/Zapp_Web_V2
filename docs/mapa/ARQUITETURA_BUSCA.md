@@ -201,6 +201,14 @@ node scripts/ci/bundle-budget.mjs                 # compara dist/ com performanc
 
 `bundle-budget.mjs` sai **0** ("OK: bundle inicial dentro do budget"). O maior chunk não é deste módulo — é `vendor-maps` (mapbox-gl, lazy).
 
+**Maior chunk do build (não é deste módulo) — medição do item 99b:**
+
+| Chunk | raw | gzip | Teto (`largest-chunk`) |
+|---|---|---|---|
+| `vendor-maps-*.js` (`mapbox-gl`, lazy por `src/lib/mapboxLoader.ts`) | 1.839.438 B (1.796,3 KB) | 504.146 B (492,3 KB) | 550 KB |
+
+Medido em 08/10/2026 (`VITE_CRM_INTEGRATION_ENABLED=true bun run build`, com `node scripts/ci/bundle-budget.mjs` logo depois): o chunk saiu como `dist/assets/vendor-maps-1ahjwT7Z.js`, **1.839.438 B raw** e 504.146 B gzip — os mesmos 492,3 KB gzip da tabela de orçamento acima, com −57,7 KB de folga sob o teto `largest-chunk` de 550 KB (`performance-budget.json`). Até esta medição o tamanho raw não tinha registro datado no repositório e as cifras espalhadas divergiam entre si: `docs/migration/PLANO.md:112` dizia 1,67 MB, `docs/audits/VALIDACAO_EXAUSTIVA_CINCO_ESPECIALISTAS_2026-09-22.md:111` dizia ~1,827 MB sem compressão (22/09), `docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md:241` dizia 1.869 KB e o comentário de `src/lib/mapboxLoader.ts:7` diz ~1,9 MB. (O `initial-js` desse mesmo build saiu em 342,6 KB contra o teto de 341 KB — não é o item 99b, que mede o maior chunk.) A guarda `scripts/ci/mapa-bundle-raw-doc.unit.mjs` exige este registro — raw, gzip, teto, data, comando e o carregador lazy — e recusa o documento sem ele.
+
 **Quem verifica:** o gate existe e roda de verdade — `.github/workflows/ci.yml:314-315` (`node scripts/ci/bundle-budget.mjs`) no job `build` (`ci.yml:278`, `needs: [lint-and-typecheck, test]`, sem filtro de `paths`); o env `VITE_CRM_INTEGRATION_ENABLED: 'true'` está no `env:` do workflow (`ci.yml:27`). Não é o padrão "existe mas não roda". O que o gate **não** faz: comparar este número com o build a cada commit — `performance-budget.json` não tem entrada por chunk (`LocationPicker`/`ContactForm` caem sob `largest-chunk`/`total-assets`). O número acima é fotografia datada; o contrato contínuo é o budget agregado.
 
 ## Débito técnico conhecido

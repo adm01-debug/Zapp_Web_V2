@@ -5,6 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { playNotificationSound, showBrowserNotification } from '@/utils/notificationSounds';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
+import { localDayKey } from '@/lib/localDay';
 import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth } from 'date-fns';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -184,7 +185,11 @@ export function useGoalNotifications() {
               continue;
           }
 
-          const achievedKey = `${goal.id}-${period}-${start.toISOString().split('T')[0]}`;
+          // R3-07: a chave é o dia **do usuário** (`localDayKey`). Fatiar o ISO em UTC
+          // (`start.toISOString().split('T')[0]`) devolvia o dia anterior a leste de UTC
+          // (em Berlin, 30/09 00:00 local = 29/09 22:00 UTC), então a conquista ficava
+          // deduplicada sob o dia errado.
+          const achievedKey = `${goal.id}-${period}-${localDayKey(start)}`;
 
           // Check if goal was achieved
           if (current >= target && !achievedGoals.current.has(achievedKey)) {

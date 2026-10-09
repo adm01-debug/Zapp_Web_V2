@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs/README.md updated with full documentation index
 - useEvolutionApi hook refactored into 5 sub-hooks for better maintainability
 - Catálogo — 01/10/2026: rail conectado ao filtro da tela — "Exportar catálogo" (CT-20/CT-21) passa a exportar o **filtro atual** em vez do catálogo inteiro, e o alerta de estoque baixo (CT-23) ganha o botão "Ver produtos com estoque baixo", que aplica `low_stock=true` na listagem via novo branch de `handleKpiSelect` (`ExternalProductManagement.tsx`; registro detalhado em `docs/catalogo/CHANGELOG_CATALOGO.md`)
+- Quadro e Tarefas — 07/10/2026: viram um módulo só; links `?view=pipeline` redirecionam; atalho Alt+P removido; Alt+K abre Tarefas
 
 ### Security
 - **RLS Audit:** Migration created to fix 10+ policies with `USING(true)`

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +21,7 @@ import { useMediaUpload } from './media-library/useMediaUpload';
 import type { MediaItem, MediaType } from './media-library/useMediaLibrary';
 import { StatsCards } from './media-library/StatsCards';
 import { AIGenerateDialog } from './media-library/AIGenerateDialog';
+import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 
 function InlineCategorySelect({ value, categories, onChange }: { value: string; categories: Record<string, string>; onChange: (cat: string) => void }) {
   const allCategories = { ...categories };
@@ -30,6 +31,49 @@ function InlineCategorySelect({ value, categories, onChange }: { value: string; 
       <SelectTrigger className="h-6 text-3xs w-[130px] border-border/40"><SelectValue /></SelectTrigger>
       <SelectContent>{Object.entries(allCategories).map(([cat, emoji]) => <SelectItem key={cat} value={cat} className="text-xs">{emoji} {cat}</SelectItem>)}</SelectContent>
     </Select>
+  );
+}
+
+/**
+ * Miniatura da lista administrativa (R2-INB-052 / #345-B). A tabela `stickers` recebe locators
+ * de bucket PRIVADO (`whatsapp-media`, gravados pelo balão e pelo envio), então o `<img>` cru
+ * mostrava a referência quebrada. O componente resolve a URL pelo hook — que devolve a fonte
+ * intacta quando ela não é locator de bucket privado — e o hook fica AQUI dentro, nunca no
+ * `lib.filtered.map(...)` (hook em `.map` quebra `react-hooks/rules-of-hooks`).
+ * Em erro de imagem faz UM refresh automático com guarda em `useRef` e cai num placeholder
+ * estável — sem laço de `onError` e sem toast.
+ */
+function MediaRowThumb({ url, name }: { url: string; name: string }) {
+  const { url: resolvedUrl, isLoading, error, refresh } = useResolvedStorageUrl(url);
+  const src = resolvedUrl || '';
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const refreshedRef = useRef(false);
+  const failed = failedSrc !== null && failedSrc === src;
+
+  return (
+    <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted/30 border border-border/30">
+      {isLoading && !src ? (
+        <div data-testid="media-row-thumb-skeleton" className="w-full h-full animate-pulse bg-muted" />
+      ) : src && !failed ? (
+        <img
+          src={src}
+          alt={name || ''}
+          className="w-full h-full object-contain p-0.5"
+          loading="lazy"
+          onError={() => {
+            if (refreshedRef.current) { setFailedSrc(src); return; }
+            refreshedRef.current = true;
+            void refresh().then((next) => { if (!next) setFailedSrc(src); });
+          }}
+        />
+      ) : error || failed ? (
+        <div className="w-full h-full flex items-center justify-center" title="Mídia indisponível" data-testid="media-row-thumb-error">
+          <ImageIcon className="w-4 h-4 text-muted-foreground/40" />
+        </div>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-4 h-4 text-muted-foreground/40" /></div>
+      )}
+    </div>
   );
 }
 
@@ -86,7 +130,6 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
               <div className="flex flex-col items-center justify-center py-16 text-center"><Package className="w-10 h-10 text-muted-foreground/30 mb-3" /><p className="text-sm text-muted-foreground">Nenhum item encontrado</p></div>
             ) : (
               lib.filtered.map(item => {
-                const url = type === 'audio_memes' ? item.audio_url : item.image_url;
                 const isEditing = lib.editingId === item.id;
                 return (
                   <div key={item.id} className={cn('flex items-center gap-3 px-3 py-2 border-b border-border/30 hover:bg-muted/20 transition-colors', lib.selected.has(item.id) && 'bg-primary/5')}>
@@ -97,9 +140,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
                           {lib.playingId === item.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
                       ) : (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted/30 border border-border/30">
-                          {url ? <img src={url} alt={item.name || ''} className="w-full h-full object-contain p-0.5" loading="lazy" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-4 h-4 text-muted-foreground/40" /></div>}
-                        </div>
+                        <MediaRowThumb url={item.image_url || ''} name={item.name || ''} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

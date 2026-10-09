@@ -64,6 +64,20 @@ function PausedNotice({ blocked, pausedUntil, query, onRetry }: {
   // Com o botão, a saída deixa de ser "adivinhe que precisa digitar de novo". O teto de custo do
   // mês não ganha botão: nova tentativa não muda o limite, seria só ruído.
   const podeTentar = blocked === 'rate_limited';
+  // SL-080 (A3-04, 2ª leva): com o botão na tela, a pausa ainda expirava em silêncio — o aviso
+  // parava no fim da espera e a busca só voltava se o operador digitasse de novo ou clicasse em
+  // "Tentar novamente". Chegando ao fim do prazo, o próprio aviso pede a retomada (o hook vê o
+  // backoff vencido e religa a busca, sem esperar o debounce). Uma vez por pausa (`retomouRef`) e só
+  // na pausa transitória: o teto de custo do mês não melhora tentando de novo, então lá não há
+  // retomada — só o aviso.
+  const retomouRef = useRef(false);
+  useEffect(() => { retomouRef.current = false; }, [pausedUntil]);
+  useEffect(() => {
+    if (blocked !== 'rate_limited' || pausedUntil === null || retomouRef.current) return;
+    if (Date.now() < pausedUntil) return;
+    retomouRef.current = true;
+    onRetry();
+  }, [agora, blocked, pausedUntil, onRetry]);
   return (
     <div className="px-3 py-3 space-y-1">
       <div className="flex items-start justify-between gap-2">

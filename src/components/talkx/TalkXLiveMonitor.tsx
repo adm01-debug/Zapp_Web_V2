@@ -1,8 +1,7 @@
-import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Pause, Square, Play, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
-  SkipForward, BarChart3, Activity, RefreshCw, Zap, AlertTriangle, Inbox,
+  Pause, Square, Play, Timer, CheckCircle2, Loader2,
+  SkipForward, Activity, RefreshCw, Zap, Inbox,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -11,19 +10,16 @@ import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
-import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
+import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
@@ -31,7 +27,7 @@ const REFETCH = 4000;
 
 export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const qc = useQueryClient();
-  const { startCampaign, pauseCampaign, cancelCampaign } = useTalkX();
+  const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
   // e o próprio refetch. O retry de um bloco não troca a campanha aberta.
   const {
@@ -40,10 +36,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [confirmPause, setConfirmPause] = useState(false);
-  const [pauseReason, setPauseReason] = useState('');
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [confirmResume, setConfirmResume] = useState(false);
 
   const {
     data: campaign,
@@ -110,8 +102,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
-  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
-  const successRate = campaign && processed > 0 ? pct(campaign.sent_count, processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
@@ -156,9 +146,9 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             <StatusPill status={campaign.status} map={CAMPAIGN_STATUS}/>
             {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
             {!isDone && (<>
-              {isRunning && <button type="button" onClick={()=>setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
-              {isPaused && <button type="button" onClick={()=>setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
-              <button type="button" onClick={()=>setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
+              {isRunning && <button type="button" onClick={()=>lifecycle.request({ kind: 'pause', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
+              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
+              <button type="button" onClick={()=>lifecycle.request({ kind: 'cancel', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
             </>)}
           </div>
         </div>
@@ -170,13 +160,28 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'A confirmar',v:fmtInt(outcomeUnknown),I:AlertTriangle,c:'text-dash-amber'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
-          <motion.div key={l} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.05}} className="rounded-xl bg-card border border-border/70 p-3 flex items-center gap-2">
-            <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-lg font-bold text-foreground tabular-nums">{v}</p><p className="text-3xs text-foreground-secondary truncate">{l}</p></div>
-          </motion.div>
-        ))}
-      </div>
+      {/* X146: faixa de KPIs ao vivo — o mesmo componente da tela 12 (Em andamento).
+          A fonte de opt-out por campanha (CAP-026) ainda não existe no front: sem o
+          número, o cartão Opt-outs não entra na faixa. */}
+      <TalkXLiveKpiRow
+        variant="tela11"
+        panel={{
+          sent: campaign.sent_count,
+          delivered: campaign.delivered_count,
+          replied: campaign.replied_count ?? 0,
+          failed: campaign.failed_count,
+          outcome_unknown: outcomeUnknown,
+          audience: campaign.total_recipients,
+          opt_outs: null,
+          forecast: null,
+          vs_yesterday: null,
+          spark: {
+            sent: chartData.map((point) => point.Enviadas),
+            delivered: chartData.map((point) => point.Entregues),
+          },
+        }}
+        onFilterOutcomeUnknown={() => { setStatusFilter('outcome_unknown'); setTab('recipients'); }}
+      />
 
       <div className="flex items-center gap-1 border-b border-border/60">
         {([['overview','Visão Geral'],['recipients','Destinatários'],['timeline','Linha do Tempo']] as [MonitorTab,string][]).map(([t,l]) => (
@@ -284,19 +289,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         </section>
       )}
 
-      <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Pausar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios em andamento serão concluídos, mas novos envios não serão iniciados.</AlertDialogDescription></AlertDialogHeader>
-        <textarea className="w-full min-h-[64px] rounded-md border border-border bg-background px-3 py-2 text-sm" placeholder="Motivo da pausa (opcional)" value={pauseReason} onChange={(e)=>setPauseReason(e.target.value)} />
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await pauseCampaign(campaignId, pauseReason.trim() || undefined); setPauseReason(''); setConfirmPause(false); } catch(e: unknown) { toast.error(`Erro ao pausar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Cancelar campanha?</AlertDialogTitle><AlertDialogDescription>O envio será interrompido e contatos pendentes não receberão mensagens.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await cancelCampaign(campaignId); setConfirmCancel(false); } catch(e: unknown) { toast.error(`Erro ao cancelar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Cancelar campanha</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Retomar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios serão continuados a partir de onde pararam.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async()=>{const started=await startCampaign(campaignId);if(!started)return;setConfirmResume(false);}}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
 }

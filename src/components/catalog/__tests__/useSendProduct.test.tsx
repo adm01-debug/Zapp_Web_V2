@@ -344,6 +344,40 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
 
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
   });
+
+  // SL-132 — o vazamento que a auditoria de 30/09 pegou (`useSendProduct.ts:57`,
+  // `window is not defined` ×2): a cadeia de retry segue agendando timers depois
+  // do teardown do jsdom, e o `tryDispatch` que dispara nesse instante toca o
+  // `window` já inexistente FORA de qualquer try/catch — unhandled error que
+  // derruba a suíte mesmo com 0 teste vermelho. Reavaliar o ambiente antes de
+  // usar o DOM é o que encerra a cadeia; aqui o teste tira o `window` no MEIO
+  // da cadeia (o 1º disparo já aconteceu) e prova que o restante fica inócuo.
+  it('o retry para (sem estourar) quando o ambiente web some no meio da cadeia', async () => {
+    vi.useFakeTimers();
+    const recebidos: string[] = [];
+    const listener = (event: Event) =>
+      recebidos.push((event as CustomEvent<{ contactId: string }>).detail.contactId);
+    window.addEventListener('open-contact-chat', listener);
+
+    openContactChat('c9');
+    await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+    expect(recebidos).toEqual(['c9']);
+
+    vi.stubGlobal('window', undefined);
+    try {
+      // Resto da cadeia (14×200 ms) com o ambiente web já fora de cena.
+      await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
+    } finally {
+      vi.unstubAllGlobals();
+      window.removeEventListener('open-contact-chat', listener);
+    }
+
+    // Nenhum disparo novo e, principalmente, nenhum `ReferenceError`/`TypeError`
+    // escapando do callback do timer.
+    expect(recebidos).toEqual(['c9']);
+
+    delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
+  });
 });
 
 // CT-78 — a decisão de status (useSendProduct.ts, mesma fórmula em

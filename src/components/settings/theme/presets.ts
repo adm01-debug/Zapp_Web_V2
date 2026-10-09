@@ -103,7 +103,10 @@ export interface ThemeModeColors {
  * chart-2…10, chart-status-pending/resolved/waiting, chart-sentiment-*,
  * dash-*, neutral-50…950, elev-*, glow-*, gradient-success,
  * shadow-glow-success. Exceção: a skin `diversity` sobrescreve
- * `gradient-success` (verde→azul pride), como no Promo Gifts.
+ * `gradient-success` (verde→azul pride), como no Promo Gifts. Como o token é
+ * fixo e `CSS_VARS_TO_APPLY` é congelada, o override de um fixo só acontece
+ * para quem está declarado em `PRESET_FIXED_OVERRIDES` (abaixo) — e é
+ * aplicado/removido explicitamente por `applyThemePreset`.
  *
  * Cobertura profunda (etapas 59-60): inventário de `var(--x)` e classes
  * Tailwind em todo `src/` confirma que os únicos tokens de COR fora de
@@ -137,6 +140,25 @@ export const FIXED_TOKENS = [
   'shadow-xs', 'shadow-sm', 'shadow-md', 'foreground-secondary', 'gradient-gold',
 ] as const;
 
+/**
+ * Tokens do grupo C (`FIXED_TOKENS`) que uma skin PODE sobrescrever.
+ *
+ * Eles continuam FORA de `CSS_VARS_TO_APPLY` — a lista é congelada por teste
+ * (`presets.test.ts` §1) e é o mesmo conjunto de `ThemeModeColors`, que deixa
+ * os fixos de fora de propósito. Quem define um valor para um destes tokens
+ * (a skin `diversity`, no caso de `gradient-success`) o recebe aplicado
+ * explicitamente em `applyThemePreset`; skin que não define valor faz
+ * `applyThemePreset` REMOVER o inline, devolvendo o token ao literal de
+ * `tokens.css`.
+ *
+ * Paridade com o Promo Gifts, onde `gradient-success` está em
+ * `CSS_VARS_TO_APPLY` e por isso chega ao DOM em todas as skins.
+ */
+export const PRESET_FIXED_OVERRIDES = ['gradient-success'] as const;
+
+/** Chaves opcionais que uma skin pode trazer além de `ThemeModeColors`. */
+type PresetFixedOverrides = Partial<Record<(typeof PRESET_FIXED_OVERRIDES)[number], string>>;
+
 export interface ThemePreset {
   id: string;
   name: string;
@@ -148,8 +170,8 @@ export interface ThemePreset {
   /** Família de fonte sugerida. Nenhuma skin declara hoje (ver D1 do plano) — campo reservado. */
   font?: string;
   swatches: [string, string, string, string];
-  light: ThemeModeColors;
-  dark: ThemeModeColors;
+  light: ThemeModeColors & PresetFixedOverrides;
+  dark: ThemeModeColors & PresetFixedOverrides;
 }
 
 interface PresetParams {
@@ -442,7 +464,7 @@ function buildDiversityPreset(): ThemePreset {
       'shadow-glow-accent': `0 0 24px hsl(${PRIDE_YELLOW} / 0.35)`,
       'shadow-glow-purple': `0 0 24px hsl(${PRIDE_PURPLE} / 0.3)`,
       'gradient-success': `linear-gradient(135deg, hsl(${PRIDE_GREEN}), hsl(${PRIDE_BLUE}))`,
-    } as ThemeModeColors,
+    },
     dark: {
       ...base.dark,
       primary: darkPrimary,
@@ -479,7 +501,7 @@ function buildDiversityPreset(): ThemePreset {
       'shadow-glow-accent': `0 0 28px hsl(${PRIDE_YELLOW} / 0.4)`,
       'shadow-glow-purple': `0 0 28px hsl(${PRIDE_PURPLE} / 0.4)`,
       'gradient-success': `linear-gradient(135deg, hsl(${PRIDE_GREEN}), hsl(${PRIDE_BLUE}))`,
-    } as ThemeModeColors,
+    },
   };
 }
 
@@ -700,6 +722,24 @@ export function applyThemePreset(
     root.style.setProperty(`--${key}`, value);
   }
 
+  // Overrides de tokens FIXOS (grupo C): `CSS_VARS_TO_APPLY` é congelada, então
+  // o valor que a skin define para um deles é escrito aqui, fora do laço. Sem
+  // valor na skin, o inline é REMOVIDO — trocar `diversity` por outra skin não
+  // pode deixar o degradê pride grudado no <html> (nem no cache do boot).
+  for (const key of PRESET_FIXED_OVERRIDES) {
+    const value = colors[key];
+    if (value === undefined) {
+      root.style.removeProperty(`--${key}`);
+      continue;
+    }
+    cache[key] = value;
+    if (altoContraste) {
+      root.style.removeProperty(`--${key}`);
+      continue;
+    }
+    root.style.setProperty(`--${key}`, value);
+  }
+
   if (preset.borderRadius !== undefined) {
     root.style.setProperty('--radius', `${preset.borderRadius / 16}rem`);
   }
@@ -730,6 +770,9 @@ export function applyRadius(px: number): void {
 export function clearThemeOverrides(): void {
   const root = document.documentElement;
   for (const key of CSS_VARS_TO_APPLY) root.style.removeProperty(`--${key}`);
+  // Overrides de tokens fixos (grupo C) também são inline no <html>: sem esta
+  // limpeza, um reset deixaria o degradê pride da `diversity` grudado.
+  for (const key of PRESET_FIXED_OVERRIDES) root.style.removeProperty(`--${key}`);
   root.style.removeProperty('--radius');
   root.style.removeProperty('--font-sans');
   root.style.removeProperty('--font-display');

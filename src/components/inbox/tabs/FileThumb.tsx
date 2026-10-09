@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { cfImagesSrcSet } from '@/lib/cfImages';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
+import { usePdfThumbnail } from '@/hooks/chat/usePdfThumbnail';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { documentBadge, documentFamily, formatDuration, type DocumentFamily } from './fileDisplay';
 
@@ -17,6 +18,10 @@ import { documentBadge, documentFamily, formatDuration, type DocumentFamily } fr
  * automatico (o cooldown de 5 s mora no hook) e depois cai num placeholder estavel — sem loop
  * de `onError`. A imagem usa `object-contain` no cartao (print de planilha nao pode ser cortado),
  * `object-cover` nas miniaturas pequenas.
+ *
+ * M04: o documento de familia `pdf` mostra a 1a pagina no lugar do icone — a miniatura vem do
+ * `usePdfThumbnail` (M01), montada so quando o tile entra na zona de pre-carregamento; os
+ * estados dele estao documentados em `PdfDocumentTile`.
  */
 export type FileThumbSize = 'card' | 'row' | 'cell';
 
@@ -126,34 +131,46 @@ function ThumbImage({ item, size }: { item: ContactMediaItem; size: FileThumbSiz
 function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
   const boxRef = useRef<HTMLSpanElement>(null);
   const isVideo = item.type === 'video';
-  const inView = useInView(boxRef, isVideo && size === 'card');
+  // M02: o primeiro quadro do video vale para os tres tamanhos (cartao, linha e celula), e a
+  // zona de pre-carregamento tambem — em lista longa nenhum `<video>` fora da zona.
+  const inView = useInView(boxRef, isVideo);
   const [duration, setDuration] = useState<string | null>(null);
   const src = item.signedUrl ?? item.url;
-  const showVideo = isVideo && size === 'card' && inView && Boolean(src);
+  // Falha amarrada ao `src` que falhou (mesmo padrao da imagem): se a URL mudar, o fallback
+  // cai sozinho e o quadro volta — sem efeito de reset.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc !== null && failedSrc === src;
+  const showVideo = isVideo && inView && Boolean(src) && !failed;
+  // Selo de duracao onde ha espaco: cartao e linha. A celula de 32 px fica limpa.
+  const showDuration = duration !== null && size !== 'cell';
 
   return (
     <span ref={boxRef} className="relative flex h-full w-full items-center justify-center">
       {showVideo ? (
         <>
           {/* Nenhuma URL de poster derivada de `media_meta` (G14): so o primeiro frame do
-              proprio arquivo, quando ele entra na zona de pre-carregamento. */}
+              proprio arquivo, quando ele entra na zona de pre-carregamento. `#t=0.1` porque
+              sem o deslocamento alguns navegadores nao desenham o quadro de abertura. */}
           <video
-            src={src}
+            src={`${src}#t=0.1`}
             preload="metadata"
             muted
             playsInline
             className="h-full w-full object-cover"
+            onError={() => setFailedSrc(src)}
             onLoadedMetadata={(event) => {
               const seconds = event.currentTarget.duration;
               if (Number.isFinite(seconds) && seconds > 0) setDuration(formatDuration(seconds));
             }}
           />
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
-              <Play className="h-5 w-5" />
+          {size === 'card' && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
+                <Play className="h-5 w-5" />
+              </span>
             </span>
-          </span>
-          {duration && (
+          )}
+          {showDuration && (
             <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-2xs tabular-nums text-foreground">
               {duration}
             </span>
@@ -177,8 +194,68 @@ function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize
   );
 }
 
+/**
+ * M04: a 1ª página do PDF no lugar do ícone da família. A miniatura é pedida ao M01
+ * (`usePdfThumbnail`) com o MESMO portão do vídeo — o `useInView` do tile —, então rolagem de
+ * lista longa não renderiza PDF nenhum fora da zona de pré-carregamento.
+ *
+ * Estados na tela:
+ * - `ready`  → a página inteira em `object-contain` sobre o fundo neutro do quadro (o vazio em
+ *              volta é o `bg-muted` de quem embrulha o tile), com o selo da extensão por cima no
+ *              cartão — o selo continua sendo o de hoje;
+ * - `loading` → esqueleto, como a imagem faz;
+ * - todo o resto (PDF protegido por senha, corrompido, grande demais, sem CORS, `pdfjs`
+ *   indisponível ou falha ao assinar a URL) → o ícone de sempre, SEM erro nenhum na tela.
+ */
+function PdfDocumentTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const inView = useInView(boxRef, true);
+  const { url: miniatura, estado } = usePdfThumbnail(item, inView);
+  const badge = size === 'card' ? documentBadge(item.extension) : null;
+  // Visível E pronta: os dois, não um só — a página não aparece fora da zona de pré-carregamento.
+  const pronta = inView && estado === 'ready' && Boolean(miniatura);
+
+  return (
+    <span ref={boxRef} className="relative flex h-full w-full items-center justify-center">
+      {pronta ? (
+        <>
+          <img
+            src={miniatura ?? undefined}
+            alt={size === 'card' ? item.displayName : ''}
+            loading="lazy"
+            decoding="async"
+            data-testid="files-thumb-pdf"
+            className="h-full w-full object-contain"
+          />
+          {badge && (
+            <Badge
+              variant="subtle"
+              className="absolute bottom-1.5 right-1.5 h-4 px-1.5 text-3xs font-bold tracking-wide"
+            >
+              {badge}
+            </Badge>
+          )}
+        </>
+      ) : estado === 'loading' ? (
+        <ThumbSkeleton />
+      ) : (
+        <span className="flex flex-col items-center justify-center gap-1">
+          <FileText className={cn(ICON[size], 'text-muted-foreground')} />
+          {badge && (
+            <Badge variant="subtle" className="h-4 px-1.5 text-3xs font-bold tracking-wide">{badge}</Badge>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function DocumentTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
   const family = documentFamily(item.extension);
+  // M04: só a família `pdf` ganha ramo próprio. Planilha, doc, ppt, zip e genérico seguem
+  // exatamente o caminho de antes — nem montam o hook da miniatura.
+  if (family === 'pdf') return <PdfDocumentTile item={item} size={size} />;
+
   const Icon = DOC_ICON[family];
   const badge = size === 'card' ? documentBadge(item.extension) : null;
 
@@ -193,7 +270,8 @@ function DocumentTile({ item, size }: { item: ContactMediaItem; size: FileThumbS
 }
 
 function renderThumb(item: ContactMediaItem, size: FileThumbSize) {
-  if (item.type === 'image') return <ThumbImage item={item} size={size} />;
+  // Figurinha é imagem: usa a MESMA miniatura (`ThumbImage`), nunca o ícone de documento.
+  if (item.type === 'image' || item.type === 'sticker') return <ThumbImage item={item} size={size} />;
   if (item.type === 'video' || item.type === 'audio') return <MediaTile item={item} size={size} />;
   return <DocumentTile item={item} size={size} />;
 }

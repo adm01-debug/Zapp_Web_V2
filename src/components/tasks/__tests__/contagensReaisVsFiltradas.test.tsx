@@ -22,17 +22,16 @@ import {
   setSelectResult,
 } from '@/test/mocks/tarefas';
 import { TasksModule } from '@/components/tasks/TasksModule';
-import type { TaskMode } from '@/components/tasks/shared/ModeSwitcher';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {}) {
+function renderModule() {
   const qc = makeQueryClient();
   const Wrapper = makeWrapper(qc);
   return render(
     <MemoryRouter>
       <TooltipProvider>
         <Wrapper>
-          <TasksModule {...props} />
+          <TasksModule />
         </Wrapper>
       </TooltipProvider>
     </MemoryRouter>
@@ -51,12 +50,15 @@ function subtitulo(): string {
   return screen.getByText(/aberta/).textContent ?? '';
 }
 
-/** A coluna do Quadro pelo rótulo (o container da coluna é o `min-w-[232px]`). */
+/**
+ * A coluna do Quadro pelo rótulo. A âncora é o `data-board-column` da `BoardColumn`
+ * (E16): antes era a string da classe `min-w-[232px]`, exatamente a largura fixa que a
+ * E16 removeu — a coluna passou a dividir a largura do trilho (`flex-1 min-w-[200px]`).
+ */
 function colunaComLabel(label: string): HTMLElement {
   for (const el of screen.getAllByText(label)) {
-    let n: HTMLElement | null = el as HTMLElement;
-    while (n && !String(n.className ?? '').includes('min-w-[232px]')) n = n.parentElement;
-    if (n) return n;
+    const coluna = (el as HTMLElement).closest<HTMLElement>('[data-board-column]');
+    if (coluna) return coluna;
   }
   throw new Error('coluna nao encontrada: ' + label);
 }
@@ -67,7 +69,12 @@ function colunaComLabel(label: string): HTMLElement {
  * 3 para hoje e 3 em "fazendo" (a trava de WIP é 3).
  */
 function cenario() {
-  const hoje = new Date().toISOString();
+  // Prazo de DIA INTEIRO de hoje (23:59 locais, a convenção dos chips "Hoje").
+  // R2-MOD-058: com hora marcada já passada a tarefa seria ATRASADA, não "para
+  // hoje" — e este cenário é o de "3 para hoje".
+  const fimDoDia = new Date();
+  fimDoDia.setHours(23, 59, 0, 0);
+  const hoje = fimDoDia.toISOString();
   setSelectResult({
     data: [
       makeTaskRow({ id: 'u1', title: 'Urgente hoje',  status: 'todo',  priority: 'urgent', due_date: hoje }),
@@ -91,7 +98,7 @@ describe('TasksModule — F4: dado real × recorte do filtro na MESMA tela', () 
 
   it('o subtítulo conta o dado REAL e os KPIs contam o RECORTE (M23, M24, M25)', async () => {
     cenario();
-    renderModule({ defaultMode: 'list' });
+    renderModule();
     await screen.findByText('Urgente hoje');
 
     // Cabeçalho = trabalho real. Se alguém trocar `byStatusReal`/`kpiReal` pelo
@@ -109,7 +116,8 @@ describe('TasksModule — F4: dado real × recorte do filtro na MESMA tela', () 
 
   it('a coluna Fazendo mostra o RECORTE, mas o cabeçalho dela segue a trava real (M19, M20, M27)', async () => {
     cenario();
-    renderModule({ defaultMode: 'board' });
+    localStorage.setItem('tasks-mode', 'board');
+    renderModule();
     await screen.findByText('Urgente hoje');
 
     const col = colunaComLabel('Fazendo');

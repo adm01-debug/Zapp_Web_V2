@@ -57,6 +57,20 @@ const mockSettings = {
   tts_speed: 1.0,
 };
 
+const operationalKeys = [
+  'business_hours_enabled',
+  'business_hours_start',
+  'business_hours_end',
+  'work_days',
+  'welcome_message',
+  'away_message',
+  'closing_message',
+  'auto_assignment_enabled',
+  'auto_assignment_method',
+  'inactivity_timeout',
+  'auto_transcription_enabled',
+];
+
 describe('useUserSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -163,17 +177,6 @@ describe('useUserSettings', () => {
     // Os campos próprios deste hook continuam indo, com os valores atuais.
     expect(payload).toMatchObject({
       user_id: 'u1',
-      business_hours_enabled: true,
-      business_hours_start: '09:00',
-      business_hours_end: '18:00',
-      work_days: [1, 2, 3, 4, 5],
-      welcome_message: 'Olá!',
-      away_message: 'Fora do horário',
-      closing_message: 'Obrigado!',
-      auto_assignment_enabled: true,
-      auto_assignment_method: 'roundrobin',
-      inactivity_timeout: 30,
-      auto_transcription_enabled: true,
       browser_notifications_enabled: true,
       theme: 'dark',
       language: 'pt-BR',
@@ -181,5 +184,51 @@ describe('useUserSettings', () => {
       tts_voice_id: 'EXAVITQu4vr4xnSDxMaL',
       tts_speed: 1.0,
     });
+  });
+
+  it('não grava os campos operacionais das abas Horário/Mensagens/Automação e mantém os campos do hook', async () => {
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { ...mockSettings, theme: 'light' },
+            error: null,
+          }),
+        }),
+      }),
+      upsert: mockUpsert,
+    }));
+
+    const { result } = renderHook(() => useUserSettings());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.updateSettings({ theme: 'dark' });
+    });
+
+    let saved: boolean | undefined;
+    await act(async () => {
+      saved = await result.current.saveSettings();
+    });
+
+    expect(saved).toBe(true);
+    expect(mockUpsert).toHaveBeenCalledTimes(1);
+    const [payload] = mockUpsert.mock.calls[0] as [Record<string, unknown>];
+
+    // Horário/Mensagens são POR CONEXÃO (business_hours/away_messages) e
+    // Automação é GLOBAL (global_settings / auto_close_config), então nenhum
+    // desses campos operacionais volta para o upsert de user_settings.
+    for (const key of operationalKeys) {
+      expect(payload).not.toHaveProperty(key);
+    }
+
+    // Os campos remanescentes do hook continuam indo, com o valor atualizado.
+    expect(payload.user_id).toBe('u1');
+    expect(payload.theme).toBe('dark');
+    expect(payload.language).toBe('pt-BR');
+    expect(payload.compact_mode).toBe(false);
+    expect(payload.tts_voice_id).toBe('EXAVITQu4vr4xnSDxMaL');
+    expect(payload.tts_speed).toBe(1.0);
+    expect(payload.browser_notifications_enabled).toBe(true);
   });
 });

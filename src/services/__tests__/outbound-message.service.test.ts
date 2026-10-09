@@ -52,6 +52,29 @@ describe('sendOutboundMessage', () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
+  // CT-11 / SL-005 — a falha INDUZIDA do envio de catálogo: a URL da foto vai
+  // intacta como `p_media_url` e o enqueue a rejeita (a RPC só aceita URL
+  // `^https://` com até 4096 caracteres, ver enqueue_outbound_message). É esta
+  // rejeição que `useSendProduct` conta como falha da foto e transforma o
+  // resultado em `partial`. Sem ela (envio "engolindo" o erro) o usuário veria
+  // sucesso com uma foto que nunca chegou — por isso o dispatch é proibido.
+  it('foto com URL inválida: o enqueue rejeitado impede o dispatch e propaga a falha', async () => {
+    rpc.mockResolvedValue({ data: null, error: new Error('invalid_outbound_message') });
+
+    await expect(sendOutboundMessage({
+      contactId: 'a9aed371-fb0a-4a8a-ae12-4f61bf1169e0',
+      content: 'Olha esse produto',
+      messageType: 'image',
+      mediaUrl: 'foto-invalida.jpg',
+      caption: 'Olha esse produto',
+    })).rejects.toThrow('invalid_outbound_message');
+
+    expect(rpc).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({
+      p_message_type: 'image', p_media_url: 'foto-invalida.jpg',
+    }));
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it('reuses the same browser action id after an ambiguous dispatch failure', async () => {
     const queued = { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2dd', status: 'sending', external_id: null };
     rpc.mockResolvedValue({ data: queued, error: null });

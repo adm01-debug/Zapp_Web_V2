@@ -104,7 +104,7 @@ export function VerTodasButton({ onClick }: VerTodasButtonProps) {
       type="button"
       data-testid="ver-todas"
       onClick={onClick}
-      className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-2xs font-medium text-foreground-secondary hover:bg-muted/60 flex items-center gap-1 shrink-0 transition-colors"
+      className="h-[26px] px-2.5 rounded-lg bg-muted/40 border border-border/60 text-2xs font-medium text-muted-foreground hover:bg-muted/60 flex items-center gap-1 shrink-0 transition-colors"
     >
       Ver todas
       <ArrowRight className="w-3 h-3" />
@@ -176,12 +176,18 @@ export function CardSelect({ value, onValueChange, options, testid }: CardSelect
 /* Primitivos adicionais para as abas (mockups): pill, avatar, botões  */
 /* ------------------------------------------------------------------ */
 
+/* Tons do Pill: TEXTO sempre pelo par AA do próprio estado (não pela cor de
+   preenchimento). No claro `--dash-*`/`--primary-glow` são tons de fundo escuro e como
+   texto sobre o card mediam 1,6:1–3,6:1; os pares de texto (`--primary-text`,
+   `--warning-text`, `--destructive-text`, `--success`) fecham ≥4,5:1 nos dois temas.
+   O violeta não tem par de texto no sistema: usa o violeta escuro no claro e a tinta
+   do próprio tom a /10 no escuro (a /15 dava 4,35:1 sobre o card escuro). */
 const pillTone = {
-  success: 'bg-dash-green/15 text-dash-green',
-  danger: 'bg-dash-red/15 text-dash-red',
-  warning: 'bg-dash-amber/15 text-dash-amber',
-  info: 'bg-primary/15 text-primary-glow',
-  violet: 'bg-dash-violet/15 text-dash-violet',
+  success: 'bg-dash-green/15 text-success',
+  danger: 'bg-dash-red/15 text-[hsl(var(--destructive-text))]',
+  warning: 'bg-dash-amber/15 text-[hsl(var(--warning-text))]',
+  info: 'bg-primary/15 text-[hsl(var(--primary-text))]',
+  violet: 'bg-dash-violet/15 text-[hsl(var(--dash-tile-violet))] dark:bg-dash-violet/10 dark:text-dash-violet',
   muted: 'bg-muted/60 text-muted-foreground',
 } as const;
 

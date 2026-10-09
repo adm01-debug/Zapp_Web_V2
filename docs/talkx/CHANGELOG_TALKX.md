@@ -54,7 +54,7 @@
 > **Nota (corrigida em 2026-09-29):** a versão anterior desta nota afirmava que E11–E85 estavam
 > "implementadas e mergeadas". A auditoria de 29/09 mostrou que isso é falso: E29, E37–E39, E48, E54, E56,
 > E75, E79 e E82–E85 não existem e o restante está parcial. Ver
-> `docs/talkx/AUDITORIA_PLANO_TALKX_2026-09-29.md` §3. As entradas abaixo registram o que foi feito nas
+> `docs/talkx/_arquivo/AUDITORIA_PLANO_TALKX_2026-09-29.md` §3. As entradas abaixo registram o que foi feito nas
 > Fases 8–9, sem implicar conclusão das fases anteriores.
 
 ## Auditoria e plano V3 (2026-09-29)

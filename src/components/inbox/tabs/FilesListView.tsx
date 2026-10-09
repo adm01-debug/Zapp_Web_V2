@@ -5,6 +5,8 @@ import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
+import { AudioPlayButton } from './AudioPlayButton';
+import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
 
 /**
  * Lista da aba Arquivos (etapas 21-22). Cada linha segue o `ContactListItem` (h-16, px-3,
@@ -25,8 +27,6 @@ interface FilesListViewProps {
   onPreview: (item: ContactMediaItem) => void;
   onRequestDelete: (item: ContactMediaItem) => void;
 }
-
-const ACTION_BUTTON = 'w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export function FilesListView({
   items,
@@ -107,11 +107,13 @@ export function FilesListView({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <button type="button" aria-label="Visualizar" className={ACTION_BUTTON} onClick={() => onPreview(item)}>
+              {/* A04: play/pause do áudio na linha, só para itens de áudio. */}
+              {item.type === 'audio' && <AudioPlayButton item={item} />}
+              <button type="button" aria-label="Visualizar" className={FILE_ACTION_BUTTON} onClick={() => onPreview(item)}>
                 <Eye className="w-3.5 h-3.5" />
               </button>
               {!isNarrow && (
-                <button type="button" aria-label="Encaminhar" title="Disponível em breve" disabled className={`${ACTION_BUTTON} text-muted-foreground/50 cursor-not-allowed`}>
+                <button type="button" aria-label="Encaminhar" title="Disponível em breve" disabled className={FILE_ACTION_BUTTON_DISABLED}>
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
               )}

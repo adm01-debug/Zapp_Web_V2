@@ -1,5 +1,5 @@
 import { formatSmartDate } from '@/lib/formatters';
-import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { isTechnicalFilename, type ContactMediaItem } from '@/hooks/chat/useContactMedia';
 
 export function formatSize(bytes: number | null): string | null {
   if (!bytes) return null;
@@ -9,7 +9,7 @@ export function formatSize(bytes: number | null): string | null {
 }
 
 export const TYPE_LABEL: Record<ContactMediaItem['type'], string> = {
-  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento',
+  image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento', sticker: 'Figurinha',
 };
 
 /**
@@ -64,4 +64,63 @@ export function formatDuration(seconds: number): string {
   const total = Math.round(seconds);
   const minutes = Math.floor(total / 60);
   return `${minutes}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** Meses em portugues, abreviados, minusculos e sem ponto: "02 set 2026, 18:45". */
+const CARD_MONTHS = [
+  'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez',
+];
+
+const twoDigits = (value: number): string => String(value).padStart(2, '0');
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  );
+}
+
+/**
+ * Etapa 22 (S22): data curta do cartao — "Hoje, 16:10", "Ontem, 14:32" ou
+ * "02 set 2026, 18:45". Le a data no fuso do navegador (nunca UTC) e compara
+ * Hoje/Ontem por dia local; o "ontem" e calculado por `setDate` sobre o dia local,
+ * entao a virada de mes e de ano se resolve sozinha. Data ausente ou invalida -> "".
+ * Nenhum componente monta essa data por conta propria.
+ */
+export function formatCardDate(createdAt: string, now: Date = new Date()): string {
+  if (!createdAt) return '';
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '';
+  const time = `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+  if (isSameLocalDay(date, now)) return `Hoje, ${time}`;
+  const yesterday = new Date(now.getTime());
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameLocalDay(date, yesterday)) return `Ontem, ${time}`;
+  return `${twoDigits(date.getDate())} ${CARD_MONTHS[date.getMonth()]} ${date.getFullYear()}, ${time}`;
+}
+
+/**
+ * Etapas 23 e 25 (S23, S25): segunda linha do cartao — "Imagem · 2,4 MB".
+ * Reaproveita `TYPE_LABEL` e `formatSize` (contrato congelado: B, KB e MB, com o ponto
+ * como separador decimal) e so troca o ponto pela virgula do mockup. Sem tamanho, sobra
+ * apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue
+ * medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo).
+ */
+export function typeSizeLine(item: ContactMediaItem): string {
+  const size = formatSize(item.size);
+  return [TYPE_LABEL[item.type], size?.replace('.', ',')].filter(Boolean).join(' · ');
+}
+
+/**
+ * Etapa 24 (S24, decisao D09): primeira linha do cartao. `text` e o `displayName` que o
+ * item ja traz (nome humano em destaque; arquivo tecnico vira "<Tipo> · dd/MM HH:mm") e
+ * `isTechnical` diz a UI que existe um nome tecnico (hex do WhatsApp) guardado — ele so
+ * aparece na dica. Sem nome nenhum nao ha dica a mostrar, entao `isTechnical` e falso.
+ * A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias.
+ */
+export function cardName(item: ContactMediaItem): { text: string; isTechnical: boolean } {
+  const filename = item.filename?.trim() ?? '';
+  return {
+    text: item.displayName,
+    isTechnical: filename.length > 0 && isTechnicalFilename(filename, item.extension),
+  };
 }

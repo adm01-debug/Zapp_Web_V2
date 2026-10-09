@@ -972,6 +972,7 @@ Legenda de estado no V2: **A** = ausente · **P** = parcial · (evidência entre
 
 #### 089 — `ai-router` e `elevenlabs-voice` consolidados
 - **Prioridade:** P2 · **Esforço:** M · **Gate:** `[PROD]` `[DECISÃO]` (consolidar reduz cold starts, mas muda 19 chamadores)
+- **Decisão (SL-195b, 2026-10-08):** mudança arquitetural opcional — NÃO consolidar as bordas agora. Roteamento LLM já está em `_shared/ai-routing.ts`/`ai-generate.ts`; lacuna real é ElevenLabs fora de `ai_usage_logs`/cota. Próximos cartões: `_shared/elevenlabs-client.ts`, bordas mortas (`elevenlabs-agent-token`, `voice-copilot-action`), reavaliar `ai-router` aditivo só com medição (035). Mapeamento das 27 bordas, contratos públicos e chamadores, com prova, no cartão `t_7a2499a7` (SL-195b, `.tmp/relato.md`).
 - **Origem:** V3 edges `ai-router` (12+ funções em uma entrada com `action`), `elevenlabs-voice` (uma edge para TTS/STS/SFX/design), `ai_function_metrics`, `useAIProviderHealth`, `useAIProviders`, `AIProvidersManager` (V2 já tem).
 - **Estado no V2:** PARCIAL (9 `ai-*` + `ai-proxy` + 10 `elevenlabs-*` separadas; `_shared/ai-providers.ts`, `ai-guards.ts`, `ai-usage.ts`).
 - **Ação:** manter as edges atuais como fachadas finas que delegam a `_shared/ai-router.ts` (sem quebrar chamadores), depois migrar o front para `ai-router` pelo `invokeEdge` (043); métricas por ação em `ai_usage_logs`; secrets `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` conforme TAREFA 3 do handoff (Anthropic usa `x-api-key` e `max_tokens` obrigatório).

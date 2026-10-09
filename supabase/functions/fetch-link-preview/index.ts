@@ -1,5 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getCorsHeaders, handleCors } from "../_shared/validation.ts";
+import {
+  enforceRateLimit,
+  getClientIP,
+  getCorsHeaders,
+  handleCors,
+  requireAuth,
+} from "../_shared/validation.ts";
+import { isServiceRoleRequest } from "../_shared/ai-auth.ts";
 import { fetchPreviewViaSecureEgress } from "../_shared/secure-egress.ts";
 
 interface PreviewData {
@@ -12,6 +19,15 @@ interface PreviewData {
 
 const MAX_BYTES = 512 * 1024; // 512KB cap
 const FETCH_TIMEOUT_MS = 6000;
+
+// SEC-EDGE_FUNCTIONS-03: `verify_jwt = true` no gateway não é autenticação de
+// usuário (a anon key pública é um JWT válido do projeto). Sem guarda própria a
+// função vira fetcher de URL arbitrária e grava `link_preview_cache` com
+// service_role. Como as demais funções de egresso: exige usuário real e limita a
+// taxa ANTES do cache/egress. 30/min por usuário é folgado para o único chamador
+// (enriquecer o link da própria mensagem enviada).
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 // In-memory LRU-ish cache by URL hash. Persists while the isolate is warm.
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h for hits
@@ -203,10 +219,50 @@ async function fetchPreview(rawUrl: string): Promise<PreviewData | null> {
   };
 }
 
-Deno.serve(async (req: Request) => {
+export async function handleFetchLinkPreview(req: Request): Promise<Response> {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
   const corsHeaders = getCorsHeaders(req);
+
+  // `verify_jwt = true` no gateway NÃO é autenticação de usuário: a anon key
+  // pública (que vai no bundle do frontend) é um JWT válido do projeto. A guarda
+  // abaixo é a única barreira antes do egress e da gravação em
+  // `link_preview_cache` (feita com service_role).
+  //
+  // Dois chamadores legítimos, ambos limitados ANTES de tocar o cache/egress:
+  //   1. usuário do front (sessão) -> requireAuth, cota por usuário;
+  //   2. webhook interno de mensagem RECEBIDA
+  //      (`_shared/evolution-webhook-messages.ts` chama esta edge com a service
+  //      role key) -> identidade de serviço conferida em tempo constante, cota
+  //      própria por IP. Máquina não é usuário, mas também não é passe livre.
+  let rateLimitKey: string;
+  if (isServiceRoleRequest(req)) {
+    rateLimitKey = `fetch-link-preview:service:${getClientIP(req)}`;
+  } else {
+    const auth = await requireAuth(req);
+    if (auth instanceof Response) return auth;
+    rateLimitKey = `fetch-link-preview:${auth.userId}`;
+  }
+
+  const rateLimit = await enforceRateLimit(
+    rateLimitKey,
+    RATE_LIMIT_MAX,
+    RATE_LIMIT_WINDOW_MS,
+  );
+  if (!rateLimit.allowed) {
+    const limited = new Response(
+      JSON.stringify({ error: "Rate limit exceeded" }),
+      {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+    limited.headers.set(
+      "Retry-After",
+      String(Math.ceil(RATE_LIMIT_WINDOW_MS / 1000)),
+    );
+    return limited;
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -271,4 +327,8 @@ Deno.serve(async (req: Request) => {
       },
     );
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleFetchLinkPreview);
+}

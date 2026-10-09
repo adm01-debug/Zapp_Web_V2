@@ -2,13 +2,25 @@ import { useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { createMultiplixDraft } from './useMultiplixAudience';
+// F44: a criacao do disparo passa a viver na MESMA edge de dominio das leituras
+// (`multiplix-dispatch`/`draft.create`, a acao que absorve o F08) — antes ela ia
+// pela edge irma `multiplix-audience`, deixando dois caminhos de criacao.
+// O erro de teto de destinatarios (F17) continua sendo a MESMA classe que o
+// `MultiplixComposerDialog` captura por `instanceof`; por isso ela e importada
+// (e nao duplicada aqui), para o `instanceof` do composer seguir valendo.
+import { MultiplixOverLimitError } from './useMultiplixAudience';
 
 export interface MultiplixDispatch {
   id: string;
   name: string;
   message_template: string;
   status: 'draft' | 'scheduled' | 'sending' | 'paused' | 'completed' | 'completed_with_failures' | 'failed' | 'cancelled';
+  /**
+   * F51: a versao do disparo. E ela que a tela manda no `confirm` (a versao
+   * REVISADA) — a confirmacao e idempotente por `(dispatch_id, dispatch_version)`.
+   * Ja vem no `dispatch.list` (DISPATCH_LIST_COLUMNS), nao precisa de leitura nova.
+   */
+  dispatch_version: number;
   total_recipients: number;
   sent_count: number;
   failed_count: number;
@@ -79,7 +91,17 @@ async function toMultiplixDispatchError(error: unknown): Promise<Error> {
   const context = (error as { context?: Response })?.context;
   if (!context || typeof context.clone !== 'function') return new Error(fallback);
   try {
-    const body = await context.clone().json() as { error?: string; message?: string };
+    const body = await context.clone().json() as {
+      error?: string; message?: string; count?: number; limit?: number;
+    };
+    // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
+    // o numero real (`{error, count, limit}`). Traduzir para o erro que o
+    // composer ja captura mantem a confirmacao explicita funcionando — sem este
+    // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
+    // botao de confirmar.
+    if (body?.error === 'multiplix_over_recipient_limit') {
+      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
+    }
     const code = body?.error ?? body?.message;
     if (code) return new MultiplixDispatchEdgeError(code, body?.message ?? code);
   } catch {
@@ -312,6 +334,16 @@ export interface CreateMultiplixDispatchResult {
 }
 
 /**
+ * Linha devolvida por `draft.create` (a RPC `multiplix_create_draft` retorna uma
+ * tabela; a edge achata para um objeto dentro do envelope `{ data }`).
+ */
+interface DraftCreateRow {
+  dispatch_id?: string | null;
+  recipient_count?: number;
+  created?: boolean;
+}
+
+/**
  * Identidade do pedido de criacao: os campos que definem QUAL disparo este
  * pedido cria. `startNow`/`confirmOverLimit` ficam de fora de proposito — eles
  * dizem o que fazer DEPOIS de criar, nao qual disparo e.
@@ -347,12 +379,17 @@ export function useCreateMultiplixDispatch() {
         attemptRef.current = { key: crypto.randomUUID(), identity };
       }
       const clientRequestId = attemptRef.current.key;
-      // F08: a criacao vive no servidor. A edge multiplix-audience re-resolve o
-      // publico no Singu com o escopo do JWT e chama a RPC transacional
-      // multiplix_create_draft (dispatch + destinatarios numa transacao,
-      // idempotente por client_request_id). O navegador nao decide mais quem
-      // recebe nem escreve direto em multiplix_dispatches/multiplix_recipients.
-      const draft = await createMultiplixDraft({
+      // F44 (absorve F08): a criacao vive na edge de DOMINIO das leituras
+      // `multiplix-dispatch`, acao `draft.create`. Ela resolve o `profiles.id` do
+      // dono a partir do JWT (o `created_by` guarda profiles.id, nao o auth.uid),
+      // re-resolve o publico no Singu com o escopo do JWT e chama a RPC
+      // transacional multiplix_create_draft (dispatch + destinatarios numa
+      // transacao, idempotente por client_request_id). O navegador so manda a
+      // REFERENCIA (company_ids/contact_ids): nunca destinatarios nem o destino.
+      //
+      // A resposta da edge chega no envelope `{ data: {...} }` (o mesmo envelope
+      // das acoes de lista), entao o corpo e desembrulhado aqui.
+      const body = await invokeMultiplixDispatch('draft.create', {
         name: input.name,
         message_template: input.messageTemplate,
         company_ids: input.companyIds,
@@ -361,7 +398,11 @@ export function useCreateMultiplixDispatch() {
         scheduled_at: input.scheduledAt ?? null,
         confirm_over_limit: input.confirmOverLimit ?? false,
       });
-      if (!draft.dispatch_id) throw new Error('Disparo criado sem identificador');
+
+      const envelope = (body ?? null) as { data?: DraftCreateRow | DraftCreateRow[] | null } | null;
+      const created = envelope?.data ?? null;
+      const draft = (Array.isArray(created) ? created[0] : created) as DraftCreateRow | null;
+      if (!draft?.dispatch_id) throw new Error('Disparo criado sem identificador');
       const dispatchId = draft.dispatch_id;
 
       if (input.startNow) {
@@ -383,7 +424,11 @@ export function useCreateMultiplixDispatch() {
         });
       }
 
-      return { id: dispatchId, recipientCount: draft.recipient_count, created: draft.created };
+      return {
+        id: dispatchId,
+        recipientCount: draft.recipient_count ?? 0,
+        created: draft.created !== false,
+      };
     },
     // Libera a chave so no SUCESSO: duas chamadas simultaneas (duplo clique)
     // compartilham a chave e viram UM disparo, e um reenvio depois de uma falha
@@ -391,6 +436,80 @@ export function useCreateMultiplixDispatch() {
     // em vez de criar outro). Um disparo novo, ou um pedido com outro conteudo,
     // recebe chave nova.
     onSuccess: () => { attemptRef.current = null; },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// F51 — `confirm`: a transacao que da existencia a fila do disparo.
+// ---------------------------------------------------------------------------
+
+export interface ConfirmMultiplixDispatchInput {
+  dispatchId: string;
+  /**
+   * `dispatch_version` do disparo REVISADO (o que a tela carregou do
+   * `dispatch.list`). E ela que identifica a confirmacao: a RPC grava
+   * `dispatch_version + 1` e as linhas de `multiplix_delivery_items` nascem com
+   * essa versao no `idempotency_key` (UNIQUE).
+   */
+  dispatchVersion: number;
+}
+
+/** O que o `confirm` congelou e materializou (resposta da edge). */
+export interface MultiplixConfirmResult {
+  dispatch_id: string;
+  /** Versao NOVA (a revisada + 1) — a mesma que os itens carregam. */
+  dispatch_version: number;
+  status: MultiplixDispatch['status'] | null;
+  scheduled_at: string | null;
+  recipient_count: number | null;
+  block_count: number | null;
+  /** Linhas de `multiplix_delivery_items` criadas NESTA chamada (0 no clique repetido). */
+  items_created: number;
+  items_total: number;
+  /** Destinatarios x blocos — "N contatos" != "N mensagens" (F50/F78). */
+  message_count: number;
+  /** false = a versao revisada JA estava confirmada (clique repetido): sucesso, nao erro. */
+  created: boolean;
+}
+
+/** Desembrulha o `{ data }` do confirm (mesmo envelope das listas). */
+function readMultiplixConfirm(data: unknown): MultiplixConfirmResult {
+  const envelope = data && typeof data === 'object' ? data as Record<string, unknown> : null;
+  const inner = envelope && 'data' in envelope ? envelope.data : data;
+  if (inner && typeof inner === 'object' && 'dispatch_id' in (inner as Record<string, unknown>)) {
+    return inner as MultiplixConfirmResult;
+  }
+  throw new MultiplixDispatchEdgeError(
+    'multiplix_confirm_shape',
+    'multiplix-dispatch: resposta do confirm em formato inesperado',
+  );
+}
+
+/**
+ * F51 — confirma o disparo pela edge `multiplix-dispatch`: revalida a
+ * elegibilidade (F49), congela publico e blocos, avanca `dispatch_version` e
+ * gera `multiplix_delivery_items` NA MESMA transacao (RPC
+ * `multiplix_confirm_dispatch`). Nada disso pode ser feito no navegador: uma
+ * falha no meio deixaria o disparo com metade da fila.
+ *
+ * Por que isto existe no front (MX01): o worker `multiplix-send` processa
+ * `multiplix_delivery_items` e SO elas. Um disparo que vai para `sending` sem
+ * passar pelo `confirm` (o caminho antigo: `multiplix-send/start` direto) fica
+ * com destinatarios pendentes e fila vazia — nao envia nada e nao conclui.
+ *
+ * Idempotente por `(dispatch_id, dispatch_version)`: os cliques repetidos mandam
+ * a MESMA versao revisada e a RPC devolve `created: false` em vez de materializar
+ * de novo — 5 cliques = 1 execucao, sem erro na tela.
+ */
+export function useConfirmMultiplixDispatch() {
+  return useMutation({
+    mutationFn: async ({ dispatchId, dispatchVersion }: ConfirmMultiplixDispatchInput): Promise<MultiplixConfirmResult> => {
+      const data = await invokeMultiplixDispatch('confirm', {
+        dispatch_id: dispatchId,
+        dispatch_version: dispatchVersion,
+      });
+      return readMultiplixConfirm(data);
+    },
   });
 }
 

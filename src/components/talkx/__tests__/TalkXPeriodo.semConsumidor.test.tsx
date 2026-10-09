@@ -126,7 +126,7 @@ function wrap(ui: React.ReactNode) {
 const chipPeriodo = () => screen.queryByRole('button', { name: 'Período' });
 
 describe('R2-MOD-059 · período do Talk X só aparece onde tem consumidor', () => {
-  it('Visão geral (sem consumidor) não oferece o menu de período', () => {
+  it('Visão geral consome o recorte (X081): o chip aparece e entrega o intervalo', () => {
     wrap(
       <TalkXOverview
         campaigns={[campanha]}
@@ -144,7 +144,9 @@ describe('R2-MOD-059 · período do Talk X só aparece onde tem consumidor', () 
         onGoTab={vi.fn()}
       />,
     );
-    expect(chipPeriodo()).toBeNull();
+    // X081 ligou o consumidor na Visão geral (o intervalo corta lista e KPIs):
+    // o chip deixa de ser promessa vazia e passa a ser oferecido.
+    expect(chipPeriodo()).not.toBeNull();
   });
 
   it('Templates (sem consumidor) não oferece o menu de período', () => {

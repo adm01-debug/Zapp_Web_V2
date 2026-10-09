@@ -365,3 +365,56 @@ Deno.test('F52 status: sent, delivered, read e replied SEPARADOS (4 chaves)', as
   const sumSent = json.data.by_block.reduce((s: number, x: Row) => s + Number(x.sent), 0);
   assert(sumSent === agg.sent, `soma de sent por bloco = agregado (${sumSent} vs ${agg.sent})`);
 });
+
+Deno.test('F52 status: por destinatario, horario e atribuicao do retorno (linked e inferred)', async () => {
+  const state = makeState({
+    dispatch: {
+      id: DISPATCH_ID, created_by: PROFILE_ID, status: 'sending', dispatch_version: 2,
+      scheduled_at: null, whatsapp_connection_id: CONN_ID, total_recipients: 3,
+      sent_count: 2, delivered_count: 2, failed_count: 0, outcome_unknown_count: 0,
+    },
+    recipients: [
+      { id: 'r1', dispatch_id: DISPATCH_ID, destino_e164: '5511900000001', company_id: 'c1', company_name_snapshot: 'Alfa', eligibility: 'eligible' },
+      { id: 'r2', dispatch_id: DISPATCH_ID, destino_e164: '5511900000002', company_id: 'c2', company_name_snapshot: 'Beta', eligibility: 'eligible' },
+      { id: 'r3', dispatch_id: DISPATCH_ID, destino_e164: '5511900000003', company_id: 'c3', company_name_snapshot: 'Gama', eligibility: 'eligible' },
+    ],
+    items: [
+      // r1: retorno com correlacao EXATA (`linked`, external_id casou).
+      { id: 'i1', dispatch_id: DISPATCH_ID, recipient_id: 'r1', block_id: 'b1', dispatch_version: 2, status: 'read', sent_at: '2026-10-01T10:00:00Z', delivered_at: '2026-10-01T10:00:05Z', read_at: '2026-10-01T10:00:09Z', replied_at: '2026-10-01T10:05:00Z', reply_attribution: 'linked' },
+      // r2: retorno com correlacao por janela + telefone (`inferred`).
+      { id: 'i2', dispatch_id: DISPATCH_ID, recipient_id: 'r2', block_id: 'b1', dispatch_version: 2, status: 'read', sent_at: '2026-10-01T10:00:01Z', delivered_at: '2026-10-01T10:00:06Z', read_at: '2026-10-01T10:00:10Z', replied_at: '2026-10-01T10:06:30Z', reply_attribution: 'inferred' },
+      // r2: 2o item SEM resposta — nao pode apagar nem zerar o retorno ja lido.
+      { id: 'i3', dispatch_id: DISPATCH_ID, recipient_id: 'r2', block_id: 'b2', dispatch_version: 2, status: 'delivered', sent_at: '2026-10-01T10:00:02Z', delivered_at: '2026-10-01T10:00:07Z', read_at: null, replied_at: null, reply_attribution: null },
+      // r1: 2o retorno MAIS TARDE — o corte por destinatario reporta o PRIMEIRO retorno (10:05:00).
+      { id: 'i4', dispatch_id: DISPATCH_ID, recipient_id: 'r1', block_id: 'b2', dispatch_version: 2, status: 'read', sent_at: '2026-10-01T10:00:03Z', delivered_at: '2026-10-01T10:00:08Z', read_at: '2026-10-01T10:00:11Z', replied_at: '2026-10-01T10:20:00Z', reply_attribution: 'linked' },
+    ],
+  });
+
+  const res = await handleStatus(makeCtx(state, { dispatch_id: DISPATCH_ID }, 'status'));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const json = await res.json() as any;
+
+  const r1 = json.data.by_recipient.find((x: Row) => x.recipient_id === 'r1');
+  const r2 = json.data.by_recipient.find((x: Row) => x.recipient_id === 'r2');
+  const r3 = json.data.by_recipient.find((x: Row) => x.recipient_id === 'r3');
+
+  // r1: horario E atribuicao do retorno exato (o 1o retorno, nao o de 10:20).
+  assert(r1.replied_at === '2026-10-01T10:05:00Z', `r1.replied_at = 1o retorno, veio ${JSON.stringify(r1.replied_at)}`);
+  assert(r1.reply_attribution === 'linked', `r1.reply_attribution = 'linked', veio ${JSON.stringify(r1.reply_attribution)}`);
+
+  // r2: retorno inferido, mesmo com o 2o item sem resposta.
+  assert(r2.replied_at === '2026-10-01T10:06:30Z', `r2.replied_at, veio ${JSON.stringify(r2.replied_at)}`);
+  assert(r2.reply_attribution === 'inferred', `r2.reply_attribution = 'inferred', veio ${JSON.stringify(r2.reply_attribution)}`);
+
+  // r3: sem retorno -> campos presentes e NULOS (a tela distingue "sem resposta" de "campo ausente").
+  assert(r3.replied_at === null, `r3.replied_at deve ser null, veio ${JSON.stringify(r3.replied_at)}`);
+  assert(r3.reply_attribution === null, `r3.reply_attribution deve ser null, veio ${JSON.stringify(r3.reply_attribution)}`);
+
+  // Compatibilidade: os campos/contadores atuais seguem intactos e independentes do horario.
+  assert(r1.replied === 2, `r1.replied = 2 (os dois itens respondidos), veio ${r1.replied}`);
+  assert(r2.replied === 1, `r2.replied = 1, veio ${r2.replied}`);
+  assert(r3.replied === 0, `r3.replied = 0, veio ${r3.replied}`);
+  assert(json.data.aggregate.replied === 3, `aggregate.replied = 3, veio ${json.data.aggregate.replied}`);
+  assert(r1.destino_e164 === '5511900000001' && r1.company_name === 'Alfa', 'campos atuais do destinatario preservados');
+});

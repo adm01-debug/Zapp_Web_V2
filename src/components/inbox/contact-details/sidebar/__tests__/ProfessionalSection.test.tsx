@@ -1,9 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { Accordion } from '@/components/ui/accordion';
 import { ProfessionalSection } from '../ProfessionalSection';
 import type { ConversationContact as Contact } from '@/types/chat';
 import type { ContactSidebarData } from '@/types/contactSidebar';
+
+const writeText = vi.fn().mockResolvedValue(undefined);
+
+beforeEach(() => {
+  writeText.mockClear();
+  Object.assign(navigator, { clipboard: { writeText } });
+});
 
 const contact: Contact = {
   id: 'contact-1',
@@ -45,12 +52,16 @@ describe('ProfessionalSection (etapas 52–60)', () => {
     expect(rows.map((r) => r.getAttribute('data-testid'))).toEqual(order);
   });
 
-  it('WhatsApp formatado (11) 98877-6655 com link wa.me (etapa 53)', () => {
+  it('WhatsApp só leitura: número inteiro e sem copiar nem abrir wa.me', () => {
     renderSection();
     const row = screen.getByTestId('sidebar-row-whatsapp');
-    expect(within(row).getByText('(11) 98877-6655')).toBeInTheDocument();
-    expect(within(row).getByRole('link')).toHaveAttribute('href', 'https://wa.me/5511988776655');
-    expect(within(row).getByRole('button', { name: 'Copiar WhatsApp' })).toBeInTheDocument();
+    // Número completo na linha (nada de "(11) 9…") e sem quebra de linha.
+    const numero = within(row).getByText('(11) 98877-6655');
+    expect(numero).toHaveClass('whitespace-nowrap');
+    expect(row.textContent).not.toContain('…');
+    expect(within(row).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(row).queryByRole('link')).not.toBeInTheDocument();
+    expect(row.querySelector('a[href^="https://wa.me"]')).toBeNull();
   });
 
   it('e-mail verificado mostra o selo BadgeCheck (etapa 54)', () => {
@@ -87,7 +98,7 @@ describe('ProfessionalSection (etapas 52–60)', () => {
     expect(screen.queryByTestId('sidebar-add-department')).not.toBeInTheDocument();
   });
 
-  it('numero nacional sem e164 ganha +55 no link wa.me e na cópia', () => {
+  it('numero nacional sem e164 continua formatado e sem link wa.me', () => {
     const nacional: ContactSidebarData = {
       ...rpcData,
       professional: {
@@ -97,7 +108,8 @@ describe('ProfessionalSection (etapas 52–60)', () => {
     };
     renderSection({ data: nacional });
     const row = screen.getByTestId('sidebar-row-whatsapp');
-    expect(within(row).getByRole('link')).toHaveAttribute('href', 'https://wa.me/5511988776655');
+    expect(within(row).getByText('(11) 98877-6655')).toBeInTheDocument();
+    expect(within(row).queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('not_found mostra "Contato não vinculado" + CTA Buscar no CRM (etapa 59)', () => {
@@ -107,9 +119,19 @@ describe('ProfessionalSection (etapas 52–60)', () => {
     expect(props.onBuscarCRM).toHaveBeenCalledTimes(1);
   });
 
-  it('subtítulo exato do mock (etapa 60)', () => {
+  it('Dados Profissionais sem subtítulo (etapa 60)', () => {
     renderSection();
-    expect(screen.getByText('Informações da sua vida profissional')).toBeInTheDocument();
+    expect(screen.queryByText('Informações da sua vida profissional')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-section-subtitle')).not.toBeInTheDocument();
+  });
+
+  it('e-mail: rótulo "E-mail" e cópia mantida', () => {
+    renderSection();
+    const row = screen.getByTestId('sidebar-row-email');
+    expect(within(row).getByText('E-mail')).toBeInTheDocument();
+    expect(within(row).queryByText('E-mail corporativo')).not.toBeInTheDocument();
+    fireEvent.click(within(row).getByRole('button', { name: 'Copiar E-mail' }));
+    expect(writeText).toHaveBeenCalledWith('joao@empresa.com');
   });
 
   it('loading mostra skeletons', () => {

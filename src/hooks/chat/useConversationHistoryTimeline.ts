@@ -291,21 +291,26 @@ export function useConversationHistoryTimeline(
       // nao 168 h para tras — que alcancavam 23/09 22:30 e entregavam 8 dias parciais.
       const sinceIso = period > 0 ? startOfDay(subDays(new Date(), period - 1)).toISOString() : null;
 
+      // A janela de transporte acompanha o `limit` da UI, e não tetos fixos (antes: 500 mensagens
+      // e 200 eventos). Pedimos uma linha a mais por fonte como sonda: se voltar mais que o `limit`,
+      // existe registro no servidor além da amostra exibida — é isso que dirige o "Carregar mais".
+      const fetchLimit = limit + 1;
+
       const messagesQuery = supabase
         .from('messages')
         .select('id, sender, content, media_url, media_filename, media_size, created_at')
         .eq('contact_id', cid)
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(fetchLimit);
       const eventsQuery = supabase
         .from('conversation_events')
         .select('id, event_type, created_at')
         .eq('contact_id', cid)
         .order('created_at', { ascending: false })
-        .limit(200);
-      const notesQuery = supabase.from('contact_notes').select('id, content, created_at').eq('contact_id', cid);
-      const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, completed_at, created_at').eq('contact_id', cid);
-      const dealsQuery = supabase.from('sales_deals').select('id, title, value, status, created_at').eq('contact_id', cid);
+        .limit(fetchLimit);
+      const notesQuery = supabase.from('contact_notes').select('id, content, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
+      const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, completed_at, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
+      const dealsQuery = supabase.from('sales_deals').select('id, title, value, status, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
 
       const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes] = await Promise.all([
         sinceIso ? messagesQuery.gte('created_at', sinceIso) : messagesQuery,
@@ -322,11 +327,21 @@ export function useConversationHistoryTimeline(
 
       const dealIds = (dealsRes.data ?? []).map((d) => d.id);
       const activitiesRes = dealIds.length
-        ? await supabase.from('deal_activities').select('id, deal_id, description, activity_type, created_at').in('deal_id', dealIds)
+        ? await supabase.from('deal_activities').select('id, deal_id, description, activity_type, created_at').in('deal_id', dealIds).order('created_at', { ascending: false }).limit(fetchLimit)
         : { data: [] as RawActivityRow[], error: null };
       if (activitiesRes.error) throw activitiesRes.error;
 
-      return buildTimeline(
+      // Truncamento real: alguma fonte devolveu mais linhas do que a tela mostra (pedimos limit+1).
+      // Sem isto, hasMore sairia só do comprimento da amostra e o "Carregar mais" pararia na janela.
+      const truncou =
+        (messagesRes.data?.length ?? 0) > limit ||
+        (eventsRes.data?.length ?? 0) > limit ||
+        (notesRes.data?.length ?? 0) > limit ||
+        (tasksRes.data?.length ?? 0) > limit ||
+        (dealsRes.data?.length ?? 0) > limit ||
+        (activitiesRes.data?.length ?? 0) > limit;
+
+      const timeline = buildTimeline(
         {
           messages: (messagesRes.data ?? []) as RawMessageRow[],
           events: (eventsRes.data ?? []) as RawEventRow[],
@@ -337,6 +352,8 @@ export function useConversationHistoryTimeline(
         },
         { type, limit },
       );
+
+      return { ...timeline, hasMore: timeline.hasMore || truncou };
     },
     enabled: !!contactId,
     staleTime: 30_000,

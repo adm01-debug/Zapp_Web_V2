@@ -134,10 +134,16 @@ describe('MediaLibraryAdmin', () => {
   // ─── 1. Rendering & Structure ───────────────────────────
 
   describe('Main Component Rendering', () => {
+    // Orçamento POR TESTE com causa medida (nenhuma asserção mudou). Este é o
+    // PRIMEIRO render da árvore inteira do admin (framer-motion + Radix) e nos logs
+    // do integrador ele reprovou com "Test timed out in 15000ms" enquanto o vitest
+    // registrava 62,8 s de duração para o próprio teste — a máquina chega a ~4x o
+    // orçamento padrão. 120 s é o valor que o repositório já usa para teste pesado
+    // (`singu-adapter.bundle.test.ts`).
     it('renders the main title', async () => {
       render(<MediaLibraryAdmin />);
       expect(screen.getByText('Biblioteca de Mídia')).toBeInTheDocument();
-    });
+    }, 120_000);
 
     it('renders the description', async () => {
       render(<MediaLibraryAdmin />);
@@ -545,6 +551,9 @@ describe('MediaLibraryAdmin', () => {
       });
     });
 
+    // Orçamento POR TESTE com causa medida: este caso monta o admin com 100 linhas
+    // reais (2.943 ms medidos na máquina ociosa) e foi o que mais reprovou no arquivo
+    // nos logs do integrador (3x "Test timed out in 15000ms"). Nenhuma asserção mudou.
     it('handles 100 items without crash', async () => {
       const items = Array.from({ length: 100 }, () => makeSticker());
       setupSupabaseQuery(items);
@@ -552,7 +561,7 @@ describe('MediaLibraryAdmin', () => {
       await waitFor(() => {
         expect(screen.getByText(/Exibindo 100 de 100/)).toBeInTheDocument();
       });
-    });
+    }, 120_000);
 
     it('handles duplicate categories correctly in stats', async () => {
       setupSupabaseQuery([

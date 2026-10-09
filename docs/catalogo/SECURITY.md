@@ -168,6 +168,17 @@ repositório **apenas como nome de variável / secret**, jamais como valor:
   literal no bundle de produção" está registrada no **CT-92** do
   `PLANO_FINALIZACAO_CATALOGO_100.md` (13 chunks JS da produção greppados → 0
   hits).
+- **JWTs literais versionados — conferidos em 08/10/2026 (SEC-1 / SL-157):** o
+  repositório tem **3** JWT de verdade versionados — `.env.production:8`,
+  `src/integrations/supabase/client.ts:17` e
+  `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:22`. O
+  campo `role` de cada um foi decodificado do *payload*, **sem imprimir valor**:
+  os três são **`role=anon`** (chave pública por desenho, protegida por RLS) —
+  **nenhum** é `service_role`. Os outros `eyJ…` que o grep acha são tokens
+  **falsos de teste** (≤ 46 caracteres, payload que nem decodifica). A repetição
+  que existia em `e2e/` (4 arquivos com o literal) **já não existe**: eles
+  passaram a ler `e2e/fixtures/supabase-env.ts`, fonte única que lê o
+  `.env.production` versionado — o grep em `e2e/` não devolve chave literal.
 
 ---
 

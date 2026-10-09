@@ -23,6 +23,9 @@ const EXPORTED_NAMES = [
   'OBJECTIVES',
   'SPEED_PROFILES',
   'SUPPRESSION_ORIGIN',
+  // X081 (TL-117) — canais do Talk X (A15: só WhatsApp): opções do filtro
+  // "Todos os canais" da Visão geral.
+  'TALKX_CHANNELS',
   'TEMPLATE_CATEGORIES',
   'TEMPLATE_STATUS',
   'VARIABLE_KEYS',

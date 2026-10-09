@@ -18,11 +18,30 @@ export interface Notification {
   read_at: string | null;
 }
 
+const EMPTY_NOTIFICATIONS: Notification[] = [];
+
+type NotificationsState = {
+  userId: string | null;
+  items: Notification[];
+};
+
+type NotificationErrorState = {
+  userId: string;
+  error: Error;
+};
+
 export function useNotifications() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const userId = user?.id ?? null;
+  const [notificationsState, setNotificationsState] = useState<NotificationsState>({ userId: null, items: [] });
+  const [errorState, setErrorState] = useState<NotificationErrorState | null>(null);
   const isMountedRef = useRef(true);
+  const activeUserIdRef = useRef<string | null>(null);
+
+  const notifications = notificationsState.userId === userId ? notificationsState.items : EMPTY_NOTIFICATIONS;
+  const error = errorState?.userId === userId ? errorState.error : null;
+  const hasResultForCurrentUser = !userId || notificationsState.userId === userId || errorState?.userId === userId;
+  const effectiveLoading = Boolean(userId) && !hasResultForCurrentUser;
 
   // R2-PLAT-002 (#440): o contador é DERIVADO da lista reconciliada — a mesma que
   // o popover renderiza — em vez de um estado à parte ajustado por delta em cada
@@ -43,32 +62,46 @@ export function useNotifications() {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
 
+    const requestUserId = user.id;
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', requestUserId)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       const typedData = (data || []) as Notification[];
-      if (isMountedRef.current) {
-        setNotifications(typedData);
+      if (isMountedRef.current && activeUserIdRef.current === requestUserId) {
+        setNotificationsState({ userId: requestUserId, items: typedData });
+        setErrorState(null);
       }
-    } catch (error) {
-      log.error('Error fetching notifications:', error);
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
+    } catch (err) {
+      log.error('Error fetching notifications:', err);
+      // Uma falha de consulta deixa de ser silenciosa: a lista anterior é
+      // conservada de propósito quando a consulta ainda pertence ao mesmo usuário.
+      // Se a conta mudou, `notifications` já deriva para [] e não vaza itens da
+      // sessão anterior.
+      if (isMountedRef.current && activeUserIdRef.current === requestUserId) {
+        setErrorState({
+          userId: requestUserId,
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
       }
     }
   }, [user]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    activeUserIdRef.current = userId;
+
+    if (userId) {
+      queueMicrotask(() => {
+        void fetchNotifications();
+      });
+    }
+  }, [fetchNotifications, userId]);
 
   // Realtime subscription
   useEffect(() => {
@@ -89,11 +122,15 @@ export function useNotifications() {
             const newNotification = payload.new as Notification;
             // Um INSERT que repete um id já reconciliado é a mesma linha (ex.: o
             // eco do próprio insert): substitui no lugar, não duplica na lista.
-            setNotifications(prev =>
-              prev.some(n => n.id === newNotification.id)
-                ? prev.map(n => (n.id === newNotification.id ? newNotification : n))
-                : [newNotification, ...prev]
-            );
+            setNotificationsState(prev => {
+              const currentItems = prev.userId === user.id ? prev.items : [];
+              return {
+                userId: user.id,
+                items: currentItems.some(n => n.id === newNotification.id)
+                  ? currentItems.map(n => (n.id === newNotification.id ? newNotification : n))
+                  : [newNotification, ...currentItems],
+              };
+            });
             // Fase F (etapa 61): o alarme de tarefa chega em tempo real pelo
             // mesmo canal. Mostra o toast com as 3 ações do aviso. Sem som de
             // propósito — o app não tem padrão sonoro para alarme de tarefa.
@@ -105,12 +142,21 @@ export function useNotifications() {
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedNotification = payload.new as Notification;
-            setNotifications(prev =>
-              prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
+            setNotificationsState(prev =>
+              prev.userId === user.id
+                ? {
+                    userId: prev.userId,
+                    items: prev.items.map(n => n.id === updatedNotification.id ? updatedNotification : n),
+                  }
+                : prev
             );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id;
-            setNotifications(prev => prev.filter(n => n.id !== deletedId));
+            setNotificationsState(prev =>
+              prev.userId === user.id
+                ? { userId: prev.userId, items: prev.items.filter(n => n.id !== deletedId) }
+                : prev
+            );
           }
         }
       )
@@ -130,9 +176,10 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n)
-      );
+      setNotificationsState(prev => ({
+        userId: prev.userId,
+        items: prev.items.map(n => n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n),
+      }));
     } catch (error) {
       log.error('Error marking notification as read:', error);
     }
@@ -150,8 +197,13 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      setNotificationsState(prev =>
+        prev.userId === user.id
+          ? {
+              userId: prev.userId,
+              items: prev.items.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() })),
+            }
+          : prev
       );
     } catch (error) {
       log.error('Error marking all as read:', error);
@@ -167,7 +219,10 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotificationsState(prev => ({
+        userId: prev.userId,
+        items: prev.items.filter(n => n.id !== notificationId),
+      }));
     } catch (error) {
       log.error('Error deleting notification:', error);
     }
@@ -184,7 +239,9 @@ export function useNotifications() {
 
       if (error) throw error;
       
-      setNotifications([]);
+      setNotificationsState(prev =>
+        prev.userId === user.id ? { userId: prev.userId, items: [] } : prev
+      );
     } catch (error) {
       log.error('Error clearing notifications:', error);
     }
@@ -217,7 +274,8 @@ export function useNotifications() {
 
   return {
     notifications,
-    loading,
+    loading: effectiveLoading,
+    error,
     unreadCount,
     markAsRead,
     markAllAsRead,
