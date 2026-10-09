@@ -194,7 +194,9 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(result.current.connections).toEqual([]);
     expect(result.current.connectionId).toBe('');
-    expect(result.current.canProceed[1]).toBe(false);
+    // X133/V25 — a conexão deixou o passo 1: quem depende dela para enviar é o
+    // passo Entrega (3), e é ele que fica bloqueado sem uma conexão ativa.
+    expect(result.current.canProceed[3]).toBe(false);
   });
 
   it('creates one draft and asks the server for the audience snapshot on later saves (X017)', async () => {

@@ -3,18 +3,22 @@ import {
   CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
   Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, X, AlertTriangle,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton, GhostButton } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, personalizePreview, extractVariables } from './talkxShared';
+// X133 — as seções de Entrega saíram daqui para `TalkXDeliverySections` (o mesmo
+// corpo passa a servir a tela 10). O que fica neste arquivo é a montagem do passo
+// e a revisão final.
+import {
+  SectionCard as Section, ScheduleSection, SendWindowSection, ThrottleSection, SuppressionSection,
+  ConnectionSection, AdvancedThrottleSliders,
+} from './TalkXDeliverySections';
+import { readTalkXBusinessHours } from './talkxDeliveryRules';
+import { useTalkXSettings } from '@/hooks/integrations/useTalkXSettings';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -24,123 +28,77 @@ function formatLocalSchedule(localDateTime: string, timezone: string): string {
   return `${day}/${month}/${year} ${time} (${timezone})`;
 }
 
-function Section({ icon, color = 'blue', title, subtitle, right, children }: { icon: React.ElementType; color?: 'blue' | 'green' | 'red' | 'violet' | 'amber'; title: string; subtitle?: string; right?: React.ReactNode; children?: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <IconTile icon={icon as never} color={color} size={40} />
-        <div className="min-w-0 flex-1"><p className="text-[15px] font-bold text-foreground">{title}</p>{subtitle && <p className="text-xs text-foreground-secondary">{subtitle}</p>}</div>
-        {right}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function OptionPill({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className={cn('h-10 px-3.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-colors', active ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/30 text-foreground-secondary hover:border-primary/40')}>
-      <span className={cn('w-3.5 h-3.5 rounded-full border-2', active ? 'border-primary bg-primary shadow-[inset_0_0_0_2.5px_hsl(var(--card))]' : 'border-border')} />{label}
-    </button>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* Passo 3 — Entrega / Agendamento                                    */
 /* ------------------------------------------------------------------ */
 
 export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
+  // X133 — o horário comercial mostrado é o que está GRAVADO nas configurações
+  // (`talkx_settings.business_hours`), a mesma fonte que o motor usa; antes era
+  // a constante "segunda a sexta, das 08:00 às 18:00".
+  const { data: settings } = useTalkXSettings();
+  const businessHours = readTalkXBusinessHours(settings);
   const scheduleLabel = ed.isScheduled && ed.scheduledAt
     ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)
     : 'Envio imediato ao lançar';
   return (
     <>
-      {/* E65 — sem conexão WhatsApp 'connected' o envio é impossível: o passo 3
-          mostra o estado dedicado com caminho para a tela de Conexões. */}
-      {(ed.connections ?? []).length === 0 && (
-        <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
-      )}
-      <Section icon={CalendarDays} title="Configurações de agendamento" subtitle="Defina quando, como e em que condições a campanha será enviada."
-        right={<Pill label={ed.isScheduled ? `Agendada para ${scheduleLabel}` : scheduleLabel} tone={ed.isScheduled ? 'success' : 'info'} dot />}
-      >
-        <div className="flex flex-wrap gap-2 mb-4">
-          <OptionPill active={!ed.isScheduled} label="Enviar ao lançar" onClick={() => ed.toggleSchedule(false)} />
-          <OptionPill active={ed.isScheduled} label="Agendar data e hora" onClick={() => ed.toggleSchedule(true)} />
-        </div>
-        {ed.isScheduled && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2">
-              <Label className="text-xs text-foreground-secondary">Data e horário de início</Label>
-              <Input type="datetime-local" value={ed.scheduledAt} min={ed.minimumScheduledAt} onChange={(e) => ed.setScheduledAt(e.target.value)} aria-invalid={!!ed.scheduleConfigError} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-2xs text-dash-red">{ed.scheduleConfigError}</p>}
-            </div>
-            <div>
-              <Label className="text-xs text-foreground-secondary">Fuso horário</Label>
-              <Select value={ed.scheduleTimezone} onValueChange={ed.setScheduleTimezone}><SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger><SelectContent><SelectItem key="America/Sao_Paulo" value="America/Sao_Paulo">America/Sao Paulo</SelectItem><SelectItem key="America/Manaus" value="America/Manaus">America/Manaus</SelectItem><SelectItem key="America/Belem" value="America/Belem">America/Belem</SelectItem><SelectItem key="America/Fortaleza" value="America/Fortaleza">America/Fortaleza</SelectItem><SelectItem key="America/Recife" value="America/Recife">America/Recife</SelectItem><SelectItem key="America/Cuiaba" value="America/Cuiaba">America/Cuiaba</SelectItem><SelectItem key="America/Porto_Velho" value="America/Porto_Velho">America/Porto Velho</SelectItem><SelectItem key="America/Rio_Branco" value="America/Rio_Branco">America/Rio Branco</SelectItem><SelectItem key="America/New_York" value="America/New_York">America/New York</SelectItem><SelectItem key="America/Chicago" value="America/Chicago">America/Chicago</SelectItem><SelectItem key="America/Los_Angeles" value="America/Los_Angeles">America/Los Angeles</SelectItem><SelectItem key="America/Buenos_Aires" value="America/Buenos_Aires">America/Buenos Aires</SelectItem><SelectItem key="America/Santiago" value="America/Santiago">America/Santiago</SelectItem><SelectItem key="America/Bogota" value="America/Bogota">America/Bogota</SelectItem><SelectItem key="America/Lima" value="America/Lima">America/Lima</SelectItem><SelectItem key="Europe/London" value="Europe/London">Europe/London</SelectItem><SelectItem key="Europe/Lisbon" value="Europe/Lisbon">Europe/Lisbon</SelectItem><SelectItem key="UTC" value="UTC">UTC</SelectItem></SelectContent></Select>
-            </div>
-          </div>
+      <ScheduleSection
+        scheduled={ed.isScheduled}
+        onScheduledChange={ed.toggleSchedule}
+        scheduledAt={ed.scheduledAt}
+        onScheduledAtChange={ed.setScheduledAt}
+        minimumScheduledAt={ed.minimumScheduledAt}
+        timezone={ed.scheduleTimezone}
+        onTimezoneChange={ed.setScheduleTimezone}
+        error={ed.scheduleConfigError}
+        statusLabel={ed.isScheduled ? `Agendada para ${scheduleLabel}` : scheduleLabel}
+        statusTone={ed.isScheduled ? 'success' : 'info'}
+      />
+
+      <SendWindowSection
+        enabled={ed.sendWindowEnabled}
+        onEnabledChange={ed.setSendWindowEnabled}
+        start={ed.sendWindowStart}
+        end={ed.sendWindowEnd}
+        onStartChange={ed.setSendWindowStart}
+        onEndChange={ed.setSendWindowEnd}
+        timezone={ed.scheduleTimezone}
+        businessHoursOnly={ed.businessHoursOnly}
+        onBusinessHoursOnlyChange={ed.setBusinessHoursOnly}
+        businessHours={businessHours}
+      />
+
+      <ThrottleSection
+        speedProfile={ed.speedProfile}
+        onSpeedProfileChange={ed.setSpeedProfile}
+        audienceTotal={ed.eligibleCount}
+        campaignMaxPerMinute={ed.campaignMaxPerMinute}
+        connectionDailyLimit={ed.connectionDailyLimit}
+        advanced={(
+          <AdvancedThrottleSliders
+            typingDelay={ed.typingDelay as [number, number]}
+            sendInterval={ed.sendInterval as [number, number]}
+            onTypingDelayChange={ed.setTypingDelay}
+            onSendIntervalChange={ed.setSendInterval}
+          />
         )}
-      </Section>
+      />
 
-      <Section icon={Clock} color="violet" title="Janela de envio" subtitle="Período do dia em que os envios podem ser realizados."
-        right={<Switch checked={ed.sendWindowEnabled} onCheckedChange={ed.setSendWindowEnabled} />}
-      >
-        <div className={cn('grid grid-cols-1 md:grid-cols-[1fr_1fr_1.4fr] gap-3', !ed.sendWindowEnabled && 'opacity-50 pointer-events-none')}>
-          <div><Label className="text-xs text-foreground-secondary">Início da janela</Label><Input type="time" value={ed.sendWindowStart} onChange={(e) => ed.setSendWindowStart(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-          <div><Label className="text-xs text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
-          <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-            <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-            <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-2xs text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
-          <div className="flex items-center gap-3">
-            <IconTile icon={CalendarDays as never} size={36} />
-            <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-2xs text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
-          </div>
-          <div className="flex items-center gap-2"><span className={cn('text-xs font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
-        </div>
-      </Section>
+      <SuppressionSection
+        respectSuppression={ed.respectSuppression}
+        onRespectSuppressionChange={ed.setRespectSuppression}
+        suppressedCount={ed.suppressedCount}
+      />
 
-      <Section icon={Gauge} color="green" title="Throttle / Simulação humana" subtitle="Controla a velocidade de envio para um comportamento mais natural.">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-4">
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs text-foreground-secondary">Velocidade de envio</Label>
-              <div className="flex flex-col gap-2 mt-1.5">
-                {SPEED_PROFILES.map((p) => <OptionPill key={p.value} active={ed.speedProfile === p.value} label={`${p.label} · ${p.interval[0]}–${p.interval[1]}s entre mensagens`} onClick={() => ed.setSpeedProfile(p.value)} />)}
-              </div>
-            </div>
-          </div>
-          <div className="space-y-5 rounded-xl border border-border/60 bg-input/20 p-4">
-            <div>
-              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Tempo "digitando…"</Label><span className="text-2xs font-mono text-foreground">{ed.typingDelay[0]}s – {ed.typingDelay[1]}s</span></div>
-              <Slider value={ed.typingDelay} onValueChange={ed.setTypingDelay} min={0.5} max={10} step={0.5} />
-            </div>
-            <div>
-              <div className="flex justify-between mb-2"><Label className="text-xs text-foreground-secondary">Intervalo entre envios</Label><span className="text-2xs font-mono text-foreground">{ed.sendInterval[0]}s – {ed.sendInterval[1]}s</span></div>
-              <Slider value={ed.sendInterval} onValueChange={ed.setSendInterval} min={3} max={60} step={1} />
-            </div>
-            <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-              <Sliders className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
-              <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-2xs text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section icon={ShieldCheck} color="amber" title="Confirmação e supressão" subtitle="Evita o envio para contatos que não devem receber.">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          <label className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3 cursor-pointer">
-            <Checkbox checked={ed.respectSuppression} onCheckedChange={(v) => ed.setRespectSuppression(!!v)} className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Não enviar para contatos em lista de supressão</p><p className="text-2xs text-foreground-secondary">Opt-outs, bloqueios manuais e LGPD são removidos do público{ed.suppressedCount > 0 ? ` (${ed.suppressedCount} no público atual)` : ''}.</p></div>
-          </label>
-          <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
-            <Checkbox checked disabled className="mt-0.5" />
-            <div><p className="text-[13px] font-medium text-foreground">Respeitar opt-outs e bloqueados no envio</p><p className="text-2xs text-foreground-secondary">O motor de envio sempre pula contatos suprimidos, mesmo os adicionados após o agendamento.</p></div>
-          </div>
-        </div>
-      </Section>
+      {/* X133 — a conexão passa a ser escolhida no passo Entrega (V25); sem
+          conexão ativa, a seção mostra o estado "WhatsApp desconectado" do kit. */}
+      <ConnectionSection
+        connections={ed.connections ?? []}
+        connectionId={ed.connectionId}
+        onConnectionChange={ed.setConnectionId}
+        onConnect={() => navigateToView('connections')}
+      />
     </>
   );
 }
