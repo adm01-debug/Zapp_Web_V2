@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
   LayoutDashboard, HelpCircle,
@@ -36,6 +36,33 @@ import {
   type TalkXWizardRoute,
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
+
+// X194 — carregamento sob demanda: cada tela do módulo vira um chunk próprio e só é
+// buscada quando a aba/visão que a usa abre. Antes, TalkXView importava as onze telas
+// de uma vez, então a biblioteca de gráficos (recharts, usada por Analytics, Monitor
+// ao vivo e Campanha em andamento) entrava no carregamento inicial do módulo.
+// lazyWithRetry é o mesmo carregador da entrada do módulo (src/pages/lazyViews.ts):
+// repete a busca do chunk 3x com espera antes de desistir.
+const TalkXHelp = lazyWithRetry(() => import('./TalkXHelp').then((m) => ({ default: m.TalkXHelp })));
+const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
+const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
+const TalkXSegments = lazyWithRetry(() => import('./TalkXSegments').then((m) => ({ default: m.TalkXSegments })));
+const TalkXTemplates = lazyWithRetry(() => import('./TalkXTemplates').then((m) => ({ default: m.TalkXTemplates })));
+const TalkXSuppression = lazyWithRetry(() => import('./TalkXSuppression').then((m) => ({ default: m.TalkXSuppression })));
+const TalkXAnalytics = lazyWithRetry(() => import('./TalkXAnalytics').then((m) => ({ default: m.TalkXAnalytics })));
+const TalkXSettings = lazyWithRetry(() => import('./TalkXSettings').then((m) => ({ default: m.TalkXSettings })));
+const TalkXCampaignScheduled = lazyWithRetry(() => import('./TalkXCampaignScheduled').then((m) => ({ default: m.TalkXCampaignScheduled })));
+const TalkXCampaignRunning = lazyWithRetry(() => import('./TalkXCampaignRunning').then((m) => ({ default: m.TalkXCampaignRunning })));
+
+/** X194 — enquanto o chunk da tela chega, o módulo mostra a estrutura (esqueleto). */
+function TalkXScreenFallback() {
+  return (
+    <div className="p-4" role="status" aria-live="polite" aria-busy="true">
+      <TalkXSkeletonRows rows={4} />
+    </div>
+  );
+}
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
 
@@ -62,6 +89,8 @@ export default function TalkXView() {
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
+  // X194 — o painel de ajuda é carregado sob demanda (lazy) e só aparece quando o usuário clica.
+  const [helpOpen, setHelpOpen] = useState(false);
   // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
   // pedindo o editor VAZIO (antes chamava openNew, que é o wizard de campanha). O pedido
   // é limpo quando a aba o atende, para não reabrir o editor sozinho depois.
@@ -231,31 +260,35 @@ export default function TalkXView() {
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
-      <TalkXCampaignScheduled
-        campaignId={scheduledCampaignId!}
-        onBack={backToList}
-        onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
-        onStatusChange={(campaign) => {
-          setScheduledCampaignId(null);
-          if (campaign.status === 'sending') {
-            setMonitorId(campaign.id);
-            setTopView('monitor');
-            return;
-          }
-          backToList();
-        }}
-      />
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXCampaignScheduled
+          campaignId={scheduledCampaignId!}
+          onBack={backToList}
+          onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
+          onStatusChange={(campaign) => {
+            setScheduledCampaignId(null);
+            if (campaign.status === 'sending') {
+              setMonitorId(campaign.id);
+              setTopView('monitor');
+              return;
+            }
+            backToList();
+          }}
+        />
+      </Suspense>
     );
   }
 
 
   if (topView === 'running') {
     return (
-      <TalkXCampaignRunning
-        initialCampaignId={runningCampaignId}
-        onBack={backToList}
-        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
-      />
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXCampaignRunning
+          initialCampaignId={runningCampaignId}
+          onBack={backToList}
+          onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        />
+      </Suspense>
     );
   }
 
@@ -278,25 +311,27 @@ export default function TalkXView() {
     }
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        <TalkXCampaignWizard
-          key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
-          campaign={wizardCampaign}
-          onClose={backToList}
-          onLaunched={(id, status) => {
-            writeWizardRoute(null, true);
-            if (status === 'scheduled') {
-              setScheduledCampaignId(id);
-              setTopView('scheduled');
-              return;
-            }
-            setMonitorId(id);
-            setTopView('monitor');
-          }}
-          initial={{ ...wizardInitial, step: wizardRoute?.step }}
-          routeStep={wizardRoute?.step}
-          onRouteStepChange={onWizardStepChange}
-          onDraftIdentity={onDraftIdentity}
-        />
+        <Suspense fallback={<TalkXScreenFallback />}>
+          <TalkXCampaignWizard
+            key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
+            campaign={wizardCampaign}
+            onClose={backToList}
+            onLaunched={(id, status) => {
+              writeWizardRoute(null, true);
+              if (status === 'scheduled') {
+                setScheduledCampaignId(id);
+                setTopView('scheduled');
+                return;
+              }
+              setMonitorId(id);
+              setTopView('monitor');
+            }}
+            initial={{ ...wizardInitial, step: wizardRoute?.step }}
+            routeStep={wizardRoute?.step}
+            onRouteStepChange={onWizardStepChange}
+            onDraftIdentity={onDraftIdentity}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -309,7 +344,9 @@ export default function TalkXView() {
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
-        <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+        <Suspense fallback={<TalkXScreenFallback />}>
+          <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+        </Suspense>
       </div>
     );
   }
@@ -337,7 +374,7 @@ export default function TalkXView() {
               </span>
             )}
             <button
-              type="button" onClick={() => changeHelpRoute({})}
+              type="button" onClick={() => setHelpOpen(true)}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
             >
               <HelpCircle className="w-4 h-4" />Ajuda
@@ -346,6 +383,13 @@ export default function TalkXView() {
           </div>
         }
       />
+      {/* X194 — a ajuda (com a sua explicação longa) só é buscada quando é solicitada. */}
+      {helpOpen && (
+        <Suspense fallback={null}>
+          <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
+        </Suspense>
+      )}
+
       <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
@@ -410,22 +454,30 @@ export default function TalkXView() {
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
-          <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
+          <Suspense fallback={<TalkXScreenFallback />}>
+            <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
+          </Suspense>
         </TabsContent>
         <TabsContent value="templates" className="mt-4">
-          <TalkXTemplates
-            onUseTemplate={(templateId) => openNew({ templateId })}
-            startNew={templateStartNew}
-            onStartNewHandled={() => setTemplateStartNew(false)}
-          />
+          <Suspense fallback={<TalkXScreenFallback />}>
+            <TalkXTemplates
+              onUseTemplate={(templateId) => openNew({ templateId })}
+              startNew={templateStartNew}
+              onStartNewHandled={() => setTemplateStartNew(false)}
+            />
+          </Suspense>
         </TabsContent>
         <TabsContent value="suppression" className="mt-4">
-          <TalkXSuppression />
+          <Suspense fallback={<TalkXScreenFallback />}>
+            <TalkXSuppression />
+          </Suspense>
         </TabsContent>
         <TabsContent value="analytics" className="mt-4">
-          {activeSub === 'configuracoes'
-            ? <TalkXSettings />
-            : <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />}
+          <Suspense fallback={<TalkXScreenFallback />}>
+            {activeSub === 'configuracoes'
+              ? <TalkXSettings />
+              : <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />}
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
