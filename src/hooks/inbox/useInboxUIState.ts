@@ -39,11 +39,27 @@ function defaultShowDetails() {
   return window.innerWidth >= MOBILE_BREAKPOINT;
 }
 
+// SL-206 / etapa 064 — deep link `?view=inbox&contact=<id>`: trocar a view pela
+// URL não bastava, porque nada lia o parâmetro e a conversa nunca abria (o
+// caminho por evento `open-contact-chat` só existe dentro da sessão de quem
+// clicou). O id do link alimenta o mesmo `pendingContactId` que o
+// RealtimeInboxView já consome. Vazio/só espaços não é contato — link sem id
+// (ou `?contact=`) fica sem conversa pendente.
+export function contactIdFromSearch(search: string): string | null {
+  const id = new URLSearchParams(search).get('contact')?.trim();
+  return id ? id : null;
+}
+
+function readPendingContactFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  return contactIdFromSearch(window.location.search);
+}
+
 export function useInboxUIState() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(defaultShowDetails);
   const [pipContact, setPipContact] = useState<{ name: string; avatar?: string; lastMessage?: string; contactId: string } | null>(null);
-  const [pendingContactId, setPendingContactId] = useState<string | null>(null);
+  const [pendingContactId, setPendingContactId] = useState<string | null>(readPendingContactFromUrl);
   const [soundOn, setSoundOn] = useState(true);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
