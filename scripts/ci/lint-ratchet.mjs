@@ -570,16 +570,13 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       console.log(`Arquivo renomeado reconhecido: ${baselineFile} -> ${currentFile}`);
     }
 
-    // Divida que CAI so sai do baseline quando alguem o baixa: sem o aviso o numero registrado fica acima do
-    // codigo (522 registradas x 498 reais em 08/10/2026) e uma ocorrencia que voltar no MESMO lugar casa com
-    // a entrada velha e e aceita em silencio. O diff do arquivo e caro (uma entrada custa ~4 mil chars com o
-    // contexto), entao a descida vai em FATIA: `--update-baseline` reescreve tudo (~240 mil chars) e passa do
-    // limite de 90.000 chars que o revisor aceita. O aviso nao muda o codigo de saida.
+    // Divida que CAI so sai do baseline quando alguem o baixa: o numero registrado fica acima do codigo e uma
+    // ocorrencia que voltar no MESMO lugar casa com a entrada velha e e aceita em silencio. O aviso nao muda o
+    // codigo de saida; ele so informa quantas entradas pagas ainda estao no baseline.
     if (comparison.removed.length > 0) {
       console.log(
-        `AVISO: ${comparison.removed.length} ocorrencia(s) do baseline nao existem mais no codigo — a divida caiu e ` +
-          "o registro ficou acima da realidade. Baixe o baseline em fatia pequena (`--update-baseline` reescreve o " +
-          "arquivo inteiro e o diff passa do limite de 90.000 chars do revisor).",
+        `AVISO: ${comparison.removed.length} ocorrencia(s) do baseline nao existem mais no codigo — baixe o ` +
+          "baseline (`--update-baseline`) para o registro nao ficar acima da realidade.",
       );
     }
 

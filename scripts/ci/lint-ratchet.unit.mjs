@@ -573,9 +573,35 @@ test("avisa para baixar o baseline quando a varredura deixa divida antiga para t
     });
 
     assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
-    assert.ok(
-      linhas.some((linha) => linha.includes("--update-baseline")),
-      `esperava o aviso de baixar o baseline; saida: ${linhas.join(" | ")}`,
+    const avisos = linhas.filter((linha) => linha.startsWith("AVISO:"));
+    assert.deepEqual(
+      avisos,
+      ["AVISO: 1 ocorrencia(s) do baseline nao existem mais no codigo — baixe o baseline (`--update-baseline`) para o registro nao ficar acima da realidade."],
+      `esperava o aviso com a contagem das pagas; saida: ${linhas.join(" | ")}`,
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("nao avisa quando nenhuma ocorrencia do baseline ficou para tras", (t) => {
+  const { root, cleanup } = fixture();
+  try {
+    // removidas=0: o baseline casa com o codigo, entao nao ha divida paga para baixar e o aviso
+    // nao pode aparecer (senao o portao avisaria a toa em toda varredura limpa).
+    const atual = result(root, "src/a.ts", "missing();\n");
+    writeFileSync(path.join(root, "baseline.json"), JSON.stringify(createBaseline([atual], root)), "utf8");
+    writeFileSync(path.join(root, "report.json"), JSON.stringify([atual]), "utf8");
+    const linhas = [];
+    t.mock.method(console, "log", (...args) => {
+      linhas.push(args.join(" "));
+    });
+
+    assert.equal(main(["--root", root, "--baseline", "baseline.json", "--report", "report.json"]), 0);
+    assert.deepEqual(
+      linhas.filter((linha) => linha.startsWith("AVISO:")),
+      [],
+      `nao esperava aviso com removidas=0; saida: ${linhas.join(" | ")}`,
     );
   } finally {
     cleanup();
