@@ -18,8 +18,8 @@
 //      baixado — zero GET no Storage, zero POST ao provedor. E o endpoint segue
 //      recusando service role (403) sem tocar a rede.
 //
-// A função não exporta o handler: `Deno.serve` é trocado por um dublê ANTES do
-// import para capturá-lo, e `globalThis.fetch` é o espião que serve GoTrue,
+// O handler é capturado do `Deno.serve` (o index também o exporta, mas registra
+// no nível do módulo): `Deno.serve` é trocado por um dublê ANTES do import, e `globalThis.fetch` é o espião que serve GoTrue,
 // PostgREST, Storage e provedor. Nenhum segredo nem dado real: tudo sintético.
 // Cota compartilhada e orçamento (RPCs) falham com erro de infraestrutura — o
 // desenho delas é falha ABERTA e não é o que está em prova aqui.
@@ -35,7 +35,7 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asse
 
 type Handler = (req: Request) => Promise<Response>;
 
-// ─── captura do handler (a função registra via Deno.serve, não exporta) ────────
+// ─── captura do handler (a função registra via Deno.serve no nível do módulo) ──
 
 const DenoMutavel = Deno as unknown as { serve: (h: Handler) => unknown };
 let handlerRegistrado: Handler | null = null;
@@ -447,6 +447,125 @@ Deno.test("R2-INF-022: service role segue recusada (403) sem tocar a rede", asyn
         0,
         `service role tocou a rede antes de ser negada: ${stub.calls.map((c) => c.url)}`,
       );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// ─── (4) t_883f4fbd: o id do run (`x-ai-request-id`) chega a ai_usage_logs ────
+//
+// A prova de orçamento/rate limit (scripts/qa/prova-orcamento-rate-limit.sh)
+// correlaciona o consumo ao run mandando `x-ai-request-id: <uuid>` e lendo
+// `ai_usage_logs` com `request_id=eq.<uuid>`. O defeito: o handler chamava
+// `generateWithRouting` SEM `requestId` (e os `logAiUsage` próprios da
+// degradação também não levavam o id), então toda linha saía com request_id
+// NULL e a leitura correlacionada devolvia 0 linhas. A asserção é sobre o corpo
+// do POST real em `/rest/v1/ai_usage_logs`, não sobre um mock do registrador.
+
+const RUN_ID = "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c";
+
+function pedidoDoRun(
+  requestId?: string,
+  body: Record<string, unknown> = { image_url: URL_PUBLICA, file_name: "feliz.png" },
+): Request {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    authorization: `Bearer ${JWT_USUARIO}`,
+  };
+  if (requestId !== undefined) headers["x-ai-request-id"] = requestId;
+  return new Request("https://stub.supabase.co/functions/v1/classify-emoji", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
+/** A linha que o registrador mandou a `ai_usage_logs` para ESTA função (falha se nenhuma). */
+function linhaDeConsumo(calls: Chamada[]): Record<string, unknown> {
+  const linha = insertsDeLog(calls).flatMap(linhasDoInsert)
+    .find((l) => l.function_name === "classify-emoji");
+  assert(linha, "nenhuma linha de classify-emoji foi inserida em ai_usage_logs — a chamada ficou sem trilha");
+  return linha;
+}
+
+const rotasDoCaminhoFeliz = () => ({
+  auth: respostaAuthOk,
+  storage: respostaStorageOk,
+  provedor: respostaProvedorOk,
+});
+
+Deno.test("t_883f4fbd: header x-ai-request-id válido chega a ai_usage_logs.request_id", async () => {
+  await withEnv(async () => {
+    const stub = withFetch(rotasDoCaminhoFeliz());
+    try {
+      const handler = await handlerDaFuncao();
+      const res = await handler(pedidoDoRun(RUN_ID));
+      assertEquals(res.status, 200);
+      assertEquals((await res.json()).category, "riso");
+
+      assertEquals(
+        linhaDeConsumo(stub.calls).request_id,
+        RUN_ID,
+        "o id do run não atravessou o handler → roteador → registrador: a prova lê 0 linhas para este run",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: sem o header, request_id grava NULL — nunca um id inventado", async () => {
+  await withEnv(async () => {
+    const stub = withFetch(rotasDoCaminhoFeliz());
+    try {
+      const handler = await handlerDaFuncao();
+      const res = await handler(pedidoDoRun());
+      assertEquals(res.status, 200);
+
+      const linha = linhaDeConsumo(stub.calls);
+      assert("request_id" in linha, "a linha de consumo não traz a coluna request_id — o registrador deveria gravar NULL declarado");
+      assertEquals(linha.request_id, null, "sem header não há correlação — nada pode ser inventado");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: header que não é uuid grava NULL — PII/valor livre não atravessa", async () => {
+  await withEnv(async () => {
+    const stub = withFetch(rotasDoCaminhoFeliz());
+    try {
+      const handler = await handlerDaFuncao();
+      const res = await handler(pedidoDoRun("5511999998888"));
+      assertEquals(res.status, 200);
+
+      assertEquals(
+        linhaDeConsumo(stub.calls).request_id,
+        null,
+        "um telefone virou request_id: o campo é uuid opaco, nunca dado pessoal",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: a degradação por entrada ausente também sai correlacionada ao run", async () => {
+  await withEnv(async () => {
+    const stub = withFetch({ auth: respostaAuthOk });
+    try {
+      // Sem image_url e sem file_name o handler grava a linha de erro DIRETO
+      // (não passa pelo roteador): se esse caminho não levar requestId, a prova
+      // lê 0 linhas para o run mesmo com o consumo auditado.
+      const handler = await handlerDaFuncao();
+      const res = await handler(pedidoDoRun(RUN_ID, {}));
+      assertEquals(res.status, 200);
+      assertEquals((await res.json()).category, "outros");
+
+      const linha = linhaDeConsumo(stub.calls);
+      assertEquals(linha.status, "error", "a degradação deveria sair como linha de erro");
+      assertEquals(linha.request_id, RUN_ID, "a linha de degradação saiu sem o id do run — caminho não correlacionado");
     } finally {
       stub.restore();
     }

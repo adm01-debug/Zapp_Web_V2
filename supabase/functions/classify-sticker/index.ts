@@ -2,7 +2,7 @@ import { handleCors, jsonResponse, Logger } from "../_shared/validation.ts";
 import { ClassifyStickerSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
-import { logAiUsage } from "../_shared/ai-usage.ts";
+import { extractAiRequestId, logAiUsage } from "../_shared/ai-usage.ts";
 import { AiImageInputError, toInlineImage, type InlineImage, type StorageIdentity } from "../_shared/ai-image-input.ts";
 
 const STICKER_CATEGORIES = [
@@ -96,6 +96,7 @@ async function embutirImagem(
   imageUrl: string,
   identity: AiIdentity,
   bearerToken: string,
+  requestId: string | null,
 ): Promise<ResultadoDaImagem> {
   try {
     return {
@@ -115,6 +116,7 @@ async function embutirImagem(
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
+      requestId,
       status: 'error',
       errorMessage: motivo,
       // IA-052 — a etapa é de VISÃO: modalidade declarada mesmo na degradação,
@@ -151,6 +153,7 @@ export async function handleClassifyStickerRequest(req: Request): Promise<Respon
   if (identity instanceof Response) return identity;
 
   const log = new Logger(FUNCTION_NAME);
+  const requestId = extractAiRequestId(req);
 
   try {
     const parsed = parseBody(ClassifyStickerSchema, await req.json());
@@ -164,6 +167,7 @@ export async function handleClassifyStickerRequest(req: Request): Promise<Respon
       await logAiUsage({
         functionName: FUNCTION_NAME,
         userId: identity.userId,
+        requestId,
         status: 'error',
         errorMessage: 'image_url ausente: nenhuma imagem para classificar.',
         // IA-052 — modalidade declarada mesmo sem provedor: a etapa é de visão.
@@ -180,7 +184,7 @@ export async function handleClassifyStickerRequest(req: Request): Promise<Respon
 Categorias: ${STICKER_CATEGORIES.join(', ')}`;
 
     // Imagem EMBUTIDA (data URL): o provedor de visão não busca nada pela rede.
-    const preparo = await embutirImagem(image_url, identity, bearerTokenDoPedido(req));
+    const preparo = await embutirImagem(image_url, identity, bearerTokenDoPedido(req), requestId);
     if (!preparo.ok) {
       log.error("Falha ao preparar a imagem; degradando para 'outros' com motivo registrado");
       return jsonResponse({ category: 'outros', state: 'input_error', error_code: preparo.errorCode }, 200, req);
@@ -194,6 +198,7 @@ Categorias: ${STICKER_CATEGORIES.join(', ')}`;
       purpose: 'tagging',
       functionName: FUNCTION_NAME,
       userId: identity.userId,
+      requestId,
       messages: [{
         role: 'user',
         content: [
@@ -251,6 +256,7 @@ Categorias: ${STICKER_CATEGORIES.join(', ')}`;
     await logAiUsage({
       functionName: FUNCTION_NAME,
       userId: identity.userId,
+      requestId,
       status: 'error',
       errorMessage: motivo,
       // IA-052 — exceção fora dos caminhos tratados também declara a rota.
