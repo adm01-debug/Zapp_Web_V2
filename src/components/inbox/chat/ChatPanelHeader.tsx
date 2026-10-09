@@ -119,7 +119,7 @@ function ChatPanelHeaderBase({
               >
                 <Avatar className="w-3.5 h-3.5">
                   <AvatarImage src={conversation.assignedTo.avatar ?? undefined} alt={conversation.assignedTo.name || 'Agente'} />
-                  <AvatarFallback className="text-[8px]">{conversation.assignedTo.name[0]}</AvatarFallback>
+                  <AvatarFallback className="text-3xs">{conversation.assignedTo.name[0]}</AvatarFallback>
                 </Avatar>
                 {conversation.assignedTo.name}
               </button>

@@ -199,7 +199,7 @@ export function StickerGrid({
 
                       {/* Usage badge */}
                       {sticker.use_count > 0 && (
-                        <span className="absolute bottom-0.5 right-0.5 text-[8px] bg-background/80 text-muted-foreground rounded px-1 leading-tight" aria-hidden="true">
+                        <span className="absolute bottom-0.5 right-0.5 text-3xs bg-background/80 text-muted-foreground rounded px-1 leading-tight" aria-hidden="true">
                           {sticker.use_count}×
                         </span>
                       )}

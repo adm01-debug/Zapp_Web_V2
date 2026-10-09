@@ -161,7 +161,7 @@ export function ContactMapView({ contacts, onContactClick }: ContactMapViewProps
                               >
                                 <Avatar className="h-6 w-6">
                                   <AvatarImage src={c.avatar_url || undefined} alt={c.name || 'Avatar'} />
-                                  <AvatarFallback className={cn(colors.bg, colors.text, 'text-[8px]')}>
+                                  <AvatarFallback className={cn(colors.bg, colors.text, 'text-3xs')}>
                                     {getInitials(c.name)}
                                   </AvatarFallback>
                                 </Avatar>
