@@ -53,7 +53,7 @@ export function StickerUploadPreview({ pending, onConfirm, onCancel }: UploadPre
         {pending.aiCategory !== 'outros' && pending.aiCategory !== 'enviadas' && category !== pending.aiCategory && (
           <button
             onClick={() => setCategory(pending.aiCategory)}
-            className="text-[9px] text-primary hover:underline shrink-0"
+            className="min-h-11 text-[9px] text-primary hover:underline shrink-0"
             aria-label={`Usar sugestão da IA: ${CATEGORY_LABELS[pending.aiCategory]?.label}`}
           >
             IA sugere: {CATEGORY_LABELS[pending.aiCategory]?.label}

@@ -248,7 +248,7 @@ export function PeriodFilterSelector({
               <p className="text-2xs text-muted-foreground font-semibold uppercase tracking-widest">Período personalizado</p>
               {(customFrom || customTo) && (
                 <button
-                  className="text-3xs text-destructive hover:underline font-medium"
+                  className="min-h-11 text-3xs text-destructive hover:underline font-medium"
                   onClick={() => {
                     onClearCustom();
                     onPeriodChange('all');

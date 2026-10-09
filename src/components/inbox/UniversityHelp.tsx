@@ -88,7 +88,7 @@ export function UniversityHelp({ contactId, contactName, messages, onSelectSugge
           ))}
         </div>
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={selectAll} className="text-3xs text-primary hover:underline font-medium">
+          <button type="button" onClick={selectAll} className="min-h-11 text-3xs text-primary hover:underline font-medium">
             {selectedIds.size === filteredMessages.length && filteredMessages.length > 0 ? 'Limpar' : 'Todos'}
           </button>
           <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-semibold tabular-nums">

@@ -60,7 +60,7 @@ function UploadPreview({ pending, onConfirm, onCancel }: { pending: PendingEmoji
         <Tag className="w-3 h-3 text-muted-foreground shrink-0" /><span className="text-3xs text-muted-foreground shrink-0">Categoria:</span>
         <CategorySelector value={category} onChange={setCategory} size="sm" />
         {pending.aiCategory !== 'outros' && category !== pending.aiCategory && (
-          <button onClick={() => setCategory(pending.aiCategory)} className="text-[9px] text-primary hover:underline shrink-0">IA sugere: {CATEGORY_LABELS[pending.aiCategory]?.label}</button>
+          <button onClick={() => setCategory(pending.aiCategory)} className="min-h-11 text-[9px] text-primary hover:underline shrink-0">IA sugere: {CATEGORY_LABELS[pending.aiCategory]?.label}</button>
         )}
       </div>
       <div className="flex items-center gap-2 justify-end">
