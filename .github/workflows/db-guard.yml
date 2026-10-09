@@ -908,3 +908,16 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      # X176 (TL-164): as três RPCs de leitura da supressão (listagem paginada, KPIs e
+      # atividade) não existiam — a tela lia a tabela inteira e somava em memória. O passo
+      # aplica a migration real em PostgreSQL 17 descartável e executa como os papéis reais
+      # (authenticated com JWT, anon, service_role): prova o 42883 antes, o 42501 do agente
+      # e do anon depois, os KPIs (opt-outs do período, suprimidos ativos sem expirado nem
+      # removido, protegidas), a paginação com total constante, os filtros e a busca por
+      # nome/e-mail/dígitos de telefone, a entrada inválida (22023), a atividade lida dos
+      # eventos de entidade e o rollback executado a partir do próprio arquivo da migration.
+      - name: Provar as RPCs de leitura da supressão do Talk X (X176)
+        env:
+          TALKX_SUPPRESSION_READ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-suppression-read-rpcs.test.sh
