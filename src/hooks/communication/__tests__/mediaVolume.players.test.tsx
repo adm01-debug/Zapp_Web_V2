@@ -486,7 +486,8 @@ describe('S43 — AudioPlayButton (player do cartão da aba Arquivos)', () => {
     bateriaDoVolume(
       () => {
         const montagem = render(<AudioPlayButton item={itemDaAbaArquivos('audio-do-cartao.mp3')} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Tocar áudio' }));
+        // A06b: o rótulo acessível do play cita o nome do arquivo (aqui, o do cartão).
+        fireEvent.click(screen.getByRole('button', { name: 'Tocar áudio audio-do-cartao.mp3' }));
         return montagem;
       },
       () => {

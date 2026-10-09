@@ -222,7 +222,9 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
 
   it('S32: em áudio, o play do A01 continua na linha de ações', () => {
     renderCard({ ...ITEM, id: 'a1', type: 'audio' });
-    expect(screen.getByRole('button', { name: 'Tocar áudio' })).toBeInTheDocument();
+    // A06b: o rótulo cita o nome do arquivo do cartão — o seletor segue EXATO, só deixa de
+    // ser o rótulo genérico; consultar "Tocar áudio" puro aqui acharia zero botões.
+    expect(screen.getByRole('button', { name: 'Tocar áudio planilha-total.png' })).toBeInTheDocument();
   });
 
   it('S32/D07: Salvar na galeria não existe em lugar nenhum do cartão', () => {
