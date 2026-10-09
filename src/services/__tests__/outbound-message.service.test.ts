@@ -102,6 +102,11 @@ describe('sendOutboundMessage', () => {
     expect(ids).toEqual(['0c5d8df5-430d-4f46-8c0a-764be035116a', '0c5d8df5-430d-4f46-8c0a-764be035116a']);
   });
 
+  it('zera o singleton de throttle entre casos do serviço para não depender da ordem do lote', () => {
+    expect(sendThrottle.pendingCount()).toBe(0);
+    expect(sendThrottle.recentCount()).toBe(0);
+  });
+
   it('persists a poll payload before asking the delivery gateway to dispatch it', async () => {
     rpc.mockResolvedValue({
       data: { id: '56bb3f25-ad35-40b9-adcd-d10f4a98752d', status: 'sending', external_id: null }, error: null,
