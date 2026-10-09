@@ -25,6 +25,15 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+let reduceMotion = false;
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    useReducedMotion: () => reduceMotion,
+  };
+});
+
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 
 /** Encadeamento do query builder do Supabase usado pelos passos do checklist. */
@@ -51,6 +60,7 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
+    reduceMotion = false;
   });
 
   it('não marca o tema como concluído quando a consulta não devolve configuração', async () => {
@@ -96,5 +106,62 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
     const progresso = await screen.findByText(/passos concluídos/);
     expect(progresso.textContent).toBe('1 de 6 passos concluídos');
     expect(screen.queryByRole('button', { name: /Personalizar/ })).toBeNull();
+  });
+
+  it('botão expandir tem nome acessível "Expandir passos" quando recolhido', async () => {
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    const botaoRecolher = screen.getByRole('button', { name: 'Recolher passos' });
+    fireEvent.click(botaoRecolher);
+
+    const botaoExpandir = screen.getByRole('button', { name: 'Expandir passos' });
+    expect(botaoExpandir).toBeTruthy();
+  });
+
+  it('botão recolher tem nome acessível "Recolher passos" quando expandido', async () => {
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    const botao = screen.getByRole('button', { name: 'Recolher passos' });
+    expect(botao).toBeTruthy();
+  });
+
+  it('botão dispensar tem nome acessível "Dispensar configuração da conta"', async () => {
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    expect(screen.getByRole('button', { name: 'Dispensar configuração da conta' })).toBeTruthy();
+  });
+
+  it('barra de progresso tem nome acessível "Progresso da configuração da conta"', async () => {
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    expect(screen.getByRole('progressbar', { name: 'Progresso da configuração da conta' })).toBeTruthy();
+  });
+
+  it('com prefers-reduced-motion o ícone não anima', async () => {
+    reduceMotion = true;
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    expect(screen.getByRole('button', { name: 'Recolher passos' })).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Progresso da configuração da conta' })).toBeTruthy();
   });
 });

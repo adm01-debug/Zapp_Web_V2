@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { CheckCircle2, Sparkles, ChevronDown, ChevronUp, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ interface OnboardingChecklistProps {
 
 export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: OnboardingChecklistProps) {
   const { user } = useAuth();
+  const reduceMotion = useReducedMotion() ?? false;
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -71,8 +72,8 @@ export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: 
             <div><p className="font-medium text-sm">Configure sua conta</p><p className="text-xs text-muted-foreground">{completedSteps.length}/{CHECKLIST_STEPS.length} passos concluídos</p></div>
           </div>
           <div className="flex items-center gap-2">
-            <Progress value={progress} className="w-24 h-2" />
-            <Button size="sm" variant="ghost" onClick={handleDismiss}><X className="w-4 h-4" /></Button>
+            <Progress value={progress} className="w-24 h-2" aria-label="Progresso da configuração da conta" />
+            <Button size="sm" variant="ghost" onClick={handleDismiss} aria-label="Dispensar configuração da conta"><X className="w-4 h-4" /></Button>
           </div>
         </div>
       </motion.div>
@@ -87,18 +88,18 @@ export function OnboardingChecklist({ onNavigate, onDismiss, compact = false }: 
         <CardHeader className="relative z-10 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}
+              <motion.div animate={reduceMotion ? undefined : { rotate: [0, 10, -10, 0] }} transition={reduceMotion ? undefined : { duration: 2, repeat: Infinity }}
                 className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </motion.div>
               <div><CardTitle className="text-lg">Configure sua conta</CardTitle><p className="text-sm text-muted-foreground">{completedSteps.length} de {CHECKLIST_STEPS.length} passos concluídos</p></div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} className="h-8 w-8">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
-              <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-8 w-8"><X className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} className="h-8 w-8" aria-label={isExpanded ? 'Recolher passos' : 'Expandir passos'}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</Button>
+              <Button variant="ghost" size="icon" onClick={handleDismiss} className="h-8 w-8" aria-label="Dispensar configuração da conta"><X className="w-4 h-4" /></Button>
             </div>
           </div>
-          <div className="mt-4"><Progress value={progress} className="h-2" /></div>
+          <div className="mt-4"><Progress value={progress} className="h-2" aria-label="Progresso da configuração da conta" /></div>
         </CardHeader>
         <AnimatePresence>
           {isExpanded && (
