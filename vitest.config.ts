@@ -23,6 +23,9 @@ export default defineConfig({
         // E79: escopo do módulo do mapa passa a entrar na cobertura (antes ficava de fora).
         "src/components/inbox/location-picker/**/*.{ts,tsx}",
         "src/components/contacts/ContactForm.tsx",
+        // SL-154 (DEC-1): o módulo do Catálogo passa a entrar na cobertura (antes era medido
+        // só por override de CLI: --coverage.include='src/components/catalog/**').
+        "src/components/catalog/**/*.{ts,tsx}",
       ],
       exclude: ["**/*.{test,spec}.{ts,tsx}", "**/__tests__/**", "**/*.d.ts"],
       // Piso global medido em 2026-09-05 (src/lib + src/services): lines 37.7, stmts 36.1,
@@ -47,6 +50,10 @@ export default defineConfig({
         // src/lib/__tests__/mapboxLoader.test.ts (2026-10-08).
         "src/components/contacts/ContactForm.tsx": { lines: 70, branches: 55 },
         "src/lib/mapboxLoader.ts": { lines: 85, branches: 75 },
+        // SL-154 (DEC-1): piso do módulo do Catálogo — a medição de 2026-10-08 é do PRÓPRIO
+        // módulo src/components/catalog/** (não é agregado de outro escopo): lines 88.18 /
+        // branches 83.21. Mesmo glob de coverage.include.
+        "src/components/catalog/**/*.{ts,tsx}": { lines: 80, branches: 80 },
       },
     },
   },
