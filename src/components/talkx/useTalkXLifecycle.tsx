@@ -289,7 +289,7 @@ export function TalkXLifecycleDialog({
                   void controller.confirm();
                 }}
               >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                {isPending && <Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />}
                 {isPending ? copy.pendingLabel : copy.confirmLabel}
               </AlertDialogAction>
             </AlertDialogFooter>
