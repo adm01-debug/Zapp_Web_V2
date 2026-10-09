@@ -233,6 +233,7 @@ export function CallDialog({
                   <Button
                     variant="outline"
                     size="icon"
+                    aria-label={isMuted ? 'Deixar de silenciar' : 'Silenciar'}
                     className={cn(
                       'w-12 h-12 rounded-full',
                       isMuted && 'bg-destructive/10 border-destructive text-destructive'
@@ -256,6 +257,7 @@ export function CallDialog({
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                 <Button
                   size="icon"
+                  aria-label="Atender"
                   className="w-14 h-14 rounded-full bg-whatsapp hover:bg-whatsapp-dark"
                   onClick={handleAnswer}
                 >
@@ -267,6 +269,7 @@ export function CallDialog({
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Button
                 size="icon"
+                aria-label="Encerrar"
                 className="w-14 h-14 rounded-full bg-destructive hover:bg-destructive/90"
                 onClick={handleEnd}
               >

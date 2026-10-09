@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -353,5 +354,46 @@ describe('CallDialog — comandos vão para a máquina de sessão', () => {
     expect(mockMissCall).not.toHaveBeenCalled();
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('CallDialog — a11y: os botões redondos dizem o que fazem (N-088)', () => {
+  it('Atender, Silenciar e Encerrar são achados por role+nome', () => {
+    // Entrada tocando: Atender + Encerrar.
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'ringing_in' }));
+    const { unmount } = montar({ direction: 'inbound' });
+    expect(screen.getByRole('button', { name: /atender/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /encerrar/i })).toBeInTheDocument();
+    unmount();
+
+    // Em curso: Silenciar + Encerrar.
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    montar();
+    expect(screen.getByRole('button', { name: /silenciar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /encerrar/i })).toBeInTheDocument();
+  });
+
+  it('o nome do botão de mudo muda com `isMuted` e continua dizendo o que faz', () => {
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active', isMuted: true }));
+    montar();
+
+    // Com o mudo ligado o rótulo diz como DESFAZER — e continua casando com
+    // /silenciar/i para quem procura pelo nome.
+    expect(screen.getByRole('button', { name: 'Deixar de silenciar' })).toBeInTheDocument();
+  });
+
+  it('axe não acusa `button-name` em nenhum estado da janela da ligação', async () => {
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    const { container, unmount } = montar();
+    // jsdom não tem layout: contraste fica fora (declarado); o alvo é button-name.
+    const opcoes = { rules: { 'color-contrast': { enabled: false } } };
+    const emCurso = await axe(container, opcoes);
+    expect(emCurso.violations.filter((v) => v.id === 'button-name')).toEqual([]);
+    unmount();
+
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'ringing_in' }));
+    const tocando = montar({ direction: 'inbound' });
+    const resultado = await axe(tocando.container, opcoes);
+    expect(resultado.violations.filter((v) => v.id === 'button-name')).toEqual([]);
   });
 });
