@@ -97,9 +97,73 @@ describe('MediaPreviewDialog (etapa 30 — visualizador único e navegável)', (
     expect(el?.getAttribute('controlslist')).toBe('nodownload');
   });
 
-  it('conteúdo com max-h-[80vh]', () => {
+  it('o X do cabeçalho fecha a janela', () => {
+    function CloseHarness() {
+      const [open, setOpen] = useState(true);
+      return <MediaPreviewDialog item={ITEMS[0]} open={open} onOpenChange={setOpen} />;
+    }
+    render(<CloseHarness />);
+    expect(screen.getByRole('dialog', { name: 'Foto A' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('MediaPreviewDialog (V01 — janela menor: -40% largura, -20% altura)', () => {
+  // A largura vem de classe arbitraria do Tailwind; o `DialogContent` base traz `max-w-lg`
+  // e `max-h-[calc(100dvh-2rem)]`. O `cn` (tailwind-merge) tem de deixar as classes daqui vencerem.
+  it('largura ~538px com teto da tela e o base max-w-lg descartado', () => {
     renderViewer(ITEMS[0], ITEMS);
-    expect(screen.getByRole('dialog').className).toContain('max-h-[80vh]');
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toContain('max-w-[min(538px,calc(100vw_-_2rem))]');
+    expect(dialog.className).not.toContain('max-w-4xl');
+    expect(dialog.className).not.toContain('max-w-lg');
+  });
+
+  it('altura máxima 64vh (80vh - 20%) e o base do dialog descartado', () => {
+    renderViewer(ITEMS[0], ITEMS);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.className).toContain('max-h-[64vh]');
+    expect(dialog.className).not.toContain('max-h-[80vh]');
+    expect(dialog.className).not.toContain('max-h-[calc(100dvh-2rem)]');
+  });
+
+  it('imagem aparece inteira (object-contain) com altura máxima 56vh dentro da área de 320px', () => {
+    renderViewer(ITEMS[0], ITEMS);
+    const img = document.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img?.className).toContain('max-w-full');
+    expect(img?.className).toContain('max-h-[56vh]');
+    expect(img?.className).toContain('object-contain');
+    expect(img?.parentElement?.className).toContain('min-h-[320px]');
+  });
+
+  it('vídeo também baixa a altura máxima para 56vh', () => {
+    const video: Preview = { ...IMAGE('v', 'clipe'), type: 'video', filename: 'clipe.mp4', url: 'https://signed.test/clipe.mp4' };
+    renderViewer(video);
+    const el = document.querySelector('video');
+    expect(el).not.toBeNull();
+    expect(el?.className).toContain('max-h-[56vh]');
+    expect(el?.className).not.toContain('max-h-[70vh]');
+  });
+
+  it('figurinha (type sticker) abre como imagem e também respeita 56vh', () => {
+    const sticker: Preview = { ...IMAGE('s', 'figurinha'), type: 'sticker', filename: 's.webp', url: 'https://signed.test/s.webp' };
+    renderViewer(sticker);
+    const img = document.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img?.className).toContain('max-h-[56vh]');
+    expect(img?.className).not.toContain('max-h-[70vh]');
+    expect(img?.className).toContain('object-contain');
+  });
+
+  it('PDF (iframe) com 56vh de altura', () => {
+    const pdf: Preview = { ...IMAGE('d', 'contrato.pdf'), type: 'document', filename: 'contrato.pdf', url: 'https://signed.test/contrato.pdf' };
+    renderViewer(pdf);
+    const iframe = document.querySelector('iframe');
+    expect(iframe).not.toBeNull();
+    expect(iframe?.className).toContain('h-[56vh]');
+    expect(iframe?.parentElement?.className).toContain('min-h-[320px]');
   });
 });
 
