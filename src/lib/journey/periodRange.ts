@@ -22,9 +22,13 @@
  * - `toIsoRange` converte as bordas locais para UTC (`toISOString`): é o formato que as consultas
  *   `gte`/`lte` de `created_at` esperam.
  *
- * O cartão F01 cria `src/lib/filesPeriod.ts` com lógica parecida para a aba Arquivos. Este módulo
- * não o importa nem é importado por ele; a unificação dos dois fica para depois (registrada no
- * relato do J02).
+ * Z01 (plano de consistência de 07/10/2026, D01) — este módulo é a FONTE ÚNICA do cálculo de
+ * período do sistema. `src/lib/filesPeriod.ts` (aba Arquivos) é um adaptador fino que traduz a API
+ * do FilesTab para cá: `resolveLastDays` é a única conta de "últimos N dias" (usada pelos atalhos
+ * daqui e pelo adaptador) e `isWithin` é o único predicado de recorte. A tabela de dias do atalho
+ * de mesmo nome difere de 1 dia entre as duas telas (Arquivos conta hoje + os N anteriores, como a
+ * aba IA; aqui são N dias de calendário) — fixado em
+ * `src/lib/__tests__/periodEquivalence.test.ts`.
  */
 import { localDayKey, parseDayKey } from '@/lib/localDay';
 
@@ -142,6 +146,21 @@ function intervalDePontas(from: Date | null, to: Date | null): JourneyRange {
   };
 }
 
+/**
+ * Últimos `dias` dias de CALENDÁRIO terminando hoje (hoje incluído): `[hoje − (dias − 1) 00:00,
+ * hoje 23:59:59.999]`, no fuso do aparelho. `dias = 1` é o dia de hoje inteiro.
+ *
+ * É a ÚNICA conta de "últimos N dias" do sistema: os atalhos de `resolveRange` e o adaptador da
+ * aba Arquivos (`src/lib/filesPeriod.ts`) passam por aqui — cada tela só decide QUANTOS dias o
+ * atalho dela cobre. `dias` fora de 1..∞ (ou "hoje" ilegível) devolve o intervalo aberto, em vez
+ * de uma janela inventada.
+ */
+export function resolveLastDays(dias: number, now: Date = new Date()): JourneyRange {
+  const hoje = dataOuNula(inicioDoDia(now));
+  if (!hoje || !Number.isFinite(dias) || dias < 1) return aberto();
+  return intervalDePontas(deslocarDia(hoje, -(dias - 1)), hoje);
+}
+
 function resolverCustom(period: JourneyPeriod): JourneyRange {
   const de = campoDeData(period.from);
   const ate = campoDeData(period.to);
@@ -162,11 +181,8 @@ export function resolveRange(period: JourneyPeriod | null | undefined, now: Date
   if (preset === 'custom') return resolverCustom(period as JourneyPeriod);
   const dias = preset ? DIAS_POR_ATALHO[preset] : undefined;
   if (!dias) return aberto();
-  const hoje = dataOuNula(inicioDoDia(now));
-  // Sem "hoje" confiável é melhor não limitar do que montar um intervalo inválido.
-  if (!hoje) return aberto();
-  // "Últimos N dias" inclui hoje: o primeiro dia é hoje − (N − 1).
-  return intervalDePontas(deslocarDia(hoje, -(dias - 1)), hoje);
+  // "Últimos N dias" inclui hoje: a conta (e as bordas do dia) vive só em `resolveLastDays`.
+  return resolveLastDays(dias, now);
 }
 
 /**

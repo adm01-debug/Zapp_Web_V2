@@ -1,34 +1,32 @@
 import type { AnalysisPeriod } from '@/components/inbox/ai-tools/PeriodFilterSelector';
+import {
+  isWithin,
+  resolveLastDays,
+  resolveRange,
+  type JourneyRange,
+} from '@/lib/journey/periodRange';
+import { localDayKey } from '@/lib/localDay';
 
 /**
- * Filtro por DATA da aba Arquivos (plano de 07/10/2026, etapas F01–F06).
+ * Filtro por DATA da aba Arquivos (plano de 07/10/2026, etapas F01–F06) — desde o Z01 é um
+ * ADAPTADOR FINO sobre `src/lib/journey/periodRange.ts`, a fonte única do cálculo de período do
+ * sistema: neste arquivo só se traduz a API que o FilesTab usa (`AnalysisPeriod` + `Date` para
+ * `JourneyPeriod`; `Date` para epoch ms) e a tabela de dias de cada atalho. Nenhuma conta de dia,
+ * de borda ou de "dentro do intervalo" mora mais aqui. Nada toca o banco: a lista já chega paginada
+ * por `created_at desc`.
  *
- * Converte o período escolhido no `PeriodFilterSelector` (`AnalysisPeriod` + o intervalo
- * personalizado) num intervalo de instantes `[from, to]` no FUSO DO NAVEGADOR — o mesmo recorte
- * que a aba IA faz em `filterMessagesByPeriod`, para o operador ver a mesma coisa nas duas abas.
- * Nada aqui toca o banco: a lista já chega paginada por `created_at desc`.
- *
- * Regras do cartão:
- * - `all` (Qualquer data) = sem filtro (`null`);
- * - `custom` inclui o dia inicial e o dia final INTEIROS (00:00:00.000 .. 23:59:59.999 locais);
- * - intervalo invertido é normalizado (`from <= to`);
- * - data ausente/inválida fica FORA quando há período ativo.
- *
- * `last_interaction` não tem sentido para arquivos (a barra não oferece a opção) e, como não há
- * histórico de mensagens aqui, cai em "sem filtro" em vez de esconder a lista inteira.
+ * Regras (comportamento da aba Arquivos, preservado):
+ * - `all` (Qualquer data) e `last_interaction` = sem filtro (`null`); `last_interaction` nem é
+ *   oferecido aqui — não há histórico de mensagens nesta aba;
+ * - `custom` inclui o dia inicial e o dia final INTEIROS, em qualquer ordem (invertido normaliza);
+ *   data ausente/inválida conta como ausente;
+ * - os atalhos cobrem o dia de hoje e os N dias anteriores (`today` = só hoje): é o mesmo recorte de
+ *   `filterMessagesByPeriod` da aba IA (`startOfDay(agora − N dias)`) — em dias de CALENDÁRIO isso
+ *   são N + 1. O atalho de mesmo nome do Journey cobre N dias (hoje e os N − 1 anteriores); a
+ *   diferença de 1 dia entre as duas telas está fixada em
+ *   `src/lib/__tests__/periodEquivalence.test.ts`;
+ * - com período ativo, item com data ausente/inválida fica FORA.
  */
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** Mesma tabela de dias da IA: `today` conta do início do dia local (0 dias para trás). */
-const PERIOD_DAYS: Partial<Record<AnalysisPeriod, number>> = {
-  today: 0,
-  '3d': 3,
-  '7d': 7,
-  '14d': 14,
-  '30d': 30,
-  '90d': 90,
-};
 
 /**
  * Intervalo em epoch ms, INCLUSIVO nas duas pontas. `null` numa ponta = sem limite daquele lado
@@ -39,37 +37,23 @@ export interface PeriodRange {
   to: number | null;
 }
 
-function startOfDay(time: number): number {
-  const date = new Date(time);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
+/** Quantos dias ATRÁS começa a janela de cada atalho da aba (0 = hoje). Tabela do F01, inalterada. */
+const DIAS_ATRAS_POR_ATALHO: Partial<Record<AnalysisPeriod, number>> = {
+  today: 0,
+  '3d': 3,
+  '7d': 7,
+  '14d': 14,
+  '30d': 30,
+  '90d': 90,
+};
 
-function endOfDay(time: number): number {
-  const date = new Date(time);
-  date.setHours(23, 59, 59, 999);
-  return date.getTime();
-}
-
-/** Início do dia local, ou `null` para data ausente/inválida (nunca `NaN` no intervalo). */
-function dayStart(date: Date | null | undefined): number | null {
-  if (!date) return null;
-  const time = date.getTime();
-  return Number.isFinite(time) ? startOfDay(time) : null;
-}
-
-/** Fim do dia local, ou `null` para data ausente/inválida. */
-function dayEnd(date: Date | null | undefined): number | null {
-  if (!date) return null;
-  const time = date.getTime();
-  return Number.isFinite(time) ? endOfDay(time) : null;
-}
-
-/** `created_at` -> epoch ms; `null` quando ausente ou inválido. */
-function timeOf(value: string | null | undefined): number | null {
-  if (!value) return null;
-  const parsed = new Date(value).getTime();
-  return Number.isFinite(parsed) ? parsed : null;
+/** Intervalo do Journey -> API do FilesTab: aberto (ou ilegível) vira "sem filtro" (`null`). */
+function paraPeriodRange(range: JourneyRange): PeriodRange | null {
+  if (range.invalid || (!range.from && !range.to)) return null;
+  return {
+    from: range.from ? range.from.getTime() : null,
+    to: range.to ? range.to.getTime() : null,
+  };
 }
 
 /**
@@ -82,41 +66,39 @@ export function buildPeriodRange(
   customTo?: Date | null,
   now: Date = new Date(),
 ): PeriodRange | null {
-  if (period === 'all' || period === 'last_interaction') return null;
-
   if (period === 'custom') {
-    const from = dayStart(customFrom);
-    const to = dayEnd(customTo);
-    if (from === null && to === null) return null;
-    // Invertido (De depois do Até): normaliza para o intervalo crescer do menor para o maior dia.
-    if (from !== null && to !== null && from > to) {
-      return { from: dayStart(customTo), to: dayEnd(customFrom) };
-    }
-    return { from, to };
+    // `localDayKey` devolve `yyyy-MM-dd` local e `null` para data ausente/inválida — o mesmo
+    // "data ilegível é campo vazio" desta aba. O intervalo inteiro (inclusive o invertido) é do
+    // Journey.
+    return paraPeriodRange(
+      resolveRange(
+        { preset: 'custom', from: localDayKey(customFrom) ?? undefined, to: localDayKey(customTo) ?? undefined },
+        now,
+      ),
+    );
   }
 
-  const days = PERIOD_DAYS[period];
-  if (days === undefined) return null;
-  // O teto é o fim do dia de hoje: o atalho é o intervalo de dias inteiros que ele nomeia
-  // ("Hoje" = o dia de hoje, não "de hoje em diante"). Arquivo com data no futuro é dado
-  // errado, e nem o filtro da IA o alcança.
-  return { from: startOfDay(now.getTime() - days * DAY_MS), to: endOfDay(now.getTime()) };
+  const diasAtras = DIAS_ATRAS_POR_ATALHO[period];
+  // Atalho fora da tabela (`all`, `last_interaction`, valor desconhecido) não filtra.
+  if (diasAtras === undefined) return null;
+  // Hoje + os `diasAtras` dias anteriores = `diasAtras + 1` dias de calendário.
+  return paraPeriodRange(resolveLastDays(diasAtras + 1, now));
 }
 
 /**
  * Recorte por `created_at`. Sem período ativo (`null`) devolve a MESMA lista; com período ativo,
  * item com data ausente/inválida fica FORA (não há como provar que ele pertence ao intervalo).
+ * Quem decide o que cai dentro é o `isWithin` do Journey — o mesmo predicado do Histórico —, para
+ * as duas telas nunca discordarem sobre uma data de fronteira.
  */
 export function filterByPeriod<T extends { created_at: string }>(
   items: T[],
   range: PeriodRange | null,
 ): T[] {
   if (!range) return items;
-  return items.filter((item) => {
-    const time = timeOf(item.created_at);
-    if (time === null) return false;
-    if (range.from !== null && time < range.from) return false;
-    if (range.to !== null && time > range.to) return false;
-    return true;
-  });
+  const bounds = {
+    from: range.from === null ? null : new Date(range.from),
+    to: range.to === null ? null : new Date(range.to),
+  };
+  return items.filter((item) => isWithin(item.created_at, bounds));
 }
