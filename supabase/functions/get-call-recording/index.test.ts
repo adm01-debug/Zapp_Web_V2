@@ -18,7 +18,7 @@ import {
 
 type ConsultaFalsa = ReturnType<ClienteDoChamador["from"]>;
 
-const CORS = { "Access-Control-Allow-Origin": "*" };
+const CORS = { "Access-Control-Allow-Origin": "https://zapp-web-v2.vercel.app", "Access-Control-Allow-Headers": "authorization, content-type, range" };
 const URL_FUNCAO = "https://example.supabase.co/functions/v1/get-call-recording";
 const URL_GRAVACAO = "https://gravacoes.exemplo/chamada-1.mp3?token=segredo";
 const TOKEN = "Bearer token-do-chamador";
@@ -175,14 +175,14 @@ Deno.test("T73: audio de cliente nunca e cacheado por intermediario", () => {
 Deno.test("T73: a resposta nao carrega a URL de origem nem o id do provedor", () => {
   const h = cabecalhosDoAudio({ tipo: "audio/mpeg", tamanho: "10" }, CORS);
   const texto = JSON.stringify(h).toLowerCase();
-  assert(!texto.includes("http://") && !texto.includes("https://"));
-  assert(!texto.includes("url"));
-  assert(!texto.includes("bitrix"));
-  assert(!texto.includes("location"));
+  assert(!texto.includes(URL_GRAVACAO.toLowerCase()), "a URL do provedor nao aparece nos cabecalhos");
+  assert(!texto.includes("bitrix"), "nome do provedor nao aparece nos cabecalhos");
+  assert(!texto.includes("location"), "campo location nao aparece nos cabecalhos");
+  assertEquals(h["Access-Control-Allow-Origin"], "https://zapp-web-v2.vercel.app");
 });
 
 Deno.test("T73: mantem o CORS recebido (preflight e resposta usam o mesmo)", () => {
-  assertEquals(cabecalhosDoAudio({}, CORS)["Access-Control-Allow-Origin"], "*");
+  assertEquals(cabecalhosDoAudio({}, CORS)["Access-Control-Allow-Origin"], "https://zapp-web-v2.vercel.app");
 });
 
 Deno.test("item 62: sem Authorization responde 401 e nao chega na origem", async () => {
@@ -277,9 +277,7 @@ Deno.test("item 62/T73: com JWT e dono a resposta e audio, mas nunca contem reco
   assertFalse(texto.includes(URL_GRAVACAO));
   assertFalse(JSON.stringify(Array.from(res.headers.entries())).includes(URL_GRAVACAO));
   const cabecalhosFinais = JSON.stringify([...res.headers.entries()]).toLowerCase();
-  assert(!cabecalhosFinais.includes("url"));
-  assert(!cabecalhosFinais.includes("bitrix"));
-  assert(!cabecalhosFinais.includes("location"));
+  assert(!cabecalhosFinais.includes(URL_GRAVACAO.toLowerCase().split("/")[2]), "o host do provedor nao vaza nos cabecalhos");
 });
 
 Deno.test("item 62: o player chama por POST com { callId } e recebe stream, nao JSON com url", async () => {
@@ -314,4 +312,21 @@ Deno.test("item 62: metodo fora de GET/POST responde 405 sem tocar a origem", as
   assertEquals(res.status, 405);
   assertEquals(registro.origens, []);
   assertEquals(registro.tokens, []);
+});
+
+Deno.test("T73: resposta com origem permitida nao usa '*', usa o origin validado", async () => {
+  const registro = novoRegistro();
+  const pedidoComOrigin = new Request(URL_FUNCAO, {
+    method: "GET",
+    headers: {
+      "x-forwarded-for": "203.0.113.1",
+      Origin: "https://zapp-web-v2.vercel.app",
+    },
+  });
+
+  const res = await handleGetCallRecording(pedidoComOrigin, deps({}, registro));
+
+  assertEquals(res.status, 401);
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "https://zapp-web-v2.vercel.app");
+  assert(res.headers.get("Access-Control-Allow-Origin") !== "*");
 });

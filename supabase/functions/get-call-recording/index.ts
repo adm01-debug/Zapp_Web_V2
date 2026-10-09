@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
+import { handleCors, getCorsHeaders, errorResponse, requireEnv, checkRateLimit, getClientIP, Logger } from "../_shared/validation.ts";
 
 /**
  * T73 / item 62 — entrega a gravacao da chamada SEM expor a URL.
@@ -69,8 +69,6 @@ export const depsReais: GetCallRecordingDeps = {
   buscarOrigem: (url, range) => fetch(url, { headers: range ? { Range: range } : {} }),
 };
 
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, range" };
-
 export async function handleGetCallRecording(
   req: Request,
   deps: GetCallRecordingDeps = depsReais,
@@ -134,7 +132,7 @@ export async function handleGetCallRecording(
       tamanho: upstream.headers.get("Content-Length"),
       faixa: upstream.headers.get("Content-Range"),
       aceita: upstream.headers.get("Accept-Ranges"),
-    }, cors);
+    }, getCorsHeaders(req));
 
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch (erro) {
