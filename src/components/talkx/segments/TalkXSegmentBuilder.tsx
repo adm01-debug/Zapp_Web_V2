@@ -147,7 +147,7 @@ export function TalkXSegmentBuilder({
                   <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E', 'O', 'G'][Math.min(gi, 2)]}</span>
                   <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                   <Select value={g.match} onValueChange={(v) => dispatch({ type: 'setMatch', id: g.id, match: v as 'and' | 'or' })}>
-                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Operador lógico do grupo" className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
                   </Select>
                   <button type="button" onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })} aria-label="Duplicar grupo" title="Duplicar grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-primary-glow"><Copy className="w-3.5 h-3.5" /></button>

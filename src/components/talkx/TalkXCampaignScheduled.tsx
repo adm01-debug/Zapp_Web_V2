@@ -222,8 +222,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <RailCard title="Configurações de Agendamento" icon={Clock}>
           <div className="space-y-4 pt-1">
             <div>
-              <Label className="text-2xs text-muted-foreground mb-1.5 block">Data e hora</Label>
+              <Label htmlFor="talkx-agendamento-data" className="text-2xs text-muted-foreground mb-1.5 block">Data e hora</Label>
               <Input
+                id="talkx-agendamento-data"
                 type="datetime-local"
                 value={localDate}
                 min={new Date().toISOString().slice(0, 16)}
@@ -233,9 +234,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             </div>
 
             <div>
-              <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label htmlFor="talkx-agendamento-fuso" className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
-                <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
+                <SelectTrigger id="talkx-agendamento-fuso" className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,18 +252,18 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <p className="text-xs font-medium text-foreground">Janela de envio</p>
                 <p className="text-2xs text-muted-foreground">Envia somente neste intervalo</p>
               </div>
-              <Switch checked={windowEnabled} onCheckedChange={setWindowEnabled} />
+              <Switch checked={windowEnabled} onCheckedChange={setWindowEnabled} aria-label="Janela de envio" />
             </div>
 
             {windowEnabled && (
               <div className="grid grid-cols-2 gap-2 pl-2 border-l-2 border-border/50">
                 <div>
-                  <Label className="text-2xs text-muted-foreground mb-1 block">Início</Label>
-                  <Input type="time" value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
+                  <Label htmlFor="talkx-janela-inicio" className="text-2xs text-muted-foreground mb-1 block">Início</Label>
+                  <Input id="talkx-janela-inicio" type="time" value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
                 <div>
-                  <Label className="text-2xs text-muted-foreground mb-1 block">Fim</Label>
-                  <Input type="time" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
+                  <Label htmlFor="talkx-janela-fim" className="text-2xs text-muted-foreground mb-1 block">Fim</Label>
+                  <Input id="talkx-janela-fim" type="time" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
               </div>
             )}
@@ -272,7 +273,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <p className="text-xs font-medium text-foreground">Somente horário comercial</p>
                 <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00</p>
               </div>
-              <Switch checked={bizHours} onCheckedChange={setBizHours} />
+              <Switch checked={bizHours} onCheckedChange={setBizHours} aria-label="Somente horário comercial" />
             </div>
           </div>
         </RailCard>
