@@ -6,13 +6,13 @@ import { join } from 'node:path';
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
  * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
- * barra lateral — as 11 da navegação primária e 29 dos 31 itens das 5 seções
- * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
- * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
- * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
- * branco) e nenhum erro de console, exceção ou resposta >= 400.
- * Dois dos 31 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
- * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
+ * barra lateral — as 10 da navegação primária e 32 dos 34 itens das 6 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema, Em Desenvolvimento)
+ * — e prova, módulo a módulo, que a tela monta de verdade: título do documento,
+ * tela própria do módulo (nunca "Acesso restrito", nunca o esqueleto de carregamento
+ * preso, nunca tela em branco) e nenhum erro de console, exceção ou resposta >= 400.
+ * Dois dos 34 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:75`)
+ * e 'Admin' (`:126`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
  * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
  * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
  * silêncio.
@@ -21,11 +21,10 @@ import { join } from 'node:path';
  *
  * AUTENTICAÇÃO: sempre contra o banco LOCAL do conjunto do cartão — o wrapper
  * zapp-e2e-local entrega ao app a URL local (VITE_ZAPP_LOCAL_SUPABASE_URL) e o
- * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). O projeto
- * que executa este spec (`chromium-authenticated`) chega com a sessão do projeto
- * `setup`, que faz login REAL contra esse mesmo banco local: se ela já estiver
- * montada o app redireciona para o shell e a varredura segue daí; se não estiver,
- * o teste faz o próprio login pela tela. Em nenhum caminho se lê sessão de
+ * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). A rodada
+ * exige um runner SEM sessão salva (R1: agente não lê e2e/.auth/*): o spec entra
+ * por /auth e, quando o shell autenticado não está de pé, faz ele mesmo o login
+ * real pela tela contra o GoTrue local. Em nenhum caminho se lê sessão de
  * produção, fixture real ou segredo externo (R1): o conjunto local prende o DNS
  * da produção e o zapp-db-guard confere o ambiente antes de rodar.
  *
@@ -65,6 +64,14 @@ interface ItemNav {
   /** rótulo exato da entrada na barra lateral (o nome acessível do botão) */
   label: string;
   /**
+   * Nome acessível do BOTÃO quando ele difere do rótulo da view. A barra lateral
+   * acrescenta o selo (pill) ao nome do botão — `src/components/layout/SidebarNavItem.tsx`
+   * monta `${item.label} (${pill.toLowerCase('pt-BR')})` —, mas o TÍTULO da view
+   * (`conferirModulo`, abaixo) continua sendo `item.label`. Hoje só o Multiplix
+   * carrega selo ('NOVO').
+   */
+  nomeAcessivel?: string;
+  /**
    * Entrada que a barra lateral só mostra para ADMINISTRADOR
    * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
    * os dois com `roles: ADMIN_ONLY`). O usuário sintético do conjunto local é
@@ -84,10 +91,11 @@ const PRIMARIOS: ItemNav[] = [
   { id: 'team-chat', label: 'Teams' },
   { id: 'email-chat', label: 'Email' },
   { id: 'contacts', label: 'Contatos' },
-  { id: 'multiplix', label: 'Multiplix' },
+  // O botão carrega o selo da entrada (pill 'NOVO'): o nome acessível vira
+  // "Multiplix (novo)" e o título da view continua "Multiplix".
+  { id: 'multiplix', label: 'Multiplix', nomeAcessivel: 'Multiplix (novo)' },
   { id: 'catalog', label: 'Catálogo' },
   { id: 'voip', label: 'Telefonia' },
-  { id: 'pipeline', label: 'Quadro' },
   { id: 'tasks', label: 'Tarefas' },
   { id: 'achievements', label: 'Conquistas' },
   { id: 'dashboard', label: 'Dashboard' },
@@ -148,6 +156,18 @@ const SECOES: SecaoNav[] = [
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
+    ],
+  },
+  // `src/services/navigation.service.ts` (getGroups, 'Em Desenvolvimento'):
+  // facades com UI completa e sem integração real por trás. Elas aparecem na
+  // barra lateral e no menu móvel para o supervisor do seed, então entram na
+  // varredura como qualquer outra entrada.
+  {
+    label: 'Em Desenvolvimento',
+    itens: [
+      { id: 'payments', label: 'Pagamentos' },
+      { id: 'meta-capi', label: 'Meta CAPI' },
+      { id: 'google-calendar', label: 'Calendário' },
     ],
   },
 ];
@@ -947,7 +967,7 @@ async function abrirSecaoDesktop(page: Page, secao: string): Promise<void> {
 
 async function clicarDesktop(page: Page, item: ItemNav): Promise<void> {
   const nav = page.getByRole('navigation', { name: MENU_DESKTOP });
-  const botao = nav.getByRole('button', { name: item.label, exact: true }).first();
+  const botao = nav.getByRole('button', { name: item.nomeAcessivel ?? item.label, exact: true }).first();
   await botao.click();
   await expect(
     botao,
@@ -971,7 +991,10 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
       await mais.click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });
       if (aoAbrirMenu) await aoAbrirMenu();
-      await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });
+      await menu
+        .getByRole('button', { name: item.nomeAcessivel ?? item.label, exact: true })
+        .first()
+        .click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não fechou depois de escolher o módulo').toBeHidden({
         timeout: 10_000,
       });
@@ -1147,7 +1170,7 @@ test.beforeAll(async ({ request }) => {
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
     // A varredura é longa (42 módulos + busca, cada um com espera de view e de
@@ -1222,7 +1245,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 42 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
