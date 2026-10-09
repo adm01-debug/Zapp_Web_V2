@@ -16,6 +16,7 @@ import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/Dash
 import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
+import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
 
@@ -98,7 +99,12 @@ interface ScheduledEditorProps {
 }
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
-  const { updateCampaign, startCampaign } = useTalkX();
+  const { updateCampaign } = useTalkX();
+  // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
+  // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
+  // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
+  // seguirá no fluxo local até o hook ganhar a ação (ver relato).
+  const lifecycle = useTalkXLifecycle();
   const initialTimezone = campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
   const [localTz, setLocalTz] = useState<string>(initialTimezone);
   const [localDate, setLocalDate] = useState<string>(() => (
@@ -109,9 +115,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   const [windowEnd, setWindowEnd] = useState<string>(campaign.send_window_end?.slice(0, 5) ?? '18:00');
   const [bizHours, setBizHours] = useState<boolean>(campaign.business_hours_only ?? false);
   const [saving, setSaving] = useState(false);
-  const [launching, setLaunching] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [launchOpen, setLaunchOpen] = useState(false);
 
   const handleTimezoneChange = useCallback((nextTimezone: string) => {
     try {
@@ -155,14 +159,6 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
       setSaving(false);
     }
   }, [campaign, localDate, localTz, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign, saving]);
-
-  const handleLaunch = useCallback(() => {
-    setLaunchOpen(false);
-    setLaunching(true);
-    // P2: fire-and-forget -- talkx-send bloqueia ate o loop completo;
-    // a navegacao ocorre via useEffect quando status mudar para 'sending'
-    void startCampaign(campaign.id).finally(() => setLaunching(false));
-  }, [campaign, startCampaign]);
 
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
@@ -359,11 +355,14 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-destructive hover:bg-destructive/10 border-destructive/30">
           Cancelar agendamento
         </GhostButton>
-        <PrimaryButton icon={Play} onClick={() => setLaunchOpen(true)} className="shadow-[var(--shadow-glow-primary)]">
-          {launching ? 'Iniciando…' : 'Iniciar agora'}
+        <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">
+          {lifecycle.isPending ? 'Iniciando…' : 'Iniciar agora'}
         </PrimaryButton>
       </div>
 
+      {/* X051 (parcial): o "Cancelar agendamento" segue local porque o hook
+          único não expõe a ação de devolver a campanha para Rascunhos
+          (`scheduled_at = null`, `status = 'draft'`). */}
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -381,23 +380,8 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={launchOpen} onOpenChange={setLaunchOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Iniciar campanha agora?</AlertDialogTitle>
-            <AlertDialogDescription>
-              A campanha será disparada imediatamente para <strong>{fmtInt(campaign.total_recipients)} contatos</strong>.
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLaunch}>
-              Confirmar e iniciar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* X051: diálogo único do ciclo de vida — o disparo não tem mais modal próprio. */}
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
 }
