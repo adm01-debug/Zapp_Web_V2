@@ -115,6 +115,7 @@ export function QueuesComparisonDashboard() {
             size="icon"
             onClick={() => navigate('/')}
             className="hover:bg-muted/30"
+            aria-label="Voltar"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -273,6 +274,7 @@ export function QueuesComparisonDashboard() {
                               variant="ghost"
                               size="icon"
                               className="w-8 h-8"
+                              aria-label={`Abrir fila ${queue.name}`}
                               onClick={() => navigate(`/queue/${queue.id}`)}
                             >
                               <Eye className="w-4 h-4" />
