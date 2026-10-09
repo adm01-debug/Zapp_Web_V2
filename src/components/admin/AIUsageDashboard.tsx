@@ -29,13 +29,13 @@ export function AIUsageDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[140px]" aria-label="Período"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="1h">Última 1h</SelectItem><SelectItem value="6h">Últimas 6h</SelectItem>
               <SelectItem value="24h">Últimas 24h</SelectItem><SelectItem value="7d">Últimos 7 dias</SelectItem><SelectItem value="30d">Últimos 30 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
+          <Button variant="outline" size="icon" aria-label="Atualizar uso de IA" onClick={() => refetch()}><RefreshCw className="w-4 h-4" /></Button>
         </div>
       </div>
 

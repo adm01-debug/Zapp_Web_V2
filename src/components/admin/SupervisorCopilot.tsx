@@ -144,7 +144,7 @@ export function SupervisorCopilot() {
             className="text-sm"
             onKeyDown={(e) => e.key === 'Enter' && askQuestion()}
           />
-          <Button size="icon" onClick={() => askQuestion()} disabled={loading || !question.trim()}>
+          <Button size="icon" aria-label="Perguntar ao copiloto" onClick={() => askQuestion()} disabled={loading || !question.trim()}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>
