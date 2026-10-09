@@ -406,6 +406,8 @@ test('editor WYSIWYG aplica formatação, link e histórico de desfazer sem exec
 test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 720 });
   await abrirEmail(page);
+  // O zoom entra depois do boot: o tema do app também grava o atributo style do <html> durante
+  // a montagem; aplicar antes poderia ser perdido e mascarar a medição de reflow.
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
@@ -413,6 +415,9 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   await firstThreadButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeVisible();
+  // Garante que o cenário medido ainda é o zoom 200%; se um reload repuser a tela, a prova
+  // falha aqui antes de aprovar um overflow medido sem zoom.
+  expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe('200%');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(2);
 });
