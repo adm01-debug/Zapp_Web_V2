@@ -4,6 +4,7 @@ import {
   isRecord, normalizePhone, resolveEventJid, toEventRecords, shouldUpdateStatus,
   getConnectionByInstance, getContactByPhone,
 } from "./evolution-helpers.ts";
+import { EvolutionMessagesUpdateStatusSchema } from "./schemas.ts";
 import type { EvolutionDbClient } from "./evolution-types.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -105,10 +106,15 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
   for (const entry of toEventRecords(data, ['messages', 'updates', 'statuses'])) {
     const keySource = isRecord(entry.key) ? entry.key : isRecord(baseData.key) ? baseData.key : null;
     const key = keySource as { id?: string; fromMe?: boolean } | null;
-    const rawStatus = (entry.status as string) || (baseData.status as string) || '';
-    const newStatus = statusMap[rawStatus] || rawStatus.toLowerCase();
+    const statusResult = EvolutionMessagesUpdateStatusSchema.safeParse(entry.status ?? baseData.status ?? '');
+    if (!statusResult.success) {
+      console.warn(`messages.update ignored invalid status for ${key?.id ?? 'unknown receipt'}`);
+      continue;
+    }
+    const rawStatus = statusResult.data;
+    const newStatus = statusMap[rawStatus.toUpperCase()] || rawStatus.toLowerCase();
 
-    if (newStatus && key?.id) {
+    if (key?.id) {
       const now = new Date().toISOString();
       // Use order+limit(1) so concurrent duplicates don't throw on maybeSingle.
       // Esta funcao trata receipts das duas direcoes, entao o sender vem de
