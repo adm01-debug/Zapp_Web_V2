@@ -18,7 +18,7 @@
  *     1000) passa a existir na lista renderizada e o início do histórico é
  *     anunciado de forma acessível.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -251,6 +251,20 @@ function renderPopup() {
   const { rerender } = render(buildUi());
   return { rerender: () => rerender(buildUi()) };
 }
+
+// A PRIMEIRA espera do arquivo pagava, DENTRO do orçamento de asserção, a avaliação
+// única do módulo `ChatPanel` — o popup o carrega por `lazy()`. O dump vermelho dos
+// logs do integrador (12 reprovações, todas nesta asserção) mostra sempre o MESMO
+// quadro: a barra de controles da janela já renderizada e o fallback "Carregando
+// conversa..." no lugar da lista. Ou seja: o `findByRole` de 5 s estava esperando a
+// fila de transformação do Vite, que sob carga passa do orçamento — e o teste caía
+// por TEMPO, não por comportamento (o botão aparece no mesmo instante em que o
+// módulo resolve). Aquecer o módulo aqui, uma vez por arquivo e fora da asserção,
+// tira essa carga única do caminho medido: o `lazy()` seguinte resolve do cache do
+// runner. Nada aqui espera tempo fixo e nenhuma asserção mudou.
+beforeAll(async () => {
+  await import('@/components/inbox/ChatPanel');
+}, 120_000);
 
 beforeEach(() => {
   vi.clearAllMocks();
