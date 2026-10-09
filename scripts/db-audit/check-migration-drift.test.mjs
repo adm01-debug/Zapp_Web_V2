@@ -1066,3 +1066,10 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
+
+test('cada divergencia sai como versao | disco | ledger | motivo com exit code 1', () => {
+  const result = runGuard({ ledger: [] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /\d{14} \| .+ \| .+ \| .+/);
+  assert.match(result.stderr, /arquivo sem registro no banco/);
+});
