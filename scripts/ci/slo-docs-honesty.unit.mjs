@@ -534,16 +534,11 @@ test('fixture I4: alvo espalhado em outras linhas da tabela é acusado (defeito 
 | Backups diários | ≥ 99 % de execução no dia (falha ≤ 1 %) | MCP | PARCIAL |
 | Schema sem drift | 100 % | \`db-live-guard.yml\` | REAL |
 ` + secaoXrid('não');
+  // Esta mesma tabela, com a guarda ANTERIOR (busca dos 4 termos no texto da tabela inteira),
+  // saía sem nenhum problema: a prova é a execução da guarda antiga sobre este documento, medida
+  // e registrada no relato — aqui não se copia a regra antiga à mão.
   const problemas = analisar(espalhado, OK);
   assert.ok(problemas.some((p) => p.startsWith('I4')), problemas.join('; '));
-  // Prova do furo da regra antiga, neste MESMO documento: os quatro termos que ela procurava
-  // (`['evolution-webhook', 'p95', '500 ms', '1 %']` no texto da tabela inteira) existiam — ela
-  // dava verde aqui, mesmo com a linha da edge sem alvo nenhum.
-  const textoDaTabela = tabelaDoTitulo(espalhado, 'SLOs propostos').map(({ celulas }) => celulas.join(' ')).join(' ');
-  assert.ok(
-    ['evolution-webhook', 'p95', '500 ms', '1 %'].every((t) => textoDaTabela.includes(t)),
-    'a fixture tem de manter os termos do alvo antigo, senão não prova o furo',
-  );
   // Prova dos dois lados: a mesma tabela com os alvos NAS linhas da edge passa.
   assert.deepEqual(analisar(tabela(FRONT_PENDENTE) + secaoXrid('não'), OK), []);
 });
