@@ -462,10 +462,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     queryKey: ['talkx-connection-daily-limit', connectionId],
     enabled: !!connectionId,
     queryFn: async () => {
-      const { data } = await supabase.from('number_reputation')
+      const { data, error } = await supabase.from('number_reputation')
         .select('daily_limit')
         .eq('whatsapp_connection_id', connectionId)
         .maybeSingle();
+      if (error) throw error;
       return (data?.daily_limit as number | null) ?? null;
     },
   });

@@ -923,6 +923,25 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
     expect(builder.in).toHaveBeenCalledWith('role', ['admin', 'supervisor']);
   });
 
+  it('falha alto quando a leitura do limite diário da conexão falha', async () => {
+    const dbError = new Error('falha ao ler reputação');
+    const builder = {
+      select: vi.fn(() => builder),
+      eq: vi.fn(() => builder),
+      maybeSingle: vi.fn(async () => ({ data: null, error: dbError })),
+    };
+    const fromSpy = supabase.from as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockReturnValueOnce(builder);
+
+    renderHook(() => useCampaignEditor({ whatsapp_connection_id: 'connection-1' } as never, vi.fn()));
+    const query = capturedQuery('talkx-connection-daily-limit');
+    expect(query).toBeDefined();
+
+    await expect(query!.queryFn!({ signal: new AbortController().signal })).rejects.toThrow('falha ao ler reputação');
+    expect(fromSpy).toHaveBeenCalledWith('number_reputation');
+    expect(builder.eq).toHaveBeenCalledWith('whatsapp_connection_id', 'connection-1');
+  });
+
   it('o select Responsável lista avatar e nome dos perfis ativos devolvidos (X124)', () => {
     f.owners = [
       { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' },
