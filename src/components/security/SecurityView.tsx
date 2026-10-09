@@ -54,49 +54,49 @@ export function SecurityView() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 md:grid-cols-11">
-            <TabsTrigger value="overview" className="gap-2">
+            <TabsTrigger value="overview" className="gap-2" aria-label="Visão Geral">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Visão Geral</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="gap-2">
+            <TabsTrigger value="account" className="gap-2" aria-label="Conta">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">Conta</span>
             </TabsTrigger>
-            <TabsTrigger value="passkeys" className="gap-2">
+            <TabsTrigger value="passkeys" className="gap-2" aria-label="Passkeys">
               <Fingerprint className="w-4 h-4" />
               <span className="hidden sm:inline">Passkeys</span>
             </TabsTrigger>
-            <TabsTrigger value="devices" className="gap-2">
+            <TabsTrigger value="devices" className="gap-2" aria-label="Dispositivos">
               <Smartphone className="w-4 h-4" />
               <span className="hidden sm:inline">Dispositivos</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
+            <TabsTrigger value="notifications" className="gap-2" aria-label="Alertas">
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Alertas</span>
             </TabsTrigger>
             {isAdmin && (
               <>
-                <TabsTrigger value="blocked" className="gap-2">
+                <TabsTrigger value="blocked" className="gap-2" aria-label="IPs">
                   <Lock className="w-4 h-4" />
                   <span className="hidden sm:inline">IPs</span>
                 </TabsTrigger>
-                <TabsTrigger value="geo" className="gap-2">
+                <TabsTrigger value="geo" className="gap-2" aria-label="Geo">
                   <Globe className="w-4 h-4" />
                   <span className="hidden sm:inline">Geo</span>
                 </TabsTrigger>
-                <TabsTrigger value="rate-limit" className="gap-2">
+                <TabsTrigger value="rate-limit" className="gap-2" aria-label="Rate Limit">
                   <Gauge className="w-4 h-4" />
                   <span className="hidden sm:inline">Rate Limit</span>
                 </TabsTrigger>
-                <TabsTrigger value="audit" className="gap-2">
+                <TabsTrigger value="audit" className="gap-2" aria-label="Auditoria">
                   <FileText className="w-4 h-4" />
                   <span className="hidden sm:inline">Auditoria</span>
                 </TabsTrigger>
-                <TabsTrigger value="quarantine" className="gap-2">
+                <TabsTrigger value="quarantine" className="gap-2" aria-label="Quarentena">
                   <ShieldAlert className="w-4 h-4" />
                   <span className="hidden sm:inline">Quarentena</span>
                 </TabsTrigger>
-                <TabsTrigger value="admin" className="gap-2">
+                <TabsTrigger value="admin" className="gap-2" aria-label="Admin">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Admin</span>
                 </TabsTrigger>
