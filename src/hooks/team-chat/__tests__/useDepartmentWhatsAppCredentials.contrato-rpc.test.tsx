@@ -35,7 +35,10 @@ vi.mock('@tanstack/react-query', () => ({
   useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
-import { useDepartmentWhatsAppCredentials } from '@/hooks/team-chat/useDepartmentManagement';
+import {
+  toDepartmentWhatsAppCredentials,
+  useDepartmentWhatsAppCredentials,
+} from '@/hooks/team-chat/useDepartmentManagement';
 
 async function runQuery(): Promise<unknown> {
   renderHook(() => useDepartmentWhatsAppCredentials('dep-1'));
@@ -66,13 +69,43 @@ describe('useDepartmentWhatsAppCredentials — contrato da RPC de configuracao',
 
   it('mapeia a tabela real (mode) para o tipo declarado do hook', async () => {
     const out = await runQuery();
-    expect(out).toEqual(expect.objectContaining({ mode: 'evolution', instance_id: 'inst-1', has_api_key: true }));
+    expect(out).toEqual({
+      mode: 'evolution',
+      instance_id: 'inst-1',
+      has_api_key: true,
+      evolution_url: 'inst-1',
+    });
   });
 
   it('normaliza modo fora do enum para "none" (não vaza valor cru)', async () => {
     f.rpc.mockResolvedValueOnce({ data: [{ mode: 'inventado', instance_id: null, has_api_key: false }], error: null });
     const out = await runQuery();
-    expect(out).toEqual(expect.objectContaining({ mode: 'none' }));
+    expect(out).toEqual({
+      mode: 'none',
+      instance_id: null,
+      has_api_key: false,
+      evolution_url: null,
+    });
+  });
+
+  it('um texto de chave devolvido nunca vira campo de credencial', () => {
+    const out = toDepartmentWhatsAppCredentials({
+      mode: 'evolution',
+      instance_id: 'inst-1',
+      has_api_key: true,
+      api_key: 'SEGREDO-API-KEY',
+      token: 'SEGREDO-TOKEN',
+      extra: 'SEGREDO-EXTRA',
+    });
+
+    expect(Object.keys(out).sort()).toEqual(['evolution_url', 'has_api_key', 'instance_id', 'mode']);
+    expect(out).toEqual({
+      mode: 'evolution',
+      instance_id: 'inst-1',
+      has_api_key: true,
+      evolution_url: 'inst-1',
+    });
+    expect(JSON.stringify(out)).not.toContain('SEGREDO');
   });
 
   it('sem linha de departamento (null) devolve o default "none"', async () => {
