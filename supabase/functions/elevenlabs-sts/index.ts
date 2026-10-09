@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -32,6 +33,7 @@ Deno.serve(async (req) => {
     apiFormData.append('audio', audioFile);
     apiFormData.append('model_id', selectedModel);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`,
       {
@@ -40,6 +42,29 @@ Deno.serve(async (req) => {
         body: apiFormData,
       }
     );
+
+    // SL-013 / IA-003 B6 — conversão paga (speech-to-speech) sem linha no
+    // ledger é consumo invisível no relatório de custo. A unidade cobrada é o
+    // SEGUNDO de áudio; a duração não é medida aqui (o arquivo chega em bytes),
+    // então a linha declara `usage_unknown: true` — ausência declarada, nunca
+    // zero medido (IA-053).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-sts",
+      userId: auth.userId,
+      model: selectedModel,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/speech-to-speech",
+        billing_unit: "second",
+        billing_quantity: null,
+        input_bytes: audioFile.size,
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -102,7 +102,18 @@ const ROTA_AUDIO: Route = {
       headers: { "content-type": "audio/mpeg" },
     }),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO];
+// SL-013 / IA-003 B6 — o ledger de consumo. A chamada PAGA tem de gravar linha
+// em `ai_usage_logs`; o PostgREST do supabase-js passa pelo mesmo `fetch`
+// stubado (a função cria o cliente com a service role e faz o insert).
+const ROTA_LEDGER: Route = {
+  match: "/rest/v1/ai_usage_logs",
+  make: () => jsonResp(null, 201),
+};
+const ROTA_PROFILES: Route = {
+  match: "/rest/v1/profiles",
+  make: () => jsonResp([{ id: "30000000-0000-0000-0000-00000000000c" }]),
+};
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -257,6 +268,97 @@ Deno.test("R2-API-024: sem bearer continua 401 e não toca o provedor", async ()
         callsTo(stub.calls, "api.elevenlabs.io").length === 0,
         "sem autenticação não se chama o provedor",
       );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// SL-013 / IA-003 B6 — toda chamada PAGA gera linha no ledger (ai_usage_logs).
+//
+// Defeito: a geração paga ia ao provedor e NÃO registrava consumo em lugar
+// nenhum — o relatório de custo (IA-058) ficava cego para o gasto do ElevenLabs.
+// O teste abaixo roda o handler REAL com o `fetch` stubado e prova que a
+// chamada ao provedor deixa exatamente UMA linha no ledger, com a unidade
+// cobrada do provedor (caractere) e as colunas de token em NULL (IA-053).
+// ───────────────────────────────────────────────────────────────────────────
+
+/** A linha que o PostgREST recebeu (o supabase-js manda objeto ou [objeto]). */
+function linhaDoLedger(calls: Call[]): Record<string, unknown> | null {
+  const post = callsTo(calls, "/rest/v1/ai_usage_logs").find((c) => c.init?.method === "POST");
+  if (!post || post.init?.body === undefined || post.init?.body === null) return null;
+  const corpo = JSON.parse(String(post.init.body)) as
+    | Record<string, unknown>
+    | Record<string, unknown>[];
+  return (Array.isArray(corpo) ? corpo[0] : corpo) ?? null;
+}
+
+Deno.test("SL-013: diálogo pago deixa UMA linha em ai_usage_logs (unidade caractere, tokens NULL)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const script = [
+        { voice_id: "voz-a", text: "Bom dia" }, // 7 caracteres
+        { voice_id: "voz-b", text: "Boa tarde" }, // 9 caracteres
+      ];
+      const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+
+      const inserts = callsTo(stub.calls, "/rest/v1/ai_usage_logs")
+        .filter((c) => c.init?.method === "POST");
+      assert(inserts.length === 1, `esperado 1 insert no ledger, veio ${inserts.length}`);
+
+      const linha = linhaDoLedger(stub.calls);
+      assert(linha !== null, "o insert no ledger chegou sem corpo");
+      assert(
+        linha!.function_name === "elevenlabs-dialogue",
+        `function_name inesperado: ${String(linha!.function_name)}`,
+      );
+      assert(linha!.status === "success", `status inesperado: ${String(linha!.status)}`);
+      assert(linha!.user_id === USER_ID, `user_id inesperado: ${String(linha!.user_id)}`);
+      assert(linha!.model === "eleven_v3", `model inesperado: ${String(linha!.model)}`);
+      // IA-053: a unidade cobrada do provedor NÃO é token — "não medido" nunca
+      // pode virar zero medido nas colunas de token.
+      assert(
+        linha!.input_tokens === null && linha!.output_tokens === null,
+        `tokens devem ser NULL quando não medidos: ${JSON.stringify(linha)}`,
+      );
+      const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
+      assert(metadata.provider === "elevenlabs", `provider inesperado: ${JSON.stringify(metadata)}`);
+      assert(metadata.billing_unit === "character", `unidade inesperada: ${JSON.stringify(metadata)}`);
+      assert(
+        metadata.billing_quantity === 16,
+        `caracteres somados do roteiro (7+9) inesperados: ${String(metadata.billing_quantity)}`,
+      );
+      assert(metadata.usage_unknown === true, "consumo sem medição tem de ser DECLARADO no metadata");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unidade é medida igual", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      ROTA_PROFILES,
+      ROTA_LEDGER,
+      { match: "api.elevenlabs.io", make: () => jsonResp({ detail: "boom" }, 500) },
+    ]);
+    try {
+      const res = await handleElevenLabsDialogue(
+        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "Bom dia" }])),
+      );
+      assert(res.status === 500, `esperado 500 do provedor, veio ${res.status}`);
+
+      const linha = linhaDoLedger(stub.calls);
+      assert(linha !== null, "chamada paga que falhou continua sendo consumo: falta a linha no ledger");
+      assert(linha!.status === "error", `status inesperado: ${String(linha!.status)}`);
+      const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
+      assert(metadata.http_status === 500, `http_status inesperado: ${JSON.stringify(metadata)}`);
+      assert(metadata.billing_quantity === 7, `caracteres do roteiro inesperados: ${String(metadata.billing_quantity)}`);
     } finally {
       stub.restore();
     }

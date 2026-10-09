@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, enforceRateLimit, isValidUUID } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -29,10 +30,32 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
 
       log.info("Generating voice preview", { descLen: description.length });
 
+      const iniciadoEm = Date.now();
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-voice/create-previews', {
         method: 'POST',
         headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ voice_description: description, text: previewText }),
+      });
+
+      // SL-013 / IA-003 B6 — a criação de prévia de voz é chamada PAGA ao
+      // provedor e tem de deixar linha no ledger (unidade = REQUISIÇÃO; as
+      // colunas de token ficam NULL com `usage_unknown: true`, IA-053).
+      await logAiUsageDetached({
+        functionName: "elevenlabs-voice-design",
+        userId: auth.userId,
+        model: null,
+        durationMs: Date.now() - iniciadoEm,
+        status: response.ok ? "success" : "error",
+        errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+        usageUnknown: true,
+        metadata: {
+          provider: "elevenlabs",
+          endpoint: "/v1/text-to-voice/create-previews",
+          billing_unit: "request",
+          billing_quantity: 1,
+          preview_characters: previewText.length,
+          http_status: response.status,
+        },
       });
 
       if (!response.ok) {
@@ -74,10 +97,30 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
 
       log.info("Creating voice", { voice_name });
 
+      const iniciadoEm = Date.now();
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-voice/create-voice-from-preview', {
         method: 'POST',
         headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ voice_name, voice_description: voice_description || '', generated_voice_id, labels: labels || {} }),
+      });
+
+      // SL-013 / IA-003 B6 — criação de voz é chamada PAGA (persiste recurso na
+      // conta do provedor) e precisa aparecer no ledger de consumo.
+      await logAiUsageDetached({
+        functionName: "elevenlabs-voice-design",
+        userId: auth.userId,
+        model: null,
+        durationMs: Date.now() - iniciadoEm,
+        status: response.ok ? "success" : "error",
+        errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+        usageUnknown: true,
+        metadata: {
+          provider: "elevenlabs",
+          endpoint: "/v1/text-to-voice/create-voice-from-preview",
+          billing_unit: "request",
+          billing_quantity: 1,
+          http_status: response.status,
+        },
       });
 
       if (!response.ok) {

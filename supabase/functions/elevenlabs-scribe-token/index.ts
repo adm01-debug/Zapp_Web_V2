@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -18,9 +19,31 @@ Deno.serve(async (req) => {
 
     log.info("Requesting ElevenLabs realtime scribe token");
 
+    const iniciadoEm = Date.now();
     const response = await fetch('https://api.elevenlabs.io/v1/single-use-token/realtime_scribe', {
       method: 'POST',
       headers: { 'xi-api-key': ELEVENLABS_API_KEY },
+    });
+
+    // SL-013 / IA-003 B6 — chamada ao provedor PAGO com rastro no ledger. Este
+    // endpoint emite a credencial de transcrição em tempo real: não há unidade
+    // de cobrança nesta chamada (o consumo é cobrado no uso), então a linha
+    // declara `usage_unknown: true` e `billing_unit: "none"`.
+    await logAiUsageDetached({
+      functionName: "elevenlabs-scribe-token",
+      userId: auth.userId,
+      model: null,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/single-use-token/realtime_scribe",
+        billing_unit: "none",
+        billing_quantity: null,
+        http_status: response.status,
+      },
     });
 
     if (!response.ok) {
