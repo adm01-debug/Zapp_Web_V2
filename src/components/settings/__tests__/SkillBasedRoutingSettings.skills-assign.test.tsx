@@ -24,10 +24,29 @@ const h = vi.hoisted(() => ({
   rpcCalls: [] as Array<{ fn: string; args: Record<string, unknown> }>,
   updates: [] as Array<{ table: string; payload: Record<string, unknown> }>,
   inserts: [] as Array<{ table: string; payload: Record<string, unknown> }>,
-  filters: [] as Array<{ table: string; column: string; value: unknown }>,
+  // op = 'leitura' quando o filtro saiu de uma corrente de SELECT,
+  // 'escrita' quando saiu de uma corrente de UPDATE/DELETE — é o que separa
+  // a busca do contato aguardando da guarda repetida no UPDATE.
+  filters: [] as Array<{
+    table: string;
+    op: 'leitura' | 'escrita' | null;
+    method: 'eq' | 'is' | 'not';
+    column: string;
+    operator?: string;
+    value: unknown;
+  }>,
+  orders: [] as Array<{
+    table: string;
+    op: 'leitura' | 'escrita' | null;
+    column: string;
+    options: unknown;
+  }>,
   toasts: [] as Array<Record<string, unknown>>,
   agentId: 'a1' as string | null,
   waiting: { id: 'c1' } as { id: string } | null,
+  // Linhas devolvidas pelo `.select('id')` depois do UPDATE: vazio simula a
+  // guarda não batendo (contato já atribuído por outro fluxo).
+  updatedRows: [{ id: 'c1' }] as Array<{ id: string }>,
   rows: {
     profiles: [{ id: 'p1', name: 'Ana' }],
     queues: [{ id: 'q1', name: 'Suporte', color: '#3B82F6' }],
@@ -68,28 +87,55 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/integrations/supabase/client', () => {
   const chainFor = (table: string) => {
+    // A corrente vira 'escrita' no primeiro insert/update/delete; antes disso
+    // é 'leitura'. No PostgREST real, UPDATE sem .select() volta 204 com
+    // data null — aqui também, para provar que a confirmação existe.
+    const ctx = { op: null as 'leitura' | 'escrita' | null, selectAposEscrita: false };
     const result = { data: h.rows[table] ?? [], error: null };
     const chain: Record<string, unknown> = {
-      select: () => chain,
-      eq: (column: string, value: unknown) => {
-        h.filters.push({ table, column, value });
+      select: () => {
+        if (ctx.op === 'escrita') ctx.selectAposEscrita = true;
+        else ctx.op = 'leitura';
         return chain;
       },
-      is: () => chain,
-      not: () => chain,
-      order: () => chain,
+      eq: (column: string, value: unknown) => {
+        h.filters.push({ table, op: ctx.op, method: 'eq', column, value });
+        return chain;
+      },
+      is: (column: string, value: unknown) => {
+        h.filters.push({ table, op: ctx.op, method: 'is', column, value });
+        return chain;
+      },
+      not: (column: string, operator: string, value: unknown) => {
+        h.filters.push({ table, op: ctx.op, method: 'not', column, operator, value });
+        return chain;
+      },
+      order: (column: string, options: unknown) => {
+        h.orders.push({ table, op: ctx.op, column, options });
+        return chain;
+      },
       limit: () => chain,
       maybeSingle: () => Promise.resolve({ data: h.waiting, error: null }),
-      delete: () => chain,
+      delete: () => {
+        ctx.op = 'escrita';
+        return chain;
+      },
       insert: (payload: Record<string, unknown>) => {
+        ctx.op = 'escrita';
         h.inserts.push({ table, payload });
         return Promise.resolve({ error: null });
       },
       update: (payload: Record<string, unknown>) => {
+        ctx.op = 'escrita';
         h.updates.push({ table, payload });
         return chain;
       },
-      then: (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve),
+      then: (resolve: (v: unknown) => unknown) =>
+        Promise.resolve(
+          ctx.op === 'escrita'
+            ? { data: ctx.selectAposEscrita ? h.updatedRows : null, error: null }
+            : result,
+        ).then(resolve),
     };
     return chain;
   };
@@ -140,9 +186,11 @@ describe('SkillBasedRoutingSettings — atribuição por habilidade (SL-192)', (
     h.updates.length = 0;
     h.inserts.length = 0;
     h.filters.length = 0;
+    h.orders.length = 0;
     h.toasts.length = 0;
     h.agentId = 'a1';
     h.waiting = { id: 'c1' };
+    h.updatedRows = [{ id: 'c1' }];
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0 } },
     });
@@ -190,5 +238,88 @@ describe('SkillBasedRoutingSettings — atribuição por habilidade (SL-192)', (
     );
     expect(h.updates).toEqual([]);
     expect(h.filters.filter(f => f.table === 'contacts')).toEqual([]);
+  });
+
+  it('busca o contato aguardando com os filtros da contagem da fila, do mais antigo ao mais novo', async () => {
+    await selecionarFila();
+
+    fireEvent.click(botaoAtribuir());
+
+    await waitFor(() => expect(h.updates).toHaveLength(1), { timeout: ESPERA_ESTADO_REAL });
+
+    // Mesma definição de "aguardando" de QueueService.fetchWaitingCounts:
+    // sem responsável, não apagado, não encerrado.
+    const leituraContacts = h.filters.filter(f => f.table === 'contacts' && f.op === 'leitura');
+    expect(leituraContacts).toEqual(
+      expect.arrayContaining([
+        { table: 'contacts', op: 'leitura', method: 'eq', column: 'queue_id', value: 'q1' },
+        { table: 'contacts', op: 'leitura', method: 'is', column: 'assigned_to', value: null },
+        { table: 'contacts', op: 'leitura', method: 'is', column: 'deleted_at', value: null },
+        {
+          table: 'contacts',
+          op: 'leitura',
+          method: 'not',
+          column: 'conversation_status',
+          operator: 'in',
+          value: '(resolved,archived)',
+        },
+      ]),
+    );
+    expect(h.orders).toEqual(
+      expect.arrayContaining([
+        { table: 'contacts', op: 'leitura', column: 'created_at', options: { ascending: true } },
+      ]),
+    );
+  });
+
+  it('repete a guarda de "aguardando" no UPDATE para não sobrescrever atribuição feita entre a leitura e a escrita', async () => {
+    await selecionarFila();
+
+    fireEvent.click(botaoAtribuir());
+
+    await waitFor(() => expect(h.updates).toHaveLength(1), { timeout: ESPERA_ESTADO_REAL });
+
+    const escritaContacts = h.filters.filter(f => f.table === 'contacts' && f.op === 'escrita');
+    expect(escritaContacts).toEqual(
+      expect.arrayContaining([
+        { table: 'contacts', op: 'escrita', method: 'eq', column: 'id', value: 'c1' },
+        { table: 'contacts', op: 'escrita', method: 'eq', column: 'queue_id', value: 'q1' },
+        { table: 'contacts', op: 'escrita', method: 'is', column: 'assigned_to', value: null },
+        { table: 'contacts', op: 'escrita', method: 'is', column: 'deleted_at', value: null },
+      ]),
+    );
+  });
+
+  it('não anuncia sucesso quando o UPDATE não altera linha (contato atribuído por outro fluxo)', async () => {
+    h.updatedRows = [];
+    await selecionarFila();
+
+    fireEvent.click(botaoAtribuir());
+
+    await waitFor(() => expect(h.toasts.length).toBeGreaterThan(0), { timeout: ESPERA_ESTADO_REAL });
+
+    const titulos = h.toasts.map(t => t.title);
+    expect(titulos).not.toContain('Contato atribuído ao agente da fila');
+    expect(titulos).toContain('Este contato já foi atribuído por outro fluxo');
+  });
+
+  it('depois de atribuir de verdade, invalida a lista de contatos e a contagem da fila', async () => {
+    const invalidacao = vi.spyOn(queryClient, 'invalidateQueries');
+    await selecionarFila();
+
+    fireEvent.click(botaoAtribuir());
+
+    await waitFor(
+      () => expect(h.toasts.map(t => t.title)).toContain('Contato atribuído ao agente da fila'),
+      { timeout: ESPERA_ESTADO_REAL },
+    );
+    // Chaves canônicas de invalidateContactsAggregates + a contagem por fila;
+    // ['contacts'] é chave morta neste repositório (prefixo não casa com
+    // 'contacts-search') e não pode aparecer.
+    expect(invalidacao).toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
+    expect(invalidacao).toHaveBeenCalledWith({ queryKey: ['contacts-type-counts'] });
+    expect(invalidacao).toHaveBeenCalledWith({ queryKey: ['contacts-search'] });
+    expect(invalidacao).toHaveBeenCalledWith({ queryKey: ['dashboard-contact-counts'] });
+    expect(invalidacao).not.toHaveBeenCalledWith({ queryKey: ['contacts'] });
   });
 });

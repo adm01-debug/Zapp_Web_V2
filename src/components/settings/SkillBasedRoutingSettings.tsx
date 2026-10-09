@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/ui/use-toast';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { Plus, X, Brain, Users, Star, Sparkles, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -129,7 +130,7 @@ export function SkillBasedRoutingSettings() {
         p_queue_id: queueId,
       });
       if (agentError) throw agentError;
-      if (!agentId) return { agentId: null, contactId: null };
+      if (!agentId) return { agentId: null, contactId: null, assigned: false };
 
       const { data: waiting, error: waitingError } = await supabase
         .from('contacts')
@@ -142,23 +143,40 @@ export function SkillBasedRoutingSettings() {
         .limit(1)
         .maybeSingle();
       if (waitingError) throw waitingError;
-      if (!waiting) return { agentId, contactId: null };
+      if (!waiting) return { agentId, contactId: null, assigned: false };
 
-      const { error: assignError } = await supabase
+      // A guarda de "aguardando" é repetida no UPDATE: entre a leitura acima e
+      // esta escrita, outro agente ou fluxo pode atribuir o mesmo contato — sem
+      // o filtro, este update sobrescreveria a atribuição dele. O `.select('id')`
+      // confirma se a linha foi mesmo alterada (guarda bateu → 1 linha).
+      const { data: assignedRows, error: assignError } = await supabase
         .from('contacts')
         .update({ assigned_to: agentId })
-        .eq('id', waiting.id);
+        .eq('id', waiting.id)
+        .eq('queue_id', queueId)
+        .is('assigned_to', null)
+        .is('deleted_at', null)
+        .select('id');
       if (assignError) throw assignError;
 
-      return { agentId, contactId: waiting.id as string };
+      return { agentId, contactId: waiting.id as string, assigned: (assignedRows?.length ?? 0) > 0 };
     },
-    onSuccess: ({ agentId, contactId }) => {
+    onSuccess: ({ agentId, contactId, assigned }) => {
       if (!agentId) {
         toast({ title: 'Nenhum agente ativo nesta fila', variant: 'destructive' });
         return;
       }
       if (!contactId) {
         toast({ title: 'Nenhum contato aguardando nesta fila' });
+        return;
+      }
+      // O contato mudou de mão (por nós ou por outro fluxo): o helper canônico
+      // revalida lista e agregados de Contatos (todas as páginas, por prefixo);
+      // a segunda linha revalida a contagem de contatos por fila do dashboard.
+      invalidateContactsAggregates(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['dashboard-contact-counts'] });
+      if (!assigned) {
+        toast({ title: 'Este contato já foi atribuído por outro fluxo' });
         return;
       }
       toast({ title: 'Contato atribuído ao agente da fila' });
