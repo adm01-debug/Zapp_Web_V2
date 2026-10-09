@@ -1,6 +1,8 @@
 -- sec_rls_conversation_tasks_insert_visibility
--- Rollback: DROP POLICY IF EXISTS tasks_insert_own ON public.conversation_tasks;
--- Rollback: CREATE POLICY tasks_insert_own ON public.conversation_tasks FOR INSERT TO authenticated WITH CHECK ( created_by = public.current_profile_id() );
+-- Rollback: recria tasks_insert_own com o predicado ANTERIOR (so created_by = current_profile_id(), sem visibilidade de contato).
+-- Rollback (SQL executável, na ordem):
+--   DROP POLICY IF EXISTS tasks_insert_own ON public.conversation_tasks;
+--   CREATE POLICY tasks_insert_own ON public.conversation_tasks FOR INSERT TO authenticated WITH CHECK ( created_by = public.current_profile_id() );
 --
 -- SEC-RLS_CONTATOS_MENSAGENS-06 (P2): `tasks_insert_own` validava so `created_by = current_profile_id()`,
 -- entao qualquer agente (sabendo o UUID) gravava tarefa apontando para contato fora do seu alcance.
