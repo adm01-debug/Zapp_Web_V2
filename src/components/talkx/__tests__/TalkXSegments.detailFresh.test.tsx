@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -129,6 +129,11 @@ describe('TalkXSegments · detalhe do segmento depois de salvar (#408)', () => {
     state.segments = [antigo];
     f.create.mockReset();
     f.update.mockReset();
+  });
+
+  // X111: o construtor aberto vive no endereço; cada teste começa na biblioteca.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
   });
 
   it('o detalhe passa a mostrar a cópia salva, não a que estava em tela', async () => {

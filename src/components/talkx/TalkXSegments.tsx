@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
 } from 'lucide-react';
@@ -12,13 +12,12 @@ import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
+import { parseTalkXSegmentsRoute, pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute, type TalkXSegmentsRoute } from './segments/talkxSegmentsRoute';
 import { toast } from 'sonner';
 
 interface Props {
   onUseCampaign: (segmentId: string) => void;
 }
-
-type ViewMode = 'list' | 'edit';
 
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
@@ -31,10 +30,62 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
-  const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
-  const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // X111 — o construtor da tela 03 vive no endereço
+  // (`?view=talkx&tab=segments&segment=<id>&mode=edit|new`), no mesmo padrão de
+  // `talkxWizardRoute`/`TalkXView`: link direto abre o segmento, F5 mantém a tela
+  // e voltar/avançar do navegador fecham e reabrem o construtor. `editing` (abaixo)
+  // é DERIVADO de `route` + `segments` a cada render — nunca copiado para estado
+  // por um efeito — exatamente como `TalkXView` deriva `wizardCampaign`.
+  const [route, setRoute] = useState<TalkXSegmentsRoute | null>(
+    () => parseTalkXSegmentsRoute(window.location.search).route,
+  );
+
+  const writeRoute = useCallback((next: TalkXSegmentsRoute | null, replace = false) => {
+    if (replace) replaceTalkXSegmentsRoute(next);
+    else pushTalkXSegmentsRoute(next);
+    setRoute(next);
+  }, []);
+
+  // O histórico do navegador é a fonte de verdade de voltar/avançar.
+  const syncFromBrowserHistory = useCallback(() => {
+    const parsed = parseTalkXSegmentsRoute(window.location.search);
+    if (parsed.needsNormalization) replaceTalkXSegmentsRoute(parsed.route);
+    setRoute(parsed.route);
+  }, []);
+
+  useEffect(() => {
+    const initial = parseTalkXSegmentsRoute(window.location.search);
+    if (initial.needsNormalization) replaceTalkXSegmentsRoute(initial.route);
+    window.addEventListener('popstate', syncFromBrowserHistory);
+    return () => window.removeEventListener('popstate', syncFromBrowserHistory);
+  }, [syncFromBrowserHistory]);
+
+  // `selected` primeiro: #408 — depois de Salvar ele já é a linha devolvida pelo
+  // banco (mais fresca do que `segments`, que só chega na próxima consulta).
+  // Reabrir pelo rail (`openEdit(selected)`) não pode voltar para a cópia velha.
+  const routedSegment = route?.segmentId
+    ? (selected?.id === route.segmentId ? selected : segments.find((s) => s.id === route.segmentId) ?? null)
+    : null;
+
+  /** Rascunho ativo do construtor: `null` fora dele, "novo" sem consultar nada,
+   *  ou a cópia do banco quando o endereço pede um id (link direto, F5, voltar). */
+  const editing: EditingSeed | null = !route ? null
+    : route.mode === 'new' ? { id: null, name: '', description: '', rules: emptyRules() }
+    : routedSegment ? { id: routedSegment.id, name: routedSegment.name, description: routedSegment.description ?? '', rules: routedSegment.rules }
+    : null;
+
+  // Id que a lista não devolve (apagado, de outra conta ou digitado à mão): a tela
+  // cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no histórico.
+  // O `dispatchEvent` (não um `setState` direto) deixa o handler de popstate acima
+  // ser a única porta de saída do construtor, a mesma do voltar do navegador.
+  useEffect(() => {
+    if (!route || route.mode !== 'edit' || isLoading || routedSegment) return;
+    replaceTalkXSegmentsRoute(null);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
+  }, [isError, isLoading, route, routedSegment]);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -60,12 +111,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     [segments, editing?.id],
   );
 
-  const openNew = () => { setSelected(null); setEditing({ id: null, name: '', description: '', rules: emptyRules() }); setMode('edit'); };
-  const openEdit = (s: TalkXSegment) => { setEditing({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }); setSelected(s); setMode('edit'); };
-  const closeBuilder = () => { setMode('list'); setEditing(null); };
+  const openNew = () => { setSelected(null); writeRoute({ segmentId: null, mode: 'new' }); };
+  const openEdit = (s: TalkXSegment) => { setSelected(s); writeRoute({ segmentId: s.id, mode: 'edit' }); };
+  // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à
+  // biblioteca sem criar entrada nova no histórico (mesmo padrão do wizard).
+  const closeBuilder = () => { writeRoute(null, true); };
 
   const save = async (draft: SegmentBuilderContent) => {
-    if (saving) return;
+    if (saving || !editing) return;
     if (!draft.name.trim()) return;
     // Uma condição em branco não pode ir para o banco: recusa com o número exato
     // do que falta em vez de deixar o botão sem efeito e sem aviso.
@@ -95,15 +148,39 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
-  if (mode === 'edit' && editing) {
-    return <TalkXSegmentBuilder
-      initial={editing}
-      isNew={!editing.id}
-      saving={saving}
-      existingNames={existingNames}
-      onSave={(draft) => void save(draft)}
-      onCancel={closeBuilder}
-    />;
+  if (editing) {
+    return (
+      <div className="w-full min-w-0 space-y-4">
+        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Segmentos</span>
+        </nav>
+        <TalkXSegmentBuilder
+          key={editing.id ?? 'new'}
+          initial={editing}
+          isNew={!editing.id}
+          saving={saving}
+          existingNames={existingNames}
+          onSave={(draft) => void save(draft)}
+          onCancel={closeBuilder}
+        />
+      </div>
+    );
+  }
+
+  if (route?.segmentId) {
+    // O endereço pede um segmento que a consulta ainda não devolveu: esqueleto
+    // no lugar da biblioteca, para o F5 do link direto não piscar a lista antes.
+    return (
+      <div className="min-h-full w-full min-w-0" role="status" aria-live="polite" aria-busy={isLoading} data-talkx-query="loading">
+        <span className="sr-only">Carregando conteúdo…</span>
+        <TalkXSkeletonRows rows={4} />
+      </div>
+    );
   }
 
   return (
