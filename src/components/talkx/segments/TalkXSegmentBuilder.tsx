@@ -9,9 +9,10 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { PrimaryButton, GhostButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import {
-  RULE_FIELDS, splitRules, useAudienceEstimate, type RuleField, type SegmentRule,
+  RULE_FIELDS, splitRules, useAudienceEstimate, useAudienceBaseTotal, type RuleField, type SegmentRule,
 } from '@/hooks/integrations/useTalkXSegments';
-import { IconTile, RailCard, fmtInt } from '../talkxShared';
+import { IconTile, RailCard, fmtInt, fmtRelativeDay } from '../talkxShared';
+import { formatBrazilianPhone } from '@/lib/formatters';
 import { toast } from 'sonner';
 import { RuleRow } from './RuleRow';
 import {
@@ -32,20 +33,37 @@ export interface TalkXSegmentBuilderProps {
   saving: boolean;
   /** Nomes já usados na biblioteca, sem o segmento em edição (para o nome repetido). */
   existingNames?: string[];
+  /** X108: contagem da última versão publicada — o "vs. versão anterior" do resumo. */
+  previousCount?: number;
   onSave: (draft: SegmentBuilderContent) => void;
   onCancel: () => void;
 }
 
 export function TalkXSegmentBuilder({
-  initial, isNew, saving, existingNames = [], onSave, onCancel,
+  initial, isNew, saving, existingNames = [], previousCount, onSave, onCancel,
 }: TalkXSegmentBuilderProps) {
   const [state, dispatch] = React.useReducer(segmentBuilderReducer, initial, createBuilderState);
   const { name, description, rules } = state;
-  const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
+  const { data: est, isFetching: estFetching, isError: estError, dataUpdatedAt } = useAudienceEstimate(rules, true);
   // Condições em branco ficam fora da estimativa; a tela precisa dizer quantas
   // antes de o usuário tentar publicar. O valor do hook cobre o mesmo cálculo,
   // a derivação local mostra o aviso imediatamente (antes do fetch resolver).
   const incompleteCount = est?.incompleteCount ?? splitRules(rules).incompleteCount;
+  // X108 — a "base total" é resolvida pelo servidor sem regras (mesmo critério
+  // de elegibilidade da estimativa): dividir por um número contado no navegador
+  // inflaria a fatia da base.
+  const { data: baseTotal } = useAudienceBaseTotal();
+  const liveCount = typeof est?.count === 'number' ? est.count : null;
+  // Comparativo com a última versão publicada: só existe quando há segmento
+  // salvo com contagem — em segmento novo a linha não aparece.
+  const deltaPct = liveCount !== null && typeof previousCount === 'number' && previousCount > 0
+    ? Math.round(((liveCount - previousCount) / previousCount) * 100)
+    : null;
+  const basePct = liveCount !== null && typeof baseTotal === 'number' && baseTotal > 0
+    ? Math.round((liveCount / baseTotal) * 100)
+    : null;
+  // Carimbo da última resposta da RPC (e não a hora do render).
+  const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toISOString() : null;
   const [dragOverGroupId, setDragOverGroupId] = React.useState<string | null>(null);
   const [draggingField, setDraggingField] = React.useState<string | null>(null);
   const [showErrors, setShowErrors] = React.useState(false);
@@ -204,10 +222,19 @@ export function TalkXSegmentBuilder({
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
-        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 motion-safe:animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success motion-safe:animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estError ? <><span className="w-2 h-2 rounded-full bg-dash-amber" /><span className="text-dash-amber">Estimativa indisponível</span></> : estFetching ? <><RefreshCw className="w-3 h-3 motion-safe:animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success motion-safe:animate-pulse" /><span className="text-success">Estimativa em tempo real</span></>}</span>}>
           <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
-          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
+          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{estError ? '—' : fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
+          {deltaPct !== null && (
+            <p className="text-2xs text-foreground-secondary mt-1">{`${deltaPct > 0 ? '+' : ''}${deltaPct}% vs. versão anterior`}</p>
+          )}
+          {basePct !== null && (
+            <p className="text-2xs text-foreground-secondary mt-1">{`${basePct}% da base total`}</p>
+          )}
+          {updatedAt && (
+            <p className="text-2xs text-muted-foreground mt-1">{`Última atualização ${fmtRelativeDay(updatedAt)}`}</p>
+          )}
           {incompleteCount > 0 && (
             <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
           )}
@@ -216,8 +243,8 @@ export function TalkXSegmentBuilder({
               <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
               {est.sample.map((c) => (
                 <div key={c.id} className="flex items-center gap-2 py-1">
-                  <InitialsAvatar name={c.name || '?'} size={28} />
-                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.phone}</p></div>
+                  <InitialsAvatar name={c.name || '?'} src={c.avatar_url} size={28} />
+                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{formatBrazilianPhone(c.phone)}</p></div>
                 </div>
               ))}
             </div>

@@ -8,6 +8,7 @@ import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@
 import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay } from './talkxShared';
+import { formatBrazilianPhone } from '@/lib/formatters';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -101,6 +102,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
       isNew={!editing.id}
       saving={saving}
       existingNames={existingNames}
+      previousCount={selected?.estimated_count}
       onSave={(draft) => void save(draft)}
       onCancel={closeBuilder}
     />;
@@ -244,7 +246,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
           {est.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2 py-1.5">
               <InitialsAvatar name={c.name || '?'} size={28} />
-              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
+              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || formatBrazilianPhone(c.phone)}</p></div>
             </div>
           ))}
         </div>

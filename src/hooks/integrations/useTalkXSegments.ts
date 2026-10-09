@@ -301,6 +301,22 @@ export function useAudienceEstimate(rules: SegmentRules | null | undefined, enab
   });
 }
 
+/**
+ * X108 (TL-132) — denominador do "N% da base total" do Resumo do Segmento: a
+ * base elegível inteira, resolvida pelo servidor sem nenhuma regra e com o
+ * MESMO critério de elegibilidade da estimativa (deleted_at, LID, telefone
+ * válido e visibilidade). Uma consulta por tela e cacheada por 5 min: o
+ * denominador não muda a cada tecla digitada no construtor.
+ */
+export function useAudienceBaseTotal(enabled = true) {
+  return useQuery({
+    queryKey: ['talkx-audience-base-total'],
+    queryFn: () => countAudience(null),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
