@@ -11,7 +11,9 @@ import {
   type ReactNode,
 } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle
+// inicial (este provider é montado no boot e é alcançado pelo entry).
+import { toast } from '@/lib/lazyToast';
 
 import { useSipClient } from '@/hooks/communication/useSipClient';
 import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
