@@ -30,10 +30,33 @@ begin;
 -- =====================================================================================
 -- FIXTURE (papel dono do banco: so prepara os dados; nenhuma assercao roda aqui)
 -- =====================================================================================
-insert into public.profiles (id, user_id, role, is_active) values
-  ('a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'agent', true),
-  ('a0000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'agent', true),
-  ('a0000000-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'admin', true)
+-- Usuarios sinteticos. No banco do Supabase (local e canonico) profiles.user_id e
+-- user_roles.user_id apontam para auth.users e o gatilho on_auth_user_created cria o
+-- profile; por isso a criacao passa por auth.users QUANDO ela existe (e a insercao
+-- direta em profiles cobre o ambiente sem auth.users, o Postgres descartavel).
+do $$
+declare
+  v_novo record;
+begin
+  if to_regclass('auth.users') is not null then
+    for v_novo in
+      select * from (values
+        ('11111111-1111-1111-1111-111111111111'::uuid, 'Dona do segmento'),
+        ('22222222-2222-2222-2222-222222222222'::uuid, 'Outro agente'),
+        ('33333333-3333-3333-3333-333333333333'::uuid, 'Admin do modulo')
+      ) as t(user_id, nome)
+    loop
+      insert into auth.users (id, raw_user_meta_data)
+      values (v_novo.user_id, jsonb_build_object('name', v_novo.nome))
+      on conflict (id) do nothing;
+    end loop;
+  end if;
+end $$;
+
+insert into public.profiles (user_id, name, role, is_active) values
+  ('11111111-1111-1111-1111-111111111111', 'Dona do segmento', 'agent', true),
+  ('22222222-2222-2222-2222-222222222222', 'Outro agente',     'agent', true),
+  ('33333333-3333-3333-3333-333333333333', 'Admin do modulo',  'admin', true)
 on conflict (user_id) do nothing;
 
 insert into public.user_roles (user_id, role) values
@@ -43,15 +66,23 @@ on conflict do nothing;
 -- S_LIVRE: sem campanha nenhuma. S_USADO: campanha scheduled na coluna segment_id.
 -- S_LISTA: campanha scheduled via a lista talkx_campaign_segments (X057).
 insert into public.talkx_segments (id, name, description, origin, status, is_favorite, rules, estimated_count, created_by)
-values
-  ('b0000000-0000-0000-0000-000000000001', 'Segmento livre',  'sem campanha', 'zapp',   'active', false, '{"groups":[]}'::jsonb, 0, 'a0000000-0000-0000-0000-000000000001'),
-  ('b0000000-0000-0000-0000-000000000002', 'Segmento usado',  'campanha agendada', 'zapp', 'active', false, '{"groups":[]}'::jsonb, 0, 'a0000000-0000-0000-0000-000000000001'),
-  ('b0000000-0000-0000-0000-000000000003', 'Segmento em lista', 'campanha multissegmento', 'zapp', 'active', false, '{"groups":[]}'::jsonb, 0, 'a0000000-0000-0000-0000-000000000001');
+select v.id, v.name, v.description, 'zapp', 'active', false, '{"groups":[]}'::jsonb, 0, p.id
+  from (values
+    ('b0000000-0000-0000-0000-000000000001'::uuid, 'Segmento livre',    'sem campanha'),
+    ('b0000000-0000-0000-0000-000000000002'::uuid, 'Segmento usado',    'campanha agendada'),
+    ('b0000000-0000-0000-0000-000000000003'::uuid, 'Segmento em lista', 'campanha multissegmento')
+  ) as v(id, name, description)
+  cross join (select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111') as p;
 
 insert into public.talkx_campaigns (id, name, message_template, status, created_by, segment_id, scheduled_at)
-values
-  ('c0000000-0000-0000-0000-000000000001', 'Campanha Agendada', 'ola {{nome}}', 'scheduled', 'a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', now() + interval '1 day'),
-  ('c0000000-0000-0000-0000-000000000002', 'Campanha da Lista', 'ola {{nome}}', 'scheduled', 'a0000000-0000-0000-0000-000000000001', null, now() + interval '2 day');
+select 'c0000000-0000-0000-0000-000000000001', 'Campanha Agendada', 'ola {{nome}}', 'scheduled',
+       p.id, 'b0000000-0000-0000-0000-000000000002', now() + interval '1 day'
+  from public.profiles p where p.user_id = '11111111-1111-1111-1111-111111111111';
+
+insert into public.talkx_campaigns (id, name, message_template, status, created_by, segment_id, scheduled_at)
+select 'c0000000-0000-0000-0000-000000000002', 'Campanha da Lista', 'ola {{nome}}', 'scheduled',
+       p.id, null, now() + interval '2 day'
+  from public.profiles p where p.user_id = '11111111-1111-1111-1111-111111111111';
 
 insert into public.talkx_campaign_segments (campaign_id, segment_id, position, status)
 values ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000003', 1, 'pending');
@@ -67,7 +98,8 @@ declare
   v_status text;
 begin
   insert into public.talkx_segments (id, name, status, created_by)
-  values ('b0000000-0000-0000-0000-000000000011', 'Rascunho novo', 'draft', 'a0000000-0000-0000-0000-000000000001');
+  select 'b0000000-0000-0000-0000-000000000011', 'Rascunho novo', 'draft', p.id
+    from public.profiles p where p.user_id = '11111111-1111-1111-1111-111111111111';
 
   select status into v_status from public.talkx_segments
    where id = 'b0000000-0000-0000-0000-000000000011';
@@ -175,7 +207,7 @@ begin
      set rules        = '{"groups":[{"match":"and","rules":[]}]}'::jsonb,
          revision     = 1,
          published_at = now(),
-         published_by = 'a0000000-0000-0000-0000-000000000001',
+         published_by = (select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111'),
          status       = 'active'
    where id = 'b0000000-0000-0000-0000-000000000001';
 
@@ -196,7 +228,8 @@ declare
   v_rev   integer;
 begin
   insert into public.talkx_segment_versions (segment_id, version_no, rules, estimated_count, note, created_by)
-  values ('b0000000-0000-0000-0000-000000000001', 1, '{"groups":[{"match":"and","rules":[]}]}'::jsonb, 42, 'primeira publicacao', 'a0000000-0000-0000-0000-000000000001');
+  values ('b0000000-0000-0000-0000-000000000001', 1, '{"groups":[{"match":"and","rules":[]}]}'::jsonb, 42, 'primeira publicacao',
+          (select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111'));
 
   select v.rules, s.revision into v_rules, v_rev
     from public.talkx_segment_versions v
@@ -316,9 +349,14 @@ begin
 end $$;
 
 reset role;
--- a campanha sai do status que bloqueia: o segmento deixa de estar em uso
+-- a transicao de ciclo de vida da campanha e do caminho de servico (o gatilho
+-- enforce_talkx_campaign_mutability libera quem nao e 'authenticated'): a campanha
+-- concluida deixa de segurar o segmento
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 update public.talkx_campaigns set status = 'completed'
  where id = 'c0000000-0000-0000-0000-000000000001';
+reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 do $$
