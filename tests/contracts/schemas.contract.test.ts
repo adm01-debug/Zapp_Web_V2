@@ -1,31 +1,9 @@
-import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { describe, it, expect } from 'vitest';
 import * as S from '../../supabase/functions/_shared/schemas.ts';
-
-const describeStack: string[] = [];
-function describe(name: string, fn: () => void) {
-  describeStack.push(name);
-  try {
-    fn();
-  } finally {
-    describeStack.pop();
-  }
-}
-function it(name: string, fn: () => void | Promise<void>) {
-  Deno.test([...describeStack, name].join(' > '), fn);
-}
-function expect<T>(actual: T) {
-  return {
-    toBe(expected: unknown) { assertEquals(actual, expected); },
-    toEqual(expected: unknown) { assertEquals(actual, expected); },
-    toBeGreaterThan(expected: number) {
-      assert(typeof actual === 'number' && actual > expected, `Expected ${actual} to be greater than ${expected}`);
-    },
-  };
-}
 
 const UUID = 'a3bb189e-8bf9-4888-9912-ace4e6543002';
 type Case = { payload: unknown; hint: string };
-type SafeParseResult = { success: boolean; error?: Parameters<typeof S.validationErrorResponse>[0] };
+type SafeParseResult = { success: true } | { success: false; error: Record<string, unknown> };
 type Suite = { schema: { safeParse: (d: unknown) => SafeParseResult }; valid: unknown[]; invalid: Case[] };
 
 // Tabela de contrato: TODO schema exportado tem casos de payload válido,
@@ -137,8 +115,7 @@ describe('cobertura de contrato por schema', () => {
       for (const c of suite.invalid) {
         it(`inválido: ${c.hint} → resposta 422 consistente`, async () => {
           const r = suite.schema.safeParse(c.payload);
-          assert(!r.success);
-          assert(r.error, 'safeParse inválido precisa expor erro para validationErrorResponse');
+          expect(r.success).toBe(false);
           const res = S.validationErrorResponse(r.error);
           expect(res.status).toBe(422);
           const body = JSON.parse(await res.text());
