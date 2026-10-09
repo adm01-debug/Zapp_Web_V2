@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
+import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
@@ -589,6 +591,12 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
+  // X159: o "Checklist para retomar" só monta os 5 itens quando a campanha está pausada.
+  const resumeChecklist = useTalkXResumeChecklist(campaign);
+  // X159: o atalho de cada item leva à aba onde ele se resolve nesta tela.
+  const handleChecklistNavigate = useCallback((key: TalkXResumeChecklistItemKey) => {
+    setActiveTab(key === 'templates' ? 'messages' : key === 'segments' ? 'recipients' : 'config');
+  }, []);
   // Auto-navegar de volta quando a campanha sair de sending/paused.
   // Transição em UM efeito só: o estado anterior é lido ANTES de a referência ser
   // atualizada. Com dois efeitos separados a limpeza ficava morta — o primeiro gravava
@@ -784,7 +792,17 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {/* Conteúdo das sub-tabs */}
             <div>
               {activeTab === 'overview' && (
-                <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                <>
+                  {campaign.status === 'paused' && (
+                    <TalkXResumeChecklist
+                      items={resumeChecklist.items}
+                      onToggle={resumeChecklist.toggle}
+                      onNavigate={handleChecklistNavigate}
+                      className="mb-4"
+                    />
+                  )}
+                  <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
