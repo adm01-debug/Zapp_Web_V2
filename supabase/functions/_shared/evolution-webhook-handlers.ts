@@ -21,6 +21,11 @@ export {
   handleMessagesSet, handleMessagesEdited,
 } from "./evolution-webhook-msg-handlers.ts";
 
+// E26: janela curta de deduplicacao do alerta de queda. A GO entrega o evento em dobro
+// (e o retry do webhook reenvia o POST) em segundos; 60 s cobre a duplicata sem esconder
+// uma queda nova de verdade (que so vem depois de uma reconexao).
+const ALERT_DEDUP_WINDOW_MS = 60_000;
+
 // deno-lint-ignore no-explicit-any
 export async function handleConnectionUpdate(supabase: EvolutionDbClient, instance: string, baseData: Record<string, unknown>) {
   const rawState = (baseData.status ?? baseData.state) as string;
@@ -78,13 +83,30 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
   console.log(`Connection ${instance} status: ${status}`);
 
   if (status === 'disconnected' && prevConn?.status === 'connected') {
-    const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
-    await supabase.from('warroom_alerts').insert({
-      alert_type: 'critical',
-      title: `🔴 Conexão ${instance} desconectou`,
-      message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
-      source: 'evolution-webhook',
-    });
+    // E26 (dedup): a GO entrega o evento de queda em dobro e o retry do webhook reenvia o
+    // POST, entao o MESMO alerta saia 2x no War Room. O guard de transicao acima nao segura
+    // a corrida em que as duas entregas leem o status ANTES de qualquer uma gravar.
+    // Antes de inserir, olha se ja existe alerta identico (mesmo source+title) na janela
+    // curta — sem DDL, a consulta resolve.
+    const title = `🔴 Conexão ${instance} desconectou`;
+    const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
+    const { data: recentAlert } = await supabase.from('warroom_alerts')
+      .select('id')
+      .eq('source', 'evolution-webhook')
+      .eq('title', title)
+      .gte('created_at', since)
+      .limit(1);
+    if (recentAlert?.length) {
+      console.log(`Alerta de queda de ${instance} deduplicado (E26)`);
+    } else {
+      const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
+      await supabase.from('warroom_alerts').insert({
+        alert_type: 'critical',
+        title,
+        message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
+        source: 'evolution-webhook',
+      });
+    }
   }
 
   // F60 (gatilho): motivo TERMINAL nao e soluço de rede — a instancia esta fora e nao volta

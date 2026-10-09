@@ -37,6 +37,10 @@ function mockSupabase(opts: {
         return Promise.resolve({ data: null, error: null });
       },
       eq: () => chain,
+      // E26: o handler agora consulta a janela de deduplicacao antes de inserir o alerta
+      // (select().eq().eq().gte().limit()); o duble precisa encadear igual ao PostgREST.
+      gte: () => chain,
+      limit: () => chain,
       single: () =>
         Promise.resolve({
           data: prevStatus === null ? null : { status: prevStatus, phone_number: "5511999990000" },
