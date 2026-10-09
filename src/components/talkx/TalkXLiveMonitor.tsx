@@ -11,21 +11,23 @@ import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
+import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
-import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, fmtInt, pct, fmtDateTime } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
+import { TalkXRecipientsTable, RECIPIENTS_READ_LIMIT, type TalkXRecipientRow } from './tracking/TalkXRecipientsTable';
 interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
+const REAL_RECIPIENT_STATUS_FILTERS = new Set(['pending', 'sending', 'sent', 'delivered', 'failed', 'skipped', 'outcome_unknown']);
+const RECIPIENTS_CUTOFF_NOTE = `Mostrando os ${RECIPIENTS_READ_LIMIT} destinatários mais recentes. Pode haver mais registros; use o filtro de status para recortar a consulta.`;
 
 export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const qc = useQueryClient();
@@ -36,8 +38,8 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
     events, isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj, refetch: refetchEvents,
   } = useTalkXEvents(campaignId);
   const [tab, setTab] = useState<MonitorTab>('overview');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('all');
   // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
   // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
   // mais um diálogo local — por isso sobe por `onOpenHelp` (o pai é quem sabe
@@ -64,6 +66,10 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
 
   const { label: connStatusLabel } = useTalkXConnectionStatus(campaign?.whatsapp_connection_id);
 
+  // X150/TL-158: estados reais recortam a consulta no banco; estados derivados
+  // (Lida/Respondida/Sem telefone) continuam sendo filtrados na tabela porque não
+  // existem como valor de `talkx_recipients.status`.
+  const statusQueryFilter = REAL_RECIPIENT_STATUS_FILTERS.has(statusFilter) ? statusFilter : 'all';
   const {
     data: recipientsData,
     isLoading: recipientsLoading,
@@ -71,27 +77,31 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
     error: recipientsErrorObj,
     refetch: refetchRecipients,
   } = useQuery({
-    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
+    queryKey: ['talkx-recipients-monitor', campaignId, statusQueryFilter],
     queryFn: async () => {
-      let q = supabase.from('talkx_recipients')
-        .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
+      let query = supabase.from('talkx_recipients')
+        .select('id, status, sent_at, delivered_at, read_at, replied_at, updated_at, personalized_message, error_message, segment_id, segments:segment_id(name), contacts:contact_id(name, nickname, phone, company, avatar_url, lead_origin)')
+        .eq('campaign_id', campaignId);
+      if (statusQueryFilter !== 'all') query = query.eq('status', statusQueryFilter);
+      const { data, error } = await query.order('updated_at', { ascending: false }).limit(RECIPIENTS_READ_LIMIT);
       if (error) throw error;
-      return (data ?? []) as unknown as TalkXRecipient[];
+      return ((data ?? []) as (TalkXRecipientRow & { segments?: { name?: string | null } | null })[]).map((row) => ({
+        ...row,
+        segment_name: row.segment_name ?? row.segments?.name ?? null,
+      }));
     },
     refetchInterval: REFETCH,
   });
   const recipients = recipientsData ?? [];
+  const recipientsCutoffNote = recipients.length >= RECIPIENTS_READ_LIMIT ? RECIPIENTS_CUTOFF_NOTE : undefined;
 
   useEffect(() => {
     const ch = supabase.channel(`talkx-mon-${campaignId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns', filter: `id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-campaign-live', campaignId] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'talkx_recipients', filter: `campaign_id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'talkx_recipients', filter: `campaign_id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [campaignId, statusFilter, qc]);
+  }, [campaignId, qc]);
 
   // Elapsed timer — Date.now() runs in effect/callback, never in render body
   useEffect(() => {
@@ -116,7 +126,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId);
 
   // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
   // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
@@ -218,6 +228,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
       </div>
 
       {tab==='overview' && (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
           <section className="rounded-2xl bg-card border border-border/70 p-4">
             <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · estimado)</span></p>
@@ -256,43 +267,58 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
             onOpenHelp={onOpenHelp}
           />
         </div>
+
+        {/* X150 — tela 12, card "Entregas em Tempo Real": a MESMA tabela da aba
+            Destinatários, com o selo "Enviando agora" enquanto o motor envia
+            (`status === 'sending'`; não existe `worker_state` no schema). */}
+        <section className="min-w-0 mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <p className="text-[13px] font-bold text-foreground">Entregas em Tempo Real</p>
+            {isRunning && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-2xs font-semibold text-primary">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary motion-safe:animate-pulse" />
+                Enviando agora
+              </span>
+            )}
+          </div>
+          <TalkXRecipientsTable
+            rows={recipients}
+            variant="deliveries"
+            isLoading={recipientsLoading}
+            isError={recipientsError}
+            error={recipientsErrorObj}
+            onRetry={() => refetchRecipients()}
+            pagination="more"
+            pageSize={5}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            note={recipientsCutoffNote}
+            emptyTitle="Nenhuma entrega ainda"
+            emptyDescription="A lista aparece no primeiro envio desta campanha."
+          />
+        </section>
+        </>
       )}
 
       {tab==='recipients' && (
-        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-            <p className="text-sm font-bold text-foreground">Destinatários</p>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v,m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <TalkXQueryBoundary
-            query={{ isLoading: recipientsLoading, isError: recipientsError, error: recipientsErrorObj }}
-            entity="listas de destinatários"
+        <section className="min-w-0">
+          {/* X150: tabela única (mesma da tela 11), com as colunas da tela 12. */}
+          <TalkXRecipientsTable
+            title="Destinatários"
+            rows={recipients}
+            variant="deliveries"
+            isLoading={recipientsLoading}
+            isError={recipientsError}
+            error={recipientsErrorObj}
             onRetry={() => refetchRecipients()}
-            skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
-            isEmpty={recipients.length === 0}
-            empty={<div className="py-4"><TalkXEmptyState icon={Inbox} title="Nenhum destinatário encontrado" description="Ajuste o filtro de status ou aguarde os primeiros envios." /></div>}
-          >
-            <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
-              {recipients.map((r,i) => {
-                const sm = RECIPIENT_STATUS[r.status]??RECIPIENT_STATUS.pending;
-                return (
-                  <motion.div key={r.id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.02,.4)}} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
-                    <InitialsAvatar name={r.contacts?.name||'?'} src={r.contacts?.avatar_url} size={32}/>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-foreground truncate">{r.contacts?.name||'Desconhecido'}</p>
-                      {r.personalized_message && <p className="text-2xs text-foreground-secondary truncate">{r.personalized_message}</p>}
-                      {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
-                    </div>
-                    <Pill label={sm.label} tone={sm.tone}/>
-                    {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </TalkXQueryBoundary>
+            pagination="more"
+            pageSize={20}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            note={recipientsCutoffNote}
+            emptyTitle="Nenhum destinatário encontrado"
+            emptyDescription="Ajuste o filtro de status ou aguarde os primeiros envios."
+          />
         </section>
       )}
 
