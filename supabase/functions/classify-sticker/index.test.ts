@@ -138,6 +138,11 @@ function instalarEspiao(): Espiao {
       return method === "POST" ? json([], 201) : json([]);
     }
     if (alvo.pathname === "/rest/v1/rpc/ai_rate_limit_hit") return json(1);
+    // Política de rede (R2-AUTH-022 / 27.3): `requireAuth` consulta a RPC depois de
+    // autenticar; a decisão declarada aqui deixa o teste chegar ao caminho que ele prova.
+    if (alvo.pathname === "/rest/v1/rpc/resolve_network_policy") {
+      return json([{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }]);
+    }
     if (alvo.pathname === "/rest/v1/rpc/ai_budget_reserve") {
       return json([{ id: "reserva-1", allowed: true, used_tokens: 0, limit_tokens: 100000 }]);
     }

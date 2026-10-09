@@ -60,6 +60,9 @@ function rotasDeAuth(userId: string): Route[] {
   return [
     { match: '/auth/v1/user', body: { id: userId, aud: 'authenticated' } },
     { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 4 }] },
+    // Política de rede (R2-AUTH-022 / 27.3): `requireAuth` consulta
+    // `resolve_network_policy` depois de autenticar, antes do handler.
+    { match: '/rest/v1/rpc/resolve_network_policy', body: [{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }] },
   ];
 }
 

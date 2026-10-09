@@ -102,7 +102,13 @@ const ROTA_AUDIO: Route = {
       headers: { "content-type": "audio/mpeg" },
     }),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO];
+// Política de rede (R2-AUTH-022 / 27.3): `requireAuth` consulta `resolve_network_policy`
+// depois de autenticar; o stub responde pela decisão para o teste exercitar o resto.
+const ROTA_POLITICA: Route = {
+  match: "/rest/v1/rpc/resolve_network_policy",
+  make: () => jsonResp([{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }]),
+};
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_POLITICA, ROTA_AUDIO];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
