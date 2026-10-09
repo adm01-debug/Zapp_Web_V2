@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { useState, useEffect, forwardRef } from 'react';
 import { ArrowRight, Navigation, Search, MessageSquare, LayoutDashboard } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface SkipLinkProps {
   href: string;
@@ -102,11 +103,18 @@ export function SkipLinks() {
       aria-label="Links de navegação rápida"
       role="navigation"
     >
-      {showIndicator && (
-        <div className="motion-safe:animate-slide-down fixed top-20 left-4 z-[9998] bg-muted/95 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-muted-foreground shadow-lg border border-border">
-          Pressione <kbd className="px-1.5 py-0.5 bg-background rounded border border-border font-mono">Tab</kbd> para navegar
-        </div>
-      )}
+      <AnimatePresence>
+        {showIndicator && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-4 z-[9998] bg-muted/95 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-muted-foreground shadow-lg border border-border"
+          >
+            Pressione <kbd className="px-1.5 py-0.5 bg-card rounded border border-border font-mono">Tab</kbd> para navegar
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {has('#main-content') && (
         <SkipLink href="#main-content" icon={<LayoutDashboard className="w-4 h-4" />}>
