@@ -50,6 +50,8 @@ describe('Talk X rota do editor de template', () => {
       '?view=inbox&tab=templates&template=tpl_1&ttab=conteudo',
       '?view=talkx&tab=templates&template=not/a/template&ttab=conteudo',
       '?view=talkx&tab=templates&template=&ttab=conteudo',
+      // Sub-aba sem template não tem o que abrir: o endereço volta para a biblioteca.
+      '?view=talkx&tab=templates&ttab=ab',
     ]) {
       expect(parseTalkXTemplateRoute(search)).toEqual({ route: null, needsNormalization: true });
     }

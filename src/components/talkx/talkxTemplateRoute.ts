@@ -57,9 +57,10 @@ export function parseTalkXTemplateRoute(search: string): ParsedTalkXTemplateRout
   if (
     view !== 'talkx' ||
     tab !== TEMPLATE_TAB ||
+    rawTemplate === undefined ||
     rawTemplate === null ||
-    rawTtab === null ||
     rawTemplate === '' ||
+    rawTtab === null ||
     (rawTemplate !== 'new' && !TEMPLATE_ID.test(rawTemplate))
   ) {
     return { route: null, needsNormalization: true };
