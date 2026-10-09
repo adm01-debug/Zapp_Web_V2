@@ -201,6 +201,14 @@ vi.mock('@/lib/logger', () => ({ log: loggerMock, getLogger: () => loggerMock })
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: roleState.isSupervisor, roles: [] }) }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => crmIntegrationState.enabled }));
 vi.mock('@/lib/crmIntegration', () => ({ callCRMIntegration: callCRMIntegrationMock }));
+vi.mock('@/hooks/system/useSearchHistory', () => ({
+  useSearchHistory: () => ({
+    history: [],
+    addToHistory: vi.fn(),
+    removeFromHistory: vi.fn(),
+    clearHistory: vi.fn(),
+  }),
+}));
 
 function renderBusca() {
   render(<GlobalSearch open onOpenChange={vi.fn()} onSelectResult={vi.fn()} />);

@@ -66,6 +66,21 @@ vi.mock('@/lib/logger', () => {
 });
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, roles: [] }) }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
+/**
+ * Isolamento do histórico de buscas (R2-PLAT-006): o hook passou a escopar o
+ * histórico por usuário e a ler `useAuth`, que exige `AuthProvider`. Este teste
+ * prova as ações rápidas/seleção da busca — nada de histórico —, então isola a
+ * dependência alheia (mesmo padrão de `GlobalSearch.navigation.test.tsx` e
+ * `GlobalSearch.r2-inb-020.test.tsx`) em vez de montar uma sessão de verdade.
+ */
+vi.mock('@/hooks/system/useSearchHistory', () => ({
+  useSearchHistory: () => ({
+    history: [],
+    addToHistory: vi.fn(),
+    removeFromHistory: vi.fn(),
+    clearHistory: vi.fn(),
+  }),
+}));
 
 const conversation = {
   id: 'conv-1',
