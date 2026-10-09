@@ -90,9 +90,21 @@ export default defineConfig(({ mode }) => {
               // Data layer
               { name: "vendor-data", priority: 90,
                 test: /node_modules[\\/](@tanstack[\\/]react-query|@supabase[\\/]supabase-js)[\\/]/ },
-              // UI components from node_modules
+              // UI components from node_modules. framer-motion NAO entra aqui:
+              // o grupo vendor-ui e alcancado estaticamente pelo entry (Radix),
+              // entao qualquer modulo do grupo vira peso de first paint mesmo sem
+              // uso inicial. Com grupo proprio (vendor-motion, abaixo) o runtime
+              // de animacao segue a alcancabilidade dos importadores: sai do
+              // chunk inicial quando o uso fica so sob demanda (SL-103A/SL-103C).
               { name: "vendor-ui", priority: 80,
-                test: /node_modules[\\/](@radix-ui|framer-motion|class-variance-authority|clsx|tailwind-merge)[\\/]/ },
+                test: /node_modules[\\/](@radix-ui|class-variance-authority|clsx|tailwind-merge)[\\/]/ },
+              // Runtime de animacao (framer-motion + deps). Grupo separado de
+              // proposito: junto do Radix ele era baixado no first paint sem
+              // nenhuma animacao ter sido pedida (medido 107,5 KB gzip em
+              // vendor-ui). Aqui ele vira chunk proprio e so e buscado quando um
+              // componente que anima realmente carrega.
+              { name: "vendor-motion", priority: 80,
+                test: /node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/ },
               // Date utilities
               { name: "vendor-utils", priority: 70, test: /node_modules[\\/]date-fns[\\/]/ },
               // Charts (loaded only by dashboards/reports)
