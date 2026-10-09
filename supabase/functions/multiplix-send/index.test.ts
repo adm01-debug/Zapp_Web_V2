@@ -178,11 +178,11 @@ interface MockOpts {
   /** R2-API-013: segura a renovacao em voo ate o teste chamar releaseHeartbeat (prova de que
    * um tick novo nao empilha outro heartbeat por cima do que ainda esta pendente). */
   heartbeatPending?: boolean;
-  /** MX03: resposta de `complete_multiplix_dispatch_if_items_drained` (default: true). */
-  itemsDrainResult?: boolean;
   /** MX03: resposta do dreno ANTIGO `complete_multiplix_dispatch_if_drained` (o que conta
    * `multiplix_recipients`). Existe so para provar que o "concluido" do worker nao vem mais
-   * dele: com `itemsDrainResult:false` + `legacyDrainResult:true`, o disparo NAO pode concluir. */
+   * dele: o dreno POR ITEM (`complete_multiplix_dispatch_if_items_drained`) e fiel ao banco —
+   * conclui so quando `ctx.remaining` esvazia de verdade — e `legacyDrainResult:true` prova que
+   * a resposta do worker nao vem do dreno antigo mesmo quando ele mentiria "concluido". */
   legacyDrainResult?: boolean;
 }
 
@@ -467,16 +467,11 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               finally: (aoFinalizar?: () => void) => executar().finally(aoFinalizar),
             };
           }
-          case "complete_multiplix_dispatch_if_items_drained":
-            // MX03: o dreno do modelo POR ITEM (f32b §3) — e quem decide "concluido"
-            // agora. O stub explicito evita cair no default `true` e deixa o teste
-            // controlar a resposta (nao-terminal = false).
-            return Promise.resolve({ data: opts.itemsDrainResult ?? true, error: null });
           case "complete_multiplix_dispatch_if_drained":
             // MX03: o dreno ANTIGO, que conta `multiplix_recipients` pending/sending.
             // Continua stubado (default true) porque o worker NAO pode mais chama-lo:
             // e a assercao "0 chamadas" que prova a troca. `legacyDrainResult:true`
-            // com `itemsDrainResult:false` prova que a resposta nao vem daqui.
+            // com a fila por item ainda aberta prova que a resposta nao vem daqui.
             return Promise.resolve({ data: opts.legacyDrainResult ?? true, error: null });
           default:
             return Promise.resolve({ data: true, error: null });
@@ -1002,8 +997,10 @@ Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
 // criado para isso e nao tinha nenhum chamador.
 
 Deno.test("MX03: com o lote processado o worker conclui pelo dreno POR ITEM (nunca pelo de recipients)", async () => {
-  const opts = batchSendingOpts("551193000");
-  opts.itemsDrainResult = true;
+  // length=20 == MULTIPLIX_BATCH_SIZE padrao: a UNICA passada do worker (F11a) processa
+  // os 20, `ctx.remaining` esvazia de verdade e o dreno POR ITEM (fiel ao banco: conclui
+  // so quando a fila esvazia) pode dizer "concluido" sem precisar fingir nada.
+  const opts = batchSendingOpts("551193000", 20);
   opts.legacyDrainResult = true; // o dreno velho diria "concluido" de todo jeito
   const ctx = newCtx(opts);
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
@@ -1025,9 +1022,10 @@ Deno.test("MX03: com o lote processado o worker conclui pelo dreno POR ITEM (nun
 
 Deno.test("MX03: 'concluido' vem da fila POR ITEM — dreno antigo dizendo true nao fecha o disparo", async () => {
   // Discriminante: os dois drenos respondem diferente. Se o worker ainda chamasse o
-  // antigo, `completed` seria true (e o disparo concluiria com item na fila).
+  // antigo, `completed` seria true (e o disparo concluiria com item na fila). Aqui o
+  // lote (25) excede o MULTIPLIX_BATCH_SIZE padrao (20): a UNICA passada processa so
+  // 20, sobram 5 em `ctx.remaining` e o dreno POR ITEM (fiel ao banco) recusa de verdade.
   const opts = batchSendingOpts("551193111");
-  opts.itemsDrainResult = false; // ainda ha item nao-terminal na fila
   opts.legacyDrainResult = true; // o antigo mentiria "drenado"
   const ctx = newCtx(opts);
   const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
