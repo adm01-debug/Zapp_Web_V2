@@ -79,16 +79,21 @@ function respostaDe(companyId: string) {
   };
 }
 
+/** Última chamada registrada pelo mock (o lib de tipos do projeto não tem `.at`). */
+function ultima(chamadas: unknown[][]): unknown[] {
+  return chamadas[chamadas.length - 1];
+}
+
 /** Clica "Buscar" e entrega a resposta da busca, como a edge faria. */
 function responderBusca(rows: MultiplixAudienceRow[]) {
   fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
-  const chamada = mocks.searchMutate.mock.calls.at(-1)!;
+  const chamada = ultima(mocks.searchMutate.mock.calls) as [unknown, { onSuccess: (rows: MultiplixAudienceRow[]) => void }];
   act(() => { chamada[1].onSuccess(rows); });
 }
 
 /** Responde a comparação feita no servidor: quem da seleção continua no filtro. */
 function responderComparacao(dentro: string[]) {
-  const chamada = mocks.selectMutate.mock.calls.at(-1)!;
+  const chamada = ultima(mocks.selectMutate.mock.calls);
   act(() => {
     chamada[1].onSuccess({
       recipients: dentro.map(respostaDe),
@@ -110,7 +115,7 @@ function salvarRegra(nome: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Salvar público' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirmar e salvar' }));
   act(() => {
-    mocks.saveMutate.mock.calls.at(-1)![1].onSuccess({ id: 'pub-1', name: nome, kind: 'rule', member_count: 0 });
+    ultima(mocks.saveMutate.mock.calls)[1].onSuccess({ id: 'pub-1', name: nome, kind: 'rule', member_count: 0 });
   });
 }
 
@@ -131,7 +136,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     responderBusca([linha('c1', 'Alfa')]);
 
     // quem responde "quem ficou fora" é o servidor, com o filtro submetido
-    const [entrada] = mocks.selectMutate.mock.calls.at(-1)!;
+    const [entrada] = ultima(mocks.selectMutate.mock.calls);
     expect(entrada.manual).toEqual({ companyIds: ['c1', 'c2'] });
     expect(entrada.filters).toEqual({ search: 'alfa' });
     responderComparacao(['c1']);
@@ -169,7 +174,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     expect(mocks.saveMutate).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar e salvar' }));
-    const [entrada, opcoes] = mocks.saveMutate.mock.calls.at(-1)!;
+    const [entrada, opcoes] = ultima(mocks.saveMutate.mock.calls);
     expect(entrada).toMatchObject({ name: 'Fornecedores alfa', kind: 'rule' });
     expect(entrada.definition).toEqual({ search: 'alfa' });
     expect(entrada.members).toBeUndefined();
@@ -196,7 +201,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     expect(mocks.saveMutate).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar e salvar' }));
-    const [entrada] = mocks.saveMutate.mock.calls.at(-1)!;
+    const [entrada] = ultima(mocks.saveMutate.mock.calls);
     expect(entrada).toMatchObject({ name: 'Meus fornecedores', kind: 'static_list', members: { companyIds: ['c1'] } });
     expect(entrada.definition).toBeUndefined();
   });
@@ -208,7 +213,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     salvarRegra('Fornecedores alfa');
 
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar público salvo' }));
-    const [entrada, opcoes] = mocks.applyMutate.mock.calls.at(-1)!;
+    const [entrada, opcoes] = ultima(mocks.applyMutate.mock.calls);
     expect(entrada).toEqual({ audienceId: 'pub-1' });
     act(() => {
       opcoes.onSuccess({
@@ -236,7 +241,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
 
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar público salvo' }));
     act(() => {
-      mocks.applyMutate.mock.calls.at(-1)![1].onSuccess({
+      ultima(mocks.applyMutate.mock.calls)[1].onSuccess({
         recipients: [],
         total: 96,
         eligible_count: 96,
@@ -263,7 +268,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar e salvar' }));
 
     act(() => {
-      mocks.saveMutate.mock.calls.at(-1)![1].onError(new Error('multiplix_audience_save_failed'));
+      ultima(mocks.saveMutate.mock.calls)[1].onError(new Error('multiplix_audience_save_failed'));
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível salvar o público: multiplix_audience_save_failed');
@@ -274,7 +279,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     responderBusca([linha('c1', 'Alfa')]);
     fireEvent.click(screen.getByRole('button', { name: 'Detalhes de Alfa' }));
 
-    const [ids, opcoes] = mocks.resolveMutate.mock.calls.at(-1)!;
+    const [ids, opcoes] = ultima(mocks.resolveMutate.mock.calls);
     expect(ids).toEqual(['c1']);
     act(() => {
       opcoes.onSuccess([
