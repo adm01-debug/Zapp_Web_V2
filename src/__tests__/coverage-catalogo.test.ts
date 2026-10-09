@@ -14,7 +14,7 @@
  *   3. o Catálogo tem piso próprio, cobrindo o módulo inteiro, de 80% em lines e branches.
  */
 import { readdirSync } from "node:fs";
-import { matchesGlob, resolve } from "node:path";
+import { join, matchesGlob, relative, resolve, sep } from "node:path";
 import { cwd } from "node:process";
 import { loadConfigFromFile } from "vite";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -32,12 +32,16 @@ const FORA_DO_MODULO = "src/components/contacts/ContactForm.tsx";
 let include: string[] = [];
 let thresholds: Record<string, number | Piso> = {};
 
-/** Arquivos de produção do módulo (sem os testes, que o `coverage.exclude` tira do gate). */
+/**
+ * Arquivos de produção do módulo (sem os testes, que o `coverage.exclude` tira do gate),
+ * no formato que o coverage casa: caminho relativo à raiz do repo, com `/`.
+ * `e.parentPath` já é absoluto: o caminho sai de `relative(raiz, join(parentPath, name))`.
+ */
 function arquivosDoModulo(): string[] {
   const raiz = resolve(cwd());
   return readdirSync(resolve(raiz, MODULO), { recursive: true, withFileTypes: true })
     .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
-    .map((e) => `${MODULO}/${(e.parentPath ?? "").slice(raiz.length + 1)}/${e.name}`.replace(/\/+/g, "/"))
+    .map((e) => relative(raiz, join(e.parentPath, e.name)).split(sep).join("/"))
     .filter((f) => !f.includes("__tests__") && !/\.(test|spec)\./.test(f));
 }
 
@@ -64,6 +68,11 @@ describe("gate de cobertura do módulo do Catálogo (SL-154 · DEC-1)", () => {
   it("um mesmo glob do gate mede todos os arquivos do módulo e nenhum de fora", () => {
     const arquivos = arquivosDoModulo();
     expect(arquivos.length).toBeGreaterThanOrEqual(20);
+    // Formato do caminho montado: relativo à raiz do repo, sem repetir o prefixo do módulo.
+    // Sem isto, um caminho duplicado (`src/components/catalog/src/components/catalog/X.tsx`)
+    // ainda casaria com o glob e o teste passaria por acaso.
+    expect(arquivos).toContain(AMOSTRA_DO_MODULO);
+    expect(arquivos.every((arquivo) => arquivo.startsWith(`${MODULO}/`) && !arquivo.includes(`${MODULO}/src/`))).toBe(true);
 
     const globDoModulo = include.find((glob) => arquivos.every((arquivo) => matchesGlob(arquivo, glob)));
     expect(globDoModulo).toBeDefined();

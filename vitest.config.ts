@@ -50,8 +50,9 @@ export default defineConfig({
         // src/lib/__tests__/mapboxLoader.test.ts (2026-10-08).
         "src/components/contacts/ContactForm.tsx": { lines: 70, branches: 55 },
         "src/lib/mapboxLoader.ts": { lines: 85, branches: 75 },
-        // SL-154 (DEC-1): piso do módulo do Catálogo (medido 2026-10-08, agregado do escopo
-        // acima): lines 88.18 / branches 83.21. Mesmo glob de coverage.include.
+        // SL-154 (DEC-1): piso do módulo do Catálogo. Medição de 2026-10-08 feita só no
+        // próprio módulo (src/components/catalog/**, não no escopo do mapa acima): lines 88.18 /
+        // branches 83.21. Mesmo glob de coverage.include.
         "src/components/catalog/**/*.{ts,tsx}": { lines: 80, branches: 80 },
       },
     },
