@@ -153,10 +153,15 @@ describe('Team Chat — Exhaustive Audit', () => {
       expect(panelSrc).toContain('team-chat-files');
     });
 
-    it.todo('BUG: audio recording uses webm which may not play on Safari', () => {
-      // WebM is not supported in Safari - should consider using mp4/m4a fallback
-      const usesWebm = panelSrc.includes('.webm');
-      expect(usesWebm).toBe(true); // Documenting this limitation
+    // SL-072 — o áudio do chat interno não é sempre webm: o MediaRecorder do
+    // Safari entrega audio/mp4 (m4a) e o TTS entrega audio/mpeg (mp3). O painel
+    // passou a resolver extensão e contentType pelo blob real; a prova de
+    // comportamento (upload chamado com o formato certo) está em
+    // __tests__/useTeamChatPanel.audio-send.test.tsx.
+    it('declara no upload o formato real do áudio — mp4/m4a no Safari (SL-072)', () => {
+      expect(panelHookSrc).toContain('resolveAudioUploadFormat');
+      expect(panelHookSrc).toContain("'audio/mp4'");
+      expect(panelHookSrc).toContain("extension: 'm4a'");
     });
   });
 
@@ -522,9 +527,13 @@ describe('Team Chat — Exhaustive Audit', () => {
     });
 
 
-    it.todo('should set proper content type on upload', () => {
+    // SL-072: o contentType do áudio do chat interno não é mais webm fixo — o
+    // painel resolve o formato pelo mime real do blob (mp4/m4a no Safari).
+    it('should set proper content type on upload', () => {
       expect(uploaderSrc).toContain('contentType: file.type');
-      expect(panelSrc).toContain("contentType: 'audio/webm'");
+      // SL-072: o áudio do painel sai com o formato do blob, resolvido no upload.
+      expect(panelHookSrc).toContain('resolveAudioUploadFormat(blob)');
+      expect(panelHookSrc).toContain("'audio/mp4'");
     });
   });
 
