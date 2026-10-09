@@ -1,4 +1,3 @@
-import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Pause, Square, Play, Timer, CheckCircle2, Loader2,
@@ -11,16 +10,12 @@ import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
-import { useTalkX } from '@/hooks/integrations/useTalkX';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
@@ -32,7 +27,7 @@ const REFETCH = 4000;
 
 export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const qc = useQueryClient();
-  const { startCampaign, pauseCampaign, cancelCampaign } = useTalkX();
+  const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
   // e o próprio refetch. O retry de um bloco não troca a campanha aberta.
   const {
@@ -41,10 +36,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [confirmPause, setConfirmPause] = useState(false);
-  const [pauseReason, setPauseReason] = useState('');
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [confirmResume, setConfirmResume] = useState(false);
 
   const {
     data: campaign,
@@ -155,9 +146,9 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             <StatusPill status={campaign.status} map={CAMPAIGN_STATUS}/>
             {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
             {!isDone && (<>
-              {isRunning && <button type="button" onClick={()=>setConfirmPause(true)} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
-              {isPaused && <button type="button" onClick={()=>setConfirmResume(true)} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
-              <button type="button" onClick={()=>setConfirmCancel(true)} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
+              {isRunning && <button type="button" onClick={()=>lifecycle.request({ kind: 'pause', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-dash-amber text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-amber/20"><Pause className="w-4 h-4"/>Pausar</button>}
+              {isPaused && <button type="button" onClick={()=>lifecycle.request({ kind: 'resume', target: campaign })} className="h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/20"><Play className="w-4 h-4"/>Retomar</button>}
+              <button type="button" onClick={()=>lifecycle.request({ kind: 'cancel', target: campaign })} className="h-9 px-3.5 rounded-lg border border-dash-red/40 bg-dash-red/10 text-dash-red text-xs font-semibold flex items-center gap-1.5 hover:bg-dash-red/20"><Square className="w-4 h-4"/>Cancelar</button>
             </>)}
           </div>
         </div>
@@ -298,19 +289,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         </section>
       )}
 
-      <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Pausar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios em andamento serão concluídos, mas novos envios não serão iniciados.</AlertDialogDescription></AlertDialogHeader>
-        <textarea className="w-full min-h-[64px] rounded-md border border-border bg-background px-3 py-2 text-sm" placeholder="Motivo da pausa (opcional)" value={pauseReason} onChange={(e)=>setPauseReason(e.target.value)} />
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-amber hover:bg-dash-amber/90 text-black" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await pauseCampaign(campaignId, pauseReason.trim() || undefined); setPauseReason(''); setConfirmPause(false); } catch(e: unknown) { toast.error(`Erro ao pausar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Pausar agora</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Cancelar campanha?</AlertDialogTitle><AlertDialogDescription>O envio será interrompido e contatos pendentes não receberão mensagens.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={async(ev: React.MouseEvent)=>{ev.preventDefault(); try { await cancelCampaign(campaignId); setConfirmCancel(false); } catch(e: unknown) { toast.error(`Erro ao cancelar: ${e instanceof Error ? (e as Error).message : 'Erro'}`); }}}>Cancelar campanha</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
-        <AlertDialogContent className="rounded-2xl border-border/70"><AlertDialogHeader><AlertDialogTitle>Retomar campanha?</AlertDialogTitle><AlertDialogDescription>Os envios serão continuados a partir de onde pararam.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async()=>{const started=await startCampaign(campaignId);if(!started)return;setConfirmResume(false);}}>Retomar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
-      </AlertDialog>
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
 }
