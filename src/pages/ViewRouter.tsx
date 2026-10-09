@@ -12,6 +12,29 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
 
 import * as Views from './lazyViews';
+import { TASKS_ROUTE_PROPS } from './viewRouteProps';
+import { TALKX_KIT_VIEW_ID, isTalkXKitEnabled } from '@/components/talkx/kit/forcedState';
+
+/**
+ * X055 — prancha de referência do Talk X (`?view=talkx-kit`), só em
+ * desenvolvimento. O `import()` vive DENTRO do ramo `import.meta.env.DEV`,
+ * que o build de produção substitui por `false`: o módulo da prancha não é
+ * empacotado em produção (mesmo padrão do adaptador de CRM em
+ * `src/services/crm/singu-adapter.ts`).
+ */
+async function loadTalkXKit() {
+  if (import.meta.env.DEV || import.meta.env.VITE_TALKX_KIT === '1') {
+    const mod = await import('@/components/talkx/__dev__/TalkXKit');
+    return mod.TalkXKit;
+  }
+  return null;
+}
+
+const TalkXKitLazy = React.lazy(async () => {
+  const Componente = await loadTalkXKit();
+  if (!Componente) throw new Error('Prancha do Talk X indisponível fora de desenvolvimento.');
+  return { default: Componente };
+});
 
 interface ViewRouterProps {
   currentView: string;
@@ -124,8 +147,19 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
   // deep link ou favorito antigo. Nega por padrao ate os papeis E as permissoes
   // nomeadas carregarem — evita flash da tela restrita (mesmo padrao do ProtectedRoute).
   const authorized = !accessLoading && NavigationService.canAccess(currentView, roles, permissions);
+  // X055 — a prancha de referência não é um módulo do menu: ela não passa pelo
+  // `canAccess` (que negaria um id sem entrada de navegação), mas continua
+  // fechada fora de DEV/`VITE_TALKX_KIT=1`.
+  const kitView = currentView === TALKX_KIT_VIEW_ID && isTalkXKitEnabled();
 
   const content = useMemo(() => {
+    if (kitView) {
+      return (
+        <ErrorBoundaryView viewId={TALKX_KIT_VIEW_ID}>
+          <TalkXKitLazy />
+        </ErrorBoundaryView>
+      );
+    }
     if (accessLoading) {
       return <ViewLoadingFallback noPadding />;
     }
@@ -146,7 +180,7 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       );
     }
     return <FallbackView currentView={currentView} />;
-  }, [currentView, userId, accessLoading, authorized, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo]);
+  }, [currentView, kitView, userId, accessLoading, authorized, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo]);
 
   return (
     <ViewContainer
