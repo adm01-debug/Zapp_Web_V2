@@ -366,7 +366,7 @@ export default function TalkXView() {
           )}
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
-            isError={isError} error={campaignsError} onRetry={() => { void refetchCampaigns(); }}
+            isError={isError} error={campaignsError} onRetry={() => refetchCampaigns()}
             onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={openRunning} onDuplicate={duplicateCampaign}
             onStart={(id) => { void startCampaign(id); }}
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
