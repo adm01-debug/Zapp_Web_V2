@@ -95,7 +95,7 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
 }));
 
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { VoIPPanel } from '../VoIPPanel';
+import { TelefoniaView } from '../TelefoniaView';
 
 function renderWithProviders(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -104,7 +104,7 @@ function renderWithProviders(ui: React.ReactElement) {
   return render(<TooltipProvider><QueryClientProvider client={qc}>{ui}</QueryClientProvider></TooltipProvider>);
 }
 
-describe('VoIPPanel', () => {
+describe('TelefoniaView — painel', () => {
   beforeEach(async () => {
     vi.resetAllMocks();
     const { supabase } = await import('@/integrations/supabase/client');
@@ -116,12 +116,12 @@ describe('VoIPPanel', () => {
   });
 
   it('renders the Telefonia header', () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     expect(screen.getByText('Telefonia')).toBeInTheDocument();
   });
 
   it('shows history and the dialer side by side — no admin configuration tab', () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     expect(screen.getByTestId('tel-new-call-panel')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar contato ou digitar número')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Buscar por nome ou número')).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('VoIPPanel', () => {
     // useCallHistory. Os KPIs do plano vem da RPC my_calls_kpi, entao a expectativa
     // foi repontada para os tiles novos - e ficou MAIS FORTE: antes so existia o
     // rotulo, agora o valor real aparece na tela.
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     expect(screen.getByText('Total')).toBeInTheDocument();
     expect(screen.getByText('Atendidas')).toBeInTheDocument();
     expect(screen.getByText('Perdidas')).toBeInTheDocument();
@@ -149,14 +149,14 @@ describe('VoIPPanel', () => {
   });
 
   it('mostra os tiles com altura fixa de 78px (T38)', () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     const tiles = screen.getAllByTestId('tel-kpi-card');
     expect(tiles.length).toBe(5);
     tiles.forEach((t) => expect(t.className).toContain('h-[78px]'));
   });
 
   it('os KPIs sao os mesmos 5 tiles, sem fileira duplicada de numeros (T38/T39)', () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     // A tela tinha OUTRA fileira de stats (Total/Recebidas/... lendo useCallHistory).
     // Duas fileiras com os mesmos numeros seria bug; o valor do servidor aparece uma vez.
     expect(screen.getAllByTestId('tel-kpi-card').length).toBe(5);
@@ -165,7 +165,7 @@ describe('VoIPPanel', () => {
   });
 
   it('scopes both the history and the stats query to the signed-in agent', async () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
 
     // O recorte por agente deixou de ser `.eq('agent_id')` no cliente: agora e o
     // parametro `scope` da RPC search_my_calls, recortado no banco. A expectativa
@@ -187,7 +187,7 @@ describe('VoIPPanel', () => {
     const paginado = mockMyCalls();
     mockMyCalls.mockReturnValueOnce({ ...paginado, total: 40, pages: 5, page: 2 });
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
 
     await waitFor(() => {
       expect(screen.getByTestId('tel-pagination')).toBeInTheDocument();
@@ -209,7 +209,7 @@ describe('VoIPPanel', () => {
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
 
     fireEvent.click(screen.getByText('Ana Paula'));
@@ -236,7 +236,7 @@ describe('VoIPPanel', () => {
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Ana Paula'));
 
@@ -278,7 +278,7 @@ describe('VoIPPanel', () => {
       return true;
     });
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
 
     const campoAnotacao = () => screen.getByPlaceholderText('Adicionar anotação sobre esta chamada...') as HTMLTextAreaElement;
@@ -316,7 +316,7 @@ describe('VoIPPanel', () => {
   // reivindicação nenhuma aba assume e o portão de `connect()` (useSipConnection)
   // recusaria o REGISTER em todas elas (a telefonia nunca registraria a linha).
   it('T20: reivindica a liderança da aba ao montar (a eleição começa)', () => {
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
 
     expect(mockClaimLeadership).toHaveBeenCalled();
   });
@@ -326,7 +326,7 @@ describe('VoIPPanel', () => {
   it('T20: com sipReason=line_in_use_other_tab mostra o motivo e desabilita conectar', () => {
     mockSipExtras.current = { sipReason: 'line_in_use_other_tab' };
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
 
     expect(screen.getByText('Ligação em andamento em outra aba')).toBeInTheDocument();
     // T40: o botao foi removido da tela; a prova agora afirma a AUSENCIA (o inverso),
@@ -346,7 +346,7 @@ describe('VoIPPanel', () => {
     }];
     mockSupabaseFrom.mockReturnValue(makeCallsQueryBuilder({ historyResult: { data: page, error: null } }));
 
-    renderWithProviders(<VoIPPanel />);
+    renderWithProviders(<TelefoniaView />);
     await waitFor(() => expect(screen.getByText('Ana Paula')).toBeInTheDocument());
 
     // Enter seleciona (T68)...

@@ -46,10 +46,19 @@ describe('TelefoniaView (T33)', () => {
     expect(container.className).toContain('min-w-0');
   });
 
-  it('o alias VoIPPanel aponta para a mesma view (contrato dos 5 consumidores)', async () => {
-    const alias = await import('../VoIPPanel');
-    const direto = await import('../TelefoniaView');
-    expect(alias.VoIPPanel).toBe(direto.TelefoniaView);
+  /**
+   * T90 — o alias `VoIPPanel` saiu: o arquivo de reexport foi removido e a rota
+   * `voip` passa a carregar a view real (`TelefoniaView`) pelo `lazyViews`.
+   *
+   * Prova o contrato dos consumidores: o módulo exposto é `TelefoniaView` e o
+   * nome antigo NÃO é mais exportado. Antes desta correção o `lazyViews` expunha
+   * `VoIPPanel` (o alias) e não tinha `TelefoniaView` — este teste falha naquele
+   * estado (vermelho antes, verde depois).
+   */
+  it('T90: o lazyViews expõe a view real e o alias VoIPPanel não existe mais', async () => {
+    const Views = await import('@/pages/lazyViews');
+    expect(Views).toHaveProperty('TelefoniaView');
+    expect((Views as Record<string, unknown>).VoIPPanel).toBeUndefined();
   });
 });
 vi.mock('@/hooks/calls/useCallsKpi', () => ({

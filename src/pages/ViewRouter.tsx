@@ -69,7 +69,7 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'wa-flows': Views.WhatsAppFlowsBuilder,
   'meta-capi': Views.MetaCAPIView,
   'diagnostics': Views.DiagnosticsView,
-  'voip': Views.VoIPPanel,
+  'voip': Views.TelefoniaView,
   'auto-export': Views.AutoExportManager,
   'google-calendar': Views.GoogleCalendarIntegration,
   'themes': Views.ThemeCustomizer,

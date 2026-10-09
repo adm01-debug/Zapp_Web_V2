@@ -37,7 +37,7 @@ import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
  * `dial/accept/reject/hangup/toggleMute/sendDTMF/openDialer`.
  *
  * Compatibilidade (o que o aceite exige antes da Fase 4): a UI antiga
- * (`VoIPPanel`, `DialPad`, `ActiveCallBar`) lê `useCallSession()`, então o valor
+ * (`TelefoniaView`, `DialPad`, `ActiveCallBar`) lê `useCallSession()`, então o valor
  * continua trazendo **todos** os campos do `useSipClient()` — `sipStatus`,
  * `callStatus`, `callDuration`, `isMuted`, `currentNumber`, `callDirection`,
  * `currentCallId` — e ganha `session` + a API nova por cima. Nenhum campo
@@ -57,7 +57,7 @@ import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
  * `onEnd` real que chega depois (`corrigirFim`) em vez de engoli-lo.
  */
 
-/** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `VoIPPanel`. */
+/** Rota da view de telefonia — o `ViewRouter` mapeia `voip` → `TelefoniaView`. */
 export const VOIP_VIEW_SEARCH = '?view=voip';
 
 /**

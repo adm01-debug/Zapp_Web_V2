@@ -5,7 +5,7 @@
  *  - o **aceite do T10**: `dial` navega (MemoryRouter) e o estado da sessão
  *    sobrevive à navegação;
  *  - a **compatibilidade**: `useCallSession()` continua entregando os campos que
- *    `VoIPPanel`/`DialPad`/`ActiveCallBar` leem hoje — sem eles a Fase 4 quebra
+ *    `TelefoniaView`/`DialPad`/`ActiveCallBar` leem hoje — sem eles a Fase 4 quebra
  *    a UI antes de substituí-la;
  *  - que o motor dirige a máquina (`calling → dialing`, `active → active`,
  *    `ended → ended`) e que `hangup` preserva o `endedBy` **sem** transição
@@ -182,7 +182,7 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('nav-view')).toBe('voip');
   });
 
-  it('mantém os campos que a UI antiga consome (VoIPPanel/DialPad/ActiveCallBar)', () => {
+  it('mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar)', () => {
     h.value = sipDuble({
       sipStatus: 'registered',
       callStatus: 'ringing',
