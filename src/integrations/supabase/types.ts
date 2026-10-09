@@ -11242,6 +11242,7 @@ export type Database = {
         Args: { p_department_id: string }
         Returns: Json
       }
+      get_department_whatsapp_mode: { Args: { p_department_id: string }; Returns: string }
       get_gmail_tokens: {
         Args: { p_account_id: string }
         Returns: {
