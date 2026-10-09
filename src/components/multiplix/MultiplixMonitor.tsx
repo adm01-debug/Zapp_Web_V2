@@ -8,6 +8,7 @@ import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
   fetchMultiplixRecipientsTotal,
+  type MultiplixRecipientRow,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import {
   IconTile, StatusPill, fmtInt, pct, fmtDateTime,
@@ -64,6 +65,30 @@ function confirmErrorMessage(error: unknown): string {
 }
 
 interface Props { dispatchId: string; onBack: () => void }
+
+/**
+ * F87 — render isolado por linha. A linha da lista de destinatarios tem
+ * componente proprio + `React.memo`: o monitor re-renderiza a cada interacao
+ * local (AlertDialog de pausar/cancelar) e a cada atualizacao de dados (canal
+ * realtime debounced + contagem de pulados a cada 5s), e a lista carrega em
+ * blocos de 500. Com o JSX inline, cada um desses eventos re-renderizava TODA a
+ * lista carregada. Com `React.memo`, a linha so re-renderiza quando o proprio
+ * objeto de dado muda (comparacao rasa das props — uma leitura nova cria
+ * objetos novos e re-renderiza; um re-render da tela sem dado novo, nao).
+ */
+const RecipientRow = React.memo(function RecipientRow({ r }: { r: MultiplixRecipientRow }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
+        <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
+        {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
+      <StatusPill status={r.status} map={RECIPIENT_STATUS} />
+      {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
+    </div>
+  );
+});
+
 
 export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const qc = useQueryClient();
@@ -172,7 +197,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   };
 
   return (
-    <div className="space-y-4 min-w-0">
+    <div className="space-y-4 min-w-0" data-testid="multiplix-monitor">
       <button type="button" onClick={onBack} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 w-fit">
         <ArrowLeft className="w-4 h-4" />Voltar aos disparos
       </button>
@@ -266,19 +291,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           </p>
         )}
         <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
-          {recipients.map((r) => {
-            const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
-            return (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
-                  <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
-                <StatusPill status={r.status} map={RECIPIENT_STATUS} />
-                {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
-              </div>
-            );
-          })}
+          {recipients.map((r) => <RecipientRow key={r.id} r={r} />)}
           {!recipientsFailed && recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
         </div>
       </section>
