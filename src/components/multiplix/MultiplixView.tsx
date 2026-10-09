@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Send, Search, Loader2, ListChecks } from 'lucide-react';
 import { ModuleHeader, StatusPill, fmtInt, fmtDateTime } from '@/components/talkx/talkxShared';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
   AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
@@ -44,6 +45,35 @@ const PLACEHOLDER_CHIPS = [
   { token: '{{saudacao}}', label: 'Saudação', acao: 'inserir a saudação' },
 ];
 
+// F76: teto de caracteres do bloco de texto. O front ainda nao consome
+// `whatsapp_connections.capabilities.max_chars` (F60 parcial — nenhum hook
+// expoe a capacidade da conexao, ver TL-035), mas a edge que recebe este texto
+// recusa acima de 65_536 (`supabase/functions/multiplix-dispatch/index.ts`:
+// `message_template: z.string().min(1).max(65_536)`) — o MESMO valor de
+// `capabilities().maxTextChars` do adaptador (`_shared/messaging/evolution-go.ts`
+// MAX_TEXT_CHARS). O contador usa o teto que o servidor REALMENTE aplica hoje e
+// fica pronto para receber o max_chars da conexao quando ele chegar ao front.
+const LIMITE_TEXTO = 65_536;
+
+/** Autosize: altura maxima do bloco de texto antes de rolar. */
+const ALTURA_MAX_TEXTO = 320;
+
+/** Chaves aceitas em `{{variavel}}` (mesmos tokens dos botoes de inserir). */
+const VARIAVEIS_CONHECIDAS = new Set(PLACEHOLDER_CHIPS.map((chip) => chip.token.slice(2, -2)));
+
+/**
+ * Chaves de `{{variavel}}` usadas no texto, sem repetir. `{{empresa|cliente}}`
+ * conta como `empresa` (mesma gramatica da previa).
+ */
+function chavesDeVariaveis(texto: string): string[] {
+  const chaves = new Set<string>();
+  for (const achado of texto.matchAll(/\{\{([^{}]*)\}\}/g)) {
+    const chave = (achado[1].split('|')[0] ?? '').trim().toLowerCase();
+    if (chave) chaves.add(chave);
+  }
+  return Array.from(chaves);
+}
+
 const PAGE_SIZE = 50;
 // Limite duro do backend: ResolveParamsSchema.company_ids em
 // supabase/functions/multiplix-audience/index.ts rejeita arrays > 500.
@@ -77,6 +107,8 @@ export default function MultiplixView() {
   // MultiplixComposerDialog, que o Radix não montava fechado).
   const [name, setName] = useState('');
   const [messageTemplate, setMessageTemplate] = useState('');
+  // F76: o bloco de texto e o alvo do autosize e da insercao no cursor.
+  const blocoTextoRef = useRef<HTMLTextAreaElement>(null);
   const [previewCompanyId, setPreviewCompanyId] = useState('');
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const [overLimit, setOverLimit] = useState<{ count: number; limit: number | null; startNow: boolean } | null>(null);
@@ -181,7 +213,15 @@ export default function MultiplixView() {
   };
 
   const busy = createDispatch.isPending;
-  const canSubmit = name.trim().length > 0 && messageTemplate.trim().length > 0 && selected.size > 0;
+  // F76 — bloco de texto: contador contra o teto do servidor, autosize e
+  // validacao das variaveis enquanto se digita. Acima do teto a revisao fica
+  // bloqueada (o botao de salvar/iniciar nao habilita).
+  const excedeLimiteTexto = messageTemplate.length > LIMITE_TEXTO;
+  const variaveisDesconhecidas = useMemo(
+    () => chavesDeVariaveis(messageTemplate).filter((chave) => !VARIAVEIS_CONHECIDAS.has(chave)),
+    [messageTemplate],
+  );
+  const canSubmit = name.trim().length > 0 && messageTemplate.trim().length > 0 && selected.size > 0 && !excedeLimiteTexto;
 
   // F08: o composer nao resolve o publico nem insere destinatarios — manda os
   // company_ids e a edge re-resolve com o escopo do JWT e cria na transacao.
@@ -215,7 +255,33 @@ export default function MultiplixView() {
     }
   };
 
-  const insertPlaceholder = (token: string) => setMessageTemplate((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${token}`);
+  // F76: os botoes de variavel inserem na posicao do cursor (antes, o token ia
+  // sempre para o fim do texto) e o bloco de texto cresce com o conteudo.
+  /** Autosize: acompanha o conteudo ate ALTURA_MAX_TEXTO e depois rola. */
+  const ajustarAlturaDoTexto = (el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, ALTURA_MAX_TEXTO)}px`;
+  };
+
+  const inserirNoCursor = (token: string) => {
+    const el = blocoTextoRef.current;
+    if (!el) {
+      setMessageTemplate((prev) => `${prev}${token}`);
+      return;
+    }
+    const inicio = el.selectionStart ?? messageTemplate.length;
+    const fim = el.selectionEnd ?? messageTemplate.length;
+    const proximo = `${messageTemplate.slice(0, inicio)}${token}${messageTemplate.slice(fim)}`;
+    setMessageTemplate(proximo);
+    ajustarAlturaDoTexto(el);
+    requestAnimationFrame(() => {
+      const node = blocoTextoRef.current;
+      if (!node) return;
+      node.focus();
+      const cursor = inicio + token.length;
+      node.setSelectionRange(cursor, cursor);
+    });
+  };
 
   // Regiao 03: previa do que o destinatario escolhido recebe. Derivada da
   // selecao (sem efeito de sincronizacao); 'previewCompanyId' e so a escolha
@@ -445,26 +511,52 @@ export default function MultiplixView() {
           <div className="flex flex-col gap-1 px-4 pb-4">
             <span className="text-xs text-muted-foreground">Mensagem</span>
             <Textarea
+              ref={blocoTextoRef}
               aria-label="Mensagem"
               value={messageTemplate}
-              onChange={(e) => setMessageTemplate(e.target.value)}
+              onChange={(e) => {
+                setMessageTemplate(e.target.value);
+                ajustarAlturaDoTexto(e.target);
+              }}
               placeholder="Olá {{empresa}}, {{saudacao}}!"
               rows={7}
+              className="resize-none"
+              aria-invalid={variaveisDesconhecidas.length > 0 || excedeLimiteTexto}
             />
-            <div className="flex flex-wrap gap-2 pt-1">
-              {PLACEHOLDER_CHIPS.map((chip) => (
-                <Button
-                  key={chip.token}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${chip.acao} na mensagem`}
-                  onClick={() => insertPlaceholder(chip.token)}
-                >
-                  + {chip.label}
-                </Button>
-              ))}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-2xs text-muted-foreground">Inserir</span>
+                {PLACEHOLDER_CHIPS.map((chip) => (
+                  <Button
+                    key={chip.token}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-label={`${chip.acao} na mensagem`}
+                    onClick={() => inserirNoCursor(chip.token)}
+                  >
+                    {chip.token}
+                  </Button>
+                ))}
+              </div>
+              <span
+                role="status"
+                aria-live="polite"
+                className={cn('shrink-0 text-2xs tabular-nums', excedeLimiteTexto ? 'font-semibold text-dash-red' : 'text-muted-foreground')}
+              >
+                {messageTemplate.length}/{LIMITE_TEXTO} caracteres
+              </span>
             </div>
+            {variaveisDesconhecidas.length > 0 && (
+              <p role="status" aria-live="polite" className="text-2xs text-dash-amber">
+                Variáveis desconhecidas: {variaveisDesconhecidas.map((chave) => `{{${chave}}}`).join(', ')}
+              </p>
+            )}
+            {excedeLimiteTexto && (
+              <p role="alert" className="text-2xs text-dash-red">
+                Acima do limite de {LIMITE_TEXTO} caracteres — a revisão fica bloqueada até o texto caber no limite.
+              </p>
+            )}
           </div>
 
           <p className="mt-auto px-4 pb-4 text-2xs text-muted-foreground">
