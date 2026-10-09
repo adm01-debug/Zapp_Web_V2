@@ -1,4 +1,4 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -1023,18 +1023,31 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     confirmSpy.mockRestore();
   });
 
-  it('alterar só a mídia já marca alteração ao sair', () => {
+  it('alterar só a mídia já marca alteração ao sair', async () => {
     const template = makeTemplate();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     const onClose = vi.fn();
     render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Imagem' }));
     fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
 
-    expect(confirmSpy).toHaveBeenCalledWith('Descartar alterações?');
+    // X050: a confirmação deixou de ser a caixinha do navegador e virou o preset
+    // `descartarAlteracoes` do kit — o editor só sai depois da resposta.
+    const modal = screen.getByRole('dialog');
+    expect(within(modal).getByText('Descartar Alterações')).toBeTruthy();
+    expect(within(modal).getByText('Tem alterações não salvas. Descartar?')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
+
+    // "Continuar editando" mantém o editor aberto.
+    fireEvent.click(within(modal).getByRole('button', { name: 'Continuar editando' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // "Descartar" aí sim fecha o editor.
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Descartar' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 

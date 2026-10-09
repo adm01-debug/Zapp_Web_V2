@@ -3,7 +3,6 @@ import {
   X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +13,10 @@ import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type Templat
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
 import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
-  VARIABLE_KEYS, personalizePreview, fmtInt,
+  VARIABLE_KEYS, personalizePreview, fmtInt, TalkXDialogShell,
 } from './talkxShared';
+import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
+import { useTalkXConfirm } from './kit/useTalkXConfirm';
 
 interface Props {
   templates: TalkXTemplate[];
@@ -27,6 +28,8 @@ interface Props {
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
   const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
+  // X050 — confirmação pelo kit: a caixinha cinza do navegador saiu do editor.
+  const { confirmar, dialogo } = useTalkXConfirm();
 
   // Inicializa campos do template sendo editado
   const [eName, setEName] = useState(editing?.name ?? '');
@@ -119,9 +122,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     } finally { setSaving(false); }
   };
 
-  const loadTemplate = (t: TalkXTemplate) => {
+  const loadTemplate = async (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
-    if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
+    if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
     versionsTemplateIdRef.current = null;
@@ -197,8 +200,15 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
     const recipientCount = await countVariantRecipients(variant.id);
     if (!isActiveOrigin(templateId)) return;
-    if (recipientCount > 0 && !window.confirm(`Variante usada em ${recipientCount} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return;
-    if (!isActiveOrigin(templateId)) return;
+    if (recipientCount > 0) {
+      // X050 — preset `excluirVariante` do kit, com a contagem em `details`.
+      const confirmado = await confirmar({
+        ...PRESETS_DO_PRODUTO.excluirVariante,
+        details: [{ label: 'Envios', value: fmtInt(recipientCount) }],
+      });
+      if (!confirmado) return;
+      if (!isActiveOrigin(templateId)) return;
+    }
 
     await deleteVariant(variant.id);
     if (!isActiveOrigin(templateId)) return;
@@ -265,10 +275,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   };
 
   /** E46: restaura campos de uma versao anterior */
-  const restoreVersion = (v: typeof versions[0]) => {
+  const restoreVersion = async (v: typeof versions[0]) => {
     // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
     if (!isActiveOrigin(v.template_id)) return;
-    if (!confirm('Restaurar esta versão? Os campos atuais serão substituídos.')) return;
+    if (!(await confirmar(PRESETS_DO_PRODUTO.restaurarVersao))) return;
+    if (!isActiveOrigin(v.template_id)) return;
     setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
@@ -325,7 +336,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => loadTemplate(t)}
+                      onClick={() => { void loadTemplate(t); }}
                       className={cn(
                         'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
                         activeTemplateId === t.id
@@ -353,8 +364,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <button
             type="button"
             onClick={() => {
-              if (isDirty && !confirm('Descartar alterações?')) return;
-              onClose();
+              // X050 — preset `descartarAlteracoes` do kit no lugar do `confirm`.
+              void (async () => {
+                if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
+                onClose();
+              })();
             }}
             aria-label="Voltar"
             className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"
@@ -622,7 +636,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
                     <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                  <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => { void restoreVersion(v); }} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
                 </div>
               ))}
             </div>
@@ -645,22 +659,32 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
         )}
       </aside>
 
-      {/* E47: Test Dialog */}
-      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
-            <div>
-              <Label className="text-xs text-foreground-secondary">Número de destino</Label>
-              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
-            </div>
-            {testResult && (
-              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
-                {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
-                {testResult.msg}
-              </div>
-            )}
-            <div className="flex gap-2 pt-1">
-              <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
-              <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
-            </div></DialogContent></Dialog>
+      {/* E47: Test Dialog — X050: passa para a casca do kit, com o conteúdo atual */}
+      <TalkXDialogShell
+        open={showTest}
+        onClose={() => setShowTest(false)}
+        title="Testar template"
+        className="max-w-sm"
+        footer={<>
+          <button type="button" onClick={() => setShowTest(false)} className="h-9 rounded-lg border border-border/70 bg-input/40 px-4 text-[13px] font-medium">Fechar</button>
+          <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="h-9 rounded-lg bg-primary px-4 text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
+        </>}
+      >
+        <p className="text-xs text-foreground-secondary">Envia a mensagem personalizada para um número via WhatsApp.</p>
+        <div className="mt-3">
+          <Label className="text-xs text-foreground-secondary">Número de destino</Label>
+          <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
+        </div>
+        {testResult && (
+          <div className={testResult.ok ? 'mt-3 flex items-center gap-2 text-dash-green text-xs' : 'mt-3 flex items-center gap-2 text-dash-red text-xs'}>
+            {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+            {testResult.msg}
+          </div>
+        )}
+      </TalkXDialogShell>
+
+      {/* X050 — modal das confirmações do editor (descartar, restaurar, excluir variante) */}
+      {dialogo}
     </div>
   );
 }

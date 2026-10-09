@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, act, cleanup, within } from '@testing-library/react';
 
 /**
  * R2-MOD-024 (item 102 / P1) — "Respostas atrasadas de variantes e histórico são
@@ -292,6 +292,35 @@ describe('R2-MOD-024 — variante do template ativo continua salvando e excluind
     const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
     fireEvent.click(row.querySelector('button') as HTMLElement);
     await flush();
+    expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
+    expect(deleteVariant).toHaveBeenCalledWith('var-A');
+  });
+
+  // X050 — excluir variante com envios: a caixinha do navegador virou o preset
+  // `excluirVariante` do kit e a contagem aparece no próprio modal.
+  it('excluir variante com envios abre o modal do kit com a contagem e só apaga depois do "Excluir"', async () => {
+    fetchVariants.mockResolvedValue([variant('var-A', 'tpl-A', 'variante do ativo')]);
+    countVariantRecipients.mockResolvedValue(7);
+
+    renderEditor();
+    fireEvent.click(variantsToggle());
+    await flush();
+
+    const textarea = screen.getAllByDisplayValue('variante do ativo')[0];
+    const row = textarea.closest('div[class*="rounded-xl"]') as HTMLElement;
+    fireEvent.click(row.querySelector('button') as HTMLElement);
+    await flush();
+
+    // Nada é apagado antes da confirmação, e a caixinha cinza do navegador não existe.
+    expect(deleteVariant).not.toHaveBeenCalled();
+    const modal = await screen.findByRole('dialog');
+    expect(within(modal).getByText('Excluir Variante')).toBeTruthy();
+    expect(within(modal).getByText('Envios')).toBeTruthy();
+    expect(within(modal).getByText('7')).toBeTruthy();
+
+    fireEvent.click(within(modal).getByRole('button', { name: 'Excluir' }));
+    await flush();
+
     expect(countVariantRecipients).toHaveBeenCalledWith('var-A');
     expect(deleteVariant).toHaveBeenCalledWith('var-A');
   });

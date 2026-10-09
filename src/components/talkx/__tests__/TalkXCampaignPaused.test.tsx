@@ -143,7 +143,9 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
     expect(screen.getByText('Retomar campanha?')).toBeTruthy();
     // o modal nomeia a campanha (o cabeçalho também traz o nome: escopo no modal)
-    expect(within(screen.getByRole('alertdialog')).getByText(/Reativação de Leads/)).toBeTruthy();
+    // O modal do kit é a casca `TalkXDialogShell` (role "dialog"), a mesma dos
+    // outros confirmadores do Talk X.
+    expect(within(screen.getByRole('dialog')).getByText(/Reativação de Leads/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
     expect(h.startCampaign).toHaveBeenCalledWith('camp-pausada-1');
