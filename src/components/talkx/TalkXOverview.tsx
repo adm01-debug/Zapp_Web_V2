@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3,
+  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
+  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,11 +10,12 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
-  TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
+  TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useCampaignRowActions } from './useCampaignRowActions';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 function loadFilters() {
@@ -37,7 +38,8 @@ interface Props {
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
   onStart: (id: string) => void;
-  onPause: (id: string) => void;
+  /** O motivo é obrigatório na pausa e vai junto com a ação para o servidor. */
+  onPause: (id: string, reason: string) => void;
   onCancel: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
@@ -57,7 +59,13 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [pageSize, setPageSize] = useState(8);
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'cancel' | 'start'; c: TalkXCampaign } | null>(null);
+
+  // X080 — as ações de linha (matriz por status + confirmação das ações que
+  // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
+  // e as "Últimas campanhas".
+  const rowActions = useCampaignRowActions({
+    onView, onViewScheduled, onViewRunning, onEdit, onStart, onPause, onCancel, onDelete, onDuplicate,
+  });
 
   React.useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ status, objective, segment, creator })); } catch { /* ignore */ }
@@ -269,21 +277,22 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         </Td>
                         <Td className="text-right">
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild><button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
+                                {rowActions.pendingId === c.id
+                                  ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                                  : <MoreVertical className="w-4 h-4" />}
+                              </button>
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              {c.status === 'scheduled' && onViewScheduled
-                                ? <DropdownMenuItem onClick={() => onViewScheduled(c)}><Eye className="w-4 h-4 mr-2" />Ver agendamento</DropdownMenuItem>
-                                : (c.status === 'sending' || c.status === 'paused') && onViewRunning
-                                ? <DropdownMenuItem onClick={() => onViewRunning(c)}><Eye className="w-4 h-4 mr-2" />Em andamento</DropdownMenuItem>
-                                : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
-                              {c.status === 'sending' && <DropdownMenuItem onClick={() => onPause(c.id)}><Pause className="w-4 h-4 mr-2" />Pausar</DropdownMenuItem>}
-                              {c.status === 'paused' && <DropdownMenuItem onClick={() => onStart(c.id)}><Play className="w-4 h-4 mr-2" />Retomar</DropdownMenuItem>}
-                              <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'cancel', c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
+                              {rowActions.actionsFor(c).map((action, i) => (
+                                <React.Fragment key={action.id}>
+                                  {action.destructive && i > 0 && <DropdownMenuSeparator />}
+                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
+                                    <action.icon className="w-4 h-4 mr-2" />{action.label}
+                                  </DropdownMenuItem>
+                                </React.Fragment>
+                              ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </Td>
@@ -327,36 +336,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* E25 — Modais de confirmação via TalkXConfirmDialog */}
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'delete'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onDelete(confirm.c.id); setConfirm(null); }}
-        icon={Trash2} iconColor="red" tone="danger"
-        title="Excluir campanha"
-        description="Esta ação não pode ser desfeita."
-        entityName={confirm?.c.name}
-        confirmLabel="Excluir campanha" cancelLabel="Cancelar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'cancel'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onCancel(confirm.c.id); setConfirm(null); }}
-        icon={Square} iconColor="red" tone="danger"
-        title="Cancelar campanha"
-        description="O envio será interrompido imediatamente e os contatos pendentes não receberão as mensagens."
-        entityName={confirm?.c.name}
-        confirmLabel="Cancelar campanha" cancelLabel="Voltar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'start'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onStart(confirm.c.id); setConfirm(null); }}
-        icon={Play} iconColor="blue" tone="primary"
-        title="Iniciar campanha?"
-        description={`As mensagens serão enviadas agora para ${fmtInt(confirm?.c.total_recipients ?? 0)} contatos. Esta ação não pode ser desfeita.`}
-        confirmLabel="Iniciar envio" cancelLabel="Cancelar"
-      />
+      {/* X080 — modais de confirmação das ações de linha (um lugar só) */}
+      {rowActions.dialogs}
     </div>
     </TalkXQueryBoundary>
   );
