@@ -46,6 +46,30 @@ function purgeLegacyHistory(): void {
 }
 
 /**
+ * Única exceção que o useAuth lança. Comparada aqui para que SÓ a ausência de
+ * provider vire "sem sessão": se o useAuth passar a lançar por outro motivo, o
+ * erro continua subindo em vez de esconder histórico de alguém.
+ */
+const SEM_AUTH_PROVIDER = 'useAuth must be used within an AuthProvider';
+
+/**
+ * Identidade do usuário logado, ou null quando não existe sessão.
+ *
+ * A busca global é montada também fora de um AuthProvider — telas isoladas e
+ * testes que não montam o provider (GlobalSearch → useGlobalSearchData → aqui)
+ * — e o render não pode estourar por causa do histórico. Sem identidade não
+ * existe histórico: é o mesmo caminho do logout, que também não lê nem grava.
+ */
+function useOwnerId(): string | null {
+  try {
+    return useAuth().profile?.id ?? null;
+  } catch (erro) {
+    if (erro instanceof Error && erro.message === SEM_AUTH_PROVIDER) return null;
+    throw erro;
+  }
+}
+
+/**
  * Histórico de buscas do usuário logado.
  *
  * Retenção definida: o histórico fica guardado para a própria identidade entre
@@ -54,8 +78,8 @@ function purgeLegacyHistory(): void {
  * e só o estado local da sessão é zerado.
  */
 export function useSearchHistory() {
-  const { profile } = useAuth();
-  const storageKey = profile?.id ? searchHistoryStorageKey(profile.id) : null;
+  const ownerId = useOwnerId();
+  const storageKey = ownerId ? searchHistoryStorageKey(ownerId) : null;
 
   /**
    * Histórico por dono, em memória. A chave é a identidade: a troca de conta no
