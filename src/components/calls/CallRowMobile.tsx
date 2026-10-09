@@ -45,7 +45,11 @@ export function CallRowMobile({
         const duracao = talkSeconds(row);
         const nome = row.peer_name || row.contact_name || row.peer_number || 'este número';
         return (
-          <li key={row.id}>
+          // `presentation`: o `li` e so a embalagem do cartao. Com o papel implicito
+          // `listitem` ele ficaria entre o `listbox` e a `option`, e a `option` passaria a
+          // nao ter o `listbox` como pai efetivo — o axe reprova a lista em
+          // `aria-required-children` / `aria-required-parent` (T77, rodada 2).
+          <li key={row.id} role="presentation">
             <div
               data-testid="tel-row-mobile"
               role="option"

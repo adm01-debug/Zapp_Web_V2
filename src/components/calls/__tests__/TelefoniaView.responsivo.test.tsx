@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { TelefoniaView } from '../TelefoniaView';
@@ -354,5 +355,46 @@ describe('SL-106 — em 390 o historico vira CallRowMobile', () => {
     expect(screen.queryByTestId('tel-history-table')).toBeNull();
     expect(screen.getByTestId('tel-list-mobile')).toBeInTheDocument();
     expect(screen.getByTestId('tel-abrir-painel')).toBeInTheDocument();
+  });
+});
+
+/**
+ * O listbox da lista de cartoes e valido do ponto de vista ARIA: o `li` que embala cada
+ * cartao e presentacional, entao as filhas efetivas do `listbox` sao as `option` (e nao
+ * `listitem`). Sem isso o axe reprova o listbox em `aria-required-children`, porque a
+ * `option` passa a nao ter o `listbox` como pai efetivo — o leitor de tela perde a
+ * navegacao por opcoes desta lista.
+ */
+describe('SL-106 — a lista de cartoes e um listbox ARIA valido', () => {
+  it('o axe nao acusa `aria-required-children` nem `aria-required-parent` na lista', async () => {
+    definirLargura(390);
+    renderNaRota('/telefonia');
+
+    expect(screen.getByTestId('tel-list-mobile')).toHaveAttribute('role', 'listbox');
+
+    // Prova independente: o mesmo axe-core (4.13) que a casa varre nas telas.
+    const resultado = await axe(document.body, {
+      rules: { 'color-contrast': { enabled: false } },
+      runOnly: { type: 'rule', values: ['aria-required-children', 'aria-required-parent'] },
+    });
+    expect(resultado.violations).toEqual([]);
+  });
+
+  it('nenhum filho do listbox expoe `listitem`: as opcoes seguem acessiveis como `option`', () => {
+    definirLargura(390);
+    renderNaRota('/telefonia');
+
+    const lista = screen.getByTestId('tel-list-mobile');
+
+    // O que o leitor de tela navega continua sendo a opcao: 2 ligacoes -> 2 `option`.
+    expect(lista.querySelectorAll('[role="option"]')).toHaveLength(2);
+
+    // O `li` que embala cada cartao nao pode ficar com o papel implicito `listitem`.
+    const embalagens = Array.from(lista.querySelectorAll('li'));
+    expect(embalagens).toHaveLength(2);
+    for (const li of embalagens) {
+      expect(li.getAttribute('role')).toBe('presentation');
+      expect(li).not.toHaveAttribute('role', 'listitem');
+    }
   });
 });

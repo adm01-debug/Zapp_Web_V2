@@ -66,6 +66,12 @@ function useConsultaDeLargura(consulta: string): boolean {
   );
 }
 
+/**
+ * T77 — abaixo de 1280 o painel lateral (`painel`) vira este `Sheet`, aberto pelo botão do
+ * topRight e pela seleção de uma linha do histórico. Quem decide montar é o `painelEmSheet`
+ * do `TelefoniaView`: no desktop o componente é desmontado, então uma abertura manual não
+ * fica guardada para quando a tela voltar a encolher.
+ */
 function TelefoniaSheetPainel({
   abertoPorSelecao,
   onLimparSelecao,
@@ -377,10 +383,6 @@ export function TelefoniaView() {
           </div>
         )}
       </div>
-
-      {/* T77: <1280 — o painel vira Sheet lateral dentro do topRight. O componente do Sheet
-          só monta no breakpoint estreito; ao ir para desktop ele desmonta e não guarda
-          abertura manual velha para quando a tela voltar a encolher. */}
     </div>
   );
 }
