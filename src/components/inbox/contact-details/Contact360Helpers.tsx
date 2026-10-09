@@ -16,6 +16,7 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { calendarDayKey, parseDayKey } from '@/lib/localDay';
 import type {
   Contact360RFM, Contact360Customer, Contact360Company,
   Contact360Contact, Contact360Interaction, Contact360Stakeholder,
@@ -44,6 +45,17 @@ export function InfoRow({ label, value, icon: Icon }: { label: string; value: st
       <span className="font-medium text-right max-w-[55%] truncate">{value}</span>
     </div>
   );
+}
+
+// ─── Data sem hora ───────────────────────────────────────────
+/**
+ * Rótulo de uma data **sem hora** (`<input type="date">` grava `yyyy-MM-dd`, que o JS lê
+ * como meia-noite UTC): `format(new Date('1985-03-14'), 'dd/MM/yyyy')` mostra `13/03/1985`
+ * em UTC-3. `calendarDayKey` devolve o dia gravado e `parseDayKey` o lê na meia-noite local.
+ */
+function calendarDayLabel(value: string): string {
+  const date = parseDayKey(calendarDayKey(value));
+  return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : '';
 }
 
 // ─── RFM Badge ───────────────────────────────────────────────
@@ -118,7 +130,7 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
         {company.nicho_cliente && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><Tag className="w-3 h-3 shrink-0" /><span className="truncate">{company.nicho_cliente}</span></div>}
         {company.natureza_juridica_desc && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><FileText className="w-3 h-3 shrink-0" /><span className="truncate">{company.natureza_juridica_desc}</span></div>}
         {company.capital_social != null && company.capital_social > 0 && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><DollarSign className="w-3 h-3 shrink-0" /><span className="truncate">{formatCurrency(company.capital_social)}</span></div>}
-        {company.data_fundacao && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><Calendar className="w-3 h-3 shrink-0" /><span className="truncate">{format(new Date(company.data_fundacao), 'dd/MM/yyyy')}</span></div>}
+        {company.data_fundacao && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><Calendar className="w-3 h-3 shrink-0" /><span className="truncate">{calendarDayLabel(company.data_fundacao)}</span></div>}
         {company.inscricao_estadual && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5 col-span-2"><Shield className="w-3 h-3 shrink-0" /><span className="truncate">IE: {company.inscricao_estadual}</span></div>}
         {company.website && (
           <a href={company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline col-span-2 bg-primary/5 rounded-md p-1.5">
@@ -176,7 +188,7 @@ export function ContactDetailCard({ contact }: { contact: Contact360Contact }) {
       <InfoRow label="Cargo" value={contact.cargo} icon={Briefcase} />
       <InfoRow label="Depto." value={contact.departamento} />
       <InfoRow label="CPF" value={contact.cpf} icon={Shield} />
-      {contact.data_nascimento && <InfoRow label="Nascimento" value={format(new Date(contact.data_nascimento), 'dd/MM/yyyy')} icon={Calendar} />}
+      {contact.data_nascimento && <InfoRow label="Nascimento" value={calendarDayLabel(contact.data_nascimento)} icon={Calendar} />}
       <InfoRow label="Sentimento" value={contact.sentiment} />
       <InfoRow label="Estágio" value={contact.relationship_stage} icon={Star} />
       <InfoRow label="Fonte" value={contact.source} />
