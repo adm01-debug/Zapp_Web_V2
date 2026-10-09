@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 // R2-MOD-020 — a tela lê "abandonadas" como TODO contato com qualquer mensagem de agente no
@@ -136,5 +137,10 @@ describe('AbandonmentRate — acessibilidade do filtro (N-091)', () => {
   it('getByRole acha o combobox Período pelo nome acessível', async () => {
     render(<AbandonmentRate />, { wrapper: TestQueryWrapper });
     expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+  });
+
+  it('axe button-name zerado no filtro de período', async () => {
+    const { container } = render(<AbandonmentRate />, { wrapper: TestQueryWrapper });
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

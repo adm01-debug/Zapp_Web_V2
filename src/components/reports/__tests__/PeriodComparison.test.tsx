@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 const mockThen = vi.fn();
@@ -39,5 +40,10 @@ describe('PeriodComparison — acessibilidade do filtro (N-091)', () => {
   it('getByRole acha o combobox Período pelo nome acessível', async () => {
     render(<PeriodComparison />, { wrapper: TestQueryWrapper });
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument());
+  });
+
+  it('axe button-name zerado no filtro de período', async () => {
+    const { container } = render(<PeriodComparison />, { wrapper: TestQueryWrapper });
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
