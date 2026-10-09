@@ -32,13 +32,17 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
  * V25 — cada objetivo carrega um ícone. O campo é aditivo: `TalkXOverview`,
  * `TalkXSegments` e `TalkXWizardDelivery` continuam lendo só `value`/`label`.
  */
-export const OBJECTIVES: { value: string; label: string; icon: LucideIcon }[] = [
-  { value: 'vendas', label: 'Vendas', icon: BadgeDollarSign },
-  { value: 'engajamento', label: 'Engajamento', icon: MousePointerClick },
-  { value: 'reativacao', label: 'Reativação', icon: RefreshCw },
-  { value: 'relacionamento', label: 'Relacionamento', icon: Users },
-  { value: 'pesquisa', label: 'Pesquisa', icon: Search },
-  { value: 'institucional', label: 'Institucional', icon: Building2 },
+/**
+ * X124/X134 — cada objetivo tem uma descrição fixa do próprio objetivo (mock
+ * 09: "Vendas · Gerar mais vendas e conversões"), usada no resumo da revisão.
+ */
+export const OBJECTIVES: { value: string; label: string; description: string; icon: LucideIcon }[] = [
+  { value: 'vendas', label: 'Vendas', description: 'Gerar mais vendas e conversões', icon: BadgeDollarSign },
+  { value: 'engajamento', label: 'Engajamento', description: 'Aumentar interação e cliques', icon: MousePointerClick },
+  { value: 'reativacao', label: 'Reativação', description: 'Trazer de volta clientes inativos', icon: RefreshCw },
+  { value: 'relacionamento', label: 'Relacionamento', description: 'Manter o contato próximo com os clientes', icon: Users },
+  { value: 'pesquisa', label: 'Pesquisa', description: 'Coletar opiniões e feedbacks dos clientes', icon: Search },
+  { value: 'institucional', label: 'Institucional', description: 'Divulgar avisos e novidades da empresa', icon: Building2 },
 ];
 
 /** Perfis de velocidade → intervalo entre envios (segundos). Digitação fica com o editor. */
