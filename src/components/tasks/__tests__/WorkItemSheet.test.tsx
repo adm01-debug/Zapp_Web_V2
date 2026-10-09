@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -585,5 +586,20 @@ describe('WorkItemSheet — R2-MOD-051 (salvar espera a escrita pendente)', () =
     await act(async () => { liberarMove(); });
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' }));
     await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('N-082: rótulos ligados aos campos — Estado, Contato e Descrição da tarefa', async () => {
+    const { container } = render(<WorkItemSheet {...props({ item: { ...base, description: 'Descrição de teste' } })} />);
+
+    // getByLabelText prova que o htmlFor/id está funcionando (falha se o rótulo não estiver ligado).
+    expect(screen.getByLabelText('Estado')).toBeTruthy();
+    expect(screen.getByLabelText('Contato')).toBeTruthy();
+    expect(screen.getByLabelText('Descrição da tarefa')).toBeTruthy();
+
+    // Axe: sem violações de acessibilidade nos campos ligados.
+    const results = await axe(container, {
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });

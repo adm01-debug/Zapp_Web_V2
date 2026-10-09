@@ -246,9 +246,9 @@ function Formulario({
         </div>
 
         <div>
-          <Label>Estado</Label>
+          <Label htmlFor="sheet-estado">Estado</Label>
           <Select value={status} onValueChange={(v) => setStatus(v as WorkItemStatus)}>
-            <SelectTrigger data-testid="sheet-estado" className="mt-1.5 bg-input/40 border-border/70">
+            <SelectTrigger id="sheet-estado" data-testid="sheet-estado" className="mt-1.5 bg-input/40 border-border/70">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -303,12 +303,12 @@ function Formulario({
         </div>
 
         <div>
-          <Label>Contato</Label>
+          <Label htmlFor="sheet-contato">Contato</Label>
           <Select
             value={contactId || 'sem'}
             onValueChange={(v) => setContactId(v === 'sem' ? '' : v)}
           >
-            <SelectTrigger data-testid="sheet-contato" className="mt-1.5 bg-input/40 border-border/70">
+            <SelectTrigger id="sheet-contato" data-testid="sheet-contato" className="mt-1.5 bg-input/40 border-border/70">
               <SelectValue placeholder="Sem contato" />
             </SelectTrigger>
             <SelectContent>
@@ -444,13 +444,17 @@ function Formulario({
             {mostraDescricao ? '− Descrição' : '+ Descrição'}
           </button>
           {mostraDescricao && (
-            <Textarea
-              data-testid="sheet-descricao"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1.5 bg-input/40 border-border/70"
-              rows={3}
-            />
+            <>
+              <Label htmlFor="sheet-descricao" className="mt-1.5 block">Descrição da tarefa</Label>
+              <Textarea
+                id="sheet-descricao"
+                data-testid="sheet-descricao"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="mt-1.5 bg-input/40 border-border/70"
+                rows={3}
+              />
+            </>
           )}
         </div>
       </div>
