@@ -390,7 +390,12 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam o par AA, e ele fecha A
       },
     ];
     const { container } = render(
-      <TalkXCampaignScheduled campaignId="camp-ag-1" onBack={vi.fn()} onEdit={vi.fn()} />,
+      <TalkXCampaignScheduled
+        campaignId="camp-ag-1"
+        onBack={vi.fn()}
+        onEdit={vi.fn()}
+        onStatusChange={vi.fn()}
+      />,
     );
     const fora = Array.from(container.querySelectorAll('.day-outside'));
     expect(fora.length).toBeGreaterThan(0);
