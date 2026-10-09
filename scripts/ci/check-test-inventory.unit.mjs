@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -92,13 +91,20 @@ test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {
   }
 });
 
-test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', () => {
+test('R2-INF-013: importar o verificador nao roda o inventario (o teste importa as funcoes)', async () => {
   // Sem a guarda de modulo principal, o import roda a checagem e chama process.exit -- foi
   // o que fez este arquivo "passar" sem executar nenhuma assercao na primeira tentativa.
-  const r = spawnSync(process.execPath, ['--input-type=module', '-e', "await import('./scripts/ci/check-test-inventory.mjs');"], {
-    cwd: RAIZ,
-    encoding: 'utf8',
-  });
-  assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout, '', 'importar nao pode imprimir o relatorio do inventario');
+  // Use um import com query para reavaliar o modulo sem precisar de subprocesso: o comando
+  // Deno do CI desta guarda nao concede --allow-run.
+  const logOriginal = console.log;
+  let stdout = '';
+  console.log = (...args) => {
+    stdout += `${args.join(' ')}\n`;
+  };
+  try {
+    await import(`./check-test-inventory.mjs?import-probe=${Date.now()}`);
+  } finally {
+    console.log = logOriginal;
+  }
+  assert.equal(stdout, '', 'importar nao pode imprimir o relatorio do inventario');
 });

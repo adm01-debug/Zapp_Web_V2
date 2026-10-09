@@ -14,9 +14,7 @@
 // `run:` precisa estar na ALLOWLIST_NODE com justificativa.
 
 import { readFileSync, readdirSync } from 'fs';
-import { spawnSync } from 'child_process';
 import { join } from 'path';
-import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 import { fileURLToPath } from 'url';
 
 const root = join(fileURLToPath(import.meta.url), '../../..');
@@ -25,6 +23,25 @@ export const RAIZ = root;
 
 function read(rel) {
   return readFileSync(join(root, rel), 'utf8');
+}
+
+
+function listarArquivos(rel) {
+  const base = join(root, rel);
+  const encontrados = [];
+  function visitar(dir, prefixo) {
+    for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+      const nomeRelativo = prefixo ? `${prefixo}/${entrada.name}` : entrada.name;
+      const caminho = join(dir, entrada.name);
+      if (entrada.isDirectory()) {
+        visitar(caminho, nomeRelativo);
+      } else if (entrada.isFile()) {
+        encontrados.push(`${rel}/${nomeRelativo}`);
+      }
+    }
+  }
+  visitar(base, '');
+  return encontrados.sort();
 }
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
@@ -88,9 +105,7 @@ export const ALLOWLIST_NODE = new Set([
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
 
-const testTsOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'supabase/functions'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testTsOnDisk = listarArquivos('supabase/functions')
   .filter(f => f.endsWith('.test.ts'));
 
 const ciYaml = read('.github/workflows/ci.yml');
@@ -101,9 +116,7 @@ const ciUsesGlob = ciYaml.includes(CI_TS_GLOB);
 
 // ── 2. .test.sh: disco vs db-guard.yml ────────────────────────────────────────
 
-const testShOnDisk = spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts/db-audit'], { cwd: root, encoding: 'utf8' })
-  .stdout
-  .split('\n')
+const testShOnDisk = listarArquivos('scripts/db-audit')
   .filter(f => f.endsWith('.test.sh'));
 
 const dbGuardYaml = read('.github/workflows/db-guard.yml');
@@ -158,9 +171,7 @@ export function orfaosNode(suites, padroes, allowlist = ALLOWLIST_NODE) {
 
 /** Suites Node versionadas em scripts/, do disco. */
 export function suitesNodeNoDisco() {
-  return spawnSync(resolverExecutavel('git'), ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
-    .stdout
-    .split('\n')
+  return listarArquivos('scripts')
     .filter(f => SUFIXO_SUITE_NODE.test(f));
 }
 
