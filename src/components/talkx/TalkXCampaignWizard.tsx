@@ -18,12 +18,14 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, completedRules, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useTalkXCampaignSummary } from '@/hooks/integrations/useTalkXCampaignSummary';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
 import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { TalkXErrorState } from './kit/states';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -613,6 +615,15 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
 
 function WizardRail({ ed }: { ed: WizardState }) {
   const sample = ed.contacts?.[0];
+  // X131 — o resumo do rail vem do SERVIDOR (RPC de audiência), não de contagem
+  // local: "Público total" era `selectedContacts.length` e "Bloqueados por
+  // supressão" era 0 para segmento (e só existia depois de um save). Agora os
+  // três números saem do mesmo critério de elegibilidade/supressão do disparo.
+  const summary = useTalkXCampaignSummary({
+    rules: ed.audienceSource === 'contacts' ? completedRules(ed.audienceRules) : null,
+    segmentIds: ed.audienceSource === 'segment' && ed.segmentId ? [ed.segmentId] : null,
+    enabled: ed.audienceSource !== 'crm360',
+  });
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
   // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
@@ -634,10 +645,15 @@ function WizardRail({ ed }: { ed: WizardState }) {
   return (
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
+        {summary.isError && (
+          <div className="mb-3">
+            <TalkXErrorState entity="o resumo da campanha" error={summary.error} onRetry={summary.refetch} />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={summary.isLoading ? '…' : fmtInt(summary.total)} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={summary.isLoading ? '…' : fmtInt(summary.eligible)} sub={summary.total > 0 ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={summary.isLoading ? '…' : fmtInt(summary.suppressed)} sub={summary.total > 0 ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
