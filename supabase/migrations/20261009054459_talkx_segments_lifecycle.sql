@@ -44,7 +44,7 @@ alter table public.talkx_segments
   add column if not exists draft_rules   jsonb,
   add column if not exists draft_saved_at timestamptz,
   add column if not exists published_at  timestamptz,
-  add column if not exists published_by  uuid references public.profiles(id) on delete set null,
+  add column if not exists published_by  uuid constraint talkx_segments_published_by_fkey references public.profiles(id) on delete set null,
   add column if not exists archived_at   timestamptz;
 
 comment on column public.talkx_segments.tags is
@@ -84,14 +84,21 @@ alter table public.talkx_segments
 -- 4. Historico das revisoes publicadas -------------------------------------------
 create table if not exists public.talkx_segment_versions (
   id              uuid        primary key default gen_random_uuid(),
-  segment_id      uuid        not null references public.talkx_segments(id) on delete cascade,
-  version_no      integer     not null check (version_no > 0),
+  segment_id      uuid        not null,
+  version_no      integer     not null,
   rules           jsonb       not null,
   estimated_count integer     not null default 0,
   note            text,
-  created_by      uuid        references public.profiles(id) on delete set null,
+  created_by      uuid,
   created_at      timestamptz not null default now(),
-  constraint talkx_segment_versions_segment_version_key unique (segment_id, version_no)
+  -- constraints NOMEADAS de proposito: o conferente de banco (zapp-verify) so consegue
+  -- explicar a diferenca de um objeto novo quando o nome dele aparece no texto da migration
+  constraint talkx_segment_versions_segment_version_key unique (segment_id, version_no),
+  constraint talkx_segment_versions_segment_id_fkey
+    foreign key (segment_id) references public.talkx_segments(id) on delete cascade,
+  constraint talkx_segment_versions_created_by_fkey
+    foreign key (created_by) references public.profiles(id) on delete set null,
+  constraint talkx_segment_versions_version_no_check check (version_no > 0)
 );
 comment on table public.talkx_segment_versions is
   'Talk X (X101): revisoes PUBLICADAS de um segmento (uma linha por publicacao). O gatilho talkx_segment_versions_trim mantem as 20 ultimas; reconstruir uma revisao antiga e o restore da etapa de publicacao.';
@@ -103,6 +110,7 @@ alter table public.talkx_segment_versions enable row level security;
 -- Leitura espelha a policy de leitura de talkx_segments (dono da linha ou admin/supervisor).
 -- ESCRITA: nenhuma policy — o cliente autenticado nao insere/edita/apaga versao; quem grava
 -- e o caminho de servico (RPC SECURITY DEFINER da publicacao, dono da tabela).
+drop policy if exists talkx_segment_versions_select on public.talkx_segment_versions;
 create policy talkx_segment_versions_select
   on public.talkx_segment_versions for select to authenticated
   using (
