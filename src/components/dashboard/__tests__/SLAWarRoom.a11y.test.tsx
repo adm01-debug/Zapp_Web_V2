@@ -7,7 +7,6 @@ import { WarRoomAlertRow } from '../war-room/WarRoomAlertRow';
 const mockAgent = {
   id: 'agent-1',
   name: 'Agente Teste',
-  avatar: null,
   status: 'online' as const,
   activeChats: 3,
   maxChats: 5,
