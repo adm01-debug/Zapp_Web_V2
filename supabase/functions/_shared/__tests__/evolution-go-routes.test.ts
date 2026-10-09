@@ -354,3 +354,32 @@ Deno.test("rotas v2 sem equivalente no GO retornam null (passam intactas, GO res
     assertEquals(translateV2ToGo(path, "POST", {}), null, `esperava null (não mapeada) para ${path}`);
   }
 });
+
+// ── Recursos EXCLUSIVOS da GO (SL-201): a lacuna não é o tradutor ───────────
+// docs/migration/GO_GAPS.md § "Exclusivos GO" lista rotas NATIVAS da GO que não
+// têm ação na matriz do proxy (supabase/functions/evolution-api/index.ts): é lá
+// que "mapear no proxy" acontece, e o wrapper do tradutor só entra depois, para
+// dar à rota o nome/credencial da conexão. Nenhuma delas é rota v2, então não
+// têm — nem devem ter — tradução aqui: o contrato do cabeçalho deste arquivo é
+// "rotas não mapeadas passam intactas". Este teste trava esse contrato para os
+// caminhos citados no cartão: um regex frouxo (âncora perdida, curinga a mais)
+// que passasse a casar estes caminhos trocaria a rota em silêncio e o caller
+// mandaria o caminho errado à GO — o oposto do que o arquivo promete.
+Deno.test("rotas nativas da GO (exclusivos: mute/pin, markplayed, carousel, link, community, newsletter, polls) passam intactas", () => {
+  for (const path of [
+    "/chat/mute", "/chat/unmute", "/chat/pin", "/chat/unpin",
+    "/message/markplayed", "/message/status",
+    "/send/carousel", "/send/link", "/send/status/media",
+    "/community/create", "/community/leave",
+    "/newsletter/create", "/newsletter/leave",
+    "/user/blocklist", "/user/unblock",
+    "/label/edit", "/label/message", "/label/unlabel",
+    "/polls/3EB0C767D9A1/results",
+  ]) {
+    assertEquals(
+      translateV2ToGo(path, "POST", {}),
+      null,
+      `rota nativa da GO não deve ser traduzida (esperava null): ${path}`,
+    );
+  }
+});
