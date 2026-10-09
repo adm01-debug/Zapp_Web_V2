@@ -4,6 +4,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { MODALITIES, type AiModality } from "./ai-capabilities.ts";
+import { verifyHmacSignature } from "./hmac-validation.ts";
 
 interface AiUsageEntry {
   functionName: string;
@@ -658,12 +659,182 @@ function montarLinhaDeConsumo(
   };
 }
 
+// ---------------------------------------------------------------------------
+// SL-195c2 — evento de IA não confirmado vai para `public.outbox_events`
+// (contrato do pai `t_c33d0cbc`), assinado com HMAC-SHA256
+// ---------------------------------------------------------------------------
+// O insert em `ai_usage_logs` falhou de vez e a linha virou pendência em
+// `ai_usage_outbox`. Esse é o "evento de IA que ficou sem confirmação": além da
+// pendência de entrega, a Edge grava o EVENTO em `outbox_events` com
+// `event_id` estável (`chaveDeLog`) e assinatura HMAC sobre a serialização
+// canônica da linha — o banco confere o formato e a unicidade
+// (origem, event_id) faz o `ON CONFLICT DO NOTHING`; a verificação
+// criptográfica fica na Edge, por `verifyHmacSignature`.
+
+/** Nome da variável de ambiente com o segredo HMAC da outbox de IA. */
+export const SEGREDO_DA_OUTBOX_DE_IA = "AI_OUTBOX_HMAC_SECRET";
+
+/** `tipo` gravado na coluna homônima de `outbox_events` para stats de IA. */
+export const TIPO_EVENTO_DE_IA = "ia.stats";
+
+/**
+ * Serialização determinística: chaves em ordem alfabética (recursivo),
+ * arrays na ordem, sem espaços. Objeto cíclico LANÇA — não pode travar nem
+ * devolver string ambígua, porque a assinatura cobre exatamente estes bytes.
+ */
+export function serializarEstatisticasCanonicas(valor: unknown): string {
+  const emProfundidade = new Set<unknown>();
+  const canonico = (v: unknown): unknown => {
+    if (v === null || typeof v !== "object") return v;
+    if (emProfundidade.has(v)) {
+      throw new Error("serializarEstatisticasCanonicas: referência circular");
+    }
+    emProfundidade.add(v);
+    try {
+      if (Array.isArray(v)) return v.map(canonico);
+      const ordenado: Record<string, unknown> = {};
+      for (const chave of Object.keys(v as Record<string, unknown>).sort()) {
+        ordenado[chave] = canonico((v as Record<string, unknown>)[chave]);
+      }
+      return ordenado;
+    } finally {
+      emProfundidade.delete(v);
+    }
+  };
+  return JSON.stringify(canonico(valor));
+}
+
+/** HMAC-SHA256 do corpo, hex minúsculo (64 caracteres), sem prefixo. */
+export async function assinarCorpoDoEvento(corpo: string, segredo: string): Promise<string> {
+  const codificador = new TextEncoder();
+  const chave = await crypto.subtle.importKey(
+    "raw",
+    codificador.encode(segredo),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const assinatura = await crypto.subtle.sign("HMAC", chave, codificador.encode(corpo));
+  return [...new Uint8Array(assinatura)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Monta a linha de `outbox_events` (colunas do contrato do pai). O corpo
+ * assinado é a STRING canônica guardada em `payload.corpo`: depois que o jsonb
+ * do banco reordenar as chaves, qualquer verificador reconhece os bytes
+ * assinados com `verifyHmacSignature(payload.corpo, linha.assinatura, segredo)`.
+ */
+async function montarEventoDeEstatisticasDeIa({ linha, motivo, logKey }: {
+  linha: Record<string, unknown>;
+  motivo: string;
+  logKey: string;
+}): Promise<Record<string, unknown>> {
+  const origemBruta = linha.function_name == null ? "" : String(linha.function_name);
+  const corpo = serializarEstatisticasCanonicas(linha);
+  const payload = { corpo, motivo, log_key: logKey };
+  return {
+    origem: origemBruta.trim() === "" ? "ai-usage" : origemBruta,
+    event_id: logKey,
+    tipo: TIPO_EVENTO_DE_IA,
+    payload,
+    assinatura: await assinarCorpoDoEvento(
+      corpo,
+      Deno.env.get(SEGREDO_DA_OUTBOX_DE_IA) ?? "",
+    ),
+    algoritmo: "sha256",
+    tentativas: 0,
+  };
+}
+
+/**
+ * Grava o evento de IA não confirmado em `outbox_events`. Idempotente por
+ * constraint: o `resolution=ignore-duplicates` do PostgREST é o
+ * `ON CONFLICT DO NOTHING` sobre UNIQUE (origem, event_id) — nunca "consulta
+ * antes". NUNCA lança: o chamador é o caminho do log essencial.
+ *
+ * Fail-closed: sem `AI_OUTBOX_HMAC_SECRET` (ou com a própria assinatura
+ * falhando na verificação) NÃO sai requisição — a coluna `assinatura` é
+ * NOT NULL com CHECK de formato, e inventar uma assinatura é pior que não
+ * gravar.
+ */
+async function gravarEstatisticaNaoConfirmada({ url, serviceRoleKey, linha, motivo, logKey }: {
+  url: string;
+  serviceRoleKey: string;
+  linha: Record<string, unknown>;
+  motivo: string;
+  logKey: string;
+}): Promise<boolean> {
+  try {
+    const segredo = Deno.env.get(SEGREDO_DA_OUTBOX_DE_IA);
+    if (!segredo || segredo.trim() === "") {
+      console.error(
+        `[ai-usage][OUTBOX-EVENTO-NAO-ASSINADO] ${SEGREDO_DA_OUTBOX_DE_IA} ausente — evento ${logKey} não gravado`,
+      );
+      return false;
+    }
+
+    const evento = await montarEventoDeEstatisticasDeIa({ linha, motivo, logKey });
+    const payload = evento.payload as { corpo: string };
+    const confere = await verifyHmacSignature(
+      payload.corpo,
+      String(evento.assinatura),
+      segredo,
+    );
+    if (!confere) {
+      console.error(
+        `[ai-usage][OUTBOX-EVENTO-NAO-ASSINADO] verificação da própria assinatura falhou — evento ${logKey} não gravado`,
+      );
+      return false;
+    }
+
+    const resposta = await fetch(
+      `${url}/rest/v1/outbox_events?on_conflict=origem,event_id`,
+      {
+        method: "POST",
+        headers: {
+          ...cabecalhosRest(serviceRoleKey),
+          Prefer: "return=minimal,resolution=ignore-duplicates",
+        },
+        body: JSON.stringify(evento),
+      },
+    );
+    try {
+      await resposta.text();
+    } catch {
+      // Resposta sem corpo: o que importa é o status.
+    }
+    return resposta.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function registrarFalhaDeLog(
   url: string,
   chave: string,
   linha: Record<string, unknown>,
   motivo: string,
 ): Promise<void> {
+  // SL-195c2 — além da pendência de entrega (abaixo, inalterada), o evento de
+  // IA que ficou sem confirmação vai para `outbox_events` assinado. A falha
+  // dessa gravação é declarada pelo marcador; nada aqui enfraquece o caminho
+  // original do log essencial.
+  try {
+    const logKey = await chaveDeLog(linha);
+    const gravou = await gravarEstatisticaNaoConfirmada({
+      url,
+      serviceRoleKey: chave,
+      linha,
+      motivo,
+      logKey,
+    });
+    if (!gravou) {
+      console.error(`[ai-usage][OUTBOX-EVENTO-PERDIDO] evento ${logKey} (motivo: ${motivo})`);
+    }
+  } catch {
+    console.error(`[ai-usage][OUTBOX-EVENTO-PERDIDO] evento não montável (motivo: ${motivo})`);
+  }
+
   if (await gravarNaOutbox(url, chave, linha, motivo)) return;
   try {
     console.error(
