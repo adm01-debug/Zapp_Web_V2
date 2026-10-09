@@ -31,6 +31,8 @@ interface ClientOpts {
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
   settings?: Array<{ key: string; value: unknown }>;
+  /** Resultado da RPC talkx_campaign_window_open por campaign id. */
+  windowOpen?: Record<string, boolean>;
 }
 
 interface ClientCtx {
@@ -85,7 +87,14 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.catch = (rej: (e: unknown) => unknown) => Promise.resolve(resolveRows()).catch(rej);
     return b;
   }
-  return { client: { rpc: () => Promise.resolve({ data: null, error: null }), from }, ctx };
+  return { client: { rpc: (name: string, args?: Record<string, unknown>) => {
+    if (name === 'talkx_campaign_window_open' && args && args.p_campaign_id) {
+      const cid = args.p_campaign_id as string;
+      const open = opts.windowOpen?.[cid] ?? true;
+      return Promise.resolve({ data: open, error: null });
+    }
+    return Promise.resolve({ data: null, error: null });
+  }, from }, ctx };
 }
 
 interface FetchOpts {
@@ -137,6 +146,7 @@ function makeDeps(o: {
   fetch?: typeof fetch;
   cronSecretValue?: string | null;
   timeoutMs?: number;
+  now?: Date;
 }): {
   supabase: unknown;
   serviceKey: string;
@@ -150,7 +160,7 @@ function makeDeps(o: {
     supabase: o.client,
     serviceKey: TEST_SERVICE_KEY,
     env: (key: string) => (key === "SUPABASE_URL" ? "https://supabase-test.example" : undefined),
-    now: NOW,
+    now: o.now ?? NOW,
     fetch: o.fetch,
     getCronSecret: () => Promise.resolve(o.cronSecretValue ?? null),
     timeoutMs: o.timeoutMs,
@@ -397,4 +407,34 @@ Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (s
   } finally {
     console.error = originalError;
   }
+});
+
+// --------------------------------------------------------------------------- N-102
+
+Deno.test("N-102: campanha fora de send_weekdays não é despachada", async () => {
+  const sunday = new Date("2026-10-11T09:00:00Z");
+  const campaign = { id: "c-weekday", name: "c-weekday", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", send_weekdays: [1, 2, 3, 4, 5] };
+  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-weekday": false } });
+  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, cronSecretValue: TEST_CRON_SECRET, now: sunday }));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(ctx.events.filter((e) => e.type === "dispatch").length === 0, "domingo fora de send_weekdays");
+});
+
+Deno.test("N-102: campanha dentro de DND com respect_dnd=true não é despachada", async () => {
+  const saturday = new Date("2026-10-10T22:30:00Z");
+  const campaign = { id: "c-dnd", name: "c-dnd", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", respect_dnd: true };
+  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-dnd": false } });
+  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, cronSecretValue: TEST_CRON_SECRET, now: saturday }));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(ctx.events.filter((e) => e.type === "dispatch").length === 0, "sábado dentro de DND");
+});
+
+Deno.test("N-102: campanha com respect_dnd=false é despachada mesmo dentro de DND", async () => {
+  const saturday = new Date("2026-10-10T22:30:00Z");
+  const campaign = { id: "c-nodnd", name: "c-nodnd", scheduled_at: "2026-10-01T00:00:00.000Z", status: "scheduled", respect_dnd: false };
+  const fake = makeFetch();
+  const { client, ctx } = makeClient({ due: [campaign as CampaignRow], windowOpen: { "c-nodnd": true } });
+  const res = await handleTalkxScheduler(makeRequest({ cronSecret: TEST_CRON_SECRET }), makeDeps({ client, fetch: fake.impl, cronSecretValue: TEST_CRON_SECRET, now: saturday }));
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(fake.posts.length === 1, `esperado 1 POST start, recebido ${fake.posts.length}`);
 });
