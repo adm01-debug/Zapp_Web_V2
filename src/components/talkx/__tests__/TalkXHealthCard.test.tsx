@@ -319,7 +319,7 @@ describe('TalkXLiveMonitor — o card de saúde usa o que a tela carrega (X148)'
   };
 
   it('envio parado há 40 min: a tela mostra "Envio parado" e "Ver o que fazer" chama a ajuda', async () => {
-    // X189 — a Ajuda saiu de diálogo local (TalkXHelp) para tela com rota própria
+    // TL-174 — a Ajuda saiu de diálogo local (TalkXHelp) para tela com rota própria
     // (TalkXHelpCenter, aberta pelo TalkXView). Quem a renderiza e cobre o texto
     // "Ajuda — Campanhas" agora são os testes do próprio TalkXHelpCenter; aqui a
     // responsabilidade do monitor é só repassar o clique para `onOpenHelp`, do

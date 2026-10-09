@@ -39,11 +39,11 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
   // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
-  // Ajuda é uma TELA com rota própria na URL (X189, `TalkXHelpCenter`), não
+  // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
   // mais um diálogo local — por isso sobe por `onOpenHelp` (o pai é quem sabe
   // navegar para `?screen=help`), em vez de um estado de dialog aqui. O
   // pause/cancel/resume do rodapé também não tem mais estado próprio aqui —
-  // vive no controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (X050).
+  // vive no controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (TL-054/X050).
 
   const {
     data: campaign,
