@@ -32,12 +32,16 @@ export interface TalkXSegmentBuilderProps {
   saving: boolean;
   /** Nomes já usados na biblioteca, sem o segmento em edição (para o nome repetido). */
   existingNames?: string[];
+  /** X112 — lista lateral "Meus segmentos" (primeira coluna, >= 1280px). */
+  sideList?: React.ReactNode;
+  /** Botão que abre a lista como gaveta abaixo de 1280px. */
+  sideListButton?: React.ReactNode;
   onSave: (draft: SegmentBuilderContent) => void;
   onCancel: () => void;
 }
 
 export function TalkXSegmentBuilder({
-  initial, isNew, saving, existingNames = [], onSave, onCancel,
+  initial, isNew, saving, existingNames = [], sideList, sideListButton, onSave, onCancel,
 }: TalkXSegmentBuilderProps) {
   const [state, dispatch] = React.useReducer(segmentBuilderReducer, initial, createBuilderState);
   const { name, description, rules } = state;
@@ -97,11 +101,15 @@ export function TalkXSegmentBuilder({
   const iconButton = 'h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center text-foreground-secondary enabled:hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed shrink-0';
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_280px] gap-4 min-w-0">
+      {/* X112 — coluna 1: "Meus Segmentos". Abaixo de 1280px vira a gaveta
+          aberta pelo botão "Meus segmentos" do cabeçalho do construtor. */}
+      {sideList && <div className="hidden xl:block min-w-0">{sideList}</div>}
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button type="button" onClick={requestExit} aria-label="Voltar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><ArrowLeft className="w-4 h-4" /></button>
+          {sideListButton}
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
             <Input value={name} onChange={(e) => dispatch({ type: 'name', value: e.target.value })} placeholder="Nome do segmento…" aria-invalid={showErrors && !!errors.name} className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
@@ -174,33 +182,35 @@ export function TalkXSegmentBuilder({
           </div>
         </section>
 
-      </div>
-
-      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
-      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
-        <p className="text-[13px] font-bold text-foreground">Filtros</p>
-        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
-        {(['basico', 'comportamento', 'comercial', 'lgpd'] as const).map((cat) => (
-          <div key={cat}>
-            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
-            <div className="flex flex-col gap-1">
-              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  draggable
-                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
-                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
-                  onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
-                >
-                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
-                </button>
-              ))}
+        {/* Catálogo de filtros — abaixo dos grupos, como no mock. A coluna 1 do
+            construtor passou a ser a lista "Meus segmentos" (X112); X107 assume
+            esta faixa (abas, busca, contadores e visível em qualquer largura). */}
+        <aside className="hidden xl:block rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+          <p className="text-[13px] font-bold text-foreground">Filtros</p>
+          <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+          {(['basico', 'comportamento', 'comercial', 'lgpd'] as const).map((cat) => (
+            <div key={cat}>
+              <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+              <div className="flex flex-col gap-1">
+                {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    draggable
+                    onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                    onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
+                    onClick={() => addFieldToGroup(f.value)}
+                    className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  >
+                    <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </aside>
+          ))}
+        </aside>
+
+      </div>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">

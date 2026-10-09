@@ -12,6 +12,7 @@ import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
+import { SegmentSideList } from './segments/SegmentSideList';
 import { toast } from 'sonner';
 
 interface Props {
@@ -35,6 +36,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // Gaveta da lista lateral abaixo de 1280px (botão "Meus segmentos").
+  const [sideListOpen, setSideListOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -95,15 +98,68 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
+  // A lista lateral grava o valor que já mostrou na estrela: a rejeição sobe
+  // para o componente desfazer a marca otimista.
+  const setFavorite = async (s: TalkXSegment, next: boolean) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: next }); };
+
+  // Diálogo de exclusão dos dois modos: a lista lateral do construtor também
+  // exclui (⋮ → Excluir).
+  const confirmDeleteDialog = (
+    <TalkXConfirmDialog
+      open={!!deleting}
+      onClose={() => setDeleting(null)}
+      onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
+      icon={Trash2} iconColor="red" tone="danger"
+      title="Excluir segmento?"
+      description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
+      entityName={deleting?.name}
+      confirmLabel="Excluir segmento" cancelLabel="Cancelar"
+    />
+  );
+
+  const sideListProps = {
+    segments,
+    isLoading,
+    isError,
+    error,
+    onRetry: () => { void refetch(); },
+    activeId: selected?.id ?? null,
+    onSelect: openEdit,
+    onNew: openNew,
+    onEdit: openEdit,
+    onUseCampaign,
+    onToggleFavorite: setFavorite,
+    onToggleStatus: (s: TalkXSegment, next: 'active' | 'inactive') => { updateSegment.mutate({ id: s.id, status: next }); },
+    onDelete: (s: TalkXSegment) => setDeleting(s),
+  };
+
   if (mode === 'edit' && editing) {
-    return <TalkXSegmentBuilder
-      initial={editing}
-      isNew={!editing.id}
-      saving={saving}
-      existingNames={existingNames}
-      onSave={(draft) => void save(draft)}
-      onCancel={closeBuilder}
-    />;
+    return (
+      <>
+        <TalkXSegmentBuilder
+          // X112: a lista lateral deixa trocar de segmento sem sair do construtor
+          // (clicar outro cartão) — o estado do construtor vive num useReducer
+          // iniciado só uma vez a partir de `initial` (X099); sem `key` o React
+          // reaproveita a MESMA instância e o reducer não relê o `initial` novo.
+          key={editing.id ?? 'novo'}
+          initial={editing}
+          isNew={!editing.id}
+          saving={saving}
+          existingNames={existingNames}
+          onSave={(draft) => void save(draft)}
+          onCancel={closeBuilder}
+          sideList={<SegmentSideList {...sideListProps} />}
+          sideListButton={(
+            <button type="button" onClick={() => setSideListOpen(true)}
+              className="xl:hidden h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground inline-flex items-center gap-1.5 shrink-0">
+              <Bookmark className="w-3.5 h-3.5" />Meus segmentos
+            </button>
+          )}
+        />
+        <SegmentSideList {...sideListProps} drawer open={sideListOpen} onOpenChange={setSideListOpen} />
+        {confirmDeleteDialog}
+      </>
+    );
   }
 
   return (
@@ -210,16 +266,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         )}
       </div>
 
-      <TalkXConfirmDialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
-        icon={Trash2} iconColor="red" tone="danger"
-        title="Excluir segmento?"
-        description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
-        entityName={deleting?.name}
-        confirmLabel="Excluir segmento" cancelLabel="Cancelar"
-      />
+      {confirmDeleteDialog}
     </div>
   );
 }
