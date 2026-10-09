@@ -25,10 +25,7 @@ vi.mock('@/providers/CallSessionProvider', () => ({
   }),
 }));
 vi.mock('@/hooks/communication/useCalls', () => ({
-  useCalls: () => ({ addCallNotes: vi.fn().mockResolvedValue(undefined), calls: [], startCall: vi.fn() }),
-}));
-vi.mock('@/hooks/communication/useCallHistory', () => ({
-  useCallHistory: () => ({ calls: [], statsRows: [], isLoading: false, error: null, refetch: vi.fn() }),
+  useCalls: () => ({ addCallNotes: vi.fn().mockResolvedValue(undefined) }),
 }));
 vi.mock('@/hooks/communication/useMediaElementVolume', () => ({ useMediaElementVolume: () => undefined }));
 vi.mock('@/lib/calls/tabLeaderStore', () => ({ claimLeadership: vi.fn(), isLeader: () => true }));

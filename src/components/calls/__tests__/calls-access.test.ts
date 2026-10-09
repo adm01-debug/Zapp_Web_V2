@@ -16,12 +16,14 @@
  *   (`valor.slice(0, 13)`, `x.replace('%', '')`); agora só pega o padrão de
  *   sufixo e **se testa** — 4 casos legítimos + 4 de sufixo, no mesmo arquivo;
  * - o T13 deixou de ser `it.todo`: a anotação tem que sair pela RPC
- *   `set_call_agent_notes` e os 4 métodos legados têm que estar `@deprecated`;
+ *   `set_call_agent_notes`; no T91 os 4 métodos legados do `useCalls` e o
+ *   `useCallHistory` saíram de vez (sem consumidor de produção) e o assert
+ *   passou a provar a AUSÊNCIA deles, não mais o `@deprecated`;
  * - `Math.random()` reintroduzido em `persistence.ts` deixava tudo verde (só o
  *   Sonar S2245 pegava) — agora há assert de fonte, ignorando comentários.
  */
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -214,18 +216,28 @@ describe('Telefonia — anotação da chamada e métodos legados (T13)', () => {
     expect(escrevemNotes).toEqual([]);
   });
 
-  it('T13: os 4 métodos legados do `useCalls` estão marcados `@deprecated`', () => {
-    const hook = readFileSync(HOOK_CALLS, 'utf8');
+  it('T91: os 4 métodos legados do `useCalls` e o `useCallHistory` saíram (sem consumidor de produção)', () => {
+    // Só CÓDIGO: a JSDoc do hook cita `startCall`/`answerCall`/… para registrar
+    // o que saiu e por quê — assert cru acusaria a própria documentação.
+    const codigo = semComentarios(readFileSync(HOOK_CALLS, 'utf8'));
+    // `\b` de propósito: `dismissCall(` (IncomingCallAlert/useIncomingCallListener)
+    // termina com "missCall" e NÃO é o legado — sem a fronteira de palavra este
+    // assert acusaria código legítimo e o detector seria desligado por ruído.
     for (const metodo of ['startCall', 'answerCall', 'endCall', 'missCall']) {
-      expect(hook, metodo).toMatch(
-        new RegExp(`\\*\\s*@deprecated[\\s\\S]{0,700}?const ${metodo}\\s*=`),
-      );
+      expect(codigo, metodo).not.toMatch(new RegExp(`\\b${metodo}\\b`));
     }
-    // O plano diz "usados só pelo `CallDialog` até T21"; a realidade medida é
-    // `CallDialog` (+ os 4) E `IncomingCallAlert` (`answerCall`/`missCall`).
-    // A JSDoc registra isso — remover os legados no T21 depende dos dois.
-    expect(hook).toMatch(/CallDialog/);
-    expect(hook).toMatch(/IncomingCallAlert/);
+    // O que tem consumidor de produção continua no hook (T13/T33) — sem isto o
+    // assert acima passaria até se o arquivo inteiro sumisse.
+    expect(codigo).toMatch(/\baddCallNotes\b/);
+    expect(codigo).toMatch(/\bgetContactCalls\b/);
+
+    // O hook do histórico morreu por inteiro: o arquivo não existe e nenhuma
+    // fonte de produção da telefonia o menciona (FONTES já ignora `__tests__`).
+    expect(existsSync(join(SRC, 'hooks/communication/useCallHistory.ts'))).toBe(false);
+    const mencionam = FONTES.filter((arquivo) =>
+      /\buseCallHistory\b/.test(readFileSync(arquivo, 'utf8')),
+    );
+    expect(mencionam).toEqual([]);
   });
 
   it('T11: o id da chamada não cai em PRNG previsível (`Math.random`)', () => {

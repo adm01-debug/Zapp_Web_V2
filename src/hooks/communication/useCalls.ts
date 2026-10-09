@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from '@/hooks/ui/use-toast';
 import { log } from '@/lib/logger';
 
@@ -29,158 +28,19 @@ export interface Call {
   created_at: string;
 }
 
-export interface StartCallParams {
-  contactId?: string;
-  contactPhone: string;
-  contactName: string;
-  direction: 'inbound' | 'outbound';
-  whatsappConnectionId?: string;
-}
-
+/**
+ * Só o que a tela consome de fato (T91): a **anotação** da chamada pela RPC
+ * `set_call_agent_notes` (T13) e o histórico da chamada por contato.
+ *
+ * Os quatro métodos legados de escrita direta na tabela `calls`
+ * (`startCall`/`answerCall`/`endCall`/`missCall`) saíram aqui: desde o T21 o
+ * `CallDialog` não fala mais com eles (usa a máquina de sessão do
+ * `CallSessionProvider`) e o `IncomingCallAlert` também não — a auditoria não
+ * achou nenhum outro consumidor fora de teste. O caminho vigente de escrita é a
+ * RPC `upsert_my_call` (`src/lib/calls/persistence.ts`, T11). O estado de sessão
+ * (`currentCallId`/`isLoading`) saiu junto: só os legados o escreviam.
+ */
 export const useCalls = () => {
-  const { user } = useAuth();
-  const [currentCallId, setCurrentCallId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Get current user's profile id
-  const getProfileId = useCallback(async (): Promise<string | null> => {
-    if (!user) return null;
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    return data?.id || null;
-  }, [user]);
-
-  /**
-   * Cria a linha da chamada (`calls`) e o estado local da sessão.
-   *
-   * @deprecated T13 — escrita direta na tabela `calls`. O caminho vigente é a
-   * RPC `upsert_my_call` (idempotente, um id por chamada) via
-   * `src/lib/calls/persistence.ts` (T11). Este método continua aqui só até o
-   * T21, porque o `CallDialog` ainda o consome.
-   */
-  const startCall = useCallback(async (params: StartCallParams): Promise<string | null> => {
-    setIsLoading(true);
-    try {
-      const profileId = await getProfileId();
-      
-      const { data, error } = await supabase
-        .from('calls')
-        .insert({
-          contact_id: params.contactId || null,
-          agent_id: profileId,
-          direction: params.direction,
-          status: 'ringing',
-          whatsapp_connection_id: params.whatsappConnectionId || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentCallId(data.id);
-      return data.id;
-    } catch (error) {
-      log.error('Error starting call:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível registrar a chamada',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getProfileId]);
-
-  /**
-   * Marca a chamada como atendida por escrita direta na tabela `calls`.
-   *
-   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
-   * T21: o `CallDialog` **e** o `IncomingCallAlert` ainda o consomem — o plano
-   * diz que o consumidor é só o `CallDialog`, mas a realidade medida no código
-   * são os dois (o alerta usa `answerCall`).
-   */
-  const answerCall = useCallback(async (callId: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('calls')
-        .update({
-          status: 'answered',
-          answered_at: new Date().toISOString(),
-        })
-        .eq('id', callId);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      log.error('Error answering call:', error);
-      return false;
-    }
-  }, []);
-
-  /**
-   * Finaliza a chamada por escrita direta na tabela `calls`.
-   *
-   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
-   * T21, porque o `CallDialog` ainda o consome.
-   */
-  const endCall = useCallback(async (callId: string, durationSeconds: number): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('calls')
-        .update({
-          status: 'ended',
-          ended_at: new Date().toISOString(),
-          duration_seconds: durationSeconds,
-        })
-        .eq('id', callId);
-
-      if (error) throw error;
-      
-      setCurrentCallId(null);
-      return true;
-    } catch (error) {
-      log.error('Error ending call:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível finalizar a chamada',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  }, []);
-
-  /**
-   * Marca a chamada como não atendida por escrita direta na tabela `calls`.
-   *
-   * @deprecated T13 — o caminho vigente é a RPC `upsert_my_call` (T11). Sai no
-   * T21: o `CallDialog` **e** o `IncomingCallAlert` ainda o consomem.
-   */
-  const missCall = useCallback(async (callId: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('calls')
-        .update({
-          status: 'missed',
-          ended_at: new Date().toISOString(),
-        })
-        .eq('id', callId);
-
-      if (error) throw error;
-      
-      setCurrentCallId(null);
-      return true;
-    } catch (error) {
-      log.error('Error marking call as missed:', error);
-      return false;
-    }
-  }, []);
-
   /**
    * Grava a **anotação humana** da chamada pela RPC `set_call_agent_notes`
    * (`p_call_id`, `p_notes`) — T13.
@@ -229,12 +89,6 @@ export const useCalls = () => {
   }, []);
 
   return {
-    currentCallId,
-    isLoading,
-    startCall,
-    answerCall,
-    endCall,
-    missCall,
     addCallNotes,
     getContactCalls,
   };

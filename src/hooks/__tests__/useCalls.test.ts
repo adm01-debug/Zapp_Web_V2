@@ -9,18 +9,9 @@ const mockRpc = vi.fn().mockResolvedValue({ error: null });
 
 vi.mock('@/integrations/supabase/client', () => {
   const mockFrom = vi.fn().mockImplementation(() => ({
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { id: 'call-1' }, error: null }),
-      }),
-    }),
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ data: {}, error: null }),
-    }),
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'p1' }, error: null }),
       }),
     }),
   }));
@@ -32,10 +23,6 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   };
 });
-
-vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-1' } }),
-}));
 
 vi.mock('@/hooks/ui/use-toast', () => ({
   toast: vi.fn(),
@@ -53,50 +40,15 @@ describe('useCalls', () => {
     mockRpc.mockResolvedValue({ error: null });
   });
 
-  it('should initialize with null currentCallId', () => {
+  it('T91: não expõe mais os métodos legados — só o que tem consumidor de produção', () => {
+    // Este assert roda o hook REAL: se alguém reintroduzir `startCall` (ou os
+    // outros três) na superfície do hook, o teste volta a ficar vermelho.
     const { result } = renderHook(() => useCalls());
-    expect(result.current.currentCallId).toBeNull();
-    expect(result.current.isLoading).toBe(false);
-  });
-
-  it('should start a call and return call ID', async () => {
-    const { result } = renderHook(() => useCalls());
-    let callId: string | null = null;
-    await act(async () => {
-      callId = await result.current.startCall({
-        contactPhone: '5511999',
-        contactName: 'Test',
-        direction: 'outbound',
-      });
-    });
-    expect(callId).toBe('call-1');
-  });
-
-  it('should answer a call', async () => {
-    const { result } = renderHook(() => useCalls());
-    let success = false;
-    await act(async () => {
-      success = await result.current.answerCall('call-1');
-    });
-    expect(success).toBe(true);
-  });
-
-  it('should end a call', async () => {
-    const { result } = renderHook(() => useCalls());
-    let success = false;
-    await act(async () => {
-      success = await result.current.endCall('call-1', 120);
-    });
-    expect(success).toBe(true);
-  });
-
-  it('should mark call as missed', async () => {
-    const { result } = renderHook(() => useCalls());
-    let success = false;
-    await act(async () => {
-      success = await result.current.missCall('call-1');
-    });
-    expect(success).toBe(true);
+    for (const metodo of ['startCall', 'answerCall', 'endCall', 'missCall']) {
+      expect(result.current).not.toHaveProperty(metodo);
+    }
+    expect(typeof result.current.addCallNotes).toBe('function');
+    expect(typeof result.current.getContactCalls).toBe('function');
   });
 
   it('should add notes to a call', async () => {
@@ -120,33 +72,6 @@ describe('useCalls', () => {
       calls = await result.current.getContactCalls('contact-1');
     });
     expect(Array.isArray(calls)).toBe(true);
-  });
-
-  // === EDGE CASES ===
-
-  it('should handle startCall with empty contactId', async () => {
-    const { result } = renderHook(() => useCalls());
-    let callId: string | null = 'nao-chamado';
-    await act(async () => {
-      callId = await result.current.startCall({
-        contactPhone: '123',
-        contactName: 'Test',
-        direction: 'inbound',
-      });
-    });
-    // Sem contactId a chamada não deixa de ser registrada: o hook grava
-    // `contact_id: params.contactId || null` e devolve o id da linha criada
-    // (useCalls.ts). O que não pode acontecer é cair no caminho de erro.
-    expect(callId).toBe('call-1');
-  });
-
-  it('should handle endCall with zero duration', async () => {
-    const { result } = renderHook(() => useCalls());
-    let success = false;
-    await act(async () => {
-      success = await result.current.endCall('call-1', 0);
-    });
-    expect(success).toBe(true);
   });
 
   it('should handle addCallNotes with empty notes', async () => {
