@@ -2,7 +2,7 @@ import { AreaChart as AreaChartIcon } from 'lucide-react';
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
+import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM } from '@/lib/chart-theme';
 
 import { IconTile, TalkXNoData, Td, Th, fmtInt } from '../talkxShared';
 import {
@@ -109,12 +109,11 @@ export function TalkXReportPerformance({ series, granularity, onGranularityChang
                 <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
                 <Tooltip
                   content={<PerformanceTooltip granularity={granularity} timeZone={timeZone} hasConversionSource={hasConversionSource} />}
-                  contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: CHART_TOOLTIP_FONT_SIZE }}
                 />
-                <Area type="monotone" dataKey="sent" stroke={TALKX_REPORT_SERIES_COLORS.sent} fill="url(#talkx-report-sent)" strokeWidth={2} />
-                <Area type="monotone" dataKey="delivered" stroke={TALKX_REPORT_SERIES_COLORS.delivered} fill="url(#talkx-report-delivered)" strokeWidth={2} />
-                <Line type="monotone" dataKey="replied" stroke={TALKX_REPORT_SERIES_COLORS.replied} strokeWidth={2} dot={false} />
-                {hasConversionSource && <Line type="monotone" dataKey="conversions" stroke={TALKX_REPORT_SERIES_COLORS.conversions} strokeWidth={2} dot={false} />}
+                <Area type="monotone" dataKey="sent" stroke={TALKX_REPORT_SERIES_COLORS.sent} fill="url(#talkx-report-sent)" strokeWidth={2} isAnimationActive={false} />
+                <Area type="monotone" dataKey="delivered" stroke={TALKX_REPORT_SERIES_COLORS.delivered} fill="url(#talkx-report-delivered)" strokeWidth={2} isAnimationActive={false} />
+                <Line type="monotone" dataKey="replied" stroke={TALKX_REPORT_SERIES_COLORS.replied} strokeWidth={2} dot={false} isAnimationActive={false} />
+                {hasConversionSource && <Line type="monotone" dataKey="conversions" stroke={TALKX_REPORT_SERIES_COLORS.conversions} strokeWidth={2} dot={false} isAnimationActive={false} />}
               </ComposedChart>
             </ResponsiveContainer>
           </div>

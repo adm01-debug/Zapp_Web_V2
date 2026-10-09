@@ -106,9 +106,13 @@ export interface TalkXReportFunnelRow {
   pct: number;
 }
 
-/** "100%" / "96,4%" — uma casa decimal só quando o valor não é inteiro, como o mock. */
+/**
+ * "100%" / "96,4%" — arredonda para UMA casa ANTES de decidir se a casa aparece, como o mock.
+ * Sem isso, 99,96% virava "100,0%" (a casa decimal só era dispensada quando `pct` já vinha inteiro).
+ */
 export function talkxReportPctText(pct: number): string {
-  return `${Number.isInteger(pct) ? String(pct) : pct.toFixed(1).replace('.', ',')}%`;
+  const rounded = Math.round(pct * 10) / 10;
+  return `${Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',')}%`;
 }
 
 /**

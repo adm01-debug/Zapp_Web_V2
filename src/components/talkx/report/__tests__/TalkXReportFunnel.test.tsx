@@ -3,7 +3,8 @@
  *
  * Regras provadas: degrau sem fonte (campanha sem link → `clicked` nulo) NÃO é
  * desenhado; cada trapézio é proporcional ao % do degrau sobre os ENVIADOS; o seletor
- * de segmento só aparece quando a campanha tem mais de um segmento.
+ * de segmento só aparece quando a campanha tem mais de um segmento; o % é arredondado
+ * para uma casa antes de decidir se a casa decimal aparece (99,96% → "100%").
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -58,6 +59,21 @@ describe('TalkXReportFunnel (X164/TL-080)', () => {
     expect(screen.getByText('2.843 · 22,8% · Responderam')).toBeTruthy();
     expect(screen.getByText('478 · 3,8% · Converteram')).toBeTruthy();
     expect(talkxReportTrapezoidPoints(100, 96.4, 0)).toBe('0,0 100,0 98.2,100 1.8,100');
+  });
+
+  it('arredonda para uma casa ANTES de decidir a casa decimal: 99,96% vira "100%", não "100,0%"', () => {
+    const quaseInteiro: TalkXReportFunnelStep[] = [
+      { key: 'sent', count: 10000 },
+      { key: 'delivered', count: 9996 },
+      { key: 'replied', count: 4996 },
+    ];
+    render(<TalkXReportFunnel steps={quaseInteiro} segments={[]} segmentId={null} onSegmentChange={vi.fn()} />);
+
+    // 9.996/10.000 = 99,96% e 4.996/10.000 = 49,96%: os dois viram inteiro depois do arredondamento.
+    expect(screen.getByText('9.996 · 100% · Entregues')).toBeTruthy();
+    expect(screen.getByText('4.996 · 50% · Responderam')).toBeTruthy();
+    expect(screen.queryByText(/100,0%/)).toBeNull();
+    expect(screen.queryByText(/50,0%/)).toBeNull();
   });
 
   it('seletor de segmento só aparece com mais de um segmento e devolve o id escolhido', () => {
