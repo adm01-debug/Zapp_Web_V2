@@ -127,6 +127,7 @@ export function SecurityNotificationsPanel() {
             checked={isSubscribed}
             onCheckedChange={handleToggle}
             disabled={isLoading || permission === 'denied'}
+            aria-label="Notificações de segurança"
           />
         </div>
 

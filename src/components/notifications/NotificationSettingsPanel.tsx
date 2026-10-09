@@ -56,7 +56,7 @@ export function NotificationSettingsPanel() {
                 <CardDescription>Configurações globais de áudio</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} />
+            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} aria-label="Ativar sons de notificação" />
           </div>
         </CardHeader>
         {settings.soundEnabled && (
@@ -99,7 +99,7 @@ export function NotificationSettingsPanel() {
                 <CardDescription>Pop-ups mesmo com a aba minimizada</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} />
+            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} aria-label="Notificações do navegador" />
           </div>
         </CardHeader>
         {settings.browserNotifications && (
