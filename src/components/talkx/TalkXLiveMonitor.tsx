@@ -155,7 +155,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         <Progress value={progress} className="h-3 mb-1.5"/>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
-          {isRunning && <span className="text-[hsl(var(--primary-text))] font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-[hsl(var(--primary-text))] font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
         </div>
       </div>
