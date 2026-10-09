@@ -7,7 +7,8 @@
 //   1. usuário válido + imagem privada ALHEIA: o GET do Storage sai com
 //      `apikey` = anon key e `Authorization` = Bearer <JWT do chamador> (a
 //      policy de `storage.objects` é quem decide — aqui o Storage devolve 403),
-//      o handler responde `{ category: 'outros' }` (HTTP 200), registra o motivo
+//      o handler responde `{ category: 'outros', state: 'input_error', ... }`
+//      (HTTP 200; IA-132 separou categoria de falha técnica), registra o motivo
 //      em `ai_usage_logs` (metadata.reason = 'image_input_failed') e NUNCA chama
 //      o provedor (0 POST ao provedor, 0 leitura de `ai_providers` — o
 //      `generateWithRouting` nem chega a rodar);
@@ -318,7 +319,11 @@ Deno.test("R2-INF-022: imagem privada alheia (Storage 403) degrada para 'outros'
       const res = await handler(pedido());
 
       assertEquals(res.status, 200);
-      assertEquals(await res.json(), { category: "outros" });
+      assertEquals(await res.json(), {
+        category: "outros",
+        state: "input_error",
+        error_code: "IMAGE_DOWNLOAD_FAILED",
+      });
 
       // O download foi TENTADO sob a identidade do usuário — anon key + JWT do
       // chamador, nunca a service role (é a policy do Storage que nega).
@@ -371,7 +376,7 @@ Deno.test("R2-INF-022: imagem autorizada chega ao provedor EMBUTIDA como data UR
       const res = await handler(pedido());
 
       assertEquals(res.status, 200);
-      assertEquals(await res.json(), { category: "riso" });
+      assertEquals(await res.json(), { category: "riso", state: "ok" });
 
       // Download sob a identidade do usuário (não service role).
       const downloads = downloadsDoStorage(stub.calls);
