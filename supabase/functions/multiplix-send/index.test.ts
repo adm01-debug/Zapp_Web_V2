@@ -1845,6 +1845,15 @@ Deno.test("F61: erro do provedor vira texto legivel — nunca JSON cru — e o c
 // ─────────────────────────────────────────────────────────────────────────────
 
 Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do worker)", async () => {
+  // Hermeticidade: limpa as variaveis de ambiente que outros testes da suite
+  // deixam setadas (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY) e que fazem o
+  // rate-limiter fazer fetch real, quebrando o teste "zero rede".
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.delete("EVOLUTION_API_FLAVOR");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
     recipients: [recipientRow(0, "5511999990000")],
@@ -1868,10 +1877,22 @@ Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do w
     assert(risco[0].args.p_signal === null, `o worker nao deveria mandar sinal: ${String(risco[0].args.p_signal)}`);
   } finally {
     provider.restore();
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL"); else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY"); else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR"); else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
   }
 });
 
 Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por qualquer coisa)", async () => {
+  // Hermeticidade: limpa as variaveis de ambiente que outros testes da suite
+  // deixam setadas (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY) e que fazem o
+  // rate-limiter fazer fetch real, quebrando o teste "zero rede".
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.delete("EVOLUTION_API_FLAVOR");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
     recipients: [recipientRow(0, "5511999990000")],
@@ -1889,6 +1910,9 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
     );
   } finally {
     provider.restore();
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL"); else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY"); else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR"); else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
   }
 });
 
