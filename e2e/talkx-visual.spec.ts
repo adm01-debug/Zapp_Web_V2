@@ -407,22 +407,24 @@ test.describe('acessibilidade por teclado', () => {
     // app (barra lateral, cabeçalho global) tem controles próprios que não são
     // desta tela e não pertencem ao que o mockup mostra.
     const visitados: { indice: number; nome: string }[] = [];
-    for (let i = 0; i < 15; i += 1) {
+    // A casca do app (links de pulo, barra lateral, cabeçalho global) vem ANTES
+    // do módulo na ordem do Tab e sozinha tem dezenas de paradas: o laço é bem
+    // mais longo que a régua interna de propósito, e só passa a contar quando o
+    // foco entra no módulo.
+    for (let i = 0; i < 150 && visitados.length < 12; i += 1) {
       await page.keyboard.press('Tab');
       const passo = await page.evaluate(() => {
         const el = document.activeElement as HTMLElement | null;
         if (!el || el === document.body) return null;
         const tablist = document.querySelector('[role="tablist"]');
         if (!tablist) return null;
-        // A raiz do módulo é o ancestral comum entre a barra de abas e o painel
-        // ativo: só os controles DENTRO dela entram na régua (a casca do app tem
-        // controles próprios, que não são desta tela). Antes o laço subia até o
-        // `body`, então a barra de navegação do app e o `Close toast` do portal
-        // entravam na lista e a volta ao topo do documento virava uma falsa
-        // falha de ordem.
-        let raiz: HTMLElement | null = tablist.parentElement;
-        while (raiz && !raiz.querySelector('[role="tabpanel"]')) raiz = raiz.parentElement;
-        if (!raiz || raiz === document.body || !raiz.contains(el)) return null;
+        // Só os controles DENTRO do módulo entram na régua: a casca do app
+        // (links de pulo, sidebar, cabeçalho) fica FORA do `<main>` e tem
+        // controles próprios, que não são desta tela. Antes o laço subia até o
+        // `body`, então a barra de navegação e o `Close toast` do portal entravam
+        // na lista e a volta ao topo do documento virava uma falsa falha de ordem.
+        const raiz = tablist.closest('main');
+        if (!raiz || !raiz.contains(el)) return null;
         const todos = Array.from(document.querySelectorAll<HTMLElement>('*'));
         const nome = (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim();
         return { indice: todos.indexOf(el), nome: nome.slice(0, 40) };
