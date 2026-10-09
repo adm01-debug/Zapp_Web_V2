@@ -936,3 +936,17 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      # N-002 (P1 · seguranca, inventario A4b): a trava que impede um usuario comum de
+      # virar admin em public.profiles (gatilho prevent_privilege_escalation, corrigido
+      # pela migration 20260830161547) existia sem nenhum teste. O contrato aplica os
+      # ARQUIVOS de migration reais num PostgreSQL 17 descartavel e prova: agente e
+      # supervisor recusados nos campos protegidos, admin trocando o papel de outro e o
+      # sync interno (user_roles -> profiles, auth.uid() nulo) preservado. Inicia
+      # container proprio e roda CREATE ROLE anon/authenticated/service_role — as roles
+      # sao globais ao cluster, entao o docker-shim do E47 colidiria com as do shim.
+      - name: Provar a trava de escalada de privilegio em profiles (N-002)
+        env:
+          PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
