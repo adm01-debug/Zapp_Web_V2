@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -166,10 +166,10 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
 
       // modal fechado
       expect(screen.queryByText(titulo)).toBeNull();
-      // seleção limpa: o seletor volta ao vazio e a tela anuncia que não há campanha ativa
-      const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
-      expect(select.value).toBe('');
-      expect(screen.getByRole('option', { name: 'Nenhuma campanha ativa' })).toBeTruthy();
+      // seleção limpa: o seletor do kit volta ao vazio e a tela anuncia que não há campanha ativa
+      expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Nenhuma campanha ativa');
+      // e a tela troca o conteúdo pelo aviso de que nada está em andamento
+      expect(screen.getByText('Nenhuma campanha em andamento no momento.')).toBeTruthy();
       // e o operador é informado
       expect(toastInfo).toHaveBeenCalledWith('Campanha concluída ou cancelada.');
     },
@@ -185,7 +185,8 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
     rendered.rerender(view());
 
     expect(screen.queryByText('Pausar Campanha?')).toBeNull();
-    expect((screen.getByLabelText('Selecionar campanha') as HTMLSelectElement).value).toBe('');
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Nenhuma campanha ativa');
+    expect(screen.getByText('Nenhuma campanha em andamento no momento.')).toBeTruthy();
     expect(toastInfo).toHaveBeenCalledWith('Campanha concluída ou cancelada.');
   });
 
@@ -200,7 +201,8 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
     rendered.rerender(view());
 
     expect(screen.getByText('Pausar Campanha?')).toBeTruthy();
-    expect((screen.getByLabelText('Selecionar campanha') as HTMLSelectElement).value).toBe('c1');
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Campanha Teste');
+    expect(within(screen.getByLabelText('Selecionar campanha')).getByText('Em andamento')).toBeTruthy();
     expect(toastInfo).not.toHaveBeenCalled();
   });
 });

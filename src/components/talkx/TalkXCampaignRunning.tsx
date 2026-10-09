@@ -4,9 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Zap, Users, ChevronLeft,
+  Zap, CheckCircle2, AlertTriangle, Users, ChevronLeft,
   Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
+  Clock, MessageCircle, ArrowRight,
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -14,7 +17,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, StatusPill, CAMPAIGN_STATUS, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { TalkXProgressRing } from './tracking/TalkXProgressRing';
+import { TalkXReplyPeakCard } from './tracking/TalkXReplyPeakCard';
+import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -40,62 +46,59 @@ const SPEED_LABEL: Record<string, string> = {
   fast: 'Rápido',
 };
 
-// ─── Donut SVG ─────────────────────────────────────────────────────────────────
-function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: number; delivered: number; failed: number; outcomeUnknown: number; total: number }) {
-  const R = 72, CX = 88, CY = 88, STROKE = 18;
-  const circ = 2 * Math.PI * R;
-  const pct = (n: number) => total > 0 ? (n / total) * circ : 0;
-  const pending = Math.max(0, total - sent - failed - outcomeUnknown);
-  const segments = [
-    { val: delivered, color: 'hsl(var(--dash-green))', label: 'Entregues' },
-    { val: sent - delivered, color: 'hsl(var(--primary))', label: 'Enviadas' },
-    { val: failed, color: 'hsl(var(--dash-red))', label: 'Falhas' },
-    { val: outcomeUnknown, color: 'hsl(var(--dash-amber))', label: 'A confirmar' },
-    { val: pending, color: 'hsl(var(--muted))', label: 'Pendentes' },
-  ];
-  let offset = 0;
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <svg width={176} height={176} viewBox="0 0 176 176">
-        {total === 0
-          ? <circle cx={CX} cy={CY} r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth={STROKE} />
-          : segments.map(({ val, color }, i) => {
-              const dash = pct(val);
-              const el = (
-                <circle key={i} cx={CX} cy={CY} r={R} fill="none" stroke={color}
-                  strokeWidth={STROKE} strokeDasharray={`${dash} ${circ - dash}`}
-                  strokeDashoffset={-offset} style={{ transform: 'rotate(-90deg)', transformOrigin: `${CX}px ${CY}px` }} />
-              );
-              offset += dash;
-              return el;
-            })
-        }
-        <text x={CX} y={CY - 6} textAnchor="middle" className="fill-foreground" fontSize={22} fontWeight={700}>{total > 0 ? Math.round(((sent + failed + outcomeUnknown) / total) * 100) : 0}%</text>
-        <text x={CX} y={CY + 14} textAnchor="middle" className="fill-foreground-secondary" fontSize={11}>concluído</text>
-      </svg>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-        {segments.map(({ val, color, label }) => (
-          <div key={label} className="flex items-center gap-2 text-xs">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-            <span className="text-foreground-secondary">{label}</span>
-            <span className="font-semibold text-foreground ml-auto">{fmtInt(val)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+// ─── Helpers X153 ────────────────────────────────────────────────────────────
+/** Chip "Início: <dia>, HH:mm" do mock (T12-005), no fuso do navegador. */
+function formatStartChip(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '—';
+  const day = at
+    .toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+    .replace(/\./g, '')
+    .replace(/^\p{Ll}/u, (letter) => letter.toUpperCase());
+  const time = at.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${day}, ${time}`;
+}
+
+/**
+ * Respostas por minuto, com buckets consecutivos terminando no minuto atual (mesma
+ * regra de `recentMinuteSeries`, que conta só envios). A janela anterior de 10
+ * minutos é a base de comparação do card "Pico de Respostas" (T12-042).
+ */
+function repliesPerMinute(rows: Array<{ replied_at: string | null }>, minutes: number): number[] {
+  const byMinute = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.replied_at) continue;
+    const at = new Date(row.replied_at);
+    if (Number.isNaN(at.getTime())) continue;
+    const key = `${at.getFullYear()}-${at.getMonth()}-${at.getDate()} ${at.getHours()}:${at.getMinutes()}`;
+    byMinute.set(key, (byMinute.get(key) ?? 0) + 1);
+  }
+  const end = new Date();
+  end.setSeconds(0, 0);
+  const out: number[] = [];
+  for (let i = minutes - 1; i >= 0; i--) {
+    const minute = new Date(end.getTime() - i * 60_000);
+    const key = `${minute.getFullYear()}-${minute.getMonth()}-${minute.getDate()} ${minute.getHours()}:${minute.getMinutes()}`;
+    out.push(byMinute.get(key) ?? 0);
+  }
+  return out;
 }
 
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
-function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
+function TabOverview({ c, chartData, replySpark, historyQuery, onRetryHistory }: {
   c: TalkXCampaign;
   chartData: { time: string; Enviadas: number; Entregues: number }[];
+  replySpark: number[];
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
 }) {
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const processed = c.sent_count + c.failed_count + outcomeUnknown;
+  const pending = Math.max(0, c.total_recipients - processed);
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : 0;
+  // X153: janelas de 10 min do "Pico de Respostas" — série do servidor, mais antigo -> recente.
+  const repliesNow = replySpark.slice(-10).reduce((total, value) => total + value, 0);
+  const repliesBefore = replySpark.slice(-20, -10).reduce((total, value) => total + value, 0);
   return (
     <div className="space-y-4">
       {/* X146: faixa de KPIs ao vivo — a barra do antigo bloco "Progresso geral"
@@ -120,9 +123,33 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(processed)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
           <div className="pt-2">
-            <DonutChart sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} outcomeUnknown={outcomeUnknown} total={c.total_recipients} />
+            <TalkXProgressRing
+              sent={c.sent_count}
+              delivered={c.delivered_count}
+              replied={c.replied_count ?? 0}
+              failed={c.failed_count}
+              total={c.total_recipients}
+            />
           </div>
         </RailCard>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 content-start">
+            <DashboardKpiCard size="compact" index={0} label="Enviadas" value={fmtInt(c.sent_count)} delta={{ text: `de ${fmtInt(c.total_recipients)} prev.`, tone: 'muted' }} tile="blue" icon={Zap} bars={null} barsColor="blue" chart="none" />
+            <DashboardKpiCard size="compact" index={1} label="Entregues" value={fmtInt(c.delivered_count)} delta={{ text: c.sent_count > 0 ? `${Math.round((c.delivered_count / c.sent_count) * 100)}% das enviadas` : '—', tone: 'muted' }} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
+            <DashboardKpiCard size="compact" index={2} label="Falhas" value={fmtInt(c.failed_count)} delta={c.sent_count > 0 ? { text: `${Math.round((c.failed_count / c.sent_count) * 100)}% de erro`, tone: 'muted' } : null} tile="red" icon={AlertTriangle} bars={null} barsColor="red" chart="none" />
+            <DashboardKpiCard size="compact" index={3} label="A confirmar" value={fmtInt(outcomeUnknown)} delta={{ text: 'Sem reenvio automático', tone: 'muted' }} tile="amber" icon={AlertTriangle} bars={null} barsColor="amber" chart="none" />
+            <DashboardKpiCard size="compact" index={4} label="Restantes" value={fmtInt(pending)} delta={{ text: `${elapsed}min decorridos`, tone: 'muted' }} tile="amber" icon={Users} bars={null} barsColor="amber" chart="none" />
+          </div>
+          {/* X153: benchmark histórico (CAP-083) ainda sem dado no banco — o card não
+              pode afirmar "acima do normal" sem fonte, então não recebe benchmark. */}
+          <TalkXReplyPeakCard
+            currentWindow={repliesNow}
+            previousWindow={repliesBefore}
+            spark={replySpark}
+            replyRatePct={c.sent_count > 0 ? Math.round(((c.replied_count ?? 0) / c.sent_count) * 100) : 0}
+            benchmark={null}
+          />
+        </div>
       </div>
       {/* Ritmo de Envio — X047: carregando -> erro -> vazio -> conteúdo */}
       <TalkXQueryBoundary
@@ -563,6 +590,10 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     isError: campaignsIsError, error: campaignsError,
   } = useTalkX();
   const sending = useMemo(() => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'), [campaigns]);
+  // X153: o seletor do cabeçalho lista só as campanhas EM ENVIO (`sending`, T12-004).
+  // A tela continua derivando do conjunto ativo (que inclui `paused`) para não perder
+  // a campanha aberta por endereço quando ela for pausada.
+  const sendingCampaigns = useMemo(() => campaigns.filter((c) => c.status === 'sending'), [campaigns]);
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<RunTab>('overview');
@@ -612,31 +643,36 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   }, [campaign, sending, selectedId]);
 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
-  const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
+  const { data: runningHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
     queryFn: async () => {
-      if (!selectedId) return [];
+      if (!selectedId) return { series: [], replies: [] };
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
       const { data, error } = await fromTable('talkx_recipients')
-        .select('sent_at, delivered_at')
+        .select('sent_at, delivered_at, replied_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
         .order('sent_at', { ascending: false })
         .limit(2000);
       // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
       if (error) throw error;
-      if (!data?.length) return [];
+      const rows = (data ?? []) as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
+      if (!rows.length) return { series: [], replies: [] };
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
-      return recentMinuteSeries(
-        data as { sent_at: string; delivered_at: string | null }[],
-        { minutes: 20 },
-      );
+      // X153: as respostas por minuto saem da MESMA leitura para o "Pico de Respostas".
+      return {
+        series: recentMinuteSeries(rows, { minutes: 20 }),
+        replies: repliesPerMinute(rows, 20),
+      };
     },
     enabled: !!selectedId,
     refetchInterval: 30_000,
     staleTime: 20_000,
   });
+
+  const chartData = runningHistory?.series ?? [];
+  const replySpark = runningHistory?.replies ?? [];
 
   const historyQuery: TalkXQueryLike = {
     isLoading: historyLoading,
@@ -715,38 +751,68 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
+      {/* X153: breadcrumb do módulo (T12-001) — "Campanhas › <nome> › <situação>" */}
+      <nav aria-label="Trilha de navegação" className="flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
+        <span>Campanhas</span>
+        <span aria-hidden="true">›</span>
+        <span className="truncate text-foreground">{campaign?.name ?? 'Campanha'}</span>
+        <span aria-hidden="true">›</span>
+        <span className="text-foreground">
+          {campaign ? (CAMPAIGN_STATUS[campaign.status]?.label ?? campaign.status) : 'Em andamento'}
+        </span>
+      </nav>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <button type="button" onClick={onBack} aria-label="Voltar" className="p-1.5 rounded-lg hover:bg-muted/50 shrink-0">
             <ChevronLeft className="w-5 h-5 text-foreground-secondary" />
           </button>
-          <IconTile icon={Activity} color="green" size={40} glow />
+          {/* X153: ícone do canal da campanha (T12-002), com o token de WhatsApp já existente */}
+          <IconTile icon={MessageCircle} color="green" size={40} glow />
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-foreground leading-tight truncate">Campanha em Andamento</h1>
-            <p className="text-xs text-foreground-secondary">Acompanhe e gerencie envios ativos</p>
+            <p className="text-xs text-foreground-secondary">A campanha está enviando mensagens para os destinatários selecionados.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Seletor de campanha */}
-          <select
-            value={selectedId ?? ''}
-            onChange={(e) => { setSelectedId(e.target.value || null); setActiveTab('overview'); }}
-            aria-label="Selecionar campanha"
-            className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium max-w-[220px] truncate focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            {sending.length === 0 && (
-              <option value="">
-                {campaignsLoading ? 'Carregando campanhas…' : campaignsIsError ? 'Campanhas indisponíveis' : 'Nenhuma campanha ativa'}
-              </option>
-            )}
-            {sending.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} [{c.status}]</option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {campaign?.started_at && (
+            <span className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border/70 bg-input/40 px-3 text-2xs font-medium text-foreground-secondary">
+              <Clock className="h-3.5 w-3.5" />
+              {`Início: ${formatStartChip(campaign.started_at)}`}
+            </span>
+          )}
+          {/* X153: seletor do kit — "Campanha: <nome>" com a pílula traduzida (T12-004) */}
+          <Select value={campaign?.id ?? ''} onValueChange={(value) => { setSelectedId(value); setActiveTab('overview'); }}>
+            <SelectTrigger
+              aria-label="Selecionar campanha"
+              className="h-9 w-auto max-w-[280px] gap-2 border-border/70 bg-input/40 text-xs font-medium"
+            >
+              <span className="truncate">
+                {`Campanha: ${campaign?.name ?? (campaignsLoading ? 'Carregando campanhas…' : campaignsIsError ? 'Campanhas indisponíveis' : 'Nenhuma campanha ativa')}`}
+              </span>
+              {campaign && <StatusPill status={campaign.status} map={CAMPAIGN_STATUS} />}
+            </SelectTrigger>
+            <SelectContent>
+              {sendingCampaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {`${c.name} — ${CAMPAIGN_STATUS[c.status]?.label ?? c.status}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <button type="button" onClick={() => { void refetchCampaigns(); }} title="Atualizar" className="h-9 w-9 flex items-center justify-center rounded-lg border border-border/70 bg-input/40 hover:bg-muted/50">
             <RefreshCw className="w-4 h-4" />
           </button>
+          {campaign && (
+            <button
+              type="button"
+              onClick={() => onViewMonitor(campaign.id)}
+              className="h-9 px-3 flex items-center gap-1.5 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold hover:bg-muted/50"
+            >
+              <ArrowRight className="w-4 h-4" />Ver monitor
+            </button>
+          )}
         </div>
       </div>
 
@@ -765,31 +831,34 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       >
         {campaign ? (
           <>
-            {/* Sub-tabs */}
-            <div className="flex gap-1 overflow-x-auto no-scrollbar border-b border-border/40 pb-0">
-              {RUN_TABS.map((t) => (
-                <button
-                  key={t.id} type="button"
-                  onClick={() => setActiveTab(t.id)}
-                  className={`px-3.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors
-                    ${activeTab === t.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-foreground-secondary hover:text-foreground'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            {/* Sub-tabs (X153: abas do kit — setas do teclado e role="tab") */}
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as RunTab)}>
+              <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto no-scrollbar rounded-none border-0 border-b border-border/40 bg-transparent p-0">
+                {RUN_TABS.map((t) => (
+                  <TabsTrigger
+                    key={t.id}
+                    value={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className={`shrink-0 whitespace-nowrap rounded-none border-b-2 bg-transparent px-3.5 py-2 text-xs font-medium shadow-none transition-colors data-[state=active]:!bg-transparent data-[state=active]:!shadow-none
+                      ${activeTab === t.id
+                        ? 'border-primary text-primary data-[state=active]:!text-primary'
+                        : 'border-transparent text-foreground-secondary hover:text-foreground data-[state=active]:!text-foreground'}`}
+                  >
+                    {t.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
             {/* Conteúdo das sub-tabs */}
             <div>
               {activeTab === 'overview' && (
-                <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                <TabOverview c={campaign} chartData={chartData} replySpark={replySpark} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
               )}
               {activeTab === 'config' && <TabConfig c={campaign} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={chartData} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
             </div>
 

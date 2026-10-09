@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -210,8 +210,12 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
 
     renderView();
 
-    expect(screen.getByRole('option', { name: 'Campanhas indisponíveis' })).toBeTruthy();
-    expect(screen.queryByRole('option', { name: 'Nenhuma campanha ativa' })).toBeNull();
+    // X153: o seletor do kit ("Campanha: <nome>") mantém a campanha aberta e nunca
+    // mostra o status cru — aqui, indisponível em vez de "Nenhuma campanha ativa".
+    expect(screen.getByText('Campanha: Campanhas indisponíveis')).toBeTruthy();
+    expect(screen.queryByText('Campanha: Nenhuma campanha ativa')).toBeNull();
+    // e o conteúdo da tela NÃO vira aviso de vazio: erro não pode passar por "nada em andamento"
+    expect(screen.queryByText('Nenhuma campanha em andamento no momento.')).toBeNull();
   });
 
   it('carregando as campanhas: esqueleto com aria-busy, sem vazio e sem erro', () => {
@@ -230,7 +234,7 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     state.rows[200] = { data: null, error: { message: 'falha X047 — destinatários' } };
 
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Destinatários' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Destinatários' }));
 
     expect(await screen.findByText(/Não foi possível carregar as informações dos destinatários/)).toBeTruthy();
     expect(screen.queryByText('Nenhum destinatário nesta campanha.')).toBeNull();
@@ -240,16 +244,17 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(await screen.findByText('Contato Retry X047')).toBeTruthy();
-    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
-    expect(select.value).toBe('c1');
-    expect(screen.getByRole('button', { name: 'Destinatários' }).className).toContain('border-primary');
+    // X153: o seletor do kit mantém a campanha aberta (nome + pílula traduzida).
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Campanha Teste');
+    expect(within(screen.getByLabelText('Selecionar campanha')).getByText('Em andamento')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Destinatários' }).className).toContain('border-primary');
   });
 
   it('erro nas mensagens: erro, e "Tentar novamente" refaz a consulta sem perder campanha e aba', async () => {
     state.rows[100] = { data: null, error: { message: 'falha X047 — mensagens' } };
 
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Mensagens' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Mensagens' }));
 
     expect(await screen.findByText(/Não foi possível carregar as mensagens/)).toBeTruthy();
     expect(screen.queryByText('Nenhum destinatário nesta campanha.')).toBeNull();
@@ -258,9 +263,10 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(await screen.findByText('Mensagem recuperada no retry X047')).toBeTruthy();
-    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
-    expect(select.value).toBe('c1');
-    expect(screen.getByRole('button', { name: 'Mensagens' }).className).toContain('border-primary');
+    // X153: o seletor do kit mantém a campanha aberta (nome + pílula traduzida).
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Campanha Teste');
+    expect(within(screen.getByLabelText('Selecionar campanha')).getByText('Em andamento')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Mensagens' }).className).toContain('border-primary');
   });
 
   it('erro no histórico: retry recupera a Visão Geral sem perder campanha e aba', async () => {
@@ -275,16 +281,17 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(await screen.findByText('Ritmo de Envio')).toBeTruthy();
-    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
-    expect(select.value).toBe('c1');
-    expect(screen.getByRole('button', { name: 'Visão Geral' }).className).toContain('border-primary');
+    // X153: o seletor do kit mantém a campanha aberta (nome + pílula traduzida).
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Campanha Teste');
+    expect(within(screen.getByLabelText('Selecionar campanha')).getByText('Em andamento')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Visão Geral' }).className).toContain('border-primary');
   });
 
   it('erro nos logs: retry recupera atividades sem perder campanha e aba', async () => {
     state.rows[50] = { data: null, error: { message: 'falha X047 — logs' } };
 
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Logs em Tempo Real' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Logs em Tempo Real' }));
 
     expect(await screen.findByText(/Não foi possível carregar as atividades em tempo real/)).toBeTruthy();
     expect(screen.queryByText('Aguardando eventos de envio…')).toBeNull();
@@ -293,8 +300,9 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(await screen.findByText(/Atividade recuperada X047/)).toBeTruthy();
-    const select = screen.getByLabelText('Selecionar campanha') as HTMLSelectElement;
-    expect(select.value).toBe('c1');
-    expect(screen.getByRole('button', { name: 'Logs em Tempo Real' }).className).toContain('border-primary');
+    // X153: o seletor do kit mantém a campanha aberta (nome + pílula traduzida).
+    expect(screen.getByLabelText('Selecionar campanha')).toHaveTextContent('Campanha: Campanha Teste');
+    expect(within(screen.getByLabelText('Selecionar campanha')).getByText('Em andamento')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Logs em Tempo Real' }).className).toContain('border-primary');
   });
 });
