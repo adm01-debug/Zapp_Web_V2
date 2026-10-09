@@ -31,11 +31,9 @@ interface InteractiveMessageBuilderProps {
    * preservada no formulário, sem fechar nem limpar).
    */
   onSend: (interactive: InteractiveMessage) => Promise<void>;
-  /** Quando presente, o envio está indisponível e é apresentado como tal. */
-  sendUnavailableReason?: string | null;
 }
 
-export function InteractiveMessageBuilder({ open, onOpenChange, onSend, sendUnavailableReason }: InteractiveMessageBuilderProps) {
+export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: InteractiveMessageBuilderProps) {
   const {
     messageType, setMessageType,
     body, setBody, footer, setFooter, headerText, setHeaderText,
@@ -133,7 +131,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend, sendUnav
                   {([
                     { type: 'reply' as const, icon: MessageSquare, label: 'Resposta' },
                     { type: 'url' as const, icon: ExternalLink, label: 'URL' },
-                    { type: 'phone' as const, icon: Phone, label: 'Telefone' },
+                    { type: 'call' as const, icon: Phone, label: 'Ligar' },
                   ]).map(({ type, icon: Icon, label }) => (
                     <Button key={type} type="button" variant="outline" size="sm" onClick={() => addButton(type)} disabled={buttons.length >= 3} className="flex-1 gap-2">
                       <Icon className="w-4 h-4" />{label}
@@ -158,7 +156,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend, sendUnav
                     <div className="space-y-2">
                       <Input placeholder="Título do botão (máx. 20 caracteres)" value={button.title} onChange={(e) => updateButton(index, { title: e.target.value })} maxLength={20} />
                       {button.type === 'url' && <Input placeholder="https://exemplo.com" value={button.url || ''} onChange={(e) => updateButton(index, { url: e.target.value })} type="url" />}
-                      {button.type === 'phone' && <Input placeholder="+55 11 99999-0000" value={button.phoneNumber || ''} onChange={(e) => updateButton(index, { phoneNumber: e.target.value })} type="tel" />}
+                      {button.type === 'call' && <Input placeholder="+55 11 99999-0000" value={button.phoneNumber || ''} onChange={(e) => updateButton(index, { phoneNumber: e.target.value })} type="tel" />}
                     </div>
                   </motion.div>
                 ))}
@@ -268,15 +266,15 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend, sendUnav
           sections={sections}
         />
 
-        {(sendUnavailableReason || sendError) && (
+        {sendError && (
           <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-            {sendUnavailableReason || sendError}
+            {sendError}
           </p>
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => { void handleSend(); }} disabled={isSending || Boolean(sendUnavailableReason)} title={sendUnavailableReason ?? undefined} className="gap-2"><Check className="w-4 h-4" />{isSending ? 'Enviando...' : 'Enviar Mensagem'}</Button>
+          <Button onClick={() => { void handleSend(); }} disabled={isSending} className="gap-2"><Check className="w-4 h-4" />{isSending ? 'Enviando...' : 'Enviar Mensagem'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

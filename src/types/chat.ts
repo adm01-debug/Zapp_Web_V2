@@ -118,6 +118,8 @@ export interface InteractiveButton {
   id: string;
   text?: string;
   title?: string;
+  // 'call' e o tipo canonico (CTA de ligacao); 'phone' e alias legado mantido
+  // porque mensagens ja persistidas usam 'phone'.
   type?: 'reply' | 'url' | 'call' | 'phone';
   url?: string;
   phoneNumber?: string;

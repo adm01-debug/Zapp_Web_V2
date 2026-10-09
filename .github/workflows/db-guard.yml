@@ -775,6 +775,12 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-delivery-phase1-behavior.test.sh
 
+      - name: Simular transporte canônico de mensagens interativas (botões/lista)
+        env:
+          MESSAGE_DELIVERY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/interactive-buttons-list-behavior.test.sh
+
       - name: Simular contrato de dados da Telefonia v2
         env:
           CALLS_TELEFONIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
