@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 
 /**
  * X090 — ações de template UNIFICADAS (menu ⋮, duplicar que abre a cópia,
@@ -8,8 +8,7 @@ import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/re
  *
  * Antes: o cartão tinha 3 botões soltos (Editar/Duplicar/Excluir) e nenhum
  * Testar; a exclusão abria um `AlertDialog` próprio da tela; o "Duplicar"
- * criava a cópia e NÃO abria nada (a pessoa não sabia qual da lista era a
- * cópia); o status era um `<Select>` livre, sem papel.
+ * criava a cópia e NÃO abria nada; o status era um `<Select>` livre, sem papel.
  *
  * Este teste renderiza o TalkXTemplates REAL e prova, pelo comportamento:
  *   1. Duplicar pelo menu cria a cópia E abre a cópia no editor;
@@ -18,13 +17,21 @@ import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/re
  *   3. Excluir passa pelo modal do kit e chama a exclusão do template certo;
  *   4. o `<Select>` livre de status saiu: no editor o status é o controle de
  *      aprovação (autor → "Enviar para revisão"; supervisor → "Aprovar").
+ *
+ * E os pontos da recusa do refazer 1 (TL-122):
+ *   5. aprovar no editor renova o `expectedUpdatedAt` do próximo salvar;
+ *   6. a janela de teste leva as variáveis personalizadas no envio;
+ *   7. clicar no controle de status NÃO seleciona o cartão/linha;
+ *   8. Duplicar no cabeçalho do editor abre a cópia (não só fecha o editor);
+ *   9. "Enviar para revisão" só é oferecido ao AUTOR do template.
  */
 
 const f = vi.hoisted(() => {
   const base = {
     description: null, category: 'geral', media_url: null, media_type: null,
-    tags: [] as string[], created_by: null, custom_variables: [] as string[],
+    tags: [] as string[], custom_variables: [] as string[],
     created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+    created_by: 'p-hugo',
   };
   return {
     roles: { isAdmin: false, isSupervisor: false },
@@ -33,8 +40,11 @@ const f = vi.hoisted(() => {
     updateAsync: vi.fn(),
     testTemplate: vi.fn(),
     templates: [
-      { ...base, id: 'tpl-A', name: 'Promoção do mês', content: 'Promoção do mês: 20% off', status: 'draft' as const, use_count: 10 },
+      // rascunho do PRÓPRIO usuário logado (`p-hugo`): pode enviar à revisão
+      { ...base, id: 'tpl-A', name: 'Promoção do mês', content: 'Promoção do mês: 20% off', status: 'draft' as const, use_count: 10, custom_variables: ['primeiro_nome'] },
       { ...base, id: 'tpl-B', name: 'Boas-vindas', content: 'Olá {{nome}}', status: 'approved' as const, use_count: 3 },
+      // rascunho criado por OUTRA pessoa: sem papel, não oferece "Enviar para revisão"
+      { ...base, id: 'tpl-C', name: 'Rascunho de outro', content: 'Texto de outro autor', status: 'draft' as const, use_count: 1, created_by: 'p-outro' },
     ],
     copy: { ...base, id: 'tpl-A-copia', name: 'Promoção do mês (cópia)', content: 'Promoção do mês: 20% off', status: 'draft' as const, use_count: 0 },
   };
@@ -74,6 +84,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 import { TalkXTemplates } from '../TalkXTemplates';
+import { TalkXTemplateTestDialog } from '../TalkXTemplateTestDialog';
 
 /** O cartão e a biblioteca lateral repetem o gatilho: o do CARTÃO vem primeiro. */
 const triggerDoCartao = (nome: string) =>
@@ -85,9 +96,20 @@ const abrirMenu = (nome: string) =>
 const clicarItem = (nome: string) =>
   fireEvent.click(screen.getByRole('menuitem', { name: nome }));
 
+/** Gatilho do menu ⋮ do CABEÇALHO do editor (label próprio, sem o nome do template). */
+const abrirMenuDoEditor = () =>
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Ações do template' }), { key: 'ArrowDown' });
+
+/** Cartão/linha clicável de um template, a partir do botão "Usar template". */
+const containerDe = (indice: number) =>
+  screen.getAllByRole('button', { name: 'Usar template' })[indice].closest('[role="button"]') as HTMLElement;
+
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
+  // X089 (TL-121): a galeria lembra grade/lista no `localStorage`; um caso que troca
+  // para "Lista" não pode deixar o próximo começar fora da grade.
+  try { localStorage.removeItem('talkx.templates.view'); } catch { /* jsdom sem storage */ }
   f.roles.isAdmin = false;
   f.roles.isSupervisor = false;
   f.duplicateAsync.mockResolvedValue(f.copy);
@@ -176,5 +198,121 @@ describe('X090 — ações de template unificadas', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Enviar para revisão$/ })[0]);
     await waitFor(() => expect(f.updateAsync).toHaveBeenCalledTimes(1));
     expect(f.updateAsync.mock.calls[0][0]).toMatchObject({ id: 'tpl-A', status: 'review' });
+  });
+});
+
+describe('TL-122 refazer 1 — regressões da unificação', () => {
+  it('aprovar no editor renova o expectedUpdatedAt do próximo salvar (sem conflito)', async () => {
+    f.roles.isSupervisor = true;
+    // A RPC avança o `updated_at`: a primeira gravação devolve a linha nova.
+    f.updateAsync.mockReset();
+    f.updateAsync.mockResolvedValue({
+      ...f.templates[0], status: 'approved', updated_at: '2026-02-02T00:00:00Z',
+    });
+
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    abrirMenu('Promoção do mês');
+    clicarItem('Editar');
+    await waitFor(() => expect(screen.getByText('Editar template')).toBeTruthy());
+
+    // aprova usando o updated_at da linha carregada
+    fireEvent.click(screen.getByRole('button', { name: /^Aprovar$/ }));
+    await waitFor(() => expect(f.updateAsync).toHaveBeenCalledTimes(1));
+    expect(f.updateAsync.mock.calls[0][0]).toMatchObject({ expectedUpdatedAt: '2026-01-01T00:00:00Z' });
+
+    // salvar em seguida tem de usar o updated_at NOVO, não o velho
+    fireEvent.click(screen.getByRole('button', { name: /Salvar template/ }));
+    await waitFor(() => expect(f.updateAsync).toHaveBeenCalledTimes(2));
+    expect(f.updateAsync.mock.calls[1][0]).toMatchObject({
+      id: 'tpl-A', expectedUpdatedAt: '2026-02-02T00:00:00Z',
+    });
+  });
+
+  it('a janela de teste leva as variáveis personalizadas do template no envio', async () => {
+    f.roles.isAdmin = true;
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+    abrirMenu('Promoção do mês');
+    clicarItem('Editar');
+    await waitFor(() => expect(screen.getByText('Editar template')).toBeTruthy());
+
+    abrirMenuDoEditor();
+    clicarItem('Testar');
+    await waitFor(() => expect(screen.getByDisplayValue('5541999001234')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    await waitFor(() => expect(f.testTemplate).toHaveBeenCalledTimes(1));
+    // tpl-A tem `custom_variables: ['primeiro_nome']`
+    expect(f.testTemplate.mock.calls[0][0]).toMatchObject({ customVariables: ['primeiro_nome'] });
+  });
+
+  it('TalkXTemplateTestDialog repassa customVariables: a prop vence, sem prop usa a linha', async () => {
+    const tpl = { ...f.templates[0], custom_variables: ['da_linha'] };
+
+    const { unmount } = render(
+      <TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} customVariables={['do_editor']} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+    await waitFor(() => expect(f.testTemplate).toHaveBeenCalledTimes(1));
+    expect(f.testTemplate.mock.calls[0][0]).toMatchObject({ customVariables: ['do_editor'] });
+
+    unmount();
+
+    render(<TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+    await waitFor(() => expect(f.testTemplate).toHaveBeenCalledTimes(2));
+    expect(f.testTemplate.mock.calls[1][0]).toMatchObject({ customVariables: ['da_linha'] });
+  });
+
+  it('clicar no controle de status dentro do cartão/linha não seleciona o container', async () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+    // grade: cartão clicável com o controle dentro
+    const cartao = containerDe(0);
+    expect(cartao.className).not.toContain('bg-primary/5');
+    fireEvent.click(screen.getAllByRole('button', { name: /^Enviar para revisão$/ })[0]);
+    await waitFor(() => expect(f.updateAsync).toHaveBeenCalledTimes(1));
+    expect(cartao.className).not.toContain('bg-primary/5');
+
+    // lista: a linha tem o MESMO container clicável
+    fireEvent.click(screen.getByTitle('Lista'));
+    const linha = screen.getByText('Promoção do mês: 20% off').closest('[role="button"]') as HTMLElement;
+    expect(linha.className).not.toContain('bg-primary/5');
+    fireEvent.click(screen.getAllByRole('button', { name: /^Enviar para revisão$/ })[0]);
+    await waitFor(() => expect(f.updateAsync).toHaveBeenCalledTimes(2));
+    expect(linha.className).not.toContain('bg-primary/5');
+  });
+
+  it('Duplicar no cabeçalho do editor abre a cópia, não só fecha o editor', async () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+    abrirMenu('Promoção do mês');
+    clicarItem('Editar');
+    await waitFor(() => expect(screen.getByText('Editar template')).toBeTruthy());
+
+    abrirMenuDoEditor();
+    clicarItem('Duplicar');
+
+    await waitFor(() => expect(f.duplicateAsync).toHaveBeenCalledTimes(1));
+    expect(f.duplicateAsync.mock.calls[0][0]).toMatchObject({ id: 'tpl-A' });
+
+    // continua no editor, agora com a cópia aberta (antes: o editor fechava)
+    await waitFor(() => expect(screen.getByDisplayValue('Promoção do mês (cópia)')).toBeTruthy());
+    expect(screen.queryByText('Novo template')).toBeNull();
+    expect(screen.getByText('Editar template')).toBeTruthy();
+  });
+
+  it('"Enviar para revisão" só é oferecido ao autor do template', async () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+    // tpl-A é o rascunho do próprio usuário; tpl-C é rascunho de outra pessoa
+    const cartaoDoAutor = containerDe(0);
+    const cartaoDoOutro = containerDe(2);
+    expect(cartaoDoOutro.textContent).toContain('Rascunho');
+
+    expect(within(cartaoDoAutor).getByRole('button', { name: /^Enviar para revisão$/ })).toBeTruthy();
+    expect(within(cartaoDoOutro).queryByRole('button', { name: /^Enviar para revisão$/ })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^Enviar para revisão$/ })).toHaveLength(1);
   });
 });
