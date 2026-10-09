@@ -67,24 +67,32 @@ export function TalkXSettings() {
           const isBool = BOOL_KEYS.has(row.key);
           const boolVal = row.value === true || row.value === 'true';
           const isDirty = edits[row.key] !== undefined;
+          // TL-175D (t_eedf548a): o rotulo da linha passa a NOMEAR o controle. O Switch
+          // e um `<button role="switch">` sem nome e os campos sao `<input>` sem `<label for>`
+          // — o axe reprovava `button-name` e `label` (criticos) nos dois temas. O id sai da
+          // chave da configuracao (unica na lista), com o resto do nome normalizado.
+          const labelId = `talkx-config-${row.key.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+          const descId = row.description ? `${labelId}-desc` : undefined;
 
           return (
             <div key={row.key} className="flex items-start gap-4 px-4 py-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <code className="text-xs font-mono text-foreground">{row.key}</code>
+                  <code id={labelId} className="text-xs font-mono text-foreground">{row.key}</code>
                   {saved === row.key && (
                     <span className="text-3xs text-emerald-600 font-medium">Salvo!</span>
                   )}
                 </div>
                 {row.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{row.description}</p>
+                  <p id={descId} className="text-xs text-muted-foreground mt-0.5">{row.description}</p>
                 )}
               </div>
 
               {isBool ? (
                 <div className="flex items-center gap-2 pt-0.5">
                   <Switch
+                    aria-labelledby={labelId}
+                    aria-describedby={descId}
                     checked={boolVal}
                     onCheckedChange={(v) => update.mutate({ key: row.key, raw: String(v) })}
                   />
@@ -93,6 +101,8 @@ export function TalkXSettings() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Input
+                    aria-labelledby={labelId}
+                    aria-describedby={descId}
                     value={currentRaw}
                     onChange={(e) => setEdits((prev) => ({ ...prev, [row.key]: e.target.value }))}
                     className="h-7 text-xs font-mono w-48"

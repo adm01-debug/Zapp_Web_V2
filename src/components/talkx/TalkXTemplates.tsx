@@ -217,13 +217,16 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
   const imagem = t.media_type === 'image' && !!t.media_url && /^https?:\/\//i.test(t.media_url);
   const aprovado = t.status === 'approved';
   const motivoBloqueio = aprovado ? undefined : 'Só templates aprovados podem ser usados em campanhas';
+  // TL-175D (t_eedf548a): o cartao NAO e um controle. Era `role="button"` com os
+  // botoes de acao DENTRO dele — o axe reprovava `nested-interactive` nos cartoes
+  // da grade (controle interativo dentro de controle: o leitor de tela anuncia mal e
+  // o Tab entra num controle que ja esta dentro de outro). O clique por mouse
+  // continua; quem seleciona o cartao nao tem papel de controle, e cada acao
+  // (Usar/Editar/Duplicar/Excluir) segue sendo um `<button>` real e alcancavel.
   return (
     <div
       data-talkx-template-card={t.id}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('rounded-2xl border cursor-pointer transition-all hover:shadow-md', selected ? 'border-primary bg-primary/5' : 'border-border/70 bg-card hover:border-primary/40')}
     >
       {/* Prévia da mensagem: texto CRU (as variáveis aparecem como no envio) */}
@@ -273,12 +276,13 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   const aprovado = t.status === 'approved';
   const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
+  // TL-175D (t_eedf548a): a linha da lista tambem deixa de ser `role="button"` pelo
+  // MESMO motivo do cartao da grade (`nested-interactive`, o outro componente deste
+  // arquivo): controle interativo dentro de controle. O clique por mouse continua e
+  // as acoes da linha seguem sendo `<button>` reais.
   return (
     <div
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/20', selected ? 'bg-primary/5' : '')}
     >
       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
