@@ -3,6 +3,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import { FILE_ACTION_BUTTON } from './fileActionButton';
 
 /**
  * Menu "Mais acoes" compartilhado pelos tres modos (etapas 19, 21 e 23). Politica D2 fechada:
@@ -26,7 +27,7 @@ export function FileActionsMenu({
         <button
           type="button"
           aria-label="Mais ações"
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={FILE_ACTION_BUTTON}
         >
           <MoreVertical className="w-3.5 h-3.5" />
         </button>

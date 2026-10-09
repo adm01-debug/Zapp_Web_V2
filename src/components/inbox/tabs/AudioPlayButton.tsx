@@ -6,6 +6,7 @@ import { useExclusiveAudio, getPlayingAudioId } from '@/hooks/chat/useExclusiveA
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 import { formatDuration } from './fileDisplay';
+import { FILE_ACTION_BUTTON } from './fileActionButton';
 
 /**
  * A02 — Play/Pause do áudio direto no cartão da aba Arquivos (Grid, Lista e Tabela).
@@ -24,10 +25,6 @@ import { formatDuration } from './fileDisplay';
  * (`tests/contracts/media-volume-surfaces.contract.test.ts`) exige que um player novo entre
  * no controle ÚNICO de volume — fora dele o áudio tocaria no volume cheio e o slider mentiria.
  */
-
-/** Mesma ação dos outros botões da linha (olho, compartilhar, ⋮) nas três vistas. */
-const BUTTON =
-  'w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 interface AudioPlayButtonProps {
   /** Item de ÁUDIO (`ContactMediaItem.type === 'audio'`). Ninguém renderiza este botão fora disso. */
@@ -208,10 +205,12 @@ export function AudioPlayButton({ item }: AudioPlayButtonProps) {
 
   return (
     <span className="inline-flex flex-col items-center gap-0.5">
+      {/* Mesma ação dos outros botões da linha (olho, compartilhar, ⋮) nas três vistas:
+          a classe vem de `fileActionButton`, com a área de toque do celular. */}
       <button
         type="button"
         aria-label={playing ? 'Pausar áudio' : 'Tocar áudio'}
-        className={BUTTON}
+        className={FILE_ACTION_BUTTON}
         onClick={(event) => {
           // D05: clicar no play/pause não abre a janela de visualização nem marca o cartão.
           event.stopPropagation();
