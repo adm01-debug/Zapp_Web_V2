@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -22,9 +22,11 @@ interface Props {
   isLoading: boolean;
   editing: TalkXTemplate | null;
   onClose: () => void;
+  /** X092/T04-046: abre o editor já na área de variações A/B (sugestão de A/B). */
+  initialVariantsOpen?: boolean;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, initialVariantsOpen = false }: Props) {
   const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
 
@@ -57,7 +59,8 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  // X092: quando o editor é aberto a partir de uma sugestão de A/B, o painel já vem aberto.
+  const [showVariants, setShowVariants] = useState(initialVariantsOpen && !!editing);
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -190,6 +193,18 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
     if (!isActiveOrigin(templateId)) return;
     setVariants(vs);
   };
+
+  // X092/T04-046: aberto por uma sugestão de A/B, o painel já vem expandido — então as
+  // variantes do template ativo precisam ser carregadas sem esperar o clique no botão.
+  const initialVariantsLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!initialVariantsOpen || !activeTemplateId || initialVariantsLoadedRef.current) return;
+    initialVariantsLoadedRef.current = true;
+    void loadVariants(activeTemplateId);
+    // Roda uma vez por template aberto: `initialVariantsOpen` e `activeTemplateId` só mudam
+    // com a troca de template (e a `key` do editor já remonta o componente nesse caso).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialVariantsOpen, activeTemplateId]);
 
   const removeVariant = async (variant: TemplateVariant) => {
     const templateId = variant.template_id;
