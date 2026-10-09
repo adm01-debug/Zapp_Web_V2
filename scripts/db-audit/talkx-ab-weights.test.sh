@@ -129,6 +129,10 @@ pass '(a) trigger talkx_template_variants_weight_sum existe'
   || fail '(a) function talkx_validate_template_variant_weights ausente'
 pass '(a) function talkx_validate_template_variant_weights existe'
 
+[[ "$(psql_q "SELECT count(*) FROM pg_proc WHERE proname = 'talkx_assign_variant'")" == '1' ]] \
+  || fail '(a) function talkx_assign_variant ausente'
+pass '(a) function talkx_assign_variant existe'
+
 # ---------------------------------------------------------------------------
 # (b) INSERT com pesos validos (soma=100) — aceito.
 # ---------------------------------------------------------------------------
@@ -172,4 +176,14 @@ sum_weight="$(psql_q "SELECT sum(weight) FROM public.talkx_template_variants WHE
 [[ "$sum_weight" == '100' ]] || fail "(e) soma dos pesos deveria ser 100 apos update [obtido: $sum_weight]"
 pass '(e) UPDATE que mantem a soma (50+50=100) aceito'
 
-printf 'PASS: N-103 talkx_ab_weights_constraint — constraint de soma de pesos, replayavel e protecoes de INSERT/UPDATE\n'
+# ---------------------------------------------------------------------------
+# (f) talkx_assign_variant: o mesmo contato recebe a mesma variante em 2 chamadas.
+# ---------------------------------------------------------------------------
+contact_id="a1111111-1111-1111-1111-111111111111"
+variant1="$(psql_q "SELECT public.talkx_assign_variant('$contact_id'::uuid, '$template_id'::uuid);")"
+variant2="$(psql_q "SELECT public.talkx_assign_variant('$contact_id'::uuid, '$template_id'::uuid);")"
+[[ "$variant1" == "$variant2" ]] || fail "(f) mesmo contato recebeu variantes diferentes em 2 chamadas: $variant1 vs $variant2"
+[[ -n "$variant1" ]] || fail "(f) talkx_assign_variant retornou NULL"
+pass "(f) talkx_assign_variant: mesmo contato recebe a mesma variante em 2 snapshots (hash=$variant1)"
+
+printf 'PASS: N-103 talkx_ab_weights_constraint — constraint de soma de pesos, atribuicao estavel, replayavel e protecoes de INSERT/UPDATE\n'
