@@ -8,8 +8,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
+import { TalkXRateChart } from './tracking/TalkXRateChart';
+import { buildRateSeries, forecastFromCampaign, type TalkXRateWindow } from './tracking/talkxRatePanel';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
@@ -37,6 +41,9 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   } = useTalkXEvents(campaignId);
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
+  // X147: janela do card de ritmo (60/30/15 min). O seletor não muda a campanha nem
+  // o filtro de status dos destinatários.
+  const [rateWindow, setRateWindow] = useState<TalkXRateWindow>(60);
   const [elapsedSec, setElapsedSec] = useState(0);
   // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
   // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
@@ -115,8 +122,26 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   // o X051 já mantém nesta função.
   const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
-  // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  // X147: a série do ritmo sai das linhas que o Monitor já lê (`sent_at`/`delivered_at`)
+  // e da janela escolhida. O filtro de status dos destinatários NÃO entra aqui (T11-033a).
+  const {
+    recipients: rateRows,
+    isLoading: rateLoading,
+    isError: rateError,
+    refetch: refetchRate,
+  } = useTalkXMonitor(campaignId);
+  // A janela é recalculada quando chegam linhas novas ou quando o usuário troca a janela
+  // (o `now` nasce dentro do memo, nunca a cada render).
+  const rateSeries = useMemo(
+    () => buildRateSeries(rateRows ?? [], { windowMinutes: rateWindow, now: new Date() }),
+    [rateRows, rateWindow],
+  );
+  const rateForecast = useMemo(() => {
+    const pending = campaign
+      ? Math.max(0, campaign.total_recipients - (campaign.sent_count + campaign.failed_count + (campaign.outcome_unknown_count ?? 0)))
+      : 0;
+    return forecastFromCampaign(campaign, { pending, now: new Date() });
+  }, [campaign]);
 
   // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
   // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
@@ -157,6 +182,9 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const isRunning = campaign.status === 'sending';
   const isPaused = campaign.status === 'paused';
   const isDone = campaign.status === 'completed' || campaign.status === 'cancelled';
+  // X147: linha de referência do card = teto de mensagens por minuto da campanha
+  // (`max_per_minute`, nulo quando não configurado — aí não há linha).
+  const rateLimit = (campaign as TalkXCampaign & { max_per_minute?: number | null }).max_per_minute ?? null;
 
   return (
     <div className="space-y-4 min-w-0" aria-busy={isFetching ? 'true' : undefined}>
@@ -204,8 +232,8 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
           forecast: null,
           vs_yesterday: null,
           spark: {
-            sent: chartData.map((point) => point.Enviadas),
-            delivered: chartData.map((point) => point.Entregues),
+            sent: rateSeries.map((point) => point.Enviadas),
+            delivered: rateSeries.map((point) => point.Entregues),
           },
         }}
         onFilterOutcomeUnknown={() => { setStatusFilter('outcome_unknown'); setTab('recipients'); }}
@@ -219,29 +247,17 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
 
       {tab==='overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
-          <section className="rounded-2xl bg-card border border-border/70 p-4">
-            <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · estimado)</span></p>
-            <TalkXQueryBoundary
-              query={{ isLoading: rateLoading, isError: rateError, error: null }}
-              entity="estimativas de ritmo"
-              onRetry={() => refetchRate()}
-              skeleton={<TalkXSkeletonRows rows={3} variant="rail" />}
-              isEmpty={chartData.length === 0}
-              empty={<div className="h-[160px] flex items-center justify-center text-xs text-muted-foreground">Sem envios nos últimos 60 minutos.</div>}
-            >
-              <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={chartData} margin={{top:5,right:5,left:-25,bottom:5}}>
-                  <defs><linearGradient id="gS" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false}/>
-                  <XAxis dataKey="label" tick={{fontSize: CHART_TICK_FONT_SIZE}} stroke="hsl(var(--muted-foreground))"/>
-                  <YAxis tick={{fontSize: CHART_TICK_FONT_SIZE}} stroke="hsl(var(--muted-foreground))"/>
-                  <ReTooltip contentStyle={{background:'hsl(var(--popover))',border:'1px solid hsl(var(--border))',borderRadius:12,fontSize: CHART_TOOLTIP_FONT_SIZE}}/>
-                  <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gS)" dot={false}/>
-                  <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false}/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </TalkXQueryBoundary>
-          </section>
+          <TalkXRateChart
+            title="Ritmo de Entrega"
+            windowMinutes={rateWindow}
+            onWindowChange={(minutes) => { setRateWindow(minutes); void refetchRate(); }}
+            series={rateSeries}
+            forecast={rateForecast}
+            limitPerMinute={rateLimit}
+            query={{ isLoading: rateLoading, isFetching: rateLoading, isError: rateError, error: null }}
+            onRetry={() => { void refetchRate(); }}
+            truncated={(rateRows?.length ?? 0) >= 2000}
+          />
           <TalkXHealthCard
             status={campaign.status}
             pauseReason={campaignPauseReason(campaign)}

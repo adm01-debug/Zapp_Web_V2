@@ -1,8 +1,6 @@
 // TalkXCampaignRunning.tsx — E77: Tela "Campanha em Andamento"
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
-import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
   Users, ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
@@ -30,6 +28,8 @@ import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
 } from './tracking/talkxCampaignRules';
+import { TalkXRateChart } from './tracking/TalkXRateChart';
+import { buildRateSeries, forecastFromCampaign, type TalkXRatePoint, type TalkXRateRow, type TalkXRateWindow } from './tracking/talkxRatePanel';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -116,12 +116,13 @@ function replyGrowthPct(replyTimes: string[], now: number): number | null {
 }
 
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
-function TabOverview({ c, chartData, replyGrowthPct, historyQuery, onRetryHistory }: {
+function TabOverview({ c, rateCard, rateSeries, replyGrowthPct }: {
   c: TalkXCampaign;
-  chartData: { time: string; Enviadas: number; Entregues: number }[];
+  rateCard: React.ReactNode;
+  /** X146: mesma série do card de ritmo — alimenta o sparkline da faixa de KPIs. */
+  rateSeries: TalkXRatePoint[];
+  /** Pico de Respostas: crescimento dos últimos 10 min vs. os 10 anteriores (null = sem base). */
   replyGrowthPct: number | null;
-  historyQuery: TalkXQueryLike;
-  onRetryHistory: () => void;
 }) {
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const processed = c.sent_count + c.failed_count + outcomeUnknown;
@@ -141,8 +142,8 @@ function TabOverview({ c, chartData, replyGrowthPct, historyQuery, onRetryHistor
           audience: c.total_recipients,
           elapsed_minutes: c.started_at ? elapsed : null,
           spark: {
-            sent: chartData.map((point) => point.Enviadas),
-            delivered: chartData.map((point) => point.Entregues),
+            sent: rateSeries.map((point) => point.Enviadas),
+            delivered: rateSeries.map((point) => point.Entregues),
           },
         }}
       />
@@ -165,44 +166,11 @@ function TabOverview({ c, chartData, replyGrowthPct, historyQuery, onRetryHistor
           </div>
         </RailCard>
       </div>
-      {/* Ritmo de Envio — X047: carregando -> erro -> vazio -> conteúdo */}
-      <TalkXQueryBoundary
-        query={historyQuery}
-        entity="estatísticas de envio"
-        onRetry={onRetryHistory}
-        skeleton={(
-          <div className="rounded-2xl bg-card border border-border/70 p-4">
-            <TalkXSkeletonRows rows={4} />
-          </div>
-        )}
-        isEmpty={chartData.length === 0}
-        empty={(
-          <RailCard title="Ritmo de Envio" color="blue" icon={Activity}>
-            <p className="pt-2 text-xs text-foreground-secondary">Nenhum envio registrado nesta campanha ainda.</p>
-          </RailCard>
-        )}
-      >
-        <RailCard title="Ritmo de Envio" color="blue" icon={Activity}>
-          <div className="h-[160px] pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="rg-sent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="10%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="time" tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: 'hsl(var(--foreground-secondary))' }} tickLine={false} axisLine={false} />
-                <ReTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
-                <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#rg-sent)" dot={false} />
-                <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </RailCard>
-      </TalkXQueryBoundary>
+      {/* X147: card do ritmo com o seletor de janela — o boundary (carregando -> erro
+          -> vazio -> conteúdo) vive dentro do card, que continua visível sem envios.
+          A "Barra de progresso"/"Progresso geral" que existia aqui foi absorvida pelo
+          cartão "Destinatários Restantes" (X146, comentário no topo deste componente). */}
+      {rateCard}
     </div>
   );
 }
@@ -695,6 +663,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
 
   const [selectedId, setSelectedId] = useState<string | null>(initialCampaignId ?? sending[0]?.id ?? null);
   const [activeTab, setActiveTab] = useState<RunTab>('overview');
+  // X147: janela do card "Ritmo de Envio" (60/30/15 min).
+  const [rateWindow, setRateWindow] = useState<TalkXRateWindow>(60);
   const [pauseOpen, setPauseOpen] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -735,11 +705,13 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     }
   }, [campaign, sending, selectedId]);
 
-  // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
-  const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
+  // Histórico de envios da campanha (linhas cruas de `talkx_recipients`): alimenta o
+  // card do ritmo na janela escolhida (X147) e, na aba Resultados, a série de 20
+  // minutos consecutivos de sempre (R2-MOD-033).
+  const { data: history, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
-    queryFn: async (): Promise<{ buckets: MinuteBucket[]; replyGrowthPct: number | null }> => {
-      if (!selectedId) return { buckets: [], replyGrowthPct: null };
+    queryFn: async (): Promise<{ rows: TalkXRateRow[]; at: number; buckets: MinuteBucket[]; replyGrowthPct: number | null }> => {
+      if (!selectedId) return { rows: [], at: 0, buckets: [], replyGrowthPct: null };
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
       const { data, error } = await fromTable('talkx_recipients')
@@ -750,14 +722,19 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
         .limit(2000);
       // X047: sem isto a falha virava "sem envios" (o `if (!data?.length)` curto engolia o erro).
       if (error) throw error;
-      if (!data?.length) return { buckets: [], replyGrowthPct: null };
-      const rows = data as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
+      const rows = (data ?? []) as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
+      if (rows.length === 0) return { rows: [], at: Date.now(), buckets: [], replyGrowthPct: null };
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
       const buckets = recentMinuteSeries(rows, { minutes: 20 });
       // Pico de Respostas: heurística explícita sobre as respostas do período —
       // últimos 10 min vs. os 10 min anteriores (ver replyGrowthPct).
       const replyTimes = rows.map((r) => r.replied_at).filter((t): t is string => !!t);
-      return { buckets, replyGrowthPct: replyGrowthPct(replyTimes, Date.now()) };
+      return {
+        rows: rows as TalkXRateRow[],
+        at: Date.now(),
+        buckets,
+        replyGrowthPct: replyGrowthPct(replyTimes, Date.now()),
+      };
     },
     enabled: !!selectedId,
     refetchInterval: 30_000,
@@ -777,6 +754,27 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   });
   const segmentNames = useMemo(() => new Map((segments ?? []).map((s) => [s.id, s.name])), [segments]);
   const segmentName = useCallback((id: string | null) => (id ? segmentNames.get(id) ?? null : null), [segmentNames]);
+
+  const historyRows = useMemo<TalkXRateRow[]>(() => history?.rows ?? [], [history]);
+  // `at` é o instante da leitura: a janela do gráfico é calculada sobre ele, não sobre
+  // o render (mesma regra do cronômetro do Monitor).
+  const historyAt = history?.at ?? 0;
+  // Aba Resultados: buckets de minuto consecutivos (zeros incluídos) dos últimos 20 min.
+  const sentHistory = history?.buckets ?? [];
+  // X147: card do ritmo na janela escolhida — "Entregues" pelo minuto da ENTREGA.
+  const rateSeries = useMemo(
+    () => buildRateSeries(historyRows, { windowMinutes: rateWindow, now: new Date(historyAt) }),
+    [historyRows, rateWindow, historyAt],
+  );
+  const ratePending = campaign
+    ? Math.max(0, campaign.total_recipients - (campaign.sent_count + campaign.failed_count + (campaign.outcome_unknown_count ?? 0)))
+    : 0;
+  const rateForecast = useMemo(
+    () => forecastFromCampaign(campaign, { pending: ratePending, now: new Date(historyAt) }),
+    [campaign, ratePending, historyAt],
+  );
+  // Teto de mensagens por minuto configurado na campanha (linha de referência do card).
+  const rateLimit = (campaign as (TalkXCampaign & { max_per_minute?: number | null }) | null)?.max_per_minute ?? null;
 
   const historyQuery: TalkXQueryLike = {
     isLoading: historyLoading,
@@ -950,13 +948,31 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                       className="mb-4"
                     />
                   )}
-                  <TabOverview c={campaign} chartData={sentHistory?.buckets ?? []} replyGrowthPct={sentHistory?.replyGrowthPct ?? null} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                  <TabOverview
+                    c={campaign}
+                    rateSeries={rateSeries}
+                    replyGrowthPct={history?.replyGrowthPct ?? null}
+                    rateCard={(
+                      <TalkXRateChart
+                        title="Ritmo de Envio"
+                        windowMinutes={rateWindow}
+                        onWindowChange={(minutes) => { setRateWindow(minutes); void refetchHistory(); }}
+                        series={rateSeries}
+                        forecast={rateForecast}
+                        limitPerMinute={rateLimit}
+                        query={historyQuery}
+                        onRetry={handleRetryHistory}
+                        truncated={historyRows.length >= 2000}
+                      />
+                    )}
+                  />
                 </>
+
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} segmentName={segmentName} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}
             </div>
 
