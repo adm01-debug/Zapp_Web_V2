@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
 } from 'lucide-react';
@@ -13,13 +13,12 @@ import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
+import { parseTalkXSegmentsRoute, pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute, type TalkXSegmentsRoute } from './segments/talkxSegmentsRoute';
 import { toast } from 'sonner';
 
 interface Props {
   onUseCampaign: (segmentId: string) => void;
 }
-
-type ViewMode = 'list' | 'edit';
 
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
@@ -35,10 +34,58 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
-  const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
+  // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
+  // `route` é o que o endereço pede; `editing` é a cópia que o usuário está editando na tela.
+  const [route, setRoute] = useState<TalkXSegmentsRoute | null>(
+    () => parseTalkXSegmentsRoute(window.location.search).route,
+  );
+
+  const routedSegment = useMemo(
+    () => (route?.segmentId ? segments.find((s) => s.id === route.segmentId) ?? null : null),
+    [route, segments],
+  );
+
+  // O que o endereço pede para o construtor. Enquanto o segmento do endereço não
+  // chegou da consulta não há cópia para abrir (a tela mostra o esqueleto abaixo).
+  const routedSeed = useMemo<EditingSeed | null>(() => {
+    if (!route) return null;
+    if (route.mode === 'new') return { id: null, name: '', description: '', rules: emptyRules() };
+    return routedSegment
+      ? { id: routedSegment.id, name: routedSegment.name, description: routedSegment.description ?? '', rules: routedSegment.rules }
+      : null;
+  }, [route, routedSegment]);
+
+  // A cópia local ganha do endereço: é ela que tem o que o usuário acabou de digitar.
+  const activeEditing = editing ?? routedSeed;
+
+  const syncFromBrowserHistory = useCallback(() => {
+    const routed = parseTalkXSegmentsRoute(window.location.search);
+    if (routed.needsNormalization) replaceTalkXSegmentsRoute(routed.route);
+    // O histórico é a fonte de verdade do que está aberto; a cópia da tela anterior
+    // não sobrevive à navegação.
+    setEditing(null);
+    setRoute(routed.route);
+  }, []);
+
+  useEffect(() => {
+    const initial = parseTalkXSegmentsRoute(window.location.search);
+    if (initial.needsNormalization) replaceTalkXSegmentsRoute(initial.route);
+    window.addEventListener('popstate', syncFromBrowserHistory);
+    return () => window.removeEventListener('popstate', syncFromBrowserHistory);
+  }, [syncFromBrowserHistory]);
+
+  // Id que a lista não devolve (apagado, de outra conta ou digitado à mão): a tela
+  // cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no histórico.
+  useEffect(() => {
+    if (!route?.segmentId || isLoading || routedSegment) return;
+    replaceTalkXSegmentsRoute(null);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
+  }, [isError, isLoading, route, routedSegment]);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -52,13 +99,29 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
   const existingNames = useMemo(
-    () => segments.filter((s) => s.id !== editing?.id).map((s) => s.name),
-    [segments, editing?.id],
+    () => segments.filter((s) => s.id !== activeEditing?.id).map((s) => s.name),
+    [segments, activeEditing?.id],
   );
 
-  const openNew = () => { setSelected(null); setEditing({ id: null, name: '', description: '', rules: emptyRules() }); setMode('edit'); };
-  const openEdit = (s: TalkXSegment) => { setEditing({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }); setSelected(s); setMode('edit'); };
-  const closeBuilder = () => { setMode('list'); setEditing(null); };
+  const openBuilder = (target: EditingSeed, nextRoute: TalkXSegmentsRoute) => {
+    setEditing(target);
+    setRoute(nextRoute);
+    pushTalkXSegmentsRoute(nextRoute);
+  };
+  const openNew = () => {
+    setSelected(null);
+    openBuilder({ id: null, name: '', description: '', rules: emptyRules() }, { segmentId: null, mode: 'new' });
+  };
+  const openEdit = (s: TalkXSegment) => {
+    setSelected(s);
+    openBuilder({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }, { segmentId: s.id, mode: 'edit' });
+  };
+  // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
+  const closeBuilder = () => {
+    setEditing(null);
+    setRoute(null);
+    replaceTalkXSegmentsRoute(null);
+  };
 
   const save = async (draft: SegmentBuilderContent) => {
     if (saving) return;
@@ -73,11 +136,12 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     setSaving(true);
     try {
       const count = await countAudience(draft.rules);
-      if (editing?.id) {
+      const currentId = activeEditing?.id ?? null;
+      if (currentId) {
         // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
         // antes de salvar.
-        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        const saved = await updateSegment.mutateAsync({ id: currentId, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
         setSelected(saved);
       } else {
         await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
@@ -91,15 +155,38 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
-  if (mode === 'edit' && editing) {
-    return <TalkXSegmentBuilder
-      initial={editing}
-      isNew={!editing.id}
-      saving={saving}
-      existingNames={existingNames}
-      onSave={(draft) => void save(draft)}
-      onCancel={closeBuilder}
-    />;
+  if (activeEditing) {
+    return (
+      <div className="w-full min-w-0 space-y-4">
+        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Segmentos</span>
+        </nav>
+        <TalkXSegmentBuilder
+          initial={activeEditing}
+          isNew={!activeEditing.id}
+          saving={saving}
+          existingNames={existingNames}
+          onSave={(draft) => void save(draft)}
+          onCancel={closeBuilder}
+        />
+      </div>
+    );
+  }
+
+  if (route?.segmentId) {
+    // O endereço pede um segmento que a consulta ainda não devolveu: esqueleto no
+    // lugar da biblioteca, para o F5 do link direto não piscar a lista primeiro.
+    return (
+      <div className="min-h-full w-full min-w-0" role="status" aria-live="polite" aria-busy={isLoading} data-talkx-query="loading">
+        <span className="sr-only">Carregando conteúdo…</span>
+        <TalkXSkeletonRows rows={4} />
+      </div>
+    );
   }
 
   return (
