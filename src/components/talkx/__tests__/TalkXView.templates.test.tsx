@@ -1,5 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
+
+/** A aba de templates consome os KPIs (react-query real): precisa do provider. */
+const renderView = () => render(
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <TalkXView />
+  </QueryClientProvider>,
+);
 
 /**
  * R2-MOD-039 — a ação "Novo template" do menu Templates, no topo do módulo, levava ao
@@ -75,7 +87,7 @@ describe('TalkXView — menu Templates ▾ → Novo template (R2-MOD-039)', () =
   afterEach(() => vi.clearAllMocks());
 
   it('abre o editor de template vazio e não o wizard de campanha', async () => {
-    render(<TalkXView />);
+    renderView();
 
     abrirMenuTemplates();
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Novo template' }));
@@ -95,7 +107,7 @@ describe('TalkXView — menu Templates ▾ → Novo template (R2-MOD-039)', () =
   });
 
   it('não reabre o editor ao revisitar a aba; a Biblioteca continua mostrando a lista', async () => {
-    render(<TalkXView />);
+    renderView();
 
     abrirMenuTemplates();
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Novo template' }));

@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
 
 /**
  * X047b — matriz de estados, linha da tela Templates.
@@ -43,15 +48,22 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 
 import { TalkXTemplates } from '../TalkXTemplates';
 
+/** A tela passou a consumir o hook de KPIs (react-query real): precisa do provider. */
+const renderTemplates = () => render(
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <TalkXTemplates onUseTemplate={vi.fn()} />
+  </QueryClientProvider>,
+);
+
 describe('matriz de estados — TalkXTemplates (X047b)', () => {
   it('consulta com erro: mostra o erro e NÃO o vazio da consulta', () => {
-    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const { container } = renderTemplates();
     expect(screen.getByText(/Não foi possível carregar/)).toBeTruthy();
     expect(container.querySelector('[data-talkx-query="empty"]')).toBeNull();
   });
 
   it('consulta com erro: não mostra nehum dos vazios da tela', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderTemplates();
     expect(screen.queryByText('Nenhum template criado')).toBeNull();
     expect(screen.queryByText('Nenhum template encontrado')).toBeNull();
   });
