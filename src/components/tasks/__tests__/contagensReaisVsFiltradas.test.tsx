@@ -70,7 +70,12 @@ function colunaComLabel(label: string): HTMLElement {
  * 3 para hoje e 3 em "fazendo" (a trava de WIP é 3).
  */
 function cenario() {
-  const hoje = new Date().toISOString();
+  // Prazo de DIA INTEIRO de hoje (23:59 locais, a convenção dos chips "Hoje").
+  // R2-MOD-058: com hora marcada já passada a tarefa seria ATRASADA, não "para
+  // hoje" — e este cenário é o de "3 para hoje".
+  const fimDoDia = new Date();
+  fimDoDia.setHours(23, 59, 0, 0);
+  const hoje = fimDoDia.toISOString();
   setSelectResult({
     data: [
       makeTaskRow({ id: 'u1', title: 'Urgente hoje',  status: 'todo',  priority: 'urgent', due_date: hoje }),
