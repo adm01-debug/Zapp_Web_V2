@@ -13,7 +13,10 @@
  * A pilha de sessão de telefonia (`CallSessionProvider`) continua no grafo
  * estático de propósito: ela envolve o app inteiro, e deixá-la lazy poria todos
  * os filhos atrás de um chunk dinâmico (cascata no first paint e falha da
- * telefonia derrubando o app). Por isso não há caso dela aqui.
+ * telefonia derrubando o app). Por isso não há caso dela aqui. Só que ela também
+ * importava `toast` de 'sonner' estaticamente (`useSipConnection`,
+ * `sipProvisioning`, `useMicrophoneGuard`, `useCallEngineSink`): esses quatro
+ * passam pela fachada `@/lib/lazyToast`, e este caso cobre os seis importadores.
  *
  * O teste empacota o app de verdade com o MESMO `vite build` do CI (vite.config
  * real, modo produção) e percorre o fechamento de imports estáticos a partir do
