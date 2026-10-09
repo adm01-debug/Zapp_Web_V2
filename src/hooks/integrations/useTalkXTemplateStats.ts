@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// As funções são introduzidas pela migration da etapa X086. O types-sync gera a
+// assinatura canônica só depois que o banco canônico receber a migration; não
+// editar `types.ts` à mão, para não mascarar drift entre código e banco.
+type PendingDatabaseRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
 /**
  * X091 — KPIs de template ligados às RPCs de métricas (X086).
  *
@@ -91,7 +99,8 @@ export function useTalkXTemplateLibraryStats(dias: number = 30, top: number = 3)
   const query = useQuery({
     queryKey: ['talkx-template-library-stats', dias, top],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('talkx_template_library_stats', { p_days: dias, p_top: top });
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('talkx_template_library_stats', { p_days: dias, p_top: top });
       if (error) throw error;
       return (data ?? null) as TalkXTemplateLibraryStats | null;
     },
@@ -116,7 +125,8 @@ export function useTalkXTemplateStats(templateId: string | null | undefined, dia
     enabled: !!templateId,
     queryFn: async () => {
       const { p_from, p_to } = templateStatsRange(dias);
-      const { data, error } = await supabase.rpc('talkx_template_stats', {
+      const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('talkx_template_stats', {
         p_template_id: templateId as string,
         p_from,
         p_to,
