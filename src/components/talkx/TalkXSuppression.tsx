@@ -26,7 +26,9 @@ import { useTalkXFilterState } from './kit/useFilterState';
 
 interface BlacklistEntry {
   id: string;
-  contact_id: string;
+  contact_id: string | null;
+  /** Telefone da própria supressão: preenchido quando o bloqueio é feito sem contato (eixo do telefone). */
+  phone: string | null;
   reason: string | null;
   blocked_by: string | null;
   created_at: string;
@@ -43,6 +45,9 @@ const REASONS = ['Opt-out solicitado', 'Número inválido / bounce', 'Reclamaç�
 // e espera antes de ir ao servidor, para não disparar uma consulta por tecla.
 const ADD_CONTACT_LIST_LIMIT = 50;
 const CONTACT_SEARCH_DEBOUNCE_MS = 300;
+
+/** Telefone da linha: o do contato vinculado ou, quando o bloqueio é só por telefone, o da própria supressão. */
+const fmtPhone = (raw: string | null | undefined) => { const d = (raw ?? '').replace(/\D/g, ''); return d ? `+${d}` : '—'; };
 
 export function TalkXSuppression() {
   const qc = useQueryClient();
@@ -92,7 +97,19 @@ export function TalkXSuppression() {
     let r = blacklist;
     if (filterValues.origin !== 'all') r = r.filter((b) => b.origin === filterValues.origin);
     if (filterValues.motivo !== 'all') r = r.filter((b) => (b.reason ?? '').toLowerCase().includes(filterValues.motivo.toLowerCase()));
-    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((b) => b.contacts?.name?.toLowerCase().includes(q) || b.contacts?.phone?.includes(q) || (b.reason ?? '').toLowerCase().includes(q)); }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      // Busca de telefone (só dígitos e pontuação): o número da supressão fica gravado em
+      // dígitos, então é preciso normalizar o termo para encontrar um bloqueio feito só
+      // por telefone — sem isso, qualquer busca com dígito casaria por acidente.
+      const qDigits = q.replace(/\D/g, '');
+      const phoneQuery = qDigits.length > 0 && /^[\d\s()+.-]+$/.test(q);
+      r = r.filter((b) =>
+        b.contacts?.name?.toLowerCase().includes(q)
+        || b.contacts?.phone?.includes(q)
+        || (phoneQuery && (b.phone ?? '').includes(qDigits))
+        || (b.reason ?? '').toLowerCase().includes(q));
+    }
     return r;
   }, [blacklist, filterValues.origin, filterValues.motivo, search]);
 
@@ -182,7 +199,7 @@ export function TalkXSuppression() {
                             <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-2xs text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
-                        <Td><span className="text-xs text-foreground-secondary">+{b.contacts?.phone?.replace(/\D/g,'')}</span></Td>
+                        <Td><span className="text-xs text-foreground-secondary">{fmtPhone(b.contacts?.phone ?? b.phone)}</span></Td>
                         <Td><Pill label={om.label} tone={om.tone} /></Td>
                         <Td><span className="text-xs text-foreground-secondary max-w-[180px] block truncate">{b.reason || '—'}</span></Td>
                         <Td><span className="text-2xs text-foreground-secondary">{b.campaign_id ? '📢 Campanha' : '—'}</span></Td>
