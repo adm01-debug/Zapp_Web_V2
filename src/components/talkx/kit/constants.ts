@@ -26,6 +26,14 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
   outcome_unknown: { label: 'Confirmação pendente', tone: 'warning' },
   skipped: { label: 'Suprimido', tone: 'muted' },
   cancelled: { label: 'Cancelado', tone: 'muted' },
+  // X150 — estados DERIVADOS da linha, não valores de `talkx_recipients.status`
+  // (o CHECK da tabela só aceita pending/sending/sent/delivered/failed/skipped/
+  // outcome_unknown). Lido/Respondida vêm de read_at/replied_at e "Sem telefone"
+  // de uma linha ainda não enviada cujo contato não tem telefone:
+  // `talkXRecipientState` (tracking/TalkXRecipientsTable) é quem os produz.
+  read: { label: 'Lida', tone: 'success' },
+  replied: { label: 'Respondida', tone: 'violet' },
+  no_phone: { label: 'Sem telefone', tone: 'warning' },
 };
 
 /**
