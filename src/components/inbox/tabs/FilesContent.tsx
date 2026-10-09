@@ -267,6 +267,8 @@ export function FilesContent({
       selectionMode={selection.mode}
       selectedIds={selection.selectedIds}
       containerWidth={containerWidth}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
@@ -280,6 +282,8 @@ export function FilesContent({
       selectedIds={selection.selectedIds}
       containerWidth={containerWidth}
       sort={sort}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSortChange={onSortChange}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
