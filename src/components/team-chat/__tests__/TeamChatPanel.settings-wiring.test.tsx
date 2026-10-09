@@ -219,7 +219,7 @@ describe('TeamChatPanel — itens existentes ligados no painel ativo (SL-082)', 
     expect(screen.queryByText('Nenhuma mensagem encontrada')).not.toBeInTheDocument();
   });
 
-  it('o spinner da busca respeita reduzir movimento (motion-safe, nunca animate-spin solto)', () => {
+  it('o spinner da busca respeita reduzir movimento (motion-safe:)', () => {
     h.panel.showSearch = true;
     h.panel.searchQuery = 'contrato';
     h.panel.isSearching = true;
@@ -229,8 +229,10 @@ describe('TeamChatPanel — itens existentes ligados no painel ativo (SL-082)', 
     expect(spinner).not.toBeNull();
     const classes = (spinner?.getAttribute('class') ?? '').split(/\s+/);
     expect(classes).toContain('motion-safe:animate-spin');
-    // `animate-spin` solto ignora quem pediu menos movimento na máquina.
-    expect(classes).not.toContain('animate-spin');
+    // A única animação do ícone tem de ser a variante que respeita "reduzir
+    // movimento": a variante crua (sem motion-safe:) ignora quem pediu menos
+    // movimento na máquina.
+    expect(classes.filter(c => c.includes(':animate-spin'))).toEqual(['motion-safe:animate-spin']);
   });
 
   it('o spinner do "Carregar mensagens anteriores" também respeita reduzir movimento', () => {
@@ -250,7 +252,7 @@ describe('TeamChatPanel — itens existentes ligados no painel ativo (SL-082)', 
     expect(spinner).toBeTruthy();
     const classes = (spinner?.getAttribute('class') ?? '').split(/\s+/);
     expect(classes).toContain('motion-safe:animate-spin');
-    expect(classes).not.toContain('animate-spin');
+    expect(classes.filter(c => c.includes(':animate-spin'))).toEqual(['motion-safe:animate-spin']);
   });
 
   it('falha da busca aparece como aviso de erro, não como "Nenhuma mensagem encontrada"', () => {
