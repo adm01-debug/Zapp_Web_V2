@@ -93,6 +93,9 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
+    // R2-INB-016 (item 312): a barra recebe o par da assinatura (ligada + nome do agente) que
+    // o ChatPanel já entrega, para que contador e botão contem o payload assinado.
+    signatureEnabled, signatureName,
   });
 
   const { isOpen: mentionOpen, cursorPos: mentionCursorPos, checkForMention, handleSelect: handleMentionSelect, close: closeMention } = useMentions(inputRef);
