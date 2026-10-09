@@ -18,7 +18,11 @@
 //   I3. Linha que cita monitor/uptime externo só é REAL/PARCIAL se existir artefato de
 //       monitoramento no repositório; linha que cita `slo_inbound_latency_daily` só é
 //       REAL/PARCIAL se a view existir no retrato de produção (schema-manifest.json).
-//   I4. O SLO mínimo da edge `evolution-webhook` (p95 < 500 ms e erro < 1 %) está no documento.
+//   I4. O SLO da edge `evolution-webhook` traz o alvo NA PRÓPRIA LINHA da tabela: a linha de
+//       latência tem `p95 < 500 ms` e a linha de erro/aceitação tem o percentual do alvo único
+//       (erro ≤ 0,5 % ⇔ aceitação ≥ 99,5 %). Termo solto em OUTRA linha da tabela não conta —
+//       foi assim que o alvo de latência e o de erro acabaram em linhas vizinhas na entrega
+//       recusada, deixando o SLO citado sem alvo na linha que o leitor consulta.
 //   I5. Toda referência `arquivo.ext:linha` resolve: o arquivo existe e tem aquela linha.
 //   I6. A afirmação sobre `x-request-id` bate com o código: o documento não pode dizer que o
 //       cliente envia o header enquanto `src/` não o tem (e vice-versa), e todo elo marcado
@@ -46,6 +50,12 @@ const normalizar = (t) =>
     .replace(/[*`>]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+
+// Alvo do SLO da edge `evolution-webhook`, exigido NA LINHA da tabela (regra I4). O alvo de erro
+// é único: `erro ≤ 0,5 %` e `aceitação ≥ 99,5 %` são a mesma medida vista dos dois lados — manter
+// as duas leituras com números diferentes foi o defeito apontado na recusa do SL-102.
+export const ALVO_LATENCIA_EDGE = 'p95 < 500 ms';
+export const ALVO_ERRO_EDGE = '0,5 %';
 
 const CLASSIFICADORES = ['REAL', 'PARCIAL', 'PENDENTE'];
 // Negativa do "Estado" de um elo: `não`, `nunca`, `nenhuma` (sem acento, já normalizado).
@@ -166,10 +176,35 @@ export function analisar(texto, amb) {
     if (!amb.existeCaminho(token)) problemas.push(`I2: caminho citado não existe — ${token}`);
   }
 
-  // --- I4: SLO mínimo da edge do webhook ---
-  const sloTexto = normalizar(tabela ? tabela.map(({ celulas }) => celulas.join(' | ')).join(' ') : '').toLowerCase();
-  for (const exigencia of ['evolution-webhook', 'p95', '500 ms', '1 %']) {
-    if (!sloTexto.includes(exigencia)) problemas.push(`I4: SLO mínimo sem "${exigencia}" na tabela de SLOs`);
+  // --- I4: o alvo tem de estar NA LINHA da edge `evolution-webhook` ---
+  // A linha de latência carrega `p95 < 500 ms`; a linha de erro/aceitação carrega o percentual do
+  // alvo único. Buscar os termos no texto da tabela inteira (regra anterior) aceitava alvo em
+  // linha vizinha: quem abria a linha da edge via um SLO sem alvo.
+  if (!tabela) {
+    problemas.push('I4: seção "SLOs propostos" sem tabela — não há SLO da edge `evolution-webhook`');
+  } else {
+    const daEdge = tabela
+      .slice(1)
+      .filter(({ celulas }) => celulas.some((c) => c.toLowerCase().includes('evolution-webhook')));
+    const linhaDe = (filtro) => daEdge.filter(({ celulas }) => filtro(celulas.join(' | ')));
+    const latencia = linhaDe((t) => /laten/i.test(t));
+    const erro = linhaDe((t) => /\berro\b/i.test(t));
+    if (!latencia.length) problemas.push('I4: a tabela de SLOs não tem a linha de latência da edge `evolution-webhook`');
+    for (const { bruto, celulas } of latencia) {
+      if (!celulas.join(' | ').toLowerCase().includes(ALVO_LATENCIA_EDGE)) {
+        problemas.push(
+          `I4: a linha de latência da edge não traz o alvo "${ALVO_LATENCIA_EDGE}" — "${bruto.slice(0, 90)}"`,
+        );
+      }
+    }
+    if (!erro.length) problemas.push('I4: a tabela de SLOs não tem a linha de erro da edge `evolution-webhook`');
+    for (const { bruto, celulas } of erro) {
+      if (!celulas.join(' | ').toLowerCase().includes(ALVO_ERRO_EDGE)) {
+        problemas.push(
+          `I4: a linha de erro da edge não traz o alvo "${ALVO_ERRO_EDGE}" — "${bruto.slice(0, 90)}"`,
+        );
+      }
+    }
   }
 
   // --- I5: referências arquivo:linha ---
@@ -356,6 +391,16 @@ test('mutação no documento real: referência de arquivo quebrada acusa I5', ()
   assert.ok(problemas.some((p) => p.startsWith('I5')), problemas.join('; '));
 });
 
+test('mutação no documento real: alvo de erro fora da linha da edge acusa I4', () => {
+  const problemas = mutar('erro ≤ 0,5 % ⇔', 'erro conforme o alvo de aceitação ⇔');
+  assert.ok(problemas.some((p) => p.startsWith('I4')), problemas.join('; '));
+});
+
+test('mutação no documento real: alvo de latência fora da linha da edge acusa I4', () => {
+  const problemas = mutar('p95 < 500 ms', 'p95 sob o limiar acordado');
+  assert.ok(problemas.some((p) => p.startsWith('I4')), problemas.join('; '));
+});
+
 // ---------------------------------------------------------------------------
 // Fixtures — os dois lados de cada regra, provados em string
 // ---------------------------------------------------------------------------
@@ -373,8 +418,8 @@ const tabela = (linhaFront, ...extras) => `## SLOs propostos (janela de 30 dias)
 | SLO | Alvo | Como medir (fonte real) | Fonte hoje |
 |---|---|---|---|
 ${linhaFront}
-| Webhook \`evolution-webhook\` latência | p95 < 500 ms | \`extensions.pg_stat_statements\` | PENDENTE |
-| Webhook \`evolution-webhook\` erro | < 1 % das respostas ≠ 2xx | logs da edge | PENDENTE |
+| Webhook \`evolution-webhook\` latência | p95 < 500 ms | duração por invocação nos logs da Edge Function | PENDENTE |
+| Webhook \`evolution-webhook\` erro | erro ≤ 0,5 % ⇔ aceitação ≥ 99,5 % (alvo único) | logs da edge | PENDENTE |
 | Schema sem drift | 100 % | \`db-live-guard.yml\` | REAL |
 ${extras.join('\n')}
 `;
@@ -471,6 +516,36 @@ test('fixture I4: SLO mínimo do webhook ausente é acusado', () => {
 | Backups | diário | MCP | PARCIAL |
 ` + secaoXrid('não');
   assert.ok(analisar(fixt, OK).some((p) => p.startsWith('I4')));
+});
+
+// Fixture da recusa: os termos existem NA TABELA, mas o alvo não está na linha da edge —
+// `evolution-webhook` numa linha, `p95 < 500 ms` e o percentual em OUTRAS linhas. A regra antiga
+// (busca no texto da tabela inteira) dava verde aqui; a linha da edge, sozinha, não tinha alvo.
+test('fixture I4: alvo espalhado em outras linhas da tabela é acusado (defeito da regra antiga)', () => {
+  const espalhado = `## SLOs propostos (janela de 30 dias)
+
+| SLO | Alvo | Como medir (fonte real) | Fonte hoje |
+|---|---|---|---|
+| Front disponível | 99,9 % | monitor externo em /version.json | PENDENTE |
+| Webhook \`evolution-webhook\` latência | ver a linha de mensagens | logs da edge | PENDENTE |
+| Mensagem inbound visível | p95 < 500 ms | \`messages\` | PENDENTE |
+| Webhook \`evolution-webhook\` erro | ver a linha de aceitação | logs da edge | PENDENTE |
+| Webhook inbound aceito | erro ≤ 0,5 % | logs da edge | PARCIAL |
+| Backups diários | ≥ 99 % de execução no dia (falha ≤ 1 %) | MCP | PARCIAL |
+| Schema sem drift | 100 % | \`db-live-guard.yml\` | REAL |
+` + secaoXrid('não');
+  const problemas = analisar(espalhado, OK);
+  assert.ok(problemas.some((p) => p.startsWith('I4')), problemas.join('; '));
+  // Prova do furo da regra antiga, neste MESMO documento: os quatro termos que ela procurava
+  // (`['evolution-webhook', 'p95', '500 ms', '1 %']` no texto da tabela inteira) existiam — ela
+  // dava verde aqui, mesmo com a linha da edge sem alvo nenhum.
+  const textoDaTabela = tabelaDoTitulo(espalhado, 'SLOs propostos').map(({ celulas }) => celulas.join(' ')).join(' ');
+  assert.ok(
+    ['evolution-webhook', 'p95', '500 ms', '1 %'].every((t) => textoDaTabela.includes(t)),
+    'a fixture tem de manter os termos do alvo antigo, senão não prova o furo',
+  );
+  // Prova dos dois lados: a mesma tabela com os alvos NAS linhas da edge passa.
+  assert.deepEqual(analisar(tabela(FRONT_PENDENTE) + secaoXrid('não'), OK), []);
 });
 
 // --- Bordas: documento vazio, célula vazia e negativa por outra palavra ---
