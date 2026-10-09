@@ -1,5 +1,7 @@
 -- login_gate_rpc
--- Rollback: DROP FUNCTION IF EXISTS public.consume_login_gate(text, text, integer, integer, integer, integer);
+-- Rollback: dropa a RPC nova consume_login_gate (a função é nova: não há corpo anterior a restaurar; o handler antigo usa consume_rate_limit/is_account_locked, que esta migration não altera).
+-- Rollback (SQL executável; o teste scripts/db-audit/login_gate_rpc.test.sh executa esta linha):
+--   drop function if exists public.consume_login_gate(text, text, integer, integer, integer, integer);
 
 -- ============================================================================
 -- auth-login fazia QUATRO idas ao banco por tentativa de login: depois da
