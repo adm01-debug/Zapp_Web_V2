@@ -16,8 +16,8 @@ import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardC
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign, TalkXRecipient } from '@/hooks/integrations/useTalkX';
 import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
-import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
+import { TalkXOperationalTimeline } from './tracking/TalkXOperationalTimeline';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
@@ -30,9 +30,8 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
   // e o próprio refetch. O retry de um bloco não troca a campanha aberta.
-  const {
-    events, isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj, refetch: refetchEvents,
-  } = useTalkXEvents(campaignId);
+  // X152: a linha do tempo saiu daqui para `tracking/TalkXOperationalTimeline`, que lê do
+  // servidor com cursor e traduz cada tipo do evento (o Monitor não escreve mais o tipo cru).
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -261,32 +260,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       )}
 
       {tab==='timeline' && (
-        <section className="rounded-2xl bg-card border border-border/70 p-4">
-          <p className="text-[15px] font-bold text-foreground mb-3">Linha do Tempo Operacional</p>
-          <TalkXQueryBoundary
-            query={{ isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj }}
-            entity="atividades da campanha"
-            onRetry={() => refetchEvents()}
-            skeleton={<TalkXSkeletonRows rows={3} />}
-            isEmpty={events.length === 0}
-            empty={<p className="text-xs text-muted-foreground">Nenhum evento registrado ainda.</p>}
-          >
-            <div className="space-y-0">
-              {events.map((ev,i) => (
-                <div key={ev.id} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={cn('w-2.5 h-2.5 rounded-full mt-1.5 shrink-0',ev.event_type==='started'?'bg-primary':ev.event_type==='completed'?'bg-dash-green':ev.event_type==='paused'?'bg-dash-amber':ev.event_type==='cancelled'?'bg-dash-red':'bg-border')}/>
-                    {i<events.length-1 && <div className="w-px flex-1 bg-border/50 my-0.5"/>}
-                  </div>
-                  <div className="pb-3 min-w-0">
-                    <p className="text-xs font-medium text-foreground">{ev.message||ev.event_type}</p>
-                    <p className="text-2xs text-muted-foreground">{fmtDateTime(ev.created_at)}{ev.actor?.name?` · ${ev.actor.name}`:''}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TalkXQueryBoundary>
-        </section>
+        <TalkXOperationalTimeline campaignId={campaignId} />
       )}
 
       <TalkXLifecycleDialog controller={lifecycle} />

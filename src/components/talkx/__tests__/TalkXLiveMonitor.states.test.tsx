@@ -84,14 +84,25 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({ startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn() }),
 }));
 
-vi.mock('@/hooks/integrations/useTalkXEvents', () => ({
-  useTalkXEvents: () => ({
-    events: [],
+/**
+ * X152 — a linha do tempo saiu do Monitor para `tracking/TalkXOperationalTimeline`, que
+ * lê de `useTalkXCampaignTimeline`. O bloco continua com o PRÓPRIO estado e o próprio
+ * retry: o que este mock controla é o mesmo erro/refetch de antes (h.eventsError /
+ * h.refetchEvents), agora na fonte que a tela realmente usa.
+ */
+vi.mock('@/hooks/integrations/useTalkXCampaignTimeline', () => ({
+  TIMELINE_PAGE_SIZE: 20,
+  TIMELINE_PREVIEW_SIZE: 5,
+  useTalkXCampaignTimeline: () => ({
+    items: [],
     isLoading: false,
+    isFetching: false,
     isError: h.eventsError !== null,
     error: h.eventsError,
+    hasMore: false,
+    isLoadingMore: false,
+    loadMore: vi.fn(),
     refetch: h.refetchEvents,
-    logEvent: vi.fn(),
   }),
 }));
 
