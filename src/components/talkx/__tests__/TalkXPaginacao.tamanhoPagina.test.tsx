@@ -178,11 +178,14 @@ describe('tamanho de página com efeito — R2-MOD-060 (#497)', () => {
 
   it('Segmentos: "20 por página" mostra os 12 segmentos e volta para a 1ª página', () => {
     wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
-    expect(screen.getByText('Mostrando 1 a 8 de 12 segmentos')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Favoritar' })).toHaveLength(8);
+    // O padrão da biblioteca de segmentos passou a ser 10 por página (X114/TL-135c;
+    // antes eram 8): as três contagens deste caso seguem a mesma prova — o seletor
+    // tem efeito e a troca de tamanho volta para a 1ª página.
+    expect(screen.getByText('Mostrando 1 a 10 de 12 segmentos')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Favoritar' })).toHaveLength(10);
 
     fireEvent.click(screen.getByRole('button', { name: '2' }));
-    expect(screen.getByText('Mostrando 9 a 12 de 12 segmentos')).toBeTruthy();
+    expect(screen.getByText('Mostrando 11 a 12 de 12 segmentos')).toBeTruthy();
 
     escolherTamanhoPagina(20);
 
