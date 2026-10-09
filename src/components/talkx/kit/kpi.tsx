@@ -34,7 +34,7 @@ interface KpiCardProps {
   /** Variação vs. período anterior — o card decide sozinho se mostra. */
   comparison?: KpiComparison;
   visual?: KpiVisual;
-  bars?: number[];
+  bars?: number[] | null;
   hint?: string;
   /** Sufixo fixo do valor numérico (ex.: '%'). Não muda a variação. */
   suffix?: string;
