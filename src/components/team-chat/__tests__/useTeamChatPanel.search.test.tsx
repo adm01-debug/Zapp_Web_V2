@@ -69,6 +69,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 const convA = { id: 'conv-a', type: 'group' } as TeamConversation;
+const convB = { id: 'conv-b', type: 'group' } as TeamConversation;
 
 /** Deixa o debounce de 400 ms da busca vencer e os microtasks do RPC correrem. */
 async function esperarDebounce() {
@@ -159,6 +160,30 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
       error: null,
     });
     act(() => { result.current.setSearchQuery('contrato renova'); });
+    await esperarDebounce();
+
+    expect(result.current.searchError).toBeNull();
+    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
+  });
+
+  it('a mesma busca que falhou não deixa o aviso na tela quando o servidor responde', async () => {
+    // Trocar de conversa NÃO remonta o painel nem apaga o termo digitado: o efeito
+    // roda de novo com o mesmo termo e a resposta chega. Sem limpar o erro
+    // anterior, o aviso de falha ficava por cima do resultado que chegou.
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'RPC indisponível' } });
+    const { result, rerender } = renderHook(
+      ({ conv }: { conv: TeamConversation }) => useTeamChatPanel(conv),
+      { initialProps: { conv: convA } },
+    );
+    act(() => { result.current.setSearchQuery('contrato'); });
+    await esperarDebounce();
+    expect(result.current.searchError).toBeTruthy();
+
+    h.rpc.mockResolvedValue({
+      data: [{ id: 'm-antiga', sender_id: 'user-3', content: 'contrato assinado', created_at: '2026-01-05T09:00:00+00:00', sender_name: 'Ana' }],
+      error: null,
+    });
+    rerender({ conv: convB });
     await esperarDebounce();
 
     expect(result.current.searchError).toBeNull();
