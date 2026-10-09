@@ -4,6 +4,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Image as ImageIcon, Music, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SUPABASE_URL } from '@/config/supabase';
 import { TeamMessage } from '@/hooks/team-chat/teamChatTypes';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
@@ -37,8 +38,10 @@ export const MediaTypeIcon = memo(function MediaTypeIcon({ type }: { type: strin
 });
 
 export const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessage }) {
+  // SEC-FE-01: a URL de storage vem de @/config/supabase (a mesma fonte do client.ts) —
+  // a variável de ambiente é injetada apontando para outro projeto.
   const source = (msg.media_bucket && msg.media_path)
-    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/${msg.media_bucket}/${msg.media_path}`
+    ? `${SUPABASE_URL}/storage/v1/object/${msg.media_bucket}/${msg.media_path}`
     : (msg.media_url || '');
   const { url: resolvedUrl, isLoading, refresh } = useResolvedStorageUrl(source);
   // E33/E37 — áudio e vídeo do chat interno da equipe são mídia de conversa.
