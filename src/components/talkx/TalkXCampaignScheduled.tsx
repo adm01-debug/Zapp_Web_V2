@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
+import { IconTile, ModuleBreadcrumb, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
@@ -286,7 +286,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
-      {/* Breadcrumb */}
+      {/* X053: a trilha à mão virou o componente do kit; o voltar continua igual. */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -295,13 +295,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-2xs text-muted-foreground hidden sm:inline">
-          <span className="text-primary">Campanhas</span>
-          {' › '}
-          <span className="text-primary">Talk X</span>
-          {' › '}
-          <span className="text-foreground">Campanha Agendada</span>
-        </span>
+        {/* X053: a trilha à mão (TL-151) virou o componente do kit, com os mesmos
+            três rótulos que já entraram; o voltar continua igual. */}
+        <ModuleBreadcrumb items={['Talk X', 'Campanhas', 'Campanha Agendada']} className="hidden sm:flex" />
       </div>
 
       {/* Header */}
