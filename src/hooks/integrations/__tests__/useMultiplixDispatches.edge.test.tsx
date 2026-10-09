@@ -94,7 +94,7 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
       body: { action: 'dispatch.list', payload: { limit: 50, offset: 0 } },
       headers: { Authorization: 'Bearer tok-123' },
     });
-    expect(result.current.data).toEqual([DISPATCH_A, DISPATCH_B]);
+    expect(result.current.data).toEqual({ rows: [DISPATCH_A, DISPATCH_B], total: 2 });
     expect((supabase as unknown as { from?: unknown }).from).toBeUndefined();
   });
 
@@ -104,7 +104,9 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
     const { result } = renderHook(() => useMultiplixDispatchesList(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual([DISPATCH_A]);
+    // Sem total no envelope a contagem continua null (nao se inventa numero):
+    // o rotulo do caso parcial so aparece com o total do servidor.
+    expect(result.current.data).toEqual({ rows: [DISPATCH_A], total: null });
   });
 
   it('useMultiplixDispatch pede o disparo por id na edge (dispatch_id no payload)', async () => {

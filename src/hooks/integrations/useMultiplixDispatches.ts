@@ -164,16 +164,28 @@ const RECIPIENT_COUNT_PAGE_LIMIT = 1000;
  */
 const RECIPIENT_MAX_PAGES = 20;
 
+/**
+ * Uma pagina do historico de disparos (`dispatch.list`).
+ *
+ * O `offset` e o numero de linhas JA carregadas: a lista usa o MESMO limite em
+ * toda pagina, entao a continuacao pede a fatia seguinte — o historico nao e
+ * carregado inteiro para depois esconder o resto. Junto das linhas vem o
+ * `total` EXATO do servidor (`meta.total`, `count: 'exact'` no handler), que e
+ * o que permite rotular o caso parcial em vez de vender a pagina como lista
+ * completa.
+ */
+export async function fetchMultiplixDispatchesPage(offset = 0): Promise<MultiplixListPayload<MultiplixDispatch>> {
+  const data = await invokeMultiplixDispatch('dispatch.list', {
+    limit: DISPATCH_LIST_LIMIT,
+    offset,
+  });
+  return readMultiplixList<MultiplixDispatch>(data);
+}
+
 export function useMultiplixDispatchesList() {
   return useQuery({
     queryKey: ['multiplix-dispatches-list'],
-    queryFn: async () => {
-      const data = await invokeMultiplixDispatch('dispatch.list', {
-        limit: DISPATCH_LIST_LIMIT,
-        offset: 0,
-      });
-      return readMultiplixList<MultiplixDispatch>(data).rows;
-    },
+    queryFn: () => fetchMultiplixDispatchesPage(0),
     refetchInterval: 10_000,
   });
 }
