@@ -39,12 +39,19 @@ export interface TalkXSegment {
   name: string;
   description: string | null;
   origin: 'zapp' | 'crm360' | 'custom';
-  status: 'active' | 'inactive';
+  /** X101: `draft` e o rascunho do ciclo de vida do segmento (coluna `status`). */
+  status: 'active' | 'inactive' | 'draft';
   is_favorite: boolean;
   rules: SegmentRules;
   estimated_count: number;
   last_used_at: string | null;
   created_by: string | null;
+  /**
+   * X101 — etiquetas do segmento. Vem da coluna `talkx_segments.tags`; enquanto a
+   * fatia de banco nao chega a linha nao traz o campo, e o filtro da biblioteca
+   * simplesmente nao oferece tag nenhuma (nunca inventa uma).
+   */
+  tags?: string[] | null;
   created_at: string;
   updated_at: string;
   creator?: { name: string | null } | null;
@@ -302,6 +309,219 @@ export function useAudienceEstimate(rules: SegmentRules | null | undefined, enab
 }
 
 /* ------------------------------------------------------------------ */
+/* X103 — KPIs da biblioteca de segmentos (RPC talkx_segment_library_stats) */
+/* ------------------------------------------------------------------ */
+
+/** Um ponto da série mensal da RPC (`series[8]`), do mês mais antigo ao corrente. */
+export interface TalkXSegmentLibraryMonth {
+  month: string;
+  has_data: boolean;
+  total_segments: number | null;
+  active_segments: number | null;
+  crm360_segments: number | null;
+  deliveries: number | null;
+  conversions: number | null;
+  conversion_pct: number | null;
+}
+
+export interface TalkXSegmentLibraryConversion {
+  value_pct: number | null;
+  previous_pct: number | null;
+  delta_pp: number | null;
+  has_data: boolean;
+  deliveries: number;
+  conversions: number;
+  previous_deliveries: number;
+  previous_conversions: number;
+  min_deliveries: number;
+}
+
+export interface TalkXSegmentLibraryStats {
+  generated_at: string;
+  timezone: string;
+  month_start: string;
+  total_segments: number;
+  active_this_month: number;
+  active_previous_month: number;
+  active_delta: number;
+  crm360_connected: number;
+  crm360_previous_month: number;
+  crm360_delta: number;
+  conversion: TalkXSegmentLibraryConversion;
+  series: TalkXSegmentLibraryMonth[];
+}
+
+type TalkXLibraryStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+/** Chave da consulta dos KPIs (X103) — a mesma usada para invalidar depois de salvar. */
+export const LIBRARY_STATS_QUERY_KEY = ['talkx-segment-library-stats', SEGMENT_TIMEZONE] as const;
+
+/**
+ * X103 — os KPIs da biblioteca são decididos no servidor pela RPC
+ * `talkx_segment_library_stats`. O navegador não soma mais `estimated_count` nem
+ * conta `status = 'active'`: "Ativos este mês" é uso real (campanha iniciada no
+ * mês) e "Conversão média" vem das entregas/conversões com base mínima.
+ */
+export function useSegmentLibraryStats() {
+  return useQuery({
+    queryKey: LIBRARY_STATS_QUERY_KEY,
+    queryFn: async () => {
+      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
+      const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
+      if (error) throw new Error(error.message);
+      return data as TalkXSegmentLibraryStats;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* X114 — filtros e paginação da biblioteca (tela 02)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * X114 — o recorte da biblioteca de segmentos vive na URL (para o endereço ser
+ * compartilhável) e o tamanho de página é preferência do operador (localStorage,
+ * por usuário). As funções desta seção são puras de propósito: a tela lê e
+ * escreve o recorte por elas, e o teste prova a ida (URL -> tela) e a volta
+ * (tela -> URL) sem depender de cliques.
+ *
+ * As chaves levam o prefixo `seg` porque a URL do Talk X já usa `tab`, `sub`,
+ * `view`, `wizard` e `step` (`talkxTabRoute`/`talkxWizardRoute`): o mesmo
+ * endereço carrega a aba e o recorte sem um sobrescrever o outro.
+ */
+export const SEGMENT_LIBRARY_URL = {
+  search: 'segq',
+  origin: 'segorigem',
+  status: 'segstatus',
+  tag: 'segtag',
+  owner: 'segproprietario',
+  page: 'segpagina',
+  pageSize: 'segporpagina',
+} as const;
+
+/** Valor do filtro de proprietário para o segmento sem `created_by`. */
+export const SEGMENT_LIBRARY_OWNER_NONE = 'sem-proprietario';
+
+export interface SegmentLibraryFilters {
+  search: string;
+  origin: string;
+  status: string;
+  tag: string;
+  owner: string;
+  page: number;
+}
+
+export const DEFAULT_SEGMENT_LIBRARY_FILTERS: SegmentLibraryFilters = {
+  search: '', origin: 'all', status: 'all', tag: 'all', owner: 'all', page: 1,
+};
+
+/** X114: 10 por página é o padrão do plano (o kit oferece 8/10/20/50). */
+export const SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT = 10;
+
+/** As opções do seletor são as do kit (`TalkXPagination`). */
+export const SEGMENT_LIBRARY_PAGE_SIZES = [8, 10, 20, 50] as const;
+
+const SEGMENT_LIBRARY_ORIGINS = ['all', 'zapp', 'crm360', 'custom'] as const;
+const SEGMENT_LIBRARY_STATUSES = ['all', 'active', 'inactive', 'draft'] as const;
+
+function valorDoDominio(valor: string | null, dominio: readonly string[]): string {
+  return valor && dominio.includes(valor) ? valor : 'all';
+}
+
+/**
+ * Lê o recorte da URL. Valor ausente, vazio ou fora do domínio cai no padrão —
+ * um endereço colado com `segstatus=qualquercoisa` não deixa a lista vazia sem
+ * que o usuário veja filtro nenhum ativo.
+ */
+export function parseSegmentLibraryFilters(search: string): SegmentLibraryFilters {
+  const params = new URLSearchParams(search);
+  const pagina = Number(params.get(SEGMENT_LIBRARY_URL.page));
+  const tag = params.get(SEGMENT_LIBRARY_URL.tag) ?? '';
+  const owner = params.get(SEGMENT_LIBRARY_URL.owner) ?? '';
+  return {
+    search: params.get(SEGMENT_LIBRARY_URL.search) ?? '',
+    origin: valorDoDominio(params.get(SEGMENT_LIBRARY_URL.origin), SEGMENT_LIBRARY_ORIGINS),
+    status: valorDoDominio(params.get(SEGMENT_LIBRARY_URL.status), SEGMENT_LIBRARY_STATUSES),
+    tag: tag || 'all',
+    owner: owner || 'all',
+    page: Number.isInteger(pagina) && pagina > 0 ? pagina : 1,
+  };
+}
+
+/** Tamanho de página pedido por um endereço compartilhado (fora do kit → null). */
+export function readSegmentLibraryPageSizeFromUrl(search: string): number | null {
+  const bruto = Number(new URLSearchParams(search).get(SEGMENT_LIBRARY_URL.pageSize));
+  return isSegmentLibraryPageSize(bruto) ? bruto : null;
+}
+
+/**
+ * Monta a URL com o recorte. Valor no padrão SAI da URL: o endereço de "nenhum
+ * filtro" volta a ser o endereço limpo, e os parâmetros do módulo (`tab`, `sub`,
+ * `view`, `wizard`, `step`) seguem intactos.
+ */
+export function formatSegmentLibraryUrl(current: URL, filters: SegmentLibraryFilters, pageSize: number | null): string {
+  const url = new URL(current.href);
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.search, filters.search, '');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.origin, filters.origin, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.status, filters.status, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.tag, filters.tag, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.owner, filters.owner, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.page, String(filters.page), '1');
+  escreverParam(
+    url.searchParams,
+    SEGMENT_LIBRARY_URL.pageSize,
+    pageSize === null ? '' : String(pageSize),
+    String(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT),
+  );
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function escreverParam(params: URLSearchParams, chave: string, valor: string, padrao: string): void {
+  if (valor && valor !== padrao) params.set(chave, valor);
+  else params.delete(chave);
+}
+
+/** Escreve o recorte na URL sem entrada de histórico: filtrar não é navegar. */
+export function syncSegmentLibraryUrl(filters: SegmentLibraryFilters, pageSize: number | null): void {
+  if (typeof window === 'undefined' || !window.history?.replaceState) return;
+  window.history.replaceState(null, '', formatSegmentLibraryUrl(new URL(window.location.href), filters, pageSize));
+}
+
+export function segmentLibraryPageSizeKey(userId: string | null | undefined): string {
+  return `zapp.talkx.segments.page-size:${userId ?? 'anonimo'}`;
+}
+
+export function isSegmentLibraryPageSize(value: unknown): value is number {
+  return typeof value === 'number' && (SEGMENT_LIBRARY_PAGE_SIZES as readonly number[]).includes(value);
+}
+
+/**
+ * Preferência de tamanho de página do operador. Leitura defensiva: valor fora
+ * das opções do kit, chave ausente ou storage indisponível caem no padrão 10.
+ */
+export function readSegmentLibraryPageSize(userId: string | null | undefined): number {
+  try {
+    const bruto = Number(window.localStorage.getItem(segmentLibraryPageSizeKey(userId)));
+    return isSegmentLibraryPageSize(bruto) ? bruto : SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT;
+  } catch {
+    return SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT;
+  }
+}
+
+export function saveSegmentLibraryPageSize(userId: string | null | undefined, size: number): void {
+  if (!isSegmentLibraryPageSize(size)) return;
+  try {
+    window.localStorage.setItem(segmentLibraryPageSizeKey(userId), String(size));
+  } catch {
+    /* storage indisponível: a escolha vale para esta tela, sem persistir */
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -321,7 +541,14 @@ export function useTalkXSegments() {
     },
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['talkx-segments'] });
+  const libraryStatsQuery = useSegmentLibraryStats();
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['talkx-segments'] });
+    // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem
+    // isto o total do topo fica velho até o próximo recarregamento.
+    qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
+  };
 
   const createSegment = useMutation({
     mutationFn: async (input: Partial<TalkXSegment> & { name: string; rules: SegmentRules }) => {
@@ -380,6 +607,14 @@ export function useTalkXSegments() {
     isError: segmentsQuery.isError,
     error: segmentsQuery.error as Error | null,
     refetch: segmentsQuery.refetch,
+    // X114 — id do operador: a preferência de tamanho de página da biblioteca é
+    // guardada por usuário (a tela não precisa abrir um segundo caminho para o perfil).
+    userId: profile?.id ?? null,
+    // X103 — KPIs da biblioteca; a tela não recalcula nada no navegador.
+    libraryStats: libraryStatsQuery.data ?? null,
+    libraryStatsLoading: libraryStatsQuery.isLoading,
+    libraryStatsError: libraryStatsQuery.error as Error | null,
+    refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
   };
 }

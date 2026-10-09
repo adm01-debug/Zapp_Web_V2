@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Copy, Shield,
   Check, RefreshCw, ChevronDown, ChevronUp, Database, Search, Sliders,
@@ -12,9 +12,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
+import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, useAudienceEstimate, countAudience, splitRules, isRuleComplete, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXNoData, fmtInt, fmtDateTime, fmtAgo, OBJECTIVES } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { toast } from 'sonner';
 
@@ -25,12 +26,21 @@ interface Props {
 type ViewMode = 'list' | 'edit';
 
 export function TalkXSegments({ onUseCampaign }: Props) {
-  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates } = useTalkXSegments();
-  const [search, setSearch] = useState('');
-  const [filterOrigin, setFilterOrigin] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  const {
+    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates,
+    libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
+    userId = null,
+  } = useTalkXSegments();
+  // X114 — o recorte da biblioteca (filtros + página) vive na URL, para o endereço
+  // ser compartilhável; o tamanho de página é preferência do operador. A URL é lida
+  // UMA vez, na montagem, e devolvida a cada mudança (`syncSegmentLibraryUrl`,
+  // replaceState sem entrada de histórico). A preferência é DERIVADA do usuário
+  // (useMemo) em vez de sincronizada por efeito: o perfil pode chegar depois da
+  // montagem e a escolha explícita da tela é que manda enquanto durar a visita.
+  const [filters, setFilters] = useState<SegmentLibraryFilters>(() => parseSegmentLibraryFilters(window.location.search));
+  const [pageSizeChoice, setPageSizeChoice] = useState<number | null>(() => readSegmentLibraryPageSizeFromUrl(window.location.search));
+  const preferredPageSize = useMemo(() => readSegmentLibraryPageSize(userId), [userId]);
+  const pageSize = pageSizeChoice ?? preferredPageSize;
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
@@ -39,23 +49,61 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [editingDesc, setEditingDesc] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Opções de tag e de proprietário saem dos PRÓPRIOS segmentos (nunca de lista
+  // fixa): tag é a coluna `talkx_segments.tags` de X101 e proprietário é
+  // `created_by`, que já vem no join `creator` do hook.
+  const tagOptions = useMemo(
+    () => Array.from(new Set(segments.flatMap((s) => s.tags ?? []))).sort((a, b) => a.localeCompare(b)),
+    [segments],
+  );
+  const ownerOptions = useMemo(() => {
+    const porId = new Map<string, string>();
+    for (const s of segments) {
+      const id = s.created_by ?? SEGMENT_LIBRARY_OWNER_NONE;
+      if (!porId.has(id)) porId.set(id, s.creator?.name ?? 'Sem proprietário');
+    }
+    return Array.from(porId, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [segments]);
+
   const filtered = useMemo(() => {
     let r = segments;
-    if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
-    if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
-    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
+    if (filters.origin !== 'all') r = r.filter((s) => s.origin === filters.origin);
+    if (filters.status !== 'all') r = r.filter((s) => s.status === filters.status);
+    if (filters.tag !== 'all') r = r.filter((s) => (s.tags ?? []).includes(filters.tag));
+    if (filters.owner !== 'all') r = r.filter((s) => (s.created_by ?? SEGMENT_LIBRARY_OWNER_NONE) === filters.owner);
+    if (filters.search.trim()) { const q = filters.search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
-  }, [segments, filterOrigin, filterStatus, search]);
+  }, [segments, filters]);
+
+  // Página pedida pela URL pode passar do fim da lista filtrada (endereço antigo,
+  // filtro mais restritivo): a tela mostra a ÚLTIMA página existente e é essa que
+  // volta para a URL, em vez de "Mostrando 41 a 12 de 12".
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = Math.min(filters.page, pageCount);
+
+  useEffect(() => {
+    syncSegmentLibraryUrl({ ...filters, page }, pageSizeChoice);
+  }, [filters, page, pageSizeChoice]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totals = useMemo(() => ({
-    total: segments.length,
-    active: segments.filter((s) => s.status === 'active').length,
-    crm360: segments.filter((s) => s.origin === 'crm360').length,
-    totalContacts: segments.reduce((a, s) => a + s.estimated_count, 0),
-    bars: barsByDay(segments.map((s) => s.created_at)),
-  }), [segments]);
+  // Trocar de recorte volta para a PRIMEIRA página; repetir o mesmo valor não é
+  // troca. O "não é troca" importa: o campo de busca do kit reemite o valor atual
+  // pelo debounce de 250 ms e, sem a guarda, o endereço compartilhado com
+  // `segpagina=2` pulava para a página 1 sozinho logo depois de abrir.
+  const setFilterValue = (key: string, value: string) => {
+    if (key !== 'origin' && key !== 'status' && key !== 'tag' && key !== 'owner') return;
+    setFilters((f) => (f[key] === value ? f : { ...f, [key]: value, page: 1 }));
+  };
+  const setSearch = (value: string) => setFilters((f) => (f.search === value ? f : { ...f, search: value, page: 1 }));
+  const setPage = (next: number) => setFilters((f) => (f.page === next ? f : { ...f, page: next }));
+  const clearFilters = () => setFilters({ ...DEFAULT_SEGMENT_LIBRARY_FILTERS });
+  const choosePageSize = (next: number) => {
+    setPageSizeChoice(next);
+    saveSegmentLibraryPageSize(userId, next);
+    setFilters((f) => ({ ...f, page: 1 }));
+  };
+  const hasActiveFilters = filters.origin !== 'all' || filters.status !== 'all' || filters.tag !== 'all' || filters.owner !== 'all' || filters.search.trim() !== '';
 
   const openNew = () => { setEditingName(''); setEditingDesc(''); setEditingRules(emptyRules()); setSelected(null); setMode('edit'); };
   const openEdit = (s: TalkXSegment) => { setEditingName(s.name); setEditingDesc(s.description ?? ''); setEditingRules(s.rules); setSelected(s); setMode('edit'); };
@@ -98,27 +146,31 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
-        {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            <KpiCard icon={Database} color="blue"   index={0} label="Total de segmentos"  value={fmtInt(totals.total)}        bars={totals.bars} />
-            <KpiCard icon={Check}    color="green"  index={1} label="Segmentos ativos"    value={fmtInt(totals.active)} />
-            <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value={fmtInt(totals.crm360)} />
-            <KpiCard icon={BarChart3} color="amber" index={3} label="Contatos cobertos"    value={fmtInt(totals.totalContacts)} />
-          </div>
-        )}
+        {/* X103/TL-135b — KPIs da biblioteca vem da RPC talkx_segment_library_stats
+            (uso real no mês e conversão com base mínima); nada é somado aqui. */}
+        <TalkXQueryBoundary
+          query={{ isLoading: libraryStatsLoading, isError: !!libraryStatsError, error: libraryStatsError }}
+          entity="as estatísticas da biblioteca"
+          onRetry={() => refetchLibraryStats()}
+          skeleton={<LibraryKpiSkeleton />}
+          isEmpty={false}
+          empty={null}
+        >
+          {libraryStats ? <LibraryKpis stats={libraryStats} /> : <LibraryKpiSkeleton />}
+        </TalkXQueryBoundary>
 
         <FilterBarV2
-          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
+          search={filters.search} onSearch={setSearch} placeholder="Buscar segmentos…"
           filters={[
-            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
-            { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
+            { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'tag', label: 'Tag', allLabel: 'Todas as tags', options: tagOptions.map((tag) => ({ value: tag, label: tag })) },
+            { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: ownerOptions },
           ]}
-          values={{ origin: filterOrigin, status: filterStatus }}
-          onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
-          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
-          onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
+          values={{ origin: filters.origin, status: filters.status, tag: filters.tag, owner: filters.owner }}
+          onFilter={setFilterValue}
+          hasActive={hasActiveFilters}
+          onClear={clearFilters}
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
         />
 
@@ -184,7 +236,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" /></div>}
         </section>
       </div>
 
@@ -213,6 +265,75 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* KPIs da biblioteca (X103)                                          */
+/* ------------------------------------------------------------------ */
+
+function LibraryKpiSkeleton() {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)}
+    </div>
+  );
+}
+
+const fmtDec = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * Mini-barras de 8 meses: cada coluna é um mês da série da RPC. Mês sem retrato
+ * gravado (`has_data` falso) fica FORA das barras em vez de virar zero — um zero
+ * desenhado seria lido como "nenhum segmento naquele mês".
+ */
+function barsFromSeries(series: TalkXSegmentLibraryMonth[], key: 'total_segments' | 'active_segments'): number[] {
+  return series.filter((m) => m.has_data).map((m) => m[key] ?? 0);
+}
+
+/** Variação relativa contra o mês anterior. Sem mês anterior (base zero) não há %. */
+function variacaoMesAnterior(atual: number, anterior: number): KpiDelta {
+  if (!Number.isFinite(anterior) || anterior <= 0) return null;
+  return { pct: Math.round(((atual - anterior) / anterior) * 100), label: 'vs. mês anterior' };
+}
+
+function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
+  const conv = stats.conversion;
+  // Abaixo da base mínima a RPC devolve has_data falso e value_pct nulo: a tela
+  // mostra o "Sem dados ainda" do kit, nunca um percentual inventado.
+  const conversaoDisponivel = conv.has_data && conv.value_pct !== null;
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+      <DashboardKpiCard
+        size="compact" index={0} label="Total de segmentos" tile="blue" icon={Database} barsColor="blue"
+        value={fmtInt(stats.total_segments)} delta={null} bars={barsFromSeries(stats.series, 'total_segments')}
+      />
+      <DashboardKpiCard
+        size="compact" index={1} label="Ativos este mês" tile="green" icon={Check} barsColor="green"
+        value={fmtInt(stats.active_this_month)}
+        delta={variacaoMesAnterior(stats.active_this_month, stats.active_previous_month)}
+        bars={barsFromSeries(stats.series, 'active_segments')}
+      />
+      <DashboardKpiCard
+        size="compact" index={2} label="CRM 360° conectados" tile="violet" icon={Shield} barsColor="violet" chart="none"
+        value={fmtInt(stats.crm360_connected)}
+        delta={variacaoMesAnterior(stats.crm360_connected, stats.crm360_previous_month)}
+        bars={null}
+      />
+      {conversaoDisponivel ? (
+        <DashboardKpiCard
+          size="compact" index={3} label="Conversão média" tile="amber" icon={BarChart3} barsColor="amber" chart="none"
+          value={`${fmtDec(conv.value_pct as number)}%`}
+          delta={conv.delta_pp === null ? null : {
+            text: `${conv.delta_pp >= 0 ? '+' : '-'}${fmtDec(Math.abs(conv.delta_pp))} p.p. vs. mês anterior`,
+            tone: conv.delta_pp >= 0 ? 'success' : 'muted',
+          }}
+          bars={null}
+        />
+      ) : (
+        <TalkXNoData hint={`A conversão média aparece com ${fmtInt(conv.min_deliveries)} entregues ou mais no mês (neste mês: ${fmtInt(conv.deliveries)}).`} />
+      )}
+    </div>
+  );
+}
+
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
   const { data: est } = useAudienceEstimate(s.rules, true);
   return (
@@ -220,7 +341,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
       right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2">
-        <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+        <Pill label={s.status === 'active' ? 'Ativo' : s.status === 'draft' ? 'Rascunho' : 'Inativo'} tone={s.status === 'active' ? 'success' : s.status === 'draft' ? 'warning' : 'muted'} dot />
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
       <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
