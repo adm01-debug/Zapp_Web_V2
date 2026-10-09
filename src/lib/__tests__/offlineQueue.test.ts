@@ -92,6 +92,68 @@ describe('createOfflineQueue', () => {
     expect(entregues).toHaveBeenCalledTimes(1);
     expect(primeira).toEqual(segunda);
   });
+
+  it('falha ao dar baixa na mensagem entregue passa por onError, para a drenagem e não rejeita', async () => {
+    const driver = createMemoryOfflineQueueDriver();
+    const queue = createOfflineQueue({ driver });
+    await queue.enqueue(mensagem(1));
+    await queue.enqueue(mensagem(2));
+
+    let removerQuebrado = true;
+    const removerOriginal = driver.remove.bind(driver);
+    driver.remove = async (clientMessageId: string) => {
+      if (removerQuebrado) throw new Error('IndexedDB perdeu a transação');
+      return removerOriginal(clientMessageId);
+    };
+
+    const onError = vi.fn();
+    const entregues: string[] = [];
+    const primeira = await queue.drain(async (item) => {
+      entregues.push(item.clientMessageId);
+    }, { onError });
+
+    // A 1ª foi entregue mas não saiu da fila: a drenagem para de forma
+    // controlada (a 2ª não sai na frente) e o drain resolve, não rejeita.
+    expect(primeira).toEqual({ sent: 1, remaining: 2 });
+    expect(onError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ clientMessageId: 'id-1' }));
+
+    removerQuebrado = false;
+    const segunda = await queue.drain(async (item) => {
+      entregues.push(item.clientMessageId);
+    });
+
+    // A 1ª é reenviada: quem impede a duplicata é a chave de idempotência
+    // (`clientMessageId`, item 024), não a remoção local.
+    expect(segunda).toEqual({ sent: 2, remaining: 0 });
+    expect(entregues).toEqual(['id-1', 'id-1', 'id-2']);
+  });
+
+  it('falha de leitura da fila no meio da drenagem passa por onError e não vira rejeição solta', async () => {
+    const driver = createMemoryOfflineQueueDriver();
+    const queue = createOfflineQueue({ driver });
+    await queue.enqueue(mensagem(1));
+    await queue.enqueue(mensagem(2));
+
+    // A listagem inicial do drain funciona; a releitura depois da entrega quebra.
+    let leiturasNaDrenagem = 0;
+    const lerOriginal = driver.readAll.bind(driver);
+    driver.readAll = async () => {
+      leiturasNaDrenagem += 1;
+      if (leiturasNaDrenagem > 1) throw new Error('IndexedDB indisponível');
+      return lerOriginal();
+    };
+
+    const onError = vi.fn();
+    const entregues: string[] = [];
+    const resultado = await queue.drain(async (item) => {
+      entregues.push(item.clientMessageId);
+    }, { onError });
+
+    // A 1ª saiu, a 2ª ficou para a próxima: sem rejeição e com aviso no onError.
+    expect(resultado).toEqual({ sent: 1, remaining: 2 });
+    expect(entregues).toEqual(['id-1']);
+    expect(onError).toHaveBeenCalled();
+  });
 });
 
 describe('driver em IndexedDB', () => {

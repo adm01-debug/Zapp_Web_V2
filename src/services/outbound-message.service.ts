@@ -128,6 +128,9 @@ async function enqueueAndDispatch(
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
 async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
+  // pode virar rajada de requests contra o servidor (item 026).
+  await sendThrottle.wait();
   await enqueueAndDispatch(
     {
       contactId: message.contactId,
@@ -200,11 +203,16 @@ export async function sendOutboundMessage(
     return { id: claim.clientMessageId, status: 'pending', externalId: null, idempotent: true };
   }
 
-  await sendThrottle.wait();
-  const result = await enqueueAndDispatch(input, clientMessageId);
-  crossTabSendDedupe.release(dedupeKey);
-  clearPendingAction(key, clientMessageId);
-  return result;
+  try {
+    await sendThrottle.wait();
+    const result = await enqueueAndDispatch(input, clientMessageId);
+    clearPendingAction(key, clientMessageId);
+    return result;
+  } finally {
+    // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
+    // da ação e uma tentativa deliberada igual em outra aba nunca mandaria.
+    crossTabSendDedupe.release(dedupeKey);
+  }
 }
 
 async function dispatchQueuedMessage(

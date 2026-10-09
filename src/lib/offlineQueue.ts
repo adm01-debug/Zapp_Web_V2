@@ -227,11 +227,27 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
           drainOptions.onError?.(error, message);
           break;
         }
-        await driver.remove(message.clientMessageId);
+        // A entrega já aconteceu: conta como enviada mesmo se a baixa local falhar.
         sent += 1;
-        commitSnapshot((await driver.readAll()).length);
+        try {
+          await driver.remove(message.clientMessageId);
+          commitSnapshot((await driver.readAll()).length);
+        } catch (error) {
+          // A baixa local falhou depois da entrega: a mensagem fica na fila e a
+          // próxima drenagem a reenvia — a chave `clientMessageId` (item 024)
+          // faz o servidor descartar a duplicata. A drenagem para aqui, em
+          // ordem, em vez de virar rejeição solta.
+          drainOptions.onError?.(error, message);
+          break;
+        }
       }
-      return { sent, remaining: (await driver.readAll()).length };
+      let remaining = snapshot;
+      try {
+        remaining = (await driver.readAll()).length;
+      } catch (error) {
+        drainOptions.onError?.(error);
+      }
+      return { sent, remaining };
     })();
     draining = run;
     try {
