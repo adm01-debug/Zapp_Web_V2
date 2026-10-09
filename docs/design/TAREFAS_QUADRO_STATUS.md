@@ -155,14 +155,14 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 ## Etapa 49 — Lista: "Próximas" por dia, "Sem prazo" colapsável e tooltip da ordenação — evidências
 
-**Regra do plano (3 comportamentos):** "Próximas" agrupa por dia ("Amanhã", "Qua 01/10", …, "Semana que vem" para > 7 dias) com subcabeçalho `text-[12px]`; "Sem prazo" colapsa quando > 10; tooltip no cabeçalho "Ordenado por prazo, depois prioridade".
+**Regra do plano (3 comportamentos):** "Próximas" agrupa por dia ("Amanhã", "Qua 01/10", …, "Semana que vem" para > 7 dias) com subcabeçalho `text-[12px]` (**reprovado** pelo guard-rail de tipografia — o token vigente é `text-xs`, ver divergência 4); "Sem prazo" colapsa quando > 10; tooltip no cabeçalho "Ordenado por prazo, depois prioridade".
 
 **Mudanças (4 arquivos):**
 
 | arquivo | o que muda |
 |---|---|
 | `src/hooks/tasks/workItemAggregates.ts` | `dayGroupLabel` (Hoje / Amanhã / "Seg 05/10" dentro de 7 dias / "Semana que vem" acima disso) e `groupUpcomingByDay` (ordena por prazo → prioridade e agrupa dias consecutivos); `PRIORITY_WEIGHT` extraído do `bucketByStatus` e reusado |
-| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups` + `hint`; subcabeçalho `text-[12px]`; tooltip no cabeçalho; "Sem prazo" com `defaultOpen={noDue.length <= 10}`; `renderCard` extraído (o card estava duplicado nos dois caminhos) |
+| `src/components/tasks/list/TasksListMode.tsx` | "Próximas" recebe `groups` + `hint`; subcabeçalho `text-xs` (12px, ver divergência 4); tooltip no cabeçalho; "Sem prazo" com `defaultOpen={noDue.length <= 10}`; `renderCard` extraído (o card estava duplicado nos dois caminhos) |
 | `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 3 casos: rótulos (incluindo a fronteira +7 / +8 dias), agrupamento ordenado por prazo e desempate por prioridade |
 | `src/components/tasks/__tests__/taskComponents.test.tsx` | 3 casos: subcabeçalhos + "Semana que vem"; "Sem prazo" abre com 10 e recolhe com 11; tooltip do cabeçalho. Harness novo `renderLista` com `TooltipProvider` (a app fornece em `AppProviders.tsx:75`) |
 
