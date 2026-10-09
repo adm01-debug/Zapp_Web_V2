@@ -258,7 +258,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         <p className="text-2xs text-muted-foreground">{fmtAgo(c.updated_at)}</p>
                       </div>
                     </div>
-                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
+                    {/* TL-175A: âmbar de PREENCHIMENTO como TEXTO sobre a própria tinta media
+                        1,67:1 no tema claro (axe color-contrast, sério). O par de texto do
+                        sistema — o mesmo que o PriorityChip usa no "alta" — fecha 5,09:1 no
+                        claro e 8,21:1 no escuro sobre `bg-dash-amber/10`. */}
+                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
                       <Pencil className="w-3.5 h-3.5" />Retomar
                     </button>
                   </div>
