@@ -1,7 +1,12 @@
 /**
- * Comportamento de `useTeamMessageReactions` — agregação por emoji, alternar (inserir/apagar)
- * a própria reação, atualização otimista com desfazer no erro e Realtime por conversa.
- * A fronteira mockada é o cliente Supabase (e o `toast`); o hook é o real.
+ * Comportamento de `useTeamMessageReactions` — agregação por emoji, alternar a própria reação,
+ * atualização otimista com desfazer no erro e Realtime por conversa. A fronteira mockada é o
+ * cliente Supabase (e o `toast`); o hook é o real.
+ *
+ * SL-016 (F43): alternar deixou de ser escrita direta na tabela (INSERT/DELETE via PostgREST) e
+ * passou a ser a RPC `toggle_team_reaction`, que confere o vínculo do autor com a conversa da
+ * própria mensagem. Este arquivo foi atualizado para o contrato novo: o cliente não escreve mais
+ * na tabela — só lê a lista e chama a RPC.
  */
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -22,10 +27,13 @@ const estado = vi.hoisted(() => ({
   auth: { profile: { id: 'p1' } as { id: string } | null },
   linhas: [] as RowReaction[],
   erroSelecao: null as unknown,
-  erroEscrita: null as unknown,
+  erroRpc: null as unknown,
   selecoes: [] as { coluna: string; valor: unknown }[],
+  /** Escritas diretas em tabela: o contrato novo não pode produzir nenhuma. */
   escritas: [] as { tipo: 'insert' | 'delete'; dados?: unknown; id?: unknown }[],
-  insercao: null as Promise<{ error: unknown }> | null,
+  rpc: vi.fn(),
+  chamadasRpc: [] as { nome: string; args: unknown }[],
+  respostaRpc: null as Promise<{ data: unknown; error: unknown }> | null,
   eventos: [] as { nome: string; filtro?: string; callback: () => void }[],
   removeChannel: vi.fn(),
   toastError: vi.fn(),
@@ -43,40 +51,26 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/integrations/supabase/client', () => {
   const criarBuilder = () => {
-    let modo: 'select' | 'delete' = 'select';
     const builder: Record<string, unknown> = {};
-    builder.select = () => {
-      modo = 'select';
-      return builder;
-    };
-    builder.delete = () => {
-      modo = 'delete';
-      return builder;
-    };
+    builder.select = () => builder;
+    builder.delete = () => builder;
     builder.eq = (coluna: string, valor: unknown) => {
-      if (modo === 'delete') {
-        estado.escritas.push({ tipo: 'delete', id: { coluna, valor } as unknown });
-      } else {
-        estado.selecoes.push({ coluna, valor });
-      }
+      estado.selecoes.push({ coluna, valor });
       return builder;
     };
     builder.insert = (dados: unknown) => {
       estado.escritas.push({ tipo: 'insert', dados });
-      return estado.insercao ?? Promise.resolve({ error: estado.erroEscrita });
+      return Promise.resolve({ error: null });
     };
     builder.then = (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) =>
-      Promise.resolve(
-        modo === 'delete'
-          ? { error: estado.erroEscrita }
-          : { data: estado.linhas, error: estado.erroSelecao },
-      ).then(onFulfilled, onRejected);
+      Promise.resolve({ data: estado.linhas, error: estado.erroSelecao }).then(onFulfilled, onRejected);
     return builder;
   };
 
   return {
     supabase: {
       from: () => criarBuilder(),
+      rpc: (...args: unknown[]) => estado.rpc(...args),
       channel: (nome: string) => {
         const canal: Record<string, unknown> = {};
         canal.on = (evento: string, config: { filter?: string }, callback: () => void) => {
@@ -125,13 +119,19 @@ beforeEach(() => {
   estado.auth.profile = { id: 'p1' };
   estado.linhas = [];
   estado.erroSelecao = null;
-  estado.erroEscrita = null;
+  estado.erroRpc = null;
   estado.selecoes = [];
   estado.escritas = [];
-  estado.insercao = null;
+  estado.chamadasRpc = [];
+  estado.respostaRpc = null;
   estado.eventos = [];
   estado.removeChannel.mockReset();
   estado.toastError.mockReset();
+  estado.rpc.mockReset();
+  estado.rpc.mockImplementation((nome: string, args: unknown) => {
+    estado.chamadasRpc.push({ nome, args });
+    return estado.respostaRpc ?? Promise.resolve({ data: { action: 'added' }, error: estado.erroRpc });
+  });
 });
 
 afterEach(() => {
@@ -186,7 +186,7 @@ describe('leitura e agregação', () => {
 });
 
 describe('alternar reação', () => {
-  it('insere a reação quando ainda não existe', async () => {
+  it('adiciona a reação pela RPC quando ela ainda não existe, sem escrever na tabela', async () => {
     estado.linhas = [];
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
@@ -195,15 +195,21 @@ describe('alternar reação', () => {
       result.current.toggle({ messageId: 'm1', emoji: '🎉' });
     });
 
-    await waitFor(() => expect(estado.escritas).toHaveLength(1));
-    expect(estado.escritas[0]).toEqual({
-      tipo: 'insert',
-      dados: { message_id: 'm1', profile_id: 'p1', emoji: '🎉', conversation_id: 'c1' },
-    });
+    await waitFor(() =>
+      expect(estado.rpc).toHaveBeenCalledWith('toggle_team_reaction', {
+        p_message_id: 'm1',
+        p_emoji: '🎉',
+      }),
+    );
+    expect(estado.chamadasRpc).toHaveLength(1);
+    expect(estado.escritas).toEqual([]);
   });
 
-  it('apaga a reação quando ela já é minha', async () => {
+  it('remove a reação otimista quando ela já é minha e passa a alternância pela RPC', async () => {
     estado.linhas = [reacao({ id: 'rx9', emoji: '👍', profile_id: 'p1' })];
+    const resposta = deferido<{ data: unknown; error: unknown }>();
+    estado.respostaRpc = resposta.promise;
+
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toHaveLength(1));
 
@@ -211,14 +217,24 @@ describe('alternar reação', () => {
       result.current.toggle({ messageId: 'm1', emoji: '👍' });
     });
 
-    await waitFor(() => expect(estado.escritas).toHaveLength(1));
-    expect(estado.escritas[0]).toEqual({ tipo: 'delete', id: { coluna: 'id', valor: 'rx9' } });
+    // Otimista: some da lista antes de a rede responder.
+    await waitFor(() => expect(result.current.aggregate('m1')).toEqual([]));
+    expect(estado.rpc).toHaveBeenCalledWith('toggle_team_reaction', {
+      p_message_id: 'm1',
+      p_emoji: '👍',
+    });
+    expect(estado.escritas).toEqual([]);
+
+    await act(async () => {
+      resposta.resolver({ data: { action: 'removed' }, error: null });
+      await resposta.promise;
+    });
   });
 
   it('mostra a reação na hora, antes de a rede responder', async () => {
     estado.linhas = [];
-    const insercao = deferido<{ error: unknown }>();
-    estado.insercao = insercao.promise;
+    const resposta = deferido<{ data: unknown; error: unknown }>();
+    estado.respostaRpc = resposta.promise;
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
 
@@ -231,16 +247,16 @@ describe('alternar reação', () => {
     expect(result.current.isToggling).toBe(true);
 
     await act(async () => {
-      insercao.resolver({ error: null });
-      await insercao.promise;
+      resposta.resolver({ data: { action: 'added' }, error: null });
+      await resposta.promise;
     });
     await waitFor(() => expect(result.current.isToggling).toBe(false));
   });
 
-  it('desfaz a reação otimista quando a escrita falha', async () => {
+  it('desfaz a reação otimista quando a RPC falha', async () => {
     estado.linhas = [];
-    const insercao = deferido<{ error: unknown }>();
-    estado.insercao = insercao.promise;
+    const resposta = deferido<{ data: unknown; error: unknown }>();
+    estado.respostaRpc = resposta.promise;
 
     const { result } = render();
     await waitFor(() => expect(result.current.reactions).toEqual([]));
@@ -251,8 +267,8 @@ describe('alternar reação', () => {
     await waitFor(() => expect(emoji(result.current.aggregate('m1'), '🎉')).toBeDefined());
 
     await act(async () => {
-      insercao.resolver({ error: { message: 'RLS negou' } });
-      await insercao.promise;
+      resposta.resolver({ data: null, error: { message: 'RLS negou' } });
+      await resposta.promise;
     });
 
     await waitFor(() => expect(estado.toastError).toHaveBeenCalledWith('Erro ao reagir'));
@@ -260,7 +276,7 @@ describe('alternar reação', () => {
     expect(result.current.isToggling).toBe(false);
   });
 
-  it('sem usuário logado não escreve e avisa o operador', async () => {
+  it('sem usuário logado não chama a RPC e avisa o operador', async () => {
     estado.auth.profile = null;
     estado.linhas = [];
     const { result } = render();
@@ -271,7 +287,8 @@ describe('alternar reação', () => {
     });
 
     await waitFor(() => expect(estado.toastError).toHaveBeenCalledWith('Erro ao reagir'));
-    expect(estado.escritas).toHaveLength(0);
+    expect(estado.rpc).not.toHaveBeenCalled();
+    expect(estado.escritas).toEqual([]);
   });
 });
 
