@@ -138,6 +138,7 @@ export function ContactsTable({
                     onCheckedChange={(checked) =>
                       onSelectIds(checked ? [...selectedIds, contact.id] : selectedIds.filter(id => id !== contact.id))
                     }
+                    aria-label={selectedIds.includes(contact.id) ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
                   />
                 </td>
                 <td className="p-3">
@@ -221,7 +222,7 @@ export function ContactsTable({
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="w-7 h-7">
+                        <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Ações do contato ${contact.name}`}>
                           <MoreVertical className="w-3.5 h-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
