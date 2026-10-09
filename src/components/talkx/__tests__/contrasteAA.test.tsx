@@ -9,25 +9,18 @@ import path from 'node:path';
  * TX-A11Y-2 (origem t_aeb3074d / TL-175D) — contraste do TEXTO da família primária
  * nas telas do Talk X.
  *
- * O que se prova, em duas frentes (nenhuma delas é "ler o .tsx e procurar a classe"):
+ * O caminho da prova é fechado, e é sempre o mesmo:
+ *   componente REAL renderizado → classe de cor que o DOM recebeu →
+ *   token resolvido no `tokens.css` de verdade (lido do disco) → razão WCAG ≥ 4,5:1
+ *   nos dois temas.
+ * Nada aqui é cópia do CSS nem string solta: se o componente voltar a aplicar o token
+ * de preenchimento (`--primary-glow`/`--primary`) ou inventar um token que a folha não
+ * define, o teste cai.
  *
- *  1. MEDIDOR WCAG sobre a folha de verdade (`src/styles/tokens.css`, lida do disco).
- *     O texto do Talk X na família primária passou a usar o par de TEXTO
- *     `--primary-text` (o mesmo que a Etapa 80 já usava nos chips do QuickAdd); os
- *     tokens de PREENCHIMENTO (`--primary-glow`, `--primary`) continuam valendo para
- *     borda/glow/ícone. O teste mede o par que os componentes de fato aplicam, sobre o
- *     `--card` e sobre a própria tinta `/10`, nos dois temas.
- *
- *  2. RENDER dos componentes reais (harness dos testes vizinhos): a classe que chega ao
- *     DOM é a do par AA, e a classe antiga (`text-primary-glow`, `text-primary`) NÃO
- *     aparece mais no markup renderizado. É esta frente que fica VERMELHA sem a
- *     correção — jsdom não prova cor, mas prova qual classe foi aplicada; a cor fica
- *     por conta do medidor (1) e da varredura axe no Chromium (relato do cartão).
- *
- * Casos próprios do cartão: calendário do Agendada (`day-outside` com `opacity-50`
- * nunca fecha AA — a tinta some junto com o texto), link "Saiba mais" (contraste E
- * `link-in-text-block`) e o botão "Salvar template" desabilitado (a semântica nativa
- * `disabled` é o que marca o controle como inativo; `opacity-50` num botão vivo não é).
+ * jsdom não pinta pixel: a cor final é provada por (a) o medidor acima e (b) a
+ * varredura axe-core no Chromium real (relato do cartão). O que jsdom prova — e é o que
+ * interessa — é QUAL token cada elemento recebeu e que ele fecha AA sobre a superfície
+ * em que aparece.
  */
 
 // ─── Mocks (mesmo harness dos testes vizinhos do módulo) ────────────────────
@@ -169,7 +162,7 @@ import { TalkXSuppression } from '../TalkXSuppression';
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from '../TalkXCampaignRunning';
 
-// ─── Medidor WCAG (mesmo do ajuste AA de skin e da Etapa 80) ────────────────
+// ─── Medidor WCAG ───────────────────────────────────────────────────────────
 type RGB = [number, number, number];
 function parseHsl(s: string): RGB {
   const m = s.match(/(-?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/)!;
@@ -196,7 +189,6 @@ function luminancia([r, g, b]: RGB): number {
   });
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
-/** Como o navegador pinta `cor` com alfa sobre `base`. */
 const compor = (cor: string, alfa: number, base: string): RGB => {
   const [r, g, b] = hslToRgb(...parseHsl(cor));
   const [br, bg, bb] = hslToRgb(...parseHsl(base));
@@ -207,11 +199,10 @@ const razaoRgb = (a: RGB, b: RGB): number => {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 };
 const razao = (cor: string, base: string): number => razaoRgb(compor(cor, 1, base), compor(base, 1, base));
-/** Texto puro sobre a tinta `tinta` com alfa composta no `base`. */
 const razaoNaTinta = (texto: string, tinta: string, alfa: number, base: string) =>
   razaoRgb(compor(texto, 1, base), compor(tinta, alfa, base));
 
-/** Variáveis de um bloco (`:root {` / `.dark {`) — leitor do tokens-sync. */
+/** Variáveis de um bloco (`:root {` / `.dark {`). */
 function variaveis(css: string, cabecalho: string): Record<string, string> {
   const idx = css.indexOf(cabecalho);
   if (idx === -1) return {};
@@ -233,13 +224,52 @@ function variaveis(css: string, cabecalho: string): Record<string, string> {
 const tokens = fs.readFileSync(path.resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
 const claro = variaveis(tokens, ':root {');
 const escuro = { ...claro, ...variaveis(tokens, '.dark {') };
+const TEMAS = [['claro', claro], ['escuro', escuro]] as const;
 
-/** A classe que a correção aplica — o par de TEXTO da primária. */
 const AA = 'text-[hsl(var(--primary-text))]';
 const ANTIGA_TEXTUAL = 'text-primary-glow';
 const MIN_TEXTO = 4.5;
 
 const inner = (el: HTMLElement) => el.innerHTML;
+
+/** O token que a CLASSE APLICADA aponta, lido do DOM: a forma `text-[hsl(var(--x))]`
+ *  e a utility nomeada (`text-muted-foreground`), que o tailwind.config liga ao mesmo
+ *  `--muted-foreground`. Tamanho de fonte não é cor e fica de fora. */
+const CLASSE_TOKEN = /^text-\[hsl\(var\(--([a-z0-9-]+)\)\)\]$/;
+const UTILITY_TOKEN = /^text-([a-z]+(?:-[a-z]+)*)$/;
+const NAO_E_COR = new Set([
+  'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl', '8xl', '9xl',
+  'left', 'center', 'right', 'justify', 'start', 'end', 'wrap', 'nowrap', 'balance', 'pretty',
+  'ellipsis', 'clip', 'transparent', 'current', 'inherit', 'white', 'black',
+]);
+function tokenDe(el: Element): string | null {
+  const classes = Array.from(el.classList);
+  for (const c of classes) {
+    const m = c.match(CLASSE_TOKEN);
+    if (m) return m[1];
+  }
+  for (const c of classes) {
+    const m = c.match(UTILITY_TOKEN);
+    if (m && !NAO_E_COR.has(m[1])) return m[1];
+  }
+  return null;
+}
+
+/**
+ * Fecha o laço: pega o token da classe que o componente REALMENTE aplicou, confere que o
+ * `tokens.css` define esse token e mede a razão sobre a superfície onde o elemento vive.
+ */
+function medirTokenAplicado(el: Element, superficie: 'card' | 'tinta-primary-10', esperado: string) {
+  const token = tokenDe(el);
+  expect(token, `classe de texto aplicada em <${el.tagName.toLowerCase()} ${el.className}>`).toBe(esperado);
+  for (const [nome, vars] of TEMAS) {
+    expect(vars[token!], `${nome}: --${token} precisa existir no tokens.css`).toBeTruthy();
+    const r = superficie === 'card'
+      ? razao(vars[token!], vars.card)
+      : razaoNaTinta(vars[token!], vars.primary, 0.1, vars.card);
+    expect(r, `${nome}: --${token} sobre ${superficie} = ${r.toFixed(2)}:1`).toBeGreaterThanOrEqual(MIN_TEXTO);
+  }
+}
 
 function comQuery(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -248,9 +278,9 @@ function comQuery(ui: React.ReactElement) {
 
 afterEach(() => cleanup());
 
-// ─── 1. O medidor: o par de TEXTO fecha AA; o de preenchimento não serve como texto ──
+// ─── 1. O medidor no tokens.css real: o par de TEXTO fecha, o de preenchimento não serve ──
 describe('TX-A11Y-2 — o par de texto da primária fecha 4,5:1 nos dois temas (tokens.css real)', () => {
-  for (const [nome, vars] of [['claro', claro], ['escuro', escuro]] as const) {
+  for (const [nome, vars] of TEMAS) {
     it(`${nome}: --primary-text ≥ 4,5:1 sobre o card E sobre a própria tinta /10`, () => {
       const texto = vars['primary-text'];
       expect(texto, `${nome}: --primary-text precisa existir`).toBeTruthy();
@@ -262,31 +292,28 @@ describe('TX-A11Y-2 — o par de texto da primária fecha 4,5:1 nos dois temas (
     });
 
     it(`${nome}: o calendário (--muted-foreground sem opacidade) fecha 4,5:1`, () => {
-      // Os dias de fora ficam em `text-muted-foreground`: é este o par que o calendário
-      // do Agendada passou a usar quando o `opacity-50` saiu. Com a opacidade o texto
-      // compunha com o fundo e caía a 2,14:1 (claro) e 3,3:1 (escuro) — medido no axe.
+      // Os dias de fora ficam em `text-muted-foreground`: é este o par que o calendário do
+      // Agendada passou a usar quando o `opacity-50` saiu. Com a opacidade o texto compunha
+      // com o fundo e caía a 3,3:1 (escuro) e 2,14:1 (claro) — medido no axe.
       expect(razao(vars['muted-foreground'], vars.card)).toBeGreaterThanOrEqual(MIN_TEXTO);
     });
 
     it(`${nome}: --primary-glow e --primary NÃO servem como texto (é o defeito que o cartão corrige)`, () => {
-      // Trava a decisão do cartão: os dois são tokens de PREENCHIMENTO. Se algum dia o
-      // Talk X voltar a pintar texto com eles, esta medida explica o porquê de não.
       expect(razao(vars['primary-glow'], vars.card)).toBeLessThan(MIN_TEXTO);
       if (nome === 'escuro') expect(razao(vars.primary, vars.card)).toBeLessThan(MIN_TEXTO);
     });
   }
 });
 
-// ─── 2. A classe que chega ao DOM ───────────────────────────────────────────
-describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no DOM', () => {
+// ─── 2. O token que cada componente aplica no DOM, medido no tokens.css real ──
+describe('TX-A11Y-2 — os componentes do Talk X aplicam o par AA, e ele fecha AA onde o texto vive', () => {
   it('Segmentos: construtor de segmento (tela 03) sai do --primary-glow', () => {
     const { container } = comQuery(<TalkXSegments onUseCampaign={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /Novo segmento/i }));
     expect(inner(container)).toContain(AA);
     expect(inner(container)).not.toContain(ANTIGA_TEXTUAL);
-    // as duas ações do construtor são texto, não ícone
-    expect(screen.getByRole('button', { name: /Adicionar condição/i }).classList.contains(AA)).toBe(true);
-    expect(screen.getByRole('button', { name: /Adicionar grupo \(AND\)/i }).classList.contains(AA)).toBe(true);
+    medirTokenAplicado(screen.getByRole('button', { name: /Adicionar condição/i }), 'card', 'primary-text');
+    medirTokenAplicado(screen.getByRole('button', { name: /Adicionar grupo \(AND\)/i }), 'card', 'primary-text');
   });
 
   it('Templates: biblioteca (tela 04) usa o par AA nas tags e no "Mais usados"', () => {
@@ -300,7 +327,9 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
     expect(inner(container)).toContain(AA);
     expect(inner(container)).not.toContain(ANTIGA_TEXTUAL);
-    expect(screen.getByText('#vip').classList.contains(AA)).toBe(true);
+    const tag = screen.getByText('#vip');
+    medirTokenAplicado(tag, 'tinta-primary-10', 'primary-text');
+    medirTokenAplicado(tag, 'card', 'primary-text');
   });
 
   it('Editor de template (tela 05): chips de variável e {{var}} no par AA', () => {
@@ -310,8 +339,8 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     );
     expect(inner(container)).toContain(AA);
     expect(inner(container)).not.toContain(ANTIGA_TEXTUAL);
-    expect(screen.getByRole('button', { name: '{{nome}}' }).classList.contains(AA)).toBe(true);
-    expect(screen.getByText('{{var}}').classList.contains(AA)).toBe(true);
+    medirTokenAplicado(screen.getByRole('button', { name: '{{nome}}' }), 'tinta-primary-10', 'primary-text');
+    medirTokenAplicado(screen.getByText('{{var}}'), 'card', 'primary-text');
   });
 
   it('Editor de template: "Salvar template" inválido é um controle DESABILITADO de verdade', () => {
@@ -322,7 +351,6 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     expect(salvar).toBeDisabled();
     expect(salvar.classList.contains('opacity-50')).toBe(false);
     expect(salvar.classList.contains('pointer-events-none')).toBe(false);
-    // O visual do estado inativo continua o do sistema (`disabled:opacity-50`).
     expect(salvar.className).toContain('disabled:opacity-50');
 
     // Formulário válido: o mesmo botão fica acionável (o inativo é estado, não estilo).
@@ -349,6 +377,7 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     // `link-in-text-block` [serious]: o link dentro do bloco de texto precisa de um
     // sinal que não seja cor — o sublinhado permanente, não só no hover.
     expect(link.classList.contains('underline')).toBe(true);
+    medirTokenAplicado(link, 'card', 'primary-text');
   });
 
   it('Campanha agendada (tela 10): calendário sem `opacity-50` nos dias de fora', () => {
@@ -367,7 +396,8 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     expect(fora.length).toBeGreaterThan(0);
     for (const dia of fora) {
       expect(dia.classList.contains('opacity-50'), 'dia de fora não pode ser translúcido').toBe(false);
-      expect(dia.classList.contains('text-muted-foreground')).toBe(true);
+      // O dia de fora é texto secundário — e o par fecha AA sem opacidade por cima.
+      medirTokenAplicado(dia, 'card', 'muted-foreground');
     }
     expect(inner(container)).toContain(AA);
     expect(inner(container)).not.toContain(ANTIGA_TEXTUAL);
@@ -385,7 +415,7 @@ describe('TX-A11Y-2 — os componentes do Talk X aplicam a classe do par AA no D
     ];
     comQuery(<TalkXCampaignRunning onBack={vi.fn()} onViewMonitor={vi.fn()} />);
     const abaAtiva = screen.getByRole('button', { name: 'Visão Geral' });
-    expect(abaAtiva.classList.contains(AA)).toBe(true);
     expect(abaAtiva.classList.contains('border-primary')).toBe(true);
+    medirTokenAplicado(abaAtiva, 'card', 'primary-text');
   });
 });
