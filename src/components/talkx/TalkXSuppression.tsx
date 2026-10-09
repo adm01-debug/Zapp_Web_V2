@@ -9,10 +9,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, Upload, Download, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, RailAction, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, TalkXNoData, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay } from './talkxShared';
+import { IconTile, RailCard, RailAction, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, TalkXNoData, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay, TalkXConfirmDialog } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
 import {
@@ -31,6 +27,7 @@ import {
   type TalkXSuppressionStat,
 } from '@/hooks/integrations/useTalkXSuppression';
 import { ProtectionGauge } from './suppression/ProtectionGauge';
+import { PRESETS_DO_MOCK } from './kit/dialogPresets';
 
 interface BlacklistEntry {
   id: string;
@@ -386,9 +383,7 @@ export function TalkXSuppression() {
                         <Td><span className="text-xs text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>
                         <Td className="text-right">
-                          <AlertDialog>
-                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
-                          </AlertDialog>
+                          <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
                         </Td>
                       </tr>
                     );
@@ -530,12 +525,22 @@ export function TalkXSuppression() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader><AlertDialogTitle>Remover da lista de supressão?</AlertDialogTitle><AlertDialogDescription><b className="text-foreground">{removing?.contacts?.name}</b> poderá receber mensagens do Talk X nas próximas campanhas.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => removing && removeMutation.mutate(removing.id)}>Remover</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TalkXConfirmDialog
+        open={!!removing}
+        onClose={() => setRemoving(null)}
+        onConfirm={() => removing ? removeMutation.mutateAsync(removing.id) : false}
+        title={PRESETS_DO_MOCK.removerSupressao.title}
+        subtitle={PRESETS_DO_MOCK.removerSupressao.subtitle}
+        description={PRESETS_DO_MOCK.removerSupressao.description}
+        consequence={PRESETS_DO_MOCK.removerSupressao.consequence}
+        tone={PRESETS_DO_MOCK.removerSupressao.tone}
+        icon={PRESETS_DO_MOCK.removerSupressao.icon}
+        iconColor={PRESETS_DO_MOCK.removerSupressao.iconColor}
+        confirmLabel={PRESETS_DO_MOCK.removerSupressao.confirmLabel}
+        cancelLabel={PRESETS_DO_MOCK.removerSupressao.cancelLabel}
+        details={removing?.contacts?.name ? [{ label: 'Contato', value: removing.contacts.name }] : []}
+        loading={removeMutation.isPending}
+      />
 
       {/* X184 — "Ver todas": histórico paginado da trilha (20 por página) */}
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
