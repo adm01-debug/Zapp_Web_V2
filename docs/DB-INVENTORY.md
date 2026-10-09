@@ -189,7 +189,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `talkx_alerts` | Alertas do motor TalkX (tipo, campanha e payload) | parcial | `scripts/db-audit/talkx-engine-health.test.sh`, `scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh`, `scripts/db-audit/talkx-tick-expurgo.test.sh` |
 | `talkx_blacklist` | Lista de supressão do TalkX (contato, motivo e origem) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx`, `src/components/talkx/__tests__/useCampaignEditor.test.tsx` … |
 | `talkx_campaign_events` | Eventos de campanha TalkX (tipo, mensagem e ator) | ativo | `src/hooks/integrations/useTalkXEvents.ts`, `supabase/functions/talkx-scheduler/index.test.ts`, `supabase/functions/talkx-send/_test-utils.ts` … |
-| `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | parcial | `scripts/db-audit/talkx-campaign-segments.test.sh` |
+| `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | ativo | `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx`, `src/hooks/integrations/useTalkXResumeChecklist.ts`, `scripts/db-audit/talkx-campaign-segments.test.sh` … |
 | `talkx_campaigns` | Campanhas TalkX (modelo, variáveis, ritmo de digitação e estado) | ativo | `src/components/talkx/TalkXLiveMonitor.tsx`, `src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx`, `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` … |
 | `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | parcial | `scripts/db-audit/talkx-e90-links-contract.test.mjs`, `scripts/db-audit/talkx-links-conversions.test.sh` |
 | `talkx_delivery_log` | Log de entrega das campanhas TalkX (tentativa, etapa e desfecho) | ativo | `supabase/functions/talkx-send/_test-utils.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/r3-delta-011-excecao-nao-perde-log.test.ts` … |
@@ -241,8 +241,9 @@ inventário apura hoje:
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
 - `ai_budget_reservations`, `department_invitations`, `multiplix_audience_members`,
-  `multiplix_audiences`, `talkx_alerts`, `talkx_campaign_segments`, `talkx_conversions` e
-  `webhook_failures` são `parcial`: só o ferramental (`scripts/db-audit/`, `scripts/qa/`,
-  `.github/workflows/`) as cita.
+  `multiplix_audiences`, `talkx_alerts`, `talkx_conversions` e `webhook_failures` são `parcial`:
+  só o ferramental (`scripts/db-audit/`, `scripts/qa/`, `.github/workflows/`) as cita. Já
+  `talkx_campaign_segments` saiu dessa lista: `src/hooks/integrations/useTalkXResumeChecklist.ts`
+  passou a consultá-la (checklist de retomada pausada) e a tabela virou `ativo`.
 
 As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 166.
