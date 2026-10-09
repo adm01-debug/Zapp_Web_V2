@@ -66,6 +66,17 @@ describe('clique-para-discar — as origens migradas (T29)', () => {
     expect(prov).not.toContain('start-voip-call');
   });
 
+  it('C02 — as origens do inbox levam o avatar do contato no payload', () => {
+    expect(ler('src/components/inbox/contact-details/ContactActionButtons.tsx')).toContain('avatar: contact.avatar');
+    expect(ler('src/components/inbox/ChatPanel.tsx')).toContain('avatar: conversation.contact.avatar');
+  });
+
+  it('C02 — o provider registra o pedido do inbox como chamadaSaida (o cartao disca sem navegar)', () => {
+    const prov = ler('src/providers/CallSessionProvider.tsx');
+    expect(prov).toContain('chamadaSaida');
+    expect(prov).toContain('limparChamadaSaida');
+  });
+
   it('ninguem mais emite o legado no app (fora da constante e dos testes)', () => {
     const prov = ler('src/providers/CallSessionProvider.tsx');
     expect(prov).not.toContain('start-voip-call');

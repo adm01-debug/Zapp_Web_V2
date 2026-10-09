@@ -714,6 +714,22 @@ describe('(2) classificação pelo CONTEÚDO SONORO', () => {
     expect(partesEnviadas(1).dataDeAudio).toBe(BASE64_MEME_2);
     expect(partesEnviadas(0).dataDeAudio).not.toBe(partesEnviadas(1).dataDeAudio);
   });
+
+  it('o texto enviado junto ao som pede para OUVIR o conteúdo (não deriva do nome)', async () => {
+    // O aceite do A8/IA-131 é uma promessa do TEXTO do prompt: se alguém reescrever
+    // o pedido e ele voltar a ser "classifique pelo nome", a garantia cai em
+    // silêncio. Aqui o prompt REAL (capturado da chamada ao provedor) é conferido.
+    H.rows = [deepseekTexto(), openrouterAudio()];
+    H.contents = ['risada'];
+    const h = await handler();
+
+    await h(pedidoClassificar({ audio_url: MEME_PUBLIC_URL, file_name: 'risada.mp3' }));
+
+    const { partes } = partesEnviadas();
+    const texto = String((partes[1] as { text?: unknown }).text);
+    expect(texto).toContain('Ouça o CONTEÚDO SONORO');
+    expect(texto).not.toContain('NÃO recebeu o som deste arquivo');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -739,6 +755,23 @@ describe('(3) só metadados: a resposta declara que a classificação é limitad
     const mensagens = doProvedor[0].body?.messages as Array<{ content: unknown }>;
     expect(typeof mensagens[0].content).toBe('string');
     expect(JSON.stringify(mensagens[0].content)).not.toContain('input_audio');
+  });
+
+  it('o prompt do modo limitado DIZ que o som não foi recebido e que a classificação é só pelo nome', async () => {
+    // Este é o mecanismo que sustenta o aceite: sem a frase abaixo o modelo
+    // passaria a responder "como se tivesse ouvido" um arquivo do qual só
+    // recebeu o nome. O texto vem do provedor capturado, não de um literal solto.
+    H.rows = [deepseekTexto(), openrouterAudio()];
+    H.contents = ['deboche'];
+    const h = await handler();
+
+    await h(pedidoClassificar({ file_name: 'risada_troll.mp3' }));
+
+    const mensagens = chamadasDeProvedor()[0].body?.messages as Array<{ content: unknown }>;
+    const prompt = String(mensagens[0].content);
+    expect(prompt).toContain('Você NÃO recebeu o som deste arquivo');
+    expect(prompt).toContain('APENAS pelo nome');
+    expect(prompt).not.toContain('Ouça o CONTEÚDO SONORO');
   });
 });
 

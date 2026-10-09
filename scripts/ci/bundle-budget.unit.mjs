@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -86,4 +86,84 @@ test("main retorna 2 sem dist", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "bundle-budget-empty-"));
   fixtureDirs.push(dir);
   assert.equal(main(["--dist", dir], dir), 2);
+});
+
+// ── Guarda da regra de chunking (SL-103B) ─────────────────────────────────────
+// O entry alcanca o grupo vendor-ui estaticamente (Radix), entao todo modulo que
+// cai nesse grupo vira peso de first paint mesmo sem uso inicial — foi assim que
+// o runtime de animacao (framer-motion) entrou no pacote inicial. Ele tem grupo
+// proprio (vendor-motion) e passa a seguir a alcancabilidade dos importadores.
+// A guarda le as regras REAIS de vite.config.ts e as aplica a ids de modulo, em
+// vez de procurar texto: com a regra antiga (framer-motion dentro do vendor-ui)
+// os casos abaixo ficam vermelhos.
+
+const VITE_CONFIG = new URL("../../vite.config.ts", import.meta.url);
+
+/** Le o bloco `codeSplitting.groups` de vite.config.ts como { name, priority, test }. */
+export function lerGruposDeChunking(fonte) {
+  const abertura = fonte.indexOf("groups: [");
+  if (abertura < 0) throw new Error("vite.config.ts: bloco codeSplitting.groups nao encontrado");
+  const resto = fonte.slice(abertura + "groups: [".length);
+  const fecho = resto.match(/\n\s*\],/u);
+  if (!fecho) throw new Error("vite.config.ts: fecho do bloco groups nao encontrado");
+  const grupos = [];
+  const entrada = /\{\s*name:\s*"([^"]+)"\s*,\s*priority:\s*(\d+)\s*,\s*test:\s*\/(.+?)\/([a-z]*)\s*\}/gsu;
+  for (const achado of resto.slice(0, fecho.index).matchAll(entrada)) {
+    grupos.push({ name: achado[1], priority: Number(achado[2]), test: new RegExp(achado[3], achado[4]) });
+  }
+  if (grupos.length === 0) throw new Error("vite.config.ts: nenhum grupo com name/priority/test foi lido");
+  return grupos;
+}
+
+const gruposDeChunking = lerGruposDeChunking(readFileSync(VITE_CONFIG, "utf8"));
+const idModulo = (caminho) => `node_modules/${caminho}`;
+const gruposQueCapturam = (id) => gruposDeChunking.filter((grupo) => grupo.test.test(id));
+
+test("le as regras reais de chunking do vite.config.ts", () => {
+  assert.ok(gruposDeChunking.length >= 8, `grupos lidos: ${gruposDeChunking.length}`);
+  for (const nome of ["vendor-core", "vendor-data", "vendor-ui", "vendor-motion", "vendor-utils"]) {
+    assert.ok(gruposDeChunking.some((grupo) => grupo.name === nome), `grupo ausente: ${nome}`);
+  }
+  const core = gruposDeChunking.find((grupo) => grupo.name === "vendor-core");
+  assert.ok(
+    gruposDeChunking.every((grupo) => grupo.name === "vendor-core" || grupo.priority <= core.priority),
+    "vendor-core precisa manter a maior prioridade (React nao pode ser arrastado por outro grupo)",
+  );
+});
+
+test("framer-motion fica em grupo proprio, fora do vendor-ui do Radix", () => {
+  const framerMotion = idModulo("framer-motion/dist/es/index.mjs");
+  const capturas = gruposQueCapturam(framerMotion);
+  assert.equal(
+    capturas.length,
+    1,
+    `framer-motion deveria ser reivindicado por exatamente 1 grupo; veio: ${capturas.map((grupo) => grupo.name).join(", ") || "nenhum"}`,
+  );
+  const nome = capturas[0].name;
+  assert.notEqual(nome, "vendor-ui", "framer-motion voltou para o mesmo chunk do Radix (peso de first paint)");
+
+  // O vendor-ui continua dono do Radix e nao pode reivindicar o runtime de animacao.
+  const vendorUi = gruposDeChunking.find((grupo) => grupo.name === "vendor-ui");
+  assert.equal(vendorUi.test.test(framerMotion), false);
+  assert.equal(vendorUi.test.test(idModulo("@radix-ui/react-dialog/dist/index.mjs")), true);
+
+  // As dependencias do runtime acompanham o mesmo grupo.
+  for (const dependencia of ["motion-dom/dist/index.mjs", "motion-utils/dist/index.mjs"]) {
+    const capturadas = gruposQueCapturam(idModulo(dependencia));
+    assert.equal(capturadas.length, 1, `${dependencia}: ${capturadas.length} grupo(s)`);
+    assert.equal(capturadas[0].name, nome);
+  }
+});
+
+test("o grupo do runtime de animacao nao captura pacotes vizinhos por nome parecido", () => {
+  const nome = gruposQueCapturam(idModulo("framer-motion/dist/es/index.mjs"))[0].name;
+  const falsos = ["framer-motion-extra/index.mjs", "meu-framer-motion/index.mjs", "@framer-motion/x/index.mjs"];
+  for (const falso of falsos) {
+    const capturados = gruposQueCapturam(idModulo(falso)).map((grupo) => grupo.name);
+    assert.equal(
+      capturados.includes(nome),
+      false,
+      `${falso} nao pode ser capturado por ${nome} (veio: ${capturados.join(", ") || "nenhum"})`,
+    );
+  }
 });

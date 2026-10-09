@@ -288,9 +288,9 @@ describe('R2-API-066 — monitor de quarentena', () => {
 
     chamadas = [];
 
-    // m1 acumula 600 versões de liberação (a última é `whitelisted`); m2 tem
-    // UMA liberação, mais recente que todas as de m1 — ou seja, além da 500ª
-    // linha. m3 continua pendente na origem.
+    // m1 acumula 600 versões de liberação (a última é `whitelisted`) e exige
+    // paginação para que a versão efetivamente mais recente seja vista; m2 tem
+    // uma liberação própria e m3 continua pendente na origem.
     const base = Date.parse('2026-09-05T00:00:00.000Z');
     const versoesDeM1: QuarantineRecord[] = Array.from({ length: 600 }, (_, i) => {
       const ts = new Date(base + i * 1000).toISOString();
@@ -312,6 +312,10 @@ describe('R2-API-066 — monitor de quarentena', () => {
     const liberacoes = chamadasDeLiberacoes();
     expect(liberacoes.length).toBeGreaterThan(1);
     expect(liberacoes.some((c) => Number(c.offset ?? 0) >= 500)).toBe(true);
+    const ordensLiberacoes = liberacoes.map(
+      (c) => c.order as { column?: string; ascending?: boolean } | undefined,
+    );
+    expect(ordensLiberacoes.every((order) => order?.column === 'id' && order?.ascending === true)).toBe(true);
   });
 
   it('8. cache maior que um lote: a consulta de liberações é dividida em lotes e cobre TODOS os ids', async () => {

@@ -27,7 +27,13 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('../useMultiplixAudience', () => ({ createMultiplixDraft: vi.fn() }));
+// F44: a criacao passou para a edge de dominio `multiplix-dispatch`; do modulo
+// irma o hook importa apenas o erro nomeado do teto (F17) — o mock preserva os
+// exports reais e neutraliza o `createMultiplixDraft`, que nao e mais usado.
+vi.mock('../useMultiplixAudience', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../useMultiplixAudience')>()),
+  createMultiplixDraft: vi.fn(),
+}));
 
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -40,6 +46,7 @@ import {
   MultiplixDispatchEdgeError,
   type MultiplixDispatch,
   type MultiplixRecipientRow,
+  useConfirmMultiplixDispatch,
 } from '@/hooks/integrations/useMultiplixDispatches';
 
 function createWrapper() {
@@ -277,5 +284,89 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
       headers: { Authorization: 'Bearer tok-123' },
     });
     expect(result.current.data?.rows).toHaveLength(501);
+  });
+});
+
+/**
+ * F51 — `confirm` (o front NAO materializa a fila): a transacao vive na edge/RPC.
+ * O que o front tem de garantir e (a) mandar a versao REVISADA e (b) tratar o
+ * clique repetido (`created: false`) como sucesso, para 5 cliques = 1 execucao.
+ */
+describe('F51 — confirm pela edge `multiplix-dispatch`', () => {
+  function confirmPayload(over: Record<string, unknown> = {}) {
+    return {
+      dispatch_id: 'd1',
+      dispatch_version: 4,
+      status: 'sending',
+      scheduled_at: null,
+      recipient_count: 10,
+      block_count: 2,
+      items_created: 20,
+      items_total: 20,
+      message_count: 20,
+      created: true,
+      ...over,
+    };
+  }
+
+  it('useConfirmMultiplixDispatch manda dispatch_version revisada e devolve o que foi congelado', async () => {
+    functionsInvoke.mockResolvedValue({ data: { data: confirmPayload() }, error: null });
+
+    const { result } = renderHook(() => useConfirmMultiplixDispatch(), { wrapper: createWrapper() });
+    const out = await result.current.mutateAsync({ dispatchId: 'd1', dispatchVersion: 3 });
+
+    expect(functionsInvoke).toHaveBeenCalledWith('multiplix-dispatch', {
+      body: { action: 'confirm', payload: { dispatch_id: 'd1', dispatch_version: 3 } },
+      headers: { Authorization: 'Bearer tok-123' },
+    });
+    expect(out).toMatchObject({ dispatch_version: 4, items_created: 20, created: true });
+  });
+
+  it('clique repetido com a MESMA versao nao vira erro (created:false = 1 execucao)', async () => {
+    functionsInvoke
+      .mockResolvedValueOnce({ data: { data: confirmPayload() }, error: null })
+      .mockResolvedValueOnce({
+        data: { data: confirmPayload({ created: false, items_created: 0 }) },
+        error: null,
+      });
+
+    const { result } = renderHook(() => useConfirmMultiplixDispatch(), { wrapper: createWrapper() });
+    const first = await result.current.mutateAsync({ dispatchId: 'd1', dispatchVersion: 3 });
+    const second = await result.current.mutateAsync({ dispatchId: 'd1', dispatchVersion: 3 });
+
+    expect(first.created).toBe(true);
+    expect(second).toMatchObject({ created: false, items_created: 0 });
+    expect(functionsInvoke).toHaveBeenNthCalledWith(2, 'multiplix-dispatch', {
+      body: { action: 'confirm', payload: { dispatch_id: 'd1', dispatch_version: 3 } },
+      headers: { Authorization: 'Bearer tok-123' },
+    });
+  });
+
+  it('recusa da revalidacao (F49) sobe o codigo nomeado em vez de sucesso silencioso', async () => {
+    const context = new Response(JSON.stringify({ error: 'multiplix_confirm_no_eligible_recipients' }), {
+      status: 422,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    functionsInvoke.mockResolvedValue({
+      data: null,
+      error: { message: 'Edge Function returned a non-2xx status code', context },
+    });
+
+    const { result } = renderHook(() => useConfirmMultiplixDispatch(), { wrapper: createWrapper() });
+    await expect(
+      result.current.mutateAsync({ dispatchId: 'd1', dispatchVersion: 3 }),
+    ).rejects.toMatchObject({
+      name: 'MultiplixDispatchEdgeError',
+      code: 'multiplix_confirm_no_eligible_recipients',
+    });
+  });
+
+  it('resposta fora do envelope do confirm falha alto (nada de confirmar em silencio)', async () => {
+    functionsInvoke.mockResolvedValue({ data: { nope: true }, error: null });
+
+    const { result } = renderHook(() => useConfirmMultiplixDispatch(), { wrapper: createWrapper() });
+    await expect(
+      result.current.mutateAsync({ dispatchId: 'd1', dispatchVersion: 3 }),
+    ).rejects.toMatchObject({ code: 'multiplix_confirm_shape' });
   });
 });

@@ -14,6 +14,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { checkRateLimit, errorResponse, requireEnv } from "./validation.ts";
+import { enforceAiCapability } from "./ai-feature-flags.ts";
 
 /** Escopos do plano de IA-043. Cada escopo tem seu próprio contador compartilhado. */
 export type AiRateLimitScope = "user" | "org" | "service" | "provider";
@@ -192,6 +193,14 @@ export async function checkSharedAiRateLimits(opts: {
 export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | null> {
   const { functionName, userId, req } = opts;
   if (!userId) return errorResponse("Unauthenticated", 401, req);
+
+  // 0) Kill switch por capacidade (IA-009). ANTES do pré-filtro, do contador
+  //    compartilhado e da cota: capacidade desligada não reserva orçamento nem
+  //    consome limite. Desliga SÓ o `enabled = false` booleano explícito; chave
+  //    AUSENTE vale LIGADA (sem seed, ausência é "o operador não desligou"); erro
+  //    de leitura ou valor não booleano FECHAM (fail-closed/503).
+  const capability = await enforceAiCapability({ functionName, req });
+  if (capability) return capability;
 
   const perMin = opts.perUserPerMinute ?? DEFAULT_PER_USER_PER_MIN;
 

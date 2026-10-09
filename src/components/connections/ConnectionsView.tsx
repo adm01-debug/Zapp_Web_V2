@@ -25,6 +25,9 @@ import { NumberReputationMonitor } from './NumberReputationMonitor';
 import { ConnectionCard } from './ConnectionCard';
 import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
 
+/** E42 — texto único da trava de nova conexão (cabeçalho e estado vazio). */
+const MULTI_CONNECTION_LOCKED_MESSAGE = 'Múltiplas conexões ainda não estão habilitadas neste sistema';
+
 export function ConnectionsView() {
   const {
     connections, loading,
@@ -45,6 +48,15 @@ export function ConnectionsView() {
       .then(({ data }) => { if (active) setMultiConnectionEnabled(data?.value === 'true'); });
     return () => { active = false; };
   }, []);
+
+  // E42: os DOIS caminhos que abrem o diálogo de nova conexão — o botão do
+  // cabeçalho e o "Adicionar Conexão" do estado vazio — passam pela mesma
+  // chave. Antes o estado vazio chamava `setIsAddDialogOpen(true)` direto e
+  // criava a conexão inoperante (token perdido, QR da PRINCIPAL) que a trava
+  // existe para impedir.
+  const openAddConnectionDialog = () => {
+    if (multiConnectionEnabled) setIsAddDialogOpen(true);
+  };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
   const [queuesDialog, setQueuesDialog] = useState({ open: false, connectionId: '', connectionName: '' });
@@ -78,7 +90,7 @@ export function ConnectionsView() {
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
                 disabled={!multiConnectionEnabled}
-                title={multiConnectionEnabled ? undefined : 'Múltiplas conexões ainda não estão habilitadas neste sistema'}
+                title={multiConnectionEnabled ? undefined : MULTI_CONNECTION_LOCKED_MESSAGE}
               >
                 <Plus className="w-4 h-4 mr-2" />Nova Conexão
               </Button>
@@ -163,7 +175,16 @@ export function ConnectionsView() {
       {loading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-2" />Carregando conexões...</div>
       ) : connections.length === 0 ? (
-        <EmptyState icon={Smartphone} title="Nenhuma conexão configurada" description="Adicione sua primeira conexão WhatsApp para começar a atender seus clientes." illustration="inbox" actionLabel="Adicionar Conexão" onAction={() => setIsAddDialogOpen(true)} />
+        <EmptyState
+          icon={Smartphone}
+          title="Nenhuma conexão configurada"
+          description={multiConnectionEnabled
+            ? 'Adicione sua primeira conexão WhatsApp para começar a atender seus clientes.'
+            : `${MULTI_CONNECTION_LOCKED_MESSAGE} — a criação de conexão fica disponível após a atualização multi-conexão.`}
+          illustration="inbox"
+          actionLabel={multiConnectionEnabled ? 'Adicionar Conexão' : undefined}
+          onAction={multiConnectionEnabled ? openAddConnectionDialog : undefined}
+        />
       ) : (
         <StaggeredList className="space-y-4">
           {connections.map((connection) => (

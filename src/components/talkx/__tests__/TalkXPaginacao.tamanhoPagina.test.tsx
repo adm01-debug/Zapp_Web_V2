@@ -9,6 +9,11 @@
  * passa a MOSTRAR — a contagem do resumo e quantas linhas foram renderizadas.
  * O caso de 2ª página cobre também o retorno para a 1ª página: sem ele, trocar o
  * tamanho na página 2 mostraria "Mostrando 21 a 12 de 12" (intervalo vazio).
+ *
+ * X089 (mock 04): a TELA de templates passou a oferecer 12/24/48 por página (padrão 12);
+ * a expectativa do caso Templates acompanhou a nova régua — o que o teste prova (a escolha
+ * tem efeito e a tela volta para a 1ª página) continua o mesmo. Segmentos e Supressão
+ * seguem com 8/10/20/50.
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -162,18 +167,22 @@ beforeEach(() => {
 });
 
 describe('tamanho de página com efeito — R2-MOD-060 (#497)', () => {
-  it('Templates: "20 por página" mostra os 12 templates e volta para a 1ª página', () => {
-    wrap(<TalkXTemplates onUseTemplate={vi.fn()} />);
-    expect(screen.getByText('Mostrando 1 a 8 de 12 templates')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Usar template' })).toHaveLength(8);
+  it('Templates: "24 por página" mostra 24 dos 30 templates e volta para a 1ª página', () => {
+    // X089 (mock 04): a biblioteca de templates passou a paginar de 12 em 12
+    // (opções 12/24/48). O comportamento provado é o mesmo do R2-MOD-060 — escolher um
+    // tamanho MAIOR mostra mais linhas e a tela volta para a 1ª página.
+    dados.templates = fabricarTemplates(30);
+    const { container } = wrap(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    expect(screen.getByText('Mostrando 1 a 12 de 30 templates')).toBeTruthy();
+    expect(container.querySelectorAll('[data-talkx-template-card]')).toHaveLength(12);
 
     fireEvent.click(screen.getByRole('button', { name: '2' }));
-    expect(screen.getByText('Mostrando 9 a 12 de 12 templates')).toBeTruthy();
+    expect(screen.getByText('Mostrando 13 a 24 de 30 templates')).toBeTruthy();
 
-    escolherTamanhoPagina(20);
+    escolherTamanhoPagina(24);
 
-    expect(screen.getByText('Mostrando 1 a 12 de 12 templates')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Usar template' })).toHaveLength(12);
+    expect(screen.getByText('Mostrando 1 a 24 de 30 templates')).toBeTruthy();
+    expect(container.querySelectorAll('[data-talkx-template-card]')).toHaveLength(24);
   });
 
   it('Segmentos: "20 por página" mostra os 12 segmentos e volta para a 1ª página', () => {

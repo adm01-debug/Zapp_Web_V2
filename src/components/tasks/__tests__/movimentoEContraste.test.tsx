@@ -189,7 +189,12 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
     const { container: atrasado } = render(<DueChip dueDate={ontem} />);
     expect(atrasado.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
 
-    const { container: hoje } = render(<DueChip dueDate={new Date().toISOString()} />);
+    // R2-MOD-058: "Hoje" é o prazo de DIA INTEIRO (23:59 locais). O instante
+    // atual (`new Date().toISOString()`) é um prazo COM hora que já passou — a
+    // mesma tarefa, um segundo depois, é "Atrasada".
+    const fimDoDia = new Date();
+    fimDoDia.setHours(23, 59, 0, 0);
+    const { container: hoje } = render(<DueChip dueDate={fimDoDia.toISOString()} />);
     expect(hoje.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
   });
 

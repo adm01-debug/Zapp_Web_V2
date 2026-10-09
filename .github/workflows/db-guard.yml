@@ -287,6 +287,11 @@ jobs:
           WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/wa-tag-and-status-authorization.test.sh
 
+      - name: Simular escopo por conexão das etiquetas de WhatsApp (item 22 / TRA-006)
+        env:
+          WA_LABEL_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/wa-label-connection-scope.test.sh
+
       - name: Simular autorização do INSERT em análises de conversa
         env:
           ANALYSES_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
@@ -718,6 +723,17 @@ jobs:
           TALKX_ESCOPO_AI_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh
 
+      # Item 33 / R3-DELTA-001: a view emite outcome_unknown_24h, mas o alerta
+      # gravado precisa usar o kind canonico outcome_unknown aceito pelo CHECK.
+      # Harness RED→GREEN em PostgreSQL 17: antes abortava o INSERT..SELECT inteiro
+      # e o lote nao gravava nem os outros alertas da rodada. SKIP_DOCKER_SHIM=1
+      # porque o harness aguarda readiness com `docker logs`, subcomando fora do shim.
+      - name: Provar lote de alertas Talk X com outcome_unknown_24h (item 33)
+        env:
+          TALKX_LOTE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp-message-phase1-<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
@@ -870,6 +886,12 @@ jobs:
           F64_VOZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/f64-voz-assets-e-grants.test.sh
+
+      - name: Simular RPC de modo do WhatsApp do departamento (QA5-09)
+        env:
+          DEPARTMENT_WA_MODE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh
 
       # t_138a15f0 (PR 1890): os dois testes abaixo existiam no disco sem passo
       # no CI e o check-test-inventory os reprovava como orfaos. Ambos iniciam

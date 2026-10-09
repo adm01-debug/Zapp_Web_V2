@@ -2,7 +2,7 @@
 
 **Estado:** ativas, imutáveis e aprovadas como referência de composição. A implementação deve preservar o tema carvão; o azul destas imagens é referência de acento e hierarquia, não autorização para substituir o tema global.
 
-Use [INDEX.html](INDEX.html) para navegar e [MANIFESTO.json](MANIFESTO.json) para conferir bytes, dimensões e SHA-256. O estado de execução está no [plano de recuperação](../PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md#estado-de-execução-em-12092026).
+Use [INDEX.html](INDEX.html) para navegar e [MANIFESTO.json](MANIFESTO.json) para conferir bytes, dimensões e SHA-256. O estado de execução está no [plano de recuperação](../_arquivo/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md#estado-de-execução-em-12092026).
 
 ## Conteúdo
 

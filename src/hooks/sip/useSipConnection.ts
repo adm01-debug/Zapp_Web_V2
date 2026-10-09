@@ -99,6 +99,17 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         authorizationUsername: config.user,
         logLevel: 'warn',
         displayName: config.user,
+        // SL-002: estas são as opções do `SessionDescriptionHandler` no sip.js
+        // (o `sessionDescriptionHandlerOptions` de cada sessão só carrega as
+        // `constraints`). Elas viram o `RTCPeerConnection` de TODA sessão
+        // (session.js:1143 -> plataforma web). O `RTCPeerConnection` não tem
+        // chave de "recusar RTP em claro" — a prova disso é o perfil do SDP
+        // negociado, checada em `SipCallAdapter.midiaCriptografada`. O que se
+        // exige aqui é o transporte: RTCP muxado (um só caminho de mídia, o da
+        // sessão DTLS) e bundle obrigatório.
+        sessionDescriptionHandlerFactoryOptions: {
+          peerConnectionConfiguration: { rtcpMuxPolicy: 'require', bundlePolicy: 'max-bundle' },
+        },
         delegate: {
           onInvite: (invitation) => onIncomingInvitationRef.current?.(invitation),
         },

@@ -130,8 +130,15 @@ export function useBulkActions<T extends { id: string }>(
         variant: 'outline' as const,
         action: async (actionItems: T[]) => {
           const ids = actionItems.map((i) => i.id);
+          // ADR-005 (passo 3): `contacts` não tem coluna `status` — o estado de
+          // conversa vive em `conversation_status`, e o update antigo
+          // (`status: 'archived'`) era recusado pelo PostgREST (arquivar conversa em
+          // massa não tinha como funcionar). As demais tabelas do hook têm `status`.
+          const payload: Record<string, unknown> = tableName === 'contacts'
+            ? { conversation_status: 'archived', updated_at: new Date().toISOString() }
+            : { status: 'archived', updated_at: new Date().toISOString() };
           const { error } = await fromTable(tableName)
-            .update({ status: 'archived', updated_at: new Date().toISOString() } as Record<string, unknown>)
+            .update(payload)
             .in('id', ids);
           
           if (error) throw error;

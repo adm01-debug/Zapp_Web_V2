@@ -84,8 +84,11 @@ export function MediaPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      {/* V01: janela do arquivo 40% mais estreita (896 -> 538px) e 20% mais baixa (80vh -> 64vh).
+          O `_-_` vira espaço no CSS: `calc(100vw-2rem)` sem os espaços é descartado pelo navegador
+          (a largura cairia de volta ao `max-w-lg` da base). `min(...)` segura o teto no celular. */}
       <DialogContent
-        className="max-w-4xl max-h-[80vh] p-0 overflow-hidden"
+        className="max-w-[min(538px,calc(100vw_-_2rem))] max-h-[64vh] p-0 overflow-hidden"
         onOpenAutoFocus={() => {
           triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         }}
@@ -109,17 +112,17 @@ export function MediaPreviewDialog({
             </div>
           </div>
         </DialogHeader>
-        <div className="flex items-center justify-center p-4 bg-background/90 min-h-[400px]">
+        <div className="flex items-center justify-center p-4 bg-background/90 min-h-[320px]">
           {isLoading && <span className="text-sm text-muted-foreground">Carregando mídia…</span>}
           {error && <Button variant="outline" onClick={() => { void refresh(); }}>Tentar novamente</Button>}
-          {(displayItem.type === 'image' || displayItem.type === 'sticker') && resolvedUrl && <img src={resolvedUrl} alt={displayName} onError={() => { void refresh(); }} className="max-w-full max-h-[70vh] object-contain" />}
-          {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[70vh]" crossOrigin="anonymous" playsInline />}
+          {(displayItem.type === 'image' || displayItem.type === 'sticker') && resolvedUrl && <img src={resolvedUrl} alt={displayName} onError={() => { void refresh(); }} className="max-w-full max-h-[56vh] object-contain" />}
+          {displayItem.type === 'video' && resolvedUrl && <video ref={videoRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} onContextMenu={(e) => e.preventDefault()} className="max-w-full max-h-[56vh]" crossOrigin="anonymous" playsInline />}
           {displayItem.type === 'audio' && resolvedUrl && <div className="p-8"><audio ref={audioRef} src={resolvedUrl} controls controlsList="nodownload" onError={() => { void refresh(); }} className="w-full" /></div>}
           {displayItem.type === 'document' && (
             isPdf ? (
               // Etapa 29 (D2a): PDF abre DENTRO do ZAPP no visualizador nativo do navegador.
               resolvedUrl
-                ? <iframe src={`${resolvedUrl}#toolbar=0`} title={displayName} className="w-full h-[70vh] rounded-lg border border-border/60 bg-background" />
+                ? <iframe src={`${resolvedUrl}#toolbar=0`} title={displayName} className="w-full h-[56vh] rounded-lg border border-border/60 bg-background" />
                 : null
             ) : (
               // Documento sem visualizador interno: icone + nome + "Abrir" (unico caminho de

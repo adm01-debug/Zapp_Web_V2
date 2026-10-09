@@ -1,5 +1,4 @@
 import * as React from "react";
-import { motion, HTMLMotionProps } from "framer-motion";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -44,24 +43,38 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 );
 Card.displayName = "Card";
 
-interface MotionCardProps extends Omit<HTMLMotionProps<"div">, "ref">, VariantProps<typeof cardVariants> {
+// MotionCardComponent — o hover/tap que antes vinha do runtime de animação agora é
+// CSS do tema: `motion-safe:` (movimento reduzido não recebe efeito), transição de
+// `transform` E `box-shadow` (o realce de sombra do token `shadow-glow-primary-sm`
+// também anima, como animava o hover do runtime de animação) com o token `duration-200`.
+// `hoverScale`/`hoverY` continuam sendo respeitados, via variáveis CSS lidas pelas
+// utilidades arbitrárias do Tailwind.
+const motionCardClasses =
+  "motion-safe:transition-[transform,box-shadow] motion-safe:duration-200 motion-safe:ease-out motion-safe:hover:translate-y-[var(--motion-card-y)] motion-safe:hover:scale-[var(--motion-card-scale)] motion-safe:hover:shadow-glow-primary-sm motion-safe:active:scale-[0.99]";
+
+interface MotionCardProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {
   hover?: boolean;
   hoverScale?: number;
   hoverY?: number;
 }
 
 const MotionCardComponent = React.forwardRef<HTMLDivElement, MotionCardProps>(
-  ({ className, variant, padding, hover = true, hoverScale = 1.01, hoverY = -4, ...props }, ref) => (
-    <motion.div
+  ({ className, variant, padding, hover = true, hoverScale = 1.01, hoverY = -4, style, ...props }, ref) => (
+    <div
       ref={ref}
-      whileHover={hover ? { 
-        y: hoverY, 
-        scale: hoverScale,
-        boxShadow: "0 12px 40px hsl(var(--primary) / 0.15)",
-        transition: { duration: 0.2, ease: "easeOut" }
-      } : undefined}
-      whileTap={hover ? { scale: 0.99 } : undefined}
-      className={cn(cardVariants({ variant: variant || "interactive", padding }), "cursor-pointer", className)}
+      style={
+        {
+          "--motion-card-y": `${hoverY}px`,
+          "--motion-card-scale": `${hoverScale}`,
+          ...style,
+        } as React.CSSProperties
+      }
+      className={cn(
+        cardVariants({ variant: variant || "interactive", padding }),
+        "cursor-pointer",
+        hover && motionCardClasses,
+        className
+      )}
       {...props}
     />
   )

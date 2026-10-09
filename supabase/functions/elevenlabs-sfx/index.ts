@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsSFXSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 import { buildElevenLabsRequest } from "./request.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
@@ -28,6 +29,7 @@ Deno.serve(async (req) => {
 
     log.info(`Generating ${isMusic ? "music" : "sfx"}: "${prompt}" (${duration || (isMusic ? 15 : 5)}s)`);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(spec.url, {
       method: "POST",
       headers: {
@@ -35,6 +37,28 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(spec.body),
+    });
+
+    // SL-013 / IA-003 B6 — geração paga de efeito/música sem linha no ledger é
+    // consumo invisível no relatório de custo. Unidade cobrada = REQUISIÇÃO
+    // (uma por geração); o provedor não devolve tokens, então as colunas de
+    // token ficam NULL com `usage_unknown: true` (IA-053).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-sfx",
+      userId: auth.userId,
+      model: null,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: isMusic ? "/v1/music" : "/v1/sound-generation",
+        billing_unit: "request",
+        billing_quantity: 1,
+        requested_seconds: duration || (isMusic ? 15 : 5),
+        http_status: response.status,
+      },
     });
 
     if (!response.ok) {

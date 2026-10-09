@@ -15,6 +15,7 @@ vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (key: string, 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: (...args: unknown[]) => navigateToView(...args) }));
 
 const baseContact = { id: 'c1', name: 'Maria Silva', phone: '+5511999999999', email: 'maria@test.com' };
+const baseContactComAvatar = { ...baseContact, avatar: 'https://cdn.exemplo/maria.png' };
 const onStartCall = vi.fn();
 
 // DropdownMenuTrigger do Radix abre no pointerdown, não no click — um clique
@@ -60,13 +61,15 @@ describe('ContactActionButtons', () => {
     expect(navigateToView).not.toHaveBeenCalled();
   });
 
-  it('não chama navigateToView quando o e-mail existe mas o clique é no botão certo', () => {
+  it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
     const emailTile = tiles.find(t => t.querySelector('svg.lucide-mail'))!;
     expect(emailTile).not.toBeDisabled();
     fireEvent.click(emailTile);
-    expect(navigateToView).toHaveBeenCalledWith('email-chat');
+    // C03: a navegação carrega o contato para o módulo abrir a conversa dele
+    // (ou o compositor com o e-mail preenchido quando não houver conversa).
+    expect(navigateToView).toHaveBeenCalledWith('email-chat', { emailContact: 'c1', emailTo: 'maria@test.com' });
   });
 
   it('o botão de e-mail desabilitado fica focável (wrapper) mesmo com o <button> nativo desabilitado', () => {
@@ -100,6 +103,53 @@ describe('ContactActionButtons', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
     expect(tiles.find(t => t.querySelector('svg.lucide-video'))).toBeUndefined();
+  });
+
+  it('C02 — "Ligar via Telefone" emite zapp:start-call real com avatar, nome e origem inbox', () => {
+    // Escuta o evento REAL no document — é o mesmo contrato que o
+    // CallSessionProvider assina; nada é mockado no caminho do emissor.
+    const ouvido = vi.fn();
+    document.addEventListener('zapp:start-call', ouvido);
+    try {
+      render(<ContactActionButtons contact={baseContactComAvatar} onStartCall={onStartCall} />);
+      const ligarTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-phone'))!;
+      openViaPointer(ligarTile);
+      fireEvent.click(screen.getByText('Ligar via Telefone'));
+
+      expect(ouvido).toHaveBeenCalledTimes(1);
+      expect((ouvido.mock.calls[0][0] as CustomEvent).detail).toEqual({
+        channel: 'voip',
+        phone: baseContactComAvatar.phone,
+        contactId: baseContactComAvatar.id,
+        name: baseContactComAvatar.name,
+        avatar: baseContactComAvatar.avatar,
+        source: 'inbox',
+      });
+      expect(onStartCall).toHaveBeenCalledWith('voip');
+    } finally {
+      document.removeEventListener('zapp:start-call', ouvido);
+    }
+  });
+
+  it('C02 — "Ligar via WhatsApp" emite o evento real pelo canal whatsapp (comportamento preservado)', () => {
+    const ouvido = vi.fn();
+    document.addEventListener('zapp:start-call', ouvido);
+    try {
+      render(<ContactActionButtons contact={baseContactComAvatar} onStartCall={onStartCall} />);
+      const ligarTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-phone'))!;
+      openViaPointer(ligarTile);
+      fireEvent.click(screen.getByText('Ligar via WhatsApp'));
+
+      expect(ouvido).toHaveBeenCalledTimes(1);
+      expect((ouvido.mock.calls[0][0] as CustomEvent).detail).toMatchObject({
+        channel: 'whatsapp',
+        phone: baseContactComAvatar.phone,
+        avatar: baseContactComAvatar.avatar,
+        source: 'inbox',
+      });
+    } finally {
+      document.removeEventListener('zapp:start-call', ouvido);
+    }
   });
 
   it('mostra a videochamada quando a flag video_call está ligada', () => {

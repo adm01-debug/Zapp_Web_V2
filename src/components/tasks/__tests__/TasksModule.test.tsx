@@ -21,13 +21,11 @@ import {
 } from '@/test/mocks/tarefas';
 
 import { TasksModule } from '@/components/tasks/TasksModule';
-import type { TaskMode } from '@/components/tasks/shared/ModeSwitcher';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { TASKS_ROUTE_PROPS } from '@/pages/viewRouteProps';
 
 const MODE_STORAGE_KEY = 'tasks-mode';
 
-function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {}) {
+function renderModule() {
   const qc = makeQueryClient();
   const Wrapper = makeWrapper(qc);
   return render(
@@ -36,7 +34,7 @@ function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {
           AppProviders; o harness monta o mesmo contexto (como em taskComponents). */}
       <TooltipProvider>
         <Wrapper>
-          <TasksModule {...props} />
+          <TasksModule />
         </Wrapper>
       </TooltipProvider>
     </MemoryRouter>
@@ -46,6 +44,18 @@ function renderModule(props: { defaultMode?: TaskMode; forceMode?: boolean } = {
 /** Modo que o `ModeSwitcher` esta exibindo — o mesmo estado que escolhe o modo renderizado. */
 function modoAtual() {
   return screen.getByTestId('tasks-mode').getAttribute('data-mode');
+}
+
+/**
+ * Prazo de DIA INTEIRO de hoje (23:59 locais) — a convenção que o próprio app
+ * grava nos chips "Hoje/Amanhã". R2-MOD-058: `new Date().toISOString()` produzia
+ * um prazo COM hora que já passou no instante seguinte, e a tarefa deixaria de
+ * contar como "para hoje"; aqui o caso é "vence hoje".
+ */
+function hojeFimDoDia() {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  return d.toISOString();
 }
 
 /**
@@ -67,7 +77,8 @@ describe('TasksModule — etapa 57 (QuickAdd da Agenda)', () => {
   });
 
   it('na Agenda existe um único QuickAdd, já apontando para o dia selecionado', async () => {
-    renderModule({ defaultMode: 'agenda', forceMode: true });
+    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
+    renderModule();
 
     // espera sair do esqueleto (a Agenda só monta o QuickAdd com o dia na tela)
     await screen.findAllByTestId('agenda-day-dots');
@@ -93,7 +104,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
   });
 
   it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
-    renderModule({ defaultMode: 'board' });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
 
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
@@ -105,7 +117,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
   });
 
   it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
-    renderModule({ defaultMode: 'board' });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
     expect(await screen.findByText('Feita')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('switch', { name: 'Mostrar concluídas' }));
@@ -126,7 +139,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     // Antes: só a busca decidia o vazio — com prioridade/contato/alarme a Lista
     // dizia "Adicione a primeira tarefa" e não oferecia como desfazer.
     window.history.replaceState(null, '', '/?prio=urgent');
-    renderModule({ defaultMode: 'list' });
+    renderModule();
 
     expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
@@ -134,7 +147,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
 
   it('Fase F: o cabeçalho conta a lista REAL, não o recorte do filtro', async () => {
     window.history.replaceState(null, '', '/?q=zzz');
-    renderModule({ defaultMode: 'board' });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
 
     // O recorte zera a tela, mas "1 aberta" (a tarefa real) segue no cabeçalho.
     expect((await screen.findAllByText(/1 aberta/)).length).toBeGreaterThan(0);
@@ -142,7 +156,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
   });
 
   it('a busca anda no campo na hora e vira filtro depois do debounce, já na URL', async () => {
-    renderModule({ defaultMode: 'board' });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
     expect(await screen.findByText('Ligar')).toBeTruthy();
 
     const campo = screen.getByRole('searchbox', { name: 'Buscar tarefa' });
@@ -199,12 +214,12 @@ describe('TasksModule — B13 (uma query para os tres modos)', () => {
 });
 
 /**
- * B7 (etapa 47): o modulo e o MESMO para os dois itens do menu, e o que os
- * diferencia e o contrato de entrada da rota —
- * `?view=pipeline` abre SEMPRE no Quadro; `?view=tasks` retoma o ultimo modo
- * salvo (ou a Lista). A preferencia so e gravada quando o usuario troca de modo.
+ * E14 (fusão Quadro→Tarefas): o módulo tem uma única rota (`?view=tasks`) e o
+ * modo inicial vem só da preferência salva (`tasks-mode` no localStorage) —
+ * sem ela, a Lista. A preferência só é gravada quando o usuário troca de modo
+ * no switcher; visitar a rota não a reescreve.
  */
-describe('TasksModule — B7 (etapa 47: modo por rota)', () => {
+describe('TasksModule — modo inicial: preferência salva (tasks-mode) × Lista', () => {
   beforeEach(() => {
     cleanup();
     resetSupabaseMock();
@@ -212,40 +227,24 @@ describe('TasksModule — B7 (etapa 47: modo por rota)', () => {
     setSelectResult({ data: [makeTaskRow()], error: null });
   });
 
-  it('`?view=pipeline` (forceMode) abre no Quadro mesmo com outro modo salvo', async () => {
-    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
-
-    renderModule({ defaultMode: 'board', forceMode: true });
-
-    await waitFor(() => expect(modoAtual()).toBe('board'));
-    // entrar pela rota nao reescreve a preferencia do usuario
-    expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('agenda');
-  });
-
-  it('a rota `pipeline` do ViewRouter entrega Quadro + forceMode', async () => {
-    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
-
-    renderModule(TASKS_ROUTE_PROPS.pipeline);
-
-    await waitFor(() => expect(modoAtual()).toBe('board'));
-  });
-
-  it('`?view=tasks` retoma o ultimo modo salvo', async () => {
+  it('preferência "agenda" salva abre na Agenda e a visita não a reescreve', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
 
     renderModule();
 
     await waitFor(() => expect(modoAtual()).toBe('agenda'));
+    expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('agenda');
   });
 
-  it('`?view=tasks` sem nada salvo cai na Lista', async () => {
+  it('sem nada salvo abre na Lista', async () => {
     renderModule();
 
     await waitFor(() => expect(modoAtual()).toBe('list'));
   });
 
   it('trocar de modo no switcher grava a preferencia', async () => {
-    renderModule({ defaultMode: 'board', forceMode: true });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
     await waitFor(() => expect(modoAtual()).toBe('board'));
 
     fireEvent.click(screen.getByText('Agenda'));
@@ -273,7 +272,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
         makeTaskRow({ id: 'a', status: 'todo' }),
         makeTaskRow({ id: 'b', status: 'doing' }),
         makeTaskRow({ id: 'c', status: 'waiting' }),
-        makeTaskRow({ id: 'd', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'd', status: 'todo', due_date: hojeFimDoDia() }),
         makeTaskRow({ id: 'e', status: 'done', completed_at: '2026-09-30T10:00:00.000Z' }),
       ],
       error: null,
@@ -287,7 +286,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
   it('usa singular com uma única tarefa aberta', async () => {
     setSelectResult({
-      data: [makeTaskRow({ id: 'a', status: 'todo', due_date: new Date().toISOString() })],
+      data: [makeTaskRow({ id: 'a', status: 'todo', due_date: hojeFimDoDia() })],
       error: null,
     });
 
@@ -328,7 +327,7 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     setSelectResult({
       data: [
         makeTaskRow({ id: 'o1', status: 'todo', due_date: ontem }),
-        makeTaskRow({ id: 'h1', status: 'todo', due_date: new Date().toISOString() }),
+        makeTaskRow({ id: 'h1', status: 'todo', due_date: hojeFimDoDia() }),
         makeTaskRow({ id: 'f1', status: 'doing' }),
         makeTaskRow({ id: 'f2', status: 'doing' }),
         makeTaskRow({ id: 'd1', status: 'done', completed_at: new Date().toISOString() }),
@@ -400,7 +399,7 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
 
 /**
  * Etapas 77/78 — o módulo não instala mais listener de teclado: o registry
- * global (escopo `tasks`/`pipeline`, com guarda de input) é quem decide e avisa
+ * global (escopo 'tasks', com guarda de input) é quem decide e avisa
  * pelo evento `tasks-shortcut`. Estes testes exercitam a segunda metade do
  * caminho — o que o módulo faz com cada comando — e a região viva que narra
  * criar, concluir, mover e desfazer.
@@ -548,7 +547,8 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
 
   it('o Quadro publica as instruções de arrasto em pt-BR e marca o card', async () => {
     setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
-    renderModule({ defaultMode: 'board', forceMode: true });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
     const card = await screen.findByTestId('work-item-card');
 
     // `dragHandleUsageInstructions` do DragDropContext vira um texto oculto no body.
@@ -571,7 +571,8 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     // No Quadro a tarefa concluída fica na coluna Concluído (na Lista a seção
     // "Concluídas (7 dias)" nasce fechada — o card só existe depois do clique).
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'done', completed_at: new Date().toISOString() })], error: null });
-    renderModule({ defaultMode: 'board', forceMode: true });
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
+    renderModule();
     const card = await screen.findByTestId('work-item-card');
     card.focus();
 
@@ -583,8 +584,8 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
 
 /**
  * Etapa 86 — o contrato de entrada do módulo fechado de ponta a ponta: qual modo
- * a rota abre (`defaultMode` × preferência salva × `forceMode` de `?view=pipeline`),
- * o deep-link `?task=` convivendo com esse modo, e o atalho `N` alcançando o
+ * a rota abre (a preferência salva em `tasks-mode`, ou a Lista), o deep-link
+ * `?task=` convivendo com esse modo, e o atalho `N` alcançando o
  * QuickAdd do dia na Agenda (o registro do registry só chega como evento).
  */
 describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => {
@@ -600,39 +601,28 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
     cleanup();
   });
 
-  it('sem preferência salva, o defaultMode da rota decide o modo (Agenda) e não é gravado', async () => {
-    renderModule({ defaultMode: 'agenda' });
+  it('sem preferência salva, Tarefas abre na Lista e nada é gravado', async () => {
+    renderModule();
 
-    await waitFor(() => expect(modoAtual()).toBe('agenda'));
-    // entrar pela rota não reescreve a preferência do usuário
+    await waitFor(() => expect(modoAtual()).toBe('list'));
     expect(localStorage.getItem(MODE_STORAGE_KEY)).toBeNull();
   });
 
-  it('com preferência salva, o defaultMode NÃO vence (retoma o modo salvo)', async () => {
+  it('com preferência salva, ela vence', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
 
-    renderModule({ defaultMode: 'agenda' });
+    renderModule();
 
     await waitFor(() => expect(modoAtual()).toBe('board'));
   });
 
-  it('`?view=pipeline` força o Quadro sobre a preferência salva e não a reescreve', async () => {
-    localStorage.setItem(MODE_STORAGE_KEY, 'list');
-
-    renderModule(TASKS_ROUTE_PROPS.pipeline);
-
-    await waitFor(() => expect(modoAtual()).toBe('board'));
-    // visitar a rota não altera a preferência do usuário
-    expect(localStorage.getItem(MODE_STORAGE_KEY)).toBe('list');
-  });
-
-  it('o deep-link `?task=` abre o Sheet sobre o Quadro forçado por `?view=pipeline`', async () => {
+  it('o deep-link `?view=tasks&task=` abre o Sheet sobre a preferência salva', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
-    window.history.replaceState(null, '', '/?view=pipeline&task=t1');
+    window.history.replaceState(null, '', '/?view=tasks&task=t1');
 
-    renderModule(TASKS_ROUTE_PROPS.pipeline);
+    renderModule();
 
-    await waitFor(() => expect(modoAtual()).toBe('board'));
+    await waitFor(() => expect(modoAtual()).toBe('agenda'));
     const titulo = await screen.findByTestId('sheet-titulo');
     expect((titulo as HTMLInputElement).value).toBe('Ligar para o cliente');
     // a URL segue carregando o id do item aberto
@@ -649,7 +639,8 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
   });
 
   it('o atalho N na Agenda leva o foco ao QuickAdd do dia (único da tela)', async () => {
-    renderModule({ defaultMode: 'agenda', forceMode: true });
+    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
+    renderModule();
     await screen.findAllByTestId('agenda-day-dots');
 
     act(() => {

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChurnPredictionDashboard } from '../ChurnPredictionDashboard';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const mockContacts = [
   { id: 'c1', name: 'Maria Silva', phone: '+5511999990001', ai_sentiment: 'negative', updated_at: '2025-01-01T00:00:00Z', created_at: '2024-12-01T00:00:00Z' },
@@ -8,6 +10,10 @@ const mockContacts = [
   { id: 'c3', name: 'Ana Costa', phone: '+5511999990003', ai_sentiment: 'neutral', updated_at: '2025-11-01T00:00:00Z', created_at: '2025-10-28T00:00:00Z' },
   { id: 'c4', name: 'Pedro Lima', phone: '+5511999990004', ai_sentiment: null, updated_at: '2025-08-01T00:00:00Z', created_at: '2025-07-01T00:00:00Z' },
 ];
+
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -219,6 +225,122 @@ describe('ChurnPredictionDashboard', () => {
       const reason = 'Inativo por mais de 60 dias extra longo';
       const truncated = reason.length > 25 ? reason.substring(0, 25) + '...' : reason;
       expect(truncated).toContain('...');
+    });
+  });
+
+  // ===== IA-112: a tela passa a exibir o resultado que o backend calculou =====
+  describe('Resultado de ai-churn-analysis aplicado (IA-112)', () => {
+    beforeEach(() => {
+      // Cada teste desta seção decide a resposta do backend; o padrão do arquivo
+      // (erro) é restaurado depois.
+      vi.mocked(supabase.functions.invoke).mockReset();
+      vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: null, error: { message: 'not found' } });
+    });
+
+    it('mostra o score, o nível e os motivos devolvidos pelo backend', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              contactId: 'c2',
+              name: 'João Santos',
+              riskScore: 88,
+              riskLevel: 'critical',
+              daysSinceLastMessage: 45,
+              totalMessageCount: 3,
+              reasons: ['Calculado pelo backend'],
+            },
+            {
+              contactId: 'contato-fora-da-lista',
+              name: 'Fora da lista',
+              riskScore: 99,
+              riskLevel: 'critical',
+              daysSinceLastMessage: 60,
+              totalMessageCount: 10,
+              reasons: ['Não deve contar como aplicado'],
+            },
+          ],
+        },
+        error: null,
+      });
+
+      render(<ChurnPredictionDashboard />);
+      // Espera a leitura local terminar (o c1 fica com 80% no cálculo do cliente).
+      await screen.findByText('80%');
+      // O c2 tem score local 0, então não aparece antes da análise de IA.
+      expect(screen.queryByText('João Santos')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Análise IA'));
+
+      // Após o clique o número exibido é o do backend (88%), não o local (0).
+      await screen.findByText('88%');
+      expect(screen.getByText('João Santos')).toBeInTheDocument();
+      expect(screen.getByText('45d sem contato')).toBeInTheDocument();
+      expect(screen.getByText('Calculado pelo backend')).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith('Análise de IA aplicada a 1 contato(s).');
+    });
+
+    it('mantém os números locais quando o backend falha (sem dizer que deu certo)', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: null,
+        error: { message: 'boom' },
+      });
+
+      render(<ChurnPredictionDashboard />);
+      await screen.findByText('80%');
+
+      fireEvent.click(screen.getByText('Análise IA'));
+
+      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
+      expect(screen.getByText('80%')).toBeInTheDocument();
+      expect(screen.queryByText('88%')).not.toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith('A análise de IA não pôde ser aplicada; os números locais foram mantidos.');
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('mantém os números locais quando o backend devolve results vazio (sem dizer que deu certo)', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: { results: [] },
+        error: null,
+      });
+
+      render(<ChurnPredictionDashboard />);
+      await screen.findByText('80%');
+
+      fireEvent.click(screen.getByText('Análise IA'));
+
+      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
+      expect(screen.getByText('80%')).toBeInTheDocument();
+      expect(toast.error).toHaveBeenCalledWith('A IA não devolveu resultados de churn; os números locais foram mantidos.');
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('não anuncia aplicação quando nenhum resultado pertence aos contatos carregados', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              contactId: 'contato-fora-da-lista',
+              riskScore: 99,
+              riskLevel: 'critical',
+              daysSinceLastMessage: 60,
+              totalMessageCount: 10,
+              reasons: ['Não deve aplicar'],
+            },
+          ],
+        },
+        error: null,
+      });
+
+      render(<ChurnPredictionDashboard />);
+      await screen.findByText('80%');
+
+      fireEvent.click(screen.getByText('Análise IA'));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('A IA não devolveu resultados para os contatos carregados; os números locais foram mantidos.'));
+      expect(screen.getByText('80%')).toBeInTheDocument();
+      expect(screen.queryByText('99%')).not.toBeInTheDocument();
+      expect(toast.success).not.toHaveBeenCalled();
     });
   });
 });

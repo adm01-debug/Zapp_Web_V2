@@ -124,12 +124,15 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
 
     teclar('2', { ctrlKey: true });
 
-    // react-router v7 agenda a navegação numa transition: espera o commit.
+    // react-router v7 agenda a navegação numa transition: a URL da JANELA muda
+    // antes do commit do estado do router. As DUAS provas — a URL da janela e a
+    // sonda (`useLocation`) — vão na MESMA condição: ler o DOM fora daqui corria
+    // com a transition e a sonda ainda mostrava '/sla' (o flake de 08/10).
     await waitFor(() => {
       expect(window.location.pathname).toBe('/');
       expect(window.location.search).toBe('?view=dashboard');
+      expect(screen.getByTestId('rota').textContent).toBe('/?view=dashboard');
     });
-    expect(screen.getByTestId('rota').textContent).toBe('/?view=dashboard');
     expect(nav.viewsPedidas()).toContain('dashboard');
   });
 

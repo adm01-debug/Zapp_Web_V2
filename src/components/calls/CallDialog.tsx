@@ -119,8 +119,17 @@ export function CallDialog({
     // aqui criaria uma SAÍDA para uma chamada que está CHEGANDO.
     if (direction !== 'outbound') return;
     discouRef.current = true;
-    void dial(contact.phone);
-  }, [open, existingCallId, direction, contact.phone, dial]);
+    // C02 — o cartão do contato disca SEM abrir o discador da Telefonia
+    // (`abrirDiscador:false`): a chamada fica na tela onde o agente está. Se a
+    // guarda do microfone recusar, `dial` resolve `false` (o motivo já foi ao
+    // toast por ela): o diálogo fecha em vez de ficar "Chamando..." eterno.
+    void Promise.resolve(dial(contact.phone, { abrirDiscador: false })).then((discou) => {
+      if (discou === false) {
+        onEnd();
+        onOpenChange(false);
+      }
+    });
+  }, [open, existingCallId, direction, contact.phone, dial, onEnd, onOpenChange]);
 
   const handleAnswer = async () => {
     // A máquina decide: `accept()` despacha ACCEPT (ringing_in → connecting) e

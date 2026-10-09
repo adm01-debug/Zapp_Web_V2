@@ -7,8 +7,9 @@
  * lidas". Cada linha é renderizada por `NotificationItem`, que trata o
  * `reminder_due` com as 3 ações do alarme.
  */
-import { Bell } from 'lucide-react';
+import { AlertTriangle, Bell, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotifications } from '@/hooks/system/useNotifications';
@@ -20,7 +21,7 @@ interface NotificationsPopoverProps {
 }
 
 export function NotificationsPopover({ collapsed = false }: NotificationsPopoverProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, loading, error, markAsRead, markAllAsRead, refetch } = useNotifications();
 
   const trigger = (
     <button
@@ -79,7 +80,41 @@ export function NotificationsPopover({ collapsed = false }: NotificationsPopover
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto overscroll-contain divide-y divide-border">
-          {notifications.length === 0 ? (
+          {error && notifications.length > 0 && (
+            <div
+              role="status"
+              className="flex items-center justify-between gap-2 px-4 py-2 bg-destructive/10 text-destructive"
+            >
+              <span className="text-2xs">Não foi possível atualizar as notificações.</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void refetch()}
+                className="h-6 px-2 text-2xs font-medium text-destructive hover:text-destructive shrink-0"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+          {loading && notifications.length === 0 ? (
+            <div role="status" aria-live="polite" className="flex flex-col items-center justify-center py-10 px-4">
+              <Loader2 className="w-5 h-5 text-muted-foreground motion-safe:animate-spin" aria-hidden="true" />
+              <p className="text-xs text-muted-foreground text-center mt-2">Carregando notificações…</p>
+            </div>
+          ) : error && notifications.length === 0 ? (
+            <div role="status" aria-live="polite" className="flex flex-col items-center justify-center py-10 px-4">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-3">
+                <AlertTriangle className="w-6 h-6 text-destructive" aria-hidden="true" />
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">Não foi possível carregar as notificações</p>
+              <p className="text-xs text-muted-foreground text-center mb-3">
+                Verifique a conexão e tente de novo.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => void refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 px-4">
               <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
                 <Bell className="w-6 h-6 text-muted-foreground/50" />

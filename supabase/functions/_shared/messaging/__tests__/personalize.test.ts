@@ -16,9 +16,43 @@ function assert(condition: unknown, message: string): asserts condition {
 
 const contact = { name: "Joao Silva", nickname: "Joao", company: "Empresa Teste" };
 
-Deno.test("personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao)", () => {
-  const result = personalize("Ola {{nome}}, aqui é da {{empresa}}", contact, {}).text;
-  assert(result === "Ola Joao, aqui é da Empresa Teste", `unexpected result: ${result}`);
+Deno.test("personalize resolves the built-in placeholders (nome/apelido/nome_completo/empresa)", () => {
+  // Os QUATRO built-ins de contato do F37 — {{nome}} (primeiro nome),
+  // {{nome_completo}}, {{apelido}} (nickname) e {{empresa}}.
+  const result = personalize(
+    "Ola {{nome}} ({{nome_completo}} / {{apelido}}), aqui é da {{empresa}}",
+    contact,
+    {},
+  ).text;
+  assert(
+    result === "Ola Joao (Joao Silva / Joao), aqui é da Empresa Teste",
+    `unexpected result: ${result}`,
+  );
+});
+
+Deno.test("personalize {{apelido}} cai no primeiro nome quando o contato nao tem apelido", () => {
+  // ../personalize.ts: `apelido: contact.nickname || firstName` — sem apelido o
+  // contato NAO fica sem tratamento: usa o primeiro nome (nunca string vazia).
+  const r = personalize("Oi {{apelido}}", { name: "Maria Souza" }, {});
+  assert(r.text === "Oi Maria", `unexpected result: ${r.text}`);
+  assert(r.missing.length === 0, `nao deveria faltar variavel: ${JSON.stringify(r.missing)}`);
+});
+
+Deno.test("personalize built-in sem valor entra em missing e mantem o texto vazio (X020)", () => {
+  // Contrato do X020 para os built-ins: chave CONHECIDA sem valor NAO vira
+  // "[chave]" (isso e so para chave desconhecida) e NAO fica silenciosa — entra
+  // em `missing`, que e o que faz o worker pular o destinatario (MX06) em vez de
+  // mandar a lacuna para o cliente. Os quatro built-ins de contato, de uma vez.
+  const semDados = { name: null, nickname: null, company: null };
+  const r = personalize("Ola {{nome}}/{{nome_completo}}/{{apelido}}/{{empresa}}", semDados, {});
+  assert(r.text === "Ola ///", `unexpected result: ${r.text}`);
+  for (const chave of ["nome", "nome_completo", "apelido", "empresa"]) {
+    assert(
+      r.missing.includes(chave),
+      `missing deveria conter '${chave}': ${JSON.stringify(r.missing)}`,
+    );
+  }
+  assert(r.unknown.length === 0, `built-in conhecido nao e desconhecido: ${JSON.stringify(r.unknown)}`);
 });
 
 Deno.test("personalize falls back to a bracket placeholder for an unresolved variable instead of throwing", () => {

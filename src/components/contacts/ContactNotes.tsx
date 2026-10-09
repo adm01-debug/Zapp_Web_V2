@@ -222,7 +222,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <Avatar className="w-5 h-5">
-                    <AvatarFallback className={cn(colors.bg, colors.text, 'text-[8px] font-bold')}>
+                    <AvatarFallback className={cn(colors.bg, colors.text, 'text-3xs font-bold')}>
                       {getInitials(note.author_name || '')}
                     </AvatarFallback>
                   </Avatar>

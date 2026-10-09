@@ -26,9 +26,18 @@ unitários, que usam os *shapes* reais da resposta.
 ## Pendente
 
 O print de **teclado virtual aberto** (aparelho real) não pode ser simulado em browser headless e segue
-pendente — é o último item da etapa E65.
+pendente — é o último item da etapa E65. O dono dele é o Joaquim: a fábrica de agentes não tem aparelho
+real e não sintetiza imagem (print inventado não é prova).
 
 ## Observação sobre outros arquivos desta pasta
 
-`f3-desktop.png` (210 KB) e `f3-mobile-360.png` são de uma etapa anterior (FASE 3) e **não** fazem parte
-do E65. O primeiro está **acima do limite de 200 KB** que a etapa E65 define para PNG.
+`f3-desktop.png` (103541 bytes ≈ 101 KB, 2560x2800) e `f3-mobile-360.png` são de uma etapa anterior
+(FASE 3) e **não** fazem parte do E65 — mas ficam nesta pasta. O `f3-desktop.png` estava com 215968
+bytes (≈ 211 KB), acima do limite de 200 KB que a etapa E65 define para PNG, e foi reexportado com
+103541 bytes no PR #1580 (commit 101218930), que é o arquivo que está aqui. Hoje nenhum PNG desta
+pasta passa de 200 KB.
+
+Quem confere isso a cada rodada é `tests/contracts/e65-prints.contract.test.ts` (`bun run
+test:contracts`): todo PNG da pasta tem de caber em 200 KB e os três prints do E65 têm de existir, em
+PNG de verdade, com a largura que a etapa pede (1280 / 360 / 1280 px). Colocar de volta um PNG acima do
+limite derruba o caso.

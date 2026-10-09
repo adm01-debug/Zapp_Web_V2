@@ -33,6 +33,24 @@ function handlerOf(session: Session): SdhLike | undefined {
   return session.sessionDescriptionHandler as SdhLike | undefined;
 }
 
+/**
+ * O SDP negociado usa perfil de mídia **criptografado** (SRTP)?
+ *
+ * Não existe no WebRTC chave de "recusar RTP em claro": o que existe é o perfil
+ * do `m=` do SDP negociado. `UDP/TLS/RTP/SAVPF` (DTLS-SRTP, o que o WebRTC
+ * negocia) e `RTP/SAVPF`/`RTP/SAVP` (SDES-SRTP) são seguros; `RTP/AVP` é RTP
+ * **em claro**. Até o SL-002 nada no app olhava isso — uma sessão em claro
+ * seguia para o áudio remoto como se fosse segura.
+ *
+ * `false` também quando não há nenhum `m=`: sem mídia negociada não há o que
+ * atestar (a leitura do "não atestado" é de quem chama — ver
+ * `midiaCriptografada`).
+ */
+export function midiaUsaSrtp(sdp: string): boolean {
+  const midias = sdp.match(/^m=.*$/gm) ?? [];
+  return midias.length > 0 && midias.every((linha) => /savp/i.test(linha));
+}
+
 export class SipCallAdapter implements CallAdapter {
   private remoteAudio: HTMLAudioElement | null = null;
 
@@ -100,6 +118,18 @@ export class SipCallAdapter implements CallAdapter {
       // engolido com log; sem o catch ele sobe pelo clique do botão "desligar".
       this.logger?.error('Hangup error:', error);
     }
+  }
+
+  midiaCriptografada(session: Session): boolean | null {
+    const sdp = handlerOf(session)?.peerConnection?.remoteDescription?.sdp;
+    if (sdp === undefined) {
+      // Sem SDP lido não há veredito: o motor segue a chamada e o motivo
+      // sobra no log — silêncio aqui esconderia uma sessão que ninguém
+      // conseguiu conferir.
+      this.logger?.warn('SDP remoto indisponível: SRTP não atestado nesta sessão.');
+      return null;
+    }
+    return midiaUsaSrtp(sdp);
   }
 
   attachRemoteAudio(session: Session): HTMLAudioElement | null {

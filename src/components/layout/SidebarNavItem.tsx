@@ -10,6 +10,8 @@ export interface NavItemConfig {
   label: string;
   shortcut?: string;
   badge?: number;
+  /** Selo textual da entrada (F71: 'NOVO' no Multiplix), pintado ao lado do rotulo. */
+  pill?: string;
 }
 
 interface SidebarNavItemProps {
@@ -29,7 +31,17 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
   const isActive = currentView === item.id;
   const shortcut = item.shortcut;
   const badgeCount = badge ?? item.badge;
+  const pill = item.pill;
   const { prefetch } = usePrefetchOnHover();
+
+  // O nome acessivel e do BOTAO (aria-label), entao o selo precisa entrar nele:
+  // sem isso o "NOVO" nao chega ao leitor de tela (o texto interno fica mascarado
+  // pelo aria-label). O badge de contagem continua com a precedencia de sempre.
+  const accessibleLabel = badgeCount
+    ? `${item.label} (${badgeCount} não lidas)`
+    : pill
+      ? `${item.label} (${pill.toLocaleLowerCase('pt-BR')})`
+      : item.label;
 
   const handleMouseEnter = useCallback(() => {
     if (!isActive) prefetch(item.id);
@@ -40,7 +52,7 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       data-tour={item.id}
       onClick={() => onViewChange(item.id)}
       onMouseEnter={handleMouseEnter}
-      aria-label={badgeCount ? `${item.label} (${badgeCount} não lidas)` : item.label}
+      aria-label={accessibleLabel}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
         'relative flex items-center gap-2.5 transition-all duration-200 ease-out group/item',
@@ -79,6 +91,16 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
       )} />
       {!collapsed && (
         <span className="relative z-10 truncate">{item.label}</span>
+      )}
+      {/* Selo textual da entrada (F71). Decorativo no texto interno porque o
+          nome acessivel do botao ja o carrega (`accessibleLabel`). */}
+      {!collapsed && pill && (
+        <span
+          aria-hidden="true"
+          className="relative z-10 shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-[0.08em] text-primary motion-safe:animate-fade-in"
+        >
+          {pill}
+        </span>
       )}
       {!collapsed && onToggleFavorite && (
         <button
@@ -125,6 +147,9 @@ export const SidebarNavItem = React.memo(function SidebarNavItem({ item, current
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
           <span>{item.label}</span>
+          {pill && (
+            <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-[0.08em] text-primary">{pill}</span>
+          )}
           {shortcut && (
             <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">
               {shortcut}

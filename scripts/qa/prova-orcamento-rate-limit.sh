@@ -47,9 +47,13 @@
 #                        casaria a leitura e a prova aprovaria nada)
 #   ZAPP_PROVA_ESPERA   (segundos entre tentativas de leitura; default: 2)
 #
-# NUNCA imprime senha nem token: a saida traz apenas o email da conta, os codigos
-# HTTP, o resultado da classificacao e o resumo lido do banco.
+# NUNCA imprime senha nem token e nenhuma credencial vai para argv de processo:
+# o corpo do login chega ao curl por stdin (--data-binary @-) e os cabecalhos
+# com credencial (apikey, Authorization) vao num arquivo de configuracao
+# privado do curl (--config). A resposta do Auth fica num diretorio temporario
+# apagado ao sair; no diretorio de saida so vai evidencia redigida, sem tokens.
 set -uo pipefail
+umask 077
 
 OUT="${1:?uso: prova-orcamento-rate-limit.sh <dir-de-saida>}"
 BASE="${ZAPP_SUPABASE_URL:?ZAPP_SUPABASE_URL ausente no ambiente (URL do projeto Supabase)}"
@@ -68,6 +72,27 @@ fi
 : "${ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD:?senha da conta COMPRAS ausente no ambiente}"
 
 mkdir -p "$OUT"
+chmod 700 "$OUT"
+
+# Diretorio privado de trabalho: tudo que carrega token (resposta do Auth e o
+# --config do curl) mora aqui e e' removido ao sair, inclusive em falha.
+PRIV_PARENT="${TMPDIR:-.tmp}"
+if [[ ! -d "$PRIV_PARENT" ]]; then
+  mkdir -p "$PRIV_PARENT"
+  chmod 700 "$PRIV_PARENT"
+fi
+PRIV="$(mktemp -d "$PRIV_PARENT/prova-orcamento.XXXXXX")"
+chmod 700 "$PRIV"
+limpar() { [[ -n "${PRIV:-}" ]] && rm -rf -- "$PRIV"; }
+trap limpar EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+CURL_CFG="$PRIV/curl.cfg"
+{
+  printf 'header = "apikey: %s"\n' "$SUPABASE_ANON_KEY"
+  printf 'header = "Content-Type: application/json"\n'
+} > "$CURL_CFG"
 
 FALHAS=0
 INCONCLUSIVOS=0
@@ -112,25 +137,34 @@ fi
 echo "== PROVA DE ORCAMENTO E RATE LIMIT (producao) =="
 echo "BASE=$BASE  FUNCAO=$FUNCAO  RUN_ID=$RUN_ID  RUN_INICIO=$RUN_INICIO"
 
-# 1) Login no Supabase Auth do Zapp V2. O corpo vai por --data (nao por argv) e o
-#    token nunca e' ecoado.
-BODY=$(jq -nc --arg e "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL" \
-              --arg p "$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD" '{email:$e,password:$p}')
+# 1) Login no Supabase Auth do Zapp V2. A senha sai do ambiente direto para o
+#    corpo (jq $ENV), que chega ao curl por stdin -- nunca por argv. A resposta
+#    completa do Auth fica em $PRIV; em $OUT vai so o resumo redigido.
 LOGIN_RC=0
-LOGIN_HTTP=$(curl -sS -o "$OUT/login.json" -w '%{http_code}' \
-  -X POST "$BASE/auth/v1/token?grant_type=password" \
-  -H "apikey: $SUPABASE_ANON_KEY" -H 'Content-Type: application/json' \
-  --data "$BODY") || LOGIN_RC=$?
+LOGIN_HTTP=$(jq -nc \
+  '{email:$ENV.ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL, password:$ENV.ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_PASSWORD}' \
+  | curl -sS -o "$PRIV/login.json" -w '%{http_code}' \
+    -X POST "$BASE/auth/v1/token?grant_type=password" \
+    --config "$CURL_CFG" \
+    --data-binary @-) || LOGIN_RC=$?
 echo "LOGIN_HTTP=$LOGIN_HTTP  CONTA=$ZAPP_MULTIPLIX_MULTIPLIX_COMPRAS_EMAIL"
+
+if [[ -s "$PRIV/login.json" ]]; then
+  jq -c '{token_type,expires_in,error,error_code,error_description,msg}' \
+    "$PRIV/login.json" > "$OUT/login-resumo.json" 2>/dev/null \
+    || printf '{"erro":"login sem json parseavel"}\n' > "$OUT/login-resumo.json"
+else
+  printf '{"erro":"login sem resposta"}\n' > "$OUT/login-resumo.json"
+fi
 
 JWT=""
 if (( LOGIN_RC != 0 )); then
   falha "transporte do login falhou (curl exit=$LOGIN_RC)"
 elif [[ "$LOGIN_HTTP" != "200" ]]; then
   falha "login nao devolveu HTTP 200 (recebido: $LOGIN_HTTP)"
-  jq -c '{error,error_description,msg}' "$OUT/login.json" 2>/dev/null | head -c 300; echo
+  jq -c '{error,error_description,msg}' "$PRIV/login.json" 2>/dev/null | head -c 300; echo
 else
-  JWT=$(jq -r '.access_token // empty' "$OUT/login.json" 2>/dev/null || true)
+  JWT=$(jq -r '.access_token // empty' "$PRIV/login.json" 2>/dev/null || true)
   if [[ -z "$JWT" ]]; then
     falha "login HTTP 200 sem access_token"
   else
@@ -140,6 +174,8 @@ fi
 
 # Sem login nao ha o que medir adiante: fecha o veredito com o que ja' foi medido.
 if (( FALHAS > 0 )); then veredito; fi
+
+printf 'header = "Authorization: Bearer %s"\n' "$JWT" >> "$CURL_CFG"
 
 # 2) Chamadas reais. Cada resposta e' CONFERIDA (transporte, HTTP, corpo): uma
 #    chamada que falha NAO pode terminar em "ok". 429 e' resultado VALIDO — e' a
@@ -160,8 +196,8 @@ for (( i=0; i<N_CHAMADAS; i++ )); do
   http=$(curl -sS -o "$saida" -w '%{http_code}' \
     -X POST "$BASE/functions/v1/$FUNCAO" \
     -H "x-ai-request-id: $RUN_ID" \
-    -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $JWT" \
-    -H 'Content-Type: application/json' --data "$payload") || rc=$?
+    --config "$CURL_CFG" \
+    --data "$payload") || rc=$?
   echo "CHAMADA${n}_HTTP=$http  corpo=$(head -c 200 "$saida")"
   if (( rc != 0 )); then
     falha "chamada $n: transporte falhou (curl exit=$rc)"
@@ -199,11 +235,11 @@ else
     rc=0
     leitura_http=$(curl -sS -o "$OUT/ai_usage_logs.json" -w '%{http_code}' -G \
       "$BASE/rest/v1/ai_usage_logs" \
+      --config "$CURL_CFG" \
       --data-urlencode "select=request_id,function_name,status,model,created_at" \
       --data-urlencode "request_id=eq.$RUN_ID" \
       --data-urlencode "function_name=eq.$FUNCAO" \
-      --data-urlencode "created_at=gte.$RUN_INICIO" \
-      -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $JWT") || rc=$?
+      --data-urlencode "created_at=gte.$RUN_INICIO") || rc=$?
     if (( rc != 0 )); then
       inconclusivo "transporte da leitura de ai_usage_logs falhou (curl exit=$rc)"
       break

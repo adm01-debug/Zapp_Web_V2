@@ -163,13 +163,19 @@ export function makeDispatchDeps(opts: {
   };
 }
 
+export function makeTestActionDeps(
+  connection: Record<string, unknown> | null,
+  opts: { storage?: unknown } = {},
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function makeTestActionDeps(connection: Record<string, unknown> | null): any {
+): any {
   return {
     serviceKey: TEST_SERVICE_KEY,
     supabase: {
       auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
       rpc: () => Promise.resolve({ data: null, error: null }),
+      // X062: o envio de teste passou a ASSINAR a midia no Storage; o fake entra
+      // so quando o teste precisa observar a assinatura.
+      ...(opts.storage ? { storage: opts.storage } : {}),
       from(table: string) {
         if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
         return thenableQB({ data: null, error: null });
@@ -358,6 +364,14 @@ export function makeContinueDeps(opts: {
   drainedResult?: boolean;
   instanceToken?: string;
   budget?: (sentCount: number) => Record<string, unknown>;
+  /** X062: linha que a RPC de snapshot devolve (midia do destinatario). */
+  snapshot?: {
+    media_url_snapshot?: string | null;
+    media_type_snapshot?: string | null;
+    media_file_name_snapshot?: string | null;
+  };
+  /** X062: assinador do Storage; sem ele o envio de midia nao assina. */
+  storage?: unknown;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): { deps: any; ctx: ContinueMockCtx } {
   const campaign = opts.campaign ?? makeCampaign({ send_interval_min: 1000, send_interval_max: 1000, typing_delay_min: 0, typing_delay_max: 0 });
@@ -379,6 +393,9 @@ export function makeContinueDeps(opts: {
       serviceKey: TEST_SERVICE_KEY,
       supabase: {
         auth: { getUser: () => Promise.resolve({ data: { user: null }, error: new Error("") }) },
+        // X062: o envio por destinatario assina a midia no Storage; o fake entra
+        // so quando o teste precisa observar a assinatura.
+        ...(opts.storage ? { storage: opts.storage } : {}),
         rpc(name: string, args: Record<string, unknown> = {}) {
           ctx.rpcCalls.push({ name, args });
           switch (name) {
@@ -406,7 +423,14 @@ export function makeContinueDeps(opts: {
               return Promise.resolve({ data: opts.suppressAll ?? false, error: null });
             case "persist_talkx_recipient_message_snapshot":
               return Promise.resolve({
-                data: [{ personalized_message: "Ola Contato, tudo bem?", media_url_snapshot: null, media_type_snapshot: null }],
+                data: [{
+                  personalized_message: "Ola Contato, tudo bem?",
+                  media_url_snapshot: opts.snapshot?.media_url_snapshot ?? null,
+                  media_type_snapshot: opts.snapshot?.media_type_snapshot ?? null,
+                  ...(opts.snapshot?.media_file_name_snapshot !== undefined
+                    ? { media_file_name_snapshot: opts.snapshot.media_file_name_snapshot }
+                    : {}),
+                }],
                 error: null,
               });
             case "mark_talkx_recipient_dispatch_started":

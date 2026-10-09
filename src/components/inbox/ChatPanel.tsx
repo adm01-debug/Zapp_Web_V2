@@ -232,7 +232,10 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const handlers = useChatPanelHandlers({
     conversationId: conversation.id, contactId: conversation.contact.id, contactPhone: conversation.contact.phone,
     instanceName, onSendMessage, editMessageApi: editMessage, applySignature,
-    handleTypingStart, handleTypingStop, openDialog: openDialog as any, closeDialog: closeDialog as any, handleSetActiveTool,
+    handleTypingStart, handleTypingStop,
+    openDialog: (key: string) => openDialog(key as DialogKey),
+    closeDialog: (key: string) => closeDialog(key as DialogKey),
+    handleSetActiveTool,
   });
 
   useEffect(() => { initResolve(); }, [conversation.contact.id]);
@@ -355,7 +358,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <ChatPanelHeader conversation={conversation} isContactTyping={isContactTyping} showAIAssistant={activeTool === 'aiAssistant'} showDetails={showDetails}
             showSummaryPanel={activeTool === 'summary'} activeTool={activeTool} onSetActiveTool={handleSetActiveTool}
             voiceId={voiceId} speed={speed} onToggleAIAssistant={() => handleSetActiveTool('aiAssistant')} onToggleDetails={onToggleDetails}
-            onStartCall={() => dispatchStartCall({ channel: 'voip', phone: conversation.contact.phone, contactId: conversation.contact.id, name: conversation.contact.name, source: 'inbox' })} onOpenSearch={() => handleSetActiveTool('chatSearch')}
+            onStartCall={() => dispatchStartCall({ channel: 'voip', phone: conversation.contact.phone, contactId: conversation.contact.id, name: conversation.contact.name, avatar: conversation.contact.avatar ?? undefined, source: 'inbox' })} onOpenSearch={() => handleSetActiveTool('chatSearch')}
             onOpenTransfer={() => openDialog('transferDialog')} onOpenSchedule={() => openDialog('scheduleDialog')}
             onVoiceChange={setVoiceId} onSpeedChange={setSpeed} onBack={onBack}
             onGenerateSummary={() => handleSetActiveTool('summary')} isSummaryLoading={false} canGenerateSummary={canGenerateSummary}

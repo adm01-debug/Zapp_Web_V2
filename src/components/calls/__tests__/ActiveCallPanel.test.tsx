@@ -5,6 +5,12 @@ import { ActiveCallPanel } from '../ActiveCallPanel';
 const acceptIncomingCall = vi.fn();
 const rejectIncomingCall = vi.fn();
 const hangUp = vi.fn();
+// API da MÁQUINA (SL-109): `accept`/`reject`/`hangup` despacham o evento antes
+// de falar com o SIP; os métodos acima (crus do `useSipClient`) só falam com o
+// SIP e deixam a máquina divergente do motor.
+const accept = vi.fn();
+const reject = vi.fn();
+const hangup = vi.fn();
 const toggleMute = vi.fn();
 const sendDTMF = vi.fn();
 
@@ -26,6 +32,9 @@ vi.mock('@/providers/CallSessionProvider', () => ({
     acceptIncomingCall,
     rejectIncomingCall,
     hangUp,
+    accept,
+    reject,
+    hangup,
     toggleMute,
     sendDTMF,
   }),
@@ -36,7 +45,7 @@ vi.mock('@/hooks/calls/useCallChannels', () => ({
 
 describe('ActiveCallPanel (T62/T63)', () => {
   beforeEach(() => {
-    for (const f of [acceptIncomingCall, rejectIncomingCall, hangUp, toggleMute, sendDTMF]) f.mockReset();
+    for (const f of [acceptIncomingCall, rejectIncomingCall, hangUp, accept, reject, hangup, toggleMute, sendDTMF]) f.mockReset();
     sessao = { status: 'dialing', channel: 'voip', phone: '+5511999998888', name: 'Ana Paula' };
     isMuted = false;
     canReject = true;
@@ -88,19 +97,27 @@ describe('ActiveCallPanel (T62/T63)', () => {
     expect((screen.getByTestId('tel-reject') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('atender, recusar e encerrar chamam o provider', () => {
+  it('SL-109: atender, recusar e encerrar passam pela MÁQUINA, não pelos métodos crus do useSipClient', () => {
+    // Os métodos crus (`acceptIncomingCall`/`rejectIncomingCall`/`hangUp`) falam
+    // só com o SIP: sem o dispatch da máquina, aceitar por aqui deixava a sessão
+    // presa em `ringing_in` (o `ESTABLISHED` que o motor publica em seguida é
+    // transição inválida) e encerrar gravava `hangup_remote` no lugar de
+    // `hangup_local`. O caminho certo é a API da máquina do provider.
     sessao = { ...sessao, status: 'ringing_in' };
     const { unmount } = render(<ActiveCallPanel segundos={0} />);
     fireEvent.click(screen.getByTestId('tel-accept'));
     fireEvent.click(screen.getByTestId('tel-reject'));
-    expect(acceptIncomingCall).toHaveBeenCalled();
-    expect(rejectIncomingCall).toHaveBeenCalled();
+    expect(accept).toHaveBeenCalled();
+    expect(reject).toHaveBeenCalled();
+    expect(acceptIncomingCall).not.toHaveBeenCalled();
+    expect(rejectIncomingCall).not.toHaveBeenCalled();
     unmount();
 
     sessao = { ...sessao, status: 'active' };
     render(<ActiveCallPanel segundos={0} />);
     fireEvent.click(screen.getByTestId('tel-hangup'));
-    expect(hangUp).toHaveBeenCalled();
+    expect(hangup).toHaveBeenCalled();
+    expect(hangUp).not.toHaveBeenCalled();
   });
 
   it('mute expoe aria-pressed refletindo o estado', () => {

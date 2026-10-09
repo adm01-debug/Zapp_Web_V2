@@ -23,6 +23,30 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+/**
+ * SL-072 — a gravação do chat interno não é sempre webm: o MediaRecorder do
+ * Safari entrega `audio/mp4` (m4a) e o TTS (ElevenLabs) entrega `audio/mpeg`
+ * (mp3). O upload declarava `webm` fixo, então o objeto era rotulado com um
+ * formato que o navegador não toca (o áudio "não tocava no Safari"). A extensão
+ * e o contentType saem agora do blob real; sem mime reconhecido, mantém webm.
+ */
+const AUDIO_UPLOAD_FORMATS: Record<string, { extension: string; contentType: string }> = {
+  'audio/webm': { extension: 'webm', contentType: 'audio/webm' },
+  'audio/mp4': { extension: 'm4a', contentType: 'audio/mp4' },
+  'audio/m4a': { extension: 'm4a', contentType: 'audio/mp4' },
+  'audio/x-m4a': { extension: 'm4a', contentType: 'audio/mp4' },
+  'audio/aac': { extension: 'aac', contentType: 'audio/aac' },
+  'audio/mpeg': { extension: 'mp3', contentType: 'audio/mpeg' },
+  'audio/mp3': { extension: 'mp3', contentType: 'audio/mpeg' },
+  'audio/ogg': { extension: 'ogg', contentType: 'audio/ogg' },
+  'audio/wav': { extension: 'wav', contentType: 'audio/wav' },
+};
+
+export function resolveAudioUploadFormat(blob: Blob): { extension: string; contentType: string } {
+  const mime = (blob.type || '').split(';')[0].trim().toLowerCase();
+  return AUDIO_UPLOAD_FORMATS[mime] ?? { extension: 'webm', contentType: 'audio/webm' };
+}
+
 export function useTeamChatPanel(conversation: TeamConversation) {
   const { profile } = useAuth();
   const [text, setText] = useState('');
@@ -280,16 +304,21 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   // R2-INB-058 (#350-B): o chamador precisa saber se o áudio foi enviado.
   // `undefined` era lido como sucesso pelo TextToAudioButton, que descartava a
-  // prévia. Agora todo caminho devolve boolean: true SÓ após a mutação confirmar.
+  // prévia. Agora todo caminho devolve boolean: `true` SÓ após a mutação confirmar;
+  // quando `handleAudioSend` devolve `false` ou rejeita, o TextToAudioButton PRESERVA
+  // a prévia do áudio gerado e só a descarta no envio confirmado com `true`.
   const handleAudioSend = useCallback(async (blob: Blob): Promise<boolean> => {
     if (!profile?.id) return false;
+    // SL-072: o formato do upload vem do blob real — webm no Chrome, mp4/m4a no
+    // Safari (e mp3 no TTS). Antes ia webm fixo e o Safari não tocava o áudio.
+    const { extension, contentType } = resolveAudioUploadFormat(blob);
     try {
       const locator = await uploadTeamMedia({
         profileId: profile.id,
         conversationId: conversation.id,
         file: blob,
-        extension: 'webm',
-        contentType: 'audio/webm',
+        extension,
+        contentType,
         upsert: false,
       });
       if (!locator) return false;

@@ -1,0 +1,181 @@
+cartao	perfil	prioridade	status	modulo	titulo	id_inventario
+TL-001	hugo	P1	NAO_VERIFICAVEL	Talk X	E2E talkx.spec.ts "wizard advances to step 2" vermelho na main	P1-7
+TL-002	hugo	P2	NAO_IMPLEMENTADA	Talk X	useTalkXSuppression.ts é código morto (DELETE físico)	HOOK-MORTO
+TL-003	worker		NAO_IMPLEMENTADA	Multiplix	Edge multiplix-prepare-voice em fila: 1 chamada ao elevenlabs-tts por roteiro distinto (hash = sha256(roteiro final, voice_id, modelo, voice_settings…	F65
+TL-004	hugo		NAO_IMPLEMENTADA	Multiplix	Gravação: reutilizar src/hooks/communication/useAudioRecorder.ts + src/utils/audioToMp3.ts do Chat (pausar/retomar/refazer), upload para o bucket pri…	F68
+TL-005	worker		NAO_IMPLEMENTADA	Multiplix	Falha de TTS/upload → item media_pending, envio não sai pela metade (bloco de voz pendente segura o destinatário inteiro). Feito quando: erro de TTS…	F69
+TL-006	iris		NAO_IMPLEMENTADA	Multiplix	MultiplixView = 3 regiões simultâneas (01 PÚBLICO / 02 COMPOSIÇÃO / 03 PRÉVIA & REVISÃO) + rodapé fixo, grid do protótipo; estado de composição em sr…	F72
+TL-007	worker		NAO_IMPLEMENTADA	Multiplix	Lista virtualizada (@tanstack/react-virtual, já usado no Chat) + "Selecionar todos os N resultados" com N do servidor (F47). Feito quando: 5.000 linh…	F74
+TL-008	iris		NAO_IMPLEMENTADA	Multiplix	Painel 02 — bloco de texto: autosize, contador contra capabilities().max_chars, variáveis por botão com validação ao digitar ({{telefone}} acusa na h…	F76
+TL-009	worker		NAO_IMPLEMENTADA	Multiplix	Blocos voz IA (voz autorizada via F64, alternador único/personalizado, player com asset e duração reais), gravação (F68, com estado/tempo/refazer; fa…	F77
+TL-010	worker		NAO_IMPLEMENTADA	Multiplix	"N contatos × M blocos = N×M mensagens" sempre visível; autosave no servidor com indicador (áudio gravado sinalizado como não persistido até o upload…	F78
+TL-011	iris		NAO_IMPLEMENTADA	Multiplix	Painel 03: seletor de destinatário sem alterar composição; bolhas = exatamente o que sai (F48); motivo por status; painel de aptidão real (Aptos / Se…	F79
+TL-012	worker		NAO_IMPLEMENTADA	Multiplix	"Repetir com inteligência": não respondidos / falhas corrigíveis / novos no público, sempre passando por nova revisão. Feito quando: nunca reenvia ce…	F82
+TL-013	worker		NAO_IMPLEMENTADA	Multiplix	Exportação CSV/JSON pela edge (F44) respeitando escopo — reintroduz o que 4704424 removeu, agora no servidor. Feito quando: outro departamento export…	F83
+TL-014	worker		NAO_IMPLEMENTADA	Multiplix	Registrar cada envio como interação no Singu via sync_interaction_from_zapp (atualiza last_interaction_at). Feito quando: timeline do contato no Sing…	F85
+TL-015	hugo		NAO_IMPLEMENTADA	Multiplix	e2e/multiplix.spec.ts no e2e-logado.yml (seleção persistente, prévia, confirmação bloqueada por placeholder inválido, monitor) + teste de escopo pont…	F90
+TL-016	workertestes		NAO_IMPLEMENTADA	Multiplix	Docs: docs/multiplix/SCHEMA.md, ARQUITETURA.md (padrão de docs/talkx/ARQUITETURA.md: mermaid + métrica→fonte), COMPONENTES.md, receita de módulo comp…	F94
+TL-017	workertestes		NAO_IMPLEMENTADA	Multiplix	docs/handoffs/HANDOFF_MULTIPLIX_<data>.md (o que ficou fora, dívidas, evoluções: linguagem natural, pressão de contato, tarefas automáticas) + retro…	F100
+TL-018	edgar		NAO_VERIFICAVEL	Multiplix	Teste real de PTT: gerar no ElevenLabs opus_48000_64 e mp3_44100_128, enviar ambos por sendWhatsAppAudio para número interno; registrar em CANAL.md q…	F63
+TL-019	edgar		NAO_VERIFICAVEL	Multiplix	Estimativa de consumo (caracteres × versões × modelo, ±5% do realizado) + 🔒 teto por envio e por departamento (ultrapassar exige confirmação explícit…	F66
+TL-020	workertestes		NAO_VERIFICAVEL	Multiplix	Piloto Compras: fornecedores reais (84 com pessoa + WhatsApp; 285 com telefone de empresa), teto de destinatários e de voz — 5 envios reais revisados…	F95
+TL-021	workertestes		NAO_VERIFICAVEL	Multiplix	Piloto Logística: transportadoras (58 com pessoa) — 3 envios reais; ajustes só do que os operadores apontaram (PRs mergeadas). Feito quando: 3 envios…	F96
+TL-022	workertestes		NAO_VERIFICAVEL	Multiplix	Go-live para os demais departamentos + 72 h de monitoramento com as métricas de F91. Feito quando: aprovado e métricas estáveis por 3 dias.	F98
+TL-023	worker		PARCIAL	Multiplix	Matriz perfil × papel × escopo em PERMISSOES.md + role_permissions: admin → multiplix.audience.admin + multiplix.dispatch.manage_all; supervisor → su…	F25
+TL-024	edgar		PARCIAL	Multiplix	multiplix_resolve_recipients em lotes de 1.000 (paginação interna na edge, sem teto silencioso — o teto de política de F17 vira erro nomeado); retorn…	F27
+TL-025	edgar		PARCIAL	Multiplix	Refatorar talkx-send e multiplix-send para consumir _shared/messaging (remover as 5 funções duplicadas + loop), correlation_id gerado por request e p…	F43
+TL-026	iris		PARCIAL	Multiplix	Edge multiplix-dispatch (CORS, JWT, escopo do JWT, correlation_id): draft.create (absorve F08), draft.get, draft.update (título, conexão, agendamento…	F44
+TL-027	iris		PARCIAL	Multiplix	audience.select: (manual ∪ públicos aplicados) ∩ filtros − exclusões, tudo no servidor via multiplix_resolve_recipients; exclusão manual vence inclus…	F46
+TL-028	iris		PARCIAL	Multiplix	estimate → mensagens (aptos × blocos), versões de roteiro (DISTINCT dos roteiros finais), caracteres/consumo de voz. Feito quando: três números de da…	F50
+TL-029	iris		PARCIAL	Multiplix	confirm: revalida (F49), congela público e blocos (snapshot em variables_snapshot/content + dispatch_version++), gera multiplix_delivery_items na mes…	F51
+TL-030	iris		PARCIAL	Multiplix	tests/contracts/multiplix-dispatch.contract.test.ts, multiplix-audience.contract.test.ts, messaging-adapter.contract.test.ts (mock: sucesso, transitó…	F54
+TL-031	edgar		PARCIAL	Multiplix	Worker (multiplix-send renomeado internamente para papel de worker; o cron continua chamando) processa multiplix_delivery_items em lote (claim FOR UP…	F55
+TL-032	worker		PARCIAL	Multiplix	Ordem por destinatário: item do bloco k só é elegível quando o bloco k-1 do mesmo destinatário está sent; mídia via prepareMedia (F40) com fileName;…	F56
+TL-033	edgar		PARCIAL	Multiplix	Testes de fila em scripts/db-audit/multiplix-delivery-leases.test.sh + unit: 2 workers, lease expira e volta, pausa para em 1 ciclo (em voo terminam)…	F57
+TL-034	edgar		PARCIAL	Multiplix	Política de recálculo do público agendado (recomendação: recalcular elegibilidade — supressão, conexão, escopo — na hora do disparo, sem re-resolver…	F59
+TL-035	edgar		PARCIAL	Multiplix	whatsapp_connections declara capacidades e limites (capabilities jsonb: ptt, document, max_chars, hourly_limit); seleção da conexão por departamento/…	F60
+TL-036	edgar		PARCIAL	Multiplix	evolution-webhook: READ/PLAYED → read_at; resposta do contato correlacionada (estender _shared/talkx-reply.ts para multiplix_delivery_items dentro de…	F62
+TL-037	edgar		PARCIAL	Multiplix	Modo same_audio (variável no roteiro bloqueia a revisão) e personalized (N versões = DISTINCT dos roteiros finais, contador visível); invalidação aut…	F67
+TL-038	iris		PARCIAL	Multiplix	Fundação visual: substituir --zapp-border/--zapp-surface-1 (inexistentes em src/) por tokens reais; zero px arbitrário (text-[13px], min-w-[130px], m…	F70
+TL-039	iris		PARCIAL	Multiplix	Nav: "Multiplix · NOVO" sob COMUNICAÇÃO, por permissão nomeada (F25); rota /multiplix além de ?view=. Feito quando: sem permissão não vê nem acessa p…	F71
+TL-040	iris		PARCIAL	Multiplix	Painel 01: busca com debounce e sem acento; papel multi-seleção; ramo combobox com busca + "Não informado"; UF dinâmica; ⚠️ seleção persistente ao tr…	F73
+TL-041	iris		PARCIAL	Multiplix	Exclusões explícitas; "N fora do filtro atual · seleção preservada"; salvar público (regra × lista, com aviso) e aplicar público (tamanho da regra ≠…	F75
+TL-042	iris		PARCIAL	Multiplix	Monitor: estado de erro (não skeleton eterno), attempt_count/external_id/erro legível por destinatário, paginação de destinatários (sem limit(500)),…	F80
+TL-043	iris		PARCIAL	Multiplix	Detalhe por bloco (parcial com rótulo próprio) + histórico com filtros (status, período, dono, conexão) e paginação keyset. Feito quando: sem carrega…	F81
+TL-044	iris		PARCIAL	Multiplix	Sala de retornos = visão filtrada do Chat via crm_contact_links (sem inbox novo); atribuição linked × inferred com visual distinto; criar tarefa a pa…	F84
+TL-045	iris		PARCIAL	Multiplix	Acessibilidade: fluxo inteiro por teclado; foco visível, trap e retorno nos modais e na troca lista↔monitor; nomes acessíveis + aria-live em contador…	F86
+TL-046	iris		PARCIAL	Multiplix	Responsivo em 1920×1080, 1440×900, 1024×1000, 390×844 sem rolagem horizontal (Playwright); render isolado por linha (memo); bundle-budget e performan…	F87
+TL-047	workertestes		PARCIAL	Multiplix	Unit: elegibilidade (7 classes), personalização (4 built-ins + custom), idempotência de confirm, backoff/classificação. Feito quando: no ci.yml.	F88
+TL-048	workertestes		PARCIAL	Multiplix	Integração da fila contra banco de teste: confirma, drena, pausa, cancela, reconcilia (outcome_unknown → ack). Feito quando: verde.	F89
+TL-049	edgar		PARCIAL	Multiplix	Observabilidade: correlation_id rastreado do clique ao webhook em 1 envio real (sem conteúdo no log); métricas com dono e ação em docs/runbooks/slo.m…	F91
+TL-050	workertestes		PARCIAL	Multiplix	Guards do banco: schema-catalog.json, schema-manifest.json, grants-baseline.json, realtime-publication-baseline.json, known-violations.json regenerad…	F93
+TL-051	workertestes		PARCIAL	Multiplix	graphify update . --force com GRAPH_REPORT.md no commit de HEAD (E001) + docs/multiplix/CHANGELOG_MULTIPLIX.md, CHANGELOG.md, docs/README.md, docs/CO…	F99
+TL-052	worker		NAO_IMPLEMENTADA	Talk X	Atualizar a projeção com dados do CRM 360 por job em lotes, com limite e métricas	X038
+TL-053	worker		NAO_IMPLEMENTADA	Talk X	Trazer negócios ganhos do Bitrix24 para `contact_purchases` em modo somente leitura	X039
+TL-054	iris		NAO_IMPLEMENTADA	Talk X	Unificar pausar, retomar, cancelar e disparar em um fluxo só nas 5 telas	X051
+TL-055	iris		NAO_IMPLEMENTADA	Talk X	Prancha de referência (`TalkXKit`), estado forçado por URL e matriz tela × estado	X055
+TL-056	worker		NAO_IMPLEMENTADA	Talk X	Gerar a próxima ocorrência de campanha recorrente no tick, com chave única	X059
+TL-057	worker		NAO_IMPLEMENTADA	Talk X	Criar o bucket privado `talkx-media` e aceitar caminho de mídia nas RPCs	X061
+TL-058	worker		NAO_IMPLEMENTADA	Talk X	Modelar mensagem interativa (botões, lista, enquete) em template e campanha	X063
+TL-059	worker		NAO_IMPLEMENTADA	Talk X	Enviar mensagem interativa com fallback em texto e registrar a resposta	X064
+TL-060	worker		NAO_IMPLEMENTADA	Talk X	Calcular no servidor ETA, série prevista, sobreposição de segmentos e risco	X068
+TL-061	worker		NAO_IMPLEMENTADA	Talk X	Criar tabela de motivos de supressão e ligar `reason_code` a ela	X070
+TL-062	worker		NAO_IMPLEMENTADA	Talk X	Criar RPCs de mapa de calor, top segmentos e ranking de campanhas	X074
+TL-063	worker		NAO_IMPLEMENTADA	Talk X	Criar a infra de IA do Talk X: edge `talkx-ai` via `ai-proxy` com teto de custo e trilha	X076
+TL-064	worker		NAO_IMPLEMENTADA	Talk X	Criar RPCs de métricas de template: desempenho, usos, KPIs da biblioteca e sugestões	X086
+TL-065	worker		NAO_IMPLEMENTADA	Talk X	Importar e exportar templates em CSV ou JSON com prévia, conflitos e trilha	X093
+TL-066	worker		NAO_IMPLEMENTADA	Talk X	Trocar o campo de URL por envio de arquivo com validação de 16 MB e metadados	X095
+TL-067	workertestes		NAO_IMPLEMENTADA	Talk X	Adicionar botões e enquete à mensagem do template, com texto reserva e teste real	X096
+TL-068	worker		NAO_IMPLEMENTADA	Talk X	Criar as sub-abas "Prévia e Contatos" e "Sobreposição" do construtor	X109
+TL-069	worker		NAO_IMPLEMENTADA	Talk X	Separar Salvar (rascunho) de Publicar, com salvamento automático e histórico de versões	X110
+TL-070	worker		NAO_IMPLEMENTADA	Talk X	Dar conteúdo real às abas Regras Avançadas, Audiências e Modelos	X113
+TL-071	iris		NAO_IMPLEMENTADA	Talk X	Ligar sugestões e as abas "Insights com IA" a regras calculadas, com botão que aplica	X117
+TL-072	worker		NAO_IMPLEMENTADA	Talk X	Criar o gerenciador de links rastreáveis no editor de mensagem	X118
+TL-073	worker		NAO_IMPLEMENTADA	Talk X	Anexar mídia por upload ("Selecionar arquivo") no wizard	X129
+TL-074	worker		NAO_IMPLEMENTADA	Talk X	Botões na mensagem da campanha: edição, prévia e aviso de fallback	X130
+TL-075	iris		NAO_IMPLEMENTADA	Talk X	Tela 13: criar `TalkXCampaignPaused.tsx` com cabeçalho, banner, Retomar e Encerrar	X156
+TL-076	iris		NAO_IMPLEMENTADA	Talk X	Tela 13: montar as 8 abas com conteúdo real	X157
+TL-077	iris		NAO_IMPLEMENTADA	Talk X	Tela 13: montar os 4 KPIs, o anel por audiência e o card "Segmentos da campanha"	X158
+TL-078	iris		NAO_IMPLEMENTADA	Talk X	Tela 13: montar linha do tempo, "Resumo de enviados" e "Principais métricas"	X160
+TL-079	iris		NAO_IMPLEMENTADA	Talk X	Criar `TalkXCampaignReport`: rota, cabeçalho, período, abas e 6 KPIs	X163
+TL-080	iris		NAO_IMPLEMENTADA	Talk X	Desenhar desempenho (4 séries), funil de 5 degraus e mapa de calor da campanha	X164
+TL-081	iris		NAO_IMPLEMENTADA	Talk X	Montar "Resumo da campanha" e "Insights" com ações	X165
+TL-082	iris		NAO_IMPLEMENTADA	Talk X	Entregar as abas Segmentos, Links, Audiência e Conversões e seus cartões-resumo	X166
+TL-083	iris		NAO_IMPLEMENTADA	Talk X	Entregar as abas Mensagens, Respostas e Logs com paginação no servidor	X167
+TL-084	iris		NAO_IMPLEMENTADA	Talk X	Compartilhar o relatório por link interno e por e-mail; menu de mais ações	X169
+TL-085	worker		NAO_IMPLEMENTADA	Talk X	Criar tabelas e RPCs de ingestão da importação de contatos	X170
+TL-086	iris		NAO_IMPLEMENTADA	Talk X	Criar a tela de importação: entrada, envio seguro do arquivo, mapeamento, prévia e regras	X171
+TL-087	worker		NAO_IMPLEMENTADA	Talk X	Detectar duplicados e aplicar a importação com carteira, consentimento e supressão	X172
+TL-088	worker		NAO_IMPLEMENTADA	Talk X	Sugerir vínculo no CRM 360 pelas regras ligadas e executar a importação em lotes	X173
+TL-089	worker		NAO_IMPLEMENTADA	Talk X	Executar a importação com progresso, KPIs e fila de pendentes de vínculo	X174
+TL-090	worker		NAO_IMPLEMENTADA	Talk X	Entregar as abas "CRM 360" (trazer contatos em lote) e "Resolver Conflitos"	X175
+TL-091	worker		NAO_IMPLEMENTADA	Talk X	Importar CSV/XLSX/TXT e exportar CSV da lista de supressão	X183
+TL-092	vera		NAO_IMPLEMENTADA	Talk X	Reescrever a documentação do módulo a partir da evidência	X197
+TL-093	worker		NAO_IMPLEMENTADA	Talk X	Publicar o release: versão, registro de mudanças, pendências assumidas e encerramento	X200
+TL-094	vera		NAO_VERIFICAVEL	Talk X	Executar o ensaio real: campanha interna com ≥ 50 destinatários e queda proposital	X035
+TL-095	worker		NAO_VERIFICAVEL	Talk X	Rodar a primeira campanha para clientes reais, pequena, e observar por 7 dias	X199
+TL-096	worker		NAO_VERIFICAVEL	Talk X	Definir números e conexão do ensaio real (recomendado: 50 números da equipe por chip secundário)	N04
+TL-097	edgar		NAO_VERIFICAVEL	Talk X	Informar funil de vendas do Bitrix24 e confirmar leitura do webhook para importar negócios ganhos	N36
+TL-098	worker		NAO_VERIFICAVEL	Talk X	Informar número/pessoa e horário de "Falar com suporte" e "Falar com especialista"	N40
+TL-099	worker		NAO_VERIFICAVEL	Talk X	Ação manual pendente: revogar o token GitHub ghp_RO0W… e gerar fine-grained para o github-mcp-server	E08
+TL-100	iris		PARCIAL	Talk X	Criar o placar do V4: etapas fechadas e elementos do mock por tela	X002
+TL-101	edgar		PARCIAL	Talk X	Criar no banco os limites por minuto, por dia e por conexão e os perfis de velocidade	X018
+TL-102	edgar		PARCIAL	Talk X	Ligar o webhook aos recibos de leitura e à atribuição de resposta	X028
+TL-103	edgar		PARCIAL	Talk X	Calcular recência, frequência, valor e segmento RFM a partir das compras locais	X040
+TL-104	edgar		PARCIAL	Talk X	Registrar negócio ganho como conversão na janela de atribuição; receita e ROI	X041
+TL-105	iris		PARCIAL	Talk X	Expor erro nos hooks e aplicar carregando/erro/vazio em todas as telas do módulo	X047
+TL-106	iris		PARCIAL	Talk X	Aplicar WhatsApp desconectado, CRM indisponível e sem permissão, com botões ligados	X048
+TL-107	iris		PARCIAL	Talk X	Modal único do kit com barra de título, tom aplicado, espera da ação e presets do mock	X049
+TL-108	iris		PARCIAL	Talk X	Trocar diálogos soltos e `window.confirm` de Supressão, Templates e limites pelo kit	X050
+TL-109	iris		PARCIAL	Talk X	Colocar aba e campanha aberta na URL e criar abas com menu (Templates, Analytics)	X052
+TL-110	iris		PARCIAL	Talk X	Cabeçalho do módulo: trilha, botão "Ajuda" com rótulo e indicador de campanha em andamento	X053
+TL-111	iris		PARCIAL	Talk X	Busca ⌘K do módulo: uma paleta só, itens sem abrir o módulo e que abrem o item certo	X054
+TL-112	edgar		PARCIAL	Talk X	Permitir vários segmentos por campanha e gravar o segmento de cada destinatário	X057
+TL-113	edgar		PARCIAL	Talk X	Assinar a mídia do bucket no envio e mandar documento com nome de arquivo	X062
+TL-114	iris		PARCIAL	Talk X	Listagem de campanhas paginada no servidor, com tempo real completo	X078
+TL-115	iris		PARCIAL	Talk X	Tabela da Visão geral nas colunas do mock, sobre `TalkXTable`	X079
+TL-116	iris		PARCIAL	Talk X	Ações de linha persistidas: duplicar, excluir com regra, pausar, retomar e cancelar	X080
+TL-117	iris		PARCIAL	Talk X	Filtros da Visão geral (status, canal, segmento, criador, período), grade e massa	X081
+TL-118	iris		PARCIAL	Talk X	Painel lateral: Talk X com 3 números reais, ações rápidas, últimas campanhas e dica do dia	X082
+TL-119	iris		PARCIAL	Talk X	Extrair `TalkXMessageEditor` único para template e wizard, com variáveis e validação	X087
+TL-120	iris		PARCIAL	Talk X	Criar `TalkXMessagePreview` fiel ao WhatsApp com mídia, interativo e tela cheia	X088
+TL-121	iris		PARCIAL	Talk X	Refazer a galeria do mock 04: cartão fiel, filtros, lista, paginação e estados	X089
+TL-122	iris		PARCIAL	Talk X	Unificar ações de template (menu ⋮, duplicar, testar, arquivar, excluir) e aprovação	X090
+TL-123	iris		PARCIAL	Talk X	Ligar KPIs das telas 04 e 05, "Desempenho deste template" e "Em andamento" às RPCs	X091
+TL-124	iris		PARCIAL	Talk X	Montar o painel lateral da tela 04: Mais convertidos, Sugestões e Ações rápidas	X092
+TL-125	iris		PARCIAL	Talk X	Encaixar a tela 05 no shell: rota, cabeçalho, sub-abas, biblioteca lateral e campos	X094
+TL-126	iris		PARCIAL	Talk X	Construir a aba Variações A/B: lado a lado, pesos em 100, resultado e vencedora	X097
+TL-127	iris		PARCIAL	Talk X	Salvar com nota e atalho, proteger alterações e construir a aba Histórico de Versões	X098
+TL-128	iris		PARCIAL	Talk X	Extrair `TalkXSegmentBuilder` com reducer, desfazer/refazer e validação	X099
+TL-129	iris		PARCIAL	Talk X	Criar o ciclo de vida do segmento no banco: rascunho, versões, tags e guarda de uso	X101
+TL-130	iris		PARCIAL	Talk X	Desenhar os grupos E/OU como no mock 03: selo, divisor, árvore e menu do grupo	X105
+TL-131	iris		PARCIAL	Talk X	Criar os campos de valor por tipo: vários valores, período, data, moeda e sim/não	X106
+TL-132	iris		PARCIAL	Talk X	Completar o "Resumo do Segmento" e a amostra de contatos com números do servidor	X108
+TL-133	iris		PARCIAL	Talk X	Encaixar a tela 03 no módulo: breadcrumb, cabeçalho, abas superiores e link direto	X111
+TL-134	iris		PARCIAL	Talk X	Criar a lista lateral "Meus Segmentos" com abas, busca, filtro e cartões	X112
+TL-135	iris		PARCIAL	Talk X	Refazer KPIs, filtros, seleção em massa, grade e paginação da biblioteca (tela 02)	X114
+TL-136	iris		PARCIAL	Talk X	Refazer colunas e ações de linha da biblioteca: critérios legíveis, uso e desempenho	X115
+TL-137	iris		PARCIAL	Talk X	Completar o painel "Detalhes do segmento": critérios, origem, composição e tags	X116
+TL-138	iris		PARCIAL	Talk X	Encaixar o wizard no shell: stepper com teclado, rodapé fixo e saída com pendência	X122
+TL-139	iris		PARCIAL	Talk X	Restaurar o rascunho inteiro (filtros, passo, opções) e salvar sozinho desde o passo 1	X123
+TL-140	iris		PARCIAL	Talk X	Passo 1 — nome com validação, objetivo com ícone e campo Responsável	X124
+TL-141	iris		PARCIAL	Talk X	Os 7 filtros de audiência com o catálogo de filtros dos segmentos	X126
+TL-142	iris		PARCIAL	Talk X	Mensagem no wizard com o editor único: abas, barra, variáveis do mock e limite 4096	X128
+TL-143	iris		PARCIAL	Talk X	Painel "Resumo da campanha" calculado no servidor	X131
+TL-144	iris		PARCIAL	Talk X	Prévia em moldura de celular, contato de amostra real e "Ver no celular"	X132
+TL-145	iris		PARCIAL	Talk X	Passo Entrega: conexão, velocidade, janela, horário comercial, dias, fuso e limites	X133
+TL-146	iris		PARCIAL	Talk X	Revisão: linhas com dado real e "Editar" que leva ao passo certo e volta	X134
+TL-147	iris		PARCIAL	Talk X	Revisão: Resumo operacional, recomendações acionáveis e "Tudo pronto" por checagens	X135
+TL-148	iris		PARCIAL	Talk X	Modal "Confirmar disparo?" com 3 confirmações gravadas e lançamento que abre o monitor	X136
+TL-149	iris		PARCIAL	Talk X	Tela 10 — data, horário, fuso, repetição, janela, throttle e supressão; salvar	X137
+TL-150	iris		PARCIAL	Talk X	Tela 10 — calendário em português e "Resumo da Programação" em linha do tempo	X138
+TL-151	iris		PARCIAL	Talk X	Tela 10 — cabeçalho, "Resumo da Campanha" com dados reais e estado "pronta para envio"	X139
+TL-152	iris		PARCIAL	Talk X	Rotear a campanha pela situação e dar endereço (URL) a cada tela de acompanhamento	X143
+TL-153	iris		PARCIAL	Talk X	Trocar leituras com teto fixo por hooks das RPCs, com tempo real e modo degradado	X144
+TL-154	iris		PARCIAL	Talk X	Tela 11: criar a aba "Monitor" no módulo, com cabeçalho, filtros e seletor de campanha	X145
+TL-155	iris		PARCIAL	Talk X	Mostrar KPIs ao vivo com comparativos e mini-gráficos nas telas 11 e 12	X146
+TL-156	iris		PARCIAL	Talk X	Desenhar o ritmo com séries do servidor, janela, previsto e término (telas 11 e 12)	X147
+TL-157	iris		PARCIAL	Talk X	Montar "Saúde da campanha", Pausar/Cancelar com modais do kit e chip de insights	X148
+TL-158	iris		PARCIAL	Talk X	Unificar a tabela de destinatários: colunas, estados, busca, filtro e paginação	X150
+TL-159	iris		PARCIAL	Talk X	Ler a "Linha do tempo operacional" do servidor, com tipos, ícones e "Ver todos"	X152
+TL-160	iris		PARCIAL	Talk X	Tela 12: montar cabeçalho, seletor, abas, anel de progresso e "Pico de respostas"	X153
+TL-161	iris		PARCIAL	Talk X	Tela 12: montar "Ações da campanha", "Configurações atuais" e a aba Configurações	X154
+TL-162	iris		PARCIAL	Talk X	Tela 13: criar o "Checklist para retomar" com 5 itens, verificação e persistência	X159
+TL-163	iris		PARCIAL	Talk X	Exportar o relatório em PDF (sem `window.print`) e CSV, com permissão e trilha	X168
+TL-164	iris		PARCIAL	Talk X	Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade	X176
+TL-165	iris		PARCIAL	Talk X	Unificar o hook de supressão e paginar a tabela no servidor com colunas reais	X178
+TL-166	iris		PARCIAL	Talk X	KPIs da supressão com janela e comparativo; Centro de proteção com medidor	X179
+TL-167	iris		PARCIAL	Talk X	Ações de linha, seleção em massa e modais de editar e remover com trilha	X181
+TL-168	iris		PARCIAL	Talk X	Card Ações da lista, modal Adicionar contato e modal Gerenciar motivos	X182
+TL-169	iris		PARCIAL	Talk X	Atividade recente da supressão lida dos eventos de entidade	X184
+TL-170	iris		PARCIAL	Talk X	Barra de filtros do Analytics, 5 KPIs com comparativo e card Comparativo de períodos	X185
+TL-171	iris		PARCIAL	Talk X	Gráfico Performance de campanhas com 4 séries e funil em SVG proporcional	X186
+TL-172	iris		PARCIAL	Talk X	Top segmentos, mapa de calor por engajamento e tabela de melhor resultado	X187
+TL-173	iris		PARCIAL	Talk X	Painel Insights com ações que aplicam de verdade e Resumo com estimativa condicionada	X188
+TL-174	iris		PARCIAL	Talk X	Transformar a Ajuda em central com artigos em markdown, índice, busca e leitor	X189
+TL-175	iris		PARCIAL	Talk X	Fechar acessibilidade nas 17 telas: teclado, foco, leitor de tela e contraste nos dois temas	X192
+TL-176	iris		PARCIAL	Talk X	Fechar o comportamento em telas menores: 1280, 1024 e 390 px	X193
+TL-177	iris		PARCIAL	Talk X	Garantir desempenho: cada tela em arquivo próprio, listas grandes e orçamento do carregamento inicial	X194
+TL-178	iris		PARCIAL	Talk X	Tornar a régua visual uma trava: regressão visual obrigatória nas 17 telas	X195
+TL-179	vera		PARCIAL	Talk X	Corrigir 40+ afirmações falsas em README/CHANGELOG/PARIDADE/ARQUITETURA/OPERACAO	DOC-FALSA
+TL-180	worker		PARCIAL	Talk X	E95 completo: vínculo/pendentes/sugestões de conversão (só o badge CRM 360 foi entregue)	E95

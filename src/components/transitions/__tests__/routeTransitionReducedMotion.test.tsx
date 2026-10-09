@@ -9,10 +9,15 @@
  *
  * A prova monta o `HighContrastProvider` REAL, o painel REAL e o `RouteTransition` REAL
  * numa rota com transição de transform (`/2fa` → zoom), e liga a opção pelo switch que o
- * usuário usa. O que se mede é a DECISÃO da variante: o motor do Framer Motion é
- * substituído por um espião que registra as `variants` que o `RouteTransition` entregou
- * (o achado não mede a animação em si — a decisão da variante é o efeito demonstrado) e o
- * esperado é sempre computado pelos módulos REAIS (`buildVariants` + `resolveTransition`).
+ * usuário usa. O que se mede é a DECISÃO da variante, agora observável na própria
+ * animação que chega ao nó da rota.
+ *
+ * SL-103A (09/10/2026): a decisão deixou de ser entregue ao runtime de animação por JS
+ * (que era carregado no pacote inicial) e passou a ser a classe de animação do tema
+ * (`motion-safe:animate-scale-in` no zoom, nada com movimento reduzido). Este arquivo
+ * trocou o espião do motor de animação pelo atributo real — as MESMAS seis verificações
+ * de preferência (4 combinações usuário/sistema, preferência salva e alternar no painel)
+ * continuam, e o esperado segue ancorado no módulo REAL `resolveTransition`.
  */
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -20,45 +25,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AccessibilitySettings, HighContrastProvider } from '@/components/theme/HighContrastToggle';
 import { RouteTransition } from '../RouteTransition';
-import { buildVariants } from '../transitionVariants';
 import { resolveTransition } from '../transitionConfig';
 
-const captura = vi.hoisted(() => ({ variantesDaRota: [] as unknown[] }));
-
-vi.mock('framer-motion', async (importOriginal) => {
-  const real = await importOriginal<typeof import('framer-motion')>();
-  const { createElement } = await import('react');
-  // Um componente estável por tag (identidade fixa: o React não remonta a cada render) —
-  // registra as variants recebidas e devolve um nó comum, sem animar.
-  const porTag = new Map<string, (props: Record<string, unknown>) => unknown>();
-  const motion = new Proxy(
-    {},
-    {
-      get: (_alvo, tag: string) => {
-        if (!porTag.has(tag)) {
-          porTag.set(tag, (props: Record<string, unknown>) => {
-            if (props.variants) captura.variantesDaRota.push(props.variants);
-            return createElement(
-              tag,
-              { 'data-testid': 'no-da-rota', style: props.style, className: props.className },
-              props.children as React.ReactNode,
-            );
-          });
-        }
-        return porTag.get(tag);
-      },
-    },
-  );
-  return {
-    ...real,
-    motion: motion as unknown as typeof real.motion,
-    AnimatePresence: (({ children }: { children?: React.ReactNode }) =>
-      children ?? null) as unknown as typeof real.AnimatePresence,
-  };
-});
-
-const VARIANTE_SEM_ANIMACAO = buildVariants({ variant: 'none' });
-const VARIANTE_DA_ROTA = buildVariants(resolveTransition('/2fa'));
+// Rota sob teste: `/2fa` é zoom. A expectativa vem do módulo real, não de um literal.
+const CLASSE_DA_ROTA = `motion-safe:animate-${resolveTransition('/2fa').variant === 'zoom' ? 'scale-in' : 'fade-in'}`;
 
 function sistemaPedeMovimentoReduzido(matches: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({
@@ -86,8 +56,10 @@ function renderRota(path: string) {
   );
 }
 
-function varianteAplicada() {
-  return captura.variantesDaRota[captura.variantesDaRota.length - 1];
+/** Animação que o nó da rota (o pai do conteúdo) recebeu. */
+function animacoesDaRota() {
+  const no = screen.getByText('conteúdo da rota').parentElement as HTMLElement;
+  return no.className.match(/animate-[a-z-]+/g) ?? [];
 }
 
 async function abrirPainelELigarReduzirMovimento() {
@@ -100,7 +72,6 @@ async function abrirPainelELigarReduzirMovimento() {
 beforeEach(() => {
   window.localStorage.clear();
   document.documentElement.className = '';
-  captura.variantesDaRota.length = 0;
 });
 
 afterEach(() => {
@@ -108,6 +79,11 @@ afterEach(() => {
 });
 
 describe('RouteTransition — preferência de movimento reduzido (R2-INF-037)', () => {
+  it('a rota sob teste é a de zoom (a expectativa do arquivo sai daqui)', () => {
+    expect(resolveTransition('/2fa').variant).toBe('zoom');
+    expect(CLASSE_DA_ROTA).toBe('motion-safe:animate-scale-in');
+  });
+
   const casos = [
     { rotulo: 'opção desligada e sistema sem preferência: a rota anima (zoom)', usuario: false, sistema: false },
     { rotulo: 'opção ligada no painel e sistema sem preferência: a rota NÃO anima', usuario: true, sistema: false },
@@ -124,10 +100,9 @@ describe('RouteTransition — preferência de movimento reduzido (R2-INF-037)', 
     const deveAnimar = !usuario && !sistema;
     await waitFor(() => {
       if (deveAnimar) {
-        expect(varianteAplicada()).toEqual(VARIANTE_DA_ROTA);
-        expect(varianteAplicada()).not.toEqual(VARIANTE_SEM_ANIMACAO);
+        expect(animacoesDaRota()).toEqual([CLASSE_DA_ROTA.replace('motion-safe:', '')]);
       } else {
-        expect(varianteAplicada()).toEqual(VARIANTE_SEM_ANIMACAO);
+        expect(animacoesDaRota()).toEqual([]);
       }
     });
   });
@@ -138,22 +113,22 @@ describe('RouteTransition — preferência de movimento reduzido (R2-INF-037)', 
 
     renderRota('/2fa');
 
-    await waitFor(() => expect(varianteAplicada()).toEqual(VARIANTE_SEM_ANIMACAO));
+    await waitFor(() => expect(animacoesDaRota()).toEqual([]));
   });
 
-  it('ligar e desligar "Reduzir Movimento" troca a variante sem recarregar a página', async () => {
+  it('ligar e desligar "Reduzir Movimento" troca a animação da rota sem recarregar a página', async () => {
     sistemaPedeMovimentoReduzido(false);
     renderRota('/2fa');
-    await waitFor(() => expect(varianteAplicada()).toEqual(VARIANTE_DA_ROTA));
+    await waitFor(() => expect(animacoesDaRota()).toEqual([CLASSE_DA_ROTA.replace('motion-safe:', '')]));
 
     await abrirPainelELigarReduzirMovimento();
-    await waitFor(() => expect(varianteAplicada()).toEqual(VARIANTE_SEM_ANIMACAO));
+    await waitFor(() => expect(animacoesDaRota()).toEqual([]));
     // Mesma chave de preferência do painel (nada de segunda chave escondida).
     expect(window.localStorage.getItem('reducedMotion')).toBe('true');
 
     const chave = screen.getByRole('switch', { name: /Reduzir Movimento/i });
     fireEvent.click(chave);
     await waitFor(() => expect(chave).toHaveAttribute('aria-checked', 'false'));
-    await waitFor(() => expect(varianteAplicada()).toEqual(VARIANTE_DA_ROTA));
+    await waitFor(() => expect(animacoesDaRota()).toEqual([CLASSE_DA_ROTA.replace('motion-safe:', '')]));
   });
 });

@@ -22,12 +22,14 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 /**
  * TEL-RECORDING-001: o `RecordingPlayer` recebe a gravacao pelo `useCallRecording`. Neste arquivo
- * o hook e mockado SO para entregar os BYTES da Edge (`blob`) - o contrato que o hook passa a
- * expor - sem tocar no hook (ele tem cartao proprio). Sem override o mock DELEGA para o hook
- * real, entao os testes antigos (T67/VOL-02) continuam exercitando o caminho real de verdade.
+ * o hook e mockado SO para entregar os BYTES da Edge (`blob`) - o contrato do hook, que tem teste
+ * proprio em `src/hooks/calls/__tests__/useCallRecording.test.tsx`. Sem override o mock DELEGA para
+ * o hook real, entao os testes antigos (T67/VOL-02) continuam exercitando o caminho real de verdade.
+ * O campo opcional `url` existe so para o caso c6: um hook que (indevidamente) devolvesse a URL de
+ * origem sem os bytes nao pode fazer o player renderizar nem expor essa URL no DOM.
  */
 const gravacao = vi.hoisted(() => ({
-  atual: null as null | { disponivel: boolean; url: string | null; blob?: Blob | null },
+  atual: null as null | { disponivel: boolean; url?: string | null; blob?: Blob | null },
 }));
 
 vi.mock('@/hooks/calls/useCallRecording', async (importOriginal) => {
@@ -262,7 +264,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
   const revogados = () => revokeObjectURL.mock.calls.map((c) => c[0] as string);
 
   it('c4: com os bytes da Edge o <audio> e o link de download usam o endereco local, nunca a URL de origem', async () => {
-    gravacao.atual = { disponivel: true, url: null, blob: audioDaEdge() };
+    gravacao.atual = { disponivel: true, blob: audioDaEdge() };
 
     const { container } = renderPlayer(<RecordingPlayer callId="c4" recordingStatus="available" />);
     await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
@@ -278,7 +280,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
   });
 
   it('sob remontagem de efeito o <audio> usa o endereco VIVO: um endereco revogado nao permanece como src', async () => {
-    gravacao.atual = { disponivel: true, url: null, blob: audioDaEdge() };
+    gravacao.atual = { disponivel: true, blob: audioDaEdge() };
 
     // StrictMode REAL: o efeito roda, e limpo e roda de novo. Se a URL fosse criada fora do
     // efeito (derivada na renderizacao), a remontagem nao criaria outro endereco e o <audio>
@@ -300,5 +302,23 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     expect(createObjectURL.mock.results.map((r) => r.value)).toContain(emUso);
     expect(emUso).toBe('blob:gravacao-2');
     expect(revogados()).toEqual(['blob:gravacao-1']);
+  });
+
+  it('c6: URL de origem sem os bytes nao renderiza o player e nunca chega ao DOM (falha fechada)', async () => {
+    gravacao.atual = { disponivel: true, url: 'https://gravacoes.exemplo/origem.mp3', blob: null };
+
+    renderPlayer(<RecordingPlayer callId="c6" recordingStatus="available" />);
+    await act(async () => { await Promise.resolve(); });
+
+    expect(screen.queryByTestId('tel-recording-player')).toBeNull();
+    expect(createObjectURL).not.toHaveBeenCalled();
+    // Os icones lucide renderizam o xmlns do SVG, que nao e endereco de origem: neutralizar antes
+    // de conferir deixa a assercao forte (o 'http' que sobrar seria a URL de origem de verdade).
+    const html = JSON.stringify(document.body.innerHTML).replace(
+      /http:\/\/www\.w3\.org\/2000\/svg/g,
+      '[svg-namespace]',
+    );
+    expect(html).not.toContain('http');
+    expect(html).not.toContain('gravacoes.exemplo');
   });
 });

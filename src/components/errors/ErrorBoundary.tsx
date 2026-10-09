@@ -43,7 +43,8 @@ function writeReloadFlag(): boolean {
   }
 }
 
-function clearReloadFlag(): void {
+// eslint-disable-next-line react-refresh/only-export-components -- reuso exigido pelo boundary da view (cartao t_4f86c0a2); a chave de sessao nao pode ser duplicada
+export function clearReloadFlag(): void {
   try {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY);
   } catch {
@@ -51,7 +52,8 @@ function clearReloadFlag(): void {
   }
 }
 
-function isChunkLoadError(error: Error): boolean {
+// eslint-disable-next-line react-refresh/only-export-components -- deteccao unica de chunk error compartilhada com error-boundary-retry (cartao t_4f86c0a2)
+export function isChunkLoadError(error: Error): boolean {
   return (
     error.name === 'ChunkLoadError' ||
     error.message.includes('Failed to fetch dynamically imported module') ||

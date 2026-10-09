@@ -100,6 +100,69 @@ describe('useTeamChatPanel — handleAudioSend sinaliza o resultado do envio (#3
     }));
   });
 
+  /**
+   * SL-072 — a gravação de áudio NÃO é sempre webm: o MediaRecorder do Safari
+   * entrega `audio/mp4` (m4a) e o TTS do chat interno entrega `audio/mpeg`
+   * (mp3). O upload declarava `webm` fixo, então o objeto ficava rotulado com
+   * um formato que o navegador não toca. A extensão e o contentType têm de sair
+   * do blob real.
+   */
+  it('declara no upload a extensão e o contentType reais de um áudio mp4 (Safari)', async () => {
+    upload.uploadTeamMedia.mockResolvedValueOnce({
+      mediaPath: 'user-1/conv-a/audio.m4a',
+      mediaBucket: 'team-chat-files',
+    });
+    send.mutateAsync.mockResolvedValueOnce({ id: 'msg-1' });
+
+    const { result } = renderHook(() => useTeamChatPanel(conv), { wrapper });
+
+    const blobMp4 = new Blob(['audio'], { type: 'audio/mp4' });
+    await act(async () => { await result.current.handleAudioSend(blobMp4); });
+
+    expect(upload.uploadTeamMedia).toHaveBeenCalledWith(expect.objectContaining({
+      file: blobMp4,
+      extension: 'm4a',
+      contentType: 'audio/mp4',
+    }));
+  });
+
+  it('declara mp3 para o áudio gerado pelo TTS (audio/mpeg)', async () => {
+    upload.uploadTeamMedia.mockResolvedValueOnce({
+      mediaPath: 'user-1/conv-a/audio.mp3',
+      mediaBucket: 'team-chat-files',
+    });
+    send.mutateAsync.mockResolvedValueOnce({ id: 'msg-2' });
+
+    const { result } = renderHook(() => useTeamChatPanel(conv), { wrapper });
+
+    const blobMp3 = new Blob(['audio'], { type: 'audio/mpeg' });
+    await act(async () => { await result.current.handleAudioSend(blobMp3); });
+
+    expect(upload.uploadTeamMedia).toHaveBeenCalledWith(expect.objectContaining({
+      file: blobMp3,
+      extension: 'mp3',
+      contentType: 'audio/mpeg',
+    }));
+  });
+
+  it('mantém webm para o blob gravado em webm (Chrome)', async () => {
+    upload.uploadTeamMedia.mockResolvedValueOnce({
+      mediaPath: 'user-1/conv-a/audio.webm',
+      mediaBucket: 'team-chat-files',
+    });
+    send.mutateAsync.mockResolvedValueOnce({ id: 'msg-3' });
+
+    const { result } = renderHook(() => useTeamChatPanel(conv), { wrapper });
+
+    await act(async () => { await result.current.handleAudioSend(blob); });
+
+    expect(upload.uploadTeamMedia).toHaveBeenCalledWith(expect.objectContaining({
+      file: blob,
+      extension: 'webm',
+      contentType: 'audio/webm',
+    }));
+  });
+
   it('devolve false (e não chama upload nem envio) quando falta profile.id', async () => {
     auth.profile = { role: 'admin' };
 

@@ -158,22 +158,51 @@ export function useMediaLibrary(type: MediaType) {
     if (error) { setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_favorite: !newValue } : i)); toast.error('Erro ao atualizar favorito'); }
   };
 
-  const deleteStorageFile = async (url: string | undefined) => {
-    if (!url) return;
+  // #336-C: devolve o resultado do `storage.remove` para quem chama decidir abortar
+  // (objeto PRIMEIRO: sem objeto removido, a LINHA não é apagada e a exclusão é repetível).
+  const deleteStorageFile = async (url: string | undefined): Promise<{ ok: true } | { ok: false; error: unknown }> => {
+    if (!url) return { ok: true };
     const info = extractStoragePath(url, bucket);
-    if (info) await supabase.storage.from(info.bucket).remove([info.path]);
+    if (!info) return { ok: true };
+    const { error } = await supabase.storage.from(info.bucket).remove([info.path]);
+    if (error) { log.error(`Erro ao remover ${info.path} de ${info.bucket}:`, error); return { ok: false, error }; }
+    return { ok: true };
   };
 
   const handleBulkDelete = async () => {
     const toDelete = items.filter(i => selected.has(i.id));
     if (toDelete.length === 0) return;
-    for (const item of toDelete) { await deleteStorageFile(type === 'audio_memes' ? item.audio_url : item.image_url); }
-    const ids = [...selected];
-    const { error } = await supabase.from(type).delete().in('id', ids);
-    if (error) { toast.error('Erro ao excluir itens'); return; }
-    setItems(prev => prev.filter(i => !selected.has(i.id)));
-    setSelected(new Set());
-    toast.success(`${ids.length} itens excluídos`);
+    // Objeto primeiro, com aborto POR ITEM: o que não sai do bucket fica no catálogo.
+    const comObjeto: MediaItem[] = [];
+    const falharam: MediaItem[] = [];
+    for (const item of toDelete) {
+      const res = await deleteStorageFile(type === 'audio_memes' ? item.audio_url : item.image_url);
+      if (res.ok) comObjeto.push(item); else falharam.push(item);
+    }
+    // A LINHA só sai depois do objeto, conferindo `error` E linhas afetadas: o RLS
+    // filtra sem erro, então `data` vazio também é falha.
+    let excluidos: MediaItem[] = [];
+    if (comObjeto.length > 0) {
+      const { data, error } = await supabase.from(type).delete().in('id', comObjeto.map(i => i.id)).select('id');
+      if (error) {
+        log.error(`Erro ao excluir itens de ${type}:`, error);
+        falharam.push(...comObjeto);
+      } else {
+        const saiu = new Set(((data ?? []) as { id: string }[]).map(r => r.id));
+        excluidos = comObjeto.filter(i => saiu.has(i.id));
+        falharam.push(...comObjeto.filter(i => !saiu.has(i.id)));
+      }
+    }
+    if (excluidos.length > 0) {
+      const excluidosIds = new Set(excluidos.map(i => i.id));
+      setItems(prev => prev.filter(i => !excluidosIds.has(i.id)));
+    }
+    // Só o que falhou continua selecionado: a nova tentativa conclui (objeto já removido é idempotente).
+    setSelected(new Set(falharam.map(i => i.id)));
+    // O resumo reflete o que realmente saiu — nunca "N itens excluídos" com falha.
+    if (falharam.length === 0) { toast.success(`${excluidos.length} itens excluídos`); return; }
+    if (excluidos.length === 0) { toast.error(`Nenhum item foi excluído (${falharam.length} falharam)`); return; }
+    toast.info(`${excluidos.length} de ${toDelete.length} itens excluídos (${falharam.length} falharam)`);
   };
 
   const handleBulkCategoryChange = async (newCategory: string) => {
@@ -237,9 +266,17 @@ export function useMediaLibrary(type: MediaType) {
   };
 
   const handleDelete = async (item: MediaItem) => {
-    await deleteStorageFile(type === 'audio_memes' ? item.audio_url : item.image_url);
-    const { error } = await supabase.from(type).delete().eq('id', item.id);
-    if (error) { toast.error('Erro ao excluir item'); return; }
+    // Objeto PRIMEIRO e com ABORTO: se o Storage recusar, a linha fica no catálogo.
+    const storage = await deleteStorageFile(type === 'audio_memes' ? item.audio_url : item.image_url);
+    if (!storage.ok) { toast.error('Erro ao excluir item: o arquivo não foi removido do storage'); return; }
+    // Depois do objeto, a LINHA: `error` E linhas afetadas (o RLS filtra sem erro).
+    const { data, error } = await supabase.from(type).delete().eq('id', item.id).select('id');
+    if (error || !data || data.length === 0) {
+      const removidas = data?.length ?? 0;
+      log.error(`Erro ao excluir item ${item.id} de ${type} (linhas afetadas: ${removidas}):`, error);
+      toast.error('O arquivo foi removido, mas o item não saiu do catálogo — exclua novamente');
+      return;
+    }
     setItems(prev => prev.filter(i => i.id !== item.id));
     toast.success('Item excluído');
   };

@@ -59,7 +59,7 @@ export function MediaVolumeControl({
   // Sem caminho para aplicar o volume (nem `element.volume`, nem AudioContext) o slider
   // aparece desabilitado com explicação, em vez de mentir para o usuário (D5/E09).
   const sliderDisabled = disabled || !isSupported;
-  const label = disabled && disabledReason ? disabledReason : muted ? MEDIA_VOLUME_LABEL_MUTED : MEDIA_VOLUME_LABEL;
+  const label = disabled && disabledReason ? disabledReason : muted ? MEDIA_VOLUME_LABEL_MUTED : `${MEDIA_VOLUME_LABEL}: ${volume}%`;
   const showLowVolumeDot = isSidebar && !disabled && (muted || volume < LOW_VOLUME_THRESHOLD);
 
   // Lê o valor ATUAL do store (não o do render): o atalho pode chegar por dois caminhos
@@ -167,7 +167,7 @@ export function MediaVolumeControl({
         onClick={(event) => event.stopPropagation()}
       >
         <VolumeSliderPopoverContent
-          title="Volume"
+          title={MEDIA_VOLUME_SLIDER_LABEL}
           valueLabel={muted ? 'Mudo' : `${volume}%`}
           volume={volume}
           muted={muted}

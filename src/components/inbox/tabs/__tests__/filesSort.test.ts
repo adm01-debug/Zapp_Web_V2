@@ -79,3 +79,34 @@ describe('filesSort — filtro', () => {
     expect(filterMediaItems(items, 'all', 'CLIP').map((i) => i.id)).toEqual(['c']);
   });
 });
+
+describe('filesSort — filtro por data (F02)', () => {
+  const range = {
+    from: new Date(2026, 2, 5, 0, 0, 0, 0).getTime(),
+    to: new Date(2026, 2, 7, 23, 59, 59, 999).getTime(),
+  };
+
+  const items = [
+    item({ id: 'dentro', type: 'document', filename: 'contrato-dentro.pdf', created_at: new Date(2026, 2, 6, 10, 0).toISOString() }),
+    item({ id: 'fora', type: 'document', filename: 'contrato-fora.pdf', created_at: new Date(2026, 2, 20, 10, 0).toISOString() }),
+  ];
+
+  it('sem o 4º parâmetro o resultado é o de antes (as chamadas atuais não mudam)', () => {
+    const esperado = ['dentro', 'fora'];
+    expect(filterMediaItems(items, 'document', 'contrato').map((i) => i.id)).toEqual(esperado);
+    expect(filterMediaItems(items, 'document', 'contrato', null).map((i) => i.id)).toEqual(esperado);
+    expect(filterMediaItems(items, 'document', 'contrato', undefined).map((i) => i.id)).toEqual(esperado);
+  });
+
+  it('com o intervalo, combina o período com o tipo e a busca', () => {
+    expect(filterMediaItems(items, 'document', 'contrato', range).map((i) => i.id)).toEqual(['dentro']);
+    expect(filterMediaItems(items, 'image', '', range)).toEqual([]);
+    expect(filterMediaItems(items, 'all', 'fora', range)).toEqual([]);
+  });
+
+  it('item sem data válida fica fora com período ativo e continua na lista sem período', () => {
+    const semData = item({ id: 'sem-data', created_at: '' });
+    expect(filterMediaItems([semData], 'all', '', range)).toEqual([]);
+    expect(filterMediaItems([semData], 'all', '')).toHaveLength(1);
+  });
+});

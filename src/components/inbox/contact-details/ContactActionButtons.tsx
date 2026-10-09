@@ -19,7 +19,7 @@ import { dispatchStartCall } from '@/lib/calls/events';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface ContactActionButtonsProps {
-  contact: { id: string; name: string; phone: string; email?: string };
+  contact: { id: string; name: string; phone: string; email?: string; avatar?: string | null };
   conversation?: Conversation;
   hasExpandedSections?: boolean;
   onCollapseAll?: () => void;
@@ -125,14 +125,15 @@ export function ContactActionButtons({
             <DropdownMenuItem onClick={() => {
               onStartCall('whatsapp');
               // T29: caminho unificado (o consumidor unico decide o que fazer).
-              dispatchStartCall({ channel: 'whatsapp', phone: contact.phone, contactId: contact.id, name: contact.name, source: 'inbox' });
+              // C02: o avatar vai junto para o cartao da chamada mostrar a foto.
+              dispatchStartCall({ channel: 'whatsapp', phone: contact.phone, contactId: contact.id, name: contact.name, avatar: contact.avatar || undefined, source: 'inbox' });
             }} className="gap-2 text-xs">
               <PhoneCall className="w-3.5 h-3.5 text-success" />Ligar via WhatsApp
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => {
               onStartCall('voip');
               // T29: o caminho unificado substitui o evento legado por window.
-              dispatchStartCall({ channel: 'voip', phone: contact.phone, contactId: contact.id, name: contact.name, source: 'inbox' });
+              dispatchStartCall({ channel: 'voip', phone: contact.phone, contactId: contact.id, name: contact.name, avatar: contact.avatar || undefined, source: 'inbox' });
             }} className="gap-2 text-xs">
               <Headphones className="w-3.5 h-3.5 text-info" />Ligar via Telefone
             </DropdownMenuItem>
@@ -151,9 +152,9 @@ export function ContactActionButtons({
         <Tile
           icon={<Mail className="w-[18px] h-[18px]" />}
           label="E-mail"
-          title={contact.email ? 'Abrir email' : 'Sem email'}
+          title={contact.email ? 'Abrir e-mail' : 'Sem e-mail'}
           disabled={!contact.email}
-          onClick={() => { if (contact.email) navigateToView('email-chat'); }}
+          onClick={() => { if (contact.email) navigateToView('email-chat', { emailContact: contact.id, emailTo: contact.email }); }}
         />
 
         <Tile

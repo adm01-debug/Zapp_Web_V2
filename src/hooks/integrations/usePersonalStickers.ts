@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { StickerItem } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { converterFigurinhaParaWebp, precisaConverterParaWebp } from '@/lib/stickerImage';
 import { log } from '@/lib/logger';
 
 export function usePersonalStickers() {
@@ -56,9 +57,17 @@ export function usePersonalStickers() {
       for (const file of Array.from(files)) {
         if (!file.type.startsWith('image/')) { toast.error(`${file.name} não é uma imagem`); continue; }
         if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} excede 10MB`); continue; }
-        const ext = getFileExtensionWithDefault(file.name, 'png');
+        // Item 069: mesma regra do seletor do chat — a figurinha vai ao bucket em WebP
+        // (o WhatsApp/Evolution GO recusa PNG/JPEG no envio). Se o navegador não conseguir
+        // converter, o arquivo original segue: a conversão não bloqueia a pasta pessoal.
+        let arquivo = file;
+        if (precisaConverterParaWebp(file)) {
+          arquivo = await converterFigurinhaParaWebp(file);
+          if (arquivo === file) log.warn('[PersonalStickers] Conversão para WebP não aplicada; subindo o arquivo original:', file.type);
+        }
+        const ext = getFileExtensionWithDefault(arquivo.name, 'png');
         const path = `pessoal/${profile.id}/${crypto.randomUUID()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from('stickers').upload(path, file, { contentType: file.type });
+        const { error: uploadError } = await supabase.storage.from('stickers').upload(path, arquivo, { contentType: arquivo.type });
         if (uploadError) { toast.error(`Erro ao enviar ${file.name}: ${uploadError.message}`); continue; }
         const { data: urlData } = supabase.storage.from('stickers').getPublicUrl(path);
         const stickerName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');

@@ -165,6 +165,52 @@ function violacoesCabecalhoDuplicado(plano) {
   return out;
 }
 
+const SECAO_ABERTURA = '### Etapas superadas pela política vigente';
+
+// Linha por linha o que foi medido em 02/10 (adendo do plano). A tabela de abertura é HISTÓRICA:
+// a evidência de uma etapa não pode ser trocada pelo texto de outra (foi o defeito da E13).
+const ABERTURA_ESPERADA = {
+  E01: '| **E01** restaurar `strict=false` | SUPERADA | medido `strict=false`, mas a política da casa é `true`; aplicar E01 deixaria o guard da casa em conflito permanente com a configuração |',
+  E13: '| **E13** criar `settings-guard.yml` | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | `.github/workflows/settings-guard.yml`, schedule de 6 h; a §1 deste plano não o listou |',
+  E14: '| **E14** `github-settings-guard.mjs` + testes | JÁ EXISTIA desde `#1436` (`4ba2e1b94`) | 6 testes verdes; o script **restaura via `PATCH`** — é ele que sustenta a política `strict=true` |',
+  E16: '| **E16** apagar `auto-update-pr-branch.yml` | SUPERADA | não é código morto: o cabeçalho do próprio arquivo registra reativação em 01/10 para a política `strict=true` |',
+};
+
+function tabelaDeAbertura(plano) {
+  const ls = linhas(plano);
+  const ini = ls.findIndex((l) => l.trim() === SECAO_ABERTURA);
+  if (ini === -1) return null;
+  const out = [];
+  for (let i = ini + 1; i < ls.length && !ls[i].startsWith('#'); i += 1) {
+    if (ls[i].startsWith('|')) out.push(ls[i]);
+  }
+  return out;
+}
+
+function evidenciaDa(linha) {
+  return linha.split('|').slice(3, -1).join('|').trim();
+}
+
+function evidenciasDaAbertura(tabela) {
+  return tabela.filter((l) => /^\|\s*\*\*E\d{1,3}\*\*/.test(l)).map(evidenciaDa);
+}
+
+function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
+  const tabela = tabelaDeAbertura(plano);
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  const out = [];
+  for (const [id, linha] of Object.entries(esperadas)) {
+    const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
+    if (atual === undefined) out.push(`${id}: linha ausente na tabela de abertura`);
+    else if (atual !== linha) out.push(`${id}: evidencia da abertura divergente`);
+  }
+  const evidencias = evidenciasDaAbertura(tabela);
+  if (new Set(evidencias).size !== evidencias.length) {
+    out.push('evidencia repetida entre linhas da tabela de abertura');
+  }
+  return out;
+}
+
 const CLAUDE_ANTES = [
   '**Plano vigente:** auditoria exaustiva dos 17 workflows + meta CI score 10/10.',
   'Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection.',
@@ -349,4 +395,45 @@ test('plano: E11 marcada concluida explicita reconciliacao na nota de execucao',
   assert.notEqual(inicio, -1, 'nota de execução da E11 deve existir');
   const bloco = plano.slice(inicio, plano.indexOf('- [ ] **E12**', inicio));
   assert.match(bloco, /Reconciliado em 05\/10\/2026: concluída \(ver Reconciliação TRA-009\)\./);
+});
+
+const ABERTURA_FIXTURE = [
+  SECAO_ABERTURA,
+  '',
+  '| Etapa | Status | Evidência medida em 02/10 |',
+  '|---|---|---|',
+  ABERTURA_ESPERADA.E13,
+  ABERTURA_ESPERADA.E14,
+  '',
+].join('\n');
+
+const ESPERADAS_FIXTURE = { E13: ABERTURA_ESPERADA.E13, E14: ABERTURA_ESPERADA.E14 };
+
+const ABERTURA_COM_EVIDENCIA_TROCADA = ABERTURA_FIXTURE.replace(
+  ABERTURA_ESPERADA.E13,
+  `| **E13** criar \`settings-guard.yml\` | JÁ EXISTIA desde \`#1436\` (\`4ba2e1b94\`) | ${evidenciaDa(ABERTURA_ESPERADA.E14)} |`,
+);
+
+test('fixture: evidencia trocada entre linhas da tabela de abertura e rejeitada', () => {
+  assert.deepEqual(violacoesTabelaAbertura(ABERTURA_FIXTURE, ESPERADAS_FIXTURE), []);
+  const defeito = violacoesTabelaAbertura(ABERTURA_COM_EVIDENCIA_TROCADA, ESPERADAS_FIXTURE);
+  assert.ok(
+    defeito.includes('E13: evidencia da abertura divergente'),
+    `E13 com a evidencia da E14 tinha de ser rejeitada (${defeito.join(' | ') || 'nenhuma violacao'})`,
+  );
+  assert.ok(
+    defeito.includes('evidencia repetida entre linhas da tabela de abertura'),
+    `a evidencia repetida entre linhas tinha de ser rejeitada (${defeito.join(' | ') || 'nenhuma violacao'})`,
+  );
+  assert.ok(violacoesTabelaAbertura('# sem a tabela', ESPERADAS_FIXTURE).length > 0);
+});
+
+test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas em 02/10', async () => {
+  const plano = await readFile(PLANO, 'utf8');
+  const tabela = tabelaDeAbertura(plano);
+  assert.ok(tabela, `tabela de abertura ("${SECAO_ABERTURA}") deve existir`);
+  for (const id of ['E01', 'E13', 'E14', 'E16']) {
+    assert.ok(tabela.some((l) => l.startsWith(`| **${id}**`)), `${id} deve estar medido na tabela de abertura`);
+  }
+  assert.deepEqual(violacoesTabelaAbertura(plano), []);
 });

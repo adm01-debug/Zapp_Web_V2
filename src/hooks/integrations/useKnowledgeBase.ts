@@ -84,13 +84,26 @@ export function useKnowledgeBase() {
       toast({ title: 'Erro', description: 'Não foi possível criar a referência durável do arquivo.', variant: 'destructive' });
       return;
     }
-    const { error: insertError } = await supabase.from('knowledge_base_files').insert({ file_name: file.name, file_url: locatorData.publicUrl, file_type: file.type, file_size: file.size });
-    if (insertError) {
+    const { data: inserted, error: insertError } = await supabase.from('knowledge_base_files')
+      .insert({ file_name: file.name, file_url: locatorData.publicUrl, file_type: file.type, file_size: file.size })
+      .select('id')
+      .single();
+    if (insertError || !inserted?.id) {
       await supabase.storage.from('whatsapp-media').remove([fileName]);
-      toast({ title: 'Erro', description: insertError.message, variant: 'destructive' });
+      toast({ title: 'Erro', description: insertError?.message ?? 'Não foi possível registrar o arquivo.', variant: 'destructive' });
       return;
     }
-    toast({ title: 'Arquivo enviado!', description: file.name });
+    // R2-API-054: o arquivo só vira conhecimento DEPOIS do processamento
+    // (extração → artigo publicado → recuperável pela IA). Sem o pipeline o
+    // documento ficava só armazenado e a tela prometia treino da IA à toa.
+    const { data: ingest, error: ingestError } = await supabase.functions.invoke('ai-kb-ingest', { body: { fileId: inserted.id } });
+    if (ingestError || !ingest || ingest.status === 'failed') {
+      toast({ title: 'Falha no processamento', description: 'O arquivo foi armazenado, mas não entrou no contexto da IA.', variant: 'destructive' });
+    } else if (ingest.status === 'unsupported') {
+      toast({ title: 'Arquivo armazenado', description: 'Sem texto extraível neste formato: não entra no contexto da IA.' });
+    } else {
+      toast({ title: 'Documento processado', description: `${file.name} disponível para a IA` });
+    }
     fetchData();
   }, [fetchData]);
 

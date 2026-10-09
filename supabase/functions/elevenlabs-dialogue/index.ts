@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 /**
  * R2-API-024 (P2) — Diálogo ElevenLabs envia `script` e omite `inputs`.
@@ -65,6 +66,7 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
 
     log.info(`Generating dialogue with ${script.length} lines`);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       'https://api.elevenlabs.io/v1/text-to-dialogue?output_format=mp3_44100_128',
       {
@@ -82,6 +84,28 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
         }),
       }
     );
+
+    // SL-013 / IA-003 B6 — a geração PAGA de diálogo tem de deixar linha em
+    // `ai_usage_logs`: sem ela o relatório de custo (IA-058) não enxerga este
+    // consumo. Unidade cobrada = CARACTERE somado do roteiro (não token): a
+    // medição vai em `metadata`; as colunas de token ficam NULL com
+    // `usage_unknown: true` (IA-053 — "não medi" nunca vira zero medido).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-dialogue",
+      userId: auth.userId,
+      model: "eleven_v3",
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/text-to-dialogue",
+        billing_unit: "character",
+        billing_quantity: script.reduce((acc, line) => acc + line.text.length, 0),
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

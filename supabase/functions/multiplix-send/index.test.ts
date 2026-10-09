@@ -392,6 +392,13 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
+          case "complete_multiplix_dispatch_if_items_drained":
+            // Fiel ao banco (f32b §10): a drenagem POR ITEM conclui SÓ quando nao
+            // sobra item em 'pending'/'sending'/'failed_transient'. No mock a fila
+            // viva e `ctx.remaining`, entao "drenada" = fila vazia. Sem espelhar
+            // esse efeito o stub devolveria `true` fixo (default do switch) e o
+            // teste nao distinguiria a drenagem real da antiga.
+            return Promise.resolve({ data: ctx.remaining.length === 0, error: null });
           case "talkx_recipient_is_suppressed": {
             ctx.suppressionChecks++;
             if (opts.suppressionRpcError) {
@@ -898,10 +905,59 @@ Deno.test("F11a: uma invocacao processa UM lote (MULTIPLIX_BATCH_SIZE) e devolve
   assert(ctx.completions.length === 20, `esperava 20 conclusoes, recebeu ${ctx.completions.length}`);
   assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
   assert(ctx.limits[0] === 20, `lote default deveria ser 20, veio ${JSON.stringify(ctx.limits)}`);
-  // Nao afirmamos body.completed aqui: o mock devolve true fixo para
-  // complete_multiplix_dispatch_if_drained — quem decide "concluido" e a funcao
-  // SQL, coberta pelos testes da F13. O que prova o lote unico e o teto de 20
-  // conclusoes acima, com 25 itens disponiveis na fila.
+  // Nao afirmamos body.completed aqui de proposito: quem decide "concluido" e a
+  // RPC de drenagem (o mock a espelha, na secao MX03). O que prova o lote unico e
+  // o teto de 20 conclusoes acima, com 25 itens disponiveis na fila (5 sobram, o
+  // disparo NAO conclui nesta passada).
+});
+
+// ------------------------------------------------------------------- MX03 (drenagem por item)
+
+Deno.test("MX03: a conclusão do disparo consulta a fila POR ITEM (delivery_items), nunca a de recipients", async () => {
+  // O worker encerrava chamando complete_multiplix_dispatch_if_drained, cuja
+  // ULTIMA definicao (20260929600000:90) conta pending/sending em
+  // multiplix_recipients — fila que os RPCs por item (record_multiplix_item_sent /
+  // complete_multiplix_item) NAO alimentam. Consequencia (achado MX03): mesmo com
+  // todo item terminal o recipient continuava 'pending' e o disparo NUNCA concluia
+  // no fluxo atual. A drenagem correta e complete_multiplix_dispatch_if_items_drained
+  // (f32b §10), e a antiga esta marcada DEPRECATED em 20261001231230:677.
+  const recipients = [recipientRow(1, "5511955550001"), recipientRow(2, "5511955550002")];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: recipients.length }),
+    recipients,
+    suppressedPhones: recipients.map((r) => String(r.destino_e164)),
+  };
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    "o worker tem de concluir pela drenagem POR ITEM (complete_multiplix_dispatch_if_items_drained)",
+  );
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_drained").length === 0,
+    "o worker nao pode mais consultar a fila antiga de recipients na conclusao",
+  );
+  // A fila de itens drenou (os 2 itens suprimidos viraram 'skipped', terminais):
+  // a drenagem por item devolve true e o disparo conclui.
+  assert(body.completed === true, `fila de itens drenada deveria concluir o disparo, veio ${body.completed}`);
+});
+
+Deno.test("MX03: com item ainda na fila a drenagem por item NAO conclui o disparo nesta passada", async () => {
+  // Contraprova do contrato: o `completed` do worker e o resultado da drenagem
+  // por item — nao um true cego. Um lote de 25 para tamanho 20 deixa 5 itens vivos.
+  const opts = batchSendingOpts("551193333", 25);
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    "o worker tem de consultar a drenagem POR ITEM mesmo quando a fila nao esta vazia",
+  );
+  assert(body.completed === false, `fila com item vivo nao pode concluir o disparo, veio ${body.completed}`);
 });
 
 Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {

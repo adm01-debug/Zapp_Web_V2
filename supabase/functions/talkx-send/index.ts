@@ -8,7 +8,6 @@ import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_s
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
-import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
@@ -18,7 +17,9 @@ import {
   sleep,
 } from "../_shared/messaging/index.ts";
 import {
+  mediaFileNameFromReference,
   processRecipient,
+  resolveTalkxMediaUrl,
   type ProcessRecipientRow,
   type ProcessResult,
 } from "./process-recipient.ts";
@@ -155,6 +156,20 @@ export async function handleTalkxSend(
       }
       const cleanPhone = phone.replace(/\D/g, "");
 
+      // X062: mídia privada do bucket é ASSINADA também no envio de teste —
+      // antes a URL crua falhava onde o envio real funcionaria. A resolução é
+      // ANTERIOR ao claim/POST: falha aqui não reivindica nem envia nada sem a
+      // mídia (erro anterior ao provedor).
+      let resolvedTestMediaUrl: string | null = null;
+      if (mediaUrl && mediaType) {
+        try {
+          resolvedTestMediaUrl = await resolveTalkxMediaUrl(supabase, mediaUrl, supabaseUrl);
+        } catch (e) {
+          log.error("test_media_sign_failed", { correlationId, error: e instanceof Error ? e.message : String(e) });
+          return new Response(JSON.stringify({ error: "Falha ao assinar a mídia do teste" }), { status: 502, headers });
+        }
+      }
+
       // IA-047: chave estável do envio de teste. Preferimos a chave do cliente
       // (idempotencyKey) — o front a deriva uma vez por clique; sem ela, o hash
       // do pedido (instância + telefone + template + mídia) faz o mesmo papel.
@@ -200,13 +215,23 @@ export async function handleTalkxSend(
         let sendRes: Response;
         if (mediaUrl && mediaType) {
           const isAudio = mediaType === "audio";
+          // X062: envia a URL ASSINADA (mesmo resolvedor do envio real).
+          const testMedia = resolvedTestMediaUrl ?? mediaUrl;
+          // X062: o documento vai com o NOME do arquivo (v2 -> GO `filename`).
+          const testFileName = mediaType === "document" ? mediaFileNameFromReference(mediaUrl) : null;
           sendRes = await evoFetch(
             evolutionUrl,
             evolutionKey,
             `/message/${isAudio ? "sendWhatsAppAudio" : "sendMedia"}/${testInstanceId}`,
             isAudio
-              ? { number: cleanPhone, audio: mediaUrl }
-              : { number: cleanPhone, mediatype: mediaType, media: mediaUrl, caption: personalizedText },
+              ? { number: cleanPhone, audio: testMedia }
+              : {
+                number: cleanPhone,
+                mediatype: mediaType,
+                media: testMedia,
+                caption: personalizedText,
+                ...(testFileName ? { fileName: testFileName } : {}),
+              },
           );
         } else {
           sendRes = await evoFetch(evolutionUrl, evolutionKey, `/message/sendText/${testInstanceId}`, {
@@ -887,7 +912,10 @@ export async function handleTalkxSend(
       let signedMedia: { url: string; at: number } | null = null;
       const mediaForSend = async () => {
         if (!signedMedia || Date.now() - signedMedia.at > 240_000) {
-          signedMedia = { url: await resolvePrivateBucketUrl(supabase, campaign.media_url as string, undefined, supabaseUrl), at: Date.now() };
+          signedMedia = {
+            url: await resolveTalkxMediaUrl(supabase, campaign.media_url as string, supabaseUrl),
+            at: Date.now(),
+          };
         }
         return signedMedia.url;
       };

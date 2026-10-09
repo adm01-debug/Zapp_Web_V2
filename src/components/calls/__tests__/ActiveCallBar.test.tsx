@@ -28,6 +28,10 @@ function baseSession(overrides: Record<string, unknown> = {}) {
     acceptIncomingCall: vi.fn(),
     toggleMute: vi.fn(),
     hangUp: vi.fn(),
+    // API da MÁQUINA (SL-109): quem despacha o evento antes de falar com o SIP.
+    accept: vi.fn(),
+    reject: vi.fn(),
+    hangup: vi.fn(),
     ...overrides,
   };
 }
@@ -71,7 +75,28 @@ describe('ActiveCallBar', () => {
 
     expect(screen.getByLabelText('Atender')).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Atender'));
-    expect(session.acceptIncomingCall).toHaveBeenCalledOnce();
+    expect(session.accept).toHaveBeenCalledOnce();
+  });
+
+  it('SL-109: Atender e Encerrar passam pela MÁQUINA, não pelos métodos crus do useSipClient', () => {
+    // Aceitar/encerrar pelos métodos crus (`acceptIncomingCall`/`hangUp`) fala
+    // com o SIP sem despachar ACCEPT/HANGUP_LOCAL: a sessão ficava presa em
+    // `ringing_in` ao atender e gravava `hangup_remote` ao encerrar — a faixa
+    // divergia do diálogo, que desde o T21 usa `accept`/`hangup`.
+    const incoming = baseSession({ callStatus: 'ringing', callDirection: 'inbound', currentNumber: '5511988887777' });
+    mockUseCallSession.mockReturnValue(incoming);
+    const telaToque = renderAt('inbox');
+    fireEvent.click(screen.getByLabelText('Atender'));
+    expect(incoming.accept).toHaveBeenCalledOnce();
+    expect(incoming.acceptIncomingCall).not.toHaveBeenCalled();
+    telaToque.unmount();
+
+    const emCurso = baseSession({ callStatus: 'active', currentNumber: '5511999999999' });
+    mockUseCallSession.mockReturnValue(emCurso);
+    renderAt('inbox');
+    fireEvent.click(screen.getByLabelText('Encerrar'));
+    expect(emCurso.hangup).toHaveBeenCalledOnce();
+    expect(emCurso.hangUp).not.toHaveBeenCalled();
   });
 
 

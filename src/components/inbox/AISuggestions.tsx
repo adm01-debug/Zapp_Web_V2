@@ -8,6 +8,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
 import { useAiRequestGeneration } from '@/lib/aiRequest/context';
 
+/**
+ * SL-063 — chips de tom da sugestão. Cada clique RE-GERA a sugestão pedindo o
+ * tom ao endpoint. O `ai-suggest-reply` não tem campo `tone` (o schema não o
+ * conhece e descartaria o campo em silêncio), então o tom viaja pelo `context`,
+ * que é o campo de texto livre que o handler injeta no prompt do modelo.
+ */
+const TONE_CHIPS = [
+  { key: 'mais-formal', label: 'Mais formal', prompt: 'Use tom mais formal, profissional e corporativo.' },
+  { key: 'mais-casual', label: 'Mais casual', prompt: 'Use tom mais casual, leve e informal.' },
+  { key: 'mais-curta', label: 'Mais curta', prompt: 'Seja mais curto: direto ao ponto, com menos palavras.' },
+  { key: 'mais-detalhada', label: 'Mais detalhada', prompt: 'Traga mais detalhes e contexto, de forma completa e explicativa.' },
+] as const;
+
+type ToneChipKey = typeof TONE_CHIPS[number]['key'];
+
 interface Message {
   id: string;
   content: string;
@@ -33,6 +48,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [activeTone, setActiveTone] = useState<ToneChipKey | null>(null);
   const { toast } = useToast();
 
   // IA-048 — a sugestão pertence ao contato de origem. Sem reset por contato, a
@@ -60,7 +76,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
     return () => { invalidateRequests(); };
   }, [invalidateRequests]);
 
-  const fetchSuggestions = async () => {
+  const fetchSuggestions = async (tone: ToneChipKey | null) => {
     if (messages.length === 0) {
       toast({
         title: "Sem mensagens",
@@ -71,8 +87,15 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
     }
 
     const request = beginRequest();
+    const previousTone = activeTone;
+    setActiveTone(tone);
     setIsLoading(true);
     setIsOpen(true);
+
+    // SL-063 — o tom pedido pelo chip entra no `context` (único campo de texto
+    // livre que o `ai-suggest-reply` injeta no prompt). Sem tom, a requisição
+    // sai exatamente como antes.
+    const toneChip = tone ? TONE_CHIPS.find((chip) => chip.key === tone) : undefined;
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-suggest-reply', {
@@ -83,6 +106,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
           })),
           contactName,
           contactId,
+          ...(toneChip ? { context: `Tom da sugestão — ${toneChip.label}: ${toneChip.prompt}` } : {}),
           // IA-051 — o id do clique (IA-048) viaja junto para o log de consumo
           // poder responder de qual requisição veio o gasto. É uuid opaco: nada
           // de conteúdo de conversa nem de contato.
@@ -101,6 +125,9 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
       if (!isRequestCurrent(request)) return;
       const error = err instanceof Error ? err : new Error('Unknown error');
       log.error('Error fetching suggestions:', error);
+      // Geração falhou: o chip não pode continuar marcado como se o tom tivesse
+      // sido aplicado na tela.
+      setActiveTone(previousTone);
       toast({
         title: "Erro ao gerar sugestões",
         description: error.message || "Tente novamente mais tarde.",
@@ -141,7 +168,7 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
       <Button
         variant="ghost"
         size="icon"
-        onClick={fetchSuggestions}
+        onClick={() => fetchSuggestions(null)}
         disabled={isLoading}
         className="relative text-primary hover:text-primary/80 hover:bg-primary/10"
         title="Sugestões de IA"
@@ -222,6 +249,37 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
                 </div>
               )}
             </div>
+
+            {suggestions.length > 0 && (
+              // SL-063 — rodapé de tons: cada chip re-gera a sugestão pedindo o
+              // tom ao endpoint (não é reescrita local). Sem sugestão na tela
+              // não há o que regenerar, então o rodapé só aparece com resultado.
+              <div
+                role="group"
+                aria-label="Tom da sugestão"
+                className="flex flex-wrap items-center gap-1.5 p-2 border-t border-border bg-muted/20"
+              >
+                {TONE_CHIPS.map((chip) => {
+                  const isActive = activeTone === chip.key;
+                  return (
+                    <button
+                      key={chip.key}
+                      type="button"
+                      aria-pressed={isActive}
+                      disabled={isLoading}
+                      onClick={() => fetchSuggestions(isActive ? null : chip.key)}
+                      className={`h-7 px-2.5 rounded-lg border text-xs transition-colors ${
+                        isActive
+                          ? 'border-primary bg-primary text-primary-foreground font-medium'
+                          : 'border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      {chip.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

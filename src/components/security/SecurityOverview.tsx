@@ -230,6 +230,7 @@ export function SecurityOverview() {
               <Progress
                 value={scorePct ?? 0}
                 className="h-3"
+                aria-label="Pontuação de segurança"
               />
             </div>
             {totalScore === null && (

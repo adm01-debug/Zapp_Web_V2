@@ -27,6 +27,12 @@ export interface NavItem {
   layout?: 'full' | 'scroll';
   /** Atalho global Alt+letra (ver useNavShortcuts) */
   shortcut?: string;
+  /**
+   * Selo textual da entrada (F71: 'NOVO' no Multiplix). Vai ao lado do rotulo.
+   * Nao e um gate proprio: quem nao tem a permissao da entrada nao ve a entrada
+   * nem o selo — por isso `filterNavItems` nao precisa conhece-lo.
+   */
+  pill?: string;
 }
 
 export interface NavGroup {
@@ -51,11 +57,10 @@ export class NavigationService {
       { id: 'team-chat', icon: MessagesSquare, label: 'Teams', layout: 'full', shortcut: 'Alt+M' },
       { id: 'email-chat', icon: Mail, label: 'Email', layout: 'full', shortcut: 'Alt+L' },
       { id: 'contacts', icon: User, label: 'Contatos', shortcut: 'Alt+O' },
-      { id: 'multiplix', icon: Send, label: 'Multiplix', permission: MULTIPLIX_DISPATCH_CREATE },
+      { id: 'multiplix', icon: Send, label: 'Multiplix', permission: MULTIPLIX_DISPATCH_CREATE, pill: 'NOVO' },
       { id: 'catalog', icon: Package, label: 'Catálogo', shortcut: 'Alt+A' },
       { id: 'voip', icon: PhoneCall, label: 'Telefonia', shortcut: 'Alt+T' },
-      { id: 'pipeline', icon: Kanban, label: 'Quadro', layout: 'full', shortcut: 'Alt+P' },
-      { id: 'tasks', icon: ListChecks, label: 'Tarefas', shortcut: 'Alt+K' },
+      { id: 'tasks', icon: ListChecks, label: 'Tarefas', layout: 'full', shortcut: 'Alt+K' },
       { id: 'achievements', icon: Trophy, label: 'Conquistas', shortcut: 'Alt+Q' },
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', shortcut: 'Alt+R' },
     ];

@@ -36,6 +36,9 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     };
   },
 }));
+vi.mock('@/hooks/integrations/useEmailThreadForContact', () => ({
+  useEmailThreadForContact: () => ({ status: 'none', threadId: null }),
+}));
 vi.mock('../EmailThreadList', () => ({
   EmailThreadList: ({ threads, page, onSelectThread, onNewEmail, onPageChange }: { threads: EmailThread[]; page: number; onSelectThread: (thread: EmailThread) => void; onNewEmail: () => void; onPageChange?: (page: number) => void }) => <div data-testid="thread-list"><span data-testid="pagina-atual">{page}</span><button onClick={() => threads[0] && onSelectThread(threads[0])}>Selecionar primeira</button><button onClick={onNewEmail}>Compor pela lista</button><button onClick={() => onPageChange?.(3)}>Ir para página 3</button></div>,
 }));

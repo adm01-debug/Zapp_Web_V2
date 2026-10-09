@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BellRing, CalendarIcon, CheckCircle2, ChevronDown, PauseCircle, X } from 'lucide-react';
@@ -32,6 +32,7 @@ import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { useNarrowViewport } from './pointerMedia';
 import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime';
+import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
@@ -61,9 +62,13 @@ interface SheetProps {
   item: WorkItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Salva os campos que não são estado nem alarme. */
-  onSave: (item: WorkItem, patch: Partial<WorkItemInput>) => void;
-  onMove: (item: WorkItem, to: WorkItemStatus, waitingReason?: string) => void;
+  /** Salva os campos que não são estado nem alarme.
+   *  R2-MOD-051: devolve a promessa da gravação — o Sheet só fecha quando ela
+   *  conclui, e uma falha mantém o formulário aberto com o que foi digitado. */
+  onSave: (item: WorkItem, patch: Partial<WorkItemInput>) => void | Promise<void>;
+  /** Muda o estado (a máquina de estados valida o destino e o motivo).
+   *  R2-MOD-051: idem — a promessa é aguardada antes do patch e do fechamento. */
+  onMove: (item: WorkItem, to: WorkItemStatus, waitingReason?: string) => void | Promise<void>;
   onSnooze: (item: WorkItem, minutes: number | 'tomorrow9') => void;
   onSetReminder: (item: WorkItem, iso: string | null) => void;
   onCancel: (item: WorkItem) => void;
@@ -134,9 +139,18 @@ function Formulario({
   const [avisadoEm, setAvisadoEm] = useState<string | null>(item.notified_at);
   const [mostraDescricao, setMostraDescricao] = useState(Boolean(item.description));
   const [erro, setErro] = useState<string | null>(null);
+  // R2-MOD-051: o Salvar espera a escrita terminar. Enquanto isso o botão fica
+  // travado (state) e o guarda síncrono (ref) fecha a porta de um duplo envio.
+  const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+  const salvandoRef = useRef(false);
 
   const doingCheio = doingCount >= 3 && item.status !== 'doing';
   const motivoObrigatorio = status === 'waiting';
+  // #425 / R2-MOD-057: o executor (`notify_due_tasks`) ignora done/cancelled —
+  // em estado terminal o Sheet não oferece alarme nem "Adiar" (o card já esconde
+  // o RemindChip aí); mostra o motivo no lugar dos controles.
+  const lembreteElegivel = aceitaLembrete(item.status);
 
   const mudou = useMemo(() => {
     const due = compor(dia, hora);
@@ -165,20 +179,25 @@ function Formulario({
     setAvisadoEm(null);
   }
 
-  function salvar() {
+  /**
+   * R2-MOD-051: o Salvar não fecha com escrita pendente nem dispara estado e
+   * campos em paralelo. O estado vai primeiro (a máquina de estados valida o
+   * destino e o motivo) e só depois o patch dos campos, os dois aguardados; o
+   * Sheet fecha apenas quando a edição inteira conclui. Qualquer falha mantém o
+   * formulário aberto com tudo o que foi digitado, para a retentativa.
+   */
+  async function salvar() {
+    if (salvandoRef.current) return;
     if (motivoObrigatorio && !motivo.trim()) {
       setErro('Diga por que parou');
       return;
     }
     setErro(null);
+    setErroSalvar(null);
 
     const due = compor(dia, hora);
     const remind = compor(alarmeDia, alarmeHora);
 
-    // Estado é do `move` (máquina de estados); o resto vai por patch (etapa 25).
-    if (status !== item.status) {
-      onMove(item, status, motivoObrigatorio ? motivo.trim() : undefined);
-    }
     const patch: Partial<WorkItemInput> = {};
     if (title !== item.title) patch.title = title;
     if ((description || null) !== (item.description ?? null)) patch.description = description || null;
@@ -187,7 +206,22 @@ function Formulario({
     if (motivoObrigatorio && (motivo || null) !== (item.waiting_reason ?? null)) patch.waitingReason = motivo.trim();
     if (!mesmoInstante(due, item.due_date)) patch.dueDate = due;
     if (!mesmoInstante(remind, item.remind_at)) patch.remindAt = remind;
-    if (Object.keys(patch).length > 0) onSave(item, patch);
+
+    // Estado é do `move` (máquina de estados); o resto vai por patch (etapa 25).
+    const mudaEstado = status !== item.status;
+
+    salvandoRef.current = true;
+    setSalvando(true);
+    try {
+      if (mudaEstado) await onMove(item, status, motivoObrigatorio ? motivo.trim() : undefined);
+      if (Object.keys(patch).length > 0) await onSave(item, patch);
+    } catch {
+      setErroSalvar('Não foi possível salvar. Seus dados continuam aqui — tente de novo.');
+      return;
+    } finally {
+      salvandoRef.current = false;
+      setSalvando(false);
+    }
 
     onOpenChange(false);
   }
@@ -326,69 +360,77 @@ function Formulario({
 
         <div>
           <Label>Alarme</Label>
-          <div className="mt-1.5 flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-testid="sheet-alarme"
-                  autoFocus={focusField === 'remind_at'}
-                  className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
+          {lembreteElegivel ? (
+            <>
+              <div className="mt-1.5 flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      data-testid="sheet-alarme"
+                      autoFocus={focusField === 'remind_at'}
+                      className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
+                    >
+                      {avisadoEm && alarmeDia
+                        ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
+                        : <CalendarIcon className="mr-2 h-4 w-4" />}
+                      {alarmeDia
+                        ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
+                        : 'Sem alarme'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      locale={ptBR}
+                      selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
+                      onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
+                    />
+                    <div className="flex items-center gap-2 border-t border-border/50 p-2">
+                      <Input
+                        type="time"
+                        data-testid="sheet-alarme-hora"
+                        value={alarmeHora}
+                        onChange={(e) => setAlarmeHora(e.target.value)}
+                        className="h-8 bg-input/40"
+                      />
+                      <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
+                      Adiar <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
+                    <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
+                    <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              {avisadoEm && (
+                <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
+                  Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
+                </p>
+              )}
+              {alarmeDia && (
+                <button
+                  type="button"
+                  data-testid="sheet-remover-alarme"
+                  onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
+                  className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
                 >
-                  {avisadoEm && alarmeDia
-                    ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
-                    : <CalendarIcon className="mr-2 h-4 w-4" />}
-                  {alarmeDia
-                    ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
-                    : 'Sem alarme'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  locale={ptBR}
-                  selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
-                  onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
-                />
-                <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                  <Input
-                    type="time"
-                    data-testid="sheet-alarme-hora"
-                    value={alarmeHora}
-                    onChange={(e) => setAlarmeHora(e.target.value)}
-                    className="h-8 bg-input/40"
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
-                  Adiar <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
-                <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
-                <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          {avisadoEm && (
-            <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
-              Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
+                  Remover alarme
+                </button>
+              )}
+            </>
+          ) : (
+            <p data-testid="sheet-alarme-indisponivel" className="mt-1.5 text-2xs text-muted-foreground">
+              {MOTIVO_SEM_LEMBRETE}
             </p>
-          )}
-          {alarmeDia && (
-            <button
-              type="button"
-              data-testid="sheet-remover-alarme"
-              onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
-              className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
-            >
-              Remover alarme
-            </button>
           )}
         </div>
 
@@ -413,6 +455,12 @@ function Formulario({
         </div>
       </div>
 
+      {erroSalvar && (
+        <p data-testid="sheet-erro-salvar" role="alert" className="text-2xs text-destructive">
+          {erroSalvar}
+        </p>
+      )}
+
       <SheetFooter className="mt-auto flex-col gap-2 sm:flex-row">
         <Button
           type="button"
@@ -435,11 +483,12 @@ function Formulario({
         <Button
           type="button"
           data-testid="sheet-salvar"
-          disabled={!mudou}
-          onClick={salvar}
+          disabled={!mudou || salvando}
+          aria-busy={salvando}
+          onClick={() => { void salvar(); }}
           className="sm:ml-auto bg-primary"
           title="Ctrl+Enter salva"
-          onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') salvar(); }}
+          onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') void salvar(); }}
         >
           Salvar
         </Button>

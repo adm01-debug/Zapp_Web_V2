@@ -311,3 +311,76 @@ Deno.test("R2-API-032 caso 5 (controlo): test:false do MESMO usuário comum segu
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// SL-014 (B5) — o cliente não escolhe destino nem modelo no fluxo normal
+//
+// O defeito: o schema aceitava `provider_id` e `model` do cliente em QUALQUER
+// requisição. Fora do diagnóstico (`test: true`), um usuário autenticado
+// escolhia o provedor de DESTINO — inclusive `custom_webhook`/`custom_agent`,
+// cujo endpoint vem do cadastro e cuja chave sai do cofre de secrets do
+// servidor — e, quando o modelo pedido estava em `config.allowed_models`,
+// escolhia também o modelo pago.
+//
+// O que estes testes travam:
+//   6. `provider_id` fora do diagnóstico → 400 (PROVIDER_ID_NOT_ALLOWED), ZERO
+//      chamada ao provedor, nenhum consumo e a RPC de papel do diagnóstico não roda.
+//   7. `model` do cliente (mesmo liberado em `config.allowed_models`) não
+//      atravessa: o corpo enviado ao provedor leva o modelo do cadastro.
+// ---------------------------------------------------------------------------
+
+Deno.test("SL-014 caso 6: provider_id do cliente fora do diagnostico → 400 sem chamar o provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_BASE);
+    try {
+      const res = await handleAiProxy(makeRequest({
+        messages: [{ role: "user", content: "ola" }],
+        provider_id: PROVIDER_ID,
+      }));
+      assert(
+        res.status === 400,
+        `provider_id fora do diagnostico tem de ser recusado com 400, veio ${res.status}`,
+      );
+      const corpo = await res.json() as { error?: { code?: string } };
+      assert(
+        corpo.error?.code === "PROVIDER_ID_NOT_ALLOWED",
+        `codigo inesperado na recusa: ${JSON.stringify(corpo)}`,
+      );
+      assert(
+        paraOpenAI(stub.chamadas).length === 0,
+        "o provedor nao pode ser chamado quando o destino vem do corpo do cliente",
+      );
+      assert(insertsDeUso(stub.chamadas).length === 0, "requisicao recusada nao gera consumo");
+      assert(
+        chamadasDePapel(stub.chamadas).length === 0,
+        "a RPC de papel e do diagnostico, nao do fluxo normal",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-014 caso 7: model do cliente nao atravessa o fluxo normal (modelo e do cadastro)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_BASE);
+    try {
+      const res = await handleAiProxy(makeRequest({
+        messages: [{ role: "user", content: "ola" }],
+        // O modelo do cliente esta LIBERADO em `config.allowed_models`: sem a
+        // correcao o proxy o usava — e e isso que deixa este caso vermelho.
+        model: MODELO_DO_CLIENTE,
+      }));
+      assert(res.status === 200, `esperado 200 no fluxo normal, veio ${res.status}`);
+      const enviadas = paraOpenAI(stub.chamadas);
+      assert(enviadas.length === 1, `esperava 1 chamada ao provedor, vieram ${enviadas.length}`);
+      const enviado = enviadas[0].corpo as Record<string, unknown>;
+      assert(
+        enviado.model === MODELO_DO_SERVIDOR,
+        `o modelo tem de ser o do cadastro do provedor (${MODELO_DO_SERVIDOR}), veio ${String(enviado.model)}`,
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});

@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
+  useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
   fetchMultiplixRecipientsTotal,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import {
@@ -40,6 +41,28 @@ const RECIPIENT_STATUS: Record<string, { label: string; tone: 'success' | 'dange
 };
 
 
+/**
+ * F49 — a revalidacao que o `confirm` roda ANTES de congelar devolve erro
+ * NOMEADO (a RPC recusa a materializacao inteira, nunca deixa fila pela metade).
+ * Sem esta traducao o operador leria o codigo cru da edge
+ * ("multiplix_confirm_no_blocks") e nao saberia o que corrigir — e o disparo
+ * continua sem enviar nada enquanto isso.
+ */
+const CONFIRM_BLOCKERS: Record<string, string> = {
+  multiplix_confirm_no_recipients: 'o disparo ficou sem destinatário',
+  multiplix_confirm_no_eligible_recipients: 'nenhum destinatário está apto a receber',
+  multiplix_confirm_no_blocks: 'o disparo ainda não tem bloco de mensagem',
+  multiplix_confirm_connection_required: 'o disparo não tem conexão de envio definida',
+  multiplix_confirm_connection_unavailable: 'a conexão de envio do disparo está desconectada',
+};
+
+function confirmErrorMessage(error: unknown): string {
+  const code = error instanceof MultiplixDispatchEdgeError ? error.code : null;
+  const blocker = code ? CONFIRM_BLOCKERS[code] : undefined;
+  if (blocker) return `Não foi possível iniciar: ${blocker}.`;
+  return error instanceof Error ? error.message : 'Erro ao confirmar disparo';
+}
+
 interface Props { dispatchId: string; onBack: () => void }
 
 export function MultiplixMonitor({ dispatchId, onBack }: Props) {
@@ -61,6 +84,9 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const recipients = recipientsData?.rows ?? [];
   const recipientsTotal = recipientsData?.total ?? null;
   const action = useMultiplixDispatchAction();
+  // F51: o confirm e a transacao que gera a fila por itens; sem ela o worker
+  // (`multiplix-send`, que processa `multiplix_delivery_items`) nao tem o que enviar.
+  const confirmDispatch = useConfirmMultiplixDispatch();
 
   // total_recipients/sent_count/failed_count/outcome_unknown_count nao contam
   // 'skipped' (empresa sem WhatsApp) -- sem isso, um disparo com destinatarios
@@ -123,6 +149,27 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const canStart = isPaused || isDraft;
   const isDone = dispatch.status === 'completed' || dispatch.status === 'completed_with_failures'
     || dispatch.status === 'cancelled' || dispatch.status === 'failed';
+
+  /**
+   * F51/MX01: rascunho NAO se inicia pelo worker. `multiplix-send/start` so
+   * promove o status e chama o motor, que processa `multiplix_delivery_items` —
+   * um rascunho que nunca passou pelo `confirm` tem fila VAZIA: o disparo entra
+   * em 'sending', os destinatarios ficam pendentes e nada e enviado.
+   *
+   * O confirm revalida (F49), congela publico e blocos e materializa os itens na
+   * MESMA transacao; como ele ja deixa o disparo em 'sending' (ou 'scheduled',
+   * quando ha agendamento), o cron leva a fila ao worker — nao ha um segundo
+   * passo de start depois dele. Cliques repetidos mandam a MESMA dispatch_version
+   * revisada: a RPC responde `created: false` e a fila e materializada uma vez so.
+   */
+  const startDraft = async () => {
+    try {
+      await confirmDispatch.mutateAsync({ dispatchId, dispatchVersion: dispatch.dispatch_version });
+      qc.invalidateQueries({ queryKey: ['multiplix-dispatch', dispatchId] });
+    } catch (e) {
+      toast.error(confirmErrorMessage(e));
+    }
+  };
 
   return (
     <div className="space-y-4 min-w-0">
@@ -245,8 +292,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         <AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('cancel'); setConfirmCancel(false); }}>Cancelar disparo</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={confirmResume} onOpenChange={setConfirmResume}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{isPaused ? 'Retomar disparo?' : 'Iniciar disparo?'}</AlertDialogTitle><AlertDialogDescription>{isPaused ? 'O envio continua de onde parou.' : 'Isso envia mensagens reais no WhatsApp para os destinatários deste disparo — sem volta.'}</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={async () => { await runAction('start'); setConfirmResume(false); }}>{isPaused ? 'Retomar' : 'Iniciar agora'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{isPaused ? 'Retomar disparo?' : 'Iniciar disparo?'}</AlertDialogTitle><AlertDialogDescription>{isPaused ? 'O envio continua de onde parou.' : 'Isso congela o público e os blocos revisados, gera a fila do disparo e envia mensagens reais no WhatsApp para os destinatários — sem volta.'}</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction disabled={action.isPending || confirmDispatch.isPending} onClick={async () => { if (isDraft) { await startDraft(); } else { await runAction('start'); } setConfirmResume(false); }}>{isPaused ? 'Retomar' : 'Iniciar agora'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
       </AlertDialog>
     </div>
   );

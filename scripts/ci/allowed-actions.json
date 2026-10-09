@@ -6,6 +6,7 @@
     "supabase/setup-cli",
     "peter-evans/create-pull-request",
     "gitleaks/gitleaks-action",
+    "actions/cache",
     "actions/checkout",
     "actions/github-script",
     "actions/setup-go",

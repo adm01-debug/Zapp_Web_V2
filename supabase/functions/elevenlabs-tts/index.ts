@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, requireAuth } from "../_shared/validation.ts";
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
     // aparecer em log. Tamanho basta para diagnostico.
     log.info(`TTS: ${text.length} caracteres, voice: ${selectedVoiceId}, model: ${selectedModel}`);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}?output_format=mp3_44100_128`,
       {
@@ -49,6 +51,27 @@ Deno.serve(async (req) => {
         }),
       }
     );
+
+    // SL-013 / IA-003 B6 — chamada PAGA ao provedor sem registro é consumo que
+    // não aparece no relatório de custo (IA-058). A unidade cobrada aqui é
+    // CARACTERE, não token: a medição vai em `metadata` e as colunas de token
+    // ficam NULL com `usage_unknown: true` (IA-053 — "não medi" nunca vira 0).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-tts",
+      userId: auth.userId,
+      model: selectedModel,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/text-to-speech",
+        billing_unit: "character",
+        billing_quantity: text.length,
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

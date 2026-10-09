@@ -26,8 +26,31 @@ export interface KpiSnapshot {
   avgCycleTimeDays: number | null;
 }
 
+/**
+ * R2-MOD-058 — regra ÚNICA de "prazo vencido" do módulo de Tarefas. O app grava
+ * dois tipos de prazo (`temHora`) e cada um vence de um jeito:
+ *
+ *  - **com hora marcada** (ex.: hoje às 9h): vence no INSTANTE — às 15h do mesmo
+ *    dia já está atrasado;
+ *  - **de dia inteiro** (23:59 e 00:00 locais, a convenção dos chips
+ *    "Hoje/Amanhã/Próx. semana" e do QuickAdd da Agenda): vence quando o dia
+ *    LOCAL termina — às 15h do mesmo dia ainda é "Hoje".
+ *
+ * Antes o badge do menu comparava o prazo com o instante e o módulo (KPI, seções
+ * e chip) só com o início do dia: a mesma tarefa acendia o menu e não aparecia em
+ * "Atrasadas" na lista que deveria explicá-la. Agora badge, `bucketByDue`
+ * (KPI e grupos), `dueLabel` (o chip `DueChip`) e `dayGroupLabel` chamam esta
+ * função — um veredito só.
+ */
+export function isOverdue(dueDate: string | null | undefined, now: Date = new Date()): boolean {
+  if (dueDate == null) return false;
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime())) return false;   // data inválida não é atraso
+  if (temHora(dueDate)) return due.getTime() < now.getTime();
+  return due < startOfDay(now);
+}
+
 export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsByDue {
-  const todayStart     = startOfDay(now);
   const tomorrowStart  = startOfDay(addDays(now, 1));
   const day2Start      = startOfDay(addDays(now, 2));
   const sevenDaysAgo   = new Date(now.getTime() - 7 * 86_400_000);
@@ -57,7 +80,8 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
   for (const item of active) {
     if (!item.due_date) { noDue.push(item); continue; }
     const due = new Date(item.due_date);
-    if (due < todayStart)    { overdue.push(item);  }
+    // R2-MOD-058: o mesmo veredito do badge (`isOverdue`), não só o dia anterior.
+    if (isOverdue(item.due_date, now)) { overdue.push(item); }
     else if (due < tomorrowStart) { today.push(item); }
     else if (due < day2Start)     { tomorrow.push(item); }
     else                          { upcoming.push(item); }
@@ -188,11 +212,12 @@ export function dueLabel(
   now: Date = new Date()
 ): { label: string; overdue: boolean } {
   const due          = new Date(dueDate);
-  const todayStart   = startOfDay(now);
   const tomorrowStart = startOfDay(addDays(now, 1));
   const day2Start    = startOfDay(addDays(now, 2));
 
-  if (due < todayStart) {
+  // R2-MOD-058: mesmo veredito do badge e do KPI (`isOverdue`) — prazo com hora
+  // marcada que já passou é atraso mesmo sendo hoje.
+  if (isOverdue(dueDate, now)) {
     const dist = formatDistanceToNowStrict(due, { locale: ptBR, addSuffix: false });
     return { label: 'Atrasada ' + dist, overdue: true };
   }
@@ -238,12 +263,11 @@ export interface DayGroup {
  */
 export function dayGroupLabel(dueDate: string, now: Date = new Date()): string {
   const due           = new Date(dueDate);
-  const todayStart    = startOfDay(now);
   const tomorrowStart = startOfDay(addDays(now, 1));
   const day2Start     = startOfDay(addDays(now, 2));
   const sevenDayLimit = startOfDay(addDays(now, 7));
 
-  if (due < todayStart)    return 'Atrasada';
+  if (isOverdue(dueDate, now)) return 'Atrasada';   // R2-MOD-058: mesma regra
   if (due < tomorrowStart) return 'Hoje';
   if (due < day2Start)     return 'Amanhã';
 

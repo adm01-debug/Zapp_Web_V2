@@ -8,12 +8,13 @@ Branch: feat/inbox-360 · Base: 249501ae · Worktree: /workspace/repos/Zapp_Web_
 ## CP5 IA/Notas   [x] sha=555978ca · AiTab(+AiTab.test)/NotesTab(+NotesTab.test) — 11 suites/70 testes typecheck=0 lint-ratchet=1 nova ocorrência falso-positivo (ChatPanel:134 pré-existe em main, deslocada por 3 linhas da nova prop pendingDraft) · grep nomes inventados=0 · commitado manualmente pós-SIGTERM
 ## CP6 Tarefas/Hist[x] sha=555978ca · TasksTab(+TaskCard+TasksTab.test)/HistoryTab(+HistoryTab.test) + useRecommendedProducts + useContactSummaryNote · commitado junto com CP5
 ## CP7 Painel     [–] FORA DE ESCOPO (reescopo 08/09) · zero diff em ContactDetails/contact-details
-## CP8 QA         [ ] shots=11-*.png (8 abas) · geometria _/4 · cores _/6 carvão (lista/painel == before) · func _/18 · mobile _ · light _ · reduced-motion _
+## CP8 QA         [~] 08/10/2026 (V2) · prints do E.1 NÃO DEMONSTRADOS (sem preview/login QA no modo local) · geometria 2/2 na fonte (tabBar 53 — alvo 48±2 do E.2 desatualizado; tabActive 36=h-9) · cores 2/2 nas 8 abas (nenhum literal; só tokens carvão) · func 8/8 (barra == painéis + clique id-a-id) · mobile 2/2 · light 2/2 · reduced-motion 3/3 · 18 checks E2E do E.4: sem equivalente automático · 15 testes novos em `src/components/inbox/chat/__tests__/ConversationTabs.cp8.test.tsx` (`npx vitest run src/components/inbox/chat/__tests__` = 24 arquivos/155 testes verdes) · detalhe e prova por mutação na seção "CP8 — QA das 8 abas" abaixo
 ## CP9 Entrega    [x] PR=https://github.com/adm01-debug/Zapp_Web_V2/pull/286 (#286) · CI=pendente · build=exit 0 em 17s, RealtimeInboxView=86KB (lazy ok) · 70/70 testes · 0 diff lista/header/painel · 0 dados inventados · aguardando revisão de Joaquim
 ## Divergências plano × código
 - `graphify-out/GRAPH_REPORT.md` não existe neste worktree — etapa 1 (graphify explain) pulada, sem grafo para consultar.
 - `git status`/`git log` mostravam "diverged" vs `origin/main` (esperado — branch de feature), mas `origin/feat/inbox-360` == HEAD local (0 commits de diferença nos dois sentidos) — sem retrabalho de sync necessário.
 - Plano cita `VirtualizedConversationList.tsx`; o arquivo real é `VirtualizedRealtimeList.tsx` (mesma função). Itens de conversa usam `role="button"` (div, não `<button>` nativo, comentário no código explica: evita aninhamento de elementos interativos), não `role="option"`/`listitem`. `data-testid="conversation-item"` ainda não existe — será adicionado na Fase 2 (etapa 18); os scripts de QA usam `[role="button"]` como fallback até lá.
+- CP8 — o alvo `tabBar 48±2` do E.2 é anterior ao commit `d99b78dd4` (28/09, "barra de abas do chat com mesma altura do header Detalhes do Contato"): o valor vigente é `h-[53px]` (`ConversationTabs.tsx:46`) e a linha do CP3 (`tabBar=48`) ficou velha depois dele. O QA do CP8 trava 53 — rebaixar para 48 desalinha a barra do header do painel e é regressão.
 - `scripts/ci/typecheck-ratchet.mjs` está quebrado independente do inbox: `runTsc()` só aceita exit 0 ou 1 de `tsc -b --force`, mas esta instalação do TypeScript retorna exit 2 quando há erros de tipo — reproduzido em checkout limpo antes de qualquer mudança da Fase 0. Contornado validando o typecheck real (`tsc -b --force` direto) a cada gate; erro registrado, não corrigido (fora do escopo do plano — não é um arquivo do inbox).
 - App mostra um `WelcomeModal` ("Pular tour") no primeiro load da conta QA que intercepta cliques; não é `.fixed.inset-0` fechável por Escape sozinho — os scripts de QA agora clicam em "Pular tour" antes do loop de Escape.
 - Plano cita `src/hooks/chat/useContactNotes.ts` (novo) para as notas; o hook já existia em `src/hooks/crm/useContactNotes.ts` (consumido por `PrivateNotes.tsx`, com `ContactService.fetchNotes/addNote/deleteNote`). Por diff mínimo e "nunca duplique" (§3.1), estendi o hook e o service existentes em vez de criar um arquivo novo — `category/is_done/due_date`, `updateNote`, `toggleNoteDone`, filtro opcional por categoria, e invalidação de `conversationTabCountsKey` foram adicionados ali.
@@ -25,3 +26,25 @@ Branch: feat/inbox-360 · Base: 249501ae · Worktree: /workspace/repos/Zapp_Web_
 - Composer só na aba Chat (as imagens 3/4/6 mostram composer em outras abas)
 - Sem dados de segmento/porte/localização/CNPJ, "última visualização" e ligações → campos omitidos
 - Tabelas comerciais vazias no banco → empty states em produção até haver dados
+- CP8: os prints (`inbox-11-*.png`, E.1) e os 18 checks funcionais de navegador (E.4) seguem NÃO DEMONSTRADOS — exigem preview com login QA, que o modo V2 local não tem. A prova automática das 8 abas (geometria, cores, funcional de estrutura, mobile, light, reduced-motion) está na seção abaixo.
+
+## CP8 — QA das 8 abas (08/10/2026, Arquitetura V2 — sem preview, sem prints)
+O QA do CP8 nasceu manual (`/workspace/qa/inbox-shot.mjs`, `inbox-measure.mjs`, `inbox-colors.mjs`, `inbox-func.mjs` — fora do repositório) e nunca rodou; no inventário o item ficou como "NÃO VERIFICÁVEL". No modo V2 (local, sem preview e sem login QA) o gate visual não é reproduzível, então o que dava para verificar virou teste automático com a fonte como verdade. Arquivo novo: `src/components/inbox/chat/__tests__/ConversationTabs.cp8.test.tsx` (15 testes).
+
+| dimensão do CP8 | estado | prova |
+|---|---|---|
+| 8 abas na barra, ordem contratada | OK | `ConversationTabs.tsx:20-28` (TABS) · teste "a barra renderiza exatamente os 8 ids contratados" |
+| toda aba da barra tem painel | OK | `ConversationTabContent.tsx:67,84,94,100,106,112,119,125` · teste "cada aba da barra tem um painel correspondente" |
+| geometria `tabBar` | OK 53px (alvo 48±2 do E.2 desatualizado) | `ConversationTabs.tsx:46` |
+| geometria `tabActive` | OK 36px (`h-9`) | `ConversationTabs.tsx:67` |
+| cores carvão | OK — nenhum literal de cor; só tokens | `ConversationTabs.tsx:46,70-71,76,80,93` · teste "a barra não usa literal de cor" |
+| mobile (sem overflow horizontal) | OK — rótulo só a partir de `2xl`, barra com scroll próprio | `ConversationTabs.tsx:51,86` |
+| light | OK — `--inbox-panel-bg` tem valor nos dois modos | `src/styles/tokens.css:116` (`:root`) e `:414` (`.dark`) |
+| reduced-motion | OK — pílula estática, sem `motion.span` | `ConversationTabs.tsx:41,74-83` + `src/styles/accessibility.css:64-71` |
+| prints `inbox-11-*.png` (E.1) | NÃO DEMONSTRADO | sem preview/login QA no modo V2 |
+| 18 checks E2E (E.4) | sem equivalente automático | dependem de app + banco local (Apêndice E.4 do plano) |
+
+Prova por mutação (`.tmp/mutacao-cp8.sh`, 6 defeitos plantados; baseline verde, todos os 6 VERMELHOS):
+1. id de aba trocado na barra → 5 falhas; 2. `h-[53px]` → `h-12` → 1 falha; 3. `bg-inbox-panel` → hex literal → 2 falhas; 4. rótulo sem `hidden 2xl:inline` → 1 falha; 5. painel da aba `files` removido → 1 falha; 6. `useReducedMotion` ignorado → 2 falhas.
+
+Comando: `npx vitest run src/components/inbox/chat/__tests__` → 24 arquivos / 155 testes verdes (15 deles novos).

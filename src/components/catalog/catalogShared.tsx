@@ -27,6 +27,14 @@ export const formatPrice = (price: number) =>
 /** "1573 un." — plural simples (o domínio não usa singular/plural PT completo aqui). */
 export const formatStock = (qty: number) => `${qty} un.`;
 
+/**
+ * R2-MOD-048 — rótulos para dado ausente da snapshot de favorito
+ * (`catalog_favorites` não guarda preço nem estoque). Um único literal para o
+ * card, o detalhe e o envio não divergirem ao dizer que o valor é desconhecido.
+ */
+export const UNKNOWN_PRICE_LABEL = 'Preço a confirmar';
+export const UNKNOWN_STOCK_LABEL = 'Estoque a confirmar';
+
 export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = 'none';
   const fallback = e.currentTarget.nextElementSibling as HTMLElement;
@@ -976,6 +984,23 @@ export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSel
 
 // ─── favoriteToProduct (CT-16) ───────────────────────────────────────────────
 /**
+ * R2-MOD-048 — produto que veio da snapshot de um favorito.
+ *
+ * `catalog_favorites` guarda só nome/SKU/imagem: preço e estoque NÃO existem
+ * nesse registro. O zero que `favoriteToProduct` escreve em
+ * `sale_price`/`stock_quantity` é preenchimento do tipo, nunca dado comercial
+ * — daí a marca `snapshotOnly`, lida pelo card, pelo detalhe e pelo envio para
+ * mostrar "desconhecido" em vez de "R$ 0,00"/"Esgotado" e para só liberar o
+ * envio depois de hidratar o produto completo (useExternalProduct).
+ */
+export type FavoriteSnapshotProduct = ExternalProduct & { snapshotOnly: true };
+
+/** `true` quando o produto é a snapshot de um favorito (preço/estoque ausentes). */
+export function isSnapshotProduct(product: ExternalProduct): boolean {
+  return (product as Partial<FavoriteSnapshotProduct>).snapshotOnly === true;
+}
+
+/**
  * Constrói um `ExternalProduct` mínimo a partir de um `CatalogFavorite`
  * (a snapshot de catalog_favorites não guarda preço/estoque/variantes).
  * O `SendProductDialog` busca o produto completo pelo id quando precisar
@@ -984,11 +1009,14 @@ export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSel
  * Ficava duplicado em CatalogFavoritesTab; subiu para cá no CT-16, quando o
  * dialog do chat passou a listar favoritos também.
  */
-export function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {
+export function favoriteToProduct(fav: CatalogFavorite): FavoriteSnapshotProduct {
   return {
     id: fav.product_id,
     name: fav.product_name,
     sku: fav.product_sku,
+    // R2-MOD-048 — marca a snapshot; os dois zeros abaixo são só o formato do
+    // tipo e nunca chegam à tela nem à mensagem.
+    snapshotOnly: true,
     sale_price: 0,
     stock_quantity: 0,
     is_stockout: false,
@@ -1016,5 +1044,5 @@ export function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {
     min_quantity: null,
     ncm_code: null,
     suggested_price: null,
-  } as unknown as ExternalProduct;
+  } as unknown as FavoriteSnapshotProduct;
 }

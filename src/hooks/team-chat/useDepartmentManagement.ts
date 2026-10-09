@@ -37,22 +37,17 @@ export interface DepartmentWhatsAppCredentials {
 const WHATSAPP_MODES = ['none', 'evolution', 'official'] as const;
 
 /**
- * A RPC `get_department_whatsapp_credentials` devolve jsonb com as chaves do banco
- * (`whatsapp_mode`, `whatsapp_api_key`, `whatsapp_instance_id`), nao com o formato do
- * hook. Devolver o payload cru deixava `credentials.mode` indefinido e a tela do
- * departamento nunca carregava o modo salvo (familia TC-015: implementacao que nao
- * corresponde ao contrato atual). A URL nao e exposta pela RPC — o campo fica nulo
+ * A RPC `get_department_whatsapp_mode` devolve TEXTO puro — so o modo salvo
+ * (`none` | `evolution` | `official`), nunca a chave da API (a RPC irma de
+ * credenciais e service_role-only e o usuario logado nao pode executa-la).
+ * Qualquer valor fora do enum cai em 'none', inclusive o NULL de departamento
+ * inexistente. A URL nao e exposta pela RPC — `evolution_url` fica sempre nulo
  * para o formulario nao preencher nada.
  */
-export function toDepartmentWhatsAppCredentials(payload: unknown): DepartmentWhatsAppCredentials {
-  const row = (Array.isArray(payload) ? payload[0] : payload) as Record<string, unknown> | null | undefined;
-  if (!row) return { mode: 'none', evolution_url: null };
-  const raw = row.whatsapp_mode;
-  const mode = (WHATSAPP_MODES as readonly string[]).includes(raw as string)
+export function toDepartmentWhatsAppMode(raw: unknown): DepartmentWhatsAppCredentials['mode'] {
+  return (WHATSAPP_MODES as readonly string[]).includes(raw as string)
     ? (raw as DepartmentWhatsAppCredentials['mode'])
     : 'none';
-  const url = row.evolution_url;
-  return { mode, evolution_url: typeof url === 'string' ? url : null };
 }
 
 /**
@@ -127,9 +122,9 @@ export function useDepartmentWhatsAppCredentials(departmentId: string) {
     queryKey: ['departmentChat', 'whatsapp', departmentId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_department_whatsapp_credentials', { p_department_id: departmentId });
+        .rpc('get_department_whatsapp_mode', { p_department_id: departmentId });
       if (error) throw error;
-      return toDepartmentWhatsAppCredentials(data);
+      return { mode: toDepartmentWhatsAppMode(data), evolution_url: null };
     },
     staleTime: 60 * 1000,
   });

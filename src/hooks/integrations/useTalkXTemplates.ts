@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase } from '@/integrations/supabase/client';
+import { SUPABASE_URL } from '@/config/supabase';
 import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
@@ -175,8 +176,10 @@ export function useTalkXTemplates() {
     templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string; customVariables?: string[];
   }) => {
     const { data: { session } } = await supabase.auth.getSession();
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-    const res = await fetch(`${supabaseUrl}/functions/v1/talkx-send`, {
+    // SEC-FE-01: a URL vem de @/config/supabase (a mesma fonte do client.ts). NÃO usar
+    // VITE_SUPABASE_URL: a hospedagem a injeta apontando para outro projeto, e o JWT da
+    // sessão não pode sair para outra origem.
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/talkx-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone, customVariables }),

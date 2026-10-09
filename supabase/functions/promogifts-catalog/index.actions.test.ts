@@ -614,3 +614,80 @@ Deno.test('CT-35 list_products (compact e completo) pede full_path_readable no e
     assertCategoriaEmbedComFullPath(argOf(productsCall, 'select', 0), `list_products compact=${compact}`);
   }
 });
+
+// ─── CT-73: payload enxuto por PADRÃO na lista ─────────────────
+
+/**
+ * Coluna isolada na string de select do PostgREST: exige fronteira
+ * (início/vírgula/espaço antes; vírgula/espaço/fim depois). Sem isso
+ * `short_description` casaria com `description` e `color_swatches` com
+ * `colors` — e o teste passaria com o payload errado.
+ */
+function temColuna(selectExpr: unknown, coluna: string): boolean {
+  assert(typeof selectExpr === 'string', `select do produto precisa ser string — recebido ${typeof selectExpr}`);
+  return new RegExp(`(^|[\\s,])${coluna}([\\s,]|$)`).test(selectExpr);
+}
+
+/**
+ * CT-73 — a página da GRADE tem de sair enxuta SEM o chamador pedir nada.
+ *
+ * A medição de 02/10/2026 pegou 81,5 KB por página de 24 contra o teto de
+ * < 30 KB, e o pedido medido é o da grade: ela chama `list_products` sem
+ * `compact` (`ExternalProductManagement.tsx:519-532` →
+ * `useExternalCatalog.ts:222-230`). Com o default antigo (`false`) esse
+ * caminho — o PADRÃO — pagava o payload completo.
+ */
+Deno.test('CT-73 list_products sem `compact` já pede o payload enxuto (grade)', async () => {
+  const ext = new MockCatalogClient({
+    products: [{ data: [{ id: 'p1', name: 'Caneca' }], error: null, count: 1 }],
+  });
+  const { status } = await invoke({ action: 'list_products', params: { limit: 24, offset: 0 } }, deps(ext));
+  assertEquals(status, 200);
+
+  const productsCall = ext.calls.find((c) => c.table === 'products');
+  assertExists(productsCall, 'list_products precisa consultar products');
+  const selectExpr = argOf(productsCall, 'select', 0);
+
+  // Os campos pesados ficam no payload completo do detalhe (get_product).
+  const pesados = [
+    'description', 'images', 'tags', 'engraving_description', 'engraving_type',
+    'dimensions_display', 'weight_g', 'combined_sizes', 'product_type', 'supply_mode',
+    'origin_country', 'has_gift_box', 'ncm_code', 'capacity_ml', 'order_count',
+    'view_count', 'updated_at', 'main_category_id',
+  ];
+  for (const pesado of pesados) {
+    assert(
+      !temColuna(selectExpr, pesado),
+      `payload enxuto não pode trazer \`${pesado}\` — select=${String(selectExpr)}`,
+    );
+  }
+
+  // O que a grade/lista realmente lê — sem estes a tela quebra.
+  const necessarios = [
+    'id', 'name', 'sku', 'sale_price', 'suggested_price', 'primary_image_url',
+    'colors', 'color_swatches', 'materials', 'short_description', 'stock_quantity',
+  ];
+  for (const coluna of necessarios) {
+    assert(
+      temColuna(selectExpr, coluna),
+      `payload enxuto precisa trazer \`${coluna}\` — select=${String(selectExpr)}`,
+    );
+  }
+});
+
+Deno.test('CT-73 `compact: false` continua servindo o payload completo (opt-in)', async () => {
+  const ext = new MockCatalogClient({
+    products: [{ data: [{ id: 'p1', name: 'Caneca' }], error: null, count: 1 }],
+  });
+  const { status } = await invoke(
+    { action: 'list_products', params: { limit: 10, offset: 0, compact: false } },
+    deps(ext),
+  );
+  assertEquals(status, 200);
+
+  const productsCall = ext.calls.find((c) => c.table === 'products');
+  assertExists(productsCall, 'list_products precisa consultar products');
+  const selectExpr = argOf(productsCall, 'select', 0);
+  assert(temColuna(selectExpr, 'description'), `compact:false precisa manter o payload completo — select=${String(selectExpr)}`);
+  assert(temColuna(selectExpr, 'images'), `compact:false precisa manter o payload completo — select=${String(selectExpr)}`);
+});

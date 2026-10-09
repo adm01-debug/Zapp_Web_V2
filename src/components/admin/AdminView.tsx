@@ -27,6 +27,20 @@ const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_ag
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
 const roleColorMap = { admin: 'text-warning', supervisor: 'text-info', agent: 'text-muted-foreground', special_agent: 'text-accent-foreground' } as const;
 
+type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
+
+// SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
+// nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
+// grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e
+// gravada em `user_service_accounts` sem nenhum consumidor: fica visível, mas desligada,
+// até a integração real existir.
+const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string; available: boolean }> = [
+  { key: 'google_sheets', label: 'Google Sheets', available: true },
+  { key: 'google_docs', label: 'Google Docs', available: true },
+  { key: 'google_calendar', label: 'Google Calendar', available: false },
+  { key: 'google_drive', label: 'Google Drive', available: true },
+];
+
 export function AdminView() {
   const { isAdmin, isSupervisor, loading: roleLoading } = useUserRole();
   const [activeTab, setActiveTab] = useState<'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis'>('users');
@@ -236,9 +250,18 @@ export function AdminView() {
               <div className="space-y-3 rounded-lg border border-secondary/30 p-3">
                 <Label className="text-sm font-medium">Serviços Google vinculados</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {([{ key: 'google_sheets', label: 'Google Sheets' }, { key: 'google_docs', label: 'Google Docs' }, { key: 'google_calendar', label: 'Google Calendar' }, { key: 'google_drive', label: 'Google Drive' }] as const).map(({ key, label }) => (
+                  {googleServiceOptions.map(({ key, label, available }) => (
                     <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Switch checked={newUserGoogleServices[key]} onCheckedChange={(checked) => setNewUserGoogleServices(prev => ({ ...prev, [key]: checked }))} />{label}
+                      <Switch
+                        checked={newUserGoogleServices[key]}
+                        onCheckedChange={(checked) => setNewUserGoogleServices(prev => ({ ...prev, [key]: checked }))}
+                        disabled={!available}
+                        aria-describedby={available ? undefined : `${key}-indisponivel`}
+                      />
+                      {label}
+                      {!available && (
+                        <span id={`${key}-indisponivel`} className="text-xs text-muted-foreground">(em desenvolvimento)</span>
+                      )}
                     </label>
                   ))}
                 </div>

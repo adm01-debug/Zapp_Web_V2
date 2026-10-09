@@ -30,7 +30,7 @@ import {
   ChevronLeft, ChevronRight, Sparkles, TrendingUp, Star, Copy, Store,
 } from 'lucide-react';
 import { ExternalProduct, useExternalProduct, useCatalogFavorites } from '@/hooks/integrations/useExternalCatalog';
-import { formatPrice, ProductThumb, handleImageError, MetaTile, SectionCard, ColorSwatch, CATALOG_FOCUS_VISIBLE, productImageAlt } from './catalogShared';
+import { formatPrice, ProductThumb, handleImageError, MetaTile, SectionCard, ColorSwatch, CATALOG_FOCUS_VISIBLE, productImageAlt, isSnapshotProduct, UNKNOWN_PRICE_LABEL, UNKNOWN_STOCK_LABEL } from './catalogShared';
 import { groupVariantsByColor } from './sendProductUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -249,6 +249,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
    * fechar o painel; abrir outro card muda `product.id` e descarta o override.
    */
   const [nav, setNav] = useState<{ baseId: string; idx: number } | null>(null);
+  /**
+   * R2-MOD-046 — o override de navegação ‹ › não pode sobreviver ao
+   * fechamento do painel: o dialog fica montado (o caller só alterna `open`),
+   * então reabrir o MESMO cartão A mantinha `nav.baseId === 'A'` e o painel
+   * voltava no produto B navegado na visita anterior. Ajuste de estado no
+   * render (mesmo padrão do `focusApplied` da galeria) zera o override quando
+   * `open` muda: cada abertura começa pelo produto do cartão clicado.
+   */
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    setNav(null);
+  }
   const baseIdx = products ? products.findIndex((p) => p.id === product.id) : -1;
   const activeIdx = nav && nav.baseId === product.id ? nav.idx : baseIdx;
   const shown = products && activeIdx >= 0 && activeIdx < products.length ? products[activeIdx] : product;
@@ -258,6 +271,12 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
     enabled: open && needsFullProduct,
   });
   const dp: ExternalProduct = fetchedProduct ?? shown;
+  /**
+   * R2-MOD-048 — enquanto `dp` é a snapshot de favorito (sem preço/estoque) o
+   * painel mostra que o dado é desconhecido, em vez de "R$ 0,00" e "0 em
+   * estoque"; assim que o produto completo chega, volta aos valores reais.
+   */
+  const snapshotOnly = isSnapshotProduct(shown) && !fetchedProduct;
 
   // E46: favorito via hook Supabase (useCatalogFavorites já existe em useExternalCatalog.ts)
   const { isFavorite, toggle: toggleFavorite } = useCatalogFavorites();
@@ -419,14 +438,16 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
             {/* preço + estoque */}
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-2xl font-bold text-foreground tabular-nums">{formatPrice(dp.sale_price)}</p>
-                {dp.suggested_price && dp.suggested_price !== dp.sale_price && (
+                <p className="text-2xl font-bold text-foreground tabular-nums">{snapshotOnly ? UNKNOWN_PRICE_LABEL : formatPrice(dp.sale_price)}</p>
+                {!snapshotOnly && dp.suggested_price && dp.suggested_price !== dp.sale_price && (
                   <p className="text-xs text-muted-foreground">Sugerido: {formatPrice(dp.suggested_price)}</p>
                 )}
               </div>
-              {dp.is_stockout
-                ? <Badge variant="destructive">Sem estoque</Badge>
-                : <Badge variant="outline" className="text-success border-success/50 text-xs">{dp.stock_quantity.toLocaleString('pt-BR')} em estoque</Badge>
+              {snapshotOnly
+                ? <Badge variant="outline" className="text-muted-foreground text-xs">{UNKNOWN_STOCK_LABEL}</Badge>
+                : dp.is_stockout
+                  ? <Badge variant="destructive">Sem estoque</Badge>
+                  : <Badge variant="outline" className="text-success border-success/50 text-xs">{dp.stock_quantity.toLocaleString('pt-BR')} em estoque</Badge>
               }
             </div>
 

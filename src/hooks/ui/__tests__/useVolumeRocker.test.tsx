@@ -7,8 +7,9 @@ import { useVolumeRocker } from '@/hooks/ui/useVolumeRocker';
  * Teste DIRETO do hook de interação compartilhado pelos dois controles de volume.
  *
  * Os testes de componente (`SoundVolumeControl`, `MediaVolume`) cobrem o caminho
- * feliz; a MATRIZ DE OPÇÕES (`enabled`/`wheelEnabled`) e o cancelamento do clique
- * longo só aparecem aqui — sem eles, desligar a roda no controle das mídias, por
+ * feliz; a MATRIZ DE OPÇÕES (`enabled`/`wheelEnabled`), o fechamento do painel
+ * (clique fora, Esc, perda de foco com devolução do foco) e o comportamento no
+ * TOQUE só aparecem aqui — sem eles, desligar a roda no controle das mídias, por
  * exemplo, passava despercebido.
  */
 const onAdjust = vi.fn();
@@ -19,24 +20,36 @@ interface Opcoes {
   wheelEnabled?: boolean;
 }
 
-/** Host mínimo: o `rootRef` precisa estar num elemento real para a roda ser ouvida. */
+/**
+ * Host mínimo: o `rootRef` precisa estar num elemento real para a roda ser ouvida.
+ * O painel (`data-volume-panel`) é renderizado FORA do `rootRef`, como no app (o
+ * Radix monta o conteúdo do popover num portal): é o que separa "dentro" de "fora".
+ */
 function Hoste({ enabled, wheelEnabled }: Opcoes) {
   const rootRef = useRef<HTMLSpanElement>(null);
   const rocker = useVolumeRocker({ step: 5, onAdjust, onToggleMute, rootRef, enabled, wheelEnabled });
 
   return (
-    <span ref={rootRef} data-testid="root">
-      <button
-        data-testid="gatilho"
-        onClick={rocker.handleTriggerClick}
-        onPointerDown={rocker.handlePointerDown}
-        onPointerUp={rocker.clearLongPress}
-        onPointerLeave={rocker.clearLongPress}
-        onKeyDown={rocker.handleTriggerKeyDown}
-      >
-        {rocker.open ? 'aberto' : 'fechado'}
-      </button>
-    </span>
+    <div>
+      <span ref={rootRef} data-testid="root">
+        <button
+          data-testid="gatilho"
+          onClick={rocker.handleTriggerClick}
+          onPointerDown={rocker.handlePointerDown}
+          onPointerUp={rocker.clearLongPress}
+          onPointerLeave={rocker.clearLongPress}
+          onKeyDown={rocker.handleTriggerKeyDown}
+        >
+          {rocker.open ? 'aberto' : 'fechado'}
+        </button>
+      </span>
+      {rocker.open && (
+        <div data-volume-panel data-testid="painel">
+          <button data-testid="controle-do-painel">ajustar</button>
+        </div>
+      )}
+      <input data-testid="fora" aria-label="Campo de fora" />
+    </div>
   );
 }
 
@@ -50,7 +63,13 @@ const roda = (deltaY: number) => {
   return evento;
 };
 
-describe('useVolumeRocker — matriz de opções e dedup do clique longo', () => {
+/** Abre o painel pelo caminho novo (clique), que é o do usuário. */
+const abrir = () => {
+  fireEvent.click(gatilho());
+  expect(gatilho()).toHaveTextContent('aberto');
+};
+
+describe('useVolumeRocker — painel, matriz de opções e fechamento', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -76,6 +95,7 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
 
   it('com wheelEnabled=false a roda não ajusta nada (e a página pode rolar), mas as setas continuam', () => {
     render(<Hoste wheelEnabled={false} />);
+    abrir();
 
     const evento = roda(-100);
     expect(onAdjust).not.toHaveBeenCalled();
@@ -85,8 +105,9 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
     expect(onAdjust).toHaveBeenCalledWith(5);
   });
 
-  it('a roda ajusta ±step e impede a rolagem da página junto', () => {
+  it('a roda ajusta ±step (com o painel aberto) e impede a rolagem da página junto', () => {
     render(<Hoste />);
+    abrir();
 
     expect(roda(-100).defaultPrevented).toBe(true);
     expect(onAdjust).toHaveBeenLastCalledWith(5);
@@ -94,11 +115,36 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
     expect(onAdjust).toHaveBeenLastCalledWith(-5);
   });
 
-  it('clique curto alterna o mudo; as setas e o M seguem o mesmo contrato', () => {
+  it('a roda NÃO ajusta com o painel fechado — rolar a sidebar não muda o volume (B5)', () => {
+    render(<Hoste />);
+
+    const evento = roda(-100);
+    expect(onAdjust).not.toHaveBeenCalled();
+    expect(evento.defaultPrevented).toBe(false);
+  });
+
+  it('o clique ABRE o painel e não alterna o mudo (D01)', () => {
     render(<Hoste />);
 
     fireEvent.click(gatilho());
-    expect(onToggleMute).toHaveBeenCalledTimes(1);
+
+    expect(gatilho()).toHaveTextContent('aberto');
+    expect(onToggleMute).not.toHaveBeenCalled();
+  });
+
+  it('com o painel aberto o clique no gatilho mantém o painel aberto (não alterna o mudo)', () => {
+    render(<Hoste />);
+    abrir();
+
+    fireEvent.click(gatilho());
+
+    expect(gatilho()).toHaveTextContent('aberto');
+    expect(onToggleMute).not.toHaveBeenCalled();
+  });
+
+  it('as setas e o M seguem o mesmo contrato, com o painel aberto', () => {
+    render(<Hoste />);
+    abrir();
 
     fireEvent.keyDown(gatilho(), { key: 'ArrowUp' });
     expect(onAdjust).toHaveBeenLastCalledWith(5);
@@ -106,7 +152,7 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
     expect(onAdjust).toHaveBeenLastCalledWith(-5);
 
     fireEvent.keyDown(gatilho(), { key: 'M' });
-    expect(onToggleMute).toHaveBeenCalledTimes(2);
+    expect(onToggleMute).toHaveBeenCalledTimes(1);
   });
 
   it('clique longo (400 ms) abre o slider', () => {
@@ -124,20 +170,35 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
     expect(gatilho()).toHaveTextContent('aberto');
   });
 
-  it('o clique que fecha o clique longo NÃO alterna o mudo (dedup)', () => {
+  it('no TOQUE, soltar o dedo depois do clique longo NÃO fecha o painel (B2)', () => {
     render(<Hoste />);
 
-    fireEvent.pointerDown(gatilho());
+    fireEvent.pointerDown(gatilho(), { pointerType: 'touch' });
     act(() => {
       vi.advanceTimersByTime(400);
     });
+    expect(gatilho()).toHaveTextContent('aberto');
+
+    // O navegador dispara o `pointerup` e, depois, o `click` sintético do toque.
+    fireEvent.pointerUp(gatilho(), { pointerType: 'touch' });
     fireEvent.click(gatilho());
 
-    expect(onToggleMute).not.toHaveBeenCalled();
     expect(gatilho()).toHaveTextContent('aberto');
+    expect(onToggleMute).not.toHaveBeenCalled();
   });
 
-  it('soltar o ponteiro antes dos 400 ms cancela o clique longo (e o próximo clique muta normal)', () => {
+  it('no TOQUE, o toque curto também abre o painel — antes ele só mutava (B1)', () => {
+    render(<Hoste />);
+
+    fireEvent.pointerDown(gatilho(), { pointerType: 'touch' });
+    fireEvent.pointerUp(gatilho(), { pointerType: 'touch' });
+    fireEvent.click(gatilho());
+
+    expect(gatilho()).toHaveTextContent('aberto');
+    expect(onToggleMute).not.toHaveBeenCalled();
+  });
+
+  it('soltar o ponteiro antes dos 400 ms cancela o clique longo (e o clique seguinte abre o painel)', () => {
     render(<Hoste />);
 
     fireEvent.pointerDown(gatilho());
@@ -152,7 +213,8 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
     expect(gatilho()).toHaveTextContent('fechado');
 
     fireEvent.click(gatilho());
-    expect(onToggleMute).toHaveBeenCalledTimes(1);
+    expect(gatilho()).toHaveTextContent('aberto');
+    expect(onToggleMute).not.toHaveBeenCalled();
   });
 
   it('Enter abre o slider e cancela o clique nativo do botão (não muta)', () => {
@@ -175,5 +237,59 @@ describe('useVolumeRocker — matriz de opções e dedup do clique longo', () =>
 
     fireEvent.keyDown(gatilho(), { key: 'ArrowUp' });
     expect(onAdjust).toHaveBeenCalledWith(5);
+  });
+
+  it('Esc fecha o painel e devolve o foco ao gatilho (S14/S15)', () => {
+    render(<Hoste />);
+    abrir();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(gatilho()).toHaveTextContent('fechado');
+    expect(document.activeElement).toBe(gatilho());
+  });
+
+  it('clique FORA fecha o painel devolvendo o foco ao gatilho; clique no painel não fecha', () => {
+    render(<Hoste />);
+    abrir();
+
+    fireEvent.pointerDown(screen.getByTestId('controle-do-painel'));
+    expect(gatilho()).toHaveTextContent('aberto');
+
+    fireEvent.pointerDown(screen.getByTestId('fora'));
+    expect(gatilho()).toHaveTextContent('fechado');
+    expect(document.activeElement).toBe(gatilho());
+  });
+
+  it('clique no body fecha o painel mesmo quando o portal está dentro do body', () => {
+    render(<Hoste />);
+    abrir();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(gatilho()).toHaveTextContent('fechado');
+    expect(document.activeElement).toBe(gatilho());
+  });
+
+  it('perda de foco fecha o painel (sem puxar o foco de volta de quem o moveu)', () => {
+    render(<Hoste />);
+    abrir();
+
+    const fora = screen.getByTestId('fora');
+    act(() => {
+      fora.focus();
+    });
+
+    expect(gatilho()).toHaveTextContent('fechado');
+    expect(document.activeElement).toBe(fora);
+  });
+
+  it('fechar o painel com o foco indo para fora NÃO alterna o mudo', () => {
+    render(<Hoste />);
+    abrir();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(onToggleMute).not.toHaveBeenCalled();
   });
 });

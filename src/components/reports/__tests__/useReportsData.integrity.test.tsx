@@ -90,7 +90,17 @@ describe('useReportsData — totais e ausência de dados (R2-MOD-018/019)', () =
     expect(result.current.stats.totalContacts).toBe(h.totalContacts);
     expect(result.current.isIncomplete).toBe(false);
     expect(result.current.isError).toBe(false);
-  });
+    // Orçamento POR TESTE com causa medida (não é retry nem asserção afrouxada: o
+    // `waitFor` e os valores esperados continuam os mesmos). Este teste deixa o hook
+    // fazer o trabalho REAL de agrupamento: `chartData` roda `dayKeysOf(30 dias)` ×
+    // 1500 mensagens = 45.000 chamadas de `appDayKey()`, que cria um
+    // `Intl.DateTimeFormat` novo a cada chamada — 6.119 ms medidos na máquina ociosa
+    // (`vitest --reporter=json`). O orçamento padrão de 15 s é 2,5x o custo real:
+    // nos logs do integrador este teste reprovou 7 vezes com "Test timed out in
+    // 15000ms" e, no mesmo log, o vitest registrou testes de outros três arquivos
+    // com 62,8 s / 61,3 s / 54,4 s — a máquina chega a ~4x o orçamento atual. 120 s é
+    // o valor que o repositório já usa para teste pesado (singu-adapter.bundle).
+  }, 120_000);
 
   it('falha de leitura é exposta como erro, não como métricas zero confirmadas', async () => {
     h.state.messagesFail = true;
