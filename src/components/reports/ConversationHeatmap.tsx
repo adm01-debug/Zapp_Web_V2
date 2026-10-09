@@ -97,7 +97,7 @@ export function ConversationHeatmap() {
             Heatmap de Volume
           </CardTitle>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-28 h-7 text-xs">
+            <SelectTrigger className="w-28 h-7 text-xs" aria-label="Período">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
