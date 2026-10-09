@@ -8,6 +8,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { REASON_LABEL } from '../capabilities';
+import { canalDaNotificacao, executorDaAcao } from '../acaoDoAlerta';
 import type { UpsertMyCallInput, UpsertMyCallResult } from '../persistence';
 import {
   MENSAGEM_ATENDA_WHATSAPP,
@@ -156,5 +157,53 @@ describe('WhatsAppCallAdapter.reject (T24 — ramo 2: recusar/Ignorar)', () => {
     // D7=b é recusa LOCAL, só a gravação local acontece.
     expect(persistir).toHaveBeenCalledTimes(1);
     expect(abrirConversa).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * SL-247 — o que a "seleção por canal" é de fato em volta deste adapter.
+ *
+ * O item do inventário nasceu do comentário do campo `channel` ("habilita a
+ * seleção por canal numa etapa futura"): o que se prova aqui é o estado REAL,
+ * para o campo não prometer o que o código não faz.
+ *
+ *  1. o campo `channel` do adapter e o canal que ele grava são o MESMO valor
+ *     (`whatsapp`) — uma fonte só;
+ *  2. a seleção por canal que existe (roteamento do alerta, R2-CALL-007) manda
+ *     `whatsapp` para este contrato local e `voip` para a máquina da sessão —
+ *     nenhum caminho cruza os canais;
+ *  3. nenhuma seleção de SAÍDA alcança este adapter: o canal não disca
+ *     (`whatsapp_no_outbound`, já fixado no `describe` do `dial` acima).
+ */
+describe('seleção por canal (SL-247)', () => {
+  it('o canal que o adapter grava é o mesmo que o campo `channel` dele declara', async () => {
+    const { ports, persistir } = montarPortas();
+    const adapter = new WhatsAppCallAdapter(ports);
+
+    expect(adapter.channel).toBe('whatsapp');
+
+    await adapter.accept(CHAMADA);
+    const noAtendimento = inputPersistido(persistir);
+    expect(noAtendimento.channel).toBe('whatsapp');
+    expect(noAtendimento.channel).toBe(adapter.channel);
+
+    persistir.mockClear();
+    await adapter.reject(CHAMADA);
+    const naRecusa = inputPersistido(persistir);
+    expect(naRecusa.channel).toBe('whatsapp');
+    expect(naRecusa.channel).toBe(adapter.channel);
+  });
+
+  it('a seleção do alerta manda o canal whatsapp para este contrato e o voip para o SIP', () => {
+    // Fonte: `acaoDoAlerta.canalDaNotificacao`/`executorDaAcao` (R2-CALL-007).
+    const canalWhatsApp = canalDaNotificacao('conexao-wa-1');
+    expect(canalWhatsApp).toBe('whatsapp');
+    // O executor do canal whatsapp é o contrato local (este adapter)...
+    expect(executorDaAcao(canalWhatsApp)).toBe('whatsapp');
+
+    const canalVoip = canalDaNotificacao(null);
+    expect(canalVoip).toBe('voip');
+    // ...e o do voip nunca é este adapter: vai para a máquina da sessão.
+    expect(executorDaAcao(canalVoip)).toBe('sip');
   });
 });
