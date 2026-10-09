@@ -227,19 +227,29 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
   // inteira) e a lista exibida durante a busca é o resultado dela.
   const searchTerm = debouncedSearchQuery.trim();
-  const [serverSearch, setServerSearch] = useState<{ term: string; results: TeamMessage[] } | null>(null);
+  // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
+  // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
+  // termo digitado continua, então um registro só vale para a tela se a conversa
+  // e o termo atuais forem os que o produziram.
+  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);
   // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
   // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
   // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
   // SEPARADO (e preso ao termo que o produziu), para a tela poder dizer a verdade.
-  const [serverSearchError, setServerSearchError] = useState<{ term: string; message: string } | null>(null);
+  // A falha também é presa à conversa que a produziu: com o mesmo termo digitado,
+  // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
+  // ainda está em voo.
+  const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!searchTerm) return;
+    // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
+    // que diz se a resposta ainda interessa ao que está na tela.
+    const conversationId = conversation.id;
     let cancelado = false;
     void (async () => {
       const { data, error } = await supabase.rpc('search_team_messages', {
-        p_conversation_id: conversation.id,
+        p_conversation_id: conversationId,
         p_query: searchTerm,
         p_limit: 50,
       });
@@ -250,7 +260,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         // falha do servidor não. Limpar o resultado anterior evita que ele seja
         // exibido como se fosse a resposta deste termo.
         setServerSearch(null);
-        setServerSearchError({ term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
+        setServerSearchError({ conversationId, term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
         return;
       }
       // Busca que deu certo limpa o erro anterior: o painel é o MESMO componente
@@ -264,10 +274,11 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         id: string; sender_id: string; content: string; created_at: string; sender_name: string | null;
       }[];
       setServerSearch({
+        conversationId,
         term: searchTerm,
         results: rows.map(row => ({
           id: row.id,
-          conversation_id: conversation.id,
+          conversation_id: conversationId,
           sender_id: row.sender_id,
           content: row.content,
           message_type: 'text',
@@ -291,15 +302,24 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // anunciar um resultado que ainda não existe.
   // A falha do servidor tem precedência: com erro não se está mais "buscando" (a
   // resposta chegou) e o que a tela mostra é a falha, não um resultado.
-  const searchError = searchActive && serverSearchError?.term === searchTerm
+  // Registro de OUTRA conversa (ou de outro termo) não vale para o que está na
+  // tela: com o mesmo termo digitado, o aviso e os resultados que a busca da
+  // conversa anterior deixou não podem aparecer na conversa atual enquanto a
+  // busca dela ainda está pendente.
+  const serverSearchMatches = serverSearch?.conversationId === conversation.id
+    && serverSearch?.term === searchTerm;
+  const searchError = searchActive
+    && serverSearchError?.conversationId === conversation.id
+    && serverSearchError.term === searchTerm
     ? serverSearchError.message
     : null;
-  const isSearching = searchActive && !searchError && serverSearch?.term !== searchTerm;
+  const isSearching = searchActive && !searchError && !serverSearchMatches;
 
   const filteredMessages = useMemo(() => {
     if (!searchActive) return messages;
-    return serverSearch && serverSearch.term === searchTerm ? serverSearch.results : [];
-  }, [messages, searchActive, searchTerm, serverSearch]);
+    if (!serverSearchMatches || !serverSearch) return [];
+    return serverSearch.results;
+  }, [messages, searchActive, serverSearchMatches, serverSearch]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
