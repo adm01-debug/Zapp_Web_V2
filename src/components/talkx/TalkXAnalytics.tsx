@@ -12,7 +12,9 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { Database } from '@/integrations/supabase/types';
 import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
-import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXInsights, type TalkXInsightAction } from '@/hooks/integrations/useTalkXInsights';
+import { goTab } from './talkxTabRoute';
+import { pushTalkXWizardRoute } from './talkxWizardRoute';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
 interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
@@ -161,7 +163,22 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   // E94: insights heurísticos — hook SEMPRE antes do return antecipado (regra dos
   // hooks); chamar depois dele causava "Rendered more hooks" quando a lista ia de
   // 0 para 1 campanha.
-  const { data: insights } = useTalkXInsights();
+  // TL-173: a janela dos insights é o período escolhido na tela (mesma barra 7/30/90).
+  const { data: insightsData, isLoading: insightsLoading, isError: insightsError, estimatedLiftPct } = useTalkXInsights(days);
+  const insights = useMemo(() => insightsData ?? [], [insightsData]);
+  // Resumo estima ganho só com número medido: valor ausente não vira "0%".
+  const liftPct = typeof estimatedLiftPct === 'number' ? estimatedLiftPct : null;
+
+  // TL-173: cada recomendação traz a ação que o botão executa; quem navega é esta
+  // tela (o hook só declara o destino, a partir dos parâmetros da regra).
+  const runInsightAction = (action?: TalkXInsightAction) => {
+    if (action === 'campaigns') { goTab('overview'); return; }
+    if (action === 'templates') { goTab('templates'); return; }
+    if (action === 'new-campaign') {
+      pushTalkXWizardRoute({ campaignId: 'new', step: 1 });
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
 
   // X047: os tres returns antecipados (erro, carga, vazio) saem; o boundary decide na ordem
   // carregando -> erro -> vazio -> conteudo, com o erro tendo precedencia sobre o vazio.
@@ -434,12 +451,28 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
 
         </div>
         <div className="space-y-4 min-w-0">
-          {/* E94: Insights heurísticos */}
-          {insights && insights.length > 0 && (
-            <section className="space-y-3">
+          {/* E94/TL-173: Insights heurísticos com ação e Resumo condicionado */}
+          {!insightsError && !insightsLoading && (
+            <section className="space-y-3" aria-label="Insights">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
+          </div>
+          <p className="text-2xs text-foreground-secondary">Análise dos seus dados de campanhas.</p>
+          <div className="rounded-2xl bg-card border border-border/70 p-3">
+            <p className="text-xs font-semibold text-foreground">Resumo</p>
+            {insights.length === 0 ? (
+              <p className="text-2xs text-foreground-secondary mt-1">Ainda não há dados suficientes para recomendações.</p>
+            ) : liftPct === null ? (
+              <p className="text-2xs text-foreground-secondary mt-1">
+                {insights.length === 1 ? '1 recomendação' : `${insights.length} recomendações`} com dados medidos nas suas campanhas.
+              </p>
+            ) : (
+              <p className="text-2xs text-foreground-secondary mt-1">
+                {insights.length === 1 ? '1 recomendação' : `${insights.length} recomendações`} — ganho estimado de{' '}
+                {`${Math.round(liftPct * 100)}%`} (estimativa medida, não garantia de resultado).
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             {insights.map((insight) => (
@@ -450,7 +483,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
                 description={insight.description}
                 priority={insight.priority}
                 applyLabel={insight.applyLabel}
-                onApply={insight.apply}
+                onApply={insight.action ? () => runInsightAction(insight.action) : undefined}
               />
             ))}
           </div>
