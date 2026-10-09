@@ -354,6 +354,7 @@ Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unid
     const stub = withFetch([
       ROTA_AUTH,
       ROTA_RATE_LIMIT,
+      ROTA_FLAGS,
       ROTA_PROFILES,
       ROTA_LEDGER,
       { match: "api.elevenlabs.io", make: () => jsonResp({ detail: "boom" }, 500) },

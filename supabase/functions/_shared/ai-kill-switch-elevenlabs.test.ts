@@ -145,7 +145,12 @@ function reqSemCorpo(nome: string): Request {
 
 function reqForm(nome: string, campos: Record<string, string>): Request {
   const fd = new FormData();
-  fd.append("audio", new File([new Uint8Array([9, 9, 9])], "audio.mp3", { type: "audio/mpeg" }));
+  // IA-122/IA-128 (dia/2026-10-09, independente deste cartão): o elevenlabs-sts
+  // agora prova a ASSINATURA real do áudio (magic bytes) antes de tocar no
+  // provedor — "ID3" (cabeçalho mp3) é reconhecido por sniffStsAudioFormat;
+  // bytes arbitrários (ex.: 9,9,9) seriam recusados com 415 ANTES do kill
+  // switch, o que testaria a validação de upload, não o kill switch.
+  fd.append("audio", new File([new Uint8Array([0x49, 0x44, 0x33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])], "audio.mp3", { type: "audio/mpeg" }));
   for (const [campo, valor] of Object.entries(campos)) fd.append(campo, valor);
   return new Request(`https://stub.supabase.co/functions/v1/${nome}`, {
     method: "POST",
