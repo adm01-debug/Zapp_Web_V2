@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/ui/use-toast';
-import { Plus, X, Brain, Users, Star } from 'lucide-react';
+import { Plus, X, Brain, Users, Star, Sparkles, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const SKILL_SUGGESTIONS = [
   'Português', 'Inglês', 'Espanhol', 'Suporte Técnico', 'Vendas',
@@ -111,6 +112,58 @@ export function SkillBasedRoutingSettings() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['queue-skills'] }),
+  });
+
+  /**
+   * Usa a estratégia de habilidades de verdade: resolve o agente da fila pelo
+   * RPC `skill_based_assign` (skills exigidas; sem candidato qualificado ele
+   * cai no membro ativo de menor carga, é o que o RPC faz) e entrega a esse
+   * agente o contato que está aguardando há mais tempo na fila.
+   * Sem isso o RPC existia, mas nenhuma tela o chamava e nenhum contato era
+   * atribuído por habilidade — a estratégia era inalcançável no produto.
+   * O filtro do contato que aguarda é o mesmo de QueueService.fetchWaitingCounts.
+   */
+  const assignBySkill = useMutation({
+    mutationFn: async (queueId: string) => {
+      const { data: agentId, error: agentError } = await supabase.rpc('skill_based_assign', {
+        p_queue_id: queueId,
+      });
+      if (agentError) throw agentError;
+      if (!agentId) return { agentId: null, contactId: null };
+
+      const { data: waiting, error: waitingError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('queue_id', queueId)
+        .is('assigned_to', null)
+        .is('deleted_at', null)
+        .not('conversation_status', 'in', '(resolved,archived)')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (waitingError) throw waitingError;
+      if (!waiting) return { agentId, contactId: null };
+
+      const { error: assignError } = await supabase
+        .from('contacts')
+        .update({ assigned_to: agentId })
+        .eq('id', waiting.id);
+      if (assignError) throw assignError;
+
+      return { agentId, contactId: waiting.id as string };
+    },
+    onSuccess: ({ agentId, contactId }) => {
+      if (!agentId) {
+        toast({ title: 'Nenhum agente ativo nesta fila', variant: 'destructive' });
+        return;
+      }
+      if (!contactId) {
+        toast({ title: 'Nenhum contato aguardando nesta fila' });
+        return;
+      }
+      toast({ title: 'Contato atribuído ao agente da fila' });
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   });
 
   return (
@@ -267,6 +320,24 @@ export function SkillBasedRoutingSettings() {
                   disabled={!newQueueSkill.trim()}
                 >
                   <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <Separator className="my-1" />
+
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Entrega o contato que aguarda há mais tempo nesta fila ao agente escolhido pelo RPC de habilidades; sem agente com as habilidades, vale o de menor carga.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 shrink-0"
+                  disabled={assignBySkill.isPending}
+                  onClick={() => assignBySkill.mutate(selectedQueue)}
+                >
+                  {assignBySkill.isPending ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  Atribuir por habilidade
                 </Button>
               </div>
             </>
