@@ -1,274 +1,372 @@
-/**
- * Talk X — leitura da trilha de supressão (X184/TL-169), consumida pela tela
- * `src/components/talkx/TalkXSuppression.tsx`.
- *
- * O hook de lista que morava neste módulo (listagem própria, `isSuppressed` em
- * dois passos e remoção com `DELETE` físico) foi removido pelo TL-002: nenhum
- * arquivo o importava — a tela faz as próprias queries — e o `DELETE` físico
- * contrariava a trilha append-only do módulo. O módulo continua aqui, com o
- * mesmo caminho, porque a atividade recente da lista é lida por ele.
- */
-import { useQuery } from '@tanstack/react-query';
-
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fromTable } from '@/lib/supabaseHelpers';
-
-/* -------------------------------------------------------------------------- */
-/* X184 — Atividade recente da lista, lida dos eventos de ENTIDADE             */
-/* -------------------------------------------------------------------------- */
+import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { toast } from 'sonner';
 
 /**
- * Tipos que a trilha de supressão usa em `talkx_campaign_events`: os três de
- * linha (`suppression_add/remove/update`) estão no CHECK do banco desde a V11
- * (`M:20260929730000:33-37`); os dois de lote (`import`/`export`) entram com a
- * importação e a exportação da lista (V74/V75).
+ * X178 — único ponto de acesso à lista de supressão do Talk X.
  *
- * O leitor filtra por ESTE vocabulário e não por `entity_type` — que a F06
- * ("Trilha de supressão", V71–V80) ainda formaliza. O evento de entidade
- * (`entity_type` `suppression`/`suppression_batch`) é o caso comum, mas o mesmo
- * `event_type` também pode estar gravado junto de uma campanha, e essa
- * atividade é da lista do mesmo jeito; o que o usuário não pode ver, o RLS barra.
+ * Antes desta etapa havia duas fontes: este hook (morto, ninguém importava,
+ * listava sem filtrar `removed_at`, cortava em 500 linhas e removia com
+ * `DELETE`) e a tela `TalkXSuppression.tsx`, que consultava o Supabase por
+ * conta própria, filtrava e paginava em memória. A tela agora só fala com
+ * este hook.
+ *
+ * A leitura é paginada NO SERVIDOR: filtros, ordenação, `count` e
+ * `range(offset, offset + limite - 1)` vão na consulta — a tela nunca recebe a
+ * tabela inteira. `fetchSuppressionPage` é o único ponto a trocar quando a RPC
+ * `talkx_suppression_list` de X176 entrar no banco vivo: hoje ela ainda não
+ * existe (`grep talkx_suppression_list supabase/` = 0), então a leitura vem da
+ * tabela que o servidor já grava, `talkx_blacklist`.
+ *
+ * Remover deixou de ser `DELETE`: grava `removed_at`/`removed_by` (`UPDATE`),
+ * como pede o plano — o registro vira histórico e a auditoria não perde autor.
  */
-export const SUPPRESSION_ACTIVITY_EVENT_TYPES = [
-  'suppression_add',
-  'suppression_remove',
-  'suppression_update',
-  'suppression_import',
-  'suppression_export',
-] as const;
 
-export type SuppressionActivityEventType = (typeof SUPPRESSION_ACTIVITY_EVENT_TYPES)[number];
+export type BlacklistReasonCode =
+  | 'opt_out'
+  | 'invalid_number'
+  | 'manual'
+  | 'lgpd'
+  | 'no_commercial_permission'
+  | 'bounce';
 
-/** Ação da trilha: o que a tela agrupa em ícone + título. */
-export type SuppressionActivityAction = 'add' | 'remove' | 'update' | 'import' | 'export';
+/** Situação derivada de uma linha (nunca é coluna: o servidor guarda datas). */
+export type SuppressionStatus = 'suprimido' | 'expirado' | 'removido';
 
-export interface SuppressionActivityItem {
+/** Linha já normalizada para a tela: o contato vinculado vira campo plano. */
+export interface SuppressionRow {
   id: string;
-  /** `null` quando o `event_type` gravado não está no contrato da tela. */
-  action: SuppressionActivityAction | null;
-  title: string;
-  /** E-mail do contato; telefone quando não há e-mail. `null` = evento sem contato. */
-  contactLabel: string | null;
-  actorName: string | null;
-  createdAt: string;
+  contact_id: string | null;
+  /** Telefone gravado na própria linha (bloqueio só por telefone, sem contato). */
+  phone: string | null;
+  reason: string | null;
+  reason_code: BlacklistReasonCode | null;
+  origin: string;
+  campaign_id: string | null;
+  campaign_name: string | null;
+  blocked_by: string | null;
+  removed_by: string | null;
+  removed_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  status: SuppressionStatus;
+  /** Dados do contato vinculado (nulos quando o bloqueio é só por telefone). */
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  contact_company: string | null;
+  contact_avatar_url: string | null;
 }
 
-export interface SuppressionActivityPage {
-  items: SuppressionActivityItem[];
-  /** Contagem exata do servidor — não o tamanho da página. */
+/** Chaves de ordenação aceitas pela listagem (viram coluna do servidor). */
+export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason' | 'status';
+
+export interface SuppressionListParams {
+  page: number;
+  pageSize: number;
+  /** Busca textual: casa nome, e-mail e dígitos de telefone (feita no servidor). */
+  search?: string;
+  /** Origem escolhida ('all' = todas). */
+  origin?: string;
+  /** Trecho do motivo ('all' = todos). */
+  reason?: string;
+  order?: SuppressionOrderKey;
+  dir?: 'asc' | 'desc';
+}
+
+export interface SuppressionListPage {
+  rows: SuppressionRow[];
+  /** Total do SERVIDOR com os filtros aplicados — é ele que o rodapé mostra. */
   total: number;
 }
 
-const ACTION_BY_EVENT_TYPE: Record<SuppressionActivityEventType, SuppressionActivityAction> = {
-  suppression_add: 'add',
-  suppression_remove: 'remove',
-  suppression_update: 'update',
-  suppression_import: 'import',
-  suppression_export: 'export',
-};
-
-/** Ação de um `event_type` da trilha; `null` para tipo fora do contrato. */
-export function suppressionActivityAction(eventType: string | null | undefined): SuppressionActivityAction | null {
-  if (!eventType) return null;
-  return (ACTION_BY_EVENT_TYPE as Record<string, SuppressionActivityAction>)[eventType] ?? null;
+export interface SuppressionTotals {
+  /** Contatos suprimidos ativos (sem removidos). */
+  total: number;
+  /** Opt-outs dos últimos 30 dias (inclui o opt-out automático da campanha). */
+  optouts30d: number;
+  /** Bloqueios manuais. */
+  manual: number;
 }
 
-/**
- * Título do item no vocabulário da tela (X184). O evento de lote traz a
- * contagem na mensagem (V74/V75); sem número legível o título sai sem contagem,
- * em vez de inventar um valor.
- */
-export function suppressionActivityTitle(eventType: string | null | undefined, message: string | null | undefined): string {
-  switch (suppressionActivityAction(eventType)) {
-    case 'add': return 'Contato adicionado à lista';
-    case 'remove': return 'Contato removido da lista';
-    case 'update': return 'Motivo atualizado';
-    case 'export': return 'Lista exportada';
-    case 'import': {
-      const digits = (message ?? '').match(/\d+/)?.[0];
-      if (!digits) return 'Contatos importados';
-      const n = Number(digits);
-      return n === 1 ? '1 contato importado' : `${n} contatos importados`;
-    }
-    default: return 'Atividade na lista de supressão';
-  }
+export interface BlacklistInput {
+  contact_id?: string | null;
+  phone?: string | null;
+  reason?: string;
+  reason_code?: BlacklistReasonCode;
+  origin?: string;
+  campaign_id?: string | null;
+  expires_at?: string | null;
+  source_message_id?: string | null;
 }
 
-interface SuppressionActivityEventRow {
+export interface BlacklistEditInput {
   id: string;
-  event_type: string | null;
-  message: string | null;
-  entity_id: string | null;
-  created_at: string;
-  actor: { name: string | null } | null;
+  reason?: string | null;
+  origin?: string;
+  expires_at?: string | null;
 }
 
-interface BlacklistEntryRow {
+/** Tamanho padrão da página e os tamanhos que o rodapé oferece. */
+export const SUPPRESSION_DEFAULT_PAGE_SIZE = 10;
+export const SUPPRESSION_PAGE_SIZES = [10, 20, 50] as const;
+/** Janela dos KPIs de opt-out. */
+export const SUPPRESSION_OPT_OUT_DAYS = 30;
+
+/** Colunas pedidas na listagem — inclui o contato e o nome da campanha. */
+const LIST_COLUMNS =
+  'id,contact_id,phone,reason,reason_code,origin,campaign_id,blocked_by,removed_at,removed_by,expires_at,created_at,'
+  + 'contacts:contact_id(name,phone,email,company,avatar_url),'
+  // campaign_id tem DUAS FKs (talkx_campaigns e talkx_campaign_metrics): sem o
+  // nome da restrição o PostgREST recusa o embed por ambiguidade.
+  + 'campaign:talkx_campaigns!talkx_blacklist_campaign_id_fkey(name)';
+
+interface RawSuppressionRow {
   id: string;
   contact_id: string | null;
   phone: string | null;
+  reason: string | null;
+  reason_code: BlacklistReasonCode | null;
+  origin: string;
+  campaign_id: string | null;
+  blocked_by: string | null;
+  removed_by: string | null;
+  removed_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  contacts: { name: string | null; phone: string | null; email: string | null; company: string | null; avatar_url: string | null } | null;
+  campaign: { name: string | null } | null;
 }
 
-interface ContactLabelRow {
-  id: string;
-  email: string | null;
-  phone: string | null;
+/** Removido vence expirado; expirado vence suprimido (a mesma ordem do plano). */
+export function suppressionStatus(
+  row: { removed_at: string | null; expires_at: string | null },
+  now: number = Date.now(),
+): SuppressionStatus {
+  if (row.removed_at) return 'removido';
+  if (row.expires_at && Date.parse(row.expires_at) <= now) return 'expirado';
+  return 'suprimido';
 }
 
-/**
- * Contato de cada evento pelo `entity_id` (id da linha de `talkx_blacklist`) —
- * a tabela de eventos não tem FK para o contato, então a resolução é em duas
- * consultas. Supressão de telefone avulso não tem contato: aí o rótulo é o
- * telefone da própria linha da lista.
- */
-async function resolveActivityContactLabels(rows: SuppressionActivityEventRow[]): Promise<Map<string, string | null>> {
-  const labels = new Map<string, string | null>();
-  const entityIds = Array.from(new Set(rows.map((r) => r.entity_id).filter((id): id is string => !!id)));
-  if (entityIds.length === 0) return labels;
-
-  const { data: entries, error: entryError } = await fromTable('talkx_blacklist')
-    .select('id,contact_id,phone')
-    .in('id', entityIds);
-  if (entryError) throw entryError;
-  const entryRows = (entries ?? []) as BlacklistEntryRow[];
-
-  const contactIds = Array.from(new Set(entryRows.map((e) => e.contact_id).filter((id): id is string => !!id)));
-  const contacts: ContactLabelRow[] = [];
-  if (contactIds.length > 0) {
-    const { data: contactRows, error: contactError } = await fromTable('contacts')
-      .select('id,email,phone')
-      .in('id', contactIds);
-    if (contactError) throw contactError;
-    contacts.push(...((contactRows ?? []) as ContactLabelRow[]));
-  }
-  const contactById = new Map(contacts.map((c) => [c.id, c]));
-
-  for (const entry of entryRows) {
-    const contact = entry.contact_id ? contactById.get(entry.contact_id) : undefined;
-    const email = contact?.email?.trim() ?? '';
-    const digits = (contact?.phone ?? entry.phone ?? '').replace(/\D/g, '');
-    labels.set(entry.id, email || (digits ? `+${digits}` : null));
-  }
-  return labels;
-}
-
-export interface FetchTalkXSuppressionActivityOptions {
-  /** Itens por página (5 no rail, 20 no histórico). */
-  limit?: number;
-  /** Página 0-based; o servidor recebe a fatia (`range`), não o teto de linhas. */
-  page?: number;
-  /** Filtro por tipo; `all` = trilha inteira. */
-  eventType?: SuppressionActivityEventType | 'all';
-}
-
-/** Leitura da trilha de supressão (eventos de entidade), mais recentes primeiro. */
-export async function fetchTalkXSuppressionActivity({
-  limit = 5, page = 0, eventType = 'all',
-}: FetchTalkXSuppressionActivityOptions = {}): Promise<SuppressionActivityPage> {
-  const from = page * limit;
-  let query = fromTable('talkx_campaign_events')
-    .select('id,event_type,message,created_at,entity_id,actor:actor_id(name)', { count: 'exact' })
-    .in('event_type', SUPPRESSION_ACTIVITY_EVENT_TYPES);
-  if (eventType !== 'all') query = query.eq('event_type', eventType);
-
-  // A página é pedida como FATIA (`range`), depois da ordem determinística —
-  // nunca um `.limit()` solto, que devolveria um subconjunto arbitrário.
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    // Desempate obrigatório: sem ele a fatia de uma página pode repetir item
-    // entre chamadas quando dois eventos caem no mesmo instante.
-    .order('id', { ascending: false })
-    .range(from, from + limit - 1);
-  if (error) throw error;
-
-  const rows = (data ?? []) as SuppressionActivityEventRow[];
-  const labels = await resolveActivityContactLabels(rows);
-
+/** Converte a linha do servidor no que a tela desenha (um só lugar faz o de-para). */
+export function toSuppressionRow(raw: RawSuppressionRow, now: number = Date.now()): SuppressionRow {
   return {
-    items: rows.map((row) => ({
-      id: row.id,
-      action: suppressionActivityAction(row.event_type),
-      title: suppressionActivityTitle(row.event_type, row.message),
-      contactLabel: row.entity_id ? labels.get(row.entity_id) ?? null : null,
-      actorName: row.actor?.name ?? null,
-      createdAt: row.created_at,
-    })),
-    // Sem a contagem do servidor, o total é o que a página prova existir.
-    total: typeof count === 'number' ? count : from + rows.length,
+    id: raw.id,
+    contact_id: raw.contact_id,
+    phone: raw.phone,
+    reason: raw.reason,
+    reason_code: raw.reason_code,
+    origin: raw.origin,
+    campaign_id: raw.campaign_id,
+    campaign_name: raw.campaign?.name ?? null,
+    blocked_by: raw.blocked_by,
+    removed_by: raw.removed_by,
+    removed_at: raw.removed_at,
+    expires_at: raw.expires_at,
+    created_at: raw.created_at,
+    status: suppressionStatus(raw, now),
+    contact_name: raw.contacts?.name ?? null,
+    contact_phone: raw.contacts?.phone ?? null,
+    contact_email: raw.contacts?.email ?? null,
+    contact_company: raw.contacts?.company ?? null,
+    contact_avatar_url: raw.contacts?.avatar_url ?? null,
   };
 }
 
+/** Chave de cache: TODO parâmetro entra — mudar filtro/página refaz a consulta. */
+export function suppressionQueryKey(params: SuppressionListParams) {
+  return [
+    'talkx-suppression',
+    params.page,
+    params.pageSize,
+    params.search?.trim() ?? '',
+    params.origin ?? 'all',
+    params.reason ?? 'all',
+    params.order ?? 'created_at',
+    params.dir ?? 'desc',
+  ] as const;
+}
+
+/** Ponto único de leitura paginada (é aqui que a RPC de X176 entra). */
+export async function fetchSuppressionPage(params: SuppressionListParams): Promise<SuppressionListPage> {
+  const { page, pageSize, search, origin, reason, order = 'created_at', dir = 'desc' } = params;
+  const from = (Math.max(1, page) - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('talkx_blacklist')
+    .select(LIST_COLUMNS, { count: 'exact' });
+  if (origin && origin !== 'all') query = query.eq('origin', origin);
+  if (reason && reason !== 'all') query = query.ilike('reason', `%${reason}%`);
+  if (search && search.trim()) {
+    const term = escapeOrFilterValue(`%${search.trim()}%`);
+    query = query.or(
+      `phone.ilike.${term},reason.ilike.${term},contacts.name.ilike.${term},contacts.email.ilike.${term},contacts.phone.ilike.${term}`,
+    );
+  }
+  // Ordernação determinística: a chave pedida + `id` como desempate, para a
+  // paginação por offset não repetir nem pular linha empatada.
+  const descending = dir === 'desc';
+  query = query.order(order, { ascending: !descending }).order('id', { ascending: !descending });
+  const { data, error, count } = await query.range(from, to);
+  if (error) throw error;
+  const rows = ((data ?? []) as unknown as RawSuppressionRow[]).map((row) => toSuppressionRow(row));
+  return { rows, total: count ?? rows.length };
+}
+
+/** Contadores dos KPIs: `count` no servidor, nunca sobre a página carregada. */
+export async function fetchSuppressionTotals(now: number = Date.now()): Promise<SuppressionTotals> {
+  const since = new Date(now - SUPPRESSION_OPT_OUT_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const [total, optouts, manual] = await Promise.all([
+    supabase.from('talkx_blacklist').select('id', { count: 'exact', head: true }).is('removed_at', null),
+    supabase.from('talkx_blacklist').select('id', { count: 'exact', head: true })
+      .in('origin', ['optout', 'auto_optout']).is('removed_at', null).gte('created_at', since),
+    supabase.from('talkx_blacklist').select('id', { count: 'exact', head: true })
+      .eq('origin', 'manual').is('removed_at', null),
+  ]);
+  if (total.error) throw total.error;
+  if (optouts.error) throw optouts.error;
+  if (manual.error) throw manual.error;
+  return { total: total.count ?? 0, optouts30d: optouts.count ?? 0, manual: manual.count ?? 0 };
+}
+
+/** Contato disponível para bloquear (o que o modal de adicionar mostra). */
+export interface SuppressionContactOption {
+  id: string;
+  name: string;
+  phone: string | null;
+  company: string | null;
+}
+
+/** Teto de contatos devolvidos na busca do modal (mesmo padrão do SLARuleFormDialog). */
+export const SUPPRESSION_CONTACT_SEARCH_LIMIT = 50;
+
 /**
- * Trilha de supressão para a tela: os 5 últimos itens no rail e o histórico
- * paginado do modal. `enabled` evita a consulta do histórico com o modal fechado.
+ * Busca de contato do modal "Adicionar": consulta o SERVIDOR (o PostgREST corta
+ * a resposta, então filtrar só o primeiro lote esconderia quem está fora dele —
+ * #407/R2-MOD-035) e tira dali quem já está suprimido — a exclusão é feita
+ * contra o banco, não contra a página da tabela, senão um contato já bloqueado
+ * numa página distante voltaria como disponível.
  */
-export function useTalkXSuppressionActivity({
-  limit = 5, page = 0, eventType = 'all', enabled = true,
-}: FetchTalkXSuppressionActivityOptions & { enabled?: boolean } = {}) {
-  const query = useQuery({
-    queryKey: ['talkx-suppression-activity', limit, page, eventType],
-    queryFn: () => fetchTalkXSuppressionActivity({ limit, page, eventType }),
+export async function fetchSuppressionContactOptions(term: string): Promise<SuppressionContactOption[]> {
+  let query = supabase.from('contacts').select('id, name, phone, company').not('phone', 'is', null);
+  if (term) {
+    const escaped = escapeOrFilterValue(`%${term}%`);
+    query = query.or(`name.ilike.${escaped},phone.ilike.${escaped}`);
+  }
+  const { data, error } = await query.order('name').limit(SUPPRESSION_CONTACT_SEARCH_LIMIT);
+  if (error) throw error;
+  const contacts = (data ?? []) as SuppressionContactOption[];
+  if (contacts.length === 0) return contacts;
+  const ids = contacts.map((c) => c.id);
+  const { data: blocked } = await supabase.from('talkx_blacklist').select('contact_id')
+    .is('removed_at', null).in('contact_id', ids);
+  const blockedIds = new Set(((blocked ?? []) as { contact_id: string | null }[]).map((r) => r.contact_id));
+  return contacts.filter((c) => !blockedIds.has(c.id));
+}
+
+/** Hook da busca de contato do modal (só consulta com o modal aberto). */
+export function useSuppressionContactSearch(term: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['talkx-suppression-contacts', term],
+    queryFn: () => fetchSuppressionContactOptions(term),
     enabled,
   });
-
-  return {
-    items: query.data?.items ?? [],
-    total: query.data?.total ?? 0,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: (query.error as Error | null) ?? null,
-    refetch: query.refetch,
-  };
 }
 
-/* -------------------------------------------------------------------------- */
-/* X179 — números da tela lidos do servidor (`talkx_suppression_stats`)       */
-/* -------------------------------------------------------------------------- */
+/** Converte o erro de permissão do PostgREST (42501) em um sinal para a tela. */
+export function isSuppressionPermissionError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  return code === '42501' || (typeof message === 'string' && message.includes('42501'));
+}
 
-/** Um dos quatro números da tela: valor da janela, valor do período anterior e a série das mini-barras. */
-export type TalkXSuppressionStat = {
-  value: number;
-  /** Período anterior de mesma duração. Zero (ou ausente) esconde a variação no card. */
-  previous: number;
-  /** Série de 8 pontos para as mini-barras do KPI. */
-  series: number[];
-};
+export function useTalkXSuppression(params: SuppressionListParams) {
+  const qc = useQueryClient();
+  const { profile } = useAuth();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['talkx-suppression'] });
+    qc.invalidateQueries({ queryKey: ['talkx-suppression-totals'] });
+  };
 
-/**
- * X176/X179 — resposta de `talkx_suppression_stats(p_days)`: suprimidos ativos
- * (sem expirados nem removidos), opt-outs da janela (`reason_code='opt_out'`, o
- * que inclui `auto_optout`), bloqueios manuais e campanhas iniciadas que
- * respeitam a lista — mais o total de campanhas iniciadas, denominador do
- * medidor do Centro de proteção.
- */
-export type TalkXSuppressionStats = {
-  active: TalkXSuppressionStat;
-  optouts: TalkXSuppressionStat;
-  manual: TalkXSuppressionStat;
-  protected: TalkXSuppressionStat & { total_started: number };
-};
-
-/** RPC que ainda não está em `types.ts` (a migration é de outra trilha). */
-type TalkXSuppressionStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
-  data: unknown;
-  error: { message: string } | null;
-}>;
-
-/**
- * X179 — os KPIs e o painel de proteção passam a ler `talkx_suppression_stats`
- * (X176) em vez de contar o que a lista carregou: "Opt-outs 30 dias" era
- * `origin === 'optout'` sem janela e ignorando `auto_optout`, e "Campanhas
- * protegidas" não tinha fonte. Sem resposta do servidor a tela não inventa
- * número: o card mostra "—".
- */
-export function useTalkXSuppressionStats(days = 30) {
-  return useQuery({
-    queryKey: ['talkx-suppression-stats', days],
-    queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXSuppressionStatsRpc;
-      const { data, error } = await rpc('talkx_suppression_stats', { p_days: days });
-      if (error) throw new Error(error.message);
-      return (data ?? null) as TalkXSuppressionStats | null;
-    },
+  const query = useQuery({
+    queryKey: suppressionQueryKey(params),
+    queryFn: () => fetchSuppressionPage(params),
+    // Mantém a página anterior à vista durante a troca de página/filtro.
+    placeholderData: (previous) => previous,
   });
+
+  const totalsQuery = useQuery({
+    queryKey: ['talkx-suppression-totals', SUPPRESSION_OPT_OUT_DAYS],
+    queryFn: () => fetchSuppressionTotals(),
+  });
+
+  /**
+   * Autoria sai do perfil ativo (profiles.id), não do auth.users: `blocked_by`
+   * e `removed_by` referenciam profiles(id) e o id de auth.users não é o mesmo
+   * (0 dos 6 perfis tem id = user_id) — gravar `auth.uid()` violava a FK.
+   */
+  const addEntry = useMutation({
+    mutationFn: async (input: BlacklistInput) => {
+      const phone = input.phone ? input.phone.replace(/\D/g, '') : null;
+      if (!phone && !input.contact_id) throw new Error('phone ou contact_id obrigatório');
+      const { error } = await supabase.from('talkx_blacklist').insert({
+        contact_id: input.contact_id ?? null,
+        phone,
+        reason: input.reason ?? null,
+        reason_code: input.reason_code ?? 'manual',
+        origin: input.origin ?? 'manual',
+        campaign_id: input.campaign_id ?? null,
+        expires_at: input.expires_at ?? null,
+        source_message_id: input.source_message_id ?? null,
+        blocked_by: profile?.id ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success('Contato adicionado à lista de supressão'); },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const updateEntry = useMutation({
+    mutationFn: async (input: BlacklistEditInput) => {
+      const { error } = await supabase.from('talkx_blacklist').update({
+        reason: input.reason ?? null,
+        ...(input.origin ? { origin: input.origin } : {}),
+        ...(input.expires_at !== undefined ? { expires_at: input.expires_at } : {}),
+      }).eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success('Entrada atualizada'); },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  /** Remover é `UPDATE` de `removed_at` (nunca `DELETE`): o autor fica gravado. */
+  const removeEntry = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('talkx_blacklist').update({
+        removed_by: profile?.id ?? null,
+        removed_at: new Date().toISOString(),
+      }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success('Contato removido da lista de supressão'); },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return {
+    rows: query.data?.rows ?? [],
+    /** Total do servidor (todos os filtros aplicados), não o da página. */
+    total: query.data?.total ?? 0,
+    totals: totalsQuery.data ?? { total: 0, optouts30d: 0, manual: 0 },
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    isPermissionError: isSuppressionPermissionError(query.error),
+    refetch: query.refetch,
+    addEntry,
+    updateEntry,
+    removeEntry,
+  };
 }

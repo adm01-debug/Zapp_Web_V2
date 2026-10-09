@@ -64,7 +64,9 @@ vi.mock('@/integrations/supabase/client', () => {
     self.is = () => self;
     self.not = () => self;
     self.eq = () => self;
+    self.in = () => self;
     self.order = () => self;
+    self.range = () => self;
     self.limit = () => Promise.resolve(run());
     self.or = (filter: string) => {
       state.orFilter = filter;

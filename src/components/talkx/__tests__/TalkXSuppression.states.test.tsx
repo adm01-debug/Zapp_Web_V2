@@ -19,8 +19,14 @@ vi.mock('@/integrations/supabase/client', () => {
   const chain: Record<string, unknown> = {};
   chain.select = () => chain;
   chain.is = () => chain;
-  chain.order = () => Promise.resolve({ data: null, error: new Error('falha exclusiva X047b') });
+  chain.eq = () => chain;
+  chain.in = () => chain;
+  chain.gte = () => chain;
+  chain.not = () => chain;
+  chain.order = () => chain;
   chain.limit = () => Promise.resolve({ data: [], error: null });
+  // A listagem fecha em `.range(...)`: a consulta falha aqui, como o teste exige.
+  chain.range = () => Promise.resolve({ data: null, error: new Error('falha exclusiva X047b') });
   return { supabase: { from: () => chain } };
 });
 
