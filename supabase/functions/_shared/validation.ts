@@ -97,6 +97,9 @@ export class Logger {
 // deixa de ser aceito de proposito, para existir UM endereco canonico.
 const EXACT_ALLOWED_ORIGINS = new Set([
   'https://zapp-web-v2.vercel.app',
+  // Dominio oficial do produto (06/10/2026). O `www` redireciona para o apex na Vercel,
+  // entao so o apex chega ao navegador como Origin.
+  'https://zappweb.app.br',
 ]);
 
 const ORIGIN_PATTERNS = [
