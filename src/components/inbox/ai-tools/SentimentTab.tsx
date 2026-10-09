@@ -42,7 +42,7 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
             <div className="flex justify-between text-3xs text-muted-foreground">
               <span>Negativo</span><span>Positivo</span>
             </div>
-            {sentimentScore !== null && <Progress value={sentimentScore} className="h-2.5 rounded-full" />}
+            {sentimentScore !== null && <Progress value={sentimentScore} className="h-2.5 rounded-full" aria-label="Sentimento" />}
           </div>
           {analysis.customerSatisfaction !== undefined && (
             <div className="border-t border-border pt-3">
@@ -77,7 +77,7 @@ export function SentimentTab({ analysis, sentimentScore, currentSentiment, analy
                       <span className="flex items-center gap-1.5 text-muted-foreground"><Icon className="h-3 w-3" />{config.label}</span>
                       <span className="font-bold tabular-nums">{value}/10</span>
                     </div>
-                    <Progress value={value * 10} className="h-1.5 rounded-full" />
+                    <Progress value={value * 10} className="h-1.5 rounded-full" aria-label={config.label} />
                   </div>
                 );
               })}

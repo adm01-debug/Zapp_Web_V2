@@ -25,7 +25,7 @@ function TtsButton({ text, label, isTtsPlaying, isTtsLoading, lastTtsText, onPla
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onPlayTts(text)} disabled={isTtsLoading}>
+          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onPlayTts(text)} disabled={isTtsLoading} aria-label={label}>
             {isTtsPlaying && lastTtsText === text ? <VolumeX className="h-3.5 w-3.5 text-primary" />
               : isTtsLoading && lastTtsText === text ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
               : <Volume2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />}
