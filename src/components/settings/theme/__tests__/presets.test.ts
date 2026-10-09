@@ -369,8 +369,12 @@ describe('§11.5 Diversity', () => {
   });
 
   it('gradient-success sobrescrito (verde→azul pride), diferente do grupo C padrão', () => {
-    expect(diversity.light['gradient-success']).toContain('130 70% 45%');
-    expect(diversity.light['gradient-success']).toContain('210 80% 55%');
+    // 'gradient-success' é token do grupo C: fica FORA de ThemeModeColors de propósito
+    // (presets.ts: "NÃO entram em ThemeModeColors") e o preset o sobrescreve por assert.
+    // Leio o valor aplicado pelo mesmo caminho, num mapa de strings.
+    const aplicados = diversity.light as unknown as Record<string, string>;
+    expect(aplicados['gradient-success']).toContain('130 70% 45%');
+    expect(aplicados['gradient-success']).toContain('210 80% 55%');
   });
 });
 
