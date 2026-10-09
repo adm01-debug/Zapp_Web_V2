@@ -140,8 +140,8 @@ let warnSpy: ReturnType<typeof vi.spyOn>;
 /** Transições inválidas registradas pelo reducer (o esperado é nenhuma). */
 function transicoesInvalidas(): string[] {
   return warnSpy.mock.calls
-    .filter((linha) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX))
-    .map((linha) => String(linha[0]));
+    .filter((linha: unknown[]) => String(linha[0]).includes(INVALID_TRANSITION_PREFIX))
+    .map((linha: unknown[]) => String(linha[0]));
 }
 
 beforeEach(() => {
