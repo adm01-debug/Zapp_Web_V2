@@ -7,6 +7,7 @@ import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { toast } from 'sonner';
 import { type StickerItem, type PendingUpload, CATEGORY_LABELS } from '@/components/inbox/stickers/StickerTypes';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
+import { converterFigurinhaParaWebp, precisaConverterParaWebp } from '@/lib/stickerImage';
 
 const log = getLogger('StickerPicker');
 const RECENT_LIMIT = 8;
@@ -119,9 +120,17 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
     const epoch = ++uploadEpochRef.current;
     setUploading(true);
     try {
-      const ext = getFileExtensionWithDefault(file.name, 'webp');
+      // Item 069: o WhatsApp/Evolution GO só aceita figurinha em WebP, e o picker aceita
+      // PNG/JPEG na entrada. A imagem é reencodada AQUI, antes de virar objeto do bucket —
+      // subir os bytes originais deixava a figurinha inválida para envio.
+      let arquivo = file;
+      if (precisaConverterParaWebp(file)) {
+        arquivo = await converterFigurinhaParaWebp(file);
+        if (arquivo === file) log.warn('[StickerPicker] Conversão para WebP não aplicada; subindo o arquivo original:', file.type);
+      }
+      const ext = getFileExtensionWithDefault(arquivo.name, 'webp');
       const storagePath = `sticker_${Date.now()}_${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('stickers').upload(storagePath, file, { contentType: file.type, cacheControl: '31536000' });
+      const { error: uploadError } = await supabase.storage.from('stickers').upload(storagePath, arquivo, { contentType: arquivo.type, cacheControl: '31536000' });
       if (uploadError) { toast.error('Erro ao enviar arquivo'); return; }
       const { data: urlData } = supabase.storage.from('stickers').getPublicUrl(storagePath);
       // Fechou/desmontou (ou um envio mais novo superou este) enquanto o upload estava em
@@ -143,7 +152,7 @@ export function useStickerPicker(onSendSticker: (url: string) => void) {
         if (error) log.error('[StickerPicker] Falha ao limpar upload superado:', error);
         return;
       }
-      const pending: PendingUpload = { file, imageUrl: urlData.publicUrl, storagePath, aiCategory, selectedCategory: aiCategory, name: file.name.replace(/\.[^.]+$/, '') };
+      const pending: PendingUpload = { file: arquivo, imageUrl: urlData.publicUrl, storagePath, aiCategory, selectedCategory: aiCategory, name: file.name.replace(/\.[^.]+$/, '') };
       pendingUploadRef.current = pending;
       setPendingUploadState(pending);
     } catch { toast.error('Erro ao processar figurinha'); } finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
