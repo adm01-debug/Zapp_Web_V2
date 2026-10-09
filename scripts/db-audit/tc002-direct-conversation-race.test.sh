@@ -302,7 +302,13 @@ printf '\n============ BLOCO C — idempotência e ROLLBACK ============\n'
 psql_file "$migration" >/dev/null
 pass 'C.1 reaplicar a migration não falha (idempotente)'
 
-grep '^-- Rollback:' "$migration" | cut -d' ' -f3- | \
+rollback_sql="$(awk '
+  /^-- Rollback:/ { in_rb=1; next }
+  in_rb && /^--   / { sub(/^--   ?/, ""); print; next }
+  in_rb && /^--$/ { exit }
+  in_rb { exit }
+' "$migration")"
+printf '%s\n' "$rollback_sql" | \
   docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres >/dev/null \
   || fail 'C.2 o bloco -- Rollback: do próprio arquivo não executou'
 pass 'C.2 o bloco -- Rollback: (extraído do arquivo) executou'
