@@ -262,9 +262,17 @@ async function violacoesAxe(page: Page): Promise<Violacao[]> {
     const axe = (window as unknown as {
       axe: { run: (c: unknown, o: unknown) => Promise<{ violations: { id: string; impact: string | null; nodes: { target: string[] }[] }[] }> };
     }).axe;
-    const resultado = await axe.run(document.body, {
-      runOnly: { type: 'tag', values: tags },
-    });
+    const resultado = await axe.run(
+      // Cobre o documento inteiro (inclusive diálogos e menus), menos a camada de
+      // avisos do sonner: é um overlay GLOBAL do app, preso no fim do `<body>`,
+      // que aparece e sai sozinho. Aberto no instante da varredura, ele reprovava
+      // telas diferentes a cada rodada (alvo `div[data-title=""]`), sem nenhuma
+      // relação com a tela medida.
+      { include: [document.body], exclude: ['[data-sonner-toaster]'] },
+      {
+        runOnly: { type: 'tag', values: tags },
+      },
+    );
     return resultado.violations.map((v) => ({
       id: v.id,
       impact: v.impact,
