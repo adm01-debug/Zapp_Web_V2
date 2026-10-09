@@ -152,9 +152,9 @@ export function ContactActionButtons({
         <Tile
           icon={<Mail className="w-[18px] h-[18px]" />}
           label="E-mail"
-          title={contact.email ? 'Abrir email' : 'Sem email'}
+          title={contact.email ? 'Abrir e-mail' : 'Sem e-mail'}
           disabled={!contact.email}
-          onClick={() => { if (contact.email) navigateToView('email-chat'); }}
+          onClick={() => { if (contact.email) navigateToView('email-chat', { emailContact: contact.id, emailTo: contact.email }); }}
         />
 
         <Tile

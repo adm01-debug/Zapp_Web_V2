@@ -61,13 +61,15 @@ describe('ContactActionButtons', () => {
     expect(navigateToView).not.toHaveBeenCalled();
   });
 
-  it('não chama navigateToView quando o e-mail existe mas o clique é no botão certo', () => {
+  it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
     const emailTile = tiles.find(t => t.querySelector('svg.lucide-mail'))!;
     expect(emailTile).not.toBeDisabled();
     fireEvent.click(emailTile);
-    expect(navigateToView).toHaveBeenCalledWith('email-chat');
+    // C03: a navegação carrega o contato para o módulo abrir a conversa dele
+    // (ou o compositor com o e-mail preenchido quando não houver conversa).
+    expect(navigateToView).toHaveBeenCalledWith('email-chat', { emailContact: 'c1', emailTo: 'maria@test.com' });
   });
 
   it('o botão de e-mail desabilitado fica focável (wrapper) mesmo com o <button> nativo desabilitado', () => {
