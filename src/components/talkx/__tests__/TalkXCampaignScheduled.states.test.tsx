@@ -54,6 +54,13 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
+// X139: a tela passa a ler o estado real da conexão (`useTalkXConnectionStatus`,
+// que usa react-query). Sem o mock o `useQuery` pede um QueryClientProvider que
+// este teste não monta — o mock devolve "sem status" e nenhuma asserção muda.
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => ({ status: null, label: null, loading: false }),
+}));
+
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 
 const BASE_CAMPAIGN = {

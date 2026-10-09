@@ -55,6 +55,13 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
 
+// T10-043: o Resumo real consulta o status da conexão por `useQuery` — sem o
+// QueryClientProvider deste harness, mockar é o mesmo caminho que o teste
+// novo do cartão (`TalkXCampaignScheduled.test.tsx`) já usa.
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => ({ status: 'connected' as const, label: 'Conectada', loading: false }),
+}));
+
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 
 const BASE_CAMPAIGN = {
