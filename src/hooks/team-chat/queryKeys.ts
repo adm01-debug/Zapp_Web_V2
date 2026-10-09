@@ -18,6 +18,7 @@ import type { QueryKey } from '@tanstack/react-query';
  * `['team-conversations', undefined]` não casaria com nada.
  */
 export const queryKeys = {
+  profile: (): QueryKey => ['profile'],
   inbox: (profileId?: string | null): QueryKey =>
     profileId === undefined || profileId === null
       ? ['team-conversations']

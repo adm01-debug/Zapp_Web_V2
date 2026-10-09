@@ -58,8 +58,8 @@ Storage.
 | `useTeamPresence` | `useTeamPresence.ts` | canal | `team-presence-<conversationId>` |
 | `useDepartmentProfiles` | `useDepartmentManagement.ts` | rpc | `get_team_profiles` |
 | `useDepartmentAuditLogs` | `useDepartmentManagement.ts` | tabela | `department_audit_logs` |
-| `useDepartmentInvites` | `useDepartmentManagement.ts` | tabela | `department_invites` |
-| `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc | `get_department_whatsapp_mode` |
+| `useDepartmentInvites` | `useDepartmentManagement.ts` | tabela | `department_invitations` |
+| `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc | `get_department_whatsapp_config` |
 | `uploadTeamMedia` | `uploadTeamMedia.ts` | storage | `team-chat-files` |
 
 Eventos assinados nos canais de dados: `useTeamConversations` escuta `*` em
@@ -78,6 +78,8 @@ Chave literal não entra neste módulo: toda `queryKey` e toda
 que a mutação revalida sejam a MESMA string. A invalidação é por prefixo, então
 a fábrica sem argumento devolve a raiz (não um `undefined` no lugar do id):
 
+- `queryKeys.profile()` — raiz `['profile']`, usada para revalidar o perfil depois
+  de aceitar convite de departamento.
 - `queryKeys.inbox()` — raiz `['team-conversations']`, alcança o inbox de
   qualquer perfil; `queryKeys.inbox(profileId)` é a chave da query.
 - `queryKeys.messages(conversationId)`
@@ -126,8 +128,7 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
 - `src/components/team-chat/TransferConversationDialog.tsx` ainda usa a chave
   literal `['transfer-dialog-members', ...]` — arquivo da área de componentes,
   fora deste módulo.
-- `useDepartmentManagement` ainda grava em `department_audit_logs` pelo cliente
-  (e o `INSERT` de `authenticated` foi revogado) e faz `upsert` em
-  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
-  RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
-  F62 do plano de finalização.
+- `useDepartmentManagement` usa as RPCs atuais para convite e WhatsApp de
+  departamento (`create_department_invite`, `accept_department_invite`,
+  `get_department_whatsapp_config`, `set_department_whatsapp_config`). Campos
+  legados do formulário de WhatsApp ficam só como compatibilidade de entrada.

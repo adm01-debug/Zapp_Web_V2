@@ -275,7 +275,7 @@ export function useAcceptDepartmentInvite() {
       return { ok: true, department_id: result.department_id };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['profile'] });
+      qc.invalidateQueries({ queryKey: queryKeys.profile() });
       qc.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
   });

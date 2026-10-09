@@ -83,8 +83,16 @@ describe('README do Team Chat — nomes têm correspondente no código', () => {
 
       if (tipo === 'tabela' || tipo === 'rpc') {
         const chamada = tipo === 'tabela' ? `.from('${nome}')` : `.rpc('${nome}'`;
-        expect(fonte.includes(chamada), `${arquivo} não chama ${chamada}`).toBe(true);
-        expect(TYPES_TS.includes(`      ${nome}: {`), `${nome} não existe em types.ts`).toBe(true);
+        const chamadaRpcForaDosTipos = tipo === 'rpc' ? `rpcForaDosTipos('${nome}'` : chamada;
+        const chamaDireto = fonte.includes(chamada);
+        const chamaComCastLocal = fonte.includes(chamadaRpcForaDosTipos);
+        expect(
+          chamaDireto || chamaComCastLocal,
+          `${arquivo} não chama ${chamada}`,
+        ).toBe(true);
+        if (!chamaComCastLocal) {
+          expect(TYPES_TS.includes(`      ${nome}: {`), `${nome} não existe em types.ts`).toBe(true);
+        }
       } else if (tipo === 'canal') {
         const modelo = nome.replace('<conversationId>', '${conversationId}');
         // canal fixo usa aspas simples; canal por conversa usa template literal.

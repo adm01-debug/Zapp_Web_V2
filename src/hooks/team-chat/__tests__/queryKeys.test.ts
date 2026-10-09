@@ -19,6 +19,10 @@ function invalidada(qc: QueryClient, key: readonly unknown[]): boolean {
 }
 
 describe('queryKeys — valores preservados (regressão)', () => {
+  it('profile() preserva a chave de perfil', () => {
+    expect(queryKeys.profile()).toEqual(['profile']);
+  });
+
   it('inbox() é a raiz e inbox(profileId) carrega o perfil', () => {
     expect(queryKeys.inbox()).toEqual(['team-conversations']);
     expect(queryKeys.inbox('profile-1')).toEqual(['team-conversations', 'profile-1']);
