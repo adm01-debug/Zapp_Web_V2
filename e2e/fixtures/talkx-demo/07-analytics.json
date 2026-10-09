@@ -1,1 +1,22 @@
-{}
+{
+  "talkx_campaigns": [
+    {"id": "camp-301", "name": "Concluída Abril", "message_template": "Olá {{nome}}, novidade para você!", "description": null, "objective": "engajamento", "status": "completed", "total_recipients": 1000, "sent_count": 980, "failed_count": 20, "delivered_count": 980, "read_count": 0, "replied_count": 0, "outcome_unknown_count": 0, "whatsapp_connection_id": "conn-demo-01", "created_by": "creator-1", "started_at": "2026-09-20T12:00:00.000Z", "completed_at": "2026-09-28T12:00:00.000Z", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-20T12:00:00.000Z", "media_url": null, "media_type": null, "scheduled_at": null, "schedule_timezone": "America/Sao_Paulo", "segment_id": "seg-vip", "audience_source": "segment", "template_id": "tpl-001", "send_window_start": null, "send_window_end": null, "business_hours_only": false, "speed_profile": "moderate", "paused_at": null, "respect_suppression": true, "confirm_consent": true, "launched_by": "creator-1", "launched_at": "2026-09-20T12:00:00.000Z", "revision": 1}
+  ],
+  "talkx_segments": [
+    {"id": "seg-vip", "name": "VIP", "description": "Clientes de maior valor", "origin": "zapp", "status": "active", "is_favorite": true, "rules": {"groups": [{"id": "seg-vip-g1", "match": "and", "rules": [{"id": "seg-vip-g1-r1", "field": "tags", "op": "contains", "value": "cliente"}, {"id": "seg-vip-g1-r2", "field": "lead_score", "op": "gte", "value": "60"}]}]}, "estimated_count": 184, "last_used_at": "2026-09-28T12:00:00.000Z", "created_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z", "creator": {"name": "Criador Teste"}},
+    {"id": "seg-leads", "name": "Leads Quentes", "description": "Leads com score alto", "origin": "zapp", "status": "active", "is_favorite": false, "rules": {"groups": [{"id": "seg-leads-g1", "match": "and", "rules": [{"id": "seg-leads-g1-r1", "field": "tags", "op": "contains", "value": "cliente"}, {"id": "seg-leads-g1-r2", "field": "lead_score", "op": "gte", "value": "60"}]}]}, "estimated_count": 312, "last_used_at": "2026-09-28T12:00:00.000Z", "created_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z", "creator": {"name": "Criador Teste"}}
+  ],
+  "talkx_campaign_metrics": [
+    {"id": "met-301", "campaign_id": "camp-301", "campaign_name": "Concluída Abril", "status": "completed", "segment_id": "seg-vip", "template_id": "tpl-001", "total_recipients": 1000, "sent_count": 980, "delivered_count": 980, "replied_count": 0, "outcome_unknown_count": 0, "reply_rate_pct": 4.2, "delivery_rate_pct": 100, "duration_secs": 3600, "started_at": "2026-09-20T12:00:00.000Z", "completed_at": "2026-09-28T12:00:00.000Z", "created_at": "2026-09-20T12:00:00.000Z"}
+  ],
+  "talkx_links": [
+    {"id": "lnk-301", "campaign_id": "camp-301", "label": "Catálogo", "slug": "catalogo-abril", "target_url": "https://exemplo.test/catalogo", "utm_source": "whatsapp", "utm_medium": "campanha", "utm_campaign": "abril", "utm_content": null, "utm_term": null, "created_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z"}
+  ],
+  "talkx_link_clicks": [
+    {"id": "clk-301", "link_id": "lnk-301", "recipient_id": null, "ip_hash": null, "ua": null, "clicked_at": "2026-09-28T12:00:00.000Z"}
+  ],
+  "talkx_recipients": [
+    {"id": "rec-301", "campaign_id": "camp-301", "contact_id": "ct-301", "status": "delivered", "sent_at": "2026-09-20T12:00:00.000Z", "delivered_at": "2026-09-20T12:00:00.000Z", "read_at": null, "replied_at": null, "click_count": 0, "error_message": null, "personalized_message": "Olá Contato Sintético, novidade para você!", "attempt_count": 1, "external_id": "wamid-rec-301", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z"},
+    {"id": "rec-302", "campaign_id": "camp-301", "contact_id": "ct-302", "status": "failed", "sent_at": "2026-09-20T12:00:00.000Z", "delivered_at": null, "read_at": null, "replied_at": null, "click_count": 0, "error_message": "Número inválido", "personalized_message": "Olá Contato Sintético, novidade para você!", "attempt_count": 1, "external_id": "wamid-rec-302", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z"}
+  ]
+}

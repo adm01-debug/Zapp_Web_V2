@@ -1,1 +1,13 @@
-{}
+{
+  "talkx_templates": [
+    {"id": "tpl-001", "name": "Boas-vindas", "description": "Modelo sintético Boas-vindas", "category": "relacionamento", "status": "published", "content": "Olá {{nome}}, confira as novidades da {{empresa}}!", "media_url": null, "media_type": null, "tags": ["sintetico", "relacionamento"], "custom_variables": ["nome", "empresa"], "current_version_id": "tpl-001-v2", "use_count": 42, "created_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z", "creator": {"name": "Criador Teste"}},
+    {"id": "tpl-004", "name": "Rascunho de campanha", "description": "Modelo sintético Rascunho de campanha", "category": "marketing", "status": "draft", "content": "Olá {{nome}}, confira as novidades da {{empresa}}!", "media_url": null, "media_type": null, "tags": ["sintetico", "marketing"], "custom_variables": ["nome", "empresa"], "current_version_id": "tpl-004-v2", "use_count": 0, "created_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z", "updated_at": "2026-09-28T12:00:00.000Z", "creator": {"name": "Criador Teste"}}
+  ],
+  "talkx_template_versions": [
+    {"id": "tpl-001-v1", "template_id": "tpl-001", "version_number": 1, "name": "Boas-vindas", "description": "Versão inicial", "content": "Olá {{nome}}, bem-vindo(a)!", "category": "relacionamento", "status": "published", "media_url": null, "media_type": null, "tags": ["sintetico"], "custom_variables": ["nome"], "saved_by": "creator-1", "created_at": "2026-09-20T12:00:00.000Z"},
+    {"id": "tpl-001-v2", "template_id": "tpl-001", "version_number": 2, "name": "Boas-vindas", "description": "Versão com empresa", "content": "Olá {{nome}}, confira as novidades da {{empresa}}!", "category": "relacionamento", "status": "published", "media_url": null, "media_type": null, "tags": ["sintetico"], "custom_variables": ["nome", "empresa"], "saved_by": "creator-1", "created_at": "2026-09-28T12:00:00.000Z"}
+  ],
+  "talkx_template_variants": [
+    {"id": "tpl-001-a", "template_id": "tpl-001", "label": "A", "content": "Olá {{nome}}, bem-vindo(a)!", "media_url": null, "media_type": null, "weight": 50, "created_at": "2026-09-20T12:00:00.000Z"}
+  ]
+}
