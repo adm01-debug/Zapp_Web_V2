@@ -180,11 +180,11 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
             />
             <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {search && (
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { handleSearch(''); setResults([]); }}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Limpar busca" onClick={() => { handleSearch(''); setResults([]); }}>
                   <X className="h-4 w-4" />
                 </Button>
               )}
-              <Button variant={showFilters ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8 relative" onClick={() => setShowFilters(!showFilters)}>
+              <Button variant={showFilters ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8 relative" aria-label="Filtros" onClick={() => setShowFilters(!showFilters)}>
                 <Filter className="h-4 w-4" />
                 {activeFiltersCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-3xs rounded-full flex items-center justify-center">
@@ -204,7 +204,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
                   <Badge key={tagId} variant="secondary" className="gap-1 pr-1" style={{ backgroundColor: `${tag.color}20`, color: tag.color, borderColor: tag.color }}>
                     <Tag className="h-3 w-3" />
                     {tag.name}
-                    <Button variant="ghost" size="icon" className="h-4 w-4 ml-0.5 hover:bg-transparent" onClick={() => removeTag(tagId)}>
+                    <Button variant="ghost" size="icon" className="h-4 w-4 ml-0.5 hover:bg-transparent" aria-label={`Remover tag ${tag.name}`} onClick={() => removeTag(tagId)}>
                       <X className="h-3 w-3" />
                     </Button>
                   </Badge>
@@ -277,7 +277,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult, onNewConversa
                   </div>
                   <div className="flex items-center gap-2">
                     {item.resultCount !== undefined && <span className="text-xs text-muted-foreground">{item.resultCount} resultados</span>}
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" aria-label="Remover do histórico" onClick={(e) => { e.stopPropagation(); removeFromHistory(item.query); }}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>

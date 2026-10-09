@@ -64,7 +64,7 @@ export function GlobalSearchFilters({
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Período</label>
             <Select value={dateFilter} onValueChange={(v) => onSetDateFilter(v as DateFilter)}>
-              <SelectTrigger className="w-full h-9">
+              <SelectTrigger className="w-full h-9" aria-label="Período">
                 <Clock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
