@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,9 +17,10 @@ import {
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
+import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
 import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
@@ -304,96 +305,6 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
   );
 }
 
-/**
- * V24 — uma linha de regra do público. Campos e operadores vêm do MESMO
- * catálogo do editor de segmentos (`RULE_FIELDS`/`RULE_OPS`), então a regra
- * montada aqui é a mesma que o motor compila para PostgREST.
- */
-function AudienceRuleRow({ rule, ed }: { rule: SegmentRule; ed: WizardState }) {
-  const field = RULE_FIELDS.find((definition) => definition.value === rule.field) ?? RULE_FIELDS[0];
-  const ops = RULE_OPS[field.kind] ?? RULE_OPS.text;
-  const needsValue = rule.op !== 'is_set' && rule.op !== 'is_empty';
-
-  // Trocar o campo troca o tipo: reinicia operador e valor para nunca deixar
-  // uma combinação que o motor rejeite (ex.: ilike em coluna uuid).
-  const changeField = (value: string) => {
-    const next = RULE_FIELDS.find((definition) => definition.value === value) ?? RULE_FIELDS[0];
-    ed.updateAudienceRule(rule.id, { field: next.value, op: (RULE_OPS[next.kind] ?? RULE_OPS.text)[0].value, value: '' });
-  };
-
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <Select value={rule.field} onValueChange={changeField}>
-        <SelectTrigger aria-label="Campo do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {RULE_FIELDS.map((definition) => <SelectItem key={definition.value} value={definition.value}>{definition.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Select value={rule.op} onValueChange={(value) => ed.updateAudienceRule(rule.id, { op: value as RuleOp })}>
-        <SelectTrigger aria-label="Operador do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {ops.map((op) => <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      {needsValue && (field.options ? (
-        <Select value={rule.value} onValueChange={(value) => ed.updateAudienceRule(rule.id, { value })}>
-          <SelectTrigger aria-label="Valor do filtro" className="h-8 text-xs w-[170px] bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
-          <SelectContent>
-            {field.options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ) : (
-        <Input
-          value={rule.value}
-          onChange={(event) => ed.updateAudienceRule(rule.id, { value: event.target.value })}
-          aria-label="Valor do filtro"
-          placeholder={field.kind === 'date' ? 'dias' : 'Valor'}
-          inputMode={field.kind === 'number' || field.kind === 'date' ? 'numeric' : undefined}
-          className="h-8 text-xs w-[170px] bg-input/40 border-border/70"
-        />
-      ))}
-      <button type="button" onClick={() => ed.removeAudienceRule(rule.id)} aria-label="Remover filtro" className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
-    </div>
-  );
-}
-
-/** V24 — filtros do passo 1 como regras do público (mesma fonte dos segmentos). */
-function AudienceRulesEditor({ ed }: { ed: WizardState }) {
-  const hasRules = ed.audienceRules.groups.some((group) => group.rules.length > 0);
-  return (
-    <div className="mb-3 space-y-2 rounded-xl border border-border/70 bg-input/30 p-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5"><Filter className="w-3.5 h-3.5" /> Filtros do público</p>
-        <span className="text-3xs text-muted-foreground">
-          {typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}
-        </span>
-      </div>
-      {ed.audienceRules.groups.map((group) => (
-        <div key={group.id} className="space-y-2">
-          {group.rules.length > 1 && (
-            <button
-              type="button"
-              onClick={() => ed.setGroupMatch(group.id, group.match === 'and' ? 'or' : 'and')}
-              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-primary-glow"
-            >
-              {group.match === 'and' ? 'Todas as regras (E)' : 'Qualquer regra (OU)'}
-            </button>
-          )}
-          {group.rules.map((rule) => <AudienceRuleRow key={rule.id} rule={rule} ed={ed} />)}
-        </div>
-      ))}
-      {!hasRules && <p className="text-2xs text-muted-foreground">Sem filtros — o público é toda a base de contatos com telefone.</p>}
-      <button
-        type="button"
-        onClick={() => ed.addAudienceRule()}
-        className="h-8 px-2.5 rounded-lg text-xs font-medium border border-border/70 bg-input/40 hover:bg-muted/50 flex items-center gap-1.5"
-      >
-        <Plus className="w-3.5 h-3.5" /> Adicionar filtro
-      </button>
-    </div>
-  );
-}
-
 function StepAudience({ ed }: { ed: WizardState }) {
   // V25 — o passo 1 só oferece segmentos ATIVOS (a página de gestão de
   // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
@@ -478,8 +389,19 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       {ed.audienceSource === 'contacts' && (
-        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
-          <AudienceRulesEditor ed={ed} />
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos."
+          right={<span className="text-3xs text-muted-foreground">{typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
+          <TalkXAudienceFilters
+            rules={ed.audienceRules}
+            onChange={ed.setAudienceRules}
+            options={{
+              tags: ed.tags,
+              companies: ed.companies,
+              sellers: (ed.owners ?? []).map((p) => ({ id: p.id, name: p.name || p.email || 'Sem nome' })),
+            }}
+            onClear={ed.clearFilters}
+          />
+          <div className="mt-3">
           <TalkXContactSelector
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
@@ -496,6 +418,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
           />
+          </div>
         </SectionCard>
       )}
     </>

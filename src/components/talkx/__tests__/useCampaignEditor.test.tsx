@@ -179,7 +179,12 @@ describe('useCampaignEditor — draft integrity', () => {
   it('oferece os filtros do passo 1 pelo catálogo de regras e consulta o motor (V24)', () => {
     render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: /adicionar filtro/i })).toBeInTheDocument();
+    // X126: a trilha "Filtros de audiência" passou a ser o componente dos 7
+    // controles do mock (antes, o editor genérico de regras com "Adicionar
+    // filtro"). O que o caso protege continua igual: os filtros vêm do catálogo
+    // de regras e a lista/contagem saem do motor.
+    expect(screen.getByRole('group', { name: 'Tags' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Localização' })).toBeInTheDocument();
     // A lista e a contagem do passo 1 saem do motor (não mais do SELECT morto).
     expect(capturedQuery('talkx-audience-contacts')).toBeDefined();
     expect(capturedQuery('talkx-audience-count')).toBeDefined();
