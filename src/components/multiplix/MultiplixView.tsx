@@ -6,13 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import {
-  useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
+  useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount, useMultiplixResolve,
   type MultiplixSearchFilters, type MultiplixAudienceRow,
 } from '@/hooks/integrations/useMultiplixAudience';
-import { useMultiplixDispatchesList } from '@/hooks/integrations/useMultiplixDispatches';
+import {
+  useMultiplixDispatchesList,
+  useMultiplixAudienceSelect,
+  useMultiplixAudienceSave,
+  useMultiplixAudienceApply,
+  type MultiplixAudienceSaveResult,
+} from '@/hooks/integrations/useMultiplixDispatches';
+import { ELIGIBILITY_LABELS_PT, type MultiplixEligibility } from '@/lib/multiplix-eligibility';
 import { MultiplixComposerDialog } from './MultiplixComposerDialog';
 import { MultiplixMonitor } from './MultiplixMonitor';
 
@@ -35,22 +43,132 @@ const DESTINO_LABELS: Record<string, string> = {
   contato_pessoa: 'Contato', telefone_empresa: 'Empresa · sem pessoa cadastrada', sem_destino: 'Sem destino',
 };
 
+// F75: os dois tipos de publico salvo do contrato da edge (`kind` de
+// `audience.save` — migration F35: CHECK ('rule','static_list')).
+type AudienciaKind = 'rule' | 'static_list';
+
+const AUDIENCE_KIND_LABELS: Record<AudienciaKind, string> = {
+  rule: 'Regra (filtros do painel)',
+  static_list: 'Lista fixa (selecionadas agora)',
+};
+
 const PAGE_SIZE = 50;
 // Limite duro do backend: ResolveParamsSchema.company_ids em
 // supabase/functions/multiplix-audience/index.ts rejeita arrays > 500.
 const MAX_SELECTABLE = 500;
+
+/** Texto do filtro para o aviso da regra ("o que este publico guarda"). */
+function resumoFiltros(filters: MultiplixSearchFilters): string {
+  const partes: string[] = [];
+  if (filters.roles?.length) partes.push(`Público: ${filters.roles.map((r) => ROLE_LABELS[r]).join(', ')}`);
+  if (filters.ramo) partes.push(`Ramo: ${filters.ramo}`);
+  if (filters.uf) partes.push(`UF: ${filters.uf}`);
+  if (filters.search) partes.push(`Nome: ${filters.search}`);
+  return partes.length > 0 ? partes.join(' · ') : 'nenhum filtro';
+}
+
+// F75: `kind=rule` exige definition com ao menos um filtro (AudienceSaveSchema
+// da edge). A tela nao manda regra vazia — o botao fica desabilitado.
+function temAlgumFiltro(filters: MultiplixSearchFilters): boolean {
+  return Boolean(filters.roles?.length || filters.ramo || filters.uf || filters.search);
+}
+
+function papeisDaEmpresa(row: MultiplixAudienceRow): string {
+  const papeis = [
+    row.is_customer ? ROLE_LABELS.cliente : null,
+    row.is_supplier ? ROLE_LABELS.fornecedor : null,
+    row.is_carrier ? ROLE_LABELS.transportadora : null,
+  ].filter((papel): papel is string => papel !== null);
+  return papeis.length > 0 ? papeis.join(' · ') : 'Sem papel informado';
+}
+
+/**
+ * F75: popover do contato com os SEIS campos do painel — empresa, papéis,
+ * origem, destino, elegibilidade e motivo.
+ *
+ * A elegibilidade NAO esta na linha da busca (`MultiplixAudienceRow`): ela vem
+ * do resolvedor canônico (`resolve`, a mesma ponte do disparo) e o rótulo em
+ * português sai do mapa único `ELIGIBILITY_LABELS_PT` — nenhuma regra paralela
+ * é criada aqui. O estado fica no próprio popover (uma instância por linha),
+ * então o dado de uma empresa nunca aparece no detalhe de outra.
+ */
+function ContatoDetalhe({ row }: { row: MultiplixAudienceRow }) {
+  const resolve = useMultiplixResolve();
+  const [aberto, setAberto] = useState(false);
+  const [resolvido, setResolvido] = useState<{ companyId: string; elegibilidade: MultiplixEligibility } | null>(null);
+
+  const aoMudarAberto = (proximo: boolean) => {
+    setAberto(proximo);
+    if (!proximo) return;
+    resolve.mutate([row.company_id], {
+      onSuccess: (linhas) => {
+        const alvo = linhas.find((linha) => linha.company_id === row.company_id);
+        if (alvo) setResolvido({ companyId: row.company_id, elegibilidade: alvo.elegibilidade });
+      },
+    });
+  };
+
+  const elegibilidade = resolvido?.companyId === row.company_id ? ELIGIBILITY_LABELS_PT[resolvido.elegibilidade] : null;
+
+  return (
+    <Popover open={aberto} onOpenChange={aoMudarAberto}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Detalhes de ${row.company_name}`}
+          className="text-left font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:underline"
+        >
+          {row.company_name}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" aria-label={`Detalhe de ${row.company_name}`} className="w-80 space-y-2 text-sm">
+        <div>
+          <p className="font-medium text-foreground">{row.company_name}</p>
+          <p className="text-xs text-muted-foreground">{row.ramo_atividade} · {row.uf ?? 'UF não informada'}</p>
+        </div>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <dt className="text-muted-foreground">Papéis</dt>
+          <dd>{papeisDaEmpresa(row)}</dd>
+          <dt className="text-muted-foreground">Origem</dt>
+          <dd>{DESTINO_LABELS[row.destino_origem] ?? row.destino_origem}</dd>
+          <dt className="text-muted-foreground">Destino</dt>
+          <dd>{row.destino_e164 ?? 'Sem destino'}</dd>
+          <dt className="text-muted-foreground">Elegibilidade</dt>
+          <dd>
+            {elegibilidade
+              ?? (resolve.isPending ? 'Verificando…' : resolve.isError ? 'Falha ao verificar' : 'Não informada')}
+          </dd>
+          <dt className="text-muted-foreground">Motivo</dt>
+          <dd>{row.motivo_inclusao}</dd>
+        </dl>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function MultiplixView() {
   const { data: ramos, isLoading: loadingRamos } = useMultiplixRamos();
   const { data: ufs, isLoading: loadingUfs } = useMultiplixUfs();
   const search = useMultiplixSearch();
   const count = useMultiplixCount();
+  const audienciaSelect = useMultiplixAudienceSelect();
+  const audienciaSave = useMultiplixAudienceSave();
+  const audienciaApply = useMultiplixAudienceApply();
 
   const [role, setRole] = useState<'cliente' | 'fornecedor' | 'transportadora' | ''>('');
   const [ramo, setRamo] = useState('');
   const [uf, setUf] = useState('');
   const [term, setTerm] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // F75: exclusoes EXPLICITAS do painel. Elas vencem a inclusao — a empresa
+  // marcada como excluida fica fora do disparo mesmo que tambem esteja marcada
+  // como selecionada (regra do prototipo: "uma exclusao manual continua valida
+  // mesmo quando o contato tambem pertence a um segmento selecionado").
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  // F75/E134: quem responde "quantos selecionados estao FORA do filtro atual" e
+  // o SERVIDOR — a lista da tela e paginada, entao a pagina carregada nao prova
+  // nada. `null` = ainda nao comparado com o filtro submetido.
+  const [confirmadosNoFiltro, setConfirmadosNoFiltro] = useState<Set<string> | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [rows, setRows] = useState<MultiplixAudienceRow[]>([]);
@@ -73,6 +191,14 @@ export default function MultiplixView() {
   // esconder o botao mesmo quando count.data > rows.length. Condicao:
   // lastPageFull && (count.data === undefined || rows.length < count.data).
   const [lastPageFull, setLastPageFull] = useState(false);
+  // F75: publico salvo (regra ou lista) gravado na camada de hooks.
+  const [audienciaNome, setAudienciaNome] = useState('');
+  const [audienciaKind, setAudienciaKind] = useState<AudienciaKind>('rule');
+  const [confirmandoSalvar, setConfirmandoSalvar] = useState(false);
+  const [audienciaSalva, setAudienciaSalva] = useState<MultiplixAudienceSaveResult | null>(null);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+  const [erroAplicar, setErroAplicar] = useState<string | null>(null);
+  const [aplicarResultado, setAplicarResultado] = useState<{ texto: string; divergente: boolean } | null>(null);
   const dispatches = useMultiplixDispatchesList();
   const selectableRows = rows.slice(0, MAX_SELECTABLE);
 
@@ -83,8 +209,20 @@ export default function MultiplixView() {
     search: term || undefined,
   }), [role, ramo, uf, term]);
 
+  const selecionados = useMemo(() => Array.from(selected), [selected]);
+  // O disparo leva a selecao MENOS as exclusoes (exclusao vence inclusao).
+  const efetivos = useMemo(() => selecionados.filter((id) => !excluded.has(id)), [selecionados, excluded]);
+  const foraDoFiltro = useMemo(
+    () => selecionados.filter((id) => confirmadosNoFiltro !== null && !confirmadosNoFiltro.has(id)),
+    [selecionados, confirmadosNoFiltro],
+  );
+  const podeSalvarPublico = audienciaNome.trim() !== ''
+    && (audienciaKind === 'rule' ? temAlgumFiltro(filters) : efetivos.length > 0);
+
   const runSearch = () => {
-    setSelected(new Set());
+    // F75/E131: a selecao SOBREVIVE a troca de filtro (era `setSelected(new
+    // Set())` aqui) — o publico e o que o operador marcou; o filtro e so a
+    // lente. Sem isto, cada troca de papel/ramo/UF apagava ate 500 marcas.
     setPage(0);
     setSubmittedFilters(filters);
     // P1 fix (Codex, review da PR #958): 'rows' antigo (de outro filtro)
@@ -101,6 +239,18 @@ export default function MultiplixView() {
     setLastPageFull(false);
     count.mutate(filters);
     search.mutate({ ...filters, page: 0, page_size: PAGE_SIZE }, { onSuccess: (data) => { setRows(data); setHasSearched(true); setLastPageFull(data.length === PAGE_SIZE); } });
+    // F75/E134: a confirmacao anterior era do filtro ANTIGO — apaga antes de
+    // comparar, senao o numero na tela seria de outra lente.
+    setConfirmadosNoFiltro(null);
+    // F75/E134: o servidor diz, para os selecionados, quais continuam DENTRO do
+    // filtro submetido; o que sobra e o "N fora do filtro atual". Sem selecao
+    // nao ha o que preservar e a chamada nem acontece.
+    if (selecionados.length > 0) {
+      audienciaSelect.mutate(
+        { manual: { companyIds: selecionados }, filters },
+        { onSuccess: (resultado) => setConfirmadosNoFiltro(new Set(resultado.recipients.map((r) => r.company_id))) },
+      );
+    }
   };
 
   // P1+P2 fix (Codex, review da PR #958):
@@ -121,6 +271,12 @@ export default function MultiplixView() {
   };
 
   const toggleRow = (companyId: string) => {
+    // F75/E134: a linha veio do resultado do filtro SUBMETIDO — ela esta dentro
+    // dele. Sem isto as marcadas depois da comparacao entrariam na conta de
+    // "fora do filtro atual" so por nao estarem no conjunto confirmado.
+    if (!selected.has(companyId)) {
+      setConfirmadosNoFiltro((prev) => (prev ? new Set(prev).add(companyId) : prev));
+    }
     setSelected((prev) => {
       if (prev.has(companyId)) {
         const next = new Set(prev);
@@ -149,7 +305,73 @@ export default function MultiplixView() {
     if (rows.length > MAX_SELECTABLE) {
       toast.error(`"Selecionar todas" limitado a ${MAX_SELECTABLE} empresas (limite do backend) — foram selecionadas as primeiras ${MAX_SELECTABLE}. Refine o filtro para pegar o restante.`);
     }
-    setSelected(new Set(selectableRows.map((r) => r.company_id)));
+    const ids = selectableRows.map((r) => r.company_id);
+    setSelected(new Set(ids));
+    // F75/E134: todas vieram do resultado do filtro submetido.
+    setConfirmadosNoFiltro((prev) => (prev ? new Set([...prev, ...ids]) : prev));
+  };
+
+  const toggleExcluido = (companyId: string) => {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) next.delete(companyId);
+      else next.add(companyId);
+      return next;
+    });
+  };
+
+  /**
+   * F75: grava o publico. O aviso vem ANTES da escrita e muda com o tipo —
+   * regra acompanha os filtros (o tamanho muda sozinho), lista fixa congela as
+   * empresas escolhidas agora.
+   */
+  const confirmarSalvarPublico = () => {
+    const nome = audienciaNome.trim();
+    const entrada = audienciaKind === 'rule'
+      ? { name: nome, kind: 'rule' as const, definition: filters }
+      : { name: nome, kind: 'static_list' as const, members: { companyIds: efetivos } };
+    setErroSalvar(null);
+    audienciaSave.mutate(entrada, {
+      onSuccess: (salvo) => {
+        // O sucesso so aparece depois da resposta da edge.
+        setAudienciaSalva(salvo);
+        setConfirmandoSalvar(false);
+        toast.success(`Público "${salvo.name}" salvo.`);
+      },
+      // Falha de escrita nao pode ficar em silencio: o aviso continua aberto
+      // com o motivo, para o operador tentar de novo.
+      onError: (erro) => setErroSalvar(erro instanceof Error ? erro.message : 'Falha ao salvar o público.'),
+    });
+  };
+
+  /**
+   * F75: aplica um publico SALVO por referencia. A tela mostra os numeros do
+   * SERVIDOR: `count` e o tamanho da regra e `eligible_count` os aptos de
+   * agora — quando divergem, a diferenca nao entra no disparo.
+   *
+   * A criacao do disparo por referencia (`audience_id` no payload) e da camada
+   * de hooks/edge, nao desta tela: aqui o publico aplicado e lido, nao
+   * expandido em company_ids no navegador.
+   */
+  const aplicarPublicoSalvo = () => {
+    if (!audienciaSalva) return;
+    setErroAplicar(null);
+    setAplicarResultado(null);
+    audienciaApply.mutate({ audienceId: audienciaSalva.id }, {
+      onSuccess: (resultado) => {
+        const tamanhoDaRegra = resultado.count;
+        const aptos = resultado.eligible_count;
+        const divergente = tamanhoDaRegra !== null && aptos !== null && tamanhoDaRegra !== aptos;
+        setAplicarResultado({
+          divergente,
+          texto: `Público "${audienciaSalva.name}" lido do servidor: `
+            + `${tamanhoDaRegra ?? 'tamanho não informado'} empresa(s) · `
+            + `${aptos ?? 'aptos não informados'} apta(s) agora.`
+            + (divergente ? ' A diferença não entra no disparo.' : ''),
+        });
+      },
+      onError: (erro) => setErroAplicar(erro instanceof Error ? erro.message : 'Falha ao aplicar o público.'),
+    });
   };
 
   if (monitorId) {
@@ -255,6 +477,92 @@ export default function MultiplixView() {
         </p>
       )}
 
+      {/* F75: exclusao vence inclusao — dito na tela, sem depender do rodape. */}
+      {excluded.size > 0 && (
+        <p role="status" className="text-sm text-destructive">
+          <strong>{excluded.size}</strong> empresa(s) excluída(s) — exclusão vence a seleção: ficam fora do disparo mesmo se estiverem marcadas como selecionadas.
+        </p>
+      )}
+
+      <section aria-label="Público salvo" className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Nome do público</span>
+          <Input
+            aria-label="Nome do público"
+            value={audienciaNome}
+            onChange={(e) => setAudienciaNome(e.target.value)}
+            placeholder="Ex.: Fornecedores de SP"
+            className="w-56"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Tipo</span>
+          <div role="group" aria-label="Tipo de público" className="flex gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={audienciaKind === 'rule' ? 'default' : 'outline'}
+              aria-pressed={audienciaKind === 'rule'}
+              onClick={() => setAudienciaKind('rule')}
+            >
+              Regra (filtros do painel)
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={audienciaKind === 'static_list' ? 'default' : 'outline'}
+              aria-pressed={audienciaKind === 'static_list'}
+              onClick={() => setAudienciaKind('static_list')}
+            >
+              Lista fixa (selecionadas)
+            </Button>
+          </div>
+        </div>
+
+        <Button type="button" onClick={() => setConfirmandoSalvar(true)} disabled={!podeSalvarPublico || audienciaSave.isPending}>
+          Salvar público
+        </Button>
+
+        <Button type="button" variant="outline" onClick={aplicarPublicoSalvo} disabled={!audienciaSalva || audienciaApply.isPending}>
+          {audienciaApply.isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
+          Aplicar público salvo
+        </Button>
+
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {audienciaSalva
+            ? `Público salvo: ${audienciaSalva.name} · ${AUDIENCE_KIND_LABELS[audienciaSalva.kind]}`
+            : 'Nenhum público salvo nesta sessão.'}
+        </p>
+      </section>
+
+      {confirmandoSalvar && (
+        <div role="alert" className="flex flex-col gap-2 rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+          <p>
+            {audienciaKind === 'rule'
+              ? `Regra: guarda os filtros do painel (${resumoFiltros(filters)}). O tamanho é recalculado a cada uso, então pode divergir dos aptos na hora do disparo.`
+              : `Lista fixa: guarda as ${efetivos.length} empresa(s) selecionadas agora — as excluídas ficam de fora — e não acompanha mudanças no cadastro.`}
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" onClick={confirmarSalvarPublico} disabled={audienciaSave.isPending}>Confirmar e salvar</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmandoSalvar(false)}>Cancelar</Button>
+          </div>
+          {erroSalvar && (
+            <p className="text-destructive">Não foi possível salvar o público: {erroSalvar}</p>
+          )}
+        </div>
+      )}
+
+      {aplicarResultado && (
+        <p role="status" className={aplicarResultado.divergente ? 'text-sm text-warning' : 'text-sm text-muted-foreground'}>
+          {aplicarResultado.texto}
+        </p>
+      )}
+
+      {erroAplicar && (
+        <p role="status" className="text-sm text-destructive">Não foi possível aplicar o público: {erroAplicar}</p>
+      )}
+
       {/* P2 fix (Codex, review da PR #958, 2 rounds): gate em 'hasSearched'
           (liga na 1a busca, nunca desliga) -- 'search.isSuccess' reflete a
           mutation COMPARTILHADA com loadMore, entao virava false a cada
@@ -278,11 +586,12 @@ export default function MultiplixView() {
                 <TableHead>UF</TableHead>
                 <TableHead>Destino</TableHead>
                 <TableHead>Escopo</TableHead>
+                <TableHead className="w-16">Excluir</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.company_id}>
+                <TableRow key={row.company_id} className={excluded.has(row.company_id) ? 'text-muted-foreground' : undefined}>
                   <TableCell>
                     <Checkbox
                       checked={selected.has(row.company_id)}
@@ -290,7 +599,11 @@ export default function MultiplixView() {
                       aria-label={`Selecionar ${row.company_name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{row.company_name}</TableCell>
+                  <TableCell>
+                    {/* F75: o nome abre o detalhe do contato (empresa, papéis,
+                        origem, destino, elegibilidade e motivo). */}
+                    <ContatoDetalhe row={row} />
+                  </TableCell>
                   <TableCell>{row.ramo_atividade}</TableCell>
                   <TableCell>{row.uf ?? '—'}</TableCell>
                   <TableCell>
@@ -301,11 +614,19 @@ export default function MultiplixView() {
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{row.motivo_inclusao}</TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={excluded.has(row.company_id)}
+                      onCheckedChange={() => toggleExcluido(row.company_id)}
+                      aria-label={`Excluir ${row.company_name}`}
+                      className="data-[state=checked]:bg-destructive data-[state=checked]:text-destructive-foreground"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     Nenhuma empresa encontrada para este filtro.
                   </TableCell>
                 </TableRow>
@@ -335,20 +656,37 @@ export default function MultiplixView() {
       )}
 
       {selected.size > 0 && (
-        <div className="sticky bottom-4 flex items-center justify-between gap-4 self-center rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] px-4 py-3 shadow-lg">
-          <span className="text-sm">
-            <strong>{selected.size}</strong> empresa(s) selecionada(s)
-          </span>
-          <Button onClick={() => setComposerOpen(true)}>Criar disparo</Button>
+        <div className="sticky bottom-4 flex flex-wrap items-center justify-between gap-4 self-center rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] px-4 py-3 shadow-lg">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm">
+              <strong>{efetivos.length}</strong> empresa(s) no disparo
+              {excluded.size > 0 && ` · ${excluded.size} excluída(s)`}
+            </span>
+            {/* F75/E134: "N fora do filtro atual · seleção preservada" — o N é a
+                diferença que o SERVIDOR confirmou depois da troca de filtro. */}
+            <span className="text-xs text-muted-foreground" aria-live="polite" data-testid="aviso-selecao">
+              {foraDoFiltro.length > 0
+                ? `${foraDoFiltro.length} fora do filtro atual · seleção preservada`
+                : 'Seleção preservada ao trocar o filtro.'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {excluded.size > 0 && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setExcluded(new Set())}>Limpar exclusões</Button>
+            )}
+            <Button onClick={() => setComposerOpen(true)} disabled={efetivos.length === 0}>Criar disparo</Button>
+          </div>
         </div>
       )}
 
       <MultiplixComposerDialog
         open={composerOpen}
         onOpenChange={setComposerOpen}
-        selectedCompanyIds={Array.from(selected)}
+        selectedCompanyIds={efetivos}
         onCreated={(dispatchId) => {
           setSelected(new Set());
+          setExcluded(new Set());
+          setConfirmadosNoFiltro(null);
           dispatches.refetch();
           setMonitorId(dispatchId);
         }}

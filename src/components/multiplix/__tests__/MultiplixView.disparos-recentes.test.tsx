@@ -33,6 +33,11 @@ const { dispatches } = vi.hoisted(() => ({
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
   useMultiplixDispatchesList: () => ({ data: dispatches, refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  // TL-041C/F75: o painel passou a consumir o publico do disparo (selecionar,
+  // salvar e aplicar) DESTE módulo — o mock entrega as três, vazias.
+  useMultiplixAudienceSelect: () => ({ mutate: vi.fn(), isPending: false }),
+  useMultiplixAudienceSave: () => ({ mutate: vi.fn(), isPending: false }),
+  useMultiplixAudienceApply: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
@@ -40,6 +45,8 @@ vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
   useMultiplixUfs: () => ({ data: [], isLoading: false }),
   useMultiplixSearch: () => ({ mutate: vi.fn(), isPending: false, isError: false, error: null }),
   useMultiplixCount: () => ({ mutate: vi.fn(), isPending: false, data: undefined }),
+  // TL-041C/F75: o detalhe do contato resolve a elegibilidade por esta hook.
+  useMultiplixResolve: () => ({ mutate: vi.fn(), isPending: false, data: undefined }),
   MultiplixOverLimitError: class MultiplixOverLimitError extends Error {},
 }));
 
