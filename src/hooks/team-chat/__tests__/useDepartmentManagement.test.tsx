@@ -115,6 +115,38 @@ describe('useSaveDepartmentWhatsApp — gravação pela RPC canônica, sem acess
     expect(args.p_api_key).toBeUndefined();
   });
 
+  it('evolution_api_key como string vazia nao envia p_api_key', async () => {
+    await runSave({ mode: 'evolution', config: { evolution_api_key: '' }, actorName: 'Ana' });
+
+    const [name, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(name).toBe('set_department_whatsapp_config');
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('evolution_api_key com espacos em branco nao envia p_api_key', async () => {
+    await runSave({ mode: 'evolution', config: { evolution_api_key: '  ' }, actorName: 'Ana' });
+
+    const [name, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(name).toBe('set_department_whatsapp_config');
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('official_token como string vazia nao envia p_api_key', async () => {
+    await runSave({ mode: 'official', config: { official_token: '' }, actorName: 'Ana' });
+
+    const [name, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(name).toBe('set_department_whatsapp_config');
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('official_token com espacos em branco nao envia p_api_key', async () => {
+    await runSave({ mode: 'official', config: { official_token: '  ' }, actorName: 'Ana' });
+
+    const [name, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(name).toBe('set_department_whatsapp_config');
+    expect(args.p_api_key).toBeUndefined();
+  });
+
   it('recusa da RPC ({ok:false,error}) nao passa como sucesso', async () => {
     f.rpc.mockResolvedValueOnce({ data: { ok: false, error: 'not_authorized' }, error: null });
 

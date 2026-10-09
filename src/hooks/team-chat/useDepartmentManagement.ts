@@ -253,9 +253,9 @@ export function useSaveDepartmentWhatsApp(departmentId: string) {
       actorName: string;
     }) => {
       const apiKey = mode === 'evolution'
-        ? config.evolution_api_key
+        ? (config.evolution_api_key?.trim() || undefined)
         : mode === 'official'
-          ? config.official_token
+          ? (config.official_token?.trim() || undefined)
           : undefined;
       const { data, error } = await supabase.rpc('set_department_whatsapp_config', {
         p_department_id: departmentId,
