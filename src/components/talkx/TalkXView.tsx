@@ -10,7 +10,9 @@ import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
-import { ModuleHeader, IconTile, TalkXSkeletonRows } from './talkxShared';
+import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXHelp } from './TalkXHelp';
 import { TalkXOverview } from './TalkXOverview';
@@ -34,6 +36,12 @@ export default function TalkXView() {
   const { data: teamProfiles = [] } = useTeamProfiles();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
+  // X048 — a Visão geral aplica o estado "Conexão WhatsApp desconectada" acima
+  // da tabela quando NÃO existe conexão ativa (o botão leva para a tela que
+  // resolve). `null` = ainda checando/consulta falhou: sem resposta confiável o
+  // estado não aparece (nunca um falso "desconectado" na tela).
+  const { whatsapp: whatsappService } = useTalkXServiceStatus();
+  const whatsappDisconnected = whatsappService.connected === false;
   const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
   const [activeTab, setActiveTab] = useState<string>(() => readTab(window.location.search));
   const [activeSub, setActiveSub] = useState<string | undefined>(() => readSub(window.location.search));
@@ -351,6 +359,11 @@ export default function TalkXView() {
         </div>
 
         <TabsContent value="overview" className="mt-4">
+          {whatsappDisconnected && (
+            <div className="mb-4" data-talkx-whatsapp-state="disconnected">
+              <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
+            </div>
+          )}
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
             isError={isError} error={campaignsError} onRetry={() => { void refetchCampaigns(); }}
