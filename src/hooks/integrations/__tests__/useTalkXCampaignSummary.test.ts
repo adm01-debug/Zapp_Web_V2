@@ -19,7 +19,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc: rpcMock, from: fromMock },
 }));
 
-import { useTalkXCampaignSummary, summaryCountsFromServer } from '@/hooks/integrations/useTalkXCampaignSummary';
+import { useTalkXCampaignSummary } from '@/hooks/integrations/useTalkXCampaignSummary';
 import type { SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -106,8 +106,20 @@ describe('useTalkXCampaignSummary — resumo da campanha calculado no servidor (
     expect(result.current.total).toBe(0);
   });
 
-  it('resposta ausente ou inválida nunca vira NaN na tela', () => {
-    expect(summaryCountsFromServer(null)).toEqual({ total: 0, eligible: 0, suppressed: 0 });
-    expect(summaryCountsFromServer({ eligible: 'x', suppressed: -3 })).toEqual({ total: 0, eligible: 0, suppressed: 0 });
+  it('resposta ausente ou inválida do servidor nunca vira NaN na tela', async () => {
+    // O servidor pode devolver jsonb sem as chaves (ou com texto): o rail tem
+    // de mostrar 0, nunca "NaN" nem contagem negativa.
+    rpcMock.mockResolvedValue({ data: { eligible: 'x', suppressed: -3 }, error: null });
+
+    const invalido = renderHook(() => useTalkXCampaignSummary({ rules }), { wrapper });
+    await waitFor(() => expect(invalido.result.current.isLoading).toBe(false));
+    expect(invalido.result.current.total).toBe(0);
+    expect(invalido.result.current.eligible).toBe(0);
+    expect(invalido.result.current.suppressed).toBe(0);
+
+    rpcMock.mockResolvedValue({ data: null, error: null });
+    const vazio = renderHook(() => useTalkXCampaignSummary({ rules }), { wrapper });
+    await waitFor(() => expect(vazio.result.current.isLoading).toBe(false));
+    expect(vazio.result.current).toMatchObject({ total: 0, eligible: 0, suppressed: 0 });
   });
 });
