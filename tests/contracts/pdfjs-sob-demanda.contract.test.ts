@@ -174,7 +174,15 @@ describe('contrato M03 — pdfjs-dist só carrega sob demanda', () => {
     for (const arquivo of arquivos) expect(arquivo.startsWith(SRC)).toBe(true);
   });
 
-  it('nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', () => {
+  // Único ajuste de tempo deste arquivo: esta é a única verificação do repositório que parseia
+  // TODO o src/** com o compilador, e o teto padrão de 5 s do `vitest.contracts.config.ts` (o
+  // config principal usa 15 s) fazia o contrato acusar vermelho FALSO quando a máquina estava
+  // ocupada — foi esse o vermelho que a fábrica viu e atribuiu a um cartão de volume, com o
+  // arquivo idêntico ao da base. A folga é medida: o mesmo teste leva ~2 s com a máquina livre,
+  // ~6 s com os 24 núcleos ocupados e ~26 s com a caixa inteira carregada (o teto de 60 s cobre a
+  // pior carga observada). Nada afrouxa aqui: as asserções são exatamente as mesmas e um import
+  // estático continua reprovado — a reprovação é por CONTEÚDO, nunca pelo tempo.
+  it('nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', { timeout: 60_000 }, () => {
     const violacoes: string[] = [];
     for (const arquivo of arquivosDeProducao(SRC)) {
       for (const achado of cargasEstaticasDePdfjs(lerFonte(arquivo), arquivo)) {
