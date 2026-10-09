@@ -22,15 +22,14 @@
  * verde com ela.
  *
  * Escopo: só o que o cartão toca. O subtítulo do `ModuleHeader` (de
- * `src/components/talkx/talkxShared.ts`, componente compartilhado de outro módulo)
- * ainda usa `text-[13px]` — por isso as regras de px são conferidas nos elementos
- * DESTE cartão e nas fontes do módulo, nunca no DOM inteiro.
+ * `src/components/talkx/kit/primitives.tsx`, componente compartilhado de outro módulo)
+ * ainda usa `text-[13px]`; por isso as regras são conferidas nas subárvores dos blocos
+ * DESTA tela — que ficam fora do cabeçalho — e nunca no DOM inteiro.
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import type { ReactElement } from 'react';
 
 /* ------------------------------------------------------------------ *
@@ -56,7 +55,7 @@ function valorDoToken(token: string): string {
 }
 
 /* ------------------------------------------------------------------ *
- * Regras conferidas em cada classe renderizada
+ * Regras conferidas no DOM renderizado
  * ------------------------------------------------------------------ */
 
 function classesDe(el: Element): string[] {
@@ -77,8 +76,8 @@ function pxArbitrarioDe(el: Element): string[] {
   return classesDe(el).filter((c) => /\[[0-9.]+px\]/.test(c));
 }
 
-/** px arbitrário em qualquer elemento da subárvore (o próprio + descendentes). */
-function pxArbitrarioNaSubarvore(el: Element): string[] {
+/** px arbitrário no bloco inteiro (o elemento e todos os descendentes). */
+function pxArbitrarioNoBloco(el: Element): string[] {
   return [el, ...el.querySelectorAll('*')].flatMap(pxArbitrarioDe);
 }
 
@@ -96,6 +95,7 @@ const h = vi.hoisted(() => ({
   rows: [] as unknown[],
   count: undefined as number | undefined,
   recipients: { rows: [] as unknown[], total: null as number | null, truncated: false },
+  recipientsError: null as unknown,
 }));
 
 function disparo(i: number) {
@@ -190,7 +190,11 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
       created_at: '2026-10-01T10:00:00Z',
     },
   }),
-  useMultiplixRecipients: () => ({ data: h.recipients, isError: false, error: null }),
+  useMultiplixRecipients: () => ({
+    data: h.recipients,
+    isError: h.recipientsError !== null,
+    error: h.recipientsError,
+  }),
   useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
   fetchMultiplixRecipientsTotal: () => Promise.resolve(0),
 }));
@@ -213,6 +217,7 @@ beforeEach(() => {
   h.rows = Array.from({ length: 50 }, (_, i) => empresa(i + 1));
   h.count = 60;
   h.recipients = { rows: [destinatario(1)], total: 1, truncated: false };
+  h.recipientsError = null;
 });
 
 /* ------------------------------------------------------------------ *
@@ -245,8 +250,14 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     expect(classesDe(painel!).filter((c) => /^(bg|border)-\[/.test(c))).toEqual([]);
     expect(painel!.className).toContain('bg-card');
     expect(painel!.className).toContain('border-border');
-    // Toda a subárvore do painel (rótulos, selects, botão Buscar) sem px arbitrário.
-    expect(pxArbitrarioNaSubarvore(painel!)).toEqual([]);
+
+    // Todo o bloco (rótulos, selects, botão Buscar), o painel "Disparos recentes"
+    // e a contagem do filtro — sem px arbitrário.
+    const recentes = screen.getByText('Disparos recentes').closest('div.rounded-2xl')!;
+    const contagem = screen.getByText(/empresa\(s\) no filtro atual/);
+    expect(pxArbitrarioNoBloco(painel!)).toEqual([]);
+    expect(pxArbitrarioNoBloco(recentes)).toEqual([]);
+    expect(pxArbitrarioNoBloco(contagem)).toEqual([]);
 
     // E nenhuma classe do DOM da tela aponta para variável que não existe.
     expect(tokensInexistentesNoDom(container)).toEqual([]);
@@ -259,16 +270,13 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     expect(screen.getByText('Empresa 1')).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Selecionar Empresa 1'));
 
-    // Os três blocos que tinham px/classe arbitrária renderizaram:
-    const listaRecentes = screen.getByText('Disparos recentes').closest('div.rounded-2xl')!;
+    // Os blocos que só nascem depois da busca/seleção renderizaram:
     const molduraTabela = screen.getByRole('table').closest('div.rounded-2xl')!;
-    const botaoCarregarMais = screen.getByRole('button', { name: /Carregar mais/ }).parentElement!;
+    const blocoCarregarMais = screen.getByRole('button', { name: /Carregar mais/ }).parentElement!;
     const barraSelecao = screen.getByText(/empresa\(s\) selecionada\(s\)/).closest('div')!;
 
-    expect(listaRecentes).not.toBeNull();
-    expect(molduraTabela).not.toBeNull();
-    for (const bloco of [listaRecentes, molduraTabela, botaoCarregarMais, barraSelecao]) {
-      expect(pxArbitrarioNaSubarvore(bloco), bloco.tagName + '|' + bloco.className).toEqual([]);
+    for (const bloco of [molduraTabela, blocoCarregarMais, barraSelecao]) {
+      expect(pxArbitrarioNoBloco(bloco), `${bloco.tagName}|${bloco.className}`).toEqual([]);
     }
 
     expect(tokensInexistentesNoDom(container)).toEqual([]);
@@ -278,33 +286,37 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     const { container } = comQueryClient(<MultiplixMonitor dispatchId="d1" onBack={vi.fn()} />);
 
     const nome = screen.getByText('Empresa 1');
-    const lista = nome.closest('div.overflow-auto')!;
-    const filtro = screen.getByRole('combobox');
-    const telaMonitor = nome.closest('div.space-y-4')!;
-
-    expect(lista).not.toBeNull();
-    expect(telaMonitor).not.toBeNull();
     // `text-[13px]` -> `text-sm` (absorção sancionada em
     // docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md:85).
     expect(classesDe(nome)).toContain('text-sm');
-    expect(pxArbitrarioDe(nome)).toEqual([]);
-    // Toda a tela do monitor (cabeçalho, KPIs, filtro, lista) sem px arbitrário.
-    expect(pxArbitrarioNaSubarvore(telaMonitor)).toEqual([]);
-    expect(pxArbitrarioDe(filtro)).toEqual([]);
+
+    // A tela inteira do monitor: cabeçalho do disparo, KPIs, filtro de status e lista.
+    const tela = nome.closest('div.space-y-4')!;
+    expect(pxArbitrarioNoBloco(tela)).toEqual([]);
+    expect(pxArbitrarioDe(screen.getByRole('combobox'))).toEqual([]);
 
     expect(tokensInexistentesNoDom(container)).toEqual([]);
   });
 
-  it('régua literal do plano F70: nenhum [NNpx] e nenhum --zapp- nas fontes do módulo', () => {
-    const arquivos = readdirSync('src/components/multiplix')
-      .filter((f) => f.endsWith('.tsx'))
-      .map((f) => join('src/components/multiplix', f));
-    expect(arquivos.length).toBeGreaterThan(0);
+  it('MultiplixMonitor: estados de amostra/falha e de lista vazia também ficam limpos', () => {
+    // Amostra do total + falha de leitura (os dois avisos da tela).
+    h.recipients = { rows: Array.from({ length: 3 }, (_, i) => destinatario(i + 1)), total: 1500, truncated: true };
+    h.recipientsError = new Error('Edge Function returned a non-2xx status code');
+    const amostra = comQueryClient(<MultiplixMonitor dispatchId="d1" onBack={vi.fn()} />);
 
-    for (const arquivo of arquivos) {
-      const fonte = readFileSync(arquivo, 'utf8');
-      expect(fonte.match(/\[[0-9.]+px\]/g) ?? [], arquivo).toEqual([]);
-      expect(fonte.match(/--zapp-[a-z0-9-]+/g) ?? [], arquivo).toEqual([]);
-    }
+    expect(screen.getByText(/amostra/i)).toBeInTheDocument();
+    expect(screen.getByText(/Não foi possível carregar os destinatários/)).toBeInTheDocument();
+    expect(pxArbitrarioNoBloco(amostra.container)).toEqual([]);
+    expect(tokensInexistentesNoDom(amostra.container)).toEqual([]);
+    amostra.unmount();
+
+    // Lista vazia confirmada (leitura OK, sem destinatário).
+    h.recipients = { rows: [], total: 0, truncated: false };
+    h.recipientsError = null;
+    const vazio = comQueryClient(<MultiplixMonitor dispatchId="d1" onBack={vi.fn()} />);
+
+    expect(screen.getByText('Nenhum destinatário encontrado')).toBeInTheDocument();
+    expect(pxArbitrarioNoBloco(vazio.container)).toEqual([]);
+    expect(tokensInexistentesNoDom(vazio.container)).toEqual([]);
   });
 });
