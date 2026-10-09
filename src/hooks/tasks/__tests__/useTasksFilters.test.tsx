@@ -63,7 +63,7 @@ describe('etapa 45 — useTasksFilters', () => {
   });
 
   it('"limpar" volta tudo ao padrão, inclusive a URL', () => {
-    const { result } = renderFiltros('?q=liga&prio=low');
+    const { result } = renderFiltros('?prio=low');
 
     act(() => { result.current.clear(); });
 
@@ -107,11 +107,23 @@ describe('etapa 45 — useTasksFilters', () => {
     // O bug A1-1: a guarda `agora !== base` comparava `window.location.search` — a
     // MESMA URL que este hook reescreve a cada filtro — então o timer via "a URL
     // mudou" e retornava sem despachar. O campo mostrava "liga", o filtro ficava
-    // vazio e a URL nunca recebia `q`: a lista não recortava o que o campo prometia.
+    // vazio e a URL nunca recebia `q`: a lista nao recortava o que o campo prometia.
     expect(result.current.filters.q).toBe('liga');
     expect(result.current.filters.prio).toBe('high');
-    expect(new URLSearchParams(window.location.search).get('q')).toBe('liga');
+    expect(new URLSearchParams(window.location.search).get('q')).toBeNull();
     expect(result.current.isActive).toBe(true);
+  });
+
+  it('o texto de busca nao vai para a URL; demais filtros continuam espelhados', () => {
+    const { result } = renderFiltros();
+
+    act(() => { result.current.setSearch('liga'); });
+    act(() => { result.current.setPrio('high'); });
+    act(() => { vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS); });
+
+    expect(result.current.filters.q).toBe('liga');
+    expect(new URLSearchParams(window.location.search).get('q')).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('prio')).toBe('high');
   });
 
   it('Fase F: deep-link que chega DEPOIS de montar reidrata os filtros (o router manda)', () => {
