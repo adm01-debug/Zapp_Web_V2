@@ -164,7 +164,7 @@ export default defineConfig({
       // e backend mockado — DESLOGADO (sem setup, sem secrets), mesmo padrao de
       // chromium-contacts-visual. Roda no job e2e do ci.yml.
       name: 'chromium-a11y',
-      testMatch: /a11y-contraste\.spec\.ts/,
+      testMatch: /a11y-(contraste|inbox-teams)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
