@@ -423,6 +423,11 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   await firstThreadButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Detalhes' })).toBeVisible();
+  // O zoom É o cenário da medição abaixo: se ele tiver se perdido (um reload disparado por chunk
+  // error repõe o app do zero e o tema do app regrava o `style` do `<html>`), o overflow mediria
+  // uma tela sem 200% e passaria em falso. O zoom entra DEPOIS do boot (`abrirEmail`), e não por
+  // `addInitScript`: no init script o `<html>` ainda não existe (`document.documentElement === null`).
+  expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe('200%');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(2);
 });
