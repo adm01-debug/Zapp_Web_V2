@@ -58,6 +58,11 @@ DROP POLICY IF EXISTS "message_reactions_delete_policy" ON public.message_reacti
 DROP POLICY IF EXISTS "Users can delete their own reactions" ON public.message_reactions;
 
 -- 2. INSERT: so a propria autoria, e o contato da reacao tem de ser o da mensagem.
+--    contact_id NULO tambem vale: user_id identifica o AUTOR agente e o contato da reacao de
+--    agente pode ser nulo (modelo de autoria do item 303: o gatilho message_reactions_normalize_author
+--    zera contact_id quando user_id esta preenchido, ANTES do WITH CHECK). A autorizacao nunca
+--    vem do contact_id da reacao: vem do contato da MENSAGEM (join abaixo), entao nulo nao abre
+--    caminho para outro contato; so um contact_id preenchido e diferente do da mensagem e barrado.
 CREATE POLICY "message_reactions_insert_policy" ON public.message_reactions
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -67,7 +72,7 @@ CREATE POLICY "message_reactions_insert_policy" ON public.message_reactions
         FROM public.messages m
         JOIN public.contacts c ON c.id = m.contact_id
        WHERE m.id = message_reactions.message_id
-         AND m.contact_id = message_reactions.contact_id
+         AND (message_reactions.contact_id IS NULL OR m.contact_id = message_reactions.contact_id)
          AND (
            public.is_admin_or_supervisor(auth.uid())
            OR c.assigned_to = public.get_profile_id_for_user(auth.uid())
@@ -90,7 +95,7 @@ CREATE POLICY "message_reactions_update_policy" ON public.message_reactions
         FROM public.messages m
         JOIN public.contacts c ON c.id = m.contact_id
        WHERE m.id = message_reactions.message_id
-         AND m.contact_id = message_reactions.contact_id
+         AND (message_reactions.contact_id IS NULL OR m.contact_id = message_reactions.contact_id)
          AND (
            public.is_admin_or_supervisor(auth.uid())
            OR c.assigned_to = public.get_profile_id_for_user(auth.uid())
