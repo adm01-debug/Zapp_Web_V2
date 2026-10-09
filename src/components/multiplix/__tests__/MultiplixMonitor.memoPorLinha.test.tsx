@@ -51,25 +51,34 @@ vi.mock('@/components/talkx/talkxShared', async (importOriginal) => {
   };
 });
 
-vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
-  useMultiplixDispatch: () => ({
-    data: {
-      id: 'd1', name: 'Disparo F87', message_template: 'oi', status: 'sending',
-      total_recipients: 3, sent_count: 1, failed_count: 0, delivered_count: 0,
-      outcome_unknown_count: 0, started_at: null, paused_at: null, pause_reason: null,
-      completed_at: null, created_at: '2026-10-06T10:00:00Z',
-    },
-  }),
-  useMultiplixRecipients: () => ({
-    data: { rows: h.rows, total: 3, truncated: false },
-    isError: false,
-    error: null,
-  }),
-  useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  // Nunca resolve: a contagem de pulados nao chega depois da montagem, entao a
-  // regua zerada no teste so mede os re-renders que o teste provoca.
-  fetchMultiplixRecipientsTotal: () => new Promise<number>(() => {}),
-}));
+// Roda o modulo REAL e troca so os quatro acessos de dados que o monitor usa.
+// Listar export por export deixava o mock obsoleto a cada hook novo da mesma
+// trilha: o `useConfirmMultiplixDispatch` do F51 (ponta da dia) entrou no
+// `MultiplixMonitor` e o mock enumerado passou a devolver `undefined` para ele,
+// quebrando a prova com "No export is defined on the mock".
+vi.mock('@/hooks/integrations/useMultiplixDispatches', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/hooks/integrations/useMultiplixDispatches')>();
+  return {
+    ...real,
+    useMultiplixDispatch: () => ({
+      data: {
+        id: 'd1', name: 'Disparo F87', message_template: 'oi', status: 'sending',
+        total_recipients: 3, sent_count: 1, failed_count: 0, delivered_count: 0,
+        outcome_unknown_count: 0, started_at: null, paused_at: null, pause_reason: null,
+        completed_at: null, created_at: '2026-10-06T10:00:00Z',
+      },
+    }),
+    useMultiplixRecipients: () => ({
+      data: { rows: h.rows, total: 3, truncated: false },
+      isError: false,
+      error: null,
+    }),
+    useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    // Nunca resolve: a contagem de pulados nao chega depois da montagem, entao a
+    // regua zerada no teste so mede os re-renders que o teste provoca.
+    fetchMultiplixRecipientsTotal: () => new Promise<number>(() => {}),
+  };
+});
 
 import { MultiplixMonitor } from '@/components/multiplix/MultiplixMonitor';
 
