@@ -25,3 +25,7 @@ Cartões arquivados do quadro porque nenhum agente pode fechá-los. Ficam com o 
 - t_fdf7a447 SL-161 Configurações/Notificações: Divida ESLint por modulo: settings 
 - t_22435b52 SL-179 Design System/UI: Divida ESLint em src/components/ui: 44 achado
 - t_7dc0e369 SL-232 Performance: Budget de performance, ratchets de TS/@ts-nocheck 
+
+## Acréscimo 23h20 (SL-118 / E80)
+- t_0e063eb6 SL-118 CI/DevOps: `concurrency` por SHA na `main` **se** o cancelamento passar de 20 %. Medido em 08/10 pela API do Actions (só `push` na `main`, 03/10 09:07Z–09/10 01:26Z, 728 runs): `ci.yml` 45/125 = **36,0 %** e `db-guard.yml` 19/126 = **15,1 %** de cancelamento — mas TODO o cancelamento está em 03–04/10 (84 runs de `ci.yml` em 03/10, 25 em 04/10); de 05/10 a 09/10 é 0/16 e 0/16. A ação do item (`concurrency.group` do push = `ci-main-${{ github.sha }}`) só se faz em `.github/workflows/ci.yml` e `.github/workflows/db-guard.yml`, proibidos ao agente: dono/Claude decide com o número (adotar custa 1 run por commit da `main`) ou mantém. O cancelado do `ci.yml` dura mediana de 2,7 min contra 13,2 min dos verdes — é corte na fila pela regra "1 pendente por grupo", não run quebrada.
+- Achado fora do escopo deste cartão, para onda própria (liga com o SL-006 da lista `Produção / infra`): `e2e-logado.yml` na `main` **nunca conclui** — 122/126 runs cancelados (96,8 %), inclusive os mais recentes, sempre com ~15,4 min e 17 steps executados.
