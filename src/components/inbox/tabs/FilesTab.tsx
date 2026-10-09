@@ -26,7 +26,7 @@ import { forwardLimitError } from '@/lib/forward-limits';
 import { FilesToolbar } from './FilesToolbar';
 import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
-import { FileDetailContent, FileDetailPanel } from './FileDetailPanel';
+import { FileDetailContent, FileDetailPanel, type FileDetailContentProps } from './FileDetailPanel';
 import { filterMediaItems, sortMediaItems } from './filesSort';
 import { buildPeriodRange, filterByPeriod, type PeriodRange } from '@/lib/filesPeriod';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -324,8 +324,29 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     );
   }, [forwardMediaItems]);
 
-  const detailProps = selected
-    ? { item: selected, contactName, onClose: () => setSelected(null), onRequestDelete: setDeleteTarget }
+  // R07/S52: o painel encaminha pelo MESMO caminho do cartão (`openForward`). A função é
+  // estável (mesma identidade em todo render) e só é chamada no clique — nada de trabalho
+  // no render. Ela entra no ponto de render, fora do objeto de props: o handler fecha sobre
+  // o ref de execução (`forwardStateRef`) e o lint de refs-durante-render recusa o espalhamento
+  // desse objeto (`react-hooks/refs`, baseline zero).
+  const handleDetailForward = useCallback(
+    (item: ContactMediaItem) => openForward([item]),
+    [openForward],
+  );
+
+  // R07 (S49–S53): o painel de detalhes mostra a MESMA identidade de quem enviou que o
+  // cartão (D01/D04 — os perfis vêm do lote resolvido aqui, o painel nunca consulta) e o
+  // download pela política já resolvida (D06).
+  const detailProps: Omit<FileDetailContentProps, 'onForward'> | null = selected
+    ? {
+        item: selected,
+        contactName,
+        senderProfiles,
+        currentUserId: profile?.id ?? null,
+        downloadAllowed: canDownload,
+        onClose: () => setSelected(null),
+        onRequestDelete: setDeleteTarget,
+      }
     : null;
 
   return (
@@ -457,7 +478,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         </div>
 
         {/* Etapa 31: lado a lado so com >= 1100 px — e nunca no lugar do painel do contato. */}
-        {sideBySide && detailProps && <FileDetailPanel {...detailProps} />}
+        {sideBySide && detailProps && <FileDetailPanel {...detailProps} onForward={handleDetailForward} />}
       </div>
 
       {/* Etapa 31: abaixo de 1100 px (ou sem medida), o MESMO conteudo vai num Sheet a direita. */}
@@ -465,7 +486,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         <Sheet open onOpenChange={(open) => { if (!open) detailProps.onClose(); }}>
           <SheetContent side="right" className="w-[340px] sm:max-w-[340px]" data-testid="file-detail-sheet">
             <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
-            <FileDetailContent {...detailProps} />
+            <FileDetailContent {...detailProps} onForward={handleDetailForward} />
           </SheetContent>
         </Sheet>
       )}

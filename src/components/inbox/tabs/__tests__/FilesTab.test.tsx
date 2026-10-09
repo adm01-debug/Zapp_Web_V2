@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -11,6 +11,18 @@ const mockUseContactMediaCounts = vi.fn();
 const mockUseMediaSenderProfiles = vi.fn();
 const mockUseDownloadPermission = vi.fn();
 const mockUseAuth = vi.fn();
+
+/** R07/S52: captura o payload REAL que chega ao transporte do encaminhamento. */
+const encaminhar = vi.hoisted(() => ({ forwardMediaMessages: vi.fn() }));
+
+vi.mock('@/hooks/chat/useForwardMedia', () => ({
+  createForwardRunState: () => ({
+    completedKeys: new Set<string>(),
+    copiedPaths: new Map<string, string>(),
+    clientMessageIds: new Map<string, string>(),
+  }),
+  forwardMediaMessages: encaminhar.forwardMediaMessages,
+}));
 
 vi.mock('@/hooks/chat/useContactMedia', async () => {
   const actual = await vi.importActual<typeof import('@/hooks/chat/useContactMedia')>('@/hooks/chat/useContactMedia');
@@ -41,7 +53,20 @@ vi.mock('@/hooks/system/useDownloadPermission', () => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
-    from: vi.fn(),
+    // R07/S52: o diálogo de encaminhamento (o mesmo do cartão) lista os contatos de destino.
+    from: (table: string) => {
+      if (table === 'contacts') {
+        return {
+          select: () => ({
+            order: () => Promise.resolve({
+              data: [{ id: 'dest-1', name: 'Bob Destino', phone: '5511999999999', avatar_url: null }],
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) };
+    },
     storage: { from: () => ({ createSignedUrls: vi.fn() }) },
   },
 }));
@@ -51,6 +76,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 beforeEach(() => {
   __resetFilesViewSession();
   localStorage.clear();
+  encaminhar.forwardMediaMessages.mockResolvedValue({
+    pairOutcomes: [], nonForwardable: [], attempted: 0, sent: 0, failed: 0,
+  });
 });
 
 const ITEMS: ContactMediaItem[] = [
@@ -199,6 +227,24 @@ describe('FilesTab', () => {
     renderTab();
     fireEvent.click(screen.getByText('foto-praia.jpg'));
     expect(screen.getByTestId('file-detail-panel')).toBeInTheDocument();
+  });
+
+  // R07/S52: o painel recebe o MESMO handler de encaminhamento do cartão — o caminho
+  // completo (diálogo + transporte) é o desta aba, não um atalho novo do painel.
+  it('R07/S52: o Encaminhar do painel de detalhes usa o mesmo caminho do cartão', async () => {
+    renderTab();
+    fireEvent.click(screen.getByText('foto-praia.jpg'));
+
+    const painel = screen.getByTestId('file-detail-panel');
+    fireEvent.click(within(painel).getByRole('button', { name: 'Encaminhar' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Encaminhar Mensagem' });
+    fireEvent.click(await within(dialog).findByText('Bob Destino'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Encaminhar' }));
+
+    await waitFor(() => expect(encaminhar.forwardMediaMessages).toHaveBeenCalledTimes(1));
+    const payload = encaminhar.forwardMediaMessages.mock.calls[0][0] as Array<{ id: string }>;
+    expect(payload.map((midia) => midia.id)).toEqual(['m1']);
   });
 
   it('etapa 43: com páginas pendentes avisa o recorte carregado e "Carregar tudo" pagina até o fim', async () => {

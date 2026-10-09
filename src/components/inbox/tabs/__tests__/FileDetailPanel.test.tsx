@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
+import type { SenderProfileMap } from '@/lib/fileSenderIdentity';
 
 /**
  * SL-083 (G4 e G5) — painel de detalhes do arquivo.
@@ -43,18 +44,31 @@ function mediaItem(overrides: Partial<ContactMediaItem> = {}): ContactMediaItem 
   };
 }
 
-function renderContent(overrides: Partial<ContactMediaItem> = {}) {
+/**
+ * R07 (S49–S53): as props que o `FilesTab` passa ao painel. Sem elas o painel não teria
+ * como mostrar quem enviou (D01/D04) nem encaminhar pelo mesmo caminho do cartão (S52).
+ */
+interface PanelProps {
+  senderProfiles?: SenderProfileMap;
+  currentUserId?: string | null;
+  downloadAllowed?: boolean;
+  onForward: (item: ContactMediaItem) => void;
+}
+
+function renderContent(overrides: Partial<ContactMediaItem> = {}, extra: Partial<PanelProps> = {}) {
   const props = {
     item: mediaItem(overrides),
     contactName: 'Ana Cliente',
     onClose: vi.fn(),
     onRequestDelete: vi.fn(),
+    onForward: vi.fn(),
+    ...extra,
   };
   return { ...render(<FileDetailContent {...props} />), props };
 }
 
-function renderPanel(item: ContactMediaItem) {
-  const props = { item, contactName: 'Ana Cliente', onClose: vi.fn(), onRequestDelete: vi.fn() };
+function renderPanel(item: ContactMediaItem, extra: Partial<PanelProps> = {}) {
+  const props = { item, contactName: 'Ana Cliente', onClose: vi.fn(), onRequestDelete: vi.fn(), onForward: vi.fn(), ...extra };
   return { ...render(<FileDetailPanel {...props} />), props };
 }
 
@@ -147,5 +161,121 @@ describe('FileDetailContent — R2-INB-060', () => {
     rerender(<FileDetailPanel {...props} />);
 
     expect(container.querySelector('img')).toBeNull();
+  });
+});
+
+/**
+ * R07 (S49–S53): o painel de detalhes do mockup — remetente com foto, legenda, Baixar pela
+ * política (D06), Encaminhar HABILITADO pelo MESMO caminho do cartão (S52) e Excluir (S53).
+ *
+ * O `SenderAvatar` é o componente REAL (só os dados do perfil entram por prop): quem prova a
+ * identidade aqui é o painel renderizado, não um mock que já traria o nome pronto.
+ */
+describe('FileDetailContent — R07 (painel de detalhes igual ao mockup)', () => {
+  const FOTO = 'https://cdn.test/foto-atendente.png';
+
+  it('S49/D01: "Enviado por" com a foto e o nome do atendente que enviou o arquivo', () => {
+    renderContent(
+      { sender: 'agent', agentId: 'p-2' },
+      { senderProfiles: { 'p-2': { id: 'p-2', name: 'Joaquim Ataides', nickname: null, avatar_url: FOTO } }, currentUserId: 'p-9' },
+    );
+
+    expect(screen.getByText('Enviado por')).toBeInTheDocument();
+    expect(screen.getByTestId('sender-avatar-photo')).toHaveAttribute('src', FOTO);
+    expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Joaquim Ataides');
+    expect(screen.getByTestId('sender-avatar')).toHaveAttribute('aria-label', 'Enviado por Joaquim Ataides');
+  });
+
+  it('S49/D01: "Você" quando o arquivo foi enviado pelo próprio usuário logado', () => {
+    renderContent(
+      { sender: 'agent', agentId: 'p-2' },
+      { senderProfiles: { 'p-2': { id: 'p-2', name: 'Joaquim Ataides', avatar_url: FOTO } }, currentUserId: 'p-2' },
+    );
+
+    expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Você');
+    expect(screen.getByTestId('sender-avatar-photo')).toHaveAttribute('src', FOTO);
+  });
+
+  it('S49/D01: arquivo do contato mostra o nome do contato (sem foto, iniciais)', () => {
+    renderContent({ sender: 'contact', senderLabel: null });
+
+    expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Ana Cliente');
+    expect(screen.queryByTestId('sender-avatar-photo')).not.toBeInTheDocument();
+    expect(screen.getByTestId('sender-avatar-initials')).toBeInTheDocument();
+  });
+
+  it('S49/D01: atendente sem agent_id (celular/automação) mostra "Equipe", sem foto', () => {
+    renderContent({ sender: 'agent', agentId: null });
+
+    expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Equipe');
+    expect(screen.queryByTestId('sender-avatar-photo')).not.toBeInTheDocument();
+  });
+
+  it('S50: a legenda do arquivo aparece no painel', () => {
+    renderContent({ caption: 'Segue o orçamento revisado.' });
+
+    expect(screen.getByText('Segue o orçamento revisado.')).toBeInTheDocument();
+  });
+
+  it('S51/D06: sem permissão o botão é o cadeado com o motivo e não baixa nada', () => {
+    vi.stubGlobal('fetch', vi.fn());
+    renderContent({}, { downloadAllowed: false });
+
+    const cadeado = screen.getByRole('button', { name: /bloqueado pela política/i });
+    expect(cadeado).toBeDisabled();
+    expect(cadeado).toHaveAttribute('title', 'Bloqueado pela política de segurança');
+
+    fireEvent.click(cadeado);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('S51/D06: com permissão baixa pelo caminho existente (fetch + anchor com o nome do arquivo)', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(['x']) });
+    vi.stubGlobal('fetch', fetchSpy);
+    URL.createObjectURL = vi.fn(() => 'blob:mock');
+    URL.revokeObjectURL = vi.fn();
+    const original = document.createElement.bind(document);
+    const anchors: HTMLAnchorElement[] = [];
+    vi.spyOn(document, 'createElement').mockImplementation(((tagName: string, options?: ElementCreationOptions) => {
+      const el = original(tagName, options);
+      if (tagName === 'a') anchors.push(el as HTMLAnchorElement);
+      return el;
+    }) as typeof document.createElement);
+
+    renderContent({}, { downloadAllowed: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Baixar arquivo' }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(BATCH));
+    await waitFor(() => expect(anchors).toHaveLength(1));
+    expect(anchors[0].download).toBe('planilha.png');
+
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('S52: Encaminhar fica HABILITADO e chama o MESMO handler do cartão com o item', () => {
+    const { props } = renderContent();
+
+    const encaminhar = screen.getByRole('button', { name: 'Encaminhar' });
+    expect(encaminhar).toBeEnabled();
+    expect(encaminhar).not.toHaveAttribute('title', 'Disponível em breve');
+
+    fireEvent.click(encaminhar);
+    expect(props.onForward).toHaveBeenCalledTimes(1);
+    expect(props.onForward).toHaveBeenCalledWith(props.item);
+  });
+
+  it('S53: Excluir pede a exclusão ao dono do estado (nunca apaga sozinho)', () => {
+    const { props } = renderContent({ sender: 'agent' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+    expect(props.onRequestDelete).toHaveBeenCalledWith(props.item);
+  });
+
+  it('S53: arquivo enviado pelo contato não oferece Excluir', () => {
+    renderContent({ sender: 'contact' });
+
+    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
   });
 });
