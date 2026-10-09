@@ -454,6 +454,18 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
               finally: (aoFinalizar?: () => void) => executar().finally(aoFinalizar),
             };
           }
+          // F55/MX03: o dreno do fim da passada tem DUAS implementacoes no banco e
+          // elas respondem diferente de proposito. A por ITEM
+          // (`complete_multiplix_dispatch_if_items_drained`, f32b §10) e a que
+          // fecha o disparo da fila nova; a por RECIPIENT
+          // (`complete_multiplix_dispatch_if_drained`) olha `multiplix_recipients`,
+          // que NENHUMA RPC de item movimenta — com o worker enviando itens ela
+          // fica presa em 'pending' e devolve false para sempre. O `data: true`
+          // fixo do default apagaria justamente essa diferenca.
+          case "complete_multiplix_dispatch_if_items_drained":
+            return Promise.resolve({ data: true, error: null });
+          case "complete_multiplix_dispatch_if_drained":
+            return Promise.resolve({ data: false, error: null });
           default:
             return Promise.resolve({ data: true, error: null });
         }
@@ -898,10 +910,9 @@ Deno.test("F11a: uma invocacao processa UM lote (MULTIPLIX_BATCH_SIZE) e devolve
   assert(ctx.completions.length === 20, `esperava 20 conclusoes, recebeu ${ctx.completions.length}`);
   assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
   assert(ctx.limits[0] === 20, `lote default deveria ser 20, veio ${JSON.stringify(ctx.limits)}`);
-  // Nao afirmamos body.completed aqui: o mock devolve true fixo para
-  // complete_multiplix_dispatch_if_drained — quem decide "concluido" e a funcao
-  // SQL, coberta pelos testes da F13. O que prova o lote unico e o teto de 20
-  // conclusoes acima, com 25 itens disponiveis na fila.
+  // Nao afirmamos body.completed aqui: quem decide "concluido" e a funcao SQL do
+  // dreno (provada no caso F55/MX03 acima e pelos testes da F13). O que prova o
+  // lote unico e o teto de 20 conclusoes acima, com 25 itens disponiveis na fila.
 });
 
 Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
@@ -917,6 +928,33 @@ Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
   assert(ctx.completions.length === 5, `esperava 5 conclusoes (um lote), recebeu ${ctx.completions.length}`);
   assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
   assert(ctx.limits[0] === 5, `lote esperado 5, veio ${JSON.stringify(ctx.limits)}`);
+});
+
+// ------------------------------------------------------------------- F55 (dreno)
+
+Deno.test("F55/MX03: o fim da passada drena pela fila por ITEM (nunca pela fila de recipients)", async () => {
+  // MX03: o worker passou a enviar ITENS no F55 — todas as RPCs de ciclo sao
+  // `*_item_*` — mas o dreno do fim da passada continuava sendo o
+  // `complete_multiplix_dispatch_if_drained` (fila ANTIGA, `multiplix_recipients`).
+  // A f32b (§8-§10) publicou o equivalente por item e diz explicitamente que as
+  // duas nao convivem ("a migracao e corte, nao convivencia"): as RPCs de item nao
+  // tocam `multiplix_recipients.status`, entao o destinatario fica em 'pending'
+  // para sempre e o dreno por recipient NUNCA fecha o disparo. A prova e dupla —
+  // o nome da RPC chamada (contrato) e o `completed` da resposta (comportamento).
+  const opts = batchSendingOpts("551192222");
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    `esperava 1 dreno por item, houve ${rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length}`,
+  );
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_drained").length === 0,
+    "o dreno pela fila ANTIGA de recipients nao pode ser chamado: nenhuma RPC de item a movimenta",
+  );
+  assert(body.completed === true, `esperava completed=true (dreno por item), veio ${body.completed}`);
 });
 
 // ---------------------------------------------------------- F17 (cota diária)

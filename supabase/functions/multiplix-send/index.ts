@@ -1053,8 +1053,17 @@ export async function handleMultiplixSend(
       // horas e podia estourar o limite de tempo no meio do disparo.
       break passLoop;
     }
+    // MX03/F55: o dreno do fim da passada e o da fila por ITEM
+    // (`complete_multiplix_dispatch_if_items_drained`, f32b §10), que conta
+    // 'pending'/'sending'/'failed_transient' em `multiplix_delivery_items`. O
+    // `complete_multiplix_dispatch_if_drained` so olha a fila ANTIGA
+    // (`multiplix_recipients`), que nenhuma RPC de item movimenta: desde o F55 o
+    // worker fecha itens, entao aquele dreno nunca via a fila andar e o disparo
+    // ficava preso em 'sending'. As duas nao convivem (f32b §8: "a migracao e
+    // corte, nao convivencia"). O ramo de erro e o mesmo de antes
+    // (`multiplix_dispatch_completion_failed`).
     const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_multiplix_dispatch_if_drained", { p_dispatch_id: dispatchId },
+      "complete_multiplix_dispatch_if_items_drained", { p_dispatch_id: dispatchId },
     );
     if (completionError) throw new Error(`multiplix_dispatch_completion_failed: ${completionError.message}`);
 
