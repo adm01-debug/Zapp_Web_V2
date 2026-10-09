@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { fmtInt } from './format';
 
-/** Paginação estilo mockup: "Mostrando 1 a 8 de 24" + botões + tamanho da página. */
-export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, noun }: { page: number; pageSize: number; total: number; onPage: (p: number) => void; onPageSize: (n: number) => void; noun: string }) {
+/** Paginação estilo mockup: "Mostrando 1 a 8 de 24" + botões + tamanho da página.
+ *  `pageSizes` permite à tela escolher os tamanhos oferecidos (padrão: 8/10/20/50). */
+export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, noun, pageSizes = [8, 10, 20, 50] }: { page: number; pageSize: number; total: number; onPage: (p: number) => void; onPageSize: (n: number) => void; noun: string; pageSizes?: number[] }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -26,7 +27,7 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
         <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Próxima página" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronRight className="w-4 h-4" /></button>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
           <SelectTrigger className="h-8 rounded-lg bg-input/40 border-border/70 text-xs w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
-          <SelectContent>{[8, 10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>)}</SelectContent>
+          <SelectContent>{pageSizes.map((n) => <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>)}</SelectContent>
         </Select>
       </div>
     </div>

@@ -20,6 +20,7 @@ import { useScheduledReportConfigs } from '@/hooks/dashboard/useScheduledReportC
 
 const FREQUENCY_LABELS: Record<string, string> = {
   daily: 'Diário', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal',
+  custom: 'Personalizada',
 };
 const REPORT_TYPE_LABELS: Record<string, string> = {
   performance: 'Desempenho da Equipe', satisfaction: 'Satisfação', sla: 'Métricas SLA',
@@ -45,7 +46,7 @@ const FREQ_TILES = [
   { value: 'daily', label: 'Diário', sub: 'Todo dia' },
   { value: 'weekly', label: 'Semanal', sub: 'Toda semana' },
   { value: 'monthly', label: 'Mensal', sub: 'Todo mês' },
-  { value: 'biweekly', label: 'Personalizada', sub: 'Sob demanda' },
+  { value: 'custom', label: 'Personalizada', sub: 'Sob demanda' },
 ];
 
 export function ScheduledReportsManager() {
@@ -208,7 +209,7 @@ export function ScheduledReportsManager() {
                   <button key={f.value} onClick={() => { setFormFrequency(f.value); openCreate(); }}
                     className={cn('h-[84px] rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-colors',
                       active ? 'bg-primary/15 border-primary/60 text-primary-glow' : 'border-border/60 bg-input/20 text-foreground hover:bg-muted/40')}>
-                    {f.value === 'monthly' ? <Calendar className="w-5 h-5" /> : f.value === 'biweekly' ? <Clock className="w-5 h-5" /> : f.value === 'daily' ? <Calendar className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
+                    {f.value === 'monthly' ? <Calendar className="w-5 h-5" /> : f.value === 'custom' ? <Clock className="w-5 h-5" /> : f.value === 'daily' ? <Calendar className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
                     <span className="text-[13px] font-semibold leading-none">{f.label}</span>
                     <span className={cn('text-2xs', active ? 'text-primary-glow/80' : 'text-muted-foreground')}>{f.sub}</span>
                   </button>

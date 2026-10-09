@@ -16,6 +16,11 @@
  *    deixou de ser destino; motivo e destino efetivos vão para o metadata da auditoria.
  *  - IA-040: campo `test` — destino fixo por `provider_id`, fallback desligado, modelo
  *    efetivo de `resolveModel`, timeout por chamada e classificação própria da falha.
+ *
+ * SL-014 / B5 (2ª leva): o cliente NÃO escolhe destino nem modelo. Fora do diagnóstico
+ * (`test:true`, restrito a admin/supervisor) um `provider_id` no corpo responde 400
+ * (`PROVIDER_ID_NOT_ALLOWED`) e o campo `model` deixou de existir no schema — o modelo é
+ * sempre o do cadastro do provedor (`resolveModel(provider, null)`), nunca um pedido do corpo.
  */
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv, requireAuth, checkRateLimit, getClientIP, createAuthedClient } from "../_shared/validation.ts";
 import { z, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
@@ -48,7 +53,10 @@ const AiProxySchema = z.object({
     // com código (`UNSUPPORTED_MODALITY`) em vez de virarem 400 genérico de schema.
     content: z.union([z.string().max(50000), z.array(z.any())]),
   })).min(1).max(100),
-  model: z.string().max(100).optional(),
+  // SL-014/B5 — o cliente não escolhe destino nem modelo: o campo `model` saiu do schema
+  // (o modelo é o do cadastro do provedor) e `provider_id` só é destino no diagnóstico de
+  // provedor (`test:true`, restrito a admin/supervisor). Fora dele a requisição é recusada
+  // com 400 — nunca atendida por outro provedor em silêncio.
   use_for: z.enum(['copilot', 'analysis', 'summary', 'tagging', 'auto_reply']).default('copilot'),
   provider_id: z.string().uuid().optional(),
   tools: z.any().optional(),
@@ -580,7 +588,7 @@ export async function handleAiProxy(req: Request): Promise<Response> {
     const parsed = parseBody(AiProxySchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { messages, model: clientModel, use_for, provider_id, tools, tool_choice, stream, response_format, test, requestId } = parsed.data;
+    const { messages, use_for, provider_id, tools, tool_choice, stream, response_format, test, requestId } = parsed.data;
     // O schema já aplica o default 'copilot'; o `?? ` só fecha o tipo (parseBody infere a entrada).
     const purpose = use_for ?? 'copilot';
     const isTest = test === true;
@@ -602,6 +610,19 @@ export async function handleAiProxy(req: Request): Promise<Response> {
       }, 400, req);
     }
 
+    // SL-014/B5 — fora do diagnóstico o destino NÃO vem do corpo. Recusar é mais honesto
+    // do que atender por outro provedor: era exatamente a escolha silenciosa (qualquer
+    // provedor ativo cadastrado, inclusive `custom_webhook` com o segredo do servidor) o
+    // defeito registrado. O destino é resolvido por finalidade + padrão (IA-034).
+    if (!isTest && present(provider_id)) {
+      return jsonResponse({
+        error: {
+          code: 'PROVIDER_ID_NOT_ALLOWED',
+          message: 'provider_id so e aceito no diagnostico de provedor (test: true).',
+        },
+      }, 400, req);
+    }
+
     // IA-036: o pedido de capacidade é derivado do corpo, nunca adivinhado.
     const need = capabilityNeedFromBody({
       messages: chatMessages,
@@ -619,14 +640,18 @@ export async function handleAiProxy(req: Request): Promise<Response> {
     let provider: AiProviderRow;
     let routing: ReturnType<typeof resolveModel>;
     try {
+      // SL-014/B5 — o filtro por id é do diagnóstico: fora dele o valor é `null`, para que
+      // nenhum caminho volte a deixar o corpo escolher o destino.
+      const requestedProviderId = isTest ? provider_id ?? null : null;
       const base = supabase.from('ai_providers').select('*');
-      const filtered = provider_id
+      const filtered = requestedProviderId
         // sem filtro de is_active: o módulo distingue INATIVO (409) de inexistente (503)
-        ? base.eq('id', provider_id)
+        ? base.eq('id', requestedProviderId)
         : base.eq('is_active', true).contains('use_for', [purpose]).eq('is_default', true).order('id');
       const { data } = await filtered;
-      provider = resolveProvider((data ?? []) as unknown as AiProviderRow[], purpose, provider_id ?? null);
-      routing = resolveModel(provider, clientModel ?? null);
+      provider = resolveProvider((data ?? []) as unknown as AiProviderRow[], purpose, requestedProviderId);
+      // SL-014/B5 — modelo SEMPRE decidido pelo servidor: o corpo não tem mais `model`.
+      routing = resolveModel(provider, null);
     } catch (routingErr) {
       if (routingErr instanceof AiRoutingError) {
         log.warn("Routing recusado", { code: routingErr.code, use_for: purpose, provider_id });
@@ -690,7 +715,8 @@ export async function handleAiProxy(req: Request): Promise<Response> {
     // Política do servidor vira mensagem própria; nenhuma mensagem do cliente é removida/reescrita (IA-037).
     const finalMessages = composeMessages(provider.system_prompt, chatMessages);
 
-    // Auditoria da substituição administrativa de modelo (IA-035).
+    // Auditoria da substituição de modelo (IA-035). Desde SL-014/B5 o corpo não carrega
+    // `model`: `model_requested` só sai não-nulo se o próprio servidor pedir um modelo.
     const modelMetadata = {
       model_requested: routing.modelRequested,
       model_used: routing.model,
@@ -759,7 +785,7 @@ export async function handleAiProxy(req: Request): Promise<Response> {
         provider: providerName, fallback_to: target.name, reason: fallbackReason, error: errorText(dispatchErr),
       });
       fallbackTo = { id: target.id, name: target.name };
-      modelUsed = resolveModel(target, clientModel ?? null).model;
+      modelUsed = resolveModel(target, null).model;
       response = await withRetry(
         dispatchProvider(target, modelUsed, composeMessages(target.system_prompt, chatMessages), tools, tool_choice, streamRequested, { responseFormat: response_format }),
         2,
@@ -786,7 +812,7 @@ export async function handleAiProxy(req: Request): Promise<Response> {
           provider: providerName, status: response.status, fallback_to: target.name, reason: fallbackReason,
         });
         fallbackTo = { id: target.id, name: target.name };
-        modelUsed = resolveModel(target, clientModel ?? null).model;
+        modelUsed = resolveModel(target, null).model;
         response = await withRetry(
           dispatchProvider(target, modelUsed, composeMessages(target.system_prompt, chatMessages), tools, tool_choice, streamRequested, { responseFormat: response_format }),
           2,

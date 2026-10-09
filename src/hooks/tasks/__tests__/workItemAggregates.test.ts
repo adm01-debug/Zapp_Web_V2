@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue } from '../workItemAggregates';
 import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
@@ -168,7 +168,9 @@ describe('bucketByDue', () => {
   });
 
   it('classifica hoje', () => {
-    const item = makeItem({ due_date: '2026-10-03T08:00:00Z' }); // hoje
+    // R2-MOD-058: "hoje" no módulo é o prazo de DIA INTEIRO (23:59 locais, a
+    // convenção dos chips "Hoje/Amanhã") — prazo com hora já passada é atraso.
+    const item = makeItem({ due_date: new Date(2026, 9, 3, 23, 59).toISOString() });
     const b = bucketByDue([item], now);
     expect(b.today).toHaveLength(1);
   });
@@ -256,7 +258,7 @@ describe('kpis', () => {
     const items = [
       makeItem({ status: 'doing' }),
       makeItem({ due_date: '2026-10-01T10:00:00Z' }), // overdue
-      makeItem({ due_date: '2026-10-03T10:00:00Z' }), // today
+      makeItem({ due_date: new Date(2026, 9, 3, 23, 59).toISOString() }), // hoje (dia inteiro)
       makeItem({ status: 'done', completed_at: '2026-09-29T10:00:00Z' }),
     ];
     const k = kpis(items, now);
@@ -278,7 +280,9 @@ describe('dueLabel', () => {
     expect(overdue).toBe(true);
   });
   it('retorna Hoje para hoje', () => {
-    const { label } = dueLabel('2026-10-03T08:00:00Z', now);
+    // R2-MOD-058: prazo de dia inteiro (23:59 locais) é "Hoje" o dia todo; o
+    // prazo com hora que já passou sai "Atrasada" (ver o bloco da regra única).
+    const { label } = dueLabel(new Date(2026, 9, 3, 23, 59).toISOString(), now);
     expect(label).toBe('Hoje');
   });
   it('retorna Amanhã para amanhã', () => {
@@ -404,5 +408,98 @@ describe('etapa 51 — splitDoneByRecency (coluna Concluído do Quadro)', () => 
 
     expect(recent).toHaveLength(0);
     expect(older).toHaveLength(0);
+  });
+});
+
+/**
+ * R2-MOD-058 — o achado: o badge (menu) comparava o prazo com o INSTANTE e o
+ * módulo (KPI, seções, chip) só com o INÍCIO DO DIA, então a mesma tarefa com
+ * prazo "hoje às 9h", às 15h, acendia o menu e sumia do "Atrasadas" da lista.
+ * A regra única (`isOverdue`) separa os dois tipos de prazo que o app grava:
+ * com hora (vence no instante) e de dia inteiro 23:59/00:00 (vence no fim do dia
+ * local). Estes casos FALHAM no código anterior — o primeiro porque o módulo
+ * tratava o prazo das 9h como "Hoje", o segundo porque o badge contava o das
+ * 23:59 como atraso.
+ */
+describe('R2-MOD-058 — regra única de prazo vencido (badge, KPI, grupos e chip)', () => {
+  // O relógio do aceite: 15h no fuso LOCAL (o mesmo dia em qualquer máquina,
+  // porque as datas abaixo são construídas em hora local).
+  const quinzeHoras = new Date(2026, 9, 3, 15, 0, 0, 0);
+  const iso = (d: Date) => d.toISOString();
+
+  const hojeAsNove    = makeItem({ id: 'nove',  due_date: iso(new Date(2026, 9, 3, 9, 0)) });
+  const hojeFimDoDia  = makeItem({ id: 'fim',   due_date: iso(new Date(2026, 9, 3, 23, 59)) });
+  const hojeMeiaNoite = makeItem({ id: 'meia',  due_date: iso(new Date(2026, 9, 3, 0, 0)) });
+  const ontemFimDoDia = makeItem({ id: 'ontem', due_date: iso(new Date(2026, 9, 2, 23, 59)) });
+  const hojeAs1530    = makeItem({ id: 'depois', due_date: iso(new Date(2026, 9, 3, 15, 30)) });
+
+  it('prazo de hoje às 9h, às 15h, é ATRASADO no badge, no KPI, no grupo e no chip', () => {
+    expect(isOverdue(hojeAsNove.due_date, quinzeHoras)).toBe(true);
+
+    const b = bucketByDue([hojeAsNove], quinzeHoras);
+    expect(b.overdue.map(i => i.id)).toEqual(['nove']);
+    expect(b.today).toEqual([]);
+
+    const k = kpis([hojeAsNove], quinzeHoras);
+    expect(k.overdue).toBe(1);
+    expect(k.dueToday).toBe(0);
+
+    const chip = dueLabel(hojeAsNove.due_date!, quinzeHoras);
+    expect(chip.overdue).toBe(true);
+    expect(chip.label).toMatch(/^Atrasada/);
+
+    expect(dayGroupLabel(hojeAsNove.due_date!, quinzeHoras)).toBe('Atrasada');
+  });
+
+  it('prazo de dia inteiro (23:59 e 00:00 de hoje) continua "Hoje" — não é atraso', () => {
+    expect(isOverdue(hojeFimDoDia.due_date, quinzeHoras)).toBe(false);
+    expect(isOverdue(hojeMeiaNoite.due_date, quinzeHoras)).toBe(false);
+
+    const b = bucketByDue([hojeFimDoDia, hojeMeiaNoite], quinzeHoras);
+    expect(b.today.map(i => i.id)).toEqual(['fim', 'meia']);
+    expect(b.overdue).toEqual([]);
+
+    const k = kpis([hojeFimDoDia], quinzeHoras);
+    expect(k.overdue).toBe(0);
+    expect(k.dueToday).toBe(1);
+
+    expect(dueLabel(hojeFimDoDia.due_date!, quinzeHoras)).toMatchObject({ label: 'Hoje', overdue: false });
+    expect(dayGroupLabel(hojeFimDoDia.due_date!, quinzeHoras)).toBe('Hoje');
+  });
+
+  it('o mesmo horário de fim do dia, um dia atrás, é atraso em todos os canais', () => {
+    expect(isOverdue(ontemFimDoDia.due_date, quinzeHoras)).toBe(true);
+    expect(bucketByDue([ontemFimDoDia], quinzeHoras).overdue.map(i => i.id)).toEqual(['ontem']);
+    expect(kpis([ontemFimDoDia], quinzeHoras).overdue).toBe(1);
+    expect(dueLabel(ontemFimDoDia.due_date!, quinzeHoras).overdue).toBe(true);
+  });
+
+  it('prazo de hoje ainda por vir (15:30 com o relógio às 15:00) não é atraso', () => {
+    expect(isOverdue(hojeAs1530.due_date, quinzeHoras)).toBe(false);
+    expect(bucketByDue([hojeAs1530], quinzeHoras).today.map(i => i.id)).toEqual(['depois']);
+  });
+
+  it('o dia é o LOCAL: às 23:30 locais o prazo das 23:59 ainda é de hoje, e o das 00:00 de amanhã abre o dia seguinte', () => {
+    // 23:30 locais do dia 3 (em UTC-3 já é dia 4 em UTC) — a comparação não pode
+    // usar o dia UTC, senão o prazo das 23:59 locais viraria "atrasado".
+    const vinte3eMeia = new Date(2026, 9, 3, 23, 30, 0, 0);
+    const hojeAs23     = makeItem({ id: 'h23', due_date: iso(new Date(2026, 9, 3, 23, 0)) });
+    const amanhaAs00   = makeItem({ id: 'a00', due_date: iso(new Date(2026, 9, 4, 0, 0)) });
+
+    expect(isOverdue(hojeFimDoDia.due_date, vinte3eMeia)).toBe(false);
+    expect(isOverdue(amanhaAs00.due_date, vinte3eMeia)).toBe(false);
+    // Com hora marcada, o relógio manda: as 23:00 de hoje já passaram.
+    expect(isOverdue(hojeAs23.due_date, vinte3eMeia)).toBe(true);
+
+    const b = bucketByDue([hojeFimDoDia, amanhaAs00, hojeAs23], vinte3eMeia);
+    expect(b.overdue.map(i => i.id)).toEqual(['h23']);
+    expect(b.today.map(i => i.id)).toEqual(['fim']);
+    expect(b.tomorrow.map(i => i.id)).toEqual(['a00']);
+
+    // Virada do dia: 00:30 do dia 4 — o prazo das 23:59 do dia 3 venceu.
+    const meiaHoraDepois = new Date(2026, 9, 4, 0, 30, 0, 0);
+    const virou = bucketByDue([hojeFimDoDia, amanhaAs00], meiaHoraDepois);
+    expect(virou.overdue.map(i => i.id)).toEqual(['fim']);
+    expect(virou.today.map(i => i.id)).toEqual(['a00']);
   });
 });

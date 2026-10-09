@@ -42,6 +42,62 @@ const threads = [
   },
 ];
 
+type FixtureThread = (typeof threads)[number];
+
+/**
+ * Responde como o PostgREST responde aos filtros que a lista de Email manda ao
+ * servidor (OTH-005: estado, pasta/marcador, período e busca vão na consulta, antes
+ * da paginação).
+ *
+ * Defeito medido (08/10, PRs #1908/#1910): esta rota devolvia a lista INTEIRA para
+ * qualquer consulta. Como a busca só chega ao servidor 300 ms depois da última tecla,
+ * a asserção `Preview deployment failed … .toBeHidden()` passava enquanto a lista
+ * estava VAZIA (janela de carregamento) e voltava a falhar assim que a resposta — sem
+ * filtro — repunha as seis conversas na tela. Resultado: 1ª tentativa vermelha e
+ * verde na reexecução, gastando um ciclo de CI por PR.
+ *
+ * Só os filtros que a tela realmente usa são emulados aqui; o join de anexos
+ * (`email_messages!inner`) não é exercitado por este spec e fica fora.
+ */
+function filtrarThreadsDaConsulta(linhas: FixtureThread[], url: URL): FixtureThread[] {
+  const params = url.searchParams;
+  let resultado = linhas;
+
+  const conta = params.get('gmail_account_id');
+  if (conta?.startsWith('eq.')) resultado = resultado.filter(thread => thread.gmail_account_id === conta.slice(3));
+  if (params.get('is_unread') === 'eq.true') resultado = resultado.filter(thread => thread.is_unread);
+  if (params.get('is_starred') === 'eq.true') resultado = resultado.filter(thread => thread.is_starred);
+
+  const marcador = params.get('label_ids');
+  if (marcador?.startsWith('cs.')) {
+    const dentro = marcador.slice(3).replace(/[{}"]/g, '').split(',').filter(Boolean);
+    resultado = resultado.filter(thread => dentro.every(id => thread.label_ids.includes(id)));
+  }
+
+  const desde = params.get('last_message_at');
+  if (desde?.startsWith('gte.')) resultado = resultado.filter(thread => thread.last_message_at >= desde.slice(4));
+
+  // Busca: o `.or()` do PostgREST com `coluna.ilike."%termo%"`. Termo com curinga
+  // (`%`/`_`) escapado pela tela não aparece nos termos deste spec.
+  const ou = params.get('or');
+  if (ou) {
+    const clausulas = ou.replace(/^\(|\)$/g, '').split(',')
+      .map(clausula => /^([a-z_]+)\.ilike\.(.*)$/.exec(clausula.trim()))
+      .filter((casado): casado is RegExpExecArray => casado !== null)
+      .map(([, coluna, padrao]) => ({ coluna, termo: padrao.replace(/^"|"$/g, '').replace(/^%|%$/g, '').toLowerCase() }))
+      .filter(({ termo }) => termo.length > 0);
+    if (clausulas.length > 0) {
+      resultado = resultado.filter(thread => clausulas.some(({ coluna, termo }) =>
+        String((thread as Record<string, unknown>)[coluna] ?? '').toLowerCase().includes(termo)));
+    }
+  }
+
+  const limite = Number(params.get('limit'));
+  const inicio = Number(params.get('offset')) || 0;
+  if (Number.isFinite(limite) && limite > 0) resultado = resultado.slice(inicio, inicio + limite);
+  return resultado;
+}
+
 const messages = [
   {
     id: MESSAGE_ID, thread_id: THREAD_ID, gmail_message_id: 'gmail-message-1', gmail_account_id: ACCOUNT_ID,
@@ -120,7 +176,11 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
     return request.action === 'get-attachment' ? json(route, { data: 'Zml4dHVyZQ==', size: 7 }) : json(route, { success: true });
   });
 
-  await page.route(/\/rest\/v1\/email_threads/, route => isRead(route.request().method()) ? json(route, options.includeExtreme ? threads : threads.filter(thread => thread.id !== EXTREME_THREAD_ID)) : json(route, { message: 'escrita bloqueada' }, 403));
+  await page.route(/\/rest\/v1\/email_threads/, route => {
+    if (!isRead(route.request().method())) return json(route, { message: 'escrita bloqueada' }, 403);
+    const base = options.includeExtreme ? threads : threads.filter(thread => thread.id !== EXTREME_THREAD_ID);
+    return json(route, filtrarThreadsDaConsulta(base, new URL(route.request().url())));
+  });
   await page.route(/\/rest\/v1\/email_messages/, route => {
     if (!isRead(route.request().method())) return json(route, { message: 'escrita bloqueada' }, 403);
     const threadFilter = new URL(route.request().url()).searchParams.get('thread_id');

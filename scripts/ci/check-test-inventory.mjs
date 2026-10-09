@@ -51,6 +51,10 @@ const ALLOWLIST = new Set([
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
+  // IA-131 (item 133): cadeia real ia033→ia131 em PG 17 descartável (docker local) — prova que a
+  // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
+  // db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.

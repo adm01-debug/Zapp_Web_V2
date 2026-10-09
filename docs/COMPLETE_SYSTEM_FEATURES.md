@@ -44,6 +44,20 @@
 32. [Design System](#32-design-system)
 33. [Banco de Dados](#33-banco-de-dados)
 34. [Edge Functions](#34-edge-functions)
+35. [Campanhas de Mensagens em Massa](#35-campanhas-de-mensagens-em-massa)
+36. [Chatbot / Fluxos Automatizados](#36-chatbot--fluxos-automatizados)
+37. [Pipeline de Vendas (CRM)](#37-pipeline-de-vendas-crm)
+38. [Base de Conhecimento](#38-base-de-conhecimento)
+39. [Hub de Integrações](#39-hub-de-integrações)
+40. [Links de Pagamento](#40-links-de-pagamento)
+41. [Conformidade LGPD](#41-conformidade-lgpd)
+42. [WhatsApp Flows Builder](#42-whatsapp-flows-builder)
+43. [Diagnósticos do Sistema](#43-diagnósticos-do-sistema)
+44. [Meta Conversions API (CAPI)](#44-meta-conversions-api-capi)
+45. [Gestão de Agentes](#45-gestão-de-agentes)
+46. [Sequências de Follow-up](#46-sequências-de-follow-up)
+47. [API Pública](#47-api-pública)
+48. [Componentes Cognitivos (UX)](#48-componentes-cognitivos-ux)
 
 ---
 
@@ -777,6 +791,186 @@
 | 34.17 | `cleanup-rate-limit-logs` | Limpeza de logs rate limit |
 | 34.18 | `send-rate-limit-alert` | Envio de alerta rate limit |
 | 34.19 | `send-scheduled-report` | Envio de relatório agendado |
+| 34.20 | `ai-auto-tag` | Classificação automática de conversas por IA |
+| 34.21 | `ai-enhance-message` | Aprimoramento/reescrita de mensagens por IA (tom) |
+| 34.22 | `chatbot-l1` | Motor de chatbot nível 1 (atendimento automático) |
+| 34.23 | `public-api` | API pública para integrações externas — DESATIVADA (responde 410) |
+| 34.24 | `send-email` | Envio de e-mail transacional restrito ao convite de membro |
+
+> **Nota (2026-10-08):** as 5 funções acima existem em `supabase/functions/` mas não constavam deste documento. `public-api` está desligada por segurança (o handler devolve `410 Public API is disabled`); `send-email` é restrita ao fluxo de convite de membro (remetente/assunto/corpo vêm de template fixo do servidor, exige papel admin/supervisor).
+
+---
+
+## 35. Campanhas de Mensagens em Massa
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=campaigns` → `CampaignsView` |
+| Componentes | `src/components/campaigns/CampaignsView.tsx`, `CampaignCreateDialog.tsx`, `CampaignABTesting.tsx` |
+| Hook | `src/hooks/communication/useCampaigns.ts` |
+| Tabelas | `campaigns`, `campaign_contacts` |
+
+**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, intervalo entre envios, filtros por status e teste A/B.
+
+---
+
+## 36. Chatbot / Fluxos Automatizados
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=chatbot` → `ChatbotFlowsView` |
+| Componentes | `src/components/chatbot/ChatbotFlowsView.tsx`, `ChatbotFlowEditor.tsx`, `ChatbotNodeDialogs.tsx`, `ChatbotExecutionsDashboard.tsx` |
+| Hook | `src/hooks/integrations/useChatbotFlows.ts` |
+| Tabelas | `chatbot_flows`, `chatbot_executions` |
+| Edge Function | `chatbot-l1` |
+
+**Funcionalidades:** CRUD de fluxos, editor visual de nós (`chatbotNodeConfig.ts`), gatilhos (keyword/first_message/menu/webhook/schedule), ativação/desativação e painel de execuções.
+
+---
+
+## 37. Pipeline de Vendas (CRM)
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=pipeline` → `TasksModule` em modo Quadro (`TASKS_ROUTE_PROPS.pipeline`, `forceMode`) |
+| Componentes | `src/components/tasks/TasksModule.tsx`; negócios lidos por `src/hooks/crm/useContactCrm360.ts` e `src/components/inbox/tabs/OpenDealsList.tsx` |
+| Tabelas | `sales_deals`, `deal_activities`, `sales_pipeline_stages` |
+
+**Funcionalidades:** quadro Kanban de negócios (reusa o módulo de Tarefas na rota `pipeline`), estágios configuráveis, valores monetários, prioridades e atividades de negócio vinculadas ao contato. **Atualização (2026-10-08):** a tela dedicada `SalesPipelineView` não existe mais; o menu "Quadro" aponta para o módulo de Tarefas.
+
+---
+
+## 38. Base de Conhecimento
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=knowledge` → `KnowledgeBaseView` |
+| Componente | `src/components/knowledge/KnowledgeBaseView.tsx` |
+| Hook | `src/hooks/integrations/useKnowledgeBase.ts` |
+| Tabelas | `knowledge_base_articles`, `knowledge_base_files` |
+| RPC | `search_knowledge_base` |
+
+**Funcionalidades:** CRUD de artigos, categorias, tags, upload de arquivos, status de publicação e status de embedding para a IA.
+
+---
+
+## 39. Hub de Integrações
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=integrations` → `IntegrationsHub` |
+| Componentes | `src/components/integrations/IntegrationsHub.tsx`, `N8nIntegrationView.tsx`, `SentryIntegrationView.tsx`, `BitrixIntegrationView.tsx`, `GmailIntegrationCard.tsx`, `GoogleCalendarIntegration.tsx` |
+
+**Funcionalidades:** hub centralizado das integrações (n8n, Sentry, Bitrix24, Gmail e Google Agenda). **Atualização (2026-10-08):** a lista do relatório citava "Google Sheets"; no código atual o cartão é de **Gmail**, além da Google Agenda.
+
+---
+
+## 40. Links de Pagamento
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=payments` → `PaymentLinksView` |
+| Componente | `src/components/payments/PaymentLinksView.tsx` |
+| Hook | `src/hooks/payments/usePaymentLinks.ts` |
+| Tabela | `payment_links` |
+
+**Funcionalidades:** CRUD de links de pagamento, métodos PIX e Cartão, valores, status (pending/paid/expired/cancelled), copiar link e enviar ao contato.
+
+---
+
+## 41. Conformidade LGPD
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=privacy` → `LGPDComplianceView` |
+| Componente | `src/components/compliance/LGPDComplianceView.tsx` |
+
+**Funcionalidades:** direito ao esquecimento (exclusão de dados do titular) e tela de portabilidade. **Estado atual (2026-10-08):** a exportação de dados está **BLOQUEADA** no código (bloco "Exportar Dados - BLOQUEADO") — nenhum dado pessoal sai do sistema por essa rota.
+
+---
+
+## 42. WhatsApp Flows Builder
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=wa-flows` → `WhatsAppFlowsBuilder` |
+| Componente | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
+| Tabela | `whatsapp_flows` |
+
+**Funcionalidades:** construtor visual de WhatsApp Flows (formulários interativos), componentes TextInput, TextArea, DatePicker, RadioButtons, Checkbox, Dropdown, Image e OptIn, preview tipo smartphone e salvar/editar/excluir telas.
+
+---
+
+## 43. Diagnósticos do Sistema
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=diagnostics` → `DiagnosticsView` |
+| Componentes | `src/components/diagnostics/DiagnosticsView.tsx`, `ConnectionHealthPanel.tsx` |
+| Hook | `src/hooks/system/useDiagnosticsData.ts` |
+
+**Funcionalidades:** status das conexões WhatsApp, diagnóstico de mensagens (taxa de entrega/falha por status), saúde do sistema (database/edge functions/storage/realtime) e mensagens falhadas recentes.
+
+---
+
+## 44. Meta Conversions API (CAPI)
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=meta-capi` → `MetaCAPIView` |
+| Componente | `src/components/meta-capi/MetaCAPIView.tsx` |
+| Hook | `src/hooks/integrations/useMetaCAPIData.ts` |
+| Tabela | `meta_capi_events` |
+
+**Funcionalidades:** eventos de conversão (Purchase, Lead, InitiateCheckout, AddToCart, ViewContent, Contact), Pixel ID e envio para a Meta.
+
+---
+
+## 45. Gestão de Agentes
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=agents` → `AgentsView` |
+| Componentes | `src/components/agents/AgentsView.tsx`, `InviteAgentDialog.tsx`, `ConfigurePermissionsDialog.tsx` |
+| Hook | `src/hooks/crm/useAgents.ts` |
+| Tabelas | `profiles`, `queues`, `queue_members`, `agent_skills` |
+
+**Funcionalidades:** visualização e gestão de atendentes, convite de novo agente, configuração de permissões e vínculo a filas e competências.
+
+---
+
+## 46. Sequências de Follow-up
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=settings` (aba de Follow-up dentro de `SettingsView`) |
+| Componente | `src/components/settings/FollowUpSequences.tsx` |
+| Tabelas | `followup_sequences`, `followup_steps`, `followup_executions` |
+
+**Funcionalidades:** CRUD de sequências automatizadas, passos com atraso em horas, template de mensagem por passo, ativação/desativação e rastreio de execuções.
+
+---
+
+## 47. API Pública
+
+| Item | Valor |
+|------|-------|
+| Rota | `?view=public-api` → `PublicApiDashboard` |
+| Componente | `src/components/admin/PublicApiDashboard.tsx` |
+| Edge Function | `public-api` |
+
+**Funcionalidades:** endpoint REST para integrações externas. **Estado atual (2026-10-08):** a API pública está **DESATIVADA** — a função `public-api` responde `410 Public API is disabled` e a tela informa que a integração está suspensa enquanto a autenticação é substituída por credenciais server-side com escopo, rotação e auditoria. Tokens antigos não devem ser reutilizados.
+
+---
+
+## 48. Componentes Cognitivos (UX)
+
+| Item | Valor |
+|------|-------|
+| Componentes | `src/components/cognitive/FeatureSpotlight.tsx`, `src/components/cognitive/ProgressiveDisclosure.tsx` |
+| Usados em | `src/components/dashboard/ProgressiveDisclosureDashboard.tsx`, `src/components/dashboard/overview/GamificationSection.tsx` |
+
+**Funcionalidades:** padrões de UX cognitiva — revelação progressiva de informação e destaque contextual de funcionalidades. **Atualização (2026-10-08):** os componentes de "prevenção de erros" e "defaults inteligentes" citados no relatório não existem mais no código.
 
 ---
 
@@ -788,7 +982,7 @@
 | **Componentes React** | **200+** |
 | **Custom Hooks** | **70+** |
 | **Tabelas no banco** | **48+** |
-| **Edge Functions** | **19** |
+| **Edge Functions** | **24** |
 | **Integrações externas** | **10** |
 | **Componentes UI (shadcn)** | **60+** |
 | **Testes unitários** | **35 (100% passing)** |
@@ -841,4 +1035,5 @@
 
 > **Documento gerado em:** 2026-03-15  
 > **Autor:** Lovable AI  
+> **Atualizado em:** 2026-10-08 — seções 35–48 (14 módulos) e 5 Edge Functions (34.20–34.24) acrescentadas a partir do `FORGOTTEN_FEATURES_REPORT.md`, conferidas contra o código da ponta do dia (SL-223).  
 > **Nota:** Este documento reflete TODAS as funcionalidades discutidas, planejadas e implementadas ao longo de toda a conversa do projeto.

@@ -653,3 +653,13 @@ prova, todas ponta a ponta no caminho do motor SIP (evento SIP → gravação na
 **Nenhum teste unitário renderiza `AppProviders`/`App`** (verificado por busca): a rede que pegaria uma
 regressão nesses dois arquivos é o **E2E**, e não existe spec de VoIP/aba-líder. Fica registrado como risco
 da fase, não como surpresa futura.
+
+---
+
+## Encerramento do ledger (T100 — 08/10/2026)
+
+> **Superado por** `docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md` — o **ledger vivo**
+> desde 29/09/2026 (T01). Esta é a linha final deste arquivo: nenhuma etapa nova entra aqui, e o histórico
+> acima fica como registro das fases 0–2 (CP0–CP2).
+> O estado corrente, o checklist final, os links das PRs e as pendências/resíduos do módulo vivem no plano
+> acima — cabeçalho de status, **§11 (Mapa de PRs)** e **§12 (Encerramento, T100)**.

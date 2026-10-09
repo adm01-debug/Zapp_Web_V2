@@ -912,3 +912,136 @@ describe('CallEngine — duração após espera assíncrona do registro', () => 
     }
   });
 });
+
+// ─── SL-002: SRTP explícito (mídia em claro não vira chamada) ───────────────
+
+/**
+ * O defeito: as opções de mídia só pediam áudio (`{ audio: true, video: false }`)
+ * e **nada** no app olhava o que tinha sido negociado. Uma sessão cujo SDP não
+ * trazia perfil SAVP (`RTP/AVP` — RTP em claro) seguia para o áudio remoto como
+ * se fosse segura.
+ *
+ * O SDP é o único ponto que o teste controla: o adapter é o REAL.
+ */
+describe('CallEngine — SRTP obrigatório (SL-002)', () => {
+  async function escoar(voltas = 8): Promise<void> {
+    for (let i = 0; i < voltas; i += 1) await Promise.resolve();
+  }
+
+  /** Perfil que o WebRTC negocia (DTLS-SRTP). */
+  const SDP_SRTP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 11:22\r\n';
+  /** Mesma mídia, sem transporte seguro: RTP em claro. */
+  const SDP_EM_CLARO = 'v=0\r\nm=audio 49170 RTP/AVP 0\r\n';
+
+  /** Sessão estabelecida que carrega o SDP negociado (`null` = ilegível). */
+  function sessaoEstabelecida(sdp: string | null) {
+    return {
+      ...sessionWithTrack(fakeAudioTrack(true), 'Established'),
+      cancel: vi.fn(),
+      bye: vi.fn().mockResolvedValue(undefined),
+      sessionDescriptionHandler: {
+        peerConnection: {
+          getSenders: () => [{ track: fakeAudioTrack(true) }],
+          getReceivers: () => [],
+          remoteDescription: sdp === null ? null : { sdp },
+        },
+      },
+    };
+  }
+
+  async function ateEstabelecer(adapter: TestAdapter, sessao: unknown, sink: ReturnType<typeof fakeSink>) {
+    const engine = new CallEngine(adapter, sink);
+    await engine.makeCall('11999992048', fakeUa(), true, 'sessao-1');
+    engine.handleStateChange('Established', sessao as Session, '11999992048', 'outbound');
+    await escoar();
+    return engine;
+  }
+
+  it('mídia em claro NÃO fica "ativa": encerra como ação nossa, avisa a tela e não conta como atendida', async () => {
+    vi.stubGlobal('MediaStream', class { addTrack() { /* dublê */ } });
+    try {
+      const adapter = new TestAdapter();
+      const sessao = sessaoEstabelecida(SDP_EM_CLARO);
+      adapter.inviter = sessao;
+      const sink = fakeSink();
+
+      await ateEstabelecer(adapter, sessao, sink);
+
+      // Nunca apareceu como atendida (o guard roda ANTES do bookkeeping).
+      expect(sink.onEstablished).not.toHaveBeenCalled();
+      expect(sink.onAnswered).not.toHaveBeenCalled();
+      expect(sink.onStatus).not.toHaveBeenCalledWith('active');
+      // O usuário sabe o motivo e a sessão foi encerrada no transporte.
+      expect(sink.onError).toHaveBeenCalledWith(expect.stringContaining('SRTP'));
+      expect(sessao.bye).toHaveBeenCalledTimes(1);
+      // Desfecho: encerramento NOSSO, sem tempo de conversa (não atendida).
+      expect(sink.onFinished).toHaveBeenCalledWith('call-1', null, { endedBy: 'hangup_local', sipCode: null });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('perfil SAVP atende normalmente: o guard não derruba chamada boa', async () => {
+    vi.stubGlobal('MediaStream', class { addTrack() { /* dublê */ } });
+    try {
+      const adapter = new TestAdapter();
+      const sessao = sessaoEstabelecida(SDP_SRTP);
+      adapter.inviter = sessao;
+      const sink = fakeSink();
+
+      await ateEstabelecer(adapter, sessao, sink);
+
+      expect(sink.onEstablished).toHaveBeenCalledTimes(1);
+      expect(sink.onStatus).toHaveBeenLastCalledWith('active');
+      expect(sessao.bye).not.toHaveBeenCalled();
+      expect(sink.onError).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('SDP ilegível não é veredito de "em claro": a chamada segue e o adapter registra o warn', async () => {
+    vi.stubGlobal('MediaStream', class { addTrack() { /* dublê */ } });
+    try {
+      const warn = vi.fn();
+      const adapter = new TestAdapter({ error: vi.fn(), warn });
+      const sessao = sessaoEstabelecida(null);
+      adapter.inviter = sessao;
+      const sink = fakeSink();
+
+      await ateEstabelecer(adapter, sessao, sink);
+
+      expect(sink.onEstablished).toHaveBeenCalledTimes(1);
+      expect(sessao.bye).not.toHaveBeenCalled();
+      // Nem silêncio nem bloqueio: o que não deu para atestar fica no log.
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('SRTP'));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('vale também na chamada de ENTRADA: o guard é do estabelecimento, não da direção', async () => {
+    const adapter = new TestAdapter();
+    const sink = fakeSink();
+    const engine = new CallEngine(adapter, sink);
+    const convite = {
+      id: 'convite-1',
+      state: 'Established',
+      stateChange: { addListener: vi.fn() },
+      remoteIdentity: { uri: { user: '5511988887777' }, displayName: '' },
+      reject: vi.fn().mockResolvedValue(undefined),
+      bye: vi.fn().mockResolvedValue(undefined),
+      sessionDescriptionHandler: {
+        peerConnection: { getReceivers: () => [], remoteDescription: { sdp: SDP_EM_CLARO } },
+      },
+    } as unknown as Invitation;
+
+    engine.handleInvitation(convite);
+    engine.handleStateChange('Established', convite as unknown as Session, '5511988887777', 'inbound');
+    await escoar();
+
+    expect(sink.onEstablished).not.toHaveBeenCalled();
+    expect(sink.onError).toHaveBeenCalledWith(expect.stringContaining('SRTP'));
+    expect((convite as unknown as { bye: ReturnType<typeof vi.fn> }).bye).toHaveBeenCalledTimes(1);
+  });
+});

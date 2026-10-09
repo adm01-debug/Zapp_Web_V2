@@ -67,7 +67,7 @@ export function ContactCard({
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted">
+            <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted" aria-label={`Ações do contato ${contact.name}`}>
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>

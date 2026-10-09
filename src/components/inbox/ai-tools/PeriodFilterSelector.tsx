@@ -166,6 +166,11 @@ interface PeriodFilterSelectorProps {
   onClearCustom: () => void;
   filteredCount: number;
   totalCount: number;
+  /**
+   * Atalhos que ESTE consumidor não oferece (ex.: a aba Arquivos esconde `last_interaction`, que
+   * só faz sentido com histórico de mensagens). Opcional: sem a prop a lista é a de sempre.
+   */
+  hiddenPeriods?: AnalysisPeriod[];
 }
 
 export function PeriodFilterSelector({
@@ -178,9 +183,13 @@ export function PeriodFilterSelector({
   onClearCustom,
   filteredCount,
   totalCount,
+  hiddenPeriods,
 }: PeriodFilterSelectorProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const hasFilter = period !== 'all';
+  const presets = hiddenPeriods && hiddenPeriods.length > 0
+    ? PERIOD_PRESETS.filter((preset) => !hiddenPeriods.includes(preset.key))
+    : PERIOD_PRESETS;
 
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -222,7 +231,7 @@ export function PeriodFilterSelector({
           {/* Presets column */}
           <div className="w-[160px] border-r border-border bg-muted/30 p-2 flex flex-col gap-0.5">
             <p className="text-3xs text-muted-foreground font-semibold px-2.5 pt-1 pb-2 uppercase tracking-widest">Atalhos</p>
-            {PERIOD_PRESETS.map((p) => (
+            {presets.map((p) => (
               <button
                 key={p.key}
                 className={cn(

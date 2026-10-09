@@ -209,3 +209,87 @@ test('E98: workflow disparado por pull_request não recebe segredo de banco', ()
   }
   assert.deepEqual(infratores, [], `pull_request com DESTINO_URL: ${infratores.join(', ')}`);
 });
+
+// E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers do
+// Playwright (centenas de MB) volta a acontecer em todo job se o cache não
+// existir OU se a instalação rodar mesmo com cache quente. As duas metades
+// precisam de teste: só "tem actions/cache" aprovaria um workflow que continua
+// baixando tudo, e só "tem if: cache-hit" aprovaria um `if` apontando para um
+// cache que ninguém salva.
+//
+// A chave precisa nomear o CONJUNTO de browsers: sem isso um cache gravado pelo
+// job que instala apenas Chromium (e2e-talkx.yml) satisfaz o job que precisa de
+// Chromium+Firefox+WebKit (ci.yml, e2e-logado.yml) — a instalação é pulada e os
+// projetos de firefox/webkit falham por executável ausente.
+
+/** Passos de um job (`steps:` é uma lista indentada em 6 espaços). */
+function passos(texto) {
+  const blocos = [];
+  let atual = null;
+  for (const linha of texto.split('\n')) {
+    if (/^ {6}- /.test(linha)) {
+      if (atual) blocos.push(atual.join('\n'));
+      atual = [linha];
+    } else if (atual) {
+      atual.push(linha);
+    }
+  }
+  if (atual) blocos.push(atual.join('\n'));
+  return blocos;
+}
+
+test('E68: browser do Playwright é cacheado e o download só roda em cache miss', () => {
+  const LETRA = { chromium: 'c', firefox: 'f', webkit: 'w' };
+  const problemas = [];
+
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    const blocos = passos(texto);
+
+    const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
+    if (!cache) {
+      problemas.push(`${nome}: sem passo actions/cache para os browsers`);
+      continue;
+    }
+    if (!/^ {10}path:\s*~\/\.cache\/ms-playwright\s*$/m.test(cache)) {
+      problemas.push(`${nome}: o cache não aponta para ~/.cache/ms-playwright`);
+    }
+
+    const id = /^ {8}id:\s*(\S+)\s*$/m.exec(cache)?.[1];
+    if (!id) {
+      problemas.push(`${nome}: passo de cache sem id — o if da instalação não tem como citá-lo`);
+      continue;
+    }
+
+    // A chave separa os jobs pelo conjunto de engines que eles instalam.
+    const chave = /^ {10}key:\s*(.+?)\s*$/m.exec(cache)?.[1] ?? '';
+    const conjunto = /(?:^|[^a-z])pw-([cfw]+)-/.exec(chave)?.[1] ?? '';
+    const instalados = Object.keys(LETRA)
+      .filter((b) => new RegExp(`install --with-deps[^\n]*\\b${b}\\b`).test(texto))
+      .map((b) => LETRA[b])
+      .sort()
+      .join('');
+    if (!conjunto) {
+      problemas.push(`${nome}: chave '${chave}' não nomeia o conjunto de browsers (esperado pw-<cfw>-)`);
+    } else if ([...conjunto].sort().join('') !== instalados) {
+      problemas.push(`${nome}: chave diz '${conjunto}' mas o job instala '${instalados}'`);
+    }
+
+    const miss = blocos.find(
+      (p) =>
+        new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
+        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+    );
+    if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
+
+    const hit = blocos.find(
+      (p) =>
+        new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
+        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+    );
+    if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
+  }
+
+  assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});

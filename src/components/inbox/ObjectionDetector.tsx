@@ -41,6 +41,38 @@ const ConfidenceBadge = memo(function ConfidenceBadge({ confidence }: { confiden
   );
 });
 
+/* ─── Severity Chip ─── */
+// A objeção não traz `severity` do hook: o JSON pedido à IA (useObjectionDetector)
+// só devolve `objection`/`counterArgument`/`confidence`. O nível sai da confiança,
+// como pede a referência da aba IA (docs/design/PLANO_INBOX_360_CONVERSA.md §2.7
+// item 3 — "pill de confiança Baixo/Médio/Alto por confidence"), com os mesmos
+// limiares do `derivePriority` que já existe no app (src/components/ai/ticketClassification.ts).
+type ObjectionSeverity = 'baixo' | 'medio' | 'alto';
+
+const SEVERITY_CONFIG: Record<ObjectionSeverity, { label: string; className: string }> = {
+  baixo: { label: 'Baixo', className: 'bg-success/20 text-success' },
+  medio: { label: 'Médio', className: 'bg-warning/20 text-warning' },
+  alto: { label: 'Alto', className: 'bg-destructive/20 text-destructive' },
+};
+
+function severityFromConfidence(confidence: number): ObjectionSeverity {
+  if (confidence > 0.8) return 'alto';
+  if (confidence > 0.5) return 'medio';
+  return 'baixo';
+}
+
+const SeverityChip = memo(function SeverityChip({ confidence }: { confidence: number }) {
+  const { label, className } = SEVERITY_CONFIG[severityFromConfidence(confidence)];
+  return (
+    <span
+      className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-3xs font-bold', className)}
+      title={`Severidade da objeção: ${label}`}
+    >
+      {label}
+    </span>
+  );
+});
+
 /* ─── Action Bar ─── */
 const ActionBar = memo(function ActionBar({ text, idx, copiedIdx, isRewriting, rewritingAny, onCopy, onRewrite, onSelect }: {
   text: string; idx: number; copiedIdx: number | null; isRewriting: boolean; rewritingAny: boolean;
@@ -79,7 +111,10 @@ const ObjectionCard = memo(forwardRef<HTMLDivElement, {
         <div className="shrink-0 mt-0.5 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><ShieldQuestion className="w-4 h-4 text-primary" /></div>
         <div className="flex-1 min-w-0 space-y-2">
           <p className="text-[13px] text-foreground font-medium leading-snug pr-4">{obj.objection}</p>
-          <ConfidenceBadge confidence={obj.confidence} />
+          <div className="flex items-center gap-1.5">
+            <SeverityChip confidence={obj.confidence} />
+            <ConfidenceBadge confidence={obj.confidence} />
+          </div>
         </div>
         <div className="shrink-0 mt-1 text-muted-foreground">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
       </button>

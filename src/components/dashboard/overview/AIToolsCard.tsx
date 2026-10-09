@@ -1,6 +1,7 @@
 import { Brain, Sparkles, FileSearch, AlertOctagon, Mic } from 'lucide-react';
-import { DashboardCard, SectionHeader, VerTodasButton } from './DashboardCard';
+import { DashboardCard, SectionHeader, VerTodasButton, StatusChip } from './DashboardCard';
 import { AI_FEATURES, useAIFeatureNavigation } from '../aiFeatures';
+import { useActiveAIProvider } from '@/hooks/analytics/useActiveAIProvider';
 import { cn } from '@/lib/utils';
 
 interface AIToolsCardProps {
@@ -16,11 +17,25 @@ const TILE_BY_TITLE: Record<string, { tile: string; icon: typeof Sparkles }> = {
 
 export function AIToolsCard({ onSeeAll }: AIToolsCardProps) {
   const handleFeatureClick = useAIFeatureNavigation();
+  // SL-165: o chip "Ativo" do mockup (etapa 74 do plano Navy) só existe com
+  // provedor REAL ativo lido de `ai_providers`; sem nenhum, ele é omitido em vez
+  // de afirmar um status que o dado não sustenta.
+  const { data: provider } = useActiveAIProvider();
   const features = AI_FEATURES.filter((f) => TILE_BY_TITLE[f.title]);
 
   return (
     <DashboardCard testid="ai-tools-card" className="min-h-[173px]">
-      <SectionHeader icon={Brain} title="Inteligência Artificial" tileSize={34} right={<VerTodasButton onClick={onSeeAll} />} />
+      <SectionHeader
+        icon={Brain}
+        title="Inteligência Artificial"
+        tileSize={34}
+        right={(
+          <div className="flex items-center gap-2 shrink-0">
+            {provider && <StatusChip label="Ativo" tone="success" />}
+            <VerTodasButton onClick={onSeeAll} />
+          </div>
+        )}
+      />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {features.map((feature) => {
           const { tile, icon: Icon } = TILE_BY_TITLE[feature.title];

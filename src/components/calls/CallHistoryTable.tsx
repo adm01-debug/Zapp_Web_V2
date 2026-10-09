@@ -24,6 +24,9 @@ const COLUNAS = ['Contato', 'Canal', 'Direção', 'Resultado', 'Data e hora', 'D
 export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLimparSelecao, onLigarDeVolta }: CallHistoryTableProps) {
   return (
     <table className="w-full table-fixed border-collapse" data-testid="tel-history-table">
+      {/* T76: nome acessivel da tabela. O caption nao aparece na tela (sr-only) e
+          nao duplica nenhuma coluna visivel — so leitor de tela le. */}
+      <caption className="sr-only">Histórico de chamadas</caption>
       <thead>
         <tr className="border-b border-border text-left">
           {COLUNAS.map((c) => (
@@ -57,6 +60,17 @@ export function CallHistoryTable({ rows, selecionadaId, onSelecionar, onLimparSe
                   // global) para nao fechar o detalhe enquanto o agente digita a anotacao.
                   e.preventDefault();
                   onLimparSelecao?.();
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                  // T76: as linhas sao focaveis (tabIndex=0); as setas andam entre elas
+                  // sem sair da tabela. Na primeira/ultima linha o foco fica onde esta
+                  // (sem wrap), mas a rolagem da pagina nao acontece: o default da seta
+                  // e cancelado em qualquer linha.
+                  e.preventDefault();
+                  const linhas = Array.from(
+                    e.currentTarget.parentElement?.querySelectorAll<HTMLTableRowElement>('tr[data-testid="tel-row"]') ?? [],
+                  );
+                  const destino = linhas[linhas.indexOf(e.currentTarget) + (e.key === 'ArrowDown' ? 1 : -1)];
+                  destino?.focus();
                 }
               }}
               className={`h-[57px] cursor-pointer border-b border-border transition-colors hover:bg-muted/40 ${

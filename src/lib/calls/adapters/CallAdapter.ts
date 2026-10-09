@@ -63,6 +63,17 @@ export interface CallAdapter {
    */
   hangup(session: Session, direction: AdapterDirection): void;
 
+  /**
+   * O SDP **negociado** (o remotamente descrito) usa perfil de mídia
+   * criptografado (SRTP)? Ver `midiaUsaSrtp` para o veredito por perfil.
+   *
+   * `null` = não foi possível ler o SDP — nada a atestar. Mesmo contrato
+   * tri-estado de `setMuted`: quem chama decide o que fazer com o "não
+   * atestado" (o motor segue a chamada; o `warn` fica no log). A decisão de
+   * recusar mídia em claro é do adapter: `false` é veredito, não ausência.
+   */
+  midiaCriptografada(session: Session): boolean | null;
+
   /** Liga o áudio remoto ao elemento de áudio da página. `null` sem mídia. */
   attachRemoteAudio(session: Session): HTMLAudioElement | null;
 

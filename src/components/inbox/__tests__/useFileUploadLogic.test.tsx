@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFileUploadLogic } from '../useFileUploadLogic';
@@ -42,6 +43,15 @@ vi.mock('@/lib/logger', () => ({
 const CONTACT_ID = '32a7c69a-bbbb-4b94-8888-61b95bb25a0d';
 const LOCATOR_URL = 'https://project.test/storage/v1/object/public/whatsapp-media/locator';
 
+/**
+ * SL-202: a ref do `<input type="file">` passou a ser do componente e entra no hook por
+ * parametro (antes o hook a criava e a devolvia, e o objeto devolvido — por carregar uma
+ * ref — era tratado como ref-like pelo compilador, gerando 75 `react-hooks/refs`).
+ */
+function makeFileInputRef() {
+  return createRef<HTMLInputElement>();
+}
+
 function createFile(name = 'Relatório final (cliente #1).pdf') {
   return new File(['conteúdo'], name, { type: 'application/pdf' });
 }
@@ -63,6 +73,7 @@ function renderUpload(onFileSent = vi.fn()) {
       contactId: CONTACT_ID,
       connectionId: 'connection-1',
       onFileSent,
+      fileInputRef: makeFileInputRef(),
     })),
   };
 }
@@ -106,7 +117,7 @@ describe('useFileUploadLogic — storage path', () => {
 
   it('nunca envia sem contactId selecionado (encaminha para seleção externa)', async () => {
     const onFileSelect = vi.fn();
-    const hook = renderHook(() => useFileUploadLogic({ onFileSelect }));
+    const hook = renderHook(() => useFileUploadLogic({ onFileSelect, fileInputRef: makeFileInputRef() }));
     act(() => {
       hook.result.current.handleExternalFile(createFile());
     });

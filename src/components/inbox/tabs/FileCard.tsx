@@ -6,6 +6,7 @@ import { formatMeta } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
+import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -103,7 +104,7 @@ export function FileCard({
         <button
           type="button"
           aria-label="Visualizar"
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={FILE_ACTION_BUTTON}
           onClick={onPreview}
         >
           <Eye className="w-3.5 h-3.5" />
@@ -113,7 +114,7 @@ export function FileCard({
           aria-label="Encaminhar"
           title="Disponível em breve"
           disabled
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground/50 cursor-not-allowed"
+          className={FILE_ACTION_BUTTON_DISABLED}
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>

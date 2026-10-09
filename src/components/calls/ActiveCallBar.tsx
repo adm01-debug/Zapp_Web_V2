@@ -60,7 +60,7 @@ export function ActiveCallBar() {
 
       <div className="flex shrink-0 items-center gap-1">
         {isIncomingRinging ? (
-          <Button size="icon" className="h-8 w-8 rounded-full bg-success hover:bg-success/90" onClick={sip.acceptIncomingCall} aria-label="Atender">
+          <Button size="icon" className="h-8 w-8 rounded-full bg-success hover:bg-success/90" onClick={sip.accept} aria-label="Atender">
             <Phone className="h-4 w-4" />
           </Button>
         ) : (
@@ -68,7 +68,7 @@ export function ActiveCallBar() {
             {sip.isMuted ? <MicOff className="h-4 w-4 text-destructive" /> : <Mic className="h-4 w-4" />}
           </Button>
         )}
-        <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={sip.hangUp} aria-label="Encerrar">
+        <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={sip.hangup} aria-label="Encerrar">
           <PhoneOff className="h-4 w-4" />
         </Button>
       </div>

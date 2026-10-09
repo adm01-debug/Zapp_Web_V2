@@ -8,6 +8,15 @@ const mockRegisterStateListeners: StateListener[] = [];
 type RegisterOptions = { requestDelegate?: { onReject?: (response: { message: { statusCode: number } }) => void } };
 const mockRegisterCalls: Array<RegisterOptions | undefined> = [];
 const mockUaInstances: Array<{ start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; transport: { onDisconnect: (() => void) | null } }> = [];
+// SL-002: as opções com que o `UserAgent` nasce (delas sai o `RTCPeerConnection`
+// de toda sessão — `sessionDescriptionHandlerFactoryOptions`).
+type UaOptions = {
+  delegate?: { onInvite?: (invitation: unknown) => void };
+  sessionDescriptionHandlerFactoryOptions?: {
+    peerConnectionConfiguration?: { rtcpMuxPolicy?: string; bundlePolicy?: string };
+  };
+};
+const mockUaOptions: UaOptions[] = [];
 // R2-CALL-004: as instâncias de Registerer ficam acessíveis para simular erro de teardown.
 const mockRegistererInstances: Array<{ register: ReturnType<typeof vi.fn>; unregister: ReturnType<typeof vi.fn> }> = [];
 let lastDelegate: { onInvite?: (invitation: unknown) => void } | undefined;
@@ -40,6 +49,7 @@ vi.mock('sip.js', () => {
       stop = vi.fn().mockResolvedValue(undefined);
       constructor(options: { delegate?: { onInvite?: (invitation: unknown) => void } }) {
         lastDelegate = options.delegate;
+        mockUaOptions.push(options as UaOptions);
         mockUaInstances.push(this);
       }
     },
@@ -86,6 +96,7 @@ describe('useSipConnection', () => {
     mockRegisterStateListeners.length = 0;
     mockRegisterCalls.length = 0;
     mockUaInstances.length = 0;
+    mockUaOptions.length = 0;
     mockRegistererInstances.length = 0;
     startImpl = () => Promise.resolve();
     registerImpl = defaultRegisterImpl;
@@ -105,6 +116,21 @@ describe('useSipConnection', () => {
     expect(lastDelegate?.onInvite).toBeInstanceOf(Function);
     lastDelegate?.onInvite?.({ fake: 'invitation' });
     expect(onIncomingInvitation).toHaveBeenCalledWith({ fake: 'invitation' });
+  });
+
+  it('SL-002: as opções do SessionDescriptionHandler exigem RTCP muxado e bundle (mídia só pela sessão DTLS)', async () => {
+    const { result } = renderHook(() => useSipConnection());
+    await act(async () => {
+      await result.current.connect({ server: 'test.com', user: 'user1', password: 'pass' });
+    });
+
+    // `sessionDescriptionHandlerFactoryOptions` é o que o sip.js entrega ao
+    // construir o `RTCPeerConnection` de CADA sessão (session.js:1143). Sem
+    // isto a configuração fica sendo só a padrão da lib.
+    expect(mockUaOptions[0]?.sessionDescriptionHandlerFactoryOptions?.peerConnectionConfiguration).toEqual({
+      rtcpMuxPolicy: 'require',
+      bundlePolicy: 'max-bundle',
+    });
   });
 
   it('T15: 403 no REGISTER vira "linha em uso por outro usuário" (não erro genérico)', async () => {

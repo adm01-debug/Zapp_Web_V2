@@ -10,13 +10,12 @@ interface RecordingPlayerProps {
 }
 
 /**
- * O que o player precisa da gravacao: se ela existe e COMO ela chega. Quando o hook entrega os
- * BYTES da Edge (`blob`) e o PLAYER que monta o endereco local - por isso `blob` entra aqui;
- * enquanto o hook so devolver um endereco pronto (`url`), o player usa esse endereco como veio.
+ * O que o player precisa da gravacao: se ela existe e os BYTES dela (`blob`). O endereco que
+ * o `<audio>` e o link de download usam e um `blob:` local montado AQUI a partir desses bytes -
+ * a URL de origem nao faz parte do contrato e nunca chega ao DOM.
  */
 interface GravacaoDoPlayer {
   disponivel: boolean;
-  url: string | null;
   blob?: Blob | null;
 }
 
@@ -93,7 +92,8 @@ function useEnderecoDoBlob(blob: Blob | null): string | null {
  *
  * TEL-RECORDING-001: o endereco que o `<audio>` e o link de download usam e um `blob:` local
  * do navegador, montado AQUI a partir dos bytes que o hook entrega - a URL de origem nunca
- * chega ao DOM. O ciclo (criar/revogar) e deste componente, no mesmo efeito.
+ * chega ao DOM. Sem bytes locais o player NAO renderiza (falha fechada): nenhum outro
+ * endereco entra no `src`/`href`. O ciclo (criar/revogar) e deste componente, no mesmo efeito.
  *
  * VOL-02 (E35): a gravacao da chamada e midia de conversa, nao alerta - o `<audio>` que
  * de fato toca e ESTE, entao a ligacao ao volume global mora aqui. Antes o hook ficava no
@@ -106,8 +106,7 @@ export function RecordingPlayer({ callId, recordingStatus }: RecordingPlayerProp
   const audioRef = useRef<HTMLAudioElement>(null);
   useMediaElementVolume(audioRef);
 
-  const enderecoDoBlob = useEnderecoDoBlob(gravacao.blob ?? null);
-  const src = enderecoDoBlob ?? gravacao.url ?? null;
+  const src = useEnderecoDoBlob(gravacao.blob ?? null);
 
   if (!src) return null;
 

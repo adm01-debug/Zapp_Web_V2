@@ -10,6 +10,15 @@
 // vermelho (`action: 'generate'` e action fora do contrato) exige 400 EXPLÍCITO e ZERO chamada ao
 // endpoint de listagem: antes da correção devolvia 200 com a lista de vozes.
 //
+// SL-007 (docs/ia/IA-003, achado B3) — "elevenlabs-voice-design exige papel e audita criação de voz".
+// A `action: 'create'` cria voz PERSISTENTE na conta ElevenLabs compartilhada da empresa. Antes:
+// qualquer usuário autenticado criava voz permanente (só `requireAuth` + rate limit), sem checagem de
+// papel e sem nenhum rastro de autoria (`audit_logs` não recebia linha). O contrato agora, provado
+// abaixo: criar voz exige admin/supervisor pela RPC canônica `is_admin_or_supervisor`, e a criação
+// bem-sucedida grava a autoria em `audit_logs` (user_id do chamador). Papel negado e falha da RPC
+// fecham ANTES de tocar o provedor; falha da auditoria não responde 200. `preview` (não persistente)
+// continua aberto a qualquer autenticado — o gate é só da criação.
+//
 // Run with:
 //   deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 \
 //     supabase/functions/elevenlabs-voice-design/index.test.ts
@@ -24,6 +33,10 @@ function assert(condition: unknown, message: string): asserts condition {
 const ELEVENLABS_LISTAGEM = '/v1/voices';
 const ELEVENLABS_PREVIEW = '/v1/text-to-voice/create-previews';
 const ELEVENLABS_CREATE = '/v1/text-to-voice/create-voice-from-preview';
+
+// ── rotas do próprio Supabase usadas pelo gate de papel e pela auditoria (SL-007) ─
+const RPC_PAPEL = '/rest/v1/rpc/is_admin_or_supervisor';
+const AUDIT_LOGS = '/rest/v1/audit_logs';
 
 type Route = { match: string; body: unknown; status?: number };
 
@@ -56,11 +69,27 @@ Deno.env.set('SUPABASE_ANON_KEY', 'anon-key-de-teste');
 Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'service-key-de-teste');
 Deno.env.set('ELEVENLABS_API_KEY', 'xi-api-key-de-teste');
 
-function rotasDeAuth(userId: string): Route[] {
-  return [
+/**
+ * Rotas mínimas de autenticação/limite. `papel` controla a resposta da RPC canônica de papel
+ * (SL-007): `isAdmin` decide a resposta, `papelErro` simula a própria RPC falhando. A rota de
+ * `audit_logs` responde sucesso por padrão — quem quiser provar a falha de auditoria declara a
+ * rota de erro ANTES desta (o stub casa pela primeira rota da lista).
+ */
+function rotasDeAuth(
+  userId: string,
+  papel: { isAdmin?: boolean; papelErro?: boolean } = {},
+): Route[] {
+  const rotas: Route[] = [
     { match: '/auth/v1/user', body: { id: userId, aud: 'authenticated' } },
     { match: '/rest/v1/rpc/consume_rate_limit', body: [{ allowed: true, remaining: 4 }] },
   ];
+  rotas.push(
+    papel.papelErro
+      ? { match: RPC_PAPEL, body: { message: 'permission denied for function is_admin_or_supervisor' }, status: 403 }
+      : { match: RPC_PAPEL, body: papel.isAdmin ?? true },
+  );
+  rotas.push({ match: AUDIT_LOGS, body: {} });
+  return rotas;
 }
 
 function makeRequest(body: unknown, withAuth = true): Request {
@@ -205,6 +234,132 @@ Deno.test('R2-MOD-070: sem action o corpo continua sendo tratado como preview (c
     assert(
       !stub.seen().some((u) => u.includes(ELEVENLABS_LISTAGEM)),
       `sem action não pode listar vozes: ${stub.seen().join(', ')}`,
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+// ── SL-007 (docs/ia/IA-003, achado B3): criação de voz exige papel e fica auditada ───
+
+/** Payload de criação conforme o contrato (`ElevenLabsVoiceDesignCreateSchema`). */
+const PAYLOAD_CRIAR_VOZ = {
+  action: 'create',
+  voice_name: 'Voz do suporte',
+  voice_description: 'Tom calmo',
+  generated_voice_id: 'previa-1',
+};
+
+Deno.test('SL-007: create sem papel admin/supervisor é 403 e não toca a conta compartilhada', async () => {
+  const stub = withFetch([
+    ...rotasDeAuth('user-sem-papel', { isAdmin: false }),
+    { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-que-nao-podia-existir' } },
+  ]);
+  try {
+    const res = await handleVoiceDesignRequest(makeRequest(PAYLOAD_CRIAR_VOZ));
+    assert(res.status === 403, `create sem papel deveria ser 403, veio ${res.status}`);
+    assert(
+      !stub.seen().some((u) => u.includes('api.elevenlabs.io')),
+      `sem papel ninguém cria voz na conta compartilhada: ${stub.seen().join(', ')}`,
+    );
+    assert(
+      stub.calls.find((c) => c.url.includes(AUDIT_LOGS)) === undefined,
+      'criação negada não pode deixar rastro de criação',
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+Deno.test('SL-007: falha da RPC de papel FECHA (não cria voz nem audita)', async () => {
+  const stub = withFetch([
+    ...rotasDeAuth('user-rpc-fora', { papelErro: true }),
+    { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-orfa' } },
+  ]);
+  try {
+    const res = await handleVoiceDesignRequest(makeRequest(PAYLOAD_CRIAR_VOZ));
+    assert(res.status >= 500, `papel não verificado deveria fechar com 5xx, veio ${res.status}`);
+    assert(
+      !stub.seen().some((u) => u.includes('api.elevenlabs.io')),
+      `fail-closed: sem papel verificado, nada de voz: ${stub.seen().join(', ')}`,
+    );
+    assert(
+      stub.calls.find((c) => c.url.includes(AUDIT_LOGS)) === undefined,
+      'sem criação não existe criação a auditar',
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+Deno.test('SL-007: admin cria voz e a autoria vai para audit_logs', async () => {
+  const userId = 'user-admin';
+  const stub = withFetch([
+    ...rotasDeAuth(userId, { isAdmin: true }),
+    { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-criada-7' } },
+  ]);
+  try {
+    const res = await handleVoiceDesignRequest(makeRequest(PAYLOAD_CRIAR_VOZ));
+    assert(res.status === 200, `admin deveria criar a voz (200), veio ${res.status}`);
+    const chamada = stub.calls.find((c) => c.url.includes(AUDIT_LOGS) && c.body !== null);
+    assert(chamada !== undefined, `a criação precisa ficar registrada: ${stub.seen().join(', ')}`);
+    const cru = JSON.parse(chamada.body as string) as Record<string, unknown> | Array<Record<string, unknown>>;
+    const linha = Array.isArray(cru) ? cru[0] : cru;
+    assert(linha.user_id === userId, `o autor precisa ser registrado: ${JSON.stringify(linha)}`);
+    assert(
+      linha.entity_type === 'elevenlabs',
+      `entity_type deveria identificar o provedor: ${String(linha.entity_type)}`,
+    );
+    assert(
+      typeof linha.action === 'string' && linha.action.length > 0,
+      `a ação precisa ser nomeada (CHECK audit_logs_action_not_empty): ${String(linha.action)}`,
+    );
+    const detalhes = (typeof linha.details === 'string' ? JSON.parse(linha.details) : linha.details) as
+      | Record<string, unknown>
+      | undefined;
+    assert(
+      detalhes?.voice_id === 'voz-criada-7',
+      `o id da voz criada precisa ficar na trilha: ${JSON.stringify(detalhes)}`,
+    );
+    assert(
+      detalhes?.voice_name === 'Voz do suporte',
+      `o nome da voz criada precisa ficar na trilha: ${JSON.stringify(detalhes)}`,
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+Deno.test('SL-007: falha da auditoria NÃO responde 200 (voz criada sem rastro é erro visível)', async () => {
+  const stub = withFetch([
+    // Rota de erro ANTES: o stub casa a primeira rota que casa.
+    { match: AUDIT_LOGS, body: { message: 'permission denied for table audit_logs' }, status: 403 },
+    ...rotasDeAuth('user-auditoria-falha', { isAdmin: true }),
+    { match: ELEVENLABS_CREATE, body: { voice_id: 'voz-sem-rastro' } },
+  ]);
+  try {
+    const res = await handleVoiceDesignRequest(makeRequest(PAYLOAD_CRIAR_VOZ));
+    assert(res.status >= 500, `sem trilha a resposta não pode passar por sucesso, veio ${res.status}`);
+    assert(
+      stub.seen().some((u) => u.includes(ELEVENLABS_CREATE)),
+      'a voz JÁ foi criada no provedor — o erro é sobre a trilha, não sobre a criação',
+    );
+  } finally {
+    stub.restore();
+  }
+});
+
+Deno.test('SL-007: preview segue aberto a qualquer autenticado (o gate é só da criação)', async () => {
+  const stub = withFetch([
+    ...rotasDeAuth('user-preview-sem-papel', { isAdmin: false }),
+    { match: ELEVENLABS_PREVIEW, body: { previews: [{ generated_voice_id: 'previa-x' }] } },
+  ]);
+  try {
+    const res = await handleVoiceDesignRequest(makeRequest({ action: 'preview', description: 'Tom calmo' }));
+    assert(res.status === 200, `preview não exige papel, veio ${res.status}`);
+    assert(
+      !stub.seen().some((u) => u.includes(RPC_PAPEL)),
+      `preview não deveria nem consultar papel: ${stub.seen().join(', ')}`,
     );
   } finally {
     stub.restore();

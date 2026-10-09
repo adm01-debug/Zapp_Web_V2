@@ -1,5 +1,7 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, enforceRateLimit, isValidUUID } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -28,10 +30,32 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
 
       log.info("Generating voice preview", { descLen: description.length });
 
+      const iniciadoEm = Date.now();
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-voice/create-previews', {
         method: 'POST',
         headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ voice_description: description, text: previewText }),
+      });
+
+      // SL-013 / IA-003 B6 — a criação de prévia de voz é chamada PAGA ao
+      // provedor e tem de deixar linha no ledger (unidade = REQUISIÇÃO; as
+      // colunas de token ficam NULL com `usage_unknown: true`, IA-053).
+      await logAiUsageDetached({
+        functionName: "elevenlabs-voice-design",
+        userId: auth.userId,
+        model: null,
+        durationMs: Date.now() - iniciadoEm,
+        status: response.ok ? "success" : "error",
+        errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+        usageUnknown: true,
+        metadata: {
+          provider: "elevenlabs",
+          endpoint: "/v1/text-to-voice/create-previews",
+          billing_unit: "request",
+          billing_quantity: 1,
+          preview_characters: previewText.length,
+          http_status: response.status,
+        },
       });
 
       if (!response.ok) {
@@ -46,6 +70,26 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
     }
 
     if (action === 'create') {
+      // SL-007 (IA-003 B3): criar voz é escrita PERSISTENTE na conta ElevenLabs
+      // compartilhada da empresa. Antes, qualquer usuário autenticado criava voz
+      // permanente, sem checagem de papel e sem rastro de autoria. Agora exige
+      // admin/supervisor pela RPC canônica `is_admin_or_supervisor` e deixa a
+      // autoria em `audit_logs`. O gate é SÓ da criação: `preview` (efêmera, não
+      // persiste na conta) continua atendida a qualquer autenticado.
+      const supabaseUser = await createAuthedClient(req);
+      const { data: isAdmin, error: roleError } = await supabaseUser.rpc("is_admin_or_supervisor", {
+        _user_id: auth.userId,
+      });
+      if (roleError) {
+        // Fail-closed: papel não verificado não vira permissão.
+        log.error("Falha ao verificar papel", { error: roleError.message });
+        return internalErrorResponse(roleError, req);
+      }
+      if (isAdmin !== true) {
+        log.warn("Criação de voz negada por papel");
+        return errorResponse("Only admins can create voices", 403, req);
+      }
+
       const parsed = parseBody(ElevenLabsVoiceDesignCreateSchema, body);
       if (!parsed.success) return validationErrorResponse(parsed, req);
 
@@ -53,10 +97,30 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
 
       log.info("Creating voice", { voice_name });
 
+      const iniciadoEm = Date.now();
       const response = await fetch('https://api.elevenlabs.io/v1/text-to-voice/create-voice-from-preview', {
         method: 'POST',
         headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ voice_name, voice_description: voice_description || '', generated_voice_id, labels: labels || {} }),
+      });
+
+      // SL-013 / IA-003 B6 — criação de voz é chamada PAGA (persiste recurso na
+      // conta do provedor) e precisa aparecer no ledger de consumo.
+      await logAiUsageDetached({
+        functionName: "elevenlabs-voice-design",
+        userId: auth.userId,
+        model: null,
+        durationMs: Date.now() - iniciadoEm,
+        status: response.ok ? "success" : "error",
+        errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+        usageUnknown: true,
+        metadata: {
+          provider: "elevenlabs",
+          endpoint: "/v1/text-to-voice/create-voice-from-preview",
+          billing_unit: "request",
+          billing_quantity: 1,
+          http_status: response.status,
+        },
       });
 
       if (!response.ok) {
@@ -66,7 +130,28 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
       }
 
       const data = await response.json();
-      log.done(200, { voiceId: data.voice_id });
+      const voiceId = typeof data.voice_id === 'string' ? data.voice_id.slice(0, 200) : null;
+
+      // A trilha é gravada com a service role: `audit_logs` bloqueia INSERT direto
+      // de `authenticated` (policy "Block direct audit log inserts", WITH CHECK
+      // false) — mesmo desenho do `elevenlabs-webhook`. `user_id` guarda o autor.
+      const supabaseAdmin = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+      const { error: auditError } = await supabaseAdmin.from('audit_logs').insert({
+        user_id: auth.userId,
+        action: 'elevenlabs_voice_created',
+        entity_type: 'elevenlabs',
+        // `entity_id` é uuid no banco: o id textual do provedor vai em `details`.
+        entity_id: voiceId !== null && isValidUUID(voiceId) ? voiceId : null,
+        details: { voice_id: voiceId, voice_name },
+      });
+      if (auditError) {
+        // A voz JÁ existe no provedor; o que falhou foi a trilha. Responder 200
+        // aqui esconderia uma criação permanente sem rastro de quem a fez.
+        log.error("Falha ao registrar auditoria da criação de voz", { error: auditError.message, voiceId });
+        return internalErrorResponse(auditError, req);
+      }
+
+      log.done(200, { voiceId });
       return jsonResponse(data, 200, req);
     }
 

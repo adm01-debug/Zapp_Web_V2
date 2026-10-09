@@ -30,15 +30,21 @@ describe('NavigationService integration maturity', () => {
       .filter(({ layout }) => layout === 'full')
       .map(({ id }) => id);
 
-    expect(fullLayoutIds).toEqual(expect.arrayContaining(['inbox', 'team-chat', 'email-chat', 'pipeline', 'omni-inbox']));
+    expect(fullLayoutIds).toEqual(expect.arrayContaining(['inbox', 'team-chat', 'email-chat', 'tasks', 'omni-inbox']));
   });
 });
 
 describe('NavigationService role gating', () => {
-  const PRIMARY_IDS = ['inbox', 'team-chat', 'email-chat', 'contacts', 'multiplix', 'catalog', 'voip', 'pipeline', 'tasks', 'achievements', 'dashboard'];
+  const PRIMARY_IDS = ['inbox', 'team-chat', 'email-chat', 'contacts', 'multiplix', 'catalog', 'voip', 'tasks', 'achievements', 'dashboard'];
 
-  it('exposes exactly the 11 agreed items, in order, on the primary nav', () => {
+  it('exposes exactly the 10 agreed items, in order, on the primary nav', () => {
     expect(NavigationService.getPrimaryNav().map(({ id }) => id)).toEqual(PRIMARY_IDS);
+  });
+
+  it('nao expoe mais a entrada "Quadro" (id pipeline) na nav primaria', () => {
+    const itens = NavigationService.getPrimaryNav();
+    expect(itens.map(({ id }) => id)).not.toContain('pipeline');
+    expect(itens.map(({ label }) => label)).not.toContain('Quadro');
   });
 
   it('never authorizes an unknown view id (deny by default)', () => {

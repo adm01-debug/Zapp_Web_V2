@@ -152,7 +152,10 @@ export default function Auth() {
                       )}
                     </AnimatePresence>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    {/* noValidate: quem valida é o zod do useAuthForm (mensagem em PT-BR com
+                        role="alert"). Sem ele o balão nativo do `type="email"` barra o envio
+                        antes, em inglês e fora do leitor de tela. */}
+                    <form onSubmit={handleLogin} noValidate className="space-y-4">
                       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="space-y-2">
                         <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                         <div className="relative group">
@@ -223,7 +226,7 @@ export default function Auth() {
 
                   {/* SIGNUP TAB */}
                   <TabsContent value="signup" className="mt-0">
-                    <form onSubmit={handleSignUp} className="space-y-4">
+                    <form onSubmit={handleSignUp} noValidate className="space-y-4">
                       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="space-y-2">
                         <Label htmlFor="signup-name" className="text-sm font-medium">Nome</Label>
                         <div className="relative group">

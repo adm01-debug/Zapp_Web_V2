@@ -5,7 +5,7 @@
  *  - o **aceite do T10**: `dial` navega (MemoryRouter) e o estado da sessão
  *    sobrevive à navegação;
  *  - a **compatibilidade**: `useCallSession()` continua entregando os campos que
- *    `VoIPPanel`/`DialPad`/`ActiveCallBar` leem hoje — sem eles a Fase 4 quebra
+ *    `TelefoniaView`/`DialPad`/`ActiveCallBar` leem hoje — sem eles a Fase 4 quebra
  *    a UI antes de substituí-la;
  *  - que o motor dirige a máquina (`calling → dialing`, `active → active`,
  *    `ended → ended`) e que `hangup` preserva o `endedBy` **sem** transição
@@ -15,8 +15,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
 
 import type { CallSessionApi } from '../CallSessionProvider';
+import { dispatchStartCall } from '@/lib/calls/events';
 import { useNavigationHistory } from '@/hooks/system/useNavigationHistory';
 import { haBloqueioRecarga, observarBloqueiosRecarga } from '@/lib/reload-blockers';
 
@@ -85,11 +87,17 @@ function Sonda() {
       <span data-testid="answeredAt">{api.session.answeredAt ?? '-'}</span>
       <span data-testid="endReason">{api.session.endReason ?? '-'}</span>
       <span data-testid="sipCode">{api.session.sipCode ?? '-'}</span>
-      <button onClick={() => { api.dial('11999992048'); }}>discar</button>
+      <span data-testid="numeroPendente">{api.numeroPendente ?? '-'}</span>
+      <span data-testid="saida-phone">{api.chamadaSaida?.phone ?? '-'}</span>
+      <span data-testid="saida-name">{api.chamadaSaida?.name ?? '-'}</span>
+      <span data-testid="saida-avatar">{api.chamadaSaida?.avatar ?? '-'}</span>
+      <button onClick={() => { void api.dial('11999992048'); }}>discar</button>
+      <button onClick={() => { void api.dial('11999992048', { abrirDiscador: false }); }}>discar-no-cartao</button>
       <button onClick={() => { api.hangup(); }}>desligar</button>
       <button onClick={() => { void api.accept(); }}>aceitar</button>
       <button onClick={() => { void api.reject(); }}>recusar</button>
       <button onClick={() => { api.openDialer(); }}>abrir</button>
+      <button onClick={() => { api.limparChamadaSaida(); }}>limpar-saida</button>
     </div>
   );
 }
@@ -174,7 +182,7 @@ describe('CallSessionProvider (T10)', () => {
     expect(texto('nav-view')).toBe('voip');
   });
 
-  it('mantém os campos que a UI antiga consome (VoIPPanel/DialPad/ActiveCallBar)', () => {
+  it('mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar)', () => {
     h.value = sipDuble({
       sipStatus: 'registered',
       callStatus: 'ringing',
@@ -802,5 +810,152 @@ describe('t_16e9b473 — chamada ativa bloqueia a recarga automática', () => {
     } finally {
       parar();
     }
+  });
+});
+
+/**
+ * t_1d36d214 (C02) — o "Ligar" do painel do contato e do cabeçalho do chat
+ * volta a discar na hora, no cartão do contato, SEM navegar para a Telefonia.
+ *
+ * O que este bloco trava, no CONSUMIDOR real do `zapp:start-call` (o provider
+ * montado de verdade, evento DOM real — só o transporte SIP é dublê):
+ *
+ *  - `source:'inbox'` NÃO navega (`?view=voip` nunca aparece, nem pelo
+ *    react-router nem pelo pushState) e NÃO disca no consumidor: o pedido vira
+ *    `chamadaSaida`, que o diálogo global (`OutboundCallDialog`) consome;
+ *  - `dial(phone, { abrirDiscador: false })` — o caminho que o diálogo usa —
+ *    disca sem abrir o discador; `dial(phone)` sem opções continua abrindo;
+ *  - `source` 'history'/'contacts'/'other' e `autoDial` ficam como estavam
+ *    (histórico disca+abre a Telefonia; contatos/outros preenchem o discador);
+ *  - com chamada em curso, o pedido do inbox não abre um segundo cartão: só
+ *    avisa (`toast.warning`);
+ *  - `limparChamadaSaida()` zera o pedido (é o `onEnd` do diálogo);
+ *  - o pedido `whatsapp` do inbox NÃO é interceptado: segue o fluxo de sempre
+ *    (discador da Telefonia preenchido) — o C02 não inventa caminho WhatsApp.
+ */
+describe('t_1d36d214 — "Ligar" do inbox disca no cartão do contato (C02)', () => {
+  beforeEach(() => {
+    // `window.location` é compartilhado entre os testes do arquivo: o caso
+    // "monta SEM Router" acima faz pushState de `?view=voip`. O RESET garante
+    // que as asserções de "URL não mudou" medem só o teste atual.
+    window.history.replaceState(null, '', '/');
+  });
+
+  const PEDIDO_INBOX = {
+    channel: 'voip' as const,
+    phone: '5511987654321',
+    contactId: 'contato-9',
+    name: 'Fulano de Tal',
+    avatar: 'https://img.test/f.png',
+    source: 'inbox' as const,
+  };
+
+  it("pedido 'inbox' registra chamadaSaida e NÃO navega nem disca no consumidor", () => {
+    montar();
+    act(() => { dispatchStartCall(PEDIDO_INBOX); });
+
+    expect(texto('saida-phone')).toBe('5511987654321');
+    expect(texto('saida-name')).toBe('Fulano de Tal');
+    expect(texto('saida-avatar')).toBe('https://img.test/f.png');
+    // Sem navegação para a Telefonia — nem pelo react-router…
+    expect(texto('rota')).toBe('/');
+    // …nem pelo pushState que a ponte usa fora do Router.
+    expect(window.location.search).not.toContain('view=voip');
+    // Quem disca é o diálogo global, não o consumidor.
+    expect(texto('status')).toBe('idle');
+    expect(h.value.makeCall).not.toHaveBeenCalled();
+    // E o número não vai para o discador (a Telefonia não é aberta).
+    expect(texto('numeroPendente')).toBe('-');
+  });
+
+  it('dial(phone, { abrirDiscador: false }) disca SEM navegar (o caminho do cartão)', async () => {
+    montar();
+    fireEvent.click(screen.getByText('discar-no-cartao'));
+    await act(async () => { await Promise.resolve(); });
+
+    expect(texto('status')).toBe('dialing');
+    expect(h.value.makeCall).toHaveBeenCalledWith('11999992048', texto('sessao'));
+    expect(texto('rota')).toBe('/');
+    expect(window.location.search).not.toContain('view=voip');
+  });
+
+  it('dial(phone) sem opções continua abrindo o discador (DialPad/Telefonia/histórico)', async () => {
+    montar();
+    await clicarDiscar();
+    expect(texto('rota')).toBe(`/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('dialing');
+  });
+
+  it("'history' com autoDial continua discando e abrindo a Telefonia", async () => {
+    montar();
+    act(() => {
+      dispatchStartCall({ channel: 'voip', phone: '5511987654321', source: 'history', autoDial: true });
+    });
+    await act(async () => { await Promise.resolve(); });
+
+    expect(texto('status')).toBe('dialing');
+    expect(texto('rota')).toBe(`/${VOIP_VIEW_SEARCH}`);
+    // O cartão de saída é exclusivo do inbox.
+    expect(texto('saida-phone')).toBe('-');
+  });
+
+  it.each([['contacts'], ['other']] as const)(
+    "source '%s' sem autoDial mantém o discador preenchido e abre a Telefonia",
+    (source) => {
+      montar();
+      act(() => {
+        dispatchStartCall({ channel: 'voip', phone: '5511987654321', source });
+      });
+
+      expect(texto('numeroPendente')).toBe('5511987654321');
+      expect(texto('rota')).toBe(`/${VOIP_VIEW_SEARCH}`);
+      expect(texto('saida-phone')).toBe('-');
+      expect(texto('status')).toBe('idle');
+      expect(h.value.makeCall).not.toHaveBeenCalled();
+    },
+  );
+
+  it("pedido 'inbox' com canal whatsapp segue o fluxo antigo — Telefonia preenchida, sem cartão", () => {
+    montar();
+    act(() => {
+      dispatchStartCall({ channel: 'whatsapp', phone: '5511987654321', name: 'Fulano de Tal', source: 'inbox' });
+    });
+
+    // Sem cartão de saída…
+    expect(texto('saida-phone')).toBe('-');
+    // …e o comportamento anterior preservado: número preenchido no discador.
+    expect(texto('numeroPendente')).toBe('5511987654321');
+    expect(texto('rota')).toBe(`/${VOIP_VIEW_SEARCH}`);
+    expect(texto('status')).toBe('idle');
+    expect(h.value.makeCall).not.toHaveBeenCalled();
+  });
+
+  it('com chamada em curso, o "Ligar" do inbox avisa e NÃO abre um segundo cartão', async () => {
+    const aviso = vi.spyOn(toast, 'warning').mockImplementation(() => 0);
+    try {
+      await emChamadaAtiva(); // máquina em 'active'
+
+      act(() => { dispatchStartCall(PEDIDO_INBOX); });
+
+      expect(texto('saida-phone')).toBe('-');
+      expect(texto('status')).toBe('active');
+      expect(aviso).toHaveBeenCalledTimes(1);
+      // A sessão em curso não foi tocada: o pedido não discou nada no duble
+      // atual (o `h.value` é trocado quando o motor reporta `active`).
+      expect(h.value.makeCall).not.toHaveBeenCalled();
+    } finally {
+      aviso.mockRestore();
+    }
+  });
+
+  it('limparChamadaSaida zera o pedido (é o onEnd/fechar do diálogo)', () => {
+    montar();
+    act(() => { dispatchStartCall(PEDIDO_INBOX); });
+    expect(texto('saida-phone')).toBe('5511987654321');
+
+    fireEvent.click(screen.getByText('limpar-saida'));
+
+    expect(texto('saida-phone')).toBe('-');
+    expect(texto('saida-name')).toBe('-');
   });
 });

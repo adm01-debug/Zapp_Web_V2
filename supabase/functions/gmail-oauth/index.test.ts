@@ -432,3 +432,26 @@ Deno.test("disconnect: update local sem linhas afetadas responde 500 sem success
   assertEquals(body.success, undefined);
   assertEquals(body.disconnected, undefined);
 });
+
+// SL-052 / M5: o disconnect NAO pode voltar a limpar tokens via
+// store_gmail_tokens(id, "", "") — o RPC levanta EXCEPTION com token vazio, o
+// .error era engolido e o ciphertext PERMANECIA no banco (retencao indevida).
+// A limpeza correta e UPDATE direta, que zera as DUAS colunas cifradas e
+// desativa a conta. Se alguem reintroduzir o RPC vazio, este teste cai.
+Deno.test("disconnect: zera os tokens cifrados por UPDATE direta e nunca chama store_gmail_tokens vazio", async () => {
+  const admin = fakeAdmin({ tokens: { access_token: "ya29.old", refresh_token: "rt.old" } });
+  const calls = newCalls();
+
+  const res = await handleGmailOAuth(
+    post({ action: "disconnect", account_id: ACCOUNT_ID }),
+    makeDeps("user-1", admin, calls),
+  );
+
+  assertEquals(res.status, 200);
+  const clearCall = admin.updateCalls.find((u) => u.is_active === false);
+  assertEquals(clearCall?.access_token_encrypted, null);
+  assertEquals(clearCall?.refresh_token_encrypted, null);
+  assertEquals(admin.rpcCalls.some((c) => c.fn === "store_gmail_tokens"), false);
+  // A revogacao no Google continua acontecendo: os tokens sao lidos antes do UPDATE.
+  assertEquals(admin.rpcCalls.some((c) => c.fn === "get_gmail_tokens"), true);
+});

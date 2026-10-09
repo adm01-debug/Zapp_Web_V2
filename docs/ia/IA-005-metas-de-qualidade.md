@@ -53,3 +53,30 @@ referência**.
 - [x] Linhas de base registradas com o comando que as produziu.
 - [x] Latência e custo explicitamente deixados para depois da medição de referência (IA-189), como o
       plano exige.
+
+## 5. Estado de cada meta no repositório (08/10/2026)
+
+> Regra desta seção: **medir não é cumprir**. Nenhuma meta aqui recebe valor medido sem medição
+> datada, com ambiente e fonte; enquanto não existir medição de referência o estado é `A MEDIR` —
+> M4 depende do conjunto reservado de **200 casos** de IA-188 e M8/M9 do ensaio de carga e orçamento
+> de IA-189. A coluna "onde é exercitada hoje" aponta o arquivo do repositório que exerce a meta; a
+> guarda `scripts/ci/ia-metas-qualidade-docs.unit.mjs` reprova meta sem prova existente, meta que
+> perca o alvo do M4 e meta declarada cumprida sem data e fonte. Hoje: **0** das 12 metas com valor
+> medido; **3** `A MEDIR` (M4, M8, M9); as outras 9 têm prova automatizada no repositório, mas
+> nenhuma medição datada.
+
+| Meta | Onde é exercitada hoje | O que falta para medir |
+|---|---|---|
+| M1 | `tests/contracts/ai-endpoints-auth.contract.test.ts` | rodar a matriz negativa (anônimo, sessão inválida, sem permissão, webhook sem assinatura) e datar o resultado (IA-011, IA-013 a IA-015) |
+| M2 | `supabase/functions/_shared/__tests__/ai-audio-authz.test.ts` | dois atores distintos sobre o mesmo objeto (IA-014, IA-020) |
+| M3 | `tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts` | contagem de efeitos no banco de ensaio, com dados sintéticos (IA-010) |
+| M4 | A MEDIR | conjunto reservado de 200 casos em português, com referência humana independente (IA-188) |
+| M5 | `supabase/functions/_shared/__tests__/ai-response-contracts.test.ts` | fonte ausente, busca vazia e integração falha no caminho de execução paga (IA-089, IA-116) |
+| M6 | `supabase/functions/_shared/ai-usage.test.ts` | consulta ao ledger de consumo por execução (IA-051 a IA-054) |
+| M7 | `tests/contracts/log-injection-sanitizacao.contract.test.ts` | varredura de telemetria gravada por payload (IA-059) |
+| M8 | A MEDIR | p50/p95 por capacidade de IA, no ensaio com volume definido (IA-189) |
+| M9 | A MEDIR | medição de referência e conciliação com o extrato do provedor (IA-055, IA-189) |
+| M10 | `supabase/functions/_shared/ai-circuit.test.ts` | falha de provedor e circuito aberto no despacho real (IA-050, IA-079) |
+| M11 | `.github/workflows/ci.yml` | manter os gates novos entrando verdes e o baseline do ratchet apertando, nunca afrouxando (IA-181 a IA-190) |
+| M12 | `scripts/ci/check-test-inventory.mjs` | prova red-first por capacidade nova ou corrigida (método obrigatório do projeto) |
+

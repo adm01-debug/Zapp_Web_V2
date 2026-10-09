@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Zap, CheckCircle2, AlertTriangle, Users, ChevronLeft,
+  Zap, Users, ChevronLeft,
   Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
 } from 'lucide-react';
 import {
@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
+import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
@@ -95,37 +95,35 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
 }) {
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const processed = c.sent_count + c.failed_count + outcomeUnknown;
-  const pending = Math.max(0, c.total_recipients - processed);
   const elapsed = c.started_at ? Math.round((new Date().getTime() - new Date(c.started_at).getTime()) / 60000) : 0;
   return (
     <div className="space-y-4">
-      {/* Donut + KPIs lado a lado */}
+      {/* X146: faixa de KPIs ao vivo — a barra do antigo bloco "Progresso geral"
+          foi absorvida pelo cartão "Destinatários Restantes". */}
+      <TalkXLiveKpiRow
+        variant="tela12"
+        panel={{
+          sent: c.sent_count,
+          delivered: c.delivered_count,
+          replied: c.replied_count ?? 0,
+          failed: c.failed_count,
+          outcome_unknown: outcomeUnknown,
+          audience: c.total_recipients,
+          elapsed_minutes: c.started_at ? elapsed : null,
+          spark: {
+            sent: chartData.map((point) => point.Enviadas),
+            delivered: chartData.map((point) => point.Entregues),
+          },
+        }}
+      />
+      {/* Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(processed)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
           <div className="pt-2">
             <DonutChart sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} outcomeUnknown={outcomeUnknown} total={c.total_recipients} />
           </div>
         </RailCard>
-        <div className="grid grid-cols-2 gap-3 content-start">
-          <DashboardKpiCard size="compact" index={0} label="Enviadas" value={fmtInt(c.sent_count)} delta={{ text: `de ${fmtInt(c.total_recipients)} prev.`, tone: 'muted' }} tile="blue" icon={Zap} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="compact" index={1} label="Entregues" value={fmtInt(c.delivered_count)} delta={{ text: c.sent_count > 0 ? `${Math.round((c.delivered_count / c.sent_count) * 100)}% das enviadas` : '—', tone: 'muted' }} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="compact" index={2} label="Falhas" value={fmtInt(c.failed_count)} delta={c.sent_count > 0 ? { text: `${Math.round((c.failed_count / c.sent_count) * 100)}% de erro`, tone: 'muted' } : null} tile="red" icon={AlertTriangle} bars={null} barsColor="red" chart="none" />
-          <DashboardKpiCard size="compact" index={3} label="A confirmar" value={fmtInt(outcomeUnknown)} delta={{ text: 'Sem reenvio automático', tone: 'muted' }} tile="amber" icon={AlertTriangle} bars={null} barsColor="amber" chart="none" />
-          <DashboardKpiCard size="compact" index={4} label="Restantes" value={fmtInt(pending)} delta={{ text: `${elapsed}min decorridos`, tone: 'muted' }} tile="amber" icon={Users} bars={null} barsColor="amber" chart="none" />
-        </div>
       </div>
-      {/* Barra de progresso */}
-      {c.total_recipients > 0 && (
-        <div className="rounded-2xl bg-card border border-border/70 p-4 space-y-2">
-          <div className="flex justify-between text-xs text-foreground-secondary">
-            <span>Progresso geral</span>
-            <span>{fmtInt(processed)} / {fmtInt(c.total_recipients)} contatos</span>
-          </div>
-          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (processed / c.total_recipients) * 100)}%` }} />
-          </div>
-        </div>
-      )}
       {/* Ritmo de Envio — X047: carregando -> erro -> vazio -> conteúdo */}
       <TalkXQueryBoundary
         query={historyQuery}

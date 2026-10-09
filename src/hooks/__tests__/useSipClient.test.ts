@@ -1051,4 +1051,49 @@ describe('useSipClient', () => {
     const fim = chamadas[chamadas.length - 1];
     expect(fim).toMatchObject({ p_status: 'failed', p_end_reason: 'failed', p_direction: 'outbound' });
   });
+
+  it('T85: saída com 603 (recusada) grava declined/declined ponta a ponta', async () => {
+    // Fecha o 603 da tabela do T22 pelo MESMO elo do 486: a resposta final
+    // negativa entra pelo `requestDelegate.onReject` que o SipCallAdapter
+    // instala, vira `sipCode` no motor e é o `Terminated` seguinte que monta o
+    // desfecho. Sem o callback, o código não viaja e a linha cairia em
+    // `ended`/`no_answer` — é este teste que prende o caminho.
+    mockInvite.mockImplementationOnce(
+      async (options: { requestDelegate: { onReject: (response: { message: { statusCode: number } }) => void } }) => {
+        options.requestDelegate.onReject({ message: { statusCode: 603 } });
+      },
+    );
+
+    const desfechos: CallEndOutcome[] = [];
+    const { result } = await montarRegistrado((outcome) => desfechos.push(outcome));
+    await discar(result);
+    await evento('Terminated');
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'declined', p_end_reason: 'declined', p_direction: 'outbound' });
+    expect(desfechos).toEqual([{ endedBy: 'hangup_remote', sipCode: 603 }]);
+  });
+
+  it('T85: saída com 480 (destino indisponível) grava ended/no_answer com o código SIP ponta a ponta', async () => {
+    // 480 e o "sem código nenhum" caem os DOIS em `no_answer`, então o par
+    // persistido sozinho não distingue os caminhos: o que prova que o 480
+    // ATRAVESSOU o `onReject` é o `sipCode` que chega ao `onEnd`. Sem o
+    // callback o desfecho sai `sipCode: null` e este teste fica vermelho.
+    mockInvite.mockImplementationOnce(
+      async (options: { requestDelegate: { onReject: (response: { message: { statusCode: number } }) => void } }) => {
+        options.requestDelegate.onReject({ message: { statusCode: 480 } });
+      },
+    );
+
+    const desfechos: CallEndOutcome[] = [];
+    const { result } = await montarRegistrado((outcome) => desfechos.push(outcome));
+    await discar(result);
+    await evento('Terminated');
+
+    const chamadas = gravacoes();
+    const fim = chamadas[chamadas.length - 1];
+    expect(fim).toMatchObject({ p_status: 'ended', p_end_reason: 'no_answer', p_direction: 'outbound' });
+    expect(desfechos).toEqual([{ endedBy: 'hangup_remote', sipCode: 480 }]);
+  });
 });

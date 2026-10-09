@@ -68,3 +68,12 @@ export const TEMPLATE_STATUS: Record<string, { label: string; tone: PillTone }> 
 };
 
 export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{{empresa}}', '{{saudacao}}'] as const;
+
+/**
+ * A15 — Canal. O motor do Talk X envia só por WhatsApp, então o canal real é um
+ * só: a coluna e o filtro existem com esse valor (campanha por e-mail não faz
+ * parte do plano). Fonte das opções do select "Todos os canais" da Visão geral.
+ */
+export const TALKX_CHANNELS: { value: string; label: string }[] = [
+  { value: 'whatsapp', label: 'WhatsApp' },
+];

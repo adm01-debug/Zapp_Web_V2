@@ -15,7 +15,7 @@ Evidência ausente é registrada como `NÃO DEMONSTRADO`/`PENDENTE` — nunca co
 - lint/ratchets — PARCIAL — CP0: `lint-ratchet=OK (1201 dívidas, 0 novas)`; CP4 confirma 6 erros pré-existentes via git stash; sem ratchet global do HEAD.
 - build — PARCIAL — CP2–CP10 citam `vite build ok`/`exit 0` por checkpoint; sem build único do HEAD/CI.
 - suíte — NÃO DEMONSTRADO — nenhum registro de `zapp-verify`/suíte completa no ledger.
-- visual/responsivo — NÃO DEMONSTRADO — CP1 mantém gates de ΔE/fonts/light/skin sem medir; CP11 é QA local 1440×900 apenas, sem viewports responsivos.
+- visual/responsivo — NÃO DEMONSTRADO — CP1 tem ΔE/fonts/light/skin medidos desde 09/10 (SL-181); CP11 é QA local 1440×900 apenas, sem viewports responsivos.
 - acessibilidade/console — NÃO DEMONSTRADO — CP11 registra `consoleErrors: 2 pré-existentes`; sem varredura de acessibilidade.
 - PR/CI — PENDENTE — CP12: PR/CI/merge pendentes.
 Conclusão: nenhum gate global está integralmente demonstrado; por isso CP0–CP11 ficam `[~]` (implementação existe, gate não provado) e CP12 segue `[ ]`.
@@ -23,7 +23,7 @@ Conclusão: nenhum gate global está integralmente demonstrado; por isso CP0–C
 ## CP0 Ambiente      [~] sha=3bf9a4e1 · worktree criado · node_modules symlinked de main checkout
   baseline: lint-ratchet=OK (1201 dívidas, 0 novas) · implicit-any=0 · typecheck=timeout (pré-existente no repo — gate NÃO DEMONSTRADO)
 
-## CP1 Paleta/Tipo   [~] sha=9afd393b · tokens navy→charcoal (36 subs .dark), PJS/Outfit, radius 14, sidebar 256px, skin v5 · ΔE: bg≈0 (rgb(14,14,16)=#0e0e10) ✓ · primary 221 83% 53% ✓ · shot=pg-01-after.png (sem ΔE page/card/sidebar medido) · light: sem mudança, sha não registrado · ΔE page= NÃO DEMONSTRADO · card= NÃO DEMONSTRADO · sidebar= NÃO DEMONSTRADO · fonts PJS/Outfit= NÃO DEMONSTRADO · light ok= NÃO DEMONSTRADO · skin v5= NÃO DEMONSTRADO
+## CP1 Paleta/Tipo   [~] sha=9afd393b · tokens navy→charcoal (36 subs .dark), PJS/Outfit, radius 14, sidebar 256px, skin v5→v6 · ΔE: bg≈0 (rgb(14,14,16)=#0e0e10) ✓ · primary 221 83% 53% ✓ · shot=pg-01-after.png · MEDIÇÃO (SL-181, `npx vitest run src/styles/__tests__/cp1FidelidadeCarvao.test.ts`, 17 testes): ΔE76 page=0,00 (`--background: 240 6% 6%` → rgb(14,14,16)=#0e0e10) · card=0,00 (`--card: 240 5% 10%`) · sidebar=0,66 (`--sidebar-background: 240 6% 5%`, um degrau abaixo da página, família carvão matiz 240) · nenhuma das 7 superfícies amostradas é navy (215–218 com sat>40%) · primary ΔE76=0,08 contra #2563eb (`221 83% 53%`) · fonts PJS/Outfit ✓ (tokens.css:54-55; index.html:19-20 pede e pré-carrega as duas; base.css consome) · light ok ✓ (superfícies L≥97% e carvão exclusivo do .dark) · skin ✓ (boot do index.html:29 aceita v6 = STORAGE_VERSION; v5 migra, v4 é descartada) · os gates GLOBAIS (typecheck, suíte, visual/responsivo, console, PR/CI) seguem NÃO DEMONSTRADOS no resumo global — por isso CP1 segue [~]
 
 ## CP2 Header        [~] sha=58d3714f · AppHeader.tsx, HeaderSectionAnchor.tsx, GlobalSearchTrigger.tsx, HeaderUserPill.tsx, RoleBadge.tsx · AppShell reestruturado em coluna flex (Sidebar | [AppHeader sticky + main]) · AgentProfilePopover refatorado: ProfileMenuContent extraído e reusado no HeaderUserPill · tsc 0 erros · eslint limpo · vite build ok
 
@@ -81,7 +81,7 @@ Conclusão: nenhum gate global está integralmente demonstrado; por isso CP0–C
 **src/styles/utilities.css:** .card-lift, .card-glow, .dark .card-lift:hover + reduced-motion
 
 ## Pendências / resíduos (honestos)
-- KPIs e gates de CP1 sem medição (ΔE page/card/sidebar, fonts, light, skin) — `NÃO DEMONSTRADO`.
+- Gates de CP1 medidos em 09/10 (SL-181, `npx vitest run src/styles/__tests__/cp1FidelidadeCarvao.test.ts`): ΔE76 page=0,00 · card=0,00 · sidebar=0,66 · primary=0,08 contra #2563eb · nenhuma das 7 superfícies amostradas é navy · fonts PJS/Outfit ok · light ok (L≥97%) · skin v6 (v5 migra, v4 descartada). Seguem sem medição própria os KPIs de tela; os gates GLOBAIS (typecheck, suíte, visual/responsivo, console, PR/CI) continuam NÃO DEMONSTRADOS — por isso CP0–CP11 seguem `[~]`.
 - KPI tiles com alpha direto (221 83% 53%) em vez de mistura navy (#01307b): leve diferença visual; o alpha sobre charcoal dá resultado próximo.
 - Dashboard navy ainda em main: tokens --dash-tile-* preservados (não tocados).
 - Teletransporte: usa breadcrumbTrail/goBack de AppShell (view-based), não history.back() (URL-based).

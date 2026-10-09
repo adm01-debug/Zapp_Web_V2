@@ -249,9 +249,13 @@ vi.mock('@/lib/supabaseHelpers', () => {
     const c: Record<string, unknown> = {};
     c.select = () => c;
     c.eq = () => c;
+    c.in = () => c;
     c.not = () => c;
     c.order = () => c;
     c.limit = () => Promise.resolve({ data: [], error: null });
+    // X184: a Supressão passou a ler a trilha (eventos de entidade) por fatia;
+    // aqui a trilha responde vazia e o caso medido continua sendo o da tela.
+    c.range = () => Promise.resolve({ data: [], error: null, count: 0 });
     c.single = () => Promise.resolve({ data: null, error: null });
     return c;
   };

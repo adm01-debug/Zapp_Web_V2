@@ -17,7 +17,6 @@ import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger';
 import type { Conversation, Message } from '@/types/chat';
-import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
 
 interface CRMAutoSyncProps {
   conversation: Conversation;
@@ -55,13 +54,11 @@ export function CRMAutoSync({ conversation, messages }: CRMAutoSyncProps) {
   const lastSyncedId = useRef<string>('');
 
   const sentiment = useMemo(() => detectSentiment(messages), [messages]);
-  const fsmEnabled = useFeatureFlag('inbox.status-fsm', false);
-  const effectiveStatus = useMemo(
-    () => fsmEnabled
-      ? (conversation.contact.conversation_status ?? conversation.status)
-      : conversation.status,
-    [fsmEnabled, conversation.contact.conversation_status, conversation.status],
-  );
+  // ADR-005 (passo 3): o estado persistido em `contacts.conversation_status` é a
+  // fonte única. Sem a flag `inbox.status-fsm` (que nascia `false`) o componente
+  // comparava `conversation.status`, valor que a UI não produz como `resolved` — o
+  // auto-sync não disparava. O coalesce cobre conversa montada sem o campo.
+  const effectiveStatus = conversation.contact.conversation_status ?? conversation.status;
 
   useEffect(() => {
     if (!isConfigured) return;

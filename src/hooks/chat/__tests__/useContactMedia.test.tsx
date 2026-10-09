@@ -55,15 +55,15 @@ function mediaRow({ id = 'r0', media_url = 'https://x/a.jpg', created_at = '2026
   return {
     id, media_url, message_type: 'image', media_type: 'image/jpeg', media_mimetype: 'image/jpeg',
     media_filename: 'a.jpg', media_size: 1000, media_meta: null, caption: null, content: null,
-    sender: 'contact', ptt: false, created_at,
+    sender: 'contact', agent_id: null, ptt: false, created_at,
   };
 }
 
 const rows = [
   mediaRow({ id: '1', media_url: 'https://x/a.jpg', created_at: '2026-01-01T10:00:00Z' }),
-  { ...mediaRow({ id: '2', created_at: '2026-01-01T11:00:00Z' }), media_url: 'https://x/b.mp4', message_type: 'video', media_type: 'video/mp4', media_mimetype: 'video/mp4', media_filename: 'b.mp4', media_size: 2000, sender: 'agent' },
+  { ...mediaRow({ id: '2', created_at: '2026-01-01T11:00:00Z' }), media_url: 'https://x/b.mp4', message_type: 'video', media_type: 'video/mp4', media_mimetype: 'video/mp4', media_filename: 'b.mp4', media_size: 2000, sender: 'agent', agent_id: 'prof-2' },
   { ...mediaRow({ id: '3', created_at: '2026-01-01T12:00:00Z' }), media_url: PRIVATE_AUDIO, message_type: 'ptt', media_type: null, media_mimetype: null, media_filename: null, media_size: null, ptt: true },
-  { ...mediaRow({ id: '4', created_at: '2026-01-01T13:00:00Z' }), media_url: 'https://x/d.pdf', message_type: 'document', media_type: 'application/pdf', media_mimetype: 'application/pdf', media_filename: 'contrato.pdf', media_size: 500, caption: 'contrato', sender: 'agent' },
+  { ...mediaRow({ id: '4', created_at: '2026-01-01T13:00:00Z' }), media_url: 'https://x/d.pdf', message_type: 'document', media_type: 'application/pdf', media_mimetype: 'application/pdf', media_filename: 'contrato.pdf', media_size: 500, caption: 'contrato', sender: 'agent', agent_id: null },
   { ...mediaRow({ id: '5', created_at: '2026-01-01T09:00:00Z' }), media_url: PRIVATE_IMAGE, message_type: 'image', media_type: null, media_mimetype: null, media_filename: null, media_size: null, content: 'legenda antiga' },
 ];
 
@@ -220,6 +220,19 @@ describe('useContactMedia — paginacao por keyset (etapa 41)', () => {
     const byId = Object.fromEntries(result.current.items.map((i) => [i.id, i]));
     expect(byId['2'].senderLabel).toBe(AGENT_SENDER_LABEL);
     expect(byId['1'].senderLabel).toBeNull();
+  });
+
+  it('R01: traz o autor da mensagem (agent_id → agentId) e pede a coluna ao banco', async () => {
+    const { result } = renderHook(() => useContactMedia('c1'), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // A coluna nova entra no SELECT (sem ela o autor nunca chega ao cartão).
+    expect(selectSpy).toHaveBeenCalledWith(expect.stringContaining('agent_id'));
+
+    const byId = Object.fromEntries(result.current.items.map((i) => [i.id, i]));
+    expect(byId['2'].agentId).toBe('prof-2');   // atendente com autor identificado
+    expect(byId['4'].agentId).toBeNull();        // atendente sem agent_id (celular/automacao)
+    expect(byId['1'].agentId).toBeNull();        // contato
   });
 });
 

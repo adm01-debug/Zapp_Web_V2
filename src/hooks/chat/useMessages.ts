@@ -249,18 +249,34 @@ export function useMessages({ contactId, enabled = true }: UseMessagesOptions) {
   );
 
   // Handle message delete from realtime
+  // SL-104: o evento de DELETE do Realtime nao garante colunas alem da PK. Com REPLICA IDENTITY
+  // FULL o `old` traz a linha inteira; com DEFAULT traz so `id` — EXIGIR `old.contact_id` e
+  // `old.media_url` aqui (junto com o filtro do canal) e o que obrigava `messages` a ficar em FULL.
+  // O handler passa a decidir so com o que o DELETE sempre traz, o `id` (unico); as colunas extras,
+  // quando vem, continuam sendo usadas.
   const handleMessageDelete = useCallback(
     (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-      const deletedMessage = payload.old as MessageRow;
+      const oldRow = (payload.old ?? {}) as Partial<MessageRow>;
+      const deletedId = oldRow.id;
+      if (!deletedId) return;
 
-      if (deletedMessage.contact_id === contactId) {
-        writeOverlay(deletedMessage.id, null);
-        setMessages((prev) => prev.filter((m) => m.id !== deletedMessage.id));
+      // Com as colunas no `old` (REPLICA IDENTITY FULL) a checagem de conversa continua valendo;
+      // sem elas (DEFAULT: so a PK) ela nao pode ser feita aqui — e nao precisa: este canal so
+      // recebe eventos desta conversa e a remocao por `id` (unico) so afeta a lista ja aberta.
+      if (oldRow.contact_id !== undefined && oldRow.contact_id !== contactId) return;
 
-        // #144/OTH-002: um DELETE remoto de midia tambem muda chips/badge/galeria.
-        if (deletedMessage.media_url) {
-          invalidateMediaAggregates(contactId as string);
-        }
+      // O tombstone e por `id` e vale tambem quando a linha ainda nao esta na lista: um refetch em
+      // voo pode trazer do snapshot a linha que ja foi apagada.
+      writeOverlay(deletedId, null);
+      setMessages((prev) => prev.filter((m) => m.id !== deletedId));
+
+      // #144/OTH-002: um DELETE remoto de midia tambem muda chips/badge/galeria. Com as colunas no
+      // `old` decide pelo `media_url` do evento; sem elas (DEFAULT: so a PK) nao ha como saber —
+      // invalida por seguranca, porque um DELETE so REMOVE do universo de midia (o mesmo criterio
+      // do fallback do UPDATE acima).
+      const oldHasMediaColumns = 'media_url' in oldRow;
+      if (!oldHasMediaColumns || !!oldRow.media_url) {
+        invalidateMediaAggregates(contactId as string);
       }
     },
     [contactId, invalidateMediaAggregates, writeOverlay]

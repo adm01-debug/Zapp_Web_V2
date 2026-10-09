@@ -3,6 +3,9 @@
  * Import: import { z, parseBody, ... } from "../_shared/schemas.ts";
  */
 import { z } from "https://esm.sh/zod@3.23.8";
+// E45: a lista de ações válidas do `evolution-api` NÃO é reescrita aqui — vem
+// dos conjuntos que o próprio handler usa para autorizar (fonte única).
+import { CONTROL_ACTIONS, READ_ACTIONS, SEND_ACTIONS } from "./evolution-control-authz.ts";
 
 export { z };
 
@@ -600,6 +603,17 @@ export const EvolutionWebhookEnvelopeV2Schema = z.object({
   apikey: z.string().max(500).optional(),
 }).passthrough();
 
+// ─── Evolution messages.update: status POR EVENTO (R2-API-016) ───────────────
+// O envelope v1 aceita `data` como unknown de propósito (a Evolution GO manda
+// eventos desconhecidos que precisam ser ACKados com 200), então o status não é
+// validável no envelope. A validação é POR EVENTO, aqui: um status numérico ou
+// objeto (ex.: `state=3` serializado por outra versão do provedor) lançava
+// TypeError em `status.toLowerCase()` dentro do laço, derrubava o lote inteiro
+// (HTTP 500) e os recibos VÁLIDOS do mesmo payload eram perdidos/reenviados.
+// Só string não vazia (até 100 chars, sem espaços nas bordas) passa; o resto
+// tem saída explícita no handler.
+export const EvolutionMessagesUpdateStatusSchema = z.string().trim().min(1, 'status must be a non-empty string').max(100, 'status too long');
+
 // ─── ElevenLabs Webhook ──────────────────────────────────────
 export const ElevenLabsWebhookV1Schema = z.object({
   type: z.string().max(100).optional(),
@@ -632,3 +646,56 @@ export const ConnectionHealthCheckHeadersSchema = z.object({
 export const AvatarsRefreshHeadersSchema = z.object({
   'x-cron-secret': z.string().min(1, 'x-cron-secret is required'),
 });
+
+// ─── E45: corpo das chamadas de `evolution-api` ──────────────
+// A ação chega por dois caminhos: no CORPO (`evolution-api` com `action`) ou no
+// PATH (`evolution-api/<ação>` — o formato padrão do front, ver
+// src/hooks/evolution/useEvolutionApiCore.ts:29). O schema valida o CORPO:
+// quando `action` vem nele, tem de ser uma ação que o handler implementa.
+//
+// A lista NÃO é reescrita aqui de propósito: `CONTROL_ACTIONS ∪ SEND_ACTIONS ∪
+// READ_ACTIONS` já é a fonte única usada para autorizar, e o teste
+// `_shared/__tests__/evolution-control-authz.test.ts` ("matriz é exaustiva")
+// prova, lendo o fonte do handler, que os três conjuntos cobrem exatamente
+// todos os `action === '...'` de `evolution-api/index.ts`. Duplicar os 113
+// literais criaria uma segunda lista para dessincronizar (uma ação nova no
+// handler seria recusada em 422 até alguém lembrar de copiá-la para cá).
+export const EVOLUTION_API_ACTIONS: readonly string[] = [
+  ...CONTROL_ACTIONS,
+  ...SEND_ACTIONS,
+  ...READ_ACTIONS,
+].sort();
+
+// Passthrough deliberado: o corpo carrega o payload específico de cada ação
+// (`number`, `text`, `key`, `mediaUrl`, …) e algumas ações o encaminham inteiro
+// ao provedor (send-status, edit-message, create-template, delete-for-everyone)
+// — descartar chaves desconhecidas quebraria esses envios. O contrato comum
+// fixado aqui é a ação conhecida e a instância alvo (E17).
+//
+// `.nullish()` (e não `.optional()`) porque `null` é o que um cliente manda ao
+// serializar variável nula: antes desta etapa `{instanceName: null}` virava
+// `''`, caía na checagem do E17 e seguia o mesmo caminho — `null` continua
+// equivalente a "ausente". O que passa a ser recusado é o TIPO errado
+// (`{instanceName: 5}` virava `"5"` e mirava uma instância inexistente).
+export const EvolutionApiRequestSchema = z.object({
+  action: z.enum(EVOLUTION_API_ACTIONS as [string, ...string[]], {
+    errorMap: () => ({ message: 'Ação desconhecida: não é uma ação suportada pelo evolution-api.' }),
+  }).nullish(),
+  instanceName: z.string().max(200).nullish(),
+  instance: z.string().max(200).nullish(),
+}).passthrough();
+
+/**
+ * Ações globais — as ÚNICAS que não operam sobre uma instância (E17).
+ * `list-instances` lista todas as instâncias da GO; `bootstrap-instance-token`
+ * migra o token legado para o Vault. Todas as demais exigem o alvo.
+ */
+export const EVOLUTION_API_INSTANCE_FREE_ACTIONS: readonly string[] = [
+  'list-instances',
+  'bootstrap-instance-token',
+];
+
+/** `instance` (instanceName) é obrigatória para a ação? */
+export function evolutionApiRequiresInstance(action: string): boolean {
+  return !EVOLUTION_API_INSTANCE_FREE_ACTIONS.includes(action);
+}

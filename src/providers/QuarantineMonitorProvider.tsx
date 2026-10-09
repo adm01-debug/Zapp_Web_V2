@@ -60,7 +60,9 @@ async function fetchReleasedForIds(
           { column: 'decision', operator: 'in', value: RELEASED_DECISIONS },
           { column: 'message_id', operator: 'in', value: batch },
         ],
-        order: { column: 'created_at', ascending: true },
+        // O proxy aceita um único `order`; ordenar pelo `id` (único) torna o
+        // offset estável mesmo quando várias liberações empatam em created_at.
+        order: { column: 'id', ascending: true },
         limit: RELEASES_PAGE_SIZE,
         offset: collected,
         countMode: 'exact',

@@ -235,12 +235,17 @@ jobs:
           CI: true
 
       - name: 📊 Upload coverage report
+        # E72 (G-32): a cobertura so sobe da main. Num PR ninguem consome o
+        # relatorio (o piso de cobertura e verificado pelo proprio vitest) e cada
+        # PR deixava um artifact de varios MB — 2.333 acumulados em 01/10/2026.
+        # `always()` mantem o upload quando a suite falha na main, que e' justo
+        # quando a cobertura serve para diagnosticar; 7 dias pelo plano (E72).
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           name: coverage-report
           path: coverage/
-          retention-days: 3
+          retention-days: 7
           if-no-files-found: ignore
 
   # ===========================================
@@ -272,10 +277,12 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_CRM_INTEGRATION_ENABLED: 'true'
 
-      # Artifact de dist/ so em PR — em push para main o deploy e feito pela
-      # Vercel, e o upload custava 41.6k GigabyteHours de storage em agosto.
+      # E72 (G-32): o artifact de dist/ so sai em workflow_dispatch (build manual,
+      # para inspecionar o bundle). Em PR ninguem consome; em push para main o
+      # deploy e feito pela Vercel. Medido em 01/10/2026: 2.333 artifacts
+      # acumulados, 41.6k GigabyteHours de storage so em agosto.
       - name: 📦 Upload build artifacts
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist
@@ -369,10 +376,32 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      # E68 (auditoria de GitHub Actions, 2026-10-01): o download dos browsers
+      # domina o tempo deste job. `~/.cache/ms-playwright` é estável para uma
+      # dada versão do Playwright, então o cache evita baixar Chromium/Firefox/
+      # WebKit a cada run. A chave carrega o hash do bun.lock (o Playwright é
+      # devDependency e a versão está no lock) e o CONJUNTO de browsers: um cache
+      # salvo por job que instala só Chromium não pode satisfazer este, que
+      # precisa dos três.
+      - name: 💾 Cache dos browsers Playwright
+        id: pw-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
-        # Versao exata resolvida no bun.lock (SonarCloud githubactions:S8543:
-        # `bunx playwright` sem versao puxaria um release nao verificado).
+        # Só em cache miss. Versao exata resolvida no bun.lock (SonarCloud
+        # githubactions:S8543: `bunx playwright` sem versao puxaria um release
+        # nao verificado).
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+
+      - name: 🔧 Dependências de sistema do Playwright (cache quente)
+        # O cache guarda os browsers, não os pacotes do apt: com o cache quente
+        # as bibliotecas do sistema ainda precisam ser instaladas.
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
 
       # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
       # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
@@ -390,8 +419,11 @@ jobs:
           CI: true
 
       - name: 📊 Upload Playwright report
+        # E72 (G-32): o report so sobe quando o E2E falha. Num PR verde ele nao
+        # serve para ninguem e so engorda o storage do repo (2.333 artifacts em
+        # 01/10/2026). O caminho sensivel ja e' excluido logo abaixo.
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
+        if: failure()
         with:
           name: playwright-report
           # Exclui o snapshot de falha e os traces: sao os unicos arquivos do

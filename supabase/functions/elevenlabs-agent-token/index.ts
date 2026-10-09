@@ -1,4 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -19,12 +20,34 @@ Deno.serve(async (req) => {
 
     log.info("Requesting ElevenLabs conversation token", { agentId: ELEVENLABS_AGENT_ID });
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${ELEVENLABS_AGENT_ID}`,
       {
         headers: { 'xi-api-key': ELEVENLABS_API_KEY },
       }
     );
+
+    // SL-013 / IA-003 B6 — toda chamada ao provedor PAGO deixa rastro no ledger.
+    // Esta emite a credencial da sessão de conversa: não há unidade de cobrança
+    // AQUI (o consumo da conversa é cobrado no uso), então a linha declara
+    // `usage_unknown: true` e `billing_unit: "none"` — nem zero, nem invenção.
+    await logAiUsageDetached({
+      functionName: "elevenlabs-agent-token",
+      userId: auth.userId,
+      model: null,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/convai/conversation/token",
+        billing_unit: "none",
+        billing_quantity: null,
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

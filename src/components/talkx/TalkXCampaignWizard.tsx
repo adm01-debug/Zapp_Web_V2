@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,12 +10,17 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
+import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
+import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
 import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
@@ -65,6 +70,9 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
   }, [hasUnsavedChanges]);
   const step = ed.step;
 
+  // TL-138 — saída com pendência (o modal só abre quando `hasUnsavedChanges` é verdadeiro).
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+
   const maximumAllowedStep = (() => {
     if (!ed.canProceed[1]) return 1;
     if (!ed.canProceed[2]) return 2;
@@ -76,6 +84,23 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
     ed.setStep(safeStep);
     onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+  };
+
+  // TL-138 — o stepper passa a ser navegável por teclado: as setas andam entre os
+  // passos até o último JÁ liberado (o mesmo teto do clique, `maximumAllowedStep`,
+  // então o teclado não pula validação), o foco acompanha e `aria-current="step"`
+  // marca onde o operador está. Enter/Espaço seguem acionando o clique nativo.
+  const stepButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleStepKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+    const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    if (!forward && !backward) return;
+    event.preventDefault();
+    const lastAllowedIndex = Math.max(0, STEPS.findIndex((item) => item.n === maximumAllowedStep));
+    const targetIndex = Math.min(Math.max(index + (forward ? 1 : -1), 0), lastAllowedIndex);
+    stepButtonRefs.current[targetIndex]?.focus();
+    requestStep(STEPS[targetIndex].n);
   };
 
   // O estado da URL pode mudar por histórico do navegador ou por um link
@@ -106,6 +131,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     }
   };
 
+  // TL-138 — saída com pendência: o `beforeunload` já só disparava com alteração
+  // real, mas sair pelo botão do wizard (ou pela trilha) desmontava o editor sem
+  // nenhum aviso. Sem pendência a saída continua imediata.
+  const requestExit = () => {
+    if (!ed.hasUnsavedChanges()) { onClose(); return; }
+    setExitDialogOpen(true);
+  };
+
+  const confirmSaveAndExit = async () => {
+    setExitDialogOpen(false);
+    await saveDraft();
+  };
+
+  const confirmDiscardAndExit = () => {
+    setExitDialogOpen(false);
+    // Sem descartar a pendência aqui, o flush de desmontagem (E73) gravaria
+    // exatamente a edição que o operador acabou de mandar jogar fora.
+    ed.discardPendingChanges();
+    onClose();
+  };
+
   return (
     <div className="w-full min-w-0 space-y-4">
       {/* E61: Breadcrumb */}
@@ -114,7 +160,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
         <span className="text-border">›</span>
         <span>Campanhas</span>
         <span className="text-border">›</span>
-        <span>Nova Campanha</span>
+        <span>{campaign ? `Editar ${campaign.name}` : 'Nova campanha'}</span>
         <span className="text-border">›</span>
         <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
       </nav>
@@ -122,19 +168,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
             {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
-          <button type="button" onClick={onClose} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
+          <button type="button" onClick={requestExit} className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0" aria-label="Voltar"><ArrowLeft className="w-4 h-4" /></button>
           <IconTile icon={step === 4 ? Check : Zap} color={step === 4 ? 'green' : 'blue'} size={48} />
           <div className="min-w-0">
             <h1 className="text-2xl font-bold font-display text-foreground tracking-[-0.02em] leading-tight truncate">{step === 4 ? 'Revisão Final' : campaign ? 'Editar campanha' : 'Nova campanha'}</h1>
             <p className="text-xs text-foreground-secondary">{step === 4 ? 'Confira todos os detalhes da sua campanha antes de lançar.' : 'Configure público, mensagem e entrega com segurança.'}</p>
           </div>
         </div>
-        <ol className="flex items-center gap-2 xl:gap-0 flex-wrap">
+        <ol aria-label="Passos da campanha" className="flex items-center gap-2 xl:gap-0 flex-wrap">
           {STEPS.map((s, i) => {
             const done = step > s.n; const active = step === s.n;
             return (
               <li key={s.n} className="flex items-center">
-                <button type="button" onClick={() => (done || s.n < step) && requestStep(s.n)} className="flex items-center gap-2.5 group">
+                <button
+                  type="button"
+                  ref={(node) => { stepButtonRefs.current[i] = node; }}
+                  onClick={() => (done || s.n < step) && requestStep(s.n)}
+                  onKeyDown={(event) => handleStepKeyDown(event, i)}
+                  tabIndex={active ? 0 : -1}
+                  aria-current={active ? 'step' : undefined}
+                  className="flex items-center gap-2.5 group"
+                >
                   <span className={cn('w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border transition-colors', active ? 'bg-primary border-primary text-white shadow-[0_0_0_4px_hsl(var(--primary)/.2)]' : done ? 'bg-dash-green border-dash-green text-white' : 'border-border/70 text-muted-foreground bg-input/40')}>
                     {done ? <Check className="w-4 h-4" /> : s.n}
                   </span>
@@ -157,8 +211,8 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
           {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
 
-          {/* Footer */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* TL-138: rodapé fixo — Voltar / Salvar rascunho / Continuar sempre à vista */}
+          <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 flex-wrap rounded-xl border border-border/70 bg-background/95 px-3 py-2.5 backdrop-blur">
             <div className="flex items-center gap-2">
               {step > 1 && <GhostButton icon={ArrowLeft} onClick={prev}>Voltar</GhostButton>}
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
@@ -190,6 +244,27 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
 
         {step < 4 && <WizardRail ed={ed} />}
       </div>
+
+      {/* TL-138 — saída com pendência: o modal do kit só aparece quando existe
+          alteração real ainda não confirmada no servidor (mesmo critério que o
+          `beforeunload` desta tela já usava). */}
+      <AlertDialog open={exitDialogOpen} onOpenChange={setExitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              {campaign
+                ? `As alterações em "${campaign.name}" ainda não foram salvas. Salve o rascunho antes de sair ou descarte o que foi alterado.`
+                : 'Esta campanha ainda não foi salva. Salve o rascunho antes de sair ou descarte o que foi digitado.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setExitDialogOpen(false)}>Continuar editando</AlertDialogCancel>
+            <GhostButton icon={X} onClick={confirmDiscardAndExit} className="text-destructive hover:bg-destructive/10 border-destructive/30">Descartar rascunho</GhostButton>
+            <AlertDialogAction onClick={() => { void confirmSaveAndExit(); }}>Salvar e sair</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -227,96 +302,6 @@ function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { i
       </div>
       <span className={cn('w-4 h-4 rounded-full border-2 shrink-0 mt-0.5', active ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_hsl(var(--card))]' : 'border-border')} />
     </button>
-  );
-}
-
-/**
- * V24 — uma linha de regra do público. Campos e operadores vêm do MESMO
- * catálogo do editor de segmentos (`RULE_FIELDS`/`RULE_OPS`), então a regra
- * montada aqui é a mesma que o motor compila para PostgREST.
- */
-function AudienceRuleRow({ rule, ed }: { rule: SegmentRule; ed: WizardState }) {
-  const field = RULE_FIELDS.find((definition) => definition.value === rule.field) ?? RULE_FIELDS[0];
-  const ops = RULE_OPS[field.kind] ?? RULE_OPS.text;
-  const needsValue = rule.op !== 'is_set' && rule.op !== 'is_empty';
-
-  // Trocar o campo troca o tipo: reinicia operador e valor para nunca deixar
-  // uma combinação que o motor rejeite (ex.: ilike em coluna uuid).
-  const changeField = (value: string) => {
-    const next = RULE_FIELDS.find((definition) => definition.value === value) ?? RULE_FIELDS[0];
-    ed.updateAudienceRule(rule.id, { field: next.value, op: (RULE_OPS[next.kind] ?? RULE_OPS.text)[0].value, value: '' });
-  };
-
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <Select value={rule.field} onValueChange={changeField}>
-        <SelectTrigger aria-label="Campo do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {RULE_FIELDS.map((definition) => <SelectItem key={definition.value} value={definition.value}>{definition.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Select value={rule.op} onValueChange={(value) => ed.updateAudienceRule(rule.id, { op: value as RuleOp })}>
-        <SelectTrigger aria-label="Operador do filtro" className="h-8 text-xs w-[150px] bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {ops.map((op) => <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      {needsValue && (field.options ? (
-        <Select value={rule.value} onValueChange={(value) => ed.updateAudienceRule(rule.id, { value })}>
-          <SelectTrigger aria-label="Valor do filtro" className="h-8 text-xs w-[170px] bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
-          <SelectContent>
-            {field.options.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ) : (
-        <Input
-          value={rule.value}
-          onChange={(event) => ed.updateAudienceRule(rule.id, { value: event.target.value })}
-          aria-label="Valor do filtro"
-          placeholder={field.kind === 'date' ? 'dias' : 'Valor'}
-          inputMode={field.kind === 'number' || field.kind === 'date' ? 'numeric' : undefined}
-          className="h-8 text-xs w-[170px] bg-input/40 border-border/70"
-        />
-      ))}
-      <button type="button" onClick={() => ed.removeAudienceRule(rule.id)} aria-label="Remover filtro" className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
-    </div>
-  );
-}
-
-/** V24 — filtros do passo 1 como regras do público (mesma fonte dos segmentos). */
-function AudienceRulesEditor({ ed }: { ed: WizardState }) {
-  const hasRules = ed.audienceRules.groups.some((group) => group.rules.length > 0);
-  return (
-    <div className="mb-3 space-y-2 rounded-xl border border-border/70 bg-input/30 p-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5"><Filter className="w-3.5 h-3.5" /> Filtros do público</p>
-        <span className="text-3xs text-muted-foreground">
-          {typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}
-        </span>
-      </div>
-      {ed.audienceRules.groups.map((group) => (
-        <div key={group.id} className="space-y-2">
-          {group.rules.length > 1 && (
-            <button
-              type="button"
-              onClick={() => ed.setGroupMatch(group.id, group.match === 'and' ? 'or' : 'and')}
-              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-primary-glow"
-            >
-              {group.match === 'and' ? 'Todas as regras (E)' : 'Qualquer regra (OU)'}
-            </button>
-          )}
-          {group.rules.map((rule) => <AudienceRuleRow key={rule.id} rule={rule} ed={ed} />)}
-        </div>
-      ))}
-      {!hasRules && <p className="text-2xs text-muted-foreground">Sem filtros — o público é toda a base de contatos com telefone.</p>}
-      <button
-        type="button"
-        onClick={() => ed.addAudienceRule()}
-        className="h-8 px-2.5 rounded-lg text-xs font-medium border border-border/70 bg-input/40 hover:bg-muted/50 flex items-center gap-1.5"
-      >
-        <Plus className="w-3.5 h-3.5" /> Adicionar filtro
-      </button>
-    </div>
   );
 }
 
@@ -404,8 +389,19 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       {ed.audienceSource === 'contacts' && (
-        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
-          <AudienceRulesEditor ed={ed} />
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos."
+          right={<span className="text-3xs text-muted-foreground">{typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
+          <TalkXAudienceFilters
+            rules={ed.audienceRules}
+            onChange={ed.setAudienceRules}
+            options={{
+              tags: ed.tags,
+              companies: ed.companies,
+              sellers: (ed.owners ?? []).map((p) => ({ id: p.id, name: p.name || p.email || 'Sem nome' })),
+            }}
+            onClear={ed.clearFilters}
+          />
+          <div className="mt-3">
           <TalkXContactSelector
             contacts={ed.contacts || []}
             filteredContacts={ed.filteredContacts}
@@ -422,6 +418,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
           />
+          </div>
         </SectionCard>
       )}
     </>

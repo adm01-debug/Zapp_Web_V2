@@ -41,6 +41,7 @@ export function ContactListItem({
         <Checkbox
           checked={isSelected}
           onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
+          aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
         />
       </div>
 
@@ -151,7 +152,7 @@ export function ContactListItem({
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50">
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50" aria-label={`Ações do contato ${contact.name}`}>
               <MoreVertical className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>

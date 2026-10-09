@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   THEME_PRESETS,
   CSS_VARS_TO_APPLY,
+  FIXED_TOKENS,
+  PRESET_FIXED_OVERRIDES,
   getPresetById,
   classicPresets,
   gxPresets,
@@ -98,6 +100,14 @@ describe('§1 catálogo', () => {
   it('grupo C (tokens fixos) não aparece em CSS_VARS_TO_APPLY', () => {
     for (const fixed of ['success', 'warning', 'whatsapp', 'kpi-tile-green', 'destructive', 'chart-2']) {
       expect(CSS_VARS_TO_APPLY as readonly string[]).not.toContain(fixed);
+    }
+  });
+
+  it('PRESET_FIXED_OVERRIDES são tokens FIXOS e nunca entram na lista global congelada', () => {
+    expect(PRESET_FIXED_OVERRIDES.length).toBeGreaterThan(0);
+    for (const key of PRESET_FIXED_OVERRIDES) {
+      expect(FIXED_TOKENS as readonly string[]).toContain(key);
+      expect(CSS_VARS_TO_APPLY as readonly string[]).not.toContain(key);
     }
   });
 
@@ -369,8 +379,59 @@ describe('§11.5 Diversity', () => {
   });
 
   it('gradient-success sobrescrito (verde→azul pride), diferente do grupo C padrão', () => {
-    expect(diversity.light['gradient-success']).toContain('130 70% 45%');
-    expect(diversity.light['gradient-success']).toContain('210 80% 55%');
+    // 'gradient-success' é token do grupo C: fica FORA de ThemeModeColors de propósito
+    // (presets.ts: "NÃO entram em ThemeModeColors") e o preset o sobrescreve por assert.
+    // Leio o valor aplicado pelo mesmo caminho, num mapa de strings.
+    const aplicados = diversity.light as unknown as Record<string, string>;
+    expect(aplicados['gradient-success']).toContain('130 70% 45%');
+    expect(aplicados['gradient-success']).toContain('210 80% 55%');
+  });
+
+  // O token é FIXO (grupo C) e fica fora de CSS_VARS_TO_APPLY: o teste acima lê o
+  // OBJETO do preset e passava mesmo com o override nunca chegando ao <html>. Os
+  // testes abaixo leem o valor APLICADO (--gradient-success inline no :root).
+  it.each(['light', 'dark'] as const)('gradient-success do preset é aplicado no <html> em %s', (mode) => {
+    applyThemePreset('diversity', mode);
+    const aplicado = document.documentElement.style.getPropertyValue('--gradient-success');
+    // valor exato do preset (e não o verde fixo de tokens.css:246/486)
+    expect(aplicado).toBe(diversity[mode]['gradient-success']);
+    expect(aplicado).toContain('130 70% 45%');
+    expect(aplicado).toContain('210 80% 55%');
+  });
+
+  it('skin sem override devolve --gradient-success ao literal de tokens.css', () => {
+    applyThemePreset('diversity', 'dark');
+    expect(document.documentElement.style.getPropertyValue('--gradient-success')).not.toBe('');
+    applyThemePreset('corporate', 'dark');
+    expect(document.documentElement.style.getPropertyValue('--gradient-success')).toBe('');
+  });
+
+  it('clearThemeOverrides remove o override do token fixo', () => {
+    applyThemePreset('diversity', 'light');
+    clearThemeOverrides();
+    expect(document.documentElement.style.getPropertyValue('--gradient-success')).toBe('');
+  });
+
+  it('o cache do boot carrega o override e o descarta ao trocar de skin', () => {
+    localStorage.clear();
+    applyThemePreset('diversity', 'dark');
+    const comOverride = JSON.parse(localStorage.getItem(STORAGE_KEY)!).cssVarsCache;
+    expect(comOverride['gradient-success']).toContain('210 80% 55%');
+
+    applyThemePreset('corporate', 'dark');
+    const semOverride = JSON.parse(localStorage.getItem(STORAGE_KEY)!).cssVarsCache;
+    expect(semOverride['gradient-success']).toBeUndefined();
+  });
+
+  it('alto contraste manda: com .high-contrast o token fixo não fica inline', () => {
+    const root = document.documentElement;
+    root.classList.add('high-contrast');
+    try {
+      applyThemePreset('diversity', 'dark');
+      expect(root.style.getPropertyValue('--gradient-success')).toBe('');
+    } finally {
+      root.classList.remove('high-contrast');
+    }
   });
 });
 

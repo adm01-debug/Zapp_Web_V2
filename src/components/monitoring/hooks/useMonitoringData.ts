@@ -40,6 +40,63 @@ function computeInstanceUptimes(logs: HealthLog[], now: Date): InstanceUptime[] 
   });
 }
 
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+function formatDayLabel(t: Date): string {
+  const dd = t.getDate().toString().padStart(2, '0');
+  const mm = (t.getMonth() + 1).toString().padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+function startOfLocalDay(t: Date): Date {
+  const day = new Date(t);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+function startOfLocalHour(t: Date): Date {
+  const hour = new Date(t);
+  hour.setMinutes(0, 0, 0);
+  return hour;
+}
+
+function addLocalDays(t: Date, days: number): Date {
+  const day = new Date(t);
+  day.setDate(day.getDate() + days);
+  return day;
+}
+
+function localDayIndex(firstDay: Date, value: Date): number {
+  return Math.round((startOfLocalDay(value).getTime() - firstDay.getTime()) / DAY_MS);
+}
+
+// R2-INF-028: a mensagem é agrupada por índice temporal e só depois rotulada.
+// Em '7d' os baldes são dias civis locais (hoje-6 ... hoje), não uma janela
+// deslizante now-7d. Em '24h' os baldes começam em hora cheia, para que o rótulo
+// "DD/MM HHh" represente exatamente a hora civil em que a mensagem caiu.
+function formatBucketLabel(startMs: number, period: TimePeriod, bucketSize: number): string {
+  const t = new Date(startMs);
+  const hh = t.getHours().toString().padStart(2, '0');
+  if (period === '7d') return formatDayLabel(t);
+  if (period === '24h') return `${formatDayLabel(t)} ${hh}h`;
+  if (bucketSize < 3600000) return `${hh}:${t.getMinutes().toString().padStart(2, '0')}`;
+  return `${hh}:00`;
+}
+
+function bucketWindow(now: Date, period: TimePeriod, bucketCount: number) {
+  if (period === '7d') {
+    const start = addLocalDays(startOfLocalDay(now), -(bucketCount - 1));
+    return { startMs: start.getTime(), bucketSize: DAY_MS };
+  }
+  if (period === '24h') {
+    const start = new Date(startOfLocalHour(now));
+    start.setHours(start.getHours() - (bucketCount - 1));
+    return { startMs: start.getTime(), bucketSize: HOUR_MS };
+  }
+  return { startMs: now.getTime() - periodMs[period], bucketSize: periodMs[period] / bucketCount };
+}
+
 function computeSparklines(logs: HealthLog[], msgs: { sender: string; created_at: string }[], now: Date, period: TimePeriod): SparklineData {
   const r: SparklineData = { messages: [], latency: [], uptime: [] };
   const ms = periodMs[period];
@@ -73,6 +130,9 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
     try {
       const now = new Date();
       const since = new Date(now.getTime() - periodMs[period]);
+      const bucketCountForPeriod = periodBuckets[period];
+      const messageWindow = bucketWindow(now, period, bucketCountForPeriod);
+      const messageSince = new Date(messageWindow.startMs);
       // R2-INF-027: os health logs cobrem a maior janela anunciada (7 dias), para
       // alimentar o SLA de 24h e o heatmap de 7 dias mesmo com seleção menor.
       const logsSince = new Date(now.getTime() - AVAILABILITY_WINDOW_MS);
@@ -92,26 +152,41 @@ export function useMonitoringData(onConnectionsUpdate?: (c: ConnectionInfo[]) =>
         setInstanceUptimes(computeInstanceUptimes(logs, now));
       }
       if (msgRes.data) {
-        const incoming = msgRes.data.filter(m => m.sender === 'contact').length;
-        const outgoing = msgRes.data.filter(m => m.sender === 'agent').length;
-        const bucketCount = periodBuckets[period];
-        const bucketSize = periodMs[period] / bucketCount;
-        const buckets: Record<string, { incoming: number; outgoing: number }> = {};
-        for (let i = bucketCount - 1; i >= 0; i--) {
-          const bTime = new Date(now.getTime() - i * bucketSize);
-          const key = period === '7d' || period === '24h'
-            ? `${bTime.getDate().toString().padStart(2, '0')}/${(bTime.getMonth() + 1).toString().padStart(2, '0')} ${bTime.getHours().toString().padStart(2, '0')}h`
-            : `${bTime.getHours().toString().padStart(2, '0')}:00`;
-          buckets[key] = { incoming: 0, outgoing: 0 };
-        }
-        msgRes.data.forEach(m => {
-          const mTime = new Date(m.created_at);
-          const key = period === '7d' || period === '24h'
-            ? `${mTime.getDate().toString().padStart(2, '0')}/${(mTime.getMonth() + 1).toString().padStart(2, '0')} ${mTime.getHours().toString().padStart(2, '0')}h`
-            : `${mTime.getHours().toString().padStart(2, '0')}:00`;
-          if (buckets[key]) { if (m.sender === 'contact') buckets[key].incoming++; else buckets[key].outgoing++; }
+        const bucketCount = bucketCountForPeriod;
+        const { startMs: windowStart, bucketSize } = messageWindow;
+        const messageSinceMs = messageSince.getTime();
+        const messagesInGraphWindow = msgRes.data.filter(m => {
+          const t = new Date(m.created_at).getTime();
+          return !Number.isNaN(t) && t >= messageSinceMs;
         });
-        setMessageStats({ incoming, outgoing, total: msgRes.data.length, hourlyData: Object.entries(buckets).map(([hour, d]) => ({ hour, ...d })) });
+        const incoming = messagesInGraphWindow.filter(m => m.sender === 'contact').length;
+        const outgoing = messagesInGraphWindow.filter(m => m.sender === 'agent').length;
+        const buckets = Array.from({ length: bucketCount }, () => ({ incoming: 0, outgoing: 0 }));
+        // R2-INF-028: agrupa por índice temporal e só depois formata o rótulo. A
+        // chave por hora civil colapsava os baldes de 10min (todos viravam a
+        // mesma "HH:00") e, em 7d, ignorava toda mensagem cuja hora fosse
+        // diferente da hora da âncora diária.
+        messagesInGraphWindow.forEach(m => {
+          const mTime = new Date(m.created_at);
+          const t = mTime.getTime();
+          if (Number.isNaN(t)) return;
+          let idx = period === '7d'
+            ? localDayIndex(new Date(windowStart), mTime)
+            : Math.floor((t - windowStart) / bucketSize);
+          if (idx < 0) return; // fora da janela do gráfico; a query busca desde `since` para as sparklines
+          if (idx >= bucketCount) idx = bucketCount - 1; // borda direita: exatamente em `now`
+          if (m.sender === 'contact') buckets[idx].incoming++; else buckets[idx].outgoing++;
+        });
+        const hourlyData = buckets.map((d, i) => {
+          const labelStartMs = period === '7d'
+            ? addLocalDays(new Date(windowStart), i).getTime()
+            : windowStart + i * bucketSize;
+          return {
+            hour: formatBucketLabel(labelStartMs, period, bucketSize),
+            ...d,
+          };
+        });
+        setMessageStats({ incoming, outgoing, total: messagesInGraphWindow.length, hourlyData });
       }
       if (logsRes.data && msgRes.data) setSparklines(computeSparklines(logsRes.data, msgRes.data, now, period));
     } catch (err) {

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ExternalDbBridgeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
@@ -73,16 +73,29 @@ async function emitTelemetry(supabaseAdmin: any, payload: TelemetryPayload): Pro
   }
 }
 
-Deno.serve(async (req) => {
+/**
+ * Clientes injetáveis pelos testes (mesmo contrato de `EdgeInjected`/`bootEdge`
+ * das funções irmãs): `userClient` carrega o JWT do chamador — é ele que faz o
+ * `auth.getUser()` e resolve o papel — e `adminClient` é o service_role que roda
+ * as queries da allowlist.
+ */
+export interface ExternalDbBridgeInjected {
+  userClient?: SupabaseClient;
+  adminClient?: SupabaseClient;
+}
+
+export async function handleExternalDbBridge(
+  req: Request,
+  _injected?: ExternalDbBridgeInjected,
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("external-db-bridge");
 
   try {
-    const supabaseUrl = requireEnv("SUPABASE_URL");
-    const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseAdmin = _injected?.adminClient ??
+      createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 
     // Auth check
     const authHeader = req.headers.get("Authorization");
@@ -90,15 +103,36 @@ Deno.serve(async (req) => {
       return errorResponse("Unauthorized", 401, req);
     }
 
-    const anonKey = requireEnv("SUPABASE_ANON_KEY");
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabaseUser = _injected?.userClient ?? createClient(
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_ANON_KEY"),
+      { global: { headers: { Authorization: authHeader } } },
+    );
     const { data: userData, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !userData?.user) {
       return errorResponse("Unauthorized", 401, req);
     }
     const userId = userData.user.id;
+
+    // SEC-EDGE_FUNCTIONS-01 (Y27 P0-01): as queries abaixo usam o cliente
+    // service_role, que BYPASSA a RLS. Sem checar papel, qualquer sessão
+    // autenticada (inclusive `agent`) leria a base inteira por esta função.
+    // Antes de tocar em qualquer tabela/RPC da allowlist, resolvemos o papel no
+    // RPC canônico (`is_admin_or_supervisor`, o mesmo de `external-db-proxy`).
+    // Não há consumidor não-admin em `src/` nem em `supabase/functions/`
+    // (git grep), então o caminho permitido é SÓ admin/supervisor: erro no RPC
+    // ou valor diferente de `true` NEGA (falha fechada).
+    const { data: isAdmin, error: roleError } = await supabaseUser.rpc(
+      "is_admin_or_supervisor",
+      { _user_id: userId },
+    );
+    if (roleError) {
+      log.error("falha ao resolver papel do chamador", { error: roleError.message });
+      return errorResponse("Forbidden", 403, req);
+    }
+    if (isAdmin !== true) {
+      return errorResponse("Forbidden", 403, req);
+    }
 
     // Parse & validate body
     const parsed = parseBody(ExternalDbBridgeSchema, await req.json());
@@ -221,4 +255,8 @@ Deno.serve(async (req) => {
     log.error("Fatal error", { error: msg });
     return errorResponse("Internal server error", 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleExternalDbBridge(req));
+}

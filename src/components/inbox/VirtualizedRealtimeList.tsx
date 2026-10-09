@@ -481,7 +481,7 @@ const ConversationRow = memo(({
                       aria-label={`Atendido por ${assignedAgent.name}`}
                     >
                       <AvatarImage src={assignedAgent.avatar_url || undefined} alt="" />
-                      <AvatarFallback className="text-[7px] font-bold bg-secondary text-secondary-foreground">
+                      <AvatarFallback className="text-3xs font-bold bg-secondary text-secondary-foreground">
                         {assignedAgent.name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Bold, Italic, List, Smile, Hash, Link2 } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Smile, Hash, Link2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { cn } from '@/lib/utils';
 import { parsePlaceholderToken, parsePlaceholders } from './kit/placeholders';
 
@@ -17,9 +18,6 @@ import { parsePlaceholderToken, parsePlaceholders } from './kit/placeholders';
  * scroll. Fonte/line-height/padding são idênticos nos dois para o overlay cair
  * exatamente sobre o texto digitado.
  */
-
-/** Emojis comuns do WhatsApp — inseridos no cursor. */
-const EMOJIS = ['😊', '😂', '🎉', '👍', '🙏', '❤️', '🔥', '✨', '📌', '✅', '🚀', '🎁', '⏰', '📎', '💰', '💬'];
 
 const TOOL_BUTTON =
   'h-7 w-7 rounded flex items-center justify-center text-foreground-secondary hover:text-foreground hover:bg-muted/50 disabled:opacity-40 disabled:pointer-events-none';
@@ -129,22 +127,15 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
           <button type="button" title="Negrito (*texto*)" disabled={disabled} onClick={() => insertAtCursor('*', '*', 'texto')} className={TOOL_BUTTON}><Bold className="w-3.5 h-3.5" /></button>
           <button type="button" title="Itálico (_texto_)" disabled={disabled} onClick={() => insertAtCursor('_', '_', 'texto')} className={TOOL_BUTTON}><Italic className="w-3.5 h-3.5" /></button>
           <button type="button" title="Lista (- item)" disabled={disabled} onClick={() => insertAtCursor('\n- ', '', 'item')} className={TOOL_BUTTON}><List className="w-3.5 h-3.5" /></button>
+          <button type="button" title="Lista numerada (1. item)" disabled={disabled} onClick={() => insertAtCursor('\n1. ', '', 'item')} className={TOOL_BUTTON}><ListOrdered className="w-3.5 h-3.5" /></button>
           <div className="w-px h-4 bg-border/60 mx-0.5" />
-          {/* Emoji */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Emoji — seletor do sistema (busca por texto e categorias) */}
+          <EmojiPicker
+            onEmojiSelect={(emoji) => insertAtCursor(emoji)}
+            trigger={
               <button type="button" title="Emoji" disabled={disabled} className={TOOL_BUTTON}><Smile className="w-3.5 h-3.5" /></button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
-              <div className="grid grid-cols-8 gap-0.5">
-                {EMOJIS.map((emoji) => (
-                  <DropdownMenuItem key={emoji} className="h-6 w-6 items-center justify-center p-0 text-base" onClick={() => insertAtCursor(emoji)}>
-                    {emoji}
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          />
           {/* Link */}
           <button type="button" title="Link (https://)" disabled={disabled} onClick={() => insertAtCursor('https://')} className={TOOL_BUTTON}><Link2 className="w-3.5 h-3.5" /></button>
           {/* Inserir variável no cursor */}

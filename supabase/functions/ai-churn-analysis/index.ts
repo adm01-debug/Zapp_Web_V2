@@ -3,6 +3,7 @@ import { handleCors, errorResponse, internalErrorResponse, jsonResponse, require
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { registrarAcaoCalculada } from "../_shared/ai-usage.ts";
 import { AiChurnAnalysisSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { analyzeChurnContacts } from "./churn-risk.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
 
         const { data: contacts } = await adminClient
           .from("contacts")
-          .select("id, name, phone, created_at, updated_at")
+          .select("id, name, phone, created_at")
           .in("id", visibleContactIds);
 
         if (!contacts || contacts.length === 0) {
@@ -62,76 +63,10 @@ Deno.serve(async (req) => {
 
         log.info("Analyzing churn risk", { contactCount: contacts.length });
 
-        const results = [];
-
-        for (const contact of contacts) {
-          const { data: lastMsg } = await adminClient
-            .from("messages")
-            .select("created_at")
-            .eq("contact_id", contact.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-          const { count: recentMsgCount } = await adminClient
-            .from("messages")
-            .select("id", { count: "exact", head: true })
-            .eq("contact_id", contact.id)
-            .gte("created_at", thirtyDaysAgo);
-
-          const { count: totalMsgCount } = await adminClient
-            .from("messages")
-            .select("id", { count: "exact", head: true })
-            .eq("contact_id", contact.id);
-
-          const lastMessageAt = lastMsg?.created_at || contact.updated_at;
-          const daysSinceLastMessage = Math.floor(
-            (Date.now() - new Date(lastMessageAt).getTime()) / (1000 * 60 * 60 * 24)
-          );
-
-          let riskScore = 0;
-
-          if (daysSinceLastMessage > 90) riskScore += 40;
-          else if (daysSinceLastMessage > 60) riskScore += 30;
-          else if (daysSinceLastMessage > 30) riskScore += 20;
-          else if (daysSinceLastMessage > 14) riskScore += 10;
-
-          const avgMonthly = (totalMsgCount || 0) > 0
-            ? ((totalMsgCount || 0) / Math.max(1, Math.floor((Date.now() - new Date(contact.created_at).getTime()) / (30 * 24 * 60 * 60 * 1000))))
-            : 0;
-
-          if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.3) riskScore += 30;
-          else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.5) riskScore += 20;
-          else if (avgMonthly > 0 && (recentMsgCount || 0) < avgMonthly * 0.7) riskScore += 10;
-
-          if ((totalMsgCount || 0) <= 1) riskScore += 30;
-          else if ((totalMsgCount || 0) <= 5) riskScore += 20;
-          else if ((totalMsgCount || 0) <= 10) riskScore += 10;
-
-          let riskLevel = "low";
-          if (riskScore >= 80) riskLevel = "critical";
-          else if (riskScore >= 60) riskLevel = "high";
-          else if (riskScore >= 40) riskLevel = "medium";
-
-          const reasons: string[] = [];
-          if (daysSinceLastMessage > 30) reasons.push(`${daysSinceLastMessage} dias sem interação`);
-          if ((recentMsgCount || 0) === 0) reasons.push("Sem mensagens nos últimos 30 dias");
-          if ((totalMsgCount || 0) <= 5) reasons.push("Baixo engajamento total");
-
-          results.push({
-            contactId: contact.id,
-            name: contact.name,
-            riskScore: Math.min(100, riskScore),
-            riskLevel,
-            daysSinceLastMessage,
-            recentMessageCount: recentMsgCount || 0,
-            totalMessageCount: totalMsgCount || 0,
-            reasons,
-          });
-        }
-
-        results.sort((a, b) => b.riskScore - a.riskScore);
+        // IA-111: o engajamento é medido SÓ pelas mensagens (churn-risk.ts). O
+        // cadastro do contato — e o seu `updated_at`, mutado por qualquer edição —
+        // não entra no cálculo da inatividade.
+        const results = await analyzeChurnContacts(adminClient, contacts, new Date());
 
         log.done(200, { analyzed: results.length });
         return jsonResponse({ results }, 200, req);

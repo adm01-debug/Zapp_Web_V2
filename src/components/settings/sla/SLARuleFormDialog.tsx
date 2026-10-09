@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSLARules, SLARuleForm, SLARule, SLARuleScope, SLARuleMetadata } from '@/hooks/sla/useSLARules';
@@ -16,6 +18,12 @@ import { CONTACT_TYPES, SCOPE_LABELS } from './sla-utils';
 import { CONTACT_TYPES as CANONICAL_TYPES } from '@/utils/whatsappFileTypes';
 import { cn } from '@/lib/utils';
 import { escapeOrFilterValue } from '@/lib/postgrestFilters';
+import {
+  SLA_RULE_NAME_MAX,
+  SLA_RULE_NOTES_MAX,
+  slaRuleFormSchema,
+  type SLARuleFormValues,
+} from '@/lib/schemas/slaRule';
 
 interface SLARuleFormDialogProps {
   open: boolean;
@@ -24,22 +32,21 @@ interface SLARuleFormDialogProps {
   editingRule: SLARule | null;
 }
 
-const EMPTY_FORM: SLARuleForm = {
-  name: '',
-  first_response_minutes: 5,
-  resolution_minutes: 60,
-  priority: 10,
-  metadata: { notify_on_warning: false, escalation_notes: '' },
-};
+// Prazo de 1ª resposta: fixo em 5 minutos (campo desabilitado na UI, decisão de
+// produto). Não é editável, então não faz parte do formulário validado.
+const FIRST_RESPONSE_MINUTES = 5;
 
-function buildForm(editingRule: SLARule | null): SLARuleForm {
-  if (!editingRule) return { ...EMPTY_FORM, metadata: { ...EMPTY_FORM.metadata } };
+const RESOLUTION_MINUTES_PADRAO = 60;
+
+function buildForm(editingRule: SLARule | null, scopeValue: string): SLARuleFormValues {
   return {
-    name: editingRule.name,
-    first_response_minutes: 5,
-    resolution_minutes: editingRule.resolution_minutes,
-    priority: editingRule.priority,
-    metadata: editingRule.metadata || { notify_on_warning: false, escalation_notes: '' },
+    name: editingRule?.name ?? '',
+    scope: scopeValue,
+    priority: editingRule?.priority ?? 10,
+    metadata: {
+      notify_on_warning: editingRule?.metadata?.notify_on_warning ?? false,
+      escalation_notes: editingRule?.metadata?.escalation_notes ?? '',
+    },
   };
 }
 
@@ -51,11 +58,23 @@ function buildScopeValue(editingRule: SLARule | null): string {
 
 export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SLARuleFormDialogProps) {
   const { createRule, updateRule, isCreating, isUpdating } = useSLARules(scope);
+  const [contactSearch, setContactSearch] = useState('');
   // Estado inicial derivado de editingRule; o componente e remontado (key no pai)
   // a cada abertura, entao nao precisa de effect de reset.
-  const [form, setForm] = useState<SLARuleForm>(() => buildForm(editingRule));
-  const [scopeValue, setScopeValue] = useState(() => buildScopeValue(editingRule));
-  const [contactSearch, setContactSearch] = useState('');
+  const schema = useMemo(() => slaRuleFormSchema(SCOPE_LABELS[scope]), [scope]);
+  const form = useForm<SLARuleFormValues>({
+    // O tipo do `zodResolver` do @hookform/resolvers@3 é declarado contra o zod
+    // v4 (`z.Schema`), mas em runtime ele só entende schema do zod v3 (ver
+    // src/lib/schemas/slaRule.ts). O cast atravessa as duas versões do MESMO
+    // pacote instalado — o mesmo motivo pelo qual o schema usa `zod/v3`.
+    resolver: zodResolver(schema as unknown as Parameters<typeof zodResolver>[0]),
+    defaultValues: buildForm(editingRule, buildScopeValue(editingRule)),
+  });
+  const errors = form.formState.errors;
+  // `useWatch` (e não `form.watch()`): o `watch()` do useForm não é memoizável e
+  // desliga a compilação do React Compiler neste componente (lint ratchet).
+  const scopeValue = useWatch({ control: form.control, name: 'scope' });
+  const notificarNoAviso = useWatch({ control: form.control, name: 'metadata.notify_on_warning' });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['sla-scope-companies'],
@@ -104,27 +123,22 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
     enabled: open && scope === 'contact' && contactSearch.length >= 2,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Nome é obrigatório';
-    if (!scopeValue) e.scope = `Selecione um(a) ${SCOPE_LABELS[scope].toLowerCase()}`;
-    if (form.first_response_minutes < 1) e.fr = 'Mínimo 1 minuto';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSave = () => {
-    if (!validate()) return;
-
-    const payload: SLARuleForm = { ...form };
-    if (scope === 'contact') payload.contact_id = scopeValue || null;
-    else if (scope === 'company') payload.company = scopeValue || null;
-    else if (scope === 'job_title') payload.job_title = scopeValue || null;
-    else if (scope === 'contact_type') payload.contact_type = scopeValue || null;
-    else if (scope === 'queue') payload.queue_id = scopeValue || null;
-    else if (scope === 'agent') payload.agent_id = scopeValue || null;
+  // A validação é do schema (`zodResolver`): o submit só chega aqui se o
+  // formulário passar. O escopo continua obrigatório, agora declarado no schema.
+  const handleSave = form.handleSubmit((values) => {
+    const payload: SLARuleForm = {
+      name: values.name,
+      first_response_minutes: FIRST_RESPONSE_MINUTES,
+      resolution_minutes: editingRule?.resolution_minutes ?? RESOLUTION_MINUTES_PADRAO,
+      priority: values.priority,
+      metadata: values.metadata,
+    };
+    if (scope === 'contact') payload.contact_id = values.scope || null;
+    else if (scope === 'company') payload.company = values.scope || null;
+    else if (scope === 'job_title') payload.job_title = values.scope || null;
+    else if (scope === 'contact_type') payload.contact_type = values.scope || null;
+    else if (scope === 'queue') payload.queue_id = values.scope || null;
+    else if (scope === 'agent') payload.agent_id = values.scope || null;
 
     if (editingRule) {
       updateRule({ ...payload, id: editingRule.id });
@@ -132,7 +146,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
       createRule(payload);
     }
     onOpenChange(false);
-  };
+  });
 
   const renderScopeSelector = () => {
     if (scope === 'contact') {
@@ -152,7 +166,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               {contacts.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => { setScopeValue(c.id); setContactSearch(c.name); }}
+                  onClick={() => { form.setValue('scope', c.id, { shouldValidate: true }); setContactSearch(c.name); }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${scopeValue === c.id ? 'bg-primary/10 font-medium' : ''}`}
                 >
                   {c.name} — {c.phone}
@@ -175,7 +189,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
       : agents.map(a => ({ id: a.id, label: a.name }));
 
     return (
-      <Select value={scopeValue} onValueChange={setScopeValue}>
+      <Select value={scopeValue} onValueChange={(v) => form.setValue('scope', v, { shouldValidate: true })}>
         <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
         <SelectContent>
           {options.map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
@@ -200,19 +214,19 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             <Label htmlFor="sla-name" className="text-xs font-medium">Nome da Regra</Label>
             <Input
               id="sla-name"
-              value={form.name}
-              onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors(e2 => ({ ...e2, name: '' })); }}
+              {...form.register('name')}
+              maxLength={SLA_RULE_NAME_MAX}
               placeholder="Ex: SLA VIP — Empresa X"
               className={cn('mt-1', errors.name && 'border-destructive')}
               aria-invalid={!!errors.name}
             />
-            {errors.name && <p className="text-2xs text-destructive mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-2xs text-destructive mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
             <Label className="text-xs font-medium">{SCOPE_LABELS[scope]}</Label>
             {renderScopeSelector()}
-            {errors.scope && <p className="text-2xs text-destructive mt-1">{errors.scope}</p>}
+            {errors.scope && <p className="text-2xs text-destructive mt-1">{errors.scope.message}</p>}
           </div>
 
           <div>
@@ -220,13 +234,12 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             <Input
               id="sla-fr"
               type="number" min={1} max={5}
-              value={form.first_response_minutes}
+              value={FIRST_RESPONSE_MINUTES}
               disabled
-              className={cn('mt-1 opacity-70', errors.fr && 'border-destructive')}
+              className="mt-1 opacity-70"
               aria-describedby="sla-rule-fr-hint"
             />
             <p id="sla-rule-fr-hint" className="text-2xs text-muted-foreground mt-1">Prazo fixo de 5 minutos (regra de SLA de 1ª resposta)</p>
-            {errors.fr && <p className="text-2xs text-destructive mt-1">{errors.fr}</p>}
           </div>
 
           <div>
@@ -234,8 +247,7 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             <Input
               id="sla-priority"
               type="number" min={0} max={100}
-              value={form.priority}
-              onChange={e => setForm(f => ({ ...f, priority: Number.parseInt(e.target.value) || 0 }))}
+              {...form.register('priority', { setValueAs: (v: string) => Number.parseInt(v, 10) || 0 })}
               className="mt-1"
             />
           </div>
@@ -249,8 +261,8 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
             <div className="flex items-center gap-3">
               <Switch
                 id="sla-notify"
-                checked={form.metadata?.notify_on_warning ?? false}
-                onCheckedChange={v => setForm(f => ({ ...f, metadata: { ...f.metadata, notify_on_warning: v } }))}
+                checked={notificarNoAviso ?? false}
+                onCheckedChange={v => form.setValue('metadata.notify_on_warning', v)}
               />
               <Label htmlFor="sla-notify" className="text-xs">Notificar ao atingir limite de aviso (70%)</Label>
             </div>
@@ -260,11 +272,10 @@ export function SLARuleFormDialog({ open, onOpenChange, scope, editingRule }: SL
               </Label>
               <Textarea
                 id="sla-notes"
-                value={form.metadata?.escalation_notes || ''}
-                onChange={e => setForm(f => ({ ...f, metadata: { ...f.metadata, escalation_notes: e.target.value } }))}
+                {...form.register('metadata.escalation_notes')}
                 placeholder="Ex: Escalar para gerente se violado..."
                 className="mt-1 text-xs min-h-[60px]"
-                maxLength={500}
+                maxLength={SLA_RULE_NOTES_MAX}
               />
             </div>
           </div>

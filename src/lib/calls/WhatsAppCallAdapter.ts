@@ -121,7 +121,21 @@ export interface WhatsAppRejectResult {
 }
 
 export class WhatsAppCallAdapter {
-  /** Canal do adapter — habilita a seleção por canal numa etapa futura. */
+  /**
+   * Canal deste adapter — a identidade do canal que ele atende, no mesmo valor
+   * de `calls.channel` (`callStatus.ts:9`), e a fonte única do canal que as
+   * gravações abaixo levam à RPC (`this.channel`, não uma constante paralela).
+   *
+   * Seleção por canal no estado atual (medido em 08/10):
+   *  - o caminho que chega aqui é o de ENTRADA: o canal da notificação decide o
+   *    executor (`acaoDoAlerta.canalDaNotificacao` → `executorDaAcao` →
+   *    `useAcoesDoAlerta` → `accept`/`reject` deste adapter);
+   *  - não existe seleção de SAÍDA que alcance este adapter: o WhatsApp é
+   *    somente-recebidas por decisão (T23 → `whatsapp_no_outbound`) e a "saída
+   *    por WhatsApp" está na lista do que o plano NÃO promete
+   *    (`PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md`, T98). O único
+   *    canal que disca é o VoIP; `dial` daqui lança `NotSupportedError`.
+   */
   readonly channel: CallChannel = CANAL_WHATSAPP;
 
   constructor(private readonly ports: WhatsAppCallPorts) {}
@@ -172,7 +186,9 @@ export class WhatsAppCallAdapter {
       id: call.callId,
       direction: 'inbound',
       status: 'answered',
-      channel: CANAL_WHATSAPP,
+      // O canal sai do campo do adapter: uma única fonte para o que ele atende
+      // e para o que ele grava (SL-247).
+      channel: this.channel,
       peerNumber: call.phone ?? null,
       peerName: call.name ?? null,
       contactId: call.contactId,
@@ -201,7 +217,7 @@ export class WhatsAppCallAdapter {
       id: call.callId,
       direction: 'inbound',
       status,
-      channel: CANAL_WHATSAPP,
+      channel: this.channel,
       peerNumber: call.phone ?? null,
       peerName: call.name ?? null,
       contactId: call.contactId,

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Copy, Pause, Square, Trash2, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3,
+  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
+  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,15 +10,30 @@ import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
-  TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard, TalkXConfirmDialog,
+  TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
+  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
+import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useCampaignRowActions } from './useCampaignRowActions';
 
 const STORAGE_KEY = 'talkx.overview.filters';
+const LAYOUT_KEY = 'talkx.overview.layout';
 function loadFilters() {
   try { const s = sessionStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+/** X081 — a alternância lista/grade é preferência do usuário: fica no localStorage. */
+function loadLayout(): 'list' | 'grid' {
+  try { return localStorage.getItem(LAYOUT_KEY) === 'grid' ? 'grid' : 'list'; } catch { return 'list'; }
+}
+/**
+ * Data de referência da campanha para o recorte de período — a mesma que a lista
+ * mostra em "Agendada em" (agendada → iniciada → criada), para que o filtro de
+ * período não esconda linha cuja data está dentro do intervalo escolhido.
+ */
+function campaignDate(c: TalkXCampaign): string {
+  return c.scheduled_at ?? c.started_at ?? c.created_at;
 }
 
 interface Props {
@@ -28,8 +43,12 @@ interface Props {
   isLoading: boolean;
   isError?: boolean;
   error?: Error | null;
-  /** Refaz a consulta de campanhas ("Tentar novamente") sem mexer em filtros nem rota. */
-  onRetry?: () => void;
+  /**
+   * Refaz a consulta de campanhas sem mexer em filtros nem rota. Serve o
+   * "Tentar novamente" do erro (X047) e o ⟳ da barra de filtros (X081): o ⟳ gira
+   * enquanto a promessa devolvida aqui não resolve.
+   */
+  onRetry?: () => void | Promise<unknown>;
   onNew: () => void;
   onEdit: (c: TalkXCampaign) => void;
   onView: (c: TalkXCampaign) => void;
@@ -37,7 +56,8 @@ interface Props {
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
   onStart: (id: string) => void;
-  onPause: (id: string) => void;
+  /** O motivo é obrigatório na pausa e vai junto com a ação para o servidor. */
+  onPause: (id: string, reason: string) => void;
   onCancel: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
@@ -51,41 +71,94 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
+  const [channel, setChannel] = useState<string>(() => saved?.channel ?? 'all');
   const [segment, setSegment] = useState<string>(() => saved?.segment ?? 'all');
   const [creator, setCreator] = useState<string>(() => saved?.creator ?? 'all');
+  const [period, setPeriod] = useState<string | null>(null);
+  const [periodRange, setPeriodRange] = useState<TalkXPeriodRange | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
-  const [layout, setLayout] = useState<'list' | 'grid'>('list');
+  const [layout, setLayout] = useState<'list' | 'grid'>(loadLayout);
+  const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'cancel' | 'start'; c: TalkXCampaign } | null>(null);
+
+  // X080 — as ações de linha (matriz por status + confirmação das ações que
+  // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
+  // e as "Últimas campanhas".
+  const rowActions = useCampaignRowActions({
+    onView, onViewScheduled, onViewRunning, onEdit, onStart, onPause, onCancel, onDelete, onDuplicate,
+  });
 
   React.useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ status, objective, segment, creator })); } catch { /* ignore */ }
-  }, [status, objective, segment, creator]);
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ status, objective, channel, segment, creator })); } catch { /* ignore */ }
+  }, [status, objective, channel, segment, creator]);
+
+  // X081 — a alternância lista/grade é preferência: sobrevive ao recarregar a tela.
+  React.useEffect(() => {
+    try { localStorage.setItem(LAYOUT_KEY, layout); } catch { /* ignore */ }
+  }, [layout]);
 
   const segmentName = (id?: string | null) => segments.find((s) => s.id === id)?.name;
 
-  const filterValues = useMemo(() => ({ status, objective, segment, creator }), [status, objective, segment, creator]);
+  const filterValues = useMemo(() => ({ status, objective, channel, segment, creator }), [status, objective, channel, segment, creator]);
   const handleFilter = (key: string, val: string) => {
     if (key === 'status') { setStatus(val); setPage(1); }
     else if (key === 'objective') { setObjective(val); setPage(1); }
+    else if (key === 'channel') { setChannel(val); setPage(1); }
     else if (key === 'segment') { setSegment(val); setPage(1); }
     else if (key === 'creator') { setCreator(val); setPage(1); }
   };
-  const hasActive = status !== 'all' || objective !== 'all' || segment !== 'all' || creator !== 'all' || search.trim() !== '';
-  const clear = () => { setSearch(''); setStatus('all'); setObjective('all'); setSegment('all'); setCreator('all'); setPage(1); };
+  /**
+   * X081 — o chip de período só aparece porque a Visão geral consome o recorte
+   * (R2-MOD-059): o intervalo recebido aqui corta a lista e os KPIs.
+   */
+  const handlePeriod = (p: string | null, range?: TalkXPeriodRange | null) => {
+    setPeriod(p);
+    setPeriodRange(range ?? null);
+    setPage(1);
+  };
+  /**
+   * ⟳ da barra — refaz a consulta de campanhas (a mesma que alimenta lista e KPIs)
+   * e gira enquanto ela busca. O `finally` solta o giro também quando a consulta
+   * falha (o erro é mostrado pelo boundary, o giro não pode ficar preso).
+   */
+  const handleRefresh = React.useCallback(async () => {
+    if (!onRetry || refreshing) return;
+    setRefreshing(true);
+    try { await onRetry(); } catch { /* o boundary mostra o erro da consulta */ } finally { setRefreshing(false); }
+  }, [onRetry, refreshing]);
+  const periodAtivo = period !== null && period !== 'all';
+  const hasActive = status !== 'all' || objective !== 'all' || channel !== 'all' || segment !== 'all' || creator !== 'all' || periodAtivo || search.trim() !== '';
+  const clear = () => { setSearch(''); setStatus('all'); setObjective('all'); setChannel('all'); setSegment('all'); setCreator('all'); setPeriod(null); setPeriodRange(null); setPage(1); };
 
   const filterDefs = useMemo(() => [
-    { key: 'status',    label: 'Todos os status',    options: Object.entries(CAMPAIGN_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
-    { key: 'objective', label: 'Todos os objetivos', options: OBJECTIVES.map((o) => ({ value: o.value, label: o.label })) },
-    { key: 'segment',   label: 'Todos os segmentos', options: [{ value: 'manual', label: 'Seleção manual' }, ...segments.map((s) => ({ value: s.id, label: s.name }))] },
-    { key: 'creator',   label: 'Todos os criadores', options: Object.entries(creators).map(([id, n]) => ({ value: id, label: n })) },
+    { key: 'status',    label: 'Todos os status',    allLabel: 'Todos os status',    options: Object.entries(CAMPAIGN_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
+    { key: 'objective', label: 'Todos os objetivos', allLabel: 'Todos os objetivos', options: OBJECTIVES.map((o) => ({ value: o.value, label: o.label })) },
+    // A15 — o motor só envia por WhatsApp: as opções são as de TALKX_CHANNELS.
+    { key: 'channel',   label: 'Todos os canais',    allLabel: 'Todos os canais',    options: TALKX_CHANNELS.map((c) => ({ value: c.value, label: c.label })) },
+    { key: 'segment',   label: 'Todos os segmentos', allLabel: 'Todos os segmentos', options: [{ value: 'manual', label: 'Seleção manual' }, ...segments.map((s) => ({ value: s.id, label: s.name }))] },
+    { key: 'creator',   label: 'Todos os criadores', allLabel: 'Todos os criadores', options: Object.entries(creators).map(([id, n]) => ({ value: id, label: n })) },
   ], [segments, creators]);
 
+  // X081 — o recorte de data vale para a lista E para os KPIs (os KPIs saem da
+  // mesma coleção recortada, não da lista inteira).
+  const noPeriodo = useMemo(() => {
+    if (!periodRange) return campaigns;
+    const from = periodRange.from.getTime();
+    const to = periodRange.to.getTime();
+    return campaigns.filter((c) => {
+      const t = new Date(campaignDate(c)).getTime();
+      return t >= from && t <= to;
+    });
+  }, [campaigns, periodRange]);
+
   const filtered = useMemo(() => {
-    let r = campaigns;
+    let r = noPeriodo;
     if (status !== 'all') r = r.filter((c) => c.status === status);
     if (objective !== 'all') r = r.filter((c) => (c.objective ?? 'engajamento') === objective);
+    // A15/T01-032 — só existe o canal WhatsApp: escolher o canal real não
+    // descarta nada; um valor fora de TALKX_CHANNELS (sessão antiga) não casa.
+    if (channel !== 'all' && !TALKX_CHANNELS.some((ch) => ch.value === channel)) r = [];
     if (segment !== 'all') r = r.filter((c) => (segment === 'manual' ? !c.segment_id : c.segment_id === segment));
     if (creator !== 'all') r = r.filter((c) => c.created_by === creator);
     if (search.trim()) {
@@ -93,25 +166,28 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
       r = r.filter((c) => c.name.toLowerCase().includes(q) || c.message_template.toLowerCase().includes(q) || (c.description ?? '').toLowerCase().includes(q));
     }
     return r;
-  }, [campaigns, status, objective, segment, creator, search]);
+  }, [noPeriodo, status, objective, channel, segment, creator, search]);
 
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const totals = useMemo(() => {
-    const sent = campaigns.reduce((a, c) => a + c.sent_count, 0);
-    const failed = campaigns.reduce((a, c) => a + c.failed_count, 0);
+    const sent = noPeriodo.reduce((a, c) => a + c.sent_count, 0);
+    const failed = noPeriodo.reduce((a, c) => a + c.failed_count, 0);
     return {
-      total: campaigns.length,
-      active: campaigns.filter((c) => c.status === 'sending' || c.status === 'paused').length,
-      completed: campaigns.filter((c) => c.status === 'completed').length,
+      total: noPeriodo.length,
+      active: noPeriodo.filter((c) => c.status === 'sending' || c.status === 'paused').length,
+      completed: noPeriodo.filter((c) => c.status === 'completed').length,
       successRate: sent + failed > 0 ? Math.round((sent / (sent + failed)) * 1000) / 10 : null,
       reached: sent,
-      bars: barsByDay(campaigns.map((c) => c.created_at)),
-      barsCompleted: barsByDay(campaigns.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
+      bars: barsByDay(noPeriodo.map((c) => c.created_at)),
+      barsCompleted: barsByDay(noPeriodo.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
     };
-  }, [campaigns]);
+  }, [noPeriodo]);
 
-  const latest = useMemo(() => [...campaigns].sort((a, b) => (b.started_at ?? b.updated_at).localeCompare(a.started_at ?? a.updated_at)).slice(0, 4), [campaigns]);
+  // X081 — o recorte de data vale para a lista, para os KPIs e para o rail
+  // ("Últimas campanhas"): um filtro que só vale em uma parte da tela mostra
+  // campanha fora do período escolhido.
+  const latest = useMemo(() => [...noPeriodo].sort((a, b) => (b.started_at ?? b.updated_at).localeCompare(a.started_at ?? a.updated_at)).slice(0, 4), [noPeriodo]);
 
   const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
 
@@ -152,6 +228,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar campanhas…"
           filters={filterDefs} values={filterValues} onFilter={handleFilter}
           hasActive={hasActive} onClear={clear}
+          period={period} onPeriodChange={handlePeriod}
+          onRefresh={onRetry ? handleRefresh : undefined} refreshing={refreshing}
           view={layout} onView={setLayout}
         />
 
@@ -269,21 +347,22 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         </Td>
                         <Td className="text-right">
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild><button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
+                                {rowActions.pendingId === c.id
+                                  ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
+                                  : <MoreVertical className="w-4 h-4" />}
+                              </button>
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              {c.status === 'scheduled' && onViewScheduled
-                                ? <DropdownMenuItem onClick={() => onViewScheduled(c)}><Eye className="w-4 h-4 mr-2" />Ver agendamento</DropdownMenuItem>
-                                : (c.status === 'sending' || c.status === 'paused') && onViewRunning
-                                ? <DropdownMenuItem onClick={() => onViewRunning(c)}><Eye className="w-4 h-4 mr-2" />Em andamento</DropdownMenuItem>
-                                : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
-                              {c.status === 'sending' && <DropdownMenuItem onClick={() => onPause(c.id)}><Pause className="w-4 h-4 mr-2" />Pausar</DropdownMenuItem>}
-                              {c.status === 'paused' && <DropdownMenuItem onClick={() => onStart(c.id)}><Play className="w-4 h-4 mr-2" />Retomar</DropdownMenuItem>}
-                              <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'cancel', c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
+                              {rowActions.actionsFor(c).map((action, i) => (
+                                <React.Fragment key={action.id}>
+                                  {action.destructive && i > 0 && <DropdownMenuSeparator />}
+                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
+                                    <action.icon className="w-4 h-4 mr-2" />{action.label}
+                                  </DropdownMenuItem>
+                                </React.Fragment>
+                              ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </Td>
@@ -327,36 +406,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* E25 — Modais de confirmação via TalkXConfirmDialog */}
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'delete'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onDelete(confirm.c.id); setConfirm(null); }}
-        icon={Trash2} iconColor="red" tone="danger"
-        title="Excluir campanha"
-        description="Esta ação não pode ser desfeita."
-        entityName={confirm?.c.name}
-        confirmLabel="Excluir campanha" cancelLabel="Cancelar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'cancel'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onCancel(confirm.c.id); setConfirm(null); }}
-        icon={Square} iconColor="red" tone="danger"
-        title="Cancelar campanha"
-        description="O envio será interrompido imediatamente e os contatos pendentes não receberão as mensagens."
-        entityName={confirm?.c.name}
-        confirmLabel="Cancelar campanha" cancelLabel="Voltar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'start'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onStart(confirm.c.id); setConfirm(null); }}
-        icon={Play} iconColor="blue" tone="primary"
-        title="Iniciar campanha?"
-        description={`As mensagens serão enviadas agora para ${fmtInt(confirm?.c.total_recipients ?? 0)} contatos. Esta ação não pode ser desfeita.`}
-        confirmLabel="Iniciar envio" cancelLabel="Cancelar"
-      />
+      {/* X080 — modais de confirmação das ações de linha (um lugar só) */}
+      {rowActions.dialogs}
     </div>
     </TalkXQueryBoundary>
   );

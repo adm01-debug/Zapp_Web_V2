@@ -158,19 +158,11 @@ export function useUserSettings() {
 
     setIsSaving(true);
     try {
+      // Payload do upsert de `user_settings`: só os campos que continuam sendo POSSE deste hook.
+      // Horário e Mensagens são POR CONEXÃO (`business_hours`/`away_messages`);
+      // Automação é GLOBAL (`global_settings` / `auto_close_config`).
       const settingsData = {
         user_id: user.id,
-        business_hours_enabled: settings.business_hours_enabled,
-        business_hours_start: settings.business_hours_start,
-        business_hours_end: settings.business_hours_end,
-        work_days: settings.work_days,
-        welcome_message: settings.welcome_message,
-        away_message: settings.away_message,
-        closing_message: settings.closing_message,
-        auto_assignment_enabled: settings.auto_assignment_enabled,
-        auto_assignment_method: settings.auto_assignment_method,
-        inactivity_timeout: settings.inactivity_timeout,
-        auto_transcription_enabled: settings.auto_transcription_enabled,
         browser_notifications_enabled: settings.browser_notifications_enabled,
         // As preferências de som (sound_enabled, quiet_hours_enabled,
         // quiet_hours_start, quiet_hours_end) pertencem ao hook canônico

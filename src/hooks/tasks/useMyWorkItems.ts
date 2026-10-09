@@ -43,7 +43,7 @@ import {
   applyTransition,
   countDoing,
 } from './workItemMachine';
-import { bucketByDue, bucketByStatus, kpis } from './workItemAggregates';
+import { bucketByDue, bucketByStatus, isOverdue, kpis } from './workItemAggregates';
 import type { WorkItem, WorkItemStatus, Priority, WorkItemContact } from './workItem.types';
 
 export type { WorkItemContact };
@@ -674,7 +674,7 @@ export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
     queryKey: [...workItemsBadgeKey(profileId), 'info'] as const,
     queryFn: async (): Promise<WorkItemsBadgeInfo> => {
       if (!profileId) return EMPTY_BADGE_INFO;
-      const now = Date.now();
+      const now = new Date();
       // R2-MOD-054 — o badge paga o MESMO teto do PostgREST: uma unica resposta
       // cortava a contagem em 1000 linhas e o numero (e a cor) do item saiam
       // sobre um lote parcial. A contagem segue no cliente, mas sobre a leitura
@@ -692,11 +692,15 @@ export function useMyWorkItemsBadgeInfo(): WorkItemsBadgeInfo {
       // Leitura parcial nunca vira "total": se nao cobriu tudo, e erro.
       if (incomplete) throw new Error('Leitura de conversation_tasks incompleta (badge)');
 
-      // Atrasadas: prazo vencido.
-      const overdue = rows.filter((r) => r.due_date != null && new Date(r.due_date).getTime() < now).length;
+      // Atrasadas: a MESMA regra do modulo (`isOverdue`) — prazo com hora vence
+      // no instante; prazo de dia inteiro (23:59/00:00) so no fim do dia local.
+      // R2-MOD-058: antes daqui saia `due_date < Date.now()` enquanto o modulo
+      // so olhava o inicio do dia, e o prazo de hoje as 9h acendia o menu sem
+      // aparecer em "Atrasadas" na lista.
+      const overdue = rows.filter((r) => isOverdue(r.due_date, now)).length;
       // Avisado e nao tratado: o alarme ja disparou (notified_at preenchido).
       const fired = rows.filter(
-        (r) => r.remind_at != null && new Date(r.remind_at).getTime() <= now && r.notified_at != null
+        (r) => r.remind_at != null && new Date(r.remind_at).getTime() <= now.getTime() && r.notified_at != null
       ).length;
       return { count: overdue + fired, hasOverdue: overdue > 0 };
     },

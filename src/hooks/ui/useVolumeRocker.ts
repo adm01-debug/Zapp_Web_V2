@@ -3,6 +3,21 @@ import type { Dispatch, KeyboardEvent, RefObject, SetStateAction } from 'react';
 
 const LONG_PRESS_MS = 400;
 
+/**
+ * Marca do painel de volume (ver `VolumeSliderPopoverContent`). O painel é montado num
+ * portal do Radix, FORA do `rootRef`; sem esta marca o hook não teria como saber o que é
+ * "dentro" e fecharia o painel no primeiro clique no próprio slider.
+ */
+export const VOLUME_PANEL_ATTRIBUTE = 'data-volume-panel';
+
+/** O nó está no controle (gatilho) ou dentro do painel montado em portal. */
+function dentroDoControle(node: EventTarget | null, root: HTMLElement | null): boolean {
+  if (!(node instanceof Element)) return false;
+  if (root?.contains(node)) return true;
+  const seletor = `[${VOLUME_PANEL_ATTRIBUTE}]`;
+  return node.closest(seletor) !== null;
+}
+
 export interface UseVolumeRockerArgs {
   /** Passo do ajuste (scroll/setas), já no domínio do caller. */
   step: number;
@@ -80,9 +95,8 @@ function aplicarAtalhoDeVolume(event: AtalhoDeVolume, acoes: AcoesDoAtalho): voi
     event.preventDefault();
     onAdjust(-step);
   } else if (event.key === 'Enter') {
-    // Equivalente de teclado do clique longo: abre o slider. `preventDefault`
-    // impede o `click` nativo do botão (que alternaria o mudo) — mudo pelo
-    // teclado é Espaço ou `M`.
+    // Equivalente de teclado do clique: abre o painel. `preventDefault` impede o
+    // `click` nativo do botão (que faria o mesmo) — mudo pelo teclado é Espaço ou `M`.
     event.preventDefault();
     setOpen(true);
   } else if (event.key === 'm' || event.key === 'M') {
@@ -93,10 +107,16 @@ function aplicarAtalhoDeVolume(event: AtalhoDeVolume, acoes: AcoesDoAtalho): voi
 
 /**
  * Lógica de interação compartilhada dos controles de volume (alertas e mídias):
- * clique = mudo/desmudo (com dedup do clique longo), clique longo = abre o slider,
- * scroll = ajuste ±step, setas ↑/↓ = ajuste ±step, Enter = abre o slider
- * (equivalente de teclado do clique longo — sem ele, o popover era inalcançável
- * por teclado nas variantes sem chevron), tecla M = mudo.
+ * clique = ABRE o painel (D01 — antes só abria com clique longo, e o usuário não
+ * descobria o slider); clique longo continua abrindo (S18: compatível); setas ↑/↓ = ajuste
+ * ±step; roda do mouse = ajuste ±step, mas SÓ com o painel aberto (B5 — rolar a sidebar
+ * não muda mais o volume sem querer); tecla `M` = mudo; Enter = abre o painel.
+ * O mudo rápido vive na tecla `M` e no botão grande dentro do painel; o clique longo
+ * mantém a abertura do painel por compatibilidade com a etapa S18 do plano.
+ *
+ * O painel fecha com clique fora, Esc e perda de foco (D02), devolvendo o foco ao
+ * gatilho — é o que o mantém utilizável também no TOQUE: o `click` que o navegador
+ * dispara ao soltar o dedo só ABRE de novo, nunca fecha (B2).
  *
  * Extraído para não duplicar o mesmo código nos dois controles (a duplicação
  * derruba o Quality Gate do SonarCloud: ≤ 3%). O `rootRef` entra como argumento e
@@ -114,7 +134,6 @@ export function useVolumeRocker({
 }: UseVolumeRockerArgs): VolumeRocker {
   const [open, setOpen] = useState(false);
   const longPressTimerRef = useRef<number | null>(null);
-  const longPressFiredRef = useRef(false);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimerRef.current !== null) {
@@ -125,18 +144,58 @@ export function useVolumeRocker({
 
   useEffect(() => clearLongPress, [clearLongPress]);
 
-  // Scroll sobre o ícone ajusta ±step. Listener nativo porque o `onWheel` do React
-  // é registrado como passivo e não consegue impedir a página de rolar junto.
+  /** Fecha o painel e, quando o foco ainda estava com ele, devolve o foco ao gatilho. */
+  const fechar = useCallback(
+    (devolverFoco: boolean) => {
+      setOpen(false);
+      if (!devolverFoco) return;
+      rootRef.current?.querySelector('button')?.focus();
+    },
+    [rootRef],
+  );
+
+  // D02 — clique fora, Esc e perda de foco fecham o painel. Escutamos no `document`
+  // porque o conteúdo do popover é um portal do Radix, fora da árvore do gatilho.
+  useEffect(() => {
+    if (!open || !enabled) return;
+    const aoApontarFora = (event: PointerEvent) => {
+      if (dentroDoControle(event.target, rootRef.current)) return;
+      fechar(true);
+    };
+    const aoTeclarEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      fechar(true);
+    };
+    const aoMudarFoco = (event: FocusEvent) => {
+      if (dentroDoControle(event.target, rootRef.current)) return;
+      // O foco já está onde o usuário o colocou: fecha sem puxá-lo de volta.
+      fechar(false);
+    };
+    document.addEventListener('pointerdown', aoApontarFora, true);
+    document.addEventListener('keydown', aoTeclarEscape);
+    document.addEventListener('focusin', aoMudarFoco);
+    return () => {
+      document.removeEventListener('pointerdown', aoApontarFora, true);
+      document.removeEventListener('keydown', aoTeclarEscape);
+      document.removeEventListener('focusin', aoMudarFoco);
+    };
+  }, [open, enabled, fechar, rootRef]);
+
+  // Scroll sobre o ícone ajusta ±step, mas só com o painel ABERTO (B5): rolar a sidebar
+  // com o cursor sobre o ícone mudava o volume sem o usuário pedir. Listener nativo
+  // porque o `onWheel` do React é registrado como passivo e não consegue impedir a
+  // página de rolar junto.
   useEffect(() => {
     const element = rootRef.current;
-    if (!element || !wheelEnabled) return;
+    if (!element || !wheelEnabled || !open) return;
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
       onAdjust(event.deltaY < 0 ? step : -step);
     };
     element.addEventListener('wheel', handleWheel, { passive: false });
     return () => element.removeEventListener('wheel', handleWheel);
-  }, [rootRef, onAdjust, step, wheelEnabled]);
+  }, [rootRef, onAdjust, step, wheelEnabled, open]);
 
   // E16 — atalhos com o foco em qualquer parte do player. Nativo (não `onKeyDown` do
   // React) porque o alvo aqui é o container, e o teclado do React só chegaria ao nó
@@ -154,21 +213,18 @@ export function useVolumeRocker({
 
   const handleTriggerClick = useCallback(() => {
     if (!enabled) return;
-    if (longPressFiredRef.current) {
-      // O clique longo já abriu o slider: o click do pointerup não muta.
-      longPressFiredRef.current = false;
-      return;
-    }
-    onToggleMute();
-  }, [enabled, onToggleMute]);
+    // D01 — o clique comum ABRE o painel. O `click` que o navegador dispara depois do
+    // clique longo (e ao soltar o dedo, no toque) cai aqui: abrir de novo é inofensivo,
+    // então o painel não fecha ao soltar o dedo (B2).
+    setOpen(true);
+  }, [enabled]);
 
   const handlePointerDown = useCallback(() => {
     if (!enabled) return;
-    longPressFiredRef.current = false;
     clearLongPress();
     longPressTimerRef.current = window.setTimeout(() => {
       longPressTimerRef.current = null;
-      longPressFiredRef.current = true;
+      // S18 do plano: clique longo continua abrindo o painel (compatibilidade).
       setOpen(true);
     }, LONG_PRESS_MS);
   }, [enabled, clearLongPress]);
