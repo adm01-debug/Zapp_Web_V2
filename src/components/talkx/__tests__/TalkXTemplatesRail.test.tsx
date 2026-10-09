@@ -88,18 +88,19 @@ import {
   CONVERSION_ROW_LIMIT,
 } from '@/hooks/integrations/useTalkXTemplatesConversion';
 
-/** Ranking com base mínima: Oferta VIP (32,4%) > Pós-venda (20,8%) > Boas-vindas (12%). */
-const rankingComBase = {
-  items: [
-    { templateId: 'tpl-alto', sent: 300, replied: 97, replyRatePct: 32.4 },
-    { templateId: 'tpl-meio', sent: 250, replied: 52, replyRatePct: 20.8 },
-    { templateId: 'tpl-baixo', sent: 100, replied: 12, replyRatePct: 12 },
-  ],
-  hasBase: true,
-  truncated: false,
-};
+/**
+ * Ranking com base mínima, calculado pelo CÓDIGO DE PRODUÇÃO (`buildConversionRanking`) —
+ * nenhum número de taxa é escrito à mão aqui: Oferta VIP 32,4% > Pós-venda 20,8% >
+ * Boas-vindas 10,0% (todas acima dos 50 envios da base mínima).
+ */
+const rankingComBase = buildConversionRanking([
+  { template_id: 'tpl-alto', sent_count: 250, replied_count: 81 },
+  { template_id: 'tpl-meio', sent_count: 240, replied_count: 50 },
+  { template_id: 'tpl-baixo', sent_count: 60, replied_count: 6 },
+]);
 
-const semBase = { items: [], hasBase: false, truncated: false };
+/** Sem base mínima: 49 envios não entram no ranking (mesmo cálculo de produção). */
+const semBase = buildConversionRanking([{ template_id: 'tpl-baixo', sent_count: 49, replied_count: 30 }]);
 
 beforeEach(() => {
   cleanup();
@@ -126,7 +127,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
     expect(within(painel()).getAllByText(/↑ .* de resposta$/).map((el) => el.textContent)).toEqual([
       '↑ 32,4% de resposta',
       '↑ 20,8% de resposta',
-      '↑ 12,0% de resposta',
+      '↑ 10,0% de resposta',
     ]);
   });
 
