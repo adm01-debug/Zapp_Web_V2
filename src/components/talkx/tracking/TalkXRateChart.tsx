@@ -111,7 +111,7 @@ export function TalkXRateChart({
         query={query}
         entity="estatísticas de envio"
         onRetry={onRetry}
-        skeleton={<div className="h-[160px] mt-3 rounded-xl bg-muted/40 animate-pulse" />}
+        skeleton={<div className="h-[160px] mt-3 rounded-xl bg-muted/40 motion-safe:animate-pulse" />}
         isEmpty={semEnvio}
         empty={<div className="h-[160px] mt-3 flex items-center justify-center text-xs text-muted-foreground">Sem envios neste período.</div>}
       >
