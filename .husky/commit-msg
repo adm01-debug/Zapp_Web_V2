@@ -1,0 +1,5 @@
+#!/bin/sh
+# Gate de mensagem de commit: a funcao do commitlint SEM dependencia nova (as regras da 2a
+# leva proibem instalar lint-staged/commitlint). O git passa o caminho do arquivo de mensagem
+# em $1; o padrao cobrado e o de CONTRIBUTING.md > Padrao de Commits.
+node scripts/ci/commit-msg-lint.mjs "$1"

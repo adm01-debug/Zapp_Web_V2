@@ -1,0 +1,7 @@
+{
+  "lock": {
+    "path": "../../scripts/ci/deno.lock",
+    "frozen": true
+  },
+  "nodeModulesDir": "none"
+}

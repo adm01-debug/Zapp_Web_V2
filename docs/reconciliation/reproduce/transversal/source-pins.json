@@ -1,0 +1,7 @@
+{
+  "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "source_sha256": {
+    "supabase/functions/_shared/evolution-go-routes.ts": "8da3c5c3c387949f5dc1143a1f1ca70412b9d4ff1d200754f09c0930f52f954d",
+    "supabase/functions/_shared/evolution-send.ts": "02c4039199552dd1576b361fb8ecafa601a23f01f9c3609b8a3e36285aeb24d8"
+  }
+}

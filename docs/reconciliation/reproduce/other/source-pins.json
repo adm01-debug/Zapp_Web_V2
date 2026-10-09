@@ -1,0 +1,9 @@
+{
+  "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "source_sha256": {
+    "src/components/catalog/catalogExport.ts": "d32cb54b7e9dc3810a48a08b2bb369fdf591e007be2757ed7ea84f50a4aa165c",
+    "src/components/inbox/tabs/FilesTab.tsx": "45986a530fa77ac6fe62b75415e46853893354bee6dbdae6c275f052e8c4e4d5",
+    "src/hooks/chat/useFilesActions.ts": "437179f65e969801f35cd3f5fed0430d5a0c8304a0d66894571763900ea90366",
+    "src/hooks/integrations/useGmail.ts": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2"
+  }
+}
