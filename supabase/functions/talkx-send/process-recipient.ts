@@ -31,6 +31,102 @@ import {
 } from "../_shared/effect-reconcile.ts";
 
 /**
+ * X062 — buckets que o motor do Talk X pode precisar ASSINAR no envio. O
+ * `resolvePrivateBucketUrl` do kernel reconhece só `whatsapp-media` e
+ * `audio-messages`; o rascunho do Talk X (X061) grava a mídia no bucket próprio
+ * `talkx-media`, que entra nesta lista.
+ */
+export const TALKX_MEDIA_BUCKETS = ["whatsapp-media", "audio-messages", "talkx-media"] as const;
+
+/** Bucket próprio do Talk X (X061) — a referência nua é `<bucket>/<caminho>`. */
+export const TALKX_MEDIA_BUCKET = "talkx-media";
+
+/** Assinador estrutural do Storage (só o que o resolvedor usa). */
+interface TalkxStorageSigner {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresIn: number,
+      ) => PromiseLike<{ data?: { signedUrl?: string } | null; error?: unknown }>;
+    };
+  };
+}
+
+/**
+ * X062 — reconhece a referência NUA `talkx-media/<caminho>` gravada pelo
+ * rascunho (além de uma URL completa). Um caminho com `..`, `\`, `\0` ou
+ * segmento vazio é recusado (mesma postura do parser do kernel): devolve `null`
+ * e o chamador segue com o valor original — nada inseguro vira objeto assinado.
+ */
+export function parseTalkxMediaReference(raw: string): { bucket: string; path: string } | null {
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  // URL completa (tem esquema) cai no caminho do kernel, não aqui.
+  if (trimmed === "" || /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) return null;
+  const prefix = `${TALKX_MEDIA_BUCKET}/`;
+  if (!trimmed.startsWith(prefix)) return null;
+  const path = trimmed.slice(prefix.length);
+  const safePath = path.length > 0 && !path.includes("\\") && !path.includes("\0") &&
+    path.split("/").every((segment) => segment !== "" && segment !== "." && segment !== "..");
+  if (!safePath) return null;
+  return { bucket: TALKX_MEDIA_BUCKET, path };
+}
+
+/**
+ * X062 — resolvedor ÚNICO de mídia do Talk X: usado pelo envio de campanha
+ * (`mediaForSend`), pelo envio por destinatário e pelo `action=test`. Aceita a
+ * URL completa (assinando quando é objeto privado de um dos buckets do motor)
+ * OU a referência nua `talkx-media/<caminho>`. A falha de assinatura SOBE (não
+ * cai no fallback da URL crua): o chamador trata como erro ANTERIOR ao POST e
+ * nunca envia sem a mídia.
+ */
+export async function resolveTalkxMediaUrl(
+  supabase: TalkxStorageSigner,
+  rawUrl: string,
+  supabaseUrl?: string,
+): Promise<string> {
+  const reference = parseTalkxMediaReference(rawUrl);
+  if (!reference) {
+    return resolvePrivateBucketUrl(supabase, rawUrl, [...TALKX_MEDIA_BUCKETS], supabaseUrl);
+  }
+  const { data, error } = await supabase.storage
+    .from(reference.bucket)
+    .createSignedUrl(reference.path, 300);
+  if (error) throw error;
+  if (!data?.signedUrl) {
+    throw new Error(`Unable to sign private object from bucket ${reference.bucket}`);
+  }
+  return data.signedUrl;
+}
+
+/**
+ * X062 — nome do arquivo do DOCUMENTO enviado. Fonte, nesta ordem: o nome que o
+ * snapshot guardar (`media_file_name_snapshot`, quando o banco o trouxer) e, na
+ * falta dele, o ULTIMO segmento do caminho da midia
+ * (`talkx-media/campanha/contrato.pdf` -> `contrato.pdf`), sem query/fragmento e
+ * ja decodificado. Devolve `null` quando nao ha segmento utilizavel: o nome vai
+ * ao provedor SO no tipo `document`, entao nunca inventamos um nome fixo.
+ */
+export function mediaFileNameFromReference(rawUrl: string | null): string | null {
+  if (typeof rawUrl !== "string") return null;
+  const withoutQuery = rawUrl.split(/[?#]/, 1)[0].trim();
+  if (withoutQuery === "") return null;
+  const segments = withoutQuery.split("/");
+  const rawLast = segments[segments.length - 1];
+  if (rawLast === undefined || rawLast === "") return null;
+  let name: string;
+  try {
+    name = decodeURIComponent(rawLast);
+  } catch {
+    return null;
+  }
+  const safe = name !== "" && name !== "." && name !== ".." &&
+    !name.includes("\\") && !name.includes("\0");
+  return safe ? name : null;
+}
+
+/**
  * FNV-1a de 32 bits — hash ESTÁVEL do id do destinatário (X020). Substitui o
  * `secureRandomFloat()` do sorteio A/B: o mesmo destinatário cai SEMPRE na
  * mesma variante (retry, auditoria e export herdam a decisão), e a proporção
@@ -102,6 +198,8 @@ export interface ProcessRecipientRow {
   message_snapshot_at?: string | null;
   media_url_snapshot?: string | null;
   media_type_snapshot?: string | null;
+  /** X062 (X061): nome do arquivo gravado ao lado da mídia no snapshot. */
+  media_file_name_snapshot?: string | null;
   variant_id?: string | null;
   contacts?: ProcessRecipientContact | null;
 }
@@ -229,6 +327,8 @@ export async function processRecipient(
   let personalizedMsg: string;
   let effectiveMediaUrl: string | null;
   let effectiveMediaType: string | null;
+  // X062: nome do arquivo do DOCUMENTO, quando o snapshot já o guardou (X061).
+  let effectiveMediaFileName: string | null;
 
   if (hasSnapshot) {
     personalizedMsg = recipient.personalized_message as string;
@@ -238,6 +338,9 @@ export async function processRecipient(
     effectiveMediaType = typeof recipient.media_type_snapshot === "string"
       ? recipient.media_type_snapshot
       : null;
+    effectiveMediaFileName = typeof recipient.media_file_name_snapshot === "string"
+      ? recipient.media_file_name_snapshot
+      : mediaFileNameFromReference(effectiveMediaUrl);
   } else {
     const existingVid = typeof recipient.variant_id === "string" ? recipient.variant_id : null;
     const legacyPersonalizedMessage = typeof recipient.personalized_message === "string"
@@ -346,6 +449,9 @@ export async function processRecipient(
     personalizedMsg = snapshot.personalized_message;
     effectiveMediaUrl = typeof snapshot.media_url_snapshot === "string" ? snapshot.media_url_snapshot : null;
     effectiveMediaType = typeof snapshot.media_type_snapshot === "string" ? snapshot.media_type_snapshot : null;
+    effectiveMediaFileName = typeof snapshot.media_file_name_snapshot === "string"
+      ? snapshot.media_file_name_snapshot
+      : mediaFileNameFromReference(effectiveMediaUrl);
   }
   if ((effectiveMediaUrl === null) !== (effectiveMediaType === null)) {
     throw new Error("talkx_invalid_persisted_media_snapshot");
@@ -462,7 +568,7 @@ export async function processRecipient(
     if (recipientHasMedia) {
       const mediaEndpoint = getMediaEndpoint(effectiveMediaType!);
       const mediaSource = (effectiveMediaUrl !== campaign.media_url)
-        ? await resolvePrivateBucketUrl(supabase, effectiveMediaUrl!, undefined, supabaseUrl)
+        ? await resolveTalkxMediaUrl(supabase, effectiveMediaUrl!, supabaseUrl)
         : await mediaForSend();
       await markProviderDispatch();
       providerPostAttempted = true;
@@ -470,7 +576,18 @@ export async function processRecipient(
         `/message/${mediaEndpoint}/${beforeSendInstanceId}`,
         effectiveMediaType === "audio"
           ? { number: phone, audio: mediaSource, delay: 0 }
-          : { number: phone, mediatype: effectiveMediaType!, media: mediaSource, caption: personalizedMsg, delay: 0 },
+          : {
+            number: phone,
+            mediatype: effectiveMediaType!,
+            media: mediaSource,
+            caption: personalizedMsg,
+            delay: 0,
+            // X062: o documento vai com o nome do arquivo do snapshot — a rota
+            // GO aceita `filename` e sem ele o PDF chega sem nome.
+            ...(effectiveMediaType === "document" && effectiveMediaFileName
+              ? { fileName: effectiveMediaFileName }
+              : {}),
+          },
         undefined, undefined, abortCtrl.signal, instanceToken ?? undefined,
       );
     } else {

@@ -9,6 +9,11 @@ import {
   makeContinueRecipients, makeContinueDeps, mockProviderRecording,
   thenableQB, makeEventRecordingQB,
 } from './_test-utils.ts';
+import {
+  mediaFileNameFromReference,
+  parseTalkxMediaReference,
+  resolveTalkxMediaUrl,
+} from './process-recipient.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -1130,5 +1135,214 @@ Deno.test("R2-INF-016 start: falha do kick → 500 sanitizado (sem detalhe do ba
   } finally {
     console.error = originalError;
     provider.restore();
+  }
+});
+
+
+// ---------------------------------------------------------------------------
+// X062 — a mídia do bucket é ASSINADA no envio e o DOCUMENTO leva o nome do arquivo.
+// ---------------------------------------------------------------------------
+
+/** Signer falso do Storage: registra os pedidos e devolve uma URL assinada. */
+function makeStorageSigner(opts: { fail?: boolean } = {}) {
+  const calls: Array<{ bucket: string; path: string; expiresIn: number }> = [];
+  return {
+    calls,
+    storage: {
+      from(bucket: string) {
+        return {
+          createSignedUrl(path: string, expiresIn: number) {
+            calls.push({ bucket, path, expiresIn });
+            if (opts.fail) {
+              return Promise.resolve({ data: null, error: { message: 'sign_failed' } });
+            }
+            return Promise.resolve({
+              data: {
+                signedUrl:
+                  `https://supabase-test.example/storage/v1/object/sign/${bucket}/${path}?token=x062`,
+              },
+              error: null,
+            });
+          },
+        };
+      },
+    },
+  };
+}
+
+Deno.test('X062 parseTalkxMediaReference: aceita o caminho nu do bucket do Talk X', () => {
+  const ref = parseTalkxMediaReference('talkx-media/campanhas/2026/contrato.pdf');
+  assert(ref !== null, 'o caminho nu do bucket do Talk X tem de ser aceito');
+  assert(ref?.bucket === 'talkx-media', `bucket inesperado: ${JSON.stringify(ref)}`);
+  assert(ref?.path === 'campanhas/2026/contrato.pdf', `caminho inesperado: ${JSON.stringify(ref)}`);
+});
+
+Deno.test('X062 parseTalkxMediaReference: recusa travessia, barra invertida, segmento vazio e URL completa', () => {
+  const recusados = [
+    'talkx-media/../segredo.pdf',
+    'talkx-media/a//b.pdf',
+    'talkx-media/pasta\\arquivo.pdf',
+    'talkx-media/',
+    'whatsapp-media/arquivo.pdf',
+    'https://supabase-test.example/storage/v1/object/sign/talkx-media/a/b.pdf?token=x',
+  ];
+  for (const entrada of recusados) {
+    assert(parseTalkxMediaReference(entrada) === null, `deveria recusar ${JSON.stringify(entrada)}`);
+  }
+});
+
+Deno.test('X062 mediaFileNameFromReference: o nome sai do último segmento, sem query', () => {
+  assert(mediaFileNameFromReference('talkx-media/campanhas/contrato.pdf') === 'contrato.pdf', 'caminho nu');
+  assert(
+    mediaFileNameFromReference('https://supabase-test.example/storage/v1/object/sign/talkx-media/c/contrato 2026.pdf?token=abc') === 'contrato 2026.pdf',
+    'a query da URL assinada não pode virar parte do nome',
+  );
+  assert(
+    mediaFileNameFromReference('https://x/storage/v1/object/public/whatsapp-media/a/b/PROPOSTA%20FINAL.pdf') === 'PROPOSTA FINAL.pdf',
+    'o segmento percent-encoded tem de ser decodificado',
+  );
+  assert(mediaFileNameFromReference('talkx-media/pasta/') === null, 'sem segmento final');
+  assert(mediaFileNameFromReference('') === null, 'vazio');
+  assert(mediaFileNameFromReference(null) === null, 'nulo');
+});
+
+Deno.test('X062 resolveTalkxMediaUrl: caminho nu é assinado no bucket talkx-media', async () => {
+  const signer = makeStorageSigner();
+  const url = await resolveTalkxMediaUrl(
+    signer,
+    'talkx-media/campanhas/contrato.pdf',
+    'https://supabase-test.example',
+  );
+  assert(signer.calls.length === 1, `esperado 1 assinatura, houve ${signer.calls.length}`);
+  assert(signer.calls[0].bucket === 'talkx-media', `bucket assinado: ${signer.calls[0].bucket}`);
+  assert(signer.calls[0].path === 'campanhas/contrato.pdf', `caminho assinado: ${signer.calls[0].path}`);
+  assert(
+    url.includes('/object/sign/talkx-media/campanhas/contrato.pdf'),
+    `URL assinada inesperada: ${url}`,
+  );
+});
+
+Deno.test('X062 resolveTalkxMediaUrl: URL privada do kernel (whatsapp-media) continua sendo assinada', async () => {
+  const signer = makeStorageSigner();
+  const crua = 'https://supabase-test.example/storage/v1/object/sign/whatsapp-media/foto.jpg?token=velho';
+  const url = await resolveTalkxMediaUrl(signer, crua, 'https://supabase-test.example');
+  assert(signer.calls.length === 1, `esperado 1 assinatura, houve ${signer.calls.length}`);
+  assert(signer.calls[0].bucket === 'whatsapp-media', `bucket assinado: ${signer.calls[0].bucket}`);
+  assert(signer.calls[0].path === 'foto.jpg', `caminho assinado: ${signer.calls[0].path}`);
+  assert(url !== crua, 'uma URL assinada expirada não pode ser devolvida como veio');
+});
+
+Deno.test('X062 resolveTalkxMediaUrl: caminho inseguro não vira objeto assinado (devolve a origem)', async () => {
+  const signer = makeStorageSigner();
+  const crua = 'talkx-media/../segredo.pdf';
+  const url = await resolveTalkxMediaUrl(signer, crua, 'https://supabase-test.example');
+  assert(signer.calls.length === 0, `não pode assinar caminho inseguro (houve ${signer.calls.length})`);
+  assert(url === crua, `tem de devolver o valor original: ${url}`);
+});
+
+Deno.test('X062 resolveTalkxMediaUrl: falha do Storage SOBE em vez de devolver a URL crua', async () => {
+  const signer = makeStorageSigner({ fail: true });
+  let erro: unknown = null;
+  try {
+    await resolveTalkxMediaUrl(signer, 'talkx-media/campanhas/contrato.pdf', 'https://supabase-test.example');
+  } catch (e) {
+    erro = e;
+  }
+  assert(erro !== null, 'assinatura que falha não pode devolver a URL crua para o provedor');
+});
+
+Deno.test('X062 action=test: documento vai com a URL ASSINADA e o nome do arquivo', async () => {
+  setDispatchEnv();
+  const provider = mockProviderRecording();
+  const signer = makeStorageSigner();
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: {
+        action: 'test',
+        templateContent: 'Segue o contrato, {{nome}}',
+        phone: '+5511999990099',
+        mediaUrl: 'talkx-media/campanhas/contrato.pdf',
+        mediaType: 'document',
+      },
+    });
+    const res = await handleTalkxSend(req, makeTestActionDeps(makeConnection(), { storage: signer.storage }));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+    const posts = provider.posts.filter((p) => p.url.includes('/message/'));
+    assert(posts.length === 1, `esperado 1 POST ao provedor, houve ${posts.length}`);
+    assert(
+      posts[0].body.media === 'https://supabase-test.example/storage/v1/object/sign/talkx-media/campanhas/contrato.pdf?token=x062',
+      `o provedor tem de receber a URL ASSINADA, recebeu: ${String(posts[0].body.media)}`,
+    );
+    assert(posts[0].body.fileName === 'contrato.pdf', `fileName ausente no envio: ${JSON.stringify(posts[0].body)}`);
+    assert(signer.calls.length === 1, `esperado 1 assinatura, houve ${signer.calls.length}`);
+  } finally {
+    provider.restore();
+  }
+});
+
+Deno.test('X062 action=test: falha ao assinar a mídia → 502 e NENHUM POST ao provedor', async () => {
+  setDispatchEnv();
+  const provider = mockProviderRecording();
+  const signer = makeStorageSigner({ fail: true });
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: {
+        action: 'test',
+        templateContent: 'Segue o contrato, {{nome}}',
+        phone: '+5511999990098',
+        mediaUrl: 'talkx-media/campanhas/contrato.pdf',
+        mediaType: 'document',
+      },
+    });
+    const res = await handleTalkxSend(req, makeTestActionDeps(makeConnection(), { storage: signer.storage }));
+    assert(res.status === 502, `esperado 502, recebido ${res.status}`);
+    const posts = provider.posts.filter((p) => p.url.includes('/message/'));
+    assert(posts.length === 0, `não pode POSTar sem a mídia (houve ${posts.length} POSTs)`);
+  } finally {
+    provider.restore();
+  }
+});
+
+
+Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o nome do arquivo', async () => {
+  setDispatchEnv();
+  const clock = installFakeClock(1_700_000_000_000);
+  const provider = mockProviderRecording();
+  const signer = makeStorageSigner();
+  const { deps, ctx } = makeContinueDeps({
+    recipients: makeContinueRecipients(1),
+    clock,
+    cronSecret: TEST_CRON_SECRET,
+    // O snapshot do destinatário é a fonte da mídia do primeiro envio.
+    snapshot: {
+      media_url_snapshot: 'talkx-media/campanhas/contrato.pdf',
+      media_type_snapshot: 'document',
+    },
+    storage: signer.storage,
+  });
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: 'continue', campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+
+    const posts = messagePosts(provider.posts);
+    assert(posts.length === 1, `esperado 1 envio, recebido ${posts.length}`);
+    assert(posts[0].body.mediatype === 'document', `mediatype inesperado: ${JSON.stringify(posts[0].body)}`);
+    assert(
+      posts[0].body.media === 'https://supabase-test.example/storage/v1/object/sign/talkx-media/campanhas/contrato.pdf?token=x062',
+      `o destino tem de receber a URL ASSINADA do bucket, recebeu: ${String(posts[0].body.media)}`,
+    );
+    assert(posts[0].body.fileName === 'contrato.pdf', `fileName ausente: ${JSON.stringify(posts[0].body)}`);
+    assert(signer.calls.some((c) => c.bucket === 'talkx-media' && c.path === 'campanhas/contrato.pdf'),
+      `a assinatura tem de ser do objeto do bucket talkx-media: ${JSON.stringify(signer.calls)}`);
+    assert(ctx.queue.length === 0, `o destinatário enviado sai da fila (restaram ${ctx.queue.length})`);
+  } finally {
+    provider.restore();
+    clock.restore();
   }
 });
