@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/ui/use-toast';
 import { Plus, X, Brain, Users, Star, Sparkles, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 
 const SKILL_SUGGESTIONS = [
   'Português', 'Inglês', 'Espanhol', 'Suporte Técnico', 'Vendas',
@@ -124,7 +125,7 @@ export function SkillBasedRoutingSettings() {
    * O filtro do contato que aguarda é o mesmo de QueueService.fetchWaitingCounts.
    */
   const assignBySkill = useMutation({
-    mutationFn: async (queueId: string) => {
+    mutationFn: async (queueId: string): Promise<{ agentId: string | null; contactId: string | null; alreadyTaken?: boolean }> => {
       const { data: agentId, error: agentError } = await supabase.rpc('skill_based_assign', {
         p_queue_id: queueId,
       });
@@ -144,23 +145,45 @@ export function SkillBasedRoutingSettings() {
       if (waitingError) throw waitingError;
       if (!waiting) return { agentId, contactId: null };
 
-      const { error: assignError } = await supabase
+      // A escrita repete a guarda de "aguardando": entre a leitura acima e este
+      // UPDATE, outro agente ou o trigger auto_assign_to_queue_agent pode ter
+      // pegado o contato. O `.select('id')` diz se alguma linha foi alterada.
+      const { data: assigned, error: assignError } = await supabase
         .from('contacts')
         .update({ assigned_to: agentId })
-        .eq('id', waiting.id);
+        .eq('id', waiting.id)
+        .eq('queue_id', queueId)
+        .is('assigned_to', null)
+        .is('deleted_at', null)
+        .not('conversation_status', 'in', '(resolved,archived)')
+        .select('id');
       if (assignError) throw assignError;
+      if (!assigned || assigned.length === 0) {
+        return { agentId, contactId: null, alreadyTaken: true };
+      }
 
       return { agentId, contactId: waiting.id as string };
     },
-    onSuccess: ({ agentId, contactId }) => {
+    onSuccess: ({ agentId, contactId, alreadyTaken }) => {
       if (!agentId) {
         toast({ title: 'Nenhum agente ativo nesta fila', variant: 'destructive' });
+        return;
+      }
+      if (alreadyTaken) {
+        toast({
+          title: 'O contato já foi atribuído',
+          description: 'Outro agente ou a distribuição automática pegou o contato antes. Tente de novo para o próximo da fila.',
+        });
         return;
       }
       if (!contactId) {
         toast({ title: 'Nenhum contato aguardando nesta fila' });
         return;
       }
+      // A fila e as listas de contatos mudaram: sem isto a tela segue com a fila velha.
+      invalidateContactsAggregates(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['warroom-queues'] });
+      queryClient.invalidateQueries({ queryKey: ['queue-position'] });
       toast({ title: 'Contato atribuído ao agente da fila' });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
