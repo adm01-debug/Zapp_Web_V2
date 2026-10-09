@@ -18,36 +18,43 @@
  * animado recebeu de fato.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { ComponentType } from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { SearchMyCallsRow } from '@/hooks/calls/useMyCalls';
 
 const reduzirMovimento = vi.hoisted(() => ({ value: false }));
 
+/** Um componente do `motion` (`motion.div`, `motion.tr`, ...). */
+type Componente = ComponentType<Record<string, unknown>>;
+
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
-  const mapa = new Map<string, unknown>();
-  const motion = new Proxy(actual.motion, {
+  const mapa = new Map<string, Componente>();
+  const embrulhar = (Real: Componente): Componente => (props) => {
+    const tap = props.whileTap as { scale?: number } | undefined;
+    const duracao = (props.transition as { duration?: number } | undefined)?.duration;
+    return (
+      <Real
+        {...props}
+        data-while-tap={tap ? `scale:${String(tap.scale)}` : 'nenhum'}
+        data-motion-duracao={duracao === undefined ? 'nenhuma' : String(duracao)}
+      />
+    );
+  };
+  // O `motion` de verdade continua por baixo: o embrulho só expõe no DOM o gesto
+  // (`data-while-tap`) e a duração (`data-motion-duracao`) que cada elemento recebeu.
+  const motion = new Proxy(actual.motion as unknown as Record<string, Componente>, {
     get(alvo, tag) {
-      if (typeof tag !== 'string') return (alvo as Record<string | symbol, unknown>)[tag];
-      if (!mapa.has(tag)) {
-        const Real = (alvo as unknown as Record<string, React.ComponentType<Record<string, unknown>>>)[tag];
-        const Envolvido = (props: Record<string, unknown>) => {
-          const tap = props.whileTap as { scale?: number } | undefined;
-          const duracao = (props.transition as { duration?: number } | undefined)?.duration;
-          return (
-            <Real
-              {...props}
-              data-while-tap={tap ? `scale:${String(tap.scale)}` : 'nenhum'}
-              data-motion-duracao={duracao === undefined ? 'nenhuma' : String(duracao)}
-            />
-          );
-        };
-        mapa.set(tag, Envolvido);
-      }
-      return mapa.get(tag);
+      if (typeof tag !== 'string') return Reflect.get(alvo, tag) as Componente;
+      if (!mapa.has(tag)) mapa.set(tag, embrulhar(alvo[tag]));
+      return mapa.get(tag) as Componente;
     },
   });
-  return { ...actual, motion, useReducedMotion: () => reduzirMovimento.value };
+  return {
+    ...actual,
+    motion: motion as unknown as typeof actual.motion,
+    useReducedMotion: () => reduzirMovimento.value,
+  };
 });
 
 import { CallKpiCard } from '../CallKpiCard';
