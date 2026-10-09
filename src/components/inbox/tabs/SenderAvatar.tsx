@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 
@@ -14,20 +13,18 @@ export interface SenderAvatarProps {
   colorKey?: string;
   /** sm = 20 px, md = 28 px (as duas medidas do mockup). */
   size?: SenderAvatarSize;
-  /** Selo do canal no canto inferior direito da foto (D05). */
-  channelBadge?: 'whatsapp' | null;
   /** Mostra o nome ao lado, em uma linha com reticências (D03). */
   showName?: boolean;
 }
 
 /** sm = 20 px (`w-5`/`h-5`), md = 28 px (`w-7`/`h-7`) — Tailwind spacing de 4 px. */
 const SIZES = {
-  sm: { circle: 'w-5 h-5', px: 20, initials: 'text-3xs', badge: 'w-2.5 h-2.5', badgeIcon: 'w-1.5 h-1.5' },
-  md: { circle: 'w-7 h-7', px: 28, initials: 'text-2xs', badge: 'w-3 h-3', badgeIcon: 'w-2 h-2' },
+  sm: { circle: 'w-5 h-5', px: 20, initials: 'text-3xs' },
+  md: { circle: 'w-7 h-7', px: 28, initials: 'text-2xs' },
 } as const;
 
 /**
- * Foto de quem enviou o arquivo (D02/D03/D05), para a linha do remetente do cartão.
+ * Foto de quem enviou o arquivo (D02/D03), para a linha do remetente do cartão.
  * Não anima nada de propósito: nada pisca ao recarregar a mesma foto (a `<img>` não é
  * remontada nem troca de `key`) e não há movimento para reduzir sob `prefers-reduced-motion`.
  */
@@ -36,7 +33,6 @@ export function SenderAvatar({
   avatarUrl = null,
   colorKey,
   size = 'sm',
-  channelBadge = null,
   showName = false,
 }: SenderAvatarProps) {
   // Guarda a URL que falhou (e não um simples booleano): a mesma foto quebrada não é
@@ -83,19 +79,6 @@ export function SenderAvatar({
             )}
           >
             {iniciais}
-          </span>
-        )}
-
-        {channelBadge === 'whatsapp' && (
-          <span
-            data-testid="sender-avatar-channel-badge"
-            className={cn(
-              'absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full bg-card ring-1 ring-border',
-              medida.badge,
-            )}
-          >
-            {/* Cor via `text-whatsapp-dark` (--whatsapp-dark): 3,73:1 no claro e 6,48:1 no escuro. */}
-            <MessageCircle aria-hidden="true" className={cn('text-whatsapp-dark', medida.badgeIcon)} />
           </span>
         )}
       </span>

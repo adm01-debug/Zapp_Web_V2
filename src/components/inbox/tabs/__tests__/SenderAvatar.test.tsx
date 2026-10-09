@@ -92,18 +92,17 @@ describe('SenderAvatar (etapas S14–S21)', () => {
     expect(screen.getByTestId('sender-avatar-initials').className).toContain(semChave.bg);
   });
 
-  it('S17: o selo do canal só aparece com channelBadge="whatsapp"', () => {
-    const comSelo = semear({ channelBadge: 'whatsapp' });
-    expect(screen.getByTestId('sender-avatar-channel-badge')).toBeInTheDocument();
-    // O ícone do selo é decorativo: quem nomeia o conjunto é o aria-label do avatar.
-    expect(screen.getByTestId('sender-avatar-channel-badge').querySelector('svg')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    );
-    comSelo.unmount();
+  // S17 CANCELADA (D05, decisão do dono em 07/10): nenhum selo de canal/origem.
+  it('S17: o avatar não tem selo de canal nem de origem (só foto/iniciais e o nome)', () => {
+    const { container } = semear({ avatarUrl: FOTO, showName: true });
 
-    semear();
-    expect(screen.queryByTestId('sender-avatar-channel-badge')).toBeNull();
+    // O selo era o único svg do componente e trazia o canal no data-testid.
+    expect(container.querySelector('svg')).toBeNull();
+    expect(container.querySelectorAll('[data-testid*="badge"]')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-testid*="channel"]')).toHaveLength(0);
+    expect(container.innerHTML).not.toMatch(/whatsapp|canal|channel|origem/i);
+    // O círculo tem exatamente um filho: a foto (ou as iniciais, sem foto).
+    expect(screen.getByTestId('sender-avatar-circle').children).toHaveLength(1);
   });
 
   it('S18: title e aria-label dizem quem enviou, com foto e sem foto', () => {
@@ -163,7 +162,7 @@ describe('SenderAvatar (etapas S14–S21)', () => {
   });
 
   it('S14–S21: não há animação no componente (prefers-reduced-motion não tem o que reduzir)', () => {
-    const { container } = render(<SenderAvatar name="Ana Souza" avatarUrl={FOTO} channelBadge="whatsapp" showName />);
+    const { container } = render(<SenderAvatar name="Ana Souza" avatarUrl={FOTO} showName />);
 
     expect(container.innerHTML).not.toMatch(/transition|animate-|duration-\d/);
   });
