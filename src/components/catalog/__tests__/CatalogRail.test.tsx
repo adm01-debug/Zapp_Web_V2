@@ -8,6 +8,13 @@ import type { CatalogSendEventRow } from '@/hooks/integrations/useCatalogRecentS
 // CT-21: o clique em "Exportar catálogo" tem de chamar o builder do CT-20.
 // Mock parcial: só a orquestração (que fala com a edge) é substituída — os
 // builders puros e as constantes continuam os reais.
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('../catalogExport', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../catalogExport')>();
   return {
@@ -208,7 +215,8 @@ describe('CatalogRail — CT-21 acoes rapidas', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('Exportar catálogo'));
     });
-    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'todos', filters: {} });
+    // Y29 — o gate do download (`profiles.can_download`) vai junto nas opções.
+    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'todos', filters: {}, canDownload: true });
   });
 
   it('Exportar catalogo usa o filtro atual quando recebe exportFilter', async () => {
@@ -216,7 +224,7 @@ describe('CatalogRail — CT-21 acoes rapidas', () => {
     await act(async () => {
       fireEvent.click(screen.getByText('Exportar catálogo'));
     });
-    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'in_stock', filters: { only_in_stock: true } });
+    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'in_stock', filters: { only_in_stock: true }, canDownload: true });
   });
 
   it('R2-MOD-041: exportFilter e exportFilters SOMAM (o filtro da listagem nao some)', async () => {
@@ -233,6 +241,7 @@ describe('CatalogRail — CT-21 acoes rapidas', () => {
     expect(exportCatalogCsv).toHaveBeenCalledWith({
       filterKey: 'in_stock',
       filters: { only_in_stock: true, search: 'caneta', category_id: 'cat1' },
+      canDownload: true,
     });
   });
 

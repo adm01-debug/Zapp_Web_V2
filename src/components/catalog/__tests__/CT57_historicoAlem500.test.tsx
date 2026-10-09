@@ -33,6 +33,13 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: (...args: unknown[]) => mockUseAuth(...args),
 }));
 
+// Y29 — o gate `can_download` agora corre ANTES de montar o CSV de envios; o
+// alvo deste teste continua sendo o recorte exportado, então a permissão vem
+// liberada como nos testes irmãos.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 const mockUseExternalCatalog = vi.fn();
 const mockUseCatalogStats = vi.fn();
 const mockFavorites = vi.fn();

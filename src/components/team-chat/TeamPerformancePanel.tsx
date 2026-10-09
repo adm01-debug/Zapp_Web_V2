@@ -4,11 +4,16 @@ import { useTeamPerformance } from '@/hooks/team-chat/useTeamPerformance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { downloadFileWithPermission, notifyDownloadBlocked } from '@/lib/downloadFile';
 
 interface Props { conversationId: string; }
 
 export function TeamPerformancePanel({ conversationId }: Props) {
   const { data, isLoading } = useTeamPerformance(conversationId);
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o JSON de performance da equipe passa
+  // pelo gate `profiles.can_download`.
+  const { canDownload } = useDownloadPermission();
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -21,14 +26,14 @@ export function TeamPerformancePanel({ conversationId }: Props) {
 
   const handleExport = () => {
     if (!data) return;
+    // Y29 — sem permissão o JSON nem é montado; a porta única avisa o usuário.
+    if (!canDownload) { notifyDownloadBlocked(); return; }
     const json = JSON.stringify({ conversationId, ...data, exportedAt: new Date().toISOString() }, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `team-performance-${conversationId.slice(0, 8)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadFileWithPermission(
+      new Blob([json], { type: 'application/json' }),
+      `team-performance-${conversationId.slice(0, 8)}.json`,
+      { canDownload },
+    );
   };
 
   if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Carregando métricas...</div>;

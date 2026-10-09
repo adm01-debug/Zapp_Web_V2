@@ -22,7 +22,7 @@ import {
 // CT-20 — o módulo fala com a edge real e com o sonner; nos testes os dois
 // entram por injeção (fetchPage/download) ou por mock.
 vi.mock('sonner', () => ({
-  toast: { loading: vi.fn(() => 'toast-1'), success: vi.fn(), error: vi.fn() },
+  toast: { loading: vi.fn(() => 'toast-1'), success: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
 }));
 
 const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
@@ -366,7 +366,8 @@ describe('CT-20 — download real (Blob + link)', () => {
   });
 
   it('baixa um text/csv com o nome pedido e revoga a URL', async () => {
-    triggerCsvDownload(`${CATALOG_EXPORT_BOM}A,B\n1,2`, 'catalogo_todos_20260101.csv');
+    // Y29 — a permissão é do chamador (`useDownloadPermission`); aqui, concedida.
+    triggerCsvDownload(`${CATALOG_EXPORT_BOM}A,B\n1,2`, 'catalogo_todos_20260101.csv', true);
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const blob = createObjectURL.mock.calls[0][0] as Blob;

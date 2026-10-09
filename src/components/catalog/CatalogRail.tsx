@@ -21,6 +21,7 @@ import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import { exportCatalogCsv, filterKeyToEdgeParams, PROMOGIFTS_BASE_URL } from './catalogExport';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 
 /** Texto do banner isolado numa constante (E51 item 4): trocar a copy não
  * exige mexer no componente. A marca "SUA MARCA AQUI" do mock NÃO entra —
@@ -444,6 +445,9 @@ export function CatalogRail({ stats, loading, products, onApplyFilter, recentSen
   const [tipIndex] = useState(() => new Date().getDate() % CATALOG_RAIL_TIPS.length);
   const [dismissedAlerts, setDismissedAlerts] = useState(readDismissedAlerts);
   const [exporting, setExporting] = useState(false);
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o export do rail é o único chamador de
+  // `exportCatalogCsv`; sem `can_download` ele não baixa o CSV do catálogo.
+  const { canDownload } = useDownloadPermission();
 
   const dismissAlert = (id: CatalogRailAlertId) => {
     const next = new Set(dismissedAlerts).add(id);
@@ -462,6 +466,8 @@ export function CatalogRail({ stats, loading, products, onApplyFilter, recentSen
       await exportCatalogCsv({
         filterKey: exportFilter ?? 'todos',
         filters: { ...filterKeyToEdgeParams(exportFilter), ...exportFilters },
+        // Y29 — o gate do download chega ao `triggerCsvDownload` por aqui.
+        canDownload,
       });
     } finally {
       setExporting(false);

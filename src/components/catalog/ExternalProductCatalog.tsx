@@ -43,6 +43,7 @@ const CatalogBulkSendDialog = lazy(() =>
 // CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20); nada é
 // buscado na edge: as linhas são exatamente os produtos selecionados.
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback } from './catalogShared';
 import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
 import type { ContactResult } from './useSendProduct';
@@ -98,6 +99,10 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
 
   // CT-59 — 429 da edge: toast + botões desabilitados por 10 s.
   const coolingDown = useRateLimitCooldown(errorCode === 'CATALOG_RATE_LIMITED');
+
+  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o CSV da seleção passa pelo mesmo gate
+  // de download (`profiles.can_download`) usado no preview do inbox.
+  const { canDownload } = useDownloadPermission();
 
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -376,7 +381,8 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
   const handleExportSelection = () => {
     if (selectedProducts.length === 0) return;
-    triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()));
+    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()), canDownload);
+    if (wrote === false) return;
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   };
 

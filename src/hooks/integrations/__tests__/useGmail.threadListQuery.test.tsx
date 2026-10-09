@@ -17,6 +17,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { callGmailFunction } from '@/hooks/gmail/gmailApi';
 import { supabase } from '@/integrations/supabase/client';
 
+
+// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/hooks/gmail/gmailApi');
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn(), from: vi.fn(), channel: vi.fn(), removeChannel: vi.fn() } }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));

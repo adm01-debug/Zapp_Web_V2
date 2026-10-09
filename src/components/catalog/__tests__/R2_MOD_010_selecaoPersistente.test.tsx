@@ -20,6 +20,13 @@ import { ExternalProductCatalog } from '../ExternalProductCatalog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
 const toastSuccess = vi.hoisted(() => vi.fn());
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { success: toastSuccess, error: vi.fn(), warning: vi.fn() }),
 }));
