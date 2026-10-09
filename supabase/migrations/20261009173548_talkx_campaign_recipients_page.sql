@@ -1,5 +1,7 @@
 -- talkx_campaign_recipients_page: lista paginada dos destinatários da campanha
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text);
+-- Rollback: remove a função talkx_campaign_recipients_page.
+-- Rollback (SQL executável, na ordem):
+--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text);
 
 CREATE OR REPLACE FUNCTION public.talkx_campaign_recipients_page(
   p_campaign_id uuid,
