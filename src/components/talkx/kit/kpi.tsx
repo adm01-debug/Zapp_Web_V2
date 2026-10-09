@@ -147,7 +147,7 @@ export function KpiCard({
               title={variation.title}
               className={cn(
                 'flex items-center gap-0.5 text-2xs font-semibold',
-                variation.tone === 'bad' ? 'text-destructive' : 'text-success',
+                variation.tone === 'bad' ? 'text-[hsl(var(--destructive-text))]' : 'text-success',
               )}
             >
               <span aria-hidden="true">{variation.arrow}</span>

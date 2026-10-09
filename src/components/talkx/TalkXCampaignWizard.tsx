@@ -218,16 +218,16 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
               {ed.autosaveStatus === 'saving' && <span className="text-3xs text-muted-foreground" role="status">Salvando alterações…</span>}
               {ed.autosaveStatus === 'offline' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-dash-amber hover:underline">
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-[hsl(var(--warning-text))] hover:underline">
                   Sem conexão — tentar novamente
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-[hsl(var(--destructive-text))] hover:underline" title={ed.autosaveError ?? undefined}>
                   Não salvo — tentar novamente
                 </button>
               )}
-              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-[hsl(var(--warning-text))]">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
                 <span className="text-3xs text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
@@ -324,10 +324,10 @@ function StepAudience({ ed }: { ed: WizardState }) {
             <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
             <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
             {nameTooShort && (
-              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
+              <p role="alert" className="mt-1.5 text-2xs text-[hsl(var(--destructive-text))]">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
             )}
             {nameTooLong && (
-              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome pode ter no máximo {CAMPAIGN_NAME_MAX_LENGTH} caracteres</p>
+              <p role="alert" className="mt-1.5 text-2xs text-[hsl(var(--destructive-text))]">O nome pode ter no máximo {CAMPAIGN_NAME_MAX_LENGTH} caracteres</p>
             )}
           </div>
           <div>
@@ -545,7 +545,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
       {(ed.messageTemplate.split('http').length - 1) > 2 && (
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
-          <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <Sparkles className="w-4 h-4 text-[hsl(var(--warning-text))] shrink-0 mt-0.5" />
           <p className="text-xs text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
         </div>
       )}
@@ -636,8 +636,8 @@ function WizardRail({ ed }: { ed: WizardState }) {
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
         <div className="grid grid-cols-2 gap-2.5">
           <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-success" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-[hsl(var(--destructive-text))]" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />

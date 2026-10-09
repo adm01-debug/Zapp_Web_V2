@@ -170,7 +170,7 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
                     'rounded px-0.5',
                     knownSet === null || knownSet.has(normalizeVariable(segment))
                       ? 'text-primary-glow bg-primary/10'
-                      : 'text-dash-amber bg-dash-amber/10 underline decoration-dotted',
+                      : 'text-[hsl(var(--warning-text))] bg-dash-amber/10 underline decoration-dotted',
                   )}
                 >
                   {segment}
@@ -205,14 +205,14 @@ export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, Tal
         {/* Contador por limite do provedor + aviso de variável desconhecida */}
         <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border/50 text-2xs">
           {unknownVariables.length > 0 ? (
-            <span className="text-dash-amber" role="status">
+            <span className="text-[hsl(var(--warning-text))]" role="status">
               Variáveis desconhecidas: {unknownVariables.map((variable) => `{{${variable}}}`).join(', ')}
             </span>
           ) : (
             <span />
           )}
           {typeof limit === 'number' && (
-            <span className={cn('tabular-nums shrink-0', overLimit ? 'text-dash-red font-semibold' : 'text-muted-foreground')}>
+            <span className={cn('tabular-nums shrink-0', overLimit ? 'text-[hsl(var(--destructive-text))] font-semibold' : 'text-muted-foreground')}>
               {value.length}/{limit}{overLimit ? ` · ${value.length - limit} acima do limite` : ''}
             </span>
           )}

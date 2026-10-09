@@ -348,7 +348,7 @@ export function TalkXSuppression() {
                       <tr key={b.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
                         <Td>
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-dash-red shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
+                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-[hsl(var(--destructive-text))] shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
                             <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name}</p><p className="text-2xs text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
@@ -360,7 +360,7 @@ export function TalkXSuppression() {
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>
                         <Td className="text-right">
                           <AlertDialog>
-                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
+                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-[hsl(var(--destructive-text))] flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
                           </AlertDialog>
                         </Td>
                       </tr>
@@ -399,7 +399,7 @@ export function TalkXSuppression() {
           </div>
         </RailCard>
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 p-3 flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <AlertTriangle className="w-4 h-4 text-[hsl(var(--warning-text))] shrink-0 mt-0.5" />
           <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-primary-glow hover:underline">Saiba mais →</a></p>
         </div>
 

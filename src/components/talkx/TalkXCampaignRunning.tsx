@@ -188,7 +188,7 @@ function TabConfig({ c }: { c: TalkXCampaign }) {
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
 type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
-const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
+const STATUS_TONE: Record<string, string> = { sent: 'text-success', failed: 'text-[hsl(var(--destructive-text))]', pending: 'text-foreground-secondary', outcome_unknown: 'text-[hsl(var(--warning-text))]' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
 function TabRecipients({ campaignId }: { campaignId: string }) {
@@ -347,7 +347,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
                     </button>
                   )}
                 </div>
-                {message.error_message && <p className="mt-2 text-2xs text-dash-red break-words">Falha: {message.error_message}</p>}
+                {message.error_message && <p className="mt-2 text-2xs text-[hsl(var(--destructive-text))] break-words">Falha: {message.error_message}</p>}
               </article>
             );
           })}
@@ -362,7 +362,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
 type LogEvent = { id: string; contact: string; phone: string; status: string; ts: string; error?: string | null };
-const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
+const LOG_TONE: Record<string, string> = { sent: 'text-success', failed: 'text-[hsl(var(--destructive-text))]', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 
 function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
@@ -441,7 +441,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
       >
         <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
           <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
+          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-success">
             <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
           </span>
         </div>
@@ -454,7 +454,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
                   <p className="text-xs font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
                   <span className={`text-2xs font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
                 </div>
-                {ev.error && <p className="text-2xs text-dash-red mt-0.5 truncate">{ev.error}</p>}
+                {ev.error && <p className="text-2xs text-[hsl(var(--destructive-text))] mt-0.5 truncate">{ev.error}</p>}
                 <p className="text-3xs text-muted-foreground mt-0.5">{new Date(ev.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
               </div>
             </div>
@@ -817,7 +817,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               <div className="flex flex-wrap gap-2">
                 {campaign.status === 'sending' && (
                   <button type="button" onClick={() => setPauseOpen(true)}
-                    className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
+                    className="h-9 px-4 rounded-lg border border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] text-xs font-semibold flex items-center gap-2 hover:bg-dash-amber/20">
                     <Pause className="w-4 h-4" />Pausar
                   </button>
                 )}

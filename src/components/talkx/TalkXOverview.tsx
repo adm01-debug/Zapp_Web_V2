@@ -241,7 +241,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
             <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
               <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-dash-amber" />
+                  <FileText className="w-4 h-4 text-[hsl(var(--warning-text))]" />
                   <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
                   <span className="text-2xs text-muted-foreground">({drafts.length})</span>
                 </div>
@@ -251,14 +251,14 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-8 w-8 rounded-lg bg-dash-amber/20 border border-dash-amber/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-dash-amber" />
+                        <FileText className="w-4 h-4 text-[hsl(var(--warning-text))]" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground truncate">{c.name || 'Sem nome'}</p>
                         <p className="text-2xs text-muted-foreground">{fmtAgo(c.updated_at)}</p>
                       </div>
                     </div>
-                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
+                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
                       <Pencil className="w-3.5 h-3.5" />Retomar
                     </button>
                   </div>
@@ -330,7 +330,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                           <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
                           <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
                         </Td>
-                        <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-whatsapp" /></span></Td>
+                        <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-success" /></span></Td>
                         <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
                         <Td>
                           {c.total_recipients > 0 && c.status !== 'draft' && c.status !== 'scheduled' ? (
@@ -358,7 +358,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                               {rowActions.actionsFor(c).map((action, i) => (
                                 <React.Fragment key={action.id}>
                                   {action.destructive && i > 0 && <DropdownMenuSeparator />}
-                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
+                                  <DropdownMenuItem className={action.destructive ? 'text-[hsl(var(--destructive-text))]' : undefined} onClick={() => rowActions.run(action.id, c)}>
                                     <action.icon className="w-4 h-4 mr-2" />{action.label}
                                   </DropdownMenuItem>
                                 </React.Fragment>

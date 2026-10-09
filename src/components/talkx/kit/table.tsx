@@ -56,7 +56,7 @@ export function RowActionsMenu({ actions, label = 'Ações', busy = false }: { a
       <DropdownMenuContent align="end" className="min-w-[180px]">
         {actions.map((a, i) => (
           <DropdownMenuItem key={i} onClick={a.disabled ? undefined : a.onSelect} disabled={a.disabled}
-            className={cn(a.danger && !a.disabled && 'text-destructive focus:text-destructive focus:bg-destructive/10')}
+            className={cn(a.danger && !a.disabled && 'text-[hsl(var(--destructive-text))] focus:text-[hsl(var(--destructive-text))] focus:bg-destructive/10')}
           >
             {a.icon && <a.icon className="w-3.5 h-3.5 mr-2 opacity-70" />} {a.label}
           </DropdownMenuItem>

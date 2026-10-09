@@ -508,7 +508,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
 
       {/* Ações inferiores */}
       <div className="flex items-center justify-between pt-2 border-t border-border/50">
-        <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-destructive hover:bg-destructive/10 border-destructive/30">
+        <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-[hsl(var(--destructive-text))] hover:bg-destructive/10 border-destructive/30">
           Cancelar agendamento
         </GhostButton>
         <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">

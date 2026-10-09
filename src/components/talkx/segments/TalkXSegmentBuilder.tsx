@@ -151,7 +151,7 @@ export function TalkXSegmentBuilder({
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
                   </Select>
                   <button type="button" onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })} aria-label="Duplicar grupo" title="Duplicar grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-primary-glow"><Copy className="w-3.5 h-3.5" /></button>
-                  {rules.groups.length > 1 && <button type="button" onClick={() => dispatch({ type: 'removeGroup', id: g.id })} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
+                  {rules.groups.length > 1 && <button type="button" onClick={() => dispatch({ type: 'removeGroup', id: g.id })} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-[hsl(var(--destructive-text))]"><X className="w-3.5 h-3.5" /></button>}
                 </div>
                 <div className="p-4 space-y-2.5">
                   {g.rules.map((r) => (
@@ -209,7 +209,7 @@ export function TalkXSegmentBuilder({
           <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
           {incompleteCount > 0 && (
-            <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
+            <p className="text-2xs text-[hsl(var(--warning-text))] mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
           )}
           {est?.sample && est.sample.length > 0 && (
             <div className="mt-3">

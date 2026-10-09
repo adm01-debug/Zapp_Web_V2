@@ -257,7 +257,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
           <button type="button" disabled={!aprovado} title={motivoBloqueio} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar template</button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3.5 h-3.5" /></button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-[hsl(var(--destructive-text))] ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
           <span className="text-3xs text-muted-foreground" title={`${fmtInt(t.use_count)} campanhas lançadas com este template`}>{fmtInt(t.use_count)} usos</span>
         </div>
       </div>
@@ -300,7 +300,7 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
         <button type="button" disabled={!aprovado} title={aprovado ? undefined : 'Só templates aprovados podem ser usados em campanhas'} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar</button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-[hsl(var(--destructive-text))]" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
       </div>
     </div>
   );

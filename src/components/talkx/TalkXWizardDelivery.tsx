@@ -82,7 +82,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
             <div className="md:col-span-2">
               <Label className="text-xs text-foreground-secondary">Data e horário de início</Label>
               <Input type="datetime-local" value={ed.scheduledAt} min={ed.minimumScheduledAt} onChange={(e) => ed.setScheduledAt(e.target.value)} aria-invalid={!!ed.scheduleConfigError} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-2xs text-dash-red">{ed.scheduleConfigError}</p>}
+              {ed.scheduleConfigError && <p role="alert" className="mt-1.5 text-2xs text-[hsl(var(--destructive-text))]">{ed.scheduleConfigError}</p>}
             </div>
             <div>
               <Label className="text-xs text-foreground-secondary">Fuso horário</Label>
@@ -108,7 +108,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
             <IconTile icon={CalendarDays as never} size={36} />
             <div><p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p><p className="text-2xs text-foreground-secondary">Envia somente de segunda a sexta, das 08:00 às 18:00 no fuso {ed.scheduleTimezone}.</p></div>
           </div>
-          <div className="flex items-center gap-2"><span className={cn('text-xs font-semibold', ed.businessHoursOnly ? 'text-dash-green' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
+          <div className="flex items-center gap-2"><span className={cn('text-xs font-semibold', ed.businessHoursOnly ? 'text-success' : 'text-muted-foreground')}>{ed.businessHoursOnly ? 'Ativado' : 'Desativado'}</span><Switch checked={ed.businessHoursOnly} onCheckedChange={ed.setBusinessHoursOnly} /></div>
         </div>
       </Section>
 
@@ -165,7 +165,7 @@ const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.El
       <div className="min-w-0 flex-1">
         <p className="text-2xs text-foreground-secondary">{label}</p>
         <p className="text-[13px] font-semibold text-foreground truncate">{value}</p>
-        {sub && <p className={cn('text-2xs', ok === false ? 'text-dash-red' : ok ? 'text-dash-green' : 'text-muted-foreground')}>{sub}</p>}
+        {sub && <p className={cn('text-2xs', ok === false ? 'text-[hsl(var(--destructive-text))]' : ok ? 'text-success' : 'text-muted-foreground')}>{sub}</p>}
       </div>
       <button type="button" onClick={() => onEditStep?.(step)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5 shrink-0"><Pencil className="w-3 h-3" />Editar</button>
     </div>
@@ -272,7 +272,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-xs text-dash-red">{error}</p>}
+        {error && <p className="text-xs text-[hsl(var(--destructive-text))]">{error}</p>}
       </div>
 
       {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
