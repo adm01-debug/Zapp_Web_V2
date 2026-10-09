@@ -62,7 +62,9 @@ interface ChatInputAreaProps {
   onOpenSchedule: () => void;
   onOpenLocationPicker: () => void;
   onSendSticker: (stickerUrl: string) => void;
-  onSendAudioMeme: (audioUrl: string) => void;
+  /** Pode ser assíncrono e falhar por rejeição (ver #350): o VoiceChangerPicker
+      só descarta a prévia da voz transformada quando o envio confirma o sucesso. */
+  onSendAudioMeme: (audioUrl: string) => void | Promise<void>;
   onSendCustomEmoji: (emojiUrl: string) => void;
   onOpenCatalog?: () => void;
   onSelectSuggestion: (text: string) => void;
