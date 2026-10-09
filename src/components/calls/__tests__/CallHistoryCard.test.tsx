@@ -41,7 +41,15 @@ describe('CallHistoryTabs (T44)', () => {
     render(<CallHistoryTabs canal="whatsapp" onCanalChange={() => {}} />);
     const abas = screen.getAllByTestId('tel-channel-tab');
     expect(abas.map((a) => a.textContent)).toEqual(['Todos', 'VoIP', 'WhatsApp']);
-    const ativa = abas.find((a) => a.getAttribute('data-state') === 'active');
+    // T76: a marca da aba ativa passou a ser o sinal ARIA publico. O widget virou
+    // grupo de alternancia (Radix `ToggleGroup type="single"` = `role="radiogroup"`
+    // com itens `role="radio"` + `aria-checked`) justamente porque, sem painel, o
+    // primitivo `Tabs` deixava `aria-controls` apontando para um elemento
+    // inexistente (axe `aria-valid-attr-value`, serious).
+    const ativa = abas.find((a) => a.getAttribute('aria-checked') === 'true');
     expect(ativa?.textContent).toBe('WhatsApp');
+    // E so UMA aba esta marcada.
+    expect(abas.filter((a) => a.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+    expect(abas.every((a) => a.getAttribute('role') === 'radio')).toBe(true);
   });
 });
