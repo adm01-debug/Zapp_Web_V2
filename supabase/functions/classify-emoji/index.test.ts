@@ -190,6 +190,14 @@ function withFetch(rotas: Rotas) {
     // GoTrue: identidade do chamador.
     if (url.includes("/auth/v1/user")) return Promise.resolve(rotas.auth());
 
+    // R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+    // antes de liberar o handler; o stub responde "allow" no caminho feliz.
+    if (url.includes("/rest/v1/rpc/resolve_network_policy")) {
+      return Promise.resolve(json([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]));
+    }
+
     // RPCs de cota compartilhada (`ai_rate_limit_hit`) e orçamento
     // (`ai_budget_reserve`): erro de infraestrutura → ambas falham ABERTO por
     // desenho (ai-guards.ts / ai-budget.ts), então a execução segue.

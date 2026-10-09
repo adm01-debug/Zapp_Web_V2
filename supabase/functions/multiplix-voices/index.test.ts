@@ -140,6 +140,15 @@ function withFetch(routes: Route[]) {
       : input instanceof URL
       ? input.toString()
       : (input as Request).url;
+    // R2-AUTH-022: `requireAuth` passa a consultar a política de rede (RPC
+    // service_role) antes de liberar o handler. O stub responde "allow" para o
+    // caminho feliz destes casos, como já faz para `consume_rate_limit`.
+    if (url.includes('/rest/v1/rpc/resolve_network_policy')) {
+      seen.push(url);
+      return Promise.resolve(new Response(JSON.stringify([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) {
       seen.push(`SEM_STUB ${url}`);

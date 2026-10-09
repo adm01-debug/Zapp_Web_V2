@@ -480,6 +480,14 @@ function withLinkFetch(routes: LinkRoute[]) {
   globalThis.fetch = ((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
     const parsed = new URL(url);
+    // R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+    // antes de liberar o handler; o stub responde "allow" no caminho feliz.
+    if (parsed.pathname === '/rest/v1/rpc/resolve_network_policy') {
+      seen.push(url);
+      return Promise.resolve(new Response(JSON.stringify([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]), { status: 200, headers: { 'content-type': 'application/json' } }));
+    }
     const route = routes.find((candidate) => candidate.match === parsed.pathname);
     if (!route) {
       seen.push(url);
