@@ -77,6 +77,11 @@ function pxArbitrarioDe(el: Element): string[] {
   return classesDe(el).filter((c) => /\[[0-9.]+px\]/.test(c));
 }
 
+/** px arbitrário em qualquer elemento da subárvore (o próprio + descendentes). */
+function pxArbitrarioNaSubarvore(el: Element): string[] {
+  return [el, ...el.querySelectorAll('*')].flatMap(pxArbitrarioDe);
+}
+
 /** Tokens inexistentes em qualquer classe do DOM renderizado. */
 function tokensInexistentesNoDom(container: HTMLElement): string[] {
   return [...container.querySelectorAll('*')].flatMap((el) => classesDe(el).flatMap(tokensInexistentes));
@@ -240,7 +245,8 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     expect(classesDe(painel!).filter((c) => /^(bg|border)-\[/.test(c))).toEqual([]);
     expect(painel!.className).toContain('bg-card');
     expect(painel!.className).toContain('border-border');
-    expect(pxArbitrarioDe(painel!)).toEqual([]);
+    // Toda a subárvore do painel (rótulos, selects, botão Buscar) sem px arbitrário.
+    expect(pxArbitrarioNaSubarvore(painel!)).toEqual([]);
 
     // E nenhuma classe do DOM da tela aponta para variável que não existe.
     expect(tokensInexistentesNoDom(container)).toEqual([]);
@@ -254,15 +260,16 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     fireEvent.click(screen.getByLabelText('Selecionar Empresa 1'));
 
     // Os três blocos que tinham px/classe arbitrária renderizaram:
-    const listaRecentes = screen.getByText('Disparos recentes').closest('div.rounded-2xl')!
-      .querySelector('.overflow-auto')!;
+    const listaRecentes = screen.getByText('Disparos recentes').closest('div.rounded-2xl')!;
+    const molduraTabela = screen.getByRole('table').closest('div.rounded-2xl')!;
     const botaoCarregarMais = screen.getByRole('button', { name: /Carregar mais/ }).parentElement!;
     const barraSelecao = screen.getByText(/empresa\(s\) selecionada\(s\)/).closest('div')!;
 
     expect(listaRecentes).not.toBeNull();
-    expect(pxArbitrarioDe(listaRecentes)).toEqual([]);
-    expect(pxArbitrarioDe(botaoCarregarMais)).toEqual([]);
-    expect(pxArbitrarioDe(barraSelecao)).toEqual([]);
+    expect(molduraTabela).not.toBeNull();
+    for (const bloco of [listaRecentes, molduraTabela, botaoCarregarMais, barraSelecao]) {
+      expect(pxArbitrarioNaSubarvore(bloco), bloco.tagName + '|' + bloco.className).toEqual([]);
+    }
 
     expect(tokensInexistentesNoDom(container)).toEqual([]);
   });
@@ -273,13 +280,16 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     const nome = screen.getByText('Empresa 1');
     const lista = nome.closest('div.overflow-auto')!;
     const filtro = screen.getByRole('combobox');
+    const telaMonitor = nome.closest('div.space-y-4')!;
 
     expect(lista).not.toBeNull();
+    expect(telaMonitor).not.toBeNull();
     // `text-[13px]` -> `text-sm` (absorção sancionada em
     // docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md:85).
     expect(classesDe(nome)).toContain('text-sm');
     expect(pxArbitrarioDe(nome)).toEqual([]);
-    expect(pxArbitrarioDe(lista)).toEqual([]);
+    // Toda a tela do monitor (cabeçalho, KPIs, filtro, lista) sem px arbitrário.
+    expect(pxArbitrarioNaSubarvore(telaMonitor)).toEqual([]);
     expect(pxArbitrarioDe(filtro)).toEqual([]);
 
     expect(tokensInexistentesNoDom(container)).toEqual([]);
