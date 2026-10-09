@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
 import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
+import { SegmentSideList } from './segments/SegmentSideList';
 import { toast } from 'sonner';
 
 interface Props {
@@ -38,6 +39,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [editingName, setEditingName] = useState('');
   const [editingDesc, setEditingDesc] = useState('');
   const [saving, setSaving] = useState(false);
+  // Gaveta da lista lateral abaixo de 1280px (botão "Meus segmentos").
+  const [sideListOpen, setSideListOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -91,8 +94,60 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
+  // A lista lateral grava o valor que já mostrou na estrela: a rejeição sobe
+  // para o componente desfazer a marca otimista.
+  const setFavorite = async (s: TalkXSegment, next: boolean) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: next }); };
+
+  // Diálogo de exclusão dos dois modos: a lista lateral do construtor também
+  // exclui (⋮ → Excluir).
+  const confirmDeleteDialog = (
+    <TalkXConfirmDialog
+      open={!!deleting}
+      onClose={() => setDeleting(null)}
+      onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
+      icon={Trash2} iconColor="red" tone="danger"
+      title="Excluir segmento?"
+      description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
+      entityName={deleting?.name}
+      confirmLabel="Excluir segmento" cancelLabel="Cancelar"
+    />
+  );
+
+  const sideListProps = {
+    segments,
+    isLoading,
+    isError,
+    error,
+    onRetry: () => { void refetch(); },
+    activeId: selected?.id ?? null,
+    onSelect: openEdit,
+    onNew: openNew,
+    onEdit: openEdit,
+    onUseCampaign,
+    onToggleFavorite: setFavorite,
+    onToggleStatus: (s: TalkXSegment, next: 'active' | 'inactive') => { updateSegment.mutate({ id: s.id, status: next }); },
+    onDelete: (s: TalkXSegment) => setDeleting(s),
+  };
+
   if (mode === 'edit') {
-    return <SegmentBuilder name={editingName} setName={setEditingName} desc={editingDesc} setDesc={setEditingDesc} rules={editingRules} setRules={setEditingRules} onSave={save} onCancel={() => setMode('list')} saving={saving} isNew={!selected} />;
+    return (
+      <>
+        <SegmentBuilder
+          name={editingName} setName={setEditingName} desc={editingDesc} setDesc={setEditingDesc}
+          rules={editingRules} setRules={setEditingRules} onSave={save} onCancel={() => setMode('list')}
+          saving={saving} isNew={!selected}
+          sideList={<SegmentSideList {...sideListProps} />}
+          sideListButton={(
+            <button type="button" onClick={() => setSideListOpen(true)}
+              className="xl:hidden h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground inline-flex items-center gap-1.5 shrink-0">
+              <Bookmark className="w-3.5 h-3.5" />Meus segmentos
+            </button>
+          )}
+        />
+        <SegmentSideList {...sideListProps} drawer open={sideListOpen} onOpenChange={setSideListOpen} />
+        {confirmDeleteDialog}
+      </>
+    );
   }
 
   return (
@@ -199,16 +254,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         )}
       </div>
 
-      <TalkXConfirmDialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => { if (deleting) { deleteSegment.mutate(deleting.id); setDeleting(null); setSelected(null); } }}
-        icon={Trash2} iconColor="red" tone="danger"
-        title="Excluir segmento?"
-        description="Será excluído permanentemente. Campanhas já criadas não serão afetadas."
-        entityName={deleting?.name}
-        confirmLabel="Excluir segmento" cancelLabel="Cancelar"
-      />
+      {confirmDeleteDialog}
     </div>
   );
 }
@@ -250,10 +296,14 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
 /* Builder de segmento                                                */
 /* ------------------------------------------------------------------ */
 
-function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave, onCancel, saving, isNew }: {
+function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave, onCancel, saving, isNew, sideList, sideListButton }: {
   name: string; setName: (v: string) => void; desc: string; setDesc: (v: string) => void;
   rules: SegmentRules; setRules: (r: SegmentRules) => void;
   onSave: () => void; onCancel: () => void; saving: boolean; isNew: boolean;
+  /** X112 — lista lateral "Meus segmentos" (primeira coluna, >= 1280px). */
+  sideList?: React.ReactNode;
+  /** Botão que abre a lista como gaveta abaixo de 1280px. */
+  sideListButton?: React.ReactNode;
 }) {
   const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
   // Condições em branco ficam fora da estimativa; a tela precisa dizer quantas
@@ -292,11 +342,15 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
   const updateRule = (gid: string, rid: string, patch: Partial<SegmentRule>) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.map((r) => r.id !== rid ? r : { ...r, ...patch }) }) });
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_280px] gap-4 min-w-0">
+      {/* X112 — coluna 1: "Meus Segmentos". Abaixo de 1280px vira a gaveta
+          aberta pelo botão "Meus segmentos" do cabeçalho do construtor. */}
+      {sideList && <div className="hidden xl:block min-w-0">{sideList}</div>}
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button type="button" onClick={onCancel} aria-label="Cancelar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
+          {sideListButton}
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
@@ -348,33 +402,35 @@ function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave,
           </div>
         </section>
 
-      </div>
-
-      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
-      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
-        <p className="text-[13px] font-bold text-foreground">Filtros</p>
-        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
-        {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
-          <div key={cat}>
-            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
-            <div className="flex flex-col gap-1">
-              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  draggable
-                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
-                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
-                  onClick={() => addFieldToGroup(f)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
-                >
-                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
-                </button>
-              ))}
+        {/* Catálogo de filtros — abaixo dos grupos, como no mock. A coluna 1 do
+            construtor passou a ser a lista "Meus segmentos" (X112); X107 assume
+            esta faixa (abas, busca, contadores e visível em qualquer largura). */}
+        <aside className="hidden xl:block rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+          <p className="text-[13px] font-bold text-foreground">Filtros</p>
+          <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+          {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
+            <div key={cat}>
+              <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+              <div className="flex flex-col gap-1">
+                {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    draggable
+                    onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                    onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
+                    onClick={() => addFieldToGroup(f)}
+                    className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  >
+                    <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </aside>
+          ))}
+        </aside>
+
+      </div>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
