@@ -63,6 +63,14 @@ export interface SuppressionRow {
 /** Chaves de ordenação aceitas pela listagem (viram coluna do servidor). */
 export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason' | 'status';
 
+/** Mapeia chaves de ordenação da UI para colunas reais do banco. */
+const ORDER_KEY_MAP: Record<SuppressionOrderKey, string> = {
+  created_at: 'created_at',
+  origin: 'origin',
+  reason: 'reason',
+  status: 'removed_at',
+};
+
 export interface SuppressionListParams {
   page: number;
   pageSize: number;
@@ -117,7 +125,7 @@ export const SUPPRESSION_OPT_OUT_DAYS = 30;
 
 /** Colunas pedidas na listagem — inclui o contato e o nome da campanha. */
 const LIST_COLUMNS =
-  'id,contact_id,phone,reason,reason_code,origin,campaign_id,blocked_by,removed_at,removed_by,expires_at,created_at,'
+  'id,contact_id!inner(name,email,phone),phone,reason,reason_code,origin,campaign_id,blocked_by,removed_at,removed_by,expires_at,created_at,'
   + 'contacts:contact_id(name,phone,email,company,avatar_url),'
   // campaign_id tem DUAS FKs (talkx_campaigns e talkx_campaign_metrics): sem o
   // nome da restrição o PostgREST recusa o embed por ambiguidade.
@@ -197,19 +205,21 @@ export async function fetchSuppressionPage(params: SuppressionListParams): Promi
 
   let query = supabase
     .from('talkx_blacklist')
-    .select(LIST_COLUMNS, { count: 'exact' });
+    .select(LIST_COLUMNS, { count: 'exact' })
+    .is('removed_at', null);
   if (origin && origin !== 'all') query = query.eq('origin', origin);
   if (reason && reason !== 'all') query = query.ilike('reason', `%${reason}%`);
   if (search && search.trim()) {
     const term = escapeOrFilterValue(`%${search.trim()}%`);
-    query = query.or(
-      `phone.ilike.${term},reason.ilike.${term},contacts.name.ilike.${term},contacts.email.ilike.${term},contacts.phone.ilike.${term}`,
-    );
+    query = query
+      .or(`phone.ilike.${term},reason.ilike.${term}`)
+      .or(`contacts.name.ilike.${term},contacts.email.ilike.${term},contacts.phone.ilike.${term}`);
   }
   // Ordernação determinística: a chave pedida + `id` como desempate, para a
   // paginação por offset não repetir nem pular linha empatada.
   const descending = dir === 'desc';
-  query = query.order(order, { ascending: !descending }).order('id', { ascending: !descending });
+  const orderColumn = ORDER_KEY_MAP[order];
+  query = query.order(orderColumn, { ascending: !descending }).order('id', { ascending: !descending });
   const { data, error, count } = await query.range(from, to);
   if (error) throw error;
   const rows = ((data ?? []) as unknown as RawSuppressionRow[]).map((row) => toSuppressionRow(row));

@@ -87,7 +87,10 @@ export function TalkXSuppression() {
     { key: 'origin', label: 'Todas as origens', allLabel: 'Todas as origens', options: Object.entries(SUPPRESSION_ORIGIN).map(([v, m]) => ({ value: v, label: m.label })) },
   ], []);
 
-  const editReasonOptions = useMemo(() => (REASONS.includes(editing?.reason ?? '') ? REASONS : [...REASONS, editing?.reason ?? '']), [editing]);
+  const editReasonOptions = useMemo(() => {
+    const currentReason = editing?.reason ?? '';
+    return currentReason ? (REASONS.includes(currentReason) ? REASONS : [...REASONS, currentReason]) : REASONS;
+  }, [editing]);
   const [editReason, setEditReason] = useState('');
   const [editOrigin, setEditOrigin] = useState<'manual' | 'lgpd'>('manual');
 
