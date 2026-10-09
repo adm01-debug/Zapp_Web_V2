@@ -1,24 +1,128 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { X } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { talkxScaleIn } from '@/components/ui/motion/variants';
+import { cn } from '@/lib/utils';
 import type { TileColor } from './constants';
 import { IconTile, TalkXPrimaryButton } from './primitives';
 
 // ════════════════════════════════════════════════════════════════════════════
-// E19 — TalkXConfirmDialog: modal crítico com checks opcionais
+// E19 / X049 — modal único do kit
+// `TalkXDialogShell`: barra de título + "✕", corpo e rodapé; base da confirmação
+// e dos formulários. `TalkXConfirmDialog` é montado sobre ela.
 // ════════════════════════════════════════════════════════════════════════════
-export interface ConfirmCheck { id: string; label: string; }
 
-export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor = 'blue', title, description, entityName, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', tone = 'primary', checks = [], details = [], loading = false }: {
-  open: boolean; onClose: () => void; onConfirm: () => void;
-  icon: LucideIcon; iconColor?: TileColor; title: string; description: string;
+export type TalkXTone = 'primary' | 'danger' | 'success' | 'violet';
+
+export interface ConfirmCheck { id: string; label: string; }
+export interface ConfirmDetail { label: string; value: string; }
+export interface ConfirmReasonField { label: string; placeholder?: string; required?: boolean; }
+
+/** Tom aplicado ao tile quando o chamador não escolhe cor própria. */
+function toneTileColor(tone: TalkXTone): TileColor {
+  return tone === 'danger' ? 'red' : tone === 'success' ? 'green' : tone === 'violet' ? 'violet' : 'blue';
+}
+/** Tone do `TalkXPrimaryButton`; o violeta é aplicado por classe própria. */
+function buttonTone(tone: TalkXTone): 'primary' | 'danger' | 'success' {
+  return tone === 'danger' ? 'danger' : tone === 'success' ? 'success' : 'primary';
+}
+/** Violeta do sistema (mesmo tom de `talkx-tile--violet`), não existe no botão do kit. */
+function buttonToneClass(tone: TalkXTone): string {
+  return tone === 'violet' ? 'bg-violet-600 hover:bg-violet-600/90' : '';
+}
+function errorMessage(e: unknown): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (typeof e === 'string' && e) return e;
+  return 'Não foi possível concluir a ação.';
+}
+
+/**
+ * Casca do modal do kit: barra de título com "✕", corpo livre e rodapé de
+ * ações. Entrada com `talkxScaleIn` (desligada em `prefers-reduced-motion`) e
+ * foco inicial opcional (usado pelos destrutivos para abrir no "Cancelar").
+ */
+export function TalkXDialogShell({ open, onClose, title, children, footer, className, initialFocusRef }: {
+  open: boolean; onClose: () => void; title: string;
+  children: ReactNode; footer?: ReactNode; className?: string;
+  initialFocusRef?: { current: HTMLElement | null };
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        aria-describedby={undefined}
+        onOpenAutoFocus={e => {
+          if (initialFocusRef?.current) { e.preventDefault(); initialFocusRef.current.focus(); }
+        }}
+        className={cn('w-full max-w-md gap-0 overflow-hidden p-0', className)}
+      >
+        <motion.div
+          initial={prefersReducedMotion ? false : 'hidden'}
+          animate="visible"
+          variants={prefersReducedMotion ? undefined : talkxScaleIn}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/30 px-4 py-3">
+            <DialogTitle className="min-w-0 truncate text-sm font-semibold text-foreground">{title}</DialogTitle>
+            <button type="button" onClick={onClose} aria-label="Fechar"
+              className="talkx-glow-ring -mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="px-4 py-4">{children}</div>
+          {footer !== undefined && (
+            <div className="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/20 px-4 py-3">{footer}</div>
+          )}
+        </motion.div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Pergunta do mock: o nome entra em negrito entre aspas no lugar de `{nome}`. */
+function ConfirmQuestion({ description, entityName }: { description: string; entityName?: string }) {
+  if (!entityName) return <>{description}</>;
+  const partes = description.split('{nome}');
+  if (partes.length === 1) {
+    return <><span className="font-semibold text-foreground">"{entityName}"</span> — {description}</>;
+  }
+  return (
+    <>
+      {partes[0]}
+      <span className="font-semibold text-foreground">"{entityName}"</span>
+      {partes[1]}
+    </>
+  );
+}
+
+export function TalkXConfirmDialog({
+  open, onClose, onConfirm, icon, iconColor, title, subtitle, description, consequence,
+  entityName, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', tone = 'primary',
+  checks = [], details = [], reasonField, loading = false,
+}: {
+  open: boolean; onClose: () => void;
+  onConfirm: (valores: { reason: string }) => void | Promise<unknown>;
+  icon: LucideIcon; iconColor?: TileColor;
+  title: string; subtitle?: string; description: string; consequence?: string;
   entityName?: string; confirmLabel?: string; cancelLabel?: string;
-  tone?: 'primary' | 'danger' | 'success' | 'violet'; checks?: ConfirmCheck[];
-  details?: { label: string; value: string }[]; loading?: boolean;
+  tone?: TalkXTone; checks?: ConfirmCheck[]; details?: ConfirmDetail[];
+  reasonField?: ConfirmReasonField; loading?: boolean;
 }) {
   const [checked, setChecked] = React.useState<Set<string>>(new Set());
-  const allChecked = checks.length === 0 || checks.every(c => checked.has(c.id));
-  const toneStyle = { danger: 'bg-destructive text-white', success: 'bg-success text-white', violet: 'bg-violet-600 text-white', primary: '' }[tone];
+  const [reason, setReason] = React.useState('');
+  const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const cancelRef = React.useRef<HTMLButtonElement>(null);
+
+  const checksOk = checks.length === 0 || checks.every(c => checked.has(c.id));
+  const reasonOk = !reasonField?.required || reason.trim().length > 0;
+  // "Nada pendente" para a trava do botão: checks marcados e motivo (se exigido) escrito.
+  const allChecked = checksOk && reasonOk;
+  const busy = pending || loading;
 
   const toggle = (id: string) => {
     const n = new Set(checked);
@@ -28,54 +132,107 @@ export function TalkXConfirmDialog({ open, onClose, onConfirm, icon, iconColor =
 
   // Reset ao fechar
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  React.useEffect(() => { if (!open) setChecked(new Set()); }, [open]);
+  React.useEffect(() => { if (!open) { setChecked(new Set()); setReason(''); setError(null); setPending(false); } }, [open]);
+
+  const handleConfirm = async () => {
+    if (!allChecked || busy) return;
+    setError(null);
+    let result: void | Promise<unknown>;
+    try {
+      result = onConfirm({ reason });
+    } catch (e) {
+      setError(errorMessage(e));
+      return;
+    }
+    if (result && typeof (result as Promise<unknown>).then === 'function') {
+      setPending(true);
+      try {
+        await result;
+        onClose();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setPending(false);
+      }
+      return;
+    }
+    // Sem promessa, quem fecha é o chamador: as confirmações que já existiam
+    // antes do kit (pausar/retomar/encerrar/segmento) fecham o próprio modal
+    // quando o servidor responde, e o operador continua aqui se a ação recusar.
+  };
+
+  const detailsBlock = details.length > 0 && (
+    <div className="mt-3 space-y-1.5 rounded-lg bg-muted/30 p-3">
+      {details.map(d => (
+        <div key={d.label} className="flex justify-between gap-3 text-xs">
+          <span className="text-muted-foreground">{d.label}</span>
+          <span className="truncate text-right font-medium text-foreground">{d.value}</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <AlertDialog open={open} onOpenChange={v => !v && onClose()}>
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <div className="flex flex-col items-center gap-3 pb-2">
-            <IconTile icon={icon} color={iconColor} size={48} glow />
-            <AlertDialogTitle className="text-center text-lg">{title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-[13px]">
-              {entityName ? <><span className="font-semibold text-foreground">"{entityName}"</span> — </> : null}{description}
-            </AlertDialogDescription>
-          </div>
-        </AlertDialogHeader>
-
-        {details.length > 0 && (
-          <div className="bg-muted/30 rounded-lg p-3 space-y-1.5 -mt-1">
-            {details.map(d => (
-              <div key={d.label} className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{d.label}</span>
-                <span className="font-medium text-foreground">{d.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {checks.length > 0 && (
-          <div className="space-y-2 py-1">
-            {checks.map(c => (
-              <label key={c.id} className="flex items-start gap-2.5 cursor-pointer group">
-                <input type="checkbox" checked={checked.has(c.id)} onChange={() => toggle(c.id)}
-                  className="mt-0.5 w-4 h-4 accent-primary cursor-pointer rounded" />
-                <span className="text-xs text-foreground leading-snug group-hover:text-foreground">{c.label}</span>
-              </label>
-            ))}
-          </div>
-        )}
-
-        <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel onClick={onClose} className="h-9 text-[13px]">{cancelLabel}</AlertDialogCancel>
-          <TalkXPrimaryButton tone={tone === 'danger' ? 'danger' : tone === 'success' ? 'success' : 'primary'}
-            glow={tone !== 'danger'} loading={loading} disabled={!allChecked || loading} onClick={onConfirm}
-            className="h-9 text-[13px]"
+    <TalkXDialogShell
+      open={open} onClose={onClose} title={title}
+      initialFocusRef={tone === 'danger' ? cancelRef : undefined}
+      footer={
+        <>
+          <button ref={cancelRef} type="button" onClick={onClose} disabled={busy}
+            className="h-9 rounded-lg border border-border/70 bg-input/40 px-4 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {cancelLabel}
+          </button>
+          <TalkXPrimaryButton tone={buttonTone(tone)} glow={tone !== 'danger'}
+            loading={loading || pending} disabled={!allChecked || loading} onClick={handleConfirm}
+            className={cn('h-9 text-[13px]', buttonToneClass(tone))}
           >
             {confirmLabel}
           </TalkXPrimaryButton>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </>
+      }
+    >
+      <div className="flex flex-col items-center gap-3 text-center">
+        <IconTile icon={icon} color={iconColor ?? toneTileColor(tone)} size={48} glow />
+        {/* O mock mostra o título duas vezes (barra + corpo). Quem não tem
+            subtítulo próprio — as confirmações que já existiam antes do kit —
+            traz o mesmo texto nos dois lugares se o corpo repetir o título. */}
+        {subtitle !== undefined && <p className="text-base font-semibold text-foreground">{subtitle}</p>}
+        <p className="text-[13px] leading-snug text-foreground-secondary">
+          <ConfirmQuestion description={description} entityName={entityName} />
+        </p>
+        {consequence && <p className="text-2xs text-muted-foreground">{consequence}</p>}
+      </div>
+
+      {detailsBlock}
+
+      {checks.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {checks.map(c => (
+            <label key={c.id} className="group flex cursor-pointer items-start gap-2.5">
+              <input type="checkbox" checked={checked.has(c.id)} onChange={() => toggle(c.id)}
+                className="mt-0.5 h-4 w-4 cursor-pointer rounded accent-primary" />
+              <span className="text-xs leading-snug text-foreground group-hover:text-foreground">{c.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {reasonField && (
+        <label className="mt-3 block space-y-1.5">
+          <span className="text-xs font-medium text-foreground">{reasonField.label}</span>
+          <textarea value={reason} rows={3} placeholder={reasonField.placeholder}
+            onChange={e => setReason(e.target.value)}
+            className="w-full rounded-lg border border-border/70 bg-input/40 px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+          />
+        </label>
+      )}
+
+      {error && (
+        <p role="alert" className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
+    </TalkXDialogShell>
   );
 }
