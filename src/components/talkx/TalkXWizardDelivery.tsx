@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
-  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, X, AlertTriangle,
+  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,14 +9,24 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+
+/**
+ * X136 — as três confirmações do disparo, com o texto do mock 09.
+ * Ficam DENTRO do modal do kit (`TalkXConfirmDialog`), que só libera
+ * "Confirmar lançamento" quando as três estão marcadas.
+ */
+const LAUNCH_CONFIRMATIONS: { id: string; label: string }[] = [
+  { id: 'consent', label: 'Confirmo que possuo o consentimento dos contatos.' },
+  { id: 'content', label: 'Revisei e estou de acordo com o conteúdo da mensagem.' },
+  { id: 'suppression', label: 'A lista de supressão foi aplicada corretamente.' },
+];
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -265,31 +275,32 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-border/70">
-          <DialogHeader>
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center mb-2"><Send className="w-7 h-7 text-primary-glow" /></div>
-            <DialogTitle className="text-center text-xl font-bold">Confirmar disparo?</DialogTitle>
-            <DialogDescription className="text-center text-xs">
-              {ed.isScheduled && ed.scheduledAt ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)}` : 'Após o lançamento, a campanha será enviada'} para <b className="text-foreground">{fmtInt(ed.eligibleCount)} contatos</b>. Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-1.5 text-xs">
-            {[['Campanha', ed.name], ['Público', ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : 'Contatos ZAPP'], ['Destinatários', `${fmtInt(ed.eligibleCount)} contatos`], ['Duração estimada', ed.estimatedTime ?? '—'], ['Envio', ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato']].map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-3"><span className="text-foreground-secondary">{k}</span><span className="font-medium text-foreground text-right truncate">{v}</span></div>
-            ))}
-          </div>
-          <div className="space-y-1.5 text-xs">
-            {[ed.confirmConsent, ed.confirmContent, ed.confirmSuppression].every(Boolean) && ['Consentimento dos contatos confirmado', 'Conteúdo da mensagem revisado', 'Lista de supressão aplicada'].map((t) => (
-              <p key={t} className="flex items-center gap-2 text-dash-green"><Check className="w-3.5 h-3.5" /> <span className="text-foreground">{t}</span></p>
-            ))}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <GhostButton icon={X} onClick={() => setConfirmOpen(false)}>Cancelar</GhostButton>
-            <PrimaryButton icon={Send} onClick={launch} disabled={!launchAllowed}>{ed.saving ? 'Lançando…' : ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
+          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
+          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
+          confirmações num cartão de fora repetidas dentro do modal como texto. */}
+      <TalkXConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => { void launch(); }}
+        icon={Send}
+        iconColor="blue"
+        title="Confirmar disparo?"
+        description={ed.isScheduled && ed.scheduledAt
+          ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)} e será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`
+          : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
+        details={[
+          { label: 'Campanha', value: ed.name || '—' },
+          { label: 'Público', value: ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : 'Contatos ZAPP' },
+          { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
+          { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
+          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
+        ]}
+        checks={LAUNCH_CONFIRMATIONS}
+        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
+        cancelLabel="Cancelar"
+        loading={ed.saving}
+      />
     </div>
   );
 }
