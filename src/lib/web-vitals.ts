@@ -1,6 +1,7 @@
 /**
  * Web Vitals monitoring utility
- * Tracks Core Web Vitals (LCP, FID, CLS, INP, TTFB) and reports to console/analytics
+ * Tracks as métricas de Web Vitals do orçamento — LCP, FID, CLS, INP, TTFB,
+ * FCP e TTI — e as reporta no console/analytics.
  *
  * Os alvos vêm de `performance-budget.json` → seção `web-vitals` (E36). Antes
  * havia aqui uma cópia dos limiares, que divergia do arquivo sem ninguém notar:
@@ -20,7 +21,15 @@ interface WebVitalMetric {
   id: string;
 }
 
-type VitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'TTFB';
+type VitalName = 'LCP' | 'FID' | 'CLS' | 'INP' | 'TTFB' | 'FCP' | 'TTI';
+
+/**
+ * Métricas que este coletor mede. O teste de contrato
+ * (`src/lib/__tests__/web-vitals-fcp-tti.test.ts`) exige que seja EXATAMENTE o
+ * conjunto das chaves de `performance-budget.json` → `web-vitals`: alvo
+ * declarado sem medição (ou o contrário) quebra a suíte.
+ */
+export const COLLECTED_VITALS: readonly VitalName[] = ['LCP', 'FID', 'CLS', 'INP', 'TTFB', 'FCP', 'TTI'];
 
 interface VitalTarget {
   /** Limite de "good" — acima disso a métrica pede atenção. */
@@ -185,7 +194,33 @@ export function initWebVitals() {
     }
   } catch (e) { /* not supported */ }
 
-  // Flush CLS and INP once when page is unloaded or backgrounded.
+  // TTI - Time to Interactive (SL-105)
+  // Algoritmo do Lighthouse, na parte que o navegador permite medir daqui: TTI é
+  // o fim da última long task (>= 50 ms) que precede uma janela de 5 s sem long
+  // tasks, contada a partir do FCP — um TTI nunca é anterior ao FCP. Sem long
+  // task depois do FCP, o TTI vale o FCP (a página ficou interativa no FCP).
+  // O que NÃO é reproduzido: a janela de rede do Lighthouse (no máximo 2
+  // requisições em voo), porque o PerformanceObserver entrega as entradas de
+  // `resource` só depois de a requisição terminar.
+  const TTI_QUIET_MS = 5000;
+  let fcpTime = 0;          // ms desde a navegação; 0 = FCP ainda não observado
+  let lastLongTaskEnd = 0;  // fim da long task mais recente
+  let ttiReported = false;
+  let ttiTimer: ReturnType<typeof setTimeout> | null = null;
+  /** (Re)arma o relógio da janela de silêncio — reinicia a cada long task nova. */
+  const scheduleTtiCheck = () => {
+    if (fcpTime <= 0) return; // TTI é definido depois do FCP
+    if (ttiTimer !== null) clearTimeout(ttiTimer);
+    ttiTimer = setTimeout(reportTti, TTI_QUIET_MS);
+  };
+  function reportTti() {
+    if (ttiReported || fcpTime <= 0) return;
+    ttiReported = true;
+    const value = Math.max(fcpTime, lastLongTaskEnd);
+    onMetric({ name: 'TTI', value, rating: getRating('TTI', value), delta: value, id: `tti-${Date.now()}` });
+  }
+
+  // Flush CLS, INP e TTI once when page is unloaded or backgrounded.
   const flushAccumulated = () => {
     if (!clsReported && clsValue > 0) {
       clsReported = true;
@@ -198,6 +233,9 @@ export function initWebVitals() {
         onMetric({ name: 'INP', value: inpValue, rating: getRating('INP', inpValue), delta: inpValue, id: `inp-${Date.now()}` });
       }
     }
+    // Se a janela de 5 s não chegou a completar (saída/aba oculta antes), vale o
+    // que se sabe até aqui — o mesmo critério que o Lighthouse usa no fim do trace.
+    reportTti();
   };
   // visibilitychange fires on document per spec; attach directly to avoid relying on bubbling.
   document.addEventListener('visibilitychange', () => {
@@ -210,6 +248,44 @@ export function initWebVitals() {
     }
   });
   addEventListener('pagehide', flushAccumulated);
+
+  // FCP - First Contentful Paint (SL-105)
+  try {
+    if (PerformanceObserver.supportedEntryTypes.includes('paint')) {
+      const fcpObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          // A entrada 'paint' entrega first-paint e first-contentful-paint.
+          if (entry.name !== 'first-contentful-paint') continue;
+          fcpTime = entry.startTime;
+          onMetric({
+            name: 'FCP',
+            value: fcpTime,
+            rating: getRating('FCP', fcpTime),
+            delta: fcpTime,
+            id: `fcp-${Date.now()}`,
+          });
+          scheduleTtiCheck();
+        }
+      });
+      fcpObserver.observe({ type: 'paint', buffered: true });
+    }
+  } catch (e) { /* not supported */ }
+
+  // Long tasks — insumo do TTI (SL-105). Sem suporte (Safari/Firefox), o TTI
+  // degenera para o FCP, que é o limite inferior correto.
+  try {
+    if (PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+      const longTaskObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const end = entry.startTime + entry.duration;
+          if (end > lastLongTaskEnd) lastLongTaskEnd = end;
+        }
+        // Cada long task nova reabre a contagem: a janela de 5 s começa no fim dela.
+        scheduleTtiCheck();
+      });
+      longTaskObserver.observe({ type: 'longtask', buffered: true });
+    }
+  } catch (e) { /* not supported */ }
 
   // TTFB - Time to First Byte
   try {

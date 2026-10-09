@@ -47,7 +47,19 @@
       "poor": 1800,
       "unit": "ms",
       "rating": "good"
+    },
+    "FCP": {
+      "target": 1500,
+      "poor": 3000,
+      "unit": "ms",
+      "rating": "good"
+    },
+    "TTI": {
+      "target": 3000,
+      "poor": 5000,
+      "unit": "ms",
+      "rating": "good"
     }
   },
-  "notes": "Run 'npx vite-bundle-visualizer' to audit. Os alvos de Web Vitals desta seção sao LIDOS por src/lib/web-vitals.ts (secao 'target' = limite de good; 'poor' = limite de poor). Coleta real: Speed Insights da Vercel, instrumentado em src/lib/speed-insights.ts (initSpeedInsights), carregado por import dinamico em src/main.tsx."
+  "notes": "Run 'npx vite-bundle-visualizer' to audit. Os alvos de Web Vitals desta seção sao LIDOS por src/lib/web-vitals.ts (secao 'target' = limite de good; 'poor' = limite de poor). Coleta real: Speed Insights da Vercel, instrumentado em src/lib/speed-insights.ts (initSpeedInsights), carregado por import dinamico em src/main.tsx. SL-105 (2026-10-08): FCP (< 1,5 s) e TTI (< 3 s) entraram aqui — alvos da secao 'Metricas Web' de docs/IMPROVEMENT_PLAN.md. TTI local = fim da ultima long task (>= 50 ms) que precede 5 s sem long tasks, contado a partir do FCP; a janela de rede do Lighthouse (no maximo 2 requisicoes em voo) NAO e reproduzida pelo coletor local. O alvo Lighthouse >= 90 e medicao de laboratorio (pagina autenticada, 4G simulado) e segue sem gate neste repositorio."
 }
