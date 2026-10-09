@@ -22,7 +22,14 @@
 #             <opaco>). Sem policy de UPDATE (UPDATE revogado em 20260928560000).
 #   BLOCO C — ROLLBACK REAL: aplica o SQL da linha "-- Rollback:" da migration e
 #             prova que ela recria uma leitura equivalente E segura (objects.name
-#             qualificado), não a versão vulnerável, nem "bucket sem policy".
+#             qualificado), não a versão vulnerável, nem "bucket sem policy"; e que
+#             DEVOLVE o dado (media_bucket das linhas reconciliadas, a partir da
+#             tabela de apoio) e apaga essa tabela.
+#
+# EFEITO COLATERAL COBERTO: o gatilho BEFORE UPDATE update_team_messages_updated_at
+# (20260402130912, corpo real reproduzido) regravaria updated_at de toda linha
+# reconciliada. O seed dá data FIXA à linha legada e o teste prova que ela NÃO muda
+# (a migration suspende o gatilho só na transação) e que o gatilho volta ligado.
 #
 # TRANSIÇÃO DO LEGADO (coberta de propósito — é o ponto cobrado na revisão): o
 # seed inclui uma linha de team_messages que reivindica media_bucket=
@@ -46,7 +53,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261004192405_team_chat_media_acl_r2_db_020.sql"
+migration="$repo_root/supabase/migrations/20261009172324_team_chat_media_acl_r2_db_020.sql"
 postgres_image="${R2DB020_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-r2db020-test-$$"
 
@@ -197,6 +204,19 @@ CREATE TABLE public.team_messages (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Gatilho BEFORE UPDATE vivo no esquema real (20260402130912): regrava updated_at
+-- em qualquer UPDATE de team_messages. Reproduzido para provar que a reconciliação
+-- da migration NÃO reescreve a data das mensagens antigas.
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql
+  SET search_path = public AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END $$;
+CREATE TRIGGER update_team_messages_updated_at
+  BEFORE UPDATE ON public.team_messages
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Helpers (mesmas assinaturas/corpos do esquema vigente).
 CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -253,6 +273,9 @@ SQL
 OWNER_PATH='b0000000-0000-0000-0000-000000000001/1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/opaque1.png'
 O2_PATH='d0000000-0000-0000-0000-000000000001/2bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opaque2.png'
 
+LEGACY_TS='2026-01-02 03:04:05+00'
+RB_TABLE='team_chat_media_acl_r2_db_020_rb'
+
 cat > "$tmp_dir/seed.sql" <<SQL
 DELETE FROM public.team_messages;
 DELETE FROM public.team_conversation_members;
@@ -281,14 +304,14 @@ INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUE
   ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c0000000-0000-0000-0000-000000000001'),
   ('2bbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'd0000000-0000-0000-0000-000000000001');
 
-INSERT INTO public.team_messages (conversation_id, sender_id, content, message_type, media_bucket, media_path) VALUES
-  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'file1', 'image', 'team-chat-files', '$OWNER_PATH'),
+INSERT INTO public.team_messages (conversation_id, sender_id, content, message_type, media_bucket, media_path, updated_at) VALUES
+  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'file1', 'image', 'team-chat-files', '$OWNER_PATH', '$LEGACY_TS'),
   -- LINHA LEGADA: reivindica media_bucket='team-chat-files' com media_path fora da
   -- chave canônica — 1º segmento é o auth.uid do remetente (formato antigo
   -- <auth_uid>/<opaco> da policy de INSERT anterior a 20260928560000), não o
   -- sender_id b000.... Serve para provar que a migration reconcilia dados
   -- preexistentes em vez de assumir tabela vazia.
-  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'legacy file', 'image', 'team-chat-files', '22222222-2222-2222-2222-222222222222/legacy.png');
+  ('1aaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b0000000-0000-0000-0000-000000000001', 'legacy file', 'image', 'team-chat-files', '22222222-2222-2222-2222-222222222222/legacy.png', '$LEGACY_TS');
 
 INSERT INTO storage.objects (bucket_id, name) VALUES
   ('team-chat-files', '$OWNER_PATH'),
@@ -356,6 +379,20 @@ expect_value 'L3 linha legada reconciliada: media_bucket anulado, media_path pre
 # VALIDATE varreu a tabela inteira: constraint termina convalidada.
 expect_value 'L4 constraint termina convalidada (convalidated = true)' '1' \
   "SELECT count(*) FROM pg_constraint WHERE conname='team_messages_media_path_matches_sender_conversation' AND contype='c' AND convalidated;"
+# EFEITO COLATERAL do UPDATE (gatilho BEFORE UPDATE): a data da mensagem legada NÃO
+# pode ser reescrita pela reconciliação.
+expect_value 'L5 reconciliação preserva updated_at (gatilho suspenso no UPDATE)' 't' \
+  "SELECT updated_at = '$LEGACY_TS'::timestamptz FROM public.team_messages WHERE media_path='22222222-2222-2222-2222-222222222222/legacy.png';"
+expect_value 'L6 gatilho update_team_messages_updated_at volta LIGADO' '1' \
+  "SELECT count(*) FROM pg_trigger WHERE tgrelid='public.team_messages'::regclass AND tgname='update_team_messages_updated_at' AND tgenabled='O' AND NOT tgisinternal;"
+# Tabela de apoio do rollback: guardou o valor ANTIGO, tem RLS ligada e ninguém além
+# do dono (que roda a migration) tem GRANT nela.
+expect_value 'L7 tabela de apoio guardou o valor antigo da linha reconciliada' '1' \
+  "SELECT count(*) FROM public.$RB_TABLE WHERE media_bucket='team-chat-files';"
+expect_value 'L8 tabela de apoio tem RLS ligada' '1' \
+  "SELECT count(*) FROM pg_class WHERE oid='public.$RB_TABLE'::regclass AND relrowsecurity;"
+expect_value 'L9 authenticated NÃO tem SELECT na tabela de apoio' 'f' \
+  "SELECT has_table_privilege('authenticated','public.$RB_TABLE','SELECT');"
 
 echo
 echo '── BLOCO B: comportamento DEPOIS da migration ────────────────────────────────────'
@@ -491,5 +528,13 @@ expect_value 'C7 membro NÃO lê objeto de conversa alheia após rollback' '0' \
   "$(as_actor "$MEMBER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='$O2_PATH';")"
 expect_value 'C8 formato legado <auth_uid>/ volta a ser legível pelo dono' '1' \
   "$(as_actor "$OWNER_UID" "SELECT count(*) FROM storage.objects WHERE bucket_id='team-chat-files' AND name='22222222-2222-2222-2222-222222222222/legacy.png';")"
+# O rollback DEVOLVE o dado (não só a ACL): o media_bucket anulado volta, a tabela de
+# apoio é apagada e a data da mensagem segue intacta.
+expect_value 'C9 rollback devolve media_bucket das linhas reconciliadas' '1' \
+  "SELECT count(*) FROM public.team_messages WHERE media_bucket='team-chat-files' AND media_path='22222222-2222-2222-2222-222222222222/legacy.png';"
+expect_value 'C10 rollback apaga a tabela de apoio' '0' \
+  "SELECT count(*) FROM pg_class WHERE relname='$RB_TABLE' AND relnamespace='public'::regnamespace;"
+expect_value 'C11 updated_at segue preservado depois do rollback' 't' \
+  "SELECT updated_at = '$LEGACY_TS'::timestamptz FROM public.team_messages WHERE media_path='22222222-2222-2222-2222-222222222222/legacy.png';"
 
 printf '\n[OK] contrato R2-DB-020 (ACL + persistência de media_path do Team Chat) verificado\n'
