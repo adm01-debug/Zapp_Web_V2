@@ -7,7 +7,8 @@ import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
-import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle } from 'lucide-react';
+import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -20,9 +21,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay, barsByDay } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
+import {
+  useTalkXSuppressionActivity, SUPPRESSION_ACTIVITY_EVENT_TYPES,
+  type SuppressionActivityAction, type SuppressionActivityEventType, type SuppressionActivityItem,
+} from '@/hooks/integrations/useTalkXSuppression';
 
 interface BlacklistEntry {
   id: string;
@@ -49,6 +54,59 @@ const CONTACT_SEARCH_DEBOUNCE_MS = 300;
 /** Telefone da linha: o do contato vinculado ou, quando o bloqueio é só por telefone, o da própria supressão. */
 const fmtPhone = (raw: string | null | undefined) => { const d = (raw ?? '').replace(/\D/g, ''); return d ? `+${d}` : '—'; };
 
+/* ------------------------------------------------------------------ */
+/* X184 — Atividade recente: trilha de supressão lida dos eventos de  */
+/* entidade gravados em `talkx_campaign_events`                       */
+/* ------------------------------------------------------------------ */
+
+/** Itens do rail ("os 5 últimos") e do histórico paginado do modal. */
+const ACTIVITY_RAIL_LIMIT = 5;
+const ACTIVITY_HISTORY_PAGE_SIZE = 20;
+
+/** Rótulo do filtro de tipo do histórico, na linguagem da tela. */
+const ACTIVITY_FILTER_LABELS: Record<SuppressionActivityEventType, string> = {
+  suppression_add: 'Adicionado',
+  suppression_remove: 'Removido',
+  suppression_update: 'Motivo atualizado',
+  suppression_import: 'Importação',
+  suppression_export: 'Exportação',
+};
+
+/** Ícone e cor por ação da trilha — só tokens que o sistema já tem. */
+const ACTIVITY_ICON: Record<SuppressionActivityAction | 'other', LucideIcon> = {
+  add: UserPlus, remove: UserMinus, update: PencilLine, import: FileInput, export: FileOutput, other: Activity,
+};
+const ACTIVITY_STYLE: Record<SuppressionActivityAction | 'other', string> = {
+  add: 'bg-dash-green/10 text-dash-green',
+  remove: 'bg-dash-red/10 text-dash-red',
+  update: 'bg-dash-amber/10 text-dash-amber',
+  import: 'bg-primary/10 text-primary',
+  export: 'bg-dash-violet/15 text-dash-violet',
+  other: 'bg-muted/40 text-foreground-secondary',
+};
+
+const activityKey = (item: SuppressionActivityItem) => item.action ?? 'other';
+
+/** Uma linha da trilha: ação (ícone), título, contato e data relativa. */
+function ActivityLine({ item, showActor = false }: { item: SuppressionActivityItem; showActor?: boolean }) {
+  const key = activityKey(item);
+  const Icon = ACTIVITY_ICON[key];
+  return (
+    <div className="flex gap-2.5 min-w-0">
+      <span className={cn('w-6 h-6 rounded-full flex items-center justify-center shrink-0', ACTIVITY_STYLE[key])}>
+        <Icon className="w-3.5 h-3.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-foreground truncate">{item.title}</p>
+        <p className="text-2xs text-foreground-secondary truncate">{item.contactLabel ?? '—'}</p>
+        <p className="text-2xs text-muted-foreground truncate">
+          {fmtRelativeDay(item.createdAt)}{showActor && item.actorName ? ` · ${item.actorName}` : ''}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function TalkXSuppression() {
   const qc = useQueryClient();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.suppression.filters', { origin: 'all', motivo: 'all' });
@@ -62,6 +120,18 @@ export function TalkXSuppression() {
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
   const [contactSearch, setContactSearch] = useState('');
   const debouncedContactSearch = useDebounce(contactSearch.trim(), CONTACT_SEARCH_DEBOUNCE_MS);
+
+  // X184 — trilha da lista: os 5 últimos itens no rail e o histórico do modal.
+  // O filtro e a página entram na chave da consulta, então cada recorte tem o
+  // seu próprio resultado (a resposta de uma página antiga não sobrescreve a nova).
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(ACTIVITY_HISTORY_PAGE_SIZE);
+  const [historyType, setHistoryType] = useState<SuppressionActivityEventType | 'all'>('all');
+  const activity = useTalkXSuppressionActivity({ limit: ACTIVITY_RAIL_LIMIT });
+  const history = useTalkXSuppressionActivity({
+    limit: historyPageSize, page: historyPage - 1, eventType: historyType, enabled: showHistory,
+  });
 
   const { data: blacklist = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['talkx-blacklist'],
@@ -139,7 +209,7 @@ export function TalkXSuppression() {
       const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: profile?.id ?? null, origin: addOrigin });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); qc.invalidateQueries({ queryKey: ['talkx-suppression-activity'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
     onError: (e: Error) => toast.error(`Erro: ${e.message}`),
   });
 
@@ -150,7 +220,7 @@ export function TalkXSuppression() {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); toast.success('Contato removido da lista de supressão'); setRemoving(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); qc.invalidateQueries({ queryKey: ['talkx-suppression-activity'] }); toast.success('Contato removido da lista de supressão'); setRemoving(null); },
   });
 
 
@@ -239,6 +309,48 @@ export function TalkXSuppression() {
           <AlertTriangle className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
           <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-primary-glow hover:underline">Saiba mais →</a></p>
         </div>
+
+        <RailCard icon={Activity} color="violet" title="Atividade recente" subtitle="Últimas mudanças na lista de supressão">
+          {activity.isLoading ? (
+            <TalkXSkeletonRows rows={3} variant="rail" />
+          ) : activity.isError ? (
+            <div role="alert" className="rounded-xl border border-dash-red/40 bg-dash-red/5 p-3">
+              <p className="text-xs text-foreground">Não foi possível carregar a atividade da lista.</p>
+              <button type="button" onClick={() => { void activity.refetch(); }} className="mt-1 text-2xs font-semibold text-foreground-secondary hover:text-foreground">Tentar novamente</button>
+            </div>
+          ) : activity.items.length === 0 ? (
+            <p className="text-xs text-foreground-secondary">Nenhuma atividade ainda</p>
+          ) : (
+            <ol className="flex flex-col gap-3">
+              {activity.items.map((item, i) => {
+                const key = activityKey(item);
+                const Icon = ACTIVITY_ICON[key];
+                return (
+                  <li key={item.id} className="flex gap-2.5 min-w-0">
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className={cn('w-6 h-6 rounded-full flex items-center justify-center', ACTIVITY_STYLE[key])}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </span>
+                      {i < activity.items.length - 1 && <span className="w-px flex-1 bg-border/60 my-1" aria-hidden="true" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground truncate">{item.title}</p>
+                      <p className="text-2xs text-foreground-secondary truncate">{item.contactLabel ?? '—'}</p>
+                      <p className="text-2xs text-muted-foreground">{fmtRelativeDay(item.createdAt)}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          <button
+            type="button"
+            onClick={() => { setHistoryPage(1); setHistoryType('all'); setShowHistory(true); }}
+            className="self-start text-xs font-medium text-primary-glow hover:underline"
+          >
+            Ver todas
+          </button>
+        </RailCard>
       </div>
 
       {/* Modal adicionar */}
@@ -286,6 +398,42 @@ export function TalkXSuppression() {
           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => removing && removeMutation.mutate(removing.id)}>Remover</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* X184 — "Ver todas": histórico paginado da trilha (20 por página) */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="rounded-2xl border-border/70 max-w-xl" aria-describedby={undefined}>
+          <DialogHeader><DialogTitle>Atividade recente</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-1">
+            <Select value={historyType} onValueChange={(v) => { setHistoryType(v as SuppressionActivityEventType | 'all'); setHistoryPage(1); }}>
+              <SelectTrigger className="bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {SUPPRESSION_ACTIVITY_EVENT_TYPES.map((t) => <SelectItem key={t} value={t}>{ACTIVITY_FILTER_LABELS[t]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {history.isLoading ? <TalkXSkeletonRows rows={4} />
+              : history.isError ? (
+                <div role="alert" className="rounded-xl border border-dash-red/40 bg-dash-red/5 p-3">
+                  <p className="text-xs text-foreground">Não foi possível carregar a atividade da lista.</p>
+                  <button type="button" onClick={() => { void history.refetch(); }} className="mt-1 text-2xs font-semibold text-foreground-secondary hover:text-foreground">Tentar novamente</button>
+                </div>
+              ) : history.items.length === 0 ? (
+                <p className="py-6 text-center text-xs text-foreground-secondary">Nenhuma atividade ainda</p>
+              ) : (
+                <ul className="flex max-h-[45vh] flex-col divide-y divide-border/50 overflow-auto">
+                  {history.items.map((item) => <li key={item.id} className="py-2.5"><ActivityLine item={item} showActor /></li>)}
+                </ul>
+              )}
+            {history.total > 0 && (
+              <TalkXPagination
+                page={historyPage} pageSize={historyPageSize} total={history.total}
+                onPage={setHistoryPage} onPageSize={(n) => { setHistoryPageSize(n); setHistoryPage(1); }}
+                noun="atividades"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
