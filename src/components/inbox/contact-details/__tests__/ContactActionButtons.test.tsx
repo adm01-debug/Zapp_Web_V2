@@ -77,6 +77,18 @@ describe('ContactActionButtons', () => {
     expect(screen.queryByText('Abrir email')).not.toBeInTheDocument();
   });
 
+  it('e-mail vazio ("") conta como sem e-mail, e os outros Tiles mostram o próprio texto de tooltip', () => {
+    render(<ContactActionButtons contact={{ ...baseContact, email: '' }} onStartCall={onStartCall} />);
+    const emailTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-mail'))!;
+    expect(emailTile).toBeDisabled();
+    const tooltips = screen.getAllByTestId('contact-action-tooltip').map((t) => t.textContent);
+    expect(tooltips).toContain('Sem e-mail');
+    // Cada Tile declara o texto do tooltip em `title`; o rótulo curto fica só no aria-label.
+    expect(tooltips).toContain('Opções de chamada');
+    expect(tooltips).toContain('Mais ações');
+    expect(tooltips).not.toContain('E-mail');
+  });
+
   it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
