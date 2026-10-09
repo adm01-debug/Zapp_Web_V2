@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
  * `tags` chega pela coluna de X101 (`talkx_segments.tags text[]`); aqui o campo
  * é opcional para o filtro do funil já funcionar quando a coluna existir.
  */
-export type SegmentLike = TalkXSegment & { tags?: string[] };
+export type SegmentLike = TalkXSegment & { tags?: string[] | null };
 
 /** Selo do cartão — `draft` entra quando X101 abrir o status de rascunho. */
 const STATUS_MAP: Record<string, { label: string; tone: PillTone }> = {
@@ -248,12 +248,14 @@ function FilterGroup({ label, value, onChange, options }: {
   );
 }
 
-function SegmentCard({ segment, active, favorite, onSelect, onToggleFavorite, onEdit, onUseCampaign, onToggleStatus, onDelete }: {
+export function SegmentCard({ segment, active, favorite, onSelect, onToggleFavorite, onEdit, onUseCampaign, onToggleStatus, onDelete, selectable = false, selected = false, onToggleSelect }: {
   segment: SegmentLike; active: boolean; favorite: boolean;
   onSelect: (s: TalkXSegment) => void; onToggleFavorite: (s: TalkXSegment) => void;
   onEdit?: (s: TalkXSegment) => void; onUseCampaign?: (id: string) => void;
   onToggleStatus?: (s: TalkXSegment, next: 'active' | 'inactive') => void;
   onDelete?: (s: TalkXSegment) => void;
+  /** X114: o mesmo cartão serve à GRADE da biblioteca, que seleciona em massa. */
+  selectable?: boolean; selected?: boolean; onToggleSelect?: (s: TalkXSegment) => void;
 }) {
   const status = STATUS_MAP[segment.status] ?? { label: segment.status, tone: 'muted' as PillTone };
   return (
@@ -263,9 +265,15 @@ function SegmentCard({ segment, active, favorite, onSelect, onToggleFavorite, on
         onClick={() => onSelect(segment)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(segment); } }}
         className={cn('rounded-xl border p-2.5 cursor-pointer transition-colors',
-          active ? 'border-primary/60 bg-primary/5' : 'border-border/60 bg-input/20 hover:bg-muted/30')}
+          selected ? 'border-primary/60 bg-primary/10' : active ? 'border-primary/60 bg-primary/5' : 'border-border/60 bg-input/20 hover:bg-muted/30')}
       >
         <div className="flex items-start gap-2">
+          {selectable && (
+            <input
+              type="checkbox" checked={selected} aria-label={`Selecionar ${segment.name}`}
+              onClick={(e) => e.stopPropagation()} onChange={() => onToggleSelect?.(segment)}
+              className="mt-1 h-4 w-4 shrink-0 accent-primary" />
+          )}
           <IconTile icon={Bookmark} color="violet" size={32} />
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-foreground truncate">{segment.name}</p>

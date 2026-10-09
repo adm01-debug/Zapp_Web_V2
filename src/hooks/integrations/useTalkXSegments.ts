@@ -522,6 +522,42 @@ export function saveSegmentLibraryPageSize(userId: string | null | undefined, si
 }
 
 /* ------------------------------------------------------------------ */
+/* X114 — ações em massa da biblioteca (RPC talkx_segment_bulk_action)  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * X114 — as ações em massa da biblioteca. Cada item passa pela MESMA guarda de
+ * uso do segmento (TL-129/X101) dentro da RPC: o barrado volta como
+ * `succeeded: false`, com o nome da campanha em `error_message` (o lote NÃO
+ * para e o item recusado não muda). "Excluir" na UI é `archive` (decisão N22:
+ * arquivar, não apagar).
+ */
+export type SegmentBulkAction = 'draft' | 'activate' | 'deactivate' | 'archive' | 'tag';
+
+export interface TalkXSegmentBulkResult {
+  segment_id: string;
+  action: SegmentBulkAction;
+  succeeded: boolean;
+  status: string | null;
+  archived_at: string | null;
+  tags: string[] | null;
+  error_code: string | null;
+  error_message: string | null;
+}
+
+export interface SegmentBulkActionInput {
+  action: SegmentBulkAction;
+  ids: string[];
+  /** Só para `action: 'tag'` (não vazio, até 40 caracteres). */
+  tag?: string;
+}
+
+type TalkXBulkActionRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string; code?: string } | null;
+}>;
+
+/* ------------------------------------------------------------------ */
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -601,6 +637,22 @@ export function useTalkXSegments() {
     onSuccess: () => invalidate(),
   });
 
+  // X114 — ações em massa (barra da biblioteca). A RPC devolve UMA LINHA POR
+  // SEGMENTO: o item barrado pela guarda de X101 volta com `succeeded: false` e o
+  // nome da campanha na mensagem, e o lote segue. Erro de ENTRADA (22023) aborta
+  // antes de escrever — nada foi aplicado, então a rejeição sobe para a tela.
+  const bulkSegmentAction = useMutation({
+    mutationFn: async ({ action, ids, tag }: SegmentBulkActionInput) => {
+      const rpc = supabase.rpc as unknown as TalkXBulkActionRpc;
+      const args: Record<string, unknown> = { p_action: action, p_segment_ids: ids };
+      if (action === 'tag') args.p_tag = (tag ?? '').trim();
+      const { data, error } = await rpc('talkx_segment_bulk_action', args);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as TalkXSegmentBulkResult[];
+    },
+    onSuccess: () => invalidate(),
+  });
+
   return {
     segments: segmentsQuery.data ?? [],
     isLoading: segmentsQuery.isLoading,
@@ -616,5 +668,7 @@ export function useTalkXSegments() {
     libraryStatsError: libraryStatsQuery.error as Error | null,
     refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
+    // X114 — ações em massa da biblioteca (ativar/inativar/tag/arquivar).
+    bulkSegmentAction,
   };
 }
