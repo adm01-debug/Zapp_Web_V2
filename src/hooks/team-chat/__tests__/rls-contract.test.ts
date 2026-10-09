@@ -18,22 +18,32 @@ import { TestQueryWrapper } from '@/test/mocks/queryClient';
  * nome errado de coluna — por isso o cartao mandou reescrever: o esperado tem
  * de vir de uma fonte que o teste NAO controla.
  *
+ * Depois disso o convite de departamento mudou de contrato (SL-069): o hook nao
+ * grava mais `department_invites` — quem cria o convite e a RPC
+ * `create_department_invite(p_department_id, p_max_uses, p_expires_hours)`, que
+ * grava `department_invitations` + a auditoria na mesma transacao. A tabela
+ * aposentada `department_invites` segue no snapshot (por isso a antiga assercao
+ * passava: ela testava uma tabela que a producao nao usa mais).
+ *
  * Aqui:
  *  - o ESPERADO vem de `supabase/schema-manifest.json`, o snapshot do banco de
  *    producao gerado por `scripts/db-audit/manifest.sql` e mantido fresco por
- *    `scripts/db-audit/check-manifest-fresh.mjs` / workflow `types-sync`;
+ *    `scripts/db-audit/check-manifest-fresh.mjs` / workflow `types-sync`:
+ *    colunas de `department_invitations` (contrato vivo do convite) e a
+ *    assinatura de `create_department_invite` em `functions`;
  *  - o ATUAL vem de CHAMAR os hooks de producao com a fronteira Supabase
  *    dublada (o que o app manda de verdade pelo cliente).
  *
  * Se a producao passar a gravar/ler uma coluna que o banco nao tem, o teste
- * fica vermelho. Se o banco perder a coluna, o manifesto muda e o teste tambem
- * fica vermelho.
+ * fica vermelho. Se o banco perder a coluna (ou a RPC mudar de parametro), o
+ * manifesto muda e o teste tambem fica vermelho.
  */
 
 type Aresta = { table: string; op: string; payload?: unknown };
 
 const f = vi.hoisted(() => {
   const arestas: Aresta[] = [];
+  const chamadasRpc: Array<{ nome: string; args?: Record<string, unknown> }> = [];
 
   // Cadeia minima do PostgREST: registra a operacao e devolve a si mesma, para
   // que `insert().select().single()` e `update().eq()` funcionem. Cadeia sem
@@ -56,12 +66,16 @@ const f = vi.hoisted(() => {
     return no;
   }
 
-  return { arestas, cadeia };
+  return { arestas, chamadasRpc, cadeia };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => f.cadeia(table),
+    rpc: (nome: string, args?: Record<string, unknown>) => {
+      f.chamadasRpc.push({ nome, args });
+      return Promise.resolve({ data: { ok: true, invite_id: 'inv-1', code: 'ZX9Y8W7V' }, error: null });
+    },
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => {},
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
@@ -81,6 +95,7 @@ import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 type Manifesto = {
   columns: Record<string, string>;
   constraints: Record<string, string>;
+  functions: Record<string, string>;
 };
 
 const manifesto = JSON.parse(
@@ -124,14 +139,29 @@ function chavesDe(payload: unknown): string[] {
   return Object.keys((payload ?? {}) as Record<string, unknown>).sort();
 }
 
+/** Palavras devolvidas pela assinatura do manifesto: "f:nome(a uuid, b integer)" -> ["a","b"]. */
+function parametrosDaAssinatura(chave: string): string[] {
+  const dentro = chave.slice(chave.indexOf('(') + 1, chave.lastIndexOf(')'));
+  return dentro
+    .split(',')
+    .map((parte) => parte.trim().split(/\s+/)[0])
+    .filter((nome) => nome.length > 0)
+    .sort();
+}
+
 describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
   beforeEach(() => {
     f.arestas.length = 0;
+    f.chamadasRpc.length = 0;
   });
 
   it('o snapshot do banco enxerga as tabelas do Team Chat (nao passa por vacuidade)', () => {
     expect(colunasReais('team_messages')).toContain('message_type');
-    expect(colunasReais('department_invites')).toContain('code');
+    // O convite de departamento vive em `department_invitations` (e14): a tabela
+    // aposentada `department_invites` segue no snapshot, mas e esta que a producao usa.
+    expect(colunasReais('department_invitations')).toEqual(
+      expect.arrayContaining(['code', 'status', 'use_count', 'max_uses', 'expires_at', 'created_by']),
+    );
   });
 
   it('useSendTeamMessage grava so colunas que existem em team_messages', async () => {
@@ -146,16 +176,30 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
     expect(chaves.filter((chave) => !colunasReais('team_messages').includes(chave))).toEqual([]);
   });
 
-  it('useCreateDepartmentInvite grava so colunas que existem em department_invites', async () => {
+  it('useCreateDepartmentInvite usa so o que o snapshot do banco tem: a RPC do convite', async () => {
     const { result } = renderHook(() => useCreateDepartmentInvite('dep-1'), { wrapper: TestQueryWrapper });
 
     await act(async () => {
       await result.current.mutateAsync('Ana');
     });
 
-    const chaves = chavesDe(ultimaAresta('department_invites', 'insert').payload);
-    expect(chaves.length).toBeGreaterThan(0);
-    expect(chaves.filter((chave) => !colunasReais('department_invites').includes(chave))).toEqual([]);
+    // O contrato atual cria o convite pela RPC: o cliente nao escreve coluna nenhuma
+    // (o INSERT em `department_audit_logs` feito pelo cliente foi revogado em 20260928530000).
+    expect(f.arestas).toEqual([]);
+
+    // A RPC chamada existe no snapshot e os parametros que o hook manda sao EXATAMENTE
+    // os da assinatura do banco — `f:create_department_invite(p_department_id uuid,
+    // p_max_uses integer, p_expires_hours integer)`.
+    expect(f.chamadasRpc).toHaveLength(1);
+    const { nome, args } = f.chamadasRpc[0] ?? { nome: '', args: {} };
+    const assinaturas = Object.keys(manifesto.functions).filter((chave) =>
+      chave.startsWith(`f:${nome}(`),
+    );
+    expect(assinaturas).toHaveLength(1);
+    expect(parametrosDaAssinatura(assinaturas[0])).toEqual(Object.keys(args ?? {}).sort());
+
+    // A tabela que a RPC grava e a do contrato vivo (nao a aposentada `department_invites`).
+    expect(colunasReais('department_invitations')).toContain('code');
   });
 
   it('a leitura de team_messages pede colunas e relacao que existem no banco', async () => {
