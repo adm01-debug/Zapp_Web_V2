@@ -18,6 +18,7 @@ import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 const LAYOUT_KEY = 'talkx.overview.layout';
@@ -56,19 +57,26 @@ interface Props {
   onViewScheduled?: (c: TalkXCampaign) => void;
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
-  onStart: (id: string) => void;
-  /** O motivo é obrigatório na pausa e vai junto com a ação para o servidor. */
-  onPause: (id: string, reason: string) => void;
-  onCancel: (id: string) => void;
+  /**
+   * X051 — iniciar/pausar/retomar/cancelar NÃO passam mais por aqui: a tela
+   * resolve o ciclo de vida pelo controlador único (`useTalkXLifecycle`). As
+   * props seguem opcionais só para mocks/chamadores antigos.
+   */
+  onStart?: (id: string) => void;
+  onPause?: (id: string, reason: string) => void;
+  onCancel?: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
 }
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
+  // X051 — UM controlador para iniciar/pausar/retomar/cancelar: a Visão geral
+  // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
+  const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
@@ -87,7 +95,18 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
   // e as "Últimas campanhas".
   const rowActions = useCampaignRowActions({
-    onView, onViewScheduled, onViewRunning, onEdit, onStart, onPause, onCancel, onDelete, onDuplicate,
+    onView,
+    onViewScheduled,
+    onViewRunning,
+    onEdit,
+    // Compatibilidade interna do hook de ações: a Visão geral nunca chama estas
+    // props para ciclo de vida quando `onLifecycle` está presente.
+    onStart: () => undefined,
+    onPause: () => undefined,
+    onCancel: () => undefined,
+    onDelete,
+    onDuplicate,
+    onLifecycle: (kind, campaign) => lifecycle.request({ kind, target: campaign }),
   });
 
   React.useEffect(() => {
@@ -407,8 +426,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* X080 — modais de confirmação das ações de linha (um lugar só) */}
+      {/* X080 — duplicar/excluir seguem nas confirmações de linha; X051 — ciclo de vida usa um diálogo único. */}
       {rowActions.dialogs}
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
     </TalkXQueryBoundary>
   );
