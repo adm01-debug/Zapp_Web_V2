@@ -434,6 +434,14 @@ async function gravarLogEssencial(
   return "falhou";
 }
 
+/**
+ * Enfileira na outbox a linha do log essencial que NÃO pôde ser entregue.
+ *
+ * `true` SÓ quando o PostgREST confirma a escrita (`resposta.ok`): conflito de
+ * unicidade, alvo inexistente, 4xx/5xx ou rede fora contam como FALHA e sobem
+ * para `registrarFalhaDeLog`, que emite o marcador de último recurso. Nenhum
+ * caminho pode tratar a tentativa de escrita como pendência durável sem isso.
+ */
 async function gravarNaOutbox(
   url: string,
   chave: string,
@@ -453,6 +461,12 @@ async function gravarNaOutbox(
   }
 }
 
+/**
+ * Atualiza (ou dá baixa em) uma pendência da outbox pelo `id`.
+ *
+ * `true` SÓ quando o PATCH confirma (`resposta.ok`). Todo chamador é obrigado a
+ * olhar o retorno: PATCH recusado = a linha continua como estava.
+ */
 async function atualizarPendencia(
   url: string,
   chave: string,
@@ -610,7 +624,14 @@ export async function reprocessarLogEssencial(
       continue;
     }
 
-    await atualizarPendencia(supabaseUrl, serviceRoleKey, id, { tentativas: novasTentativas });
+    // O PATCH de tentativas também responde: descartar `resposta.ok` era o único
+    // ponto em que a outbox recusava uma escrita SEM ninguém saber — o item
+    // ficava pendente (correto), mas a recusa saía muda. Ela passa a sair no
+    // resultado da execução, junto das demais falhas de leitura.
+    const registrouTentativas = await atualizarPendencia(supabaseUrl, serviceRoleKey, id, {
+      tentativas: novasTentativas,
+    });
+    if (!registrouTentativas) resultado.falha = "patch_tentativas_recusado";
     resultado.pendentes += 1;
   }
   return resultado;
