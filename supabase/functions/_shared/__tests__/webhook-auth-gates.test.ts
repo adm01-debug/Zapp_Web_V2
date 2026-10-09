@@ -459,3 +459,38 @@ Deno.test("evolution-webhook: EVOLUTION_WEBHOOK_ENFORCE=shadow explícito contin
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// SL-061 / IA-004 L6 — regressão do DEFAULT: corpo SEM assinatura HMAC não é
+// aceito. O caminho padrão nega (401); o único jeito de um corpo sem assinatura
+// passar é `EVOLUTION_WEBHOOK_ENFORCE=shadow`, explícito (teste acima). Se
+// alguém devolver o default para `shadow`, este teste fica vermelho.
+// A Evolution GO não assina webhooks (só envia Content-Type), então a credencial
+// dela é o `instanceToken` do corpo — e ele também é exigido no default.
+// ---------------------------------------------------------------------------
+
+Deno.test("evolution-webhook: corpo SEM assinatura HMAC não é aceito por padrão (IA-004 L6 / SL-061)", async () => {
+  await withEnv(
+    {
+      EVOLUTION_WEBHOOK_ENFORCE: undefined, // default = enforcement
+      EVOLUTION_WEBHOOK_SECRET: "secret-configurado-no-emissor", // mesmo COM secret, o default nega
+      EVOLUTION_INSTANCE_TOKEN: "tok-global",
+      SUPABASE_URL: undefined, // se o gate abrisse, getDb() estouraria -> 500, e o 401 abaixo não passaria
+      SUPABASE_SERVICE_ROLE_KEY: undefined,
+    },
+    async () => {
+      // (1) sem header de assinatura (post() manda só content-type) e sem instanceToken -> 401.
+      const semAssinatura = await handleEvolutionWebhook(post(EVO_URL, evoBody({})));
+      assertEquals(semAssinatura.status, 401);
+      assertEquals(await semAssinatura.text(), JSON.stringify({ error: "Unauthorized" }));
+
+      // (2) assinatura presente porém inválida com instanceToken VÁLIDO -> 401 na assinatura
+      //     (fail-closed: o token do corpo não substitui uma assinatura apresentada e inválida).
+      const assinaturaInvalida = await handleEvolutionWebhook(
+        post(EVO_URL, evoBody({ instanceToken: "tok-global" }), { "x-evolution-signature": "sha256=deadbeef" }),
+      );
+      assertEquals(assinaturaInvalida.status, 401);
+      assertEquals(await assinaturaInvalida.text(), JSON.stringify({ error: "Invalid webhook signature" }));
+    },
+  );
+});
