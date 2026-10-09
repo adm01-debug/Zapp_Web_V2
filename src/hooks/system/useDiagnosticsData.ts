@@ -232,8 +232,7 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     const { count: messagesCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-    const { count: connectionsCountRaw, error: connectionsCountError } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
-    const connectionsCount = connectionsCountError ? 0 : connectionsCountRaw;
+    const { count: connectionsCount } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
 
     const realtime = await probeRealtime();
 
