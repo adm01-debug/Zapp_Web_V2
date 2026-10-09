@@ -258,6 +258,7 @@
         "ai_jobs.finished_at:timestamp with time zone:nullable",
         "ai_jobs.created_at:timestamp with time zone:not-null",
         "ai_jobs.updated_at:timestamp with time zone:not-null",
+        "ai_jobs.effect_started_at:timestamp with time zone:nullable",
         "ai_model_prices.id:uuid:not-null",
         "ai_model_prices.provider_id:uuid:nullable",
         "ai_model_prices.model:text:not-null",
@@ -2296,6 +2297,7 @@
         "list_multiplix_dead_letters",
         "log_audit_event",
         "log_talkx_campaign_checklist",
+        "mark_ai_job_effect_started",
         "mark_first_response",
         "mark_multiplix_item_dispatch_started",
         "mark_multiplix_recipient_dispatch_started",
@@ -2419,7 +2421,7 @@
         "upsert_my_call",
         "user_has_permission"
     ],
-    "generated_at": "2026-10-08",
+    "generated_at": "2026-10-09",
     "format_version": 2,
     "check_constraints": [
         "agent_presence.agent_presence_status_check:CHECK ((status = ANY (ARRAY['online'::text, 'away'::text, 'offline'::text])))",
@@ -2798,6 +2800,7 @@
         "list_multiplix_dead_letters(p_limit integer, p_dispatch_id uuid)->TABLE(item_id uuid, dispatch_id uuid, dispatch_name text, recipient_id uuid, block_id uuid, block_order smallint, attempt_count integer, error_class text, error_message text, failed_at timestamp with time zone, next_attempt_at timestamp with time zone, destino_mascarado text)|kind=f",
         "log_audit_event(p_action text, p_entity_type text, p_entity_id text, p_details jsonb, p_user_agent text)->void|kind=f",
         "log_talkx_campaign_checklist(p_campaign_id uuid, p_items jsonb)->uuid|kind=f",
+        "mark_ai_job_effect_started(p_id uuid, p_lease_token uuid)->boolean|kind=f",
         "mark_first_response(p_contact_id uuid)->void|kind=f",
         "mark_multiplix_item_dispatch_started(p_item_id uuid, p_claim_token uuid)->void|kind=f",
         "mark_multiplix_recipient_dispatch_started(p_recipient_id uuid, p_claim_token uuid)->void|kind=f",
