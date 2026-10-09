@@ -12,9 +12,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
+import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXNoData, fmtInt, fmtDateTime, fmtAgo, OBJECTIVES } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { toast } from 'sonner';
 
@@ -25,7 +26,10 @@ interface Props {
 type ViewMode = 'list' | 'edit';
 
 export function TalkXSegments({ onUseCampaign }: Props) {
-  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates } = useTalkXSegments();
+  const {
+    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates,
+    libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
+  } = useTalkXSegments();
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -48,14 +52,6 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   }, [segments, filterOrigin, filterStatus, search]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const totals = useMemo(() => ({
-    total: segments.length,
-    active: segments.filter((s) => s.status === 'active').length,
-    crm360: segments.filter((s) => s.origin === 'crm360').length,
-    totalContacts: segments.reduce((a, s) => a + s.estimated_count, 0),
-    bars: barsByDay(segments.map((s) => s.created_at)),
-  }), [segments]);
 
   const openNew = () => { setEditingName(''); setEditingDesc(''); setEditingRules(emptyRules()); setSelected(null); setMode('edit'); };
   const openEdit = (s: TalkXSegment) => { setEditingName(s.name); setEditingDesc(s.description ?? ''); setEditingRules(s.rules); setSelected(s); setMode('edit'); };
@@ -98,16 +94,18 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
-        {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i)=><KpiCardSkeleton key={i}/>)}</div>
-        ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            <KpiCard icon={Database} color="blue"   index={0} label="Total de segmentos"  value={fmtInt(totals.total)}        bars={totals.bars} />
-            <KpiCard icon={Check}    color="green"  index={1} label="Segmentos ativos"    value={fmtInt(totals.active)} />
-            <KpiCard icon={Shield}   color="violet" index={2} label="CRM 360° conectados" value={fmtInt(totals.crm360)} />
-            <KpiCard icon={BarChart3} color="amber" index={3} label="Contatos cobertos"    value={fmtInt(totals.totalContacts)} />
-          </div>
-        )}
+        {/* X103/TL-135b — KPIs da biblioteca vem da RPC talkx_segment_library_stats
+            (uso real no mês e conversão com base mínima); nada é somado aqui. */}
+        <TalkXQueryBoundary
+          query={{ isLoading: libraryStatsLoading, isError: !!libraryStatsError, error: libraryStatsError }}
+          entity="as estatísticas da biblioteca"
+          onRetry={() => refetchLibraryStats()}
+          skeleton={<LibraryKpiSkeleton />}
+          isEmpty={false}
+          empty={null}
+        >
+          {libraryStats ? <LibraryKpis stats={libraryStats} /> : <LibraryKpiSkeleton />}
+        </TalkXQueryBoundary>
 
         <FilterBarV2
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
@@ -209,6 +207,75 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         entityName={deleting?.name}
         confirmLabel="Excluir segmento" cancelLabel="Cancelar"
       />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* KPIs da biblioteca (X103)                                          */
+/* ------------------------------------------------------------------ */
+
+function LibraryKpiSkeleton() {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)}
+    </div>
+  );
+}
+
+const fmtDec = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * Mini-barras de 8 meses: cada coluna é um mês da série da RPC. Mês sem retrato
+ * gravado (`has_data` falso) fica FORA das barras em vez de virar zero — um zero
+ * desenhado seria lido como "nenhum segmento naquele mês".
+ */
+function barsFromSeries(series: TalkXSegmentLibraryMonth[], key: 'total_segments' | 'active_segments'): number[] {
+  return series.filter((m) => m.has_data).map((m) => m[key] ?? 0);
+}
+
+/** Variação relativa contra o mês anterior. Sem mês anterior (base zero) não há %. */
+function variacaoMesAnterior(atual: number, anterior: number): KpiDelta {
+  if (!Number.isFinite(anterior) || anterior <= 0) return null;
+  return { pct: Math.round(((atual - anterior) / anterior) * 100), label: 'vs. mês anterior' };
+}
+
+function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
+  const conv = stats.conversion;
+  // Abaixo da base mínima a RPC devolve has_data falso e value_pct nulo: a tela
+  // mostra o "Sem dados ainda" do kit, nunca um percentual inventado.
+  const conversaoDisponivel = conv.has_data && conv.value_pct !== null;
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+      <DashboardKpiCard
+        size="compact" index={0} label="Total de segmentos" tile="blue" icon={Database} barsColor="blue"
+        value={fmtInt(stats.total_segments)} delta={null} bars={barsFromSeries(stats.series, 'total_segments')}
+      />
+      <DashboardKpiCard
+        size="compact" index={1} label="Ativos este mês" tile="green" icon={Check} barsColor="green"
+        value={fmtInt(stats.active_this_month)}
+        delta={variacaoMesAnterior(stats.active_this_month, stats.active_previous_month)}
+        bars={barsFromSeries(stats.series, 'active_segments')}
+      />
+      <DashboardKpiCard
+        size="compact" index={2} label="CRM 360° conectados" tile="violet" icon={Shield} barsColor="violet" chart="none"
+        value={fmtInt(stats.crm360_connected)}
+        delta={variacaoMesAnterior(stats.crm360_connected, stats.crm360_previous_month)}
+        bars={null}
+      />
+      {conversaoDisponivel ? (
+        <DashboardKpiCard
+          size="compact" index={3} label="Conversão média" tile="amber" icon={BarChart3} barsColor="amber" chart="none"
+          value={`${fmtDec(conv.value_pct as number)}%`}
+          delta={conv.delta_pp === null ? null : {
+            text: `${conv.delta_pp >= 0 ? '+' : '-'}${fmtDec(Math.abs(conv.delta_pp))} p.p. vs. mês anterior`,
+            tone: conv.delta_pp >= 0 ? 'success' : 'muted',
+          }}
+          bars={null}
+        />
+      ) : (
+        <TalkXNoData hint={`A conversão média aparece com ${fmtInt(conv.min_deliveries)} entregues ou mais no mês (neste mês: ${fmtInt(conv.deliveries)}).`} />
+      )}
     </div>
   );
 }
