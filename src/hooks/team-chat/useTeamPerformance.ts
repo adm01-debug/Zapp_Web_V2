@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { queryKeys } from './queryKeys';
 
 export interface PerformanceStat {
   messageCount: number;
@@ -9,7 +10,7 @@ export interface PerformanceStat {
 
 export function useTeamPerformance(conversationId: string) {
   return useQuery<PerformanceStat>({
-    queryKey: ['departmentChat', 'performance', conversationId],
+    queryKey: queryKeys.performance(conversationId),
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
       const { data, error } = await supabase

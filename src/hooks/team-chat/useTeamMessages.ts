@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
 import type { TeamMessage } from './teamChatTypes';
+import { queryKeys } from './queryKeys';
 
 const log = getLogger('useTeamMessages');
 
@@ -13,7 +14,7 @@ export function useTeamMessages(conversationId: string | null) {
   const markedRef = useRef<string | null>(null);
 
   const query = useQuery({
-    queryKey: ['team-messages', conversationId],
+    queryKey: queryKeys.messages(conversationId),
     queryFn: async () => {
       if (!conversationId) return [];
       const { data, error } = await supabase
@@ -37,8 +38,8 @@ export function useTeamMessages(conversationId: string | null) {
     const channel = supabase
       .channel(`team-messages-${conversationId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ['team-messages', conversationId] });
-        queryClient.invalidateQueries({ queryKey: ['team-conversations'] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };

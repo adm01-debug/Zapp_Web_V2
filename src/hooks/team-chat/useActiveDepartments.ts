@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { queryKeys } from './queryKeys';
 
 export interface ActiveDepartment {
   id: string;
@@ -10,7 +11,7 @@ export interface ActiveDepartment {
 
 export function useActiveDepartments(enabled: boolean) {
   return useQuery<ActiveDepartment[]>({
-    queryKey: ['departmentChat', 'list'],
+    queryKey: queryKeys.departments.list(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('departments')
