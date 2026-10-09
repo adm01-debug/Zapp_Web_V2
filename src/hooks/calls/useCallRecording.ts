@@ -1,4 +1,3 @@
-import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 
@@ -13,6 +12,13 @@ import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
  */
 export const SERVICO_DE_GRAVACAO_ATIVO = true;
 
+/**
+ * O que o hook entrega a quem consome: se a gravacao existe e os BYTES dela. O endereco que o
+ * `<audio>` e o link de download usam e um `blob:` local montado pelo PLAYER a partir destes
+ * bytes (TEL-RECORDING-001) - o hook nao devolve endereco nenhum, e a URL da origem nunca passa
+ * por aqui, que e o motivo de a Edge `get-call-recording` existir (T73: o front nunca recebe
+ * `recording_url`).
+ */
 export interface GravacaoDaChamada {
   disponivel: boolean;
   blob: Blob | null;
@@ -30,41 +36,23 @@ function urlDaFuncao(): string {
 }
 
 /**
- * Uma object URL por assinatura, criada no subscribe e revogada no unsubscribe da
- * MESMA assinatura (o `useSyncExternalStore` trata a URL `blob:` como o recurso
- * externo que ela e). Sob StrictMode o ciclo subscribe/unsubscribe se repete e cada
- * ciclo ganha URL nova; no desmontar real a URL morre com a montagem. O Blob fica
- * no cache da query, entao remontar dentro do `staleTime` gera URL nova sem novo
- * download - e uma URL revogada nunca volta a ser usada.
- */
-function useUrlDoBlob(blob: Blob | null): string | null {
-  const urlViva = useRef<string | null>(null);
-  const subscribe = useCallback(
-    (avisar: () => void) => {
-      if (!blob) return () => {};
-      const urlDaAssinatura = URL.createObjectURL(blob);
-      urlViva.current = urlDaAssinatura;
-      avisar();
-      return () => {
-        URL.revokeObjectURL(urlDaAssinatura);
-        if (urlViva.current === urlDaAssinatura) urlViva.current = null;
-      };
-    },
-    [blob],
-  );
-  return useSyncExternalStore(subscribe, () => urlViva.current);
-}
-
-/**
  * Busca a gravacao (T67) SO quando a chamada diz que tem.
  *
  * A Edge `get-call-recording` preserva a garantia do T73: o front nunca recebe
- * `recording_url`. O hook baixa o stream autenticado como Blob e entrega ao
- * `<audio>` uma URL local (`blob:`), nao a URL assinada do provedor.
+ * `recording_url`. O hook baixa o stream autenticado como Blob e entrega os BYTES
+ * (`{ disponivel, blob, buscando }`) - nao a URL assinada do provedor e tambem nenhum
+ * endereco `blob:` pronto: quem cria e revoga o `blob:` local e o `RecordingPlayer`, no
+ * mesmo efeito (TEL-RECORDING-001).
  *
- * Refazer #62: o cache da query guarda o BLOB, nunca a URL `blob:` - a URL e criada
- * por montagem a partir do Blob cacheado e revogada no desmontar, entao a remontagem
- * dentro do `staleTime` nao herda uma URL morta (defeito do refazer #62).
+ * Refazer #62: o cache da query guarda o BLOB, nunca uma URL `blob:` - a URL e criada por
+ * montagem a partir do Blob cacheado e revogada no desmontar, entao a remontagem dentro do
+ * `staleTime` nao herda uma URL morta (defeito do refazer #62).
+ *
+ * Transporte: POST com `{ callId }` no corpo (nunca na query string) e o JWT da sessao; 403/404
+ * sao resposta esperada e viram `{ disponivel: false }`; qualquer outra falha (rede, 5xx, sem
+ * sessao) PROPAGA - nada aqui engole erro. Blob de tamanho 0, ou resposta JSON, nao e gravacao valida. A resposta e
+ * lida como `Response.blob()`, entao o audio chega inteiro seja qual for a `Content-Type`
+ * (`audio/mpeg` incluso).
  */
 export function useCallRecording(callId: string | null | undefined, recordingStatus: string | null | undefined) {
   const temGravacao = recordingStatus === 'available';
@@ -90,15 +78,16 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
 
       const blob = await resposta.blob();
       if (blob.size === 0) return { disponivel: false, blob: null };
+      // JSON e o formato dos erros/respostas de controle da Edge, nunca o audio: se um 200 vier
+      // assim, nao ha bytes de gravacao e nada e fabricado a partir dele (falha fechada).
+      if (blob.type.toLowerCase().startsWith('application/json')) return { disponivel: false, blob: null };
       return { disponivel: true, blob };
     },
   });
 
-  const url = useUrlDoBlob(query.data?.blob ?? null);
-
   return {
     disponivel: Boolean(query.data?.disponivel),
-    url,
+    blob: query.data?.blob ?? null,
     buscando: query.isLoading,
   };
 }
