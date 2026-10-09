@@ -37,7 +37,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { ContactSelectionStep } from './ContactSelectionStep';
 // CT-37 — PhonePreview (prévia estilo WhatsApp) subiu para catalogShared,
 // junto com a classe .catalog-phone e os tokens --wa-*.
-import { PhonePreview, CATALOG_FOCUS_VISIBLE, productImageAlt } from './catalogShared';
+import { PhonePreview, CATALOG_FOCUS_VISIBLE, productImageAlt, isSnapshotProduct } from './catalogShared';
 
 interface SendProductDialogProps {
   product: ExternalProduct;
@@ -111,10 +111,26 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   product, open, onOpenChange, onConfirmSend, initialVariantColor, presetContact = null,
 }) => {
   const needsFullProduct = !product.variants || product.variants.length === 0;
-  const { data: fetchedProduct, isFetching: loadingVariants } = useExternalProduct(product.id, {
+  const { data: fetchedProduct, isFetching: loadingVariants, refetch: refetchProduct } = useExternalProduct(product.id, {
     enabled: open && needsFullProduct,
   });
   const fullProduct: ExternalProduct = fetchedProduct ?? product;
+  /**
+   * R2-MOD-048 — o envio pode abrir a partir da snapshot de um favorito, que
+   * não traz preço nem estoque. Enquanto o produto completo não chega, o
+   * dialog não monta a mensagem nem libera o avanço com os zeros do
+   * preenchimento; consulta que falha vira erro com "Tentar novamente" em vez
+   * de silêncio (antes o anúncio comercial saía com R$ 0,00 e 0 un.).
+   */
+  const snapshotOnly = isSnapshotProduct(product);
+  const productReady = !snapshotOnly || !!fetchedProduct;
+  const productLoading = snapshotOnly && !fetchedProduct && loadingVariants;
+  const productUnavailable = snapshotOnly && !fetchedProduct && !loadingVariants;
+  const productBlockedReason = productReady
+    ? null
+    : productLoading
+      ? 'Carregando os dados do produto...'
+      : 'Não foi possível carregar os dados do produto.';
   const [template, setTemplate] = useState<MessageTemplate>('informal');
   const [isEditing, setIsEditing] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
@@ -253,7 +269,9 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   // ("João Silva"/"Sua Empresa") e mostraria dados que não existem.
   const message = isEditing
     ? (selectedContact ? personalizePreview(customMessage, selectedContact) : customMessage)
-    : buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null, selectedContact);
+    : productReady
+      ? buildMessage(fullProduct, template, sendMode === 'variant' ? activeGroup : null, selectedContact)
+      : '';
   const messageTooLong = message.length > MAX_MESSAGE_LENGTH;
   const selectedImagesList = useMemo(
     () => visibleImages.filter((i) => selectedImages.has(i.url)),
@@ -352,6 +370,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   };
 
   const handleSend = () => {
+    if (!productReady) return;
     const imgs = Array.from(selectedImages);
     // R2-MOD-011 — o comando final revalida o teto: um estado acima do limite
     // (ex.: "Selecionar todas" com mais de 10 fotos visíveis) não pode virar
@@ -385,14 +404,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
   // dentro é possível voltar um passo em vez de fechar o dialog inteiro.
   const handleContentKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (step === 'configure') {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !messageTooLong) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !messageTooLong && productReady) {
         e.preventDefault();
         handleSend();
       }
       return;
     }
 
-    const canSend = !!selectedContact && !isSending && !sendReadiness.blocked && !sendReadiness.checking;
+    const canSend = !!selectedContact && !isSending && !sendReadiness.blocked && !sendReadiness.checking && productReady;
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && canSend) {
       e.preventDefault();
       void handleSendToContact();
@@ -407,6 +426,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
 
   const handleSendToContact = async () => {
     if (!selectedContact) { toast.error('Selecione um contato'); return; }
+    if (!productReady) return;
     // R2-MOD-011 — mesmo teto do handleSend: o envio direto (contato preset ou
     // passo do contato) também recusa estado acima do limite.
     const imgs = Array.from(selectedImages);
@@ -593,7 +613,11 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                 </div>
 
                 <div className="rounded-lg bg-muted/50 border border-border/50 p-4">
-                  {isEditing ? (
+                  {!productReady ? (
+                    /* R2-MOD-048 — sem preço/estoque completos não existe
+                       mensagem: nada de "Valor: R$ 0,00 / Em estoque: 0 un.". */
+                    <p className="text-sm text-muted-foreground">{productBlockedReason}</p>
+                  ) : isEditing ? (
                     <Textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)} className="min-h-[150px] bg-transparent border-0 p-0 focus-visible:ring-0 resize-none text-sm" placeholder="Escreva sua mensagem personalizada..." />
                   ) : (
                     <p className="text-sm whitespace-pre-line leading-relaxed">{message}</p>
@@ -636,6 +660,14 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                 </div>
               )}
               {presetContact && sendReadiness.reason && <AlertCard tone="warning">{sendReadiness.reason}</AlertCard>}
+              {!productReady && productUnavailable && (
+                <div className="flex items-center gap-2">
+                  <AlertCard tone="warning">{productBlockedReason}</AlertCard>
+                  <Button variant="outline" size="sm" className="h-8 shrink-0 text-xs" onClick={() => void refetchProduct()}>
+                    Tentar novamente
+                  </Button>
+                </div>
+              )}
               <div className="flex items-center gap-2">
               <Button variant="outline" className="flex-1" onClick={requestClose}>Cancelar</Button>
               <div className="flex flex-1">
@@ -652,6 +684,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
                   onClick={presetContact ? handleSendToContact : handleSend}
                   disabled={
                     messageTooLong ||
+                    !productReady ||
                     (!!presetContact && (!selectedContact || isSending || sendReadiness.checking || !!sendReadiness.reason))
                   }
                 >
@@ -693,7 +726,7 @@ export const SendProductDialog: React.FC<SendProductDialogProps> = ({
             selectedContact={selectedContact}
             onSelectContact={setSelectedContact}
             isSending={isSending}
-            sendBlockedReason={sendReadiness.reason}
+            sendBlockedReason={sendReadiness.reason ?? productBlockedReason}
             checkingSendReadiness={sendReadiness.checking}
             onRetrySendReadiness={sendReadiness.unavailable ? sendReadiness.retry : null}
             onBack={() => setStep('configure')}

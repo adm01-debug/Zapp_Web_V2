@@ -10,6 +10,8 @@ import {
   CATALOG_FOCUS_VISIBLE,
   productImageAlt,
   singleProductColor,
+  isSnapshotProduct,
+  UNKNOWN_PRICE_LABEL,
 } from './catalogShared';
 // CT-71 — o detalhe entra por `import()` (chunk próprio, fora do bundle
 // inicial). `lazy()` fica em ESCOPO DE MÓDULO: a regra
@@ -226,7 +228,14 @@ export function CatalogProductCard({
   sizes,
 }: CatalogProductCardProps) {
   const [showDetails, setShowDetails] = useState(false);
-  const stockout = product.is_stockout || product.stock_quantity === 0;
+  /**
+   * R2-MOD-048 — snapshot de favorito: preço/estoque não existem no registro
+   * salvo. `stock_quantity === 0` ali é ausência, não esgotamento, então o
+   * card não rotula "Esgotado" nem inventa preço; o envio continua liberado e
+   * é o SendProductDialog que hidrata o produto antes de montar a mensagem.
+   */
+  const snapshotOnly = isSnapshotProduct(product);
+  const stockout = !snapshotOnly && (product.is_stockout || product.stock_quantity === 0);
 
   // ── CT-25: ações do card (RowActionsMenu) ────────────────────────────────
   const openDetails = () => setShowDetails(true);
@@ -315,8 +324,8 @@ export function CatalogProductCard({
 
           {/* preço + estoque */}
           <div className="text-right shrink-0 space-y-0.5">
-            <p className="text-[13px] font-bold text-foreground tabular-nums">{formatPrice(product.sale_price)}</p>
-            <LowStockPill qty={product.stock_quantity} />
+            <p className="text-[13px] font-bold text-foreground tabular-nums">{snapshotOnly ? UNKNOWN_PRICE_LABEL : formatPrice(product.sale_price)}</p>
+            {!snapshotOnly && <LowStockPill qty={product.stock_quantity} />}
           </div>
 
           {/* ações */}
@@ -411,7 +420,9 @@ export function CatalogProductCard({
                 <SelectCheckbox selected={isSelected} onToggle={onToggleSelect} productId={product.id} />
               </div>
             ) : (
-              <ProductBadge product={product} />
+              /* R2-MOD-048 — sem snapshot de estoque não há o que rotular:
+                 o badge "Em estoque" seria dado inventado. */
+              snapshotOnly ? null : <ProductBadge product={product} />
             )}
           </div>
 
@@ -453,8 +464,8 @@ export function CatalogProductCard({
           <ColorChips product={product} />
 
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-bold text-foreground tabular-nums">{formatPrice(product.sale_price)}</span>
-            <LowStockPill qty={product.stock_quantity} />
+            <span className="text-sm font-bold text-foreground tabular-nums">{snapshotOnly ? UNKNOWN_PRICE_LABEL : formatPrice(product.sale_price)}</span>
+            {!snapshotOnly && <LowStockPill qty={product.stock_quantity} />}
           </div>
 
           {/* rodapé */}
