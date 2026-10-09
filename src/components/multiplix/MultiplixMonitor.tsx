@@ -246,7 +246,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             )}
           </p>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[8.125rem]"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -265,13 +265,13 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             Mostrando os primeiros {fmtInt(recipients.length)} destinatários (amostra do total, veja o filtro de status).
           </p>
         )}
-        <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
+        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
           {recipients.map((r) => {
             const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
             return (
               <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
                   <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
                   {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
                 <StatusPill status={r.status} map={RECIPIENT_STATUS} />

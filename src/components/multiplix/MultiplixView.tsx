@@ -280,7 +280,7 @@ export default function MultiplixView() {
       />
 
       {(dispatches.data?.length ?? 0) > 0 && (
-        <div className="rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
+        <div className="rounded-2xl border border-border bg-card p-4">
           <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5"><ListChecks className="w-4 h-4" />Disparos recentes</p>
           {/* Lista TODOS os disparos que a edge devolveu (ate o limite do fetch),
               com rolagem. Antes o `slice(0, 8)` escondia do 9o em diante: o dado
@@ -305,7 +305,7 @@ export default function MultiplixView() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Público</span>
           <Select value={role || 'all'} onValueChange={(v) => setRole(v === 'all' ? '' : (v as typeof role))}>
@@ -387,7 +387,7 @@ export default function MultiplixView() {
           tambem nao dependia de count.data (RPC independente que pode falhar
           sem que a busca em si tenha falhado). */}
       {hasSearched && (
-        <div className="overflow-hidden rounded-2xl border border-[--zapp-border]">
+        <div className="overflow-hidden rounded-2xl border border-border">
           {/* F74: o corpo da tabela renderiza so a janela visivel (+ overscan);
               duas linhas-espaçadoras `aria-hidden` reservam a altura total para
               a barra de rolagem. Sem isso, 5.000 linhas carregadas viram
@@ -467,7 +467,7 @@ export default function MultiplixView() {
               ainda mantinha o botao vísivel para sempre. Fix: lastPageFull &&
               (count.data === undefined || rows.length < count.data). */}
           {(rows.length > 0 || !search.isError) && lastPageFull && (count.data === undefined || rows.length < count.data) && (
-            <div className="flex justify-center border-t border-[--zapp-border] p-3">
+            <div className="flex justify-center border-t border-border p-3">
               <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending || loadingAll}>
                 {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {count.data !== undefined
@@ -484,7 +484,7 @@ export default function MultiplixView() {
       )}
 
       {selected.size > 0 && (
-        <div className="sticky bottom-4 flex items-center justify-between gap-4 self-center rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] px-4 py-3 shadow-lg">
+        <div className="sticky bottom-4 flex items-center justify-between gap-4 self-center rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
           <span className="text-sm">
             <strong>{selected.size}</strong> empresa(s) selecionada(s)
           </span>
