@@ -2,6 +2,7 @@ import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asse
 import { handleEvolutionApi } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -58,8 +59,17 @@ function makeCallerClient(opts: { isAdminOrSupervisor: boolean; contactVisible?:
   };
 }
 
-function makeServiceClient(): any {
-  return { from: () => makeQuery(), rpc: () => Promise.resolve({ data: null, error: null }) };
+function makeServiceClient(instanceToken: string | null = "vault-instance-token"): any {
+  // TRA-002/#18: o handler passou a resolver o token DA conexão no Vault
+  // (get_instance_token). O default devolve um token — é o estado real de uma
+  // conexão já criada por create-connection; testes que precisam do caminho
+  // NEGADO passam `null`.
+  return {
+    from: () => makeQuery(),
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: instanceToken, error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
 }
 
 function controlRequest(action: string, body: Record<string, unknown>): Request {
@@ -532,5 +542,104 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
       `o schema recusa a ação suportada '${action}'`,
     );
+  }
+});
+
+// ─── TRA-002 / item #18 (P1) ───────────────────────────────────────────────────────────────
+// Rota de OUTRA conexão não pode autenticar com a credencial da instância
+// PADRÃO nem com a key global: a Evolution GO seleciona a instância pela
+// CREDENCIAL, então status/connect/logout/privacidade/webhook de uma conexão
+// sairiam pela conexão errada. O handler resolve o token DA conexão no Vault
+// (get_instance_token) e o entrega ao provedor; sem token, NEGA antes de qualquer
+// I/O. RED: o handler lia EVOLUTION_INSTANCE_TOKEN (token da padrão) para TODA
+// rota de instância e, sem ele, caía na key global.
+
+const TOKEN_PADRAO = "credencial-da-instancia-padrao";
+
+/** Fake que registra path + credencial (`apikey`) de cada request recebida. */
+function createKeyCapturingFake() {
+  const requests: Array<{ path: string; apikey: string | null }> = [];
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, (req) => {
+    requests.push({ path: new URL(req.url).pathname, apikey: req.headers.get("apikey") });
+    return new Response(JSON.stringify({ status: "success" }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    });
+  });
+  const addr = server.addr;
+  if (addr.transport !== "tcp") throw new Error("key-fake: esperava listener TCP");
+  return { url: `http://127.0.0.1:${addr.port}`, requests, stop: () => server.shutdown() };
+}
+
+/** Handler real, com o token que a conexão tem (ou não) no Vault. */
+async function chamarComToken(action: string, body: Record<string, unknown>, token: string | null) {
+  const fake = createKeyCapturingFake();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", "PRINCIPAL");
+  Deno.env.set("EVOLUTION_INSTANCE_TOKEN", TOKEN_PADRAO);
+  resetInstanceTokenCache();
+  const supabase: any = {
+    from: () => makeQuery(),
+    rpc: (fn: string) => fn === "get_instance_token"
+      ? Promise.resolve({ data: token, error: null })
+      : Promise.resolve({ data: null, error: null }),
+  };
+  const res = await handleEvolutionApi(controlRequest(action, body), {
+    callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+    supabase,
+  });
+  return { res, requests: fake.requests, stop: () => fake.stop() };
+}
+
+// Cada ponto de bloqueio NOVO: a rota de OUTRA conexão sem token NEGA e não
+// produz I/O no provedor.
+const NEGADAS: Array<[string, Record<string, unknown>]> = [
+  ["set-webhook", { url: "https://x/functions/v1/evolution-webhook", enabled: true }],
+  ["status", {}],
+  ["connect", {}],
+  ["disconnect", {}],
+  ["update-privacy", { readreceipts: "contacts" }],
+];
+for (const [action, extra] of NEGADAS) {
+  Deno.test(`TRA-002/#18: ${action} de OUTRA conexão sem token no Vault nega e não chega ao provedor`, async () => {
+    const c = await chamarComToken(action, { instanceName: "CONN_B", ...extra }, null);
+    try {
+      assertEquals(c.requests.length, 0, "rota de outra conexão não pode usar a credencial da padrão");
+      assertEquals(c.res.status, 200);
+      assertEquals((await c.res.json())?.error, true);
+    } finally {
+      await c.stop();
+    }
+  });
+}
+
+Deno.test("TRA-002/#18: set-webhook (proxy) de OUTRA conexão usa o token DELA", async () => {
+  const c = await chamarComToken("set-webhook", { instanceName: "CONN_B", url: "https://x/functions/v1/evolution-webhook", enabled: true }, "token-da-CONN_B");
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].apikey, "token-da-CONN_B");
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("TRA-002/#18: status de OUTRA conexão usa o token DELA", async () => {
+  const c = await chamarComToken("status", { instanceName: "CONN_B" }, "token-da-CONN_B");
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].path, "/instance/status");
+    assertEquals(c.requests[0].apikey, "token-da-CONN_B");
+  } finally {
+    await c.stop();
+  }
+});
+
+Deno.test("TRA-002/#18: instância PADRÃO sem token no Vault mantém o fallback EVOLUTION_INSTANCE_TOKEN", async () => {
+  const c = await chamarComToken("set-webhook", { instanceName: "PRINCIPAL", url: "https://x/functions/v1/evolution-webhook", enabled: true }, null);
+  try {
+    assertEquals(c.requests.length, 1);
+    assertEquals(c.requests[0].apikey, TOKEN_PADRAO);
+  } finally {
+    await c.stop();
   }
 });
