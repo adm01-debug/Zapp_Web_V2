@@ -1,7 +1,71 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, getClientIP } from "../_shared/validation.ts";
 import { WebAuthnActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { verifyAuthenticationAssertion, extractCredentialPublicKey, bytesToBase64url } from "./verify.ts";
+
+// SEC-EDGE-FUNCTIONS-04 (P2), ação PÚBLICA `authentication-options`: (a) e-mail
+// inexistente e conta sem passkey respondem IGUAL (`allowCredentials` vazio nunca
+// vai no JSON); (b) a busca da conta passou a ser PAGINADA — `listUsers()` sem
+// paginação lia só a primeira página (50 contas) e dava a conta fora dela como
+// inexistente; (c) limite por IP antes de qualquer efeito. O teste ao lado
+// (`index.test.ts`) chama o handler REAL e prova os três pontos.
+
+// Limite por IP da ação pública. Mesmo desenho do `auth-login`, com teto maior
+// porque um login por passkey gasta duas chamadas (`authentication-options` +
+// `verify-authentication`) e o cadastro de passkey gasta mais duas.
+const IP_LIMIT_MAX = 30; // requisições por IP
+const IP_LIMIT_WINDOW_MS = 60_000; // 1 minuto
+
+// Tetos da busca paginada de contas. A varredura para quando o paginador diz que
+// não há próxima página — nunca se pede uma página depois da última — e, sem esse
+// dado, quando vem uma página incompleta. O teto de páginas limita o custo de uma
+// única chamada mesmo com a base de contas muito maior.
+export const LIST_USERS_PAGE_SIZE = 200;
+export const LIST_USERS_MAX_PAGES = 25; // teto de 5 000 contas por busca
+
+export type UserLookup =
+  | { status: "found"; userId: string }
+  | { status: "not_found" }
+  | { status: "unavailable" };
+
+/**
+ * Localiza a conta pelo e-mail percorrendo as páginas de `listUsers`.
+ * Sem paginação a resposta era sempre a primeira página — a conta que estivesse
+ * fora dela era lida como inexistente. A comparação é case-insensitive, como o
+ * e-mail é normalizado no resto do sistema. Falha de consulta devolve
+ * `unavailable` (o chamador responde igual a "não existe": falha fechada).
+ */
+export async function findUserByEmail(
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  userEmail: string,
+): Promise<UserLookup> {
+  const target = userEmail.trim().toLowerCase();
+  if (!target) return { status: "not_found" };
+  for (let page = 1; page <= LIST_USERS_MAX_PAGES; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: LIST_USERS_PAGE_SIZE });
+    if (error) return { status: "unavailable" };
+    const users: Array<{ id?: unknown; email?: unknown }> = Array.isArray(data?.users) ? data.users : [];
+    const match = users.find((u) => String(u?.email ?? "").toLowerCase() === target);
+    if (match && typeof match.id === "string") return { status: "found", userId: match.id };
+    // O paginador diz qual é a próxima página: `nextPage` nulo significa que esta
+    // é a última, e a busca NUNCA pede uma página depois dela — com total múltiplo
+    // exato do tamanho da página, a página extra viria vazia (era o caso de pedir
+    // a 3ª página num total de 2 páginas cheias). Resposta sem o paginador (campo
+    // ausente): a página incompleta é o fim; página cheia segue, limitada pelo
+    // teto de páginas.
+    const nextPage = data?.nextPage;
+    if (nextPage === undefined) {
+      if (users.length < LIST_USERS_PAGE_SIZE) return { status: "not_found" };
+    } else if (typeof nextPage === "number" && nextPage > page) {
+      continue;
+    } else {
+      return { status: "not_found" };
+    }
+  }
+  return { status: "not_found" };
+}
 
 function base64URLEncode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -29,17 +93,38 @@ function getRpId(origin: string): string {
   try { return new URL(origin).hostname; } catch { return 'localhost'; }
 }
 
-Deno.serve(async (req) => {
+// ─── Seam de injeção (SEC-EDGE-FUNCTIONS-04) ─────────────────────────────────
+// O handler exportado recebe o que faz efeito (client service_role e limitador)
+// para o teste exercitar o handler REAL com um `Request`: nenhuma chamada toca
+// banco, GoTrue ou rede.
+export interface WebAuthnDeps {
+  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any;
+  enforceRateLimit: (
+    key: string,
+    maxRequests: number,
+    windowMs: number,
+  ) => PromiseLike<{ allowed: boolean }>;
+}
+
+export async function handleWebAuthn(req: Request, deps: WebAuthnDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
   const log = new Logger("webauthn");
+  const supabaseAdmin = deps.admin;
 
   try {
-    const supabaseUrl = requireEnv('SUPABASE_URL');
-    const supabaseAnonKey = requireEnv('SUPABASE_ANON_KEY');
-    const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // SEC-EDGE-FUNCTIONS-04(c): limite por IP antes de ler o corpo e de qualquer
+    // efeito (mesma ordem do `auth-login`). Sem limite, o oráculo de enumeração
+    // podia ser repetido indefinidamente.
+    const clientIp = getClientIP(req);
+    const ipRl = await deps.enforceRateLimit(`webauthn:${clientIp}`, IP_LIMIT_MAX, IP_LIMIT_WINDOW_MS);
+    if (!ipRl.allowed) {
+      log.done(429, { reason: "rate_limited" });
+      return errorResponse("Rate limit exceeded", 429, req);
+    }
 
     const rawBody = await req.json();
     const parsed = parseBody(WebAuthnActionSchema, rawBody);
@@ -55,7 +140,7 @@ Deno.serve(async (req) => {
     let authenticatedUserId: string | null = null;
 
     if (authHeader?.startsWith('Bearer ')) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      const supabaseAuth = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
         global: { headers: { Authorization: authHeader } },
       });
       const token = authHeader.replace('Bearer ', '');
@@ -75,7 +160,7 @@ Deno.serve(async (req) => {
         }
 
         const { data: existingCredentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id').eq('user_id', userId);
-        const excludeCredentials = (existingCredentials || []).map(cred => ({
+        const excludeCredentials = (existingCredentials || []).map((cred: { credential_id: string }) => ({
           id: cred.credential_id, type: 'public-key', transports: ['internal', 'hybrid', 'usb', 'ble', 'nfc'],
         }));
 
@@ -145,13 +230,19 @@ Deno.serve(async (req) => {
         let authUserId: string | null = null;
 
         if (userEmail) {
-          const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
-          const user = userData?.users?.find(u => u.email === userEmail);
-          if (user) {
-            authUserId = user.id;
-            const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', user.id);
-            allowCredentials = (credentials || []).map(cred => ({
-              id: cred.credential_id, type: 'public-key', transports: cred.transports || ['internal', 'hybrid'],
+          // SEC-EDGE-FUNCTIONS-04(b): busca paginada/filtrada por e-mail, nunca
+          // `listUsers()` sem paginação (que só enxergava a primeira página).
+          const lookup = await findUserByEmail(supabaseAdmin, userEmail);
+          if (lookup.status === 'unavailable') {
+            // Falha fechada: sem a lista de contas a resposta é a MESMA de "não
+            // existe" — nada de 5xx que denunciaria a conta ao chamador anônimo.
+            log.warn('user lookup unavailable', { action });
+          }
+          if (lookup.status === 'found') {
+            authUserId = lookup.userId;
+            const { data: credentials } = await supabaseAdmin.from('passkey_credentials').select('credential_id, transports').eq('user_id', authUserId);
+            allowCredentials = (credentials || []).map((cred: { credential_id: string; transports: string[] | null }) => ({
+              id: cred.credential_id, type: 'public-key' as const, transports: cred.transports || ['internal', 'hybrid'],
             }));
           }
         }
@@ -159,6 +250,8 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from('webauthn_challenges').insert({ user_id: authUserId, challenge, type: 'authentication' });
 
         log.done(200, { action });
+        // SEC-EDGE-FUNCTIONS-04(a): o corpo de "e-mail inexistente" e o de "conta
+        // sem passkey" são idênticos — `allowCredentials` vazio não entra no JSON.
         return jsonResponse({
           options: { challenge, rpId, timeout: 60000, userVerification: 'preferred', allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined },
         }, 200, req);
@@ -219,4 +312,13 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) =>
+    handleWebAuthn(req, {
+      admin: createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')),
+      enforceRateLimit,
+    })
+  );
+}
