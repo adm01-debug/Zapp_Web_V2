@@ -121,29 +121,32 @@ Se não houver objeções, retorne []`,
       if (!isRequestCurrent(request)) return;
 
       if (response.error) throw new Error(response.error.message || 'Erro na API');
-      const content = response.data?.content || response.data?.choices?.[0]?.message?.content || '[]';
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(parsed)) throw new Error('Resposta inválida da IA');
-        const valid = parsed.filter((o: unknown) => {
-          if (typeof o !== 'object' || o === null) return false;
-          const obj = o as Record<string, unknown>;
-          return typeof obj.objection === 'string' && typeof obj.counterArgument === 'string';
-        }).map((o: Record<string, unknown>) => ({
-          objection: String(o.objection),
-          counterArgument: String(o.counterArgument),
-          confidence: typeof o.confidence === 'number' ? Math.min(1, Math.max(0, o.confidence)) : 0.5,
-        }));
-        setObjections(valid);
-        if (valid.length > 0) toast.success(`${valid.length} objeção(ões) detectada(s)!`);
-      } else {
-        setObjections([]);
+      // N-169 — resposta vazia ou fora do formato é FALHA, nunca "nenhuma objeção":
+      // só um "[]" explícito da IA diz que o cliente não apresentou resistências.
+      const content = response.data?.content ?? response.data?.choices?.[0]?.message?.content;
+      const jsonMatch = typeof content === 'string' ? content.match(/\[[\s\S]*\]/) : null;
+      if (!jsonMatch) {
+        throw new Error(content ? 'Resposta da IA fora do formato esperado' : 'Resposta vazia da IA');
       }
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(parsed)) throw new Error('Resposta inválida da IA');
+      const valid = parsed.filter((o: unknown) => {
+        if (typeof o !== 'object' || o === null) return false;
+        const obj = o as Record<string, unknown>;
+        return typeof obj.objection === 'string' && typeof obj.counterArgument === 'string';
+      }).map((o: Record<string, unknown>) => ({
+        objection: String(o.objection),
+        counterArgument: String(o.counterArgument),
+        confidence: typeof o.confidence === 'number' ? Math.min(1, Math.max(0, o.confidence)) : 0.5,
+      }));
+      setObjections(valid);
+      if (valid.length > 0) toast.success(`${valid.length} objeção(ões) detectada(s)!`);
     } catch (err) {
       if (!isRequestCurrent(request)) return;
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
-      setError(msg); setObjections([]);
+      // N-169 — a falha mantém o resultado anterior: em vez de zerar a lista
+      // (que na tela vira "Nenhuma objeção!"), apenas o erro é sinalizado.
+      setError(msg);
       toast.error('Falha ao analisar objeções. Tente novamente.');
     }
     if (!isRequestCurrent(request)) return;
