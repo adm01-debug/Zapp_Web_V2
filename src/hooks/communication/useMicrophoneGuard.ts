@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toastError } from '@/lib/sonnerLazy';
 import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
 
 /**
@@ -49,7 +49,7 @@ export function useMicrophoneGuard() {
       motivoRef.current = motivo;
       conferidoEmRef.current = 0;
       setMicReason(motivo);
-      if (!silencioso) toast.error(describeReason(motivo) ?? 'Microfone indisponível');
+      if (!silencioso) toastError(describeReason(motivo) ?? 'Microfone indisponível');
       return false;
     }
   }, []);

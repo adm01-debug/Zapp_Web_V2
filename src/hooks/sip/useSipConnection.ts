@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import type { UserAgent, Registerer, Invitation } from 'sip.js';
-import { toast } from 'sonner';
+import { toastError, toastInfo, toastSuccess } from '@/lib/sonnerLazy';
 import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
 import { isLeader } from '@/lib/calls/tabLeaderStore';
 
@@ -128,7 +128,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
           reconnectAttemptsRef.current++;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), MAX_BACKOFF_MS);
           setSipStatus('reconnecting');
-          toast.info(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
+          toastInfo(`Conexão perdida. Reconectando em ${delay / 1000}s... (tentativa ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
             if (unmountedRef.current) return;
@@ -142,7 +142,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         } else {
           // T16: 6a falha seguida — para de tentar e diz isso na tela.
           setSipStatus('unavailable');
-          toast.error('Não foi possível reconectar ao servidor VoIP.');
+          toastError('Não foi possível reconectar ao servidor VoIP.');
         }
       };
 
@@ -158,7 +158,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
       let registroRecusado = false;
       registerer.stateChange.addListener((state) => {
         if (attempt.cancelled) return;
-        if (state === 'Registered') { setSipStatus('registered'); setSipReason(null); reconnectAttemptsRef.current = 0; toast.success('VoIP conectado!'); }
+        if (state === 'Registered') { setSipStatus('registered'); setSipReason(null); reconnectAttemptsRef.current = 0; toastSuccess('VoIP conectado!'); }
         else if (state === 'Unregistered' || state === 'Terminated') setSipStatus('idle');
       });
       await registerer.register({
@@ -171,7 +171,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
             registroRecusado = true;
             setSipStatus('unavailable');
             setSipReason('line_in_use_other_user');
-            toast.error(REASON_LABEL.line_in_use_other_user);
+            toastError(REASON_LABEL.line_in_use_other_user);
           },
         },
       });
@@ -203,7 +203,7 @@ export function useSipConnection(onIncomingInvitation?: (invitation: Invitation)
         uaRef.current = null;
         registererRef.current = null;
         setSipStatus('unavailable');
-        toast.error(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
+        toastError(`Erro ao conectar VoIP: ${err instanceof Error ? err.message : 'Falha na conexão'}`);
       }
     } finally {
       if (attemptRef.current === attempt) attemptRef.current = null;

@@ -87,6 +87,12 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
 
 import { useSipConnection } from '../useSipConnection';
 
+async function escoarToastLazy(): Promise<void> {
+  await act(async () => {
+    for (let i = 0; i < 8; i += 1) await Promise.resolve();
+  });
+}
+
 describe('useSipConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -253,6 +259,7 @@ describe('useSipConnection', () => {
     }
 
     expect(result.current.sipStatus).toBe('unavailable');
+    await escoarToastLazy();
     expect(toast.error).toHaveBeenCalledWith('Não foi possível reconectar ao servidor VoIP.');
     const uaCount = mockUaInstances.length;
     await act(async () => { vi.advanceTimersByTime(120000); });

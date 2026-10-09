@@ -11,8 +11,6 @@ import {
   type ReactNode,
 } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
 import { useSipClient } from '@/hooks/communication/useSipClient';
 import type { EngineStatus } from '@/lib/calls/adapters/CallEngine';
 import { uuidV4 } from '@/lib/calls/persistence';
@@ -27,6 +25,13 @@ import {
 } from '@/lib/calls/session';
 import { onStartCall, type StartCallPayload } from '@/lib/calls/events';
 import { registrarBloqueioRecarga } from '@/lib/reload-blockers';
+import { toastWarning } from '@/lib/sonnerLazy';
+
+function avisarChamadaEmCurso() {
+  toastWarning('Já existe uma chamada em andamento.', {
+    description: 'Encerre a chamada atual antes de ligar para outro contato.',
+  });
+}
 
 /**
  * T10 — o provider ganha a máquina de estados canônica (`src/lib/calls/session.ts`).
@@ -444,9 +449,7 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
           // Chamada em curso: nada de segundo cartão. (O motor também recusaria
           // o 2º convite com toast — aqui o aviso sai antes e a sessão não é
           // tocada.)
-          toast.warning('Já existe uma chamada em andamento.', {
-            description: 'Encerre a chamada atual antes de ligar para outro contato.',
-          });
+          avisarChamadaEmCurso();
           return;
         }
         // Uma sessão deixada em `ended` pela chamada anterior tornaria o novo
