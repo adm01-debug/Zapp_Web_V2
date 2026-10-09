@@ -80,9 +80,27 @@ export const CATALOG_GRADE_SIZES =
 // `rose-500`): a mesma cor nos 4 temas, enquanto o texto (`primary-foreground`)
 // mudava. Agora cada badge usa o TOKEN do seu estado (`--success`, `--warning`,
 // `--destructive`) com o par de texto do próprio token — o fundo passa a
-// acompanhar claro/escuro/alto contraste. O par de TEXTO é o do token (e não
-// `primary-foreground`, que só é claro nos temas escuros): só sobre o amarelo
-// o par de leitura é escuro.
+// acompanhar claro/escuro/alto contraste.
+//
+// SL-041 / CT-69 — este é `text-[9px]`, ou seja TEXTO PEQUENO: o par
+// FUNDO×TEXTO de cada badge de destaque tem de fechar **4,5:1** nos 4 temas
+// (claro, escuro, claro+alto contraste, escuro+alto contraste), não só o 3:1 de
+// componente de UI que a troca por token (SL-038) já entregava.
+//
+//   Novo  → `--success` × `--success-foreground` ... 5,66 / 7,80 / 5,66 / 7,80
+//   Top   → `--warning` × `--warning-foreground` ... 7,15 / 10,34 / 7,15 / 10,34
+//   Promo → o par cru do vermelho (`--destructive` × `--destructive-foreground`,
+//           o que o SL-038 usa) para em 3,78 (claro) e 3,00 (escuro) — abaixo
+//           de 4,5:1 — e escurecer `--destructive` é mudança global de cor
+//           vetada pelo dono do produto (PR #1458, o mesmo desvio registrado
+//           em `tests/contracts/contraste-aa-componentes.contract.test.ts`).
+//           O vermelho que o sistema desenhou para fechar AA é
+//           `--destructive-text` (a tinta da etapa 80/E.3): ele entra como
+//           FUNDO e o texto é `--background` — o par invertido do tema, o
+//           mesmo que `--success`/`--warning` já usam no escuro e o mesmo par
+//           do tooltip (`dark:bg-foreground text-background`). 6,39 / 6,54 /
+//           6,86 / 7,14, e o fundo continua OPACO (a badge é sobre a foto do
+//           produto).
 function ProductBadge({ product }: { product: ExternalProduct }) {
   if (product.is_new) return (
     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-success text-success-foreground">
@@ -95,7 +113,7 @@ function ProductBadge({ product }: { product: ExternalProduct }) {
     </span>
   );
   if (product.is_on_sale) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-destructive text-destructive-foreground">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[hsl(var(--destructive-text))] text-background">
       <Tag className="w-2.5 h-2.5" />Promo
     </span>
   );
