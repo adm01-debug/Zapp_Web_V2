@@ -138,18 +138,13 @@
  *    legado: o mapa INVENTARIO e a contagem de ocorrências (3) seguem idênticos — só o total
  *    varrido sobe, medido pela varredura depois do merge.
  *
- * 06/10/2026 — o total de arquivos varridos deixa de ser pino EXATO e vira PISO
- * (`PISO_ARQUIVOS_VARRIDOS`). O histórico acima mostra por quê: em toda entrada o número subiu
- * "de propósito" sem que o inventário mudasse, ou seja, o pino exato não guardava nada além de
- * "ninguém criou arquivo". Na integração em lote ele virou ponto de colisão: cada entrega que
- * cria um .ts em supabase/functions (quase sempre um teste) media base+1 isolada, mas duas
- * entregas juntas mediam base+2 e nenhuma das duas trazia o número certo. O que protege contra
- * produtor legado novo continua EXATO: o mapa INVENTARIO, a contagem de ocorrências (3) e a
- * lista MIGRADAS. O piso mantém a única garantia útil do total: a varredura não encolheu nem
- * passou a ler uma pasta vazia. Quem só cria arquivo sem token legado não precisa mais tocar
- * neste teste; subir o piso é opcional e nunca é exigido por uma entrega.
+ * 06/10/2026 — o total global deixa de ser o contrato. A cobertura do scanner passa a ser
+ * comparada, arquivo por arquivo, com o inventário independente de `globSync`: assim uma
+ * redução, uma duplicata ou um acréscimo indevido na saída de `tsFiles` falha, mas um `.ts` novo
+ * e legítimo entra nos dois lados sem criar colisão entre entregas. O conteúdo continua pinado
+ * pelo mapa INVENTARIO, pela contagem de ocorrências (3) e pela lista MIGRADAS.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { globSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -168,6 +163,30 @@ function tsFiles(dir: string): string[] {
     else if (full.endsWith('.ts')) out.push(full);
   }
   return out.sort();
+}
+
+function duplicados(arquivos: readonly string[]): string[] {
+  const vistos = new Set<string>();
+  const repetidos = new Set<string>();
+  for (const arquivo of arquivos) {
+    if (vistos.has(arquivo)) repetidos.add(arquivo);
+    else vistos.add(arquivo);
+  }
+  return [...repetidos].sort();
+}
+
+function validarCoberturaExata(arquivosVarridos: readonly string[], arquivosEsperados: readonly string[]) {
+  const varridos = [...arquivosVarridos].sort();
+  const esperados = [...arquivosEsperados].sort();
+  if (varridos.length === esperados.length && varridos.every((arquivo, i) => arquivo === esperados[i])) return;
+
+  const conjuntoVarrido = new Set(varridos);
+  const conjuntoEsperado = new Set(esperados);
+  const faltantes = esperados.filter((arquivo) => !conjuntoVarrido.has(arquivo));
+  const inesperados = varridos.filter((arquivo) => !conjuntoEsperado.has(arquivo));
+  throw new Error(
+    `arquivos varridos divergiram do inventário real; faltantes=${JSON.stringify(faltantes)}; inesperados=${JSON.stringify(inesperados)}; duplicados=${JSON.stringify(duplicados(varridos))}`,
+  );
 }
 
 const PRODUCER_PATTERNS = [
@@ -215,9 +234,6 @@ const MIGRADAS = [
   'supabase/functions/ai-conversation-summary/index.ts',
 ];
 
-/** Menor total já medido com este inventário; a varredura nunca pode cobrir menos que isso. */
-const PISO_ARQUIVOS_VARRIDOS = 243;
-
 const hits = scan();
 const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
   (acc[h.file] ??= []).push(h.id);
@@ -225,8 +241,19 @@ const porArquivo = hits.reduce<Record<string, string[]>>((acc, h) => {
 }, {});
 
 describe('(c.1) inventário completo de produtores legados / regex antigo', () => {
-  it('a varredura cobre ao menos o piso de arquivos .ts e o inventário bate com o mapa pinado', () => {
-    expect(tsFiles(EDGE).length).toBeGreaterThanOrEqual(PISO_ARQUIVOS_VARRIDOS);
+  it.each([
+    ['redução', ['a.ts']],
+    ['duplicata', ['a.ts', 'b.ts', 'b.ts']],
+    ['acréscimo inesperado', ['a.ts', 'b.ts', 'c.ts']],
+  ])('a validação exata rejeita %s na cobertura', (_caso, arquivosVarridos) => {
+    expect(() => validarCoberturaExata(arquivosVarridos, ['a.ts', 'b.ts'])).toThrowError(
+      /arquivos varridos divergiram do inventário real/,
+    );
+  });
+
+  it('a varredura cobre exatamente os arquivos .ts reais e o inventário bate com o mapa pinado', () => {
+    const arquivosEsperados = globSync('**/*.ts', { cwd: EDGE }).map((arquivo) => resolve(EDGE, arquivo));
+    validarCoberturaExata(tsFiles(EDGE), arquivosEsperados);
     const normalizado = Object.fromEntries(
       Object.entries(porArquivo).map(([k, v]) => [k, [...v].sort()]),
     );

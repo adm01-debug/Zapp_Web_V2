@@ -11,7 +11,7 @@
 
 const VALID_VIEWS = new Set([
   'inbox', 'dashboard', 'contacts', 'reports', 'settings', 'integrations',
-  'omni-inbox', 'email-chat', 'pipeline', 'team-chat',
+  'omni-inbox', 'email-chat', 'team-chat',
 ]);
 const VALID_INTEGRATION_VIEWS = new Set(['gmail', 'whatsapp', 'calendar']);
 

@@ -298,3 +298,25 @@ Legenda: ✅ feito · ⚠️ parcial · ❌ não feito · ➖ superado (decisão
 
 ## 8. PRÓXIMO PASSO
 Executar `docs/design/PLANO_TAREFAS_FINALIZACAO_100_ETAPAS.md` (criado junto com este relatório).
+
+---
+
+## 9. Fechamento da fusão (07/10/2026)
+
+> **Nota de fechamento**, acrescentada na etapa **E25** do plano de fusão. O histórico acima (auditoria de 29/09/2026) **não foi reescrito**: esta seção registra apenas o desfecho dos pontos que a fusão do módulo "Quadro" no módulo "Tarefas" tornou superados.
+
+**Plano que executa a fusão:** `docs/plans/PLANO_FUSAO_QUADRO_TAREFAS_50_ETAPAS_2026-10-07.md` — decisões nas seções 1 e 2 (E01–E06), execução nas etapas E07–E29, estado conferido item a item no ledger `docs/design/TAREFAS_QUADRO_STATUS.md` (etapa E24) e nos portões E30–E47.
+
+**O que a fusão é** (decisões E01/E02 do plano): não existe módulo "Quadro" separado no código — o item `pipeline` do menu era uma **segunda porta de entrada para o mesmo `TasksModule`**, forçada no modo Quadro (`{ defaultMode: 'board', forceMode: true }`, `src/pages/viewRouteProps.ts`). A fusão remove essa porta de entrada (item de menu, rota e as props de modo forçado) e mantém a **visão Quadro como um dos três modos de Tarefas** (Lista / Quadro / Agenda), com arrastar, WIP e colunas intactos. Sem DDL, sem Edge Function, sem migration e sem dependência nova: os dados são `conversation_tasks`, os mesmos nas duas entradas.
+
+**Pontos deste relatório que a fusão supera:**
+
+| Ponto desta auditoria | Desfecho com a fusão |
+|---|---|
+| §2.3 — "Navegação: `?view=tasks` e `?view=pipeline` → `TasksModule`; label "Quadro" | a segunda entrada deixa de existir; `?view=pipeline` e `#pipeline` passam a **redirecionar para `tasks`**, gravando `tasks-mode='board'` só nessa entrada legada (E03/E07) |
+| **B7** — `?view=pipeline` pode abrir em Lista | o defeito deixa de existir junto com a porta de entrada: o acesso legado abre no Quadro por decisão própria (E03) e o item de menu com modo forçado é removido (E14) |
+| §5, última linha — "Atalhos Alt+K / Alt+P ✅ (mantidos na navegação)" | **Alt+P deixa de existir** (E04); Tarefas continua em Alt+K e as teclas 1/2/3 trocam o modo |
+| §2.3, linha do Chat — "`Crm360Tab`/`NotesTab` migrados" | os três botões do `Crm360Tab` que chamavam `navigateToView('pipeline')` passam a abrir Tarefas, com os rótulos corrigidos (E06/E13); `sales_deals`, `sales_pipeline_stages`, `ContactViewSwitcher` e `CRM_PIPELINE_TABS` **não** são tocados |
+| **G-3** do plano de 150 etapas — "dois itens na sidebar por 30 dias, depois avaliar" | avaliação feita em 07/10/2026: decisão por **um módulo só**, encerramento registrado na etapa E27 |
+
+Com isso fica superada a leitura desta auditoria de que "Tarefas" e "Quadro" seriam dois itens de menu com funcionalidades a integrar: eles sempre foram o mesmo componente, e a partir de 07/10/2026 existe uma única porta de entrada. O que esta auditoria mediu sobre o módulo (banco, hook, componentes, três modos, bugs B1–B15) permanece válido como histórico daquela data.

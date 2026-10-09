@@ -1,6 +1,8 @@
 # Tarefas + Lembretes + Quadro — STATUS
 Base: 1b85cb439f42a47d1091ce740ec68be357f05903 · Repo path: /workspace/repos/Zapp_Web_V2-tarefas · Playwright: ok · QA user: ok (senha redefinida 28/09)
 
+> **07/10/2026 — o item de menu "Quadro" (id `pipeline`) não existe mais.** A fusão Quadro→Tarefas foi concluída (plano de 50 etapas, etapas E01–E29; seção final deste documento): o Quadro passou a ser um **modo** de Tarefas. As seções históricas abaixo que citam o item de menu, `?view=pipeline` ou o contrato `forceMode` descrevem o estado da época em que foram escritas.
+
 Decisões: G-1=Migrar reminders (1 ativo, risco zero) G-2=Desligar UI deals (0 deals em produção) G-3=2 itens sidebar por 30 dias G-4=Órfãs→Admin 01 (d7825f6e-0240-4500-bc88-2721897f78c6) G-5=Sem parser NL v1 G-6=WIP Fazendo=3 hard, Aguardando=5 soft G-7=Push só se infra existir (registrado como resíduo) G-8=Concluídas 7 dias
 
 ## CP0 Ambiente     [x] sha=1b85cb43 · branch=claude/feat-tarefas-f0-ledger-260928-1940
@@ -96,7 +98,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 ## CP-D QuickAdd [x] — chip-btn CSS=ok · 7 chips=ok (reconfirmado no DOM em 02/10: `[data-testid^=quick-add-chip]` = 7) · screenshot `D-42-quickadd.png` tirado 02/10 · validação passado=ok · teste=11+2+6 mutações
 ## CP-E Telas       [~] etapas 43, 44, 45 e 46, 47 (B7), 48 (B4), 49, 50, 51 (B5), 52 (B8), 53, 55, 56 e 57 fechadas 29-30/09/2026 (executor: Hermes) · subtítulo: ok (números reais pt-BR) · KPIs 88px: ok (5 cards, tile 44px, WIP n/3) · filtros 3 modos: ok (barra de 5 filtros, estado na URL por replaceState, recorte único) · Concluídas 7d: ok · Próximas por dia: ok · fade ao concluir: ok · Concluído 7d no Quadro: ok · Quadro WIP/ordem: drop ok (interno sim, externo nao) · coluna vazia/esqueleto/altura: ok · Agenda grupos: ok (3 grupos, ponto por tipo, atrasadas expansível) · card agenda: ok (h-11, 1 linha, checkbox) · QuickAdd no dia: ok (pré-preenchido) · 0 requests na troca= · modo por rota: ok · auditoria F1: ok (7 correções; 9 mutações mortas) · auditoria F2: ok (7 correções; 7 mutações mortas) · auditoria F3: ok (A4 16/16 mutações mortas; A1-1 corrigido; 3 achados do A2 na fila) · cenários F4: ok (7 sobreviventes da F3 cobertos; 5/5 mutações mortas) · rótulos pt-BR do módulo: ok (Média, Concluído e as políticas das colunas acentuados)
 
-## Etapa 47 (B7) — modo por rota (Fase E) — evidências
+## Etapa 47 (B7) — modo por rota (Fase E) — evidências — **SUPERADA em 07/10/2026 pela fusão Quadro→Tarefas**
 
 **Regra do plano:** `?view=pipeline` abre SEMPRE no Quadro; `?view=tasks` retoma o último modo salvo (ou a Lista); a preferência só é gravada no `onChange` do `ModeSwitcher`.
 
@@ -124,7 +126,7 @@ Metodo: 5 subagentes com copias descartaveis (/tmp/audit1..5) para poderem MUTAR
 
 **Entrega:** PR #1230 mergeada em `1b23980d358aac2525c960168664ce43a9346d0b` (squash; commits de fix/test/docs) · deploy de produção: success · prova em produção: dos 376 chunks servidos por `zapp-web-v2.vercel.app`, exatamente 2 trazem `forceMode` — o do roteador (`{pipeline:{defaultMode:"board",forceMode:!0}}`) e o do módulo (`{defaultMode:e="list",forceMode:t=!1}`) — trechos idênticos ao build local.
 
-**Achado fora do escopo (não corrigido):** `src/components/inbox/tabs/Crm360Tab.tsx:120/167/245` manda "Ver funil →" / "Ver pipeline →" para `navigateToView('pipeline')`; depois desta etapa esses botões abrem o Quadro de TAREFAS (antes caíam na mesma tela no modo salvo). Rótulo e destino são decisão de produto.
+**Achado fora do escopo — RESOLVIDO em 07/10/2026 (etapa E13 da fusão):** os três botões do `Crm360Tab.tsx` que chamavam `navigateToView('pipeline')` ("Ver funil →", "Criar negociação", "Ver pipeline →") passaram a abrir **Tarefas**, com os rótulos corrigidos para o que de fato abrem. *(Registro original: `src/components/inbox/tabs/Crm360Tab.tsx:120/167/245` mandava "Ver funil →" / "Ver pipeline →" para `navigateToView('pipeline')`; depois desta etapa esses botões abriam o Quadro de TAREFAS — antes caíam na mesma tela no modo salvo — e rótulo e destino eram decisão de produto.)*
 
 ## Etapa 48 (B4) — "Concluídas (7 dias)" na Lista — evidências
 
@@ -832,3 +834,23 @@ Armadilha registrada: `CREATE OR REPLACE FUNCTION` **nao troca o tipo de retorno
 **Producao conferida depois dos runs:** `conversation_tasks where title like 'QA-E5-idem%'` = **0** e **0** notificacoes orfas dessas tarefas.
 
 **Placar: 98 de 100.** Ficam abertas apenas **96** (abrir a migrada na Lista/Sheet do dono — credencial do Admin 01) e **100** (conferencia presencial do dono).
+
+---
+
+## Fusão Quadro → Tarefas — CONCLUÍDA (07/10/2026)
+
+**Plano:** `docs/plans/PLANO_FUSAO_QUADRO_TAREFAS_50_ETAPAS_2026-10-07.md`, etapas **E01–E29** (23 cartões, um por conjunto de arquivos). Escopo: front-end — **sem DDL, sem Edge Function, sem migration, sem dependência nova**.
+
+**O que a fusão era, no código:** não existia um módulo "Quadro" separado. O item `pipeline` do menu ("Quadro", Alt+P) era uma **segunda porta de entrada** para o **mesmo** `TasksModule`, forçada no modo Quadro pelo contrato `{ defaultMode: 'board', forceMode: true }` de `src/pages/viewRouteProps.ts`. Os dados sempre foram `conversation_tasks`, os mesmos nas duas entradas.
+
+**Item de menu e rota `pipeline` — REMOVIDOS.** Saíram o item de `src/services/navigation.service.ts`, a rota de `SPECIAL_VIEWS` em `src/pages/ViewRouter.tsx` (com o import de `TASKS_ROUTE_PROPS`), o arquivo `src/pages/viewRouteProps.ts` (o contrato B7) e as props `defaultMode`/`forceMode` de `TasksModule`. O item **Tarefas** passa a `layout:'full'`; a Lista e a Agenda recebem o gutter internamente, com a aparência de antes.
+
+**O Quadro continua existindo — como MODO de Tarefas** (Lista / Quadro / Agenda, `ModeSwitcher`), com tudo o que já estava entregue: `TasksBoardMode`, `BoardColumn`, limites de WIP, arrastar, `MoveToMenu`, `resolveDragEnd`, filtros e KPIs. Nada disso foi removido.
+
+**Entradas antigas e atalhos.** `?view=pipeline` e `#pipeline` são links legados: redirecionam para `tasks` e abrem no Quadro **uma única vez** (entrar por `tasks` não sobrescreve o modo salvo). **Alt+P deixou de existir**; **Alt+K** continua abrindo Tarefas e **1/2/3** trocam o modo. Ficaram intactos, fora do escopo: `sales_deals`/`sales_pipeline_stages`, `useContactCrm360`, `OpenDealsList`, `ContactViewSwitcher` e `CRM_PIPELINE_TABS`.
+
+**Etapa 47 (B7) — SUPERADA.** O "modo por rota" (`forceMode`) descrito na seção acima existia **só** para servir o item de menu; com o item removido não há mais contrato de rota forçando modo, e o Quadro é alcançado como qualquer outro modo de Tarefas.
+
+**Achado do CRM360 — RESOLVIDO.** Os três botões do `Crm360Tab.tsx` que chamavam `navigateToView('pipeline')` passaram a abrir Tarefas, com os rótulos corrigidos para o que de fato abrem (etapa E13). O pipeline de vendas não foi tocado.
+
+**Critérios de aceite do conjunto** (§4 do plano, conferidos nos portões E30–E47 do Claude): menu lateral, drawer mobile e paleta sem "Quadro" como item; `?view=pipeline`/`#pipeline` abrindo Tarefas no Quadro e `?view=tasks` retomando o modo salvo; Alt+K ativo, Alt+P inerte e 1/2/3 trocando o modo; Lista e Agenda com a aparência de hoje e o Quadro em largura total; nenhum `navigateToView('pipeline')` nem `'pipeline'` como id de view sobrando (exceto o redirect legado); `sales_*` intactas.

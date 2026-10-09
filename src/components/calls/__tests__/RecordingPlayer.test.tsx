@@ -10,9 +10,14 @@ import {
   toGain,
 } from '@/lib/mediaVolumeStore';
 
-const invoke = vi.fn();
+// CI com cobertura roda este arquivo ~7x mais devagar que a maquina local (20 s contra 2,7 s): a cadeia
+// getSession -> fetch -> Blob -> render estourava o 1 s padrao do findBy. Folga so de tempo, sem afrouxar nenhuma asserção.
+vi.setConfig({ testTimeout: 20_000 });
+
+const getSession = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } },
+  SUPABASE_URL: 'https://zapp-local.supabase.co',
+  supabase: { auth: { getSession: (...args: unknown[]) => getSession(...args) } },
 }));
 
 /**
@@ -36,10 +41,15 @@ vi.mock('@/hooks/calls/useCallRecording', async (importOriginal) => {
   };
 });
 
-const renderPlayer = (ui: React.ReactElement) => {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
-};
+const fetchMock = vi.fn();
+const createObjectURL = vi.fn();
+const revokeObjectURL = vi.fn();
+let sequenciaDeUrlBlob = 0;
+
+const novoQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+const renderPlayer = (ui: React.ReactElement, qc = novoQueryClient()) =>
+  render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 
 /**
  * Root com `StrictMode` REAL no topo: o efeito e montado, desmontado e montado de novo.
@@ -47,7 +57,7 @@ const renderPlayer = (ui: React.ReactElement) => {
  * remontagem simulada do efeito nao acontece.)
  */
 const renderPlayerEstrito = (ui: React.ReactElement) => {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const qc = novoQueryClient();
   return render(
     <StrictMode>
       <QueryClientProvider client={qc}>{ui}</QueryClientProvider>
@@ -59,11 +69,35 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
+function respostaAudio(corpo = 'ID3-audio') {
+  // Corpo em TEXTO (nao em Blob do jsdom): o Response do Node nem sempre entende o Blob do jsdom e entregaria 0 bytes
+  // (o hook trata 0 bytes como 'sem gravacao'), o que so aparecia no CI.
+  return Promise.resolve(new Response(corpo, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }));
+}
+
+// `expect.any(Blob)` compara com o Blob GLOBAL do jsdom, mas `Response.blob()` do Node devolve o Blob do Node (outro realm):
+// no CI a checagem de classe falha mesmo com o objeto certo. Aqui se confere o que importa: tem bytes e o tipo do audio.
+function expectBlobDeAudio(mockCriar: ReturnType<typeof vi.fn>) {
+  expect(mockCriar).toHaveBeenCalled();
+  const recebido = mockCriar.mock.calls[0][0] as Blob;
+  expect(recebido.size).toBeGreaterThan(0);
+  expect(recebido.type).toBe('audio/mpeg');
+}
+
+function prepararAmbiente() {
+  gravacao.atual = null;
+  getSession.mockReset().mockResolvedValue({ data: { session: { access_token: 'jwt-local' } }, error: null });
+  fetchMock.mockReset().mockImplementation(() => respostaAudio());
+  sequenciaDeUrlBlob = 0;
+  createObjectURL.mockReset().mockImplementation(() => `blob:gravacao-${++sequenciaDeUrlBlob}`);
+  revokeObjectURL.mockReset();
+  vi.stubGlobal('fetch', fetchMock);
+  Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+  Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+}
+
 describe('RecordingPlayer (T67)', () => {
-  beforeEach(() => {
-    gravacao.atual = null;
-    invoke.mockReset().mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null });
-  });
+  beforeEach(prepararAmbiente);
 
   it('nao renderiza nada quando a chamada nao tem gravacao', () => {
     renderPlayer(<RecordingPlayer callId="c1" recordingStatus="none" />);
@@ -73,15 +107,91 @@ describe('RecordingPlayer (T67)', () => {
   it('nao renderiza nem requisita quando a chamada nao diz que tem', () => {
     renderPlayer(<RecordingPlayer callId="c2" recordingStatus={null} />);
     expect(screen.queryByTestId('tel-recording-player')).toBeNull();
-    expect(invoke).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(getSession).not.toHaveBeenCalled();
   });
 
-  it('com gravacao disponivel o player existe e pede o audio pela Edge (nunca pela URL)', async () => {
-    renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
-    // D3 revisado em 29/09 (reconciliar com o Bitrix24): a Edge get-call-recording existe, entao
-    // o player deixa de devolver null e passa a buscar o audio - sem que a URL chegue ao front.
-    await waitFor(() => expect(invoke).toHaveBeenCalledWith('get-call-recording', expect.objectContaining({ body: { callId: 'c3' } })));
-    expect(JSON.stringify(document.body.innerHTML)).not.toContain('http');
+  it('com gravacao disponivel baixa o stream pela Edge como Blob e nunca recebe recording_url', async () => {
+    const { container } = renderPlayer(<RecordingPlayer callId="c3" recordingStatus="available" />);
+
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://zapp-local.supabase.co/functions/v1/get-call-recording',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { Authorization: 'Bearer jwt-local', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callId: 'c3' }),
+        cache: 'no-store',
+      }),
+    );
+    expectBlobDeAudio(createObjectURL);
+    const audio = audioDoPlayer(container);
+    expect(audio.getAttribute('src')).toBe('blob:gravacao-1');
+    const htmlSemXmlnsSvg = JSON.stringify(document.body.innerHTML).replace(
+      /http:\/\/www\.w3\.org\/2000\/svg/g,
+      '[svg-namespace]',
+    );
+    expect(htmlSemXmlnsSvg).not.toContain('http');
+    expect(htmlSemXmlnsSvg).not.toContain('recording_url');
+    expect(htmlSemXmlnsSvg).not.toContain('https://gravacoes');
+  });
+
+  it('404 da Edge continua sendo tratado como chamada sem gravacao', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('Sem gravacao disponivel', { status: 404 }));
+
+    renderPlayer(<RecordingPlayer callId="c404" recordingStatus="available" />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 10_000 });
+    expect(screen.queryByTestId('tel-recording-player')).toBeNull();
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('resposta 200 sem bytes (blob vazio) e tratada como chamada sem gravacao', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 200 }));
+
+    renderPlayer(<RecordingPlayer callId="cvazio" recordingStatus="available" />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 10_000 });
+    expect(screen.queryByTestId('tel-recording-player')).toBeNull();
+    // Blob vazio nunca vira object URL: nao ha audio para tocar.
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Refazer #62 — o cache do react-query sobrevive ao desmontar por `staleTime` (5 min).
+ * Se a URL `blob:` guardada no cache for revogada no cleanup, a remontagem dentro do
+ * staleTime devolve uma URL morta e o audio quebra. O teste usa o MESMO QueryClient
+ * nas duas montagens da MESMA chamada: o cache tem de sobreviver, e cada montagem
+ * precisa criar uma object URL nova a partir do Blob cacheado (sem novo download).
+ */
+describe('RecordingPlayer (#62) — URL blob revogada nunca volta do cache', () => {
+  beforeEach(prepararAmbiente);
+
+  it('desmontar revoga a URL e remontar gera URL nova a partir do Blob em cache', async () => {
+    const qc = novoQueryClient();
+    const ui = <RecordingPlayer callId="r1" recordingStatus="available" />;
+
+    const primeiro = renderPlayer(ui, qc);
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
+    const src1 = audioDoPlayer(primeiro.container).getAttribute('src');
+    expect(src1).toMatch(/^blob:/);
+
+    primeiro.unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith(src1);
+
+    const segundo = renderPlayer(ui, qc);
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
+    const src2 = audioDoPlayer(segundo.container).getAttribute('src');
+
+    // A remontagem nao pode herdar a URL revogada: nasce uma URL blob NOVA...
+    expect(src2).toMatch(/^blob:/);
+    expect(src2).not.toBe(src1);
+    expect(revokeObjectURL).not.toHaveBeenCalledWith(src2);
+    expect(createObjectURL).toHaveBeenCalledTimes(2);
+    // ...a partir do Blob que ja estava no cache, sem baixar de novo.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -93,8 +203,7 @@ describe('RecordingPlayer (T67)', () => {
  */
 describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () => {
   beforeEach(() => {
-    gravacao.atual = null;
-    invoke.mockReset().mockResolvedValue({ data: { url: 'https://exemplo/g.mp3' }, error: null });
+    prepararAmbiente();
     act(() => {
       setVolume(DEFAULT_MEDIA_VOLUME_STATE.volume);
       setMuted(DEFAULT_MEDIA_VOLUME_STATE.muted);
@@ -105,12 +214,12 @@ describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () 
     act(() => setVolume(40));
 
     const { container } = renderPlayer(<RecordingPlayer callId="v1" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const audio = audioDoPlayer(container);
     expect(audio).not.toBeNull();
 
     // Ganho perceptual aplicado pelo controle unico: (40/100)^2 = 0.16.
-    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5));
+    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5), { timeout: 10_000 });
     expect(audio.muted).toBe(false);
 
     // Muda para 70 no controle global: o mesmo elemento acompanha.
@@ -129,9 +238,9 @@ describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () 
     act(() => setVolume(40));
 
     const { container, unmount } = renderPlayer(<RecordingPlayer callId="v2" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
     const audio = audioDoPlayer(container);
-    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5));
+    await waitFor(() => expect(audio.volume).toBeCloseTo(toGain(40), 5), { timeout: 10_000 });
 
     unmount();
     act(() => setVolume(5));
@@ -148,18 +257,7 @@ describe('RecordingPlayer (VOL-02) — a gravacao respeita o volume global', () 
  * invisivel para o proprio teste).
  */
 describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () => {
-  const createObjectURL = vi.fn();
-  const revokeObjectURL = vi.fn();
-  let criados = 0;
-
-  beforeEach(() => {
-    criados = 0;
-    createObjectURL.mockReset().mockImplementation(() => `blob:gravacao-${(criados += 1)}`);
-    revokeObjectURL.mockReset();
-    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
-    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-    gravacao.atual = null;
-  });
+  beforeEach(prepararAmbiente);
 
   const revogados = () => revokeObjectURL.mock.calls.map((c) => c[0] as string);
 
@@ -167,13 +265,13 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     gravacao.atual = { disponivel: true, url: null, blob: audioDaEdge() };
 
     const { container } = renderPlayer(<RecordingPlayer callId="c4" recordingStatus="available" />);
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
 
     const audio = audioDoPlayer(container);
     const link = container.querySelector('a[download]') as HTMLAnchorElement | null;
 
-    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:gravacao-1'));
+    expectBlobDeAudio(createObjectURL);
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('blob:gravacao-1'), { timeout: 10_000 });
     expect(link?.getAttribute('href')).toBe('blob:gravacao-1');
     expect(audio.getAttribute('src')).not.toMatch(/^https?:/);
     expect(link?.getAttribute('href')).not.toMatch(/^https?:/);
@@ -188,7 +286,7 @@ describe('RecordingPlayer (TEL-RECORDING-001) — ciclo do endereco blob', () =>
     const { container } = renderPlayerEstrito(
       <RecordingPlayer callId="c5" recordingStatus="available" />,
     );
-    await screen.findByTestId('tel-recording-player');
+    await screen.findByTestId('tel-recording-player', {}, { timeout: 10_000 });
 
     const audio = audioDoPlayer(container);
     const emUso = audio.getAttribute('src');

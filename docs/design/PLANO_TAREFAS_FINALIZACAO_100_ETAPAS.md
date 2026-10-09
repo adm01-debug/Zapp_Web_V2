@@ -1,5 +1,7 @@
 # PLANO DE FINALIZAÇÃO — TAREFAS + LEMBRETES + QUADRO KANBAN | ZAPP WEB V2 — 100 ETAPAS
 
+> ⚠️ **Nota de superação — 07/10/2026:** a decisão dos **dois itens de menu** ("Tarefas" e "Quadro Kanban", duas entradas para o mesmo módulo, com `?view=pipeline` abrindo o Quadro — etapa 47/B7) está **superada** por `docs/plans/PLANO_FUSAO_QUADRO_TAREFAS_50_ETAPAS_2026-10-07.md`: o item "Quadro" sai do menu e a visão Quadro passa a ser um dos modos de Tarefas. O restante deste plano permanece como histórico.
+
 > **Versão:** 2.0 — 29/09/2026 — sucede o plano de 150 etapas (v1.0). Baseado no `RELATORIO_AUDITORIA_TAREFAS_FUSAO.md` (mesma pasta).
 > **Executor:** Claude (chat com MCP) ou Claude Code (`claude -p`, quando a cota liberar em 01/10) — container `claude-code`, worktree `/workspace/repos/Zapp_Web_V2-tarefas`
 > **Repo:** `adm01-debug/Zapp_Web_V2` · **Deploy:** Vercel `zapp_web_v2` (team `juca1`) — merge em `main` = produção

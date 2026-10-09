@@ -39,6 +39,20 @@ describe('SidebarSection (etapa 45)', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('sem subtitle não renderiza a linha do subtítulo', () => {
+    render(
+      <Accordion type="multiple" defaultValue={['professional']}>
+        <SidebarSection index={0} value="professional" tone="blue" icon={<Briefcase />} title="Dados Profissionais">
+          <div>conteúdo da seção</div>
+        </SidebarSection>
+      </Accordion>,
+    );
+    expect(screen.getByText('Dados Profissionais')).toBeInTheDocument();
+    expect(screen.queryByTestId('sidebar-section-subtitle')).not.toBeInTheDocument();
+    // Nenhuma linha (nem vazia) abaixo do título.
+    expect(screen.getByText('Dados Profissionais').nextElementSibling).toBeNull();
+  });
+
   it('nenhuma cor literal nas classes', () => {
     const { container } = renderSection();
     expect(container.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,6}|rgb\(/);

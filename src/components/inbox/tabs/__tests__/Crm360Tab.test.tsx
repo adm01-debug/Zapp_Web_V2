@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Crm360Tab } from '../Crm360Tab';
 import type { Conversation } from '@/types/chat';
@@ -137,10 +137,25 @@ describe('Crm360Tab', () => {
     expect(onTabChange).toHaveBeenCalledWith('history');
   });
 
-  it('"Ver funil →" navega para o pipeline (navigateToView)', () => {
+  it('"Ver tarefas →" do card "Etapa no funil" navega para Tarefas', () => {
     renderTab();
-    fireEvent.click(screen.getByText('Ver funil →'));
-    expect(mockNavigateToView).toHaveBeenCalledWith('pipeline');
+    const card = screen.getByText('Etapa no funil').closest('section')!;
+    fireEvent.click(within(card).getByText('Ver tarefas →'));
+    expect(mockNavigateToView).toHaveBeenCalledWith('tasks');
+  });
+
+  it('"Abrir Tarefas" do estado vazio de negociação navega para Tarefas', () => {
+    renderTab();
+    const card = screen.getByText('Etapa no funil').closest('section')!;
+    fireEvent.click(within(card).getByText('Abrir Tarefas'));
+    expect(mockNavigateToView).toHaveBeenCalledWith('tasks');
+  });
+
+  it('"Ver tarefas →" do card "Pipeline comercial" navega para Tarefas', () => {
+    renderTab();
+    const card = screen.getByText('Pipeline comercial').closest('section')!;
+    fireEvent.click(within(card).getByText('Ver tarefas →'));
+    expect(mockNavigateToView).toHaveBeenCalledWith('tasks');
   });
 
   it('exibe o ticket médio formatado em BRL quando há compras concluídas', () => {

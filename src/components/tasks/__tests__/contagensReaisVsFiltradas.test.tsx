@@ -51,12 +51,15 @@ function subtitulo(): string {
   return screen.getByText(/aberta/).textContent ?? '';
 }
 
-/** A coluna do Quadro pelo rótulo (o container da coluna é o `min-w-[232px]`). */
+/**
+ * A coluna do Quadro pelo rótulo. A âncora é o `data-board-column` da `BoardColumn`
+ * (E16): antes era a string da classe `min-w-[232px]`, exatamente a largura fixa que a
+ * E16 removeu — a coluna passou a dividir a largura do trilho (`flex-1 min-w-[200px]`).
+ */
 function colunaComLabel(label: string): HTMLElement {
   for (const el of screen.getAllByText(label)) {
-    let n: HTMLElement | null = el as HTMLElement;
-    while (n && !String(n.className ?? '').includes('min-w-[232px]')) n = n.parentElement;
-    if (n) return n;
+    const coluna = (el as HTMLElement).closest<HTMLElement>('[data-board-column]');
+    if (coluna) return coluna;
   }
   throw new Error('coluna nao encontrada: ' + label);
 }

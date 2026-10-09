@@ -17,7 +17,8 @@ interface SidebarSectionProps {
   value: SidebarSectionValue;
   icon: ReactNode;
   title: string;
-  subtitle: string;
+  /** opcional: sem subtítulo a linha não é renderizada (nem sobra altura) */
+  subtitle?: string;
   tone: SidebarSectionTone;
   children: ReactNode;
 }
@@ -48,7 +49,9 @@ export function SidebarSection({ index, value, icon, title, subtitle, tone, chil
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-foreground leading-tight">{title}</div>
-              <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
+              {subtitle ? (
+                <div data-testid="sidebar-section-subtitle" className="text-xs text-muted-foreground truncate">{subtitle}</div>
+              ) : null}
             </div>
           </div>
         </AccordionTrigger>

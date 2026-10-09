@@ -16,7 +16,12 @@
  *
  * Diferença proposital: aqui o retorno é STRING (a prévia só mostra o texto);
  * o relatório `{ text, missing, unknown }` é do kernel do edge.
+ *
+ * A leitura do token (chave/padrão) vem de `./placeholders`, a MESMA que o
+ * editor e o resumo usam (R2-MOD-062) — a prévia é a referência da gramática.
  */
+
+import { parsePlaceholderInner } from './placeholders';
 
 export type PreviewContact = {
   name?: string | null;
@@ -91,9 +96,7 @@ export function personalizePreview(
   // reinterpretado como placeholder pela chamada seguinte — o preview
   // mostraria algo diferente do que o envio real produz.
   return template.replace(/\{\{([^}]+)\}\}/g, (_match, rawKey: string) => {
-    const pipeIndex = rawKey.indexOf('|');
-    const key = (pipeIndex === -1 ? rawKey : rawKey.slice(0, pipeIndex)).trim().toLowerCase();
-    const fallback = pipeIndex === -1 ? null : rawKey.slice(pipeIndex + 1);
+    const { key, fallback } = parsePlaceholderInner(rawKey);
     if (key === 'saudacao') return greetingInTimezone(timeZone);
     if (key === 'data_atual' || key === 'data') return today;
     if (key === 'link') {

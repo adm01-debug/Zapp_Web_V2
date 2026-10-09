@@ -40,6 +40,7 @@ import {
   claimAiJobs,
   finishAiJob,
   heartbeatAiJob,
+  markAiJobEffectStarted,
   reapAiJobs,
   type AiJob,
 } from "../_shared/ai-jobs.ts";
@@ -62,6 +63,19 @@ const CLAIM_LIMIT = 10;
 const CLAIM_LEASE_SECONDS = 60;
 /** Renovação de lease antes/depois de cada job (30..300). */
 const HEARTBEAT_LEASE_SECONDS = 120;
+/** Janela de lease do trabalho em ms — a mesma pedida a cada renovação. */
+export const LEASE_WINDOW_MS = HEARTBEAT_LEASE_SECONDS * 1000;
+/**
+ * Intervalo do "lease keeper": renova DURANTE o handler em janela/3 — nunca
+ * maior que janela/2, para caber ao menos duas renovações na mesma janela.
+ */
+const LEASE_KEEPER_INTERVAL_MS = Math.floor(LEASE_WINDOW_MS / 3);
+/**
+ * Margem do prazo de geração dentro da janela do lease: a chamada inteira ao
+ * provedor (requisição + headers + corpo — IA-041) termina ESTRITAMENTE antes
+ * do lease vencer, sobrando tempo para a liquidação.
+ */
+export const GENERATE_LEASE_MARGIN_MS = 15_000;
 
 /**
  * Flag de ambiente que liga a chamada REAL de IA no handler `ai.generate`.
@@ -93,6 +107,12 @@ export interface AiJobHandlerInput {
   /** `ai_jobs.function_name` — finalidade declarada pelo produtor do job. */
   functionName: string;
   userId: string | null;
+  /**
+   * Aborta quando o lease é PERDIDO durante o handler (o keeper viu o heartbeat
+   * devolver false). A perda é PROPAGADA ao trabalho — nunca só um `warn` e
+   * `continue`: o handler sabe e pode parar de gastar tentativa.
+   */
+  signal: AbortSignal;
 }
 
 /**
@@ -139,6 +159,27 @@ async function handleReapExpired(): Promise<AiJobHandlerResult> {
 }
 
 /**
+ * Rejeita quando o job perde o lease (`input.signal` abortado pelo keeper).
+ *
+ * A interface do provedor é congelada (`options.timeoutMs` — IA-040) e não
+ * aceita signal externo, então a perda corre EM PARALELO à geração: ao abortar,
+ * o handler falha com o MESMO código de prazo que o estouro de `timeoutMs`
+ * produziria — sem comportamento novo. A chamada do provedor segue no fundo,
+ * limitada pelo `timeoutMs` ligado ao lease, e a liquidação é recusada pelo
+ * fencing do heartbeat final (o reaper decide o desfecho, não este processo).
+ */
+function leaseLostRejection(signal: AbortSignal, code: string): Promise<never> {
+  return new Promise((_resolve, reject) => {
+    const fail = () => reject(new AiJobHandlerError(code, "lease perdido durante a geracao"));
+    if (signal.aborted) {
+      fail();
+      return;
+    }
+    signal.addEventListener("abort", fail, { once: true });
+  });
+}
+
+/**
  * `ai.generate` — handler REAL do kind de geração. DELEGA para o caminho de geração
  * que já existe (`_shared/ai-generate.ts` → `generateWithRouting`): não reimplementa
  * roteamento, provedor, orçamento nem auditoria.
@@ -162,22 +203,40 @@ async function handleAiGenerate(input: AiJobHandlerInput): Promise<AiJobHandlerR
     throw new AiJobHandlerError("AI_GENERATE_BAD_PAYLOAD", "payload.messages nao e array");
   }
 
-  const { generateWithRouting } = await import("../_shared/ai-generate.ts");
+  const { generateWithRouting, AI_TIMEOUT_ERROR_CODE, resolveDefaultTimeoutMs } = await import(
+    "../_shared/ai-generate.ts"
+  );
   const system = typeof input.payload.system === "string" ? input.payload.system : null;
 
-  const gen = await generateWithRouting({
-    purpose: purpose as GenerateParams["purpose"],
-    functionName: input.functionName,
-    userId: input.userId,
-    // IA-051 — a execução nasceu na fila: o consumo fica ligado ao job e à
-    // tentativa (`ai_usage_logs.job_id` / `.attempt`). É esta ligação que
-    // permite reconciliar ação, tentativa e cobrança (IA-054) depois, sem
-    // precisar do conteúdo da conversa para saber de onde veio o gasto.
-    jobId: input.job.id,
-    attempt: input.job.attemptCount,
-    messages,
-    system,
-  });
+  const gen = await Promise.race([
+    generateWithRouting({
+      purpose: purpose as GenerateParams["purpose"],
+      functionName: input.functionName,
+      userId: input.userId,
+      // IA-051 — a execução nasceu na fila: o consumo fica ligado ao job e à
+      // tentativa (`ai_usage_logs.job_id` / `.attempt`). É esta ligação que
+      // permite reconciliar ação, tentativa e cobrança (IA-054) depois, sem
+      // precisar do conteúdo da conversa para saber de onde veio o gasto.
+      jobId: input.job.id,
+      attempt: input.job.attemptCount,
+      messages,
+      system,
+      // IA-202 — teto DUPLO, nunca um aumento: o prazo ponta a ponta (que
+      // IA-041 já estende ao corpo da resposta) fica limitado ao MENOR entre
+      // o default que o próprio roteador usaria para este purpose aqui (o
+      // worker não declara `need.modality`, então é
+      // `resolveDefaultTimeoutMs(purpose, null)` — 30 s para as finalidades
+      // de texto) e o orçamento do lease (janela - margem = 105 s). Para
+      // texto o Math.min devolve o default de sempre: o prazo NUNCA passa do
+      // default nem do orçamento — só fica impossível uma geração à deriva
+      // além do lease se um default futuro crescer.
+      timeoutMs: Math.min(
+        resolveDefaultTimeoutMs(purpose, null),
+        LEASE_WINDOW_MS - GENERATE_LEASE_MARGIN_MS,
+      ),
+    }),
+    leaseLostRejection(input.signal, AI_TIMEOUT_ERROR_CODE),
+  ]);
 
   if (!gen.ok) {
     throw new AiJobHandlerError(gen.errorCode ?? "AI_GENERATE_ERROR");
@@ -196,6 +255,21 @@ export const HANDLERS: Readonly<Record<string, AiJobHandler>> = {
   // provedor — nunca reenvia (ver `_shared/effect-reconcile.ts`).
   "effect.reconcile": handleEffectReconcile,
 };
+
+/**
+ * Kinds cujo handler produz EFEITO EXTERNO cobrável no provedor (IA-202).
+ *
+ * Antes de executar um destes kinds, o worker grava a marca durável
+ * (`mark_ai_job_effect_started` → `ai_jobs.effect_started_at`) — é ela que
+ * permite ao reaper distinguir "o worker morreu ANTES do efeito" de "o efeito
+ * TALVEZ já tenha chegado ao provedor". No segundo caso o job vai ao terminal
+ * `outcome_unknown` em vez de voltar à fila — nunca há reenvio cego.
+ *
+ * `ai_jobs.reap_expired` fica de fora de propósito: é manutenção LOCAL da fila,
+ * repetir não custa nada no provedor. `effect.reconcile` também fica de fora:
+ * é SOMENTE-LEITURA no provedor por contrato (IA-047), repetir é seguro.
+ */
+const EFFECTFUL_KINDS: ReadonlySet<string> = new Set(["ai.generate"]);
 
 // ---------------------------------------------------------------------------
 // Leitura da linha completa (kind/payload) dos jobs arrendados.
@@ -257,12 +331,20 @@ function renewLease(job: AiJob, leaseToken: string): Promise<boolean> {
   });
 }
 
+/** Dependências de execução do lote — injetáveis SÓ para o teste de runtime. */
+export interface RunBatchDeps {
+  handlers?: Readonly<Record<string, AiJobHandler>>;
+  renewIntervalMs?: number;
+}
+
 /** Executa um lote arrendado e devolve os contadores por desfecho. */
-async function runBatch(
+export async function runBatch(
   supabase: SupabaseClient,
   claimed: AiJob[],
   log: { warn: (message: string, ctx?: Record<string, unknown>) => void },
+  deps: RunBatchDeps = {},
 ): Promise<TickCounts> {
+  const handlers = deps.handlers ?? HANDLERS;
   const rows = await loadJobRows(supabase, claimed);
   const counts: TickCounts = { succeeded: 0, failed: 0, partial: 0 };
 
@@ -280,13 +362,55 @@ async function runBatch(
       continue; // lease perdido é resultado: o reaper/outro worker assume
     }
 
-    const handler = HANDLERS[row.kind];
+    const handler = handlers[row.kind];
     if (!handler) {
       // NÃO inventa execução para kind desconhecido.
       await finishAiJob({ id: job.id, leaseToken, status: "failed", errorCode: "UNKNOWN_KIND" });
       counts.failed += 1;
       continue;
     }
+
+    // IA-202: kinds com efeito externo marcam o início ANTES de executar. Se a
+    // marca é recusada (lease perdido / job fora de alcance), na dúvida NEGA:
+    // o efeito NÃO acontece — é o que impede a 2ª chamada cobrável ao provedor.
+    if (EFFECTFUL_KINDS.has(row.kind)) {
+      const marked = await markAiJobEffectStarted({ id: job.id, leaseToken });
+      if (!marked) {
+        log.warn("ai-jobs-worker: marca de efeito recusada (lease perdido) — efeito nao executado", {
+          jobId: job.id,
+        });
+        continue;
+      }
+    }
+
+    // IA-202: o "lease keeper" renova DURANTE o handler (janela/3). Heartbeat
+    // com `false` = lease perdido → aborta o AbortController e o handler SABE
+    // (perda propagada pelo `signal`, nunca só warn+continue). O timer morre no
+    // `finally`, em TODO caminho — inclusive erro e infra.
+    const leaseCtl = new AbortController();
+    let keeperBusy = false;
+    const keeper = setInterval(() => {
+      if (keeperBusy) return; // heartbeat anterior ainda em voo — não empilha
+      keeperBusy = true;
+      void (async () => {
+        try {
+          if (!(await renewLease(job, leaseToken))) {
+            leaseCtl.abort();
+          }
+        } catch {
+          // Erro de INFRA dentro do timer não tem quem o receba: registra e o
+          // próximo tick tenta (a janela cobre várias tentativas). Se a falha
+          // persistir, o heartbeat continua LANÇANDO exceção — nunca devolve
+          // `false` por conta própria — então este caminho NÃO aborta o
+          // handler: a segurança dele vem da marca durável
+          // (`mark_ai_job_effect_started`/`effect_started_at`) e do reaper,
+          // que decide o desfecho quando o lease finalmente vencer.
+          log.warn("ai-jobs-worker: heartbeat do keeper falhou", { jobId: job.id });
+        } finally {
+          keeperBusy = false;
+        }
+      })();
+    }, deps.renewIntervalMs ?? LEASE_KEEPER_INTERVAL_MS);
 
     let outcome: AiJobHandlerResult;
     try {
@@ -296,6 +420,7 @@ async function runBatch(
         payload: row.payload ?? {},
         functionName: row.function_name,
         userId: row.user_id,
+        signal: leaseCtl.signal,
       });
     } catch (err) {
       if (err instanceof AiJobInfraError) throw err; // infra → 5xx (não é falha do job)
@@ -313,6 +438,8 @@ async function runBatch(
       }
       counts.failed += 1;
       continue; // o LOTE CONTINUA no próximo job
+    } finally {
+      clearInterval(keeper); // encerramento GARANTIDO — nenhum timer vaza
     }
 
     // Heartbeat DEPOIS do trabalho e ANTES da liquidação (fencing do lease).

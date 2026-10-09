@@ -1,7 +1,7 @@
 export interface MediaItem {
   id: string;
   url: string;
-  type: 'image' | 'video' | 'audio' | 'document';
+  type: 'image' | 'video' | 'audio' | 'document' | 'sticker';
   filename: string;
   created_at: string;
   caption: string | null;
