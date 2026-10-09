@@ -282,6 +282,14 @@ export interface AudienceStore {
   loadSavedAudience(audienceId: string, viewerProfileId: string): Promise<SavedAudience | null>;
   insertSavedAudience(input: SavedAudienceInput, ownerId: string): Promise<{ id: string }>;
   insertSavedMembers(audienceId: string, companyIds: string[], contactIds: string[]): Promise<void>;
+  /**
+   * Compensacao da gravacao PARCIAL de um publico: remove a linha recem-criada
+   * SOMENTE quando ela pertence ao `ownerId` (escopo por `owner_id`, o mesmo do
+   * RLS de escrita). Chamado quando `insertSavedMembers` falha depois de
+   * `insertSavedAudience`, para nao deixar publico orfao sem membros — que uma
+   * nova tentativa duplicaria.
+   */
+  deleteSavedAudience(audienceId: string, ownerId: string): Promise<void>;
 }
 
 /** Erro nomeado do store: nunca sobe cru como 500 generico. */
@@ -891,7 +899,26 @@ export async function handleAudienceSave(
       company_ids: companyIds,
       contact_ids: contactIds,
     }, ownerId);
-    if (!isRule) await store.insertSavedMembers(saved.id, companyIds, contactIds);
+    if (!isRule) {
+      try {
+        await store.insertSavedMembers(saved.id, companyIds, contactIds);
+      } catch (memberError) {
+        // COMPENSACAO da gravacao parcial: `insertSavedAudience` ja commitou a
+        // linha do publico e os membros NAO. Sem desfazer, fica um publico orfao
+        // sem membros — e uma nova tentativa (mesmo nome) duplicaria o publico.
+        // A remocao e escopada por `owner_id` (a MESMA fronteira da escrita) e
+        // usa o id recem-gravado; falha dela nao engole o erro original.
+        try {
+          await store.deleteSavedAudience(saved.id, ownerId);
+        } catch (compensationError) {
+          const compensationCode = compensationError instanceof Error
+            ? compensationError.message.split(':')[0]
+            : 'unknown';
+          logServerFailure('audience.save.compensate', ctx.userId, ctx.correlationId, compensationCode);
+        }
+        throw memberError;
+      }
+    }
 
     return jsonResponse({
       data: {
@@ -905,9 +932,12 @@ export async function handleAudienceSave(
   } catch (error) {
     const code = error instanceof Error ? error.message.split(':')[0] : 'unknown';
     logServerFailure('audience.save', ctx.userId, ctx.correlationId, code);
+    // Resposta FECHADA: mesma message fixa para o navegador (igual ao select). O
+    // `code` detalhado sai SO no log estruturado acima — nunca ecoa texto interno
+    // do Error (ex.: mensagem do store) para o cliente.
     return jsonResponse({
       error: MULTIPLIX_AUDIENCE_SAVE_FAILED,
-      message: `${code}: audience.save falhou no servidor`,
+      message: 'audience.save falhou no servidor',
     }, 502, ctx.req);
   }
 }
@@ -1044,6 +1074,24 @@ export function buildAudienceStore(ctx: ActionContext): AudienceStore {
         .from('multiplix_audience_members')
         .insert(rows) as Result<unknown>;
       if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: members insert failed`);
+    },
+
+    async deleteSavedAudience(audienceId, ownerId) {
+      // Compensacao escopada por DONO: o client e service role (bypassa RLS),
+      // entao o `owner_id` no WHERE e a fronteira — so a linha do proprio dono e
+      // removida. `.select('id')` confirma que ALGO foi removido (fail-closed:
+      // zero linha removida e erro, nao silencio).
+      const { data, error } = await ctx.supabase
+        .from('multiplix_audiences')
+        .delete()
+        .eq('id', audienceId)
+        .eq('owner_id', ownerId)
+        .select('id')
+        .maybeSingle() as Result<{ id?: string } | null>;
+      if (error) throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: audience delete failed`);
+      if (typeof data?.id !== 'string') {
+        throw new Error(`${MULTIPLIX_AUDIENCE_STORE_FAILED}: audience delete affected no row`);
+      }
     },
   };
 }
