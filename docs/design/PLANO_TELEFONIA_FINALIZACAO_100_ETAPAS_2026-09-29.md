@@ -222,7 +222,8 @@ depende de um segredo que não está configurado.
 - [ ] **T95** — Verificação de produção: deployment Vercel `READY` para o SHA do último merge; `12-prod.png`; `measure.mjs`/`colors.mjs` contra produção. **Aceite:** tabelas aqui.
 - [ ] **T96** — Homologação de áudio (roteiro T87) com um agente real: VoIP saída atendida / não atendida / ocupada · VoIP entrada atendida / recusada / perdida · WhatsApp entrada tocando / perdida · navegação durante a chamada · 2 abas. Cada cenário = 1 linha real em `calls` com `id, status, end_reason, talk_seconds, provider_call_id`. **Aceite:** tabela de 9 cenários com ids reais aqui. **Só aqui o módulo é "pronto".**
 - [ ] **T97** — Reconciliação pós-homologação: `SELECT count(*) FROM calls WHERE status='ringing' AND started_at < now() - interval '1 hour'` = 0 (nenhuma linha nova presa). **Aceite:** consulta aqui.
-- [ ] **T98** — Decisões D1–D7 finais na seção 10 com data e quem decidiu; o que **não** está prometido (saída por WhatsApp, gravação se D3=b, ramal por agente, seleção de dispositivo de áudio) listado no corpo da última PR. **Aceite:** seção 10 completa.
+- [x] **T98** — Decisões D1–D7 finais na seção 10 com data e quem decidiu; o que **não** está prometido (saída por WhatsApp, gravação se D3=b, ramal por agente, seleção de dispositivo de áudio) listado no corpo da última PR. **Aceite:** seção 10 completa.
+  **FEITO 08/10.** Seção 10 fechada: D1–D7 seguem com valor, data e quem decidiu; o parágrafo **"Fechamento do T98"** as declara **finais** (nenhuma revista depois de 29/09 — D3, 29/09, e D8, 02/10, são as duas alterações do Joaquim) e a subseção **10.1 "O que não está prometido"** lista os quatro limites nomeados neste item, cada um com a origem (D1/D2/D3) e o estado real do código. **Divergência declarada:** o plano pedia a lista "no corpo da última PR"; a Arquitetura V2 entrega local (sem PR), então a lista durável mora na própria seção 10, que o T02 já define como fonte de verdade. Trava por contrato: `tests/contracts/telefonia-decisoes.contract.test.ts`.
 - [ ] **T99** — CLAUDE.md ganha seção "Telefonia" (provedor SIP, secret, RPCs canônicas, `notes` × `agent_notes`, pasta de docs, regra "merge ≠ deploy de Edge"). **Aceite:** seção presente, sem tocar o resto.
 - [ ] **T100** — Encerramento: este arquivo com checklist final, links das PRs e "Pendências/resíduos" honesto; `TELEFONIA_STATUS.md` recebe linha final "superado por …". **Aceite:** ambos no mesmo PR.
 
@@ -240,6 +241,19 @@ depende de um segredo que não está configurado.
 | D6 | KPIs seguem busca/filtros | não | 2026-09-29 | padrão do plano (executor: Hermes) — revisável por Joaquim |
 | D7 | Recusar WhatsApp | **(b) "Ignorar"** | 2026-09-29 | padrão do plano (executor: Hermes) — "Ignorar" = `declined` local, sem endpoint de recusa comprovado no Evolution GO |
 | D8 | Visibilidade do canal WhatsApp sob RLS | **(3) Não mexer na RLS** | 2026-10-02 | **Decisão do Joaquim** (caixa `20261002-092605-eb4f`) — a policy de SELECT de `whatsapp_connections` devolve zero linhas para agente comum (só admin/supervisor lê; a de agentes foi derrubada em `20260411111648`). O canal fica visível só a admin/supervisor; para o agente comum aparece **indisponível** com o texto "Disponível para supervisores". T27/T30 entregam isso e testam o caso. Segurança de produção não é alterada |
+
+**Fechamento do T98 — 08/10/2026.** As decisões **D1–D7** acima são as **finais** do módulo: cada linha tem valor, data e quem decidiu. Nenhuma foi revista depois de 29/09 — **D3** (29/09) e **D8** (02/10) são as duas alterações feitas pelo **Joaquim**; D1, D2, D4, D5, D6 e D7 seguem os valores-padrão que o executor registrou no T02, e os valores batem com o que está implementado, com âncora no código: D5 = `PAGE_SIZE = 8` (`src/hooks/calls/useMyCalls.ts:7`), D7 = `ROTULO_IGNORAR_WHATSAPP = 'Ignorar'` (`src/lib/calls/WhatsAppCallAdapter.ts:56`), D2 = `dial` → `NotSupported` (mesmo arquivo). Esta seção é a **fonte de verdade** das decisões (T02) e este parágrafo a fecha (T98).
+
+### 10.1 O que **não** está prometido (T98)
+
+O T98 mandava listar isto "no corpo da última PR"; na Arquitetura V2 a entrega é **local, sem PR**, então a lista mora aqui, junto das decisões que a originam. São **limites assumidos**, não pendências escondidas:
+
+| Limite | Origem | Estado real (conferido em 08/10/2026) |
+|---|---|---|
+| **Saída por WhatsApp** (discar pelo WhatsApp) | D2 = (a) "só eventos" | **não prometido**: o módulo registra e recebe eventos de chamada do WhatsApp; `WhatsAppCallAdapter.dial` devolve `NotSupported` e a capacidade do canal é `canDial:false` com o motivo "Ligação por WhatsApp não disponível nesta linha" |
+| **Gravação de chamada** | D3 (reconciliar com o Bitrix24) | **condicionada a D3**: quem implementa é a Fase 7 (T72–T73); não há bucket de gravação nem `BITRIX_WEBHOOK_URL` configurados, então **nenhum botão de gravação aparece** (`canRecord:false` em todos os estados) e `recording_url` nunca é renderizado cru |
+| **Ramal por agente** | D1 = (a) `phone1` compartilhado | **não prometido**: existe **uma** linha (`phone1`) compartilhada, com detecção de conflito (403 → `line_in_use_other_user`; duas abas → `line_in_use_other_tab`); não há ramal por usuário |
+| **Seleção de dispositivo de áudio de saída** (`setSinkId` / alto-falante) | fora do escopo deste plano | **não prometido**: não existe `setSinkId` em `src/`; o botão "Alto-falante" não é renderizado |
 
 ## 11. Mapa de PRs
 
