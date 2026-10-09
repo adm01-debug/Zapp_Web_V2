@@ -63,8 +63,10 @@ function projetosDoConfig(ts) {
 }
 
 const ciYml = ler('.github/workflows/ci.yml');
+const logadoYml = ler('.github/workflows/e2e-logado.yml');
 const config = ler('playwright.config.ts');
 const doCi = projetosNoWorkflow(ciYml);
+const doLogado = projetosNoWorkflow(logadoYml);
 const projetos = projetosDoConfig(config);
 
 test('#463: o job E2E obrigatorio do ci.yml coleta o modulo MAPA (chromium-mapa)', () => {
@@ -116,6 +118,57 @@ test('#463: nenhum project listado no ci.yml depende de login real', () => {
       bloco,
       /dependencies:\s*\[|storageState:/,
       `"${nome}" no ci.yml arrastaria o login real para um workflow de PR`,
+    );
+  }
+});
+
+// E88 (PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01, G-35): o job E2E de PR do `ci.yml`
+// é o caminho mais caro do pipeline e já exercita `auth.spec.ts` pelo projeto
+// `chromium`; `firefox-auth`/`webkit-auth` rodavam ali por herança, não por
+// precisarem de PR. Passaram para o `e2e-logado.yml`, que já instala os 3 engines: o
+// PR deixa de subir 2 engines e a cobertura cross-browser da tela de login continua
+// existindo depois do merge. Os 3 testes abaixo travam a mudança (ida E volta): se
+// alguém devolver os projetos ao PR, o primeiro reprova; se alguém apagá-los do
+// workflow logado, o segundo reprova.
+test('E88: o job E2E de PR (ci.yml) não roda firefox-auth/webkit-auth', () => {
+  for (const nome of ['firefox-auth', 'webkit-auth']) {
+    assert.ok(
+      !doCi.includes(nome),
+      `"${nome}" não volta ao ci.yml: é cobertura cross-browser de auth, que só roda ` +
+        'depois do merge no e2e-logado.yml — o PR fica só com Chromium',
+    );
+  }
+});
+
+test('E88: firefox-auth/webkit-auth seguem cobertos no e2e-logado.yml', () => {
+  for (const nome of ['firefox-auth', 'webkit-auth']) {
+    assert.ok(
+      doLogado.includes(nome),
+      `"${nome}" tem de estar no e2e-logado.yml: sem ele a tela de login deixa de ser ` +
+        'provada no Firefox/WebKit (sobraria só o Chromium)',
+    );
+  }
+});
+
+test('E88: firefox-auth/webkit-auth continuam deslogados onde rodarem', () => {
+  for (const nome of ['firefox-auth', 'webkit-auth']) {
+    const bloco = projetos.get(nome);
+    assert.ok(bloco, `${nome} tem de existir no playwright.config.ts`);
+    assert.doesNotMatch(
+      bloco,
+      /dependencies:\s*\[|storageState:/,
+      `"${nome}" prova a tela de LOGIN deslogada: com \`setup\`/storageState ele deixaria ` +
+        'de exercitar o estado deslogado e passaria a exigir E2E_TEST_EMAIL/E2E_TEST_PASSWORD',
+    );
+  }
+});
+
+test('E88: todo --project= do e2e-logado.yml existe de fato no playwright.config.ts', () => {
+  assert.ok(doLogado.length > 0, 'o e2e-logado.yml tem de listar projetos explicitamente');
+  for (const nome of doLogado) {
+    assert.ok(
+      projetos.has(nome),
+      `e2e-logado.yml referencia o project "${nome}", que não existe no config`,
     );
   }
 });

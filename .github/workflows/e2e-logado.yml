@@ -112,6 +112,12 @@ jobs:
       # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
       # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
       # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
+      #
+      # E88: firefox-auth/webkit-auth provam a tela de login (auth.spec.ts) no Firefox
+      # e no WebKit. Sao DESLOGADOS (sem `dependencies`/`storageState`, nenhum secret),
+      # mas sairam do job de PR do ci.yml: cross-browser de auth nao precisa bloquear
+      # todo PR, e este workflow -- que ja instala os 3 engines -- e quem prova os
+      # engines alternativos depois do merge. Travado em ci-e2e-projects.unit.mjs.
       # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
       # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
       - name: 🔒 Mascarar o e-mail do E2E no log
@@ -127,7 +133,7 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-auth --project=webkit-auth --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}

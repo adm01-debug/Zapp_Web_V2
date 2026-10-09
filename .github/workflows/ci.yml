@@ -403,10 +403,16 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.63.0 install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # Projeto "chromium" exercita auth.spec.ts deslogado (sem
+      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem referenciar
+      # esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então o login real
+      # roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # E88: firefox-auth/webkit-auth (a MESMA auth.spec.ts nos engines alternativos)
+      # SAÍRAM daqui e foram para o e2e-logado.yml. Os dois são deslogados (sem `setup`
+      # nem `storageState`), mas cobertura cross-browser de auth não precisa bloquear
+      # todo PR: o PR fica só com Chromium e o e2e-logado.yml — que já instala os 3
+      # engines — segue provando a tela de login no Firefox e no WebKit.
+      # Travado em scripts/ci/ci-e2e-projects.unit.mjs.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
@@ -414,7 +420,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
