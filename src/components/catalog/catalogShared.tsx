@@ -890,7 +890,10 @@ export function AdvancedFilterChips({
           onClick={chip.onRemove}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-            'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors',
+            /* Y17-5 (achado 04): `text-primary` (preenchimento, L53) sobre
+               `bg-primary/10` media 3,15:1 no escuro; o par de texto do sistema
+               é `--primary-text`. */
+            'bg-primary/10 text-[hsl(var(--primary-text))] border-primary/30 hover:bg-primary/20 transition-colors',
             CATALOG_FOCUS_VISIBLE
           )}
         >
