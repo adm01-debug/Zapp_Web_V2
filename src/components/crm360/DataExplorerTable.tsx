@@ -58,6 +58,11 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
     browser.clearFilters();
   }, [browser]);
 
+  const handleSort = useCallback((column: string) => {
+    const isAsc = browser.order?.column === column && browser.order?.ascending;
+    browser.setSort(column, !isAsc);
+  }, [browser]);
+
   return (
     <div className="space-y-3">
       {/* Controls */}
@@ -72,7 +77,7 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
             className="pl-9 pr-8 h-9"
           />
           {searchInput && (
-            <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <button type="button" aria-label="Limpar busca" onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
               <X className="h-3.5 w-3.5" />
             </button>
           )}
@@ -81,7 +86,7 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
           <Search className="h-3.5 w-3.5 mr-1" /> Buscar
         </Button>
         <Select value={String(browser.pageSize)} onValueChange={(v) => browser.setPageSize(Number(v))}>
-          <SelectTrigger className="w-[80px] h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Itens por página" className="w-[80px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="10">10</SelectItem>
             <SelectItem value="25">25</SelectItem>
@@ -89,7 +94,7 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
             <SelectItem value="100">100</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={() => browser.refetch()} className="h-9">
+        <Button variant="outline" size="sm" aria-label="Atualizar" onClick={() => browser.refetch()} className="h-9">
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
         {onCreateClick && (
@@ -98,8 +103,8 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
           </Button>
         )}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
-          {browser.totalRecords > 0 && <Badge variant="secondary" className="text-3xs">{browser.totalRecords.toLocaleString('pt-BR')} reg.</Badge>}
-          {browser.duration > 0 && <Badge variant="outline" className="text-3xs">{browser.duration}ms</Badge>}
+          {browser.totalRecords > 0 && <Badge variant="secondary" className="text-xs">{browser.totalRecords.toLocaleString('pt-BR')} reg.</Badge>}
+          {browser.duration > 0 && <Badge variant="outline" className="text-xs">{browser.duration}ms</Badge>}
         </div>
       </div>
 
@@ -111,8 +116,11 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
               <TableRow>
                 <TableHead className="w-[40px] text-3xs">#</TableHead>
                 {tabConfig.columns.map((col) => (
-                  <TableHead key={col.key} className="cursor-pointer hover:bg-muted/50 transition-colors text-xs"
-                    onClick={() => { const isAsc = browser.order?.column === col.key && browser.order?.ascending; browser.setSort(col.key, !isAsc); }}>
+                  <TableHead key={col.key} className="cursor-pointer hover:bg-muted/50 transition-colors text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    tabIndex={0}
+                    aria-sort={browser.order?.column === col.key ? (browser.order.ascending ? 'ascending' : 'descending') : 'none'}
+                    onClick={() => handleSort(col.key)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(col.key); } }}>
                     <div className="flex items-center gap-1">
                       {col.label}
                       {browser.order?.column === col.key && <ArrowUpDown className="h-3 w-3 text-primary" />}
@@ -154,8 +162,8 @@ export function DataExplorerTable({ tabConfig, onRowClick, onCreateClick }: Data
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">Pág. {browser.page + 1} de {totalPages}</span>
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={browser.prevPage} disabled={browser.page === 0} className="h-7 px-2"><ChevronLeft className="h-3.5 w-3.5" /></Button>
-          <Button variant="outline" size="sm" onClick={browser.nextPage} disabled={browser.page >= totalPages - 1} className="h-7 px-2"><ChevronRight className="h-3.5 w-3.5" /></Button>
+          <Button variant="outline" size="sm" aria-label="Página anterior" onClick={browser.prevPage} disabled={browser.page === 0} className="h-7 px-2"><ChevronLeft className="h-3.5 w-3.5" /></Button>
+          <Button variant="outline" size="sm" aria-label="Próxima página" onClick={browser.nextPage} disabled={browser.page >= totalPages - 1} className="h-7 px-2"><ChevronRight className="h-3.5 w-3.5" /></Button>
         </div>
       </div>
 
