@@ -103,15 +103,20 @@ describe('TalkXInteractiveEditor (X096)', () => {
     expect(screen.queryByTestId('talkx-interactive-errors')).not.toBeInTheDocument();
   });
 
-  it('usa token de aviso permitido e transição protegida por motion-safe', () => {
+  it('usa só tokens do sistema: erros em text-warning e troca de modo animada só com motion-safe', () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Botões' }));
     fireEvent.change(screen.getByLabelText('Tipo do botão 1'), { target: { value: 'link' } });
 
-    expect(screen.getByTestId('talkx-interactive-errors')).toHaveClass('text-warning');
-    expect(screen.getByTestId('talkx-interactive-errors')).not.toHaveClass('text-dash-amber');
-    expect(screen.getByRole('button', { name: 'Nenhum' })).toHaveClass('motion-safe:transition-colors');
-    expect(screen.getByRole('button', { name: 'Nenhum' })).not.toHaveClass('transition-colors');
+    const errors = screen.getByTestId('talkx-interactive-errors');
+    expect(errors).toHaveClass('text-warning');
+    expect(errors.className).not.toMatch(/\bdash-/);
+
+    for (const name of ['Nenhum', 'Botões', 'Enquete']) {
+      const classes = screen.getByRole('button', { name }).className.split(/\s+/);
+      expect(classes).toContain('motion-safe:transition-colors');
+      expect(classes).not.toContain('transition-colors');
+    }
   });
 
   it('acusa enquete com 1 opção e opção vazia; com 2 opções preenchidas fica válida', () => {
