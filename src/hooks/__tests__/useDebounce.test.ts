@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
@@ -116,6 +119,40 @@ describe('useDebounce — desmontagem', () => {
     unmount();
     vi.advanceTimersByTime(1000);
     expect(cb).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
+describe('useDebounce — suíte única para este hook', () => {
+  // O defeito (cartão SL-222): existia um segundo arquivo de teste deste hook ao lado do código
+  // (`src/hooks/system/useDebounce.test.ts`), coletado também pelo `include` do vitest.config.ts,
+  // o que rodava as mesmas verificações duas vezes por build. Esta guarda trava a volta da duplicata.
+  const canonico = join(process.cwd(), 'src', 'hooks', '__tests__', 'useDebounce.test.ts');
+  const duplicado = join(process.cwd(), 'src', 'hooks', 'system', 'useDebounce.test.ts');
+
+  it('a varredura enxerga os dois caminhos (não passa por vacuidade) e o duplicado não existe', () => {
+    expect(existsSync(canonico)).toBe(true);
+    expect(existsSync(duplicado)).toBe(false);
+  });
+
+  it('mantém aqui a cobertura que a duplicata removida tinha, chamando o hook real', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    const { result } = renderHook(() => useDebounce(callback, 500));
+
+    // Mesma sequência do arquivo removido: 250 + 250 + 500.
+    result.current(1);
+    vi.advanceTimersByTime(250);
+    result.current(2);
+    vi.advanceTimersByTime(250);
+    result.current(3);
+
+    expect(callback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(500);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(3);
     vi.useRealTimers();
   });
 });
