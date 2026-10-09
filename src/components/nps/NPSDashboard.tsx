@@ -20,11 +20,12 @@ function ScoreGauge({ score }: { score: number }) {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color }: {
+function MetricCard({ icon: Icon, label, value, color, textColor }: {
   icon: React.ElementType;
   label: string;
   value: number;
   color: string;
+  textColor: string;
 }) {
   return (
     <Card>
@@ -33,7 +34,7 @@ function MetricCard({ icon: Icon, label, value, color }: {
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold">{value}</p>
+          <p className={`text-2xl font-bold ${textColor}`}>{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
@@ -78,10 +79,10 @@ export function NPSDashboard() {
         </Card>
 
         <div className="md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard icon={Users} label="Total de Respostas" value={metrics.totalResponses} color="bg-primary/10 text-primary" />
-          <MetricCard icon={ThumbsUp} label="Promotores (9-10)" value={metrics.promoters} color="bg-success/10 text-success" />
-          <MetricCard icon={Meh} label="Passivos (7-8)" value={metrics.passives} color="bg-warning/10 text-warning" />
-          <MetricCard icon={ThumbsDown} label="Detratores (0-6)" value={metrics.detractors} color="bg-destructive/10 text-destructive" />
+          <MetricCard icon={Users} label="Total de Respostas" value={metrics.totalResponses} color="bg-primary/10 text-primary" textColor="text-[hsl(var(--primary-text))]" />
+          <MetricCard icon={ThumbsUp} label="Promotores (9-10)" value={metrics.promoters} color="bg-success/10 text-success" textColor="text-[hsl(var(--success))]" />
+          <MetricCard icon={Meh} label="Passivos (7-8)" value={metrics.passives} color="bg-warning/10 text-warning" textColor="text-[hsl(var(--warning-text))]" />
+          <MetricCard icon={ThumbsDown} label="Detratores (0-6)" value={metrics.detractors} color="bg-destructive/10 text-destructive" textColor="text-[hsl(var(--destructive-text))]" />
         </div>
       </div>
 
