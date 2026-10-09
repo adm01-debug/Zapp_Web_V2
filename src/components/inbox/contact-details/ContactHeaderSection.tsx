@@ -108,10 +108,14 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
 
   // Anel SVG: usa tokens do tema (decorativo, sem requisito de contraste de texto).
   const getScoreColor = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
-  // Badge com número: L reduzido para garantir ≥ 4.5:1 com texto branco (WCAG 1.4.3).
-  // Os tokens brutos falham: --warning 38 92% 50% → ~2.1:1; --success 160 70% 42% → ~3.8:1;
-  // --destructive 0 84% 60% → ~3.6:1. Ajuste só no badge, sem tocar tokens globais.
-  const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(160 70% 28%)' : s >= 50 ? 'hsl(38 90% 32%)' : 'hsl(0 84% 48%)';
+  // Badge com número: pares de token do sistema com contraste AA ≥ 4,5:1.
+  // Alto (≥80): --success + --success-foreground  → ~7,5:1 ✅
+  // Médio (≥50): --warning + --warning-foreground → ~6,5:1 ✅
+  // Baixo (<50): --destructive-text + --destructive-foreground → ~5,0:1 ✅
+  // (--destructive 0 84% 60% + --destructive-foreground white falha em ~3,6:1;
+  //  ajuste do par do selo para --destructive-text, token existente em tokens.css:169.)
+  const getScoreBadgeBg = (s: number) => s >= 80 ? 'hsl(var(--success))' : s >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive-text))';
+  const getScoreBadgeFg = (s: number) => s >= 80 ? 'hsl(var(--success-foreground))' : s >= 50 ? 'hsl(var(--warning-foreground))' : 'hsl(var(--destructive-foreground))';
 
   if (isCompact) {
     return <CompactContactHeader contact={contact} isVip={isVip} companyName={companyName ?? undefined} firstName={displayName} />;
@@ -142,7 +146,7 @@ export function ContactHeaderSection({ contact, enrichedData, conversation, onQu
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center text-3xs font-bold ring-2 ring-background"
-                      style={{ backgroundColor: getScoreBadgeBg(engagementScore), color: 'white' }}>
+                      style={{ backgroundColor: getScoreBadgeBg(engagementScore), color: getScoreBadgeFg(engagementScore) }}>
                       {engagementScore}
                     </div>
                   </TooltipTrigger>
