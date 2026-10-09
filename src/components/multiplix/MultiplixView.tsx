@@ -329,7 +329,7 @@ export default function MultiplixView() {
             </div>
 
             <Button className="w-full" onClick={runSearch} disabled={search.isPending || count.isPending}>
-              {search.isPending || count.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {search.isPending || count.isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <Search className="h-4 w-4" />}
               Buscar
             </Button>
           </div>
@@ -406,7 +406,7 @@ export default function MultiplixView() {
               {(rows.length > 0 || !search.isError) && lastPageFull && (count.data === undefined || rows.length < count.data) && (
                 <div className="flex justify-center border-t border-border p-3">
                   <Button variant="outline" size="sm" onClick={loadMore} disabled={search.isPending}>
-                    {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    {search.isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
                     {count.data !== undefined
                       ? `Carregar mais (${count.data - rows.length} restante${count.data - rows.length === 1 ? '' : 's'})`
                       : 'Carregar mais'}
@@ -527,11 +527,11 @@ export default function MultiplixView() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={busy || !canSubmit} onClick={() => void submit(false)}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
             Salvar rascunho
           </Button>
           <Button disabled={busy || !canSubmit} onClick={() => setConfirmStartOpen(true)}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
             Salvar e iniciar agora
           </Button>
         </div>
