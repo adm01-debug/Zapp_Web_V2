@@ -62,9 +62,15 @@ test('Talk X não rotula uso de template como "Mais convertidos"', () => {
   assert.match(templates, /Mais usados/);
 });
 
-test('Talk X não rotula taxa de envio como "Conversão por segmento"', () => {
-  assert.doesNotMatch(analytics, /Conversão por segmento/);
-  assert.match(analytics, /label="Envio por segmento"/);
+// X185: o KPI "Conversão por segmento" passou a existir de fato — mas o número
+// exibido tem de ser o campo de conversão devolvido pela RPC. O defeito que este
+// contrato guarda é o rótulo afirmar "conversão" mostrando taxa de envio/entrega
+// calculada no navegador (sent_count / total_recipients).
+test('Talk X: "Conversão por segmento" mostra a conversão da RPC, não taxa de envio', () => {
+  assert.match(analytics, /label="Conversão por segmento"/);
+  assert.match(analytics, /value=\{current \? current\.segment_conversion_rate_pct \?\? null : null\}/);
+  assert.doesNotMatch(analytics, /Envio por segmento/);
+  assert.doesNotMatch(analytics, /sent_count\s*\/\s*total_recipients/);
 });
 
 test('Talk X lê o status real da conexão WA em vez de "Conectada" fixo', () => {

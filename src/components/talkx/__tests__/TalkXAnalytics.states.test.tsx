@@ -26,6 +26,15 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1', full_name: 'QA' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
 
+// X185: a tela consulta a RPC de resumo (61 s com campanha em envio) e o papel do
+// usuário. Aqui os dois entram stubados: o teste olha só o boundary de estados.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/team-chat/useActiveDepartments', () => ({ useActiveDepartments: () => ({ data: [] }) }));
+vi.mock('@/hooks/integrations/useTalkXAnalytics', async (orig) => {
+  const actual = await orig<typeof import('@/hooks/integrations/useTalkXAnalytics')>();
+  return { ...actual, useTalkXAnalytics: () => ({ data: undefined, isPending: true }) };
+});
+
 import { TalkXAnalytics } from '../TalkXAnalytics';
 
 function wrap(ui: ReactNode) {
