@@ -5,22 +5,25 @@ import { TestQueryWrapper } from '@/test/mocks/queryClient';
 /**
  * O codigo do convite de departamento e uma credencial: quem digita o codigo
  * entra no departamento. Sorteado com `Math.random()` (PRNG previsivel) ele e
- * adivinhavel — e o formato NAO pode mudar, porque o banco consome exatamente
- * este formato: `department_invites.code` e `text NOT NULL UNIQUE` (migration
- * 20260927400000) e a RPC `accept_department_invite` procura por
- * `code = upper(trim(p_code))`. Ou seja: 8 caracteres MAIUSCULOS de base36,
- * nem um a mais nem um a menos.
+ * adivinhavel (#1528 trocou por `crypto.getRandomValues` no cliente).
  *
- * `secureRandomChars(8, BASE36_MAIUSCULO)` preserva alfabeto e tamanho byte a
- * byte, entao o formato que o banco le continua identico.
+ * Contrato ATUAL (F76, migration 20260928520000): o codigo nasce no SERVIDOR.
+ * A RPC `create_department_invite` gera o codigo com `gen_random_bytes` e grava
+ * `department_invitations` + auditoria na mesma transacao; o cliente nao escolhe
+ * nem sorteia o codigo e nao escreve mais em `department_invites` (tabela
+ * aposentada, que a RPC `accept_department_invite` nem le). A propriedade que o
+ * teste antigo protegia — codigo nao adivinhavel — passa a valer assim: o hook
+ * nao tem fonte de aleatoriedade propria e devolve o codigo que a RPC criou.
  */
 const f = vi.hoisted(() => ({
   inserts: [] as Array<{ table: string; payload: Record<string, unknown> }>,
+  rpc: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'u1' } } }) },
+    rpc: f.rpc,
     from: (table: string) => ({
       insert: (payload: Record<string, unknown>) => {
         f.inserts.push({ table, payload });
@@ -32,58 +35,65 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { useCreateDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
 
-const FORMATO_CONVITE = /^[A-Z0-9]{8}$/;
-const ALFABETO_CONVITE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-async function criarConvite(departmentId = 'dep-1'): Promise<string> {
+async function criarConvite(departmentId = 'dep-1') {
   const { result } = renderHook(() => useCreateDepartmentInvite(departmentId), {
     wrapper: TestQueryWrapper,
   });
 
+  let criado: Awaited<ReturnType<typeof result.current.mutateAsync>> | undefined;
   await act(async () => {
-    await result.current.mutateAsync('Ana');
+    criado = await result.current.mutateAsync('Ana');
   });
-
-  const convites = f.inserts.filter((insert) => insert.table === 'department_invites');
-  const ultimoConvite = convites[convites.length - 1];
-  return String(ultimoConvite?.payload.code ?? '');
+  return criado;
 }
 
 describe('useCreateDepartmentInvite — codigo do convite', () => {
   beforeEach(() => {
     f.inserts.length = 0;
     vi.clearAllMocks();
+    f.rpc.mockResolvedValue({
+      data: { ok: true, invite_id: 'inv-1', code: 'ZX9Y8W7VQ2AB' },
+      error: null,
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('sorteia o codigo por crypto.getRandomValues (nao por Math.random)', async () => {
-    const espiao = vi.spyOn(globalThis.crypto, 'getRandomValues');
+  it('o codigo vem da RPC create_department_invite (gerado no servidor), sem sorteio no cliente', async () => {
+    // O primeiro `act` do React consome um `Math.random()` proprio (nome de modulo do
+    // enqueueTask): aquece antes de espiar, para o espiao enxergar so o que o hook faz.
+    await act(async () => {});
+    const aleatorioPrevisivel = vi.spyOn(Math, 'random');
+    const aleatorioDoCliente = vi.spyOn(globalThis.crypto, 'getRandomValues');
 
+    const criado = await criarConvite();
+
+    expect(f.rpc).toHaveBeenCalledWith('create_department_invite', expect.objectContaining({ p_department_id: 'dep-1' }));
+    expect(criado).toEqual({ ok: true, invite_id: 'inv-1', code: 'ZX9Y8W7VQ2AB' });
+    // Nem o PRNG previsivel nem um sorteio proprio do hook: o codigo nao nasce aqui.
+    expect(aleatorioPrevisivel).not.toHaveBeenCalled();
+    expect(aleatorioDoCliente).not.toHaveBeenCalled();
+  });
+
+  it('nao grava em department_invites (aposentada) nem faz INSERT direto de convite', async () => {
     await criarConvite();
 
-    // 8 caracteres, um sorteio sem vies por caractere.
-    expect(espiao.mock.calls.length).toBeGreaterThanOrEqual(8);
+    expect(f.inserts.filter((insert) => insert.table === 'department_invites')).toEqual([]);
+    expect(f.inserts.filter((insert) => insert.table === 'department_invitations')).toEqual([]);
   });
 
-  it('mantem o formato que o banco consome: 8 caracteres base36 maiusculo', async () => {
-    const codigo = await criarConvite();
+  it('dois convites seguidos devolvem cada um o seu codigo da RPC (nada e reaproveitado no cliente)', async () => {
+    f.rpc
+      .mockResolvedValueOnce({ data: { ok: true, invite_id: 'inv-1', code: 'AAAAAAAAAAAA' }, error: null })
+      .mockResolvedValueOnce({ data: { ok: true, invite_id: 'inv-2', code: 'BBBBBBBBBBBB' }, error: null });
 
-    expect(codigo).toMatch(FORMATO_CONVITE);
-    for (const caractere of codigo) expect(ALFABETO_CONVITE).toContain(caractere);
-    // upper(trim(p_code)) no banco: o codigo gravado ja tem de ser maiusculo.
-    expect(codigo).toBe(codigo.toUpperCase());
-  });
-
-  it('grava o codigo em department_invites e dois convites nunca saem iguais', async () => {
     const primeiro = await criarConvite();
     const segundo = await criarConvite();
 
-    expect(f.inserts.some((insert) => insert.table === 'department_invites')).toBe(true);
-    expect(primeiro).toMatch(FORMATO_CONVITE);
-    expect(segundo).toMatch(FORMATO_CONVITE);
-    expect(primeiro).not.toBe(segundo);
+    expect(primeiro?.code).toBe('AAAAAAAAAAAA');
+    expect(segundo?.code).toBe('BBBBBBBBBBBB');
+    expect(primeiro?.code).not.toBe(segundo?.code);
   });
 });

@@ -48,20 +48,26 @@ const f = vi.hoisted(() => {
     no.update = (payload: unknown) => { registrar('update', payload); return no; };
     no.delete = () => { registrar('delete'); return no; };
     no.select = (columns?: string) => { registrar('select', columns); return no; };
-    no.eq = () => no;
-    no.gt = () => no;
-    no.order = () => no;
+    no.eq = (coluna: string) => { registrar('eq', { coluna }); return no; };
+    no.gt = (coluna: string) => { registrar('gt', { coluna }); return no; };
+    no.order = (coluna: string) => { registrar('order', { coluna }); return no; };
     no.limit = () => no;
     no.single = () => Promise.resolve({ data: { id: 'msg-1' }, error: null });
     return no;
   }
 
-  return { arestas, cadeia };
+  const rpcs: Array<{ nome: string; args: unknown }> = [];
+
+  return { arestas, cadeia, rpcs };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => f.cadeia(table),
+    rpc: (nome: string, args: unknown) => {
+      f.rpcs.push({ nome, args });
+      return Promise.resolve({ data: { ok: true, invite_id: 'inv-1', code: 'ABCD2345WXYZ' }, error: null });
+    },
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => {},
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
@@ -74,7 +80,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 
-import { useCreateDepartmentInvite } from '@/hooks/team-chat/useDepartmentManagement';
+import { useCreateDepartmentInvite, useDepartmentInvites } from '@/hooks/team-chat/useDepartmentManagement';
 import { useSendTeamMessage } from '@/hooks/team-chat/useTeamChatMutations';
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
@@ -127,11 +133,13 @@ function chavesDe(payload: unknown): string[] {
 describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
   beforeEach(() => {
     f.arestas.length = 0;
+    f.rpcs.length = 0;
   });
 
   it('o snapshot do banco enxerga as tabelas do Team Chat (nao passa por vacuidade)', () => {
     expect(colunasReais('team_messages')).toContain('message_type');
     expect(colunasReais('department_invites')).toContain('code');
+    expect(colunasReais('department_invitations')).toContain('status');
   });
 
   it('useSendTeamMessage grava so colunas que existem em team_messages', async () => {
@@ -146,16 +154,32 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
     expect(chaves.filter((chave) => !colunasReais('team_messages').includes(chave))).toEqual([]);
   });
 
-  it('useCreateDepartmentInvite grava so colunas que existem em department_invites', async () => {
+  it('useCreateDepartmentInvite cria pela RPC create_department_invite e nao faz INSERT em tabela de convite', async () => {
     const { result } = renderHook(() => useCreateDepartmentInvite('dep-1'), { wrapper: TestQueryWrapper });
 
     await act(async () => {
       await result.current.mutateAsync('Ana');
     });
 
-    const chaves = chavesDe(ultimaAresta('department_invites', 'insert').payload);
-    expect(chaves.length).toBeGreaterThan(0);
-    expect(chaves.filter((chave) => !colunasReais('department_invites').includes(chave))).toEqual([]);
+    const chamada = f.rpcs.find((rpc) => rpc.nome === 'create_department_invite');
+    expect(chamada).toBeDefined();
+    expect(chavesDe(chamada?.args)).toEqual(['p_department_id', 'p_expires_hours', 'p_max_uses']);
+    expect(
+      f.arestas.filter((a) => a.op === 'insert' && (a.table === 'department_invites' || a.table === 'department_invitations')),
+    ).toEqual([]);
+  });
+
+  it('useDepartmentInvites le so colunas que existem em department_invitations (e nao toca department_invites)', async () => {
+    renderHook(() => useDepartmentInvites('dep-1'), { wrapper: TestQueryWrapper });
+
+    await waitFor(() => expect(f.arestas.some((a) => a.table === 'department_invitations' && a.op === 'select')).toBe(true));
+
+    const colunasUsadas = f.arestas
+      .filter((a) => a.table === 'department_invitations' && ['eq', 'gt', 'order'].includes(a.op))
+      .map((a) => String((a.payload as { coluna: string }).coluna));
+    expect(colunasUsadas.length).toBeGreaterThan(0);
+    expect(colunasUsadas.filter((coluna) => !colunasReais('department_invitations').includes(coluna))).toEqual([]);
+    expect(f.arestas.some((a) => a.table === 'department_invites')).toBe(false);
   });
 
   it('a leitura de team_messages pede colunas e relacao que existem no banco', async () => {
