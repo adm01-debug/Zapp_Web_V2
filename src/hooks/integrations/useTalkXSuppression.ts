@@ -5,23 +5,11 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 
 /**
- * X178 — único ponto de acesso à lista de supressão do Talk X.
- *
- * Antes desta etapa havia duas fontes: este hook (morto, ninguém importava,
- * listava sem filtrar `removed_at`, cortava em 500 linhas e removia com
- * `DELETE`) e a tela `TalkXSuppression.tsx`, que consultava o Supabase por
- * conta própria, filtrava e paginava em memória. A tela agora só fala com
- * este hook.
- *
- * A leitura é paginada NO SERVIDOR: filtros, ordenação, `count` e
- * `range(offset, offset + limite - 1)` vão na consulta — a tela nunca recebe a
- * tabela inteira. `fetchSuppressionPage` é o único ponto a trocar quando a RPC
- * `talkx_suppression_list` de X176 entrar no banco vivo: hoje ela ainda não
- * existe (`grep talkx_suppression_list supabase/` = 0), então a leitura vem da
- * tabela que o servidor já grava, `talkx_blacklist`.
- *
- * Remover deixou de ser `DELETE`: grava `removed_at`/`removed_by` (`UPDATE`),
- * como pede o plano — o registro vira histórico e a auditoria não perde autor.
+ * X178 — único ponto de acesso à lista de supressão do Talk X (a tela não fala
+ * mais com o Supabase direto). Leitura paginada NO SERVIDOR: filtros, ordenação,
+ * `count` e `range` vão na consulta; `fetchSuppressionPage` é o único ponto a
+ * trocar quando a RPC `talkx_suppression_list` (X176) entrar no banco vivo.
+ * Remover é `UPDATE` de `removed_at`/`removed_by` — nunca `DELETE`.
  */
 
 export type BlacklistReasonCode =
@@ -60,8 +48,24 @@ export interface SuppressionRow {
   contact_avatar_url: string | null;
 }
 
-/** Chaves de ordenação aceitas pela listagem (viram coluna do servidor). */
-export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason' | 'status';
+/**
+ * Chaves de ordenação aceitas pela listagem: SÓ colunas reais. `status` fica de
+ * fora porque não é coluna — é derivado de `removed_at`/`expires_at`
+ * (`suppressionStatus`), e repassá-lo cru ao `.order()` faz o PostgREST recusar.
+ */
+export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason';
+
+/** Coluna real de cada chave — o único lugar que traduz chave em coluna. */
+const ORDER_COLUMNS: Record<SuppressionOrderKey, string> = {
+  created_at: 'created_at',
+  origin: 'origin',
+  reason: 'reason',
+};
+
+/** Chave desconhecida (chamada por JS, sem o tipo) cai em `created_at`: o valor cru nunca vai ao PostgREST. */
+export function suppressionOrderColumn(key: string): string {
+  return ORDER_COLUMNS[key as SuppressionOrderKey] ?? 'created_at';
+}
 
 export interface SuppressionListParams {
   page: number;
@@ -114,6 +118,11 @@ export const SUPPRESSION_DEFAULT_PAGE_SIZE = 10;
 export const SUPPRESSION_PAGE_SIZES = [10, 20, 50] as const;
 /** Janela dos KPIs de opt-out. */
 export const SUPPRESSION_OPT_OUT_DAYS = 30;
+/**
+ * Teto de contatos resolvidos na busca da listagem: os ids viram
+ * `contact_id.in.(…)` na URL. Telefone e motivo da própria linha não dependem dele.
+ */
+export const SUPPRESSION_SEARCH_CONTACT_LIMIT = 200;
 
 /** Colunas pedidas na listagem — inclui o contato e o nome da campanha. */
 const LIST_COLUMNS =
@@ -189,27 +198,57 @@ export function suppressionQueryKey(params: SuppressionListParams) {
   ] as const;
 }
 
+/** Resolve os contatos do termo (nome, e-mail, telefone) para a busca da listagem. */
+async function findSuppressionContactIds(term: string): Promise<string[]> {
+  const escaped = escapeOrFilterValue(`%${term}%`);
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('id')
+    .or(`name.ilike.${escaped},email.ilike.${escaped},phone.ilike.${escaped}`)
+    .order('name')
+    .limit(SUPPRESSION_SEARCH_CONTACT_LIMIT);
+  if (error) throw error;
+  return ((data ?? []) as { id: string }[]).map((row) => row.id);
+}
+
 /** Ponto único de leitura paginada (é aqui que a RPC de X176 entra). */
 export async function fetchSuppressionPage(params: SuppressionListParams): Promise<SuppressionListPage> {
   const { page, pageSize, search, origin, reason, order = 'created_at', dir = 'desc' } = params;
   const from = (Math.max(1, page) - 1) * pageSize;
   const to = from + pageSize - 1;
+  const term = search?.trim() ?? '';
 
   let query = supabase
     .from('talkx_blacklist')
-    .select(LIST_COLUMNS, { count: 'exact' });
+    .select(LIST_COLUMNS, { count: 'exact' })
+    // Removido é histórico (a remoção é UPDATE de `removed_at`): sem este filtro
+    // a linha removida volta à tabela e o total do rodapé diverge do KPI.
+    .is('removed_at', null);
   if (origin && origin !== 'all') query = query.eq('origin', origin);
   if (reason && reason !== 'all') query = query.ilike('reason', `%${reason}%`);
-  if (search && search.trim()) {
-    const term = escapeOrFilterValue(`%${search.trim()}%`);
-    query = query.or(
-      `phone.ilike.${term},reason.ilike.${term},contacts.name.ilike.${term},contacts.email.ilike.${term},contacts.phone.ilike.${term}`,
-    );
+  if (term) {
+    // O contato entra pelo relacionamento (`contacts` → ids → `contact_id.in.(…)`,
+    // coluna da própria linha). Um `or` misturando coluna do pai com campo do
+    // embed não restringe as linhas do topo no PostgREST.
+    const contactIds = await findSuppressionContactIds(term);
+    const digits = term.replace(/\D/g, '');
+    // Termo só de dígitos/pontuação é telefone: `(11) 98888-7777` → `11988887777`
+    // para casar o número gravado em dígitos (eixo do #406).
+    const phoneTerm = digits.length > 0 && /^[\d\s()+.-]+$/.test(term) ? digits : term;
+    const clauses = [
+      `phone.ilike.${escapeOrFilterValue(`%${phoneTerm}%`)}`,
+      `reason.ilike.${escapeOrFilterValue(`%${term}%`)}`,
+    ];
+    if (contactIds.length > 0) clauses.push(`contact_id.in.(${contactIds.join(',')})`);
+    query = query.or(clauses.join(','));
   }
-  // Ordernação determinística: a chave pedida + `id` como desempate, para a
-  // paginação por offset não repetir nem pular linha empatada.
+  // Ordenação determinística: a chave pedida (sempre uma coluna real) + `id`
+  // como desempate, para a paginação por offset não repetir nem pular linha
+  // empatada.
   const descending = dir === 'desc';
-  query = query.order(order, { ascending: !descending }).order('id', { ascending: !descending });
+  query = query
+    .order(suppressionOrderColumn(order), { ascending: !descending })
+    .order('id', { ascending: !descending });
   const { data, error, count } = await query.range(from, to);
   if (error) throw error;
   const rows = ((data ?? []) as unknown as RawSuppressionRow[]).map((row) => toSuppressionRow(row));
@@ -243,13 +282,8 @@ export interface SuppressionContactOption {
 /** Teto de contatos devolvidos na busca do modal (mesmo padrão do SLARuleFormDialog). */
 export const SUPPRESSION_CONTACT_SEARCH_LIMIT = 50;
 
-/**
- * Busca de contato do modal "Adicionar": consulta o SERVIDOR (o PostgREST corta
- * a resposta, então filtrar só o primeiro lote esconderia quem está fora dele —
- * #407/R2-MOD-035) e tira dali quem já está suprimido — a exclusão é feita
- * contra o banco, não contra a página da tabela, senão um contato já bloqueado
- * numa página distante voltaria como disponível.
- */
+/** Busca de contato do modal "Adicionar": filtra NO SERVIDOR (#407) e exclui
+ * quem já está suprimido consultando o banco, não a página da tabela. */
 export async function fetchSuppressionContactOptions(term: string): Promise<SuppressionContactOption[]> {
   let query = supabase.from('contacts').select('id, name, phone, company').not('phone', 'is', null);
   if (term) {

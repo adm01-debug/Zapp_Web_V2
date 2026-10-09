@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -65,6 +65,25 @@ vi.mock('@/integrations/supabase/client', () => {
             contacts: { name: 'Ana Souza', phone: '+551****7777', email: 'ana@acme.test', company: 'ACME', avatar_url: null },
             campaign: null,
           };
+          // Linha SEM motivo (TL-165): era o caso que enchia o select de edição
+          // com uma opção de valor vazio.
+          const semMotivo = {
+            id: 'bl-2',
+            contact_id: null,
+            phone: '5511955554444',
+            reason: null,
+            reason_code: null,
+            blocked_by: null,
+            created_at: '2026-09-02T10:00:00.000Z',
+            origin: 'manual',
+            campaign_id: null,
+            removed_by: null,
+            removed_at: null,
+            expires_at: null,
+            contacts: null,
+            campaign: null,
+          };
+          const linhas = [row, semMotivo];
           const self: Record<string, unknown> = {};
           self.select = () => self;
           self.is = () => self;
@@ -74,9 +93,9 @@ vi.mock('@/integrations/supabase/client', () => {
           self.not = () => self;
           self.order = () => self;
           self.range = () => self;
-          self.limit = () => Promise.resolve({ data: [row], error: null, count: 1 });
+          self.limit = () => Promise.resolve({ data: linhas, error: null, count: linhas.length });
           self.then = (resolve: unknown, reject: unknown) =>
-            Promise.resolve({ data: [row], error: null, count: 1 })
+            Promise.resolve({ data: linhas, error: null, count: linhas.length })
               .then(resolve as (v: unknown) => unknown, reject as (e: unknown) => unknown);
           self.insert = (payload: Record<string, unknown>) => {
             inserted.push(payload);
@@ -161,5 +180,39 @@ describe('TalkXSuppression · autoria (V04)', () => {
     expect(updated[0]).toMatchObject({ removed_by: 'profile-1' });
     expect(updated[0].removed_by).not.toBe('auth-user-1');
     expect(getUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('TalkXSuppression · modal de edição sem motivo (TL-165)', () => {
+  // Abrir o Radix Select no jsdom exige os métodos de captura de ponteiro.
+  beforeAll(() => {
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.setPointerCapture = () => {};
+    Element.prototype.releasePointerCapture = () => {};
+    // jsdom não implementa `scrollIntoView` e o Radix Select o chama ao abrir.
+    Element.prototype.scrollIntoView = () => {};
+  });
+
+  it('registro sem motivo abre com um motivo conhecido e lista sem opção de valor vazio', async () => {
+    renderView();
+
+    const linhas = await screen.findAllByRole('button', { name: /Editar/i });
+    fireEvent.click(linhas[1]);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Editar supressão')).toBeTruthy();
+
+    // Sem motivo no registro, o select começa no primeiro motivo conhecido.
+    const gatilho = within(dialog).getByRole('combobox');
+    expect(gatilho.textContent).toContain('Opt-out solicitado');
+
+    fireEvent.pointerDown(gatilho, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+    const opcoes = await screen.findAllByRole('option');
+    const textos = opcoes.map((opcao) => (opcao.textContent ?? '').trim());
+    // Nenhuma opção vazia (a string vazia no Radix Select é o defeito recusado)…
+    expect(textos.filter((texto) => texto.length === 0)).toEqual([]);
+    // …e a lista traz os motivos conhecidos.
+    expect(textos).toContain('Opt-out solicitado');
+    expect(textos).toContain('Bloqueio manual');
   });
 });

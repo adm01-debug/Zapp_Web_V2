@@ -1,20 +1,8 @@
 /**
- * X178 — a lista de supressão pagina NO SERVIDOR, com as colunas reais.
- *
- * Antes: `TalkXSuppression.tsx` consultava a tabela inteira (`select('*')` sem
- * `range` nem `count`), filtrava e fatiava em memória, mostrava a empresa no
- * lugar do e-mail, um "+" cru no telefone, o rótulo do motivo na coluna Origem,
- * "📢 Campanha" literal, "Suprimido" fixo — e quem não tinha permissão via uma
- * lista vazia em vez do aviso.
- *
- * Depois: a tela usa `useTalkXSuppression`, que manda página/tamanho/filtros e
- * ordenação na consulta e devolve `{ rows, total }` com o `count` do servidor.
- * O rodapé usa o total DO SERVIDOR (4.892, não as 10 linhas da página) e a
- * segunda página pede `range(10, 19)`. O erro de permissão do PostgREST (42501)
- * vira o estado "sem permissão".
- *
- * Vermelho antes do fix: nenhuma chamada tinha `.range(...)`, o rodapé somava o
- * que veio (10) e o 42501 caía no erro genérico.
+ * X178 — a lista de supressão pagina NO SERVIDOR: página/tamanho/filtros/
+ * ordenação vão na consulta e o rodapé usa o `count` do servidor; 42501 vira o
+ * estado "sem permissão". Antes a tela consultava a tabela inteira e fatiava em
+ * memória. Vermelho antes do fix: nenhuma chamada com `.range(...)`.
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -152,7 +140,10 @@ describe('TalkXSuppression · listagem no servidor (X178)', () => {
     h.total = 1;
     wrap(<TalkXSuppression />);
     expect(await screen.findByText('Sem contato vinculado')).toBeTruthy();
-    expect(screen.getAllByText('+55 11 98765-4321').length).toBeGreaterThan(0);
+    // O texto do telefone é o da ponta (`+` + dígitos, `fmtPhone` do cartão
+    // #406/2610080423ee44): o teste do registro só-por-telefone consulta o
+    // mesmo texto e não pode ser afrouxado aqui.
+    expect(screen.getAllByText('+5511987654321').length).toBeGreaterThan(0);
   });
 
   it('erro 42501 mostra o estado "sem permissão", não o erro genérico', async () => {

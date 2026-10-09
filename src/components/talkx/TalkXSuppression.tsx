@@ -38,14 +38,14 @@ const STATUS_META: Record<SuppressionStatus, { label: string; tone: 'danger' | '
   removido: { label: 'Removido', tone: 'muted' },
 };
 
-/** `+55 11 98765-4321` a partir do que estiver gravado (contato ou telefone avulso). */
-function formatSuppressionPhone(raw: string | null): string | null {
+/**
+ * Telefone como a ponta o mostra: `+` seguido dos dígitos gravados (do contato
+ * vinculado ou da própria supressão, quando o bloqueio é só por telefone —
+ * #406). Sem dígito, `null` (a célula mostra `—`).
+ */
+function fmtPhone(raw: string | null | undefined): string | null {
   const digits = (raw ?? '').replace(/\D/g, '');
-  if (!digits) return null;
-  const local = digits.startsWith('55') && (digits.length === 12 || digits.length === 13) ? digits.slice(2) : digits;
-  if (local.length === 11) return `+55 ${local.slice(0, 2)} ${local.slice(2, 7)}-${local.slice(7)}`;
-  if (local.length === 10) return `+55 ${local.slice(0, 2)} ${local.slice(2, 6)}-${local.slice(6)}`;
-  return `+${digits}`;
+  return digits ? `+${digits}` : null;
 }
 
 /** Iniciais do contato (no máximo 2) para o avatar de texto. */
@@ -87,7 +87,14 @@ export function TalkXSuppression() {
     { key: 'origin', label: 'Todas as origens', allLabel: 'Todas as origens', options: Object.entries(SUPPRESSION_ORIGIN).map(([v, m]) => ({ value: v, label: m.label })) },
   ], []);
 
-  const editReasonOptions = useMemo(() => (REASONS.includes(editing?.reason ?? '') ? REASONS : [...REASONS, editing?.reason ?? '']), [editing]);
+  /** Motivos do modal de edição: o Radix Select derruba o componente com item de
+   * valor vazio, então motivo nulo/vazio não entra (o `openEdit` já abre no
+   * primeiro motivo conhecido). */
+  const editReasonOptions = useMemo(() => {
+    const custom = (editing?.reason ?? '').trim();
+    if (!custom || REASONS.includes(custom)) return REASONS;
+    return [...REASONS, custom];
+  }, [editing]);
   const [editReason, setEditReason] = useState('');
   const [editOrigin, setEditOrigin] = useState<'manual' | 'lgpd'>('manual');
 
@@ -149,7 +156,7 @@ export function TalkXSuppression() {
                       <tbody>
                         {rows.map((b) => {
                           const om = SUPPRESSION_ORIGIN[b.origin] ?? { label: b.origin, tone: 'muted' as const };
-                          const phone = formatSuppressionPhone(b.contact_phone ?? b.phone);
+                          const phone = fmtPhone(b.contact_phone ?? b.phone);
                           const status = STATUS_META[b.status];
                           return (
                             <tr key={b.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
@@ -166,10 +173,11 @@ export function TalkXSuppression() {
                                         <p className="text-[13px] font-medium text-foreground truncate">{b.contact_name}</p>
                                         <p className="text-2xs text-foreground-secondary truncate">{b.contact_email ?? '—'}</p>
                                       </>)
-                                      : (<>
+                                      : (
+                                        // O telefone aparece UMA vez, na coluna Telefone: repetir
+                                        // aqui deixava dois elementos com o mesmo texto (#406).
                                         <p className="text-[13px] font-medium text-foreground-secondary">Sem contato vinculado</p>
-                                        <p className="text-2xs text-foreground-secondary truncate">{phone ?? '—'}</p>
-                                      </>)}
+                                      )}
                                   </div>
                                 </div>
                               </Td>

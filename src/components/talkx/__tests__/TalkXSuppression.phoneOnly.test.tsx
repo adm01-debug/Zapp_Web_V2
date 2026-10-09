@@ -4,16 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
 /**
- * R2-MOD-034 (#406) — bloqueio cadastrado SOMENTE por telefone.
- *
- * A tela só olhava a relação `contacts:contact_id(...)`. Uma supressão criada no
- * eixo do telefone (contact_id NULL, phone preenchido — eixo garantido pelo índice
- * talkx_blacklist_phone_active_unique) não aparecia: a célula Telefone ficava vazia
- * ("+") e a busca não a encontrava.
- *
- * Vermelho antes do fix: o telefone da linha não aparece na tabela e a busca por
- * telefone não deixa a linha no resultado.
- * Verde depois: a linha mostra o telefone da própria supressão e a busca a encontra.
+ * R2-MOD-034 (#406) — bloqueio cadastrado SOMENTE por telefone (contact_id NULL,
+ * phone preenchido): a linha mostra o telefone da própria supressão e a busca a
+ * encontra. Vermelho antes do fix: célula Telefone vazia e busca sem a linha.
  */
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -46,20 +39,61 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   ];
 
-  const chain = (data: unknown[]) => {
+  /**
+   * Emula o servidor no contrato da listagem nova (X178): `range` fatia a
+   * página, `count` é o total do filtro, o `or` casa colunas da PRÓPRIA linha
+   * (`phone.ilike`, `reason.ilike`, `contact_id.in.(…)`) e o contato vinculado é
+   * resolvido numa consulta anterior a `contacts`. As asserções deste arquivo
+   * NÃO mudaram; só o mock passou a emular o que a tela manda ao servidor (a
+   * listagem deixou de filtrar em memória).
+   */
+  const contactRows = rows
+    .filter((row) => row.contacts && row.contact_id)
+    .map((row) => ({ id: row.contact_id as string, ...(row.contacts as Record<string, unknown>) }));
+
+  const ilike = (value: unknown, term: string) => String(value ?? '').toLowerCase().includes(term.toLowerCase());
+
+  /** Só colunas do próprio recurso: `col.ilike."%termo%"` e `contact_id.in.(a,b)`. */
+  const matchesOr = (row: Record<string, unknown>, filter: string) =>
+    filter.split(',').some((clause) => {
+      const ilikeClause = clause.match(/^(\w+)\.ilike\."%(.*)%"$/);
+      if (ilikeClause) return ilike(row[ilikeClause[1]], ilikeClause[2]);
+      const inClause = clause.match(/^contact_id\.in\.\((.*)\)$/);
+      if (inClause) return inClause[1].split(',').filter(Boolean).includes(String(row.contact_id));
+      return false;
+    });
+
+  const builder = (table: string) => {
+    const state = { or: '', from: 0, to: Number.POSITIVE_INFINITY };
+    const run = () => {
+      const base = (table === 'contacts' ? contactRows : rows.filter((row) => row.removed_at === null)) as unknown as Record<string, unknown>[];
+      const data = state.or ? base.filter((row) => matchesOr(row, state.or)) : base;
+      return {
+        data: table === 'contacts' ? data : data.slice(state.from, state.to + 1),
+        error: null,
+        count: data.length,
+      };
+    };
     const self: Record<string, unknown> = {};
-    self.select = () => self;
-    self.is = () => self;
-    self.not = () => self;
-    self.eq = () => self;
-    self.order = () => Promise.resolve({ data, error: null });
-    self.limit = () => Promise.resolve({ data, error: null });
+    const chain = () => self;
+    self.select = chain;
+    self.is = chain;
+    self.not = chain;
+    self.eq = chain;
+    self.in = chain;
+    self.gte = chain;
+    self.order = chain;
+    self.limit = chain;
+    self.or = (filter: string) => { state.or = filter; return self; };
+    self.range = (from: number, to: number) => { state.from = from; state.to = to; return self; };
+    self.then = (resolve: unknown, reject: unknown) =>
+      Promise.resolve(run()).then(resolve as (v: unknown) => unknown, reject as (e: unknown) => unknown);
     return self;
   };
 
   return {
     supabase: {
-      from: (table: string) => (table === 'talkx_blacklist' ? chain(rows) : chain([])),
+      from: (table: string) => builder(table),
     },
   };
 });
