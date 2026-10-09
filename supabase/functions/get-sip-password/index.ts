@@ -25,6 +25,7 @@ export interface GetSipPasswordDeps {
 // nao tem permission nem roles, logo o acesso e aberto a usuarios
 // ativos. A funcao verifica que o perfil existe e esta ativo.
 export async function autorizarTelefonia(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string,
 ): Promise<boolean> {
