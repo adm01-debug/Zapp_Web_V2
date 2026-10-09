@@ -47,6 +47,17 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
 }));
+// X051: o passo 4 (TalkXWizardReview) agora passa por `useTalkXLifecycle`, que por
+// dentro usa `useTalkX` (react-query) — sem mock, o render cai em "No QueryClient
+// set" (o mesmo padrão já usado por TalkXWizardReview.lifecycle.test.tsx).
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(),
+    pauseCampaign: vi.fn(),
+    cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
 
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
