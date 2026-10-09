@@ -244,27 +244,42 @@ describe('useMessages', () => {
     });
 
     it('mantém as páginas antigas já carregadas por loadOlderMessages', async () => {
-      const pagina = Array.from({ length: 1000 }, (_, i) => row(`n${i}`, 100 + i));
+      // O tamanho da página sai do código de produção — o `range` que o ChatService
+      // manda ao banco — e não de uma constante repetida aqui: o teto do GET de
+      // mensagens caiu em SL-099 e este teste acompanha o teto vigente.
+      let tamanhoPagina = 0;
+      let pagina: ReturnType<typeof row>[] = [];
       const antigas = Array.from({ length: 5 }, (_, i) => row(`o${i}`, i));
       const nova = row('nova', 2000);
-      mockFrom.mockReturnValue(queueChain([
-        { data: desc(pagina), error: null },
-        { data: desc(antigas), error: null },
-        { data: desc([...pagina.slice(1), nova]), error: null },
-      ]));
+      let chamadasDeRange = 0;
+      const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+      for (const m of ['select', 'eq', 'or', 'order']) chain[m] = vi.fn(() => chain);
+      chain.range = vi.fn((from: number, to: number) => {
+        chamadasDeRange += 1;
+        if (chamadasDeRange === 1) {
+          tamanhoPagina = to - from + 1;
+          pagina = Array.from({ length: tamanhoPagina }, (_, i) => row(`n${i}`, 100 + i));
+          return Promise.resolve({ data: desc(pagina), error: null });
+        }
+        // Refetch silencioso: a janela volta cheia, sem a mensagem mais antiga dela.
+        return Promise.resolve({ data: desc([...pagina.slice(1), nova]), error: null });
+      });
+      chain.limit = vi.fn(() => Promise.resolve({ data: desc(antigas), error: null }));
+      mockFrom.mockReturnValue(chain);
 
       const { result } = renderHook(() => useMessages({ contactId: 'c1' }), { wrapper: createWrapper() });
-      await waitFor(() => expect(result.current.messages).toHaveLength(1000));
+      await waitFor(() => expect(tamanhoPagina).toBeGreaterThan(0));
+      await waitFor(() => expect(result.current.messages).toHaveLength(tamanhoPagina));
       expect(result.current.hasOlder).toBe(true);
 
       await act(async () => { await result.current.loadOlderMessages(); });
-      expect(result.current.messages).toHaveLength(1005);
+      expect(result.current.messages).toHaveLength(tamanhoPagina + 5);
       expect(result.current.hasOlder).toBe(false);
 
       await act(async () => { await result.current.refetch(); });
 
       const ids = result.current.messages.map((m) => m.id);
-      expect(ids).toHaveLength(1006);
+      expect(ids).toHaveLength(tamanhoPagina + 6);
       expect(ids.slice(0, 6)).toEqual(['o0', 'o1', 'o2', 'o3', 'o4', 'n0']);
       expect(ids[ids.length - 1]).toBe('nova');
       expect(result.current.hasOlder).toBe(false);

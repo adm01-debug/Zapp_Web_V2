@@ -15,7 +15,17 @@ interface UseMessagesOptions {
   enabled?: boolean;
 }
 
-const MESSAGES_PAGE_SIZE = 1000;
+/**
+ * SL-099: a página era de 1000 linhas — o teto padrão do PostgREST — e o GET de
+ * uma conversa grande estourava o statement timeout do banco (`57014`): o pedido
+ * voltava 500 e o chat abria sem histórico. O teto por requisição cai para 100
+ * linhas, o que mantém a consulta dentro do orçamento do banco (e o payload 10x
+ * menor). Nada do histórico é cortado: o restante continua vindo pela paginação
+ * por cursor — `loadOlderMessages` -> `fetchMessagesBefore` —, que usa ESTE mesmo
+ * teto, e a lista virtualizada (`ChatMessagesArea`) carrega mais pelo controle
+ * "Carregar mensagens anteriores".
+ */
+const MESSAGES_PAGE_SIZE = 100;
 
 /**
  * #310 (R2-INB-013): entrada do overlay de realtime com a geracao em que foi escrita.
