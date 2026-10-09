@@ -25,7 +25,7 @@ describe('ConversationHeatmap — acessibilidade do filtro (N-091)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockThen.mockImplementation((resolve: unknown) =>
-      Promise.resolve(resolve({ data: [], error: null })),
+      Promise.resolve((resolve as (v: { data: unknown[]; error: null }) => unknown)({ data: [], error: null })),
     );
   });
 
