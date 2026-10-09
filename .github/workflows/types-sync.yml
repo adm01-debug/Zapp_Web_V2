@@ -597,6 +597,12 @@ jobs:
                 owner,
                 repo,
                 head_sha: headSha,
+                // E21 (G-25): sem `head_branch`, qualquer run `action_required`
+                // do MESMO commit entrava no laco abaixo e era aprovado — um
+                // run de outra branch no mesmo SHA fazia o token liberar check
+                // que nao e do PR de tipos. A branch e a mesma que o
+                // create-pull-request abre (`branch:` mais acima).
+                head_branch: 'automation/types-sync',
                 status: 'action_required',
                 per_page: 20,
               });
