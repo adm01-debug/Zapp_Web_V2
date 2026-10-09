@@ -16,6 +16,7 @@ import {
   handleLabelsEdit, handleLabelsAssociation, handleCallEvent,
   handleChatsDelete, handleApplicationStartup, handleMessagesSet,
   handleContactsSet, handleChatsSet, handleMessagesEdited,
+  handleTypebotEvent,
 } from "../_shared/evolution-webhook-handlers.ts";
 import {
   handleIncomingMessage, handleOutgoingWhatsAppMessage,
@@ -309,6 +310,11 @@ export async function handleEvolutionWebhook(req: Request): Promise<Response> {
     if (event === 'labels.edit') await handleLabelsEdit(db, instance, data);
     if (event === 'labels.association') await handleLabelsAssociation(db, instance, data);
     if (event === 'call') await handleCallEvent(db, instance, data);
+    // SL-190: a Evolution está configurada a enviar TYPEBOT_START/TYPEBOT_CHANGE_STATUS
+    // (evolution-api set-webhook) — sem este ramo os dois eventos eram descartados.
+    if (event === 'typebot.start' || event === 'typebot.change.status') {
+      await handleTypebotEvent(db, instance, baseData, event);
+    }
     if (event === 'chats.delete') await handleChatsDelete(db, instance, data);
     if (event === 'application.startup') await handleApplicationStartup(db, instance);
     if (event === 'messages.set') await handleMessagesSet(db, instance, data);

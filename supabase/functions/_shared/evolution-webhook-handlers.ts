@@ -352,6 +352,76 @@ export async function handleCallEvent(supabase: EvolutionDbClient, instance: str
   if (persistError) throw new Error('Unable to persist incoming call event');
 }
 
+// SL-190 — eventos TYPEBOT_* (`typebot.start`, `typebot.change.status`).
+//
+// O roteador não tinha ramo para eles (lacuna: docs/WEBHOOK_EVENTS.md, "TYPEBOT_*
+// — NÃO IMPLEMENTADO"), embora a Evolution esteja configurada a enviá-los
+// (`evolution-api` set-webhook registra TYPEBOT_START/TYPEBOT_CHANGE_STATUS):
+// o evento chegava, ganhava 200 e era descartado sem nenhum efeito. Aqui a
+// transição da SESSÃO do Typebot do contato é gravada em `conversation_events`
+// — a trilha da conversa que já registra atribuição, transferência e
+// encerramento — para deixar de ser um evento perdido, sem tabela nova e sem
+// tocar quem chama o provedor.
+//
+// Só o vocabulário documentado entra (`opened`/`paused`/`closed`); `typebot.start`
+// não traz status e vale como `opened` (a sessão começou). Status desconhecido é
+// IGNORADO em vez de gravado cru — a coluna é livre, mas gravar lixo degradaria
+// quem lê a trilha. JID sem telefone real (@lid/@g.us) e contato inexistente
+// também não gravam: um evento de bot não cria contato.
+export const TYPEBOT_SESSION_STATUSES: ReadonlySet<string> = new Set(['opened', 'paused', 'closed']);
+
+export async function handleTypebotEvent(
+  supabase: EvolutionDbClient,
+  instance: string,
+  data: unknown,
+  event: string,
+) {
+  const typebotData = isRecord(data) ? data : {};
+  const jid = (typebotData.remoteJid as string) || (typebotData.id as string);
+  const phone = jid ? normalizePhone(jid) : null;
+
+  const rawStatus = typeof typebotData.status === 'string' ? typebotData.status.trim().toLowerCase() : '';
+  const sessionStatus = TYPEBOT_SESSION_STATUSES.has(rawStatus)
+    ? rawStatus
+    : event === 'typebot.start' ? 'opened' : '';
+
+  // Um evento sem destino ou com status fora do vocabulário é descartado de
+  // propósito — mas NOMEANDO o motivo: descarte mudo é justamente o defeito que
+  // este cartão fecha (o evento chegava, ganhava 200 e sumia sem rastro).
+  if (!jid || !phone || !sessionStatus) {
+    const motivo = !jid ? 'sem-remoteJid' : !phone ? 'jid-sem-telefone' : 'status-fora-do-vocabulario';
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=${motivo}`);
+    return;
+  }
+
+  const connection = await getConnectionByInstance(supabase, instance);
+  if (!connection) {
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=sem-conexao`);
+    return;
+  }
+
+  const contact = await getContactByPhone(supabase, phone, connection.id);
+  if (!contact) {
+    console.log(`[TYPEBOT] ignorado instance=${instance} evento=${event} motivo=contato-inexistente`);
+    return;
+  }
+
+  const typebotId = typeof typebotData.typebotId === 'string' && typebotData.typebotId ? typebotData.typebotId : null;
+  const { error } = await supabase.from('conversation_events').insert({
+    contact_id: contact.id,
+    event_type: 'bot_session',
+    metadata: {
+      source: 'typebot',
+      provider_event: event,
+      session_status: sessionStatus,
+      typebot_id: typebotId,
+    },
+  });
+  // Fail-closed: falha ao persistir sobe como erro (o webhook devolve 500 e o
+  // provedor reprocessa) em vez de encerrar o evento como sucesso silencioso.
+  if (error) throw new Error('Unable to persist typebot session event');
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handleChatsDelete(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const chats = Array.isArray(data) ? data : [data];
