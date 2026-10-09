@@ -69,6 +69,10 @@ describe('ambiente.mjs (R1 local)', () => {
     assert.equal(comEnv({ TEL_URL: 'http://localhost:5173', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente().base), 'http://localhost:5173');
     assert.equal(comEnv({ TEL_URL: 'http://127.0.0.1:5173', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: '1' }, () => ambiente().base), 'http://127.0.0.1:5173');
     assert.throws(
+      () => comEnv({ TEL_URL: 'http://127.0.0.1:5173', TEL_CAMINHO: '@evil.example/path', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente()),
+      /TEL_URL.*local/i,
+    );
+    assert.throws(
       () => comEnv({ TEL_URL: 'https://zapp.example.com', PLAYWRIGHT_BASE_URL: undefined, TEL_MUTACAO: undefined }, () => ambiente()),
       /TEL_URL.*local/i,
     );
@@ -156,12 +160,13 @@ describe('axe.mjs (T84/E.5)', () => {
 
 describe('func.mjs (T83/E.5)', () => {
   it('publica os 20 passos do plano, na ordem, com o console limpo e skips explícitos', () => {
-    const { json } = rodar('func.mjs');
+    const { status, json } = rodar('func.mjs');
     assert.ok(json);
     assert.deepEqual(json.checks.map((c) => c.eixo), [...CHECKS_E5]);
     assert.equal(json.total, 20);
     assert.equal(json.consoleErrors, 0);
     assert.equal(check(json, 'console sem error').ok, true);
+    assert.equal(status, 1, 'a fixture conforme deixa a aba VoIP falhar de propósito e precisa explicar isso');
     assert.ok(json.skipped >= 1, 'passos não aplicáveis na fixture precisam sair como skip explícito');
     assert.equal(check(json, 'periodo muda KPIs').skip, true);
     assert.equal(check(json, 'discar -> dialing -> Cancelar -> linha cancelled').skip, true);
@@ -173,6 +178,36 @@ describe('func.mjs (T83/E.5)', () => {
     const c = check(json, 'aba VoIP');
     assert.equal(c.ok, false);
     assert.match(c.motivo, /selecion/i);
+  });
+
+
+
+  it('não aprova busca quando digitar não muda linhas nem mostra vazio/URL', () => {
+    const { json } = rodar('func.mjs', 'busca-ignorada');
+    assert.ok(json);
+    const nome = check(json, 'busca nome');
+    assert.equal(nome.ok, false);
+    assert.match(nome.motivo, /não reduziu|estado vazio/i);
+    const numero = check(json, 'busca numero');
+    assert.equal(numero.ok, false);
+    assert.match(numero.motivo, /não filtrou|URL\/estado/i);
+  });
+
+  it('explica como skip quando os passos de busca não têm campo para executar', () => {
+    const { json } = rodar('func.mjs', 'sem-busca');
+    assert.ok(json);
+    assert.equal(check(json, 'busca nome').skip, true);
+    assert.match(check(json, 'busca nome').motivo, /campo de busca ausente/i);
+    assert.equal(check(json, 'busca numero').skip, true);
+    assert.match(check(json, 'busca numero').motivo, /campo de busca ausente/i);
+  });
+
+  it('não aprova deep link que abre painel para call inexistente', () => {
+    const { json } = rodar('func.mjs', 'deep-link-painel');
+    assert.ok(json);
+    const c = check(json, 'deep link');
+    assert.equal(c.ok, false);
+    assert.match(c.motivo, /call inexistente abriu painel/i);
   });
 
   it('o erro de console da fixture aparece e reprova — não passa mudo', () => {

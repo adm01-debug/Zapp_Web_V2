@@ -33,13 +33,15 @@ export function ambiente() {
   const mutacao = process.env.TEL_MUTACAO === '1';
   const url = validarBaseLocal(base, { mutacao });
   const arquivo = url.protocol === 'file:';
+  const caminho = process.env.TEL_CAMINHO ?? (arquivo ? '' : '/?view=voip');
+  validarBaseLocal(`${base}${caminho}`, { mutacao });
   return {
     base,
     arquivo,
     email: process.env.TEL_EMAIL ?? process.env.E2E_TEST_EMAIL ?? null,
     senha: process.env.TEL_SENHA ?? process.env.E2E_TEST_PASSWORD ?? null,
     // Numa fixture `file://` não existe rota `/?view=voip` — o alvo é o próprio arquivo.
-    caminho: process.env.TEL_CAMINHO ?? (arquivo ? '' : '/?view=voip'),
+    caminho,
     largura: Number(process.env.TEL_LARGURA ?? 1672),
     altura: Number(process.env.TEL_ALTURA ?? 1000),
   };

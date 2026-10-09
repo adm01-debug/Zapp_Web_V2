@@ -99,6 +99,25 @@
     baixoContraste.textContent = 'contraste baixo';
     document.querySelector('[data-testid="tel-view"]').appendChild(baixoContraste);
   }
+  if (mutar.includes('busca-ignorada')) {
+    document.querySelector('[data-testid="tel-history-empty"]')?.remove();
+    const card = document.querySelector('[data-testid="tel-history-card"]');
+    for (const texto of ['Maria 21999990000', 'João 31988880000']) {
+      const linha = document.createElement('article');
+      linha.dataset.testid = 'tel-row';
+      linha.textContent = texto;
+      card.appendChild(linha);
+    }
+  }
+  if (mutar.includes('sem-busca')) {
+    document.querySelector('[data-testid="tel-history-search"]')?.remove();
+  }
+  if (mutar.includes('deep-link-painel') && new URLSearchParams(location.search).get('call') === 'nao-existe') {
+    const painel = document.createElement('aside');
+    painel.dataset.testid = 'tel-selected-panel';
+    painel.textContent = 'Painel aberto indevidamente para call inexistente';
+    document.querySelector('[data-testid="tel-view"]').appendChild(painel);
+  }
   if (mutar.includes('console')) console.error('erro proposital da fixture de QA');
 </script>
 </body>

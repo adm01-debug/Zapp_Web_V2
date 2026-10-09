@@ -244,6 +244,38 @@ export function passosE5(pagina) {
       return (await locator.innerText({ timeout: 1000 }).catch(() => '')).trim();
     }
   };
+  const normalizar = (texto) => String(texto ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const estadoHistorico = async () => {
+    const linhas = pagina.locator('[data-testid="tel-row"]');
+    const quantidade = await linhas.count();
+    const textos = quantidade > 0 ? await linhas.allInnerTexts() : [];
+    const vazio = await pagina.locator('[data-testid="tel-history-empty"]').first().isVisible().catch(() => false);
+    return { quantidade, textos, vazio };
+  };
+  const urlRefleteBusca = (urlAntes, termo) => {
+    const urlDepois = pagina.url();
+    if (urlDepois === urlAntes) return false;
+    const termoNormalizado = normalizar(termo);
+    try {
+      return Array.from(new URL(urlDepois).searchParams.values())
+        .some((valor) => normalizar(valor).includes(termoNormalizado));
+    } catch {
+      return false;
+    }
+  };
+  const historicoFiltrou = (antes, depois, termo) => {
+    if (antes.quantidade === 0) return false;
+    if (depois.vazio || depois.quantidade < antes.quantidade) return true;
+    const termoNormalizado = normalizar(termo);
+    const todasDepoisCasam = depois.textos.length > 0
+      && depois.textos.every((texto) => normalizar(texto).includes(termoNormalizado));
+    const todasAntesCasavam = antes.textos.length > 0
+      && antes.textos.every((texto) => normalizar(texto).includes(termoNormalizado));
+    return todasDepoisCasam && !todasAntesCasavam;
+  };
 
   return [
     {
@@ -282,14 +314,15 @@ export function passosE5(pagina) {
       async executar() {
         const busca = primeiro('[data-testid="tel-history-search"]');
         if (!(await existe(busca))) return skip('campo de busca ausente');
-        const linhas = pagina.locator('[data-testid="tel-row"]');
-        const antes = await linhas.count();
-        if (antes === 0) return skip('histórico vazio: não há nomes para filtrar');
-        await busca.fill('a');
+        const antes = await estadoHistorico();
+        if (antes.quantidade === 0) return skip('histórico vazio: não há nomes para filtrar');
+        const termo = '__qa_sem_resultado__';
+        await busca.fill(termo);
         await esperar(900);
-        const depois = await linhas.count();
-        const valor = await busca.inputValue();
-        return valor === 'a' && antes >= depois ? true : falha('busca por nome não filtrou o histórico');
+        const depois = await estadoHistorico();
+        return historicoFiltrou(antes, depois, termo)
+          ? true
+          : falha('busca por nome não reduziu o histórico nem mostrou estado vazio para termo inexistente');
       },
     },
     {
@@ -297,9 +330,19 @@ export function passosE5(pagina) {
       async executar() {
         const busca = primeiro('[data-testid="tel-history-search"]');
         if (!(await existe(busca))) return skip('campo de busca ausente');
-        await busca.fill('11');
+        const termo = '11';
+        const antes = await estadoHistorico();
+        if (antes.quantidade === 0) return skip('histórico vazio: não há números para filtrar');
+        const urlAntes = pagina.url();
+        await busca.fill(termo);
         await esperar(900);
-        return (await busca.inputValue()) === '11' ? true : falha('campo de busca não reteve o número digitado');
+        const depois = await estadoHistorico();
+        if (urlRefleteBusca(urlAntes, termo) || historicoFiltrou(antes, depois, termo)) return true;
+        const todosAntesJaCasavam = antes.textos.length > 0
+          && antes.textos.every((texto) => normalizar(texto).includes(termo));
+        return todosAntesJaCasavam
+          ? skip('histórico já continha apenas números com 11 e sem URL/estado para distinguir filtro')
+          : falha('busca por número não filtrou o histórico nem refletiu a busca na URL/estado');
       },
     },
     {
@@ -348,8 +391,13 @@ export function passosE5(pagina) {
         const alvo = new URL(pagina.url());
         alvo.searchParams.set('call', 'nao-existe');
         await pagina.goto(alvo.toString(), { waitUntil: 'domcontentloaded' });
-        await pagina.locator('[data-testid="tel-view"]').first().waitFor({ state: 'visible', timeout: 30000 });
-        return new URL(pagina.url()).searchParams.get('call') === 'nao-existe' ? true : falha('deep link não preservou call na URL');
+        const view = pagina.locator('[data-testid="tel-view"]').first();
+        await view.waitFor({ state: 'visible', timeout: 30000 });
+        const painel = pagina.locator('[data-testid="tel-selected-panel"]').first();
+        const painelAbriu = await painel.isVisible().catch(() => false);
+        return painelAbriu
+          ? falha('deep link para call inexistente abriu painel selecionado')
+          : true;
       },
     },
     {
@@ -444,7 +492,13 @@ export function passosE5(pagina) {
         await esperar(900);
         const view = pagina.locator('[data-testid="tel-view"]').first();
         if (!(await existe(view))) return falha('view de telefonia ausente no inbox');
-        return (await pagina.locator('[data-testid="tel-active-bar"]').count()) <= 1 ? true : falha('ActiveCallBar duplicou no inbox');
+        const barras = pagina.locator('[data-testid="tel-active-bar"]');
+        const quantidade = await barras.count();
+        if (quantidade === 0) return skip('sem ligação ativa: ActiveCallBar não é aplicável');
+        if (quantidade > 1) return falha('ActiveCallBar duplicou no inbox');
+        return (await barras.first().isVisible().catch(() => false))
+          ? true
+          : falha('ActiveCallBar existe, mas não está visível no inbox');
       },
     },
     {
@@ -471,9 +525,21 @@ export function passosE5(pagina) {
       async executar() {
         const segunda = await pagina.context().newPage();
         try {
+          const lockAntes = await pagina.evaluate(() => window.localStorage?.getItem('zapp.call.tab-leader') ?? null).catch(() => null);
           await segunda.goto(pagina.url(), { waitUntil: 'domcontentloaded' });
           await esperar(1200);
-          return (await segunda.locator('[data-testid="tel-view"]').count()) > 0 ? true : falha('segunda aba não carregou a tela');
+          if ((await segunda.locator('[data-testid="tel-view"]').count()) === 0) return falha('segunda aba não carregou a tela');
+          const [lockPrincipal, lockSegunda] = await Promise.all([
+            pagina.evaluate(() => window.localStorage?.getItem('zapp.call.tab-leader') ?? null).catch(() => null),
+            segunda.evaluate(() => window.localStorage?.getItem('zapp.call.tab-leader') ?? null).catch(() => null),
+          ]);
+          const lock = lockPrincipal ?? lockSegunda ?? lockAntes;
+          if (!lock) return skip('papel líder/seguidora não exposto nesta tela/fixture');
+          let parsed;
+          try { parsed = JSON.parse(lock); } catch { return falha('lock líder/seguidora inválido no localStorage'); }
+          return parsed?.tabId && Number.isFinite(parsed?.expiresAt) && lockPrincipal === lockSegunda
+            ? true
+            : falha('abas não compartilharam um único lock líder/seguidora');
         } finally {
           await segunda.close();
         }
