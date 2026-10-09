@@ -29,7 +29,8 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     isLoading: false,
     createTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
     updateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
-    duplicateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn() },
+    deleteTemplate: { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false },
+    duplicateTemplate: { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false },
     testTemplate: vi.fn(),
     fetchVersionHistory,
     fetchVariants,
@@ -40,6 +41,11 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
 }));
 
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
+
+// X090: o controle de status do cabeçalho do editor lê o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, isSpecialAgent: false, roles: [] }),
+}));
 
 type TalkXTemplate = {
   id: string; name: string; description: string | null; category: string; content: string;

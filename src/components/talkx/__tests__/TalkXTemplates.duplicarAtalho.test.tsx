@@ -46,7 +46,7 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     createTemplate: { mutate: vi.fn(), mutateAsync: mocks.createMutateAsync },
     updateTemplate: { mutate: vi.fn(), mutateAsync: mocks.updateMutateAsync },
     deleteTemplate: { mutate: vi.fn() },
-    duplicateTemplate: { mutate: mocks.duplicateMutate },
+    duplicateTemplate: { mutate: mocks.duplicateMutate, mutateAsync: mocks.duplicateMutate },
     testTemplate: vi.fn(),
     fetchVersionHistory: vi.fn().mockResolvedValue([]),
     fetchVariants: vi.fn().mockResolvedValue([]),
@@ -57,6 +57,12 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
 }));
 
 import { TalkXTemplates } from '../TalkXTemplates';
+
+// X090: o menu ⋮ e o controle de status leem o papel do usuário (e o menu abre a
+// cópia pelo mesmo caminho do hook de ações).
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
+}));
 
 beforeEach(() => {
   cleanup();
