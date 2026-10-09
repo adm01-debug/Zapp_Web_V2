@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import type { ReactNode } from 'react';
 import { AuditLogDashboard } from '../AuditLogDashboard';
 
@@ -57,7 +58,7 @@ vi.mock('@/components/ui/select', async () => {
   const Select = ({ children, onValueChange }: { children?: ReactNode; onValueChange?: (v: string) => void }) => (
     <Contexto.Provider value={onValueChange ?? (() => {})}>{children}</Contexto.Provider>
   );
-  const SelectTrigger = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
+  const SelectTrigger = ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>;
   const SelectValue = () => null;
   const SelectContent = ({ children }: { children?: ReactNode }) => <ul>{children}</ul>;
   const SelectItem = ({ children, value }: { children?: ReactNode; value: string }) => {
@@ -115,6 +116,24 @@ describe('AuditLogDashboard', () => {
     it('renders logs section title', () => {
       render(<AuditLogDashboard />);
       expect(screen.getByText(/Logs de Auditoria/)).toBeInTheDocument();
+    });
+
+    it('action filter combobox has accessible name "Filtrar por ação"', () => {
+      render(<AuditLogDashboard />);
+      expect(screen.getByRole('combobox', { name: 'Filtrar por ação' })).toBeInTheDocument();
+    });
+
+    it('period filter combobox has accessible name "Período"', () => {
+      render(<AuditLogDashboard />);
+      expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    });
+
+    it('axe não acusa violações de acessibilidade no dashboard', async () => {
+      const { container } = render(<AuditLogDashboard />);
+      const results = await axe(container, {
+        rules: { 'color-contrast': { enabled: false } },
+      });
+      expect(results.violations).toEqual([]);
     });
 
     it('shows loading skeletons initially', () => {

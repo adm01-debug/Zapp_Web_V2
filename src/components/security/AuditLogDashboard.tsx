@@ -187,10 +187,10 @@ export function AuditLogDashboard() {
               </div>
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" role="combobox" aria-label="Filtrar por ação" aria-expanded={false} aria-controls="action-filter-content">
                 <SelectValue placeholder="Tipo de ação" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent id="action-filter-content">
                 <SelectItem value="all">Todas as ações</SelectItem>
                 <SelectItem value="login">Login</SelectItem>
                 <SelectItem value="logout">Logout</SelectItem>
@@ -202,10 +202,10 @@ export function AuditLogDashboard() {
               </SelectContent>
             </Select>
             <Select value={entityFilter} onValueChange={setEntityFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" role="combobox" aria-label="Período" aria-expanded={false} aria-controls="entity-filter-content">
                 <SelectValue placeholder="Entidade" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent id="entity-filter-content">
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="contact">Contatos</SelectItem>
                 <SelectItem value="message">Mensagens</SelectItem>
