@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
+import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolution-session-routes.ts';
 import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
@@ -52,54 +53,102 @@ export async function handleConnectionHealthCheck(
     const results = [];
     const alertsToCreate: Array<{ connection_id: string; instance_id: string; phone: string | null }> = [];
 
+    // A rota de SESSÃO desta sonda (e a credencial que ela exige) sai do MESMO
+    // resolvedor do ciclo de sessão do `evolution-api` (R2-API-015): no GO a rota
+    // de status e de INSTÂNCIA (a instância vem na credencial), no v2 e global.
+    const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
+
     for (const conn of connections) {
       const start = performance.now();
       let healthStatus = 'unknown';
       let errorMessage: string | null = null;
       let responseTime = 0;
 
+      // E24 (plano multi-conexão): a consulta de estado é POR INSTÂNCIA. No flavor
+      // GO a instância é escolhida pela CREDENCIAL (o nome no path v2 se perde na
+      // tradução), então sem o token da própria conexão o tradutor falha fechado
+      // (400 'instance token ausente') para TODA conexão que não é a padrão — a
+      // outra apareceria como 'error' para sempre, sem nunca ser consultada de
+      // verdade. O token vive no Vault por conexão (get_instance_token,
+      // service_role); o fallback de transição do evoFetch (E15) segue valendo,
+      // mas só para a instância padrão.
+      let instanceToken: string | undefined;
+      let tokenLookupError: string | null = null;
       try {
-        const resp = await evoFetch(baseUrl, evolutionKey,
-          `/instance/connectionState/${conn.instance_id}`, undefined,
-          (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET');
-        responseTime = Math.round(performance.now() - start);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const state = extractConnectionState(data);
-          healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
-
-          // Only update for definitive GO states; skip transient (connecting/qr_pending).
-          const dbStatus = state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : null;
-          if (dbStatus && dbStatus !== conn.status) {
-            // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
-            const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
-            if (dbStatus === 'connected' || !isTransient) {
-              // .eq('status', conn.status): um webhook pode ter mudado a linha
-              // enquanto liamos o estado na GO. Sem isso, um qr_pending recem
-              // gravado viraria 'disconnected' e dispararia alerta falso.
-              // CAS pelo status lido. '.eq' com null nao casa linha nenhuma no
-              // PostgREST, entao conexao com status NULL precisa de 'is.null'.
-              const { data: updated } = await supabase.from('whatsapp_connections')
-                .update({ status: dbStatus, updated_at: new Date().toISOString() })
-                .eq('id', conn.id)
-                .or(conn.status === null || conn.status === undefined
-                  ? 'status.is.null'
-                  : `status.eq.${conn.status}`)
-                .select('id');
-              if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
-                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
-              }
-            }
-          }
-        } else {
-          healthStatus = 'error';
-          errorMessage = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`;
+        const { data: tokenData, error: tokenError } = await supabase
+          .rpc('get_instance_token', { p_instance_id: conn.instance_id });
+        if (tokenError) {
+          // Ler a credencial falhou: não inventa, não usa a global. O motivo fica
+          // registrado para a falha não virar "sem credencial" indistinguível.
+          tokenLookupError = tokenError.message || 'get_instance_token devolveu erro';
+        } else if (typeof tokenData === 'string' && tokenData) {
+          instanceToken = tokenData;
         }
       } catch (err) {
-        responseTime = Math.round(performance.now() - start);
-        healthStatus = 'timeout';
-        errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        tokenLookupError = err instanceof Error ? err.message : 'get_instance_token lançou';
+      }
+      const padrao = Deno.env.get('EVOLUTION_INSTANCE_NAME') ?? '';
+      const tokenLegado = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? '';
+      const usaTokenDoAmbiente = padrao !== '' && conn.instance_id === padrao && tokenLegado !== '';
+      const semCredencial = resolveSessionRoute(flavor, 'status', conn.instance_id).auth === 'instance'
+        && !instanceToken && !usaTokenDoAmbiente;
+
+      if (semCredencial) {
+        // Credencial ausente NÃO é queda de sessão nem falha do provedor: o
+        // monitoramento por instância (E28) recebe o estado próprio e nada é
+        // sobrescrito — e a sonda jamais sai com a credencial de outra instância.
+        healthStatus = 'no_credentials';
+        errorMessage = tokenLookupError
+          ? `Falha ao ler a credencial da instância (get_instance_token): ${tokenLookupError}`
+          : 'Instância sem credencial própria no Vault e sem token de ambiente para a padrão.';
+      } else {
+        try {
+          const resp = await evoFetch(baseUrl, evolutionKey,
+            `/instance/connectionState/${conn.instance_id}`, undefined,
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'GET', undefined, instanceToken);
+          responseTime = Math.round(performance.now() - start);
+
+          if (resp.ok) {
+            const data = await resp.json();
+            const state = extractConnectionState(data);
+            healthStatus = state === 'open' ? 'healthy' : state === 'close' ? 'disconnected' : 'degraded';
+
+            // Only update for definitive GO states; skip transient (connecting/qr_pending).
+            const dbStatus = state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : null;
+            if (dbStatus && dbStatus !== conn.status) {
+              // Never overwrite a QR-scan or reconnect transient state with 'disconnected'.
+              const isTransient = conn.status === 'qr_pending' || conn.status === 'connecting';
+              if (dbStatus === 'connected' || !isTransient) {
+                // .eq('status', conn.status): um webhook pode ter mudado a linha
+                // enquanto liamos o estado na GO. Sem isso, um qr_pending recem
+                // gravado viraria 'disconnected' e dispararia alerta falso.
+                // CAS pelo status lido. '.eq' com null nao casa linha nenhuma no
+                // PostgREST, entao conexao com status NULL precisa de 'is.null'.
+                const { data: updated } = await supabase.from('whatsapp_connections')
+                  .update({ status: dbStatus, updated_at: new Date().toISOString() })
+                  .eq('id', conn.id)
+                  .or(conn.status === null || conn.status === undefined
+                    ? 'status.is.null'
+                    : `status.eq.${conn.status}`)
+                  .select('id');
+                if (updated?.length && dbStatus === 'disconnected' && conn.status === 'connected') {
+                  alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                }
+              }
+            }
+          } else {
+            // E24/E28: 401/403 = a instancia nao autentica com a credencial que
+            // temos. Isso NAO e queda da sessao: o estado proprio de monitoramento
+            // ('no_credentials') evita alerta falso de "desconectada" e, como toda
+            // resposta nao-ok, nao sobrescreve o status da conexao (fail-closed).
+            healthStatus = resp.status === 401 || resp.status === 403 ? 'no_credentials' : 'error';
+            errorMessage = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`;
+          }
+        } catch (err) {
+          responseTime = Math.round(performance.now() - start);
+          healthStatus = 'timeout';
+          errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        }
       }
 
       await supabase.from('connection_health_logs').insert({
