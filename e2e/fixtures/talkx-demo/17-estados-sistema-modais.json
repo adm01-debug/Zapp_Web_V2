@@ -1,1 +1,40 @@
-{}
+{
+  "talkx_settings": [
+    {
+      "key": "ai_insights",
+      "value": true,
+      "description": "Insights por IA ligados",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "key": "default_speed_profile",
+      "value": "moderate",
+      "description": "Perfil de velocidade padrão das campanhas",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "key": "max_per_minute",
+      "value": 240,
+      "description": "Teto de envios por minuto",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "key": "suppression_retention_days",
+      "value": 365,
+      "description": "Retenção da lista de supressão em dias",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    }
+  ],
+  "talkx_alerts": [
+    {
+      "id": "alr-001",
+      "campaign_id": null,
+      "kind": "engine_health",
+      "opened_at": "2026-09-20T12:00:00.000Z",
+      "resolved_at": null,
+      "payload": {
+        "message": "Motor de envio saudável"
+      }
+    }
+  ]
+}

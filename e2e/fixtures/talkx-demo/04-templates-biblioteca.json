@@ -1,1 +1,108 @@
-{}
+{
+  "talkx_templates": [
+    {
+      "id": "tpl-001",
+      "name": "Boas-vindas",
+      "description": "Modelo sintético Boas-vindas",
+      "category": "relacionamento",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "relacionamento"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-001-v2",
+      "use_count": 42,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-002",
+      "name": "Promoção relâmpago",
+      "description": "Modelo sintético Promoção relâmpago",
+      "category": "promocao",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "promocao"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-002-v2",
+      "use_count": 18,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-003",
+      "name": "Pesquisa de satisfação",
+      "description": "Modelo sintético Pesquisa de satisfação",
+      "category": "pesquisa",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "pesquisa"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-003-v2",
+      "use_count": 7,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-004",
+      "name": "Rascunho de campanha",
+      "description": "Modelo sintético Rascunho de campanha",
+      "category": "marketing",
+      "status": "draft",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "marketing"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-004-v2",
+      "use_count": 0,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ]
+}

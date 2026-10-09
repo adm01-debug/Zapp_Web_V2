@@ -1,1 +1,505 @@
-{}
+{
+  "talkx_campaigns": [
+    {
+      "id": "camp-301",
+      "name": "Concluída Abril",
+      "message_template": "Olá {{nome}}, novidade para você!",
+      "description": null,
+      "objective": "engajamento",
+      "status": "completed",
+      "total_recipients": 1000,
+      "sent_count": 980,
+      "failed_count": 20,
+      "delivered_count": 980,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-20T12:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": "America/Sao_Paulo",
+      "segment_id": "seg-vip",
+      "audience_source": "segment",
+      "template_id": "tpl-001",
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-09-20T12:00:00.000Z",
+      "revision": 1
+    },
+    {
+      "id": "camp-302",
+      "name": "Concluída Maio",
+      "message_template": "Olá {{nome}}, novidade para você!",
+      "description": null,
+      "objective": "engajamento",
+      "status": "completed",
+      "total_recipients": 800,
+      "sent_count": 790,
+      "failed_count": 10,
+      "delivered_count": 790,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-20T12:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": "America/Sao_Paulo",
+      "segment_id": "seg-leads",
+      "audience_source": "segment",
+      "template_id": "tpl-002",
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-09-20T12:00:00.000Z",
+      "revision": 1
+    },
+    {
+      "id": "camp-303",
+      "name": "Concluída Junho",
+      "message_template": "Olá {{nome}}, novidade para você!",
+      "description": null,
+      "objective": "engajamento",
+      "status": "completed",
+      "total_recipients": 600,
+      "sent_count": 596,
+      "failed_count": 4,
+      "delivered_count": 596,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-20T12:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": "America/Sao_Paulo",
+      "segment_id": "seg-ativos",
+      "audience_source": "segment",
+      "template_id": "tpl-003",
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-09-20T12:00:00.000Z",
+      "revision": 1
+    }
+  ],
+  "talkx_segments": [
+    {
+      "id": "seg-vip",
+      "name": "VIP",
+      "description": "Clientes de maior valor",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": true,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-vip-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          },
+          {
+            "id": "seg-vip-g2",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g2-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g2-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 184,
+      "last_used_at": "2026-09-28T12:00:00.000Z",
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-leads",
+      "name": "Leads Quentes",
+      "description": "Leads com score alto",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-leads-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-leads-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-leads-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 312,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-ativos",
+      "name": "Clientes Ativos",
+      "description": "Compraram nos últimos 90 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-ativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-ativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-ativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 540,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-inativos",
+      "name": "Inativos",
+      "description": "Sem interação há mais de 180 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-inativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-inativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-inativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 226,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-office",
+      "name": "Office",
+      "description": null,
+      "origin": "custom",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-office-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-office-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-office-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 97,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_campaign_metrics": [
+    {
+      "id": "met-301",
+      "campaign_id": "camp-301",
+      "campaign_name": "Concluída Abril",
+      "status": "completed",
+      "segment_id": "seg-vip",
+      "template_id": "tpl-001",
+      "total_recipients": 1000,
+      "sent_count": 980,
+      "delivered_count": 980,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "reply_rate_pct": 4.2,
+      "delivery_rate_pct": 100,
+      "duration_secs": 3600,
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "met-302",
+      "campaign_id": "camp-302",
+      "campaign_name": "Concluída Maio",
+      "status": "completed",
+      "segment_id": "seg-leads",
+      "template_id": "tpl-002",
+      "total_recipients": 800,
+      "sent_count": 790,
+      "delivered_count": 790,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "reply_rate_pct": 2.1,
+      "delivery_rate_pct": 100,
+      "duration_secs": 2400,
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "met-303",
+      "campaign_id": "camp-303",
+      "campaign_name": "Concluída Junho",
+      "status": "completed",
+      "segment_id": "seg-ativos",
+      "template_id": "tpl-003",
+      "total_recipients": 600,
+      "sent_count": 596,
+      "delivered_count": 596,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "reply_rate_pct": 1.4,
+      "delivery_rate_pct": 100,
+      "duration_secs": 1800,
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    }
+  ],
+  "talkx_links": [
+    {
+      "id": "lnk-301",
+      "campaign_id": "camp-301",
+      "label": "Catálogo",
+      "slug": "catalogo-abril",
+      "target_url": "https://exemplo.test/catalogo",
+      "utm_source": "whatsapp",
+      "utm_medium": "campanha",
+      "utm_campaign": "abril",
+      "utm_content": null,
+      "utm_term": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "lnk-302",
+      "campaign_id": "camp-302",
+      "label": "Oferta",
+      "slug": "oferta-maio",
+      "target_url": "https://exemplo.test/oferta",
+      "utm_source": "whatsapp",
+      "utm_medium": "campanha",
+      "utm_campaign": "maio",
+      "utm_content": null,
+      "utm_term": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    }
+  ],
+  "talkx_link_clicks": [
+    {
+      "id": "clk-301",
+      "link_id": "lnk-301",
+      "recipient_id": null,
+      "ip_hash": null,
+      "ua": null,
+      "clicked_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "id": "clk-302",
+      "link_id": "lnk-302",
+      "recipient_id": null,
+      "ip_hash": null,
+      "ua": null,
+      "clicked_at": "2026-09-28T12:00:00.000Z"
+    }
+  ],
+  "talkx_recipients": [
+    {
+      "id": "rec-301",
+      "campaign_id": "camp-301",
+      "contact_id": "ct-301",
+      "segment_id": null,
+      "status": "delivered",
+      "sent_at": "2026-09-20T12:00:00.000Z",
+      "delivered_at": "2026-09-20T12:00:00.000Z",
+      "read_at": null,
+      "replied_at": null,
+      "click_count": 0,
+      "clicked_at": null,
+      "error_message": null,
+      "personalized_message": "Olá Maria, novidade para você!",
+      "attempt_count": 1,
+      "manual_retry_count": 0,
+      "delivery_attempt_count": 1,
+      "delivery_claimed_at": null,
+      "delivery_claimed_by": null,
+      "delivery_claim_expires_at": null,
+      "delivery_claim_token": null,
+      "delivery_last_claim_token": null,
+      "provider_dispatch_started_at": "2026-09-20T12:00:00.000Z",
+      "external_id": "wamid-rec-301",
+      "media_type_snapshot": null,
+      "media_url_snapshot": null,
+      "message_snapshot_at": "2026-09-20T12:00:00.000Z",
+      "reply_message_id": null,
+      "retry_after": null,
+      "variant_id": null,
+      "variant_id_snapshot": null,
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "id": "rec-302",
+      "campaign_id": "camp-302",
+      "contact_id": "ct-302",
+      "segment_id": null,
+      "status": "delivered",
+      "sent_at": "2026-09-20T12:00:00.000Z",
+      "delivered_at": "2026-09-20T12:00:00.000Z",
+      "read_at": null,
+      "replied_at": null,
+      "click_count": 0,
+      "clicked_at": null,
+      "error_message": null,
+      "personalized_message": "Olá Maria, novidade para você!",
+      "attempt_count": 1,
+      "manual_retry_count": 0,
+      "delivery_attempt_count": 1,
+      "delivery_claimed_at": null,
+      "delivery_claimed_by": null,
+      "delivery_claim_expires_at": null,
+      "delivery_claim_token": null,
+      "delivery_last_claim_token": null,
+      "provider_dispatch_started_at": "2026-09-20T12:00:00.000Z",
+      "external_id": "wamid-rec-302",
+      "media_type_snapshot": null,
+      "media_url_snapshot": null,
+      "message_snapshot_at": "2026-09-20T12:00:00.000Z",
+      "reply_message_id": null,
+      "retry_after": null,
+      "variant_id": null,
+      "variant_id_snapshot": null,
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z"
+    }
+  ]
+}
