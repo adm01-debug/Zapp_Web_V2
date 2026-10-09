@@ -43,8 +43,8 @@ psql_q() { psql_test -Atqc "$1"; }
 # --- registro dos casos (ausencia de medicao = falha) -----------------------
 declare -A CASES_SEEN=()
 declare -a CASES_EXPECTED=(
-  save_writes_ordered_segments save_rejects_eleven
-  snapshot_dedupes_across_segments snapshot_first_segment_wins
+  save_writes_ordered_segments save_prefers_first_segment_ids
+  save_rejects_eleven snapshot_dedupes_across_segments snapshot_first_segment_wins
   legacy_single_segment helper_acl
 )
 case_done() { CASES_SEEN["$1"]=1; }
@@ -367,6 +367,21 @@ seg_first="$(psql_q "SELECT segment_id FROM public.talkx_campaigns WHERE id='$ca
 [[ "$seg_first" == "$seg_k" ]] || fail "(a) talkx_campaigns.segment_id deveria ser o PRIMEIRO [obtido: $seg_first]"
 pass '(a) segment_ids -> 3 linhas ordenadas (position 1,2,3) e segment_id = primeiro'
 case_done save_writes_ordered_segments
+
+# Recusa rodada 1: quando segment_id avulso e segment_ids vierem juntos, a coluna
+# unica precisa continuar apontando para o primeiro item da lista ordenada.
+divergent_creation_key='90000000-0000-0000-0000-000000000012'
+divergent_payload='{"name":"Divergente","message_template":"Ola","objective":"vendas","audience_source":"segment","audience_filters":{},"segment_id":"'"$seg_r"'","segment_ids":["'"$seg_k"'","'"$seg_m"'"]}'
+divergent_campaign="$(psql_q "$admin_session SELECT campaign_id FROM public.save_talkx_campaign_draft(NULL, NULL, '$divergent_creation_key'::uuid, '$divergent_payload'::jsonb);")"
+[[ -n "$divergent_campaign" ]] || fail '(a2) save_talkx_campaign_draft divergente nao devolveu campaign_id'
+
+divergent_first="$(psql_q "SELECT segment_id FROM public.talkx_campaigns WHERE id='$divergent_campaign'")"
+[[ "$divergent_first" == "$seg_k" ]] || fail "(a2) segment_id avulso divergente nao pode prevalecer sobre segment_ids[1] [obtido: $divergent_first]"
+
+divergent_order="$(psql_q "SELECT string_agg(segment_id::text, ',' ORDER BY position) FROM public.talkx_campaign_segments WHERE campaign_id='$divergent_campaign'")"
+[[ "$divergent_order" == "$seg_k,$seg_m" ]] || fail "(a2) linhas ordenadas deveriam seguir segment_ids [obtido: $divergent_order]"
+pass '(a2) segment_id divergente nao prevalece: coluna unica = primeiro segment_ids[1]'
+case_done save_prefers_first_segment_ids
 
 # ---------------------------------------------------------------------------
 # (b) 11 segmentos -> 22023 (teto do aceite).

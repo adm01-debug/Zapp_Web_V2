@@ -53,7 +53,7 @@
 --     IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
 --       RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     SELECT profile.id INTO v_actor_profile_id
 --      FROM public.profiles profile
 --      WHERE profile.user_id = auth.uid()
@@ -63,17 +63,17 @@
 --     IF v_actor_profile_id IS NULL THEN
 --       RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     -- X014: criar/editar rascunho é ato de admin/supervisor.
 --     IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
 --       RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     IF p_payload IS NULL OR jsonb_typeof(p_payload) <> 'object'
 --        OR pg_column_size(p_payload) > 65536 THEN
 --       RAISE EXCEPTION 'invalid_talkx_campaign_payload' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     v_name := NULLIF(btrim(p_payload ->> 'name'), '');
 --     v_message_template := COALESCE(p_payload ->> 'message_template', '');
 --     v_description := p_payload ->> 'description';
@@ -96,7 +96,7 @@
 --     v_owner := NULLIF(p_payload ->> 'owner', '')::uuid;
 --     v_template_version_id := NULLIF(p_payload ->> 'template_version_id', '')::uuid;
 --     v_requested_status := NULLIF(p_payload ->> 'status', '');
---   
+--
 --     -- X032: base legal e carimbo do operador que confirmou. A confirmacao so e gravada
 --     -- quando o operador marca o checkbox (confirm_consent); desmarcar limpa o carimbo.
 --     -- O carimbo original e preservado mais abaixo (update), quando ja existia.
@@ -108,7 +108,7 @@
 --       v_consent_by := NULL;
 --       v_consent_at := NULL;
 --     END IF;
---   
+--
 --     -- X018: ritmo derivado do perfil (clamp na faixa) em vez dos valores crus.
 --     SELECT * INTO v_pace FROM public.talkx_resolve_speed_pace(
 --       NULLIF(p_payload ->> 'speed_profile', ''),
@@ -122,20 +122,20 @@
 --     v_send_interval_max := v_pace.send_interval_max;
 --     v_typing_delay_min := v_pace.typing_delay_min;
 --     v_typing_delay_max := v_pace.typing_delay_max;
---   
+--
 --     -- X018: max_per_minute (nulo = usa o padrão do setting; acima do teto -> 22023).
 --     v_max_per_minute := NULLIF(p_payload ->> 'max_per_minute', '')::smallint;
---   
+--
 --     -- Unificação owner × responsible_id: owner é o ÚNICO responsável.
 --     IF v_owner IS NULL THEN
 --       v_owner := v_actor_profile_id;
 --     END IF;
---   
+--
 --     -- X017: recusa desmarcar a supressão.
 --     IF v_respect_suppression IS NOT TRUE THEN
 --       RAISE EXCEPTION 'talkx_respect_suppression_false_nao_liberado' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     IF v_name IS NULL OR length(v_name) > 200
 --        OR v_objective IS NULL OR v_audience_source IS NULL
 --        OR length(v_message_template) > 4096
@@ -160,7 +160,7 @@
 --        OR (v_max_per_minute IS NOT NULL AND v_max_per_minute < 1) THEN
 --       RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     -- X018: max_per_minute acima do teto por minuto da conexão -> 22023.
 --     IF v_max_per_minute IS NOT NULL
 --        AND v_max_per_minute > COALESCE((SELECT (settings.value)::text::integer
@@ -168,7 +168,7 @@
 --                                          WHERE settings.key = 'max_per_minute_per_connection'), 6) THEN
 --       RAISE EXCEPTION 'talkx_max_per_minute_acima_do_teto' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     IF v_connection_id IS NOT NULL
 --        AND NOT EXISTS (
 --          SELECT 1
@@ -179,12 +179,12 @@
 --        ) THEN
 --       RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     IF p_campaign_id IS NULL THEN
 --       IF p_creation_key IS NULL THEN
 --         RAISE EXCEPTION 'talkx_draft_creation_key_required' USING ERRCODE = '22023';
 --       END IF;
---   
+--
 --       INSERT INTO public.talkx_campaigns (
 --         name, message_template, description, objective, audience_source,
 --         audience_filters, segment_id, template_id, whatsapp_connection_id,
@@ -208,22 +208,22 @@
 --       )
 --       ON CONFLICT (created_by, draft_creation_key) WHERE draft_creation_key IS NOT NULL DO NOTHING
 --       RETURNING * INTO v_campaign;
---   
+--
 --       IF FOUND THEN
 --         RETURN QUERY SELECT v_campaign.id, v_campaign.revision, false;
 --         RETURN;
 --       END IF;
---   
+--
 --       SELECT * INTO v_campaign
 --         FROM public.talkx_campaigns campaign
 --        WHERE campaign.created_by = v_actor_profile_id
 --          AND campaign.draft_creation_key = p_creation_key
 --        FOR UPDATE;
---   
+--
 --       IF NOT FOUND THEN
 --         RAISE EXCEPTION 'talkx_draft_creation_recovery_failed' USING ERRCODE = '40001';
 --       END IF;
---   
+--
 --       IF v_campaign.name IS DISTINCT FROM v_name
 --          OR v_campaign.message_template IS DISTINCT FROM v_message_template
 --          OR v_campaign.description IS DISTINCT FROM v_description
@@ -255,20 +255,20 @@
 --          OR v_campaign.max_per_minute IS DISTINCT FROM v_max_per_minute THEN
 --         RAISE EXCEPTION 'talkx_draft_creation_key_payload_conflict' USING ERRCODE = '40001';
 --       END IF;
---   
+--
 --       RETURN QUERY SELECT v_campaign.id, v_campaign.revision, true;
 --       RETURN;
 --     END IF;
---   
+--
 --     IF p_expected_revision IS NULL OR p_expected_revision < 1 THEN
 --       RAISE EXCEPTION 'talkx_draft_expected_revision_required' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     SELECT * INTO v_campaign
 --       FROM public.talkx_campaigns campaign
 --      WHERE campaign.id = p_campaign_id
 --      FOR UPDATE;
---   
+--
 --     IF NOT FOUND THEN
 --       RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002';
 --     END IF;
@@ -282,13 +282,13 @@
 --     IF v_campaign.revision IS DISTINCT FROM p_expected_revision THEN
 --       RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
 --     END IF;
---   
+--
 --     -- X032: nao "piscar" o carimbo — se ja havia confirmacao, mantem o autor/instante originais.
 --     IF v_confirm_consent AND v_campaign.consent_confirmed_at IS NOT NULL THEN
 --       v_consent_by := v_campaign.consent_confirmed_by;
 --       v_consent_at := v_campaign.consent_confirmed_at;
 --     END IF;
---   
+--
 --     UPDATE public.talkx_campaigns campaign
 --        SET name = v_name,
 --            message_template = v_message_template,
@@ -325,7 +325,7 @@
 --            updated_at = v_now
 --      WHERE campaign.id = v_campaign.id
 --      RETURNING * INTO v_campaign;
---   
+--
 --     RETURN QUERY SELECT v_campaign.id, v_campaign.revision, false;
 --   END;
 --   $function$;
@@ -353,7 +353,7 @@
 --     IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
 --       RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     SELECT profile.id INTO v_actor_profile_id
 --       FROM public.profiles AS profile
 --      WHERE profile.user_id = auth.uid()
@@ -363,16 +363,16 @@
 --     IF v_actor_profile_id IS NULL THEN
 --       RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     -- X014: gerar destinatarios e ato de admin/supervisor.
 --     IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
 --       RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501';
 --     END IF;
---   
+--
 --     IF p_campaign_id IS NULL THEN
 --       RAISE EXCEPTION 'invalid_talkx_audience_snapshot' USING ERRCODE = '22023';
 --     END IF;
---   
+--
 --     SELECT * INTO v_campaign
 --       FROM public.talkx_campaigns AS campaign
 --      WHERE campaign.id = p_campaign_id
@@ -391,7 +391,7 @@
 --     IF p_expected_revision IS NULL OR v_campaign.revision IS DISTINCT FROM p_expected_revision THEN
 --       RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
 --     END IF;
---   
+--
 --     -- Origem lida do PROPRIO rascunho.
 --     IF v_campaign.audience_source = 'segment' AND v_campaign.segment_id IS NOT NULL THEN
 --       v_rules := COALESCE(
@@ -419,9 +419,9 @@
 --         END;
 --       END IF;
 --     END IF;
---   
+--
 --     v_respect := COALESCE(v_campaign.respect_suppression, true);
---   
+--
 --     -- Uma unica avaliacao do motor (X016): classifica e coleta os elegiveis.
 --     WITH classified AS (
 --       SELECT q.id,
@@ -436,26 +436,26 @@
 --            COALESCE(array_agg(classified.id ORDER BY classified.id) FILTER (WHERE classified.eligible), ARRAY[]::uuid[])
 --       INTO v_eligible, v_suppressed, v_skipped_invalid, v_ids
 --       FROM classified;
---   
+--
 --     -- Mesma GUC transacional do replace_talkx_draft_recipients: e o que autoriza os
 --     -- gatilhos de talkx_recipients/talkx_campaigns nesta transacao.
 --     PERFORM set_config('app.talkx_recipient_snapshot_write', 'on', true);
---   
+--
 --     DELETE FROM public.talkx_recipients
 --      WHERE campaign_id = p_campaign_id;
---   
+--
 --     INSERT INTO public.talkx_recipients (campaign_id, contact_id)
 --     SELECT p_campaign_id, eligible_id
 --       FROM unnest(v_ids) AS eligible_id;
---   
+--
 --     GET DIAGNOSTICS v_count = ROW_COUNT;
---   
+--
 --     UPDATE public.talkx_campaigns
 --        SET total_recipients = v_count,
 --            audience_snapshot_at = statement_timestamp(),
 --            updated_at = statement_timestamp()
 --      WHERE id = p_campaign_id;
---   
+--
 --     RETURN jsonb_build_object(
 --       'eligible', v_eligible,
 --       'suppressed', v_suppressed,
@@ -599,7 +599,9 @@ BEGIN
     EXCEPTION WHEN others THEN
       RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
     END;
-    IF v_segment_id IS NULL AND cardinality(v_segment_ids) > 0 THEN
+    IF cardinality(v_segment_ids) > 0 THEN
+      -- Se o cliente legado enviar segment_id junto com segment_ids, a lista
+      -- ordenada vence para manter a coluna unica alinhada ao snapshot.
       v_segment_id := v_segment_ids[1];
     END IF;
   END IF;
