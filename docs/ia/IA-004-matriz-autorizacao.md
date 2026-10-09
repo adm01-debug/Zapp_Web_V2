@@ -298,6 +298,22 @@ não "somente-leitura". Registrar como **lacuna de modelo** (a IA-015 depende di
 | L12 | `ai-transcribe-audio` aceita `SUPABASE_SERVICE_ROLE_KEY` como credencial de bypass | `ai-transcribe-audio/index.ts:67-84` | qualquer vazamento da service key transcreve qualquer áudio dos 3 buckets | média (dívida) |
 | L13 | `ai-transcribe-audio` não valida se a mensagem/contato do áudio é visível ao chamador | `ai-transcribe-audio/index.ts:99-119` (só usa `messageId` como eco) + `:31-61` (download com `service_role`) | qualquer `authenticated` que conheça uma URL de storage válida dos 3 buckets transcreve o áudio (PII de voz) de contato fora do escopo | **alta** |
 
+### 7.1 Confirmação na ponta de 08/10/2026 (cartão SL-067)
+
+Confirmação pedida pelo inventário ("L10 e L12 não confirmados"), feita no código da ponta do dia — com
+prova rodada, não só leitura. Busca pelos caminhos do mesmo defeito em `supabase/functions` e `src`.
+
+| # | Estado em 08/10 | Evidência |
+|---|---|---|
+| L13 | **FECHADO** (era a de gravidade alta) | `_shared/ai-audio-authz.ts:29-82` — `assertMessageVisibleToCaller` pergunta ao banco com o **JWT do chamador** (a RLS de `messages` decide; zero linhas ⇒ 404 idêntico para "não existe" e "não é seu") e devolve a `media_url` do registro; `ai-transcribe-audio/index.ts:107-120` chama essa autorização **antes** do download e passa a usar a `media_url` como única fonte do objeto (`resolveAuthorizedAudioUrl`, `_shared/ai-audio-authz.ts:99-106`). Prova: `deno test … ai-audio-authz.test.ts ai-audio-authz-runtime.test.ts` = **12 testes verdes** (inclui invisível ⇒ 404 e a asserção de que o JWT do chamador viaja na consulta) e o contrato `tests/contracts/ai-endpoints-auth.contract.test.ts:127-150` (autorizar antes de baixar; `media_url` ausente recusa antes do download; só o caminho de usuário aplica a autorização). |
+| L10 | **NÃO É LACUNA** — conceder `service_role` não teria efeito | a RPC é *caller-bound*: `SECURITY DEFINER` que levanta `42501 contact is not visible to current user` quando `auth.uid() IS NULL` (`20261001301230_tab_counts_drop_n.sql:35-39`; mesma guarda desde `20260909200000_harden_inbox_contact_authorization.sql:99-103`). O `EXECUTE` a `service_role` habilitaria só uma chamada que **sempre** falha (origem sem `auth.uid()`), e nenhum consumidor precisa disso: o único chamador é o front autenticado (`src/hooks/chat/useConversationTabCounts.ts:37`), com **0** ocorrências da RPC em `supabase/functions`. Por isso a correção é **não** mexer no GRANT (que é o desenho), e não uma migration. |
+| L12 | **ABERTO, por desenho e fora desta leva** | o caminho de serviço segue reconhecendo a service role key de propósito: `_shared/ai-auth.ts:46-53,95-104` (`requireAiIdentityOrService`, com teto por IP) usado em `ai-transcribe-audio/index.ts:74-77`; o chamador interno é o webhook (`_shared/evolution-webhook-messages.ts:734-737`, `Authorization: Bearer <service role key>`). Trocar por credencial de máquina dedicada exige **segredo novo** e a mudança do chamador — política de segredos/rotação, reservada ao dono na 2ª leva; a própria casa hoje aceita a service key no guard compartilhado (`_shared/cron-secret-auth.ts:75`). Fica como dívida declarada, não como correção deste cartão. |
+
+Outros caminhos de áudio conferidos no mesmo passo (não têm o defeito do L13): `_shared/ai-audio-input.ts:391-426`
+(classify-audio-meme) baixa o objeto **sob a identidade do chamador** (`{ kind: 'user', bearerToken }`,
+a policy de `storage.objects` decide) e falha FECHADO sem identidade; `multiplix-voices/index.ts:183-200`
+confere o grant (`canRecoverAsset` + `revoked_at`/`invalidated_at`) **antes** de assinar a URL.
+
 ---
 
 ## 8. Cenários de teste negativos propostos
