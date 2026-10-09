@@ -71,6 +71,20 @@ describe('TalkXMessageEditor — gramática de variáveis (R2-MOD-062)', () => {
 });
 
 describe('Resumo da campanha — variáveis de personalização (R2-MOD-062)', () => {
+  it('a linha "Objetivo" mostra a descrição do objetivo e mantém a da campanha (X124/T09-012)', () => {
+    render(
+      <TalkXWizardReview
+        ed={reviewEd({ objective: 'vendas', description: 'Produtos em destaque para escritórios' })}
+        campaign={null}
+        onLaunched={() => {}}
+      />,
+    );
+
+    expect(screen.getByText(/Gerar mais vendas e conversões/)).toBeInTheDocument();
+    // A descrição livre da campanha não pode sumir do resumo ao ganhar a do objetivo.
+    expect(screen.getByText(/Produtos em destaque para escritórios/)).toBeInTheDocument();
+  });
+
   it('lista {{nome}} e {{custom_1}} do texto com fallback, em vez de "Nenhuma"', () => {
     render(
       <TalkXWizardReview

@@ -18,7 +18,7 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
@@ -310,25 +310,51 @@ function StepAudience({ ed }: { ed: WizardState }) {
   // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
   // lista vem do hook compartilhado sem alteração.
   const activeSegments = ed.segments.filter((s) => s.status === 'active');
+  // X124 — o nome tem faixa (3–200): o aviso aparece logo abaixo do campo e o
+  // mesmo limite bloqueia "Continuar" no hook (uma régua só, sem divergir).
+  const nameLength = ed.name.trim().length;
+  const nameTooShort = nameLength > 0 && nameLength < CAMPAIGN_NAME_MIN_LENGTH;
+  const nameTooLong = nameLength > CAMPAIGN_NAME_MAX_LENGTH;
+  const selectedObjective = OBJECTIVES.find((o) => o.value === ed.objective);
   return (
     <>
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
           <div>
             <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
-            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
-            {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
-              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            {nameTooShort && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
+            )}
+            {nameTooLong && (
+              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome pode ter no máximo {CAMPAIGN_NAME_MAX_LENGTH} caracteres</p>
             )}
           </div>
           <div>
             <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
-              <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Objetivo" className="mt-1.5 h-10 bg-input/40 border-border/70">
+                {/* O gatilho mostra só ícone + rótulo; a descrição do objetivo
+                    existe nas opções (e na revisão), não na caixa fechada. */}
+                <SelectValue>
+                  {selectedObjective ? (
+                    <span className="flex items-center gap-2">
+                      <selectedObjective.icon className="w-4 h-4 text-muted-foreground" />
+                      {selectedObjective.label}
+                    </span>
+                  ) : ed.objective}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
-                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
+                {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon, description }) => (
                   <SelectItem key={value} value={value}>
-                    <span className="flex items-center gap-2"><ObjectiveIcon className="w-4 h-4 text-muted-foreground" />{label}</span>
+                    <span className="flex items-start gap-2">
+                      <ObjectiveIcon className="mt-0.5 w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="flex min-w-0 flex-col">
+                        <span>{label}</span>
+                        <span className="text-3xs text-muted-foreground">{description}</span>
+                      </span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -351,7 +377,16 @@ function StepAudience({ ed }: { ed: WizardState }) {
             <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
               <SelectTrigger aria-label="Responsável" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue placeholder="Selecione…" /></SelectTrigger>
               <SelectContent>
-                {(ed.owners ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.name || p.email || 'Sem nome'}</SelectItem>)}
+                {(ed.owners ?? []).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {/* X124 — a lista traz o avatar e o nome do perfil; sem nome
+                        cadastrado o e-mail continua sendo a identificação. */}
+                    <span className="flex items-center gap-2">
+                      <InitialsAvatar name={p.name || p.email || '?'} size={24} />
+                      <span className="min-w-0 truncate">{p.name || p.email || 'Sem nome'}</span>
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

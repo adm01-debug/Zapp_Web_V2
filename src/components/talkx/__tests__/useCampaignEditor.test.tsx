@@ -1,4 +1,4 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,6 +22,8 @@ const f = vi.hoisted(() => ({
   // V25 — usuário logado (profiles.id) e segmentos do passo 1.
   profile: { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' } as { id: string; name: string; email: string } | null,
   segments: [] as { id: string; name: string; description: string; status: string; estimated_count: number }[],
+  // X124 — perfis devolvidos pela consulta de responsáveis (admin/supervisor ativos).
+  owners: [] as { id: string; name: string | null; email: string | null }[],
   queryCalls: [] as CapturedQuery[],
 }));
 
@@ -91,8 +93,9 @@ vi.mock('@tanstack/react-query', () => ({
     const data = key === 'wa-connections-talkx' ? f.connections
       : key === 'talkx-audience-contacts' ? f.contacts
         : key === 'talkx-audience-count' ? f.contacts.length
-          : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
-            : undefined;
+          : key === 'talkx-owner-profiles' ? f.owners
+            : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
+              : undefined;
     return { data, isFetching: false };
   },
   useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
@@ -107,6 +110,15 @@ import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTal
 // X017 — spy do cliente Supabase: prova que o persist não faz consulta solta.
 import { supabase } from '@/integrations/supabase/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
+
+// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
+// `hasPointerCapture` no pointerdown que o abre (mesmo ajuste dos testes de
+// paginação do Talk X).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+});
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
 function capturedQuery(key: string): CapturedQuery | undefined {
@@ -844,6 +856,85 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
   it('todo objetivo tem ícone', () => {
     expect(OBJECTIVES).toHaveLength(6);
     for (const objective of OBJECTIVES) expect(objective.icon).toBeDefined();
+  });
+
+  /* ---------------- X124 — nome 3–200, objetivo com descrição, responsável --- */
+
+  it('exige nome com no máximo 200 caracteres para liberar o passo 1 (X124)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+    // Público e conexão válidos: só o comprimento do nome separa os casos.
+    act(() => { result.current.setName('a'.repeat(200)); result.current.toggleContact('contact-1'); });
+    expect(result.current.canProceed[1]).toBe(true);
+
+    act(() => result.current.setName('a'.repeat(201)));
+    expect(result.current.canProceed[1]).toBe(false);
+
+    act(() => result.current.setName('a'.repeat(500)));
+    expect(result.current.canProceed[1]).toBe(false);
+  });
+
+  it('mostra o erro do nome longo abaixo do campo e liga aria-invalid (X124)', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    const input = screen.getByPlaceholderText(/Lançamento Linha Office/i);
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(201) } });
+    expect(screen.getByText(/no máximo 200 caracteres/i)).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(200) } });
+    expect(screen.queryByText(/no máximo 200 caracteres/i)).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('todo objetivo tem descrição curta para o select e para a revisão (X124)', () => {
+    expect(OBJECTIVES.find((o) => o.value === 'vendas')?.description).toBe('Gerar mais vendas e conversões');
+    for (const objective of OBJECTIVES) expect(objective.description.trim().length).toBeGreaterThan(0);
+  });
+
+  it('o select de objetivo mostra a descrição de cada opção (X124)', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    fireEvent.pointerDown(screen.getByRole('combobox', { name: 'Objetivo' }), { button: 0, ctrlKey: false, pointerType: 'mouse' });
+
+    expect(screen.getByRole('option', { name: /Vendas/ })).toHaveTextContent('Gerar mais vendas e conversões');
+    expect(screen.getByRole('option', { name: /Reativação/ })).toHaveTextContent('Trazer de volta clientes inativos');
+  });
+
+  it('a consulta de responsáveis pede só perfis ativos admin/supervisor (X124)', async () => {
+    const builder = {
+      select: vi.fn(() => builder),
+      eq: vi.fn(() => builder),
+      in: vi.fn(() => builder),
+      order: vi.fn(() => builder),
+    };
+    const fromSpy = supabase.from as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockReturnValueOnce(builder);
+
+    renderHook(() => useCampaignEditor(null, vi.fn()));
+    const query = capturedQuery('talkx-owner-profiles');
+    expect(query).toBeDefined();
+    await act(async () => { await query!.queryFn!({ signal: new AbortController().signal }); });
+
+    expect(fromSpy).toHaveBeenCalledWith('profiles');
+    expect(builder.eq).toHaveBeenCalledWith('is_active', true);
+    expect(builder.in).toHaveBeenCalledWith('role', ['admin', 'supervisor']);
+  });
+
+  it('o select Responsável lista avatar e nome dos perfis ativos devolvidos (X124)', () => {
+    f.owners = [
+      { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' },
+      { id: 'profile-2', name: null, email: 'chefe@example.com' },
+    ];
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    fireEvent.pointerDown(screen.getByRole('combobox', { name: 'Responsável' }), { button: 0, ctrlKey: false, pointerType: 'mouse' });
+
+    const option = screen.getByRole('option', { name: /Ana Silva/ });
+    // O avatar é o InitialsAvatar do perfil (iniciais derivadas do nome).
+    expect(within(option).getByLabelText('Ana Silva')).toHaveTextContent('AS');
+    // Sem nome cadastrado, o e-mail continua identificando o perfil.
+    expect(screen.getByRole('option', { name: /chefe@example\.com/ })).toBeInTheDocument();
   });
 });
 
