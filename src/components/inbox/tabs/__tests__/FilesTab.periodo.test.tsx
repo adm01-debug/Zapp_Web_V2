@@ -127,8 +127,20 @@ function renderTab() {
   return { ...view, rerenderTab: () => view.rerender(build()) };
 }
 
+/**
+ * R08: o seletor de período passou a morar no painel do funil. Abrir é idempotente — depois de
+ * escolher um atalho o painel do funil continua aberto (só o popover interno é que fecha).
+ */
+function abrirFunil() {
+  if (!screen.queryByTestId('files-filter-panel')) {
+    fireEvent.click(screen.getByTestId('files-filter-trigger'));
+  }
+  return screen.getByTestId('files-filter-panel');
+}
+
 /** Gatilho do seletor de período (o primeiro botão dentro do filtro; o X vem depois). */
 function gatilhoPeriodo() {
+  abrirFunil();
   return within(screen.getByTestId('files-period-filter')).getAllByRole('button')[0];
 }
 
@@ -160,6 +172,7 @@ function semearPeriodoSoAte(customTo: Date) {
     period: 'custom',
     customFrom: null,
     customTo,
+    senders: [],
   });
 }
 

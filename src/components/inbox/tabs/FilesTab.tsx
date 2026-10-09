@@ -23,14 +23,23 @@ import {
 } from '@/hooks/chat/useForwardMedia';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { forwardLimitError } from '@/lib/forward-limits';
-import { FilesToolbar } from './FilesToolbar';
+import { FilesToolbar, type SenderFilterOption } from './FilesToolbar';
 import { FilesContent } from './FilesContent';
 import { FilesSelectionBar } from './FilesSelectionBar';
 import { FileDetailContent, FileDetailPanel, type FileDetailContentProps } from './FileDetailPanel';
 import { filterMediaItems, sortMediaItems } from './filesSort';
 import { buildPeriodRange, filterByPeriod, type PeriodRange } from '@/lib/filesPeriod';
+import {
+  CONTACT_SENDER_FALLBACK,
+  SELF_SENDER_NAME,
+  TEAM_SENDER_NAME,
+  resolveSenderIdentity,
+  senderProfileName,
+  type SenderIdentity,
+  type SenderProfileMap,
+} from '@/lib/fileSenderIdentity';
 import { EmptyState } from '@/components/ui/empty-state';
-import { CalendarX2 } from 'lucide-react';
+import { CalendarX2, Users } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -81,6 +90,29 @@ const CHIPS: { id: FilesTypeFilter; label: string }[] = [
   { id: 'document', label: 'Docs' },
 ];
 
+/**
+ * R08/S56: chave do remetente no funil — `self`, `contact`, `team` ou `agent:<id>`.
+ * Sai do `kind` da MESMA resolucao do cartao (D01): nada de reimplementar aqui quem e "Voce" ou
+ * "Equipe". O id do atendente e o que separa dois atendentes diferentes, por isso ele entra na
+ * chave.
+ */
+function senderFilterKey(item: ContactMediaItem, identity: SenderIdentity): string {
+  return identity.kind === 'agent' ? `agent:${item.agentId}` : identity.kind;
+}
+
+/**
+ * Rotulo de uma chave que NAO esta no recorte contado (remetente marcado e depois escondido pelo
+ * periodo). Usa os mesmos nomes do cartao (D01) para o painel nunca mostrar duas palavras para a
+ * mesma pessoa.
+ */
+function senderFilterLabel(key: string, contactName: string, profiles: SenderProfileMap): string {
+  if (key === 'self') return SELF_SENDER_NAME;
+  if (key === 'contact') return contactName.trim() || CONTACT_SENDER_FALLBACK;
+  if (key === 'team') return TEAM_SENDER_NAME;
+  const agentId = key.startsWith('agent:') ? key.slice('agent:'.length) : '';
+  return senderProfileName(agentId ? profiles[agentId] : undefined);
+}
+
 interface FilesTabProps {
   contactId: string;
   contactName: string;
@@ -113,6 +145,21 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   // download tambem e resolvida uma vez aqui e decide "baixar" x "cadeado" no cartao.
   const { profiles: senderProfiles } = useMediaSenderProfiles(items.map((item) => item.agentId));
   const { canDownload } = useDownloadPermission();
+
+  // R08/S56: quem enviou cada arquivo, pela MESMA funcao que o cartao usa (D01) — aqui ela serve
+  // ao funil (rotulo, chave e contagem), la ao "Enviado por". `contact` recebe o nome da conversa
+  // porque a identidade do contato e derivada dele (nao ha consulta nova).
+  const currentUserId = profile?.id ?? null;
+  const resolveIdentity = useCallback(
+    (item: ContactMediaItem) =>
+      resolveSenderIdentity({
+        item,
+        currentUserId,
+        contact: { name: contactName },
+        profiles: senderProfiles,
+      }),
+    [currentUserId, contactName, senderProfiles],
+  );
 
   // F05 (F01): o período escolhido vira o intervalo [de, até] no fuso do navegador. `null` =
   // "Qualquer data" — nada muda em relação ao comportamento anterior ao filtro.
@@ -223,11 +270,45 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   // Com período ativo a contagem é derivada dos itens carregados: erro de RPC não a atinge.
   const displayCountsError = periodCounts ? false : countsError;
 
+  // R08/S56: opcoes do funil de remetente. A contagem usa o MESMO recorte dos chips — com
+  // periodo ativo, o recorte do periodo; tipo e busca continuam fora (a RPC conta por TIPO, nao
+  // por remetente, entao dos itens carregados e a unica contagem honesta). Uma chave MARCADA
+  // nunca some do painel: se o periodo em vigor nao tem mais nenhum arquivo dela, ela continua
+  // listada com 0, que e o que permite ao operador desmarcar.
+  const senderCountBase = periodItems ?? items;
+  const senderOptions = useMemo<SenderFilterOption[]>(() => {
+    const porChave = new Map<string, SenderFilterOption>();
+    for (const item of senderCountBase) {
+      const identity = resolveIdentity(item);
+      const key = senderFilterKey(item, identity);
+      const atual = porChave.get(key);
+      if (atual) atual.count += 1;
+      else porChave.set(key, { key, label: identity.name, count: 1 });
+    }
+    for (const key of view.senders) {
+      if (porChave.has(key)) continue;
+      porChave.set(key, { key, label: senderFilterLabel(key, contactName, senderProfiles), count: 0 });
+    }
+    // Ordem do cartao: Voce, contato, atendentes (por nome) e Equipe no fim.
+    const peso = (key: string) => (key === 'self' ? 0 : key === 'contact' ? 1 : key === 'team' ? 3 : 2);
+    return [...porChave.values()].sort(
+      (a, b) => peso(a.key) - peso(b.key) || a.label.localeCompare(b.label, 'pt-BR'),
+    );
+  }, [senderCountBase, view.senders, resolveIdentity, contactName, senderProfiles]);
+
   // Etapa 43: filtro/ordenacao num modulo proprio (testavel) — "Maiores" põe tamanho
   // desconhecido no fim e desempata por data e id.
+  // R08/S56: o recorte por REMETENTE entra junto de tipo/busca/periodo — os quatro valem ao
+  // mesmo tempo sobre os mesmos itens.
+  const senderFiltered = useMemo(
+    () => (view.senders.length === 0
+      ? items
+      : items.filter((item) => view.senders.includes(senderFilterKey(item, resolveIdentity(item))))),
+    [items, view.senders, resolveIdentity],
+  );
   const filtered = useMemo(
-    () => sortMediaItems(filterMediaItems(items, view.typeFilter, view.search, periodRange), view.sort),
-    [items, view.typeFilter, view.search, periodRange, view.sort],
+    () => sortMediaItems(filterMediaItems(senderFiltered, view.typeFilter, view.search, periodRange), view.sort),
+    [senderFiltered, view.typeFilter, view.search, periodRange, view.sort],
   );
 
   // Enquanto a varredura do período não acabou e nada casou ainda, o recorte pode estar só nas
@@ -235,6 +316,16 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const showSkeleton = isLoading || (periodScanning && filtered.length === 0);
   const periodEmpty = !isLoading && !showSkeleton && !isError
     && periodItems !== null && periodItems.length === 0;
+
+  // R08/S56: o remetente e o UNICO filtro que o `FilesContent` nao conhece — sem isto, um funil
+  // que nao casa nada cairia no "Nenhum arquivo nesta conversa" (mentira: os arquivos existem, o
+  // recorte e que esta estreito). So entra quando busca e tipo estao no "todos", porque esses
+  // dois tem mensagem propria no `FilesContent` e limpam so o seu proprio recorte.
+  const senderEmpty = !periodEmpty && !showSkeleton && !isError
+    && view.senders.length > 0
+    && view.search.trim() === ''
+    && view.typeFilter === 'all'
+    && filtered.length === 0;
 
   const visibleIds = useMemo(() => filtered.map((item) => item.id), [filtered]);
   const selection = useFilesSelection(visibleIds, contactId);
@@ -351,9 +442,17 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
 
   return (
     <div className="flex flex-col gap-3" data-testid="files-tab">
-      {/* Etapa 14: título e chips na mesma linha, contagem honesta, sem subtítulo. */}
+      {/* Etapa 14: título e chips na mesma linha, contagem honesta. R08/S55: título do mockup
+          ("Arquivos compartilhados") com o subtítulo logo abaixo, no mesmo bloco. */}
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-base font-semibold text-foreground">Arquivos</h2>
+        <div className="min-w-0">
+          {/* Medidas do mockup (docs/design/PLANO_INBOX_360_CONVERSA.md §2.6, aba Arquivos):
+              titulo 18/700 e subtitulo 13 muted. */}
+          <h2 className="text-lg font-bold text-foreground">Arquivos compartilhados</h2>
+          <p className="text-[13px] text-muted-foreground" data-testid="files-subtitle">
+            Todos os arquivos, mídias e documentos desta conversa.
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {CHIPS.map((chip) => (
             <button
@@ -408,6 +507,9 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         onClearCustom={view.clearCustomDates}
         filteredCount={filtered.length}
         totalCount={items.length}
+        senderOptions={senderOptions}
+        selectedSenders={view.senders}
+        onToggleSender={view.toggleSender}
         viewMode={view.viewMode}
         onViewModeChange={view.setViewMode}
         columns={view.columns}
@@ -445,6 +547,17 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
               description="Ajuste o período ou veja todos os arquivos da conversa."
               actionLabel="Limpar período"
               onAction={view.clearPeriod}
+              size="sm"
+            />
+          ) : senderEmpty ? (
+            /* R08/S56: nada casa com o funil de remetente — diz o que aconteceu e desfaz o
+               recorte (o `FilesContent` contaria "nenhum arquivo nesta conversa"). */
+            <EmptyState
+              icon={Users}
+              title="Nenhum arquivo deste remetente"
+              description="Ajuste o funil ou veja todos os arquivos da conversa."
+              actionLabel="Ver todos os remetentes"
+              onAction={view.clearSenders}
               size="sm"
             />
           ) : (

@@ -252,3 +252,63 @@ describe('useFilesViewState — filtro por data (F03)', () => {
     expect(result.current.customFrom).toBeNull();
   });
 });
+
+describe('useFilesViewState — filtro de remetente (R08/S56)', () => {
+  it('o padrao e "todos os remetentes": lista vazia', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    expect(result.current.senders).toEqual([]);
+    expect(DEFAULT_FILES_VIEW_SESSION.senders).toEqual([]);
+  });
+
+  it('toggleSender marca e desmarca a mesma chave, sem repetir nem aceitar chave vazia', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+
+    act(() => result.current.toggleSender('self'));
+    act(() => result.current.toggleSender('agent:p-2'));
+    expect(result.current.senders).toEqual(['self', 'agent:p-2']);
+    // Marcar a MESMA chave de novo desmarca (e nao cria duplicata).
+    act(() => result.current.toggleSender('self'));
+    act(() => result.current.toggleSender('agent:p-2'));
+    expect(result.current.senders).toEqual([]);
+
+    act(() => result.current.toggleSender('   '));
+    expect(result.current.senders).toEqual([]);
+  });
+
+  it('clearSenders volta para todos (o botao do estado vazio do funil)', () => {
+    const { result } = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => result.current.toggleSender('contact'));
+    act(() => result.current.toggleSender('team'));
+    expect(result.current.senders).toHaveLength(2);
+
+    act(() => result.current.clearSenders());
+    expect(result.current.senders).toEqual([]);
+  });
+
+  it('o remetente NAO vai para o localStorage e sobrevive a remontagem na mesma conversa', () => {
+    const primeiro = renderHook(() => useFilesViewState(USER, CONTACT));
+    act(() => primeiro.result.current.toggleSender('contact'));
+
+    const stored = localStorage.getItem(filesViewStorageKey(USER));
+    if (stored) {
+      expect(stored).not.toContain('contact');
+      expect(JSON.parse(stored)).toEqual({ v: 1, viewMode: 'grid', columns: 4 });
+    }
+    primeiro.unmount();
+
+    const remontado = renderHook(() => useFilesViewState(USER, CONTACT));
+    expect(remontado.result.current.senders).toEqual(['contact']);
+  });
+
+  it('trocar de contato com o hook montado zera o filtro de remetente', () => {
+    const { result, rerender } = renderHook(
+      ({ contactId }) => useFilesViewState(USER, contactId),
+      { initialProps: { contactId: CONTACT } },
+    );
+    act(() => result.current.toggleSender('agent:p-2'));
+    expect(result.current.senders).toEqual(['agent:p-2']);
+
+    rerender({ contactId: 'contact-9' });
+    expect(result.current.senders).toEqual([]);
+  });
+});

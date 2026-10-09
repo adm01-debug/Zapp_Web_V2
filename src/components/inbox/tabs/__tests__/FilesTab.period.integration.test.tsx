@@ -134,8 +134,12 @@ function renderTab() {
   return { ...view, rerenderTab: () => view.rerender(build()) };
 }
 
-/** Gatilho do seletor de periodo (o primeiro botao dentro do filtro; o X vem depois). */
+/** Gatilho do seletor de periodo (o primeiro botao dentro do filtro; o X vem depois).
+ *  R08: o seletor agora mora no painel do funil — abrir o painel antes e idempotente. */
 function gatilhoPeriodo() {
+  if (!screen.queryByTestId('files-filter-panel')) {
+    fireEvent.click(screen.getByTestId('files-filter-trigger'));
+  }
   return within(screen.getByTestId('files-period-filter')).getAllByRole('button')[0];
 }
 
@@ -157,6 +161,7 @@ function semearPeriodo(customFrom: Date | null, customTo: Date | null) {
     period: 'custom',
     customFrom,
     customTo,
+    senders: [],
   });
 }
 
