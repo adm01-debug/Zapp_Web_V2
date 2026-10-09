@@ -131,8 +131,18 @@ globalThis.MediaStream = class MediaStream {
   getTracks() { return []; }
 } as unknown as typeof globalThis.MediaStream;
 
-vi.mock('sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+// t_49c3ebaa — o duble do toast é a NOSSA fachada (`@/lib/lazyToast`), não o
+// 'sonner'. A telefonia saiu do import estático do sonner justamente para a lib
+// (~9 KB gzip) não entrar no grafo inicial: quem pede a lib é a fachada, por
+// `import()`. Dublar o 'sonner' prendia este teste ao instante em que a fachada
+// resolve esse `import()`: com a fachada mais lazy a chamada caía FORA do duble
+// (o `import()` seguinte nem sempre passa pelo mock) e o teste ficava vermelho
+// — foi o que quebrou o lote de 09/10 em cima da `dia`. O contrato que este
+// arquivo guarda é o do hook (QUAL toast, com QUE mensagem), que é o que a
+// fachada expõe; o encaminhamento dela ao sonner tem teste próprio em
+// `src/lib/__tests__/lazyToast.test.ts`.
+vi.mock('@/lib/lazyToast', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
 
 // T20: a eleição de aba vem do `tabLeaderStore`. Aqui ele é MOCKADO (snapshot
@@ -163,7 +173,7 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
 
 import { useSipClient } from '../communication/useSipClient';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 
 /** Deixa a cadeia assíncrona do sink (contato + RPC) rodar até o fim. */
 async function escoar(voltas = 12): Promise<void> {
