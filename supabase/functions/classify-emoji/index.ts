@@ -24,7 +24,8 @@ const FUNCTION_NAME = "classify-emoji";
  *   - 'ok':               categoria válida do provedor (inclusive 'outros');
  *   - 'unknown':          não havia entrada para classificar;
  *   - 'input_error':      a entrada não pôde ser preparada (imagem recusada);
- *   - 'low_confidence':   o provedor respondeu sem categoria da lista;
+ *   - 'low_confidence':   o provedor respondeu sem categoria da lista ou sem
+ *                         conteúdo algum (EMPTY_RESPONSE);
  *   - 'provider_error':   falha técnica do provedor/roteamento (HTTP, timeout,
  *                         orçamento, circuito, nenhum candidato à modalidade);
  *   - 'unexpected_error': exceção fora dos caminhos tratados.
@@ -194,9 +195,19 @@ Categorias: ${EMOJI_CATEGORIES.join(', ')}`;
       return jsonResponse({ category: 'outros', state: 'provider_error', error_code: gen.errorCode ?? 'PROVIDER_ERROR' }, 200, req);
     }
 
+    // IA-132: resposta SEM conteúdo (choices ausente/vazio, item sem
+    // `message.content`, ou content vazio/só espaços) NÃO é o modelo escolhendo
+    // 'outros' — é resposta VAZIA. Antes, `(content || 'outros')` transformava
+    // isso em `{ category: 'outros', state: 'ok' }`, uma conclusão FALSA.
     const content = (gen.data.choices as Array<{ message: { content: string } }>)?.[0]?.message?.content;
-    const rawCategory = (content || 'outros')
-      .trim().toLowerCase().replace(/[^a-záàãâéêíóôõúç ]/g, '').trim();
+    const conteudoBruto = typeof content === 'string' ? content.trim() : '';
+    if (!conteudoBruto) {
+      log.warn('Provedor respondeu sem conteúdo: resposta vazia (EMPTY_RESPONSE)');
+      return jsonResponse({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' }, 200, req);
+    }
+
+    const rawCategory = conteudoBruto
+      .toLowerCase().replace(/[^a-záàãâéêíóôõúç ]/g, '').trim();
 
     // IA-132: categoria fora da lista NÃO é o mesmo 'outros' de quando o modelo
     // escolhe 'outros' — é resposta sem categoria utilizável (`low_confidence`).
