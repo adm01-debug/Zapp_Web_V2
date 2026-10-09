@@ -326,7 +326,7 @@ migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
 # F89/TL-048: cast explicito do ENUM no UPDATE de conclusao das DUAS RPCs de drenagem. Sem ela
 # os casos (8)/(9) deste arquivo falham com 42804 no passo em que a drenagem CONCLUI o disparo.
-migration "20261009005511_multiplix_drain_enum_cast.sql"
+migration "20261009011641_multiplix_drain_enum_cast.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -874,7 +874,7 @@ drena_aberta="$(psql_test -Atqc "$service_session SELECT public.complete_multipl
 # recusa (42804: column "status" is of type multiplix_dispatch_status but expression is of type
 # text) em TODA chamada que chegava ao UPDATE — o passo em que a RPC CONCLUI o disparo. A fila
 # esvaziava e o disparo ficava 'sending' para sempre, com o cron reinvocando. Conserto:
-# 20261009005511_multiplix_drain_enum_cast.sql (cast explicito nas DUAS funcoes, o mesmo padrao
+# 20261009011641_multiplix_drain_enum_cast.sql (cast explicito nas DUAS funcoes, o mesmo padrao
 # que o F59 usou em transition_multiplix_dispatch). Sem essa migration os casos (8) e (9)
 # falham com o 42804.
 # A migration troca so o CORPO por CREATE OR REPLACE: a ACL nao pode ter mudado. service_role
@@ -992,11 +992,14 @@ ack_nao="$(psql_test -Atqc "$service_session SELECT public.record_multiplix_item
 # que o rollback devolveu o corpo anterior e COMPORTAMENTAL, nao texto de deparse: com o
 # corpo antigo a drenagem volta a levantar o 42804 e nenhum disparo conclui. Reaplicar a
 # migration devolve o conserto (idempotencia).
-migration_f89="$migrations_dir/20261009005511_multiplix_drain_enum_cast.sql"
+migration_f89="$migrations_dir/20261009011641_multiplix_drain_enum_cast.sql"
 [[ -f "$migration_f89" ]] || fail 'BLOCO ROLLBACK: arquivo da migration ausente'
 rb_sql="${TMPDIR:-$repo_root/.tmp}/rollback-f89.sql"
 mkdir -p "$(dirname "$rb_sql")"
-sed -n '1,5p' "$migration_f89" | sed -n 's/^-- Rollback: //p' > "$rb_sql"
+# O bloco vem do PROPRIO arquivo: as linhas entre o marcador "-- Rollback (SQL executavel, na
+# ordem):" e o "--" que o fecha, sem o prefixo "--   " (mesmo molde da
+# 20261006141643_ai_jobs_efeito_externo_lease.sql, linhas 1-11).
+sed -n '/^-- Rollback (SQL executavel, na ordem):/,/^--$/p' "$migration_f89" | sed '1d;$d' | sed 's/^--   //' > "$rb_sql"
 grep -q 'CREATE OR REPLACE FUNCTION public.complete_multiplix_dispatch_if_items_drained' "$rb_sql" \
   || fail 'BLOCO ROLLBACK: a linha -- Rollback: nao traz a recriacao das DUAS drenagens'
 # Fixture: disparo em 'sending' com a fila JA terminal (um item 'sent'), pronto para drenar.
@@ -1027,7 +1030,7 @@ traz_de_volta="$(psql_test -Atqc "$service_session SELECT public.complete_multip
   || fail "BLOCO ROLLBACK: depois do rollback a drenagem tinha de voltar a levantar o 42804 (veio: $traz_de_volta)"
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'sending' ]] \
   || fail 'BLOCO ROLLBACK: o disparo concluiu com o corpo ANTIGO no lugar (o rollback nao restaurou a funcao)'
-migration "20261009005511_multiplix_drain_enum_cast.sql"
+migration "20261009011641_multiplix_drain_enum_cast.sql"
 [[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_rb')::text;" 2>&1 || true)" == 'true' ]] \
   || fail 'BLOCO ROLLBACK: reaplicar a migration nao devolveu o conserto'
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'completed' ]] \
