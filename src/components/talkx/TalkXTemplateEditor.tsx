@@ -16,6 +16,7 @@ import {
   useTalkXTemplateStats,
   pointsDelta,
   TALKX_TEMPLATE_STATS_PERIODS,
+  TALKX_STATS_MIN_BASE,
 } from '@/hooks/integrations/useTalkXTemplateStats';
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
 import { useTalkX } from '@/hooks/integrations/useTalkX';
@@ -118,7 +119,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const enviosDelta = (() => {
     const cur = templateStats?.sent;
     const prev = templateStats?.previous?.sent;
-    if (cur == null || prev == null || prev < 50 || cur < 50) return null;
+    if (cur == null || prev == null || prev < TALKX_STATS_MIN_BASE || cur < TALKX_STATS_MIN_BASE) return null;
     const variacao = ((cur - prev) / prev) * 100;
     return { text: `${variacao >= 0 ? '↑' : '↓'} ${fmtDelta1(variacao)}%`, tone: variacao >= 0 ? 'text-success' : 'text-destructive' };
   })();
@@ -401,7 +402,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
       <div className="flex-1 min-w-0 space-y-3">
         {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior" />
+          <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
           <KpiCard icon={Check} color="green" index={1} label="Templates aprovados" value={libStats?.approved ?? null} bars={libStats?.approved_series ?? null} hint={libStats?.approved != null && libStats.total ? `${Math.round((libStats.approved / libStats.total) * 100)}% do total` : 'Aprovados entre os templates'} />
           <KpiCard icon={BarChart3} color="violet" index={2} label="Melhor taxa de resposta" value={libStats?.best_reply?.reply_rate_pct ?? null} suffix="%" hint={libStats?.best_reply?.name ? `Template: ${libStats.best_reply.name}${libStats.best_reply.version ? ` v${libStats.best_reply.version}` : ''}` : 'Ranking só com base mínima de enviados'} />
           <KpiCard icon={Image} color="amber" index={3} label="Templates com mídia" value={libStats?.with_media ?? null} bars={libStats?.with_media_series ?? null} hint={libStats?.with_media != null && libStats.total ? `${Math.round((libStats.with_media / libStats.total) * 100)}% do total` : 'Templates com mídia'} />

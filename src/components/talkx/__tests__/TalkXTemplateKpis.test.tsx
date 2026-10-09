@@ -174,6 +174,21 @@ describe('X091 — KPIs das telas 04 e 05 nas RPCs', () => {
     expect(h.rpc).toHaveBeenCalledWith('talkx_template_stats', expect.objectContaining({ p_template_id: 't1' }));
   });
 
+  it('tela 05: "Total de Templates" mostra o total acumulado, mas compara criados do mês (12 vs 10 = +20%, não +380%)', async () => {
+    render(<TalkXTemplateEditor templates={h.templates} isLoading={false} editing={h.templates[0]} onClose={vi.fn()} />, { wrapper });
+
+    // O valor continua sendo o total acumulado devolvido pela RPC da biblioteca (48).
+    const label = await screen.findByText('Total de Templates');
+    const card = label.closest('[data-testid="kpi-card"]') as HTMLElement;
+    expect(card).toBeTruthy();
+    await waitFor(() => expect(within(card).getByText('48')).toBeTruthy());
+
+    // A variação compara grandezas iguais: criados no mês atual (12) vs. mês anterior (10) = +20%.
+    expect(within(card).getByTestId('kpi-comparison').textContent).toContain('+20%');
+    // Nunca o total (48) contra os criados do mês anterior (10), que daria +380%.
+    expect(within(card).queryByText(/380/)).toBeNull();
+  });
+
   it('tela 05: trocar de template na biblioteca troca os números do card', async () => {
     render(<TalkXTemplateEditor templates={h.templates} isLoading={false} editing={h.templates[0]} onClose={vi.fn()} />, { wrapper });
     await waitFor(() => expect(secaoDesempenho().getByText('1.250')).toBeTruthy());
