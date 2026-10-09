@@ -10,6 +10,7 @@ import {
   casaPadrao,
   orfaosNode,
   padroesNodeDeWorkflow,
+  padroesNodeDosWorkflows,
   suitesNodeOrfas,
 } from './check-test-inventory.mjs';
 
@@ -84,6 +85,24 @@ test('R2-INF-013: a arvore atual nao tem suite Node fora dos workflows nem da AL
   // nomeada na ALLOWLIST_NODE. Sem isso, uma suite nova nasce sem passo nenhum e o
   // inventario continua dizendo OK — foi o defeito desta tarefa.
   assert.deepEqual(suitesNodeOrfas(), []);
+});
+
+test('N-018: a suite do executor de banco roda em bloco run: (nao basta a ALLOWLIST_NODE)', () => {
+  // N-018: a suite do executor da suite de banco (R2-INF-010) vivia SO na ALLOWLIST_NODE —
+  // nenhum bloco `run:` a citava, entao nenhum PR executava o contrato da resposta do `mcp_exec`.
+  // Pela ALLOWLIST_NODE o inventario ficava verde sem a suite rodar: por isso o pino exige o
+  // bloco `run:`. O casamento e' contra o caminho REAL (glob ou caminho exato), entao promover
+  // a suite para outro workflow/globo continua valendo.
+  const ALVO = 'scripts/db-tests/run-all.unit.mjs';
+  assert.equal(
+    ALLOWLIST_NODE.has(ALVO),
+    false,
+    `${ALVO} voltou para a ALLOWLIST_NODE: a suite do executor de banco ficaria sem passo no CI`,
+  );
+  assert.ok(
+    padroesNodeDosWorkflows().some((padrao) => casaPadrao(ALVO, padrao)),
+    `${ALVO} nao e citada em nenhum bloco \`run:\` de workflow — a suite do executor de banco nao roda em PR nenhum`,
+  );
 });
 
 test('R2-INF-013: a ALLOWLIST_NODE nao guarda entrada morta', () => {

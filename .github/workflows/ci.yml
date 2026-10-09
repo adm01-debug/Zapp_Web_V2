@@ -91,6 +91,12 @@ jobs:
           scripts/db-audit/crm-sync-outbox-contract.test.mjs
           scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
 
+      # N-018: a suite do executor da suite de banco prova o contrato da resposta do
+      # `mcp_exec` (runner de verdade em child process, `fetch` stubbed) e rodava em
+      # lugar nenhum — ela vivia so na ALLOWLIST_NODE do check-test-inventory.
+      - name: 🧪 Run db-tests runner contracts (R2-INF-010)
+        run: node --test scripts/db-tests/*.unit.mjs
+
       - name: 🐹 Setup Go for egress-proxy contracts
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
