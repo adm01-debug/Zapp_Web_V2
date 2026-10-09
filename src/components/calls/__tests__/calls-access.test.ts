@@ -26,6 +26,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { midiaUsaSrtp } from '@/lib/calls/adapters/SipCallAdapter';
+
 const SRC = join(process.cwd(), 'src');
 
 /** Superfície de telefonia: é aqui que a regra de acesso vale. */
@@ -228,5 +230,56 @@ describe('Telefonia — asserções pendentes, com a etapa dona', () => {
 
 describe('Telefonia — lacunas herdadas (não cobertas pelas 100 etapas)', () => {
   it.todo('espera, transferência e conferência de chamada');
-  it.todo('enforcement de SRTP explícito nas opções do SessionDescriptionHandler');
+});
+
+/**
+ * SL-002: o `it.todo` de "enforcement de SRTP explícito nas opções do
+ * SessionDescriptionHandler" virou teste.
+ *
+ * O `it.todo` era honesto quanto à lacuna: as opções de mídia pediam só áudio
+ * (`{ audio: true, video: false }`) e **nenhum** ponto do app olhava o SDP
+ * negociado — uma sessão em RTP claro (`RTP/AVP`) seguia para o áudio remoto
+ * como se fosse segura. O que se prova aqui é o veredito sobre o SDP (teste de
+ * comportamento, com a função real) e a ligação dele no motor (a fonte, que é o
+ * estilo deste arquivo). O comportamento fim-a-fim — a sessão em claro NÃO
+ * ficar "ativa" — está em `src/lib/calls/adapters/__tests__/CallEngine.test.ts`.
+ */
+describe('Telefonia — SRTP explícito (SL-002)', () => {
+  const ADAPTER_SIP = join(SRC, 'lib/calls/adapters/SipCallAdapter.ts');
+  const MOTOR = join(SRC, 'lib/calls/adapters/CallEngine.ts');
+  const CONEXAO = join(SRC, 'hooks/sip/useSipConnection.ts');
+
+  it('o perfil do SDP decide: SAVP (DTLS/SDES-SRTP) segue, RTP/AVP (em claro) não', () => {
+    expect(midiaUsaSrtp('v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n')).toBe(true); // WebRTC
+    expect(midiaUsaSrtp('v=0\r\nm=audio 9 RTP/SAVPF 0 8\r\n')).toBe(true); // SDES-SRTP
+    expect(midiaUsaSrtp('v=0\r\nm=audio 49170 RTP/AVP 0\r\n')).toBe(false); // RTP em claro
+    // Basta UMA mídia em claro para a sessão inteira não valer.
+    expect(midiaUsaSrtp('v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\nm=video 9 RTP/AVP 96\r\n')).toBe(false);
+    // Sem `m=` não houve negociação de mídia: não há o que atestar.
+    expect(midiaUsaSrtp('v=0\r\n')).toBe(false);
+  });
+
+  it('o veredito sai do SDP NEGOCIADO da sessão (DTLS vem do que foi trocado, não da config)', () => {
+    const adapter = readFileSync(ADAPTER_SIP, 'utf8');
+    expect(adapter).toMatch(/export function midiaUsaSrtp/);
+    expect(adapter).toMatch(/remoteDescription\?\.sdp/);
+    expect(adapter).toMatch(/midiaCriptografada\(session: Session\): boolean \| null/);
+  });
+
+  it('o motor consulta o adapter antes de marcar a chamada como atendida', () => {
+    const motor = readFileSync(MOTOR, 'utf8');
+    expect(motor).toMatch(/this\.adapter\.midiaCriptografada\(session\)/);
+    // A consulta precede o bookkeeping: sessão em claro não pode aparecer como
+    // "ativa" nem virar chamada atendida no banco.
+    expect(motor.indexOf('midiaCriptografada(session)')).toBeLessThan(
+      motor.indexOf("setStatus('active')"),
+    );
+  });
+
+  it('as opções do SessionDescriptionHandler exigem o transporte cifrado (RTCP muxado + bundle)', () => {
+    const conexao = readFileSync(CONEXAO, 'utf8');
+    expect(conexao).toMatch(/sessionDescriptionHandlerFactoryOptions/);
+    expect(conexao).toMatch(/peerConnectionConfiguration:\s*\{[^}]*rtcpMuxPolicy:\s*'require'/);
+    expect(conexao).toMatch(/peerConnectionConfiguration:\s*\{[^}]*bundlePolicy:\s*'max-bundle'/);
+  });
 });
