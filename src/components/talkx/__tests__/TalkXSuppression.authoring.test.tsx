@@ -1,7 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// X181: o menu ⋮ da linha (Radix DropdownMenu) precisa das mesmas APIs que o
+// jsdom não implementa nos testes do catálogo (medida do trigger e rolagem).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+  if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
+});
 
 // V04 (plano Talk X V3, achado P1-4): a autoria da supressão tem de sair do
 // perfil ativo. blocked_by e removed_by referenciam profiles(id) e o id do
@@ -68,7 +77,7 @@ vi.mock('@/integrations/supabase/client', () => {
           });
           self.update = (payload: Record<string, unknown>) => {
             updated.push(payload);
-            return { eq: () => Promise.resolve({ error: null }) };
+            return { in: () => Promise.resolve({ error: null }) };
           };
           return self;
         }
@@ -83,6 +92,11 @@ vi.mock('@/lib/supabaseHelpers', () => ({
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: null });
+    },
+    // X181: a remoção/edição da linha é um UPDATE por ids.
+    update: (payload: Record<string, unknown>) => {
+      updated.push(payload);
+      return { in: () => Promise.resolve({ error: null }) };
     },
   }),
 }));
@@ -136,10 +150,12 @@ describe('TalkXSuppression · autoria (V04)', () => {
   it('grava removed_by com o id do perfil ativo, sem nova ida ao auth nem a profiles', async () => {
     renderView();
 
-    const rowButtons = await screen.findAllByRole('button', { name: /Remover/i });
-    fireEvent.click(rowButtons[0]);
-    const confirmButtons = await screen.findAllByRole('button', { name: /^Remover$/i });
-    fireEvent.click(confirmButtons[confirmButtons.length - 1]);
+    // X181: a remoção sai do menu ⋮ da linha e confirma no modal do kit.
+    const rowMenus = await screen.findAllByRole('button', { name: /^Ações de / });
+    fireEvent.keyDown(rowMenus[0], { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remover da lista' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Remover$/i }));
 
     await waitFor(() => expect(updated).toHaveLength(1));
     expect(updated[0]).toMatchObject({ removed_by: 'profile-1' });
