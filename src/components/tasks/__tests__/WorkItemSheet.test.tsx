@@ -6,7 +6,7 @@
  * e abrir por `?task=` não faziam absolutamente nada.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import {
@@ -16,7 +16,9 @@ import {
   makeWrapper,
   resetSupabaseMock,
   setSelectResult,
+  supabaseMock,
 } from '@/test/mocks/tarefas';
+import { createQueryBuilder } from '@/test/mocks/supabase';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { WorkItemSheet } from '@/components/tasks/shared/WorkItemSheet';
 import { TasksModule } from '@/components/tasks/TasksModule';
@@ -101,7 +103,7 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     expect(p.onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('25: Salvar só habilita com mudança, salva o patch e fecha', () => {
+  it('25: Salvar só habilita com mudança, salva o patch e fecha', async () => {
     const p = props();
     render(<WorkItemSheet {...p} />);
 
@@ -113,7 +115,9 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
 
     fireEvent.click(screen.getByTestId('sheet-salvar'));
     expect(p.onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' });
-    expect(p.onOpenChange).toHaveBeenCalledWith(false);
+    // R2-MOD-051: o fechamento agora só acontece depois da escrita. Com o spy
+    // resolvendo na hora (vi.fn() -> undefined), o close chega no microtask.
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
   });
 
   it('24: após preencher o motivo, salvar leva o motivo pelo move', async () => {
@@ -252,6 +256,97 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
   });
 });
 
+/**
+ * R2-MOD-051 — Salvar fecha com escritas pendentes e divide a edição em
+ * operações concorrentes.
+ *
+ * O contrato provado aqui é o do próprio componente: as props de escrita
+ * devolvem a promessa da gravação, e o Sheet só fecha quando ela conclui. Um
+ * erro mantém o formulário aberto com tudo que foi digitado, e o estado não sai
+ * em paralelo com os campos.
+ */
+describe('WorkItemSheet — R2-MOD-051 (Salvar espera a escrita)', () => {
+  beforeEach(() => cleanup());
+  afterEach(() => cleanup());
+
+  it('mantém o formulário aberto e bloqueia novo envio enquanto a escrita não volta', async () => {
+    let liberar!: () => void;
+    const escrita = new Promise<void>((resolve) => { liberar = resolve; });
+    const onSave = vi.fn(() => escrita);
+    const p = props({ onSave });
+    render(<WorkItemSheet {...p} />);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' });
+    // A resposta ainda não chegou: o Salvar fica travado e a tela não fecha.
+    await waitFor(() => expect((screen.getByTestId('sheet-salvar') as HTMLButtonElement).disabled).toBe(true));
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+    expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Ligar amanhã');
+
+    await act(async () => { liberar(); });
+
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('falha na escrita mantém o formulário aberto com os campos digitados', async () => {
+    const onSave = vi.fn(() => Promise.reject(new Error('falha de rede')));
+    const p = props({ onSave });
+    render(<WorkItemSheet {...p} />);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Outro título' } });
+    fireEvent.click(screen.getByTestId('sheet-prio-urgent'));
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(await screen.findByTestId('sheet-erro-salvar')).toBeTruthy();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+    // O rascunho continua na tela para a retentativa.
+    expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Outro título');
+    expect(screen.getByTestId('sheet-prio-urgent').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('estado e campos não saem em duas escritas concorrentes', async () => {
+    let liberarMove!: () => void;
+    const onMove = vi.fn(() => new Promise<void>((resolve) => { liberarMove = resolve; }));
+    const onSave = vi.fn();
+    const p = props({ onMove, onSave });
+    render(<WorkItemSheet {...p} />);
+
+    await abrirEstado();
+    fireEvent.click(await screen.findByRole('option', { name: 'Fazendo' }));
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(onMove).toHaveBeenCalledWith(base, 'doing', undefined);
+    // Enquanto o move não volta, o patch dos campos não é disparado.
+    expect(onSave).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+
+    await act(async () => { liberarMove(); });
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' }));
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('se o move falhar, o patch dos campos não é enviado e o formulário fica aberto', async () => {
+    const onMove = vi.fn(() => Promise.reject(new Error('limite de Fazendo')));
+    const onSave = vi.fn();
+    const p = props({ onMove, onSave });
+    render(<WorkItemSheet {...p} />);
+
+    await abrirEstado();
+    fireEvent.click(await screen.findByRole('option', { name: 'Fazendo' }));
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(await screen.findByTestId('sheet-erro-salvar')).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+    expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Ligar amanhã');
+  });
+});
+
 describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo ?task=', () => {
   function renderModulo() {
     const qc = makeQueryClient();
@@ -376,5 +471,56 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     // desvincular também é uma mudança: a coluna vai a nulo em vez de o patch
     // sair vazio e o vínculo antigo continuar.
     expect(h.update.mock.calls[0][0]).toHaveProperty('contact_id', null);
+  });
+
+  it('R2-MOD-051: o Sheet só fecha quando a escrita da tarefa termina de verdade', async () => {
+    // A escrita do Supabase fica presa num "portão" que o teste só abre no fim:
+    // se o módulo descartasse a promessa, a tela fecharia antes disso.
+    let liberar!: () => void;
+    const portao = new Promise<void>((resolve) => { liberar = resolve; });
+    supabaseMock.from.mockImplementation(() => {
+      const leitura = makeTaskRow({ id: 't1', title: 'Ligar para o cliente', status: 'todo' });
+      const escritaLeitura = createQueryBuilder([leitura], null);
+      // A escrita é uma promessa que só resolve quando o teste liberar o portão;
+      // `update`/`eq` devolvem o próprio builder (como o PostgREST encadeável).
+      type EscritaControlada = Promise<{ data: null; error: null }> & {
+        update: (patch: unknown) => EscritaControlada;
+        eq: () => EscritaControlada;
+      };
+      const escrita: EscritaControlada = Object.assign(
+        portao.then(() => ({ data: null, error: null })),
+        {
+          update: (patch: unknown): EscritaControlada => {
+            supabaseMock.update(patch);
+            return escrita;
+          },
+          eq: (): EscritaControlada => escrita,
+        },
+      );
+      return {
+        select: () => escritaLeitura,
+        insert: () => escrita,
+        update: (patch: unknown) => { supabaseMock.update(patch); return escrita; },
+        upsert: () => escrita,
+      };
+    });
+    window.history.replaceState(null, '', '/?task=t1');
+    renderModulo();
+
+    const titulo = await screen.findByTestId('sheet-titulo');
+    expect((titulo as HTMLInputElement).value).toBe('Ligar para o cliente');
+
+    fireEvent.change(titulo, { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    // O update foi disparado, mas a resposta não voltou: o Sheet continua aberto.
+    await waitFor(() => expect(supabaseMock.update).toHaveBeenCalled());
+    expect(screen.getByTestId('sheet-titulo')).toBeTruthy();
+    expect(new URLSearchParams(window.location.search).get('task')).toBe('t1');
+
+    await act(async () => { liberar(); });
+
+    await waitFor(() => expect(screen.queryByTestId('sheet-titulo')).toBeNull());
+    expect(new URLSearchParams(window.location.search).get('task')).toBeNull();
   });
 });

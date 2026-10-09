@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BellRing, CalendarIcon, CheckCircle2, ChevronDown, PauseCircle, X } from 'lucide-react';
@@ -62,9 +62,13 @@ interface SheetProps {
   item: WorkItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Salva os campos que não são estado nem alarme. */
-  onSave: (item: WorkItem, patch: Partial<WorkItemInput>) => void;
-  onMove: (item: WorkItem, to: WorkItemStatus, waitingReason?: string) => void;
+  /** Salva os campos que não são estado nem alarme.
+   *  R2-MOD-051: devolve a promessa da gravação — o Sheet só fecha quando ela
+   *  conclui, e uma falha mantém o formulário aberto com o que foi digitado. */
+  onSave: (item: WorkItem, patch: Partial<WorkItemInput>) => void | Promise<void>;
+  /** Muda o estado (a máquina de estados valida o destino e o motivo).
+   *  R2-MOD-051: idem — a promessa é aguardada antes do patch e do fechamento. */
+  onMove: (item: WorkItem, to: WorkItemStatus, waitingReason?: string) => void | Promise<void>;
   onSnooze: (item: WorkItem, minutes: number | 'tomorrow9') => void;
   onSetReminder: (item: WorkItem, iso: string | null) => void;
   onCancel: (item: WorkItem) => void;
@@ -135,6 +139,11 @@ function Formulario({
   const [avisadoEm, setAvisadoEm] = useState<string | null>(item.notified_at);
   const [mostraDescricao, setMostraDescricao] = useState(Boolean(item.description));
   const [erro, setErro] = useState<string | null>(null);
+  // R2-MOD-051: o Salvar espera a escrita terminar. Enquanto isso o botão fica
+  // travado (state) e o guarda síncrono (ref) fecha a porta de um duplo envio.
+  const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+  const salvandoRef = useRef(false);
 
   const doingCheio = doingCount >= 3 && item.status !== 'doing';
   const motivoObrigatorio = status === 'waiting';
@@ -170,20 +179,25 @@ function Formulario({
     setAvisadoEm(null);
   }
 
-  function salvar() {
+  /**
+   * R2-MOD-051: o Salvar não fecha com escrita pendente nem dispara estado e
+   * campos em paralelo. O estado vai primeiro (a máquina de estados valida o
+   * destino e o motivo) e só depois o patch dos campos, os dois aguardados; o
+   * Sheet fecha apenas quando a edição inteira conclui. Qualquer falha mantém o
+   * formulário aberto com tudo o que foi digitado, para a retentativa.
+   */
+  async function salvar() {
+    if (salvandoRef.current) return;
     if (motivoObrigatorio && !motivo.trim()) {
       setErro('Diga por que parou');
       return;
     }
     setErro(null);
+    setErroSalvar(null);
 
     const due = compor(dia, hora);
     const remind = compor(alarmeDia, alarmeHora);
 
-    // Estado é do `move` (máquina de estados); o resto vai por patch (etapa 25).
-    if (status !== item.status) {
-      onMove(item, status, motivoObrigatorio ? motivo.trim() : undefined);
-    }
     const patch: Partial<WorkItemInput> = {};
     if (title !== item.title) patch.title = title;
     if ((description || null) !== (item.description ?? null)) patch.description = description || null;
@@ -192,7 +206,22 @@ function Formulario({
     if (motivoObrigatorio && (motivo || null) !== (item.waiting_reason ?? null)) patch.waitingReason = motivo.trim();
     if (!mesmoInstante(due, item.due_date)) patch.dueDate = due;
     if (!mesmoInstante(remind, item.remind_at)) patch.remindAt = remind;
-    if (Object.keys(patch).length > 0) onSave(item, patch);
+
+    // Estado é do `move` (máquina de estados); o resto vai por patch (etapa 25).
+    const mudaEstado = status !== item.status;
+
+    salvandoRef.current = true;
+    setSalvando(true);
+    try {
+      if (mudaEstado) await onMove(item, status, motivoObrigatorio ? motivo.trim() : undefined);
+      if (Object.keys(patch).length > 0) await onSave(item, patch);
+    } catch {
+      setErroSalvar('Não foi possível salvar. Seus dados continuam aqui — tente de novo.');
+      return;
+    } finally {
+      salvandoRef.current = false;
+      setSalvando(false);
+    }
 
     onOpenChange(false);
   }
@@ -426,6 +455,12 @@ function Formulario({
         </div>
       </div>
 
+      {erroSalvar && (
+        <p data-testid="sheet-erro-salvar" role="alert" className="text-2xs text-destructive">
+          {erroSalvar}
+        </p>
+      )}
+
       <SheetFooter className="mt-auto flex-col gap-2 sm:flex-row">
         <Button
           type="button"
@@ -448,11 +483,12 @@ function Formulario({
         <Button
           type="button"
           data-testid="sheet-salvar"
-          disabled={!mudou}
-          onClick={salvar}
+          disabled={!mudou || salvando}
+          aria-busy={salvando}
+          onClick={() => { void salvar(); }}
           className="sm:ml-auto bg-primary"
           title="Ctrl+Enter salva"
-          onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') salvar(); }}
+          onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') void salvar(); }}
         >
           Salvar
         </Button>
