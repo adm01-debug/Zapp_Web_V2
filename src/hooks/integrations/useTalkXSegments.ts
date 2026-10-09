@@ -302,6 +302,76 @@ export function useAudienceEstimate(rules: SegmentRules | null | undefined, enab
 }
 
 /* ------------------------------------------------------------------ */
+/* X103 — KPIs da biblioteca de segmentos (RPC talkx_segment_library_stats) */
+/* ------------------------------------------------------------------ */
+
+/** Um ponto da série mensal da RPC (`series[8]`), do mês mais antigo ao corrente. */
+export interface TalkXSegmentLibraryMonth {
+  month: string;
+  has_data: boolean;
+  total_segments: number | null;
+  active_segments: number | null;
+  crm360_segments: number | null;
+  deliveries: number | null;
+  conversions: number | null;
+  conversion_pct: number | null;
+}
+
+export interface TalkXSegmentLibraryConversion {
+  value_pct: number | null;
+  previous_pct: number | null;
+  delta_pp: number | null;
+  has_data: boolean;
+  deliveries: number;
+  conversions: number;
+  previous_deliveries: number;
+  previous_conversions: number;
+  min_deliveries: number;
+}
+
+export interface TalkXSegmentLibraryStats {
+  generated_at: string;
+  timezone: string;
+  month_start: string;
+  total_segments: number;
+  active_this_month: number;
+  active_previous_month: number;
+  active_delta: number;
+  crm360_connected: number;
+  crm360_previous_month: number;
+  crm360_delta: number;
+  conversion: TalkXSegmentLibraryConversion;
+  series: TalkXSegmentLibraryMonth[];
+}
+
+type TalkXLibraryStatsRpc = (name: string, args: Record<string, unknown>) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+/** Chave da consulta dos KPIs (X103) — a mesma usada para invalidar depois de salvar. */
+export const LIBRARY_STATS_QUERY_KEY = ['talkx-segment-library-stats', SEGMENT_TIMEZONE] as const;
+
+/**
+ * X103 — os KPIs da biblioteca são decididos no servidor pela RPC
+ * `talkx_segment_library_stats`. O navegador não soma mais `estimated_count` nem
+ * conta `status = 'active'`: "Ativos este mês" é uso real (campanha iniciada no
+ * mês) e "Conversão média" vem das entregas/conversões com base mínima.
+ */
+export function useSegmentLibraryStats() {
+  return useQuery({
+    queryKey: LIBRARY_STATS_QUERY_KEY,
+    queryFn: async () => {
+      const rpc = supabase.rpc as unknown as TalkXLibraryStatsRpc;
+      const { data, error } = await rpc('talkx_segment_library_stats', { p_timezone: SEGMENT_TIMEZONE });
+      if (error) throw new Error(error.message);
+      return data as TalkXSegmentLibraryStats;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -321,7 +391,14 @@ export function useTalkXSegments() {
     },
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['talkx-segments'] });
+  const libraryStatsQuery = useSegmentLibraryStats();
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['talkx-segments'] });
+    // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem
+    // isto o total do topo fica velho até o próximo recarregamento.
+    qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
+  };
 
   const createSegment = useMutation({
     mutationFn: async (input: Partial<TalkXSegment> & { name: string; rules: SegmentRules }) => {
@@ -380,6 +457,11 @@ export function useTalkXSegments() {
     isError: segmentsQuery.isError,
     error: segmentsQuery.error as Error | null,
     refetch: segmentsQuery.refetch,
+    // X103 — KPIs da biblioteca; a tela não recalcula nada no navegador.
+    libraryStats: libraryStatsQuery.data ?? null,
+    libraryStatsLoading: libraryStatsQuery.isLoading,
+    libraryStatsError: libraryStatsQuery.error as Error | null,
+    refetchLibraryStats: libraryStatsQuery.refetch,
     createSegment, updateSegment, deleteSegment, refreshEstimates,
   };
 }
