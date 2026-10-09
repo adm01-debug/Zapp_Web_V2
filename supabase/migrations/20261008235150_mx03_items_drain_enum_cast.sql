@@ -2,9 +2,63 @@
 -- Classe: CONTRATO (create or replace function) — mesma familia do F59
 -- (20261002521230_f59_transition_dispatch_enum_cast.sql).
 --
--- Rollback: DROP FUNCTION IF EXISTS public.complete_multiplix_dispatch_if_items_drained(uuid);
--- Rollback: e recriar o corpo de 20261001231230_f32b_multiplix_item_queue_rpcs.sql (§10), que faz
--- Rollback: SET status = CASE ... END sem cast. ATENCAO: o rollback reintroduz o 42804 descrito abaixo.
+-- Rollback: recria o corpo ANTERIOR (sem o cast), byte a byte igual ao de
+-- Rollback: 20261001231230_f32b_multiplix_item_queue_rpcs.sql. ATENCAO: reintroduz o 42804 abaixo.
+--   CREATE OR REPLACE FUNCTION public.complete_multiplix_dispatch_if_items_drained(p_dispatch_id uuid)
+--   RETURNS boolean
+--   LANGUAGE plpgsql
+--   SECURITY DEFINER
+--   SET search_path TO 'public', 'pg_temp'
+--   AS $function$
+--   DECLARE
+--     v_status text;
+--   BEGIN
+--     IF COALESCE(auth.role(), '') <> 'service_role' THEN
+--       RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501';
+--     END IF;
+--     IF p_dispatch_id IS NULL THEN
+--       RAISE EXCEPTION 'invalid_multiplix_dispatch_id' USING ERRCODE = '22023';
+--     END IF;
+--
+--     SELECT dispatch.status
+--       INTO v_status
+--       FROM public.multiplix_dispatches AS dispatch
+--      WHERE dispatch.id = p_dispatch_id
+--      FOR UPDATE;
+--
+--     IF NOT FOUND THEN
+--       RAISE EXCEPTION 'multiplix_dispatch_not_found' USING ERRCODE = 'P0002';
+--     END IF;
+--
+--     IF v_status <> 'sending' THEN
+--       RETURN false;
+--     END IF;
+--
+--     IF EXISTS (
+--       SELECT 1
+--         FROM public.multiplix_delivery_items AS item
+--        WHERE item.dispatch_id = p_dispatch_id
+--          AND item.status IN ('pending', 'sending', 'failed_transient')
+--     ) THEN
+--       RETURN false;
+--     END IF;
+--
+--     UPDATE public.multiplix_dispatches AS dispatch
+--        SET status = CASE
+--              WHEN dispatch.failed_count + dispatch.outcome_unknown_count > 0 THEN 'completed_with_failures'
+--              ELSE 'completed'
+--            END,
+--            completed_at = statement_timestamp(),
+--            updated_at = statement_timestamp()
+--     WHERE dispatch.id = p_dispatch_id
+--       AND dispatch.status = 'sending';
+--
+--     RETURN FOUND;
+--   END;
+--   $function$;
+--
+--   REVOKE ALL ON FUNCTION public.complete_multiplix_dispatch_if_items_drained(uuid) FROM PUBLIC, anon, authenticated;
+--   GRANT EXECUTE ON FUNCTION public.complete_multiplix_dispatch_if_items_drained(uuid) TO service_role;
 --
 -- ACHADO (nao previsto no plano; encontrado ao ligar o worker no dreno por item):
 --
