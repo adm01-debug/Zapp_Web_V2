@@ -138,6 +138,18 @@ describe('M02 — miniatura de vídeo: primeiro quadro em todos os tamanhos', ()
     expect(container.querySelector('.lucide-play')).not.toBeNull();
   });
 
+  it.each(['card', 'row'] as const)('%s: R05/S39 — círculo de play sempre visível sobre o quadro', (size) => {
+    const { container } = renderInsideZone(size);
+    expect(container.querySelector('video')).not.toBeNull();
+    expect(container.querySelector('.lucide-play')).not.toBeNull();
+  });
+
+  it('cell: o quadro aparece sem o círculo (32 px, a mesma regra de espaço do selo de duração)', () => {
+    const { container } = renderInsideZone('cell');
+    expect(container.querySelector('video')).not.toBeNull();
+    expect(container.querySelector('.lucide-play')).toBeNull();
+  });
+
   it('card: o quadro do vídeo mantém o botão de play de prévia (etapa 27) e o rótulo do tipo fora da zona', () => {
     const { container } = renderInsideZone('card');
     expect(container.querySelector('video')).not.toBeNull();

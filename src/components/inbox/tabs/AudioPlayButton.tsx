@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
@@ -29,9 +29,18 @@ import { FILE_ACTION_BUTTON } from './fileActionButton';
 interface AudioPlayButtonProps {
   /** Item de ÁUDIO (`ContactMediaItem.type === 'audio'`). Ninguém renderiza este botão fora disso. */
   item: ContactMediaItem;
+  /**
+   * R05/S41 — onde o botão é desenhado:
+   * - `default` (linha de ações do cartão, Lista e Tabela): botão compacto de 28 px, com o tempo
+   *   restante e a barra fina enquanto toca (D04);
+   * - `thumb` (sobre a miniatura do cartão): CÍRCULO AZUL (`bg-primary`) do mockup. A duração
+   *   que aparece dentro da miniatura é a TOTAL e é desenhada pelo próprio `FileThumb`; por isso
+   *   a variante `thumb` não repete o tempo restante nem a barra.
+   */
+  variant?: 'default' | 'thumb';
 }
 
-export function AudioPlayButton({ item }: AudioPlayButtonProps) {
+export function AudioPlayButton({ item, variant = 'default' }: AudioPlayButtonProps) {
   const { playingId, play, pause, register } = useExclusiveAudio();
   const playing = playingId === item.id;
 
@@ -203,6 +212,29 @@ export function AudioPlayButton({ item }: AudioPlayButtonProps) {
   const percent = duration > 0 ? Math.min(100, Math.max(0, (elapsed / duration) * 100)) : 0;
   const active = playing || elapsed > 0;
 
+  // D05 vale nas DUAS variantes: clicar no play/pause não abre a janela de visualização nem
+  // marca o cartão (a miniatura está dentro do botão de prévia do cartão).
+  const alternar = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    handleToggle();
+  };
+
+  if (variant === 'thumb') {
+    // R05/S41: círculo azul do mockup sobre a miniatura. Só o círculo — a duração dentro da
+    // miniatura (total) é do `FileThumb`, e o tempo restante/barra do D04 continua na variante
+    // compacta (`default`), usada pela Lista e pela Tabela.
+    return (
+      <button
+        type="button"
+        aria-label={playing ? 'Pausar áudio' : 'Tocar áudio'}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:transition-transform motion-safe:active:scale-95"
+        onClick={alternar}
+      >
+        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </button>
+    );
+  }
+
   return (
     <span className="inline-flex flex-col items-center gap-0.5">
       {/* Mesma ação dos outros botões da linha (olho, compartilhar, ⋮) nas três vistas:
@@ -211,11 +243,7 @@ export function AudioPlayButton({ item }: AudioPlayButtonProps) {
         type="button"
         aria-label={playing ? 'Pausar áudio' : 'Tocar áudio'}
         className={FILE_ACTION_BUTTON}
-        onClick={(event) => {
-          // D05: clicar no play/pause não abre a janela de visualização nem marca o cartão.
-          event.stopPropagation();
-          handleToggle();
-        }}
+        onClick={alternar}
       >
         {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
       </button>

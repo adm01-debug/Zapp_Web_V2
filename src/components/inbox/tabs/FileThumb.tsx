@@ -37,6 +37,122 @@ const ICON: Record<FileThumbSize, string> = {
   cell: 'h-4 w-4',
 };
 
+/**
+ * R05/S39 — o círculo de play do vídeo fica SEMPRE visível sobre o quadro (cartão e linha).
+ * A célula de 32 px fica limpa: é a mesma regra de espaço do selo de duração (M02).
+ */
+const PLAY_CIRCLE: Partial<Record<FileThumbSize, string>> = {
+  card: 'h-10 w-10',
+  row: 'h-6 w-6',
+};
+
+const PLAY_CIRCLE_ICON: Partial<Record<FileThumbSize, string>> = {
+  card: 'h-5 w-5',
+  row: 'h-3 w-3',
+};
+
+/**
+ * R05/S43 (decisão D10) — duração do áudio declarada em `media_meta`. O `media_meta` é `jsonb`
+ * sem contrato de chave no `schema-catalog.json`, então a leitura é DEFENSIVA: só aceita um
+ * número positivo nas chaves conhecidas de duração e devolve `null` (nada inventado) quando não
+ * há nenhuma. Quando devolve `null`, a duração é lida sob demanda pelo `<audio>`.
+ */
+const META_DURATION_KEYS = ['duration', 'durationSeconds', 'duration_seconds', 'seconds'] as const;
+
+function audioDurationFromMeta(meta: Record<string, unknown> | null): number | null {
+  if (!meta) return null;
+  for (const key of META_DURATION_KEYS) {
+    const value = meta[key];
+    const seconds = typeof value === 'string' ? Number(value) : value;
+    if (typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0) return seconds;
+  }
+  return null;
+}
+
+interface AudioDurationState {
+  seconds: number | null;
+  loading: boolean;
+  error: boolean;
+}
+
+/**
+ * R05/S43 — duração do áudio para a miniatura. Vem de `media_meta` quando existir; senão é lida
+ * SOB DEMANDA: só quando o cartão aparece (`enabled`, o mesmo portão de `useInView` do vídeo) e
+ * só os METADADOS (`preload = 'metadata'`) — o áudio inteiro não é baixado. Estados: `loading`
+ * (leitura em voo) e `error` (não foi possível ler; o áudio e o play seguem funcionando).
+ */
+function useAudioDuration(item: ContactMediaItem, enabled: boolean): AudioDurationState {
+  const fromMeta = audioDurationFromMeta(item.meta);
+  const src = item.signedUrl ?? item.url;
+  const [probed, setProbed] = useState<{ seconds: number | null; error: boolean } | null>(null);
+
+  useEffect(() => {
+    if (fromMeta !== null || !enabled || !src) return;
+    let alive = true;
+    const probe = new Audio();
+    probe.preload = 'metadata';
+    probe.onloadedmetadata = () => {
+      if (!alive) return;
+      const seconds = probe.duration;
+      setProbed(
+        Number.isFinite(seconds) && seconds > 0
+          ? { seconds, error: false }
+          : { seconds: null, error: true },
+      );
+    };
+    probe.onerror = () => { if (alive) setProbed({ seconds: null, error: true }); };
+    probe.src = src;
+    return () => {
+      alive = false;
+      probe.onloadedmetadata = null;
+      probe.onerror = null;
+      probe.setAttribute('src', '');
+    };
+  }, [fromMeta, enabled, src]);
+
+  if (fromMeta !== null) return { seconds: fromMeta, loading: false, error: false };
+  return {
+    seconds: probed?.seconds ?? null,
+    loading: enabled && Boolean(src) && probed === null,
+    error: probed?.error ?? false,
+  };
+}
+
+/** R05/S44 — carregando (`--:--`) e erro (`—`) da duração, ambos distinguíveis na tela. */
+function AudioDurationLabel({ item, state }: { item: ContactMediaItem; state: AudioDurationState }) {
+  if (state.loading) {
+    return (
+      <span
+        data-testid={`files-thumb-audio-carregando-${item.id}`}
+        title="Lendo a duração do áudio"
+        className="text-2xs tabular-nums text-muted-foreground motion-safe:animate-pulse"
+      >
+        --:--
+      </span>
+    );
+  }
+  if (state.error) {
+    return (
+      <span
+        data-testid={`files-thumb-audio-erro-${item.id}`}
+        title="Duração indisponível"
+        className="text-2xs tabular-nums text-muted-foreground"
+      >
+        —
+      </span>
+    );
+  }
+  if (state.seconds === null) return null;
+  return (
+    <span
+      data-testid={`files-thumb-audio-duracao-${item.id}`}
+      className="text-2xs tabular-nums text-muted-foreground"
+    >
+      {formatDuration(state.seconds)}
+    </span>
+  );
+}
+
 const DOC_ICON: Record<DocumentFamily, LucideIcon> = {
   pdf: FileText,
   sheet: FileSpreadsheet,
@@ -131,9 +247,11 @@ function ThumbImage({ item, size }: { item: ContactMediaItem; size: FileThumbSiz
 function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize }) {
   const boxRef = useRef<HTMLSpanElement>(null);
   const isVideo = item.type === 'video';
+  const isAudio = item.type === 'audio';
   // M02: o primeiro quadro do video vale para os tres tamanhos (cartao, linha e celula), e a
-  // zona de pre-carregamento tambem — em lista longa nenhum `<video>` fora da zona.
-  const inView = useInView(boxRef, isVideo);
+  // zona de pre-carregamento tambem — em lista longa nenhum `<video>` fora da zona. R05: o
+  // audio usa o MESMO portao para ler a duracao sob demanda (so quando o cartao aparece).
+  const inView = useInView(boxRef, isVideo || isAudio);
   const [duration, setDuration] = useState<string | null>(null);
   const src = item.signedUrl ?? item.url;
   // Falha amarrada ao `src` que falhou (mesmo padrao da imagem): se a URL mudar, o fallback
@@ -143,6 +261,9 @@ function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize
   const showVideo = isVideo && inView && Boolean(src) && !failed;
   // Selo de duracao onde ha espaco: cartao e linha. A celula de 32 px fica limpa.
   const showDuration = duration !== null && size !== 'cell';
+  const audioDuration = useAudioDuration(item, isAudio && inView);
+  const playCircle = PLAY_CIRCLE[size];
+  const playCircleIcon = PLAY_CIRCLE_ICON[size];
 
   return (
     <span ref={boxRef} className="relative flex h-full w-full items-center justify-center">
@@ -163,10 +284,10 @@ function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize
               if (Number.isFinite(seconds) && seconds > 0) setDuration(formatDuration(seconds));
             }}
           />
-          {size === 'card' && (
+          {playCircle && (
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/60">
-                <Play className="h-5 w-5" />
+              <span className={cn('flex items-center justify-center rounded-full bg-background/60', playCircle)}>
+                <Play className={cn(playCircleIcon)} />
               </span>
             </span>
           )}
@@ -178,11 +299,15 @@ function MediaTile({ item, size }: { item: ContactMediaItem; size: FileThumbSize
         </>
       ) : item.type === 'audio' ? (
         <span className="flex flex-col items-center justify-center gap-1">
-          {/* Etapa 28: `media_meta` nao tem contrato de chave no schema-catalog.json (so
-              `jsonb`), entao nao ha campo de duracao confirmado — nada de duracao inventada.
-              O icone AudioLines distingue audio de video sem depender de cor. */}
+          {/* Etapa 28 + R05/S41–S44: o icone AudioLines distingue audio de video sem depender de
+              cor; o CIRCULO AZUL de play e desenhado por cima da miniatura (`FileCard`, variante
+              `thumb` do `AudioPlayButton`) — ele nao pode nascer aqui dentro porque a miniatura
+              vive dentro do botao de previa dos tres modos (botao dentro de botao e violacao
+              seria do axe, `nested-interactive`). A duracao entra quando o cartao aparece: de
+              `media_meta` quando existir, senao lida so dos metadados do proprio arquivo. */}
           <AudioLines className={cn(ICON[size], 'text-muted-foreground')} />
           {size === 'card' && <span className="text-2xs text-muted-foreground">Áudio</span>}
+          {size === 'card' && <AudioDurationLabel item={item} state={audioDuration} />}
         </span>
       ) : (
         <span className="flex flex-col items-center justify-center gap-1">

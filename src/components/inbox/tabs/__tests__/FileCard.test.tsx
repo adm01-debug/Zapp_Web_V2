@@ -220,9 +220,21 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('S32: em áudio, o play do A01 continua na linha de ações', () => {
+  it('S32/R05: em áudio, o play fica sobre a miniatura — fora da linha de ações e fora do botão de prévia', () => {
     renderCard({ ...ITEM, id: 'a1', type: 'audio' });
-    expect(screen.getByRole('button', { name: 'Tocar áudio' })).toBeInTheDocument();
+    const botao = screen.getByRole('button', { name: 'Tocar áudio' });
+    expect(botao).toBeInTheDocument();
+    // R05/S41: o mockup não tem play na linha de ações — ele vive DENTRO da miniatura, mas
+    // IRMÃO do botão de prévia (botão dentro de botão = `nested-interactive` no axe).
+    expect(
+      screen.getByRole('button', { name: 'Visualizar planilha-total.png' }).contains(botao),
+    ).toBe(false);
+    expect(screen.getByTestId('files-item-a1').contains(botao)).toBe(true);
+    // A camada da miniatura é o contêiner do botão de prévia: o play é IRMÃO dela. É isso que
+    // separa o "dentro da miniatura" de antes, quando ele morava na linha de ações.
+    expect(botao.parentElement?.parentElement?.parentElement).toBe(
+      screen.getByRole('button', { name: 'Visualizar planilha-total.png' }).parentElement,
+    );
   });
 
   it('S32/D07: Salvar na galeria não existe em lugar nenhum do cartão', () => {

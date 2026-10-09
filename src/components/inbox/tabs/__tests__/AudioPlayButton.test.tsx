@@ -330,8 +330,74 @@ describe('AudioPlayButton (A02/D03/D04)', () => {
   });
 });
 
+describe('AudioPlayButton — variante thumb (R05/S41, círculo do mockup)', () => {
+  it('é o círculo AZUL do sistema (token primary) e alterna o som como a variante compacta', async () => {
+    render(<AudioPlayButton item={audioItem()} variant="thumb" />);
+
+    const botao = screen.getByRole('button', { name: 'Tocar áudio' });
+    // O aceite é visual (o círculo azul do mockup): o círculo é `rounded-full` e a cor é o
+    // token `primary` do sistema — nenhuma cor nova entra.
+    expect(botao.className).toContain('rounded-full');
+    expect(botao.className).toContain('bg-primary');
+    expect(botao.className).toContain('text-primary-foreground');
+
+    await tocar(botao);
+
+    expect(FakeAudio.created[0].play).toHaveBeenCalledTimes(1);
+    expect(getPlayingAudioId()).toBe('a1');
+    fireEvent.click(screen.getByRole('button', { name: 'Pausar áudio' }));
+    await waitFor(() => expect(getPlayingAudioId()).toBeNull());
+  });
+
+  it('D04 fica na variante compacta: o círculo não repete o tempo restante nem a barra', async () => {
+    render(<AudioPlayButton item={audioItem()} variant="thumb" />);
+    await tocar();
+
+    act(() => {
+      FakeAudio.created[0].loadMetadata(120);
+      FakeAudio.created[0].seek(30);
+    });
+
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('audio-remaining-a1')).not.toBeInTheDocument();
+  });
+
+  it('D05: o clique no círculo não borbulha para o cartão (não abre a janela nem marca)', async () => {
+    const cliqueNoCartao = vi.fn();
+    render(
+      <div onClick={cliqueNoCartao}>
+        <AudioPlayButton item={audioItem()} variant="thumb" />
+      </div>,
+    );
+
+    await tocar();
+
+    expect(cliqueNoCartao).not.toHaveBeenCalled();
+  });
+
+  it('A01/D02: o círculo participa do mesmo "um áudio por vez" do store', async () => {
+    const a = audioItem();
+    const b = audioItem({ id: 'b1', url: MEDIA_URL('audio-messages', 'conv-1/b1.ogg'), displayName: 'b1.ogg' });
+    render(
+      <>
+        <AudioPlayButton item={a} variant="thumb" />
+        <AudioPlayButton item={b} />
+      </>,
+    );
+
+    await tocar(screen.getAllByRole('button', { name: 'Tocar áudio' })[0]);
+    await tocar(); // agora só o B está com rótulo "Tocar áudio"
+
+    const [audioA, audioB] = FakeAudio.created;
+    expect(audioA.pause).toHaveBeenCalled();
+    expect(audioB.play).toHaveBeenCalled();
+    expect(getPlayingAudioId()).toBe('b1');
+    expect(screen.getAllByRole('button', { name: 'Tocar áudio' })).toHaveLength(1);
+  });
+});
+
 describe('vistas da aba Arquivos (A03/A04)', () => {
-  it('FileCard: o play fica na linha de ações e só em item de áudio', () => {
+  it('R05: o play do áudio vive sobre a miniatura e FORA do botão de prévia (nada de botão dentro de botão)', () => {
     const { unmount } = render(
       <FileCard
         item={audioItem()}
@@ -345,11 +411,17 @@ describe('vistas da aba Arquivos (A03/A04)', () => {
       />,
     );
     const botao = screen.getByRole('button', { name: 'Tocar áudio' });
-    expect(botao.parentElement?.parentElement).toBe(
-      screen.getByRole('button', { name: 'Visualizar' }).parentElement,
-    );
+    const previa = screen.getByRole('button', { name: 'Visualizar recado.ogg' });
+    // A miniatura É o botão de prévia: um botão dentro dele seria `nested-interactive` no axe.
+    expect(previa.contains(botao)).toBe(false);
+    // O play é IRMÃO da prévia na camada da miniatura (antes deste cartão ele ficava na linha
+    // de ações, e a cadeia de pais batia no <article>).
+    expect(botao.parentElement?.parentElement?.parentElement).toBe(previa.parentElement);
+    // Mas segue dentro do cartão de áudio.
+    expect(screen.getByTestId('files-item-a1').contains(botao)).toBe(true);
     unmount();
 
+    // Item que não é áudio não ganha play nenhum (asserção negativa intacta).
     render(
       <FileCard
         item={IMAGE}

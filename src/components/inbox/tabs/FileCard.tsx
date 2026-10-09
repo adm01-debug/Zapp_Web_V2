@@ -141,6 +141,20 @@ export function FileCard({
         >
           <FileThumb item={item} size="card" />
         </button>
+
+        {/* R05 (S41–S42): play/pause do áudio DENTRO da miniatura, como o mockup — círculo azul
+            (variante `thumb` do A01/A02), sem abrir a janela e sem marcar o cartão (D05), com um
+            áudio por vez pelo store do A01. Ele fica IRMÃO do botão de prévia, não dentro dele:
+            botão dentro de botão é violação séria de acessibilidade (axe `nested-interactive`),
+            e `FileThumb` (que desenha a miniatura) não pode renderizar controle interativo por
+            isso. A camada é `pointer-events-none`; só o círculo recebe o toque. */}
+        {item.type === 'audio' && (
+          <span className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <span className="pointer-events-auto">
+              <AudioPlayButton item={item} variant="thumb" />
+            </span>
+          </span>
+        )}
       </div>
 
       {/* R04 (S28–S31): quatro linhas fixas — nome, tipo·tamanho, data e remetente — para a
@@ -167,12 +181,12 @@ export function FileCard({
       </div>
 
       {/* R04 (S32): olho, baixar (D06), encaminhar e ⋮ — sem "Copiar link" nem "Salvar na
-          galeria" (D07). Em áudio, o play do A01 abre a linha. O "Encaminhar" continua o
+          galeria" (D07). R05/S41: o play do áudio NÃO fica mais nesta linha — ele passou para
+          dentro da miniatura (o mockup e a etapa S32 não listam play nas ações; dois controles
+          para o mesmo áudio quebrariam o "um áudio por vez" do store). O "Encaminhar" continua o
           mesmo botão "em breve" das outras vistas (o plano habilita o encaminhamento na
           etapa do painel), agora vindo da classe compartilhada. */}
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
-        {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
-        {item.type === 'audio' && <AudioPlayButton item={item} />}
         <button
           type="button"
           aria-label="Visualizar"
