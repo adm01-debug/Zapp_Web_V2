@@ -311,7 +311,7 @@ export function BehaviorRadar({ decisionPower, formalityLevel, discProfile }: { 
       {axes.map((a, i) => { const ep = getPoint(a.angle, 1); return <line key={i} x1={cx} y1={cy} x2={ep.x} y2={ep.y} stroke="hsl(var(--muted))" strokeWidth="0.5" opacity="0.3" />; })}
       <motion.polygon points={poly} fill="hsl(var(--primary))" fillOpacity="0.15" stroke="hsl(var(--primary))" strokeWidth="1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} />
       {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="hsl(var(--primary))" />)}
-      {axes.map((a, i) => { const lp = getPoint(a.angle, 1.25); return <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="central" className="text-[8px] fill-muted-foreground font-medium">{a.label}</text>; })}
+      {axes.map((a, i) => { const lp = getPoint(a.angle, 1.25); return <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="central" className="text-3xs fill-muted-foreground font-medium">{a.label}</text>; })}
     </svg>
   );
 }

@@ -81,7 +81,7 @@ export function TeamMemberDetails({ conversation, onClose }: TeamMemberDetailsPr
                         <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
                         <div className="flex items-center gap-1.5">
                           <span className="text-3xs text-muted-foreground truncate">{member.job_title || mRole.label}</span>
-                          {mBirthday && mBirthday.daysUntil <= 7 && mBirthday.daysUntil > 0 && <Badge variant="outline" className="text-[8px] px-1 py-0 bg-chart-4/10 text-chart-4 border-chart-4/20">🎂 {mBirthday.daysUntil}d</Badge>}
+                          {mBirthday && mBirthday.daysUntil <= 7 && mBirthday.daysUntil > 0 && <Badge variant="outline" className="text-3xs px-1 py-0 bg-chart-4/10 text-chart-4 border-chart-4/20">🎂 {mBirthday.daysUntil}d</Badge>}
                         </div>
                       </div>
                     </div>
