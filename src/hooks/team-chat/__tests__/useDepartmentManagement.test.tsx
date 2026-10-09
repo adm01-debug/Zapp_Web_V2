@@ -17,7 +17,6 @@ const f = vi.hoisted(() => {
     insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
   };
   return {
-    // get_department_whatsapp_mode devolve TEXTO puro (QA5-09); o default fica no formato real.
     rpc: vi.fn((_name: string, _args?: Record<string, unknown>) =>
       Promise.resolve({ data: 'none' as unknown, error: null as unknown })),
     from: vi.fn(() => builder),
@@ -112,6 +111,34 @@ describe('useSaveDepartmentWhatsApp — gravação pela RPC canônica, sem acess
     const [name, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
     expect(name).toBe('set_department_whatsapp_config');
     expect(args.p_whatsapp_mode).toBe('evolution');
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('string vazia em evolution_api_key nao envia p_api_key', async () => {
+    await runSave({ mode: 'evolution', config: { evolution_api_key: '' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('string com espacos em evolution_api_key nao envia p_api_key', async () => {
+    await runSave({ mode: 'evolution', config: { evolution_api_key: '  ' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('string vazia em official_token nao envia p_api_key', async () => {
+    await runSave({ mode: 'official', config: { official_token: '' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('string com espacos em official_token nao envia p_api_key', async () => {
+    await runSave({ mode: 'official', config: { official_token: '  ' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
     expect(args.p_api_key).toBeUndefined();
   });
 
