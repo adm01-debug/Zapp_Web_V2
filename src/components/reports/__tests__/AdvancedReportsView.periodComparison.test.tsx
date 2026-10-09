@@ -3,6 +3,7 @@ import { render, renderHook, screen, waitFor, fireEvent, act } from '@testing-li
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { axe } from 'vitest-axe';
 import { appDayKey, appDayStart, appShiftDayKey } from '@/lib/localDay';
 
 // R2-MOD-017 — Relatórios Avançados.
@@ -183,5 +184,12 @@ describe('AdvancedReportsView — acessibilidade dos filtros (N-091)', () => {
 
     expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Agente' })).toBeInTheDocument();
+  });
+
+  it('axe button-name zerado nos filtros de período e agente', async () => {
+    const { container } = render(<AdvancedReportsView />, { wrapper: makeWrapper() });
+    const results = await axe(container);
+    const buttonNameViolations = results.violations.filter((v: { id: string }) => v.id === 'button-name');
+    expect(buttonNameViolations).toHaveLength(0);
   });
 });
