@@ -1,6 +1,43 @@
 -- tc002_find_or_create_direct_pair_upsert
 -- TC-002 (#55): a RPC ativa de conversa direta perdeu a proteção contra criação concorrente.
--- Rollback: CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(other_profile_id uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ DECLARE v_my_profile_id uuid; v_conv_id uuid; BEGIN v_my_profile_id := public.current_profile_id(); IF v_my_profile_id IS NULL THEN RAISE EXCEPTION 'not_authenticated'; END IF; IF v_my_profile_id = other_profile_id THEN RAISE EXCEPTION 'cannot_create_direct_with_self'; END IF; SELECT c.id INTO v_conv_id FROM public.team_conversations c JOIN public.team_conversation_members m1 ON m1.conversation_id = c.id AND m1.profile_id = v_my_profile_id JOIN public.team_conversation_members m2 ON m2.conversation_id = c.id AND m2.profile_id = other_profile_id WHERE c.type = 'direct' LIMIT 1; IF v_conv_id IS NOT NULL THEN RETURN v_conv_id; END IF; INSERT INTO public.team_conversations(type, created_by) VALUES ('direct', v_my_profile_id) RETURNING id INTO v_conv_id; INSERT INTO public.team_conversation_members(conversation_id, profile_id) VALUES (v_conv_id, v_my_profile_id), (v_conv_id, other_profile_id); RETURN v_conv_id; END; $f$;
+-- Rollback:
+--   CREATE OR REPLACE FUNCTION public.find_or_create_direct_conversation(other_profile_id uuid)
+--   RETURNS uuid
+--   LANGUAGE plpgsql
+--   SECURITY DEFINER
+--   SET search_path = public
+--   AS $rollback$
+--   DECLARE
+--     v_my_profile_id uuid;
+--     v_conv_id uuid;
+--   BEGIN
+--     v_my_profile_id := public.current_profile_id();
+--     IF v_my_profile_id IS NULL THEN
+--       RAISE EXCEPTION 'not_authenticated';
+--     END IF;
+--     IF v_my_profile_id = other_profile_id THEN
+--       RAISE EXCEPTION 'cannot_create_direct_with_self';
+--     END IF;
+--     SELECT c.id INTO v_conv_id
+--       FROM public.team_conversations c
+--       JOIN public.team_conversation_members m1
+--         ON m1.conversation_id = c.id AND m1.profile_id = v_my_profile_id
+--       JOIN public.team_conversation_members m2
+--         ON m2.conversation_id = c.id AND m2.profile_id = other_profile_id
+--      WHERE c.type = 'direct'
+--      LIMIT 1;
+--     IF v_conv_id IS NOT NULL THEN
+--       RETURN v_conv_id;
+--     END IF;
+--     INSERT INTO public.team_conversations(type, created_by)
+--     VALUES ('direct', v_my_profile_id)
+--     RETURNING id INTO v_conv_id;
+--     INSERT INTO public.team_conversation_members(conversation_id, profile_id)
+--     VALUES (v_conv_id, v_my_profile_id), (v_conv_id, other_profile_id);
+--     RETURN v_conv_id;
+--   END;
+--   $rollback$;
+--
 -- (o rollback devolve o corpo canônico anterior — o mesmo texto de 20260929190000 e da
 --  reconciliação 20261003272707. A ACL não muda nesta migration: CREATE OR REPLACE preserva
 --  dono e permissões, então não há REVOKE/GRANT para desfazer.)
