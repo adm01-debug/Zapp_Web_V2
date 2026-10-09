@@ -63,7 +63,7 @@ test.describe('Talk X module', () => {
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
   });
 
-  test('help modal opens and closes', async ({ page }) => {
+  test('help screen opens, searches, reads an article and goes back', async ({ page }) => {
     await page.goto('/');
     await expandCampanhasGroup(page);
     await page
@@ -72,12 +72,37 @@ test.describe('Talk X module', () => {
       .first()
       .click();
 
+    // X189: o "?" do cabeçalho abre a tela da Ajuda (antes era um Dialog).
     await page.getByRole('button', { name: /ajuda/i }).click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeVisible();
 
-    await page.keyboard.press('Escape');
-    await expect(dialog).not.toBeVisible();
+    const busca = page.getByPlaceholder('O que você precisa de ajuda hoje?');
+    await busca.fill('supressao');
+    await expect(page.getByRole('option', { name: /supressão/i }).first()).toBeVisible();
+
+    await page.getByRole('option', { name: /supressão/i }).first().click();
+    await expect(page.getByRole('heading', { name: 'Segmentos de contatos' })).toBeVisible();
+
+    await page.getByRole('button', { name: /voltar à ajuda/i }).click();
+    await expect(page.getByPlaceholder('O que você precisa de ajuda hoje?')).toBeVisible();
+  });
+
+  test('Cmd/Ctrl+K inside the help focuses the search and does not open the palette', async ({ page }) => {
+    await page.goto('/?view=talkx&screen=help');
+
+    const busca = page.getByPlaceholder('O que você precisa de ajuda hoje?');
+    await expect(busca).toBeVisible();
+
+    await page.keyboard.press('Control+k');
+    await expect(busca).toBeFocused();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  test('Cmd/Ctrl+K outside the help still opens the command palette', async ({ page }) => {
+    await page.goto('/?view=talkx');
+
+    await page.keyboard.press('Control+k');
+    await expect(page.getByPlaceholder('Buscar ou digitar comando...')).toBeVisible();
   });
 
   test('segments and templates render via deep links', async ({ page }) => {
