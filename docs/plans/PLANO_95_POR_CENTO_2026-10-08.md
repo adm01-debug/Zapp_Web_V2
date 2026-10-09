@@ -2,20 +2,25 @@
 
 Pedido do Joaquim: "gerir bem os agentes de forma que possamos subir para 95% de acertos cada agente". Medida: **aceite de primeira** = entregas integradas sem voltar como `[refazer]`, por agente, por semana.
 
-## 1. Onde estamos (medido em 08/10, entregas desde 07/10)
+## 1. Onde estamos (medido em 08/10 ~22h; CORRIGIDO: a 1ª versão deste plano dizia 28% e estava errada)
 
-| Agente | Entregas | Integradas | Recusadas/falhas | Aceite |
-|---|---|---|---|---|
-| hugo | 47 | 12 | 8 | 60% |
-| vera | 28 | 6 | 6 | 50% |
-| iris | 56 | 9 | 16 | 36% |
-| senior (refazer) | 191 | 22 | 56 | 28% |
-| workertestes | 47 | 6 | 16 | 27% |
-| complexo | 47 | 5 | 16 | 23% |
-| worker | 61 | 5 | 21 | 19% |
-| edgar / workersql / workeria | 23 / 15 / 14 | 0 / 0 / 0 | 6 / 7 / 9 | 0% |
+A primeira medição contava como "aceite" só o que já estava **integrado**, mas 305 entregas já aprovadas pelo revisor esperam vaga no integrador (3 a 4 por hora). Definição certa: **aprovada = o revisor ou o portão aprovou**, mesmo aguardando vaga. Aprovação de 1ª = cartão que não é `[refazer]`.
 
-Média: **28%**. Tempo do início do cartão até integrar: **mediana 27 h**. Cada recusa custa um ciclo inteiro (refazer + portão + revisor + verificação). Hoje o portão reteve **260 de 277** entregas (94%): quase tudo passa pelo revisor caro.
+| Agente | 1ª passagem, 7 dias | 1ª passagem, 24 h |
+|---|---|---|
+| hugo | 75% | 86% |
+| iris | 73% | 75% |
+| edgar | 62% | 76% |
+| workertestes | 65% | 74% |
+| vera | — | 73% |
+| worker | 46% | 69% |
+| workersql | 28% | 63% |
+| complexo | 36% | 100% (n=9) |
+| workeria | 31% | 31% |
+| senior (só refazer) | 60% | 60% |
+| **todos** | **69%** | **73%** |
+
+Distância real até 95%: cerca de 22 a 26 pontos, e a tendência já sobe (os dias anteriores eram piores). Mediana início→integrado: 27 h, dominada pela fila do integrador, não pelo agente.
 
 ## 2. Por que recusa (44 recusas lidas uma a uma, não por palavra-chave)
 
@@ -30,7 +35,7 @@ Média: **28%**. Tempo do início do cartão até integrar: **mediana 27 h**. Ca
 
 Falhas de verificação (18): 6 por teste do CI (contrato pdfjs/schemas, inventário de testes) que o próprio cartão quebrou; 3 por token/ref de produção no diff; 5 por teste alheio vermelho depois de integrar; 2 por branch que andou depois do fechar.
 
-Por que o portão retém 94%: a pergunta do Jev "evidência limpa" exige que o relato **cite execução concreta com zero falhas e zero pulados**; os agentes escrevem `zapp-verify --rapido` como rótulo, sem a linha de resultado.
+Por que o portão retém 94% (e a aprovação continua sendo do revisor, não do portão): a pergunta do Jev "evidência limpa" exige que o relato **cite execução concreta com zero falhas e zero pulados**; os agentes escrevem `zapp-verify --rapido` como rótulo, sem a linha de resultado.
 
 ## 3. Estratégia: medir por máquina o que hoje é escrito à mão
 
