@@ -52,9 +52,18 @@ test('a página preserva o critério literal do aceite (sem N+1, antes/depois, o
 });
 
 test('a página registra os números medidos, não só a intenção', () => {
+  // Números atuais do medidor: corpus 20 e 1.000 rendem 1 página + 1 lote +
+  // 1 contador = 3 consultas e 20 linhas carregadas (EMAIL_THREAD_PAGE_SIZE).
   // Compara já normalizado (o normalizador remove `_`), então o token vem na
   // forma achatada que existe no texto lido.
-  for (const numero of ['consultas=4', 'consultas=6', 'linhas=20', 'picovivos=2', 'pendentesapos40ciclos=0', '643451']) {
+  for (const numero of [
+    'consultas corpus=20 paginas=1 lotes=1 contadores=1 consultas=3 carregadas=20',
+    'consultas corpus=1000 paginas=1 lotes=1 contadores=1 consultas=3 carregadas=20',
+    'linhas=20',
+    'picovivos=2',
+    'pendentesapos40ciclos=0',
+    '643451',
+  ]) {
     assert.ok(docTxt.includes(numero), `a medição EN-088 não preserva o número medido "${numero}"`);
   }
 });
@@ -71,6 +80,12 @@ test('a página aponta para o medidor executável e a mutação de validação',
     'a medição EN-088 não aponta para o medidor executável',
   );
   assert.ok(docTxt.includes('mutacao'), 'a medição EN-088 não registra a prova de mutação do medidor');
+  // A subseção de mutação declara os números dela como execução HISTÓRICA
+  // (05/10), não como medição atual — nenhum número antigo pode passar por válido.
+  assert.ok(
+    docTxt.includes('execucao historica'),
+    'a prova de mutação do EN-088 não declara os números como execução histórica',
+  );
 });
 
 test('o medidor existe (a verificação comportamental é o Vitest, não esta guarda)', () => {
