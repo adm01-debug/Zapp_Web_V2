@@ -12,8 +12,9 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
 import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
+import { TalkXMessagePreview } from './TalkXMessagePreview';
 import {
-  IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
+  IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
 } from './talkxShared';
 
@@ -577,7 +578,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
       {/* === COLUNA DIREITA: preview === */}
       <aside className="hidden xl:flex flex-col w-[300px] flex-shrink-0 gap-3">
         <RailCard icon={FileText} color="green" title="Pré-visualização" subtitle="Como aparece no WhatsApp">
-          <PhoneFrame
+          {/* X088: a moldura do editor é o uso "frame" do MESMO renderizador do
+              cartão (`TalkXMessagePreview`) — formatação, mídia e tela cheia
+              iguais nos dois lugares. */}
+          <TalkXMessagePreview
+            variant="frame"
             text={personalizePreview(eContent)}
             mediaUrl={eHasMedia ? eMediaUrl : null}
             mediaType={eHasMedia ? eMediaType : null}
