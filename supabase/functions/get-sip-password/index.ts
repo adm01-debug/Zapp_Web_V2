@@ -16,7 +16,26 @@ export function provisionamentoSip(
   };
 }
 
-export async function handleGetSipPassword(req: Request): Promise<Response> {
+export interface GetSipPasswordDeps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase?: any;
+}
+
+// Replica a regra de NavigationService.canAccess('voip'): a view voip
+// nao tem permission nem roles, logo o acesso e aberto a usuarios
+// ativos. A funcao verifica que o perfil existe e esta ativo.
+export async function autorizarTelefonia(
+  supabase: any,
+  userId: string,
+): Promise<boolean> {
+  const { data: profile, error } = await supabase
+    .from('profiles').select('id, is_active').eq('user_id', userId).maybeSingle();
+  if (error || !profile) return false;
+  if (!profile.is_active) return false;
+  return true;
+}
+
+export async function handleGetSipPassword(req: Request, deps?: GetSipPasswordDeps): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -31,7 +50,7 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
       return errorResponse('Unauthorized', 401, req);
     }
 
-    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
+    const supabase = deps?.supabase ?? createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'), {
       global: { headers: { Authorization: authHeader } },
     });
 
@@ -47,6 +66,15 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
 
     if (profileError || !profile) return errorResponse('User profile not found', 403, req);
     if (!profile.is_active) return errorResponse('User account is inactive', 403, req);
+
+    // mesma regra que NavigationService.canAccess('voip') no front:
+    // a view voip nao tem permission nem roles, logo o acesso e aberto a
+    // usuarios ativos. A funcao replica essa logica para o backend.
+    const allowed = await autorizarTelefonia(supabase, userId);
+    if (!allowed) {
+      log.done(403);
+      return errorResponse('Forbidden', 403, req);
+    }
 
     // Secret ausente é erro de configuração, não falha de runtime: responde 503
     // com código estável em vez de estourar 500 genérico (requireEnv lançava).
@@ -69,5 +97,5 @@ export async function handleGetSipPassword(req: Request): Promise<Response> {
 // Convenção do repo para funções testáveis: o handler é exportado e o servidor
 // só sobe quando o módulo é o entrypoint (o runtime do Supabase é o entrypoint).
 if (import.meta.main) {
-  Deno.serve(handleGetSipPassword);
+  Deno.serve((req: Request) => handleGetSipPassword(req));
 }
