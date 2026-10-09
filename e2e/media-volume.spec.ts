@@ -21,9 +21,9 @@ import {
 // mensagem `[E2E fixture setup]`, removida no afterAll).
 //
 // O que este spec prova, e o que ele deliberadamente NÃO prova:
-// - prova: o controle existe na sidebar, o clique curto alterna o mudo da mídia,
-//   o clique longo abre o slider, o valor persiste no localStorage e sobrevive ao
-//   reload, e o botão de ALERTAS fica intocado (critério 3 do plano);
+// - prova: o controle existe na sidebar, o clique abre o painel, o botão Silenciar
+//   alterna o mudo da mídia, o valor persiste no localStorage e sobrevive ao reload,
+//   e o botão de ALERTAS fica intocado (critério 3 do plano);
 // - não prova: a aplicação do volume no `<audio>` do balão. O contato de fixture
 //   do E2E não tem mensagem de áudio (e semear uma aqui seria dado de mídia
 //   inventado em produção). Essa parte é coberta por
@@ -35,7 +35,7 @@ import {
 // dois estados, para achar o botão sem saber em que estado ele está.
 const LABEL_VOLUME = new RegExp(`^${MEDIA_VOLUME_LABEL}`);
 const LABEL_MUDO = MEDIA_VOLUME_LABEL_MUTED;
-const LABEL_CONTROLE = new RegExp(`${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED}`);
+const LABEL_CONTROLE = new RegExp(`^(${MEDIA_VOLUME_LABEL}|${MEDIA_VOLUME_LABEL_MUTED})`);
 const LABEL_SLIDER = MEDIA_VOLUME_SLIDER_LABEL;
 const LABEL_ALERTA = new RegExp(`${SOUND_VOLUME_LABEL}|${SOUND_VOLUME_LABEL_MUTED}`);
 const CHAVE_VOLUME = MEDIA_VOLUME_STORAGE_KEYS.volume;
@@ -62,7 +62,7 @@ test.describe('Volume das mídias de conversa', () => {
   });
 
   test('o controle da sidebar muda o volume e o valor sobrevive ao reload', async ({ page, browserName }) => {
-    // O slider abre pelo teclado (`Enter` = equivalente de teclado do clique longo,
+    // O slider abre pelo teclado (`Enter` = equivalente de teclado do clique comum,
     // documentado em `useVolumeRocker`). O clique longo com `mouse.down()/up()` reais
     // era instável no CI: o timer de 400 ms é cancelado por qualquer `pointerleave`
     // (`VolumeTriggerButton.tsx:40-42`), e as runs do `e2e-logado` de 30/09 e 01/10
@@ -125,6 +125,7 @@ test.describe('Volume das mídias de conversa', () => {
     const rotuloAlertaAntes = await alerta.getAttribute('aria-label');
 
     await page.getByRole('button', { name: LABEL_VOLUME }).click();
+    await page.getByRole('button', { name: 'Silenciar' }).click();
 
     await expect(page.getByRole('button', { name: LABEL_MUDO })).toBeVisible();
     // Critério 3 do plano: o canal dos alertas não muda de estado com a mídia muda.
@@ -138,6 +139,7 @@ test.describe('Volume das mídias de conversa', () => {
 
     // desfaz para não deixar a mídia muda na sessão de quem rodar depois
     await page.getByRole('button', { name: LABEL_MUDO }).click();
+    await page.getByRole('button', { name: 'Ativar som' }).click();
     await expect(page.getByRole('button', { name: LABEL_VOLUME })).toBeVisible();
   });
 
