@@ -1,1 +1,167 @@
-{}
+{
+  "talkx_templates": [
+    {
+      "id": "tpl-001",
+      "name": "Boas-vindas",
+      "description": "Modelo sintético Boas-vindas",
+      "category": "relacionamento",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "relacionamento"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-001-v2",
+      "use_count": 42,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-002",
+      "name": "Promoção relâmpago",
+      "description": "Modelo sintético Promoção relâmpago",
+      "category": "promocao",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "promocao"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-002-v2",
+      "use_count": 18,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-003",
+      "name": "Pesquisa de satisfação",
+      "description": "Modelo sintético Pesquisa de satisfação",
+      "category": "pesquisa",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "pesquisa"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-003-v2",
+      "use_count": 7,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_template_versions": [
+    {
+      "id": "tpl-001-v1",
+      "template_id": "tpl-001",
+      "version_number": 1,
+      "name": "Boas-vindas",
+      "description": "Versão inicial",
+      "content": "Olá {{nome}}, bem-vindo(a)!",
+      "category": "relacionamento",
+      "status": "published",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico"
+      ],
+      "custom_variables": [
+        "nome"
+      ],
+      "saved_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "tpl-001-v2",
+      "template_id": "tpl-001",
+      "version_number": 2,
+      "name": "Boas-vindas",
+      "description": "Versão com empresa",
+      "content": "Olá {{nome}}, bem-vindo(a) à {{empresa}}!",
+      "category": "relacionamento",
+      "status": "published",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "saved_by": "creator-1",
+      "created_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "id": "tpl-002-v1",
+      "template_id": "tpl-002",
+      "version_number": 1,
+      "name": "Promoção relâmpago",
+      "description": null,
+      "content": "Olá {{nome}}, promoção só hoje!",
+      "category": "promocao",
+      "status": "published",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico"
+      ],
+      "custom_variables": [
+        "nome"
+      ],
+      "saved_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z"
+    }
+  ],
+  "talkx_template_variants": [
+    {
+      "id": "tpl-001-a",
+      "template_id": "tpl-001",
+      "label": "A",
+      "content": "Olá {{nome}}, bem-vindo(a)!",
+      "media_url": null,
+      "media_type": null,
+      "weight": 50,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "tpl-001-b",
+      "template_id": "tpl-001",
+      "label": "B",
+      "content": "Oi {{nome}}, chegou novidade!",
+      "media_url": null,
+      "media_type": null,
+      "weight": 50,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    }
+  ]
+}

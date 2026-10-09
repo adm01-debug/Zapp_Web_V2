@@ -1,1 +1,344 @@
-{}
+{
+  "talkx_segments": [
+    {
+      "id": "seg-vip",
+      "name": "VIP",
+      "description": "Clientes de maior valor",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": true,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-vip-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          },
+          {
+            "id": "seg-vip-g2",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g2-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g2-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 184,
+      "last_used_at": "2026-09-28T12:00:00.000Z",
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-leads",
+      "name": "Leads Quentes",
+      "description": "Leads com score alto",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-leads-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-leads-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-leads-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 312,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-ativos",
+      "name": "Clientes Ativos",
+      "description": "Compraram nos últimos 90 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-ativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-ativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-ativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 540,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-inativos",
+      "name": "Inativos",
+      "description": "Sem interação há mais de 180 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-inativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-inativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-inativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 226,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-office",
+      "name": "Office",
+      "description": null,
+      "origin": "custom",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-office-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-office-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-office-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 97,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_campaigns": [
+    {
+      "id": "camp-201",
+      "name": "Campanha Suprimida",
+      "message_template": "Olá {{nome}}, novidade para você!",
+      "description": null,
+      "objective": "engajamento",
+      "status": "completed",
+      "total_recipients": 120,
+      "sent_count": 118,
+      "failed_count": 2,
+      "delivered_count": 118,
+      "read_count": 0,
+      "replied_count": 0,
+      "outcome_unknown_count": 0,
+      "whatsapp_connection_id": "conn-001",
+      "created_by": "creator-1",
+      "started_at": "2026-09-20T12:00:00.000Z",
+      "completed_at": "2026-09-28T12:00:00.000Z",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-20T12:00:00.000Z",
+      "media_url": null,
+      "media_type": null,
+      "scheduled_at": null,
+      "schedule_timezone": "America/Sao_Paulo",
+      "segment_id": "seg-vip",
+      "audience_source": "segment",
+      "template_id": null,
+      "send_window_start": null,
+      "send_window_end": null,
+      "business_hours_only": false,
+      "speed_profile": "moderate",
+      "paused_at": null,
+      "respect_suppression": true,
+      "confirm_consent": true,
+      "launched_by": "creator-1",
+      "launched_at": "2026-09-20T12:00:00.000Z",
+      "revision": 1
+    }
+  ],
+  "talkx_blacklist": [
+    {
+      "id": "blk-001",
+      "contact_id": null,
+      "phone": "5511900000001",
+      "reason": "Pediu para sair da lista",
+      "reason_code": "opt_out",
+      "origin": "resposta",
+      "campaign_id": "camp-201",
+      "blocked_by": "creator-1",
+      "expires_at": null,
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "blk-002",
+      "contact_id": null,
+      "phone": "5511900000002",
+      "reason": "Número inválido",
+      "reason_code": "invalid_number",
+      "origin": "importacao",
+      "campaign_id": null,
+      "blocked_by": "creator-1",
+      "expires_at": null,
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "blk-003",
+      "contact_id": null,
+      "phone": "5511900000003",
+      "reason": "Cadastro manual",
+      "reason_code": "manual",
+      "origin": "manual",
+      "campaign_id": null,
+      "blocked_by": "creator-1",
+      "expires_at": null,
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "id": "blk-004",
+      "contact_id": null,
+      "phone": null,
+      "reason": "Pedido LGPD",
+      "reason_code": "lgpd",
+      "origin": "solicitacao",
+      "campaign_id": "camp-201",
+      "blocked_by": "creator-1",
+      "expires_at": "2027-01-01T00:00:00.000Z",
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-28T12:00:00.000Z"
+    },
+    {
+      "id": "blk-005",
+      "contact_id": null,
+      "phone": "5511900000005",
+      "reason": "Sem permissão comercial",
+      "reason_code": "no_commercial_permission",
+      "origin": "resposta",
+      "campaign_id": null,
+      "blocked_by": "creator-1",
+      "expires_at": null,
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "blk-006",
+      "contact_id": null,
+      "phone": "5511900000006",
+      "reason": "Retorno de falha",
+      "reason_code": "bounce",
+      "origin": "webhook",
+      "campaign_id": null,
+      "blocked_by": "creator-1",
+      "expires_at": null,
+      "source_message_id": null,
+      "removed_at": null,
+      "removed_by": null,
+      "created_at": "2026-09-20T12:00:00.000Z"
+    }
+  ]
+}

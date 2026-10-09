@@ -1,1 +1,6 @@
-{}
+{
+  "tela": {
+    "aplicavel": false,
+    "motivo": "Estado não aplicável: importação e vinculação CRM360 não têm componente/rota no Zapp Web (edição e importação em massa são do Singu). Nada a medir."
+  }
+}

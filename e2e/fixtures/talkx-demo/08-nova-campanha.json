@@ -1,1 +1,319 @@
-{}
+{
+  "talkx_segments": [
+    {
+      "id": "seg-vip",
+      "name": "VIP",
+      "description": "Clientes de maior valor",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": true,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-vip-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          },
+          {
+            "id": "seg-vip-g2",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-vip-g2-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-vip-g2-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 184,
+      "last_used_at": "2026-09-28T12:00:00.000Z",
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-leads",
+      "name": "Leads Quentes",
+      "description": "Leads com score alto",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-leads-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-leads-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-leads-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 312,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-ativos",
+      "name": "Clientes Ativos",
+      "description": "Compraram nos últimos 90 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-ativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-ativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-ativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 540,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-inativos",
+      "name": "Inativos",
+      "description": "Sem interação há mais de 180 dias",
+      "origin": "zapp",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-inativos-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-inativos-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-inativos-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 226,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "seg-office",
+      "name": "Office",
+      "description": null,
+      "origin": "custom",
+      "status": "active",
+      "is_favorite": false,
+      "rules": {
+        "groups": [
+          {
+            "id": "seg-office-g1",
+            "match": "and",
+            "rules": [
+              {
+                "id": "seg-office-g1-r1",
+                "field": "tags",
+                "op": "contains",
+                "value": "cliente"
+              },
+              {
+                "id": "seg-office-g1-r2",
+                "field": "lead_score",
+                "op": "gte",
+                "value": "60"
+              }
+            ]
+          }
+        ]
+      },
+      "estimated_count": 97,
+      "last_used_at": null,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_templates": [
+    {
+      "id": "tpl-001",
+      "name": "Boas-vindas",
+      "description": "Modelo sintético Boas-vindas",
+      "category": "relacionamento",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "relacionamento"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-001-v2",
+      "use_count": 42,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-002",
+      "name": "Promoção relâmpago",
+      "description": "Modelo sintético Promoção relâmpago",
+      "category": "promocao",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "promocao"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-002-v2",
+      "use_count": 18,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-003",
+      "name": "Pesquisa de satisfação",
+      "description": "Modelo sintético Pesquisa de satisfação",
+      "category": "pesquisa",
+      "status": "published",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "pesquisa"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-003-v2",
+      "use_count": 7,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    },
+    {
+      "id": "tpl-004",
+      "name": "Rascunho de campanha",
+      "description": "Modelo sintético Rascunho de campanha",
+      "category": "marketing",
+      "status": "draft",
+      "content": "Olá {{nome}}, confira as novidades da {{empresa}}!",
+      "media_url": null,
+      "media_type": null,
+      "tags": [
+        "sintetico",
+        "marketing"
+      ],
+      "custom_variables": [
+        "nome",
+        "empresa"
+      ],
+      "current_version_id": "tpl-004-v2",
+      "use_count": 0,
+      "created_by": "creator-1",
+      "created_at": "2026-09-20T12:00:00.000Z",
+      "updated_at": "2026-09-28T12:00:00.000Z",
+      "creator": {
+        "name": "Criador Teste"
+      }
+    }
+  ],
+  "talkx_campaigns": []
+}
