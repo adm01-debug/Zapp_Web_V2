@@ -106,6 +106,8 @@ import { OBJECTIVES, personalizePreview } from '@/components/talkx/talkxShared';
 import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 // X017 — spy do cliente Supabase: prova que o persist não faz consulta solta.
 import { supabase } from '@/integrations/supabase/client';
+// X123 — prova que o autosave não marca uso do segmento.
+import { fromTable } from '@/lib/supabaseHelpers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
@@ -1149,5 +1151,138 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     const dirty = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(dirty);
     expect(dirty.defaultPrevented).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* X123 — salvar sozinho desde o passo 1, uso do segmento e erro da RPC */
+/* ------------------------------------------------------------------ */
+
+/** Nome digitado no passo 1 do wizard real. */
+const X123_NAME_INPUT = /Lançamento Linha Office/i;
+
+describe('useCampaignEditor — X123 (autosave desde o passo 1, uso do segmento e erro da RPC)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    f.create.mockResolvedValue({ id: 'draft-1' });
+    f.update.mockResolvedValue({});
+    f.saveDraft.mockClear();
+    f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
+    f.start.mockResolvedValue(true);
+    f.log.mockResolvedValue({});
+    f.persistedRecipientIds = [];
+    f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    // A implementação da cadeia do fromTable vale só para o teste que a define.
+    (fromTable as unknown as ReturnType<typeof vi.fn>).mockReset();
+  });
+
+  it('salva sozinho uma campanha nova que só tem nome, sem mensagem (X123)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => result.current.setName('Campanha só com nome'));
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(f.create).toHaveBeenCalledTimes(1);
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Campanha só com nome' }));
+    expect(f.snapshot).toHaveBeenCalledWith({ campaignId: 'draft-1', expectedRevision: 1 });
+  });
+
+  it('hidrata filtros, passo, responsável e supressão e envia o draft_step no payload (X123)', async () => {
+    const savedFilters: SegmentRules & { search?: string; contact_ids?: string[] } = {
+      groups: [{
+        id: 'group-1', match: 'and',
+        rules: [{ id: 'rule-1', field: 'city', op: 'eq', value: 'Recife' }],
+      }],
+      search: 'ana',
+      contact_ids: ['contact-1'],
+    };
+    f.persistedRecipientIds = [{ contact_id: 'contact-1' }];
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho completo', status: 'draft',
+      audience_source: 'contacts', audience_filters: savedFilters, draft_step: 3,
+      owner: 'owner-2', respect_suppression: false, whatsapp_connection_id: 'connection-1',
+    };
+
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(result.current.step).toBe(3);
+    expect(result.current.owner).toBe('owner-2');
+    expect(result.current.respectSuppression).toBe(false);
+    expect(result.current.contactSearch).toBe('ana');
+    expect(result.current.selectedContacts).toEqual(['contact-1']);
+    expect(rulesToPostgrest(result.current.audienceRules)).toBe('city.eq."Recife"');
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'draft-1',
+      draft_step: 3,
+      owner: 'owner-2',
+      respect_suppression: false,
+      audience_filters: expect.objectContaining({
+        groups: savedFilters.groups,
+        search: 'ana',
+        contact_ids: ['contact-1'],
+      }),
+    }));
+  });
+
+  it('não marca o segmento como usado no autosave; o salvamento explícito marca (X123)', async () => {
+    f.segments = [{ id: 'seg-1', name: 'Compradores', description: '', status: 'active', estimated_count: 10 }];
+    const fromSpy = fromTable as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockReturnValue({ update: () => ({ eq: () => Promise.resolve({ error: null }) }) });
+    const campaign = { id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'segment', segment_id: 'seg-1' };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    fromSpy.mockClear();
+
+    // Autosave: o rascunho é gravado, mas o uso do segmento não é reescrito.
+    act(() => result.current.setName('Rascunho do segmento'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.update).toHaveBeenCalled();
+    expect(fromSpy).not.toHaveBeenCalled();
+    expect(f.log).not.toHaveBeenCalled();
+
+    // Salvamento explícito: aí sim o segmento passa a contar como usado.
+    await act(async () => { await result.current.handleSave('draft'); });
+    expect(fromSpy).toHaveBeenCalledWith('talkx_segments');
+    // Eventos de ciclo de vida continuam no servidor (X025), não no cliente.
+    expect(f.log).not.toHaveBeenCalled();
+  });
+
+  it('mostra "Rascunho salvo há X" no rodapé depois do autosave confirmado (X123)', async () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(X123_NAME_INPUT), { target: { value: 'Campanha salva' } });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(screen.getByText(/Rascunho salvo há/)).toBeInTheDocument();
+  });
+
+  it('traduz o código da RPC no aviso de salvamento, sem mostrar o código cru (X123)', async () => {
+    f.create.mockRejectedValueOnce(new Error('save_talkx_campaign_draft: talkx_campaign_stale_revision'));
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(X123_NAME_INPUT), { target: { value: 'Campanha conflitante' } });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    const aviso = screen.getByRole('button', { name: /Outra sessão alterou esta campanha/ });
+    expect(aviso.getAttribute('title')).toContain('Outra sessão alterou esta campanha');
+    expect(document.body.textContent).not.toContain('talkx_campaign_stale_revision');
   });
 });
