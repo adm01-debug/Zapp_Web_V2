@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
   Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
@@ -20,8 +22,31 @@ import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/st
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
+import { TalkXScheduleTimeline } from './TalkXScheduleTimeline';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { toast } from 'sonner';
+
+/**
+ * X138: o mock 10 escreve mês e dias da semana em português com inicial
+ * maiúscula ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex Sáb"); o locale do
+ * date-fns devolve "novembro 2026" e "dom".
+ */
+const comInicialMaiuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
+const CALENDAR_FORMATTERS = {
+  formatCaption: (mes: Date) => `${comInicialMaiuscula(format(mes, 'LLLL', { locale: ptBR }))} de ${format(mes, 'yyyy')}`,
+  formatWeekdayName: (dia: Date) => comInicialMaiuscula(format(dia, 'cccccc', { locale: ptBR })),
+};
+
+/**
+ * X138: "hoje" é o dia da parede local da CAMPANHA — com o navegador em outro
+ * fuso, o limite do calendário continua sendo o dia em que a campanha envia.
+ */
+function todayInCampaignTimezone(timezone: string): Date {
+  const wall = utcToLocalInTimezone(new Date().toISOString(), timezone); // 'AAAA-MM-DDTHH:mm'
+  const [year, month, day] = wall.slice(0, 10).split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
 
 const TIMEZONES = [
   ['America/Sao_Paulo', 'America/São Paulo'],
@@ -185,7 +210,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     setSendInterval(intervalForProfile(profile));
   }, []);
 
+  // T00:00:00 explícito: `new Date('2026-01-15')` é meia-noite UTC e pode
+  // voltar um dia em fusos negativos (Brasil, UTC-3); com o horário embutido
+  // o parse é LOCAL.
   const calDate = localDate ? new Date(`${localDate}T00:00:00`) : undefined;
+  // X138: o calendário não aceita dia anterior a hoje NO FUSO DA CAMPANHA.
+  const calendarFloor = todayInCampaignTimezone(localTz);
 
   const handleSave = useCallback(async () => {
     if (saving) return;
@@ -441,7 +471,10 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <div className="flex flex-col gap-3">
             <Calendar
               mode="single"
+              locale={ptBR}
+              formatters={CALENDAR_FORMATTERS}
               selected={calDate}
+              disabled={{ before: calendarFloor }}
               onSelect={(d) => {
                 if (!d) return;
                 const y = d.getFullYear();
@@ -451,16 +484,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               }}
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
-            <div className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-2">
-              <p className="text-2xs font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
-              <div className="space-y-1.5">
-                <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
-                <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
-                <MetaRow icon={Timer} label="Fuso" value={localTz} />
-                {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
-                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
-              </div>
-            </div>
+            <TalkXScheduleTimeline campaign={campaign} timezone={localTz} />
           </div>
         </RailCard>
 
