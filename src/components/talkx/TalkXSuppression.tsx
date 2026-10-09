@@ -22,13 +22,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, RailAction, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay, barsByDay } from './talkxShared';
+import { IconTile, RailCard, RailAction, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, TalkXNoData, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
 import {
-  useTalkXSuppressionActivity, SUPPRESSION_ACTIVITY_EVENT_TYPES,
+  useTalkXSuppressionActivity, useTalkXSuppressionStats, SUPPRESSION_ACTIVITY_EVENT_TYPES,
   type SuppressionActivityAction, type SuppressionActivityEventType, type SuppressionActivityItem,
+  type TalkXSuppressionStat,
 } from '@/hooks/integrations/useTalkXSuppression';
+import { ProtectionGauge } from './suppression/ProtectionGauge';
 
 interface BlacklistEntry {
   id: string;
@@ -264,12 +266,29 @@ export function TalkXSuppression() {
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totals = useMemo(() => ({
-    total: blacklist.length,
-    optouts: blacklist.filter((b) => b.origin === 'optout').length,
-    manual: blacklist.filter((b) => b.origin === 'manual').length,
-    bars: barsByDay(blacklist.map((b) => b.created_at)),
-  }), [blacklist]);
+  // X179 — os quatro KPIs e o Centro de proteção leem `talkx_suppression_stats`
+  // (X176): valor da janela, mini-barras da série e variação contra o período
+  // anterior. A variação fica oculta quando o período anterior é zero.
+  const { data: stats, isLoading: statsLoading } = useTalkXSuppressionStats();
+  // Sem resposta do servidor (`stats` indefinido no carregamento ou no erro da
+  // RPC, ou `data: null`) nenhum número é inventado: o ausente vira "—", nunca 0
+  // — nem no rail ("0 campanhas protegidas") nem na fração do medidor.
+  const fmtStat = (stat: TalkXSuppressionStat | undefined) => (stat ? fmtInt(stat.value) : '—');
+  const kpiProps = (stat: TalkXSuppressionStat | undefined) => ({
+    value: fmtStat(stat),
+    delta: stat && stat.previous > 0
+      ? { pct: Math.round(((stat.value - stat.previous) / stat.previous) * 100), label: 'vs. período anterior' }
+      : null,
+    bars: stat && stat.series.length >= 2 ? stat.series : null,
+  });
+  const protectedCount = stats?.protected?.value ?? null;
+  const protectedStarted = stats?.protected?.total_started ?? null;
+  const railNumbers = [
+    { label: 'Suprimidos', value: fmtStat(stats?.active), icon: UserX, color: 'red' as const },
+    { label: 'Opt-outs', value: fmtStat(stats?.optouts), icon: ShieldBan, color: 'red' as const },
+    { label: 'Manuais', value: fmtStat(stats?.manual), icon: UserMinus, color: 'amber' as const },
+    { label: 'Protegidas', value: fmtStat(stats?.protected), icon: ShieldCheck, color: 'green' as const },
+  ];
 
   // Autoria sai do perfil ativo (profiles.id), como em useTalkXSegments: as
   // colunas blocked_by/removed_by referenciam profiles(id) e o id do
@@ -312,11 +331,19 @@ export function TalkXSuppression() {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
+        {/* X179 — os 4 KPIs leem `talkx_suppression_stats`: valor da janela,
+            mini-barras da série e variação contra o período anterior. Período
+            anterior zerado esconde a variação; sem campanha iniciada,
+            "Campanhas protegidas" mostra o estado "Sem dados ainda" do kit (A9). */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Contatos suprimidos" value={fmtInt(totals.total)} delta={null} tile="red" icon={UserX} bars={totals.bars} barsColor="red" />
-          <DashboardKpiCard size="hero" index={1} label="Opt-outs 30 dias" value={fmtInt(totals.optouts)} delta={null} tile="red" icon={ShieldBan} bars={null} barsColor="red" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="Bloqueios manuais" value={fmtInt(totals.manual)} delta={null} tile="amber" icon={UserX} bars={null} barsColor="amber" chart="none" />
-          <DashboardKpiCard size="hero" index={3} label="Campanhas protegidas" value="—" delta={{ text: 'aplicação automática', tone: 'success' }} tile="green" icon={ShieldCheck} bars={null} barsColor="green" chart="none" />
+          <DashboardKpiCard size="hero" index={0} label="Contatos suprimidos" tile="red" icon={UserX} barsColor="red" isLoading={statsLoading} {...kpiProps(stats?.active)} />
+          <DashboardKpiCard size="hero" index={1} label="Opt-outs 30 dias" tile="red" icon={ShieldBan} barsColor="red" isLoading={statsLoading} {...kpiProps(stats?.optouts)} />
+          <DashboardKpiCard size="hero" index={2} label="Bloqueios manuais" tile="amber" icon={UserMinus} barsColor="amber" isLoading={statsLoading} {...kpiProps(stats?.manual)} />
+          {stats?.protected?.total_started === 0 ? (
+            <div className="min-h-[132px]"><TalkXNoData hint="Campanhas protegidas" /></div>
+          ) : (
+            <DashboardKpiCard size="hero" index={3} label="Campanhas protegidas" tile="green" icon={ShieldCheck} barsColor="green" isLoading={statsLoading} {...kpiProps(stats?.protected)} />
+          )}
         </div>
 
         <FilterBarV2
@@ -388,13 +415,19 @@ export function TalkXSuppression() {
         </RailCard>
 
         <RailCard icon={ShieldCheck} color="green" title="Centro de proteção" subtitle="Mais segurança para suas campanhas" glow>
-          <div className="rounded-xl bg-dash-green/10 border border-dash-green/30 p-3 text-center mb-3">
-            <p className="text-4xl font-bold text-foreground tabular-nums">{fmtInt(totals.total)}</p>
-            <p className="text-xs text-foreground-secondary">campanhas protegidas automaticamente</p>
+          <div className="rounded-xl bg-dash-green/10 border border-dash-green/30 p-3 text-center">
+            <ProtectionGauge protectedCount={protectedCount} totalStarted={protectedStarted} />
+            <p data-testid="rail-protected-value" className="text-4xl font-bold text-foreground tabular-nums">{protectedCount === null ? '—' : fmtInt(protectedCount)}</p>
+            <p className="text-xs text-foreground-secondary">campanhas protegidas</p>
+            <p className="text-2xs text-foreground-secondary leading-snug mt-1.5">Contatos da lista de supressão são automaticamente excluídos de todos os envios.</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-center">
-            {[[fmtInt(totals.total), 'Suprimidos'], [fmtInt(totals.optouts), 'Opt-outs'], [fmtInt(totals.manual), 'Manuais'], ['0', 'LGPD']].map(([v, l]) => (
-              <div key={l} className="rounded-xl bg-muted/30 border border-border/50 py-2"><p className="text-sm font-bold text-foreground">{v}</p><p className="text-3xs text-foreground-secondary">{l}</p></div>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {railNumbers.map(({ value, label, icon, color }) => (
+              <div key={label} className="rounded-xl bg-muted/30 border border-border/50 py-2 flex flex-col items-center gap-1.5 min-w-0">
+                <IconTile icon={icon} color={color} size={32} soft />
+                <p className="text-sm font-bold text-foreground tabular-nums">{value}</p>
+                <p className="text-3xs text-foreground-secondary truncate max-w-full">{label}</p>
+              </div>
             ))}
           </div>
         </RailCard>
