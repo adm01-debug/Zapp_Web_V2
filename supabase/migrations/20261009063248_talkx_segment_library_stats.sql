@@ -1,5 +1,11 @@
 -- talkx_segment_library_stats
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_segment_library_stats(text); DROP FUNCTION IF EXISTS public.talkx_segment_library_month(date, text); DROP FUNCTION IF EXISTS public.talkx_refresh_segment_library_history(integer, text); DROP TABLE IF EXISTS public.talkx_segment_library_history;
+-- Rollback: drop function if exists public.talkx_segment_library_stats(text); drop function if exists public.talkx_segment_library_month(date, text); drop function if exists public.talkx_refresh_segment_library_history(integer, text); drop table if exists public.talkx_segment_library_history;
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_segment_library_stats(text);
+--   drop function if exists public.talkx_segment_library_month(date, text);
+--   drop function if exists public.talkx_refresh_segment_library_history(integer, text);
+--   drop table if exists public.talkx_segment_library_history;
+--
 -- Rollback (por que ele e completo): a tabela, a policy, os GRANT/REVOKE, as tres
 -- funcoes e o retrato de 8 meses (as linhas do backfill) nascem TODOS nesta
 -- migration. Nao existe, antes dela, nenhum objeto, coluna, dado, policy ou ACL
