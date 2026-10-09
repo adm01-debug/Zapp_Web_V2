@@ -1,7 +1,8 @@
-import { requireAiIdentityOrService } from "../_shared/ai-auth.ts";
+import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
 import {
   assertMessageVisibleToCaller,
   resolveAuthorizedAudioUrl,
+  type AudioObjectAuthzResult,
 } from "../_shared/ai-audio-authz.ts";
 import {
   checkRateLimit,
@@ -18,6 +19,7 @@ import {
   validationErrorResponse,
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
+import { detectMediaKind } from "../_shared/messaging/media.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB
@@ -27,6 +29,10 @@ const APPROVED_AUDIO_BUCKETS = [
   "audio-memes",
 ] as const;
 
+type DownloadAudioResult =
+  | { buffer: ArrayBuffer; contentType: string }
+  | { error: string };
+
 /**
  * Only accepts an exact URL for the project's approved media buckets.
  * Service-role storage reads must never be reachable through an arbitrary URL.
@@ -34,7 +40,7 @@ const APPROVED_AUDIO_BUCKETS = [
 async function downloadAudio(
   audioUrl: string,
   log: Logger,
-): Promise<{ buffer: ArrayBuffer; contentType: string } | { error: string }> {
+): Promise<DownloadAudioResult> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceKey) {
@@ -63,24 +69,137 @@ async function downloadAudio(
   return { buffer, contentType: data.type || "audio/ogg" };
 }
 
-Deno.serve(async (req) => {
+/** Tipo de arquivo que será enviado ao provedor de transcrição. */
+export interface TranscriptionAudioFormat {
+  mimeType: string;
+  fileName: string;
+  /** De onde veio a decisão: magic bytes do ARQUIVO ou metadado declarado. */
+  source: "magic" | "metadata";
+}
+
+/** Extensão de arquivo para o mime REAL reconhecido pelos magic bytes. */
+const EXTENSION_BY_MIME: Record<string, string> = {
+  "audio/mpeg": "mp3",
+  "audio/ogg": "ogg",
+  "audio/wav": "wav",
+  "audio/mp4": "m4a",
+  "audio/flac": "flac",
+  "audio/aac": "aac",
+  "audio/webm": "webm",
+};
+
+/** Tipo declarado (content-type informado + extensão da URL) — fallback. */
+function formatFromMetadata(
+  audioUrl: string,
+  contentType: string,
+): { mimeType: string; fileName: string } {
+  if (contentType.includes("ogg") || audioUrl.includes(".ogg")) {
+    return { mimeType: "audio/ogg", fileName: "audio.ogg" };
+  }
+  if (contentType.includes("webm") || audioUrl.includes(".webm")) {
+    return { mimeType: "audio/webm", fileName: "audio.webm" };
+  }
+  if (contentType.includes("wav") || audioUrl.includes(".wav")) {
+    return { mimeType: "audio/wav", fileName: "audio.wav" };
+  }
+  if (
+    contentType.includes("m4a") || contentType.includes("mp4") ||
+    audioUrl.includes(".m4a")
+  ) {
+    return { mimeType: "audio/mp4", fileName: "audio.m4a" };
+  }
+  if (contentType.includes("mpeg") || audioUrl.includes(".mp3")) {
+    return { mimeType: "audio/mpeg", fileName: "audio.mp3" };
+  }
+  return { mimeType: "audio/mpeg", fileName: "audio.mp3" };
+}
+
+/**
+ * SL-195a — escolhe o tipo enviado ao STT pelos MAGIC BYTES do arquivo.
+ *
+ * O `content-type` informado e a extensão da URL são entradas NÃO confiáveis: um
+ * `.mp3`/`audio/mpeg` que serve um OGG era enviado ao provedor com o tipo
+ * errado. O detector real (`detectMediaKind`) decide primeiro; só quando ele não
+ * reconhece a assinatura (arquivo desconhecido) o metadado declarado é usado.
+ *
+ * O container EBML/WebM é classificado como VÍDEO pelo detector por ser um
+ * container ambíguo; neste endpoint, que só transcreve áudio, ele é a gravação
+ * de áudio do navegador e vai como `audio/webm`.
+ *
+ * Não precisa do arquivo inteiro: os primeiros bytes já carregam a assinatura.
+ */
+export function resolveTranscriptionAudioFormat(
+  audioUrl: string,
+  contentType: string,
+  bytes: Uint8Array,
+): TranscriptionAudioFormat {
+  const detected = detectMediaKind(bytes);
+  if (detected) {
+    // SL-195a: os magic bytes do ARQUIVO vencem o `content-type` informado e a
+    // extensão da URL — os dois são entradas não confiáveis (um `.mp3` que serve
+    // OGG era enviado como audio/mpeg). O container EBML/WebM é classificado
+    // como vídeo pelo detector por ser ambíguo, mas neste endpoint é a gravação
+    // de ÁUDIO do navegador e vai como `audio/webm`.
+    const mimeType = detected.mime === "video/webm" ? "audio/webm" : detected.mime;
+    const extension = EXTENSION_BY_MIME[mimeType] ?? "bin";
+    return { mimeType, fileName: `audio.${extension}`, source: "magic" };
+  }
+  const { mimeType, fileName } = formatFromMetadata(audioUrl, contentType);
+  return { mimeType, fileName, source: "metadata" };
+}
+
+/**
+ * Seam de teste (mesmo padrão das outras edge functions): tudo que o handler
+ * precisa do mundo externo (auth, rate limit, env, download do objeto e o
+ * `fetch` ao provedor) pode ser injetado. Em produção nada é passado e o handler
+ * usa as implementações reais — por isso o teste chama o handler REAL.
+ */
+export interface TranscribeAudioDeps {
+  /** Resolve a identidade do chamador (default: `requireAiIdentityOrService`). */
+  authorize?: (req: Request) => Promise<AiIdentity | Response>;
+  /** Rate limit local por IP (default: `checkRateLimit`). */
+  rateLimit?: (key: string, max: number, windowMs: number) => { allowed: boolean };
+  /** IP do chamador (default: `getClientIP(req)`). */
+  clientIp?: string;
+  /** Leitura de env (default: `requireEnv`). */
+  env?: (key: string) => string | undefined;
+  /** Download do objeto autorizado (default: `downloadAudio`). */
+  downloadAudio?: (audioUrl: string, log: Logger) => Promise<DownloadAudioResult>;
+  /** Checagem de visibilidade da mensagem (default: `assertMessageVisibleToCaller`). */
+  assertMessageVisible?: (
+    req: Request,
+    messageId?: string | null,
+  ) => Promise<AudioObjectAuthzResult>;
+  /** `fetch` para o provedor de STT (default: o global). */
+  fetch?: typeof fetch;
+}
+
+export async function handleTranscribeAudio(
+  req: Request,
+  deps: TranscribeAudioDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
+
+  const authorize = deps.authorize ??
+    ((r: Request) =>
+      requireAiIdentityOrService(r, "ai-transcribe-audio", {
+        perUserPerMinute: 10,
+      }));
 
   // IA-011/IA-012: caminho de usuário com identidade verificada + cota; caminho de
   // serviço (evolution-webhook, auto-transcrição) reconhecido por comparação em
   // tempo constante e limitado por IP. A comparação `===` que existia aqui vazava
   // o segredo pelo tempo de resposta e não tinha limite nenhum.
-  const identity = await requireAiIdentityOrService(req, "ai-transcribe-audio", {
-    perUserPerMinute: 10,
-  });
+  const identity = await authorize(req);
   if (identity instanceof Response) return identity;
 
   const log = new Logger("ai-transcribe-audio");
 
   try {
-    const ip = getClientIP(req);
-    const { allowed } = checkRateLimit(`transcribe:${ip}`, 10, 60_000);
+    const rateLimit = deps.rateLimit ?? checkRateLimit;
+    const ip = deps.clientIp ?? getClientIP(req);
+    const { allowed } = rateLimit(`transcribe:${ip}`, 10, 60_000);
     if (!allowed) {
       return errorResponse(
         "Limite de transcrições excedido. Tente novamente em 1 minuto.",
@@ -105,7 +224,8 @@ Deno.serve(async (req) => {
     // autorização do objeto pertence ao pipeline que já validou a origem.
     let audioUrl = requestedAudioUrl;
     if (identity.kind === "user") {
-      const objectAuthz = await assertMessageVisibleToCaller(req, messageId);
+      const assertVisible = deps.assertMessageVisible ?? assertMessageVisibleToCaller;
+      const objectAuthz = await assertVisible(req, messageId);
       if (!objectAuthz.ok) {
         return errorResponse(objectAuthz.error, objectAuthz.status, req);
       }
@@ -120,10 +240,15 @@ Deno.serve(async (req) => {
     }
 
     log.info("Starting transcription", { messageId, languageCode });
-    const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
+    const readEnv = deps.env ?? requireEnv;
+    const ELEVENLABS_API_KEY = readEnv("ELEVENLABS_API_KEY");
+    if (!ELEVENLABS_API_KEY) {
+      return errorResponse("Transcription provider is unavailable", 500, req);
+    }
 
     // Download audio (prefers service-role storage download for own URLs)
-    const downloadResult = await downloadAudio(audioUrl, log);
+    const download = deps.downloadAudio ?? downloadAudio;
+    const downloadResult = await download(audioUrl, log);
     if ("error" in downloadResult) {
       return errorResponse(downloadResult.error, 400, req);
     }
@@ -134,35 +259,21 @@ Deno.serve(async (req) => {
       return errorResponse("Audio file too large (max 25MB)", 400, req);
     }
 
-    // Determine correct MIME type and file extension
-    let mimeType = "audio/mpeg";
-    let fileName = "audio.mp3";
-
-    if (contentType.includes("ogg") || audioUrl.includes(".ogg")) {
-      mimeType = "audio/ogg";
-      fileName = "audio.ogg";
-    } else if (contentType.includes("webm") || audioUrl.includes(".webm")) {
-      mimeType = "audio/webm";
-      fileName = "audio.webm";
-    } else if (contentType.includes("wav") || audioUrl.includes(".wav")) {
-      mimeType = "audio/wav";
-      fileName = "audio.wav";
-    } else if (
-      contentType.includes("m4a") || contentType.includes("mp4") ||
-      audioUrl.includes(".m4a")
-    ) {
-      mimeType = "audio/mp4";
-      fileName = "audio.m4a";
-    } else if (contentType.includes("mpeg") || audioUrl.includes(".mp3")) {
-      mimeType = "audio/mpeg";
-      fileName = "audio.mp3";
-    }
+    // Determine correct MIME type and file extension — SL-195a: os magic bytes do
+    // ARQUIVO decidem; `contentType` e extensão da URL só entram quando o
+    // detector não reconhece a assinatura.
+    const { mimeType, fileName, source } = resolveTranscriptionAudioFormat(
+      audioUrl,
+      contentType,
+      new Uint8Array(audioBuffer),
+    );
 
     const audioBlob = new Blob([audioBuffer], { type: mimeType });
     log.info("Audio downloaded", {
       size: audioBlob.size,
       type: mimeType,
       originalType: contentType,
+      typeSource: source,
     });
 
     const formData = new FormData();
@@ -172,7 +283,8 @@ Deno.serve(async (req) => {
     formData.append("tag_audio_events", String(tagAudioEvents));
     formData.append("diarize", String(enableDiarization));
 
-    const response = await fetch(
+    const doFetch = deps.fetch ?? fetch;
+    const response = await doFetch(
       "https://api.elevenlabs.io/v1/speech-to-text",
       {
         method: "POST",
@@ -233,4 +345,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleTranscribeAudio(req));
+}

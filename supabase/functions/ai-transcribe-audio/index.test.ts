@@ -1,0 +1,169 @@
+/**
+ * SL-195a (item 088 do SL-195) — contrato executável do `ai-transcribe-audio`.
+ *
+ * Defeito: o tipo enviado ao provedor de STT era escolhido pelo `content-type`
+ * informado ou pela extensão da URL. Os dois são entradas NÃO confiáveis: um
+ * arquivo OGG (`OggS`) servido com `audio/mpeg` e URL `.mp3` era enviado ao
+ * provedor como MPEG — classificação frágil, que o cabeçalho REAL do arquivo
+ * (magic bytes) deve vencer.
+ *
+ * O teste chama o handler REAL (`handleTranscribeAudio`) com um `Request` real e
+ * confere o `FormData` que sai para o provedor (o tipo e o nome do arquivo). Roda
+ * offline, sem rede, sem banco e sem env: tudo entra por `deps`.
+ *
+ * Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/ai-transcribe-audio/index.test.ts
+ */
+import {
+  handleTranscribeAudio,
+  resolveTranscriptionAudioFormat,
+  type TranscribeAudioDeps,
+} from "./index.ts";
+
+function assert(cond: unknown, msg: string): asserts cond {
+  if (!cond) throw new Error(msg);
+}
+
+function assertEquals(actual: unknown, expected: unknown, msg: string): void {
+  if (actual !== expected) {
+    throw new Error(`${msg}: esperava ${JSON.stringify(expected)}, veio ${JSON.stringify(actual)}`);
+  }
+}
+
+// ─── Fixtures reais: assinaturas mínimas que `detectMediaKind` reconhece ──────
+// OGG/Opus (a voz do WhatsApp): "OggS".
+const OGG_HEADER = new Uint8Array([0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x00]);
+// Frame MPEG-1 Layer III (0xFF 0xFB ...).
+const MP3_HEADER = new Uint8Array([0xff, 0xfb, 0x90, 0x64, 0x00, 0x00]);
+// Nenhuma assinatura conhecida (0x99 não é texto imprimível).
+const UNKNOWN_HEADER = new Uint8Array([0x99, 0x98, 0x97, 0x96]);
+
+// `.mp3` de propósito: a extensão mente junto com o content-type.
+const AUDIO_URL = "https://local.test/storage/v1/object/public/whatsapp-media/audio.mp3";
+
+interface Captured {
+  form: FormData | null;
+}
+
+/** `fetch` falso que captura o corpo enviado ao provedor e responde 200. */
+function capturingFetch(captured: Captured, body: unknown = { text: "oi" }): typeof fetch {
+  return ((_input: RequestInfo | URL, init?: RequestInit) => {
+    captured.form = init?.body as FormData;
+    return Promise.resolve(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+  }) as typeof fetch;
+}
+
+function baseDeps(overrides: Partial<TranscribeAudioDeps> = {}): TranscribeAudioDeps {
+  return {
+    // Caminho de serviço: pula a checagem de visibilidade da mensagem (o objeto
+    // baixado também é injetado), deixando o teste focado no tipo do arquivo.
+    authorize: () => Promise.resolve({ kind: "service", userId: null }),
+    rateLimit: () => ({ allowed: true }),
+    clientIp: "127.0.0.1",
+    env: (key) => (key === "ELEVENLABS_API_KEY" ? "test-key" : undefined),
+    ...overrides,
+  };
+}
+
+function makeRequest(): Request {
+  return new Request("https://edge.test/ai-transcribe-audio", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audioUrl: AUDIO_URL, messageId: "msg-1" }),
+  });
+}
+
+Deno.test(
+  "SL-195a: magic bytes vencem metadado divergente — OGG servido como audio/mpeg vai como audio/ogg",
+  async () => {
+    const captured: Captured = { form: null };
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: OGG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/mpeg",
+        }),
+      fetch: capturingFetch(captured),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    assert(captured.form, "o fetch ao provedor não foi chamado");
+    const file = captured.form.get("file") as File;
+    assertEquals(
+      file.type,
+      "audio/ogg",
+      "o tipo enviado deve vir dos magic bytes, não do audio/mpeg informado",
+    );
+    assertEquals(file.name, "audio.ogg", "o nome do arquivo deve seguir o tipo REAL");
+  },
+);
+
+Deno.test(
+  "SL-195a: magic bytes vencem metadado divergente — MPEG servido como audio/ogg vai como audio/mpeg",
+  async () => {
+    const captured: Captured = { form: null };
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: MP3_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        }),
+      fetch: capturingFetch(captured),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    assert(captured.form, "o fetch ao provedor não foi chamado");
+    const file = captured.form.get("file") as File;
+    assertEquals(file.type, "audio/mpeg", "o MPEG real deve vencer o audio/ogg informado");
+    assertEquals(file.name, "audio.mp3", "o nome do arquivo deve seguir o tipo REAL");
+  },
+);
+
+Deno.test(
+  "SL-195a: assinatura não reconhecida mantém o fallback do metadado declarado (não regride)",
+  async () => {
+    const captured: Captured = { form: null };
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: UNKNOWN_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/webm",
+        }),
+      fetch: capturingFetch(captured),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    assert(captured.form, "o fetch ao provedor não foi chamado");
+    const file = captured.form.get("file") as File;
+    assertEquals(
+      file.type,
+      "audio/webm",
+      "sem magic bytes reconhecíveis o content-type declarado ainda decide",
+    );
+    assertEquals(file.name, "audio.webm", "a extensão acompanha o tipo declarado");
+  },
+);
+
+Deno.test("SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão", () => {
+  const byMagic = resolveTranscriptionAudioFormat("x.mp3", "audio/mpeg", OGG_HEADER);
+  assertEquals(byMagic.mimeType, "audio/ogg", "OGG real");
+  assertEquals(byMagic.source, "magic", "decisão pelos magic bytes");
+
+  const byMetadata = resolveTranscriptionAudioFormat(
+    "audio.mp3",
+    "audio/mpeg",
+    UNKNOWN_HEADER,
+  );
+  assertEquals(byMetadata.mimeType, "audio/mpeg", "fallback pelo metadado");
+  assertEquals(byMetadata.source, "metadata", "decisão pelo metadado declarado");
+});
