@@ -1,8 +1,8 @@
 import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Pause, Square, Play, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
-  SkipForward, BarChart3, Activity, RefreshCw, Zap, AlertTriangle, Inbox,
+  Pause, Square, Play, Timer, CheckCircle2, Loader2,
+  SkipForward, Activity, RefreshCw, Zap, Inbox,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -24,6 +24,7 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { useTalkXEvents } from '@/hooks/integrations/useTalkXEvents';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
+import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
@@ -110,8 +111,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
-  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
-  const successRate = campaign && processed > 0 ? pct(campaign.sent_count, processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
@@ -170,13 +169,28 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        {[{l:'Enviadas',v:fmtInt(campaign.sent_count),I:Send,c:'text-primary'},{l:'Entregues',v:fmtInt(campaign.delivered_count),I:CheckCircle2,c:'text-dash-green'},{l:'Falhas',v:fmtInt(campaign.failed_count),I:XCircle,c:'text-dash-red'},{l:'A confirmar',v:fmtInt(outcomeUnknown),I:AlertTriangle,c:'text-dash-amber'},{l:'Restantes',v:fmtInt(remaining),I:Clock,c:'text-foreground-secondary'},{l:'Taxa sucesso',v:successRate+'%',I:BarChart3,c:'text-primary-glow'}].map(({l,v,I,c},i) => (
-          <motion.div key={l} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.05}} className="rounded-xl bg-card border border-border/70 p-3 flex items-center gap-2">
-            <I className={cn('w-4 h-4 shrink-0',c)}/><div className="min-w-0"><p className="text-lg font-bold text-foreground tabular-nums">{v}</p><p className="text-3xs text-foreground-secondary truncate">{l}</p></div>
-          </motion.div>
-        ))}
-      </div>
+      {/* X146: faixa de KPIs ao vivo — o mesmo componente da tela 12 (Em andamento).
+          A fonte de opt-out por campanha (CAP-026) ainda não existe no front: sem o
+          número, o cartão Opt-outs não entra na faixa. */}
+      <TalkXLiveKpiRow
+        variant="tela11"
+        panel={{
+          sent: campaign.sent_count,
+          delivered: campaign.delivered_count,
+          replied: campaign.replied_count ?? 0,
+          failed: campaign.failed_count,
+          outcome_unknown: outcomeUnknown,
+          audience: campaign.total_recipients,
+          opt_outs: null,
+          forecast: null,
+          vs_yesterday: null,
+          spark: {
+            sent: chartData.map((point) => point.Enviadas),
+            delivered: chartData.map((point) => point.Entregues),
+          },
+        }}
+        onFilterOutcomeUnknown={() => { setStatusFilter('outcome_unknown'); setTab('recipients'); }}
+      />
 
       <div className="flex items-center gap-1 border-b border-border/60">
         {([['overview','Visão Geral'],['recipients','Destinatários'],['timeline','Linha do Tempo']] as [MonitorTab,string][]).map(([t,l]) => (
