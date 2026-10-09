@@ -301,4 +301,33 @@ describe('X079 — a tabela da Visão geral usa as colunas e células do mock', 
     expect(screen.getByText('Retomar')).toBeTruthy();
     expect(screen.getByText('Melhor horário')).toBeTruthy();
   });
+
+  // Recusa do revisor: `selectionKey` não incluía `channel` nem o período, então
+  // uma linha marcada continuava "selecionada" por dentro ao trocar esses dois
+  // filtros (mesmo quando a linha seguia visível, como aqui). Os dois casos
+  // provam que `selectionResetKey` muda e a `TalkXTable` zera a seleção.
+  it('trocar o período zera a seleção (mesmo com a linha ainda visível)', () => {
+    renderOverview();
+    const checkbox = within(linhaDe('Delta campanha')).getByRole('checkbox');
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Período' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '7 dias' }));
+
+    expect(linhaDe('Delta campanha')).toBeTruthy(); // a linha continua na tabela
+    expect(within(linhaDe('Delta campanha')).getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('trocar o filtro de canal zera a seleção', () => {
+    renderOverview();
+    const checkbox = within(linhaDe('Delta campanha')).getByRole('checkbox');
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Todos os canais' }));
+    fireEvent.click(screen.getByRole('option', { name: 'WhatsApp' }));
+
+    expect(within(linhaDe('Delta campanha')).getByRole('checkbox')).not.toBeChecked();
+  });
 });

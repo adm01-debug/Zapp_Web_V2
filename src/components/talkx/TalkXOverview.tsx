@@ -221,7 +221,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
 
   // A seleção é do TalkXTable (restrita à página) e zera quando a página, o
   // tamanho dela ou qualquer filtro muda — nenhuma linha invisível fica marcada.
-  const selectionKey = `${page}|${pageSize}|${status}|${objective}|${segment}|${creator}|${search.trim()}`;
+  // Recusa do revisor (TL-115): a chave não incluía `channel` nem o período
+  // (`noPeriodo`/`periodRange`), que também filtram `filtered` — sem eles, uma
+  // linha marcada ficava invisível (mas ainda "selecionada") ao trocar de canal
+  // ou de período.
+  const selectionKey = `${page}|${pageSize}|${status}|${objective}|${channel}|${segment}|${creator}|${search.trim()}|${period}|${periodRange?.from.getTime() ?? ''}|${periodRange?.to.getTime() ?? ''}`;
 
   const columns: TalkXColumn<TalkXCampaign>[] = [
     {
@@ -425,6 +429,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
  */
 function CampaignStatusCell({ status }: { status: string }) {
   if (status !== 'sending') return <StatusPill status={status} map={CAMPAIGN_STATUS} />;
+  // `StatusPill`/`Pill` (kit/primitives.tsx) só têm o ponto ESTÁTICO (`dot`); não
+  // existe variante com `.talkx-dot-pulse` para o envio em curso. A cópia aqui
+  // reaproveita as MESMAS classes de tom que `Pill` usaria para o tom `info` de
+  // `CAMPAIGN_STATUS.sending` (bg-primary/15 text-primary-glow) e só troca o
+  // ponto — não é estilo inventado, é o kit sem essa variante ainda.
   return (
     <span className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-semibold whitespace-nowrap bg-primary/15 text-primary-glow">
       <span className="talkx-dot-pulse" aria-hidden="true" />
