@@ -54,6 +54,13 @@ import { join } from 'node:path';
  *    ou outro par de tags aninhadas) — e reprova qualquer outro console.error ou
  *    resposta >= 400 que não esteja em nenhuma das listas.
  *
+ * 3) TERCEIRO DO PRODUTO — a lista TERCEIROS_DE_PRODUTO (requisição a terceiro que
+ *    o conjunto local não deixa responder). O app sai para fora do conjunto
+ *    (telemetria da Vercel, ligada no `main.tsx`) e o DNS de fora está preso: a URL
+ *    nunca responde. É defeito do produto, com dono e `test.fixme` próprio; sai no
+ *    relatório em linha própria (`[TERCEIROS DE PRODUTO]`) e SÓ a URL medida escapa
+ *    do `canceladasSemProva` — cancelamento de qualquer outra URL REPROVA.
+ *
  * A lista de módulos e os títulos esperados são DADOS DO TESTE: vieram do cartão
  * Y09 e das entradas que a barra lateral mostra. Nada é lido do código do produto.
  */
@@ -338,6 +345,40 @@ const NINHOS_DE_PRODUTO: NinhoDeProduto[] = [
     fixme: 'DEFEITO: a Documentação põe o selo do catálogo (<div>) dentro de um <p>',
   },
 ];
+
+interface TerceiroDeProduto {
+  /** dono do conserto */
+  area: string;
+  /** trecho EXATO e medido da URL do terceiro */
+  contem: string;
+  /** título EXATO do test.fixme que reproduz o defeito (no fim do arquivo) */
+  fixme: string;
+}
+
+/**
+ * Requisição a TERCEIRO que o app dispara e que o conjunto local não deixa
+ * responder. MEDIDO em 09/10 (rodada 1 deste cartão): o `main.tsx:33` chama
+ * `initSpeedInsights()` sem olhar o ambiente, então TODA carga de página pede
+ * `va.vercel-scripts.com/v1/speed-insights/script.debug.js` — inclusive contra o
+ * conjunto local, onde o DNS de fora está preso (zapp-db-guard): a resposta chega
+ * sem tipo de script e o navegador cancela com `net::ERR_BLOCKED_BY_ORB`, sem
+ * nunca responder. Para `canceladasSemProva` isso era "requisição que não chegou a
+ * lugar nenhum". É defeito do PRODUTO (telemetria de terceiro no caminho do E2E
+ * local), com dono e `test.fixme` próprio. SÓ a URL declarada aqui escapa:
+ * cancelamento de qualquer outra URL continua REPROVANDO.
+ */
+const TERCEIROS_DE_PRODUTO: TerceiroDeProduto[] = [
+  {
+    area: 'performance/telemetria',
+    contem: 'va.vercel-scripts.com/v1/speed-insights/',
+    fixme: 'DEFEITO: o app dispara telemetria da Vercel (Speed Insights) no conjunto local',
+  },
+];
+
+/** Terceiro já medido e registrado; `undefined` = cancelamento sem justificativa. */
+function terceiroMedido(url: string): TerceiroDeProduto | undefined {
+  return TERCEIROS_DE_PRODUTO.find((t) => url.includes(t.contem));
+}
 
 interface OcorrenciaTolerada {
   /** lista de origem: lacuna do conjunto local ou defeito do produto */
@@ -752,7 +793,21 @@ function relatar(onde: string, itens: Ocorrencia[]): string[] {
  * nunca chegou a lugar nenhum.
  */
 function canceladasSemProva(trafego: Trafego): Trafego['canceladas'] {
-  return trafego.canceladas.filter((c) => !trafego.responderam.has(c.url));
+  return trafego.canceladas.filter((c) => !trafego.responderam.has(c.url) && !terceiroMedido(c.url));
+}
+
+/**
+ * Cancelamentos que o conjunto local NÃO deixa responder por serem de terceiro
+ * (`TERCEIROS_DE_PRODUTO`): saem no relatório em lista própria, com o dono e o
+ * `test.fixme` — nunca em silêncio como se fossem requisição do app.
+ */
+function canceladasDeTerceiro(trafego: Trafego): (Trafego['canceladas'][number] & { terceiro: TerceiroDeProduto })[] {
+  return trafego.canceladas
+    .filter((c) => !trafego.responderam.has(c.url))
+    .flatMap((c) => {
+      const terceiro = terceiroMedido(c.url);
+      return terceiro ? [{ ...c, terceiro }] : [];
+    });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -991,8 +1046,11 @@ async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promi
       await mais.click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });
       if (aoAbrirMenu) await aoAbrirMenu();
+      // O menu móvel (`src/components/mobile/MobileDrawerMenu.tsx`: o item sai com
+      // `{item.label}` no span, sem selo) NÃO põe o pill no nome acessível: aqui o
+      // alvo é o rótulo puro.
       await menu
-        .getByRole('button', { name: item.nomeAcessivel ?? item.label, exact: true })
+        .getByRole('button', { name: item.label, exact: true })
         .first()
         .click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não fechou depois de escolher o módulo').toBeHidden({
@@ -1125,6 +1183,15 @@ function relatarRodada(
   console.warn(
     `[CANCELADAS] ${onde}: ${trafego.canceladas.length} canceladas, ${semProva.length} sem resposta da mesma URL`,
   );
+  const terceiros = canceladasDeTerceiro(trafego);
+  if (terceiros.length > 0) {
+    console.warn(`[TERCEIROS DE PRODUTO] ${onde}: ${terceiros.length}`);
+    for (const t of terceiros) {
+      console.warn(
+        `  ${onde}: ${t.metodo} ${t.url} — ${t.motivo} — DEFEITO DO PRODUTO (${t.terceiro.area}) → test.fixme "${t.terceiro.fixme}"`,
+      );
+    }
+  }
   console.warn(`[LACUNAS DO CONJUNTO LOCAL] ${onde}: ${lacunas.length}`);
   for (const linha of relatar(onde, lacunas)) console.warn(`  ${linha}`);
   console.warn(`[DEFEITOS DE PRODUTO] ${onde}: ${defeitos.length}`);
@@ -1450,6 +1517,29 @@ test.describe('Guarda da varredura: ruído novo REPROVA', () => {
     expect(defeitos).toHaveLength(1);
     expect(defeitos[0].tolerada?.motivo, 'o defeito não aponta o test.fixme').toContain('test.fixme');
   });
+
+  test('cancelamento de TERCEIRO DA LISTA é tolerado; qualquer outro cancelamento sem resposta REPROVA', () => {
+    const TERCEIRO = 'https://va.vercel-scripts.com/v1/speed-insights/script.debug.js';
+    const DO_APP = 'http://127.0.0.1:29037/functions/v1/qualquer-coisa';
+    const canceladas = [
+      { metodo: 'GET', url: TERCEIRO, motivo: 'net::ERR_BLOCKED_BY_ORB' },
+      { metodo: 'POST', url: DO_APP, motivo: 'net::ERR_FAILED' },
+    ];
+
+    const trafego: Trafego = { ruido: [], responderam: new Set<string>(), canceladas };
+    expect(
+      canceladasSemProva(trafego).map((c) => c.url),
+      'ou o cancelamento do app passou pela varredura, ou o terceiro da lista voltou a reprovar',
+    ).toEqual([DO_APP]);
+    expect(canceladasDeTerceiro(trafego), 'o terceiro da lista não foi reconhecido').toHaveLength(1);
+    expect(canceladasDeTerceiro(trafego)[0].terceiro.fixme, 'o terceiro não aponta o defeito com dono').toContain('DEFEITO');
+
+    // URL que RESPONDEU na sequência (StrictMode) não é cancelamento sem prova: sai
+    // das duas contas, sem virar "terceiro" por engano.
+    const comResposta: Trafego = { ruido: [], responderam: new Set([TERCEIRO, DO_APP]), canceladas };
+    expect(canceladasSemProva(comResposta)).toEqual([]);
+    expect(canceladasDeTerceiro(comResposta)).toEqual([]);
+  });
 });
 
 /* -------------------------------------------------------------------------- */
@@ -1498,7 +1588,8 @@ test.fixme('DEFEITO: <li> dentro de <li> na trilha de navegação (PageHeader) e
   await abrirApp(page);
   const desde = trafego.ruido.length;
   await clicarDesktop(page, { id: 'tasks', label: 'Tarefas' });
-  await clicarDesktop(page, { id: 'pipeline', label: 'Quadro' });
+  // O Quadro saiu da navegação primária no dia (6b0be2a4c): a trilha do PageHeader
+  // segue reprodutível por Tarefas, que é onde o par também foi medido.
   const erros = aninhadosNaJanela(trafego, desde, 'li', 'li');
   expect(resumir(erros), 'a trilha do PageHeader e o Quadro ainda aninham <li> dentro de <li>').toEqual([]);
 });
@@ -1560,4 +1651,29 @@ test.fixme('DEFEITO: detect-new-device devolve 500 quando o app chama duas vezes
   await abrirApp(page);
   await expect(page.getByRole('main'), 'a tela inicial não montou para observar o arranque').toBeVisible();
   expect(resumir(falhas.map((texto) => ({ tipo: 'resposta', texto }))), 'detect-new-device ainda devolve 500 na corrida').toEqual([]);
+});
+
+/**
+ * DEFEITO (área de performance/telemetria) — `src/main.tsx:33` chama
+ * `initSpeedInsights()` (`src/lib/speed-insights.ts:23-36`) SEM olhar o ambiente, e o
+ * `@vercel/speed-insights` injeta `va.vercel-scripts.com/v1/speed-insights/script.debug.js`
+ * em TODA carga de página. Contra o conjunto LOCAL o DNS de fora está preso
+ * (zapp-db-guard), a resposta não chega como script e o navegador cancela a
+ * requisição com `net::ERR_BLOCKED_BY_ORB` — ela NUNCA responde. MEDIDO em 09/10
+ * (rodada 1 deste cartão): nenhum pedido deve sair do conjunto no E2E (R1). O
+ * conserto é no app (não ligar telemetria de terceiro quando ele aponta para o
+ * conjunto local); enquanto isso a varredura segue medindo e tolera SÓ esta URL
+ * (`TERCEIROS_DE_PRODUTO`). Quando o dono consertar, este fixme vira `test`.
+ */
+test.fixme('DEFEITO: o app dispara telemetria da Vercel (Speed Insights) no conjunto local', async ({ page }) => {
+  const trafego = observar(page);
+  await abrirApp(page);
+  // O `initSpeedInsights` injeta em tempo ocioso (`requestIdleCallback`): dá folga
+  // para o pedido sair antes de medir.
+  await page.waitForTimeout(3_000);
+  const terceiros = trafego.canceladas.filter((c) => c.url.includes('va.vercel-scripts.com'));
+  expect(
+    resumir(terceiros.map((c) => ({ ...c, tipo: 'cancelada' }))),
+    'o app ainda dispara telemetria de terceiro (Vercel) contra o conjunto local',
+  ).toEqual([]);
 });
