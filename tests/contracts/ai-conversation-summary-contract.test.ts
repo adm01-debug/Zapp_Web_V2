@@ -198,3 +198,18 @@ describe('IA-048 · revalida o contexto antes do efeito e devolve cancelled', ()
     expect(source.slice(resposta)).toContain('requestId');
   });
 });
+
+describe('IA-061 · o contexto do resumo não diverge do contexto da análise', () => {
+  const source = read('supabase/functions/ai-conversation-summary/index.ts');
+
+  it('monta o contexto pela rotina compartilhada (histórico no vocabulário canônico)', () => {
+    expect(source).toContain('buildSummaryContactContext(');
+    // O defeito era injetar o sentimento CRU do histórico no prompt
+    // (`[${a.sentiment}]`), enquanto a análise normaliza (IA-021).
+    expect(source, 'o histórico voltou a mandar o sentimento cru').not.toMatch(/\[\$\{a\.sentiment\}\]/);
+  });
+
+  it('informa o papel do interlocutor (contact_type), como a análise (IA-065)', () => {
+    expect(source).toContain('contact_type');
+  });
+});
