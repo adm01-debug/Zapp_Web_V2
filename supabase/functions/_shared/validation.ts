@@ -136,11 +136,10 @@ const SECURITY_HEADERS: Record<string, string> = {
 /** Build CORS + security headers with origin validation */
 export function getCorsHeaders(req?: Request): Record<string, string> {
   const origin = req?.headers.get('origin') || '';
-  const allowedOrigin = isAllowedOrigin(origin) ? origin : 'https://zapp-web-v2.vercel.app';
+  const allowedOrigin = isAllowedOrigin(origin) ? origin : '';
   const requestId = req?.headers.get('x-request-id') || crypto.randomUUID();
-  return {
+  const headers: Record<string, string> = {
     ...SECURITY_HEADERS,
-    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
       'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id',
@@ -149,6 +148,10 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     Vary: 'Origin',
     'X-Request-ID': requestId,
   };
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin;
+  }
+  return headers;
 }
 
 /** @deprecated Use getCorsHeaders(req) for origin-validated CORS. Kept for backward compat. */
