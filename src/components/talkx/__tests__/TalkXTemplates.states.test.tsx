@@ -41,6 +41,11 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, refetch: vi.fn() }),
 }));
 
+// X090: o menu ⋮ e o controle de status leem o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
+}));
+
 import { TalkXTemplates } from '../TalkXTemplates';
 
 describe('matriz de estados — TalkXTemplates (X047b)', () => {

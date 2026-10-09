@@ -71,7 +71,9 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     fetchVersionHistory: f.fetchVersionHistory,
     createTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
     updateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
-    duplicateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn() },
+    // X090: o menu ⋮ / controle de status leem estes campos.
+    deleteTemplate: { mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false },
+    duplicateTemplate: { mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false },
     testTemplate: vi.fn(),
     fetchVariants: vi.fn(async () => []),
     saveVariant: vi.fn(),

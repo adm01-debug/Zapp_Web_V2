@@ -57,6 +57,18 @@ function templateUpdateErrorMessage(error: unknown): string {
   return 'Não foi possível atualizar o template. Tente novamente.';
 }
 
+/**
+ * X090 — recado do teste para os códigos que o agente vê na prática:
+ *  403 = o `talkx-send` (`action=test`) exige admin/supervisor;
+ *  429 = excesso de testes seguidos.
+ * Os demais códigos mantêm o texto do servidor.
+ */
+function testSendErrorMessage(status: number, serverError: unknown): string {
+  if (status === 403) return 'Só admin ou supervisor pode enviar teste.';
+  if (status === 429) return 'Muitos testes seguidos. Aguarde alguns instantes e tente de novo.';
+  return (typeof serverError === 'string' && serverError) || `Erro ${status}`;
+}
+
 export type TemplateVariant = {
   id: string; template_id: string; label: 'A' | 'B' | 'C';
   content: string; media_url: string | null; media_type: string | null;
@@ -143,13 +155,20 @@ export function useTalkXTemplates() {
     onError: (e: Error) => toast.error(`Erro ao excluir: ${e.message}`),
   });
 
+  /**
+   * X090: devolve a LINHA da cópia criada — o menu ⋮ do template abre a cópia
+   * depois de duplicar (`useTalkXTemplateActions`), para a pessoa continuar no
+   * novo template em vez de adivinhar qual da lista é a cópia.
+   */
   const duplicateTemplate = useMutation({
     mutationFn: async (t: TalkXTemplate) => {
-      const { error } = await fromTable('talkx_templates').insert({
+      const { data, error } = await fromTable('talkx_templates').insert({
         name: `${t.name} (cópia)`, description: t.description, category: t.category, content: t.content,
         media_url: t.media_url, media_type: t.media_type, tags: t.tags, status: 'draft', created_by: profile?.id ?? null, custom_variables: t.custom_variables ?? [],
-      });
+      }).select().single();
       if (error) throw error;
+      if (!data) throw new Error('Cópia não confirmada pelo banco');
+      return data as TalkXTemplate;
     },
     onSuccess: () => { invalidate(); toast.success('Template duplicado'); },
     onError: (e: Error) => toast.error(`Erro ao duplicar: ${e.message}`),
@@ -182,7 +201,7 @@ export function useTalkXTemplates() {
       body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone, customVariables }),
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok || !json.success) throw new Error(json.error || `Erro ${res.status}`);
+    if (!res.ok || !json.success) throw new Error(testSendErrorMessage(res.status, json.error));
     return json;
   };
 

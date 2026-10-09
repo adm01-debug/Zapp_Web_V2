@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import {
-  X, Check, Copy, ChevronLeft, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+  X, Check, ChevronLeft, FileText, BarChart3, Image, Video, Music, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
@@ -16,6 +15,11 @@ import {
   IconTile, RailCard, PhoneFrame, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
 } from './talkxShared';
+// X090 — as ações do template (menu ⋮, Testar, Excluir) e o controle de status
+// ficam num só lugar; o cabeçalho do editor consome os mesmos componentes.
+import { TalkXTemplateActionsMenu } from './TalkXTemplateActionsMenu';
+import { TalkXTemplateStatusControl } from './TalkXTemplateStatusControl';
+import { TalkXTemplateTestDialog } from './TalkXTemplateTestDialog';
 
 interface Props {
   templates: TalkXTemplate[];
@@ -25,7 +29,7 @@ interface Props {
 }
 
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: Props) {
-  const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
+  const { createTemplate, updateTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
 
   // Inicializa campos do template sendo editado
@@ -41,11 +45,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
   const [eTagInput, setETagInput] = useState('');
   const [eCustomVars, setECustomVars] = useState<string[]>(editing?.custom_variables ?? []);
   const [eCustomVarInput, setECustomVarInput] = useState('');
-  // E47: test sheet
+  // E47/X090: janela de teste COMPARTILHADA (`TalkXTemplateTestDialog`); aqui
+  // ela recebe o texto em edição para testar o que está na tela.
   const [showTest, setShowTest] = useState(false);
-  const [testPhone, setTestPhone] = useState('');
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(editing?.updated_at ?? null);
@@ -145,23 +147,6 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
 
   /** Insere markup na posicao do cursor (painéis de variaveis fora do editor). */
   const insertAtCursor = (text: string) => messageEditorRef.current?.insertAtCursor(text);
-
-
-  /** E47: envia mensagem de teste para o numero informado */
-  const handleTest = async () => {
-    const phone = testPhone.replace(/\D/g, '');
-    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Número inválido' }); return; }
-    if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
-    setTesting(true); setTestResult(null);
-    try {
-      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone, customVariables: eCustomVars });
-      setTestResult({ ok: true, msg: `Mensagem enviada para ${phone}` });
-    } catch (e) {
-      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
-    } finally {
-      setTesting(false);
-    }
-  };
 
 
   /** R2-MOD-024: a origem (template) da resposta ainda é o template ativo? */
@@ -367,10 +352,18 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <p className="text-xs text-foreground-secondary">Personalize a mensagem e adicione variáveis</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {editing && (
-              <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
+            {/* X090: Duplicar/Testar/Excluir do cabeçalho vêm do menu ⋮ unificado.
+                Duplicar cria a cópia e fecha o editor — a cópia ainda não está na
+                biblioteca deste editor, então ela aparece na lista. */}
+            {(activeTemplate ?? editing) && (
+              <TalkXTemplateActionsMenu
+                template={(activeTemplate ?? editing) as TalkXTemplate}
+                onOpenCopy={() => onClose()}
+                onTest={() => setShowTest(true)}
+                onDeleted={() => onClose()}
+                label="Ações do template"
+              />
             )}
-            <GhostButton icon={Send} onClick={() => { setShowTest(true); setTestResult(null); }}>Testar</GhostButton>
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
@@ -394,10 +387,20 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             </div>
             <div>
               <Label className="text-xs text-foreground-secondary">Status</Label>
-              <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
-                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              {/* X090: o `<Select>` livre de status saiu. A transição exige papel
+                  (autor envia para revisão; admin/supervisor aprova/devole) e o
+                  `onChanged` mantém o campo do formulário alinhado, para o próximo
+                  "Salvar template" não reverter a aprovação. */}
+              {(activeTemplate ?? editing) ? (
+                <div className="mt-1.5 h-10 flex items-center">
+                  <TalkXTemplateStatusControl
+                    template={(activeTemplate ?? editing) as TalkXTemplate}
+                    onChanged={setEStatus}
+                  />
+                </div>
+              ) : (
+                <p className="mt-1.5 h-10 flex items-center text-xs text-muted-foreground">Salve o template para enviar à revisão.</p>
+              )}
             </div>
           </div>
 
@@ -645,22 +648,18 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
         )}
       </aside>
 
-      {/* E47: Test Dialog */}
-      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
-            <div>
-              <Label className="text-xs text-foreground-secondary">Número de destino</Label>
-              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
-            </div>
-            {testResult && (
-              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
-                {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
-                {testResult.msg}
-              </div>
-            )}
-            <div className="flex gap-2 pt-1">
-              <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
-              <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
-            </div></DialogContent></Dialog>
+      {/* E47/X090: janela de teste compartilhada — recebe o texto EM EDIÇÃO, para
+          o teste sair com o que está na tela (ainda não salvo). */}
+      {(activeTemplate ?? editing) && showTest && (
+        <TalkXTemplateTestDialog
+          template={(activeTemplate ?? editing) as TalkXTemplate}
+          open
+          onClose={() => setShowTest(false)}
+          contentOverride={eContent}
+          mediaUrlOverride={eHasMedia ? (eMediaUrl || null) : null}
+          mediaTypeOverride={eHasMedia ? (eMediaType || null) : null}
+        />
+      )}
     </div>
   );
 }
