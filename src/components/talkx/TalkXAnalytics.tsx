@@ -1,22 +1,24 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Zap, Sparkles } from 'lucide-react';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, TalkXEmptyState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct } from './talkxShared';
+import type { Database } from '@/integrations/supabase/types';
+import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
-import { AnalyticsPerformanceChart } from './analytics/AnalyticsPerformanceChart';
-import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsPerformanceChart';
-import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
-import type { FunnelStep } from './analytics/AnalyticsFunnel';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
+import { AnalyticsTopSegments } from './analytics/AnalyticsTopSegments';
+import { AnalyticsHeatmap } from './analytics/AnalyticsHeatmap';
+import type { HeatmapCell } from './analytics/AnalyticsHeatmap';
+import { AnalyticsTopCampaigns } from './analytics/AnalyticsTopCampaigns';
+import { goTab, readSub } from './talkxTabRoute';
 
 interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
 type Period = '7d' | '30d' | '90d';
@@ -26,10 +28,15 @@ const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
-  // X186: seletor PRÓPRIO do gráfico de performance. `null` = ainda não foi tocado, então
-  // ele segue o filtro da tela (padrão pedido no cartão); escolhido, passa a mandar só nele.
-  const [chartPeriod, setChartPeriod] = useState<Period | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
+  // X187: a sub-visão vive na URL (?sub=), como no resto do Talk X; o TalkXView
+  // também reflete popstate, então os dois leem a mesma fonte.
+  const [sub, setSub] = useState<string | undefined>(() => readSub(window.location.search));
+  useEffect(() => {
+    const onPop = () => setSub(readSub(window.location.search));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   const days = DAYS[period];
   // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
   const [pageLoadTime] = useState<number>(() => Date.now());
@@ -46,20 +53,27 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     return { sent, failed, delivered, read, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
   }, [filtered]);
 
-  const { data: hourlyData } = useQuery({
+  const { data: hourlyData, isError: hourlyError } = useQuery({
     queryKey: ['talkx-hourly-stats', period],
     queryFn: async () => {
-      const { data } = await fromTable('talkx_recipients')
-        .select('sent_at, status').in('status', ['sent', 'delivered'])
+      const { data, error } = await fromTable('talkx_recipients')
+        .select('sent_at, replied_at, status').in('status', ['sent', 'delivered'])
         .gte('sent_at', cutoff.toISOString()).not('sent_at', 'is', null);
+      // X187: falha de leitura não pode virar "sem envios" no mapa — o dado é que
+      // faltou, não o envio.
+      if (error) throw error;
       const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+      // X187: a intensidade do mapa passa a ser a taxa de resposta, então a mesma
+      // leitura precisa trazer replied_at (antes só vinha o volume de envio).
+      const repliedMap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
       const hourTotals: number[] = Array(24).fill(0);
-      (data ?? []).forEach((r: { sent_at?: string | null }) => {
+      (data ?? []).forEach((r: { sent_at?: string | null; replied_at?: string | null }) => {
         if (!r.sent_at) return;
         const d = new Date(r.sent_at); const h = d.getHours(); const dw = d.getDay();
         heatmap[dw][h] += 1; hourTotals[h] += 1;
+        if (r.replied_at) repliedMap[dw][h] += 1;
       });
-      return { heatmap, hourTotals };
+      return { heatmap, repliedMap, hourTotals };
     },
     staleTime: 60_000,
   });
@@ -120,6 +134,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   );
 
   const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
+  const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
 
   // E82: comparativo taxa de entrega
   // E82: usa campaigns (nao filtered) — periodo nao deve excluir campanhas antigas do comparativo
@@ -137,51 +152,24 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
       .reverse();
     return comp;
   }, [campaigns]);
-  // X186: degraus do funil da campanha. Conversão por mensagem ainda não é medida pela
-  // plataforma (etapa de banco X073): a fonte entra como `null` e a tela mostra "sem dados
-  // ainda" — nunca um zero que não foi medido (A9).
-  const funnelSteps = useMemo<FunnelStep[]>(() => ([
-    { key: 'sent', label: 'Enviadas', value: stats.sent, token: 'primary' },
-    { key: 'delivered', label: 'Entregues', value: stats.delivered, token: 'dash-green' },
-    { key: 'read', label: 'Lidas', value: stats.read, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'dash-violet' },
-    { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
-  ]), [stats, repliedTotal]);
-
-  // X186: série diária do gráfico de performance. O período é o do seletor próprio do
-  // gráfico (padrão = filtro da tela); o corte da tela continua valendo para os KPIs.
-  const effectiveChartPeriod: PerformancePeriod = chartPeriod ?? period;
-  const chartCutoff = useMemo(
-    () => new Date(pageLoadTime - DAYS[effectiveChartPeriod] * 86_400_000),
-    [pageLoadTime, effectiveChartPeriod],
-  );
-  const { data: performancePoints, isLoading: performanceLoading, isError: performanceError } = useQuery({
-    queryKey: ['talkx-performance-daily', effectiveChartPeriod],
-    queryFn: async () => {
-      // Recusa 1 do TL-171: o `error` da RPC NÃO pode ser descartado. Quando ele vem, a
-      // leitura falhou: lançar aqui faz o React Query marcar `isError` e o gráfico mostra o
-      // estado de erro próprio ("Não foi possível carregar a série do período"), nunca o
-      // vazio "Sem envios registrados" — que afirmaria leitura OK com zero envio.
-      const { data, error } = await supabase.rpc('talkx_overview_stats', {
-        p_from: chartCutoff.toISOString(),
-        p_to: new Date(pageLoadTime).toISOString(),
-      });
-      if (error) throw error;
-      // `daily` é contada no servidor pelos carimbos de envio, entrega e resposta.
-      // `conversions` só passa a existir depois da etapa de banco X073: enquanto o campo
-      // não vier, a série fica nula (o gráfico mostra "sem dados ainda"), nunca zero.
-      const daily = (data as unknown as { daily?: Array<Record<string, unknown>> } | null)?.daily ?? [];
-      return daily.map((row): PerformancePoint => ({
-        day: String(row.day ?? ''),
-        sent: typeof row.sent === 'number' ? row.sent : null,
-        delivered: typeof row.delivered === 'number' ? row.delivered : null,
-        replied: typeof row.replied === 'number' ? row.replied : null,
-        conversions: typeof row.conversions === 'number' ? row.conversions : null,
-      }));
-    },
-    staleTime: 60_000,
-  });
-  const heatmaxVal = useMemo(() => Math.max(...(hourlyData?.hourTotals ?? [0]), 1), [hourlyData]);
+  const funnelData = useMemo(() => {
+    return [
+      { name: 'Enviadas', value: stats.sent, reported: true, fill: 'hsl(var(--primary))' },
+      { name: 'Entregues', value: stats.delivered, reported: true, fill: 'hsl(var(--dash-green))' },
+      { name: 'Lidas', value: stats.read, reported: true, fill: 'hsl(var(--dash-violet))' },
+      { name: 'Conversões', value: null, reported: false, fill: 'hsl(var(--dash-amber))' },
+    ];
+  }, [stats]);
+  // X187: grade do mapa de calor por engajamento (taxa de resposta por dia/hora).
+  const heatCells = useMemo<HeatmapCell[]>(() => {
+    const out: HeatmapCell[] = [];
+    for (let dw = 0; dw < 7; dw += 1) {
+      for (let h = 0; h < 24; h += 1) {
+        out.push({ day: dw, hour: h, sent: hourlyData?.heatmap[dw][h] ?? 0, replied: hourlyData?.repliedMap[dw][h] ?? 0 });
+      }
+    }
+    return out;
+  }, [hourlyData]);
 
   // Por dia da semana: soma de todas as horas de cada dia
   const dayTotals = useMemo(() => DAY_LABELS.map((day, dw) => ({
@@ -247,18 +235,58 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
       {/* E75: respondentes agora derivam de replied_count no servidor (V18); a
           segmentação individual de respondentes deixa de ser consultada aqui. */}
 
-      {/* X186: performance no tempo (4 séries) e funil em SVG proporcional. Os dois
-          substituem o gráfico de barras "Performance por Campanha" e o funil de larguras
-          fixas (100/80/55/35 %), que não media a perda real entre os degraus. */}
-      <AnalyticsPerformanceChart
-        data={performancePoints ?? []}
-        period={effectiveChartPeriod}
-        onPeriodChange={setChartPeriod}
-        isLoading={performanceLoading}
-        isError={performanceError}
+      {/* X187: top segmentos com métrica escolhida; a sub-visão
+          `?tab=analytics&sub=segmentos` abre a lista completa no lugar do resumo. */}
+      <AnalyticsTopSegments
+        campaigns={filtered}
+        segments={allSegments ?? []}
+        view={sub === 'segmentos' ? 'segmentos' : 'resumo'}
+        onViewAll={() => goTab('analytics', 'segmentos')}
       />
 
-      <AnalyticsFunnel steps={funnelSteps} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {barData.length > 0 && (
+          <section className="rounded-2xl bg-card border border-border/70 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <IconTile icon={BarChart3} size={36} />
+              <div><p className="text-[15px] font-bold text-foreground">Performance por Campanha</p><p className="text-xs text-foreground-secondary">Top {barData.length} campanhas por envio</p></div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
+                <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
+                <Bar dataKey="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Falhas" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+        )}
+
+        <section className="rounded-2xl bg-card border border-border/70 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <IconTile icon={Target} color="violet" size={36} />
+            <div><p className="text-[15px] font-bold text-foreground">Funil da Campanha</p><p className="text-xs text-foreground-secondary">Somente métricas confirmadas pela plataforma</p></div>
+          </div>
+          <div className="space-y-2.5">
+            {funnelData.map((f, i) => {
+              const widths = [100, 80, 55, 35];
+              return (
+                <div key={f.name} className="flex items-center gap-3">
+                  <span className="text-xs text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
+                  <div style={{ width: `${widths[i]}%` }} className="relative h-9 flex items-center justify-center rounded-lg" >
+                    <div className="w-full h-9 rounded-lg flex items-center justify-center" style={{ background: f.fill + '33', border: `1.5px solid ${f.fill}55` }}>
+                      <span className="text-[13px] font-bold text-foreground">{f.reported ? fmtInt(f.value ?? 0) : 'Não rastreado'}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-foreground-secondary w-12 shrink-0">{f.reported ? fmtPct(f.value ?? 0, funnelData[0].value ?? 0) : '—'}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
         {/* Barra por dia da semana */}
@@ -303,60 +331,17 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
         </section>
       </div>
 
-      <section className="rounded-2xl bg-card border border-border/70 p-4">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <IconTile icon={Calendar} color="green" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Melhores horários de envio</p><p className="text-xs text-foreground-secondary">Volume por dia da semana e horário</p></div>
-          </div>
-          <div className="flex items-center gap-2 text-2xs text-muted-foreground">
-            <span className="w-8 h-2.5 rounded-sm bg-muted/50 inline-block" />Menor
-            <span className="w-8 h-2.5 rounded-sm bg-primary/80 inline-block" />Maior
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
-            <div className="flex ml-9 mb-1">{Array.from({ length: 8 }, (_, i) => i * 3).map((h) => <div key={h} className="flex-1 text-[9px] text-muted-foreground text-center">{String(h).padStart(2, '0')}h</div>)}</div>
-            {DAY_LABELS.map((day, dw) => (
-              <div key={day} className="flex items-center mb-0.5 gap-1">
-                <span className="text-3xs text-foreground-secondary w-8 text-right shrink-0">{day}</span>
-                <div className="flex-1 flex gap-0.5">
-                  {Array.from({ length: 24 }, (_, h) => {
-                    const count = hourlyData?.heatmap[dw][h] ?? 0;
-                    const intensity = count / heatmaxVal;
-                    return <div key={h} title={`${day} ${String(h).padStart(2,'0')}h: ${count} envios`} className="flex-1 h-5 rounded-[2px]" style={{ background: intensity > 0 ? `hsl(var(--primary) / ${Math.max(0.1, intensity * 0.9)})` : 'hsl(var(--muted) / 0.3)' }} />;
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* X187: mapa de calor por engajamento (taxa de resposta) no lugar do mapa
+          por volume de envio; a leitura de horário continua a mesma query. */}
+      <AnalyticsHeatmap cells={heatCells} hasError={hourlyError} />
 
-      {topCampaigns.length > 0 && (
-        <section className="rounded-2xl bg-card border border-border/70 p-4">
-          <p className="text-[15px] font-bold text-foreground mb-3">Campanhas com melhor resultado</p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] border-collapse">
-              <thead><tr>
-                {['#','Campanha','Canal','Enviadas','Taxa de entrega','Falhas'].map((h) => <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-3 py-2">{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {topCampaigns.map((c, i) => (
-                  <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
-                    <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
-                    <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
-                    <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      {/* X187: tabela de melhor resultado com "Ordenar por"; abrir a campanha
+          continua alimentando o painel de destinatários abaixo. */}
+      <AnalyticsTopCampaigns
+        campaigns={filtered}
+        onOpenCampaign={(id) => setSelectedCampaignId((prev) => (prev === id ? null : id))}
+        onViewAll={() => goTab('overview')}
+      />
       {/* E82: comparativo taxa de entrega */}
       {compareData.length >= 2 && (
         <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
