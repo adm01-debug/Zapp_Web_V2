@@ -18,6 +18,7 @@ import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
+  backoffDelayForAttempts,
   getMediaEndpoint,
   personalize,
   randomBetween,
@@ -522,11 +523,15 @@ export async function processRecipient(
     clearTimeout(sendTimeout);
     // E91: erro antes do POST ao provedor — pode reagendar com backoff
     if (!providerPostAttempted) {
-      const backoffMs = [30_000, 120_000, 600_000];
+      // SL-054: o backoff do DLQ é o COMPARTILHADO (kernel): a conta e a tabela
+      // (30 s / 2 min / 10 min) saem do MESMO lugar que o multiplix-send usa.
+      // Antes esta edge mantinha a própria cópia da tabela — corrigir a política
+      // num motor deixava o outro para trás em silêncio (mesmo caso que originou
+      // o `_shared/messaging/timing.ts`).
       const attemptSoFar = typeof recipient.attempt_count === 'number'
         ? recipient.attempt_count
         : 0;
-      const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+      const delayMs = backoffDelayForAttempts(attemptSoFar);
       const retryAfter = new Date(Date.now() + delayMs).toISOString();
       const reason = err instanceof Error ? err.message : "pre_dispatch_error";
       const { data: schedResult } = await supabase.rpc("reschedule_talkx_recipient", {
