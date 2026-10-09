@@ -66,7 +66,12 @@ const ListProductsSchema = z.object({
   ascending: z.boolean().default(true),
   only_active: z.boolean().default(true),
   only_in_stock: z.boolean().default(false),
-  compact: z.boolean().default(false),
+  // CT-73 — `true` por padrão: a grade chama `list_products` SEM `compact`, e
+  // era exatamente esse caminho padrão que a medição de 02/10/2026 pegou com
+  // 81,5 KB por página de 24. O payload enxuto tem de valer por PADRÃO, não só
+  // quando o chamador lembrar de pedir. Quem precisa do payload completo pede
+  // `compact: false` (o detalhe não passa por aqui: usa `get_product`).
+  compact: z.boolean().default(true),
   // E22 — filtros avançados
   is_featured: z.boolean().optional(),
   is_new: z.boolean().optional(),
@@ -131,16 +136,37 @@ export function buildTagOrExpr(column: "colors" | "materials", values: string[])
 const PRODUCT_RELATIONS = `categories:category_id(id, name, slug, parent_id, full_path_readable),
   suppliers:supplier_id(id, name)`;
 
-// Payload do card (grade/lista): só o que a UI mostra por item.
+/**
+ * CT-73 — payload enxuto da LISTA e caminho PADRÃO de `list_products`.
+ *
+ * Só o que a grade/lista mostra por item. Os campos pesados que só o detalhe
+ * usa (`description`, `images`, `tags`, `engraving_description`, `weight_g`,
+ * `ncm_code`, `capacity_ml`, `view_count`, `order_count`, ...) ficam de fora:
+ * a página de 24 pagava por eles sem exibir nenhum, e a medição de 02/10/2026
+ * pegou 81,5 KB (teto do CT-73: < 30 KB). Não há perda de tela — os dois
+ * diálogos que mostram esses campos buscam o produto COMPLETO por `id`
+ * (`ProductDetailDialog.tsx:260` e `SendProductDialog.tsx:113-117`, ambos via
+ * `get_product`), então eles já vivem no payload completo de qualquer jeito.
+ *
+ * `color_swatches` e `materials` NÃO podem sair daqui:
+ * - `CatalogProductCard.tsx:103` pinta os pontinhos de cor do card com
+ *   `color_swatches` (sem o campo o card degrada para a contagem de `colors`);
+ * - `ExternalProductManagement.tsx:327` mantém um segundo filtro de material
+ *   sobre `materials` — com o campo ausente, `matchesAnySelected(undefined, ['X'])`
+ *   devolve `false` (`catalogShared.tsx:925`) e a grade fica VAZIA sempre que
+ *   houver material selecionado.
+ */
 const PRODUCT_FIELDS_COMPACT = `id, name, short_description, sku, sale_price, suggested_price,
-  stock_quantity, primary_image_url, primary_image_fallback_url, colors, brand, min_quantity,
+  stock_quantity, primary_image_url, primary_image_fallback_url, colors, color_swatches, materials,
+  brand, min_quantity,
   is_kit, is_active, is_stockout, allows_personalization, lead_time_days,
   is_featured, is_new, is_bestseller, is_on_sale, is_closeout,
   is_featured_expires_at, is_new_expires_at, is_bestseller_expires_at,
   category_id, supplier_id, slug, created_at, last_sync_at,
   ${PRODUCT_RELATIONS}`;
 
-// Payload completo (detalhe, envio e list_products sem compact).
+// Payload completo — `get_product` (detalhe/envio) e o opt-in `compact: false`
+// de `list_products`.
 const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_price, suggested_price,
   stock_quantity, primary_image_url, primary_image_fallback_url, images, colors, color_swatches,
   materials, tags, brand, origin_country, min_quantity,
