@@ -17,6 +17,7 @@
 import { errorResponse, getClientIP, requireAuth } from './validation.ts';
 import { checkRateLimit } from './validation.ts';
 import { enforceAiGuards } from './ai-guards.ts';
+import { enforceAiCapability } from './ai-feature-flags.ts';
 import { timingSafeEqual } from './hmac-validation.ts';
 
 export type AiIdentity =
@@ -93,6 +94,14 @@ export async function requireAiIdentityOrService(
   options: AiIdentityOptions = {},
 ): Promise<AiIdentity | Response> {
   if (isServiceRoleRequest(req)) {
+    // O caminho de SERVIÇO não passa por `enforceAiGuards` (não há usuário):
+    // o kill switch por capacidade é conferido aqui para que a capacidade
+    // desligada também pare o chamador interno (IA-009: desligar vale para
+    // TODA origem, não só para o navegador). Vem antes do teto por IP —
+    // capacidade desligada não consome limite.
+    const capability = await enforceAiCapability({ functionName, req });
+    if (capability) return capability;
+
     const perMinute = options.servicePerMinute ?? 60;
     if (perMinute > 0) {
       const { allowed } = checkRateLimit(`ai:service:${functionName}:${getClientIP(req)}`, perMinute, 60_000);
