@@ -189,8 +189,12 @@ expect_value 'B: cenario de rollback tem cliente + 2 agentes no mesmo emoji' '3'
   "SELECT count(*)::text FROM public.message_reactions WHERE message_id='$M2' AND emoji='❤️';"
 
 printf '\n== ROLLBACK — bloco executavel extraido da propria migration ==\n'
-sed -n 's/^-- Rollback: //p' "$migration" > "$tmp_dir/rollback.sql"
-[[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem bloco -- Rollback: executavel'
+awk '
+  /^-- Rollback \(SQL executável, na ordem\):/ { in_rollback = 1; next }
+  in_rollback && /^--$/ { exit }
+  in_rollback && /^--   / { sub(/^--   /, ""); print }
+' "$migration" > "$tmp_dir/rollback.sql"
+[[ -s "$tmp_dir/rollback.sql" ]] || fail 'a migration nao tem bloco -- Rollback (SQL executável)'
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 expect_value 'R: contact_id restaurado (agente x agente)' "$C1" \
   "SELECT contact_id::text FROM public.message_reactions WHERE message_id='$M1' AND user_id='$PA';"
