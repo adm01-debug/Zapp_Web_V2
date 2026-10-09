@@ -298,6 +298,10 @@ está tudo bem.
 **Por que não há tela:** decisão do dono (F59, 02/10/2026) — consulta operacional por função, sem
 construir painel. Fundamento em `docs/adr/ADR-007-multiplix-ponte-singu-canal-e-aptidao.md` (D5).
 
+**Os demais cenários do Multiplix** (fila travada, worker morto, TTS fora, conexão caída, consumo
+estourado e Singu indisponível) estão em `docs/runbooks/multiplix-incidentes.md`, com consulta
+somente-leitura, ação e dono por cenário.
+
 ## 📋 Checklist Geral de Incidente
 
 ### Durante o Incidente
