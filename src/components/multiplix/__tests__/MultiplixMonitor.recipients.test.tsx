@@ -43,6 +43,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
     error: h.recipientsError,
   }),
   useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  // F51 (TL-029): o monitor tambem usa o confirm do rascunho — o mock do modulo
+  // precisa expor o hook, senao o componente chama uma funcao inexistente.
+  useConfirmMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   fetchMultiplixRecipientsTotal: () => Promise.resolve(0),
 }));
 

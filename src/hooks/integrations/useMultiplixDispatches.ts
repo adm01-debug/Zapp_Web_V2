@@ -15,6 +15,12 @@ export interface MultiplixDispatch {
   name: string;
   message_template: string;
   status: 'draft' | 'scheduled' | 'sending' | 'paused' | 'completed' | 'completed_with_failures' | 'failed' | 'cancelled';
+  /**
+   * F51: a versao do disparo. E ela que a tela manda no `confirm` (a versao
+   * REVISADA) — a confirmacao e idempotente por `(dispatch_id, dispatch_version)`.
+   * Ja vem no `dispatch.list` (DISPATCH_LIST_COLUMNS), nao precisa de leitura nova.
+   */
+  dispatch_version: number;
   total_recipients: number;
   sent_count: number;
   failed_count: number;
@@ -430,6 +436,80 @@ export function useCreateMultiplixDispatch() {
     // em vez de criar outro). Um disparo novo, ou um pedido com outro conteudo,
     // recebe chave nova.
     onSuccess: () => { attemptRef.current = null; },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// F51 — `confirm`: a transacao que da existencia a fila do disparo.
+// ---------------------------------------------------------------------------
+
+export interface ConfirmMultiplixDispatchInput {
+  dispatchId: string;
+  /**
+   * `dispatch_version` do disparo REVISADO (o que a tela carregou do
+   * `dispatch.list`). E ela que identifica a confirmacao: a RPC grava
+   * `dispatch_version + 1` e as linhas de `multiplix_delivery_items` nascem com
+   * essa versao no `idempotency_key` (UNIQUE).
+   */
+  dispatchVersion: number;
+}
+
+/** O que o `confirm` congelou e materializou (resposta da edge). */
+export interface MultiplixConfirmResult {
+  dispatch_id: string;
+  /** Versao NOVA (a revisada + 1) — a mesma que os itens carregam. */
+  dispatch_version: number;
+  status: MultiplixDispatch['status'] | null;
+  scheduled_at: string | null;
+  recipient_count: number | null;
+  block_count: number | null;
+  /** Linhas de `multiplix_delivery_items` criadas NESTA chamada (0 no clique repetido). */
+  items_created: number;
+  items_total: number;
+  /** Destinatarios x blocos — "N contatos" != "N mensagens" (F50/F78). */
+  message_count: number;
+  /** false = a versao revisada JA estava confirmada (clique repetido): sucesso, nao erro. */
+  created: boolean;
+}
+
+/** Desembrulha o `{ data }` do confirm (mesmo envelope das listas). */
+function readMultiplixConfirm(data: unknown): MultiplixConfirmResult {
+  const envelope = data && typeof data === 'object' ? data as Record<string, unknown> : null;
+  const inner = envelope && 'data' in envelope ? envelope.data : data;
+  if (inner && typeof inner === 'object' && 'dispatch_id' in (inner as Record<string, unknown>)) {
+    return inner as MultiplixConfirmResult;
+  }
+  throw new MultiplixDispatchEdgeError(
+    'multiplix_confirm_shape',
+    'multiplix-dispatch: resposta do confirm em formato inesperado',
+  );
+}
+
+/**
+ * F51 — confirma o disparo pela edge `multiplix-dispatch`: revalida a
+ * elegibilidade (F49), congela publico e blocos, avanca `dispatch_version` e
+ * gera `multiplix_delivery_items` NA MESMA transacao (RPC
+ * `multiplix_confirm_dispatch`). Nada disso pode ser feito no navegador: uma
+ * falha no meio deixaria o disparo com metade da fila.
+ *
+ * Por que isto existe no front (MX01): o worker `multiplix-send` processa
+ * `multiplix_delivery_items` e SO elas. Um disparo que vai para `sending` sem
+ * passar pelo `confirm` (o caminho antigo: `multiplix-send/start` direto) fica
+ * com destinatarios pendentes e fila vazia — nao envia nada e nao conclui.
+ *
+ * Idempotente por `(dispatch_id, dispatch_version)`: os cliques repetidos mandam
+ * a MESMA versao revisada e a RPC devolve `created: false` em vez de materializar
+ * de novo — 5 cliques = 1 execucao, sem erro na tela.
+ */
+export function useConfirmMultiplixDispatch() {
+  return useMutation({
+    mutationFn: async ({ dispatchId, dispatchVersion }: ConfirmMultiplixDispatchInput): Promise<MultiplixConfirmResult> => {
+      const data = await invokeMultiplixDispatch('confirm', {
+        dispatch_id: dispatchId,
+        dispatch_version: dispatchVersion,
+      });
+      return readMultiplixConfirm(data);
+    },
   });
 }
 
