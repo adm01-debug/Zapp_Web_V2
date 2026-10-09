@@ -64,6 +64,7 @@ import {
   useDeleteDepartmentInvite,
   useDepartmentInvites,
   useDepartmentWhatsAppCredentials,
+  useSaveDepartmentWhatsApp,
 } from '@/hooks/team-chat/useDepartmentManagement';
 
 function alvosTocados(): string[] {
@@ -210,5 +211,56 @@ describe('useDepartmentWhatsAppCredentials — RPC de leitura atual', () => {
       has_api_key: true,
       evolution_url: 'inst-1',
     });
+  });
+});
+
+
+describe('useSaveDepartmentWhatsApp — RPC de gravação atual', () => {
+  it('chama set_department_whatsapp_config com nulos presentes e nao escreve em tabelas legadas', async () => {
+    f.rpc.mockResolvedValue({ data: { ok: true }, error: null });
+
+    const { result } = renderHook(() => useSaveDepartmentWhatsApp('dep-1'), { wrapper: TestQueryWrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        mode: 'evolution',
+        config: {},
+        actorName: 'Ana',
+      });
+    });
+
+    expect(f.rpc).toHaveBeenCalledWith('set_department_whatsapp_config', {
+      p_department_id: 'dep-1',
+      p_whatsapp_mode: 'evolution',
+      p_api_key: null,
+      p_instance_id: null,
+    });
+    expect(alvosTocados()).not.toContain('department_whatsapp_configs');
+    expect(alvosTocados()).not.toContain('department_audit_logs');
+  });
+
+  it('ok:false da RPC vira erro (nao passa como configuracao salva)', async () => {
+    f.rpc.mockResolvedValue({ data: { ok: false, error: 'not_authorized' }, error: null });
+
+    const { result } = renderHook(() => useSaveDepartmentWhatsApp('dep-1'), { wrapper: TestQueryWrapper });
+
+    await act(async () => {
+      await expect(
+        result.current.mutateAsync({
+          mode: 'official',
+          config: { official_token: 'token-1', instance_id: 'inst-1' },
+          actorName: 'Ana',
+        }),
+      ).rejects.toThrow('not_authorized');
+    });
+
+    expect(f.rpc).toHaveBeenCalledWith('set_department_whatsapp_config', {
+      p_department_id: 'dep-1',
+      p_whatsapp_mode: 'official',
+      p_api_key: 'token-1',
+      p_instance_id: 'inst-1',
+    });
+    expect(alvosTocados()).not.toContain('department_whatsapp_configs');
+    expect(alvosTocados()).not.toContain('department_audit_logs');
   });
 });

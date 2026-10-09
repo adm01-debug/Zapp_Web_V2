@@ -347,12 +347,15 @@ export function useSaveDepartmentWhatsApp(departmentId: string) {
     }) => {
       const apiKey = config.api_key ?? config.evolution_api_key ?? config.official_token;
       const instanceId = config.instance_id ?? config.evolution_url;
-      const { data, error } = await supabase.rpc('set_department_whatsapp_config', {
+      const rpcArgs = {
         p_department_id: departmentId,
         p_whatsapp_mode: mode,
-        p_api_key: apiKey,
-        p_instance_id: instanceId,
-      });
+        p_api_key: apiKey ?? null,
+        p_instance_id: instanceId ?? null,
+      } satisfies Record<string, string | null>;
+      // Tipos gerados ainda marcam os dois campos preservaveis como string|undefined,
+      // mas undefined some do JSON e quebra a assinatura de 4 parametros da RPC.
+      const { data, error } = await supabase.rpc('set_department_whatsapp_config', rpcArgs as never);
       if (error) throw error;
       const result = (data ?? null) as { ok?: boolean; error?: string } | null;
       if (!result || result.ok !== true) {
