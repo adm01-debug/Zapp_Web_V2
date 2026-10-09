@@ -524,3 +524,66 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     expect(new URLSearchParams(window.location.search).get('task')).toBeNull();
   });
 });
+
+/**
+ * R2-MOD-051 — save prematuro: o `salvar` fecha o Sheet e dispara a edição
+ * fragmentada sem esperar as escritas pendentes.
+ *
+ * Casos escritos ANTES da correção (vermelho): no código atual o `salvar` chama
+ * `onMove` e `onSave` sem aguardar e roda `onOpenChange(false)` na mesma batida,
+ * então o Sheet fecha (e o módulo descarta a promessa) com a escrita ainda em
+ * voo, e o estado e os campos saem em duas escritas concorrentes.
+ *
+ * O contrato provado aqui é o do próprio componente: a escrita devolvida por
+ * `onSave`/`onMove` é aguardada — o Sheet só fecha quando ela conclui — e a
+ * edição é uma operação serializada (o patch dos campos depois do move).
+ */
+describe('WorkItemSheet — R2-MOD-051 (salvar espera a escrita pendente)', () => {
+  beforeEach(() => cleanup());
+  afterEach(() => cleanup());
+
+  it('R2-MOD-051/1: escrita pendente não fecha o Sheet nem descarta o rascunho', async () => {
+    let liberar!: () => void;
+    // Escrita que só termina quando o teste abre o portão: é o estado real
+    // entre o clique em Salvar e a resposta do banco.
+    const escritaPendente = new Promise<void>((resolve) => { liberar = resolve; });
+    const onSave = vi.fn(() => escritaPendente);
+    const p = props({ onSave });
+    render(<WorkItemSheet {...p} />);
+
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' });
+    // A escrita ainda está em voo: não pode fechar antes de ela concluir.
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+    expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Ligar amanhã');
+
+    // Só com a escrita concluída o Sheet fecha.
+    await act(async () => { liberar(); });
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('R2-MOD-051/2: edição serializada — o patch dos campos não sai em paralelo com o move', async () => {
+    let liberarMove!: () => void;
+    const onMove = vi.fn(() => new Promise<void>((resolve) => { liberarMove = resolve; }));
+    const onSave = vi.fn();
+    const p = props({ onMove, onSave });
+    render(<WorkItemSheet {...p} />);
+
+    // Estado e campo mudam no mesmo Salvar: são duas escritas, uma de cada vez.
+    await abrirEstado();
+    fireEvent.click(await screen.findByRole('option', { name: 'Fazendo' }));
+    fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Ligar amanhã' } });
+    fireEvent.click(screen.getByTestId('sheet-salvar'));
+
+    expect(onMove).toHaveBeenCalledWith(base, 'doing', undefined);
+    // Enquanto o move não volta, o patch dos campos não pode sair.
+    expect(onSave).not.toHaveBeenCalled();
+    expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
+
+    await act(async () => { liberarMove(); });
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(base, { title: 'Ligar amanhã' }));
+    await waitFor(() => expect(p.onOpenChange).toHaveBeenCalledWith(false));
+  });
+});
