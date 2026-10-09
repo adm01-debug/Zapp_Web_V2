@@ -1,7 +1,7 @@
 # Talk X / Campanhas — Guia de Operação (v1.0)
 
 > **Atualizado:** 2026-09-27 · **Versão:** `talkx-v1.0.0`  
-> Referência: `docs/talkx/PLANO_IMPLEMENTACAO_TALKX_100.md` (fases F0–F1 concluídas).
+> Referência: `docs/talkx/_arquivo/PLANO_IMPLEMENTACAO_TALKX_100.md` (fases F0–F1 concluídas; plano substituído, no arquivo).
 
 ---
 
@@ -256,7 +256,8 @@ O aviso no grupo interno é feito pelo fluxo N8N **`talkx-alerts`** (export em
 A coluna `category` é do tipo `text` (sem enum no banco). Para adicionar uma nova categoria:
 
 1. Adicionar o novo valor ao array `TEMPLATE_CATEGORIES` em
-   `src/components/talkx/talkxShared.tsx`.
+   `src/components/talkx/kit/constants.ts` (o arquivo é reexportado pelo barrel
+   `src/components/talkx/talkxShared.ts`).
 2. Abrir PR → merge `main` — sem migration de banco necessária.
 
 ### 8.2 Desabilitar o módulo temporariamente

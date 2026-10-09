@@ -7,8 +7,9 @@
 > `TalkXCampaignRunning`; `completed/cancelled` abrem o Monitor). "Lidas/`read_at` E87 ✅" e "Tempo médio E88 ✅"
 > são falsos (`read_at` não existe). "E94 ✅ via `ContactImportDialog`": arquivo apagado em `ef300d1`. "E97 ✅": há
 > 11 `AlertDialog` diretos. "Ajuda não implementada": `TalkXHelp` existe (Dialog estático). O diagrama de estados
-> omite `scheduled → draft` (Cancelar agendamento). Reescrita completa na etapa V96 do
-> [plano V3](./PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md).
+> omite `scheduled → draft` (Cancelar agendamento). Reescrita completa na etapa X197 do
+> [plano vigente](./PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md); o [plano V3](./_arquivo/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md)
+> e a [auditoria](./_arquivo/AUDITORIA_PLANO_TALKX_2026-09-29.md) estão no arquivo.
 
 ---
 
