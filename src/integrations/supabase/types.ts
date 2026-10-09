@@ -11338,7 +11338,10 @@ export type Database = {
         Args: { p_department_id: string }
         Returns: Json
       }
-      get_department_whatsapp_mode: { Args: { p_department_id: string }; Returns: string }
+      get_department_whatsapp_mode: {
+        Args: { p_department_id: string }
+        Returns: string
+      }
       get_gmail_tokens: {
         Args: { p_account_id: string }
         Returns: {
@@ -11977,7 +11980,7 @@ export type Database = {
         Returns: Json
       }
       remove_wa_label_from_all_contacts: {
-        Args: { p_label_prefix: string }
+        Args: { p_connection_id: string; p_label_prefix: string }
         Returns: undefined
       }
       remove_wa_tag_by_prefix: {
@@ -11985,7 +11988,11 @@ export type Database = {
         Returns: undefined
       }
       rename_wa_label_on_all_contacts: {
-        Args: { p_label_prefix: string; p_new_tag: string }
+        Args: {
+          p_connection_id: string
+          p_label_prefix: string
+          p_new_tag: string
+        }
         Returns: undefined
       }
       reorder_multiplix_blocks: {
