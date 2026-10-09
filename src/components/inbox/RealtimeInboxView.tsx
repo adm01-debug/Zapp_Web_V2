@@ -253,23 +253,24 @@ export function RealtimeInboxView() {
         />
       )}
 
-      {!isMobile && (
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => inbox.setShowNewConversation(true)}
-              className="fixed bottom-24 right-6 z-50 flex h-[54px] w-[54px] items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-xl shadow-primary/20 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95"
-              aria-label="Nova conversa"
-            >
-              <MessageSquarePlus className="h-6 w-6" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left" sideOffset={8}>
-            Nova Conversa
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => inbox.setShowNewConversation(true)}
+            className={cn(
+              "fixed bottom-24 right-6 z-50 flex items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-xl shadow-primary/20 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95",
+              isMobile ? "h-[44px] w-[44px]" : "h-[54px] w-[54px]",
+            )}
+            aria-label="Nova conversa"
+          >
+            <MessageSquarePlus className={cn("h-6 w-6", isMobile && "h-5 w-5")} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="left" sideOffset={8}>
+          Nova Conversa
+        </TooltipContent>
+      </Tooltip>
 
       <ConversationListSidebar
         inbox={inbox}
