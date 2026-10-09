@@ -307,7 +307,7 @@ export function TalkXSuppression() {
         </RailCard>
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 p-3 flex items-start gap-2.5">
           <AlertTriangle className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
-          <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-primary-glow hover:underline">Saiba mais →</a></p>
+          <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-[hsl(var(--primary-text))] underline">Saiba mais →</a></p>
         </div>
 
         <RailCard icon={Activity} color="violet" title="Atividade recente" subtitle="Últimas mudanças na lista de supressão">
@@ -346,7 +346,7 @@ export function TalkXSuppression() {
           <button
             type="button"
             onClick={() => { setHistoryPage(1); setHistoryType('all'); setShowHistory(true); }}
-            className="self-start text-xs font-medium text-primary-glow hover:underline"
+            className="self-start text-xs font-medium text-[hsl(var(--primary-text))] hover:underline"
           >
             Ver todas
           </button>

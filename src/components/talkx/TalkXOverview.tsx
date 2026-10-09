@@ -321,7 +321,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                           <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
                             <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
                             <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-primary-glow">{c.name}</span>
+                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-[hsl(var(--primary-text))]">{c.name}</span>
                               <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
                             </span>
                           </button>

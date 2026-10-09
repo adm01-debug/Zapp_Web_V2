@@ -175,7 +175,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
           <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
           {most.map((t, i) => (
             <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
               <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </button>
@@ -248,7 +248,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
           <Pill label={sm.label} tone={sm.tone} dot />
           <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
-          {tagsVisiveis.map((tag) => <span key={tag} className="text-3xs text-primary-glow">#{tag}</span>)}
+          {tagsVisiveis.map((tag) => <span key={tag} className="text-3xs text-[hsl(var(--primary-text))]">#{tag}</span>)}
           {tagsRestantes > 0 && <span className="text-3xs text-muted-foreground" title={t.tags.join(', ')}>+{tagsRestantes}</span>}
         </div>
         {variaveis && <p className="text-2xs text-foreground-secondary mt-2 truncate">{variaveis}</p>}

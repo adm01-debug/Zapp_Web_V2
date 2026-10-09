@@ -435,7 +435,7 @@ export function TalkXAudienceFilters({ rules, onChange, options, onClear }: Prop
           type="button"
           onClick={() => { onChange(emptyRules()); onClear?.(); }}
           disabled={!active}
-          className="text-xs font-medium text-primary-glow hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-xs font-medium text-[hsl(var(--primary-text))] hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Limpar filtros
         </button>

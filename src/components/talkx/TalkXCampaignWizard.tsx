@@ -380,7 +380,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
                     <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                   </div>
                   <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
-                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
+                  <p className="text-xs font-semibold text-[hsl(var(--primary-text))] mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
                 </button>
               );
             })}
@@ -436,7 +436,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
         right={(
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-[hsl(var(--primary-text))] border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
               {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
@@ -484,7 +484,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>

@@ -144,13 +144,13 @@ export function TalkXSegmentBuilder({
                 }}
               >
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
-                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E', 'O', 'G'][Math.min(gi, 2)]}</span>
+                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center">{['E', 'O', 'G'][Math.min(gi, 2)]}</span>
                   <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                   <Select value={g.match} onValueChange={(v) => dispatch({ type: 'setMatch', id: g.id, match: v as 'and' | 'or' })}>
                     <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
                   </Select>
-                  <button type="button" onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })} aria-label="Duplicar grupo" title="Duplicar grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-primary-glow"><Copy className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => dispatch({ type: 'duplicateGroup', id: g.id })} aria-label="Duplicar grupo" title="Duplicar grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-[hsl(var(--primary-text))]"><Copy className="w-3.5 h-3.5" /></button>
                   {rules.groups.length > 1 && <button type="button" onClick={() => dispatch({ type: 'removeGroup', id: g.id })} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
                 </div>
                 <div className="p-4 space-y-2.5">
@@ -163,13 +163,13 @@ export function TalkXSegmentBuilder({
                     />
                   ))}
                   {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
-                  <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
+                  <button type="button" onClick={() => dispatch({ type: 'addRule', groupId: g.id })} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-[hsl(var(--primary-text))] text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
                 </div>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2 mt-4">
-            <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'and' })} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
+            <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'and' })} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
             <button type="button" onClick={() => dispatch({ type: 'addGroup', match: 'or' })} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-xs font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
           </div>
         </section>
@@ -192,7 +192,7 @@ export function TalkXSegmentBuilder({
                   onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
                   onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
                   onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-[hsl(var(--primary-text))] cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-[hsl(var(--primary-text))] cursor-grab')}
                 >
                   <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
                 </button>
