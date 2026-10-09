@@ -315,6 +315,22 @@ export default defineConfig({
         storageState: 'e2e/.auth/user.json',
       },
     },
+    {
+      // telefonia.spec.ts (T86) no Firefox — o aceite do item pede verde nos 3
+      // browsers. Mesma receita do `chromium-telefonia` logo acima: sessão FALSA
+      // (`installFakeSession`), backend mockado e rede real barrada — DESLOGADO
+      // (sem `setup`, sem secrets), por isso entra no `e2e-logado.yml`.
+      // O `storageState` VAZIO fica explícito: nenhuma sessão salva alimenta a spec.
+      name: 'firefox-telefonia',
+      testMatch: /telefonia\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'], storageState: { cookies: [], origins: [] } },
+    },
+    {
+      // telefonia.spec.ts (T86) no WebKit (engine do Safari) — o terceiro browser do aceite.
+      name: 'webkit-telefonia',
+      testMatch: /telefonia\.spec\.ts/,
+      use: { ...devices['Desktop Safari'], storageState: { cookies: [], origins: [] } },
+    },
   ],
   webServer: (() => {
     // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.

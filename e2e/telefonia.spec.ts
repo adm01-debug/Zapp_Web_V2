@@ -339,8 +339,22 @@ test.describe('Y11 · Telefonia', () => {
     expect(registro.writesApp).toEqual([]);
   });
 
-  test('ligar do painel do contato abre o discador com o número do contato', async ({ page }) => {
+  test('ligar do painel do contato pede a chamada do número DO CONTATO, sem sair do chat', async ({ page }) => {
     const { registro, sockets } = await montarAmbiente(page);
+
+    // C02 (`fix(telefonia): isola diálogo de saída do app`, 09/10 09:24) substituiu o T29 que
+    // esta spec provava: "Ligar via Telefone" NÃO leva mais para a tela de Telefonia — o
+    // `CallSessionProvider` registra o pedido e o `OutboundCallDialog` disca no cartão do
+    // contato, sobre o chat. O contrato VIGENTE é o que se prova aqui: o clique emite
+    // `zapp:start-call` (src/lib/calls/events.ts) com o número DO CONTATO. O evento é lido por
+    // um listener REAL no `document` — nem dublê, nem espião de módulo.
+    await page.addInitScript(() => {
+      const alvo = window as unknown as { __zappStartCall?: unknown[] };
+      alvo.__zappStartCall = [];
+      document.addEventListener('zapp:start-call', (evento) => {
+        alvo.__zappStartCall?.push((evento as CustomEvent<unknown>).detail);
+      });
+    });
 
     // Inbox com a conversa do contato fixo (mesmo caminho de `location-picker.spec.ts`).
     await page.goto('/');
@@ -358,12 +372,27 @@ test.describe('Y11 · Telefonia', () => {
     await painel.getByRole('button', { name: 'Ligar', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Ligar via Telefone' }).click();
 
-    // O caminho único de discagem (T29) leva à tela de Telefonia com o número DO CONTATO
-    // já preenchido, em E.164 — e não disca: sem provedor, o CTA fica bloqueado.
-    await expect(page).toHaveURL(/view=voip/);
-    await expect(page.getByTestId('tel-number-display')).toContainText('+55 (11) 99999-9999');
-    await expect(page.getByTestId('tel-dial-button')).toBeDisabled();
-    await expect(page.getByTestId('tel-dial-reason')).toHaveText('Telefone não configurado nesta conta');
+    // O pedido saiu pelo canal voip com o telefone DO CONTATO (5511999999999) — e não com o do
+    // histórico (5511999998888) — e com a origem `inbox`.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const alvo = window as unknown as { __zappStartCall?: Record<string, unknown>[] };
+          return (alvo.__zappStartCall ?? []).map(({ channel, phone, contactId, source }) => ({
+            channel,
+            phone,
+            contactId,
+            source,
+          }));
+        }),
+      )
+      .toEqual([{ channel: 'voip', phone: '5511999999999', contactId: CONTACT_ID, source: 'inbox' }]);
+
+    // E o agente NÃO saiu do chat: a conversa (com o painel) continua na tela e a view de
+    // Telefonia não subiu — é o que distingue este caminho do antigo `?view=voip`.
+    await expect(painel).toBeVisible();
+    await expect(page).not.toHaveURL(/view=voip/);
+    await expect(page.getByTestId('tel-view')).toHaveCount(0);
 
     // Nenhuma CHAMADA gravada e nenhum tráfego real. O único PATCH de escrita esperado é o
     // `is_read` do markAsRead, disparado ao abrir a conversa — o clique-para-discar não
