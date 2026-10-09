@@ -128,6 +128,15 @@ function hasExactKeys(value, expectedKeys) {
   return JSON.stringify(Object.keys(value).sort((a, b) => a.localeCompare(b))) === JSON.stringify([...expectedKeys].sort((a, b) => a.localeCompare(b)));
 }
 
+function divergenceLine(version, disk, ledger, reason) {
+  return `${version} | ${disk} | ${ledger} | ${reason}`;
+}
+
+function safeDivergenceName(name) {
+  if (name === null || name === undefined) return '(nenhum)';
+  return JSON.stringify(name).slice(1, -1);
+}
+
 function loadEvidence(filePath) {
   const document = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const errors = [];
@@ -552,10 +561,20 @@ function compare(migrations, records, exceptionsByVersion) {
 
   if (withoutRecord.length) {
     errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
-    errors.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
+    for (const { version, fileName } of withoutRecord) {
+      errors.push(divergenceLine(version, fileName, '(nenhum)', 'arquivo sem registro no banco'));
+      errors.push(`  ${version}  ${fileName}`);
+    }
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
+    errors.push(...withoutFile.map((record) => {
+      const normalizedName = record.name
+        ? normalizeLedgerName(record.version, record.name)
+        : null;
+      const safeLedger = JSON.stringify(normalizedName ?? record.name ?? '(nenhum)');
+      return divergenceLine(record.version, '(nenhum)', safeLedger, 'registro no banco sem arquivo no repo');
+    }));
     errors.push(...withoutFile.map((record) => {
       const normalizedName = record.name
         ? normalizeLedgerName(record.version, record.name)
@@ -695,6 +714,9 @@ function compare(migrations, records, exceptionsByVersion) {
     const namesMatch = ledgerName !== null && ledgerName === migration.name;
     if (record.name && !namesMatch) {
       errors.push(
+        divergenceLine(migration.version, safeDivergenceName(migration.name), safeDivergenceName(record.name), 'nome divergente'),
+      );
+      errors.push(
         `nome divergente em ${migration.version}: arquivo=${JSON.stringify(migration.name)}; `
         + `ledger=${JSON.stringify(record.name)}`,
       );
@@ -718,6 +740,7 @@ function compare(migrations, records, exceptionsByVersion) {
     if (!strongEvidenceAndName) {
       for (const source of sourceReferences) {
         if (source !== migration.fileName) {
+          errors.push(divergenceLine(migration.version, migration.fileName, safeDivergenceName(source), 'fonte divergente'));
           errors.push(`fonte divergente em ${migration.version}: arquivo=${migration.fileName}; ledger=${source}`);
         }
       }
@@ -727,18 +750,21 @@ function compare(migrations, records, exceptionsByVersion) {
     if (fileHashes.length === 1) {
       hasEvidence = true;
       if (fileHashes[0] !== migration.rawHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, safeDivergenceName(record.name), 'hash de arquivo divergente'));
         errors.push(`hash de arquivo divergente em ${migration.version}`);
       }
     }
     if (sqlHashes.length === 1) {
       hasEvidence = true;
       if (sqlHashes[0] !== migration.sqlHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, safeDivergenceName(record.name), 'hash SQL divergente'));
         errors.push(`hash SQL divergente em ${migration.version}`);
       }
     }
     if (ledgerSql) {
       hasEvidence = true;
       if (ledgerSql !== fileSql) {
+        errors.push(divergenceLine(migration.version, migration.fileName, safeDivergenceName(record.name), 'conteudo SQL divergente'));
         errors.push(
           `conteudo SQL divergente em ${migration.version} `
           + `(arquivo=${sha256(fileSql)}, ledger=${ledgerSqlHash}) `
@@ -759,6 +785,9 @@ function compare(migrations, records, exceptionsByVersion) {
         // Nota: statements: null fica normalizado a [] em parseLedger() e cai no
         // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente
         // de migracao com prosa no lugar do SQL.
+        errors.push(
+          divergenceLine(migration.version, migration.fileName, safeDivergenceName(record.name), 'statements no ledger sao prosa pura sem hash verificavel'),
+        );
         errors.push(
           `${migration.version} (${migration.fileName}): statements no ledger sao prosa pura `
           + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '
