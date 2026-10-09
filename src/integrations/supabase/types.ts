@@ -323,6 +323,7 @@ export type Database = {
           attempt_count: number
           available_at: string
           created_at: string
+          effect_started_at: string | null
           expires_at: string | null
           finished_at: string | null
           function_name: string
@@ -348,6 +349,7 @@ export type Database = {
           attempt_count?: number
           available_at?: string
           created_at?: string
+          effect_started_at?: string | null
           expires_at?: string | null
           finished_at?: string | null
           function_name: string
@@ -373,6 +375,7 @@ export type Database = {
           attempt_count?: number
           available_at?: string
           created_at?: string
+          effect_started_at?: string | null
           expires_at?: string | null
           finished_at?: string | null
           function_name?: string
@@ -10576,6 +10579,7 @@ export type Database = {
           attempt_count: number
           available_at: string
           created_at: string
+          effect_started_at: string | null
           expires_at: string | null
           finished_at: string | null
           function_name: string
@@ -11662,6 +11666,10 @@ export type Database = {
       log_talkx_campaign_checklist: {
         Args: { p_campaign_id: string; p_items: Json }
         Returns: string
+      }
+      mark_ai_job_effect_started: {
+        Args: { p_id: string; p_lease_token: string }
+        Returns: boolean
       }
       mark_first_response: {
         Args: { p_contact_id: string }

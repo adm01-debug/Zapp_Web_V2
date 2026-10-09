@@ -889,6 +889,7 @@
         "agent_presence.updated_at": "2ee64b1d53e1f8dc8df73647e8fba382",
         "agent_stats.messages_sent": "99031c720b33ef86b8df5e48af3ae522",
         "ai_budget_reservations.id": "9eb0988535c3822cb67934be7c6886ed",
+        "ai_jobs.effect_started_at": "5acc3145d7627a563843e137480b1cbf",
         "ai_providers.api_endpoint": "2a2cfca688ff6a504270d0e8ae144de8",
         "ai_usage_logs.duration_ms": "440d47639197fb240f5ed049e6c5f155",
         "automations.trigger_count": "00a1b509635e663a18c76adaae253e11",
@@ -4271,7 +4272,7 @@
         "scheduled_report_configs.update_scheduled_report_configs_updated_at": "a63286685d9d8f1091201a5af5b4533f"
     },
     "functions": {
-        "f:reap_ai_jobs()": "2fba90d40ff2da269bffc8d214f7a0a0",
+        "f:reap_ai_jobs()": "6af088787f1639ee50cf28d7728da1c2",
         "f:get_team_inbox()": "c26b9a5574abd49a099ca7e47804c8a7",
         "f:handle_new_user()": "0cc13112844cee8252b4a808014a39a3",
         "f:init_agent_stats()": "23000426dbd4bed9f1037a4a2a26661d",
@@ -4468,6 +4469,7 @@
         "f:increment_agent_messages(p_profile_id uuid, p_type text)": "36e0b0ec30da88e60008b83a7baba881",
         "f:find_or_create_direct_conversation(other_profile_id uuid)": "a3b41902bbcd26be6bfbf0599db1a4ee",
         "f:get_department_whatsapp_credentials(p_department_id uuid)": "89c13bb4730891b8e18172cdd8a00027",
+        "f:mark_ai_job_effect_started(p_id uuid, p_lease_token uuid)": "3503b5109ea98b64003591ecd6aa5a70",
         "f:remove_wa_tag_by_prefix(p_contact_id uuid, p_prefix text)": "d48853965ce03265c465f67d94a9f0cd",
         "f:user_has_permission(_user_id uuid, _permission_name text)": "597c2adc2788fa74c9c36e38230ab13e",
         "f:ai_rate_limit_purge(p_older_than timestamp with time zone)": "c27b1caa91bcb1d1877c7bb70ec539af",
@@ -4498,7 +4500,7 @@
         "f:talk_me_eligible_waiting_contacts(p_queue_id uuid, p_contact_id uuid)": "fa90881c85f094006507ededebd4d568",
         "f:add_wa_tag_if_not_exists(p_contact_id uuid, p_prefix text, p_tag text)": "07324e73e7830f4ce0cf026f04ae03f0",
         "f:ai_rate_limit_hit(p_key text, p_window_start timestamp with time zone)": "4d183cb993c1ef8946083cd6eda32cb6",
-        "f:claim_ai_jobs(p_worker text, p_limit integer, p_lease_seconds integer)": "9979377ab6f3dc31099cbad636108bd0",
+        "f:claim_ai_jobs(p_worker text, p_limit integer, p_lease_seconds integer)": "ab986f377f68dddbdbe896efc860c4aa",
         "f:fail_crm_sync_outbox(p_id uuid, p_lease_token uuid, p_error_code text)": "8f12ebb8b9d2fb2c8012a5872f3a4906",
         "f:release_talkx_recipient_claim(p_recipient_id uuid, p_claim_token uuid)": "64a92ee5d4d10a93df0b69cfb185789f",
         "f:set_conversation_status(p_contact_id uuid, p_next text, p_reason text)": "3c029ce755796986f644bdb04a811934",
@@ -5278,7 +5280,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-10-08T12:45:47Z",
+    "generated_at": "2026-10-09T00:45:08Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -5812,6 +5814,7 @@
         "f:get_department_whatsapp_api_key(p_department_id uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_department_whatsapp_config(p_department_id uuid)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_department_whatsapp_credentials(p_department_id uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:mark_ai_job_effect_started(p_id uuid, p_lease_token uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:multiplix_dispatch_window_is_open(p_dispatch_id uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:remove_wa_tag_by_prefix(p_contact_id uuid, p_prefix text)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:toggle_team_reaction(p_message_id uuid, p_emoji text)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -5835,6 +5838,7 @@
         "f:find_or_create_direct_conversation(other_profile_id uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_department_whatsapp_credentials(p_department_id uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:increment_agent_messages(p_profile_id uuid, p_type text)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
+        "f:mark_ai_job_effect_started(p_id uuid, p_lease_token uuid)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:remove_team_member(p_conversation_id uuid, p_profile_id uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:remove_wa_tag_by_prefix(p_contact_id uuid, p_prefix text)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:replace_ai_conversation_tags(p_contact_id uuid, p_tags jsonb)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
