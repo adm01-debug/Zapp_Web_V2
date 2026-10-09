@@ -85,19 +85,16 @@ export function useTeamMessageReactions(conversationId: string) {
   const toggleMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
       if (!profile?.id) throw new Error('Não autenticado');
-      const existing = rows.find(r => r.message_id === messageId && r.emoji === emoji && r.profile_id === profile.id);
-      if (existing) {
-        const { error } = await supabase.from('team_message_reactions').delete().eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('team_message_reactions').insert({
-          message_id: messageId,
-          profile_id: profile.id,
-          emoji,
-          conversation_id: conversationId,
-        });
-        if (error) throw error;
-      }
+      // SL-016 (F43): alternar a reação é uma RPC só (`toggle_team_reaction`). O
+      // caminho anterior escrevia direto na tabela (INSERT/DELETE) e a policy de
+      // INSERT era justamente o buraco de reação cross-team fechado em 30/09
+      // (migration 20260930260000): a RPC confere o vínculo com a conversa da
+      // própria mensagem, sem aceitar a conversa como parâmetro do cliente.
+      const { error } = await supabase.rpc('toggle_team_reaction', {
+        p_message_id: messageId,
+        p_emoji: emoji,
+      });
+      if (error) throw error;
     },
     onMutate: async ({ messageId, emoji }) => {
       await qc.cancelQueries({ queryKey: qKey });
