@@ -2,6 +2,17 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const talkxMocks = vi.hoisted(() => ({
+  startCampaign: vi.fn(),
+  pauseCampaign: vi.fn(),
+  cancelCampaign: vi.fn(),
+  updateCampaign: { mutateAsync: vi.fn() },
+}));
+
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => talkxMocks,
+}));
+
 /**
  * X080 — ações de linha persistidas: duplicar, excluir com regra, pausar,
  * retomar e cancelar.
@@ -266,7 +277,7 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     sessionStorage.clear();
   });
 
-  it('mostra as ações do status e confirma "Retomar" pelo modal', async () => {
+  it('mostra as ações do status e abre ciclo de vida pelo hook único', async () => {
     render(<TalkXOverview {...props} />);
 
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Ações' }));
@@ -279,9 +290,8 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('menuitem', { name: 'Retomar' }));
     });
-    await clicar('Retomar');
 
-    expect(props.onStart).toHaveBeenCalledTimes(1);
-    expect(props.onStart).toHaveBeenCalledWith('c-paused');
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Retomar campanha?');
+    expect(props.onStart).not.toHaveBeenCalled();
   });
 });
