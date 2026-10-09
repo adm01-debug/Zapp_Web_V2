@@ -392,22 +392,22 @@ describe('ContactHeaderSection', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
     // Positiva: badge usa --success para score=100 (alto engajamento)
-    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
+    expect(badge).toHaveStyle('background-color: hsl(var(--success))');
     // Negativa: toHaveStyle distingue valores distintos
-    expect(badge.getAttribute('style')).not.toContain('hsl(var(--warning))');
+    expect(badge).not.toHaveStyle('background-color: hsl(var(--warning))');
   });
 
   it('badge de alto engajamento usa token --success como fundo', () => {
     // baseEnriched: positive+high+company+customer = 100
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
+    expect(badge).toHaveStyle('background-color: hsl(var(--success))');
   });
 
   it('badge de alto engajamento usa --success-foreground como texto', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge.getAttribute('style')).toContain('hsl(var(--success-foreground))');
+    expect(badge).toHaveStyle('color: hsl(var(--success-foreground))');
   });
 
   it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
@@ -419,7 +419,7 @@ describe('ContactHeaderSection', () => {
       />
     );
     const badge = screen.getByText('80');
-    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
+    expect(badge).toHaveStyle('background-color: hsl(var(--success))');
   });
 
   it('badge de médio engajamento usa token --warning como fundo', () => {
@@ -431,7 +431,7 @@ describe('ContactHeaderSection', () => {
     );
     // score = 50 (base sem bônus — mínimo alcançável pela fórmula atual)
     const badge = screen.getByText('50');
-    expect(badge.getAttribute('style')).toContain('hsl(var(--warning))');
+    expect(badge).toHaveStyle('background-color: hsl(var(--warning))');
   });
 
   it('score mínimo é 50 — ramo s<50 em getScoreBadgeBg é código defensivo não alcançável', () => {
@@ -447,7 +447,7 @@ describe('ContactHeaderSection', () => {
     const badge = screen.getByText('50');
     expect(badge).toBeInTheDocument();
     // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
-    expect(badge.getAttribute('style')).not.toContain('hsl(var(--destructive))');
+    expect(badge).not.toHaveStyle('background-color: hsl(var(--destructive))');
   });
 
   it('badge usa cor de médio engajamento na fronteira score=75 (abaixo do limiar hot 80)', () => {
@@ -459,7 +459,7 @@ describe('ContactHeaderSection', () => {
       />
     );
     const badge = screen.getByText('75');
-    expect(badge.getAttribute('style')).toContain('hsl(var(--warning))');
-    expect(badge.getAttribute('style')).not.toContain('hsl(var(--success))');
+    expect(badge).toHaveStyle('background-color: hsl(var(--warning))');
+    expect(badge).not.toHaveStyle('background-color: hsl(var(--success))');
   });
 });
