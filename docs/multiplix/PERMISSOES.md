@@ -62,8 +62,9 @@ resolve nenhuma empresa — comportamento seguro por padrão, não um erro.
 ## Proposta de permissões nomeadas (E015)
 
 > Catálogo **já aplicado** no banco por `supabase/migrations/20260926150000_seed_multiplix_audience_permissions.sql`
-> (as 5 permissões existem na tabela `permissions`; nenhuma linha em `role_permissions`
-> ainda — ver a matriz F25 abaixo para a atribuição a papel).
+> (as 5 permissões existem na tabela `permissions`) e a atribuição a papel **já versionada**
+> em `supabase/migrations/20260930620000_multiplix_role_permissions_matrix.sql` — é a
+> matriz F25 do §1 abaixo.
 
 Novas permissões no catálogo já existente (`permissions`/`role_permissions`), sem
 tabela nova:
@@ -86,44 +87,43 @@ Papéis que **existem hoje no banco**: `app_role` = `('admin', 'supervisor', 'ag
 mesmo enum no front, `src/services/role.service.ts:3`). São esses 4 — a matriz não
 inventa papel.
 
-Legenda: **✅** = atribuição já versionada (existe hoje); **🎯** = alvo da etapa F25
-(`role_permissions` a semear numa migration que **ainda não está neste repo**);
-**—** = não atribuído.
+Legenda: **✅** = atribuição **versionada e aplicada** (está no repo, em migration
+nomeada, e o banco tem a linha); **—** = não atribuído. A matriz abaixo é o **estado
+atual** (08/10/2026), não um alvo.
 
 > **Nomenclatura — shorthand do plano × nome real medido.** O plano cita as permissões
 > de audiência de forma abreviada (`suppliers`, `carriers`, `customers.all`,
 > `customers.own`); os nomes **reais** na tabela `permissions` carregam o prefixo
-> `multiplix.audience.`. Este doc usa sempre o **nome completo**. Fonte: SELECT no banco
-> canônico (líder, 2026-10-01) — as 5 permissões existem no catálogo e **0 linhas** em
-> `role_permissions` as ligam a papel algum (bate com o comentário da migration
-> `20260926150000_seed_multiplix_audience_permissions.sql:3-4`). `multiplix.dispatch.create`
-> **não existe ainda**: é criada na migration de `role_permissions` (F25 parte 1) e é ela
-> que vai gatear a rota `/multiplix`.
+> `multiplix.audience.`. Este doc usa sempre o **nome completo**. As 5 permissões de
+> audiência estão no catálogo desde `20260926150000_seed_multiplix_audience_permissions.sql:15-21`;
+> `multiplix.dispatch.create` **não existia** no catálogo e foi criada pelo próprio seed da
+> matriz (`20260930620000_multiplix_role_permissions_matrix.sql:67-69`) — é ela que gateia a
+> rota `/multiplix`.
 
 ### 1. Papel × permissão nomeada
 
 | Papel (`app_role`) | `multiplix.audience.admin` | `multiplix.audience.suppliers` | `multiplix.audience.carriers` | `multiplix.audience.customers.own` | `multiplix.audience.customers.all` | `multiplix.dispatch.create` | `multiplix.dispatch.manage_all` |
 |---|---|---|---|---|---|---|---|
-| `admin`        | 🎯 | — | — | — | — | 🎯 (nota ¹) | ✅ |
-| `supervisor`   | — | 🎯 | 🎯 | — | 🎯 | 🎯 | — |
-| `agent`        | — | — | — | 🎯 | — | 🎯 | — |
+| `admin`        | ✅ | — | — | — | — | ✅ (nota ¹) | ✅ |
+| `supervisor`   | — | ✅ | ✅ | — | ✅ | ✅ | — |
+| `agent`        | — | — | — | ✅ | — | ✅ | — |
 | `special_agent`| — | — | — | — | — | — | — |
 
 ¹ O texto literal da F25 (plano, linha 53) atribui a `admin` só `multiplix.audience.admin`
-e `multiplix.dispatch.manage_all` — **não** lista `multiplix.dispatch.create`. Isso é uma
-lacuna do enunciado: se o gate de nav/rota passa a ser exclusivamente pela permissão
+e `multiplix.dispatch.manage_all` — **não** lista `multiplix.dispatch.create`. Era uma
+lacuna do enunciado: como o gate de nav/rota passou a ser exclusivamente pela permissão
 nomeada (como a mesma etapa pede), `admin` também precisa dela para ver `/multiplix`.
-A migration de `role_permissions` em construção (F25 parte 1) liga
-`multiplix.dispatch.create` a `admin`, `supervisor` e `agent` — resolvendo a lacuna.
+O seed da matriz (`20260930620000_multiplix_role_permissions_matrix.sql`) liga
+`multiplix.dispatch.create` a `admin`, `supervisor` e `agent` — lacuna resolvida.
 
-**O que existe hoje, de fato:** a única linha `role_permissions` de permissão Multiplix
-versionada no repo é `admin → multiplix.dispatch.manage_all`
-(`supabase/migrations/20260929640000_multiplix_dispatch_manage_all_permission.sql:17-28`).
-As 5 permissões de audiência estão no catálogo `permissions`
-(`20260926150000_seed_multiplix_audience_permissions.sql:16-20`) mas **sem nenhuma
-atribuição a papel** — a própria migration registra isso ("sem nenhuma linha em
-`role_permissions`", linhas 3-4). Até o seed F25 rodar, quem abre escopo na edge é apenas
-`is_admin()` (fallback), não a permissão nomeada.
+**O que existe hoje no repo, de fato (conferido em 08/10/2026):** o seed F25 está versionado
+em `supabase/migrations/20260930620000_multiplix_role_permissions_matrix.sql` (classe
+**aditiva**: só `INSERT ... ON CONFLICT DO NOTHING`) e materializa os **9 pares** da matriz
+acima — `admin` 3, `supervisor` 4, `agent` 2. Duas das linhas já vinham de migrations
+anteriores (`admin → multiplix.dispatch.manage_all` em `20260929640000_...:21-28`) e o resto
+do catálogo existe desde `20260926150000_...:15-21`. Quem abre escopo na edge
+`multiplix-audience` é a permissão nomeada (§2), e o gate de nav/rota e a entrada do worker
+`multiplix-send` usam `multiplix.dispatch.create`.
 
 ### 2. Permissão → escopo → o que libera na prática
 
@@ -134,8 +134,8 @@ atribuição a papel** — a própria migration registra isso ("sem nenhuma linh
 | `multiplix.audience.carriers` | **segmento** transportadoras (`is_carrier = true`) | edge, `scope='carriers'` (`index.ts:199,209`) |
 | `multiplix.audience.customers.own` | **carteira própria** — só os clientes do vendedor | edge, `scope='customers_own'` + e-mail do JWT resolvido a `vendedor_id` no Singu (`index.ts:201,211,217-218`) |
 | `multiplix.audience.customers.all` | **todos** os clientes (`is_customer = true`, sem filtro de dono) | edge, `scope='customers_all'` (`index.ts:200,210`) |
-| `multiplix.dispatch.create` | n/a — é **gate de navegação/acesso** | item de nav `multiplix` + rota `/multiplix`, via `NavigationService`/`ViewRouter.canAccess` (alvo F25/F71, plano linhas 53 e 152). **Hoje** a fonte `navigation.service.ts` ainda filtra por papel `STAFF_ROLES` (`src/services/navigation.service.ts:34,44`) e `canAccess` só olha papéis (`navigation.service.ts:159-169`, chamado em `src/pages/ViewRouter.tsx:131`) |
-| `multiplix.dispatch.manage_all` | n/a — é **operação de disparo** | edge `multiplix-send`: iniciar/pausar/cancelar disparo de **outro** dono (`supabase/functions/multiplix-send/index.ts:94,124-130`); catálogo + atribuição a `admin` em `20260929640000_multiplix_dispatch_manage_all_permission.sql:17-28` |
+| `multiplix.dispatch.create` | n/a — é **gate de navegação/acesso** e de **entrada do worker** | item de nav `multiplix` + rota `/multiplix`: `NavigationService` declara `permission: MULTIPLIX_DISPATCH_CREATE` e o filtro/autorização decidem **pela permissão**, não pelo papel (`src/services/navigation.service.ts:45,54,157-163,193`, chamado em `src/pages/ViewRouter.tsx:132`); o mesmo nome abre a **entrada** do worker `multiplix-send` (`supabase/functions/multiplix-send/index.ts:94,171-177`), sempre limitado pelo **dono** do disparo |
+| `multiplix.dispatch.manage_all` | n/a — é **operação de disparo** | edge `multiplix-send`: iniciar/pausar/cancelar disparo de **outro** dono (`supabase/functions/multiplix-send/index.ts:161-164,195-200`); catálogo + atribuição a `admin` em `20260929640000_multiplix_dispatch_manage_all_permission.sql:17-28` |
 
 ### 3. Perfil de negócio (F24) → papel (F25)
 
@@ -154,19 +154,24 @@ atribuição a papel** — a própria migration registra isso ("sem nenhuma linh
 > separá-los, seria preciso um papel por segmento (novo valor no enum) ou permissão por
 > usuário; nenhum dos dois está no repo hoje.
 
-### 4. Estado atual × alvo (para não confundir documentação com banco)
+### 4. Estado atual (não confundir documentação com banco)
 
-- **Hoje:** catálogo `permissions` com as 6 permissões Multiplix
-  (`20260926150000_...sql:16-20` + `20260929640000_...sql:17-19`); `role_permissions`
-  só com `admin → multiplix.dispatch.manage_all`. Escopo da edge aberto por `is_admin()`.
-- **Alvo F25:** `role_permissions` com `admin → multiplix.audience.admin +
-  multiplix.dispatch.manage_all`; `supervisor → multiplix.audience.suppliers +
-  multiplix.audience.carriers + multiplix.audience.customers.all +
-  multiplix.dispatch.create`; `agent → multiplix.audience.customers.own +
-  multiplix.dispatch.create` (é o texto literal do plano, linha 53).
-  Essa semeadura é uma migration **a criar** (fora do escopo deste arquivo — o F25
-  inteiro parte 2). O gate de nav/rota deixa de ser por papel e passa a ser a permissão
-  nomeada `multiplix.dispatch.create`.
+- **Hoje (08/10/2026):** catálogo `permissions` com as 6 permissões Multiplix
+  (`20260926150000_...sql:15-21` + `20260929640000_...sql:17-19` +
+  `multiplix.dispatch.create` em `20260930620000_...sql:67-69`) e `role_permissions` com os
+  **9 pares** da F25 pelo seed `20260930620000_multiplix_role_permissions_matrix.sql`
+  (aditivo, `ON CONFLICT DO NOTHING`) — o texto literal do plano, linha 53:
+  `admin → multiplix.audience.admin + multiplix.dispatch.manage_all (+ create)`;
+  `supervisor → suppliers + carriers + customers.all + create`;
+  `agent → customers.own + create`.
+- **Gate:** nav, rota `/multiplix` e a entrada do worker `multiplix-send` decidem pela
+  permissão nomeada `multiplix.dispatch.create` — quem não a tem não vê o item nem entra
+  pela URL. Escopo da edge `multiplix-audience` pela permissão nomeada de audiência (§2).
+- **O que a matriz NÃO faz (decisão explícita):** não inventa papel (só os 4 do enum), não
+  separa Compras de Logística (ambos `supervisor`, §3) e **não** deixa `agent`/`supervisor`
+  operar disparo de terceiro: `start`/`pause`/`cancel` continuam exigindo ser o **dono** do
+  disparo ou ter `multiplix.dispatch.manage_all` (hoje só `admin`) — alinhado ao efeito
+  declarado de `dispatch.create` (“criar e operar os **próprios** disparos”) em §2.
 
 ## Regra de escopo (F24) — o escopo nunca vem do body
 

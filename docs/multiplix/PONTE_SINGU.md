@@ -225,14 +225,14 @@ teste. **PENDENTE** — script não existe e só há contas admin/teste/CI
 `PERMISSOES.md` + `role_permissions`: `admin` → `multiplix.audience.admin` +
 `multiplix.dispatch.manage_all`; `supervisor` → `suppliers` + `carriers` + `customers.all` +
 `multiplix.dispatch.create`; `agent` → `customers.own` + `multiplix.dispatch.create`; nav e
-`ViewRouter` por permissão nomeada. **EM ANDAMENTO na branch (2026-10-01):** a matriz já está
-escrita em `docs/multiplix/PERMISSOES.md` (seção "Matriz perfil × papel × escopo (F25)") e há
-uma migration de seed em rascunho com versão reservada
-(`supabase/migrations/__VERSAO___multiplix_role_permissions_matrix.sql`); o gate de
-nav/`ViewRouter` (`src/services/navigation.service.ts`) também está em edição. Permissões de
+`ViewRouter` por permissão nomeada. **FECHADO (2026-10-01; reconferido em 08/10/2026):** a
+matriz está em `docs/multiplix/PERMISSOES.md` (seção "Matriz perfil × papel × escopo (F25)") e
+o seed está versionado em
+`supabase/migrations/20260930620000_multiplix_role_permissions_matrix.sql` (aditivo, 9 pares);
+o gate de nav/`ViewRouter` (`src/services/navigation.service.ts`) exige a permissão nomeada
+`multiplix.dispatch.create`. Permissões de
 público já no catálogo: `20260926150000_seed_multiplix_audience_permissions.sql:15-21`;
 `multiplix.dispatch.manage_all`: `20260929640000_multiplix_dispatch_manage_all_permission.sql:18`.
-Falta o que estiver fora dessas edições (conferir `role_permissions` no banco).
 
 ### 6.6 F27 — `multiplix_resolve_recipients` em lotes de 1.000
 Paginação interna na edge, sem teto silencioso (o teto de política de F17 vira erro nomeado);
