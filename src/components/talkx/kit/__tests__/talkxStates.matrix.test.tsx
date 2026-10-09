@@ -257,7 +257,7 @@ vi.mock('@/lib/supabaseHelpers', () => {
   };
   return {
     fromTable: () => cadeia(),
-    supabase: { from: () => cadeia(), channel: () => ({ on: () => ({ subscribe: () => ({}) }) }), removeChannel: () => undefined, rpc: () => Promise.resolve({ data: null, error: null }) },
+    supabase: { from: () => cadeia(), channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; ch.unsubscribe = () => ch; return ch; }, removeChannel: () => undefined, rpc: () => Promise.resolve({ data: null, error: null }) },
     invokeEdge: () => Promise.resolve({ data: null, error: null }),
   };
 });

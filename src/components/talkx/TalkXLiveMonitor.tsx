@@ -4,10 +4,11 @@ import {
   Pause, Square, Play, Timer, Send, CheckCircle2, XCircle, Clock, Loader2,
   SkipForward, BarChart3, Activity, RefreshCw, Zap, AlertTriangle, Inbox,
 } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
+import { useTalkXLiveChannel, talkxLiveBadgeText } from '@/hooks/integrations/useTalkXLiveChannel';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -30,8 +31,11 @@ type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
 export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
-  const qc = useQueryClient();
   const { startCampaign, pauseCampaign, cancelCampaign } = useTalkX();
+  // X144: UM canal por campanha (campanha + destinatários + eventos), com
+  // invalidação em lote (no máximo 1 por segundo) e estado explícito. Com a
+  // inscrição caída a tela não para: cai para polling (10 s aqui) e o selo avisa.
+  const liveChannel = useTalkXLiveChannel(campaignId);
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
   // e o próprio refetch. O retry de um bloco não troca a campanha aberta.
   const {
@@ -59,7 +63,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       if (error) throw error;
       return data as TalkXCampaign;
     },
-    refetchInterval: REFETCH,
+    // X144: ao vivo quem atualiza é o evento do canal; sem tempo real, o painel
+    // passa a atualizar no intervalo degradado (10 s) — nunca mais parado em
+    // silêncio dizendo "Ao vivo".
+    refetchInterval: liveChannel.live ? false : (liveChannel.panelPollMs ?? REFETCH),
   });
 
   const { label: connStatusLabel } = useTalkXConnectionStatus(campaign?.whatsapp_connection_id);
@@ -81,17 +88,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
     },
-    refetchInterval: REFETCH,
+    // X144: ao vivo o evento invalida a lista; degradado, a tabela atualiza a 15 s.
+    refetchInterval: liveChannel.live ? false : (liveChannel.tablePollMs ?? REFETCH),
   });
   const recipients = recipientsData ?? [];
-
-  useEffect(() => {
-    const ch = supabase.channel(`talkx-mon-${campaignId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'talkx_campaigns', filter: `id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-campaign-live', campaignId] }))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'talkx_recipients', filter: `campaign_id=eq.${campaignId}` }, () => qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [campaignId, statusFilter, qc]);
 
   // Elapsed timer — Date.now() runs in effect/callback, never in render body
   useEffect(() => {
@@ -114,7 +114,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const successRate = campaign && processed > 0 ? pct(campaign.sent_count, processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  // X144: a leitura é a JANELA de 60 min do gráfico (sem teto de linhas); quando o
+  // servidor devolve menos linhas do que existem na janela, a série é parcial e a
+  // tela diz isso em vez de apresentar a amostra como total.
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate, truncated: rateTruncated, total: rateTotal } = useTalkXMonitor(campaignId, statusFilter);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
@@ -153,6 +156,12 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {elapsed && <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border border-border/70 bg-input/40"><Timer className="w-3.5 h-3.5 text-muted-foreground"/>{elapsed}</span>}
+            {/* X144: selo ÚNICO do tempo real — "Ao vivo" só quando a inscrição está de pé. */}
+            <span className={cn('flex items-center gap-1.5 text-2xs font-semibold px-2.5 py-1 rounded-lg border',
+              liveChannel.live ? 'border-dash-green/40 bg-dash-green/10 text-dash-green' : 'border-border/70 bg-input/40 text-foreground-secondary')}>
+              <span className={cn('w-2 h-2 rounded-full', liveChannel.live ? 'bg-dash-green' : 'bg-dash-amber')}/>
+              {talkxLiveBadgeText(liveChannel.status)}
+            </span>
             <StatusPill status={campaign.status} map={CAMPAIGN_STATUS}/>
             {isFetching && <RefreshCw className="w-3.5 h-3.5 text-muted-foreground animate-spin"/>}
             {!isDone && (<>
@@ -208,6 +217,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                 </AreaChart>
               </ResponsiveContainer>
             </TalkXQueryBoundary>
+            {rateTruncated && (
+              <p className="mt-2 text-2xs text-dash-amber">
+                Série parcial: {fmtInt(rateTotal ?? 0)} envios na janela de 60 min — exibindo os mais recentes.
+              </p>
+            )}
           </section>
           <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
             <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>

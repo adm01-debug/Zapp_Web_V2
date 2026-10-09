@@ -107,11 +107,14 @@ vi.mock('@/components/dashboard/overview/DashboardKpiCard', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } }));
 
 // Cadeia thenable genérica: o componente só lê listas via .select().eq().order().limit(n).
+// X144: o histórico de envios passou a ser recortado por janela (`gte('sent_at', …)`)
+// no lugar do teto de 2000 linhas — o recorte continua respondendo por `rows[2000]`.
 const chain = (limitKey: number): Record<string, unknown> => ({
   select: () => chain(limitKey),
   eq: () => chain(limitKey),
   order: () => chain(limitKey),
   not: () => chain(limitKey),
+  gte: () => chain(2000),
   limit: (n: number) => chain(n),
   single: () => Promise.resolve({ data: null, error: null }),
   then: (resolve: (value: unknown) => void) => resolve(state.rows[limitKey] ?? { data: [], error: null }),

@@ -74,7 +74,15 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: (table: string) => makeChain(table),
-      channel: () => ({ on: () => ({ on: () => ({ subscribe: () => ({}) }) }) }),
+      // X144: o canal é aberto pelo hook de tempo real (3 tabelas) — a cadeia
+      // precisa aceitar quantos `.on()` o hook registrar.
+      channel: () => {
+        const ch: Record<string, unknown> = {};
+        ch.on = () => ch;
+        ch.subscribe = () => ch;
+        ch.unsubscribe = () => ch;
+        return ch;
+      },
       removeChannel: () => {},
     },
   };
@@ -183,6 +191,10 @@ describe('matriz de estados — TalkXLiveMonitor (X047c)', () => {
     const { container } = renderMonitor();
 
     await waitFor(() => expect(screen.getByText('Campanha X047')).toBeTruthy());
+    // X144: o selo do tempo real vem do estado da inscrição — sem `SUBSCRIBED` ele
+    // NÃO diz "Ao vivo", e sim que está atualizando por intervalo.
+    expect(screen.getByText('Tempo real indisponível — atualizando a cada 10 s')).toBeTruthy();
+    expect(screen.queryByText('Ao vivo')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Destinatários/ }));
 
     const section = container.querySelector('section') as HTMLElement;
