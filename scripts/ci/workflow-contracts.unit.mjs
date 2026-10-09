@@ -293,3 +293,58 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
 });
+
+// E86 (auditoria de GitHub Actions, 2026-10-01): "avaliar `supabase start` +
+// seed mínimo em CI para a suíte logada". **Avaliado neste repositório e NÃO
+// adotado** — e a decisão fica travada aqui, não no texto do plano:
+//
+//  1. a suíte logada existe para provar PRODUÇÃO — login real
+//     (E2E_TEST_EMAIL/E2E_TEST_PASSWORD), RLS real e fixtures que vivem no banco
+//     de produção (`e2e/README.md`; presença cobrada pela E85). Um Postgres local
+//     com seed não prova nada disso.
+//  2. os specs que NÃO precisam de produção já rodam 100% locais com custo de
+//     boot ZERO — sessão falsa (`installFakeSession`) + REST/RPC/Mapbox
+//     interceptados por rota (`e2e/README.md`, "Aba Arquivos: prova autenticada
+//     100% local"; `chromium-mapa`, travado em `ci-e2e-projects.unit.mjs`).
+//     Contra os ~3 min de boot por run que o próprio item E86 levantou.
+//  3. o caminho local do CLI já existe e é documentado como SÓ-DEV:
+//     `scripts/db-audit/gen-types.sh` (`--local` — "nenhum workflow atual usa").
+//  4. um "seed mínimo" teria de recriar `profiles`/`user_roles`/contatos/
+//     campanhas/conexão Talk X — DDL e dados que este plano não admite.
+//
+// Enquanto a suíte prova produção, o único freio para ela não poluir o banco é a
+// limpeza explícita do que grava (segundo caso, abaixo). Adotar um Supabase local
+// não pode entrar em silêncio num PR: estes casos obrigam a revisitar a decisão
+// de propósito.
+const BOOT_SUPABASE_LOCAL = /\bsupabase\s+(start|db\s+start|db\s+reset|db\s+seed)\b/;
+
+test('E86: nenhum workflow sobe Supabase local (a suíte prova produção ou sessão falsa)', () => {
+  const infratores = [];
+  for (const nome of nomes) {
+    for (const linha of linhasExecutaveis(wf[nome])) {
+      if (BOOT_SUPABASE_LOCAL.test(linha)) infratores.push(`${nome}: ${linha.slice(0, 70)}`);
+    }
+  }
+  assert.deepEqual(
+    infratores,
+    [],
+    `workflow sobe Supabase local (decisão E86, ver o comentário acima):\n${infratores.join('\n')}`,
+  );
+});
+
+test('E86: quem roda a suíte logada declara a limpeza do que grava em produção', () => {
+  // Sem banco local (decisão acima), a suíte logada grava em PRODUÇÃO. O freio
+  // contra poluir o banco é o teardown explícito (`e2e-logado.yml`). Um workflow
+  // logado novo sem essa limpeza gravaria fixture permanente a cada run.
+  const semLimpeza = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    if (!/secrets\.E2E_TEST_(EMAIL|PASSWORD)/.test(texto)) continue;
+    if (!/teardown|cleanup|limpeza|limpar/i.test(texto)) semLimpeza.push(nome);
+  }
+  assert.deepEqual(
+    semLimpeza,
+    [],
+    `workflow roda a suíte logada contra produção sem passo de limpeza: ${semLimpeza.join(', ')}`,
+  );
+});
