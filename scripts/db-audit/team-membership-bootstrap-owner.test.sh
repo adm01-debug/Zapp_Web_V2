@@ -21,6 +21,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261004185228_team_membership_bootstrap_owner_grants.sql"
+migration_fix="$repo_root/supabase/migrations/20261009211113_tcm_insert_owner_only.sql"
 postgres_image="${TEAM_MEMBERSHIP_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-team-membership-test-$$"
 
@@ -339,6 +340,7 @@ psql_sql "UPDATE public.team_conversations SET department_id=NULL WHERE id='$G_O
 
 printf '\n============ BLOCO B — migration aplicada ============\n'
 psql_file "$migration" >/dev/null
+psql_file "$migration_fix" >/dev/null
 psql_file "$tmp_dir/seed.sql" >/dev/null
 
 CONV_B1="$(as_user "$ATILA" "SELECT public.create_team_group_conversation('Time X', ARRAY['$P_DORA']::uuid[], NULL);" | tail -n1)"
@@ -369,80 +371,85 @@ expect_value 'B.9 ...e NAO adiciona quem chamou depois (DORA segue fora)' '1' \
 expect_error_as 'B.10 INSERT direto com member_role=owner agora e barrado pela policy' \
   'row-level security' "$DORA" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','owner');"
-expect_ok_as 'B.11 membro segue podendo adicionar como member (papel forjado, nao a entrada)' \
-  "$DORA" "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','member');"
+expect_error_as 'B.11 membro comum NAO pode adicionar outro membro (N-068: so dono/admin/supervisor)' \
+  'row-level security' "$DORA" \
+  "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','member');"
+expect_ok_as 'B.12 dono do grupo ainda pode adicionar membros' \
+  "$OTTO" "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_OLD','$P_EVA','member');"
 psql_sql "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_OLD' AND profile_id='$P_EVA';" >/dev/null
+expect_ok_as 'B.13 admin global ainda pode adicionar membros' \
+  "$ADM" "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
 
-expect_error_as 'B.12 quem nao e membro/criador/admin nao se auto-convida' \
+expect_error_as 'B.14 quem nao e membro/criador/admin nao se auto-convida' \
   'row-level security' "$EVA" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_OLD','$P_EVA');"
-expect_ok_as 'B.13 fallback de bootstrap: o CRIADOR sem membership ainda anexa membros (como member)' \
+expect_ok_as 'B.15 fallback de bootstrap: o CRIADOR sem membership ainda anexa membros (como member)' \
   "$CARLOS" "INSERT INTO public.team_conversations (id, type, name, created_by) VALUES ('e0000000-0000-0000-0000-0000000000c1','group','Do Carlos','$P_CARLOS');
             INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('e0000000-0000-0000-0000-0000000000c1','$P_CARLOS'),('e0000000-0000-0000-0000-0000000000c1','$P_EVA');"
 
-expect_ok_as 'B.14 DELETE do ultimo owner nao estoura erro: a RLS filtra a linha' \
+expect_ok_as 'B.16 DELETE do ultimo owner nao estoura erro: a RLS filtra a linha' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_OTTO';"
-expect_value 'B.15 ...mas a linha do ultimo owner CONTINUA la (guarda)' '1' \
+expect_value 'B.17 ...mas a linha do ultimo owner CONTINUA la (guarda)' '1' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_OTTO';"
-expect_ok_as 'B.16 membro comum sai normalmente' \
+expect_ok_as 'B.18 membro comum sai normalmente' \
   "$DORA" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_DORA';"
-expect_value 'B.17 saida do membro comum aplicada' '0' \
+expect_value 'B.19 saida do membro comum aplicada' '0' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_DORA';"
 psql_sql "INSERT INTO public.team_conversation_members (conversation_id, profile_id, member_role) VALUES ('$G_DEL','$P_DORA','member');" >/dev/null
 
-expect_ok_as 'B.18 promocao canonica: owner promove DORA a owner via RPC' \
+expect_ok_as 'B.20 promocao canonica: owner promove DORA a owner via RPC' \
   "$OTTO" "SELECT public.set_team_member_role('$G_DEL','$P_DORA','owner');"
-expect_ok_as 'B.19 com dois owners, OTTO ja pode sair (nao e mais o ultimo)' \
+expect_ok_as 'B.21 com dois owners, OTTO ja pode sair (nao e mais o ultimo)' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_OTTO';"
-expect_value 'B.20 OTTO saiu de verdade' '0' \
+expect_value 'B.22 OTTO saiu de verdade' '0' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_OTTO';"
-expect_ok_as 'B.21 DORA virou a ultima owner: a guarda passa a proteger ELA' \
+expect_ok_as 'B.23 DORA virou a ultima owner: a guarda passa a proteger ELA' \
   "$DORA" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_DORA';"
-expect_value 'B.22 a linha dela continua (grupo nao fica sem owner)' '1' \
+expect_value 'B.24 a linha dela continua (grupo nao fica sem owner)' '1' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_DEL' AND profile_id='$P_DORA';"
 
-expect_error_as 'B.23 rebaixar o ultimo owner pela RPC tambem e barrado' \
+expect_error_as 'B.25 rebaixar o ultimo owner pela RPC tambem e barrado' \
   'last_owner_must_transfer_ownership' "$OTTO" \
   "SELECT public.set_team_member_role('$G_ROLE','$P_OTTO','member');"
 
-expect_ok_as 'B.24 conversa direta nao entra na guarda: owner de direct sai normal' \
+expect_ok_as 'B.26 conversa direta nao entra na guarda: owner de direct sai normal' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_DIR' AND profile_id='$P_OTTO';"
-expect_value 'B.25 saida aplicada na direct' '0' \
+expect_value 'B.27 saida aplicada na direct' '0' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_DIR' AND profile_id='$P_OTTO';"
 
-expect_error_as 'B.26 transferir grupo alheio e recusado' \
+expect_error_as 'B.28 transferir grupo alheio e recusado' \
   'not_authorized' "$EVA" \
   "SELECT public.transfer_team_conversation_ownership('$G_TR','$P_MARIA');"
-expect_error_as 'B.27 alvo tem de ser membro' \
+expect_error_as 'B.29 alvo tem de ser membro' \
   'target_not_a_member' "$OTTO" \
   "SELECT public.transfer_team_conversation_ownership('$G_TR','$P_EVA');"
-expect_ok_as 'B.28 owner transfere para membro pela RPC canonica' \
+expect_ok_as 'B.30 owner transfere para membro pela RPC canonica' \
   "$OTTO" "SELECT public.transfer_team_conversation_ownership('$G_TR','$P_MARIA');"
-expect_value 'B.29 created_by migrado' "$P_MARIA" \
+expect_value 'B.31 created_by migrado' "$P_MARIA" \
   "SELECT created_by FROM public.team_conversations WHERE id='$G_TR';"
-expect_value 'B.30 novo owner com member_role=owner e antigo rebaixado a member' '2' \
+expect_value 'B.32 novo owner com member_role=owner e antigo rebaixado a member' '2' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_TR' AND ((profile_id='$P_MARIA' AND member_role='owner') OR (profile_id='$P_OTTO' AND member_role='member'));"
-expect_ok_as 'B.31 ex-owner (agora member) consegue sair — a transferencia destravou a saida' \
+expect_ok_as 'B.33 ex-owner (agora member) consegue sair — a transferencia destravou a saida' \
   "$OTTO" "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_TR' AND profile_id='$P_OTTO';"
-expect_value 'B.32 OTTO saiu' '0' \
+expect_value 'B.34 OTTO saiu' '0' \
   "SELECT count(*) FROM public.team_conversation_members WHERE conversation_id='$G_TR' AND profile_id='$P_OTTO';"
 
-expect_ok_as 'B.33 UPDATE de name continua permitido (coluna concedida)' \
+expect_ok_as 'B.35 UPDATE de name continua permitido (coluna concedida)' \
   "$OTTO" "UPDATE public.team_conversations SET name='Renomeado B' WHERE id='$G_OLD';"
-expect_ok_as 'B.34 UPDATE de updated_at continua permitido (coluna concedida)' \
+expect_ok_as 'B.36 UPDATE de updated_at continua permitido (coluna concedida)' \
   "$OTTO" "UPDATE public.team_conversations SET updated_at=now() WHERE id='$G_OLD';"
-expect_error_as 'B.35 UPDATE de created_by agora e PERMISSION DENIED (grant por coluna efetivo)' \
+expect_error_as 'B.37 UPDATE de created_by agora e PERMISSION DENIED (grant por coluna efetivo)' \
   'permission denied' "$OTTO" "UPDATE public.team_conversations SET created_by='$P_DORA' WHERE id='$G_OLD';"
-expect_error_as 'B.36 UPDATE de type tambem negado' \
+expect_error_as 'B.38 UPDATE de type tambem negado' \
   'permission denied' "$OTTO" "UPDATE public.team_conversations SET type='direct' WHERE id='$G_OLD';"
-expect_error_as 'B.37 UPDATE de department_id tambem negado' \
+expect_error_as 'B.39 UPDATE de department_id tambem negado' \
   'permission denied' "$OTTO" "UPDATE public.team_conversations SET department_id='$DEP1' WHERE id='$G_OLD';"
-expect_value 'B.38 created_by intacto depois das tentativas' "$P_OTTO" \
+expect_value 'B.40 created_by intacto depois das tentativas' "$P_OTTO" \
   "SELECT created_by FROM public.team_conversations WHERE id='$G_OLD';"
 
-expect_ok_as 'B.39 admin CANONICO (user_roles, profiles.role=agent) adiciona membro' \
+expect_ok_as 'B.41 admin CANONICO (user_roles, profiles.role=agent) adiciona membro' \
   "$ADM" "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
-expect_error_as 'B.40 profiles.role=admin SEM user_roles nao vale mais (autorizacao canonica)' \
+expect_error_as 'B.42 profiles.role=admin SEM user_roles nao vale mais (autorizacao canonica)' \
   'row-level security' "$PSEUDO" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_DORA');"
 
