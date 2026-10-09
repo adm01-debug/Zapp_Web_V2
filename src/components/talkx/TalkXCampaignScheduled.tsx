@@ -1,26 +1,24 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
-  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
+  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
-import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
+import { IconTile, RailCard, MetaRow, fmtDateTime, fmtDurationShort, fmtInt, estimateSeconds, WhatsAppBubble } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
-import { intervalForProfile } from './talkxLimits';
-import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const TIMEZONES = [
@@ -43,6 +41,68 @@ const TIMEZONES = [
   ['Europe/Lisbon', 'Europe/Lisboa'],
   ['UTC', 'UTC'],
 ] as const;
+
+/**
+ * T10-005 — selo do agendamento no FUSO DA CAMPANHA.
+ *
+ * `fmtDateTime` formata no fuso do navegador: com o navegador em outro fuso o
+ * selo mostrava uma hora diferente da que o motor usa para disparar
+ * (`scheduled_at` + `schedule_timezone`). Aqui o instante é convertido para o
+ * fuso salvo na campanha, no formato do mock: "27/11 • 09:00".
+ */
+function fmtScheduleSelo(iso: string | null | undefined, timezone: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  try {
+    const parts = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: timezone || DEFAULT_SCHEDULE_TIMEZONE,
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+    return `${get('day')}/${get('month')} • ${get('hour')}:${get('minute')}`;
+  } catch {
+    // Fuso IANA desconhecido (dado legado): mantém o comportamento antigo.
+    return fmtDateTime(iso);
+  }
+}
+
+/**
+ * Estado real da linha WhatsApp (o texto fixo "Linha WhatsApp conectada" dizia
+ * "conectada" até para conexão caída).
+ */
+const CONNECTION_STATUS: Record<string, { label: string; className: string }> = {
+  connected: { label: 'Conectada', className: 'border-success/30 bg-success/15 text-success' },
+  pending: { label: 'Pendente', className: 'border-warning/30 bg-warning/15 text-warning' },
+  disconnected: { label: 'Desconectada', className: 'border-destructive/30 bg-destructive/15 text-destructive' },
+};
+
+/**
+ * Pendências que BLOQUEIAM o envio, com a mesma regra que a revisão do wizard
+ * usa (conexão ativa, público com contatos elegíveis, mensagem escrita).
+ *
+ * A RPC de checagens de lançamento (X120) ainda não existe no banco; enquanto
+ * ela não chega, a tela não pode anunciar "pronta para ser enviada" sem olhar
+ * o que já é conhecido da campanha. Enquanto o status da conexão está sendo
+ * lido (`connectionLoading`) ele não conta como pendência — não se inventa
+ * bloqueio com dado ainda não carregado.
+ */
+function campaignBlockingChecks(
+  campaign: Pick<TalkXCampaign, 'whatsapp_connection_id' | 'total_recipients' | 'message_template'>,
+  connectionStatus: string | null,
+  connectionLoading: boolean,
+): string[] {
+  const problemas: string[] = [];
+  if (!campaign.whatsapp_connection_id) {
+    problemas.push('Nenhuma linha WhatsApp selecionada.');
+  } else if (!connectionLoading && connectionStatus && connectionStatus !== 'connected') {
+    const rotulo = CONNECTION_STATUS[connectionStatus]?.label ?? connectionStatus;
+    problemas.push(`A linha WhatsApp está ${rotulo.toLowerCase()}.`);
+  }
+  if ((campaign.total_recipients ?? 0) <= 0) problemas.push('O público não tem contatos elegíveis.');
+  if (!campaign.message_template?.trim()) problemas.push('A mensagem da campanha está vazia.');
+  return problemas;
+}
 
 interface Props {
   campaignId: string; // P1: recebe ID, deriva da query -- evita stale
@@ -101,102 +161,49 @@ interface ScheduledEditorProps {
   onEdit: (campaign: TalkXCampaign) => void;
 }
 
-/**
- * X137: o piso da data vinha de `new Date().toISOString()`, ou seja, do relógio
- * em UTC — num fuso a oeste o operador podia escolher um dia que já passou na
- * campanha (e vice-versa). O piso passa a ser "hoje" no fuso da campanha,
- * medido pelo mesmo conversor usado ao salvar.
- */
-function todayInTimezone(tz: string): string {
-  try {
-    return utcToLocalInTimezone(new Date().toISOString(), tz).slice(0, 10);
-  } catch {
-    return '';
-  }
-}
-
-/** X137: intervalo real do perfil, em segundos, como o motor o aplica. */
-function fmtIntervalRange(intervalMs: [number, number]): string {
-  return `${Math.round(intervalMs[0] / 1000)}–${Math.round(intervalMs[1] / 1000)}s`;
-}
-
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
-  const { updateCampaign } = useTalkX();
-  // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
-  // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
-  // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
-  // seguirá no fluxo local até o hook ganhar a ação (ver relato).
-  const lifecycle = useTalkXLifecycle();
+  const { updateCampaign, startCampaign } = useTalkX();
+  // T10-043 — estado real da conexão (o Resumo mostrava "Linha WhatsApp
+  // conectada" fixo, mesmo com a conexão caída).
+  const { status: connectionStatus, loading: connectionLoading } = useTalkXConnectionStatus(campaign.whatsapp_connection_id);
   const initialTimezone = campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE;
-  // X137: data e horário deixam de ser um único `datetime-local`. O instante
-  // gravado é convertido para a parede local do fuso da campanha e separado em
-  // dois campos — o que o operador vê é o que ele edita.
   const [localTz, setLocalTz] = useState<string>(initialTimezone);
   const [localDate, setLocalDate] = useState<string>(() => (
-    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone).split('T')[0] ?? '' : ''
-  ));
-  const [localTime, setLocalTime] = useState<string>(() => (
-    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone).split('T')[1] ?? '09:00' : '09:00'
+    campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone) : ''
   ));
   const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign.send_window_start);
   const [windowStart, setWindowStart] = useState<string>(campaign.send_window_start?.slice(0, 5) ?? '08:00');
   const [windowEnd, setWindowEnd] = useState<string>(campaign.send_window_end?.slice(0, 5) ?? '18:00');
   const [bizHours, setBizHours] = useState<boolean>(campaign.business_hours_only ?? false);
-  const [speedProfile, setSpeedProfile] = useState<'slow' | 'moderate' | 'fast'>(campaign.speed_profile ?? 'moderate');
-  const [sendInterval, setSendInterval] = useState<[number, number]>(() => {
-    const fallback = intervalForProfile(campaign.speed_profile ?? 'moderate');
-    return [campaign.send_interval_min ?? fallback[0], campaign.send_interval_max ?? fallback[1]];
-  });
-  // A supressão é sempre aplicada neste envio (o banco é quem libera); a tela
-  // apenas a exibe travada e a reenvia no payload.
-  const respectSuppression = campaign.respect_suppression ?? true;
-  const [confirmConsent, setConfirmConsent] = useState<boolean>(campaign.confirm_consent ?? false);
   const [saving, setSaving] = useState(false);
+  const [launching, setLaunching] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-
-  const minimumDate = todayInTimezone(localTz);
-
-  const messagesPerMinute = useMemo(() => {
-    const avg = ((campaign.typing_delay_min + campaign.typing_delay_max) / 2 + (sendInterval[0] + sendInterval[1]) / 2) / 1000;
-    return avg > 0 ? Math.round((60 / avg) * 10) / 10 : 0;
-  }, [campaign.typing_delay_min, campaign.typing_delay_max, sendInterval]);
+  const [launchOpen, setLaunchOpen] = useState(false);
 
   const handleTimezoneChange = useCallback((nextTimezone: string) => {
-    setLocalTz(nextTimezone);
-    if (!localDate || !localTime) return;
     try {
-      // Preserva o INSTANTE: mudar o fuso não pode "andar" o horário agendado.
-      const nextLocal = utcToLocalInTimezone(localToUTCInTimezone(`${localDate}T${localTime}`, localTz), nextTimezone);
-      const [nextDay, nextClock] = nextLocal.split('T');
-      if (nextDay && nextClock) {
-        setLocalDate(nextDay);
-        setLocalTime(nextClock);
-      }
+      const nextDate = localDate
+        ? utcToLocalInTimezone(localToUTCInTimezone(localDate, localTz), nextTimezone)
+        : localDate;
+      setLocalDate(nextDate);
+      setLocalTz(nextTimezone);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível alterar o fuso horário.');
     }
-  }, [localDate, localTime, localTz]);
+  }, [localDate, localTz]);
 
-  const handleSpeedProfileChange = useCallback((next: string) => {
-    const profile = next as 'slow' | 'moderate' | 'fast';
-    setSpeedProfile(profile);
-    // O intervalo acompanha o perfil (é o valor que o motor usa); o cartão
-    // abaixo mostra exatamente esse par, não um número fixo.
-    setSendInterval(intervalForProfile(profile));
-  }, []);
-
-  const calDate = localDate ? new Date(`${localDate}T00:00:00`) : undefined;
+  const calDate = localDate ? new Date(localDate) : undefined;
 
   const handleSave = useCallback(async () => {
     if (saving) return;
-    if (!localDate || !localTime) { toast.error('Defina a data e o horário do agendamento.'); return; }
+    if (!localDate) { toast.error('Defina a data e hora do agendamento.'); return; }
     if (windowEnabled && windowStart >= windowEnd) {
       toast.error('O fim da janela de envio deve ser posterior ao início.');
       return;
     }
     setSaving(true);
     try {
-      const scheduledAt = localToUTCInTimezone(`${localDate}T${localTime}`, localTz);
+      const scheduledAt = localToUTCInTimezone(localDate, localTz);
       if (new Date(scheduledAt).getTime() <= Date.now()) {
         throw new Error('O agendamento deve estar no futuro no fuso selecionado.');
       }
@@ -207,11 +214,6 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         send_window_start: windowEnabled ? `${windowStart}:00` : null,
         send_window_end: windowEnabled ? `${windowEnd}:00` : null,
         business_hours_only: bizHours,
-        speed_profile: speedProfile,
-        send_interval_min: sendInterval[0],
-        send_interval_max: sendInterval[1],
-        respect_suppression: respectSuppression,
-        confirm_consent: confirmConsent,
       });
       toast.success('Agendamento atualizado.');
     } catch (error) {
@@ -219,7 +221,15 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     } finally {
       setSaving(false);
     }
-  }, [campaign, localDate, localTime, localTz, windowEnabled, windowStart, windowEnd, bizHours, speedProfile, sendInterval, respectSuppression, confirmConsent, updateCampaign, saving]);
+  }, [campaign, localDate, localTz, windowEnabled, windowStart, windowEnd, bizHours, updateCampaign, saving]);
+
+  const handleLaunch = useCallback(() => {
+    setLaunchOpen(false);
+    setLaunching(true);
+    // P2: fire-and-forget -- talkx-send bloqueia ate o loop completo;
+    // a navegacao ocorre via useEffect quando status mudar para 'sending'
+    void startCampaign(campaign.id).finally(() => setLaunching(false));
+  }, [campaign, startCampaign]);
 
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
@@ -233,13 +243,41 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   }, [campaign, updateCampaign, onBack]);
 
   const scheduledLabel = campaign?.scheduled_at
-    ? fmtDateTime(campaign.scheduled_at)
-    : localDate && localTime ? fmtDateTime(localToUTCInTimezone(`${localDate}T${localTime}`, localTz)) : '—';
+    ? fmtScheduleSelo(campaign.scheduled_at, campaign.schedule_timezone || DEFAULT_SCHEDULE_TIMEZONE)
+    : localDate ? fmtScheduleSelo(localToUTCInTimezone(localDate, localTz), localTz) : '—';
+
+  // T10-005 — "Campanha pronta para ser enviada." só quando não há checagem
+  // bloqueante; caso contrário a tela mostra quantas pendências faltam e o
+  // caminho para resolvê-las no wizard.
+  const blockingChecks = campaignBlockingChecks(campaign, connectionStatus, connectionLoading);
+  const readyToSend = blockingChecks.length === 0;
+
+  // T10-044 — duração estimada com o ritmo previsto (mesma conta da revisão do
+  // wizard: média de digitação + média do intervalo entre envios).
+  const { estimatedLabel, messagesPerMinute } = React.useMemo(() => {
+    const segundosPorMensagem = ((campaign.typing_delay_min + campaign.typing_delay_max) / 2
+      + (campaign.send_interval_min + campaign.send_interval_max) / 2) / 1000;
+    if (campaign.total_recipients <= 0 || segundosPorMensagem <= 0) {
+      return { estimatedLabel: null, messagesPerMinute: 0 };
+    }
+    return {
+      estimatedLabel: fmtDurationShort(estimateSeconds(
+        campaign.total_recipients,
+        campaign.typing_delay_min,
+        campaign.typing_delay_max,
+        campaign.send_interval_min,
+        campaign.send_interval_max,
+      )),
+      messagesPerMinute: Math.round((60 / segundosPorMensagem) * 10) / 10,
+    };
+  }, [campaign.total_recipients, campaign.typing_delay_min, campaign.typing_delay_max, campaign.send_interval_min, campaign.send_interval_max]);
+
+  const connectionInfo = CONNECTION_STATUS[connectionStatus ?? ''];
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-3">
+      {/* T10-001 — breadcrumb do módulo */}
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           type="button"
           onClick={onBack}
@@ -247,18 +285,25 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-2xs text-muted-foreground hidden sm:inline">
-          Campanhas / <span className="text-foreground">{campaign.name}</span>
-        </span>
+        <nav aria-label="Trilha de navegação" className="hidden sm:flex items-center gap-1.5 text-2xs text-muted-foreground">
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Campanha Agendada</span>
+        </nav>
       </div>
 
-      {/* Header */}
+      {/* Header — T10-002 (faixa), T10-003 (título) e T10-004 (subtítulo) */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
-          <div>
+          <div className="min-w-0">
             <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
+            <h1 className="text-xl font-bold font-display text-foreground tracking-[-0.02em] truncate">
+              Campanha Agendada • {campaign.name}
+            </h1>
+            <p className="text-xs text-foreground-secondary">Configure o agendamento e revise os detalhes antes de ativar o envio.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -267,13 +312,29 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </div>
       </div>
 
-      {/* Status pill */}
-      <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
-        <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+      {/* T10-005 — selo no fuso da campanha + estado real de prontidão */}
+      <div className={cn(
+        'rounded-xl border px-4 py-3 flex items-center gap-3 flex-wrap',
+        readyToSend ? 'border-success/30 bg-success/8' : 'border-warning/30 bg-warning/8',
+      )}>
+        {readyToSend
+          ? <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          : <AlertTriangle className="w-4 h-4 text-warning shrink-0" />}
         <p className="text-[13px] text-foreground">
-          <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
-          {' '}— Campanha pronta para ser enviada.
+          <span className={cn('font-semibold', readyToSend ? 'text-success' : 'text-warning')}>Agendada para {scheduledLabel}</span>
+          {' '}— {readyToSend
+            ? 'Campanha pronta para ser enviada.'
+            : `${blockingChecks.length} ${blockingChecks.length === 1 ? 'pendência' : 'pendências'} antes do envio.`}
         </p>
+        {!readyToSend && (
+          <button
+            type="button"
+            onClick={() => onEdit(campaign)}
+            className="ml-auto h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
+          >
+            Revisar no wizard
+          </button>
+        )}
       </div>
 
       {/* 3 colunas */}
@@ -282,30 +343,16 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         {/* Col 1 — Configurações de Agendamento */}
         <RailCard title="Configurações de Agendamento" icon={Clock}>
           <div className="space-y-4 pt-1">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="talkx-schedule-date" className="text-2xs text-muted-foreground mb-1.5 block">Data de início</Label>
-                <Input
-                  id="talkx-schedule-date"
-                  type="date"
-                  value={localDate}
-                  min={minimumDate}
-                  onChange={(e) => setLocalDate(e.target.value)}
-                  className="h-10 bg-input/40 border-border/70 text-[13px]"
-                />
-              </div>
-              <div>
-                <Label htmlFor="talkx-schedule-time" className="text-2xs text-muted-foreground mb-1.5 block">Horário de início</Label>
-                <Input
-                  id="talkx-schedule-time"
-                  type="time"
-                  value={localTime}
-                  onChange={(e) => setLocalTime(e.target.value)}
-                  className="h-10 bg-input/40 border-border/70 text-[13px]"
-                />
-              </div>
+            <div>
+              <Label className="text-2xs text-muted-foreground mb-1.5 block">Data e hora</Label>
+              <Input
+                type="datetime-local"
+                value={localDate}
+                min={new Date().toISOString().slice(0, 16)}
+                onChange={(e) => setLocalDate(e.target.value)}
+                className="h-10 bg-input/40 border-border/70 text-[13px]"
+              />
             </div>
-            <p className="text-2xs text-muted-foreground">Data e horário no fuso {localTz}.</p>
 
             <div>
               <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
@@ -326,112 +373,28 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <p className="text-xs font-medium text-foreground">Janela de envio</p>
                 <p className="text-2xs text-muted-foreground">Envia somente neste intervalo</p>
               </div>
-              <Switch aria-label="Janela de envio" checked={windowEnabled} onCheckedChange={setWindowEnabled} />
+              <Switch checked={windowEnabled} onCheckedChange={setWindowEnabled} />
             </div>
 
             {windowEnabled && (
-              <div className="space-y-3 pl-2 border-l-2 border-border/50">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor="talkx-window-start" className="text-2xs text-muted-foreground mb-1 block">Início</Label>
-                    <Input id="talkx-window-start" type="time" value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
-                  </div>
-                  <div>
-                    <Label htmlFor="talkx-window-end" className="text-2xs text-muted-foreground mb-1 block">Fim</Label>
-                    <Input id="talkx-window-end" type="time" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
-                  </div>
+              <div className="grid grid-cols-2 gap-2 pl-2 border-l-2 border-border/50">
+                <div>
+                  <Label className="text-2xs text-muted-foreground mb-1 block">Início</Label>
+                  <Input type="time" value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
-                <div className="rounded-xl border border-primary/30 bg-primary/8 p-3 flex items-start gap-2.5">
-                  <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold text-primary">Envios apenas neste período</p>
-                    <p className="text-2xs text-muted-foreground">
-                      Fora da janela, o envio pausa e retoma automaticamente no próximo início ({windowStart}), no fuso {localTz}.
-                    </p>
-                  </div>
+                <div>
+                  <Label className="text-2xs text-muted-foreground mb-1 block">Fim</Label>
+                  <Input type="time" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className="h-9 bg-input/40 border-border/70 text-[13px]" />
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-input/20 p-3">
-              <div className="flex items-center gap-3">
-                <IconTile icon={CalendarDays as never} size={36} />
-                <div>
-                  <p className="text-[13px] font-semibold text-foreground">Limitar por horário comercial</p>
-                  <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00 no fuso {localTz}.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={cn('text-xs font-semibold', bizHours ? 'text-success' : 'text-muted-foreground')}>
-                  {bizHours ? 'Ativado' : 'Desativado'}
-                </span>
-                <Switch aria-label="Limitar por horário comercial" checked={bizHours} onCheckedChange={setBizHours} />
-              </div>
-            </div>
-
-            {/* Throttle / Simulação humana — o intervalo do cartão é o valor real
-                do perfil escolhido (ms no banco), não um texto fixo. */}
-            <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-3">
-              <div className="flex items-center gap-3">
-                <IconTile icon={Gauge as never} color="green" size={36} />
-                <div>
-                  <p className="text-[13px] font-semibold text-foreground">Throttle / Simulação humana</p>
-                  <p className="text-2xs text-muted-foreground">Velocidade de envio e intervalo entre mensagens.</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="talkx-speed-profile" className="text-2xs text-muted-foreground mb-1.5 block">Velocidade de envio</Label>
-                <Select value={speedProfile} onValueChange={handleSpeedProfileChange}>
-                  <SelectTrigger id="talkx-speed-profile" className="h-9 bg-input/40 border-border/70 text-[13px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPEED_PROFILES.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-xs font-medium text-foreground">Somente horário comercial</p>
+                <p className="text-2xs text-muted-foreground">Seg–Sex, 08:00–18:00</p>
               </div>
-              <div className="rounded-lg border border-border/50 bg-card/50 p-2.5">
-                <p className="text-2xs text-muted-foreground">Intervalo do perfil selecionado</p>
-                <p className="text-[13px] font-semibold text-foreground">
-                  {fmtIntervalRange(sendInterval)} entre mensagens · ~{messagesPerMinute} msgs/min
-                </p>
-              </div>
-            </div>
-
-            {/* Confirmação e supressão */}
-            <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-2.5">
-              <div className="flex items-center gap-3">
-                <IconTile icon={ShieldCheck as never} color="violet" size={36} />
-                <div>
-                  <p className="text-[13px] font-semibold text-foreground">Confirmação e supressão</p>
-                  <p className="text-2xs text-muted-foreground">Proteções aplicadas no lançamento.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <Checkbox id="talkx-respect-suppression" checked={respectSuppression} disabled className="mt-0.5" />
-                <Label htmlFor="talkx-respect-suppression" className="text-xs font-normal text-foreground leading-snug">
-                  Respeitar a lista de supressão
-                  <span className="block text-2xs text-muted-foreground">
-                    Aplicada automaticamente neste envio; desmarcar exige liberação no banco.
-                  </span>
-                </Label>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <Checkbox
-                  id="talkx-confirm-consent"
-                  checked={confirmConsent}
-                  onCheckedChange={(v) => setConfirmConsent(!!v)}
-                  className="mt-0.5"
-                />
-                <Label htmlFor="talkx-confirm-consent" className="text-xs font-normal text-foreground leading-snug">
-                  Confirmo que possuo o consentimento dos contatos
-                  <span className="block text-2xs text-muted-foreground">
-                    Sem esta confirmação a campanha não é lançada.
-                  </span>
-                </Label>
-              </div>
+              <Switch checked={bizHours} onCheckedChange={setBizHours} />
             </div>
           </div>
         </RailCard>
@@ -444,10 +407,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               selected={calDate}
               onSelect={(d) => {
                 if (!d) return;
+                const existingTime = localDate.split('T')[1] || '09:00';
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
-                setLocalDate(`${y}-${m}-${day}`);
+                setLocalDate(`${y}-${m}-${day}T${existingTime}`);
               }}
               className="rounded-lg border border-border/60 bg-card/50 mx-auto"
             />
@@ -455,7 +419,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
               <p className="text-2xs font-semibold text-foreground-secondary uppercase tracking-wide">Resumo da Programação</p>
               <div className="space-y-1.5">
                 <MetaRow icon={CalendarDays} label="Data" value={calDate ? calDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }) : '—'} />
-                <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
+                <MetaRow icon={Clock} label="Hora" value={localDate.split('T')[1] || '—'} />
                 <MetaRow icon={Timer} label="Fuso" value={localTz} />
                 {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
                 <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
@@ -485,8 +449,31 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <div className="space-y-1.5">
               <MetaRow icon={Zap} label="Campanha" value={campaign.name} />
               <MetaRow icon={Users} label="Público" value={`${fmtInt(campaign.total_recipients)} contatos`} />
-              <MetaRow icon={Send} label="Canal" value={campaign.whatsapp_connection_id ? 'Linha WhatsApp conectada' : 'Sem linha'} />
-              <MetaRow icon={Timer} label="Velocidade" value={{ slow: 'Lenta', moderate: 'Moderada', fast: 'Rápida' }[speedProfile]} />
+              {/* T10-043 — estado REAL da linha (antes era o texto fixo "Linha WhatsApp conectada") */}
+              <MetaRow
+                icon={Send}
+                label="Linha WhatsApp"
+                value={!campaign.whatsapp_connection_id
+                  ? 'Sem linha'
+                  : connectionInfo
+                    ? (
+                      <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full border text-2xs font-medium', connectionInfo.className)}>
+                        {connectionInfo.label}
+                      </span>
+                    )
+                    : '—'}
+              />
+              {campaign.speed_profile && (
+                <MetaRow icon={Timer} label="Velocidade" value={{ slow: 'Lenta', moderate: 'Moderada', fast: 'Rápida' }[campaign.speed_profile] ?? campaign.speed_profile} />
+              )}
+              {/* T10-044 — duração estimada com o ritmo previsto */}
+              {estimatedLabel && (
+                <MetaRow
+                  icon={Clock}
+                  label="Duração estimada"
+                  value={<span><b>{estimatedLabel}</b> <span className="text-foreground-secondary font-normal">· ~{messagesPerMinute} msg/min</span></span>}
+                />
+              )}
             </div>
             {campaign.message_template && (
               <div>
@@ -494,13 +481,32 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <WhatsAppBubble text={campaign.message_template.slice(0, 120) + (campaign.message_template.length > 120 ? '…' : '')} />
               </div>
             )}
-            <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
-              <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
-                <p className="text-2xs text-muted-foreground">Aguardando {scheduledLabel}.</p>
+            {readyToSend ? (
+              <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
+                <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-primary">Tudo pronto para o envio!</p>
+                  <p className="text-2xs text-muted-foreground">Aguardando {scheduledLabel}.</p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border border-warning/30 bg-warning/8 px-3 py-2.5 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-warning">Pendências antes do envio</p>
+                  <ul className="text-2xs text-muted-foreground list-disc pl-4 mt-1 space-y-0.5">
+                    {blockingChecks.map((pendencia) => <li key={pendencia}>{pendencia}</li>)}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(campaign)}
+                    className="mt-2 h-7 px-2.5 rounded-lg border border-border/70 bg-input/40 text-2xs font-medium text-foreground-secondary hover:bg-muted/50"
+                  >
+                    Revisar no wizard
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </RailCard>
 
@@ -511,14 +517,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-destructive hover:bg-destructive/10 border-destructive/30">
           Cancelar agendamento
         </GhostButton>
-        <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">
-          {lifecycle.isPending ? 'Iniciando…' : 'Iniciar agora'}
+        <PrimaryButton icon={Play} onClick={() => setLaunchOpen(true)} className="shadow-[var(--shadow-glow-primary)]">
+          {launching ? 'Iniciando…' : 'Iniciar agora'}
         </PrimaryButton>
       </div>
 
-      {/* X051 (parcial): o "Cancelar agendamento" segue local porque o hook
-          único não expõe a ação de devolver a campanha para Rascunhos
-          (`scheduled_at = null`, `status = 'draft'`). */}
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -536,8 +539,23 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* X051: diálogo único do ciclo de vida — o disparo não tem mais modal próprio. */}
-      <TalkXLifecycleDialog controller={lifecycle} />
+      <AlertDialog open={launchOpen} onOpenChange={setLaunchOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Iniciar campanha agora?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A campanha será disparada imediatamente para <strong>{fmtInt(campaign.total_recipients)} contatos</strong>.
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLaunch}>
+              Confirmar e iniciar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

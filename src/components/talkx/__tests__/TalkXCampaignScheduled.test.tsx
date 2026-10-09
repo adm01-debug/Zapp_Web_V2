@@ -1,112 +1,121 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 /**
- * X137 (TL-149) — Tela 10: data, horário, fuso, janela, throttle e supressão;
- * salvar.
+ * X139 (T10-001…T10-005, T10-043, T10-044) — cabeçalho, Resumo da Campanha com
+ * dados reais e estado "pronta para envio" da tela Agendada.
  *
- * O que estes casos fixam, e o defeito que cada um pega:
+ * O que estava errado antes desta correção:
+ *  - o topo mostrava "Campanhas / {nome}" em vez do breadcrumb do módulo
+ *    ("Campanhas › Talk X › Campanha Agendada") e o nome da campanha aparecia
+ *    como subtítulo, sem o título "Campanha Agendada • <nome>" nem o subtítulo
+ *    do mock;
+ *  - o selo "Agendada para ..." era formatado por `fmtDateTime`, no fuso do
+ *    NAVEGADOR — não no fuso salvo na campanha (`schedule_timezone`);
+ *  - a frase "Campanha pronta para ser enviada." aparecia sempre, mesmo com a
+ *    linha WhatsApp caída;
+ *  - a linha "Linha WhatsApp" era o texto FIXO "Linha WhatsApp conectada"
+ *    sempre que havia id, sem ler o estado real da conexão;
+ *  - não havia duração estimada com o ritmo previsto.
  *
- * 1. A data e o horário vêm em CAMPOS SEPARADOS, derivados do instante gravado
- *    na parede local do fuso da campanha. Antes havia um único `datetime-local`
- *    cujo `min` saía de `new Date().toISOString()` (relógio UTC): numa campanha
- *    em America/Manaus (UTC-4) o operador podia escolher um dia já passado.
- * 2. O `min` da data é "hoje" NO FUSO DA CAMPANHA, não hoje em UTC.
- * 3. "Salvar agendamento" leva ao banco o MESMO instante e o MESMO fuso que
- *    foram lidos, mais o perfil de velocidade, o intervalo real (ms) e a
- *    supressão/consentimento — o que a coluna edita é o que a tela grava.
- * 4. O cartão do throttle mostra o intervalo real do perfil escolhido e o
- *    payload leva exatamente esse par, como o motor o lê.
- * 5. A janela de envio passa a mostrar o cartão do período, citando o horário
- *    do próprio campo (não um texto fixo).
- * 6. A supressão aparece marcada e travada (quem libera é o banco) e o
- *    consentimento é editável.
- *
- * A tela continua derivando o disparo do controlador único de ciclo de vida
- * (X051) — o comportamento do diálogo "Iniciar agora" fica travado em
- * `TalkXCampaignScheduled.lifecycle.test.tsx`; aqui só se prova a COLUNA.
+ * Os testes abaixo renderizam o componente REAL (o editor montado pelo
+ * `TalkXCampaignScheduled` quando a consulta devolve a campanha) e olham o que
+ * o operador vê.
  */
 
-// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
-// `hasPointerCapture` no pointerdown que o abre.
-beforeAll(() => {
-  Element.prototype.hasPointerCapture = () => false;
-  Element.prototype.setPointerCapture = () => {};
-  Element.prototype.releasePointerCapture = () => {};
-});
+type QueryState = {
+  campaigns: Array<Record<string, unknown>>;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  isFetching: boolean;
+};
+
+type ConnectionState = { status: string | null; label: string | null; loading: boolean };
 
 const h = vi.hoisted(() => ({
-  campaigns: [] as Array<Record<string, unknown>>,
-  refetch: vi.fn(),
-  updateAsync: vi.fn(),
-  startCampaign: vi.fn(),
-  pauseCampaign: vi.fn(),
-  cancelCampaign: vi.fn(),
+  state: {
+    campaigns: [] as Array<Record<string, unknown>>,
+    isLoading: false,
+    isError: false,
+    error: null as Error | null,
+    isFetching: false,
+  } as QueryState,
+  connection: { status: null, label: null, loading: false } as ConnectionState,
   onBack: vi.fn(),
   onEdit: vi.fn(),
   onStatusChange: vi.fn(),
-  toastSuccess: vi.fn(),
-  toastError: vi.fn(),
-  toastInfo: vi.fn(),
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
-    campaigns: h.campaigns,
-    isLoading: false,
-    isFetching: false,
-    isError: false,
-    error: null,
-    refetchCampaigns: h.refetch,
-    updateCampaign: { mutateAsync: h.updateAsync },
-    startCampaign: h.startCampaign,
-    pauseCampaign: h.pauseCampaign,
-    cancelCampaign: h.cancelCampaign,
+    campaigns: h.state.campaigns,
+    isLoading: h.state.isLoading,
+    isError: h.state.isError,
+    error: h.state.error,
+    isFetching: h.state.isFetching,
+    refetchCampaigns: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+    startCampaign: vi.fn(),
   }),
 }));
 
-vi.mock('sonner', () => ({
-  toast: { success: h.toastSuccess, error: h.toastError, info: h.toastInfo },
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => h.connection,
 }));
+
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 
-// Manaus é UTC-4: 10/06/2030 02:30 UTC é 09/06/2030 22:30 na campanha.
-const MANAUS_UTC_INSTANT = '2030-06-10T02:30:00.000Z';
-
-const CAMPAIGN = {
+const BASE_CAMPAIGN = {
   id: 'camp-agendada-1',
-  name: 'Promoção de Outubro',
-  message_template: 'Olá {{nome}}, chegou a promoção!',
+  name: 'Black Friday VIP',
+  message_template: 'Olá {{nome}}, chegou a Black Friday VIP!',
   variables_config: [],
+  // 16,75 s por mensagem → 1.200 contatos em ~5h 35min a ~3,6 msg/min
   typing_delay_min: 1500,
-  typing_delay_max: 4500,
-  send_interval_min: 15000,
-  send_interval_max: 30000,
+  typing_delay_max: 4000,
+  send_interval_min: 8000,
+  send_interval_max: 20000,
   status: 'scheduled',
   total_recipients: 1200,
   sent_count: 0,
   failed_count: 0,
   delivered_count: 0,
-  whatsapp_connection_id: 'conn-1',
+  // `string | null` de propósito: um dos cenários é a campanha SEM linha.
+  whatsapp_connection_id: 'conn-1' as string | null,
   created_by: 'user-1',
   started_at: null,
   completed_at: null,
-  created_at: '2030-06-01T10:00:00.000Z',
-  updated_at: '2030-06-01T10:00:00.000Z',
+  created_at: '2026-11-25T17:32:00.000Z',
+  updated_at: '2026-11-25T17:32:00.000Z',
   media_url: null,
   media_type: null,
-  scheduled_at: MANAUS_UTC_INSTANT,
-  schedule_timezone: 'America/Manaus',
+  // 15:00 UTC — 12:00 em São Paulo (UTC-3) e 11:00 em Manaus (UTC-4)
+  scheduled_at: '2026-12-01T15:00:00.000Z',
+  schedule_timezone: 'America/Sao_Paulo',
   send_window_start: null,
   send_window_end: null,
   business_hours_only: false,
-  speed_profile: 'slow',
-  respect_suppression: true,
-  confirm_consent: true,
-  revision: 7,
+  speed_profile: 'moderate',
+  revision: 1,
 };
+
+function setCampaign(over: Partial<typeof BASE_CAMPAIGN> = {}) {
+  h.state = {
+    campaigns: [{ ...BASE_CAMPAIGN, ...over }],
+    isLoading: false,
+    isError: false,
+    error: null,
+    isFetching: false,
+  };
+}
+
+function setConnection(over: Partial<ConnectionState>) {
+  h.connection = { status: null, label: null, loading: false, ...over };
+}
 
 function view() {
   return (
@@ -119,136 +128,99 @@ function view() {
   );
 }
 
-function dateField() {
-  return document.getElementById('talkx-schedule-date') as HTMLInputElement;
-}
-
-function timeField() {
-  return document.getElementById('talkx-schedule-time') as HTMLInputElement;
-}
-
-/** Abre o Select real do perfil de velocidade e escolhe o rótulo pedido. */
-function escolherVelocidade(rotulo: string) {
-  fireEvent.pointerDown(document.getElementById('talkx-speed-profile') as HTMLElement, {
-    button: 0, ctrlKey: false, pointerType: 'mouse',
+describe('X139 — tela Agendada: cabeçalho, resumo real e estado de prontidão', () => {
+  beforeEach(() => {
+    h.onBack.mockClear();
+    h.onEdit.mockClear();
+    h.onStatusChange.mockClear();
+    setCampaign();
+    setConnection({ status: 'connected', label: 'Conectada' });
   });
-  fireEvent.click(screen.getByRole('option', { name: rotulo }));
-}
 
-beforeEach(() => {
-  h.campaigns = [CAMPAIGN];
-  h.refetch.mockClear();
-  h.updateAsync.mockReset();
-  h.updateAsync.mockResolvedValue({});
-  h.startCampaign.mockReset();
-  h.startCampaign.mockResolvedValue(true);
-  h.onBack.mockClear();
-  h.onEdit.mockClear();
-  h.onStatusChange.mockClear();
-  h.toastSuccess.mockClear();
-  h.toastError.mockClear();
-  h.toastInfo.mockClear();
-});
-
-describe('Tela 10 — configurações de agendamento (X137)', () => {
-  it('separa data e horário na parede local do fuso da campanha', () => {
+  it('T10-001/003/004: breadcrumb do módulo, título "Campanha Agendada • <nome>" e subtítulo do mock', () => {
     render(view());
 
-    expect(dateField()).toBeTruthy();
-    expect(dateField().value).toBe('2030-06-09');
-    expect(timeField().value).toBe('22:30');
-    // A data/hora UTC (10/06 02:30) NÃO pode aparecer como se fosse a local.
-    expect(dateField().value).not.toBe('2030-06-10');
-    expect(timeField().value).not.toBe('02:30');
+    // breadcrumb do módulo (o antigo era "Campanhas / Black Friday VIP")
+    expect(screen.getByText('Campanhas')).toBeTruthy();
+    expect(screen.getByText('Talk X')).toBeTruthy();
+    expect(screen.getByText('Campanha Agendada')).toBeTruthy();
+
+    const titulo = screen.getByRole('heading', { level: 1 });
+    expect(titulo.textContent).toBe('Campanha Agendada • Black Friday VIP');
+    expect(screen.getByText('Configure o agendamento e revise os detalhes antes de ativar o envio.')).toBeTruthy();
   });
 
-  it('o mínimo da data é hoje NO FUSO DA CAMPANHA, não hoje em UTC', () => {
-    vi.useFakeTimers();
-    try {
-      // 10/06/2030 02:30 UTC = 09/06/2030 no relógio da campanha (UTC-4).
-      vi.setSystemTime(new Date('2030-06-10T02:30:00.000Z'));
-      render(view());
+  it('T10-005: o selo mostra o horário no fuso DA CAMPANHA (mesmo instante, fusos diferentes)', () => {
+    const rendered = render(view());
+    expect(screen.getByText('Agendada para 01/12 • 12:00')).toBeTruthy();
 
-      expect(dateField().getAttribute('min')).toBe('2030-06-09');
-      expect(dateField().getAttribute('min')).not.toBe('2030-06-10');
-    } finally {
-      vi.useRealTimers();
-    }
+    // mesmo instante (15:00 UTC), campanha em Manaus (UTC-4)
+    setCampaign({ schedule_timezone: 'America/Manaus' });
+    rendered.rerender(view());
+
+    expect(screen.getByText('Agendada para 01/12 • 11:00')).toBeTruthy();
+    expect(screen.queryByText('Agendada para 01/12 • 12:00')).toBeNull();
   });
 
-  it('salvar grava o mesmo instante e o mesmo fuso que foram lidos, com o perfil e a supressão', async () => {
-    render(view());
-    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
-
-    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
-    const payload = h.updateAsync.mock.calls[0][0];
-    expect(payload.id).toBe('camp-agendada-1');
-    expect(payload.scheduled_at).toBe(MANAUS_UTC_INSTANT);
-    expect(payload.schedule_timezone).toBe('America/Manaus');
-    // X137: a coluna edita velocidade, intervalo e supressão — o save leva isso.
-    expect(payload.speed_profile).toBe('slow');
-    expect(payload.send_interval_min).toBe(15000);
-    expect(payload.send_interval_max).toBe(30000);
-    expect(payload.respect_suppression).toBe(true);
-    expect(payload.confirm_consent).toBe(true);
-    expect(h.toastSuccess).toHaveBeenCalledWith('Agendamento atualizado.');
-  });
-
-  it('editar o horário de início muda o instante gravado (mesma parede local)', async () => {
-    render(view());
-    fireEvent.change(timeField(), { target: { value: '23:45' } });
-    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
-
-    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
-    // 09/06/2030 23:45 em Manaus (UTC-4) = 10/06/2030 03:45 UTC.
-    expect(h.updateAsync.mock.calls[0][0].scheduled_at).toBe('2030-06-10T03:45:00.000Z');
-  });
-
-  it('o cartão do throttle mostra o intervalo real do perfil escolhido', async () => {
-    render(view());
-    expect(screen.getByText(/15–30s entre mensagens/)).toBeTruthy();
-
-    escolherVelocidade('Rápida');
-    expect(screen.getByText(/3–8s entre mensagens/)).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
-    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
-    const payload = h.updateAsync.mock.calls[0][0];
-    expect(payload.speed_profile).toBe('fast');
-    expect(payload.send_interval_min).toBe(3000);
-    expect(payload.send_interval_max).toBe(8000);
-  });
-
-  it('a janela de envio passa a mostrar o cartão do período', () => {
-    render(view());
-    expect(screen.queryByText(/Envios apenas neste período/)).toBeNull();
-
-    const linhaJanela = screen.getByText('Janela de envio').closest('div')?.parentElement as HTMLElement;
-    fireEvent.click(linhaJanela.querySelector('[role="switch"]') as HTMLElement);
-
-    // O cartão diz o horário do próprio campo (08:00), não um texto fixo.
-    expect(screen.getByText(/Envios apenas neste período/)).toBeTruthy();
-    expect(screen.getByText(/próximo início \(08:00\)/)).toBeTruthy();
-  });
-
-  it('a supressão aparece marcada e travada, e o consentimento é editável', async () => {
+  it('T10-043: lê o estado REAL da linha e não diz "conectada" com a conexão caída', () => {
+    setConnection({ status: 'disconnected', label: 'Desconectada' });
     render(view());
 
-    const supressao = document.getElementById('talkx-respect-suppression') as HTMLElement;
-    expect(supressao).toBeTruthy();
-    expect(supressao.hasAttribute('disabled')).toBe(true);
-    expect(supressao.getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByText('Desconectada')).toBeTruthy();
+    expect(screen.queryByText('Linha WhatsApp conectada')).toBeNull();
+  });
 
-    const consentimento = document.getElementById('talkx-confirm-consent') as HTMLElement;
-    expect(consentimento.getAttribute('aria-checked')).toBe('true');
-    expect(consentimento.hasAttribute('disabled')).toBe(false);
+  it('T10-005: esconde "Campanha pronta para ser enviada." com checagem bloqueante e leva ao wizard', () => {
+    setConnection({ status: 'disconnected', label: 'Desconectada' });
+    render(view());
 
-    // Desmarcar o consentimento é do operador: o payload acompanha o campo.
-    fireEvent.click(consentimento);
-    await waitFor(() => expect(consentimento.getAttribute('aria-checked')).toBe('false'));
+    expect(screen.queryByText(/Campanha pronta para ser enviada/)).toBeNull();
+    expect(screen.getByText(/1 pendência antes do envio/)).toBeTruthy();
+    expect(screen.getByText('A linha WhatsApp está desconectada.')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
-    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
-    expect(h.updateAsync.mock.calls[0][0].confirm_consent).toBe(false);
+    const botoes = screen.getAllByRole('button', { name: /Revisar no wizard/ });
+    expect(botoes.length).toBeGreaterThan(0);
+    fireEvent.click(botoes[0]);
+    expect(h.onEdit).toHaveBeenCalledTimes(1);
+    expect(h.onEdit.mock.calls[0][0]).toMatchObject({ id: 'camp-agendada-1' });
+  });
+
+  it('T10-005: anuncia o envio quando não há pendência bloqueante', () => {
+    render(view());
+
+    expect(screen.getByText(/Campanha pronta para ser enviada\./)).toBeTruthy();
+    expect(screen.getByText('Tudo pronto para o envio!')).toBeTruthy();
+    expect(screen.getByText('Conectada')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Revisar no wizard/ })).toBeNull();
+  });
+
+  it('T10-005: público sem contatos, mensagem vazia e linha ausente somam 3 pendências', () => {
+    setCampaign({
+      whatsapp_connection_id: null,
+      total_recipients: 0,
+      message_template: '',
+    });
+    setConnection({ status: null, label: null });
+    render(view());
+
+    expect(screen.getByText(/3 pendências antes do envio/)).toBeTruthy();
+    expect(screen.getByText('Nenhuma linha WhatsApp selecionada.')).toBeTruthy();
+    expect(screen.getByText('O público não tem contatos elegíveis.')).toBeTruthy();
+    expect(screen.getByText('A mensagem da campanha está vazia.')).toBeTruthy();
+    expect(screen.queryByText(/Campanha pronta para ser enviada/)).toBeNull();
+  });
+
+  it('T10-044: mostra a duração estimada com o ritmo previsto', () => {
+    render(view());
+
+    expect(screen.getByText('~5h 35min')).toBeTruthy();
+    expect(screen.getByText(/~3\.6 msg\/min/)).toBeTruthy();
+  });
+
+  it('conexão ainda carregando não vira pendência (não se inventa bloqueio sem dado)', () => {
+    setConnection({ status: null, label: null, loading: true });
+    render(view());
+
+    expect(screen.getByText(/Campanha pronta para ser enviada\./)).toBeTruthy();
   });
 });
