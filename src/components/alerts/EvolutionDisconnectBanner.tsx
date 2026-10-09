@@ -58,8 +58,16 @@ export function EvolutionDisconnectBanner() {
       // R2-API-042: a Edge Function responde HTTP 200 também nas falhas LÓGICAS — o erro vem no
       // CORPO (`{ error: true, message }`), não no campo `error` do invoke. Olhando só o
       // transporte, o banner anunciava "Reconectando..." como se a solicitação tivesse sido aceita.
+      // O motivo tem de chegar ao operador: é a edge que sabe da janela de manutenção
+      // (`global_settings.whatsapp_maintenance_until` — o front não a lê, o SELECT dessa tabela é
+      // admin/supervisor) e põe o bloqueio da Meta na mensagem. Com o texto genérico, um bloqueio
+      // virava "Erro ao reconectar" e o operador insistia no login em loop, que é justamente o que
+      // estende o bloqueio (docs/runbooks/bloqueio-meta.md).
       if (data?.error) {
-        throw new Error(typeof data.error === 'string' ? data.error : data.message ?? 'Falha ao reconectar');
+        toast.error(
+          typeof data.error === 'string' ? data.error : data.message ?? `Erro ao reconectar ${conn.instance_id}`,
+        );
+        return;
       }
       toast.success(`Reconectando ${conn.instance_id}... Escaneie o QR Code na tela de conexões.`);
     } catch {
