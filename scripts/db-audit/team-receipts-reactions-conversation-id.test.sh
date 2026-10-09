@@ -19,7 +19,7 @@
 #             funções de TRIGGER terminam sem EXECUTE para authenticated/anon/PUBLIC (B.15-B.17).
 #
 # TEAM_CID_PRESTATE=1 roda o bloco B SEM aplicar a migration — é assim que se prova o vermelho
-# (bloco A passa pelo defeito, B.1 falha). Sem a variável, o roteiro é o normal: verde.
+# (bloco A passa pelo defeito, B.2 falha). Sem a variável, o roteiro é o normal: verde.
 #
 # Pre-estado fiel ao canônico de 04/10 (`pg_policies` + `pg_get_functiondef` + `pg_trigger`):
 # INSERT de recibo estrito por vínculo (reconciliação 20261003272707), leitura de recibo por
@@ -29,7 +29,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql"
+migration="$repo_root/supabase/migrations/20261009173657_team_receipts_reactions_conversation_id_forced.sql"
 postgres_image="${TEAM_CID_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-team-cid-test-$$"
 
@@ -386,9 +386,7 @@ expect_value 'A.9 (DEFEITO) e sumiu da conversa da propria mensagem (agregacao/r
   "SELECT count(*) FROM public.team_message_reactions WHERE conversation_id='$CONV_A';"
 
 printf '\n============ BLOCO B — migration aplicada ============\n'
-if [[ "${TEAM_CID_PRESTATE:-0}" = "1" ]]; then
-  printf '>>> TEAM_CID_PRESTATE=1: bloco B roda SEM aplicar a migration (prova do vermelho)\n'
-else
+if [[ "${TEAM_CID_PRESTATE:-0}" != "1" ]]; then
   psql_file "$migration" >/dev/null
 fi
 
