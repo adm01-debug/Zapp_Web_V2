@@ -75,7 +75,7 @@ function DepartmentJoinByCode() {
         />
         <Button type="submit" size="sm" className="shrink-0" disabled={acceptInvite.isPending || code.trim().length === 0}>
           {acceptInvite.isPending && <Loader2 className="w-3.5 h-3.5 mr-1.5 motion-safe:animate-spin" aria-hidden />}
-          Entrar
+          Entrar via código
         </Button>
       </form>
       {acceptInvite.isError && (
@@ -97,7 +97,10 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
   // E68/F79: o canal de departamento é fechado para quem está fora, mas o
   // caminho de entrada é o código do convite — quem não é membro vê o fluxo
   // "Entrar via código" abaixo, não só o aviso.
-  const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id;
+  // F80: admin/supervisor abre qualquer canal de departamento (o papel vem do
+  // perfil, em `canTransfer`, e não de `profiles.department_id` — sem esta
+  // cláusula a administração ficava presa no aviso "Conteúdo Protegido").
+  const isChannelMember = !isDeptChannel || profileDeptId === convAny.department_id || s.canTransfer === true;
 
   // E73: render performance monitoring (dev only)
   const renderStartRef = useRef<number>(0);
