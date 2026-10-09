@@ -903,6 +903,54 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(screen.getByText('0/4096')).toBeInTheDocument();
   });
 
+  it('X128 — o chip de variável insere NA POSIÇÃO DO CURSOR (não anexa ao fim do texto)', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const textarea = screen.getByPlaceholderText(/saudacao/) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Olá !' } });
+    // Cursor entre "Olá " e "!" — o chip tem de entrar AQUI.
+    textarea.setSelectionRange(4, 4);
+
+    fireEvent.click(screen.getByRole('button', { name: '{{empresa}}' }));
+
+    expect(textarea.value).toBe('Olá {{empresa}}!');
+  });
+
+  it('X128 — mensagem acima do teto do provedor (4.096) bloqueia o Continuar do passo 2', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const textarea = screen.getByPlaceholderText(/saudacao/) as HTMLTextAreaElement;
+    const continuar = () => screen.getByRole('button', { name: /continuar/i });
+
+    fireEvent.change(textarea, { target: { value: 'a'.repeat(4096) } });
+    expect(continuar()).toBeEnabled();
+
+    fireEvent.change(textarea, { target: { value: 'a'.repeat(4097) } });
+    expect(continuar()).toBeDisabled();
+    expect(screen.getByText('4097/4096 · 1 acima do limite')).toBeInTheDocument();
+  });
+
+  it('X128 — chips de variável na ordem do mock 08 e as demais em "Mais variáveis"', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const naOrdemDoMock = ['{{nome}}', '{{empresa}}', '{{saudacao}}', '{{vendedor}}', '{{data_atual}}', '{{link}}'];
+    const chips = naOrdemDoMock.map((key) => screen.getByRole('button', { name: key }));
+    for (let i = 1; i < chips.length; i += 1) {
+      expect(chips[i - 1].compareDocumentPosition(chips[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+
+    // As demais NÃO ocupam o painel: ficam no menu do botão.
+    expect(screen.queryByRole('button', { name: '{{nome_completo}}' })).not.toBeInTheDocument();
+    const mais = screen.getByRole('button', { name: /mais variáveis/i });
+    fireEvent.pointerDown(mais, { button: 0, ctrlKey: false });
+    fireEvent.click(mais);
+    expect(screen.getByText('{{nome_completo}}')).toBeInTheDocument();
+    expect(screen.getByText('{{apelido}}')).toBeInTheDocument();
+  });
+
   it('texto vazio + mídia passa do passo 2; sem mídia não passa', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     await act(async () => {});
