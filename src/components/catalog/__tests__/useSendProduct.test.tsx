@@ -378,6 +378,37 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
 
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
   });
+
+  // SL-101 — a cadeia de retry tem de PARAR quando a entrega acontece e o
+  // timer agendado tem de ser limpo: sem isso ela redisparava o evento até 15
+  // vezes mesmo com o contato já aberto e deixava timer pendente atravessando
+  // o teardown do jsdom.
+  it('openContactChat limpa o timer de retry quando a inbox consome o contato', async () => {
+    vi.useFakeTimers();
+    const recebidos: string[] = [];
+    // Mesmo efeito do handler de `useRealtimeInbox`: recebe o evento e limpa
+    // `__pendingOpenContactId` (é assim que o app confirma que o contato foi
+    // consumido).
+    const listener = (event: Event) => {
+      recebidos.push((event as CustomEvent<{ contactId: string }>).detail.contactId);
+      delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
+    };
+    window.addEventListener('open-contact-chat', listener);
+
+    openContactChat('c9');
+    await act(async () => { await vi.advanceTimersByTimeAsync(150); });
+
+    // Primeira tentativa entregou o evento…
+    expect(recebidos).toEqual(['c9']);
+    // …e nenhum timer de retry fica agendado depois da entrega confirmada.
+    expect(vi.getTimerCount()).toBe(0);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    window.removeEventListener('open-contact-chat', listener);
+
+    expect(recebidos).toEqual(['c9']);
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
 
 // CT-78 — a decisão de status (useSendProduct.ts, mesma fórmula em
