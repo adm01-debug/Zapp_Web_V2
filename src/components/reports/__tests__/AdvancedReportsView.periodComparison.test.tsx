@@ -171,3 +171,17 @@ describe('AdvancedReportsView — rótulo do período anterior (R2-MOD-017)', ()
     expect(inicio).toBe(format(new Date(previousWindow.gte), 'dd/MM/yyyy'));
   });
 });
+
+describe('AdvancedReportsView — acessibilidade dos filtros (N-091)', () => {
+  beforeEach(() => {
+    h.calls.length = 0;
+    h.state.rows = seededMessages(1, 7);
+  });
+
+  it('getByRole acha os 2 comboboxes (Período e Agente) pelos nomes acessíveis', async () => {
+    render(<AdvancedReportsView />, { wrapper: makeWrapper() });
+
+    expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Agente' })).toBeInTheDocument();
+  });
+});
