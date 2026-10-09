@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - useEvolutionApi hook refactored into 5 sub-hooks for better maintainability
 - Catálogo — 01/10/2026: rail conectado ao filtro da tela — "Exportar catálogo" (CT-20/CT-21) passa a exportar o **filtro atual** em vez do catálogo inteiro, e o alerta de estoque baixo (CT-23) ganha o botão "Ver produtos com estoque baixo", que aplica `low_stock=true` na listagem via novo branch de `handleKpiSelect` (`ExternalProductManagement.tsx`; registro detalhado em `docs/catalogo/CHANGELOG_CATALOGO.md`)
 - Quadro e Tarefas — 07/10/2026: viram um módulo só; links `?view=pipeline` redirecionam; atalho Alt+P removido; Alt+K abre Tarefas
+- Multiplix — 08/10/2026: registro de execução do módulo passa a viver em `docs/multiplix/CHANGELOG_MULTIPLIX.md` (referenciado no índice `docs/README.md`); o grafo do repositório (`graphify update . --force`) é artefato LOCAL regenerável — `graphify-out/` é gitignored — e não entra no versionamento
 
 ### Security
 - **RLS Audit:** Migration created to fix 10+ policies with `USING(true)`
