@@ -26,7 +26,7 @@ export function SentimentAlertsDashboard() {
               <SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={fetchData} disabled={loading} aria-label="Atualizar alertas de sentimento"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></Button>
+          <Button variant="outline" size="icon" onClick={fetchData} disabled={loading} aria-label="Atualizar alertas de sentimento"><RefreshCw className={`h-4 w-4 ${loading ? 'motion-safe:animate-spin' : ''}`} /></Button>
         </div>
       </div>
 
