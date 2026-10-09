@@ -76,3 +76,9 @@ verify_jwt = false
 # T73: entrega audio de cliente. Exige JWT (padrao) e a RLS decide quem enxerga a chamada.
 [functions.get-call-recording]
 verify_jwt = true
+
+# X076 (TL-063): infra de IA do Talk X. A edge `talkx-ai` delega a chamada paga ao
+# `ai-proxy` e exige, alem do JWT, admin/supervisor (RPC `is_admin_or_supervisor`).
+# verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
+[functions.talkx-ai]
+verify_jwt = true
