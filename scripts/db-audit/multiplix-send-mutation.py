@@ -4,7 +4,9 @@
 Cada mutante quebra UM comportamento que o teste precisa defender. Se o mutante
 sobrevive (suite continua verde), o teste e decorativo naquele ponto. Morto =
 assercao falhou com a suite rodando (erro de type-check nao conta como morte).
-Roda com: python3 scripts/db-audit/multiplix-send-mutation.py
+Roda no CI: passo "Provar por mutação os testes do worker do Multiplix (N-017)"
+do .github/workflows/db-guard.yml (job offline-contract) — fail-closed: sai 1 se
+algum mutante sobreviver. A mao: python3 scripts/db-audit/multiplix-send-mutation.py
 """
 import re
 import subprocess
@@ -37,14 +39,18 @@ MUTANTS = [
      "            if (dailyRoom !== null) dailyRoom -= 1;",
      "            if (dailyRoom !== null) dailyRoom -= 0;"),
     ("F11a: total do disparo zerado",
-     "      selectedTotal += recipients.length;",
+     "      selectedTotal += claimable.length;",
      "      selectedTotal += 0;"),
     ("F11a: lote padrao fora do configurado",
      '    const parsedBatchSize = Number.parseInt(Deno.env.get("MULTIPLIX_BATCH_SIZE") ?? "", 10);',
      '    const parsedBatchSize = Number.parseInt(Deno.env.get("MULTIPLIX_BATCH_SIZE") ?? "1000", 10);'),
-    ("F11a: laco nao encerra na passada vazia",
-     "      if (claimedInPass === 0) break;",
-     "      if (claimedInPass === -1) break;"),
+    # F11a: o mutante "laco nao encerra na passada vazia" (`if (claimedInPass === 0)
+    # break;`) saiu em 09/10/2026 — o `for(;;)` que ele atacava virou UMA passada por
+    # invocacao (F11a, 01/10) e o `break passLoop` do FIM do bloco ja encerra a
+    # passada vazia. Sem o `break` do topo o fluxo cai no MESMO break de fim de
+    # bloco (mutante equivalente): medido com `||`->`&&` e com `=== -1`, a suite
+    # fica verde (80 passed | 0 failed). Nenhum teste pode mata-lo, entao ele nao
+    # prova nada — fica aqui registrado para nao voltar como "ancora 0x".
     ("F06: permissao de gestao nao e conferida no start",
      "      if (!(await canManageDispatch(targetDispatch.created_by))) {",
      "      if (false) {"),
@@ -78,9 +84,13 @@ MUTANTS = [
      """      if (error || typeof data !== "boolean") {
         return false;
       }"""),
-    ("M32: dispatch com midia cai no endpoint de texto",
-     "const mediaEndpoint = getMediaEndpoint(dispatch.media_type);",
-     'const mediaEndpoint = "sendText";'),
+    # MX02/F37/F43 (01-02/10) tiraram `getMediaEndpoint`/`mediaEndpoint` do worker: a
+    # midia do ITEM sai do SEU bloco e o adaptador decide o endpoint pelo `MessageKind`
+    # de `kindForMedia`. O mutante continua no MESMO ponto de prova (midia nao pode cair
+    # no endpoint de texto), agora ancorado no mapeamento do audio (nota de voz -> ptt).
+    ("M32: midia de audio (nota de voz) cai no endpoint de texto",
+     '    case "audio":\n      return "ptt";',
+     '    case "audio":\n      return "text";'),
 ]
 
 pristine = open(WORKER, encoding="utf-8").read()

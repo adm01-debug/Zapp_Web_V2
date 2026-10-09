@@ -549,6 +549,21 @@ jobs:
           MULTIPLIX_RESOLVE_ESCOPO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/multiplix-resolve-escopo.test.sh
 
+      # N-017 (inventario de melhorias de 07/10, item A4): o runner de mutacao do
+      # worker do Multiplix existia no disco e nunca rodava no CI — a prova de que
+      # os testes do envio pegam erro de verdade ficava dependendo de alguem rodar
+      # a mao. Aqui ele passa a rodar de verdade: reescreve
+      # supabase/functions/multiplix-send/index.ts com os mutantes listados no
+      # proprio runner, roda a suite Deno (index.test.ts) a cada mutante e sai
+      # NAO-ZERO se algum sobreviver — ou se a ancora de um mutante sumir (o
+      # runner e fail-closed: mutante que nao se aplica e erro, nunca "morto").
+      # O Deno ja esta no PATH deste job (setup acima) e o runner usa
+      # scripts/ci/deno.json com `--frozen`. Sem filtro de caminhos: este job ja
+      # roda em todo PR (o nome do check precisa existir em todo PR — ver o topo
+      # deste arquivo), e o passo custa a mesma ordem dos testes Deno vizinhos.
+      - name: Provar por mutação os testes do worker do Multiplix (N-017)
+        run: python3 scripts/db-audit/multiplix-send-mutation.py
+
       - name: Simular estados e audiencia canônicos do Talk X
         env:
           TALKX_CAMPAIGN_STATE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
