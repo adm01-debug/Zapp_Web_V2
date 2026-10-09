@@ -76,6 +76,9 @@ vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
   useMultiplixDispatchesList: () => ({ data: [], refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMultiplixAudienceSelect: () => ({ data: [], isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useMultiplixAudienceSave: () => ({ data: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useMultiplixAudienceApply: () => ({ data: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
 vi.mock('@/components/multiplix/MultiplixMonitor', () => ({

@@ -161,10 +161,13 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     expect(screen.getByText(/empresa\(s\) no disparo/).textContent).toContain('1');
   });
 
-  it('salva público tipo regra só depois do aviso, com os filtros do painel', () => {
+  it('salva público tipo regra só depois do aviso, com os filtros submetidos', () => {
     render(<MultiplixView />);
     responderBusca([linha('c1', 'Alfa')]);
     fireEvent.change(screen.getByPlaceholderText('Nome da empresa...'), { target: { value: 'alfa' } });
+    // F75: submittedFilters só atualiza quando o usuário clica Buscar de novo
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    act(() => { ultima(mocks.searchMutate.mock.calls)[1].onSuccess([linha('c1', 'Alfa')]); });
     fireEvent.change(screen.getByLabelText('Nome do público'), { target: { value: 'Fornecedores alfa' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Salvar público' }));
@@ -183,6 +186,29 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
       opcoes.onSuccess({ id: 'pub-1', name: 'Fornecedores alfa', kind: 'rule', member_count: 0 });
     });
     expect(screen.getByText(/Público salvo: Fornecedores alfa/)).toBeInTheDocument();
+  });
+
+  it('avisa quando se salva regra com exclusões no painel', () => {
+    render(<MultiplixView />);
+    responderBusca([linha('c1', 'Alfa'), linha('c2', 'Beta')]);
+    fireEvent.click(screen.getByLabelText('Selecionar Alfa'));
+    fireEvent.click(screen.getByLabelText('Excluir Beta'));
+    fireEvent.change(screen.getByPlaceholderText('Nome da empresa...'), { target: { value: 'alfa' } });
+    // F75: submittedFilters só atualiza quando o usuário clica Buscar de novo
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    act(() => { ultima(mocks.searchMutate.mock.calls)[1].onSuccess([linha('c1', 'Alfa')]); });
+    fireEvent.change(screen.getByLabelText('Nome do público'), { target: { value: 'Fornecedores alfa' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar público' }));
+    const aviso = screen.getByRole('alert');
+    expect(aviso).toHaveTextContent('Regra: guarda os filtros do painel (Nome: alfa)');
+    expect(aviso).toHaveTextContent('1 empresa(s) excluída(s) não entram no disparo');
+    expect(mocks.saveMutate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar e salvar' }));
+    const [entrada] = ultima(mocks.saveMutate.mock.calls);
+    expect(entrada).toMatchObject({ name: 'Fornecedores alfa', kind: 'rule' });
+    expect(entrada.definition).toEqual({ search: 'alfa' });
   });
 
   it('salva lista fixa com as selecionadas menos as excluídas e avisa que ela não acompanha o cadastro', () => {
@@ -212,9 +238,9 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     fireEvent.change(screen.getByPlaceholderText('Nome da empresa...'), { target: { value: 'alfa' } });
     salvarRegra('Fornecedores alfa');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aplicar público salvo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Conferir público salvo' }));
     const [entrada, opcoes] = ultima(mocks.applyMutate.mock.calls);
-    expect(entrada).toEqual({ audienceId: 'pub-1' });
+    expect(entrada).toEqual({ audienceId: 'pub-1', exclude: { companyIds: [] } });
     act(() => {
       opcoes.onSuccess({
         recipients: [],
@@ -231,6 +257,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     });
 
     expect(screen.getByText(/lido do servidor: 120 empresa\(s\) · 96 apta\(s\) agora\./)).toHaveTextContent('A diferença não entra no disparo');
+    expect(screen.getByText(/lido do servidor: 120 empresa\(s\) · 96 apta\(s\) agora\./)).toHaveTextContent('O disparo não usa este público diretamente');
   });
 
   it('não fala em divergência quando o tamanho da regra bate com os aptos', () => {
@@ -239,7 +266,7 @@ describe('MultiplixView — F75 (seleção / exclusões / público salvo / detal
     fireEvent.change(screen.getByPlaceholderText('Nome da empresa...'), { target: { value: 'alfa' } });
     salvarRegra('Fornecedores alfa');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aplicar público salvo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Conferir público salvo' }));
     act(() => {
       ultima(mocks.applyMutate.mock.calls)[1].onSuccess({
         recipients: [],

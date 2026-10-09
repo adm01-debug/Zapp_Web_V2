@@ -44,6 +44,9 @@ const estado = vi.hoisted(() => ({
 vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
   useMultiplixDispatchesList: () => ({ data: [], refetch: vi.fn() }),
   useCreateMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMultiplixAudienceSelect: () => ({ data: [], isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useMultiplixAudienceSave: () => ({ data: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useMultiplixAudienceApply: () => ({ data: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 
 // F74 (rebase contra dia/2026-10-09): a tabela do Painel 01 passou a ser
