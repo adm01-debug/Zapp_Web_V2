@@ -2,20 +2,25 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Contrato da RPC de MODO do WhatsApp do departamento (QA5-09).
+ * Contrato da RPC de configuracao de WhatsApp do departamento (familia TC-015, item 59).
  *
- * A tela chamava `get_department_whatsapp_credentials` — service_role-only no
- * banco (REVOKE de PUBLIC/anon/authenticated), entao o usuario logado levava
- * 42501 e o modo salvo nunca carregava. Alem disso essa RPC devolve a chave da
- * API. A RPC nova, `get_department_whatsapp_mode(p_department_id)`, devolve
- * TEXTO puro ('none' | 'evolution' | 'official'): o tipo de retorno nao tem
- * campo de chave, entao nem um payload malicioso vira credencial no hook.
- * `evolution_url` segue sempre null (a RPC nao expoe URL).
+ * A RPC `get_department_whatsapp_config(p_department_id)` (migration 20261006213734, F10)
+ * devolve a TABELA `(mode, instance_id, has_api_key)` e e exclusiva de admin/supervisor;
+ * a chave nunca aparece no retorno. A RPC antiga `get_department_whatsapp_credentials`
+ * (20260928550000) e service_role-only e devolvia `access_denied` para `authenticated` —
+ * era ela que impedia a aba WhatsApp do departamento de carregar o modo salvo.
+ *
+ * O hook declara `DepartmentWhatsAppCredentials` com `mode`; devolver o payload cru sem
+ * mapear deixaria `credentials.mode` indefinido. Estes testes pinam o contrato vivo
+ * (nome da RPC, parametro e formato de retorno).
  */
-const f = vi.hoisted(() => ({
-  rpc: vi.fn(() => Promise.resolve({ data: 'evolution' as unknown, error: null as unknown })),
-  captured: undefined as undefined | { queryFn: () => Promise<unknown> },
-}));
+const f = vi.hoisted(() => {
+  const payload: unknown = [{ mode: 'evolution', instance_id: 'inst-1', has_api_key: true }];
+  return {
+    rpc: vi.fn(() => Promise.resolve({ data: payload, error: null as unknown })),
+    captured: undefined as undefined | { queryFn: () => Promise<unknown> },
+  };
+});
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc: f.rpc },
@@ -41,41 +46,38 @@ async function runQuery(): Promise<unknown> {
   return out;
 }
 
-describe('useDepartmentWhatsAppCredentials — contrato da RPC de modo', () => {
+describe('useDepartmentWhatsAppCredentials — contrato da RPC de configuracao', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     f.captured = undefined;
   });
 
-  it('chama a RPC nova com p_department_id (assinatura real do banco)', async () => {
+  it('chama get_department_whatsapp_config com p_department_id (assinatura real do banco)', async () => {
     await runQuery();
-    expect(f.rpc).toHaveBeenCalledWith('get_department_whatsapp_mode', {
+    expect(f.rpc).toHaveBeenCalledWith('get_department_whatsapp_config', {
       p_department_id: 'dep-1',
     });
   });
 
-  it('mapeia o texto da RPC para o modo declarado do hook', async () => {
+  it('nao chama mais a RPC antiga service_role-only', async () => {
+    await runQuery();
+    expect(f.rpc).not.toHaveBeenCalledWith('get_department_whatsapp_credentials', expect.anything());
+  });
+
+  it('mapeia a tabela real (mode) para o tipo declarado do hook', async () => {
     const out = await runQuery();
-    expect(out).toEqual({ mode: 'evolution', evolution_url: null });
+    expect(out).toEqual(expect.objectContaining({ mode: 'evolution', instance_id: 'inst-1', has_api_key: true }));
   });
 
   it('normaliza modo fora do enum para "none" (não vaza valor cru)', async () => {
-    f.rpc.mockResolvedValueOnce({ data: 'inventado', error: null });
+    f.rpc.mockResolvedValueOnce({ data: [{ mode: 'inventado', instance_id: null, has_api_key: false }], error: null });
     const out = await runQuery();
-    expect(out).toEqual({ mode: 'none', evolution_url: null });
+    expect(out).toEqual(expect.objectContaining({ mode: 'none' }));
   });
 
-  it('departamento inexistente (null) devolve o default "none"', async () => {
+  it('sem linha de departamento (null) devolve o default "none"', async () => {
     f.rpc.mockResolvedValueOnce({ data: null, error: null });
     const out = await runQuery();
-    expect(out).toEqual({ mode: 'none', evolution_url: null });
-  });
-
-  it('um texto de chave devolvido nunca vira campo de credencial', async () => {
-    f.rpc.mockResolvedValueOnce({ data: 'chave-secreta', error: null });
-    const out = (await runQuery()) as Record<string, unknown>;
-    expect(Object.keys(out).sort()).toEqual(['evolution_url', 'mode']);
-    expect(out).toEqual({ mode: 'none', evolution_url: null });
-    expect(JSON.stringify(out)).not.toContain('chave-secreta');
+    expect(out).toEqual({ mode: 'none', instance_id: null, has_api_key: false, evolution_url: null });
   });
 });
