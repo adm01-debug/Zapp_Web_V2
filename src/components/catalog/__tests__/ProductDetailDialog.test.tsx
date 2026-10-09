@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ProductDetailDialog } from '../ProductDetailDialog';
+import { CatalogProductCard } from '../CatalogProductCard';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
 
 // Dialog de zoom (E60) usa @radix-ui/react-dialog, que depende de
@@ -399,6 +400,48 @@ describe('ProductDetailDialog — CT-36 navegação ‹ › entre produtos do re
     fireEvent.click(screen.getByLabelText('Produto anterior'));
 
     expect(screen.getByText('Primeiro')).toBeInTheDocument();
+  });
+});
+
+
+/**
+ * R2-MOD-046 — reabrir o detalhe de um cartão não pode continuar exibindo o
+ * produto para o qual o usuário navegou ‹ › na visita anterior. O fluxo é o
+ * real da tela: `CatalogProductCard` controla o `open` do painel (fechar →
+ * reabrir o MESMO cartão).
+ */
+describe('ProductDetailDialog — R2-MOD-046 reabrir o cartão volta ao produto clicado', () => {
+  const lista = () => [
+    mockProduct({ id: 'p1', name: 'Primeiro' }),
+    mockProduct({ id: 'p2', name: 'Segundo' }),
+  ];
+
+  beforeEach(() => {
+    mockUseExternalProduct.mockReturnValue({ data: undefined, isFetching: false });
+  });
+
+  it('fechar no Segundo e reabrir o cartão do Primeiro mostra o Primeiro', async () => {
+    render(<CatalogProductCard product={lista()[0]} products={lista()} onSend={vi.fn()} />);
+
+    // abre o detalhe do cartão do produto A ("Primeiro")
+    fireEvent.click(screen.getByRole('button', { name: 'Ver' }));
+    const painel = await screen.findByTestId('product-detail-sheet');
+    expect(within(painel).getByText('Primeiro')).toBeInTheDocument();
+
+    // navega ‹ › para o produto B ("Segundo")
+    fireEvent.click(within(painel).getByLabelText('Próximo produto'));
+    expect(within(painel).getByText('Segundo')).toBeInTheDocument();
+
+    // fecha o painel (mesmo caminho do botão fechar do Sheet)
+    fireEvent.click(within(painel).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByTestId('product-detail-sheet')).not.toBeInTheDocument());
+
+    // reabre o MESMO cartão A
+    fireEvent.click(screen.getByRole('button', { name: 'Ver' }));
+    const reaberto = await screen.findByTestId('product-detail-sheet');
+
+    expect(within(reaberto).getByText('Primeiro')).toBeInTheDocument();
+    expect(within(reaberto).queryByText('Segundo')).not.toBeInTheDocument();
   });
 });
 

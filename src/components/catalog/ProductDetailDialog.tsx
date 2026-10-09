@@ -249,6 +249,19 @@ export function ProductDetailDialog({ product, open, onOpenChange, onSend, produ
    * fechar o painel; abrir outro card muda `product.id` e descarta o override.
    */
   const [nav, setNav] = useState<{ baseId: string; idx: number } | null>(null);
+  /**
+   * R2-MOD-046 — o override de navegação ‹ › não pode sobreviver ao
+   * fechamento do painel: o dialog fica montado (o caller só alterna `open`),
+   * então reabrir o MESMO cartão A mantinha `nav.baseId === 'A'` e o painel
+   * voltava no produto B navegado na visita anterior. Ajuste de estado no
+   * render (mesmo padrão do `focusApplied` da galeria) zera o override quando
+   * `open` muda: cada abertura começa pelo produto do cartão clicado.
+   */
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    setNav(null);
+  }
   const baseIdx = products ? products.findIndex((p) => p.id === product.id) : -1;
   const activeIdx = nav && nav.baseId === product.id ? nav.idx : baseIdx;
   const shown = products && activeIdx >= 0 && activeIdx < products.length ? products[activeIdx] : product;
