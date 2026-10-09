@@ -70,7 +70,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
             className={cn(
               'h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center',
               isActive
-                ? 'bg-accent border-primary/50 text-foreground'
+                ? 'status-chip-active bg-accent border-primary/50 text-foreground'
                 : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted/70'
             )}
           >
