@@ -5,6 +5,7 @@ import { SUPABASE_URL } from '@/config/supabase';
 import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
+import { fetchConversionRanking, type TalkXTemplateConversionState } from './useTalkXTemplatesConversion';
 
 export interface TalkXTemplate {
   id: string;
@@ -81,6 +82,19 @@ export function useTalkXTemplates() {
       return (data ?? []) as TalkXTemplate[];
     },
   });
+
+  // X092/T04-039 — "Mais convertidos": ranking por taxa de resposta (base mínima A9).
+  // Mesma chave de cache para todos os consumidores do hook: uma leitura por sessão.
+  const conversionQuery = useQuery({
+    queryKey: ['talkx-template-conversion-ranking'],
+    queryFn: fetchConversionRanking,
+  });
+  const conversion: TalkXTemplateConversionState = {
+    ranking: conversionQuery.data ?? null,
+    isLoading: conversionQuery.isLoading,
+    isError: conversionQuery.isError,
+    error: conversionQuery.error as Error | null,
+  };
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['talkx-templates'] });
 
@@ -234,6 +248,7 @@ export function useTalkXTemplates() {
     refetch: query.refetch,
     createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
     testTemplate,
+    conversion,
     fetchVersionHistory,
     fetchVariants, saveVariant, deleteVariant, countVariantRecipients,
   };
