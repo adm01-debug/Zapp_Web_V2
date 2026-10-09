@@ -42,6 +42,17 @@ const TOKENS_DECLARADOS = new Set(
   [...TOKENS_CSS.matchAll(/--([a-z0-9-]+)\s*:/g)].map((m) => m[1]),
 );
 
+const TAILWIND = readFileSync('tailwind.config.ts', 'utf8');
+
+/** Degraus de texto declarados em `fontSize` no tailwind.config.ts (a escala sancionada). */
+const ESCALA_TEXTO = new Set(
+  (() => {
+    const ini = TAILWIND.indexOf('fontSize: {');
+    const fim = TAILWIND.indexOf('\n      },', ini);
+    return [...TAILWIND.slice(ini, fim).matchAll(/"?([a-z0-9-]+)"?:\s*\[\s*"/g)].map((m) => m[1]);
+  })(),
+);
+
 /** Injeta o CSS de tokens no documento — quem resolve passa a ser o motor de CSS. */
 function injetarTokens(): void {
   const folha = document.createElement('style');
@@ -84,6 +95,16 @@ function pxArbitrarioNoBloco(el: Element): string[] {
 /** Tokens inexistentes em qualquer classe do DOM renderizado. */
 function tokensInexistentesNoDom(container: HTMLElement): string[] {
   return [...container.querySelectorAll('*')].flatMap((el) => classesDe(el).flatMap(tokensInexistentes));
+}
+
+/**
+ * Token do tema que uma utility de cor nomeada usa (`bg-card` -> `--card`).
+ * Devolve null quando a classe não é cor nomeada — é o caso do defeito
+ * (`bg-[--zapp-surface-1]`, `border-[--zapp-border]`), que não passa pela escala.
+ */
+function tokenDaCorNomeada(classe: string): string | null {
+  const m = /^(?:bg|border|border-t|border-b|divide|ring|fill|stroke)-([a-z][a-z-]*)(?:\/\d+)?$/.exec(classe);
+  return m ? `--${m[1]}` : null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -152,6 +173,25 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+// F74 (TL-007): o virtualizer real depende de medições de layout que o jsdom não
+// fornece (igual ao MultiplixView.lista-virtualizada.test.tsx) — sem o mock, a janela
+// visível fica vazia e nenhuma linha aparece no DOM.
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (options: { count: number; estimateSize: (i: number) => number }) => {
+    const size = options.estimateSize(0);
+    const visible = Math.min(options.count, 25);
+    return {
+      getTotalSize: () => options.count * size,
+      getVirtualItems: () =>
+        Array.from({ length: visible }, (_, index) => ({
+          index, size, start: index * size, end: (index + 1) * size, key: index, lane: 0,
+        })),
+      measure: () => {},
+      measureElement: () => {},
+    };
+  },
+}));
+
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 vi.mock('@/hooks/integrations/useMultiplixAudience', () => ({
@@ -196,7 +236,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
     error: h.recipientsError,
   }),
   useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useConfirmMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   fetchMultiplixRecipientsTotal: () => Promise.resolve(0),
+  MultiplixDispatchEdgeError: class MultiplixDispatchEdgeError extends Error {},
 }));
 
 import MultiplixView from '@/components/multiplix/MultiplixView';
@@ -247,9 +289,12 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     // O painel existe sempre (não depende de dado) e é ancorado pelo rótulo "Público".
     const painel = screen.getByLabelText('Público').closest('div.rounded-2xl');
     expect(painel).not.toBeNull();
+    // Nada de cor arbitrária (`bg-[--x]`) e toda cor nomeada resolvendo na folha:
+    // antes da correção o painel não tinha nenhuma cor nomeada — só os --zapp-*.
     expect(classesDe(painel!).filter((c) => /^(bg|border)-\[/.test(c))).toEqual([]);
-    expect(painel!.className).toContain('bg-card');
-    expect(painel!.className).toContain('border-border');
+    const coresDoPainel = classesDe(painel!).map(tokenDaCorNomeada).filter((t): t is string => t !== null);
+    expect(coresDoPainel.length).toBeGreaterThan(0);
+    expect(coresDoPainel.filter((t) => valorDoToken(t) === '')).toEqual([]);
 
     // Todo o bloco (rótulos, selects, botão Buscar), o painel "Disparos recentes"
     // e a contagem do filtro — sem px arbitrário.
@@ -286,9 +331,12 @@ describe('TL-038 (F70) — fundação visual: tokens reais e zero px arbitrário
     const { container } = comQueryClient(<MultiplixMonitor dispatchId="d1" onBack={vi.fn()} />);
 
     const nome = screen.getByText('Empresa 1');
-    // `text-[13px]` -> `text-sm` (absorção sancionada em
+    // `text-[13px]` -> degrau nomeado da escala (`text-sm`, absorção sancionada em
     // docs/tipografia/PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24.md:85).
-    expect(classesDe(nome)).toContain('text-sm');
+    const tamanhosDoNome = classesDe(nome)
+      .map((c) => /^text-(.+)$/.exec(c)?.[1] ?? '')
+      .filter((t) => ESCALA_TEXTO.has(t));
+    expect(tamanhosDoNome.length).toBeGreaterThan(0);
 
     // A tela inteira do monitor: cabeçalho do disparo, KPIs, filtro de status e lista.
     const tela = nome.closest('div.space-y-4')!;

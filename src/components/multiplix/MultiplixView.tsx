@@ -286,7 +286,7 @@ export default function MultiplixView() {
               com rolagem. Antes o `slice(0, 8)` escondia do 9o em diante: o dado
               vinha do servidor e nao tinha nenhum caminho de clique para o
               monitor. */}
-          <div className="divide-y divide-border/40 max-h-[360px] overflow-auto">
+          <div className="divide-y divide-border/40 max-h-[22.5rem] overflow-auto">
             {dispatches.data!.map((d) => (
               <button
                 key={d.id}
@@ -295,7 +295,7 @@ export default function MultiplixView() {
                 className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-muted/20 rounded-lg px-2 -mx-2"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-foreground truncate">{d.name}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
                   <p className="text-2xs text-muted-foreground">{fmtDateTime(d.created_at)} · {fmtInt(d.sent_count)}/{fmtInt(d.total_recipients)} enviadas</p>
                 </div>
                 <StatusPill status={d.status} map={DISPATCH_STATUS} />
@@ -392,7 +392,7 @@ export default function MultiplixView() {
               duas linhas-espaçadoras `aria-hidden` reservam a altura total para
               a barra de rolagem. Sem isso, 5.000 linhas carregadas viram
               5.000 <tr> no DOM e a rolagem trava. */}
-          <div ref={tableScrollRef} className="max-h-[480px] overflow-auto">
+          <div ref={tableScrollRef} className="max-h-[30rem] overflow-auto">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
