@@ -232,7 +232,10 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const handlers = useChatPanelHandlers({
     conversationId: conversation.id, contactId: conversation.contact.id, contactPhone: conversation.contact.phone,
     instanceName, onSendMessage, editMessageApi: editMessage, applySignature,
-    handleTypingStart, handleTypingStop, openDialog: openDialog as any, closeDialog: closeDialog as any, handleSetActiveTool,
+    handleTypingStart, handleTypingStop,
+    openDialog: (key: string) => openDialog(key as DialogKey),
+    closeDialog: (key: string) => closeDialog(key as DialogKey),
+    handleSetActiveTool,
   });
 
   useEffect(() => { initResolve(); }, [conversation.contact.id]);

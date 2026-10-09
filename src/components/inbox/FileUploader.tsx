@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { motion, AnimatePresence } from '@/components/ui/motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -92,21 +92,33 @@ function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedF
 export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
   instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, disabled,
 }, ref) => {
-  const logic = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent });
+  // O `<input type="file">` escondido e a ref que o abre pertencem ao COMPONENTE: o hook
+  // recebe a ref e a usa nos handlers, mas nao a devolve. Devolver a ref no objeto do
+  // hook fazia o compilador do React tratar TODO o resultado como ref-like e marcar cada
+  // leitura de propriedade do hook no render como `react-hooks/refs` (75 achados, SL-202).
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    isDialogOpen, filePreview, fileQueue, isMultiMode, caption, setCaption,
+    uploading, uploadProgress, uploadStage, currentQueueIndex,
+    apiLoading, canSend, validFilesCount, totalQueueProgress,
+    handleClose, handleSendFile, handleSendAllFiles, handleFileChange,
+    handleExternalFile, handleExternalFiles, removeFromQueue,
+  } = useFileUploadLogic({ instanceName, recipientNumber, contactId, connectionId, onFileSelect, onFileSent, fileInputRef });
 
   useImperativeHandle(ref, () => ({
-    handleExternalFile: logic.handleExternalFile,
-    handleExternalFiles: logic.handleExternalFiles,
+    handleExternalFile,
+    handleExternalFiles,
   }));
 
   return (
     <>
-      <input ref={logic.fileInputRef} type="file" accept={getFileInputAccept()} onChange={logic.handleFileChange} className="hidden" disabled={disabled || logic.uploading} multiple />
+      <input ref={fileInputRef} type="file" accept={getFileInputAccept()} onChange={handleFileChange} className="hidden" disabled={disabled || uploading} multiple />
 
       <Tooltip>
         <TooltipTrigger asChild>
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => logic.fileInputRef.current?.click()} disabled={disabled || logic.uploading} aria-label="Anexar arquivo">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => fileInputRef.current?.click()} disabled={disabled || uploading} aria-label="Anexar arquivo">
               <Paperclip className="w-5 h-5" />
             </Button>
           </motion.div>
@@ -114,73 +126,73 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
         <TooltipContent side="top">Anexar arquivo</TooltipContent>
       </Tooltip>
 
-      <Dialog open={logic.isDialogOpen} onOpenChange={logic.handleClose}>
+      <Dialog open={isDialogOpen} onOpenChange={handleClose}>
         <DialogContent aria-describedby={undefined} className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />
-              {logic.isMultiMode ? `Enviar ${logic.fileQueue.length} Arquivos` : 'Enviar Arquivo'}
+              {isMultiMode ? `Enviar ${fileQueue.length} Arquivos` : 'Enviar Arquivo'}
             </DialogTitle>
             <DialogDescription>
-              {logic.isMultiMode ? `${logic.validFilesCount} de ${logic.fileQueue.length} arquivos válidos` : 'Formatos suportados: imagens, vídeos, áudios e documentos'}
+              {isMultiMode ? `${validFilesCount} de ${fileQueue.length} arquivos válidos` : 'Formatos suportados: imagens, vídeos, áudios e documentos'}
             </DialogDescription>
           </DialogHeader>
 
-          {logic.isMultiMode && logic.fileQueue.length > 0 && (
+          {isMultiMode && fileQueue.length > 0 && (
             <div className="flex-1 overflow-y-auto space-y-3 py-2 max-h-[40vh]">
-              {logic.fileQueue.map((qf) => (
-                <QueueFileItem key={qf.id} queuedFile={qf} onRemove={() => logic.removeFromQueue(qf.id)} disabled={logic.uploading} />
+              {fileQueue.map((qf) => (
+                <QueueFileItem key={qf.id} queuedFile={qf} onRemove={() => removeFromQueue(qf.id)} disabled={uploading} />
               ))}
             </div>
           )}
 
-          {!logic.isMultiMode && logic.filePreview && (
+          {!isMultiMode && filePreview && (
             <div className="space-y-4">
-              {logic.filePreview.preview && logic.filePreview.file.type === 'application/pdf' && (
+              {filePreview.preview && filePreview.file.type === 'application/pdf' && (
                 <div className="border rounded-lg overflow-hidden bg-muted/30">
-                  <iframe src={`${logic.filePreview.preview}#toolbar=0&navpanes=0`} className="w-full h-[280px] border-0" title="PDF Preview" />
+                  <iframe src={`${filePreview.preview}#toolbar=0&navpanes=0`} className="w-full h-[280px] border-0" title="PDF Preview" />
                 </div>
               )}
               <div className="relative border rounded-lg p-4 bg-muted/50">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
-                    {logic.filePreview.preview && logic.filePreview.file.type !== 'application/pdf' ? (
-                      <img src={logic.filePreview.preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg"  loading="lazy" decoding="async"/>
+                    {filePreview.preview && filePreview.file.type !== 'application/pdf' ? (
+                      <img src={filePreview.preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg"  loading="lazy" decoding="async"/>
                     ) : (
                       <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                        {getCategoryIcon(logic.filePreview.validation.category || 'document')}
+                        {getCategoryIcon(filePreview.validation.category || 'document')}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{logic.filePreview.file.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{formatFileSize(logic.filePreview.file.size)}</p>
-                    {logic.filePreview.validation.valid ? (
-                      <Badge variant="outline" className="mt-2 text-xs bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />{logic.filePreview.validation.category}</Badge>
+                    <p className="font-medium text-sm truncate">{filePreview.file.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatFileSize(filePreview.file.size)}</p>
+                    {filePreview.validation.valid ? (
+                      <Badge variant="outline" className="mt-2 text-xs bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />{filePreview.validation.category}</Badge>
                     ) : (
                       <Badge variant="destructive" className="mt-2 text-xs"><AlertCircle className="w-3 h-3 mr-1" />Inválido</Badge>
                     )}
                   </div>
-                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={logic.handleClose} disabled={logic.uploading}><X className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={handleClose} disabled={uploading}><X className="w-4 h-4" /></Button>
                 </div>
-                {!logic.filePreview.validation.valid && (
+                {!filePreview.validation.valid && (
                   <div className="mt-3 p-3 bg-destructive/10 rounded-lg">
-                    <p className="text-sm text-destructive flex items-start gap-2"><AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />{logic.filePreview.validation.error}</p>
+                    <p className="text-sm text-destructive flex items-start gap-2"><AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />{filePreview.validation.error}</p>
                   </div>
                 )}
               </div>
-              {logic.filePreview.validation.valid && ['image', 'video', 'document'].includes(logic.filePreview.validation.category || '') && (
+              {filePreview.validation.valid && ['image', 'video', 'document'].includes(filePreview.validation.category || '') && (
                 <div className="space-y-2">
                   <Label htmlFor="caption">Legenda (opcional)</Label>
-                  <Input id="caption" placeholder="Adicione uma legenda..." value={logic.caption} onChange={(e) => logic.setCaption(e.target.value)} disabled={logic.uploading} />
+                  <Input id="caption" placeholder="Adicione uma legenda..." value={caption} onChange={(e) => setCaption(e.target.value)} disabled={uploading} />
                 </div>
               )}
               <AnimatePresence>
-                {logic.uploading && (
+                {uploading && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-                    <Progress value={logic.uploadProgress} className="h-2" />
+                    <Progress value={uploadProgress} className="h-2" />
                     <p className="text-xs text-muted-foreground text-center">
-                      {logic.uploadStage === 'uploading' ? `Fazendo upload... ${logic.uploadProgress}%` : `Enviando via WhatsApp... ${logic.uploadProgress}%`}
+                      {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
                     </p>
                   </motion.div>
                 )}
@@ -198,30 +210,30 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
             </ul>
           </div>
 
-          {!logic.canSend && (
+          {!canSend && (
             <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
               <p className="text-sm text-warning flex items-center gap-2"><AlertCircle className="w-4 h-4" />Selecione uma conversa para enviar o arquivo via WhatsApp</p>
             </div>
           )}
 
-          {logic.isMultiMode && logic.uploading && (
+          {isMultiMode && uploading && (
             <div className="space-y-2">
-              <Progress value={logic.totalQueueProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground text-center">Enviando arquivo {logic.currentQueueIndex + 1} de {logic.fileQueue.length}...</p>
+              <Progress value={totalQueueProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">Enviando arquivo {currentQueueIndex + 1} de {fileQueue.length}...</p>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={logic.handleClose} disabled={logic.uploading}>Cancelar</Button>
+            <Button variant="outline" onClick={handleClose} disabled={uploading}>Cancelar</Button>
             <Button
-              onClick={logic.isMultiMode ? logic.handleSendAllFiles : logic.handleSendFile}
-              disabled={(logic.isMultiMode ? logic.validFilesCount === 0 : !logic.filePreview?.validation.valid) || logic.uploading || logic.apiLoading}
+              onClick={isMultiMode ? handleSendAllFiles : handleSendFile}
+              disabled={(isMultiMode ? validFilesCount === 0 : !filePreview?.validation.valid) || uploading || apiLoading}
               className="bg-whatsapp hover:bg-whatsapp-dark"
             >
-              {logic.uploading ? 'Enviando...' : (
+              {uploading ? 'Enviando...' : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  {logic.isMultiMode ? `Enviar ${logic.validFilesCount} arquivo${logic.validFilesCount !== 1 ? 's' : ''}` : logic.canSend ? 'Enviar' : 'Selecionar'}
+                  {isMultiMode ? `Enviar ${validFilesCount} arquivo${validFilesCount !== 1 ? 's' : ''}` : canSend ? 'Enviar' : 'Selecionar'}
                 </>
               )}
             </Button>

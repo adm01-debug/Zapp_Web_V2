@@ -86,12 +86,12 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
           ) : (
             <div className="space-y-3 pr-2">
               <AnimatePresence>
-                {notes?.map((note: any, index: number) => (
+                {notes?.map((note, index) => (
                   <motion.div key={note.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }} className="p-3 rounded-lg bg-muted/50 border">
                     <div className="flex items-center gap-2 mb-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={note.author?.avatar_url} alt={note.author?.name || 'Autor'} />
+                        <AvatarImage src={note.author?.avatar_url ?? undefined} alt={note.author?.name || 'Autor'} />
                         <AvatarFallback className="text-xs">{note.author?.name?.substring(0, 2).toUpperCase() || 'NA'}</AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium">{note.author?.name || 'Anônimo'}</span>
