@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import React from 'react';
 
 vi.mock('framer-motion', () => ({
@@ -79,5 +80,19 @@ describe('VideoFullscreen — aria-labels nos botões', () => {
   it('botão de fechar tem aria-label "Fechar"', () => {
     render(<VideoFullscreen url="https://example.com/video.mp4" onClose={() => {}} />);
     expect(screen.getByRole('button', { name: /fechar/i })).toBeInTheDocument();
+  });
+
+  it('axe button-name zerado no ImagePreview e no VideoFullscreen', async () => {
+    const { container: previewContainer } = render(<ImagePreview src="https://example.com/img.jpg" alt="Test" />);
+    const previewResults = await axe(previewContainer, {
+      rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+    });
+    expect(previewResults).toHaveNoViolations();
+
+    const { container: videoContainer } = render(<VideoFullscreen url="https://example.com/video.mp4" onClose={() => {}} />);
+    const videoResults = await axe(videoContainer, {
+      rules: { region: { enabled: false }, 'color-contrast': { enabled: false } },
+    });
+    expect(videoResults).toHaveNoViolations();
   });
 });
