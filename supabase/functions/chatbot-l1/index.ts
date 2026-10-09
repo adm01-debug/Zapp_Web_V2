@@ -108,18 +108,6 @@ export async function handleChatbotL1Request(req: Request): Promise<Response> {
           `[${a.category || 'Geral'}] ${a.title} (relevância: ${(a.rank * 100).toFixed(0)}%):\n${a.content.substring(0, 800)}`
         )
         .join('\n---\n');
-    } else {
-      const { data: fallbackArticles } = await supabase
-        .from('knowledge_base_articles')
-        .select('title, content, category')
-        .eq('is_published', true)
-        .limit(5);
-
-      if (fallbackArticles && fallbackArticles.length > 0) {
-        kbContext = fallbackArticles
-          .map(a => `[${a.category || 'Geral'}] ${a.title}: ${a.content.substring(0, 400)}`)
-          .join('\n---\n');
-      }
     }
 
     // Fetch conversation history

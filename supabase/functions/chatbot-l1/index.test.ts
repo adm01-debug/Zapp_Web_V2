@@ -539,3 +539,48 @@ Deno.test("IA-106: fala do ATENDENTE com o mesmo texto não é comida pelo dedup
     },
   );
 });
+
+// ── N-171: sem artigo relevante, o bot NÃO usa artigo qualquer como fallback ──
+
+Deno.test("N-171: busca vazia não usa artigo qualquer como fallback e marca sem fundamento", async () => {
+  // A busca retorna vazio (já é o padrão do stub), mas a tabela knowledge_base_articles
+  // TEM artigos publicados. Antes da correção o handler fazia fallback para os 5 primeiros;
+  // depois da correção kbContext fica vazio e o prompt não contém nenhum artigo.
+  const ARTIGO_IRRELEVANTE = "Artigo de fallback que não deveria ser usado";
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [mensagem("OLÁ", CONEXAO_A, "2026-01-01T00:00:20Z")],
+      artigos: [
+        {
+          id: "artigo-1",
+          title: ARTIGO_IRRELEVANTE,
+          content: "Conteúdo genérico de fallback que o bot não deveria citar.",
+          category: "Geral",
+          is_published: true,
+        },
+      ],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A, "Pergunta sem artigo relevante");
+
+      igual(status, 200, "resposta do handler");
+      igual(vivo.prompts.length, 1, "uma chamada de IA");
+
+      const prompt = vivo.prompts[0];
+      // O prompt NÃO deve conter o título nem o conteúdo do artigo de fallback.
+      afirma(
+        !prompt.includes(ARTIGO_IRRELEVANTE),
+        "o prompt não deve conter artigo qualquer quando a busca não achou nada",
+      );
+      // O sistema informa que não há artigos disponíveis (Nenhum artigo disponível.).
+      afirma(
+        prompt.includes("Nenhum artigo disponível"),
+        "o prompt deve indicar ausência de artigos quando a busca retorna vazio",
+      );
+      // Nenhuma consulta à tabela knowledge_base_articles foi feita (sem fallback).
+      const queryKb = consulta(vivo, "knowledge_base_articles");
+      igual(queryKb.length, 0, "nenhuma consulta à tabela de artigos como fallback");
+    },
+  );
+});
