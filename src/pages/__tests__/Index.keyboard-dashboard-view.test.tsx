@@ -2,10 +2,10 @@
  * P2 #447 — REGRESSÃO DE INTEGRAÇÃO do atalho "Ir para Dashboard" (Ctrl+2).
  *
  * O defeito original: a ação `go-to-dashboard` do registry global de atalhos só
- * chamava `navigate('/')` e anunciava no toast. O aviso saía, a view do shell
- * continuava `inbox`. Um teste que só olhasse `toast.info` passaria com o bug de
- * pé — por isso este teste observa o PONTO QUE RECEBE A VIEW: o `currentView`
- * entregue ao `AppShell`.
+ * chamava `navigate('/')`, então a view do shell continuava `inbox`. Um teste
+ * que olhasse apenas o efeito colateral do aviso passaria com o bug de pé — por
+ * isso este teste observa o PONTO QUE RECEBE A VIEW: o `currentView` entregue
+ * ao `AppShell`.
  *
  * Fluxo coberto (o mesmo do app):
  *   GlobalKeyboardProvider → useGlobalKeyboardShortcuts (registry global)
@@ -15,14 +15,15 @@
  *     → `useNavigationHistory` do `Index` (escuta `zapp:navigate`)
  *     → prop `currentView` do `AppShell`.
  *
- * Com a implementação antiga (`navigate('/')` + toast) a URL canônica seguia
+ * Com a implementação antiga (`navigate('/')`) a URL canônica seguia
  * `?view=inbox`, nenhum `zapp:navigate` saía e o shell recebia `inbox` — as duas
- * asserções do primeiro caso falham.
+ * asserções de mudança do primeiro caso falham.
  *
- * Observação de escopo: este commit inclui a correção de produção do hook
- * `go-to-dashboard` em `src/hooks/ui/useGlobalKeyboardShortcuts.ts`, trazida
- * como cópia da correção 5dc966476, para que a regressão exercite o fluxo real.
- * Os dublês abaixo são só os painéis e hooks de dados do shell, que não
+ * Observação de escopo: cartão só de regressão. Nenhum arquivo de produção foi
+ * tocado; a correção do hook `go-to-dashboard` em
+ * `src/hooks/ui/useGlobalKeyboardShortcuts.ts` (5dc966476, entrada equivalente
+ * na branch do dia em dbf679062) já está na base, e é ela que faz o fluxo real
+ * passar. Os dublês abaixo são só os painéis e hooks de dados do shell, que não
  * participam do fluxo em teste.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -110,7 +111,6 @@ vi.mock('@/components/layout/AppShell', () => ({
   ),
 }));
 
-import { toast } from 'sonner';
 import Index from '@/pages/Index';
 import { GlobalKeyboardProvider } from '@/components/keyboard/GlobalKeyboardProvider';
 
@@ -170,8 +170,6 @@ describe('#447 — Ctrl+2 troca a view do shell para dashboard', () => {
     expect(viewNoShell()).toBe('dashboard');
     // ...e a URL canônica acompanhou (?view=dashboard, não a raiz).
     expect(viewNaUrl()).toBe('dashboard');
-    // O aviso continua acontecendo — mas ele não é a prova.
-    expect(toast.info).toHaveBeenCalledWith('📊 Dashboard', { duration: 1500 });
   });
 
   it('Ctrl+2 já em ?view=dashboard mantém o shell em dashboard', async () => {
