@@ -51,6 +51,15 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
 }));
+// X131 (TL-143) — o rail do wizard passou a ler o resumo pelo servidor
+// (react-query). Sem este dublê, qualquer teste que monte o wizard de verdade
+// precisaria de um QueryClientProvider só por causa do rail (sempre visível,
+// em qualquer passo) — o teste aqui prova a navegação/pendência, não o resumo.
+vi.mock('@/hooks/integrations/useTalkXCampaignSummary', () => ({
+  useTalkXCampaignSummary: () => ({
+    total: 0, eligible: 0, suppressed: 0, isLoading: false, isError: false, error: null, refetch: vi.fn(),
+  }),
+}));
 
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
