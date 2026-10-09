@@ -7,9 +7,9 @@
     "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af"
   },
   "summary": {
-    "function_count": 75,
-    "source_file_count": 149,
-    "verify_jwt_true": 61,
+    "function_count": 76,
+    "source_file_count": 151,
+    "verify_jwt_true": 62,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -73,6 +73,11 @@
       "path": "supabase/functions/_shared/ai-json.ts",
       "bytes": 1261,
       "sha256": "915b960b7ac4b589022f4d8b960f59676add75324f4c637d283bf7ea51c00abb"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-kb-ingest.ts",
+      "bytes": 6048,
+      "sha256": "486548e47d0e797ab4068ee3d247bc64debfb96cb1f39581316c34aad994f65e"
     },
     {
       "path": "supabase/functions/_shared/ai-providers.ts",
@@ -378,6 +383,11 @@
       "path": "supabase/functions/ai-jobs-worker/index.ts",
       "bytes": 22527,
       "sha256": "625b2bdc4c6c6c750f31d7adc1900649a296ee4bd0428cdd6e7c1c9ac6fe64fb"
+    },
+    {
+      "path": "supabase/functions/ai-kb-ingest/index.ts",
+      "bytes": 10590,
+      "sha256": "85dbfe84f76f2ae1031466a7bb6a975ec90cdf4638f3f374bace338cf58a7a5d"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -915,6 +925,19 @@
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-jobs-worker/index.ts"
+      ]
+    },
+    {
+      "name": "ai-kb-ingest",
+      "entrypoint": "supabase/functions/ai-kb-ingest/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "cfcbe7f554d4c7dc736e1770e68134be2cdeba45d930ee705c8137b5e628dc97",
+      "source_files": [
+        "supabase/functions/_shared/ai-kb-ingest.ts",
+        "supabase/functions/_shared/edge-boot.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/ai-kb-ingest/index.ts"
       ]
     },
     {
@@ -1924,5 +1947,5 @@
       ]
     }
   ],
-  "manifest_sha256": "20ed0edd2751be9006a1964256111f79d2ab1c57d7ce827d72095cb6463b4797"
+  "manifest_sha256": "70aa1b315d84f71f109899d1c36b01208101b8700e5deb7eec40aa7be6679033"
 }
