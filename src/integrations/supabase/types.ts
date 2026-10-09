@@ -3446,55 +3446,6 @@ export type Database = {
           },
         ]
       }
-      department_invites: {
-        Row: {
-          code: string
-          created_at: string
-          created_by: string | null
-          department_id: string
-          expires_at: string
-          id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          created_by?: string | null
-          department_id: string
-          expires_at: string
-          id?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          department_id?: string
-          expires_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "department_invites_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "department_invites_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "department_invites_department_id_fkey"
-            columns: ["department_id"]
-            isOneToOne: false
-            referencedRelation: "departments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       departments: {
         Row: {
           created_at: string
@@ -12075,6 +12026,10 @@ export type Database = {
       set_instance_token: {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
+      }
+      set_profile_department: {
+        Args: { p_department_id: string; p_profile_id: string }
+        Returns: undefined
       }
       set_team_member_pref: {
         Args: { p_conversation_id: string; p_is_muted?: boolean }

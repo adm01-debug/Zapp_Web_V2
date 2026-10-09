@@ -51,6 +51,10 @@ const ALLOWLIST = new Set([
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
+  // SL-069 (t_6536c5a0): prova da RPC set_profile_department + remocao da tabela legada
+  // department_invites em Postgres descartavel (docker), com o papel real. Promover a um
+  // passo de db-guard.yml pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/sl069-set-profile-department.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
