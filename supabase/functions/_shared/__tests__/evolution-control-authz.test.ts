@@ -19,11 +19,11 @@ Deno.test("classifyEvolutionAction - ações de controle exigem papel (RED→GRE
   for (const action of ["set-webhook", "disconnect", "restart-instance", "update-privacy"]) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
   }
-  // Alterações de perfil/grupos e integrações também são controle.
+  // Alterações de perfil/grupos também são controle.
   for (const action of [
     "update-profile-name", "update-profile-picture", "remove-profile-picture",
-    "create-group", "update-participants", "leave-group", "toggle-ephemeral",
-    "set-settings", "set-presence", "set-chatwoot", "delete-openai", "set-proxy",
+    "create-group", "update-participants", "leave-group",
+    "handle-label", "update-block-status",
   ]) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
   }
@@ -49,24 +49,39 @@ Deno.test("classifyEvolutionAction - ação desconhecida cai em control (deny by
 
 Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa são send", () => {
   for (const action of [
-    "send-text", "send-media", "send-audio", "send-template", "send-ptv",
-    "send-reaction", "send-status", "send-chat-presence", "offer-call",
-    "mark-read", "mark-unread", "archive-chat",
+    "send-text", "send-media", "send-audio", "send-ptv",
+    "send-reaction", "send-status", "send-chat-presence",
+    "mark-read", "archive-chat",
   ]) {
     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
   }
   assert(SEND_ACTIONS.has("send-text"));
-  assert(SEND_ACTIONS.has("offer-call"));
+  assert(SEND_ACTIONS.has("send-ptv"));
 });
 
 Deno.test("classifyEvolutionAction - leituras seguem liberadas a autenticados", () => {
   for (const action of [
-    "status", "get-settings", "get-webhook", "find-chats", "list-instances",
-    "fetch-profile", "instance-info", "list-groups", "invite-info",
-    "check-numbers", "get-catalog", "find-templates", "typebot-sessions",
+    "status", "list-instances", "fetch-profile", "instance-info", "list-groups",
+    "check-numbers", "find-contacts", "find-labels", "get-media-base64",
+    "group-info", "group-participants", "group-invite-code",
+    "fetch-profile-picture", "fetch-business-profile",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
+  }
+});
+
+Deno.test("classifyEvolutionAction - ações removidas no E43 caem em control (deny by default)", () => {
+  // SL-075 E43: as ações sem equivalente na GO saíram dos três conjuntos.
+  for (const action of [
+    "set-chatwoot", "get-typebot", "delete-openai", "set-proxy",
+    "find-chats", "get-settings", "send-template", "offer-call",
+    "mark-unread", "toggle-ephemeral", "invite-info", "get-catalog",
+  ]) {
+    assertEquals(classifyEvolutionAction(action), "control", `${action} deve cair em control`);
+    assert(!CONTROL_ACTIONS.has(action), `${action} não deve estar em CONTROL_ACTIONS`);
+    assert(!SEND_ACTIONS.has(action), `${action} não deve estar em SEND_ACTIONS`);
+    assert(!READ_ACTIONS.has(action), `${action} não deve estar em READ_ACTIONS`);
   }
 });
 
@@ -101,7 +116,7 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   const handlerActions = new Set(
     [...handlerSource.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(handlerActions.size > 100, `sanidade: handler deve ter >100 ações (achou ${handlerActions.size})`);
+  assert(handlerActions.size > 50, `sanidade: handler deve ter >50 ações (achou ${handlerActions.size})`);
 
   const sets = { CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
   for (const [name, set] of Object.entries(sets)) {
