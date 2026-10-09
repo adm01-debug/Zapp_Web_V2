@@ -25,42 +25,81 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/ui/use-toast';
 import { QuarantineBadge } from '@/components/security/QuarantineBadge';
 import { LinkPreviewCard } from './LinkPreviewCard';
+import {
+  PRIVATE_MEDIA_BUCKETS,
+  parseSupabaseStorageObjectUrl,
+  type StorageObjectReference,
+} from '@/lib/storage_object_reference';
+import { SUPABASE_URL } from '@/config/supabase';
 
 import { getLogger } from '@/lib/logger';
 const log = getLogger('MessageBubble');
 
-// #92A: ao salvar uma figurinha recebida na biblioteca, o arquivo precisa ser
-// COPIADO para o bucket `stickers` — a biblioteca não pode compartilhar o
-// objeto da mensagem em `whatsapp-media` (vida útil distinta; apagar a
-// mensagem/arquivo não pode quebrar o catálogo).
+// SEC-SAIDAS_DE_INFORMACAO-03 (Y29 P0-03): a figurinha RECEBIDA de cliente era copiada para
+// o bucket PÚBLICO `stickers` e a biblioteca guardava a URL pública permanente
+// (`getPublicUrl`) — conteúdo de conversa legível sem sessão. A cópia agora vive DENTRO do
+// bucket privado da mídia de conversa (`whatsapp-media`), na mesma família de
+// PRIVATE_MEDIA_BUCKETS, e é referenciada por um locator durável que a biblioteca resolve
+// por URL assinada (useResolvedStorageUrl). A cópia continua existindo porque a biblioteca
+// não pode compartilhar o objeto da mensagem: apagar a mensagem/arquivo não pode quebrar o
+// catálogo.
 
-/**
- * O destino é derivado do id estável da mensagem. Assim a URL da cópia também
- * é estável e pode ser usada para detectar um segundo salvamento antes do
- * download/upload, sem persistir a URL temporária da mídia recebida.
- */
-function getReceivedStickerDestination(messageId: string): { url: string; storagePath: string } {
-  const storagePath = `recebida_${encodeURIComponent(messageId)}.webp`;
-  const { data } = supabase.storage.from('stickers').getPublicUrl(storagePath);
-  if (!data?.publicUrl) throw new Error('Falha ao definir o destino da cópia da figurinha');
-  return { url: data.publicUrl, storagePath };
+const STORAGE_ORIGINS = [new URL(SUPABASE_URL).origin] as const;
+
+/** Cópia própria da figurinha recebida, sempre dentro de um bucket PRIVADO. */
+interface ReceivedStickerCopy {
+  bucket: string;
+  storagePath: string;
+  /** Locator durável (formato `/object/public/…`): identifica o objeto, não o abre. */
+  url: string;
 }
 
 /**
- * Baixa a mídia recebida e publica uma cópia própria no bucket `stickers`.
+ * Objeto de origem da cópia. Devolve `null` quando a mídia da mensagem não é um objeto de
+ * bucket privado conhecido: sem isso não existe origem dentro do perímetro de onde copiar,
+ * e a saída é falhar explicitamente em vez de publicar mídia de conversa em bucket aberto.
+ */
+function resolveReceivedStickerSource(mediaUrl: string): StorageObjectReference | null {
+  return parseSupabaseStorageObjectUrl(mediaUrl, PRIVATE_MEDIA_BUCKETS, STORAGE_ORIGINS);
+}
+
+function extensionFromObjectPath(path: string): string {
+  const match = /\.([a-z0-9]{2,5})$/i.exec(path);
+  return match ? match[1].toLowerCase() : 'webp';
+}
+
+/**
+ * O destino é derivado do id estável da mensagem. Assim o locator da cópia também é estável
+ * e pode ser usado para detectar um segundo salvamento antes da cópia.
+ *
+ * O PRIMEIRO segmento do caminho é a pasta do usuário que salva: é o prefixo que a policy de
+ * INSERT de `whatsapp-media` autoriza para quem não é admin/supervisor (a outra opção é a
+ * pasta de um contato atribuído, que o balão não conhece). Efeito assumido: a cópia é
+ * legível por quem a salvou — abrir para o time exigiria mudar a policy do bucket, que é
+ * trilha de banco.
+ */
+function getReceivedStickerDestination(
+  source: StorageObjectReference,
+  userId: string,
+  messageId: string
+): ReceivedStickerCopy {
+  const storagePath = `${userId}/stickers/recebida_${encodeURIComponent(messageId)}.${extensionFromObjectPath(source.path)}`;
+  const { data } = supabase.storage.from(source.bucket).getPublicUrl(storagePath);
+  if (!data?.publicUrl) throw new Error('Falha ao definir o destino da cópia da figurinha');
+  return { bucket: source.bucket, storagePath, url: data.publicUrl };
+}
+
+/**
+ * Copia a mídia recebida para o destino próprio da biblioteca, dentro do MESMO bucket
+ * privado. `copy` é server-side: as policies do Storage decidem a leitura da origem e a
+ * escrita do destino, e o arquivo não passa pelo navegador.
  */
 async function copyReceivedStickerToLibrary(
-  receivedUrl: string,
-  destination: { url: string; storagePath: string }
-): Promise<{ url: string; storagePath: string }> {
-  const response = await fetch(receivedUrl);
-  if (!response.ok) throw new Error(`Falha ao baixar figurinha (HTTP ${response.status})`);
-  const blob = await response.blob();
-  const contentType = blob.type || 'image/webp';
-  const { error: uploadError } = await supabase.storage
-    .from('stickers')
-    .upload(destination.storagePath, blob, { contentType, cacheControl: '31536000' });
-  if (uploadError) throw uploadError;
+  source: StorageObjectReference,
+  destination: ReceivedStickerCopy
+): Promise<ReceivedStickerCopy> {
+  const { error } = await supabase.storage.from(source.bucket).copy(source.path, destination.storagePath);
+  if (error) throw error;
   return destination;
 }
 
@@ -257,7 +296,14 @@ export const MessageBubble = memo(function MessageBubble({
                         onClick={async (e) => {
                           e.stopPropagation();
                           try {
-                            const destination = getReceivedStickerDestination(message.id);
+                            // Y29 P0-03: a origem tem de ser um objeto de bucket privado —
+                            // é de dentro dele que a cópia nasce.
+                            const source = resolveReceivedStickerSource(message.mediaUrl!);
+                            if (!source) throw new Error('Mídia da figurinha não é um objeto de bucket privado');
+                            const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+                            if (sessionError) throw sessionError;
+                            if (!user?.id) throw new Error('Sessão não encontrada');
+                            const destination = getReceivedStickerDestination(source, user.id, message.id);
                             const { data: existing, error: duplicateCheckError } = await supabase
                               .from('stickers')
                               .select('id')
@@ -271,9 +317,9 @@ export const MessageBubble = memo(function MessageBubble({
                               const { data: classifyData, error: classifyErr } = await supabase.functions.invoke('classify-sticker', { body: { image_url: message.mediaUrl } });
                               if (!classifyErr && classifyData?.category) category = classifyData.category;
                             } catch (err) { log.error('Unexpected error in MessageBubble:', err); }
-                            // #92A: copia a mídia recebida para o bucket `stickers`
-                            // e insere SÓ a URL da cópia na biblioteca.
-                            const copy = await copyReceivedStickerToLibrary(message.mediaUrl!, destination);
+                            // Y29 P0-03: a cópia nasce e fica no bucket privado; a biblioteca
+                            // guarda SÓ o locator durável dela.
+                            const copy = await copyReceivedStickerToLibrary(source, destination);
                             // R2-INB-038: o insert pode falhar de duas formas — resolver com
                             // { error } (PostgREST/RLS) ou REJEITAR a promessa (falha de
                             // transporte). As duas têm de cair na mesma compensação, senão a
@@ -286,8 +332,8 @@ export const MessageBubble = memo(function MessageBubble({
                               insertError = thrown instanceof Error ? thrown : new Error(String(thrown));
                             }
                             if (insertError) {
-                              // compensa o objeto recém-publicado: sem INSERT ele ficaria órfão
-                              try { await supabase.storage.from('stickers').remove([copy.storagePath]); }
+                              // compensa o objeto recém-copiado: sem INSERT ele ficaria órfão
+                              try { await supabase.storage.from(copy.bucket).remove([copy.storagePath]); }
                               catch (cleanupErr) { log.error('Unexpected error in MessageBubble:', cleanupErr); }
                               throw insertError;
                             }

@@ -2,30 +2,45 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MessageBubble } from '../MessageBubble';
 import { Message } from '@/types/chat';
+import { parseSupabaseStorageObjectUrl, PRIVATE_MEDIA_BUCKETS } from '@/lib/storage_object_reference';
+import { SUPABASE_URL } from '@/config/supabase';
 
-// #92A / R2-INB-049 — ao salvar uma figurinha RECEBIDA na biblioteca, o INSERT
-// de `stickers.image_url` não pode reaproveitar a URL da mensagem em
-// `whatsapp-media`: a biblioteca precisa de cópia própria no bucket `stickers`.
-// O teste também prova que falha de cópia/insert não anuncia sucesso e não
-// deixa o objeto recém-publicado órfão quando a compensação é possível.
+// SEC-SAIDAS_DE_INFORMACAO-03 (Y29 P0-03) — a figurinha RECEBIDA de cliente era copiada para o
+// bucket PÚBLICO `stickers` e a biblioteca guardava a URL pública permanente (`getPublicUrl`),
+// deixando conteúdo de conversa legível sem sessão.
+//
+// O contrato que este teste prende: a cópia fica DENTRO do bucket privado da mídia de conversa
+// (`whatsapp-media`), na pasta do usuário que salva, e `stickers.image_url` recebe o locator
+// durável dessa cópia — o formato que a biblioteca já resolve por URL assinada
+// (`useResolvedStorageUrl` + `PRIVATE_MEDIA_BUCKETS`, provado em
+// src/components/inbox/stickers/__tests__/StickerGrid.resolucao.test.tsx).
+//
+// O mock de Storage RECUSA outro bucket: se o código voltar a tocar `stickers` (publicar ou
+// ler URL pública de mídia de conversa), o teste falha. O mock de `fetch` global também segue
+// instalado para provar que o arquivo não é baixado pelo navegador.
 
-const RECEIVED_URL =
-  'https://proj.supabase.co/storage/v1/object/public/whatsapp-media/msg-recebida-92a.webp';
-const COPIED_URL =
-  'https://proj.supabase.co/storage/v1/object/public/stickers/recebida_copia_92a.webp';
+const ORIGIN = new URL(SUPABASE_URL).origin;
+const RECEIVED_URL = `${ORIGIN}/storage/v1/object/public/whatsapp-media/sticker/msg-recebida-92a.webp`;
+const RECEIVED_PATH = 'sticker/msg-recebida-92a.webp';
+const USER_ID = 'user-92a';
+const DEST_PATH = `${USER_ID}/stickers/recebida_m-92a.webp`;
+const DEST_LOCATOR = `${ORIGIN}/storage/v1/object/public/whatsapp-media/${DEST_PATH}`;
 
 const mocks = vi.hoisted(() => ({
   // tabela `stickers`
   selectEq: vi.fn(),
   selectMaybeSingle: vi.fn(),
   insert: vi.fn(),
-  // storage `stickers`
-  upload: vi.fn(),
+  // storage (bucket privado da conversa)
+  storageFrom: vi.fn(),
+  copy: vi.fn(),
   getPublicUrl: vi.fn(),
   remove: vi.fn(),
+  // sessão do usuário que salva
+  getUser: vi.fn(),
   // edge function
   invoke: vi.fn(),
-  // fetch usado para baixar a mídia recebida
+  // fetch global: a cópia NÃO pode passar pelo navegador
   fetch: vi.fn(),
   toast: vi.fn(),
 }));
@@ -41,14 +56,18 @@ vi.mock('@/integrations/supabase/client', () => ({
     },
     storage: {
       from: (bucket: string) => {
-        if (bucket !== 'stickers') throw new Error(`bucket inesperado no teste: ${bucket}`);
+        if (bucket !== 'whatsapp-media') {
+          throw new Error(`bucket inesperado no teste (bucket público?): ${bucket}`);
+        }
+        mocks.storageFrom(bucket);
         return {
-          upload: mocks.upload,
+          copy: mocks.copy,
           getPublicUrl: mocks.getPublicUrl,
           remove: mocks.remove,
         };
       },
     },
+    auth: { getUser: mocks.getUser },
     functions: { invoke: mocks.invoke },
   },
 }));
@@ -58,7 +77,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ profile: { name: 'Ana' } }),
+  useAuth: () => ({ profile: { name: 'Ana' }, user: { id: USER_ID } }),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -143,6 +162,12 @@ function renderBubble(message: Message) {
 
 const saveButton = () => screen.getByTitle('Salvar na biblioteca');
 
+/** Referência gravada na biblioteca, como o leitor (StickerGrid) a interpreta. */
+const storedReference = () => {
+  const inserted = mocks.insert.mock.calls[0][0] as { image_url: string };
+  return parseSupabaseStorageObjectUrl(inserted.image_url, PRIVATE_MEDIA_BUCKETS);
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.selectEq.mockImplementation((_column: string, value: string) => ({
@@ -151,14 +176,10 @@ beforeEach(() => {
   mocks.selectMaybeSingle.mockResolvedValue({ data: null, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'recebidas' }, error: null });
   mocks.insert.mockResolvedValue({ error: null });
-  mocks.upload.mockResolvedValue({ error: null });
-  mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: COPIED_URL } });
+  mocks.copy.mockResolvedValue({ error: null });
+  mocks.getPublicUrl.mockReturnValue({ data: { publicUrl: DEST_LOCATOR } });
   mocks.remove.mockResolvedValue({ error: null });
-  mocks.fetch.mockResolvedValue({
-    ok: true,
-    status: 200,
-    blob: async () => new Blob(['sticker-bytes'], { type: 'image/webp' }),
-  });
+  mocks.getUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null });
   vi.stubGlobal('fetch', mocks.fetch);
 });
 
@@ -166,8 +187,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', () => {
-  it('baixa a mídia recebida, publica cópia no bucket stickers e insere a URL da cópia', async () => {
+describe('MessageBubble — salvar figurinha recebida na biblioteca (Y29 P0-03)', () => {
+  it('copia a mídia recebida DENTRO do bucket privado e grava o locator da cópia', async () => {
     const message = makeMessage();
     renderBubble(message);
 
@@ -175,21 +196,19 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
 
     await waitFor(() => expect(mocks.insert).toHaveBeenCalledTimes(1));
 
-    // 1. a origem do download é a mídia RECEBIDA (whatsapp-media)
-    expect(mocks.fetch).toHaveBeenCalledWith(RECEIVED_URL);
+    // 1. a cópia é server-side, dentro de `whatsapp-media`, em pasta própria do usuário
+    expect(mocks.copy).toHaveBeenCalledTimes(1);
+    expect(mocks.copy).toHaveBeenCalledWith(RECEIVED_PATH, DEST_PATH);
 
-    // 2. o upload vai para o bucket `stickers`, em caminho próprio e único
-    expect(mocks.upload).toHaveBeenCalledTimes(1);
-    const [storagePath, blob, opts] = mocks.upload.mock.calls[0];
-    expect(String(storagePath)).not.toContain('whatsapp-media');
-    expect(String(storagePath)).toMatch(/^recebida_/);
-    expect(String(storagePath)).toMatch(/\.webp$/);
-    expect(blob).toBeInstanceOf(Blob);
-    expect((opts as { contentType: string }).contentType).toBe('image/webp');
+    // 2. o arquivo NÃO passa pelo navegador (nenhum download da mídia de conversa)
+    expect(mocks.fetch).not.toHaveBeenCalled();
 
-    // 3. a URL publicada é a da cópia — nunca a da mensagem
-    expect(mocks.insert.mock.calls[0][0]).toMatchObject({ image_url: COPIED_URL });
-    expect(mocks.insert.mock.calls[0][0].image_url).not.toBe(RECEIVED_URL);
+    // 3. o locator gravado aponta para o objeto privado; o leitor assina esse objeto
+    const inserted = mocks.insert.mock.calls[0][0] as { image_url: string };
+    expect(inserted.image_url).toBe(DEST_LOCATOR);
+    expect(inserted.image_url).not.toBe(RECEIVED_URL);
+    expect(storedReference()).toEqual({ bucket: 'whatsapp-media', path: DEST_PATH });
+    expect(PRIVATE_MEDIA_BUCKETS).toContain('whatsapp-media');
 
     // 4. sucesso anunciado e nada compensado
     expect(mocks.toast).toHaveBeenCalledWith({ title: '✅ Figurinha salva como "recebidas"!' });
@@ -199,10 +218,10 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
     expect(message.mediaUrl).toBe(RECEIVED_URL);
   });
 
-  it('salvar a mesma mensagem duas vezes não repete upload nem INSERT', async () => {
+  it('salvar a mesma mensagem duas vezes não repete a cópia nem o INSERT', async () => {
     mocks.selectMaybeSingle.mockImplementation((imageUrl: string) =>
       Promise.resolve({
-        data: imageUrl === COPIED_URL && mocks.insert.mock.calls.length === 1 ? { id: 'sticker-92a' } : null,
+        data: imageUrl === DEST_LOCATOR && mocks.insert.mock.calls.length === 1 ? { id: 'sticker-92a' } : null,
         error: null,
       })
     );
@@ -217,11 +236,44 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
     );
 
     expect(mocks.selectEq).toHaveBeenCalledTimes(2);
-    expect(mocks.selectEq).toHaveBeenNthCalledWith(1, 'image_url', COPIED_URL);
-    expect(mocks.selectEq).toHaveBeenNthCalledWith(2, 'image_url', COPIED_URL);
-    expect(mocks.fetch).toHaveBeenCalledTimes(1);
-    expect(mocks.upload).toHaveBeenCalledTimes(1);
+    expect(mocks.selectEq).toHaveBeenNthCalledWith(1, 'image_url', DEST_LOCATOR);
+    expect(mocks.selectEq).toHaveBeenNthCalledWith(2, 'image_url', DEST_LOCATOR);
+    expect(mocks.copy).toHaveBeenCalledTimes(1);
     expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('mídia da mensagem fora de bucket privado reconhecido: erro, sem cópia e sem INSERT', async () => {
+    renderBubble(makeMessage({ mediaUrl: 'https://cdn.externo.example/figurinha.webp' }));
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: 'Erro ao salvar figurinha',
+        variant: 'destructive',
+      })
+    );
+    expect(mocks.copy).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it('sem sessão: erro, sem pasta de usuário, sem cópia e sem INSERT', async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    renderBubble(makeMessage());
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith({
+        title: 'Erro ao salvar figurinha',
+        variant: 'destructive',
+      })
+    );
+    expect(mocks.getPublicUrl).not.toHaveBeenCalled();
+    expect(mocks.copy).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   it('falha na checagem de duplicidade sem copiar nem inserir', async () => {
@@ -237,13 +289,12 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
       })
     );
     expect(mocks.invoke).not.toHaveBeenCalled();
-    expect(mocks.fetch).not.toHaveBeenCalled();
-    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.copy).not.toHaveBeenCalled();
     expect(mocks.insert).not.toHaveBeenCalled();
   });
 
-  it('falha no upload: sem toast de sucesso, sem INSERT', async () => {
-    mocks.upload.mockResolvedValue({ error: { message: 'quota' } });
+  it('falha na cópia: sem toast de sucesso, sem INSERT e sem compensar objeto que não nasceu', async () => {
+    mocks.copy.mockResolvedValue({ error: { message: 'quota' } });
     renderBubble(makeMessage());
 
     fireEvent.click(saveButton());
@@ -255,12 +306,13 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
       })
     );
     expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
     expect(mocks.toast).not.toHaveBeenCalledWith(
       expect.objectContaining({ title: expect.stringContaining('✅') })
     );
   });
 
-  it('falha no INSERT: sem toast de sucesso e remove o objeto recém-publicado', async () => {
+  it('falha no INSERT: sem toast de sucesso e remove a cópia recém-publicada', async () => {
     mocks.insert.mockResolvedValue({ error: { message: 'rls denied' } });
     renderBubble(makeMessage());
 
@@ -268,10 +320,11 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
 
+    // a compensação remove o objeto da cópia, no bucket privado, pelo caminho copiado
     const [removedPaths] = mocks.remove.mock.calls[0];
-    const [uploadedPath] = mocks.upload.mock.calls[0];
-    expect(removedPaths).toEqual([uploadedPath]);
-    expect(String(uploadedPath)).not.toContain('whatsapp-media');
+    expect(removedPaths).toEqual([DEST_PATH]);
+    const [, destinationPath] = mocks.copy.mock.calls[0];
+    expect(removedPaths).toEqual([destinationPath]);
 
     expect(mocks.toast).toHaveBeenCalledWith({
       title: 'Erro ao salvar figurinha',
@@ -283,9 +336,8 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
   });
 
   // R2-INB-038 (aceite 3): o insert pode REJEITAR a promessa, e não só resolver com
-  // { error }. Nos dois casos não pode haver toast de sucesso nem sobrar a cópia
-  // publicada no bucket.
-  it('insert REJEITADO (promessa) não anuncia sucesso e compensa o objeto publicado', async () => {
+  // { error }. Nos dois casos não pode haver toast de sucesso nem sobrar a cópia no bucket.
+  it('insert REJEITADO (promessa) não anuncia sucesso e compensa o objeto copiado', async () => {
     mocks.insert.mockRejectedValue(new Error('falha de transporte'));
     renderBubble(makeMessage());
 
@@ -294,9 +346,8 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledTimes(1));
 
     const [removedPaths] = mocks.remove.mock.calls[0];
-    const [uploadedPath] = mocks.upload.mock.calls[0];
-    expect(removedPaths).toEqual([uploadedPath]);
-    expect(String(uploadedPath)).not.toContain('whatsapp-media');
+    const [, destinationPath] = mocks.copy.mock.calls[0];
+    expect(removedPaths).toEqual([destinationPath]);
 
     expect(mocks.toast).toHaveBeenCalledWith({
       title: 'Erro ao salvar figurinha',
@@ -305,22 +356,5 @@ describe('MessageBubble — salvar figurinha recebida copia a mídia (#92A)', ()
     expect(mocks.toast).not.toHaveBeenCalledWith(
       expect.objectContaining({ title: expect.stringContaining('✅') })
     );
-  });
-
-  it('falha ao baixar a mídia recebida: erro explícito, sem upload e sem INSERT', async () => {
-    mocks.fetch.mockResolvedValue({ ok: false, status: 404, blob: async () => new Blob([]) });
-    renderBubble(makeMessage());
-
-    fireEvent.click(saveButton());
-
-    await waitFor(() =>
-      expect(mocks.toast).toHaveBeenCalledWith({
-        title: 'Erro ao salvar figurinha',
-        variant: 'destructive',
-      })
-    );
-    expect(mocks.upload).not.toHaveBeenCalled();
-    expect(mocks.insert).not.toHaveBeenCalled();
-    expect(mocks.remove).not.toHaveBeenCalled();
   });
 });
