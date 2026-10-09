@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Regressão: a RPC do modo do WhatsApp declara o parâmetro como `p_department_id`
- * (migration 20261005111312). Chamar com `_department_id` faz o PostgREST responder
+ * (migration 20261009170000). Chamar com `_department_id` faz o PostgREST responder
  * PGRST202 (função inexistente com esses argumentos) e a tela de WhatsApp do
  * departamento nunca carrega o modo salvo.
  *

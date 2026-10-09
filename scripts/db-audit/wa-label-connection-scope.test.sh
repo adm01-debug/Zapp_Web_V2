@@ -23,7 +23,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261005095819_scope_wa_label_rpc_by_connection.sql"
+migration="$repo_root/supabase/migrations/20261009150000_scope_wa_label_rpc_by_connection.sql"
 postgres_image="${WA_LABEL_SCOPE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-wa-label-scope-test-$$"
 

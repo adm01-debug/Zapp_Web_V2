@@ -771,7 +771,7 @@ Regra do Joaquim: "a arquitetura não pode precisar que eu faça algo". O Joaqui
 
 ### 18.10 Correções nas ferramentas da Fase 0, 05/10/2026 (08:26)
 Origem: pedido da outra sessão + relatórios de QA (g1-db, g1-seguranca, g1-preview). Backups: zapp-db-local.bak-20261005, zapp-verify.bak-20261005.
-- CORRIGIDO e reproduzido: o `up` reaplicava reconcile.sql (= migration 20261003272707) DEPOIS das migrations e desfazia correções posteriores. Teste: alteração de teste em set_team_member_role sobrevive agora (antes: sumia). Cenário do colega: 20261005095819 aplica sem erro (antes: "reconciliação falhou").
+- CORRIGIDO e reproduzido: o `up` reaplicava reconcile.sql (= migration 20261003272707) DEPOIS das migrations e desfazia correções posteriores. Teste: alteração de teste em set_team_member_role sobrevive agora (antes: sumia). Cenário do colega: 20261009150000 aplica sem erro (antes: "reconciliação falhou").
 - CORRIGIDO: nome do conjunto validado (a-z 0-9 hífen, até 28); 'preview' só para a worktree da pré-visualização; down não apaga fora de stacks/.
 - CORRIGIDO: caminho com espaço não quebra a lista de migrations; falta de falhas-esperadas.txt agora reprova; comparação que não rodou sai 2 e o up sai 1 (antes saía 0).
 - CORRIGIDO: zapp-verify sem nome NÃO sai mais VERDE calado (diz NÃO VERIFICADO / VERDE SEM BANCO); --aceitar sem valor dá erro; travas reprovam se net.http_get não existir.

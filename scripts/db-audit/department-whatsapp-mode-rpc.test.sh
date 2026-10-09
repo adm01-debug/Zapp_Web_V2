@@ -6,7 +6,7 @@
 # chave da API. A tela so precisa do MODO ('none' | 'evolution' | 'official').
 #
 # A correcao e a RPC NOVA e aditiva public.get_department_whatsapp_mode(uuid)
-# -> text (migration 20261005111312_p1_department_whatsapp_mode.sql), com o
+# -> text (migration 20261009170000_p1_department_whatsapp_mode.sql), com o
 # mesmo portao de papel do irmao set_department_whatsapp_config (20260928540000,
 # aqui endurecido para RAISE ... ERRCODE '42501') e ACL
 #   REVOKE EXECUTE ... FROM PUBLIC, anon;
@@ -42,7 +42,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261005111312_p1_department_whatsapp_mode.sql"
+migration="$repo_root/supabase/migrations/20261009170000_p1_department_whatsapp_mode.sql"
 postgres_image="${DEPARTMENT_WA_MODE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-dept-wa-mode-test-$$"
 # TMPDIR da tarefa/CI pode apontar para diretorio proprio; nunca /tmp por padrao
