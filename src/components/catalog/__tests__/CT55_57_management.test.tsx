@@ -236,6 +236,35 @@ describe('CT-57 — aba "Enviados"', () => {
     expect(screen.getByRole('tab', { name: /Enviados/ })).toHaveAttribute('data-state', 'inactive');
     expect(screen.getByText('Catálogo de Produtos')).toBeInTheDocument();
   });
+
+  it('o botão de limpar busca da aba Enviados tem nome acessível', () => {
+    mockSendHistory.mockReturnValue({ rows: [historyRow()], isLoading: false, error: null });
+    window.history.replaceState(null, '', '/?tab=enviados');
+
+    renderManagement();
+
+    fireEvent.change(screen.getByPlaceholderText('Buscar por produto, SKU, contato ou agente...'), {
+      target: { value: 'Caneta' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Limpar busca' })).toBeInTheDocument();
+  });
+
+  it('o filtro de status da aba Enviados tem nome acessível no combobox', () => {
+    mockSendHistory.mockReturnValue({ rows: [historyRow()], isLoading: false, error: null });
+    window.history.replaceState(null, '', '/?tab=enviados');
+
+    renderManagement();
+
+    expect(screen.getByRole('combobox', { name: 'Filtro de status' })).toBeInTheDocument();
+  });
+
+  it('as abas têm altura mínima de 44 px no celular (h-11)', () => {
+    renderManagement();
+
+    const tabsList = screen.getByRole('tablist');
+    expect(tabsList).toHaveClass('h-11');
+  });
 });
 
 describe('CT-55 — deep link ?contact=<id>', () => {

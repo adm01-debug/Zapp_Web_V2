@@ -775,7 +775,7 @@ export const ExternalProductManagement: React.FC = () => {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
-      <TabsList className="mb-4 h-9">
+      <TabsList className="mb-4 h-11">
         <TabsTrigger value="produtos" className="gap-1.5 text-xs">
           <Package className="w-3.5 h-3.5" />
           Produtos
@@ -1225,14 +1225,14 @@ export const ExternalProductManagement: React.FC = () => {
                 className="pl-9"
               />
               {sentSearch && (
-                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => handleSentSearch('')}>
+                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca" onClick={() => handleSentSearch('')}>
                   <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
 
             <Select value={sentStatus} onValueChange={handleSentStatus}>
-              <SelectTrigger className="w-[170px]">
+              <SelectTrigger className="w-[170px]" aria-label="Filtro de status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
