@@ -222,7 +222,11 @@ vi.mock('@/integrations/supabase/client', () => {
     c.eq = () => c;
     c.is = () => c;
     c.not = () => c;
+    c.in = () => c;
+    c.gte = () => c;
     c.order = () => c;
+    // X178: a lista de supressão pagina no servidor e fecha em `.range(...)`.
+    c.range = () => c;
     c.limit = () => resolver();
     c.single = () => resolver();
     c.then = (ok: (v: unknown) => unknown, err?: (e: unknown) => unknown) => resolver().then(ok, err);

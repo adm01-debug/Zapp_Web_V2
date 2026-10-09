@@ -11,7 +11,7 @@
  * tamanho na página 2 mostraria "Mostrando 21 a 12 de 12" (intervalo vazio).
  */
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -114,12 +114,28 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (orig) => {
 });
 
 vi.mock('@/integrations/supabase/client', () => {
-  const chain: Record<string, unknown> = {};
-  chain.select = () => chain;
-  chain.is = () => chain;
-  chain.not = () => chain;
-  chain.order = () => Promise.resolve({ data: dados.blacklist, error: null });
-  return { supabase: { from: () => chain } };
+  // A listagem de supressão pagina NO SERVIDOR (X178): o mock emula a fatia e o
+  // `count` do PostgREST, para o teste provar que o tamanho da página chega lá.
+  const builder = (table: string) => {
+    let from = 0;
+    let to = Number.POSITIVE_INFINITY;
+    const self: Record<string, unknown> = {};
+    self.select = () => self;
+    self.is = () => self;
+    self.not = () => self;
+    self.in = () => self;
+    self.gte = () => self;
+    self.eq = () => self;
+    self.or = () => self;
+    self.limit = () => self;
+    self.order = () => self;
+    self.range = (f: number, t: number) => { from = f; to = t; return self; };
+    self.then = (resolve: unknown, reject: unknown) =>
+      Promise.resolve({ data: (table === 'talkx_blacklist' ? dados.blacklist : []).slice(from, to + 1), error: null, count: table === 'talkx_blacklist' ? dados.blacklist.length : 0 })
+        .then(resolve as (v: unknown) => unknown, reject as (e: unknown) => unknown);
+    return self;
+  };
+  return { supabase: { from: (table: string) => builder(table) } };
 });
 
 vi.mock('@/lib/supabaseHelpers', () => ({
@@ -201,6 +217,7 @@ describe('tamanho de página com efeito — R2-MOD-060 (#497)', () => {
     escolherTamanhoPagina(20);
 
     expect(screen.getByText('Mostrando 1 a 14 de 14 contatos suprimidos')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Remover' })).toHaveLength(14);
+    // A nova página chega do servidor: o mock só devolve as 14 depois do novo range.
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Remover' })).toHaveLength(14));
   });
 });

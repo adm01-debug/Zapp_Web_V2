@@ -49,23 +49,39 @@ vi.mock('@/integrations/supabase/client', () => {
           return chain([{ id: 'c2', name: 'Ana Souza', phone: '+5511988887777', company: 'ACME' }]);
         }
         if (table === 'talkx_blacklist') {
+          const row = {
+            id: 'bl-1',
+            contact_id: 'c1',
+            phone: null,
+            reason: 'Manual',
+            reason_code: 'manual',
+            blocked_by: 'profile-1',
+            created_at: '2026-09-01T10:00:00.000Z',
+            origin: 'manual',
+            campaign_id: null,
+            removed_by: null,
+            removed_at: null,
+            expires_at: null,
+            contacts: { name: 'Ana Souza', phone: '+551****7777', email: 'ana@acme.test', company: 'ACME', avatar_url: null },
+            campaign: null,
+          };
           const self: Record<string, unknown> = {};
           self.select = () => self;
           self.is = () => self;
-          self.order = () => Promise.resolve({
-            data: [{
-              id: 'bl-1',
-              contact_id: 'c1',
-              reason: 'Manual',
-              blocked_by: 'profile-1',
-              created_at: '2026-09-01T10:00:00.000Z',
-              origin: 'manual',
-              campaign_id: null,
-              removed_by: null,
-              contacts: { name: 'Ana Souza', phone: '+5511988887777', company: 'ACME', avatar_url: null },
-            }],
-            error: null,
-          });
+          self.eq = () => self;
+          self.in = () => self;
+          self.gte = () => self;
+          self.not = () => self;
+          self.order = () => self;
+          self.range = () => self;
+          self.limit = () => Promise.resolve({ data: [row], error: null, count: 1 });
+          self.then = (resolve: unknown, reject: unknown) =>
+            Promise.resolve({ data: [row], error: null, count: 1 })
+              .then(resolve as (v: unknown) => unknown, reject as (e: unknown) => unknown);
+          self.insert = (payload: Record<string, unknown>) => {
+            inserted.push(payload);
+            return Promise.resolve({ error: null });
+          };
           self.update = (payload: Record<string, unknown>) => {
             updated.push(payload);
             return { eq: () => Promise.resolve({ error: null }) };
