@@ -3,7 +3,7 @@ import { ShieldAlert, ShieldCheck, Ban, Check, RefreshCw, FileWarning, Loader2, 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -63,6 +63,8 @@ function formatDate(iso?: string | null): string {
     return '—';
   }
 }
+
+const QUARANTINE_FILTERS: QuarantineFilter[] = ['pending', 'allowed', 'deleted', 'whitelisted', 'all'];
 
 interface ConfirmAction {
   id: string;
@@ -130,44 +132,52 @@ export function QuarantinePanel() {
               <TabsTrigger value="whitelisted">Whitelist</TabsTrigger>
               <TabsTrigger value="all">Todas</TabsTrigger>
             </TabsList>
-          </Tabs>
+            {/* Cada gatilho aponta (aria-controls) para um painel acessível; inativos ficam vazios mas presentes no DOM. */}
+            {QUARANTINE_FILTERS.map((f) => (
+              <TabsContent key={f} value={f} forceMount className={f === filter ? 'mt-0 space-y-4' : undefined}>
+                {f === filter && (
+                  <>
+                    {notConfigured && (
+                      <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                        <ShieldOff className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <div className="text-sm">
+                          <p className="font-medium">Banco externo não configurado</p>
+                          <p className="text-muted-foreground">Defina <code>EXTERNAL_SUPABASE_URL</code> e <code>EXTERNAL_SUPABASE_ANON_KEY</code> para consumir a tabela <code>media_quarantine</code>.</p>
+                        </div>
+                      </div>
+                    )}
 
-          {notConfigured && (
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
-              <ShieldOff className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium">Banco externo não configurado</p>
-                <p className="text-muted-foreground">Defina <code>EXTERNAL_SUPABASE_URL</code> e <code>EXTERNAL_SUPABASE_ANON_KEY</code> para consumir a tabela <code>media_quarantine</code>.</p>
-              </div>
-            </div>
-          )}
+                    {error && !notConfigured && (
+                      <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-sm text-destructive">
+                        {error}
+                      </div>
+                    )}
 
-          {error && !notConfigured && (
-            <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          <ScrollArea className="h-[480px] -mx-2 px-2">
-            {loading && records.length === 0 ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={`q-skel-${i}`} className="h-24 w-full" />)}
-              </div>
-            ) : records.length === 0 ? (
-              <EmptyState filter={filter} />
-            ) : (
-              <div className="space-y-2">
-                {records.map((r) => (
-                  <QuarantineRow key={r.id} record={r} onAct={setConfirm} />
-                ))}
-                {total > records.length && (
-                  <p className="text-xs text-center text-muted-foreground py-2">
-                    Exibindo {records.length} de {total} registros
-                  </p>
+                    <ScrollArea className="h-[480px] -mx-2 px-2">
+                      {loading && records.length === 0 ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => <Skeleton key={`q-skel-${i}`} className="h-24 w-full" />)}
+                        </div>
+                      ) : records.length === 0 ? (
+                        <EmptyState filter={filter} />
+                      ) : (
+                        <div className="space-y-2">
+                          {records.map((r) => (
+                            <QuarantineRow key={r.id} record={r} onAct={setConfirm} />
+                          ))}
+                          {total > records.length && (
+                            <p className="text-xs text-center text-muted-foreground py-2">
+                              Exibindo {records.length} de {total} registros
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </>
                 )}
-              </div>
-            )}
-          </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
 
