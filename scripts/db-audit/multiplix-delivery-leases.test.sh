@@ -1063,15 +1063,13 @@ eventos_sem_final="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_even
 
 # (MX01.R2.4) Executa exatamente o SQL declarado no cabecalho como rollback.
 # A transacao e revertida no fim para os demais testes continuarem vendo a RPC.
-rollback_line=''
-while IFS= read -r line; do
-  case "$line" in
-    '-- Rollback:'*) rollback_line="$line"; break ;;
-  esac
-done < "$migrations_dir/20261005150259_mx01_legacy_queue_materialize.sql"
-rollback_sql="${rollback_line#-- Rollback: }"
-[[ -n "$rollback_sql" && "$rollback_sql" != "$rollback_line" ]] \
-  || fail 'MX01.R2.4: cabecalho -- Rollback: ausente ou vazio'
+rollback_sql="$(awk '
+  /^-- Rollback \(SQL executavel, na ordem\):/ { in_rollback = 1; next }
+  in_rollback && /^--   / { sub(/^--   /, ""); print; next }
+  in_rollback { exit }
+' "$migrations_dir/20261005150259_mx01_legacy_queue_materialize.sql")"
+[[ -n "$rollback_sql" ]] \
+  || fail 'MX01.R2.4: bloco -- Rollback (SQL executavel, na ordem): ausente ou vazio'
 psql_test -v rollback_sql="$rollback_sql" >/dev/null <<'SQL'
 BEGIN;
 INSERT INTO public.multiplix_dispatches (

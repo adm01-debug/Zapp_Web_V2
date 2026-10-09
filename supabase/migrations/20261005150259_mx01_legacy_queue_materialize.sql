@@ -1,7 +1,11 @@
 -- mx01_legacy_queue_materialize
 -- versão 20261005150259 reservada para hermes-composer-materializa-fila-2610051151125f (hermes-db-migrar --nova)
 --
--- Rollback: UPDATE public.multiplix_dispatches AS d SET status = 'sending', pause_reason = NULL, paused_at = NULL WHERE d.status = 'paused' AND d.pause_reason = 'legacy_queue_unmaterialized' AND NOT EXISTS (SELECT 1 FROM public.multiplix_delivery_items AS item WHERE item.dispatch_id = d.id); DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
+-- Rollback: devolve ao estado 'sending' os disparos que esta migration pausou (so os que
+-- Rollback: ainda nao materializaram a fila por item) e remove a funcao. SQL executavel abaixo.
+-- Rollback (SQL executavel, na ordem):
+--   UPDATE public.multiplix_dispatches AS d SET status = 'sending', pause_reason = NULL, paused_at = NULL WHERE d.status = 'paused' AND d.pause_reason = 'legacy_queue_unmaterialized' AND NOT EXISTS (SELECT 1 FROM public.multiplix_delivery_items AS item WHERE item.dispatch_id = d.id);
+--   DROP FUNCTION IF EXISTS public.multiplix_materialize_legacy_queue(uuid, uuid);
 -- Rollback honesto: mensagem enviada depois de uma retomada manual nao tem rollback.
 --
 -- MX01 (BACKLOG_VERIFICADO item 45 / achado MX01 da reconciliacao TALKX_MULTIPLIX):
