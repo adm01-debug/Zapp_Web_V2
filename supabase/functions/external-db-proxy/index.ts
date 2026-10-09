@@ -32,7 +32,7 @@ function isInfraError(err: { code?: string; message?: string }) {
   )
 }
 
-Deno.serve(async (req) => {
+export async function handleExternalDbProxy(req: Request): Promise<Response> {
   const cors = handleCors(req)
   if (cors) return cors
 
@@ -88,6 +88,17 @@ Deno.serve(async (req) => {
       return json({ error: 'Table is not allowed' }, 400, corsHeaders)
     }
 
+    // SEC-EDGE_FUNCTIONS-02 (P0): a credencial externa é do SERVIDOR (anon key
+    // da VPS Evolution, fora da RLS local), então TODA operação — leitura
+    // inclusive — exige papel. A checagem saiu de dentro do `if (action ===
+    // 'update')` e passou a valer nas duas pontas. Nenhum consumidor legítimo
+    // não-admin foi confirmado (ver relato); o único caminho de `evolution_*`
+    // é um hook legado desligado. Falha no RPC nega (fecha).
+    const { data: isAdminOrSupervisor, error: roleError } = await canonical.rpc('is_admin_or_supervisor', {
+      _user_id: userData.user.id,
+    })
+    const canManageExternalDb = !roleError && isAdminOrSupervisor === true
+
     // Mutation: update
     if (action === 'update') {
       if (table !== 'media_quarantine' || !data || typeof data !== 'object' || Array.isArray(data) ||
@@ -102,10 +113,7 @@ Deno.serve(async (req) => {
           Object.keys(matcher).length !== 1 || typeof matcher.id !== 'string') {
         return json({ error: 'Invalid quarantine update' }, 400, corsHeaders)
       }
-      const { data: isAdmin, error: roleError } = await canonical.rpc('is_admin_or_supervisor', {
-        _user_id: userData.user.id,
-      })
-      if (roleError || !isAdmin) return json({ error: 'Forbidden' }, 403, corsHeaders)
+      if (!canManageExternalDb) return json({ error: 'Forbidden' }, 403, corsHeaders)
 
       let q = ext.from(table).update(update)
       for (const [k, v] of Object.entries(matcher)) q = q.eq(k, v as string)
@@ -124,6 +132,10 @@ Deno.serve(async (req) => {
     if (typeof countMode !== 'undefined' && !['exact', 'planned', 'estimated'].includes(String(countMode))) {
       return json({ error: 'Invalid count mode' }, 400, corsHeaders)
     }
+
+    // Mesmo papel exigido para LEITURA: sem ele, nada é montado nem consultado.
+    if (!canManageExternalDb) return json({ error: 'Forbidden' }, 403, corsHeaders)
+
     let query = ext.from(table).select((select as string) || '*', {
       count: countMode as 'exact' | 'planned' | 'estimated' | undefined,
     })
@@ -183,4 +195,6 @@ Deno.serve(async (req) => {
     console.error('external-db-proxy failed', error instanceof Error ? error.message : String(error))
     return json({ error: 'Internal proxy error' }, 500, corsHeaders)
   }
-})
+}
+
+if (import.meta.main) Deno.serve(handleExternalDbProxy)
