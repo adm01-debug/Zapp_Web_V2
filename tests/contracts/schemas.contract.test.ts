@@ -163,6 +163,19 @@ const suites: Record<string, Suite> = {
     { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
   AvatarsRefreshHeadersSchema: { schema: S.AvatarsRefreshHeadersSchema, valid: [{ 'x-cron-secret': 's' }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { 'x-cron-secret': '' }, hint: 'vazio' }] },
+  // E45 (SL-050): corpo de `evolution-api`. A `action` é opcional porque o
+  // formato padrão do front a manda no PATH (`evolution-api/<ação>`); quando
+  // vem no corpo, tem de ser uma ação que o handler implementa. `null` equivale
+  // a "ausente" (o corpo do cliente serializa variável nula). O payload
+  // específico da ação é passthrough (send-status/edit-message encaminham o
+  // corpo inteiro ao provedor).
+  EvolutionApiRequestSchema: { schema: S.EvolutionApiRequestSchema, valid: [
+    {}, { action: null, instanceName: null }, { action: 'list-instances' },
+    { action: 'send-text', instanceName: 'PRINCIPAL', number: '5511999999999', textoExtra: 1 }], invalid: [
+    { payload: { action: 'acao-que-nao-existe' }, hint: 'ação fora da lista' },
+    { payload: { action: 5 }, hint: 'tipo da ação' },
+    { payload: { instanceName: 5 }, hint: 'tipo da instância' },
+    { payload: ['send-text'], hint: 'root não-objeto' }] },
 };
 
 describe('cobertura de contrato por schema', () => {
