@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Send, Search, Loader2, ListChecks } from 'lucide-react';
+import { Send, Search, Loader2, ListChecks, ChevronDown } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ModuleHeader, StatusPill, fmtInt, fmtDateTime } from '@/components/talkx/talkxShared';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { useDebouncedCallback } from '@/lib/debounce';
 import {
   useMultiplixRamos, useMultiplixUfs, useMultiplixSearch, useMultiplixCount,
   type MultiplixSearchFilters, type MultiplixAudienceRow,
@@ -28,9 +31,22 @@ const DISPATCH_STATUS: Record<string, { label: string; tone: 'success' | 'danger
   cancelled: { label: 'Cancelado', tone: 'danger' },
 };
 
-const ROLE_LABELS: Record<'cliente' | 'fornecedor' | 'transportadora', string> = {
+type RoleValue = 'cliente' | 'fornecedor' | 'transportadora';
+
+const ROLE_LABELS: Record<RoleValue, string> = {
   cliente: 'Cliente', fornecedor: 'Fornecedor', transportadora: 'Transportadora',
 };
+
+// E017: `multiplix_list_ramos` já devolve "Não informado" (COALESCE do ramo
+// vazio) e a busca aceita `p_ramo = 'Não informado'`. A opção é garantida aqui
+// porque a listagem é carregada uma vez e pode não trazer nenhuma empresa sem
+// ramo no momento do carregamento — sem isto o filtro perderia a linha.
+const RAMO_NAO_INFORMADO = 'Não informado';
+
+/** Busca de texto do combobox sem acento e sem caixa: "credito" acha "Crédito". */
+function normalizaFiltro(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 const DESTINO_LABELS: Record<string, string> = {
   contato_pessoa: 'Contato', telefone_empresa: 'Empresa · sem pessoa cadastrada', sem_destino: 'Sem destino',
@@ -61,8 +77,12 @@ export default function MultiplixView() {
   const search = useMultiplixSearch();
   const count = useMultiplixCount();
 
-  const [role, setRole] = useState<'cliente' | 'fornecedor' | 'transportadora' | ''>('');
+  // E127: papéis não são exclusivos (há empresas cliente E fornecedor) — o
+  // filtro manda TODOS os marcados e a RPC casa por OU (`p_roles`).
+  const [roles, setRoles] = useState<RoleValue[]>([]);
   const [ramo, setRamo] = useState('');
+  const [ramoOpen, setRamoOpen] = useState(false);
+  const [ramoBusca, setRamoBusca] = useState('');
   const [uf, setUf] = useState('');
   const [term, setTerm] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -125,20 +145,49 @@ export default function MultiplixView() {
   const paddingBottom = lastVirtualRow ? audienceVirtualizer.getTotalSize() - lastVirtualRow.end : 0;
 
   const filters: MultiplixSearchFilters = useMemo(() => ({
-    roles: role ? [role] : undefined,
+    roles: roles.length ? roles : undefined,
     ramo: ramo || undefined,
     uf: uf || undefined,
     search: term || undefined,
-  }), [role, ramo, uf, term]);
+  }), [roles, ramo, uf, term]);
+
+  // E128: combobox do ramo — a lista vem do servidor (566 valores) e a busca
+  // por texto é feita aqui, sem acento e sem caixa.
+  const ramoOpcoes = useMemo(() => {
+    const nomes = (ramos ?? []).map((r) => r.ramo_atividade);
+    if (!nomes.includes(RAMO_NAO_INFORMADO)) nomes.push(RAMO_NAO_INFORMADO);
+    return nomes;
+  }, [ramos]);
+
+  const ramoTotais = useMemo(
+    () => new Map((ramos ?? []).map((r) => [r.ramo_atividade, r.total])),
+    [ramos],
+  );
+
+  const ramosFiltrados = useMemo(() => {
+    const alvo = normalizaFiltro(ramoBusca.trim());
+    if (!alvo) return ramoOpcoes;
+    return ramoOpcoes.filter((nome) => normalizaFiltro(nome).includes(alvo));
+  }, [ramoOpcoes, ramoBusca]);
+
+  const rolesRotulo = roles.length === 0
+    ? 'Todos'
+    : roles.length === 1
+      ? ROLE_LABELS[roles[0]]
+      : `${ROLE_LABELS[roles[0]]} +${roles.length - 1}`;
+
+  const ramoRotulo = ramo === '' ? 'Todos' : ramo;
 
   const runSearch = () => {
     if (loadingAll) return;
     const searchVersion = searchVersionRef.current + 1;
     searchVersionRef.current = searchVersion;
     submittedFiltersRef.current = filters;
-    setSelected(new Set());
     setPage(0);
     setSubmittedFilters(filters);
+    // F73/E131: a seleção SOBREVIVE à troca de filtro (era `setSelected(new
+    // Set())` aqui) — o público é o que o operador marcou; o filtro é só a
+    // lente. Sem isto, cada troca de papel/ramo/UF apagava até 500 marcas.
     // P1 fix (Codex, review da PR #958): 'rows' antigo (de outro filtro)
     // ficava na tela e continuava clicavel enquanto a nova busca (page 0)
     // ainda estava em voo -- selecionar uma linha nesse intervalo mantinha
@@ -182,6 +231,21 @@ export default function MultiplixView() {
         setLastPageFull(data.length === PAGE_SIZE);
       } },
     );
+  };
+
+  // E126: busca com debounce. Depois da primeira consulta a lista se atualiza
+  // sozinha 300 ms após a última tecla; o botão "Buscar" continua valendo para
+  // os outros filtros. O callback lê o closure mais recente, então o termo
+  // efetivo é sempre o que está no campo quando o timer dispara.
+  const buscarAposDigitar = useDebouncedCallback(() => { if (hasSearched) runSearch(); }, 300);
+
+  const handleTermChange = (value: string) => {
+    setTerm(value);
+    if (hasSearched) buscarAposDigitar();
+  };
+
+  const toggleRole = (value: RoleValue) => {
+    setRoles((prev) => (prev.includes(value) ? prev.filter((r) => r !== value) : [...prev, value]));
   };
 
   const toggleRow = (companyId: string) => {
@@ -308,30 +372,61 @@ export default function MultiplixView() {
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[--zapp-border] bg-[--zapp-surface-1] p-4">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Público</span>
-          <Select value={role || 'all'} onValueChange={(v) => setRole(v === 'all' ? '' : (v as typeof role))}>
-            <SelectTrigger aria-label="Público" className="w-44"><SelectValue placeholder="Todos" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" aria-label="Público" aria-haspopup="listbox" className="h-10 w-44 justify-between font-normal">
+                <span className="truncate">{rolesRotulo}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" aria-label="Filtro de público" className="w-56 p-1">
+              <div className="flex flex-col">
+                <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
+                  <Checkbox checked={roles.length === 0} onCheckedChange={() => setRoles([])} aria-label="Todos os públicos" />
+                  Todos
+                </label>
+                {(Object.entries(ROLE_LABELS) as Array<[RoleValue, string]>).map(([value, label]) => (
+                  <label key={value} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
+                    <Checkbox checked={roles.includes(value)} onCheckedChange={() => toggleRole(value)} aria-label={label} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Ramo</span>
-          <Select value={ramo || 'all'} onValueChange={(v) => setRamo(v === 'all' ? '' : v)} disabled={loadingRamos}>
-            <SelectTrigger aria-label="Ramo" className="w-56"><SelectValue placeholder="Todos" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {(ramos ?? []).map((r) => (
-                <SelectItem key={r.ramo_atividade} value={r.ramo_atividade}>
-                  {r.ramo_atividade} ({r.total})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={ramoOpen} onOpenChange={(next) => { setRamoOpen(next); if (!next) setRamoBusca(''); }}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-label="Ramo" disabled={loadingRamos} className="h-10 w-56 justify-between font-normal">
+                <span className="truncate">{ramoRotulo}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" aria-label="Filtro de ramo" className="w-72 p-0">
+              {/* Filtro do cmdk desligado: a busca é feita aqui, sem acento e
+                  sem caixa, sobre os 566 valores que o servidor devolveu. */}
+              <Command shouldFilter={false}>
+                <CommandInput placeholder="Buscar ramo…" value={ramoBusca} onValueChange={setRamoBusca} />
+                <CommandList>
+                  <CommandEmpty>Nenhum ramo encontrado</CommandEmpty>
+                  <CommandItem value="todos" onSelect={() => { setRamo(''); setRamoOpen(false); }}>
+                    Todos
+                  </CommandItem>
+                  {ramosFiltrados.map((nome) => (
+                    <CommandItem key={nome} value={nome} onSelect={() => { setRamo(nome); setRamoOpen(false); }}>
+                      <span className="truncate">{nome}</span>
+                      {ramoTotais.has(nome) && (
+                        <span className="ml-auto text-2xs text-muted-foreground tabular-nums">{fmtInt(ramoTotais.get(nome) ?? 0)}</span>
+                      )}
+                    </CommandItem>
+                  ))}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -349,7 +444,7 @@ export default function MultiplixView() {
 
         <div className="flex flex-1 flex-col gap-1">
           <span className="text-xs text-muted-foreground">Buscar por nome</span>
-          <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Nome da empresa..." />
+          <Input value={term} onChange={(e) => handleTermChange(e.target.value)} placeholder="Nome da empresa..." />
         </div>
 
         <Button onClick={runSearch} disabled={search.isPending || count.isPending || loadingAll}>
