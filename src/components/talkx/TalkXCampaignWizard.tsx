@@ -14,11 +14,11 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, explainDraftSaveError, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -102,9 +102,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
       const id = await ed.handleSave('draft');
       if (id) onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.');
+      const message = error instanceof Error ? error.message : null;
+      toast.error(explainDraftSaveError(message) ?? message ?? 'Não foi possível salvar o rascunho.');
     }
   };
+
+  // X123: os códigos técnicos da RPC viram frase com ação no aviso de salvamento.
+  const draftSaveError = explainDraftSaveError(ed.autosaveError);
 
   return (
     <div className="w-full min-w-0 space-y-4">
@@ -169,15 +173,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
-                  Não salvo — tentar novamente
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[320px] truncate text-3xs text-dash-red hover:underline" title={draftSaveError ?? ed.autosaveError ?? undefined}>
+                  {draftSaveError ?? 'Não salvo — tentar novamente'}
                 </button>
               )}
               {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
-                <span className="text-3xs text-muted-foreground">
-                  Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
-                </span>
+                <span className="text-3xs text-muted-foreground">{`Rascunho salvo ${fmtAgo(ed.lastAutosave.toISOString())}`}</span>
               )}
             </div>
             {step < 4 && (

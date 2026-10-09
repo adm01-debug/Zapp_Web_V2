@@ -51,6 +51,32 @@ export function isLiveTalkXConnection(connection: {
   return connection.status === 'connected' && Boolean(connection.instance_id?.trim());
 }
 
+/**
+ * X123 — a RPC do rascunho recusa com códigos técnicos. O rodapé do wizard
+ * mostrava o código cru dentro do aviso de salvamento; aqui cada código vira uma
+ * frase que diz o que fazer. Mensagem desconhecida devolve `null`: o chamador
+ * mantém a mensagem original — nunca inventamos a causa de uma falha.
+ */
+const DRAFT_SAVE_ERROR_MESSAGES: { code: string; message: string }[] = [
+  {
+    code: 'talkx_campaign_stale_revision',
+    message: 'Outra sessão alterou esta campanha — recarregue a página e tente novamente.',
+  },
+  {
+    code: 'selected_whatsapp_connection_unavailable',
+    message: 'A conexão de WhatsApp escolhida não está disponível — escolha outra no passo 1 e tente novamente.',
+  },
+  {
+    code: 'invalid_talkx_campaign_draft',
+    message: 'O rascunho não passou na validação do servidor — revise público, mensagem e entrega e tente novamente.',
+  },
+];
+
+export function explainDraftSaveError(message: string | null | undefined): string | null {
+  if (!message) return null;
+  return DRAFT_SAVE_ERROR_MESSAGES.find((entry) => message.includes(entry.code))?.message ?? null;
+}
+
 type LocalDateTimeParts = {
   year: number;
   month: number;
@@ -327,7 +353,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [scheduleConfigError, setScheduleConfigError] = useState<string | null>(null);
   const [scheduleNowMs, setScheduleNowMs] = useState(() => Date.now());
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // E68
-  const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch') => Promise<string | null>) | null>(null); // E68
+  const handleSaveRef = useRef<((mode?: 'draft' | 'schedule' | 'launch', source?: 'manual' | 'autosave') => Promise<string | null>) | null>(null); // E68
   const autosaveInitialRef = useRef<string | null>(null); // E68: snapshot de abertura
   // E73: snapshot corrente (lido por callbacks estáveis, fora do render) e
   // indicador de alteração ainda não confirmada no servidor.
@@ -767,8 +793,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   });
   const autosaveIsDirty = persistedAutosaveSnapshot !== null && persistedAutosaveSnapshot !== autosaveFields;
 
-  /** Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id da campanha. */
-  const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+  /**
+   * Salva (rascunho/agendada) e, se `launch`, dispara imediatamente. Devolve o id
+   * da campanha. X123 separa o salvamento explícito do autosave: a marca de uso
+   * do segmento pertence ao salvamento explícito — cada pausa de digitação não
+   * pode reescrever `talkx_segments.last_used_at`.
+   */
+  const persistSave = useCallback(async (mode: 'draft' | 'schedule' | 'launch' = 'draft', source: 'manual' | 'autosave' = 'manual'): Promise<string | null> => {
     setSaving(true);
     try {
       if (!recipientSnapshotReady) {
@@ -815,7 +846,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         expectedRevision: draftRevisionRef.current,
       });
       setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
-      if (audienceSource === 'segment' && selectedSegment) {
+      if (source === 'manual' && audienceSource === 'segment' && selectedSegment) {
         await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
       }
 
@@ -837,10 +868,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
   // anterior — eliminando create/create ou update fora de ordem.
-  const handleSave = useCallback((mode: 'draft' | 'schedule' | 'launch' = 'draft'): Promise<string | null> => {
+  const handleSave = useCallback((mode: 'draft' | 'schedule' | 'launch' = 'draft', source: 'manual' | 'autosave' = 'manual'): Promise<string | null> => {
     const task = saveQueueRef.current.then(
-      () => persistSave(mode),
-      () => persistSave(mode),
+      () => persistSave(mode, source),
+      () => persistSave(mode, source),
     );
     saveQueueRef.current = task.then(() => undefined, () => undefined);
     return task;
@@ -870,7 +901,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       setAutosaveStatus('saving');
       setAutosaveError(null);
       try {
-        const id = await handleSaveRef.current?.('draft');
+        const id = await handleSaveRef.current?.('draft', 'autosave');
         if (!id) return;
         // O baseline deve acompanhar o último snapshot confirmado. Caso o
         // usuário reverta um filtro ao valor de abertura, essa reversão também
@@ -906,7 +937,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (autosaveTimerRef.current) { clearTimeout(autosaveTimerRef.current); autosaveTimerRef.current = null; }
     if (!pendingChangesRef.current || !autosaveFieldsRef.current || !autosaveNameRef.current.trim()) return;
     try {
-      await handleSaveRef.current?.('draft');
+      await handleSaveRef.current?.('draft', 'autosave');
     } catch { /* sair nunca pode ser bloqueado por uma falha de gravação */ }
   }, []);
 
@@ -918,7 +949,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     setAutosaveStatus('saving');
     setAutosaveError(null);
     try {
-      const id = await handleSave('draft');
+      const id = await handleSave('draft', 'autosave');
       if (!id) return null;
       autosaveInitialRef.current = autosaveFields;
       setPersistedAutosaveSnapshot(autosaveFields);
