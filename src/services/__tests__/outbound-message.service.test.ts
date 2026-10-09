@@ -7,11 +7,20 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
+import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
+import { offlineSendQueue } from '@/lib/offlineQueue';
+import { sendThrottle } from '@/lib/sendThrottle';
 
 describe('sendOutboundMessage', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.stubGlobal('crypto', { randomUUID: () => '0c5d8df5-430d-4f46-8c0a-764be035116a' });
+    // `sendThrottle` é um singleton do módulo: as reservas de um caso ficariam de
+    // pé para o próximo e a drenagem do caso da fila offline sairia só depois do
+    // prazo do `vi.waitFor`. Zerar por caso devolve a cada teste o mesmo throttle
+    // que o app tem no boot — nenhuma expectativa deste arquivo muda.
+    sendThrottle.reset();
   });
 
   it('enqueues first and only then asks the authenticated delivery gateway to dispatch', async () => {
@@ -117,5 +126,161 @@ describe('sendOutboundMessage', () => {
     expect(invoke).toHaveBeenCalledWith('message-delivery', {
       body: { messageId: '56bb3f25-ad35-40b9-adcd-d10f4a98752d' },
     });
+  });
+
+  it('com a rede caída a mensagem espera na fila local e sai sozinha na reconexão (SL-070/025)', async () => {
+    await offlineSendQueue.clear();
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await expect(sendOutboundMessage({ contactId: 'contato-fila', content: 'composta offline' })).resolves.toEqual({
+        id: '0c5d8df5-430d-4f46-8c0a-764be035116a', status: 'pending', externalId: null, idempotent: false,
+      });
+      // Nada saiu da aba: nem enqueue no servidor, nem despacho.
+      expect(rpc).not.toHaveBeenCalled();
+      expect(invoke).not.toHaveBeenCalled();
+      expect((await offlineSendQueue.list()).map((item) => item.content)).toEqual(['composta offline']);
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+
+    rpc.mockResolvedValue({
+      data: { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sending', external_id: null }, error: null,
+    });
+    invoke.mockResolvedValue({
+      data: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sent', externalId: 'provider-fila', idempotent: false },
+      error: null,
+    });
+
+    window.dispatchEvent(new Event('online'));
+
+    await vi.waitFor(async () => expect(await offlineSendQueue.list()).toEqual([]));
+    // Sai com a MESMA chave estável: sem duplicar (item 024).
+    expect(rpc).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({
+      p_client_message_id: '0c5d8df5-430d-4f46-8c0a-764be035116a',
+      p_content: 'composta offline',
+    }));
+    expect(invoke).toHaveBeenCalledWith('message-delivery', {
+      body: { messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' },
+    });
+  });
+
+  it('aba que perde a disputa de dedupe não dispara enqueue nem despacho (SL-070/026)', async () => {
+    vi.spyOn(crossTabSendDedupe, 'claim').mockResolvedValue({
+      owner: false,
+      clientMessageId: 'id-da-aba-dona',
+    });
+    const waitSpy = vi.spyOn(sendThrottle, 'wait');
+
+    await expect(sendOutboundMessage({ contactId: 'contato-dedupe', content: 'mesma ação em duas abas' }))
+      .resolves.toEqual({
+        id: 'id-da-aba-dona', status: 'pending', externalId: null, idempotent: true,
+      });
+
+    // A aba perdedora adota a chave da dona e daqui não sai request nenhum.
+    expect(rpc).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
+    expect(waitSpy).not.toHaveBeenCalled();
+  });
+
+  it('aba dona da ação espera o throttle antes de enfileirar no servidor', async () => {
+    const claimSpy = vi.spyOn(crossTabSendDedupe, 'claim').mockResolvedValue({
+      owner: true,
+      clientMessageId: '0c5d8df5-430d-4f46-8c0a-764be035116a',
+    });
+    const ordem: string[] = [];
+    vi.spyOn(sendThrottle, 'wait').mockImplementation(async () => {
+      ordem.push('throttle');
+    });
+    rpc.mockImplementation(async () => {
+      ordem.push('enqueue');
+      return {
+        data: { id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sending', external_id: null },
+        error: null,
+      };
+    });
+    invoke.mockResolvedValue({
+      data: {
+        messageId: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc', status: 'sent', externalId: null, idempotent: false,
+      },
+      error: null,
+    });
+
+    await expect(sendOutboundMessage({ contactId: 'contato-online', content: 'envio online' }))
+      .resolves.toMatchObject({ id: 'e23ca9d2-99a8-45d2-a3fe-df344fb9b2cc' });
+
+    expect(claimSpy).toHaveBeenCalledTimes(1);
+    expect(ordem.slice(0, 2)).toEqual(['throttle', 'enqueue']);
+  });
+
+  it('libera a reivindicação do dedupe quando o envio falha — senão a próxima ação igual fica presa', async () => {
+    const claimSpy = vi.spyOn(crossTabSendDedupe, 'claim').mockResolvedValue({
+      owner: true,
+      clientMessageId: '0c5d8df5-430d-4f46-8c0a-764be035116a',
+    });
+    const releaseSpy = vi.spyOn(crossTabSendDedupe, 'release');
+    rpc.mockResolvedValue({ data: null, error: new Error('enqueue indisponível') });
+
+    await expect(sendOutboundMessage({ contactId: 'contato-release', content: 'vai falhar' }))
+      .rejects.toThrow('enqueue indisponível');
+
+    const dedupeKey = claimSpy.mock.calls[0][0];
+    expect(releaseSpy).toHaveBeenCalledWith(dedupeKey);
+  });
+
+  it('libera a reivindicação do dedupe quando o próprio throttle falha', async () => {
+    const claimSpy = vi.spyOn(crossTabSendDedupe, 'claim').mockResolvedValue({
+      owner: true,
+      clientMessageId: '0c5d8df5-430d-4f46-8c0a-764be035116a',
+    });
+    const releaseSpy = vi.spyOn(crossTabSendDedupe, 'release');
+    vi.spyOn(sendThrottle, 'wait').mockRejectedValue(new Error('relógio do throttle quebrou'));
+
+    await expect(sendOutboundMessage({ contactId: 'contato-throttle', content: 'throttle falha' }))
+      .rejects.toThrow('relógio do throttle quebrou');
+
+    expect(rpc).not.toHaveBeenCalled();
+    const dedupeKey = claimSpy.mock.calls[0][0];
+    expect(releaseSpy).toHaveBeenCalledWith(dedupeKey);
+  });
+
+  it('a drenagem da fila offline espaça cada entrega pelo throttle (SL-070/025+026)', async () => {
+    await offlineSendQueue.clear();
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await sendOutboundMessage({ contactId: 'contato-fila', content: 'primeira', clientMessageId: 'fila-1' });
+      await sendOutboundMessage({ contactId: 'contato-fila', content: 'segunda', clientMessageId: 'fila-2' });
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+    expect(await offlineSendQueue.list()).toHaveLength(2);
+
+    const ordem: string[] = [];
+    const waitSpy = vi.spyOn(sendThrottle, 'wait').mockImplementation(async () => {
+      ordem.push('throttle');
+    });
+    rpc.mockImplementation(async (_name: string, args: { p_client_message_id: string }) => {
+      ordem.push(`enqueue:${args.p_client_message_id}`);
+      return {
+        data: { id: `srv-${args.p_client_message_id}`, status: 'sending', external_id: null },
+        error: null,
+      };
+    });
+    invoke.mockImplementation(async (_name: string, options: { body: { messageId: string } }) => {
+      ordem.push(`dispatch:${options.body.messageId}`);
+      return {
+        data: { messageId: options.body.messageId, status: 'sent', externalId: null },
+        error: null,
+      };
+    });
+
+    window.dispatchEvent(new Event('online'));
+
+    await vi.waitFor(async () => expect(await offlineSendQueue.list()).toEqual([]));
+    // Cada entrega da fila espera a vez no throttle — a reconexão não vira rajada.
+    expect(ordem).toEqual([
+      'throttle', 'enqueue:fila-1', 'dispatch:srv-fila-1',
+      'throttle', 'enqueue:fila-2', 'dispatch:srv-fila-2',
+    ]);
+    expect(waitSpy).toHaveBeenCalledTimes(2);
   });
 });

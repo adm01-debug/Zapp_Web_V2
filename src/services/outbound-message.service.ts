@@ -1,4 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
+import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
+import { drainOfflineQueueOnReconnect, offlineSendQueue, type OfflineQueuedMessage } from '@/lib/offlineQueue';
+import { sendThrottle } from '@/lib/sendThrottle';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -92,17 +95,15 @@ function clearPendingAction(key: string | null, id: string) {
   if (key && pendingActionIds.get(key) === id) pendingActionIds.delete(key);
 }
 
-/**
- * Canonical browser entrypoint for outbound WhatsApp traffic.
- *
- * The browser may enqueue an authorized message, but never owns its delivery
- * lease or status transition.  The Edge Function claims it with service-role
- * credentials and the database fences completion by claim token.
- */
-export async function sendOutboundMessage(
+/** Sem rede não há como enfileirar no servidor: a mensagem espera na fila local (item 025). */
+function semRede(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+async function enqueueAndDispatch(
   input: SendOutboundMessageInput,
+  clientMessageId: string,
 ): Promise<OutboundMessageDeliveryResult> {
-  const { id: clientMessageId, key } = resolveClientMessageId(input);
   // Generated database types intentionally stay bound to the canonical
   // database until the controlled migration is applied. This narrow transport
   // shape is removed by the post-deploy type-sync workflow.
@@ -122,9 +123,96 @@ export async function sendOutboundMessage(
     throw enqueueError ?? new Error('Não foi possível enfileirar a mensagem.');
   }
 
-  const result = await dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
-  clearPendingAction(key, clientMessageId);
-  return result;
+  return dispatchQueuedMessage(queued.id, queued.status ?? null, queued.external_id ?? null);
+}
+
+/** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
+async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
+  // pode virar rajada de requests contra o servidor (item 026).
+  await sendThrottle.wait();
+  await enqueueAndDispatch(
+    {
+      contactId: message.contactId,
+      content: message.content,
+      messageType: message.messageType as OutboundMessageType,
+      mediaUrl: message.mediaUrl,
+      caption: message.caption,
+      replyToId: message.replyToId,
+      whatsappConnectionId: message.whatsappConnectionId,
+    },
+    message.clientMessageId,
+  );
+}
+
+// Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
+drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
+  onError: (error, message) => {
+    // A mensagem continua na fila e a próxima reconexão tenta de novo; o aviso é
+    // o que impede a espera virar falha silenciosa. `console.warn` (e não o
+    // logger do app) mantém este módulo — caminho quente de todo envio — sem
+    // dependência nova de import.
+    console.warn('Fila offline: entrega adiada', {
+      clientMessageId: message?.clientMessageId ?? null,
+      erro: error instanceof Error ? error.message : String(error),
+    });
+  },
+});
+
+async function enqueueOffline(
+  input: SendOutboundMessageInput,
+  clientMessageId: string,
+): Promise<OutboundMessageDeliveryResult> {
+  const queued = await offlineSendQueue.enqueue({
+    clientMessageId,
+    contactId: input.contactId,
+    content: input.content,
+    messageType: input.messageType ?? 'text',
+    mediaUrl: input.mediaUrl ?? null,
+    caption: input.caption ?? null,
+    replyToId: input.replyToId ?? null,
+    whatsappConnectionId: input.whatsappConnectionId ?? null,
+  });
+  // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
+  return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
+}
+
+/**
+ * Canonical browser entrypoint for outbound WhatsApp traffic.
+ *
+ * The browser may enqueue an authorized message, but never owns its delivery
+ * lease or status transition.  The Edge Function claims it with service-role
+ * credentials and the database fences completion by claim token.
+ *
+ * Dois envios iguais na mesma ação, feitos em abas diferentes, viram UM request
+ * (item 026); uma rajada é espaçada por `useSendThrottle` (500 ms / 5 por 3 s);
+ * e com a rede caída a mensagem espera na fila local em vez de se perder (025).
+ */
+export async function sendOutboundMessage(
+  input: SendOutboundMessageInput,
+): Promise<OutboundMessageDeliveryResult> {
+  const { id: clientMessageId, key } = resolveClientMessageId(input);
+
+  if (semRede()) return enqueueOffline(input, clientMessageId);
+
+  const dedupeKey = actionKey(input);
+  const claim = await crossTabSendDedupe.claim(dedupeKey, clientMessageId);
+  if (!claim.owner) {
+    // Outra aba já está mandando esta mesma ação: daqui não sai request nenhum.
+    // A chave é a mesma, então as duas abas mostram a MESMA mensagem.
+    return { id: claim.clientMessageId, status: 'pending', externalId: null, idempotent: true };
+  }
+
+  try {
+    await sendThrottle.wait();
+    const result = await enqueueAndDispatch(input, clientMessageId);
+    clearPendingAction(key, clientMessageId);
+    return result;
+  } finally {
+    // A reivindicação sai até quando o envio falha: sem isso a aba fica "dona"
+    // da ação e uma tentativa deliberada igual em outra aba nunca mandaria.
+    crossTabSendDedupe.release(dedupeKey);
+  }
 }
 
 async function dispatchQueuedMessage(
