@@ -60,6 +60,7 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, 
               <button
                 key={tab.id}
                 role="tab"
+                aria-label={tab.label}
                 aria-selected={active}
                 data-testid={`conversation-tab-${tab.id}`}
                 onClick={() => onTabChange(tab.id)}
