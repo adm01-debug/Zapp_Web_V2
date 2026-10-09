@@ -253,6 +253,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         setServerSearchError({ term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
         return;
       }
+      // Busca que deu certo limpa o erro anterior: o painel é o MESMO componente
+      // quando o atendente troca de conversa (o termo digitado continua), então o
+      // aviso de falha não pode ficar na tela por cima do resultado que chegou.
+      setServerSearchError(null);
       // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
       // TeamMessageItem compõe a linha a partir daqui, sem mídia/recibo — a
       // mensagem de resultado é texto puro.
