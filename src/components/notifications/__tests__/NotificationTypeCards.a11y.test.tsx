@@ -10,14 +10,33 @@ vi.mock('@/hooks/ui/use-toast', () => ({
   toast: vi.fn(),
 }));
 
+const settings = {
+  newMessageSound: true,
+  mentionSound: true,
+  slaSound: true,
+  goalSound: true,
+  transcriptionSound: true,
+  quietHoursEnabled: false,
+  sentimentAlertEnabled: true,
+  sentimentAlertThreshold: 30,
+  sentimentConsecutiveCount: 3,
+  transcriptionNotificationEnabled: true,
+  messageSoundType: 'chime',
+  mentionSoundType: 'bell',
+  slaSoundType: 'alert',
+  goalSoundType: 'chime',
+  transcriptionSoundType: 'soft',
+  soundEnabled: true,
+  soundVolume: 70,
+  browserNotifications: false,
+};
+
 describe('a11y: Switch com nome acessível em NotificationTypeSection', () => {
-  it('Switch de ativar tem aria-label', () => {
+  it('Switch de novas mensagens tem aria-label', () => {
     render(
       <NotificationTypeSection
-        title="Teste"
-        desc="Descrição"
-        enabled={true}
-        onToggle={vi.fn()}
+        settings={settings}
+        updateSettings={vi.fn()}
       />
     );
     expect(screen.getByRole('switch', { name: /Ativar notificação/i })).toBeInTheDocument();
