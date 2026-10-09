@@ -1,6 +1,12 @@
 /**
  * Web Vitals monitoring utility
- * Tracks Core Web Vitals (LCP, FCP, CLS, INP, TTFB) and reports to console/analytics
+ * Mede as SEIS métricas do mapa de alvos do budget — LCP, FCP, CLS, INP, TTFB e FID — e
+ * reporta no console/analytics.
+ *
+ * O `FID` continua sendo coletado aqui por `first-input` (mais abaixo) e por isso segue no
+ * mapa: no `performance-budget.json` ele está declarado `"field": false`, porque o Speed
+ * Insights não publica FID — ele não tem par de campo, e o alvo só vale enquanto esta
+ * coleta existir.
  *
  * Os alvos vêm de `performance-budget.json` → seção `web-vitals` (E36). Antes
  * havia aqui uma cópia dos limiares, que divergia do arquivo sem ninguém notar:
