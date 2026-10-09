@@ -25,14 +25,14 @@
  *     `import { type PDFPageProxy } from 'pdfjs-dist'` — binding puramente de TIPO: o compilador
  *     (esbuild/vite) apaga a declaração antes de emitir, então não entra byte nenhum no bundle.
  *
- * POR QUE AST (typescript) E NÃO REGEX: o defeito é a FORMA SINTÁTICA da declaração, e regex erra
- * nos dois sentidos. (a) Falso positivo: `// import 'pdfjs-dist'` num comentário, ou a string
- * `const exemplo = "import 'pdfjs-dist'"`, ou um import quebrado em várias linhas com comentário no
- * meio — o revisor recusou contratos desta área que quebravam com reformatação. (b) Falso negativo:
- * um stripper de comentários ingênuo engole código depois de um `//` que está dentro de um literal.
- * A AST não tem nenhum dos dois problemas: comentário e literal não são declaração, e o
- * `import(...)` dinâmico é uma CallExpression (nunca uma ImportDeclaration), então é aceito por
- * construção — sem lista de exceções.
+ * POR QUE ANALISADOR LÉXICO E NÃO REGEX: o defeito é a FORMA SINTÁTICA da declaração,
+ * e regex crua erra nos dois sentidos. (a) Falso positivo: `// import 'pdfjs-dist'` num
+ * comentário, ou a string `const exemplo = "import 'pdfjs-dist'"`, ou um import quebrado em
+ * várias linhas com comentário no meio — o revisor recusou contratos desta área que quebravam
+ * com reformatação. (b) Falso negativo: um stripper de comentários ingênuo engole código depois
+ * de um `//` que está dentro de um literal. O lexer abaixo ignora comentários/literais e só
+ * considera tokens reais de `import`/`export`/`require`; `import(...)` dinâmico é chamada e fica
+ * permitido por construção — sem lista de exceções.
  *
  * ESCOPO DA VARREDURA: `src/**` RECURSIVO, com três exclusões explícitas, todas de arquivo que não
  * emite código de produção:
@@ -44,27 +44,23 @@
  */
 import { strict as assert } from 'node:assert';
 import { readdirSync, readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const require = createRequire(import.meta.url);
-const ts = require('typescript');
-type NoTs = {
-  [chave: string]: unknown;
-  moduleSpecifier: unknown;
-  moduleReference: { expression?: unknown };
-  expression: { text?: string };
-  arguments: Array<{ text?: string }>;
-  importClause: { isTypeOnly?: boolean; name?: unknown; namedBindings?: NamedBindingsLike };
-  isTypeOnly?: boolean;
-  exportClause?: NamedBindingsLike;
-  forEachChild: (cb: (no: NoTs) => void) => void;
-  getStart: (sourceFile: unknown) => number;
-};
-type NamedBindingsLike = { elements: Array<{ isTypeOnly: boolean }> };
-type StringLiteralLike = { text: string };
+const denoGlobal = (globalThis as { Deno?: { test?: (nome: string, fn: CaseFn) => void } }).Deno;
+const IS_DENO = typeof denoGlobal?.test === 'function';
+
+type CaseFn = () => void | Promise<void>;
+let registrar: (nome: string, fn: CaseFn) => void;
+if (IS_DENO) {
+  registrar = (nome, fn) => { denoGlobal!.test!(nome, fn); };
+} else {
+  // Specifier não-literal: o Deno não tenta resolver 'vitest' no `deno check`
+  // (que roda com --frozen e sem essa dependência); sob Node o vitest resolve.
+  const spec = 'vit' + 'est';
+  const mod = (await import(spec)) as { it: (nome: string, fn: CaseFn) => void };
+  registrar = (nome, fn) => { mod.it(nome, fn); };
+}
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const SRC = resolve(ROOT, 'src');
@@ -76,38 +72,135 @@ function ehPdfjs(specifier: string): boolean {
 }
 
 type Achado = { linha: number; descricao: string };
+type Token = { texto: string; inicio: number; fim: number; tipo: 'id' | 'string' | 'pontuacao' };
 
-/**
- * Extrai os especifiers de `import`/`export`/`require` nomeados do módulo, seguindo o padrão
- * TS/JS (string literal). O specifier é `undefined` quando o nó não declara módulo
- * (`import x from "y"` sempre declara; `export { x }` sem `from` não).
- */
-function specifierDe(no: NoTs): string | undefined {
-  if (ts.isImportDeclaration(no) || ts.isExportDeclaration(no)) {
-    const modulo = no.moduleSpecifier;
-    if (modulo && ts.isStringLiteral(modulo)) return (modulo as StringLiteralLike).text;
-    return undefined;
-  }
-  if (ts.isImportEqualsDeclaration(no) && ts.isExternalModuleReference(no.moduleReference)) {
-    const expressao = no.moduleReference.expression;
-    if (expressao && ts.isStringLiteral(expressao)) return (expressao as StringLiteralLike).text;
-  }
-  return undefined;
+const ehInicioIdentificador = (ch: string) => /[A-Za-z_$]/.test(ch);
+const ehParteIdentificador = (ch: string) => /[A-Za-z0-9_$]/.test(ch);
+
+function linhaDe(fonte: string, posicao: number): number {
+  let linha = 1;
+  for (let i = 0; i < posicao; i += 1) if (fonte.charCodeAt(i) === 10) linha += 1;
+  return linha;
 }
 
-/**
- * Todos os bindings nomeados da declaração são `type` (`import { type A, type B } from 'x'`)?
- *
- * Aceita as duas listas nomeadas (`NamedImportBindings` no import, `NamedExports` no export) e
- * exige que a lista EXISTA e não esteja vazia. `import * as ns from 'x'` (`NamespaceImport`) traz
- * o namespace inteiro em tempo de execução: é tratado EXPLICITAMENTE como não-tipo, e não pela
- * ausência do campo `.elements` — era essa a suposição implícita que deixava o namespace passar
- * como só-tipo em qualquer refatoração futura.
- */
-function soBindingsDeTipo(named: NamedBindingsLike | undefined): boolean {
-  if (named === undefined || ts.isNamespaceImport(named)) return false;
-  const elementos = named.elements;
-  return elementos.length > 0 && elementos.every((elemento) => elemento.isTypeOnly);
+function pularComentarioLinha(fonte: string, i: number): number {
+  let cursor = i + 2;
+  while (cursor < fonte.length && fonte[cursor] !== '\n') cursor += 1;
+  return cursor;
+}
+
+function pularComentarioBloco(fonte: string, i: number): number {
+  let cursor = i + 2;
+  while (cursor < fonte.length && !(fonte[cursor] === '*' && fonte[cursor + 1] === '/')) cursor += 1;
+  return Math.min(cursor + 2, fonte.length);
+}
+
+function pularLiteral(fonte: string, i: number): number {
+  const aspas = fonte[i];
+  let cursor = i + 1;
+  while (cursor < fonte.length) {
+    if (fonte[cursor] === '\\') {
+      cursor += 2;
+      continue;
+    }
+    if (fonte[cursor] === aspas) return cursor + 1;
+    cursor += 1;
+  }
+  return fonte.length;
+}
+
+function valorStringLiteral(raw: string): string {
+  // Os specifiers reais do projeto são literais simples; estes escapes cobrem os casos válidos
+  // sem avaliar código arbitrário.
+  return raw.slice(1, -1).replace(/\\(['"`\\])/g, '$1');
+}
+
+function tokensDe(fonte: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < fonte.length) {
+    const ch = fonte[i];
+    const prox = fonte[i + 1];
+    if (/\s/.test(ch)) {
+      i += 1;
+      continue;
+    }
+    if (ch === '/' && prox === '/') {
+      i = pularComentarioLinha(fonte, i);
+      continue;
+    }
+    if (ch === '/' && prox === '*') {
+      i = pularComentarioBloco(fonte, i);
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const fim = pularLiteral(fonte, i);
+      tokens.push({ texto: valorStringLiteral(fonte.slice(i, fim)), inicio: i, fim, tipo: 'string' });
+      i = fim;
+      continue;
+    }
+    if (ehInicioIdentificador(ch)) {
+      const inicio = i;
+      i += 1;
+      while (i < fonte.length && ehParteIdentificador(fonte[i])) i += 1;
+      tokens.push({ texto: fonte.slice(inicio, i), inicio, fim: i, tipo: 'id' });
+      continue;
+    }
+    tokens.push({ texto: ch, inicio: i, fim: i + 1, tipo: 'pontuacao' });
+    i += 1;
+  }
+  return tokens;
+}
+
+function fimDaInstrucao(tokens: Token[], inicio: number): number {
+  for (let i = inicio; i < tokens.length; i += 1) {
+    if (tokens[i].texto === ';') return i;
+  }
+  return tokens.length;
+}
+
+function todosBindingsInlineSaoTipo(tokens: Token[], abreChaves: number, fechaChaves: number): boolean {
+  if (abreChaves < 0 || fechaChaves <= abreChaves + 1) return false;
+  let esperaBinding = true;
+  let viuBinding = false;
+  for (let i = abreChaves + 1; i < fechaChaves; i += 1) {
+    const token = tokens[i];
+    if (token.texto === ',') {
+      esperaBinding = true;
+      continue;
+    }
+    if (!esperaBinding) continue;
+    if (token.texto !== 'type') return false;
+    viuBinding = true;
+    esperaBinding = false;
+  }
+  return viuBinding;
+}
+
+function importSomenteTipo(tokens: Token[], inicio: number, indiceFrom: number): boolean {
+  const primeiro = tokens[inicio + 1];
+  if (!primeiro) return false;
+  if (primeiro.texto === 'type') return true;
+  if (primeiro.texto !== '{') return false; // default, namespace e import misto têm binding de valor.
+  let profundidade = 0;
+  for (let i = inicio + 1; i < indiceFrom; i += 1) {
+    if (tokens[i].texto === '{') profundidade += 1;
+    if (tokens[i].texto === '}') {
+      profundidade -= 1;
+      if (profundidade === 0) return todosBindingsInlineSaoTipo(tokens, inicio + 1, i);
+    }
+  }
+  return false;
+}
+
+function exportSomenteTipo(tokens: Token[], inicio: number, indiceFrom: number): boolean {
+  const primeiro = tokens[inicio + 1];
+  if (!primeiro) return false;
+  if (primeiro.texto === 'type') return true;
+  const abreChaves = tokens.findIndex((token, indice) => indice > inicio && indice < indiceFrom && token.texto === '{');
+  if (abreChaves === -1) return false;
+  const fechaChaves = tokens.findIndex((token, indice) => indice > abreChaves && indice < indiceFrom && token.texto === '}');
+  return todosBindingsInlineSaoTipo(tokens, abreChaves, fechaChaves);
 }
 
 /**
@@ -115,50 +208,63 @@ function soBindingsDeTipo(named: NamedBindingsLike | undefined): boolean {
  * biblioteca só por `import(...)` dinâmico. Todas as descrições são fixas (o teste compara com
  * elas e com as linhas), então a função é o sujeito testado pela tabela de casos.
  */
-function cargasEstaticasDePdfjs(fonte: string, nomeDoArquivo = 'arquivo.ts'): Achado[] {
-  const scriptKind = nomeDoArquivo.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const arquivo = ts.createSourceFile(nomeDoArquivo, fonte, ts.ScriptTarget.Latest, true, scriptKind);
+function cargasEstaticasDePdfjs(fonte: string, _nomeDoArquivo = 'arquivo.ts'): Achado[] {
+  const tokens = tokensDe(fonte);
   const achados: Achado[] = [];
 
-  const anotar = (no: NoTs, descricao: string) => {
-    achados.push({ linha: arquivo.getLineAndCharacterOfPosition(no.getStart(arquivo)).line + 1, descricao });
-  };
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token.texto === 'import') {
+      const seguinte = tokens[i + 1];
+      if (!seguinte || seguinte.texto === '(') continue; // import(...) dinâmico.
 
-  const visitar = (no: NoTs): void => {
-    const specifier = specifierDe(no);
-    if (specifier !== undefined && ehPdfjs(specifier)) {
-      // `import { type A } from 'x'` é só-tipo pelos bindings inline, mas `import padrao, { type A }`
-      // NÃO é: o binding DEFAULT é valor e puxa o módulo. Por isso os bindings inline só decidem
-      // quando não existe `importClause.name` (nenhum binding de valor antes da lista).
-      const somenteTipo = ts.isImportDeclaration(no)
-        ? no.importClause?.isTypeOnly === true ||
-          (no.importClause?.name === undefined && soBindingsDeTipo(no.importClause?.namedBindings))
-        : ts.isExportDeclaration(no)
-          ? no.isTypeOnly ||
-            soBindingsDeTipo(no.exportClause && ts.isNamedExports(no.exportClause) ? no.exportClause : undefined)
-          : false; // `import x = require(...)` nunca é só tipo
-      if (!somenteTipo) {
-        const forma = ts.isImportDeclaration(no)
-          ? `import estático de '${specifier}'`
-          : ts.isExportDeclaration(no)
-            ? `export ... from '${specifier}'`
-            : `import ... = require('${specifier}')`;
-        anotar(no, forma);
+      const fim = fimDaInstrucao(tokens, i);
+      const indiceRequire = tokens.findIndex((t, indice) => indice > i && indice < fim && t.texto === 'require');
+      if (indiceRequire !== -1) {
+        const specifier = tokens[indiceRequire + 2];
+        if (tokens[indiceRequire + 1]?.texto === '(' && specifier?.tipo === 'string' && ehPdfjs(specifier.texto)) {
+          achados.push({ linha: linhaDe(fonte, token.inicio), descricao: `import ... = require('${specifier.texto}')` });
+        }
+        i = fim;
+        continue;
       }
-    } else if (
-      ts.isCallExpression(no) &&
-      ts.isIdentifier(no.expression) &&
-      no.expression.text === 'require' &&
-      no.arguments.length > 0 &&
-      ts.isStringLiteral(no.arguments[0])
-    ) {
-      const argumento = no.arguments[0] as StringLiteralLike;
-      if (ehPdfjs(argumento.text)) anotar(no, `require('${argumento.text}')`);
-    }
-    no.forEachChild(visitar);
-  };
 
-  visitar(arquivo);
+      if (seguinte.tipo === 'string') {
+        if (ehPdfjs(seguinte.texto)) {
+          achados.push({ linha: linhaDe(fonte, token.inicio), descricao: `import estático de '${seguinte.texto}'` });
+        }
+        i = fim;
+        continue;
+      }
+
+      const indiceFrom = tokens.findIndex((t, indice) => indice > i && indice < fim && t.texto === 'from');
+      const specifier = indiceFrom === -1 ? undefined : tokens[indiceFrom + 1];
+      if (specifier?.tipo === 'string' && ehPdfjs(specifier.texto) && !importSomenteTipo(tokens, i, indiceFrom)) {
+        achados.push({ linha: linhaDe(fonte, token.inicio), descricao: `import estático de '${specifier.texto}'` });
+      }
+      i = fim;
+      continue;
+    }
+
+    if (token.texto === 'export') {
+      const fim = fimDaInstrucao(tokens, i);
+      const indiceFrom = tokens.findIndex((t, indice) => indice > i && indice < fim && t.texto === 'from');
+      const specifier = indiceFrom === -1 ? undefined : tokens[indiceFrom + 1];
+      if (specifier?.tipo === 'string' && ehPdfjs(specifier.texto) && !exportSomenteTipo(tokens, i, indiceFrom)) {
+        achados.push({ linha: linhaDe(fonte, token.inicio), descricao: `export ... from '${specifier.texto}'` });
+      }
+      i = fim;
+      continue;
+    }
+
+    if (token.texto === 'require' && tokens[i + 1]?.texto === '(' && tokens[i + 2]?.tipo === 'string') {
+      const specifier = tokens[i + 2].texto;
+      if (ehPdfjs(specifier)) {
+        achados.push({ linha: linhaDe(fonte, token.inicio), descricao: `require('${specifier}')` });
+      }
+    }
+  }
+
   return achados;
 }
 
@@ -181,7 +287,7 @@ function arquivosDeProducao(dir: string, acumulado: string[] = []): string[] {
 const rel = (absoluto: string) => absoluto.slice(ROOT.length + 1);
 const lerFonte = (absoluto: string) => readFileSync(absoluto, 'utf8');
 
-Deno.test('contrato M03 — a varredura alcança src/** de produção (e só ele)', () => {
+registrar('contrato M03 — a varredura alcança src/** de produção (e só ele)', () => {
   const arquivos = arquivosDeProducao(SRC);
     // A varredura tem de ser vasta e alcançar a aba Arquivos: sem isto, uma varredura vazia
     // passaria no teste seguinte para sempre (o contrato mais frágil no momento mais importante).
@@ -192,7 +298,7 @@ Deno.test('contrato M03 — a varredura alcança src/** de produção (e só ele
   for (const arquivo of arquivos) assert.equal(arquivo.startsWith(SRC), true);
 });
 
-Deno.test('contrato M03 — nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', () => {
+registrar('contrato M03 — nenhum arquivo de produção em src/** carrega pdfjs-dist de forma estática', () => {
   const violacoes: string[] = [];
   for (const arquivo of arquivosDeProducao(SRC)) {
     for (const achado of cargasEstaticasDePdfjs(lerFonte(arquivo), arquivo)) {
@@ -305,15 +411,15 @@ const casos: Array<{ nome: string; codigo: string; esperado: string[] }> = [
   ];
 
 for (const { nome, codigo, esperado } of casos) {
-  Deno.test(`contrato M03 — ${nome}`, () => {
+  registrar(`contrato M03 — ${nome}`, () => {
     assert.deepEqual(cargasEstaticasDePdfjs(codigo).map((achado) => achado.descricao), esperado);
   });
 }
 
-Deno.test('contrato M03 — um arquivo com import estático é reprovado (e a linha é a certa)', () => {
+registrar('contrato M03 — um arquivo com import estático é reprovado (e a linha é a certa)', () => {
   // Prova o caminho do contrato sem escrever arquivo temporário: o comando de CI deste contrato
   // roda só com --allow-read, então a amostra precisa ser em memória e ainda preservar o nome/linha.
-  const alvo = join(tmpdir(), 'carga-estatica.tmp.ts');
+  const alvo = 'carga-estatica.tmp.ts';
   const fonte = "const linha = 1;\nimport { getDocument } from 'pdfjs-dist';\n";
   assert.deepEqual(
     cargasEstaticasDePdfjs(fonte, alvo).map((achado) => [achado.linha, achado.descricao]),
@@ -321,7 +427,7 @@ Deno.test('contrato M03 — um arquivo com import estático é reprovado (e a li
   );
 });
 
-Deno.test('contrato M03 — pdfjs-dist está em dependencies (bundle do app), nunca em devDependencies', () => {
+registrar('contrato M03 — pdfjs-dist está em dependencies (bundle do app), nunca em devDependencies', () => {
   const pacote = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
