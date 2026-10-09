@@ -31,6 +31,12 @@ const IncomingCallAlert = lazy(() =>
   import("@/components/calls/IncomingCallAlert")
     .then(m => ({ default: m.IncomingCallAlert }))
 );
+// C02: o cartão da chamada de SAÍDA iniciada no inbox — mesmo slot global do
+// alerta de entrada (overlay, não é provider de contexto).
+const OutboundCallDialog = lazy(() =>
+  import("@/components/calls/OutboundCallDialog")
+    .then(m => ({ default: m.OutboundCallDialog }))
+);
 const EasterEggsProvider = lazy(() =>
   import("@/components/effects/EasterEggs")
     .then(m => ({ default: m.EasterEggsProvider }))
@@ -62,6 +68,7 @@ function DeferredProviders() {
     <Suspense fallback={null}>
       <RealtimeSentimentAlertProvider />
       <IncomingCallAlert />
+      <OutboundCallDialog />
       <TeamChatNotificationsListener />
       <InAppNotificationProvider>
         {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
