@@ -27,8 +27,8 @@ function TestQueryWrapper({ children }: { children: React.ReactNode }) {
 const defaultFilters: DashboardFiltersState = {
   period: 'today',
   dateRange: { from: new Date('2026-10-09'), to: new Date('2026-10-09') },
-  queueId: undefined,
-  agentId: undefined,
+  queueId: null,
+  agentId: null,
 };
 
 vi.mock('@/hooks/business/useQueues', () => ({
