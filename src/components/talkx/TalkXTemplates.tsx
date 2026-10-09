@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
-  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight,
+  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,

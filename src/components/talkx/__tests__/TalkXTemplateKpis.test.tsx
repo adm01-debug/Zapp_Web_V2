@@ -189,6 +189,26 @@ describe('X091 — KPIs das telas 04 e 05 nas RPCs', () => {
     expect(within(card).queryByText(/380/)).toBeNull();
   });
 
+  it('tela 05: "Total de Templates" não calcula variação quando created_current_month vem nulo', async () => {
+    h.rpc.mockImplementation((nome: string, args: { p_template_id?: string }) => {
+      if (nome === 'talkx_template_library_stats') {
+        return Promise.resolve({ data: { ...libraryStats, created_current_month: null, created_previous_month: 10 }, error: null });
+      }
+      if (nome === 'talkx_template_stats') return Promise.resolve({ data: templateStats[args.p_template_id ?? ''] ?? vazio, error: null });
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    render(<TalkXTemplateEditor templates={h.templates} isLoading={false} editing={h.templates[0]} onClose={vi.fn()} />, { wrapper });
+
+    const label = await screen.findByText('Total de Templates');
+    const card = label.closest('[data-testid="kpi-card"]') as HTMLElement;
+    expect(card).toBeTruthy();
+    await waitFor(() => expect(within(card).getByText('48')).toBeTruthy());
+
+    expect(within(card).queryByTestId('kpi-comparison')).toBeNull();
+    expect(within(card).queryByText(/380/)).toBeNull();
+  });
+
   it('tela 05: trocar de template na biblioteca troca os números do card', async () => {
     render(<TalkXTemplateEditor templates={h.templates} isLoading={false} editing={h.templates[0]} onClose={vi.fn()} />, { wrapper });
     await waitFor(() => expect(secaoDesempenho().getByText('1.250')).toBeTruthy());

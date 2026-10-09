@@ -15,7 +15,9 @@ export interface KpiComparison {
   /** Valor do período anterior. Sem ele (ou <= 0) não há variação. */
   previous?: number | null;
   /**
-   * Valor do período atual usado no cálculo da variação (default: o `value` exibido).
+   * Valor do período atual usado no cálculo da variação.
+   * Quando o campo não é passado (`undefined`), o cálculo usa o `value` exibido.
+   * Quando vem `null` explícito, não há variação.
    * Use quando a grandeza comparada difere do número mostrado no card — ex.: "Total de
    * Templates" exibe o total acumulado, mas compara criados no mês atual vs. o anterior.
    */
@@ -65,7 +67,7 @@ function computeVariation(
   comparison?: KpiComparison,
 ): Variation | null {
   if (!comparison) return null;
-  const cur = comparison.current ?? value;
+  const cur = comparison.current !== undefined ? comparison.current : value;
   if (typeof cur !== 'number') return null;
   const prev = comparison.previous;
   if (prev == null || prev <= 0) return null;
