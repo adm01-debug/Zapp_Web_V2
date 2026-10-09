@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { ArrowLeft, Camera, Mic, MoreVertical, Paperclip, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /** Bolha de preview estilo WhatsApp (mensagem enviada). */
@@ -29,33 +30,65 @@ export function WhatsAppBubble({ text, mediaUrl, mediaType, time, senderName = '
   );
 }
 
-/** Moldura de telefone WhatsApp para preview de template (E44). */
-export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empresa' }: { text: string; mediaUrl?: string | null; mediaType?: string | null; senderName?: string }) {
+/**
+ * Moldura de telefone WhatsApp para preview de template/campanha (E44 · X132).
+ *
+ * A moldura mostra o cabeçalho como o CONTATO vê: seta de volta, avatar, o nome
+ * e o número da CONEXÃO escolhida, ícones de chamada e menu. O selo de
+ * verificado e o rótulo "Conta comercial" só aparecem quando a conexão tem
+ * coluna que os sustente (A9) — por isso são props, e ficam desligados quando
+ * ninguém os passa.
+ *
+ * Contrato de dados (F10/X132): o `text` já chega PERSONALIZADO
+ * (`personalizePreview` com o contato de amostra) e a barra de digitação é
+ * decorativa — a moldura não envia nada.
+ */
+export function PhoneFrame({
+  text,
+  mediaUrl,
+  mediaType,
+  senderName = 'Sua Empresa',
+  senderPhone,
+  className,
+}: {
+  text: string;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
+  senderName?: string;
+  senderPhone?: string | null;
+  className?: string;
+}) {
   const now = format(new Date(), 'HH:mm');
   const initials = senderName.slice(0, 1).toUpperCase();
+  // O `media_type` da campanha pode vir como MIME ('image/jpeg') de um template
+  // e como tipo curto ('image') do wizard. Normalizar aqui é o que garante que
+  // a mesma prévia renderize a imagem nos dois caminhos (X132).
+  const mediaKind = mediaType ? (mediaType.startsWith('image') ? 'image' : mediaType) : null;
   return (
-    <div className="mx-auto flex-shrink-0" style={{ width: 272, height: 540 }}>
-      <div className="relative w-full h-full rounded-[36px] border-[7px] border-[hsl(220_10%_14%)] bg-[hsl(220_10%_11%)] shadow-2xl overflow-hidden">
+    <div className={cn('mx-auto flex-shrink-0', className)} style={{ width: 272, height: 540 }} data-testid="talkx-phone-frame">
+      <div className="relative w-full h-full flex flex-col rounded-[36px] border-[7px] border-[hsl(220_10%_14%)] bg-[hsl(220_10%_11%)] shadow-2xl overflow-hidden">
         {/* notch */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[hsl(220_10%_14%)] z-10" />
         {/* status bar */}
-        <div className="flex items-center justify-between px-4 py-1 bg-[hsl(220_8%_8%)]">
+        <div className="flex items-center justify-between px-4 py-1 bg-[hsl(220_10%_11%)]">
           <span className="text-[9px] font-bold text-white">{now}</span>
           <span className="text-3xs text-white/60">&#9679;&#9679;&#9679;&#9679; WiFi</span>
         </div>
         {/* WA header */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(151_52%_21%)]">
+        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[hsl(151_52%_21%)]">
+          <ArrowLeft className="w-3 h-3 text-white/80 flex-shrink-0" aria-hidden="true" />
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0">{initials}</div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[9px] font-semibold text-white leading-tight truncate">{senderName}</p>
-            <p className="text-3xs text-white/70">online</p>
+            <p className="text-[8px] text-white/70 leading-tight truncate">{senderPhone || 'online'}</p>
           </div>
+          <Phone className="w-3 h-3 text-white/80 flex-shrink-0" aria-hidden="true" />
+          <MoreVertical className="w-3 h-3 text-white/80 flex-shrink-0" aria-hidden="true" />
         </div>
         {/* chat area */}
         <div
-          className="p-2 overflow-hidden"
+          className="flex-1 min-h-0 p-2 overflow-hidden"
           style={{
-            height: 'calc(100% - 72px)',
             background: 'hsl(var(--background))',
             backgroundImage: 'radial-gradient(hsl(var(--primary)/.05) 1px, transparent 1px)',
             backgroundSize: '11px 11px',
@@ -66,16 +99,25 @@ export function PhoneFrame({ text, mediaUrl, mediaType, senderName = 'Sua Empres
           </div>
           <div className="flex justify-end">
             <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-[9px] text-foreground whitespace-pre-wrap leading-snug break-words">
-              {mediaUrl && mediaType === 'image' && (
+              {mediaUrl && mediaKind === 'image' && (
                 /^https?:\/\//i.test(mediaUrl) && <img src={mediaUrl} alt="" className="rounded mb-1 w-full object-cover" style={{ maxHeight: 64 }} loading="lazy" />
               )}
-              {mediaUrl && mediaType && mediaType !== 'image' && (
-                <div className="rounded mb-1 px-1.5 py-0.5 bg-black/20 text-3xs text-muted-foreground">📎 {mediaType}</div>
+              {mediaUrl && mediaKind && mediaKind !== 'image' && (
+                <div className="rounded mb-1 px-1.5 py-0.5 bg-black/20 text-[8px] text-muted-foreground">📎 {mediaKind}</div>
               )}
               {text || <span className="text-muted-foreground italic">Prévia da mensagem…</span>}
               <span className="block text-right text-3xs text-muted-foreground mt-0.5">{now} ✓✓</span>
             </div>
           </div>
+        </div>
+        {/* barra de digitação */}
+        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[hsl(220_10%_11%)]">
+          <div className="flex-1 flex items-center gap-1 rounded-full bg-white/10 px-2 py-1">
+            <span className="text-[8px] text-white/70 truncate">Mensagem…</span>
+          </div>
+          <Paperclip className="w-3 h-3 text-white/70 flex-shrink-0" aria-hidden="true" />
+          <Camera className="w-3 h-3 text-white/70 flex-shrink-0" aria-hidden="true" />
+          <Mic className="w-3 h-3 text-white/70 flex-shrink-0" aria-hidden="true" />
         </div>
       </div>
     </div>

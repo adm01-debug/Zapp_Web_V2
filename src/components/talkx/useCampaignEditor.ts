@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, useAudienceEstimate, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { fetchAllRows } from '@/lib/fetchAllRows';
@@ -563,6 +563,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     enabled: audienceSource === 'segment' && !!selectedSegment,
   });
 
+  // X132 — a amostra da prévia é o primeiro contato ELEGÍVEL devolvido pela RPC
+  // de audiência (`talkx_resolve_audience`, a MESMA do motor), com os campos
+  // customizados dele — não o primeiro da lista crua nem um contato fictício.
+  // Para público por contatos, a amostra também vem da RPC de estimativa
+  // (`useAudienceEstimate.sample[0]`), não do array bruto usado para desenhar a
+  // lista selecionável do passo 1. No público por segmento a lista `contacts`
+  // nem é consultada (o `enabled` dela é só `'contacts'`).
+  const { data: audiencePreview } = useAudienceEstimate(
+    audienceSource === 'segment' ? ((selectedSegment?.rules as SegmentRules) ?? null) : effectiveAudienceRules,
+    audienceSource === 'segment' ? !!selectedSegment : audienceSource === 'contacts',
+  );
+  const previewSample = audiencePreview?.sample?.[0] ?? null;
+
   const { companies, tags } = useMemo(() => {
     if (!contacts) return { companies: [] as string[], tags: [] as string[] };
     const companySet = new Set<string>();
@@ -640,7 +653,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const eligibleCount = Math.max(0, audienceTotal - suppressedCount);
 
   const previewMessage = useMemo(() => {
-    const sample = contacts?.[0] || { name: 'João Silva', nickname: 'Joãozinho', company: 'Acme' };
+    const sample = previewSample || { name: 'João Silva', nickname: 'Joãozinho', company: 'Acme' };
     const firstName = (sample.name || '').split(' ')[0];
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
@@ -650,7 +663,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       .replace(/\{\{apelido\}\}/gi, sample.nickname || firstName)
       .replace(/\{\{empresa\}\}/gi, sample.company || '')
       .replace(/\{\{saudacao\}\}/gi, greeting);
-  }, [messageTemplate, contacts]);
+  }, [messageTemplate, previewSample]);
 
   const estimatedSeconds = useMemo(() => estimateSeconds(eligibleCount, typingDelay[0] * 1000, typingDelay[1] * 1000, sendInterval[0] * 1000, sendInterval[1] * 1000), [eligibleCount, typingDelay, sendInterval]);
   const estimatedTime = eligibleCount > 0 ? fmtDurationShort(estimatedSeconds) : null;
@@ -1014,7 +1027,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, tags, filteredContacts,
-    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
+    previewMessage, previewSample, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
     insertVariable, toggleContact, selectAll, handleSave,
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };

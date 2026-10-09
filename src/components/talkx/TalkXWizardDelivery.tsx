@@ -13,7 +13,7 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import { IconTile, PhoneFrame, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -174,7 +174,9 @@ const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.El
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3 | 4) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const sample = ed.contacts?.[0];
+  // X132 — mesma amostra do rail: o primeiro contato ELEGÍVEL da RPC de
+  // audiência, com os campos customizados dele.
+  const sample = ed.previewSample;
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
   // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
@@ -237,7 +239,13 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} />
+        <PhoneFrame
+          text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)}
+          mediaUrl={ed.hasMedia ? ed.mediaUrl : null}
+          mediaType={ed.hasMedia ? ed.mediaType : null}
+          senderName={connection?.name ?? 'Sua Empresa'}
+          senderPhone={connection?.phone_number ?? null}
+        />
       </Section>
 
       <div className="space-y-4 min-w-0">
