@@ -1,6 +1,6 @@
 // TalkXCampaignRunning.tsx — E77: Tela "Campanha em Andamento"
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
@@ -15,12 +15,13 @@ import {
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
+import { useTalkXLiveChannel, talkxLiveBadgeText } from '@/hooks/integrations/useTalkXLiveChannel';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
-import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { invokeEdge } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
 
@@ -361,13 +362,14 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
-type LogEvent = { id: string; contact: string; phone: string; status: string; ts: string; error?: string | null };
 const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 
 function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
-  const queryClient = useQueryClient();
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // X144: UMA canal por campanha, com as três tabelas, modo degradado e invalidação
+  // em lote no lugar do canal próprio + `setQueryData` à mão (que não tratava falha
+  // de inscrição: o selo "Ao vivo" era texto fixo, mesmo com o realtime caído).
+  const { live, status, tablePollMs } = useTalkXLiveChannel(campaignId);
 
   // X047: a carga inicial dos logs engolia o erro (`if (data)`) — uma falha virava
   // "Aguardando eventos de envio…". Agora é uma consulta de verdade, com
@@ -392,41 +394,12 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
       }));
     },
     enabled: active && !!campaignId,
+    // Enquanto o canal estiver ao vivo quem atualiza é o evento; sem tempo real a
+    // lista continua andando no intervalo degradado (e o selo diz isso na tela).
+    refetchInterval: active && !live ? (tablePollMs ?? 15_000) : false,
   });
 
   const events = data ?? [];
-
-  useEffect(() => {
-    if (!active || !campaignId) return;
-
-    // Subscription realtime nos talkx_recipients desta campanha
-    const ch = supabase
-      .channel(`talkx-logs-${campaignId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'talkx_recipients',
-        filter: `campaign_id=eq.${campaignId}`,
-      }, (payload) => {
-        const r = payload.new as Record<string, unknown>;
-        if (r.status === 'pending') return;
-        const ev: LogEvent = {
-          id: r.id as string,
-          contact: '—', // sem join em realtime; enriquece se ja temos o contato
-          phone: '—',
-          status: r.status as string,
-          ts: r.updated_at as string,
-          error: r.error_message as string | null,
-        };
-        // O evento entra na mesma lista da consulta: uma fonte só para a tela.
-        queryClient.setQueryData<LogEvent[]>(['talkx-running-logs', campaignId], (prev) =>
-          [ev, ...(prev ?? []).filter((e) => e.id !== ev.id)].slice(0, 50));
-      })
-      .subscribe();
-    channelRef.current = ch;
-
-    return () => { void supabase.removeChannel(ch); };
-  }, [campaignId, active, queryClient]);
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
@@ -441,8 +414,11 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
       >
         <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
           <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
-            <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
+          {/* X144: selo único do tempo real — antes era um "Ao vivo" fixo mesmo com
+              a inscrição caída, o que fazia a tela mentir sobre estar atualizando. */}
+          <span className={`inline-flex items-center gap-1.5 text-2xs font-semibold px-2.5 py-1 rounded-lg border ${live ? 'border-dash-green/40 bg-dash-green/10 text-dash-green' : 'border-border/70 bg-input/40 text-foreground-secondary'}`}>
+            <span className={`w-2 h-2 rounded-full ${live ? 'bg-dash-green' : 'bg-dash-amber'}`} />
+            {talkxLiveBadgeText(status)}
           </span>
         </div>
         <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
@@ -624,14 +600,19 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     queryKey: ['talkx-running-history', selectedId],
     queryFn: async () => {
       if (!selectedId) return [];
-      // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
-      // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
+      // X144: a série é recortada pela JANELA do gráfico (20 buckets de 1 min + 1 min
+      // de folga), não por um teto de linhas — o teto fixo anterior, em ordem
+      // decrescente, deixava de fora o começo da janela em campanha grande e chegava
+      // a mostrar "série" montada sobre uma amostra. `recentMinuteSeries` descarta
+      // tudo que ficaria fora desses buckets, então o filtro do servidor é o mesmo
+      // recorte da tela.
+      const historyWindowStart = new Date(Date.now() - (20 + 1) * 60_000).toISOString();
       const { data, error } = await fromTable('talkx_recipients')
         .select('sent_at, delivered_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
-        .order('sent_at', { ascending: false })
-        .limit(2000);
+        .gte('sent_at', historyWindowStart)
+        .order('sent_at', { ascending: false });
       // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
       if (error) throw error;
       if (!data?.length) return [];
