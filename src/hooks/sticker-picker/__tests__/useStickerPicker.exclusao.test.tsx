@@ -57,7 +57,8 @@ function tableChain(table: string) {
     delete: () => ({
       eq: (column: string, value: string) => {
         mocks.rowDeleteEq(table, column, value);
-        return Promise.resolve({ error: null });
+        // Contrato atual: a exclusão confere as linhas afetadas via `.select('id')`.
+        return { select: () => Promise.resolve({ data: [{ id: 'sticker-1' }], error: null }) };
       },
     }),
     update: () => ({ eq: () => Promise.resolve({ error: null }) }),
