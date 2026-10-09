@@ -37,6 +37,14 @@ export type WizardStep = 1 | 2 | 3 | 4;
 export type AudienceSource = 'contacts' | 'segment' | 'crm360';
 
 export const DEFAULT_SCHEDULE_TIMEZONE = 'America/Sao_Paulo';
+
+/**
+ * X124 — limites do nome da campanha (coluna `talkx_campaigns.name`). Vivem
+ * aqui para o passo 1 (mensagem/aria-invalid) e o bloqueio de avanço usarem a
+ * MESMA régua, em vez de repetir o número em cada ponto.
+ */
+export const CAMPAIGN_NAME_MIN_LENGTH = 3;
+export const CAMPAIGN_NAME_MAX_LENGTH = 200;
 const DRAFT_CREATION_KEY_STORAGE = 'talkx:draft-creation-key:v1';
 
 /**
@@ -447,12 +455,16 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
 
   // V25 — responsáveis elegíveis: perfis ativos. Exibimos `name` (fallback
   // e-mail) e gravamos `id` (uuid de profiles.id), como em TalkXSuppression.
+  // X124 — quem responde pela campanha é admin ou supervisor: o papel entra no
+  // filtro do banco (não só uma peneira na tela), então um agente nunca aparece
+  // como responsável.
   const { data: ownerProfiles } = useQuery({
     queryKey: ['talkx-owner-profiles'],
     queryFn: async () => {
       const { data } = await supabase.from('profiles')
         .select('id, name, email')
         .eq('is_active', true)
+        .in('role', ['admin', 'supervisor'])
         .order('name');
       return (data ?? []) as { id: string; name: string | null; email: string | null }[];
     },
@@ -727,7 +739,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length >= 3 && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
     // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
     2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),

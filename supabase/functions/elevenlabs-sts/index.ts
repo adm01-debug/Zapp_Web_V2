@@ -1,5 +1,6 @@
 import { handleCors, errorResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
 
 /**
  * IA-122/IA-128 (Bloco 13 — Voz, transcrição, TTS e comandos).
@@ -114,11 +115,8 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
 
     const formData = await req.formData();
     const audioFile = formData.get('audio') as File | null;
-    const voiceId = formData.get('voiceId') as string;
-    const modelId = formData.get('modelId') as string;
 
     if (!audioFile) return errorResponse('Audio file is required', 400, req);
-    if (!voiceId || voiceId.length > 100) return errorResponse('Valid voice ID is required', 400, req);
 
     const uploadRejection = await validateStsUpload(audioFile);
     if (uploadRejection) {
@@ -129,7 +127,12 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
       return errorResponse(uploadRejection.error, uploadRejection.status, req);
     }
 
-    const selectedModel = (modelId && modelId.length <= 100) ? modelId : 'eleven_multilingual_sts_v2';
+    // SL-008 (achado B4) — a mesma lista fechada de `schemas.ts`: o cliente não
+    // escolhe voz fora do catálogo nem modelo. Antes `voiceId` era livre (≤100
+    // caracteres), então dava para acionar uma voz clonada da conta compartilhada.
+    const inputs = resolveElevenLabsStsInputs(formData.get('voiceId'), formData.get('modelId'));
+    if (!inputs.ok) return errorResponse(inputs.error, 400, req);
+    const { voiceId, modelId: selectedModel } = inputs;
 
     log.info("Converting audio", { size: audioFile.size, voiceId, model: selectedModel });
 
@@ -191,6 +194,8 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
   }
 }
 
+// `import.meta.main` (mesmo padrão de `elevenlabs-dialogue`): o handler pode ser
+// importado por teste sem subir o servidor.
 if (import.meta.main) {
   Deno.serve(handleElevenLabsSts);
 }

@@ -7,7 +7,7 @@ import { escapeOrFilterValue } from '@/lib/postgrestFilters';
 import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
-import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity } from 'lucide-react';
+import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, Upload, Download, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,10 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay, barsByDay } from './talkxShared';
+import { IconTile, RailCard, RailAction, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, fmtRelativeDay, barsByDay } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
 import {
@@ -53,6 +54,42 @@ const CONTACT_SEARCH_DEBOUNCE_MS = 300;
 
 /** Telefone da linha: o do contato vinculado ou, quando o bloqueio é só por telefone, o da própria supressão. */
 const fmtPhone = (raw: string | null | undefined) => { const d = (raw ?? '').replace(/\D/g, ''); return d ? `+${d}` : '—'; };
+
+// Telefone avulso do modal: o banco guarda só dígitos e o aceita de 10 a 15
+// (trigger de talkx_blacklist), então a tela valida a mesma faixa antes de
+// habilitar o envio e aplica a máscara brasileira durante a digitação.
+const PHONE_MIN_DIGITS = 10;
+const PHONE_MAX_DIGITS = 15;
+
+/** Só os dígitos — é a forma que o banco guarda em `talkx_blacklist.phone`. */
+function phoneDigits(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+/** Máscara brasileira durante a digitação: (11) 91234-5678. */
+function formatPhoneMask(digits: string): string {
+  const d = phoneDigits(digits).slice(0, PHONE_MAX_DIGITS);
+  if (d.length === 0) return '';
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  const base = `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
+  return d.length > 11 ? `${base} ${d.slice(11)}` : base;
+}
+
+/**
+ * Chave de comparação de telefone — SÓ para achar duplicado e habilitar o
+ * botão; nunca é o que vai para o banco. O DDD + número são os últimos 11
+ * dígitos tanto no telefone avulso quanto no telefone do contato cadastrado
+ * (que vem com o +55), então comparar o fim não acusa duplicado errado nem
+ * deixa passar o repetido. Abaixo de 10 dígitos não é telefone válido: não
+ * gera chave.
+ */
+function phoneKey(value: string | null | undefined): string | null {
+  const d = phoneDigits(value ?? '');
+  if (d.length < PHONE_MIN_DIGITS) return null;
+  return d.length >= 11 ? d.slice(-11) : d;
+}
 
 /* ------------------------------------------------------------------ */
 /* X184 — Atividade recente: trilha de supressão lida dos eventos de  */
@@ -114,12 +151,31 @@ export function TalkXSuppression() {
   const [pageSize, setPageSize] = useState(10);
   const [showAdd, setShowAdd] = useState(false);
   const [removing, setRemoving] = useState<BlacklistEntry | null>(null);
+  const [addTab, setAddTab] = useState<'contact' | 'phone'>('contact');
   const [addContactId, setAddContactId] = useState('');
+  const [addPhone, setAddPhone] = useState('');
   const [addReason, setAddReason] = useState(REASONS[0]);
   const [addCustomReason, setAddCustomReason] = useState('');
   const [addOrigin, setAddOrigin] = useState<'manual'|'lgpd'>('manual');
   const [contactSearch, setContactSearch] = useState('');
+  const [showReasons, setShowReasons] = useState(false);
   const debouncedContactSearch = useDebounce(contactSearch.trim(), CONTACT_SEARCH_DEBOUNCE_MS);
+
+  /**
+   * Limpa o formulário do modal Adicionar. É o MESMO reset nos três caminhos
+   * que fecham o modal: `onOpenChange` (Esc, clique fora), o botão Cancelar e o
+   * sucesso do envio — antes o Cancelar fechava com `setShowAdd(false)` e
+   * deixava aba, telefone e busca preenchidos para a próxima abertura.
+   */
+  const resetAddForm = () => {
+    setAddTab('contact');
+    setAddPhone('');
+    setAddContactId('');
+    setContactSearch('');
+    setAddReason(REASONS[0]);
+    setAddCustomReason('');
+    setAddOrigin('manual');
+  };
 
   // X184 — trilha da lista: os 5 últimos itens no rail e o histórico do modal.
   // O filtro e a página entram na chave da consulta, então cada recorte tem o
@@ -162,6 +218,25 @@ export function TalkXSuppression() {
 
   const blacklistedIds = useMemo(() => new Set(blacklist.map((b) => b.contact_id)), [blacklist]);
   const nonBlocked = useMemo(() => availableContacts.filter((c) => !blacklistedIds.has(c.id)), [availableContacts, blacklistedIds]);
+
+  // Telefone avulso: válido a partir de 10 dígitos; duplicado é o telefone que
+  // já está na lista (avulso ou do contato cadastrado), antes mesmo de enviar.
+  // `addPhoneKey` existe SÓ para isso — o envio grava os dígitos completos.
+  const addPhoneKey = useMemo(() => phoneKey(addPhone), [addPhone]);
+  const addPhoneDuplicate = useMemo(
+    () => (addPhoneKey ? blacklist.some((b) => phoneKey(b.phone) === addPhoneKey || phoneKey(b.contacts?.phone) === addPhoneKey) : false),
+    [blacklist, addPhoneKey],
+  );
+
+  /** Uso por motivo: quantos registros ativos da lista carregam cada rótulo. */
+  const reasonUsage = useMemo(() => {
+    const usage = new Map<string, number>();
+    for (const b of blacklist) {
+      const label = (b.reason ?? '').trim() || 'Sem motivo';
+      usage.set(label, (usage.get(label) ?? 0) + 1);
+    }
+    return usage;
+  }, [blacklist]);
 
   const filtered = useMemo(() => {
     let r = blacklist;
@@ -206,12 +281,21 @@ export function TalkXSuppression() {
   const addMutation = useMutation({
     mutationFn: async () => {
       const finalReason = addReason === 'Outro' ? addCustomReason || 'Outro' : addReason;
-      const { error } = await fromTable('talkx_blacklist').insert({ contact_id: addContactId, reason: finalReason, blocked_by: profile?.id ?? null, origin: addOrigin });
+      // Telefone avulso vai com TODOS os dígitos válidos (10 a 15). `addPhoneKey`
+      // corta para os últimos 11 só para comparar duplicado — usá-lo aqui salvava
+      // `5511998877665` truncado e a supressão não batia nas funções de banco que
+      // comparam o telefone inteiro.
+      const payload = addTab === 'phone'
+        ? { phone: phoneDigits(addPhone), contact_id: null, reason: finalReason, blocked_by: profile?.id ?? null, origin: addOrigin }
+        : { contact_id: addContactId, reason: finalReason, blocked_by: profile?.id ?? null, origin: addOrigin };
+      const { error } = await fromTable('talkx_blacklist').insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); qc.invalidateQueries({ queryKey: ['talkx-suppression-activity'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); setAddContactId(''); setAddReason(REASONS[0]); },
-    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talkx-blacklist'] }); qc.invalidateQueries({ queryKey: ['talkx-suppression-activity'] }); toast.success('Contato adicionado à lista de supressão'); setShowAdd(false); resetAddForm(); },
+    onError: (e: Error & { code?: string }) => toast.error(e.code === '23505' ? 'Este contato já está na lista de supressão' : `Erro: ${e.message}`),
   });
+
+  const addReady = addTab === 'phone' ? Boolean(addPhoneKey) && !addPhoneDuplicate : Boolean(addContactId);
 
   const removeMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -239,7 +323,6 @@ export function TalkXSuppression() {
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar por contato, telefone ou e-mail…"
           filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'origin' | 'motivo', v); setPage(1); }}
           hasActive={hasActive} onClear={() => { clearFilters(); setPage(1); }}
-          rightSlot={<PrimaryButton icon={Plus} onClick={() => setShowAdd(true)}>Adicionar contato</PrimaryButton>}
         />
 
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
@@ -292,8 +375,18 @@ export function TalkXSuppression() {
         </section>
       </div>
 
-      {/* Centro de proteção */}
+      {/* Rail: ações da lista (SH:242) + proteção + trilha */}
       <div className="space-y-4 min-w-0">
+        <RailCard icon={ListChecks} color="violet" title="Ações da lista" subtitle="Importar, exportar e personalizar a supressão">
+          <div className="flex flex-col gap-2">
+            <RailAction icon={Plus} color="blue" title="Adicionar contato" subtitle="Inserir manualmente" onClick={() => setShowAdd(true)} />
+            <RailAction icon={Settings} color="violet" title="Gerenciar motivos" subtitle="Personalizar categorias" onClick={() => setShowReasons(true)} />
+            <RailAction icon={Upload} color="amber" title="Importar contatos" subtitle="CSV, XLSX ou TXT" disabled />
+            <RailAction icon={Download} color="amber" title="Exportar lista" subtitle="Baixar lista em CSV" disabled />
+          </div>
+          <p className="text-2xs text-muted-foreground">Importar e exportar ainda não estão disponíveis nesta tela.</p>
+        </RailCard>
+
         <RailCard icon={ShieldCheck} color="green" title="Centro de proteção" subtitle="Mais segurança para suas campanhas" glow>
           <div className="rounded-xl bg-dash-green/10 border border-dash-green/30 p-3 text-center mb-3">
             <p className="text-4xl font-bold text-foreground tabular-nums">{fmtInt(totals.total)}</p>
@@ -353,12 +446,16 @@ export function TalkXSuppression() {
         </RailCard>
       </div>
 
-      {/* Modal adicionar */}
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+      {/* Modal adicionar: contato existente ou telefone avulso (duas abas) */}
+      <Dialog open={showAdd} onOpenChange={(o) => { setShowAdd(o); if (!o) resetAddForm(); }}>
         <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>Adicionar à Lista de Supressão</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
+          <Tabs value={addTab} onValueChange={(v) => setAddTab(v as 'contact' | 'phone')}>
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="contact">Contato existente</TabsTrigger>
+              <TabsTrigger value="phone">Telefone avulso</TabsTrigger>
+            </TabsList>
+            <TabsContent value="contact" className="mt-3">
               <Label className="text-xs text-foreground-secondary">Buscar contato</Label>
               <Input value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} placeholder="Nome ou telefone…" className="mt-1.5 bg-input/40 border-border/70" />
               <div className="max-h-40 overflow-auto mt-2 rounded-lg border border-border/60 divide-y divide-border/50">
@@ -369,7 +466,15 @@ export function TalkXSuppression() {
                     </button>
                   ))}
               </div>
-            </div>
+            </TabsContent>
+            <TabsContent value="phone" className="mt-3">
+              <Label htmlFor="talkx-suppress-phone" className="text-xs text-foreground-secondary">Telefone</Label>
+              <Input id="talkx-suppress-phone" value={addPhone} onChange={(e) => setAddPhone(formatPhoneMask(e.target.value))} inputMode="tel" placeholder="(11) 91234-5678" className="mt-1.5 bg-input/40 border-border/70" />
+              <p className="text-2xs text-foreground-secondary mt-1.5">DDD + número, de 10 a 15 dígitos. O contato não precisa estar cadastrado.</p>
+              {addPhoneDuplicate && <p className="mt-2 rounded-lg border border-dash-amber/30 bg-dash-amber/10 p-2.5 text-2xs text-foreground-secondary">Este contato já está na lista de supressão.</p>}
+            </TabsContent>
+          </Tabs>
+          <div className="space-y-4 py-2">
             <div>
               <Label className="text-xs text-foreground-secondary">Origem</Label>
               <div className="flex gap-2 mt-1.5">
@@ -386,8 +491,8 @@ export function TalkXSuppression() {
             </div>
           </div>
           <DialogFooter>
-            <GhostButton onClick={() => setShowAdd(false)}>Cancelar</GhostButton>
-            <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} className={cn((!addContactId || addMutation.isPending) && 'opacity-50 pointer-events-none')}>Bloquear</PrimaryButton>
+            <GhostButton onClick={() => { setShowAdd(false); resetAddForm(); }}>Cancelar</GhostButton>
+            <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} disabled={!addReady || addMutation.isPending}>Bloquear</PrimaryButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -432,6 +537,29 @@ export function TalkXSuppression() {
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal gerenciar motivos */}
+      <Dialog open={showReasons} onOpenChange={setShowReasons}>
+        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
+          <DialogHeader><DialogTitle>Motivos de supressão</DialogTitle></DialogHeader>
+          <ul className="divide-y divide-border/50 rounded-lg border border-border/60 max-h-72 overflow-auto">
+            {REASONS.map((r) => {
+              const usos = reasonUsage.get(r) ?? 0;
+              return (
+                <li key={r} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-foreground truncate">{r}</p>
+                    <p className="text-2xs text-foreground-secondary">{usos === 1 ? '1 registro' : `${fmtInt(usos)} registros`}</p>
+                  </div>
+                  <Pill label="Sistema" tone="muted" />
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-2xs text-foreground-secondary">Criar, renomear e desativar categorias depende da tabela de motivos do módulo (ainda não criada).</p>
+          <DialogFooter><GhostButton onClick={() => setShowReasons(false)}>Fechar</GhostButton></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

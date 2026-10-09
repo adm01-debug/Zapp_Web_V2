@@ -20,13 +20,24 @@ function specsEmQuarentena(): string[] {
   }
 }
 
+// E81 (G-05, docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md): os retries
+// existem para absorver a instabilidade da REDE REAL -- o login
+// (E2E_TEST_EMAIL/E2E_TEST_PASSWORD) e o backend de verdade. Por isso valem 2 APENAS
+// nos projetos logados (o proprio `setup`, que faz o login, e os que declaram
+// `dependencies: ['setup']` ou `storageState`). Os projetos deslogados usam backend
+// mockado e deterministico: repetir ali so triplicaria o tempo da falha real e
+// esconderia o defeito -- o `retries` global abaixo fica 0.
+// A regra e travada por scripts/ci/playwright-config-e81.unit.mjs.
+const RETRIES_LOGADOS = process.env.CI ? 2 : 0;
+
 export default defineConfig({
   testDir: './e2e',
   // E87: specs em quarentena ficam fora da execucao.
   testIgnore: specsEmQuarentena(),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
+  retries: 0,
   // The Email fixture boots a full Vite app and captures visual artifacts. A
   // bounded local pool prevents cold-start starvation that made otherwise
   // independent specs observe the module-loading fallback after five seconds.
@@ -34,7 +45,11 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
-    trace: 'on-first-retry',
+    // E81: guarda o trace quando o teste FALHA (inclusive na 1a tentativa, que com o
+    // `on-first-retry` ia embora sem deixar rastro se o retry passasse); nenhum spec
+    // depende de video, entao gravar video so consumiria disco e upload do relatorio.
+    trace: 'retain-on-failure',
+    video: 'off',
   },
   // Screenshots de referência: caminho fixo pedido pela etapa 90 do
   // PLANO_CONTATOS_100_ETAPAS_2026-09-29 — `e2e/__screenshots__/contacts-*.png`
@@ -71,6 +86,7 @@ export default defineConfig({
       // abaixo) — nunca bloqueia o projeto "chromium" acima.
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
+      retries: RETRIES_LOGADOS,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -80,6 +96,7 @@ export default defineConfig({
       // Playwright resolva "setup" sozinha via dependencies — ver e2e/README.md.
       name: 'chromium-e2e-core',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -115,6 +132,7 @@ export default defineConfig({
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
       testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -155,6 +173,7 @@ export default defineConfig({
       // Reusa o storageState gerado pelo projeto "setup".
       name: 'chromium-talkx',
       testMatch: /talkx\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -180,6 +199,7 @@ export default defineConfig({
       // browser-agnostic; the same user.json works for all engine projects).
       name: 'firefox-talkx',
       testMatch: /talkx\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
@@ -191,6 +211,7 @@ export default defineConfig({
       // Talk X module. Uses the same storageState as the other auth projects.
       name: 'webkit-talkx',
       testMatch: /talkx\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],
@@ -246,6 +267,7 @@ export default defineConfig({
       // coverage of the authenticated inbox. Reuses the storageState from setup.
       name: 'firefox-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
@@ -257,6 +279,7 @@ export default defineConfig({
       // cross-browser coverage of the authenticated inbox.
       name: 'webkit-conversation',
       testMatch: [/conversation\.spec\.ts/, /messaging\.spec\.ts/],
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],
@@ -274,6 +297,7 @@ export default defineConfig({
       // lista explicitamente os projects deslogados.
       name: 'firefox-catalog',
       testMatch: /catalog\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Firefox'],
@@ -284,6 +308,7 @@ export default defineConfig({
       // catalog.spec.ts (CT-82) no WebKit (Safari engine).
       name: 'webkit-catalog',
       testMatch: /catalog\.spec\.ts/,
+      retries: RETRIES_LOGADOS,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Safari'],

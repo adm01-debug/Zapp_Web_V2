@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
+import { toast } from '@/lib/lazyToast';
 import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
 
 /**

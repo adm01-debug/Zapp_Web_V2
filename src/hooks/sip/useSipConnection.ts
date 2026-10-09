@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getLogger } from '@/lib/logger';
 import type { UserAgent, Registerer, Invitation } from 'sip.js';
-import { toast } from 'sonner';
+// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
+import { toast } from '@/lib/lazyToast';
 import { REASON_LABEL, type CapabilityReason } from '@/lib/calls/capabilities';
 import { isLeader } from '@/lib/calls/tabLeaderStore';
 

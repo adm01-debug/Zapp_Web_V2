@@ -672,6 +672,11 @@ Deno.test('R2-DB-003 handler: resolve redige a linha fora do escopo na resposta 
       if (rpc === 'is_admin') return json(true);
       if (rpc === 'user_has_permission') return json(true);
       if (rpc === 'consume_rate_limit') return json({ allowed: true, remaining: 59 });
+      // R2-AUTH-022: requireAuth consulta a política de rede antes de liberar o
+      // handler; o stub responde "allow" no caminho feliz.
+      if (rpc === 'resolve_network_policy') {
+        return json([{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }]);
+      }
       if (rpc === 'multiplix_resolve_recipients') {
         const headers = new Headers(init?.headers);
         chamadasSingu.push({

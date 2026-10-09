@@ -50,6 +50,19 @@ function withFetch(routes: Route[]) {
       ? input.toString()
       : (input as Request).url;
     calls.push({ url, body: typeof init?.body === 'string' ? init.body : null });
+    // R2-AUTH-022: `requireAuth` passa a consultar a política de rede (RPC
+    // service_role) antes de liberar o handler. O stub responde "allow" para o
+    // caminho feliz destes casos, como já faz para `consume_rate_limit`.
+    if (url.includes('/rest/v1/rpc/resolve_network_policy')) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+          ]),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response('nao stubado', { status: 599 }));
     return Promise.resolve(

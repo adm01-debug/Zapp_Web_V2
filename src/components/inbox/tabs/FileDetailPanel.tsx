@@ -23,7 +23,6 @@ interface FileDetailContentProps {
 }
 
 export function FileDetailContent({ item, contactName, onClose, onRequestDelete }: FileDetailContentProps) {
-  const [hasError, setHasError] = useState(false);
   // Etapa 10 + R2-INB-059: o locator vai SEMPRE para o resolver (a URL em lote entra como
   // semente), entao o `refresh` do erro consegue renovar a assinatura que falhou.
   const { url: resolvedUrl, refresh } = useResolvedStorageUrl(item.url, undefined, {
@@ -31,6 +30,12 @@ export function FileDetailContent({ item, contactName, onClose, onRequestDelete 
     signedUrlExpiresAt: item.expiresAt,
   });
   const displayUrl = resolvedUrl || item.signedUrl || '';
+  // R2-INB-060: o erro pertence a URL que falhou, nao ao painel. O `FilesTab` troca o
+  // arquivo selecionado na MESMA instancia deste componente (sem `key` por arquivo), entao
+  // um `hasError` solto mantinha a imagem A em erro quando o usuario escolhia B — e a
+  // renovacao bem-sucedida da URL tambem nao podia reapresentar a imagem.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const hasError = displayUrl !== '' && failedUrl === displayUrl;
   const size = formatSize(item.size);
   // Etapa 31: nome tecnico so quando agrega — quando difere do displayName legivel.
   const technicalName = item.filename && item.filename !== item.displayName ? item.filename : null;
@@ -51,7 +56,7 @@ export function FileDetailContent({ item, contactName, onClose, onRequestDelete 
 
       <div className="aspect-square rounded-lg bg-muted flex items-center justify-center overflow-hidden">
         {(item.type === 'image' || item.type === 'sticker') && !hasError && displayUrl ? (
-          <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setHasError(true); void refresh(); }} />
+          <img src={displayUrl} alt={item.displayName} className="w-full h-full object-cover" onError={() => { setFailedUrl(displayUrl); void refresh(); }} />
         ) : item.type === 'video' || item.type === 'audio' ? (
           <Play className="w-8 h-8 text-muted-foreground" />
         ) : item.type === 'document' ? (

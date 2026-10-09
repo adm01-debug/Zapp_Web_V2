@@ -142,7 +142,13 @@ const ROTA_OPENAI = {
   },
 };
 
-const ROTAS_BASE = [ROTA_AUTH, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI];
+// R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+// antes de liberar o handler; o stub responde "allow" no caminho feliz.
+const ROTA_POLICY = {
+  match: "/rest/v1/rpc/resolve_network_policy",
+  body: [{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
+};
+const ROTAS_BASE = [ROTA_AUTH, ROTA_POLICY, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI];
 
 function makeRequest(body: unknown): Request {
   return new Request("https://stub.supabase.co/functions/v1/ai-proxy", {

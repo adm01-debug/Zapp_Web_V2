@@ -150,10 +150,77 @@ export const AiClassifyTicketsSchema = z.object({
 });
 
 // ─── ElevenLabs schemas ──────────────────────────────────────
+// SL-008 (achado B4) — lista FECHADA de vozes e modelos. Antes o cliente escolhia
+// `voiceId`/`modelId`/`voice_id` livremente (qualquer texto de até 100 caracteres):
+// dava para acionar uma voz clonada da conta compartilhada e o modelo mais caro.
+// A lista abaixo é o catálogo que a interface oferece — `ELEVENLABS_VOICES` em
+// `src/components/inbox/VoiceSelector.tsx` mais as vozes de diálogo de
+// `src/components/voice/ElevenLabsDialogue.tsx` — e o contrato
+// `tests/contracts/schemas.contract.test.ts` falha se a interface ganhar uma voz
+// que não esteja aqui.
+export const ELEVENLABS_VOICE_IDS = [
+  'TY3h8ANhQUsJaa0Bga5F', // Voz Principal (padrão do sistema)
+  'EXAVITQu4vr4xnSDxMaL', // Sarah
+  'CwhRBWXzGAHq8TQ4Fs17', // Roger
+  'FGY2WhTYpPnrIDTdsKH5', // Laura
+  'IKne3meq5aSn9XLyUdCD', // Charlie
+  'JBFqnCBsd6RMkjVDRZzb', // George
+  'XrExE9yKIg1WjnnlVkGX', // Matilda
+  'pFZP5JQG7iQjIQuC4Bku', // Lily
+  'onwK4e9ZLuTAKqWW03F9', // Daniel
+  'nPczCjzI2devNBz1zQrb', // Brian
+  'cgSgspJ2msm6clMCkdW9', // Jessica
+  'cjVigY5qzO86Huf0OWal', // Eric (diálogo)
+] as const;
+
+/** Modelos aceitos em `elevenlabs-tts` (eleven_v3) e `elevenlabs-tts-stream` (eleven_flash_v2_5). */
+export const ELEVENLABS_TTS_MODEL_IDS = ['eleven_v3', 'eleven_flash_v2_5'] as const;
+
+/** Modelo aceito em `elevenlabs-sts` (speech-to-speech). */
+export const ELEVENLABS_STS_MODEL_IDS = ['eleven_multilingual_sts_v2'] as const;
+
+export const ELEVENLABS_VOICE_NOT_ALLOWED = 'Voz não permitida: escolha uma voz da lista da interface.';
+export const ELEVENLABS_MODEL_NOT_ALLOWED = 'Modelo não permitido: escolha um modelo da lista da interface.';
+
+const ELEVENLABS_VOICE_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_VOICE_IDS);
+const ELEVENLABS_TTS_MODEL_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_TTS_MODEL_IDS);
+const ELEVENLABS_STS_MODEL_SET: ReadonlySet<string> = new Set<string>(ELEVENLABS_STS_MODEL_IDS);
+
+/** Voz aceita: id do catálogo da interface. Ausente, tipo errado ou fora da lista é recusado. */
+export function isAllowedElevenLabsVoiceId(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_VOICE_SET.has(value);
+}
+
+export function isAllowedElevenLabsTtsModel(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_TTS_MODEL_SET.has(value);
+}
+
+export function isAllowedElevenLabsStsModel(value: unknown): value is string {
+  return typeof value === 'string' && ELEVENLABS_STS_MODEL_SET.has(value);
+}
+
+/**
+ * Resolve os campos de `elevenlabs-sts` — a função lê `FormData`, não passa por
+ * schema zod, então a mesma lista fechada vale aqui. Devolve `{ ok: false }` com a
+ * mensagem de recusa para o handler responder 400 ANTES de chamar o provedor;
+ * `modelId` ausente cai no modelo do produto (o cliente não escolhe modelo).
+ */
+export function resolveElevenLabsStsInputs(
+  voiceId: unknown,
+  modelId: unknown,
+): { ok: true; voiceId: string; modelId: string } | { ok: false; error: string } {
+  if (!isAllowedElevenLabsVoiceId(voiceId)) return { ok: false, error: ELEVENLABS_VOICE_NOT_ALLOWED };
+  if (modelId === undefined || modelId === null || modelId === '') {
+    return { ok: true, voiceId, modelId: ELEVENLABS_STS_MODEL_IDS[0] };
+  }
+  if (!isAllowedElevenLabsStsModel(modelId)) return { ok: false, error: ELEVENLABS_MODEL_NOT_ALLOWED };
+  return { ok: true, voiceId, modelId };
+}
+
 export const ElevenLabsTTSSchema = z.object({
   text: z.string().min(1, "Text is required").max(5000),
-  voiceId: z.string().max(100).optional(),
-  modelId: z.string().max(100).optional(),
+  voiceId: z.string().max(100).refine(isAllowedElevenLabsVoiceId, { message: ELEVENLABS_VOICE_NOT_ALLOWED }).optional(),
+  modelId: z.string().max(100).refine(isAllowedElevenLabsTtsModel, { message: ELEVENLABS_MODEL_NOT_ALLOWED }).optional(),
   languageCode: z.string().max(10).optional(),
   applyTextNormalization: z.string().max(20).optional(),
 });
@@ -166,7 +233,7 @@ export const ElevenLabsSFXSchema = z.object({
 
 export const ElevenLabsDialogueSchema = z.object({
   script: z.array(z.object({
-    voice_id: z.string().min(1, "voice_id is required").max(100),
+    voice_id: z.string().min(1, "voice_id is required").max(100).refine(isAllowedElevenLabsVoiceId, { message: ELEVENLABS_VOICE_NOT_ALLOWED }),
     text: z.string().min(1, "text is required").max(5000),
   })).min(1, "Script is required"),
   languageCode: z.string().max(10).optional().default('pt'),

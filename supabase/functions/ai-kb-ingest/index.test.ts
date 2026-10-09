@@ -30,6 +30,9 @@ const USER_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
 Deno.env.set("SUPABASE_URL", SUPABASE_URL);
 Deno.env.set("SUPABASE_ANON_KEY", "anon-key-publica-de-teste");
+// R2-AUTH-022: `requireAuth` cria o client service_role para consultar a política
+// de rede; a env precisa existir (o `fetch` abaixo responde a RPC no stub).
+Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-de-teste");
 
 /** IP próprio por requisição: o rate limit em módulo não contamina os casos. */
 let ipSeq = 0;
@@ -209,6 +212,18 @@ function comAuthFalsa(userId: string | null): { restaurar: () => void; urls: str
   globalThis.fetch = ((input: RequestInfo | URL) => {
     const url = typeof input === "string" || input instanceof URL ? String(input) : input.url;
     urls.push(url);
+    // R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+    // antes de liberar o handler; o stub responde "allow" no caminho feliz.
+    if (url.includes("/rest/v1/rpc/resolve_network_policy")) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+    }
     if (url.includes("/auth/v1/user")) {
       return Promise.resolve(
         new Response(JSON.stringify({ id: userId }), {

@@ -1,21 +1,33 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 /**
  * Y09 — Navegação por todos os módulos sem erro de console nem requisição falha.
  *
- * Abre CADA entrada da barra lateral — as 11 da navegação primária e os 31 itens
- * das 5 seções (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e
- * prova, módulo a módulo, que a tela monta de verdade: título do documento, tela
- * própria do módulo (nunca "Acesso restrito", nunca o esqueleto de carregamento
- * preso, nunca tela em branco) e nenhum erro de console, exceção ou resposta >= 400.
+ * Abre CADA entrada que o papel do usuário sintético do conjunto local enxerga na
+ * barra lateral — as 11 da navegação primária e 29 dos 31 itens das 5 seções
+ * (Vendas & CRM, Automação & IA, Analytics, Conexões, Sistema) — e prova, módulo a
+ * módulo, que a tela monta de verdade: título do documento, tela própria do módulo
+ * (nunca "Acesso restrito", nunca o esqueleto de carregamento preso, nunca tela em
+ * branco) e nenhum erro de console, exceção ou resposta >= 400.
+ * Dois dos 31 itens são admin-only — 'CRM 360°' (`src/services/navigation.service.ts:70`)
+ * e 'Admin' (`:121`), ambos com `roles: ADMIN_ONLY` — e o usuário do seed é
+ * supervisor: eles ficam FORA da varredura e a AUSÊNCIA é conferida de propósito
+ * (`conferirEntradasForaDoPapel`), para o mapa de módulos não perder linhas em
+ * silêncio.
  * Repete tudo no celular 390x844, pelo menu móvel. A busca global ("Buscar") entra
  * nas duas larguras.
  *
- * AUTENTICAÇÃO: o teste entra pela TELA DE LOGIN com o usuário sintético do banco
- * LOCAL (lido de E2E_TEST_EMAIL/E2E_TEST_PASSWORD, que o wrapper zapp-e2e-local
- * injeta: admin.local@promobrindes.com.br, semeado por ~/.local/share/zapp-local/
- * seed.sql). Nenhuma sessão salva em disco é lida ou usada (R1), e nada aqui fala
- * com a produção.
+ * AUTENTICAÇÃO: sempre contra o banco LOCAL do conjunto do cartão — o wrapper
+ * zapp-e2e-local entrega ao app a URL local (VITE_ZAPP_LOCAL_SUPABASE_URL) e o
+ * usuário sintético do seed local (E2E_TEST_EMAIL/E2E_TEST_PASSWORD). O projeto
+ * que executa este spec (`chromium-authenticated`) chega com a sessão do projeto
+ * `setup`, que faz login REAL contra esse mesmo banco local: se ela já estiver
+ * montada o app redireciona para o shell e a varredura segue daí; se não estiver,
+ * o teste faz o próprio login pela tela. Em nenhum caminho se lê sessão de
+ * produção, fixture real ou segredo externo (R1): o conjunto local prende o DNS
+ * da produção e o zapp-db-guard confere o ambiente antes de rodar.
  *
  * A VARREDURA REPROVA por padrão. Só escapam as ocorrências de DUAS listas
  * explícitas e curtas, separadas de propósito, porque a natureza é diferente:
@@ -27,6 +39,10 @@ import { test, expect, type Page } from '@playwright/test';
  *    real e o teste só tolera se casar com a assinatura declarada) e traz o log do
  *    runtime que prova a configuração ausente. Não há família de endpoint, prefixo
  *    nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM.
+ *    NÃO existe entrada de curinga (`*`) — nem para falha de arranque do runtime do
+ *    conjunto: "qualquer 503" aceitaria também o que estivesse por trás dele. A corrida
+ *    de cache do runtime é removida ANTES de medir, por `aquecerRuntime` (abaixo), que
+ *    REPROVA a função que não subir nem em chamada isolada.
  *
  * 2) DEFEITO DO PRODUTO — as listas DEFEITOS_DE_PRODUTO (resposta HTTP) e
  *    NINHOS_DE_PRODUTO (HTML aninhado). É bug do app, achado por esta varredura,
@@ -48,6 +64,14 @@ interface ItemNav {
   id: string;
   /** rótulo exato da entrada na barra lateral (o nome acessível do botão) */
   label: string;
+  /**
+   * Entrada que a barra lateral só mostra para ADMINISTRADOR
+   * (`src/services/navigation.service.ts`: `crm360` na linha 70 e `admin` na 121,
+   * os dois com `roles: ADMIN_ONLY`). O usuário sintético do conjunto local é
+   * SUPERVISOR, então ela NÃO entra na varredura: entra na conferência de ausência
+   * (`conferirEntradasForaDoPapel`).
+   */
+  somenteAdmin?: boolean;
 }
 
 interface SecaoNav {
@@ -73,7 +97,7 @@ const SECOES: SecaoNav[] = [
   {
     label: 'Vendas & CRM',
     itens: [
-      { id: 'crm360', label: 'CRM 360°' },
+      { id: 'crm360', label: 'CRM 360°', somenteAdmin: true },
       { id: 'wallet', label: 'Carteira' },
       { id: 'queues', label: 'Filas' },
       { id: 'schedule', label: 'Agendamentos' },
@@ -120,7 +144,7 @@ const SECOES: SecaoNav[] = [
       { id: 'agents', label: 'Equipe' },
       { id: 'security', label: 'Segurança' },
       { id: 'privacy', label: 'LGPD' },
-      { id: 'admin', label: 'Admin' },
+      { id: 'admin', label: 'Admin', somenteAdmin: true },
       { id: 'themes', label: 'Skins' },
       { id: 'docs', label: 'Documentação' },
       { id: 'settings', label: 'Configurações' },
@@ -139,9 +163,11 @@ const NAV_INFERIOR = 'Navegação principal';
 /* -------------------------------------------------------------------------- */
 
 interface LacunaLocal {
-  /** caminho EXATO da função de ponta (sem host e sem query); '*' = falha do runtime local */
+  /** caminho EXATO da função de ponta (sem host, sem query e sem curinga) */
   caminho: string;
   status: number;
+  /** sintoma MEDIDO no conjunto local, em uma linha, para o relatório da rodada */
+  sintoma: string;
   /** assinatura do corpo: o teste só tolera se o corpo MEDIDO contiver uma delas */
   corpos: string[];
   /** prova da configuração ausente (log do runtime do conjunto local) */
@@ -175,6 +201,7 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
   {
     caminho: '/functions/v1/get-sip-password',
     status: 503,
+    sintoma: 'Telefonia: a função exige SIP_PASSWORD do projeto externo e devolve 503 SIP_NOT_CONFIGURED',
     corpos: ['"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"'],
     log: '{"level":"error","fn":"get-sip-password","msg":"SIP_PASSWORD is not configured"}',
     fonte: 'supabase/functions/get-sip-password/index.ts:53-58',
@@ -182,6 +209,7 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
   {
     caminho: '/functions/v1/promogifts-catalog',
     status: 503,
+    sintoma: 'Catálogo: a função depende do banco externo do catálogo e devolve 503 CATALOG_NOT_CONFIGURED',
     corpos: ['"error":"External DB not configured","code":"CATALOG_NOT_CONFIGURED"'],
     log: 'o conjunto local não tem o banco externo do catálogo (external DB not configured)',
     fonte: 'supabase/functions/promogifts-catalog/index.ts:335-336',
@@ -189,6 +217,7 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
   {
     caminho: '/functions/v1/multiplix-audience',
     status: 503,
+    sintoma: 'Multiplix: a função não sobe sem a ponte Singu do projeto externo e devolve 503 Internal server error',
     corpos: ['"error":"Internal server error"'],
     log: '{"level":"error","source":"edge","status":503,"msg":"Multiplix audience is not configured"}',
     fonte: 'supabase/functions/multiplix-audience/index.ts:375,397',
@@ -196,19 +225,10 @@ const LACUNAS_DO_CONJUNTO_LOCAL: LacunaLocal[] = [
   {
     caminho: '/functions/v1/gmail-oauth',
     status: 500,
+    sintoma: 'Gmail: a função exige GOOGLE_CLIENT_ID/OAuth do projeto externo e devolve 500 Internal Server Error',
     corpos: ['Internal Server Error'],
     log: 'Error: GOOGLE_CLIENT_ID is not configured',
     fonte: 'supabase/functions/gmail-oauth/index.ts:303',
-  },
-  {
-    // Falha do RUNTIME de Edge do conjunto local, não do app: o worker não conseguiu
-    // subir e o próprio runtime respondeu. Corpo fixo, produzido pelo runtime (o app
-    // nunca escreve essa mensagem), status 503.
-    caminho: '*',
-    status: 503,
-    corpos: ['"code":"BOOT_ERROR","message":"Worker failed to boot'],
-    log: "worker boot error: failed to bootstrap runtime: failed to create the graph: Failed caching npm package '@types/node@22.5.4'.: failed to unpack `node/readline/promises.d.ts` ... File exists (os error 17)",
-    fonte: 'runtime de Edge do conjunto local (cache Deno do contêiner de functions)',
   },
 ];
 
@@ -367,14 +387,14 @@ function respostaTolerada(medida: MedidaResposta): OcorrenciaTolerada | undefine
 
   const lacuna = LACUNAS_DO_CONJUNTO_LOCAL.find(
     (l) =>
-      (l.caminho === '*' || l.caminho === caminho) &&
+      l.caminho === caminho &&
       l.status === medida.status &&
       corpoCasa(medida.corpo, l.corpos),
   );
   if (lacuna) {
     return {
       origem: 'lacuna',
-      motivo: `lacuna do conjunto local (${lacuna.log}; ${lacuna.fonte}) — corpo medido: ${medida.corpo}`,
+      motivo: `lacuna do conjunto local (${lacuna.sintoma}) — ${lacuna.log}; ${lacuna.fonte} — corpo medido: ${medida.corpo}`,
     };
   }
 
@@ -432,6 +452,13 @@ type TipoRuido = 'console' | 'pageerror' | 'resposta';
 interface Ocorrencia {
   tipo: TipoRuido;
   texto: string;
+  /**
+   * URL onde a ocorrência nasceu. Na resposta ela sai do próprio texto; no
+   * console.error a URL NÃO está no texto — vem da localização da mensagem
+   * (`msg.location().url`), e é isso que permite casar a sombra do console com a
+   * resposta EXATA que a produziu (endpoint + status), em vez de com o status solto.
+   */
+  url?: string;
   /** prova da tolerância: só entra aqui com status e corpo medidos na resposta */
   tolerada?: OcorrenciaTolerada;
 }
@@ -442,6 +469,15 @@ interface Trafego {
   responderam: Set<string>;
   /** requisições que o navegador cancelou: não houve resposta nenhuma */
   canceladas: { metodo: string; url: string; motivo: string }[];
+}
+
+/**
+ * Texto de uma ocorrência de RESPOSTA, exatamente como o relatório e o julgamento o
+ * leem (`<status> <método> <url>`). A varredura e o bloco de guarda usam ESTA função —
+ * se o formato mudar, os testes de guarda caem junto, em vez de conferir uma cópia.
+ */
+function textoDaResposta(status: number, metodo: string, url: string): string {
+  return `${status} ${metodo} ${url}`;
 }
 
 function observar(page: Page): Trafego {
@@ -469,7 +505,7 @@ function observar(page: Page): Trafego {
     }
     trafego.ruido.push({
       tipo: 'resposta',
-      texto: `${response.status()} ${response.request().method()} ${response.url()}`,
+      texto: textoDaResposta(response.status(), response.request().method(), response.url()),
     });
   });
   page.on('requestfailed', (request) => {
@@ -532,11 +568,12 @@ async function esperarMedidaDaResposta(page: Page, texto: string): Promise<void>
  *
  * - resposta >= 400: só escapa com CORPO e status medidos na própria sessão, casando
  *   uma entrada de LACUNAS_DO_CONJUNTO_LOCAL ou de DEFEITOS_DE_PRODUTO;
- * - console.error: só escapa quando é a sombra de uma resposta já justificada com
- *   aquele status ("Failed to load resource ... status of N") ou quando o par de tags
- *   aninhadas casa um defeito de NINHOS_DE_PRODUTO já registrado em test.fixme;
- * - qualquer outra coisa (exceção, erro de console sem resposta por trás, 4xx de
- *   validação, endpoint novo, par de tags novo) entra em `reprovam`.
+ * - console.error: só escapa quando é a sombra de uma resposta já justificada com o
+ *   MESMO caminho de função e o MESMO status ("Failed to load resource ... status of N",
+ *   com a URL na localização da mensagem) ou quando o par de tags aninhadas casa um
+ *   defeito de NINHOS_DE_PRODUTO já registrado em test.fixme;
+ * - qualquer outra coisa (exceção, erro de console sem resposta justificada por trás,
+ *   4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`.
  */
 async function julgar(
   page: Page,
@@ -552,9 +589,48 @@ async function julgar(
   }
 
   const medidas = await lacunasMedidas(page);
+  return classificar(fatia, medidas, respostasJustificadas(trafego.ruido, medidas), trafego.ruido);
+}
+
+/** URL da ocorrência: do próprio texto (resposta) ou da localização da mensagem (console). */
+function urlDaOcorrencia(ocorrencia: Ocorrencia): string {
+  const bruta = ocorrencia.url ?? ((ocorrencia.texto.match(/https?:\/\/\S+/) ?? [''])[0]);
+  return bruta.split('?')[0];
+}
+
+/**
+ * Pares `caminho EXATO da função#status` que a sessão já justificou com uma medida real
+ * (corpo da resposta casando a assinatura declarada). É esta chave que autoriza a sombra
+ * de console — status solto NÃO autoriza nada.
+ */
+function respostasJustificadas(ruido: Ocorrencia[], medidas: MedidaResposta[]): Set<string> {
+  const chaves = new Set<string>();
+  for (const ocorrencia of ruido) {
+    if (ocorrencia.tipo !== 'resposta') continue;
+    const url = urlDaOcorrencia(ocorrencia);
+    const status = statusDaOcorrencia(ocorrencia.texto);
+    const medida = medidas.find((m) => caminhoDaFuncao(m.url) === caminhoDaFuncao(url) && m.status === status);
+    if (medida && respostaTolerada(medida)) chaves.add(`${caminhoDaFuncao(url)}#${status}`);
+  }
+  return chaves;
+}
+
+/**
+ * Julga uma janela de ruído contra as duas listas. É PURA (não toca no navegador) de
+ * propósito: o bloco "Guarda da varredura", no fim do arquivo, chama esta mesma função
+ * com ruído sintético para provar que endpoint novo, status diferente, corpo fora da
+ * assinatura e console sem resposta justificada REPROVAM.
+ */
+function classificar(
+  fatia: Ocorrencia[],
+  medidas: MedidaResposta[],
+  justificadasDaSessao: Set<string>,
+  /** lista COMPLETA da sessão: é nela que a sombra procura a resposta que a precedeu */
+  todas: Ocorrencia[] = fatia,
+): { reprovam: Ocorrencia[]; lacunas: Ocorrencia[]; defeitos: Ocorrencia[] } {
   const lacunas: Ocorrencia[] = [];
   const defeitos: Ocorrencia[] = [];
-  const statusJustificados = new Set<number>();
+  const justificadas = new Set(justificadasDaSessao);
   const pendentes = new Set<Ocorrencia>();
 
   for (const ocorrencia of fatia) {
@@ -562,14 +638,14 @@ async function julgar(
       pendentes.add(ocorrencia);
       continue;
     }
-    const url = ((ocorrencia.texto.match(/https?:\/\/\S+/) ?? [''])[0]).split('?')[0];
+    const url = urlDaOcorrencia(ocorrencia);
     const status = statusDaOcorrencia(ocorrencia.texto);
     const medida = medidas.find((m) => caminhoDaFuncao(m.url) === caminhoDaFuncao(url) && m.status === status);
     const tolerada = medida ? respostaTolerada(medida) : undefined;
 
     if (tolerada) {
       ocorrencia.tolerada = tolerada;
-      statusJustificados.add(status);
+      justificadas.add(`${caminhoDaFuncao(url)}#${status}`);
       (tolerada.origem === 'lacuna' ? lacunas : defeitos).push(ocorrencia);
     } else {
       pendentes.add(ocorrencia);
@@ -578,11 +654,16 @@ async function julgar(
 
   const reprovam: Ocorrencia[] = [];
   for (const ocorrencia of Array.from(pendentes)) {
-    const status = statusDaOcorrencia(ocorrencia.texto);
-    if (ocorrencia.tipo === 'console' && status && statusJustificados.has(status)) {
+    // Sombra de console: o navegador escreve "Failed to load resource: the server
+    // responded with a status of N" e põe a URL na LOCALIZAÇÃO da mensagem, não no
+    // texto. Só escapa a sombra do MESMO caminho de função com o MESMO status de uma
+    // resposta já justificada e medida; console.error de outra URL, sem URL, ou de um
+    // status que aquele caminho não produziu REPROVA.
+    const chave = ocorrencia.tipo === 'console' ? chaveDaSombra(ocorrencia, todas) : undefined;
+    if (chave && justificadas.has(chave)) {
       ocorrencia.tolerada = {
         origem: 'lacuna',
-        motivo: `sombra de console da resposta já medida (status ${status})`,
+        motivo: `sombra de console da resposta já medida e justificada (${chave})`,
       };
       lacunas.push(ocorrencia);
       continue;
@@ -600,6 +681,41 @@ async function julgar(
   }
 
   return { reprovam, lacunas, defeitos };
+}
+
+/**
+ * Chave `caminho EXATO da função#status` da sombra de console.
+ *
+ * O console.error de recurso ("Failed to load resource ... the server responded with a
+ * status of N") NÃO traz a URL no texto, e a localização da mensagem aponta o DOCUMENTO
+ * (medido na rodada local de 08/10: a sombra do 500 de `gmail-oauth` caiu na tela de
+ * Contatos). Então a URL vem da RESPOSTA que produziu a sombra — o evento de resposta
+ * imediatamente anterior, na mesma sessão, com aquele status (o `page.on('response')`
+ * registra a URL real). Sem resposta anterior com esse status, ou se ela não for de uma
+ * função de ponta, não há sombra: REPROVA.
+ */
+function chaveDaSombra(ocorrencia: Ocorrencia, todas: Ocorrencia[]): string | undefined {
+  const status = statusDaOcorrencia(ocorrencia.texto);
+  if (!status) return undefined;
+
+  // 1) localização da mensagem, quando o navegador aponta a própria função de ponta.
+  const daLocalizacao = ocorrencia.url;
+  if (daLocalizacao?.includes('/functions/v1/')) {
+    return `${caminhoDaFuncao(daLocalizacao.split('?')[0])}#${status}`;
+  }
+
+  // 2) a resposta medida que precede a sombra nesta sessão.
+  const indice = todas.indexOf(ocorrencia);
+  if (indice < 0) return undefined;
+  for (let i = indice - 1; i >= 0; i -= 1) {
+    const anterior = todas[i];
+    if (anterior.tipo !== 'resposta') continue;
+    if (statusDaOcorrencia(anterior.texto) !== status) continue;
+    const url = urlDaOcorrencia(anterior);
+    if (!url.includes('/functions/v1/')) return undefined;
+    return `${caminhoDaFuncao(url)}#${status}`;
+  }
+  return undefined;
 }
 
 /** Linha de relatório por ocorrência, com o módulo onde ela apareceu. */
@@ -676,12 +792,51 @@ function shellAutenticado(page: Page) {
     .first();
 }
 
-/** Entra pela tela de login com o usuário sintético do banco local. */
+/**
+ * Deixa a sessão do banco local montada: aproveita o shell já autenticado (sessão
+ * do projeto `setup`, que loga contra o MESMO banco local) ou faz o login pela
+ * tela, com o usuário sintético do seed.
+ */
 async function entrar(page: Page): Promise<void> {
   // Tetos explícitos: sob carga alta o dev server demora a servir o bundle e um
   // clique sem teto pendura o teste inteiro (já aconteceu com 900 s).
   await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });
-  if (await shellAutenticado(page).isVisible().catch(() => false)) return;
+
+  // Espera o app DECIDIR a sessão, e só aceita um desfecho que se SUSTENTE.
+  // Quem já tem sessão é redirecionado de /auth para o shell, e a tela de login
+  // aparece por uma piscada antes do redirect (medido em 08/10 no conjunto
+  // t-a0ace86a: a aba "Entrar" nasce e some em ~400 ms nas duas larguras).
+  // Decidir por essa piscada levava o teste a clicar num elemento que já não
+  // existia — 90 s de espera e varredura vermelha no desktop e no celular.
+  //   shell autenticado visível  ⇒ segue sem tocar na tela de login;
+  //   tela de login visível por ESTABILIDADE_MS seguidos ⇒ é ela que vale.
+  const shell = shellAutenticado(page);
+  const abaEntrar = page.getByRole('tab', { name: /^entrar$/i }).first();
+  const ESTABILIDADE_MS = 1_500;
+  const limite = Date.now() + 120_000;
+  let loginDesde: number | undefined;
+  let tela: 'shell' | 'login' | undefined;
+
+  while (!tela && Date.now() < limite) {
+    if (await shell.isVisible().catch(() => false)) {
+      tela = 'shell';
+      break;
+    }
+    if (await abaEntrar.isVisible().catch(() => false)) {
+      loginDesde = loginDesde ?? Date.now();
+      if (Date.now() - loginDesde >= ESTABILIDADE_MS) tela = 'login';
+    } else {
+      loginDesde = undefined;
+    }
+    await page.waitForTimeout(200);
+  }
+
+  if (tela === 'shell') return;
+  if (tela !== 'login') {
+    throw new Error(
+      'nem o shell autenticado nem a tela de login ficaram de pé (banco local do conjunto do cartão)',
+    );
+  }
 
   const email = process.env.E2E_TEST_EMAIL;
   const senha = process.env.E2E_TEST_PASSWORD;
@@ -693,12 +848,11 @@ async function entrar(page: Page): Promise<void> {
   }
 
   const teto = { timeout: 90_000 };
-  await page.getByRole('tab', { name: /^entrar$/i }).click(teto);
+  await abaEntrar.click(teto);
   await page.getByRole('textbox', { name: /e-?mail/i }).fill(email, teto);
   await page.locator('input[type="password"]').fill(senha, teto);
   await page.getByRole('button', { name: /^entrar$/i }).click(teto);
 
-  const shell = shellAutenticado(page);
   if (!(await shell.isVisible().catch(() => false))) {
     await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);
   }
@@ -806,7 +960,7 @@ async function clicarDesktop(page: Page, item: ItemNav): Promise<void> {
  * repetido quando um aviso da aplicação cobre o botão no meio do caminho — é o
  * comportamento do próprio app, não um defeito do teste.
  */
-async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
+async function clicarMobile(page: Page, item: ItemNav, aoAbrirMenu?: () => Promise<void>): Promise<void> {
   const menu = page.getByRole('dialog', { name: MENU_CELULAR });
   const mais = page.getByRole('navigation', { name: NAV_INFERIOR }).getByRole('button', { name: 'Mais' });
   let ultimoErro: unknown;
@@ -816,6 +970,7 @@ async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
       await limparAvisos(page, `celular/${item.label}`);
       await mais.click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });
+      if (aoAbrirMenu) await aoAbrirMenu();
       await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });
       await expect(menu, 'o menu móvel não fechou depois de escolher o módulo').toBeHidden({
         timeout: 10_000,
@@ -833,13 +988,99 @@ async function clicarMobile(page: Page, item: ItemNav): Promise<void> {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Estabilização do runtime de Edge do conjunto local                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Aquece o runtime de Edge do conjunto local, UMA função de ponta por vez, e
+ * REPROVA se alguma não arrancar nem em chamada isolada.
+ *
+ * POR QUE EXISTE (medido em 07/10 no conjunto local): o contêiner de functions
+ * nasce com o cache Deno vazio e monta o grafo de dependências de cada função na
+ * primeira chamada. Quando o app dispara VÁRIAS funções em paralelo no arranque,
+ * o desempacotamento do mesmo pacote npm (@types/node) corre duas vezes ao mesmo
+ * tempo e uma delas morre com `File exists (os error 17)`; o runtime responde
+ * 503 {"code":"BOOT_ERROR",...} para aquela chamada, sem defeito de produto
+ * nenhum por trás (log do contêiner de functions do conjunto local).
+ *
+ * ISTO NÃO É TOLERÂNCIA. A varredura abaixo continua reprovando qualquer 503 que
+ * apareça, inclusive o de arranque: a lista de lacunas do conjunto tem endpoints
+ * exatos, com status e corpo medidos, e não existe entrada de curinga (`*`).
+ * Aqui a corrida é REMOVIDA antes de medir — e a função que não subir nem sozinha
+ * REPROVA este aquecimento (mais estrito do que tolerar o 503 na varredura).
+ *
+ * Invocado fora do wrapper `zapp-e2e-local` (sem as variáveis do conjunto local),
+ * o aquecimento é pulado com aviso; o teste é do conjunto local do cartão.
+ */
+async function aquecerRuntime(request: APIRequestContext): Promise<void> {
+  const url = process.env.VITE_ZAPP_LOCAL_SUPABASE_URL;
+  const chave = process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY;
+  const pasta = join(process.cwd(), 'supabase', 'functions');
+  if (!url || !chave || !existsSync(pasta)) {
+    console.warn('[AQUECIMENTO] sem conjunto local (VITE_ZAPP_LOCAL_SUPABASE_URL/ANON_KEY): pulado');
+    return;
+  }
+
+  const funcoes = readdirSync(pasta, { withFileTypes: true })
+    .filter((entrada) => entrada.isDirectory() && !entrada.name.startsWith('_'))
+    .map((entrada) => entrada.name)
+    .sort();
+
+  const semArranque: string[] = [];
+  for (const nome of funcoes) {
+    // Uma por vez, de propósito: é a chamada SIMULTÂNEA que corrompe o cache.
+    const resposta = await request
+      .post(`${url}/functions/v1/${nome}`, {
+        headers: { apikey: chave },
+        data: {},
+        timeout: 25_000,
+        failOnStatusCode: false,
+      })
+      .catch(() => undefined); // rede/tempo esgotado: quem reprova é a varredura
+    if (!resposta) continue;
+    if (resposta.status() === 503 && (await resposta.text()).includes('BOOT_ERROR')) {
+      semArranque.push(nome);
+    }
+  }
+
+  expect(
+    semArranque,
+    'o runtime de Edge do conjunto local não arrancou estas funções nem em chamada isolada (BOOT_ERROR)',
+  ).toEqual([]);
+  console.warn(`[AQUECIMENTO] ${funcoes.length} funções de ponta arrancaram sem BOOT_ERROR`);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Testes                                                                      */
 /* -------------------------------------------------------------------------- */
 
 const PASSOS: { secao?: string; item: ItemNav }[] = [
   ...PRIMARIOS.map((item) => ({ item })),
-  ...SECOES.flatMap((secao) => secao.itens.map((item) => ({ secao: secao.label, item }))),
+  ...SECOES.flatMap((secao) =>
+    secao.itens.filter((item) => !item.somenteAdmin).map((item) => ({ secao: secao.label, item })),
+  ),
 ];
+
+/** Entradas do mapa que o papel do seed não enxerga: ausência conferida, não ignorada. */
+const FORA_DO_PAPEL_DO_SEED = SECOES.flatMap((secao) =>
+  secao.itens.filter((item) => item.somenteAdmin).map((item) => item.label),
+);
+
+/**
+ * Confere que as entradas restritas a administrador NÃO aparecem para o usuário
+ * sintético do conjunto local (supervisor). Tirar 'CRM 360°' da varredura sem esta
+ * conferência seria esconder a lacuna: aqui a expectativa fica escrita, então o
+ * dia em que o papel do seed (ou o porteiro da entrada) mudar, isto REPROVA e a
+ * lista de módulos volta a ter de ser revista.
+ */
+async function conferirEntradasForaDoPapel(page: Page, onde: string): Promise<void> {
+  for (const label of FORA_DO_PAPEL_DO_SEED) {
+    await expect(
+      page.getByRole('button', { name: label, exact: true }),
+      `${onde}: "${label}" é admin-only e não pode aparecer para o supervisor do seed local`,
+    ).toHaveCount(0);
+  }
+}
 
 // A varredura inteira (login + 42 módulos + busca) passa longe do teto padrão de
 // 30s do Playwright — este teto é do cartão, não uma espera fixa.
@@ -867,16 +1108,56 @@ function relatarRodada(
   for (const linha of relatar(onde, defeitos)) console.warn(`  ${linha}`);
 }
 
+/**
+ * AQUECIMENTO DO CONJUNTO LOCAL — UMA VEZ PARA O ARQUIVO INTEIRO.
+ *
+ * Medido em 08/10 no conjunto local t-a0ace86a (rodadas 1 e 2 deste cartão):
+ * chamado DENTRO de cada teste, o aquecimento (74 funções de ponta, uma por vez)
+ * rodava duas vezes na mesma rodada — a segunda já com um worker residente por
+ * função — e o pico de memória matava o navegador no primeiro módulo do teste
+ * seguinte ("Target page, context or browser has been closed"). Aqui ele roda uma
+ * vez, antes dos dois testes, e continua com a mesma trava: função que não
+ * arrancar CONTINUA REPROVANDO (e a varredura continua reprovando qualquer 503 —
+ * esta lista não afrouxa nada).
+ *
+ * A passada é repetida (até 4) porque o arranque do runtime de Edge do conjunto
+ * local falha de forma intermitente ao desempacotar o cache Deno: na rodada 2 a
+ * primeira passada deixou `ai-suggest-reply` em BOOT_ERROR e a passada seguinte,
+ * do mesmo conjunto, arrancou as 74. Repetir aqui ESTABILIZA o conjunto antes de
+ * medir; não é tolerância: se a função não arrancar em nenhuma das passadas,
+ * o teste reprova.
+ */
+test.beforeAll(async ({ request }) => {
+  // O default do Playwright para hooks e 30 s, e uma passada de aquecimento (74
+  // funcoes de ponta) leva mais que isso: o teto vai no proprio hook.
+  test.setTimeout(20 * 60_000);
+  let ultimoErro: unknown;
+  for (let passada = 1; passada <= 4; passada += 1) {
+    try {
+      await aquecerRuntime(request);
+      return;
+    } catch (erro) {
+      ultimoErro = erro;
+      console.warn(`[AQUECIMENTO] passada ${passada} não fechou limpa — repetindo a passada inteira`);
+    }
+  }
+  throw ultimoErro;
+});
+
 test.describe('Navegação por todos os módulos (desktop)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('abre os 42 módulos da barra lateral e a busca global sem erro de console nem requisição falha', async ({
+  test('abre as 40 entradas do menu que o supervisor do seed enxerga e a busca global sem erro de console nem requisição falha', async ({
     page,
   }) => {
     // A varredura é longa (42 módulos + busca, cada um com espera de view e de
     // ruído): o teto padrão do Playwright (30 s) não cabe — e o teto fica no
     // próprio spec para ele rodar no config do repositório, sem config própria.
     test.setTimeout(20 * 60_000);
+    // O aquecimento do runtime do conjunto local roda UMA vez para o arquivo
+    // inteiro (test.beforeAll, mais abaixo): repeti-lo dentro de cada teste
+    // dobrava a carga sobre o runtime e o pico de memoria matava o navegador no
+    // meio do segundo teste (medido em 08/10, rodadas 1 e 2 do cartao).
     const trafego = observar(page);
     await abrirApp(page);
     let vistos = trafego.ruido.length;
@@ -887,8 +1168,13 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `desktop/${secao}` : 'desktop';
       visitados.push(item.label);
-      // Cada seção da barra lateral abre FECHADA; a visita do primeiro item abre a dela.
-      if (secao && item === SECOES.find((s) => s.label === secao)?.itens[0]) {
+      // Cada seção da barra lateral abre FECHADA: quem abre a dela é a visita do
+      // primeiro item DO MAPA daquela seção — que não é necessariamente o primeiro
+      // item da seção ('CRM 360°' é admin-only e saiu da varredura). Comparar com
+      // `itens[0]` deixava a seção fechada e o clique em 'Carteira' pendurava até o
+      // teto do teste (medido em 08/10 no conjunto t-a0ace86a).
+      const primeiroDaSecao = SECOES.find((s) => s.label === secao)?.itens.find((i) => !i.somenteAdmin);
+      if (secao && item === primeiroDaSecao) {
         await abrirSecaoDesktop(page, secao);
       }
       await clicarDesktop(page, item);
@@ -913,6 +1199,11 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
     defeitosDaRodada.push(...defeitos);
     expect(resumir(reprovam), 'desktop — Buscar produziu ruído não justificado').toEqual([]);
 
+    // A varredura já abriu as 5 seções da barra lateral: é agora que a ausência
+    // das entradas admin-only diz alguma coisa (com a seção fechada, o item não
+    // estaria no DOM de qualquer forma).
+    await conferirEntradasForaDoPapel(page, 'desktop');
+
     // Prova de cobertura: o número de módulos ABERTOS tem de bater com o mapa
     // da barra lateral, senão a varredura passou sem passar por tudo.
     expect(
@@ -931,7 +1222,7 @@ test.describe('Navegação por todos os módulos (desktop)', () => {
 test.describe('Navegação por todos os módulos (celular 390x844)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('abre os 42 módulos pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
+  test('abre as 40 entradas do menu pelo menu móvel e a busca do cabeçalho sem erro de console nem requisição falha', async ({
     page,
   }) => {
     test.setTimeout(20 * 60_000); // mesma razão do desktop: varredura longa
@@ -941,11 +1232,19 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
     const lacunasDaRodada: Ocorrencia[] = [];
     const defeitosDaRodada: Ocorrencia[] = [];
     const visitados: string[] = [];
+    // O menu móvel lista os mesmos grupos da barra lateral: na primeira vez que
+    // ele abre, a ausência das entradas admin-only é conferida (uma vez basta).
+    let foraDoPapelConferido = false;
+    const conferirForaDoPapelUmaVez = async () => {
+      if (foraDoPapelConferido) return;
+      foraDoPapelConferido = true;
+      await conferirEntradasForaDoPapel(page, 'celular');
+    };
 
     for (const { secao, item } of PASSOS) {
       const onde = secao ? `celular/${secao}` : 'celular';
       visitados.push(item.label);
-      await clicarMobile(page, item);
+      await clicarMobile(page, item, conferirForaDoPapelUmaVez);
       await conferirModulo(page, item, `${onde}/${item.label}`);
 
       const { reprovam, lacunas, defeitos } = await julgar(page, trafego, vistos);
@@ -987,6 +1286,146 @@ test.describe('Navegação por todos os módulos (celular 390x844)', () => {
       resumir(canceladasSemProva(trafego)),
       'celular: requisições canceladas que nunca responderam na mesma sessão',
     ).toEqual([]);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* GUARDA DA VARREDURA — prova, SEM NAVEGADOR, que ruído novo REPROVA          */
+/*                                                                             */
+/* A varredura só tolera o que casa (a) um endpoint EXATO da lista de lacunas   */
+/* do conjunto local, com status e corpo MEDIDOS, (b) um par EXATO de tags      */
+/* aninhadas já registrado em test.fixme, ou (c) a sombra de console de uma     */
+/* resposta daquele MESMO endpoint com aquele MESMO status. Este bloco chama a  */
+/* função PURA que a varredura usa (`classificar`) com ruído sintético e prova  */
+/* o lado que uma rodada verde não prova: que todo o resto REPROVA.             */
+/* -------------------------------------------------------------------------- */
+
+function respostaSintetica(status: number, url: string): Ocorrencia {
+  // usa o MESMO formatador da varredura (textoDaResposta): se o formato do ruído mudar
+  // no código de produção, os testes de guarda caem junto em vez de conferir uma cópia.
+  return { tipo: 'resposta', texto: textoDaResposta(status, 'GET', url) };
+}
+
+function consoleSintetico(texto: string, url?: string): Ocorrencia {
+  return { tipo: 'console', texto, url };
+}
+
+function medidaSintetica(url: string, status: number, corpo: string): MedidaResposta {
+  return { url, status, corpo };
+}
+
+const HOST_LOCAL = 'http://127.0.0.1:21186';
+const SIP_URL = `${HOST_LOCAL}/functions/v1/get-sip-password`;
+const CORPO_SIP = '{"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}';
+const NADA_JUSTIFICADO = new Set<string>();
+
+test.describe('Guarda da varredura: ruído novo REPROVA', () => {
+  test('endpoint novo (fora da lista) REPROVA mesmo com status conhecido', () => {
+    const url = `${HOST_LOCAL}/functions/v1/endpoint-novo`;
+    const ocorrencia = respostaSintetica(503, url);
+    const { reprovam, lacunas } = classificar(
+      [ocorrencia],
+      [medidaSintetica(url, 503, '"error":"qualquer coisa"')],
+      NADA_JUSTIFICADO,
+    );
+    expect(resumir(reprovam), 'endpoint novo passou pela varredura').toHaveLength(1);
+    expect(lacunas).toHaveLength(0);
+  });
+
+  test('endpoint da lista com OUTRO status REPROVA', () => {
+    const ocorrencia = respostaSintetica(500, SIP_URL);
+    const { reprovam } = classificar(
+      [ocorrencia],
+      [medidaSintetica(SIP_URL, 500, CORPO_SIP)],
+      NADA_JUSTIFICADO,
+    );
+    expect(resumir(reprovam), 'status fora do declarado passou pela varredura').toHaveLength(1);
+  });
+
+  test('endpoint e status da lista, corpo FORA da assinatura REPROVA', () => {
+    const ocorrencia = respostaSintetica(503, SIP_URL);
+    const { reprovam } = classificar(
+      [ocorrencia],
+      [medidaSintetica(SIP_URL, 503, '{"error":"outra coisa"}')],
+      NADA_JUSTIFICADO,
+    );
+    expect(resumir(reprovam), 'corpo fora da assinatura passou pela varredura').toHaveLength(1);
+  });
+
+  test('endpoint, status e corpo MEDIDOS da lista viram lacuna do conjunto local', () => {
+    const ocorrencia = respostaSintetica(503, SIP_URL);
+    const { reprovam, lacunas } = classificar(
+      [ocorrencia],
+      [medidaSintetica(SIP_URL, 503, CORPO_SIP)],
+      NADA_JUSTIFICADO,
+    );
+    expect(resumir(reprovam)).toEqual([]);
+    expect(lacunas).toHaveLength(1);
+    expect(lacunas[0].tolerada?.motivo, 'a tolerância não aponta a lacuna medida').toContain('SIP_PASSWORD');
+  });
+
+  test('resposta >= 400 sem medida nenhuma (REST, 4xx de validação) REPROVA', () => {
+    const ocorrencia = respostaSintetica(400, `${HOST_LOCAL}/rest/v1/contatos?select=id`);
+    const { reprovam } = classificar([ocorrencia], [], NADA_JUSTIFICADO);
+    expect(resumir(reprovam), '4xx sem prova medida passou pela varredura').toHaveLength(1);
+  });
+
+  test('console.error sem resposta justificada REPROVA (status solto não tolera)', () => {
+    const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
+    const outraUrl = consoleSintetico(
+      'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+      `${HOST_LOCAL}/functions/v1/outra-funcao`,
+    );
+    const semUrl = consoleSintetico('Uncaught TypeError: nao e funcao');
+    const { reprovam } = classificar([outraUrl, semUrl], [], justificadas);
+    expect(resumir(reprovam), 'console.error tolerado por status solto').toHaveLength(2);
+  });
+
+  test('sombra de console da MESMA resposta medida e justificada é tolerada', () => {
+    const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
+    const sombra = consoleSintetico(
+      'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+      SIP_URL,
+    );
+    const { reprovam, lacunas } = classificar([sombra], [], justificadas);
+    expect(resumir(reprovam)).toEqual([]);
+    expect(lacunas).toHaveLength(1);
+    expect(lacunas[0].tolerada?.motivo, 'a sombra não aponta o par exato que a justificou').toContain('#503');
+  });
+
+  test('sombra sem URL na mensagem só casa com a resposta MEDIDA que a precede', () => {
+    const justificadas = new Set([`${caminhoDaFuncao(SIP_URL)}#503`]);
+    const resposta = respostaSintetica(503, SIP_URL);
+    const sombra = consoleSintetico(
+      'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+    );
+
+    const comResposta = classificar(
+      [resposta, sombra],
+      [medidaSintetica(SIP_URL, 503, CORPO_SIP)],
+      new Set(justificadas),
+    );
+    expect(resumir(comResposta.reprovam)).toEqual([]);
+    expect(comResposta.lacunas).toHaveLength(2);
+
+    const sozinha = classificar([sombra], [], new Set(justificadas));
+    expect(
+      resumir(sozinha.reprovam),
+      'sombra sem resposta medida na sessão passou pela varredura',
+    ).toHaveLength(1);
+  });
+
+  test('par de tags aninhadas FORA da lista REPROVA; o da lista vira defeito com fixme', () => {
+    const novo = consoleSintetico(
+      'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <span> table',
+    );
+    const conhecido = consoleSintetico(
+      'In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <button> button',
+    );
+    const { reprovam, defeitos } = classificar([novo, conhecido], [], NADA_JUSTIFICADO);
+    expect(resumir(reprovam), 'par de tags novo passou pela varredura').toHaveLength(1);
+    expect(defeitos).toHaveLength(1);
+    expect(defeitos[0].tolerada?.motivo, 'o defeito não aponta o test.fixme').toContain('test.fixme');
   });
 });
 
