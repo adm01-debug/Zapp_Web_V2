@@ -46,9 +46,10 @@
  *      ESTADO (`state`) e o motivo técnico (`error_code`): 'ok' (categoria
  *      válida — inclusive quando o MODELO responde 'outros'), 'unknown' (sem
  *      entrada), 'input_error' (imagem recusada na preparação), 'low_confidence'
- *      (resposta sem categoria da lista) e 'provider_error' (falha de
- *      provedor/roteamento). Sem a correção todos estes caminhos devolviam
- *      SOMENTE `{ category: 'outros' }` e eram indistinguíveis;
+ *      (resposta sem categoria da lista OU resposta VAZIA — corpo 200 sem
+ *      conteúdo utilizável, com `error_code: 'EMPTY_RESPONSE'`) e 'provider_error'
+ *      (falha de provedor/roteamento). Sem a correção todos estes caminhos
+ *      devolviam SOMENTE `{ category: 'outros' }` e eram indistinguíveis;
  *   8. no front (`useMediaLibrary.ts`, reclassificação em lote) a gravação da
  *      categoria fica atrás da checagem de estado: indisponibilidade do modelo
  *      não altera o arquivo para 'outros' como se fosse conclusão.
@@ -149,6 +150,14 @@ const H = vi.hoisted(() => ({
   imageMode: 'ok' as ImageMode,
   /** Conteúdo que o provedor devolve (categoria); `null` usa o 200 padrão. */
   providerContent: 'riso' as string | null,
+  /**
+   * FORMA da resposta 200 do provedor (IA-132 — resposta vazia):
+   *   - 'normal':         `choices[0].message.content` traz `providerContent`;
+   *   - 'emptyChoices':   `choices: []`;
+   *   - 'missingChoices': corpo SEM a chave `choices`;
+   *   - 'noContent':      `choices[0].message` existe mas SEM `content`.
+   */
+  providerShape: 'normal' as 'normal' | 'emptyChoices' | 'missingChoices' | 'noContent',
   /**
    * Identidade que `requireAiIdentityOrService` devolve (R2-INF-022): 'user' é
    * o fluxo de usuário; 'service' é o fluxo interno do webhook do WhatsApp.
@@ -279,6 +288,7 @@ beforeEach(() => {
   H.fetchMode = 'ok';
   H.imageMode = 'ok';
   H.providerContent = 'riso';
+  H.providerShape = 'normal';
   H.identityKind = 'user';
   logSpy.mockClear();
 
@@ -305,14 +315,25 @@ beforeEach(() => {
           headers: { 'content-type': 'application/json' },
         });
       }
-      return new Response(
-        JSON.stringify({
-          model: MODELO_VISAO,
-          choices: [{ message: { content: H.providerContent } }],
-          usage: { prompt_tokens: 7, completion_tokens: 2 },
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      const payload: Record<string, unknown> = {
+        model: MODELO_VISAO,
+        usage: { prompt_tokens: 7, completion_tokens: 2 },
+      };
+      // IA-132 — a FORMA da resposta 200 é controlada por `providerShape`: o caso
+      // de resposta VAZIA (sem conteúdo utilizável) sai de um destes ramos.
+      if (H.providerShape === 'emptyChoices') {
+        payload.choices = [];
+      } else if (H.providerShape === 'missingChoices') {
+        // Corpo 200 SEM a chave `choices`.
+      } else if (H.providerShape === 'noContent') {
+        payload.choices = [{ message: {} }];
+      } else {
+        payload.choices = [{ message: { content: H.providerContent } }];
+      }
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     }),
   );
 });
@@ -865,6 +886,31 @@ describe('(7) central: NENHUM caminho que devolva `outros` termina sem registro 
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'categoria-inventada'; },
       chamar: async () => (await handlers()).emoji(pedidoEmoji()),
     },
+    {
+      nome: 'provedor responde conteudo VAZIO - sticker', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = ''; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
+    },
+    {
+      nome: 'provedor responde conteudo VAZIO - emoji (so espacos)', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = '   '; },
+      chamar: async () => (await handlers()).emoji(pedidoEmoji()),
+    },
+    {
+      nome: 'provedor responde choices vazio', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'emptyChoices'; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
+    },
+    {
+      nome: 'provedor responde sem choices', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'missingChoices'; },
+      chamar: async () => (await handlers()).emoji(pedidoEmoji()),
+    },
+    {
+      nome: 'provedor responde item sem message.content', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'noContent'; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
+    },
   ];
 
   for (const cenario of cenarios) {
@@ -874,6 +920,7 @@ describe('(7) central: NENHUM caminho que devolva `outros` termina sem registro 
       H.fetchMode = 'ok';
       H.imageMode = 'ok';
       H.providerContent = 'riso';
+      H.providerShape = 'normal';
       cenario.preparar();
 
       const res = await cenario.chamar();
@@ -1001,6 +1048,7 @@ describe('(10) IA-132: o estado separa conclusão, desconhecido, baixa confianç
     H.fetchMode = 'ok';
     H.imageMode = 'ok';
     H.providerContent = 'riso';
+    H.providerShape = 'normal';
     H.identityKind = 'user';
     caso.preparar();
     const h = await handlers();
@@ -1067,6 +1115,55 @@ describe('(10) IA-132: o estado separa conclusão, desconhecido, baixa confianç
       chamar: (h) => h.emoji(pedidoEmoji()),
     });
     expect(inventada).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'INVALID_CATEGORY' });
+  });
+
+  it('resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)', async () => {
+    // CENTRAL: provedor 200 sem conteudo utilizavel NAO pode virar `{ outros, ok }`.
+    // Se o codigo voltar a `(content || 'outros')`, estes casos ficam VERMELHOS
+    // (sairia `{ category: 'outros', state: 'ok' }`).
+    const vazioSticker = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = ''; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(vazioSticker).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const brancoEmoji = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = '  \n  '; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(brancoEmoji).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const semContent = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'noContent'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(semContent).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const choicesVazio = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'emptyChoices'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(choicesVazio).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const semChoices = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'missingChoices'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(semChoices).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+  });
+
+  it('`outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle', async () => {
+    const explicitoSticker = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'outros'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(explicitoSticker).toEqual({ category: 'outros', state: 'ok' });
+
+    const explicitoEmoji = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'outros'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(explicitoEmoji).toEqual({ category: 'outros', state: 'ok' });
   });
 
   it("ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão", async () => {
