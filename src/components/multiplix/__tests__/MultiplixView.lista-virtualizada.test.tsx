@@ -15,9 +15,18 @@
  * substituído por um dublê que delega para as opções do COMPONENTE
  * (count/estimateSize) e devolve uma janela. Se o componente voltar a fazer
  * `rows.map`, as asserções caem (a linha fora da janela aparece no DOM).
+ *
+ * Rebase em dia/2026-10-09 (TL-006/F72): a composição deixou de viver num
+ * diálogo (`MultiplixComposerDialog`, removido — a seleção chegava até ele por
+ * `selectedCompanyIds`) e passou para a região 02 da própria `MultiplixView`.
+ * O que antes se lia em `lastComposerProps()?.selectedCompanyIds` agora se lê
+ * no rodapé real da tela ("N empresa(s) selecionada(s)", via `contagemSelecao()`
+ * abaixo) ou nas checkboxes visíveis (quando a linha está na janela do
+ * virtualizador) — o contrato provado (N do servidor, paginação, truncagem)
+ * não mudou, só a fonte da leitura.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 // Teto de page_size do servidor (SearchParamsSchema, page_size .max(200)).
 const SERVER_PAGE_MAX = 200;
@@ -34,7 +43,6 @@ const state = vi.hoisted(() => ({
   serverCount: undefined as number | undefined,
   declaredCount: undefined as number | undefined,
   virtualizerOptions: [] as Array<{ count: number; estimateSize: (i: number) => number }>,
-  composerProps: [] as Array<{ selectedCompanyIds: string[] }>,
 }));
 
 vi.mock('@tanstack/react-virtual', () => ({
@@ -82,13 +90,6 @@ vi.mock('@/components/multiplix/MultiplixMonitor', () => ({
   MultiplixMonitor: () => <div data-testid="monitor" />,
 }));
 
-vi.mock('@/components/multiplix/MultiplixComposerDialog', () => ({
-  MultiplixComposerDialog: (props: { selectedCompanyIds: string[] }) => {
-    state.composerProps.push(props);
-    return <div data-testid="composer" />;
-  },
-}));
-
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
 
 import { toast } from 'sonner';
@@ -124,8 +125,16 @@ function lastVirtualizerOptions() {
   return state.virtualizerOptions[state.virtualizerOptions.length - 1];
 }
 
-function lastComposerProps() {
-  return state.composerProps[state.composerProps.length - 1];
+// TL-006/F72: a seleção não chega mais a um diálogo por prop — ela vive em
+// `selected` (estado da própria tela) e aparece em DOIS rodapés reais ("N
+// empresa(s) selecionada(s)": um no fim da região 01, outro perto dos botões
+// da região 02). O da região 01 tem o número num `<strong>` DENTRO do `<p>`
+// que também tem o texto "selecionada(s)" — "X empresa(s) no filtro atual."
+// (count do servidor) também usa `<strong>`, por isso o escopo pelo `<p>` pai.
+function contagemSelecao(): number {
+  const p = Array.from(document.querySelectorAll('p')).find((el) => el.textContent?.includes('selecionada(s)'));
+  const n = p?.querySelector('strong')?.textContent;
+  return n ? Number(n) : 0;
 }
 
 beforeEach(() => {
@@ -133,7 +142,6 @@ beforeEach(() => {
   state.serverCount = undefined;
   state.declaredCount = undefined;
   state.virtualizerOptions = [];
-  state.composerProps = [];
   searchMock.mutate.mockReset();
   searchMock.mutateAsync.mockReset();
   vi.mocked(toast.error).mockClear();
@@ -159,10 +167,14 @@ describe('MultiplixView — F74 lista virtualizada e "Selecionar todos os N resu
     await waitFor(() => expect(lastVirtualizerOptions()?.count).toBe(5000));
 
     // Só a janela entra no DOM — a linha seguinte à janela não é renderizada.
+    // "Empresa 1" também aparece no seletor "Visualizar como" da região 03
+    // (prévia — pré-seleciona a 1ª empresa selecionada): o alvo aqui é a
+    // TABELA, por isso a busca é escopada a ela.
     expect(document.querySelectorAll('tr[data-index]').length).toBe(WINDOW);
-    expect(screen.getByText('Empresa 1')).toBeInTheDocument();
-    expect(screen.queryByText(`Empresa ${WINDOW + 1}`)).not.toBeInTheDocument();
-    expect(screen.queryByText('Empresa 5000')).not.toBeInTheDocument();
+    const tabela = document.querySelector('table') as HTMLTableElement;
+    expect(within(tabela).getByText('Empresa 1')).toBeInTheDocument();
+    expect(within(tabela).queryByText(`Empresa ${WINDOW + 1}`)).not.toBeInTheDocument();
+    expect(within(tabela).queryByText('Empresa 5000')).not.toBeInTheDocument();
 
     // O corpo reserva a altura cheia (5.000 linhas) para a barra de rolagem.
     const size = lastVirtualizerOptions()!.estimateSize(0);
@@ -186,7 +198,7 @@ describe('MultiplixView — F74 lista virtualizada e "Selecionar todos os N resu
 
     fireEvent.click(await screen.findByRole('checkbox', { name: /Selecionar todas as empresas visíveis/ }));
 
-    await waitFor(() => expect(lastComposerProps()?.selectedCompanyIds).toHaveLength(10000));
+    await waitFor(() => expect(contagemSelecao()).toBe(10000));
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith(expect.stringContaining('primeiras 10.000'));
   });
 
@@ -205,7 +217,7 @@ describe('MultiplixView — F74 lista virtualizada e "Selecionar todos os N resu
     expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
     releaseFirstPage(state.server as Row[]);
 
-    await waitFor(() => expect(lastComposerProps()?.selectedCompanyIds).toHaveLength(3));
+    await waitFor(() => expect(contagemSelecao()).toBe(3));
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith(expect.stringContaining('primeiras 3'));
     expect(vi.mocked(toast.error)).not.toHaveBeenCalledWith(expect.stringContaining('primeiras 10.000'));
   });
@@ -230,7 +242,7 @@ describe('MultiplixView — F74 lista virtualizada e "Selecionar todos os N resu
     expect(searchMock.mutate).toHaveBeenCalledTimes(1);
 
     releaseFirstPage(slicePage({ page: 0, page_size: SERVER_PAGE_MAX }));
-    await waitFor(() => expect(lastComposerProps()?.selectedCompanyIds).toHaveLength(300));
+    await waitFor(() => expect(contagemSelecao()).toBe(300));
   });
 
   it('usa o N do servidor (count) e materializa a seleção paginando o servidor', async () => {
@@ -246,12 +258,15 @@ describe('MultiplixView — F74 lista virtualizada e "Selecionar todos os N resu
 
     fireEvent.click(selectAll);
 
-    await waitFor(() => expect(lastComposerProps()?.selectedCompanyIds).toHaveLength(230));
-    expect(lastComposerProps()?.selectedCompanyIds.slice(0, 3)).toEqual(['c1', 'c2', 'c3']);
-    // A barra de seleção (texto quebrado em <strong> + texto, por isso o
-    // seletor pelo nó de texto) confirma os 230 vindos do servidor.
-    expect(screen.getByText(/empresa\(s\) selecionada\(s\)/).parentElement?.textContent)
-      .toContain('230 empresa(s) selecionada(s)');
+    await waitFor(() => expect(contagemSelecao()).toBe(230));
+    // As 3 primeiras linhas (índices 0-2, dentro da janela do virtualizador
+    // a partir do topo) estão selecionadas — confirma que a materialização
+    // preservou a ORDEM do servidor, não só a contagem.
+    expect(screen.getByLabelText('Selecionar Empresa 1')).toBeChecked();
+    expect(screen.getByLabelText('Selecionar Empresa 2')).toBeChecked();
+    expect(screen.getByLabelText('Selecionar Empresa 3')).toBeChecked();
+    // Confirma os 230 vindos do servidor pelo mesmo rodapé (contagemSelecao).
+    expect(contagemSelecao()).toBe(230);
 
     // Materialização vem do servidor, na maior página que ele aceita.
     expect(searchMock.mutateAsync).toHaveBeenCalledTimes(2);

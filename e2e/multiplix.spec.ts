@@ -221,28 +221,18 @@ async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
         return json(route, { data: 51 });
       case 'search':
         return json(route, { data: pagina(Number(params.page ?? 0)) });
-      case 'create_draft': {
-        // A Edge cria o disparo na transação e devolve o id; o monitor (que abre
-        // logo depois) lê esse id em `dispatch.list`. O fake faz o mesmo.
-        const nome = String(params.name ?? '');
-        backend.disparos = [
-          disparo({ id: DISPATCH_ID, name: nome, message_template: String(params.message_template ?? '') }),
-          ...backend.disparos.filter((d) => d.id !== DISPATCH_ID),
-        ];
-        return json(route, {
-          data: {
-            dispatch_id: DISPATCH_ID,
-            recipient_count: Array.isArray(params.company_ids) ? params.company_ids.length : 0,
-            created: true,
-          },
-        });
-      }
       default:
         return json(route, { error: `acao nao prevista no spec: ${action}` }, 400);
     }
   });
 
-  // ── Lista/monitor (multiplix-dispatch) ────────────────────────────────────
+  // ── Lista/monitor/criação (multiplix-dispatch) ────────────────────────────
+  // Rebase em dia/2026-10-09: a criação (`useCreateMultiplixDispatch`) chama
+  // `invokeMultiplixDispatch('draft.create', {...})` — ação `draft.create` no
+  // ROTEADOR (`multiplix-dispatch`), não `create_draft` em `multiplix-audience`
+  // (contrato antigo deste mock, nunca batia com o código real — nem no
+  // diálogo antigo, nem na tela nova; achado ao portar este spec, não
+  // introduzido por este cartão).
   await page.route(/\/functions\/v1\/multiplix-dispatch/, (route: Route) => {
     const { action = '', payload = {} } = corpo(route);
     backend.roteador.push({ action, params: payload });
@@ -262,6 +252,22 @@ async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
           ? backend.destinatarios
           : backend.destinatarios.filter((d) => d.status === filtro);
         return json(route, { data: { recipients: linhas, total: linhas.length } });
+      }
+      case 'draft.create': {
+        // A Edge cria o disparo na transação e devolve o id; o monitor (que abre
+        // logo depois) lê esse id em `dispatch.list`. O fake faz o mesmo.
+        const nome = String(payload.name ?? '');
+        backend.disparos = [
+          disparo({ id: DISPATCH_ID, name: nome, message_template: String(payload.message_template ?? '') }),
+          ...backend.disparos.filter((d) => d.id !== DISPATCH_ID),
+        ];
+        return json(route, {
+          data: {
+            dispatch_id: DISPATCH_ID,
+            recipient_count: Array.isArray(payload.company_ids) ? payload.company_ids.length : 0,
+            created: true,
+          },
+        });
       }
       default:
         return json(route, { error: `acao nao prevista no spec: ${action}` }, 400);
@@ -292,9 +298,15 @@ async function buscar(page: Page): Promise<void> {
   await expect(page.getByRole('cell', { name: EMPRESA_P1, exact: true })).toBeVisible();
 }
 
-/** Rodapé fixo da seleção (só existe com `selected.size > 0`). */
+/**
+ * Rodapé da seleção, no fim da região 01 ("01 Público"). TL-006/F72: a
+ * composição deixou de ficar num diálogo (`MultiplixComposerDialog`) e passou
+ * para a região 02 da própria tela, que tem o MESMO texto no rodapé dela
+ * (perto dos botões "Salvar") — por isso o escopo pela região 01, não
+ * `page.getByText` solto (acharia os dois).
+ */
 function rodapeSelecao(page: Page, quantas: number) {
-  return page.getByText(`${quantas} empresa(s) selecionada(s)`);
+  return page.locator('[aria-label="01 Público"]').getByText(`${quantas} empresa(s) selecionada(s)`);
 }
 
 /** Marca a empresa pelo `aria-label` do checkbox da linha. */
@@ -354,23 +366,31 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     await buscar(page);
 
     // O count da RPC independente aparece acima da tabela.
-    await expect(page.getByText(/empresa\(s\) no filtro atual/)).toContainText(EMPRESA_CHEIA);
-
-    // Página 0 = 50 linhas (limite do backend), com "Carregar mais" porque há 51.
-    await expect(page.getByRole('checkbox', { name: /^Selecionar E2E Empresa / })).toHaveCount(PAGE_SIZE);
+    const contagemFiltro = page.getByText(/empresa\(s\) no filtro atual/);
+    await expect(contagemFiltro).toContainText(EMPRESA_CHEIA);
+    // Página 0 = 50 linhas carregadas (limite do backend) de 51 do filtro — o
+    // texto mostra "Mostrando 50." enquanto `rows.length < count.data`.
+    // F74 (TL-007): a tabela é virtualizada no navegador real — só a janela
+    // visível (não as 50) vai ao DOM, por isso a contagem de linhas carregadas
+    // se lê neste texto, não contando checkboxes.
+    await expect(contagemFiltro).toContainText('Mostrando 50.');
     const carregarMais = page.getByRole('button', { name: /Carregar mais/ });
     await expect(carregarMais).toContainText('1 restante');
 
-    // Seleciona duas empresas da primeira página.
+    // Seleciona duas empresas da primeira página (índices 0 e 1 — sempre na
+    // janela do virtualizador, mesmo com `scrollTop` 0).
     await marcar(page, EMPRESA_P1);
     await marcar(page, EMPRESA_P2);
     await expect(rodapeSelecao(page, 2)).toBeVisible();
 
     // (a) A seleção sobrevive ao "Carregar mais": a página 1 é ANEXADA
-    // (`[...prev, ...data]`) e o que estava marcado continua marcado.
+    // (`[...prev, ...data]`) e o que estava marcado continua marcado. Com 51
+    // linhas carregadas = total do filtro, o texto "Mostrando" desaparece e o
+    // botão "Carregar mais" também (página 1 devolveu 1 < PAGE_SIZE: não é
+    // `lastPageFull`).
     await carregarMais.click();
-    await expect(page.getByRole('checkbox', { name: /^Selecionar E2E Empresa / })).toHaveCount(51);
-    await expect(page.getByRole('cell', { name: 'E2E Empresa 51', exact: true })).toBeVisible();
+    await expect(contagemFiltro).not.toContainText('Mostrando');
+    await expect(carregarMais).toHaveCount(0);
     await expect(rodapeSelecao(page, 2)).toBeVisible();
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).toBeChecked();
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P2}` })).toBeChecked();
@@ -388,7 +408,7 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).not.toBeChecked();
 
     // O spec não escreveu nada: nenhuma Edge de criação foi chamada por engano.
-    expect(backend.audiencia.filter((c) => c.action === 'create_draft')).toHaveLength(0);
+    expect(backend.roteador.filter((c) => c.action === 'draft.create')).toHaveLength(0);
     expect(backend.envios).toHaveLength(0);
   });
 
@@ -398,24 +418,36 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     await marcar(page, EMPRESA_P1);
     await marcar(page, EMPRESA_P2);
 
-    await page.getByRole('button', { name: 'Criar disparo' }).click();
-    const composer = page.getByRole('dialog');
-    await expect(composer.getByText('Novo disparo Multiplix')).toBeVisible();
-    await expect(composer.getByText(`2 empresa(s) selecionada(s) da busca.`)).toBeVisible();
+    // TL-008/F76: a composição não abre mais um diálogo ("Criar disparo") — os
+    // campos da região 02 ("02 Composição") já estão na tela, ao lado da
+    // região 01. O bloco de texto tem autosize e contador contra o teto do
+    // servidor ("N/65536 caracteres"), em vez da conta "N contatos × M
+    // blocos" do TL-010 (feature de outro cartão, não presente nesta ponta).
+    const composer = page.locator('[aria-label="02 Composição"]');
+    await expect(composer.getByText('0/65536 caracteres')).toBeVisible();
 
-    // Bloqueio que EXISTE hoje no composer: sem nome e sem mensagem os dois
-    // caminhos ficam desabilitados (não há validação de placeholder na tela).
-    const salvarRascunho = composer.getByRole('button', { name: 'Salvar rascunho' });
-    const iniciarAgora = composer.getByRole('button', { name: 'Salvar e iniciar agora' });
+    // Bloqueio que EXISTE hoje na tela: sem nome E sem mensagem os dois
+    // caminhos ficam desabilitados (o nome continua obrigatório — o título
+    // sugerido/opcional é do TL-010, não deste cartão). Os botões vivem no
+    // rodapé fixo GLOBAL (fora das 3 regiões — "antes viviam no diálogo"),
+    // não dentro da região 02.
+    const salvarRascunho = page.getByRole('button', { name: 'Salvar rascunho' });
+    const iniciarAgora = page.getByRole('button', { name: 'Salvar e iniciar agora' });
     await expect(salvarRascunho).toBeDisabled();
     await expect(iniciarAgora).toBeDisabled();
 
-    // Preenche o nome e a mensagem pelos CHIPS (os tokens válidos do composer).
+    // Preenche o nome e a mensagem pelos CHIPS (os tokens válidos da composição).
+    // TL-008 ganhou `aria-label` explícito nos chips ("inserir a X na
+    // mensagem") — o nome acessível não é mais o texto visível ("+ Empresa").
     await composer.getByPlaceholder('Ex.: Convite feira 2026').fill('Convite feira 2026');
-    await composer.getByRole('button', { name: '+ Empresa' }).click();
-    await composer.getByRole('button', { name: '+ Saudação' }).click();
+    await composer.getByRole('button', { name: 'inserir a empresa na mensagem' }).click();
+    await composer.getByRole('button', { name: 'inserir a saudação na mensagem' }).click();
     const mensagem = composer.getByPlaceholder('Olá {{empresa}}, {{saudacao}}!');
-    await expect(mensagem).toHaveValue('{{empresa}} {{saudacao}}');
+    // F76: `inserirNoCursor` insere no CURSOR (não concatena com espaço, como o
+    // F08 antigo) — as duas chips em sequência inserem uma após a outra.
+    await expect(mensagem).toHaveValue('{{empresa}}{{saudacao}}');
+    // F76: o contador acompanha o texto digitado.
+    await expect(composer.getByText('23/65536 caracteres')).toBeVisible();
     await expect(salvarRascunho).toBeEnabled();
 
     // "Salvar e iniciar agora" NÃO cria nada sozinho: abre o AlertDialog.
@@ -423,17 +455,17 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     const confirmacao = page.getByRole('alertdialog');
     await expect(confirmacao.getByText('Iniciar disparo agora?')).toBeVisible();
     await expect(confirmacao.getByText(/Isso envia mensagens reais no WhatsApp para 2 empresa\(s\)/)).toBeVisible();
-    expect(backend.audiencia.filter((c) => c.action === 'create_draft')).toHaveLength(0);
+    expect(backend.roteador.filter((c) => c.action === 'draft.create')).toHaveLength(0);
     expect(backend.envios).toHaveLength(0);
 
-    // Só a confirmação explícita chama a Edge: create_draft com os company_ids da
-    // seleção e o template com os placeholders, e depois o start em background.
+    // Só a confirmação explícita chama a Edge: draft.create com os company_ids
+    // da seleção e o template com os placeholders, e depois o start em background.
     await confirmacao.getByRole('button', { name: 'Iniciar agora' }).click();
 
-    await expect.poll(() => backend.audiencia.filter((c) => c.action === 'create_draft').length).toBe(1);
-    const criacao = backend.audiencia.find((c) => c.action === 'create_draft')!;
+    await expect.poll(() => backend.roteador.filter((c) => c.action === 'draft.create').length).toBe(1);
+    const criacao = backend.roteador.find((c) => c.action === 'draft.create')!;
     expect(criacao.params.name).toBe('Convite feira 2026');
-    expect(criacao.params.message_template).toBe('{{empresa}} {{saudacao}}');
+    expect(criacao.params.message_template).toBe('{{empresa}}{{saudacao}}');
     expect(criacao.params.company_ids).toEqual([
       '00000000-0000-4000-8000-000000000001',
       '00000000-0000-4000-8000-000000000002',
