@@ -17,7 +17,10 @@ import { useAudienceEstimate, RULE_FIELDS, RULE_OPS, type RuleOp, type SegmentRu
 import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { TalkXMessageEditor } from './TalkXMessageEditor';
+import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
+import { TalkXLinksManager } from './links/TalkXLinksManager';
+import { buildTalkxLinkPlaceholder, useTalkXLinks } from '@/hooks/integrations/useTalkXLinks';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
@@ -434,6 +437,19 @@ function StepAudience({ ed }: { ed: WizardState }) {
 
 function StepMessage({ ed }: { ed: WizardState }) {
   const approved = ed.templates.filter((t) => t.status === 'approved');
+  // Só admin/supervisor escreve link (mesmo predicado da RPC `talkx_upsert_link`).
+  // `true` estrito: enquanto a RPC não respondeu o botão não aparece, em vez de
+  // aparecer e falhar com 42501.
+  const canEditLinks = useCRMAdminAccess() === true;
+  const messageEditorRef = React.useRef<TalkXMessageEditorHandle>(null);
+  // Rótulos cadastrados são "conhecidos" no envio (X022, `loadLinkLabels` no
+  // motor): alimentar o editor com eles evita acusar {{link:rotulo}} como
+  // variável desconhecida logo depois de o usuário inserir o link.
+  const { links } = useTalkXLinks(ed.draftCampaignId);
+  const knownVariables = React.useMemo(
+    () => [...VARIABLE_KEYS, ...links.map((link) => buildTalkxLinkPlaceholder(link.label))],
+    [links],
+  );
   return (
     <>
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
@@ -469,12 +485,13 @@ function StepMessage({ ed }: { ed: WizardState }) {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
           <TalkXMessageEditor
+            ref={messageEditorRef}
             value={ed.messageTemplate}
             onChange={ed.setMessageTemplate}
             placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
             rows={7}
             limit={4096}
-            knownVariables={VARIABLE_KEYS}
+            knownVariables={knownVariables}
             footer={(
               <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
                 <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
@@ -509,6 +526,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
           </div>
         )}
       </SectionCard>
+
+      {/* X118 — links rastreáveis: cria o link medido e insere {{link:rotulo}} no cursor */}
+      <TalkXLinksManager
+        campaignId={ed.draftCampaignId}
+        campaignName={ed.name}
+        canEdit={canEditLinks}
+        onInsertPlaceholder={(placeholder) => messageEditorRef.current?.insertAtCursor(placeholder)}
+      />
 
       {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
       {(ed.messageTemplate.split('http').length - 1) > 2 && (
