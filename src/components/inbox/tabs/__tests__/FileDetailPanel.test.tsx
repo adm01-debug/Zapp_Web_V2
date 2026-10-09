@@ -89,4 +89,16 @@ describe('FileDetailContent — SL-083 (G4/G5)', () => {
     // "Excluir" continua PEDINDO a exclusão ao dono do estado (nunca apaga sozinho).
     expect(props.onRequestDelete).toHaveBeenCalledTimes(1);
   });
+
+  it('figurinha (type sticker, da dia) segue a mesma regra: o erro é da URL que falhou, não do painel', () => {
+    const fig1 = makeItem({ id: 's1', type: 'sticker', displayName: 'fig-1.webp', signedUrl: 'https://signed.test/s1.webp' });
+    const fig2 = makeItem({ id: 's2', type: 'sticker', displayName: 'fig-2.webp', signedUrl: 'https://signed.test/s2.webp' });
+    const { container, rerender, props } = renderPanel(fig1);
+    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+    expect(container.querySelector('img')).toBeNull();
+
+    rerender(<FileDetailPanel {...props} item={fig2} />);
+
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://signed.test/s2.webp');
+  });
 });
