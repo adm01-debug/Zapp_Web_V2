@@ -142,7 +142,7 @@ export function useConnectionsManager() {
     setLoading(true);
     const { data, error } = await supabase
       .from('whatsapp_connections')
-      .select('*')
+      .select('id, name, phone_number, instance_id, status, is_default, created_at, battery_level, is_plugged, retry_count, max_retries, health_status, health_response_ms, last_health_check')
       .order('created_at', { ascending: false });
     if (!isMountedRef.current) return;
     if (!error && data) setConnections(data as WhatsAppConnection[]);
