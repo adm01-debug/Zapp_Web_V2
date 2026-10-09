@@ -143,6 +143,39 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   return { complete: { groups }, incompleteCount };
 }
 
+/** Quantas condições a coluna "Principais critérios (regras)" mostra antes de resumir o resto em "+N" (X115). */
+export const RULE_CHIP_LIMIT = 3;
+
+/**
+ * X115 — texto legível de uma condição: campo + operador + valor
+ * ("Lead score maior que 1000", "Tags contém VIP", "Última interação nos últimos 30 dias").
+ * A biblioteca mostrava só o rótulo do campo, então a linha não dizia o que o
+ * segmento filtra. Condição sem valor sai sem valor — o vazio aparece, não some.
+ */
+export function describeRule(rule: SegmentRule): string {
+  const def = RULE_FIELDS.find((f) => f.value === rule.field);
+  const field = def?.label ?? rule.field;
+  const op = (RULE_OPS[def?.kind ?? 'text'] ?? RULE_OPS.text).find((o) => o.value === rule.op)?.label ?? rule.op;
+  const value = rule.value.trim();
+  // O rótulo do operador de data ("nos últimos (dias)") já diz a unidade; o
+  // valor entra como o número de dias que a regra usa no filtro.
+  if (rule.op === 'in_last_days' || rule.op === 'not_in_last_days') {
+    return value ? `${field} ${op} ${value} dias` : `${field} ${op}`;
+  }
+  if (rule.op === 'is_set' || rule.op === 'is_empty' || !value) return `${field} ${op}`;
+  return `${field} ${op} ${value}`;
+}
+
+/**
+ * X115 — chips da coluna "Principais critérios (regras)": até `limit` condições
+ * legíveis e o resto em `extra`, que a tela resume em "+N" com a dica listando
+ * os demais. Nada é descartado em silêncio.
+ */
+export function describeRules(rules: SegmentRules | null | undefined, limit = RULE_CHIP_LIMIT) {
+  const all = (rules?.groups ?? []).flatMap((group) => group.rules).map(describeRule);
+  return { chips: all.slice(0, limit), extra: all.slice(limit) };
+}
+
 // Escapa \ ANTES de escapar " — em um unico passe, para nao deixar uma barra
 // invertida do valor original "engolir" a aspa de fechamento do filtro
 // PostgREST (js/incomplete-sanitization: sem isso, um valor terminado em \
@@ -355,6 +388,35 @@ export function useTalkXSegments() {
     onError: (e: Error) => toast.error(`Erro ao atualizar segmento: ${e.message}`),
   });
 
+  /**
+   * X115 — "Duplicar" da linha da biblioteca: cria a cópia como rascunho (não
+   * ativa, sem favorito e sem uso) com o MESMO critério do original e devolve a
+   * linha nova, para o construtor abrir a cópia em vez do original. O status de
+   * rascunho do plano (X101) ainda não existe no banco: a cópia nasce `inactive`.
+   */
+  const duplicateSegment = useMutation({
+    mutationFn: async (segment: TalkXSegment) => {
+      const userId = profile?.id;
+      if (!userId) throw new Error('Perfil ainda não carregado');
+      const estimated_count = await countAudience(segment.rules);
+      const { data, error } = await fromTable('talkx_segments')
+        .insert({
+          name: `Cópia de ${segment.name}`,
+          description: segment.description,
+          rules: segment.rules,
+          estimated_count,
+          status: 'inactive',
+          is_favorite: false,
+          created_by: userId,
+        })
+        .select().single();
+      if (error) throw error;
+      return data as TalkXSegment;
+    },
+    onSuccess: () => { invalidate(); toast.success('Segmento duplicado'); },
+    onError: (e: Error) => toast.error(`Erro ao duplicar segmento: ${e.message}`),
+  });
+
   const deleteSegment = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await fromTable('talkx_segments').delete().eq('id', id);
@@ -380,6 +442,6 @@ export function useTalkXSegments() {
     isError: segmentsQuery.isError,
     error: segmentsQuery.error as Error | null,
     refetch: segmentsQuery.refetch,
-    createSegment, updateSegment, deleteSegment, refreshEstimates,
+    createSegment, updateSegment, duplicateSegment, deleteSegment, refreshEstimates,
   };
 }

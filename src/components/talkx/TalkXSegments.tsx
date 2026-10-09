@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import {
-  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
+  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, Users, Copy, Shield,
+  Check, Database, Search, Sliders, Power, type LucideIcon,
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton, GhostButton, Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay } from './talkxShared';
+import { useTalkXSegments, emptyRules, describeRules, type TalkXSegment, useAudienceEstimate, countAudience } from '@/hooks/integrations/useTalkXSegments';
+import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, EntityCell, RowActionsMenu, fmtInt, fmtDateTime, barsByDay, type PillTone, type TileColor } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -23,8 +23,21 @@ type ViewMode = 'list' | 'edit';
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
+/**
+ * X115 — a linha da biblioteca mostra, por segmento, o ícone e a cor do tile e o
+ * selo de origem COM ícone. `talkx_segments` não guarda `icon`/`color` (T02-027),
+ * então os dois saem da origem — que é dado real da linha — em vez de serem
+ * inventados por índice; `custom` é o "Segmentado" do mock (T02-031).
+ */
+const ORIGIN_CELL: Record<TalkXSegment['origin'], { label: string; tone: PillTone; icon: LucideIcon; color: TileColor }> = {
+  crm360: { label: 'CRM 360°', tone: 'violet', icon: Database, color: 'violet' },
+  zapp: { label: 'ZAPP', tone: 'info', icon: Zap, color: 'blue' },
+  custom: { label: 'Segmentado', tone: 'violet', icon: Sliders, color: 'amber' },
+};
+const originOf = (origin: TalkXSegment['origin']) => ORIGIN_CELL[origin] ?? ORIGIN_CELL.custom;
+
 export function TalkXSegments({ onUseCampaign }: Props) {
-  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment } = useTalkXSegments();
+  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, duplicateSegment, deleteSegment, refreshEstimates } = useTalkXSegments();
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -34,6 +47,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
+  const [duplicating, setDuplicating] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const filtered = useMemo(() => {
@@ -95,6 +109,27 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
+  /** X115 — "Duplicar" cria a cópia como rascunho e abre ELA no construtor (nunca o original). */
+  const duplicar = async (s: TalkXSegment) => {
+    if (duplicating) return;
+    setDuplicating(s.id);
+    try {
+      const copia = await duplicateSegment.mutateAsync(s);
+      openEdit(copia);
+    } catch {
+      // O hook já avisa o erro no toast; a lista continua como está.
+    } finally { setDuplicating(null); }
+  };
+
+  /** X115 — "Ativar/Inativar" da linha grava o status oposto ao que está em tela. */
+  const toggleStatus = async (s: TalkXSegment) => {
+    try {
+      await updateSegment.mutateAsync({ id: s.id, status: s.status === 'active' ? 'inactive' : 'active' });
+    } catch {
+      // O hook já avisa o erro no toast.
+    }
+  };
+
   if (mode === 'edit' && editing) {
     return <TalkXSegmentBuilder
       initial={editing}
@@ -123,7 +158,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         <FilterBarV2
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
           filters={[
-            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: ORIGIN_CELL.zapp.label }, { value: 'crm360', label: ORIGIN_CELL.crm360.label }, { value: 'custom', label: ORIGIN_CELL.custom.label }] },
             { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
           ]}
           values={{ origin: filterOrigin, status: filterStatus }}
@@ -147,49 +182,57 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
-                  <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Público relativo</Th><Th className="text-right">Ações</Th>
+                  <Th className="w-8">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Principais critérios (regras)</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Desempenho (última campanha)</Th><Th className="text-right">Ações</Th>
                 </tr></thead>
                 <tbody>
-                  {paged.map((s) => (
-                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                  {paged.map((s) => {
+                    const origin = originOf(s.origin);
+                    const { chips, extra } = describeRules(s.rules);
+                    return (
+                    <tr key={s.id} tabIndex={0} aria-selected={selected?.id === s.id} onClick={() => setSelected(s)}
+                      // X115 — a linha responde ao teclado: Enter abre o mesmo detalhe do clique.
+                      onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } }}
+                      className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40', selected?.id === s.id && 'bg-primary/5')}>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
-                        <p className="text-sm font-semibold text-foreground">{s.name}</p>
-                        <p className="text-2xs text-foreground-secondary truncate max-w-[220px]">{s.description || 'Sem descrição'}</p>
+                        <EntityCell name={s.name} description={s.description || 'Sem descrição'} icon={origin.icon} color={origin.color} />
                       </Td>
-                      <Td><Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} /></Td>
                       <Td>
-                        <div className="flex flex-wrap gap-1 max-w-[280px]">
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
-                            const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
-                          })}
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-3xs text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
+                        <span className="inline-flex items-center gap-1.5">
+                          <origin.icon className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                          <Pill label={origin.label} tone={origin.tone} />
+                        </span>
+                      </Td>
+                      <Td>
+                        <div className="flex flex-wrap gap-1 max-w-[320px]">
+                          {chips.map((chip, i) => <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{chip}</span>)}
+                          {extra.length > 0 && <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/40 text-foreground-secondary border border-border/60 cursor-help" title={extra.join(' · ')}>+{extra.length}</span>}
+                          {chips.length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
                         </div>
                       </Td>
-                      <Td><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-2xs text-foreground-secondary ml-1">contatos</span></Td>
-                      <Td><span className="text-xs text-foreground-secondary">{s.last_used_at ? fmtAgo(s.last_used_at) : 'Nunca'}</span></Td>
-                      <Td><ProgressBar value={Math.min(100, (s.estimated_count / Math.max(...segments.map((x) => x.estimated_count), 1)) * 100)} tone="info" height={6} className="w-[80px]" /></Td>
+                      <Td>
+                        <span className="text-sm font-bold text-foreground cursor-help" title={`Contagem gravada com o segmento · registro atualizado em ${fmtDateTime(s.updated_at)}`}>
+                          {fmtInt(s.estimated_count)}<span className="text-2xs text-foreground-secondary ml-1 font-normal">contatos</span>
+                        </span>
+                      </Td>
+                      <Td><span className="text-xs text-foreground-secondary">{s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca usado'}</span></Td>
+                      <Td><span className="text-2xs text-muted-foreground italic" title="A taxa de resposta da última campanha chega com a RPC da biblioteca (X103)">Sem dados ainda</span></Td>
                       <Td className="text-right">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50" aria-label="Ações"><MoreVertical className="w-4 h-4" /></button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onUseCampaign(s.id)}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openEdit(s)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toggleFav(s)}>{s.is_favorite ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}{s.is_favorite ? 'Remover favorito' : 'Favoritar'}</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-dash-red" onClick={() => setDeleting(s)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                        <SegmentRowActions
+                          segment={s}
+                          busy={duplicating === s.id}
+                          onDetails={() => setSelected(s)}
+                          onEdit={() => openEdit(s)}
+                          onDuplicate={() => void duplicar(s)}
+                          onUseCampaign={() => onUseCampaign(s.id)}
+                          onToggleFavorite={() => void toggleFav(s)}
+                          onToggleStatus={() => void toggleStatus(s)}
+                          onDelete={() => setDeleting(s)}
+                        />
                       </Td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -224,6 +267,38 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   );
 }
 
+/**
+ * X114/X115 — ações da linha da biblioteca, no menu ⋮ do kit (`RowActionsMenu`).
+ * O gatilho é nomeado pela linha (leitor de tela) e o conteúdo do menu é o do
+ * mock: Ver detalhes, Editar, Duplicar, Usar em campanha, Favoritar,
+ * Ativar/Inativar e Excluir.
+ */
+function SegmentRowActions({ segment, busy, onDetails, onEdit, onDuplicate, onUseCampaign, onToggleFavorite, onToggleStatus, onDelete }: {
+  segment: TalkXSegment; busy: boolean;
+  onDetails: () => void; onEdit: () => void; onDuplicate: () => void; onUseCampaign: () => void;
+  onToggleFavorite: () => void; onToggleStatus: () => void; onDelete: () => void;
+}) {
+  const ativo = segment.status === 'active';
+  return (
+    // O clique na linha abre o detalhe; o menu não pode disparar isso junto.
+    <div onClick={(e) => e.stopPropagation()}>
+      <RowActionsMenu
+        label={`Ações de ${segment.name}`}
+        busy={busy}
+        actions={[
+          { label: 'Ver detalhes', icon: Users, onSelect: onDetails },
+          { label: 'Editar', icon: Pencil, onSelect: onEdit },
+          { label: 'Duplicar', icon: Copy, onSelect: onDuplicate, disabled: busy },
+          { label: 'Usar em campanha', icon: Zap, onSelect: onUseCampaign },
+          { label: segment.is_favorite ? 'Remover favorito' : 'Favoritar', icon: segment.is_favorite ? StarOff : Star, onSelect: onToggleFavorite },
+          { label: ativo ? 'Inativar' : 'Ativar', icon: Power, onSelect: onToggleStatus },
+          { label: 'Excluir', icon: Trash2, danger: true, onSelect: onDelete },
+        ]}
+      />
+    </div>
+  );
+}
+
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
   const { data: est } = useAudienceEstimate(s.rules, true);
   return (
@@ -235,7 +310,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
       <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
-      <MetaRow label="Origem" value={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} />
+      <MetaRow label="Origem" value={originOf(s.origin).label} />
       <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
       {est?.sample && est.sample.length > 0 && (
