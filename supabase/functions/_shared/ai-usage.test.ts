@@ -1051,11 +1051,15 @@ function stubOutbox(opts: {
   logStatuses?: number[];
   profileStatus?: number;
   logLookup?: Record<string, unknown>[];
+  outboxPostStatus?: number;
+  outboxPatchStatus?: number;
 } = {}) {
   const capturas: Captura[] = [];
   const outbox: Array<Record<string, unknown>> = [];
   let logStatuses = opts.logStatuses ?? [201];
   let logPosts = 0;
+  let outboxPostStatus = opts.outboxPostStatus ?? 201;
+  let outboxPatchStatus = opts.outboxPatchStatus ?? 200;
   const profileStatus = opts.profileStatus ?? 200;
   const original = globalThis.fetch;
 
@@ -1097,6 +1101,10 @@ function stubOutbox(opts: {
       return json(opts.logLookup ?? []);
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "POST") {
+      // Conflito simulado: o PostgREST recusa o INSERT (ex.: 409 de unicidade).
+      if (outboxPostStatus >= 300) {
+        return json({ message: "conflito na outbox" }, outboxPostStatus);
+      }
       const pendencia = corpo as Record<string, unknown>;
       outbox.push({
         id: `pendencia-${outbox.length + 1}`,
@@ -1146,6 +1154,11 @@ function stubOutbox(opts: {
       return json(itens);
     }
     if (url.includes("/rest/v1/ai_usage_outbox") && metodo === "PATCH") {
+      // Baixa recusada: o PATCH responde erro e NADA é gravado (nem id, nem
+      // processed_at) — é o caso que prova que a baixa só conta se confirmada.
+      if (outboxPatchStatus >= 300) {
+        return json({ message: "baixa recusada" }, outboxPatchStatus);
+      }
       const id = url.match(/(?:[?&])id=eq\.([^&]+)/)?.[1];
       const campos = corpo as Record<string, unknown>;
       for (const item of outbox) {
@@ -1162,6 +1175,12 @@ function stubOutbox(opts: {
     setLogStatuses(statuses: number[]) {
       logStatuses = statuses;
       logPosts = 0;
+    },
+    setOutboxPostStatus(status: number) {
+      outboxPostStatus = status;
+    },
+    setOutboxPatchStatus(status: number) {
+      outboxPatchStatus = status;
     },
     restaurar() {
       globalThis.fetch = original;
@@ -1488,6 +1507,120 @@ Deno.test("IA-TIMEOUT-001 logAiUsage resolve sem lançar quando a montagem da li
     );
   } finally {
     console.error = consoleOriginal;
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (m) IA-TIMEOUT-001 — o enfileiramento e a baixa só contam com resposta ok
+// ---------------------------------------------------------------------------
+// O defeito corrigido: o enfileiramento da pendência tratava a resposta do
+// PostgREST como sucesso sem olhar `resposta.ok`, e a baixa da outbox podia ser
+// contada antes do PATCH confirmar. Nos dois caminhos a falha ficava muda: o
+// consumo pago saía do sistema sem pendência durável e sem marcador.
+Deno.test("IA-TIMEOUT-001 POST na outbox em conflito não conta como pendência e emite o marcador de último recurso", async () => {
+  const restaurarEnv = stubEnv();
+  // 409: o INSERT da pendência conflita (unicidade) e a outbox NÃO aceitou a linha.
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPostStatus: 409 });
+  const erros: string[] = [];
+  const consoleOriginal = console.error;
+  console.error = (...args: unknown[]) => erros.push(args.map(String).join(" "));
+  try {
+    await logAiUsage(ENTRADA);
+
+    assertEquals(postsNoLog(stub.capturas).length, 3, "o insert do log esgota o teto de tentativas");
+    assertEquals(postsNaOutbox(stub.capturas).length, 1, "a falha tenta enfileirar a pendência");
+    assertEquals(
+      stub.outbox.length,
+      0,
+      "INSERT em conflito não pode ser contado como pendência durável",
+    );
+    assert(
+      erros.some((m) => m.includes("[ai-usage][LOG-ESSENCIAL-PERDIDO]")),
+      "sem pendência na outbox, a falha tem de sair pelo marcador de último recurso",
+    );
+  } finally {
+    console.error = consoleOriginal;
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 baixa recusada pelo PATCH deixa o item pendente e não conta entrega", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPatchStatus: 500 });
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox.length, 1, "a linha completa ficou pendente na outbox");
+
+    // A entrega em `ai_usage_logs` passa a funcionar, mas a BAIXA continua
+    // recusada: sem `processed_at` gravado, o item não pode sair da fila.
+    stub.setLogStatuses([201]);
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.entregues, 0, "entrega sem baixa confirmada não é entrega");
+    assertEquals(resultado.pendentes, 1, "com a baixa recusada, o item segue pendente");
+    assertEquals(
+      stub.outbox[0].processed_at,
+      null,
+      "PATCH recusado não pode marcar processed_at",
+    );
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// (n) IA-TIMEOUT-001 — a SEGUNDA escrita da outbox também tem de responder
+// ---------------------------------------------------------------------------
+// O defeito corrigido: no reprocessamento, o PATCH que só registra a tentativa
+// (`tentativas` +1) era aguardado e o RESULTADO era jogado fora. Se o PostgREST
+// recusasse esse PATCH, o item continuava pendente (correto), mas a recusa
+// desaparecia: nem no retorno da execução, nem no log. É o mesmo padrão de
+// "segunda escrita ignorada" que derruba a fila em silêncio. Agora o retorno de
+// `atualizarPendencia` é olhado em TODOS os chamadores e a recusa sai no
+// `resultado.falha` da execução.
+Deno.test("IA-TIMEOUT-001 PATCH de tentativas recusado não sai em silêncio: a recusa fica no resultado", async () => {
+  const restaurarEnv = stubEnv();
+  // A entrega continua falhando (insert do log em 500) E o PATCH que registra a
+  // tentativa é recusado: exatamente o caminho que antes seguia sem rastro.
+  const stub = stubOutbox({ logStatuses: [500, 500, 500], outboxPatchStatus: 500 });
+  try {
+    await logAiUsage(ENTRADA);
+    assertEquals(stub.outbox.length, 1, "a falha de insert enfileira a pendência");
+
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.entregues, 0, "nada foi entregue");
+    assertEquals(resultado.pendentes, 1, "sem o registro da tentativa o item segue pendente");
+    assertEquals(
+      resultado.falha,
+      "patch_tentativas_recusado",
+      "PATCH recusado não pode ser descartado: a recusa tem de sair no resultado",
+    );
+    assertEquals(stub.outbox[0].tentativas, 0, "o PATCH recusado não alterou a linha");
+    assertEquals(stub.outbox[0].processed_at, null, "recusa de PATCH não pode dar baixa");
+  } finally {
+    stub.restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("IA-TIMEOUT-001 PATCH de tentativas confirmado registra a tentativa e não inventa falha", async () => {
+  const restaurarEnv = stubEnv();
+  const stub = stubOutbox({ logStatuses: [500, 500, 500] });
+  try {
+    await logAiUsage(ENTRADA);
+
+    const resultado = await reprocessarLogEssencial();
+
+    assertEquals(resultado.pendentes, 1, "a falha de entrega mantém o item na fila");
+    assertEquals(resultado.falha, null, "com o PATCH confirmado não há falha a registrar");
+    assertEquals(stub.outbox[0].tentativas, 1, "o PATCH confirmado registra a tentativa");
+    assertEquals(stub.outbox[0].processed_at, null, "pendência não recebe baixa sem entrega");
+  } finally {
     stub.restaurar();
     restaurarEnv();
   }
