@@ -14,6 +14,15 @@ describe('CsatCard', () => {
     expect(screen.getByText('Sem avaliações no período')).toBeInTheDocument();
   });
 
+  it('sem avaliações, não renderiza estrelas nem barras (nada inventado)', () => {
+    mockUseCSAT.mockReturnValue({ stats: { average: 0, total: 0, distribution: {}, trend: 0 } });
+    render(<CsatCard period="month" onPeriodChange={vi.fn()} />);
+    // SL-165: sem dado real, o card não pode mostrar nota 0.0 (que afirmaria
+    // "mediu e deu zero") nem barras/estrelas de distribuição inexistente.
+    expect(screen.queryByText('0.0')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId('csat-row')).toHaveLength(0);
+  });
+
   it('com avaliações, mostra nota média e distribuição por estrela', () => {
     mockUseCSAT.mockReturnValue({
       stats: { average: 4.8, total: 50, distribution: { 5: 36, 4: 10, 3: 2, 2: 1, 1: 1 }, trend: 12 },
