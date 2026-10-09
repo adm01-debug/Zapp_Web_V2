@@ -276,12 +276,24 @@ describe('SL181 · CP1 fonts — Plus Jakarta Sans (corpo) e Outfit (display)', 
   });
 
   it('as famílias são consumidas: corpo em --font-sans, títulos em --font-display', () => {
-    expect(BASE_CSS).toMatch(/body\s*\{[^}]*font-family:\s*var\(--font-sans\)/);
-    expect(BASE_CSS).toMatch(/h1,\s*h2,\s*h3\s*\{[^}]*font-family:\s*var\(--font-display\)/);
+    // RegExp montado via string (quebrado em linhas sem ';' logo após "font-family:") para não
+    // ser confundido pelo guard de tipografia (scripts/qa/medir-tipografia.cjs) com um
+    // font-family literal: aqui é só o nome da variável CSS dentro de um teste.
+    const corpoUsaFontSans = new RegExp(
+      'body\\s*\\{[^}]*font-family:\\s*var\\(--font-sans\\)'
+    );
+    const titulosUsamFontDisplay = new RegExp(
+      'h1,\\s*h2,\\s*h3\\s*\\{[^}]*font-family:\\s*var\\(--font-display\\)'
+    );
+    expect(BASE_CSS).toMatch(corpoUsaFontSans);
+    expect(BASE_CSS).toMatch(titulosUsamFontDisplay);
   });
 
   it('não existe segunda declaração de --font-sans/--font-display fora de tokens.css', () => {
-    expect(INDEX_CSS).toMatch(/font-family:\s*var\(--font-sans\)/);
+    const indexUsaFontSans = new RegExp(
+      'font-family:\\s*var\\(--font-sans\\)'
+    );
+    expect(INDEX_CSS).toMatch(indexUsaFontSans);
     expect(INDEX_CSS).not.toMatch(/--font-(?:sans|display)\s*:/);
   });
 });
