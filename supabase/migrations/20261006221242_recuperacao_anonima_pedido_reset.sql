@@ -17,7 +17,7 @@
 --     END;
 --     $function$;
 --     REVOKE EXECUTE ON FUNCTION public.sanitize_reset_request() FROM PUBLIC, anon, authenticated;
---     DROP POLICY IF EXISTS "Anon can file a password reset request" ON public.password_reset_requests;
+--     DROP POLICY IF EXISTS anon_can_file_password_reset_request ON public.password_reset_requests;
 --   Nenhuma linha de dado foi gravada, alterada ou apagada por esta migration: nao ha dado a desfazer.
 --
 -- R2-AUTH-006 (item 72 / #72c): "Recuperacao anonima consulta profiles protegido e nao cria
@@ -111,7 +111,8 @@ REVOKE EXECUTE ON FUNCTION public.sanitize_reset_request() FROM PUBLIC, anon, au
 
 -- Caminho anonimo de escrita: a tabela ja concede INSERT a anon; faltava a policy.
 DROP POLICY IF EXISTS "Anon can file a password reset request" ON public.password_reset_requests;
-CREATE POLICY "Anon can file a password reset request"
+DROP POLICY IF EXISTS anon_can_file_password_reset_request ON public.password_reset_requests;
+CREATE POLICY anon_can_file_password_reset_request
   ON public.password_reset_requests
   FOR INSERT
   TO anon
