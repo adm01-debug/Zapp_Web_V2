@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
 } from 'lucide-react';
@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXNoData, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
@@ -28,25 +28,59 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
+    userId = null,
   } = useTalkXSegments();
-  const [search, setSearch] = useState('');
-  const [filterOrigin, setFilterOrigin] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  // X114 — o recorte da biblioteca (filtros + página) vive na URL, para o endereço
+  // ser compartilhável; o tamanho de página é preferência do operador. A URL é lida
+  // UMA vez, na montagem, e devolvida a cada mudança (`syncSegmentLibraryUrl`,
+  // replaceState sem entrada de histórico). A preferência é DERIVADA do usuário
+  // (useMemo) em vez de sincronizada por efeito: o perfil pode chegar depois da
+  // montagem e a escolha explícita da tela é que manda enquanto durar a visita.
+  const [filters, setFilters] = useState<SegmentLibraryFilters>(() => parseSegmentLibraryFilters(window.location.search));
+  const [pageSizeChoice, setPageSizeChoice] = useState<number | null>(() => readSegmentLibraryPageSizeFromUrl(window.location.search));
+  const preferredPageSize = useMemo(() => readSegmentLibraryPageSize(userId), [userId]);
+  const pageSize = pageSizeChoice ?? preferredPageSize;
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Opções de tag e de proprietário saem dos PRÓPRIOS segmentos (nunca de lista
+  // fixa): tag é a coluna `talkx_segments.tags` de X101 e proprietário é
+  // `created_by`, que já vem no join `creator` do hook.
+  const tagOptions = useMemo(
+    () => Array.from(new Set(segments.flatMap((s) => s.tags ?? []))).sort((a, b) => a.localeCompare(b)),
+    [segments],
+  );
+  const ownerOptions = useMemo(() => {
+    const porId = new Map<string, string>();
+    for (const s of segments) {
+      const id = s.created_by ?? SEGMENT_LIBRARY_OWNER_NONE;
+      if (!porId.has(id)) porId.set(id, s.creator?.name ?? 'Sem proprietário');
+    }
+    return Array.from(porId, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [segments]);
+
   const filtered = useMemo(() => {
     let r = segments;
-    if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
-    if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
-    if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
+    if (filters.origin !== 'all') r = r.filter((s) => s.origin === filters.origin);
+    if (filters.status !== 'all') r = r.filter((s) => s.status === filters.status);
+    if (filters.tag !== 'all') r = r.filter((s) => (s.tags ?? []).includes(filters.tag));
+    if (filters.owner !== 'all') r = r.filter((s) => (s.created_by ?? SEGMENT_LIBRARY_OWNER_NONE) === filters.owner);
+    if (filters.search.trim()) { const q = filters.search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
-  }, [segments, filterOrigin, filterStatus, search]);
+  }, [segments, filters]);
+
+  // Página pedida pela URL pode passar do fim da lista filtrada (endereço antigo,
+  // filtro mais restritivo): a tela mostra a ÚLTIMA página existente e é essa que
+  // volta para a URL, em vez de "Mostrando 41 a 12 de 12".
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = Math.min(filters.page, pageCount);
+
+  useEffect(() => {
+    syncSegmentLibraryUrl({ ...filters, page }, pageSizeChoice);
+  }, [filters, page, pageSizeChoice]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -55,6 +89,24 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     () => segments.filter((s) => s.id !== editing?.id).map((s) => s.name),
     [segments, editing?.id],
   );
+
+  // Trocar de recorte volta para a PRIMEIRA página; repetir o mesmo valor não é
+  // troca. O "não é troca" importa: o campo de busca do kit reemite o valor atual
+  // pelo debounce de 250 ms e, sem a guarda, o endereço compartilhado com
+  // `segpagina=2` pulava para a página 1 sozinho logo depois de abrir.
+  const setFilterValue = (key: string, value: string) => {
+    if (key !== 'origin' && key !== 'status' && key !== 'tag' && key !== 'owner') return;
+    setFilters((f) => (f[key] === value ? f : { ...f, [key]: value, page: 1 }));
+  };
+  const setSearch = (value: string) => setFilters((f) => (f.search === value ? f : { ...f, search: value, page: 1 }));
+  const setPage = (next: number) => setFilters((f) => (f.page === next ? f : { ...f, page: next }));
+  const clearFilters = () => setFilters({ ...DEFAULT_SEGMENT_LIBRARY_FILTERS });
+  const choosePageSize = (next: number) => {
+    setPageSizeChoice(next);
+    saveSegmentLibraryPageSize(userId, next);
+    setFilters((f) => ({ ...f, page: 1 }));
+  };
+  const hasActiveFilters = filters.origin !== 'all' || filters.status !== 'all' || filters.tag !== 'all' || filters.owner !== 'all' || filters.search.trim() !== '';
 
   const openNew = () => { setSelected(null); setEditing({ id: null, name: '', description: '', rules: emptyRules() }); setMode('edit'); };
   const openEdit = (s: TalkXSegment) => { setEditing({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }); setSelected(s); setMode('edit'); };
@@ -119,15 +171,17 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         </TalkXQueryBoundary>
 
         <FilterBarV2
-          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
+          search={filters.search} onSearch={setSearch} placeholder="Buscar segmentos…"
           filters={[
-            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
-            { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
+            { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'tag', label: 'Tag', allLabel: 'Todas as tags', options: tagOptions.map((tag) => ({ value: tag, label: tag })) },
+            { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: ownerOptions },
           ]}
-          values={{ origin: filterOrigin, status: filterStatus }}
-          onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
-          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
-          onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
+          values={{ origin: filters.origin, status: filters.status, tag: filters.tag, owner: filters.owner }}
+          onFilter={setFilterValue}
+          hasActive={hasActiveFilters}
+          onClear={clearFilters}
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
         />
 
@@ -193,7 +247,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" /></div>}
         </section>
       </div>
 
@@ -298,7 +352,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
       right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2">
-        <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+        <Pill label={s.status === 'active' ? 'Ativo' : s.status === 'draft' ? 'Rascunho' : 'Inativo'} tone={s.status === 'active' ? 'success' : s.status === 'draft' ? 'warning' : 'muted'} dot />
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
       <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
