@@ -8,11 +8,6 @@ import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, X, AlertTriangle } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,9 +15,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, GhostButton, InitialsAvatar, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, SUPPRESSION_ORIGIN, Th, Td, fmtInt, fmtDateTime, barsByDay, TalkXConfirmDialog, TalkXDialogShell } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXFilterState } from './kit/useFilterState';
+import { PRESETS_DO_MOCK } from './kit/dialogPresets';
 
 interface BlacklistEntry {
   id: string;
@@ -189,9 +185,7 @@ export function TalkXSuppression() {
                         <Td><span className="text-xs text-foreground-secondary">{fmtDateTime(b.created_at)}</span></Td>
                         <Td><Pill label="Suprimido" tone="danger" dot /></Td>
                         <Td className="text-right">
-                          <AlertDialog>
-                            <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
-                          </AlertDialog>
+                          <button type="button" onClick={() => setRemoving(b)} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-dash-red/10 hover:text-dash-red flex items-center gap-1.5 ml-auto"><Trash2 className="w-3.5 h-3.5" />Remover</button>
                         </Td>
                       </tr>
                     );
@@ -224,11 +218,17 @@ export function TalkXSuppression() {
         </div>
       </div>
 
-      {/* Modal adicionar */}
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Adicionar à Lista de Supressão</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
+      {/* X050 — o formulário passa para a casca do kit; conteúdo igual ao de antes. */}
+      <TalkXDialogShell
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="Adicionar à Lista de Supressão"
+        footer={<>
+          <GhostButton onClick={() => setShowAdd(false)}>Cancelar</GhostButton>
+          <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} className={cn((!addContactId || addMutation.isPending) && 'opacity-50 pointer-events-none')}>Bloquear</PrimaryButton>
+        </>}
+      >
+          <div className="space-y-4">
             <div>
               <Label className="text-xs text-foreground-secondary">Buscar contato</Label>
               <Input value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} placeholder="Nome ou telefone…" className="mt-1.5 bg-input/40 border-border/70" />
@@ -256,19 +256,18 @@ export function TalkXSuppression() {
               {addReason === 'Outro' && <Textarea value={addCustomReason} onChange={(e) => setAddCustomReason(e.target.value)} placeholder="Descreva o motivo…" className="mt-2 bg-input/40 border-border/70" rows={2} />}
             </div>
           </div>
-          <DialogFooter>
-            <GhostButton onClick={() => setShowAdd(false)}>Cancelar</GhostButton>
-            <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} className={cn((!addContactId || addMutation.isPending) && 'opacity-50 pointer-events-none')}>Bloquear</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
-      <AlertDialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader><AlertDialogTitle>Remover da lista de supressão?</AlertDialogTitle><AlertDialogDescription><b className="text-foreground">{removing?.contacts?.name}</b> poderá receber mensagens do Talk X nas próximas campanhas.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => removing && removeMutation.mutate(removing.id)}>Remover</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* X050 — preset `removerSupressao` do kit (tile e botão violeta, textos do
+          mock); o nome do contato vai em `details` e o modal só fecha quando o
+          UPDATE volta, porque o `onConfirm` devolve a Promise da mutation. */}
+      <TalkXConfirmDialog
+        open={!!removing}
+        onClose={() => setRemoving(null)}
+        onConfirm={() => (removing ? removeMutation.mutateAsync(removing.id) : undefined)}
+        {...PRESETS_DO_MOCK.removerSupressao}
+        details={removing ? [{ label: 'Contato', value: removing.contacts?.name ?? '—' }] : []}
+      />
     </div>
   );
 }
