@@ -15,6 +15,7 @@ import {
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES,
 } from './talkxShared';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 function loadFilters() {
@@ -36,18 +37,27 @@ interface Props {
   onViewScheduled?: (c: TalkXCampaign) => void;
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
-  onStart: (id: string) => void;
-  onPause: (id: string) => void;
-  onCancel: (id: string) => void;
+  /**
+   * X051 — iniciar/pausar/retomar/cancelar NÃO passam mais por aqui: a tela
+   * resolve o ciclo de vida pelo controlador único (`useTalkXLifecycle`). As
+   * props seguem na interface (opcionais) só para os chamadores e mocks que já
+   * as passavam continuarem compilando; a tela não as lê.
+   */
+  onStart?: (id: string) => void;
+  onPause?: (id: string) => void;
+  onCancel?: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
 }
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
+  // X051 — UM controlador para iniciar/pausar/retomar/cancelar: a tela não tem
+  // mais handler próprio nem diálogo próprio dessas quatro ações.
+  const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
@@ -57,7 +67,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [pageSize, setPageSize] = useState(8);
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'cancel' | 'start'; c: TalkXCampaign } | null>(null);
+  // Só a exclusão (que NÃO é ação de ciclo de vida) segue no diálogo local.
+  const [confirm, setConfirm] = useState<TalkXCampaign | null>(null);
 
   React.useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ status, objective, segment, creator })); } catch { /* ignore */ }
@@ -277,13 +288,13 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                                 ? <DropdownMenuItem onClick={() => onViewRunning(c)}><Eye className="w-4 h-4 mr-2" />Em andamento</DropdownMenuItem>
                                 : <DropdownMenuItem onClick={() => onView(c)}><Eye className="w-4 h-4 mr-2" />{c.status === 'completed' ? 'Ver relatório' : 'Monitorar'}</DropdownMenuItem>}
                               {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem onClick={() => onEdit(c)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => setConfirm({ kind: 'start', c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
-                              {c.status === 'sending' && <DropdownMenuItem onClick={() => onPause(c.id)}><Pause className="w-4 h-4 mr-2" />Pausar</DropdownMenuItem>}
-                              {c.status === 'paused' && <DropdownMenuItem onClick={() => onStart(c.id)}><Play className="w-4 h-4 mr-2" />Retomar</DropdownMenuItem>}
+                              {(c.status === 'draft' || c.status === 'scheduled') && c.total_recipients > 0 && <DropdownMenuItem onClick={() => lifecycle.request({ kind: 'start', target: c })}><Play className="w-4 h-4 mr-2" />Iniciar agora</DropdownMenuItem>}
+                              {c.status === 'sending' && <DropdownMenuItem onClick={() => lifecycle.request({ kind: 'pause', target: c })}><Pause className="w-4 h-4 mr-2" />Pausar</DropdownMenuItem>}
+                              {c.status === 'paused' && <DropdownMenuItem onClick={() => lifecycle.request({ kind: 'resume', target: c })}><Play className="w-4 h-4 mr-2" />Retomar</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => onDuplicate(c)}><Copy className="w-4 h-4 mr-2" />Duplicar</DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'cancel', c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
-                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm({ kind: 'delete', c })}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
+                              {(c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => lifecycle.request({ kind: 'cancel', target: c })}><Square className="w-4 h-4 mr-2" />Cancelar campanha</DropdownMenuItem>}
+                              {(c.status === 'draft' || c.status === 'scheduled') && <DropdownMenuItem className="text-dash-red" onClick={() => setConfirm(c)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </Td>
@@ -327,36 +338,19 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* E25 — Modais de confirmação via TalkXConfirmDialog */}
+      {/* E25 — exclusão (não é ciclo de vida) segue no TalkXConfirmDialog;
+          X051 — iniciar/pausar/retomar/cancelar vêm do diálogo único do controlador. */}
       <TalkXConfirmDialog
-        open={confirm?.kind === 'delete'}
+        open={confirm !== null}
         onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onDelete(confirm.c.id); setConfirm(null); }}
+        onConfirm={() => { if (confirm) onDelete(confirm.id); setConfirm(null); }}
         icon={Trash2} iconColor="red" tone="danger"
         title="Excluir campanha"
         description="Esta ação não pode ser desfeita."
-        entityName={confirm?.c.name}
+        entityName={confirm?.name}
         confirmLabel="Excluir campanha" cancelLabel="Cancelar"
       />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'cancel'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onCancel(confirm.c.id); setConfirm(null); }}
-        icon={Square} iconColor="red" tone="danger"
-        title="Cancelar campanha"
-        description="O envio será interrompido imediatamente e os contatos pendentes não receberão as mensagens."
-        entityName={confirm?.c.name}
-        confirmLabel="Cancelar campanha" cancelLabel="Voltar"
-      />
-      <TalkXConfirmDialog
-        open={confirm?.kind === 'start'}
-        onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onStart(confirm.c.id); setConfirm(null); }}
-        icon={Play} iconColor="blue" tone="primary"
-        title="Iniciar campanha?"
-        description={`As mensagens serão enviadas agora para ${fmtInt(confirm?.c.total_recipients ?? 0)} contatos. Esta ação não pode ser desfeita.`}
-        confirmLabel="Iniciar envio" cancelLabel="Cancelar"
-      />
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
     </TalkXQueryBoundary>
   );
