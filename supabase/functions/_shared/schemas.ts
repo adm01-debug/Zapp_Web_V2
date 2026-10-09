@@ -600,6 +600,17 @@ export const EvolutionWebhookEnvelopeV2Schema = z.object({
   apikey: z.string().max(500).optional(),
 }).passthrough();
 
+// ─── Evolution messages.update: status POR EVENTO (R2-API-016) ───────────────
+// O envelope v1 aceita `data` como unknown de propósito (a Evolution GO manda
+// eventos desconhecidos que precisam ser ACKados com 200), então o status não é
+// validável no envelope. A validação é POR EVENTO, aqui: um status numérico ou
+// objeto (ex.: `state=3` serializado por outra versão do provedor) lançava
+// TypeError em `status.toLowerCase()` dentro do laço, derrubava o lote inteiro
+// (HTTP 500) e os recibos VÁLIDOS do mesmo payload eram perdidos/reenviados.
+// Só string não vazia (até 100 chars, sem espaços nas bordas) passa; o resto
+// tem saída explícita no handler.
+export const EvolutionMessagesUpdateStatusSchema = z.string().trim().min(1, 'status must be a non-empty string').max(100, 'status too long');
+
 // ─── ElevenLabs Webhook ──────────────────────────────────────
 export const ElevenLabsWebhookV1Schema = z.object({
   type: z.string().max(100).optional(),

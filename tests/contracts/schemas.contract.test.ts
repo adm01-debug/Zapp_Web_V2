@@ -1,9 +1,68 @@
-import { describe, it, expect } from 'vitest';
 import * as S from '../../supabase/functions/_shared/schemas.ts';
+
+// Harness dual (mesmo padrão dos contratos multiplix-*): este arquivo roda nos
+// DOIS runners do projeto — `bun run test:contracts` (vitest, etapa "Edge
+// Function contract tests" do ci.yml) e `deno test --config scripts/ci/deno.json`.
+// Por isso NÃO pode haver `import "https://deno.land/..."` (o ESM do Node não
+// carrega URL https e derrubava a suíte inteira no CI) nem `import 'vitest'`
+// estático (o Deno não resolve o specifier com --frozen e nodeModulesDir: none).
+// O que muda por runtime é só o REGISTRO do caso; as asserções são locais, em
+// Error puro, idênticas nos dois.
+const IS_DENO = typeof Deno !== 'undefined' && typeof (Deno as { test?: unknown }).test === 'function';
+
+type TestFn = () => void | Promise<void>;
+let registrar: (name: string, fn: TestFn) => void;
+if (IS_DENO) {
+  registrar = (name, fn) => { Deno.test(name, fn); };
+} else {
+  // Specifier não-literal: o Deno não tenta resolver 'vitest' no check/test
+  // (--frozen, sem essa dependência); sob Node o vitest resolve.
+  const spec = 'vit' + 'est';
+  const mod = (await import(spec)) as { it: (name: string, fn: TestFn) => void };
+  registrar = (name, fn) => { mod.it(name, fn); };
+}
+
+const describeStack: string[] = [];
+function describe(name: string, fn: () => void) {
+  describeStack.push(name);
+  try {
+    fn();
+  } finally {
+    describeStack.pop();
+  }
+}
+function it(name: string, fn: TestFn) {
+  registrar([...describeStack, name].join(' > '), fn);
+}
+function assert(cond: unknown, msg?: string): asserts cond {
+  if (!cond) throw new Error(msg ?? 'asserção do contrato falhou');
+}
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  return ka.length === kb.length &&
+    ka.every((k) => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+function expect<T>(actual: T) {
+  return {
+    toBe(expected: unknown) {
+      assert(Object.is(actual, expected), `esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`);
+    },
+    toEqual(expected: unknown) {
+      assert(deepEqual(actual, expected), `esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`);
+    },
+    toBeGreaterThan(expected: number) {
+      assert(typeof actual === 'number' && actual > expected, `Expected ${actual} to be greater than ${expected}`);
+    },
+  };
+}
 
 const UUID = 'a3bb189e-8bf9-4888-9912-ace4e6543002';
 type Case = { payload: unknown; hint: string };
-type SafeParseResult = { success: true } | { success: false; error: Record<string, unknown> };
+type SafeParseResult = { success: boolean; error?: Parameters<typeof S.validationErrorResponse>[0] };
 type Suite = { schema: { safeParse: (d: unknown) => SafeParseResult }; valid: unknown[]; invalid: Case[] };
 
 // Tabela de contrato: TODO schema exportado tem casos de payload válido,
@@ -90,6 +149,10 @@ const suites: Record<string, Suite> = {
     { event: 'e', instance: 'i', data: {} }], invalid: [
     { payload: { event: 'e', instance: 'i' }, hint: 'data ausente' },
     { payload: { event: 'e', instance: 'i', data: 'x' }, hint: 'data tipo' }] },
+  EvolutionMessagesUpdateStatusSchema: { schema: S.EvolutionMessagesUpdateStatusSchema, valid: [
+    'DELIVERY_ACK', ' READ '], invalid: [
+    { payload: 3, hint: 'tipo número' }, { payload: { code: 3 }, hint: 'tipo objeto' },
+    { payload: '', hint: 'vazio' }] },
   ElevenLabsWebhookV1Schema: { schema: S.ElevenLabsWebhookV1Schema, valid: [{}, { type: 'tts.completed', extra: 1 }], invalid: [
     { payload: { type: 123 }, hint: 'tipo' }, { payload: 'str', hint: 'root' }] },
   ElevenLabsWebhookV2Schema: { schema: S.ElevenLabsWebhookV2Schema, valid: [{ type: 't' }, { event_type: 'e' }], invalid: [
@@ -111,7 +174,8 @@ describe('cobertura de contrato por schema', () => {
       for (const c of suite.invalid) {
         it(`inválido: ${c.hint} → resposta 422 consistente`, async () => {
           const r = suite.schema.safeParse(c.payload);
-          expect(r.success).toBe(false);
+          assert(!r.success);
+          assert(r.error, 'safeParse inválido precisa expor erro para validationErrorResponse');
           const res = S.validationErrorResponse(r.error);
           expect(res.status).toBe(422);
           const body = JSON.parse(await res.text());
