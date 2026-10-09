@@ -130,6 +130,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 265,
-    "authenticated_execute_count": 140
+    "service_role_execute_count": 266,
+    "authenticated_execute_count": 141
 }
