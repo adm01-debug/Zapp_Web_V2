@@ -76,19 +76,26 @@ export const CATALOG_GRADE_SIZES =
   '(min-width: 1280px) 220px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw';
 
 // ── badge de destaque (top-left) ───────────────────────────────────────────
+// SL-038 — o fundo era a paleta CRUA do Tailwind (`emerald-500`/`orange-500`/
+// `rose-500`): a mesma cor nos 4 temas, enquanto o texto (`primary-foreground`)
+// mudava. Agora cada badge usa o TOKEN do seu estado (`--success`, `--warning`,
+// `--destructive`) com o par de texto do próprio token — o fundo passa a
+// acompanhar claro/escuro/alto contraste. O par de TEXTO é o do token (e não
+// `primary-foreground`, que só é claro nos temas escuros): só sobre o amarelo
+// o par de leitura é escuro.
 function ProductBadge({ product }: { product: ExternalProduct }) {
   if (product.is_new) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500 text-primary-foreground">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-success text-success-foreground">
       <Sparkles className="w-2.5 h-2.5" />Novo
     </span>
   );
   if (product.is_bestseller) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-500 text-primary-foreground">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-warning text-warning-foreground">
       <TrendingUp className="w-2.5 h-2.5" />Top
     </span>
   );
   if (product.is_on_sale) return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500 text-primary-foreground">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-destructive text-destructive-foreground">
       <Tag className="w-2.5 h-2.5" />Promo
     </span>
   );
