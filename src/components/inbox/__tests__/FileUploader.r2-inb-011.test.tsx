@@ -1,24 +1,27 @@
 /**
- * R2-INB-011 / item 308 — "Seletor de anexos permite seleção múltipla mas
- * aproveita somente o primeiro".
+ * R2-INB-011 / item 308 — "Seletor de anexos permite seleção múltipla mas aproveita
+ * somente o primeiro".
  *
- * O input nativo do FileUploader tem `multiple`, mas `handleFileChange`
- * aproveitava só `e.target.files?.[0]`: o segundo arquivo em diante sumia
- * sem aviso. O caminho alternativo (drag/paste/chip) já usava a fila de
- * múltiplos (`handleExternalFiles`).
+ * O input nativo do FileUploader tem `multiple`, mas `handleFileChange` aproveitava
+ * só `e.target.files?.[0]`: o segundo arquivo em diante sumia sem aviso. O caminho
+ * alternativo (drag/paste/chip) já usava a fila de múltiplos (`handleExternalFiles`).
  *
- * Prova (vermelho antes / verde depois): selecionar DOIS arquivos no diálogo
- * nativo precisa colocar os DOIS na fila de envio — a tela mostra os dois
- * nomes e o título "Enviar 2 Arquivos" (não um preview único do primeiro).
+ * Prova (vermelho antes / verde depois): selecionar DOIS arquivos no diálogo nativo
+ * precisa colocar os DOIS na fila de envio — a tela mostra os dois nomes e o título
+ * "Enviar 2 Arquivos" (não um preview único do primeiro).
  *
  * Acessibilidade (N-039): botões de remover e fechar com aria-label; barras
  * de progresso com nome acessível que identifica o arquivo.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
+import { toHaveNoViolations } from 'vitest-axe/matchers';
 import { FileUploader } from '@/components/inbox/FileUploader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useFileUploadLogic } from '@/components/inbox/useFileUploadLogic';
+
+expect.extend(toHaveNoViolations);
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -141,6 +144,36 @@ describe('FileUploader — R2-INB-011: input multiple aproveita todos os arquivo
 // ── N-039: acessibilidade dos botões e barras de progresso ──────────────────────
 
 describe('FileUploader — N-039: nomes acessíveis em botões e progressbar', () => {
+  it('axe zerado no diálogo do FileUploader', async () => {
+    mockHook({
+      isDialogOpen: true,
+      filePreview: null,
+      fileQueue: baseQueue([pdf('documento.pdf')]),
+      isMultiMode: true,
+      caption: '',
+      setCaption: vi.fn(),
+      uploading: false,
+      uploadProgress: 0,
+      uploadStage: 'idle',
+      currentQueueIndex: 0,
+      apiLoading: false,
+      canSend: true,
+      validFilesCount: 1,
+      totalQueueProgress: 0,
+      handleClose: vi.fn(),
+      handleSendFile: vi.fn(),
+      handleSendAllFiles: vi.fn(),
+      handleFileChange: vi.fn(),
+      handleExternalFile: vi.fn(),
+      handleExternalFiles: vi.fn(),
+      removeFromQueue: vi.fn(),
+    });
+
+    const { container } = renderUploader();
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
   it('botão remover na fila tem aria-label "Remover <arquivo>"', () => {
     mockHook({
       isDialogOpen: true,
