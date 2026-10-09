@@ -223,4 +223,55 @@ describe('useMessages — exclusão remota atualiza os agregados (OTH-002)', () 
 
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
+
+  // SL-104: com `REPLICA IDENTITY DEFAULT` o evento de DELETE carrega SO a PK — `payload.old` vem
+  // sem `contact_id` e sem `media_url`. Antes o handler comparava `old.contact_id === contactId`,
+  // entao a mensagem apagada nunca saia da conversa aberta (falha silenciosa de UI).
+  it('DELETE com apenas a PK (REPLICA IDENTITY DEFAULT) remove a mensagem da conversa aberta', async () => {
+    h.fetchMessages.mockResolvedValueOnce({
+      data: [row({ id: 'msg-1' }), row({ id: 'msg-2', created_at: '2026-01-01T10:01:00Z' })],
+      error: null,
+    });
+    const view = await renderReady();
+    await waitFor(() => expect(view.result.current.messages.map((m) => m.id)).toEqual(['msg-1', 'msg-2']));
+
+    act(() => { onDelete({ id: 'msg-2' } as MessageRow); });
+
+    expect(view.result.current.messages.map((m) => m.id)).toEqual(['msg-1']);
+  });
+
+  // Mesmo fallback do UPDATE acima: sem as colunas em `old` nao ha como saber se a linha apagada
+  // tinha midia — invalida por seguranca, para o badge/chip nao ficarem contando midia apagada.
+  it('DELETE sem as colunas em old (REPLICA IDENTITY DEFAULT) invalida os agregados por segurança', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete({ id: 'msg-1' } as MessageRow); });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: conversationTabCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: contactMediaCountsKey(CONTACT) });
+    expect(invalidateSpy).toHaveBeenCalledTimes(3);
+  });
+
+  // A checagem de conversa segue valendo quando o `old` traz as colunas (hoje REPLICA IDENTITY
+  // FULL): DELETE de outro contato nao mexe nos agregados desta conversa.
+  it('DELETE de outro contato com as colunas em old continua ignorado', async () => {
+    const { invalidateSpy } = await renderReady();
+
+    act(() => { onDelete(row({ contact_id: 'outro-contato', media_url: 'https://x/a.jpg' })); });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  // Sem `id` nao ha o que remover nem como decidir a conversa: o handler sai sem tocar em nada.
+  it('DELETE sem id no old nao remove mensagem e nao invalida os agregados', async () => {
+    h.fetchMessages.mockResolvedValueOnce({ data: [row({ id: 'msg-1' })], error: null });
+    const { result, invalidateSpy } = await renderReady();
+    await waitFor(() => expect(result.current.messages.map((m) => m.id)).toEqual(['msg-1']));
+
+    act(() => { onDelete({} as MessageRow); });
+
+    expect(result.current.messages.map((m) => m.id)).toEqual(['msg-1']);
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
 });
