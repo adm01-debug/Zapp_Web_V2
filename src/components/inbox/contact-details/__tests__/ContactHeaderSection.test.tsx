@@ -382,33 +382,32 @@ describe('ContactHeaderSection', () => {
   });
 
   // ========== BADGE CONTRASTE WCAG 1.4.3 ==========
-  // Tokens brutos falham 4.5:1 com texto branco; getScoreBadgeBg usa L reduzido.
-  // Ratios verificados matematicamente (HSL→RGB→luminância IEC 61966-2-1):
-  //   hsl(160 70% 28%) → L≈0.1461 → 5.35:1 ✅
-  //   hsl(38 90% 32%)  → L≈0.1634 → 4.92:1 ✅
-  //   hsl(0 84% 48%)   → L≈0.1660 → 4.86:1 ✅
+  // O selo usa pares de token do sistema (bg + fg) com contraste AA ≥ 4.5:1 nos 3 níveis.
+  // Alto (≥80): --success + --success-foreground
+  // Médio (≥50): --warning + --warning-foreground
+  // Baixo (<50): --destructive + --destructive-foreground
+  // Nenhum hsl literal nem 'white' — valores resolvidos do CSS custom properties.
 
-  // Smoke: prova que jsdom/cssstyle processa inline styles corretamente.
-  it('smoke: inline styles são processadas pelo jsdom (assertion positiva + negativa)', () => {
+  it('smoke: inline styles usam tokens do sistema (assertion positiva + negativa)', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    // Positiva: badge tem a cor correta para score=100 (hot)
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    // Positiva: badge usa --success para score=100 (alto engajamento)
+    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
     // Negativa: toHaveStyle distingue valores distintos
-    expect(badge).not.toHaveStyle('background-color: hsl(38 90% 32%)');
+    expect(badge.getAttribute('style')).not.toContain('hsl(var(--warning))');
   });
 
-  it('badge de alto engajamento usa cor acessível (hsl 160 70% 28%, ~5.35:1 com branco)', () => {
+  it('badge de alto engajamento usa token --success como fundo', () => {
     // baseEnriched: positive+high+company+customer = 100
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
   });
 
-  it('badge de alto engajamento usa texto branco (necessário para ratio WCAG)', () => {
+  it('badge de alto engajamento usa --success-foreground como texto', () => {
     render(<ContactHeaderSection contact={baseContact} enrichedData={baseEnriched} />);
     const badge = screen.getByText('100');
-    expect(badge).toHaveStyle('color: rgb(255, 255, 255)');
+    expect(badge.getAttribute('style')).toContain('hsl(var(--success-foreground))');
   });
 
   it('badge usa cor de alto engajamento na fronteira exata score=80', () => {
@@ -420,10 +419,10 @@ describe('ContactHeaderSection', () => {
       />
     );
     const badge = screen.getByText('80');
-    expect(badge).toHaveStyle('background-color: hsl(160 70% 28%)');
+    expect(badge.getAttribute('style')).toContain('hsl(var(--success))');
   });
 
-  it('badge de médio engajamento usa cor acessível (hsl 38 90% 32%, ~4.92:1 com branco)', () => {
+  it('badge de médio engajamento usa token --warning como fundo', () => {
     render(
       <ContactHeaderSection
         contact={baseContact}
@@ -432,12 +431,12 @@ describe('ContactHeaderSection', () => {
     );
     // score = 50 (base sem bônus — mínimo alcançável pela fórmula atual)
     const badge = screen.getByText('50');
-    expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
+    expect(badge.getAttribute('style')).toContain('hsl(var(--warning))');
   });
 
   it('score mínimo é 50 — ramo s<50 em getScoreBadgeBg é código defensivo não alcançável', () => {
     // A fórmula só faz adições (base 50 + bônus). Sentiment negativo não subtrai.
-    // Logo hsl(0 84% 48%) nunca é ativado com a implementação atual.
+    // Logo hsl(var(--destructive)) nunca é ativado com a implementação atual.
     // Este teste documenta esse invariante: qualquer enrichedData produz score >= 50.
     render(
       <ContactHeaderSection
@@ -448,7 +447,7 @@ describe('ContactHeaderSection', () => {
     const badge = screen.getByText('50');
     expect(badge).toBeInTheDocument();
     // Confirma que a cor de baixo engajamento NÃO é usada (score está em 50, range médio)
-    expect(badge).not.toHaveStyle('background-color: hsl(0 84% 48%)');
+    expect(badge.getAttribute('style')).not.toContain('hsl(var(--destructive))');
   });
 
   it('badge usa cor de médio engajamento na fronteira score=75 (abaixo do limiar hot 80)', () => {
@@ -460,7 +459,7 @@ describe('ContactHeaderSection', () => {
       />
     );
     const badge = screen.getByText('75');
-    expect(badge).toHaveStyle('background-color: hsl(38 90% 32%)');
-    expect(badge).not.toHaveStyle('background-color: hsl(160 70% 28%)');
+    expect(badge.getAttribute('style')).toContain('hsl(var(--warning))');
+    expect(badge.getAttribute('style')).not.toContain('hsl(var(--success))');
   });
 });
