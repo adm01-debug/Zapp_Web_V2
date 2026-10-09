@@ -306,8 +306,8 @@
     },
     {
       "path": "supabase/functions/_shared/schemas.ts",
-      "bytes": 34109,
-      "sha256": "2a1d645ce1b7ad41cb416f88d0cb19e4d0ad8f74e6004345ba29e1ae5a31a545"
+      "bytes": 37744,
+      "sha256": "0ac47ffb52272d67a0a1859ff611df58ca2250c02bce870b392e707d52dd01ed"
     },
     {
       "path": "supabase/functions/_shared/secure-egress.ts",
@@ -346,8 +346,8 @@
     },
     {
       "path": "supabase/functions/_shared/validation.ts",
-      "bytes": 15079,
-      "sha256": "e04cadec8389ce326b2c0fe7f083d0e6a72bd91f3909f0b40adfe0a9a40e70b1"
+      "bytes": 19000,
+      "sha256": "f04fdcc805bc7d92a0dbda5c03e30bd0414387e3d171e2596c06b65f26db7d4e"
     },
     {
       "path": "supabase/functions/_shared/voice-copilot-authz.ts",
@@ -421,8 +421,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 7855,
-      "sha256": "6698f254e1db0f81564eb7a126396256bb53c9050254fe19b55eb086070aab61"
+      "bytes": 13732,
+      "sha256": "b4adbcf82f39b0c4ee5ce14e6135a62a0e1a5e41756675ff362e7868ee820c56"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -456,18 +456,18 @@
     },
     {
       "path": "supabase/functions/classify-audio-meme/index.ts",
-      "bytes": 10717,
-      "sha256": "c22819a0178a6b3126fcc6a405a8790db26203ea164a2d2435dadbcbdbd68f9b"
+      "bytes": 11238,
+      "sha256": "15acfc5dc416fe14e856e3a9ec59129d2ce53b371ae2f81e11dd27fc347bccf4"
     },
     {
       "path": "supabase/functions/classify-emoji/index.ts",
-      "bytes": 8122,
-      "sha256": "4c785b2548fcc132d33c44c1f26f3753ec6601bba3d53b9a92b13b8066d69932"
+      "bytes": 11697,
+      "sha256": "697809388905835d24e112a6fd45a2c122876dd98cd4ec7d38d83aa1af3942fb"
     },
     {
       "path": "supabase/functions/classify-sticker/index.ts",
-      "bytes": 9515,
-      "sha256": "08ad1fd43f184f5db46fdd935f2df7d9d7e913f3c064d6517116fb9a36ad963e"
+      "bytes": 12584,
+      "sha256": "af3e2c82a9fb1c413ad49dbee7c770136282ef4859ec213da6aa460e8a815607"
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
@@ -526,8 +526,8 @@
     },
     {
       "path": "supabase/functions/elevenlabs-sts/index.ts",
-      "bytes": 8075,
-      "sha256": "54c371fb74a7b2012b5e4a3f723d313b6d1e1fd9a385978e845427a0b6c4e97e"
+      "bytes": 8425,
+      "sha256": "ff0ff9ff2a480f6c2a1338a001a81a27b392d9b3a16e3544d375e92a3e8be9a4"
     },
     {
       "path": "supabase/functions/elevenlabs-tts-stream/index.ts",
@@ -646,8 +646,8 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/audience.ts",
-      "bytes": 26418,
-      "sha256": "a7981ea3e6217c7ca0268cf237e60be06cf4e61cca63b0f42b6ca778c86f07c8"
+      "bytes": 44921,
+      "sha256": "168d93c125ceddad66c21ef645be25ba92d50004e6847960661749f47d09095c"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
@@ -656,8 +656,8 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
-      "bytes": 32495,
-      "sha256": "10295be6db78cc1bccd5161e17c086c88d81a56368a7f76725cb138601584c8a"
+      "bytes": 39162,
+      "sha256": "58668b4284adb196500fb50207e0eb0c6c3d23f753a12e6ce6cfbae4611d688d"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
@@ -671,8 +671,8 @@
     },
     {
       "path": "supabase/functions/multiplix-dispatch/index.ts",
-      "bytes": 22133,
-      "sha256": "e42466f0f0b8bd8fadd5f65ef1a9e32d2d2f74c4e7b83acd53103471035be426"
+      "bytes": 22334,
+      "sha256": "368c530215256ac9a8215c81d9042f04923db2b3bbb468b53e5840a404582b32"
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
@@ -815,7 +815,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "02425f228e90548b35a95d250bd23726eb4c8238082f563401af852a17735995",
+      "source_sha256": "24231a3699826f180076b391176b86ee19c9c4b15efb867c7a0bc795e263132e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -832,6 +832,7 @@
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -842,7 +843,7 @@
       "name": "ai-churn-analysis",
       "entrypoint": "supabase/functions/ai-churn-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bc8347f7f070177aa272017fef1a33083f8a4f6d3ff45d029321d79502a66b72",
+      "source_sha256": "e4dcc78e00c0dac7ead931ccbe245dbd9880d7fade103a9a3c23b1b8a47ecd94",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -851,6 +852,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-churn-analysis/churn-risk.ts",
@@ -861,7 +863,7 @@
       "name": "ai-classify-tickets",
       "entrypoint": "supabase/functions/ai-classify-tickets/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dfb0ad3726c0762db50818513ba51a2a4529bb1bdc7fd17f83ebeb632d4ec875",
+      "source_sha256": "42eb3e8e5b2ee21c8ef507952abb8ab3cc9a91f6a99e089d1f5d75688e37a458",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -870,6 +872,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-classify-tickets/index.ts"
@@ -879,7 +882,7 @@
       "name": "ai-conversation-analysis",
       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4da7138506a8e3d27a8dfa9f125e4d7c9d8705e755b0c34b87f1c327bb1c284a",
+      "source_sha256": "da19a27305502c34a0a94ed6808b00bb0c415e534e5706d69c9a29a4b3cce8cc",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -897,6 +900,7 @@
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -907,7 +911,7 @@
       "name": "ai-conversation-summary",
       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e7da40ca357d80717cbc347dafa188c60b057bfce8926a7d175938a6eaa244e8",
+      "source_sha256": "096a050465dd4691591b6afe90a012c001e819235840c07eaf1137bff82ae717",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -925,6 +929,7 @@
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -936,7 +941,7 @@
       "name": "ai-enhance-message",
       "entrypoint": "supabase/functions/ai-enhance-message/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9b0c2d87e1ba422089e0b42c2a75b90423995ba4d70a7d00f9deec73c1af86cd",
+      "source_sha256": "de4418af97b9d3386647c03250b851f9312337539f245e86b7d94154aaf9899e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -949,6 +954,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -959,7 +965,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "851e21dd2aec91f2fa3f18c836c2790a86fb24a144ad505d419f2401b5db6bb1",
+      "source_sha256": "9a6abb72431b3ea178a54cf7a1bf3de98e4db55a20a6ae7fe69366e00653dc82",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -977,6 +983,7 @@
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-jobs-worker/index.ts"
@@ -986,11 +993,12 @@
       "name": "ai-kb-ingest",
       "entrypoint": "supabase/functions/ai-kb-ingest/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cfcbe7f554d4c7dc736e1770e68134be2cdeba45d930ee705c8137b5e628dc97",
+      "source_sha256": "ee00710a13028f928f1241992b75d890fd3346ccde2544f879c6252a1b8c9c37",
       "source_files": [
         "supabase/functions/_shared/ai-kb-ingest.ts",
         "supabase/functions/_shared/edge-boot.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-kb-ingest/index.ts"
       ]
@@ -999,7 +1007,7 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "aebe8cc1b2c4fa343beecc3c62887c5c797a77189252fb22c77327ae76a7385c",
+      "source_sha256": "3a95eb67e4578d5ba767334661e01cf4e34e8b8d09c5adeede02961d5e830175",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -1009,6 +1017,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1019,7 +1028,7 @@
       "name": "ai-suggest-reply",
       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bfd29c16e7c1f16b1083d3e891b27dae9cfbaab4706baf937a89814c3b512fde",
+      "source_sha256": "7778e41a4c0b831553edc2892757e65da4052e12ab75d89f70e2fe5c76704921",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1034,6 +1043,7 @@
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1044,7 +1054,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a16beee680e337acb1830fca883bab5bb9d88641cbc1deba02e49189040046b3",
+      "source_sha256": "55e67aaacabec405d95871ad2e7a6f2ef041394ede02d51170bdf9ded5dcc563",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1052,6 +1062,8 @@
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1062,10 +1074,11 @@
       "name": "approve-password-reset",
       "entrypoint": "supabase/functions/approve-password-reset/index.ts",
       "verify_jwt": true,
-      "source_sha256": "55075f1116a54a8168cf7324534fbcc66a20ee2b902a757ca31bfcb060152377",
+      "source_sha256": "070657aa55f1e30aa238386c44b2164eb30e3fa53ad9da7869241dfa2e40721e",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/approve-password-reset/index.ts"
@@ -1075,7 +1088,7 @@
       "name": "auth-login",
       "entrypoint": "supabase/functions/auth-login/index.ts",
       "verify_jwt": false,
-      "source_sha256": "ddbd8ff33de5ecb99ea50300dd49ee6fcd46ab5ce8d4015887c4050b09b59d2b",
+      "source_sha256": "f2bb13c57d50e7139ffc17e3ab6bf7a63f5b120b09546aa556cd6bfdbef4c558",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -1087,9 +1100,10 @@
       "name": "auto-close-conversations",
       "entrypoint": "supabase/functions/auto-close-conversations/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ee7425823807c590c1123c75c350fc3f76b208a8a0699d0e1ea216425599c7b5",
+      "source_sha256": "072a390cdbcc158c57efafcae8e3ee1b52a5d4fcd0b33a8fc07c8b574024d8df",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/auto-close-conversations/index.ts"
       ]
@@ -1098,7 +1112,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "de851f39488ad579242a608afacc26f15e797c58a97c10960553f75d86ea5afe",
+      "source_sha256": "96fa1042130a3fad7a47fa3872872ead2c12c6a54234ff0f6e02eeb4e18f01ee",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1108,6 +1122,7 @@
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/batch-fetch-avatars/index.ts"
@@ -1117,9 +1132,10 @@
       "name": "bitrix-api",
       "entrypoint": "supabase/functions/bitrix-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ec7e624226ed091b05ceeb4094fdad17b8b8682dc63394f65c68136a636daa1d",
+      "source_sha256": "cb6b2bb4f098fdffccac8892b02b1c316dfc7692286aa22188f8481a0e67a869",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/bitrix-api/index.ts"
       ]
@@ -1128,7 +1144,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0cd8d47c28298a2d9e9d28a1c1c5d356160ff001273cf9ca39c994884b9d8487",
+      "source_sha256": "4d1945d19234c46109d7df96c0c3c025c6a022e9c35f99d729ed537ef17d358e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1144,6 +1160,7 @@
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1154,7 +1171,7 @@
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d4ea2dd184ab2a2e2c8e610b34eeb37bc2ac404ac386741337b49f4beaedf95f",
+      "source_sha256": "f4924d9888ee55c95c8014959d24964b5fb80bf068d6e9352d0e70b29fe8784c",
       "source_files": [
         "supabase/functions/_shared/ai-audio-input.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1169,6 +1186,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -1180,7 +1198,7 @@
       "name": "classify-emoji",
       "entrypoint": "supabase/functions/classify-emoji/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3b6d470e6ed4bdc0cc5baf19258f60255c9480e8fd529967e95e62dd392b9c5f",
+      "source_sha256": "724f08bec473618d097f1e9cea78941a500ad71acc1a12d05c3053084f351747",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1195,6 +1213,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -1206,7 +1225,7 @@
       "name": "classify-sticker",
       "entrypoint": "supabase/functions/classify-sticker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cb340cdc2646810c043339918a1aa3b086a7b892d00f5502d343ff07f0c8099e",
+      "source_sha256": "2820bbd0a261ea850549b6774889cc681cca96b60203478071e651edf94cfd80",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1221,6 +1240,7 @@
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -1232,9 +1252,10 @@
       "name": "cleanup-rate-limit-logs",
       "entrypoint": "supabase/functions/cleanup-rate-limit-logs/index.ts",
       "verify_jwt": true,
-      "source_sha256": "29c6de1c997fcaffba226d8006d56f4d0e6fa26621a479e9a3927acbaa77fdb7",
+      "source_sha256": "2f7e9dfbc47bfd99d369848b7a60959c2a025437e0e634b061eb18932f205767",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/cleanup-rate-limit-logs/index.ts"
       ]
@@ -1243,7 +1264,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "ce37cd4257ab33624cceef52a40270243d8b9f49111af85cfba2218c2980fe1f",
+      "source_sha256": "881119362d1b3c8684734dde9e064713b6fe3da5948eedd06d14c8f12ada1449",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1253,6 +1274,7 @@
         "supabase/functions/_shared/evolution-session-routes.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/notification-events.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/connection-health-check/index.ts"
       ]
@@ -1261,9 +1283,10 @@
       "name": "create-user",
       "entrypoint": "supabase/functions/create-user/index.ts",
       "verify_jwt": true,
-      "source_sha256": "08fe926c272be2f357538db8dc607bf52b904d99237007a21a95cc06701099a0",
+      "source_sha256": "cb47e5e49b093580880461f960e3072c3d88c921da276097176c52b479cbb2d5",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/create-user/index.ts"
       ]
@@ -1272,11 +1295,12 @@
       "name": "crm-integration",
       "entrypoint": "supabase/functions/crm-integration/index.ts",
       "verify_jwt": false,
-      "source_sha256": "cd586ca29e7cf817f3361bf1c69a33e19fb4d9a4ae37088afcbf565f28b116dd",
+      "source_sha256": "b827b6ff94fedd73f83a47d9387aae4010cf3c16ee22f27951ba86c6d73354f0",
       "source_files": [
         "supabase/functions/_shared/ai-vocabulary.ts",
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/crm-integration/index.ts"
       ]
@@ -1285,9 +1309,10 @@
       "name": "csp-report",
       "entrypoint": "supabase/functions/csp-report/index.ts",
       "verify_jwt": false,
-      "source_sha256": "9c5059c720f1bb585a7481ec8bdb9bf772a8392e8d7a552a4fc8451101d61b97",
+      "source_sha256": "f4cc19d28a472289a995c735f0eaa4f74585d7d902f63064d437cc6747ed70c3",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/csp-report/index.ts"
       ]
@@ -1296,11 +1321,12 @@
       "name": "detect-new-device",
       "entrypoint": "supabase/functions/detect-new-device/index.ts",
       "verify_jwt": true,
-      "source_sha256": "726516a01b9c804e72c828b6398b3abe0da89871df51d86664f95ee47f03b84a",
+      "source_sha256": "6d0f3e2fcfdb569b6efb29f86b4b235ecd9456b467923942a77d64cf3d365f68",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/detect-new-device/index.ts"
@@ -1310,12 +1336,13 @@
       "name": "elevenlabs-agent-token",
       "entrypoint": "supabase/functions/elevenlabs-agent-token/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e23a598a6c44e79875f06f2360bcc819d2af28c09a7f7ec1bdd6218b99f2ae55",
+      "source_sha256": "20e75afabe563f316b35aee44c0d01f3db659290f36dffa159aba2a11e3af4a2",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-agent-token/index.ts"
       ]
@@ -1324,13 +1351,14 @@
       "name": "elevenlabs-dialogue",
       "entrypoint": "supabase/functions/elevenlabs-dialogue/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3d8ec1bafbe8f5c335054db33a874c0d897e78dba5260bfbfc146c3873a467de",
+      "source_sha256": "c361ee2e0645be38b0165c8c8ae9428cca28e08e3b4ec737820caa6f8af9ddef",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-dialogue/index.ts"
@@ -1340,12 +1368,13 @@
       "name": "elevenlabs-scribe-token",
       "entrypoint": "supabase/functions/elevenlabs-scribe-token/index.ts",
       "verify_jwt": true,
-      "source_sha256": "5349db22206e7adbfc9639238e4832b534be62b77349d2e150dec02432006c3f",
+      "source_sha256": "d6804dca0716829333a6319156132ad78b3115d60b265056185f6887280b5f1a",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-scribe-token/index.ts"
       ]
@@ -1354,13 +1383,14 @@
       "name": "elevenlabs-sfx",
       "entrypoint": "supabase/functions/elevenlabs-sfx/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dd1efd13794695c4361c974eca0ce676328e7271daae89223073637d0222c005",
+      "source_sha256": "2734625ffcc90d38da33ece380a1cefd4b076970f367043bda558782bdb7fcec",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-sfx/index.ts",
@@ -1371,12 +1401,15 @@
       "name": "elevenlabs-sts",
       "entrypoint": "supabase/functions/elevenlabs-sts/index.ts",
       "verify_jwt": true,
-      "source_sha256": "36fa47c679686a23b5b3eafc83559f1abcc387c9c756e272d81370ab75fd3e91",
+      "source_sha256": "b3e3742347f50b31779214e3a8b58502cf6cdb32bff22d217920efa3b8fad318",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-sts/index.ts"
       ]
@@ -1385,13 +1418,14 @@
       "name": "elevenlabs-tts",
       "entrypoint": "supabase/functions/elevenlabs-tts/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c67f088119bcfb7caa065c95ffc9ddbf99a878ae49ac29a29a436fe30a92ae58",
+      "source_sha256": "8d171538b1a765fdacf79972a7dbc8e26c7ac091f358ccc9ca57e0e057af8a39",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-tts/index.ts"
@@ -1401,13 +1435,14 @@
       "name": "elevenlabs-tts-stream",
       "entrypoint": "supabase/functions/elevenlabs-tts-stream/index.ts",
       "verify_jwt": true,
-      "source_sha256": "543f9cc9453ba6b0bb517654770ab273fa20dfe8da67894b6db6fb3a86637124",
+      "source_sha256": "5b0d7981551d8dd955bbf6529d942c9d5d084818c3101c74d799ca9a71a58d57",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-tts-stream/index.ts"
@@ -1417,13 +1452,14 @@
       "name": "elevenlabs-voice-design",
       "entrypoint": "supabase/functions/elevenlabs-voice-design/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3c47bce0cf9e4b9f2c73e3f9a11efd727533408fe5b4ebe8b31506ce07eb9795",
+      "source_sha256": "3e4138175d133ba12e1ca46c94c35424ca4e102d4e5b43c1fdd2b153badf5eee",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/elevenlabs-voice-design/index.ts"
@@ -1433,11 +1469,12 @@
       "name": "elevenlabs-webhook",
       "entrypoint": "supabase/functions/elevenlabs-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8f5bd71beca6c414ab2a1007efcb3e5a9678f04a0aa6f5a578d48e2ac9f08e0a",
+      "source_sha256": "0c600827d36b8c12383b7de48c155688a0c0c14bf11b68e11fd6f87e5a2e82de",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/_shared/webhook-signature.ts",
@@ -1448,7 +1485,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "230dadc8f644fa421fa0f5a1b4e53d2b0194a6e672ed1e011c054c26b363830c",
+      "source_sha256": "f164ae5a4e9a7cb3f63d7035af88fb2f6278848a62aee12b8c66be27fbe46466",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1458,6 +1495,7 @@
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/evolution-api/index.ts"
@@ -1467,13 +1505,14 @@
       "name": "evolution-sync",
       "entrypoint": "supabase/functions/evolution-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7dddb9863f009903530927e64bece288152476de97a712fd61239a4ae79c12b7",
+      "source_sha256": "d30eadfde5eb62e9d6fbe9ab1dbb9d214830de75a0036e122bfc421c82932e89",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/evolution-sync/index.ts"
       ]
@@ -1482,7 +1521,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "074d023b07429d937d77891831b3421b9ce2d5c3257843a15d4348270cb7f20a",
+      "source_sha256": "5eb6333ae7adf2ee71fa79e90b535aac76b5898bcd58405635f8e536393ecd2c",
       "source_files": [
         "supabase/functions/_shared/contracts.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1498,6 +1537,7 @@
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/notification-events.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-reply.ts",
@@ -1509,10 +1549,11 @@
       "name": "external-db-bridge",
       "entrypoint": "supabase/functions/external-db-bridge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8505153b91be44eb7f002e6265eb95bf22ba9ffc21c9235e2bf290f651248e7f",
+      "source_sha256": "8d6f28d238da2945d48cce5f64446c7f485b9d8ff818af496bdfedc56e40fd36",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/external-db-bridge/index.ts"
@@ -1522,9 +1563,10 @@
       "name": "external-db-proxy",
       "entrypoint": "supabase/functions/external-db-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dc7eafa1fbffe288fcc2cf57f9a66a09174b2f70883717a97d09d58c1b058b0d",
+      "source_sha256": "279e29f5346dfc906ba2957b02e0e928194cdf7788c2080aa40215ef29de7b30",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/external-db-proxy/index.ts"
       ]
@@ -1533,12 +1575,13 @@
       "name": "fetch-link-preview",
       "entrypoint": "supabase/functions/fetch-link-preview/index.ts",
       "verify_jwt": true,
-      "source_sha256": "106739e49a7793b854941c5d0914543c7be734e31852881e35395e5a41ac278f",
+      "source_sha256": "138240361af81f3f60218e15ff62a1c7847acc5c02f842cec9d988946530e9af",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-egress.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/fetch-link-preview/index.ts"
@@ -1548,9 +1591,10 @@
       "name": "get-call-recording",
       "entrypoint": "supabase/functions/get-call-recording/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ccdeb130171ef945945639aaa70595c68f097aa9e067c590c536fb45877beb98",
+      "source_sha256": "eea07fadc2778b15f94580f0e7b5d7ec9857f819f23be1fa61c2fc85a23a07fb",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/get-call-recording/index.ts"
       ]
@@ -1559,9 +1603,10 @@
       "name": "get-mapbox-token",
       "entrypoint": "supabase/functions/get-mapbox-token/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d9a6e2e92285cb8606a51afbdca9a7c590e3a6cb1d01c71aa8ca9669e7ed0ed8",
+      "source_sha256": "1471ff44063859481b96f63873340c11b481589efdeac94d49bc7c7943fd7a70",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/get-mapbox-token/index.ts"
       ]
@@ -1570,9 +1615,10 @@
       "name": "get-sip-password",
       "entrypoint": "supabase/functions/get-sip-password/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2bfab8bc8cac122c9e610c76ef15c5ed9b7a0d3f46cb53909c416876366ee163",
+      "source_sha256": "204cb1c91328a79e48865589f26cfc443b7d3cf3d32da3ce0d278c455d62f998",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/get-sip-password/index.ts"
       ]
@@ -1581,10 +1627,11 @@
       "name": "gmail-cron-sync",
       "entrypoint": "supabase/functions/gmail-cron-sync/index.ts",
       "verify_jwt": false,
-      "source_sha256": "4711c8e897de65a51dab3f4707c6b955eaa7f0e173642e12e100fe5e7cf493ea",
+      "source_sha256": "b903e8f752a865154b166aeba6a477e17c5c5031c1b8a73a7aec2798033a96f1",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-cron-sync/index.ts"
       ]
@@ -1593,10 +1640,11 @@
       "name": "gmail-oauth",
       "entrypoint": "supabase/functions/gmail-oauth/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c54552fed9349408dbf2cc4fd21cf941dff0b1c684a4303d879d412ecc0fbcf1",
+      "source_sha256": "7345c498f7b191a22eeec91d34f0aa608da205c5b36069d93c4ddeaa3cdbfb1f",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-oauth/index.ts"
@@ -1606,11 +1654,12 @@
       "name": "gmail-send",
       "entrypoint": "supabase/functions/gmail-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6ff8c4dd92e7a66770890791d04d312872fcf86e66b20a90151876cbd9eb0bf5",
+      "source_sha256": "6a3e1aeab9a7f331b877d207229374e583e1cf2c5060443162c44957d1e33540",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/gmail-mime.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-send/index.ts"
@@ -1620,10 +1669,11 @@
       "name": "gmail-sync",
       "entrypoint": "supabase/functions/gmail-sync/index.ts",
       "verify_jwt": true,
-      "source_sha256": "677ad603a2725c65ee8dde0c37a192a01c0510353c7afa0440df37ea7d0c434e",
+      "source_sha256": "2e1b8e1d0c0965f303e30b8e17f46e40ceff924a6202b6b3af376c7505f2f02f",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-sync/index.ts"
       ]
@@ -1632,10 +1682,11 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a9b0e81da775d11823aa1f86ae82d5d6c5ae25e9d9b157775ce568784e047d1f",
+      "source_sha256": "148046793d2a3d85039ec08a4982c815cb566e50a59865922815fa2e02519a19",
       "source_files": [
         "supabase/functions/_shared/gmail-helpers.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/gmail-webhook/index.ts"
       ]
@@ -1644,10 +1695,11 @@
       "name": "health",
       "entrypoint": "supabase/functions/health/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ce0c098e614210c4b7da7ea11578099a4e4985c8666d8718930d79479217f532",
+      "source_sha256": "e4a3d5573ed6bf42193f9d53339399aa620774789fdfe81b36333231deb2d651",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/observability.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/health/index.ts"
       ]
@@ -1656,7 +1708,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "25e4005864db94a3911d836968e6549fb8052bd8c823458a0db05819c78ed5e5",
+      "source_sha256": "aee3e37ae5b280432e8913bc9543d360dd34c20989a246b2a5fecb80c859e7db",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -1664,6 +1716,7 @@
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/message-delivery/index.ts"
       ]
@@ -1672,10 +1725,11 @@
       "name": "metrics",
       "entrypoint": "supabase/functions/metrics/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ae906521be97a9d9b45b16f19b7304d444b91fa824910d4a4c093701416e2a4e",
+      "source_sha256": "cb3661f49f31617ef0d490bdb9af13a9f9f35983990f4314c4acdf9ce0ce0a96",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/observability.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/metrics/index.ts"
       ]
@@ -1684,11 +1738,12 @@
       "name": "migrate-media-storage",
       "entrypoint": "supabase/functions/migrate-media-storage/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f7efa5e0c6634cb2bd307b2f5e4d37fedd353ef96e4186216c4628081d34dc59",
+      "source_sha256": "da88e3a997c61ef8793d2853e51b06edda34a547ef8a5d8936ff54551413e339",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/migrate-media-storage/index.ts"
       ]
@@ -1697,11 +1752,12 @@
       "name": "multiplix-audience",
       "entrypoint": "supabase/functions/multiplix-audience/index.ts",
       "verify_jwt": true,
-      "source_sha256": "24954eac45986b2633b6b85ca398473b89e145add0b1942e79b42aaf1ac5c3d4",
+      "source_sha256": "344cdc50e673dcc06d359b96eec92bed1e69a69ee5579af9bd99702834b47034",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/multiplix-audience/index.ts"
       ]
@@ -1710,7 +1766,7 @@
       "name": "multiplix-dispatch",
       "entrypoint": "supabase/functions/multiplix-dispatch/index.ts",
       "verify_jwt": true,
-      "source_sha256": "bc4b21f51c11437a98c26973ff8bdab594b071906c656732db0013a6b1aff4ea",
+      "source_sha256": "761382cfb72710523c821ef380a510c0945ef325204e2c34ffccb01771cb62fa",
       "source_files": [
         "supabase/functions/_shared/crm-integration-contract.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1730,6 +1786,7 @@
         "supabase/functions/_shared/messaging/types.ts",
         "supabase/functions/_shared/multiplix-content.ts",
         "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-window.ts",
@@ -1747,7 +1804,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "328135c5f18d4d93319530d160caf33cb86c323df71b2152eba79da57f873d42",
+      "source_sha256": "c90e02fe644979b108055c37cd0273a69c93508465843916d960ab615bfbce3c",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
@@ -1767,6 +1824,7 @@
         "supabase/functions/_shared/messaging/types.ts",
         "supabase/functions/_shared/multiplix-content.ts",
         "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-delivery-connection.ts",
@@ -1779,10 +1837,11 @@
       "name": "multiplix-voices",
       "entrypoint": "supabase/functions/multiplix-voices/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3562d14ea570802a646ddaa6b4e496a62b38ae2c020a312a06f9c0bc15daccb8",
+      "source_sha256": "a70913e4b787641ad7a0f38c2f4030a292b694c5c33a3eb73427bafa631328d9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/messaging/media.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/multiplix-voices/index.ts"
@@ -1792,9 +1851,10 @@
       "name": "promogifts-catalog",
       "entrypoint": "supabase/functions/promogifts-catalog/index.ts",
       "verify_jwt": true,
-      "source_sha256": "73c4069861d45ae4370b01bcd3479bbcfa38cecb0f21d76ec96833b27508ecf6",
+      "source_sha256": "1382453b4596c939fc1d1e3b6a39f3599a2e7aed8aedd0074a60d793fcf598d9",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/promogifts-catalog/index.ts"
       ]
@@ -1803,9 +1863,10 @@
       "name": "public-api",
       "entrypoint": "supabase/functions/public-api/index.ts",
       "verify_jwt": false,
-      "source_sha256": "bc296393a18e95825d9cef8dc34557160e9f0a038654937e3ce7d331963e612c",
+      "source_sha256": "8ad1dc6b6a4dd35864bf4ac221df7332eaa62954d28d0f8b7a7b1154ea51fd93",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/public-api/index.ts"
       ]
@@ -1814,11 +1875,12 @@
       "name": "recover-corrupted-audios",
       "entrypoint": "supabase/functions/recover-corrupted-audios/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e8cfb00d08700b3779f7340e636a23b5758a6db169ab09f97cd545fb98b74f54",
+      "source_sha256": "1d222385ca0806517049cbbd498a9d4eebb977762593a84910f6e5df4109e167",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/recover-corrupted-audios/index.ts"
       ]
@@ -1827,10 +1889,11 @@
       "name": "revoke-auth-sessions",
       "entrypoint": "supabase/functions/revoke-auth-sessions/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d2244e86106cc3bfbd833d6d56d48ba4405692a9471a271048aedcc2c735a73f",
+      "source_sha256": "805c0aa7a25ee719bc53bc0538c2eea20850e523921906a57c269896125a4597",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/revoke-auth-sessions/index.ts"
@@ -1840,10 +1903,11 @@
       "name": "searchbox-budget-alert",
       "entrypoint": "supabase/functions/searchbox-budget-alert/index.ts",
       "verify_jwt": false,
-      "source_sha256": "283621ba95bf3984798b77dbb69125febd4219fa0796cde08a2f4ea6fb3a7320",
+      "source_sha256": "e36af29d6e9835ca2d7caa8c1a92853c1677ec7c6dc3d0c0ceef6d6b3931ef9a",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/searchbox-budget-alert/index.ts"
       ]
@@ -1852,10 +1916,11 @@
       "name": "send-email",
       "entrypoint": "supabase/functions/send-email/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f7f08ad3b1e30da929d67ace3e9421461b92de9f1dbfc2121b2363dccfd8f249",
+      "source_sha256": "5ccd99dab9c0583e09d4df07c9c698ac1c8a6c31bf6d5870db47b4075ea96366",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/send-email/index.ts"
@@ -1865,10 +1930,11 @@
       "name": "send-rate-limit-alert",
       "entrypoint": "supabase/functions/send-rate-limit-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "61f13599d654384d7703fc58e0f6ba1104288faf76c0b68ee801cfd173fd8cb2",
+      "source_sha256": "ac18e283f2c6f9a081121828d22c8c229898030b72b1ce3191db419a729dc0db",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/send-rate-limit-alert/index.ts"
@@ -1878,11 +1944,12 @@
       "name": "send-scheduled-report",
       "entrypoint": "supabase/functions/send-scheduled-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c17c3ec388659bcd61fedc1d564b3acd3635b510f2e37dfe8ca04585f20a1f4b",
+      "source_sha256": "3bc2b988e439551ecb19778c7ae46e105e5446717aeebf9297f68b8f593dd728",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/send-scheduled-report/index.ts"
@@ -1892,12 +1959,13 @@
       "name": "sentiment-alert",
       "entrypoint": "supabase/functions/sentiment-alert/index.ts",
       "verify_jwt": true,
-      "source_sha256": "8acb4025a2d1c5d754df05b7de9f2d0bf3b32ecbd210c9a88f17aaaf389d69ee",
+      "source_sha256": "259d7f8cd44929d22594a06535f0e91593fe43d91615506bc64778b109627a2d",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/notification-events.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/sentiment-alert/index.ts"
@@ -1907,10 +1975,11 @@
       "name": "status",
       "entrypoint": "supabase/functions/status/index.ts",
       "verify_jwt": true,
-      "source_sha256": "02e56170f68f29c76de88145bc0708c37249e3ce4c564d0e0899d61019d70369",
+      "source_sha256": "4bb5d87190bbb9eecd23f80b2eb1e67dcf35c16fc1fc2eae52d36b5efd479f02",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/observability.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/status/index.ts"
       ]
@@ -1919,9 +1988,10 @@
       "name": "sync-call-records",
       "entrypoint": "supabase/functions/sync-call-records/index.ts",
       "verify_jwt": false,
-      "source_sha256": "2a62fd926703973452895fabdc40c0f6b531c1b67b5067f972846b2a446d2aef",
+      "source_sha256": "970584b2dfa5a23b98bfcfb243b396ea61c9bedec4932049cb6206a114b7d4cc",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/sync-call-records/index.ts"
       ]
@@ -1930,12 +2000,13 @@
       "name": "talkx-ai",
       "entrypoint": "supabase/functions/talkx-ai/index.ts",
       "verify_jwt": true,
-      "source_sha256": "99213a65f386237ee9ad4a5ec4e9dcbd9de317a3c72c8a0ac3af1fe9bb8846ea",
+      "source_sha256": "978faa627a310240bc32f47c162fb1b282e4fb73d1c10b1f0b03ff612ca24079",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-ai/index.ts"
       ]
@@ -1944,9 +2015,10 @@
       "name": "talkx-link",
       "entrypoint": "supabase/functions/talkx-link/index.ts",
       "verify_jwt": false,
-      "source_sha256": "cf9f2490a1cfab7eb0e774b0ea10c0ca652cfec6ccce46be27623abf70529970",
+      "source_sha256": "c9d11ff14399a4af8057a262b49c51690acde53089c4a02b0e0f7c30ab863094",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-link/index.ts"
       ]
@@ -1955,10 +2027,11 @@
       "name": "talkx-report",
       "entrypoint": "supabase/functions/talkx-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2b9ce625ae909656947c50d778e27cf22a9501916a3e94af33a6af4628102904",
+      "source_sha256": "eb3db437eebdbb33cc7dca6cf3923c762594d76e8e32831e2da907f614cfe6fd",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-report/index.ts"
       ]
@@ -1967,9 +2040,10 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6ee4c3ae1040f85ddb945fe16d1a5df1c8cd461e4d59d919a59e94c79cd8ee08",
+      "source_sha256": "698da57f38a789f98080b8313c618bf3d28c697577f44a8114f37d0ef9275fa4",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
         "supabase/functions/_shared/talkx-window.ts",
         "supabase/functions/_shared/validation.ts",
@@ -1980,7 +2054,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0c986a5fc893f19b256c75f5accd4d5ab84ba9dbc37a3acb57102f43db23493d",
+      "source_sha256": "ce1b2f502eac5870d99d2e459cfa72080d7d6fea312ec0747b633c251cf2453c",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
@@ -2001,6 +2075,7 @@
         "supabase/functions/_shared/messaging/timing.ts",
         "supabase/functions/_shared/messaging/types.ts",
         "supabase/functions/_shared/multiplix-eligibility.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-delivery-connection.ts",
@@ -2015,9 +2090,10 @@
       "name": "talkx-storage-purge",
       "entrypoint": "supabase/functions/talkx-storage-purge/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c92ecdb3c083d954b400ce7a22ab90304cda00d8f33f5746c50bb9f29dcb53f7",
+      "source_sha256": "9a63e16b87bc6a603a3911643a224a8a963c171a5b44c94ccf0dd95550c8793e",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/talkx-storage-purge/index.ts"
       ]
@@ -2026,7 +2102,7 @@
       "name": "voice-agent",
       "entrypoint": "supabase/functions/voice-agent/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f3f159cdb87e3b5e79a0cbd275de5c1ccb614bbcf0ddbd0b09f1ea630bf7a986",
+      "source_sha256": "06eaf9e26cae683df44fea4d2087dc8e80318b4fa2e0373df303b35b354a8e17",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -2039,6 +2115,7 @@
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-agent/index.ts"
@@ -2048,9 +2125,10 @@
       "name": "voice-changer",
       "entrypoint": "supabase/functions/voice-changer/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0305cc3dfa355ae9ab5d5f92bf36edffc8d08c0a86ad1f1deb7fc6f6438e42a1",
+      "source_sha256": "3670c997df2d6f12ec27253c49aa81da2540fcd7d0b881f8a21a1afa66d240f2",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-changer/index.ts"
       ]
@@ -2059,10 +2137,11 @@
       "name": "voice-copilot-action",
       "entrypoint": "supabase/functions/voice-copilot-action/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0b3640fd8e81426149ab2af2f8618d707abfed5de8162cd43d6ba3fbc6ee525e",
+      "source_sha256": "a899f6ef8545783e167d40ddeacd8b497c324a536f156a1524e6b61532574f87",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/postgrest-filters.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/_shared/voice-copilot-authz.ts",
         "supabase/functions/voice-copilot-action/index.ts"
@@ -2072,10 +2151,11 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9c7a035e01caa349aefe7fb02dec67479fb54ed793cea5a3bd2325c8ece4af54",
+      "source_sha256": "c9d82a83c4d0f84e4d135037b8bbaf66637d16d74199bd3fd5c2f46eb7b998b3",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/webauthn/index.ts",
@@ -2086,12 +2166,13 @@
       "name": "webhook-diagnostic",
       "entrypoint": "supabase/functions/webhook-diagnostic/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1cd4cb2591dbc2169344d6502b97ebc06528df1366d6f18d3290985eccbf8708",
+      "source_sha256": "5419a0b4805f1fb5bfdd80f69ddbfd87f11d270680851e7402ab7abdb5f21998",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/webhook-diagnostic/index.ts"
       ]
@@ -2100,7 +2181,7 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "f7b0e203e8e2c9818ec62305efbd2f4c04fc91d3e81f652070e9402fb8a9a937",
+      "source_sha256": "75daf5b88965836e2fa2e9d72dc020f1afab6bd9b30a7f15857361d8282a8bb5",
       "source_files": [
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
@@ -2108,11 +2189,12 @@
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/whatsapp-webhook/index.ts"
       ]
     }
   ],
-  "manifest_sha256": "38f2a4e5a40b0a5c608090437d885b6a6d1e79ce772defc00c812baf5ddcf125"
+  "manifest_sha256": "a4cc0bb60cff6d5f50306c1bed0dec9f5bf111559023f2e1b4f2d3ebc97503a3"
 }
