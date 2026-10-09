@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { createContext, useContext, useState, useCallback, useId } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { createContext, useContext, useState, useCallback, useId, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, Loader2 } from 'lucide-react';
 import { secureRandomChars } from '@/lib/secureRandom';
@@ -52,30 +51,58 @@ const backgrounds: Record<ToastType, string> = {
   loading: 'bg-primary/10 border-primary/30',
 };
 
+// A saída do toast é a animação `exit` do tema (`animate-exit`: fade-out 0.3s +
+// scale-out 0.2s). O item fica montado até ela terminar, por isso a remoção é
+// adiada em 300ms — e é imediata quando o usuário pede movimento reduzido, caso em
+// que o `motion-safe:` também desliga a animação.
+const DURACAO_SAIDA_MS = 300;
+
+function movimentoReduzidoPedido(): boolean {
+  if (typeof window === 'undefined') return false;
+  const naPagina = typeof document !== 'undefined' && document.documentElement.classList.contains('reduced-motion');
+  const noSistema = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return Boolean(naPagina || noSistema);
+}
+
 interface AccessibleToastProviderProps {
   children: React.ReactNode;
 }
 
 export function AccessibleToastProvider({ children }: AccessibleToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [saindo, setSaindo] = useState<ReadonlySet<string>>(() => new Set<string>());
+  const agendaDeSaida = useRef<Set<string>>(new Set());
+
+  const removeToast = useCallback((id: string) => {
+    // Idempotente: fechar à mão e o auto-fechar podem cair no mesmo toast.
+    if (agendaDeSaida.current.has(id)) return;
+    agendaDeSaida.current.add(id);
+    setSaindo((prev) => new Set(prev).add(id));
+    window.setTimeout(() => {
+      agendaDeSaida.current.delete(id);
+      setSaindo((prev) => {
+        const proximo = new Set(prev);
+        proximo.delete(id);
+        return proximo;
+      });
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, movimentoReduzidoPedido() ? 0 : DURACAO_SAIDA_MS);
+  }, []);
 
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = secureRandomChars(9, '0123456789abcdefghijklmnopqrstuvwxyz');
     setToasts((prev) => [...prev, { ...toast, id }]);
-    
-    // Auto remove after duration (except loading)
+
+    // Auto remove after duration (except loading) — passa pela mesma saída
+    // animada que o botão de fechar, para o toast não sumir de um quadro para o outro.
     if (toast.type !== 'loading' && toast.duration !== 0) {
       setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
+        removeToast(id);
       }, toast.duration || 5000);
     }
-    
-    return id;
-  }, []);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+    return id;
+  }, [removeToast]);
 
   const updateToast = useCallback((id: string, updates: Partial<Omit<Toast, 'id'>>) => {
     setToasts((prev) =>
@@ -86,17 +113,18 @@ export function AccessibleToastProvider({ children }: AccessibleToastProviderPro
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast, updateToast }}>
       {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer toasts={toasts} saindo={saindo} onRemove={removeToast} />
     </ToastContext.Provider>
   );
 }
 
 interface ToastContainerProps {
   toasts: Toast[];
+  saindo: ReadonlySet<string>;
   onRemove: (id: string) => void;
 }
 
-function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+function ToastContainer({ toasts, saindo, onRemove }: ToastContainerProps) {
   return (
     <div
       role="region"
@@ -104,22 +132,21 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
       aria-label="Notificações"
       className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-md w-full pointer-events-none"
     >
-      <AnimatePresence mode="popLayout">
-        {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
-        ))}
-      </AnimatePresence>
+      {toasts.map((toast) => (
+        <ToastItem key={toast.id} toast={toast} saindo={saindo.has(toast.id)} onRemove={onRemove} />
+      ))}
     </div>
   );
 }
 
 interface ToastItemProps {
   toast: Toast;
+  saindo?: boolean;
   onRemove: (id: string) => void;
 }
 
 const ToastItem = React.forwardRef<HTMLDivElement, ToastItemProps>(function ToastItem(
-  { toast, onRemove },
+  { toast, saindo = false, onRemove },
   ref
 ) {
   const [progress, setProgress] = React.useState(100);
@@ -143,18 +170,16 @@ const ToastItem = React.forwardRef<HTMLDivElement, ToastItemProps>(function Toas
   }, [duration]);
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      layout
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 100, scale: 0.9 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       role="alert"
       aria-atomic="true"
       className={cn(
         'relative overflow-hidden rounded-xl border p-4 shadow-lg pointer-events-auto',
         'bg-card',
+        // Entrada: sobe com fade (o mesmo movimento de antes), só com movimento
+        // liberado e usando a animação `slide-up` do tema. Saída: `animate-exit`.
+        saindo ? 'motion-safe:animate-exit' : 'motion-safe:animate-slide-up',
         backgrounds[toast.type]
       )}
     >
@@ -188,13 +213,11 @@ const ToastItem = React.forwardRef<HTMLDivElement, ToastItemProps>(function Toas
       </div>
 
       {duration > 0 && (
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-current opacity-20"
-          initial={{ width: '100%' }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.1 }}
+        <div
+          className="absolute bottom-0 left-0 h-1 bg-current opacity-20 motion-safe:transition-all motion-safe:duration-100"
+          style={{ width: `${progress}%` }}
         />
       )}
-    </motion.div>
+    </div>
   );
 });

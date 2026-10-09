@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { motion, HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -73,26 +72,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-// Motion button with built-in hover/tap animations and neon glow
+// MotionButton — mesmas animações de hover/tap que o botão animado anterior fazia
+// por JS, agora só com CSS do tema: o efeito é sutil, roda apenas com
+// `motion-safe:` (quem pede movimento reduzido não recebe hover/tap animado) e usa
+// `transition-transform`/`duration-200`, tokens já existentes em tailwind.config.ts.
+// Botão desabilitado (ou carregando) não anima: a base traz
+// `disabled:pointer-events-none`, então o hover/active nem chega ao elemento.
+const motionButtonClasses =
+  "motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]";
+
 interface MotionButtonProps
-  extends Omit<HTMLMotionProps<"button">, "ref">,
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
   loadingText?: string;
 }
 
 const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
-  ({ className, variant, size, isLoading, loadingText, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, isLoading = false, loadingText, children, disabled, ...props }, ref) => {
     return (
-      <motion.button
+      <button
         ref={ref}
-        whileHover={{ 
-          scale: disabled || isLoading ? 1 : 1.02, 
-          y: disabled || isLoading ? 0 : -2,
-          transition: { duration: 0.2, ease: "easeOut" }
-        }}
-        whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size }), motionButtonClasses, className)}
         disabled={disabled || isLoading}
         {...props}
       >
@@ -104,7 +105,7 @@ const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
         ) : (
           children
         )}
-      </motion.button>
+      </button>
     );
   }
 );
