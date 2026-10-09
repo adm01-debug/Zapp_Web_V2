@@ -128,8 +128,8 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
             </p>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Nome do disparo (opcional)</span>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Convite feira 2026" />
+              <label htmlFor="multiplix-dispatch-name" className="text-xs text-muted-foreground">Nome do disparo (opcional)</label>
+              <Input id="multiplix-dispatch-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Convite feira 2026" />
               {/* F78 (TL-010): sem nome digitado o disparo sai com o titulo
                   sugerido (publico + assunto) — nao trava o envio. */}
               <p className="text-xs text-muted-foreground">
@@ -138,8 +138,9 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Mensagem</span>
+              <label htmlFor="multiplix-dispatch-message" className="text-xs text-muted-foreground">Mensagem</label>
               <Textarea
+                id="multiplix-dispatch-message"
                 value={messageTemplate}
                 onChange={(e) => setMessageTemplate(e.target.value)}
                 placeholder="Olá {{empresa}}, {{saudacao}}!"
@@ -161,14 +162,14 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
               disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
               onClick={() => submit(false)}
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
               Salvar rascunho
             </Button>
             <Button
               disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
               onClick={() => setConfirmStartOpen(true)}
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {busy ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : null}
               Salvar e iniciar agora
             </Button>
           </DialogFooter>

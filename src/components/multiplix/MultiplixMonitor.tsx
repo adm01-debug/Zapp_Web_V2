@@ -101,6 +101,15 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
 
   const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // F86: a lista de disparos e desmontada quando o monitor abre; sem mover o
+  // foco, quem navega por teclado volta para o <body> e perde o lugar na troca
+  // lista<->monitor. O titulo (tabIndex -1) recebe o foco quando o disparo
+  // chega -- o efeito roda de novo por id, nao a cada re-render do realtime.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [dispatch?.id]);
 
   useEffect(() => {
     // Debounce 500ms nos dois handlers: durante envio ativo cada destinatario
@@ -134,7 +143,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     }
   };
 
-  if (!dispatch) return <div className="space-y-4 animate-pulse">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-2xl" />)}</div>;
+  if (!dispatch) return <div className="space-y-4 motion-safe:animate-pulse">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-2xl" />)}</div>;
 
   const outcomeUnknown = dispatch.outcome_unknown_count ?? 0;
   const processed = dispatch.sent_count + dispatch.failed_count + outcomeUnknown + skippedCount;
@@ -171,6 +180,11 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     }
   };
 
+  // F86: os contadores e a barra mudam sozinhos (realtime) sem ninguem tocar
+  // na tela — este texto e o que a regiao aria-live anuncia; sai dos mesmos
+  // numeros que a tela mostra.
+  const progressAnnouncement = `${progress}% concluído · ${fmtInt(processed)} de ${fmtInt(dispatch.total_recipients)} processados · ${fmtInt(dispatch.failed_count)} falha(s) · ${fmtInt(remaining)} restantes`;
+
   return (
     <div className="space-y-4 min-w-0">
       <button type="button" onClick={onBack} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 w-fit">
@@ -182,7 +196,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           <div className="flex items-center gap-3 min-w-0">
             <IconTile icon={isRunning ? Send : isPaused ? Pause : XCircle} color={isRunning ? 'blue' : isPaused ? 'amber' : dispatch.status === 'completed' ? 'green' : 'red'} size={48} />
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
+              <h2 ref={headingRef} tabIndex={-1} className="text-xl font-bold text-foreground truncate">{dispatch.name}</h2>
               <p className="text-xs text-foreground-secondary line-clamp-1">{dispatch.message_template}</p>
             </div>
           </div>
@@ -195,10 +209,19 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5" />
+        <Progress value={progress} aria-label="Progresso do disparo" className="h-3 mb-1.5" />
+        <span
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          data-testid="multiplix-progresso-live"
+        >
+          {progressAnnouncement}
+        </span>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(dispatch.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-primary-glow font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
         {/* F10c: o worker grava o motivo da pausa automatica — sem isto o
@@ -246,7 +269,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             )}
           </p>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger aria-label="Filtrar destinatários por status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -265,7 +288,15 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
             Mostrando os primeiros {fmtInt(recipients.length)} destinatários (amostra do total, veja o filtro de status).
           </p>
         )}
-        <div className="max-h-[480px] overflow-auto divide-y divide-border/40">
+        {/* F86: a lista rola em `overflow-auto`; sem foco proprio o teclado nao
+            alcanca a rolagem (os itens nao sao focaveis) e quem nao usa mouse
+            fica sem ver os destinatarios alem do corte. */}
+        <div
+          role="region"
+          aria-label="Lista de destinatários"
+          tabIndex={0}
+          className="max-h-[480px] overflow-auto divide-y divide-border/40"
+        >
           {recipients.map((r) => {
             const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
             return (
