@@ -43,6 +43,7 @@ const EXPORTED_NAMES = [
   'personalizePreview',
   'IconTile',
   'ModuleHeader',
+  'ModuleBreadcrumb',
   'MetaRow',
   'Th',
   'Td',
