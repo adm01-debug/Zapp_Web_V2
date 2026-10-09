@@ -40,6 +40,10 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     refetchCampaigns: vi.fn(),
   }),
 }));
+// X090: o menu ⋮ e o controle de status da tela de templates leem o papel.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false, isSpecialAgent: false, roles: [] }),
+}));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));

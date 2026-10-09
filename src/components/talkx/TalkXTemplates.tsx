@@ -1,19 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
-  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight,
+  Plus, FileText, Star, Copy, Image, Video, Music, Check, ChevronRight,
 } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
-import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
+import { useTalkXTemplateActions } from '@/hooks/integrations/useTalkXTemplateActions';
 import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
+// X090 — ações do template unificadas (menu ⋮ + controle de status) no cartão, na
+// lista e na biblioteca lateral; o modal de exclusão é o do kit.
+import { TalkXTemplateActionsMenu } from './TalkXTemplateActionsMenu';
+import { TalkXTemplateStatusControl } from './TalkXTemplateStatusControl';
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -62,13 +63,15 @@ function resumoVariaveis(content: string): string | null {
 }
 
 export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: Props) {
-  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
+  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate } = useTalkXTemplates();
+  // X090: o atalho "Duplicar template" da biblioteca lateral passa pelo MESMO
+  // caminho do menu ⋮ (cria a cópia e devolve a linha criada).
+  const actions = useTalkXTemplateActions();
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [mode, setMode] = useState<ViewMode>('list');
   const [editing, setEditing] = useState<TalkXTemplate | null>(null);
-  const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
   const [selected, setSelected] = useState<TalkXTemplate | null>(null);
   const [galleryMode, setGalleryMode] = useState<GalleryMode>(lerModoGaleria);
 
@@ -76,6 +79,23 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
   const openNew = () => { setEditing(null); setMode('edit'); };
   const openEdit = (t: TalkXTemplate) => { setEditing(t); setMode('edit'); };
+
+  /**
+   * X090 — depois de excluir, nada pode continuar apontando para o template que
+   * sumiu (a seleção do cartão alimentava o atalho "Duplicar template").
+   */
+  const handleDeleted = (id: string) => setSelected((current) => (current?.id === id ? null : current));
+
+  /**
+   * X090/R2-MOD-061: o atalho do rail duplica o template SELECIONADO pelo MESMO
+   * caminho do menu ⋮ — nunca abre o original para edição. Sem seleção, abre o
+   * fluxo de template novo. Aqui a cópia não é aberta: o atalho é "duplicar" e a
+   * pessoa volta para onde estava (a cópia aparece na lista).
+   */
+  const duplicateFromRail = () => {
+    if (!selected) { openNew(); return; }
+    void actions.duplicate(selected).catch(() => { /* avisado no toast da mutation */ });
+  };
 
   // R2-MOD-039: o menu do topo ("Templates ▾ → Novo template") abre o editor VAZIO. O modo
   // é DERIVADO do pedido (não sincronizado por efeito, para não disparar render em cascata),
@@ -155,14 +175,14 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
           <div data-talkx-view="grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {paged.length === 0 ? (<div className="col-span-full"><TalkXFilteredEmptyState onClearFilters={limparFiltros} /></div>)
              : paged.map((t) => (
-              <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+              <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={openEdit} onOpenCopy={openEdit} onDeleted={handleDeleted} onUse={() => onUseTemplate(t.id)} />
             ))}
           </div>
         ) : (
           <div data-talkx-view="list" className="border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/50">
             {paged.length === 0 ? <TalkXFilteredEmptyState onClearFilters={limparFiltros} />
              : paged.map((t) => (
-              <TemplateListItem key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+              <TemplateListItem key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={openEdit} onOpenCopy={openEdit} onDeleted={handleDeleted} onUse={() => onUseTemplate(t.id)} />
             ))}
           </div>
         )}
@@ -174,30 +194,26 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
         <RailCard icon={Star} color="amber" title="Biblioteca inteligente" subtitle="Os templates mais usados na sua base.">
           <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
           {most.map((t, i) => (
-            <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-              <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-            </button>
+            <div key={t.id} className="flex items-center gap-1.5 py-2.5 border-b border-border/50 last:border-0 rounded-xl px-1 hover:bg-muted/20">
+              <button type="button" onClick={() => onUseTemplate(t.id)} className="flex items-center gap-2.5 min-w-0 flex-1 text-left">
+                <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </button>
+              {/* X090: as mesmas ações do cartão, aqui na biblioteca lateral. */}
+              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                <TalkXTemplateActionsMenu template={t} onEdit={openEdit} onOpenCopy={openEdit} onDeleted={handleDeleted} label={`Ações do template ${t.name}`} />
+              </div>
+            </div>
           ))}
         </RailCard>
         <RailCard icon={FileText} title="Ações rápidas">
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero ou com IA" onClick={openNew} />
-            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
-
+            <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={duplicateFromRail} />
           </div>
         </RailCard>
       </div>
-
-
-
-      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader><AlertDialogTitle>Excluir template?</AlertDialogTitle><AlertDialogDescription>O template <b className="text-foreground">"{deleting?.name}"</b> será excluído permanentemente.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={() => { if (deleting) deleteTemplate.mutate(deleting.id); setDeleting(null); }}>Excluir</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
@@ -208,8 +224,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
  * ficha do template embaixo (nome, categoria, tags, variáveis usadas, data,
  * usos e status). "Usar template" só habilita o que está aprovado (A8).
  */
-function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
-  const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+function TemplateCard({ t, selected, onClick, onEdit, onOpenCopy, onDeleted, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: (t: TalkXTemplate) => void; onOpenCopy: (t: TalkXTemplate) => void; onDeleted: (id: string) => void; onUse: () => void }) {
   const variaveis = resumoVariaveis(t.content);
   const tagsVisiveis = t.tags.slice(0, 2);
   const tagsRestantes = t.tags.length - tagsVisiveis.length;
@@ -246,7 +261,8 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
       <div className="p-3.5">
         <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-          <Pill label={sm.label} tone={sm.tone} dot />
+          {/* X090: selo + aprovação no lugar do `<Select>` livre. */}
+          <TalkXTemplateStatusControl template={t} />
           <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
           {tagsVisiveis.map((tag) => <span key={tag} className="text-3xs text-primary-glow">#{tag}</span>)}
           {tagsRestantes > 0 && <span className="text-3xs text-muted-foreground" title={t.tags.join(', ')}>+{tagsRestantes}</span>}
@@ -255,9 +271,10 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
         <p className="text-2xs text-muted-foreground mt-1 truncate" title={`Atualizado em ${fmtDateTime(t.updated_at)}`}>Atualizado em {fmtDateTime(t.updated_at)}</p>
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
           <button type="button" disabled={!aprovado} title={motivoBloqueio} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar template</button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3.5 h-3.5" /></button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+          {/* X090: editar, duplicar (abre a cópia), testar e excluir no menu ⋮ único. */}
+          <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+            <TalkXTemplateActionsMenu template={t} onEdit={onEdit} onOpenCopy={onOpenCopy} onDeleted={onDeleted} />
+          </div>
           <span className="text-3xs text-muted-foreground" title={`${fmtInt(t.use_count)} campanhas lançadas com este template`}>{fmtInt(t.use_count)} usos</span>
         </div>
       </div>
@@ -269,8 +286,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
  * X089 — linha do modo lista: ícone, nome, descrição, selo e tags. Mesma fonte
  * de dados do cartão, para a tela não contar duas histórias diferentes.
  */
-export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
-  const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+export function TemplateListItem({ t, selected, onClick, onEdit, onOpenCopy, onDeleted, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: (t: TalkXTemplate) => void; onOpenCopy: (t: TalkXTemplate) => void; onDeleted: (id: string) => void; onUse: () => void }) {
   const aprovado = t.status === 'approved';
   const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
   return (
@@ -293,14 +309,15 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground hidden sm:block">{t.category}</span>
-        <Pill label={sm.label} tone={sm.tone} dot />
+        {/* X090: selo + aprovação no lugar do `<Select>` livre. */}
+        <TalkXTemplateStatusControl template={t} />
         <span className="text-3xs text-muted-foreground w-12 text-right hidden md:block" title={`${fmtInt(t.use_count)} campanhas lançadas com este template`}>{fmtInt(t.use_count)} usos</span>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <button type="button" disabled={!aprovado} title={aprovado ? undefined : 'Só templates aprovados podem ser usados em campanhas'} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar</button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
+        <div onClick={(e) => e.stopPropagation()}>
+          <TalkXTemplateActionsMenu template={t} onEdit={onEdit} onOpenCopy={onOpenCopy} onDeleted={onDeleted} />
+        </div>
       </div>
     </div>
   );
