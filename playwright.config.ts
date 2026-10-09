@@ -114,7 +114,7 @@ export default defineConfig({
       // As specs do módulo MAPA (E71-E74) ficam de fora: usam sessão FALSA e não
       // podem depender do login real — ver o projeto `chromium-mapa` abaixo.
       name: 'chromium-authenticated',
-      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts/,
+      testIgnore: /auth\.spec\.ts|auth\.setup\.ts|conversation\.spec\.ts|messaging\.spec\.ts|location-picker\.spec\.ts|contact-address\.spec\.ts|contact-map-pin\.spec\.ts|contacts-snapshots\.spec\.ts|a11y-contraste\.spec\.ts|talkx-launch\.spec\.ts|telefonia\.spec\.ts|skins-e2e\.spec\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
@@ -139,6 +139,21 @@ export default defineConfig({
       // backend mockado (sem setup, sem secrets) — roda no job E2E de PR do ci.yml.
       name: 'chromium-contacts-visual',
       testMatch: /contacts-snapshots\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // CP8/CP9 do plano das Skins (docs/design/PLANO_SKINS_OPERA_GX_100_ETAPAS.md):
+      // fidelidade das 19 skins + 14 checks funcionais na tela `?view=themes`.
+      // Sessão FALSA (`installFakeSession`) + backend do app shell mockado —
+      // DESLOGADO (sem `setup`, sem `storageState`, sem secrets), mesmo padrão de
+      // `chromium-onboarding-dispensar`/`chromium-contacts-visual`. Projeto
+      // dedicado porque o catch-all `chromium-authenticated` depende de `setup`.
+      name: 'chromium-skins',
+      testMatch: /skins-[a-z0-9-]*\.spec\.ts/,
+      // A spec roda contra o dev server (Vite) e a máquina de trabalho vive a load alto: um
+      // boot de página que não baixa o módulo derruba o teste por motivo de infraestrutura,
+      // não por comportamento. Uma repetição absorve isso sem afrouxar asserção nenhuma.
+      retries: 1,
       use: { ...devices['Desktop Chrome'] },
     },
     {
