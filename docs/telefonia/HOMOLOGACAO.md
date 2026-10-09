@@ -32,14 +32,19 @@ Rodar após cada cenário, sempre com a linha real gravada:
 select id, channel as canal, direction as direção, status, end_reason, talk_seconds,
        recording_status, provider_call_id, answered_at, ended_at
 from calls
-where agent_id = '<perfil-do-agente-de-teste>'
+where agent_id = '<uuid-do-agente-de-teste>'
 order by started_at desc
 limit 5;
 ```
 
+`agent_id` é **uuid** (não é o nome do perfil): o filtro precisa do id do agente de
+teste, senão a consulta nem roda. O `provider_call_id` é o `Call-ID` do SIP —
+é ele que prova que a linha do banco é *a chamada daquela ligação*, e o aceite do
+T96 o exige em cada cenário.
+
 O recibo de cada cenário é a **linha real** dessa consulta, resumida na tabela com as colunas:
 `id`, `canal`, `direção`, `cenário`, `status`, `end_reason`, `talk_seconds`,
-`recording_status`.
+`provider_call_id`, `recording_status`.
 
 ## Cenários (9)
 
@@ -59,17 +64,17 @@ Cada cenário preenche **uma linha real** na tabela de recibos abaixo (colunas c
 
 ## Tabela de recibos (preencher na execução)
 
-| # | id | canal | direção | cenário | status | end_reason | talk_seconds | recording_status |
-|---|---|---|---|---|---|---|---|---|
-| 1 | | | | VoIP saída atendida | | | | |
-| 2 | | | | VoIP saída não atendida | | | | |
-| 3 | | | | VoIP saída cancelada | | | | |
-| 4 | | | | VoIP saída ocupado | | | | |
-| 5 | | | | VoIP entrada atendida | | | | |
-| 6 | | | | VoIP entrada recusada | | | | |
-| 7 | | | | VoIP entrada perdida | | | | |
-| 8 | | | | WhatsApp entrada | | | | |
-| 9 | | | | Navegação + 2 abas | | | | |
+| # | id | canal | direção | cenário | status | end_reason | talk_seconds | provider_call_id | recording_status |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | | | | VoIP saída atendida | | | | | |
+| 2 | | | | VoIP saída não atendida | | | | | |
+| 3 | | | | VoIP saída cancelada | | | | | |
+| 4 | | | | VoIP saída ocupado | | | | | |
+| 5 | | | | VoIP entrada atendida | | | | | |
+| 6 | | | | VoIP entrada recusada | | | | | |
+| 7 | | | | VoIP entrada perdida | | | | | |
+| 8 | | | | WhatsApp entrada | | | | | |
+| 9 | | | | Navegação + 2 abas | | | | | |
 
 ## Critério de encerramento (TEL-RUNTIME-001)
 

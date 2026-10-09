@@ -75,3 +75,55 @@ test('TEL-RUNTIME-001: o roteiro registra os 3 critérios de encerramento do ach
   assert.match(texto, /áudio correto|audio correto/i, 'falta o critério de áudio correto');
   assert.match(texto, /zero linhas novas presas/i, 'falta o critério de zero linhas presas');
 });
+
+// ─── T96 (SL-019) — o recibo precisa coletar o que o aceite exige ───
+//
+// O aceite do T96 e o critério 1 do TEL-RUNTIME-001 pedem, por cenário, a linha real
+// com `id, status, end_reason, talk_seconds, provider_call_id`. O recibo era a peça
+// que a execução preenche, e ele não pedia o `provider_call_id`: a homologação seria
+// feita e o aceite não teria como ser conferido depois — retrabalho com o agente ao
+// telefone. Estes dois testes travam isso (vermelho antes, verde depois).
+
+/** Campos que o aceite do T96 exige em cada linha real de `calls`. */
+const CAMPOS_DO_ACEITE_T96 = [
+  'id',
+  'status',
+  'end_reason',
+  'talk_seconds',
+  'provider_call_id',
+];
+
+/** Colunas do CABEÇALHO da tabela que a execução preenche (não qualquer menção no texto). */
+function colunasDaTabelaDeRecibos(texto) {
+  const linhas = texto.split(/\r?\n/);
+  const inicio = linhas.findIndex((l) => /^##\s+Tabela de recibos/i.test(l));
+  assert.ok(inicio >= 0, 'não achei a seção "Tabela de recibos" no roteiro');
+  for (let i = inicio + 1; i < linhas.length; i += 1) {
+    const linha = linhas[i].trim();
+    if (/^##\s/.test(linha)) break; // fim da seção sem tabela
+    if (linha.startsWith('|')) {
+      return linha.split('|').map((celula) => celula.trim()).filter((celula) => celula.length > 0);
+    }
+  }
+  assert.fail('não achei a tabela de recibos abaixo da seção');
+}
+
+test('T96: o cabeçalho do recibo coleta os campos do aceite, inclusive `provider_call_id`', () => {
+  const colunas = colunasDaTabelaDeRecibos(lerRoteiro());
+  for (const campo of CAMPOS_DO_ACEITE_T96) {
+    assert.ok(
+      colunas.includes(campo),
+      `campo do aceite ausente no cabeçalho do recibo: ${campo} (cabeçalho: ${colunas.join(' | ')})`,
+    );
+  }
+});
+
+test('T96: o filtro da consulta de recibo usa o UUID do agente (a coluna `agent_id` é uuid)', () => {
+  const consulta = /where\s+agent_id\s*=\s*'([^']*)'/i.exec(lerRoteiro());
+  assert.ok(consulta, 'falta o filtro `where agent_id = ...` na consulta de recibo');
+  assert.match(
+    consulta[1],
+    /uuid/i,
+    `o filtro casa agent_id (uuid) com "${consulta[1]}": um nome de perfil ali não roda na consulta`,
+  );
+});
