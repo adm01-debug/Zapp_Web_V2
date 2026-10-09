@@ -23,6 +23,19 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   }),
 }));
 
+// O teste cobre busca; a central de notificações é provada em
+// MobileShell.notificacoes.test.tsx. Sem este mock, o hook real exige AuthProvider
+// e impede a regressão de busca de ser exercitada.
+vi.mock('@/hooks/system/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+    loading: false,
+  }),
+}));
+
 const PLACEHOLDER = 'Buscar módulo… (ex: pipeline, chatbot)';
 
 // O cmdk chama scrollIntoView no item ativo; o jsdom não implementa a função.
