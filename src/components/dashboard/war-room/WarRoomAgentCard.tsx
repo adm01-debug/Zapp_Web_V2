@@ -42,7 +42,7 @@ export function WarRoomAgentCard({ agent, onClick }: AgentCardProps) {
           <span className="text-muted-foreground">Chats</span>
           <span className={cn(isOverloaded && "text-warning font-medium")}>{agent.activeChats}/{agent.maxChats}</span>
         </div>
-        <Progress value={utilizationPercent} className="h-1.5" />
+        <Progress value={utilizationPercent} className="h-1.5" aria-label="Utilização do agente" />
         <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
           <div><div className="text-muted-foreground">Resp.</div><div className="font-medium">{agent.avgResponseTime}s</div></div>
           <div><div className="text-muted-foreground">Hoje</div><div className="font-medium">{agent.resolvedToday}</div></div>
