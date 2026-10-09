@@ -309,25 +309,31 @@ describe('TalkXLiveMonitor — o card de saúde usa o que a tela carrega (X148)'
     h.rateError = null;
   });
 
-  const renderMonitor = () => {
+  const renderMonitor = (onOpenHelp?: () => void) => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={qc}>
-        <TalkXLiveMonitor campaignId="camp-1" />
+        <TalkXLiveMonitor campaignId="camp-1" onOpenHelp={onOpenHelp} />
       </QueryClientProvider>,
     );
   };
 
-  it('envio parado há 40 min: a tela mostra "Envio parado" e "Ver o que fazer" abre a ajuda', async () => {
+  it('envio parado há 40 min: a tela mostra "Envio parado" e "Ver o que fazer" chama a ajuda', async () => {
+    // X189 — a Ajuda saiu de diálogo local (TalkXHelp) para tela com rota própria
+    // (TalkXHelpCenter, aberta pelo TalkXView). Quem a renderiza e cobre o texto
+    // "Ajuda — Campanhas" agora são os testes do próprio TalkXHelpCenter; aqui a
+    // responsabilidade do monitor é só repassar o clique para `onOpenHelp`, do
+    // mesmo jeito que o teste direto do TalkXHealthCard já cobre (linha 67 acima).
     h.healthRecipients = [{ sent_at: new Date(Date.now() - 40 * MINUTE).toISOString() }];
-    renderMonitor();
+    const onOpenHelp = vi.fn();
+    renderMonitor(onOpenHelp);
 
     await screen.findByText('Campanha parada');
     expect(screen.getByText(/^Envio parado há 40 minutos$/)).toBeTruthy();
     expect(screen.queryByText('Enviando normalmente')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Ver o que fazer/ }));
-    expect(await screen.findByText(/Ajuda — Campanhas/)).toBeTruthy();
+    expect(onOpenHelp).toHaveBeenCalledTimes(1);
   });
 
   it('consulta da medida com erro não vira "Envio parado" (erro de consulta não é campanha parada)', async () => {

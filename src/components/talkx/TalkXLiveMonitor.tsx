@@ -23,12 +23,11 @@ import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
-import { TalkXHelp } from './TalkXHelp';
-interface Props { campaignId: string; onBack?: () => void }
+interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
@@ -39,10 +38,12 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
-  // X148/TL-157: "Ver o que fazer" do card de saúde abre a ajuda do módulo. O
-  // pause/cancel/resume do rodapé não tem mais estado próprio aqui — vive no
-  // controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (X050).
-  const [helpOpen, setHelpOpen] = useState(false);
+  // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
+  // Ajuda é uma TELA com rota própria na URL (X189, `TalkXHelpCenter`), não
+  // mais um diálogo local — por isso sobe por `onOpenHelp` (o pai é quem sabe
+  // navegar para `?screen=help`), em vez de um estado de dialog aqui. O
+  // pause/cancel/resume do rodapé também não tem mais estado próprio aqui —
+  // vive no controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (X050).
 
   const {
     data: campaign,
@@ -109,6 +110,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
+  // X148/TL-157 — "pendentes" para a Saúde da Campanha: mesma fórmula do cálculo
+  // pré-refactor (total menos o que já foi processado), usando o `processed` que
+  // o X051 já mantém nesta função.
+  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
@@ -248,7 +253,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             connectionLabel={connStatusLabel}
             ratePerMinute={healthMeasured ? talkxRatePerMinute(healthSentAts) : null}
             startedAt={campaign.started_at}
-            onOpenHelp={() => setHelpOpen(true)}
+            onOpenHelp={onOpenHelp}
           />
         </div>
       )}
@@ -321,9 +326,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       )}
 
       <TalkXLifecycleDialog controller={lifecycle} />
-      {/* X148 — "Ver o que fazer" do card de saúde abre a ajuda do módulo aqui mesmo: a
-          tela do monitor é montada fora da view que guarda o estado da ajuda. */}
-      <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }

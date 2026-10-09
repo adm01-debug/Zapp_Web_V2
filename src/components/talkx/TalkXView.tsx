@@ -296,7 +296,7 @@ export default function TalkXView() {
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
-        <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+        <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} onOpenHelp={() => changeHelpRoute({})} />
       </div>
     );
   }
