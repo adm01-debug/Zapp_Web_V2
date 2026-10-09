@@ -2,13 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { fetchAllRows } from '@/lib/fetchAllRows';
+import {
+  firstResponseRatePctOrZero,
+  tallyFirstResponse,
+  type FirstResponseFields,
+  type FirstResponseTally,
+} from './slaFirstResponse';
 
 export type PeriodFilter = 'today' | 'week' | 'month' | 'all';
 
 interface SLAMetric {
+  /** Conversas AVALIADAS (no prazo + violadas) — o denominador da taxa. */
   total: number;
   onTime: number;
   breached: number;
+  /** Conversas ainda sem desfecho de 1ª resposta: não contam como "no prazo". */
+  pending: number;
+  /** Taxa sobre as avaliadas; sem nenhuma avaliada é 0 — nunca 100 (R2-SLA-001). */
   rate: number;
 }
 
@@ -23,17 +33,18 @@ interface AgentSLAMetric {
 export interface SLADashboardData {
   overall: {
     firstResponse: SLAMetric;
+    /** Conversas com SLA no período: avaliadas + pendentes. */
     totalConversations: number;
+    /** `false` quando o período não tem nenhuma conversa avaliada (a taxa não existe). */
+    hasSample: boolean;
     overallRate: number;
   };
   byAgent: AgentSLAMetric[];
 }
 
 /** Linhas de `conversation_sla` usadas no cálculo (o join traz o agente dono do contato). */
-interface SLARow {
+interface SLAMetricsRow extends FirstResponseFields {
   id: string;
-  first_response_at: string | null;
-  first_response_breached: boolean | null;
   contacts: { assigned_to: string | null } | null;
 }
 
@@ -54,9 +65,18 @@ export function getPeriodStart(period: PeriodFilter, now: Date = new Date()): Da
   }
 }
 
-function buildMetric(onTime: number, breached: number): SLAMetric {
-  const total = onTime + breached;
-  return { total, onTime, breached, rate: total > 0 ? (onTime / total) * 100 : 100 };
+/**
+ * Métrica de 1ª resposta a partir do MESMO tally que o histórico usa (R2-SLA-001): o denominador é
+ * sempre `no prazo + violadas` e a pendente não entra em nenhum dos dois lados da conta.
+ */
+function buildMetric(tally: FirstResponseTally): SLAMetric {
+  return {
+    total: tally.evaluated,
+    onTime: tally.onTime,
+    breached: tally.breached,
+    pending: tally.pending,
+    rate: firstResponseRatePctOrZero(tally),
+  };
 }
 
 async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> {
@@ -66,7 +86,7 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
   const [slaRead, profilesResult] = await Promise.all([
     // Leitura paginada: sem `.range()` o PostgREST corta a consulta no teto de linhas do projeto
     // e o total do período passa a ser calculado sobre uma amostra.
-    fetchAllRows<SLARow>(
+    fetchAllRows<SLAMetricsRow>(
       (from, to) => {
         const base = supabase
           .from('conversation_sla')
@@ -89,36 +109,34 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
   const slaData = slaRead.rows;
   const profiles = profilesResult.data || [];
 
-  // Overall
-  const frOnTime = slaData.filter(s => s.first_response_at && !s.first_response_breached).length;
-  const frBreached = slaData.filter(s => s.first_response_breached).length;
-
-  const firstResponse = buildMetric(frOnTime, frBreached);
+  // Overall — uma conta só, a mesma que o histórico usa (R2-SLA-001).
+  const tallyOverall = tallyFirstResponse(slaData);
+  const firstResponse = buildMetric(tallyOverall);
   const totalConversations = slaData.length;
 
   const overall = {
     firstResponse,
     totalConversations,
+    hasSample: tallyOverall.evaluated > 0,
     overallRate: firstResponse.rate,
   };
 
-  // By agent
-  const agentMap = new Map<string, { frOn: number; frBr: number }>();
+  // By agent — mesmo critério, por agente.
+  const rowsByAgent = new Map<string, SLAMetricsRow[]>();
 
   for (const sla of slaData) {
     const agentId = sla.contacts?.assigned_to;
     if (!agentId) continue;
 
-    const stats = agentMap.get(agentId) || { frOn: 0, frBr: 0 };
-    if (sla.first_response_at && !sla.first_response_breached) stats.frOn++;
-    if (sla.first_response_breached) stats.frBr++;
-    agentMap.set(agentId, stats);
+    const rows = rowsByAgent.get(agentId);
+    if (rows) rows.push(sla);
+    else rowsByAgent.set(agentId, [sla]);
   }
 
-  const byAgent: AgentSLAMetric[] = Array.from(agentMap.entries())
-    .map(([agentId, s]) => {
+  const byAgent: AgentSLAMetric[] = Array.from(rowsByAgent.entries())
+    .map(([agentId, rows]) => {
       const profile = profiles.find(p => p.id === agentId);
-      const fr = buildMetric(s.frOn, s.frBr);
+      const fr = buildMetric(tallyFirstResponse(rows));
       return {
         agentId,
         agentName: profile?.name || 'Agente',
