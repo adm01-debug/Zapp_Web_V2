@@ -168,8 +168,9 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
 
   it('a mesma busca que falhou não deixa o aviso na tela quando o servidor responde', async () => {
     // Trocar de conversa NÃO remonta o painel nem apaga o termo digitado: o efeito
-    // roda de novo com o mesmo termo e a resposta chega. Sem limpar o erro
-    // anterior, o aviso de falha ficava por cima do resultado que chegou.
+    // roda de novo com o mesmo termo e a resposta chega. Enquanto a busca da
+    // conversa nova está EM VOO, o aviso de falha da conversa anterior não pode
+    // estar na tela (o painel é o mesmo componente, sem `key`).
     h.rpc.mockResolvedValue({ data: null, error: { message: 'RPC indisponível' } });
     const { result, rerender } = renderHook(
       ({ conv }: { conv: TeamConversation }) => useTeamChatPanel(conv),
@@ -178,15 +179,66 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     act(() => { result.current.setSearchQuery('contrato'); });
     await esperarDebounce();
     expect(result.current.searchError).toBeTruthy();
+    expect(result.current.filteredMessages).toEqual([]);
 
-    h.rpc.mockResolvedValue({
-      data: [{ id: 'm-antiga', sender_id: 'user-3', content: 'contrato assinado', created_at: '2026-01-05T09:00:00+00:00', sender_name: 'Ana' }],
-      error: null,
-    });
+    // A busca de convB fica pendente: é o estado intermediário que separa a
+    // falha de convA do resultado de convB.
+    let liberarConvB: (v: { data: unknown[]; error: null }) => void = () => {};
+    h.rpc.mockImplementation(() => new Promise(res => { liberarConvB = res as typeof liberarConvB; }));
     rerender({ conv: convB });
     await esperarDebounce();
 
+    expect(h.rpc).toHaveBeenLastCalledWith('search_team_messages', {
+      p_conversation_id: 'conv-b',
+      p_query: 'contrato',
+      p_limit: 50,
+    });
     expect(result.current.searchError).toBeNull();
-    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
+    expect(result.current.isSearching).toBe(true);
+    expect(result.current.filteredMessages).toEqual([]);
+
+    await act(async () => {
+      liberarConvB({
+        data: [{ id: 'm-b', sender_id: 'user-4', content: 'contrato novo', created_at: '2026-10-09T09:00:00+00:00', sender_name: 'Caio' }],
+        error: null,
+      });
+    });
+
+    expect(result.current.searchError).toBeNull();
+    expect(result.current.isSearching).toBe(false);
+    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-b']);
+  });
+
+  it('resultado da conversa anterior não vaza para a conversa nova enquanto a busca dela está pendente', async () => {
+    h.rpc.mockResolvedValue({
+      data: [{ id: 'm-a', sender_id: 'user-3', content: 'contrato assinado', created_at: '2026-01-05T09:00:00+00:00', sender_name: 'Ana' }],
+      error: null,
+    });
+    const { result, rerender } = renderHook(
+      ({ conv }: { conv: TeamConversation }) => useTeamChatPanel(conv),
+      { initialProps: { conv: convA } },
+    );
+    act(() => { result.current.setSearchQuery('contrato'); });
+    await esperarDebounce();
+    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-a']);
+
+    // O mesmo termo continua digitado em convB, cuja busca ainda não respondeu.
+    let liberarConvB: (v: { data: unknown[]; error: null }) => void = () => {};
+    h.rpc.mockImplementation(() => new Promise(res => { liberarConvB = res as typeof liberarConvB; }));
+    rerender({ conv: convB });
+    await esperarDebounce();
+
+    expect(result.current.filteredMessages).toEqual([]);
+    expect(result.current.isSearching).toBe(true);
+
+    await act(async () => {
+      liberarConvB({
+        data: [{ id: 'm-b', sender_id: 'user-4', content: 'contrato novo', created_at: '2026-10-09T09:00:00+00:00', sender_name: 'Caio' }],
+        error: null,
+      });
+    });
+
+    expect(result.current.isSearching).toBe(false);
+    expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-b']);
   });
 });
