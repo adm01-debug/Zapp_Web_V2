@@ -183,7 +183,12 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
     return values;
   }, [sampleCustomFields]);
   const variables = extractVariables(ed.messageTemplate);
-  const objective = OBJECTIVES.find((o) => o.value === ed.objective)?.label ?? ed.objective;
+  const objectiveEntry = OBJECTIVES.find((o) => o.value === ed.objective);
+  const objective = objectiveEntry?.label ?? ed.objective;
+  // X124/T09-012 — a linha "Objetivo" mostra o que o objetivo significa
+  // ("Gerar mais vendas e conversões"); a descrição livre da campanha continua
+  // visível na mesma linha, para não sumir do resumo.
+  const objectiveSub = [objectiveEntry?.description, ed.description].filter(Boolean).join(' · ') || undefined;
   const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
   const responses = null; // sem histórico de respostas no motor atual — não estimamos
   const waOk = !!connection;
@@ -210,7 +215,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
     <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr_0.9fr] gap-4 min-w-0">
       <Section icon={FileText} title="Resumo da campanha" subtitle="Verifique se todas as informações estão corretas.">
         <Row icon={FileText} label="Nome da campanha" value={ed.name || '—'} step={1} onEditStep={onEditStep} />
-        <Row icon={Target} label="Objetivo" value={objective} sub={ed.description || undefined} step={1} onEditStep={onEditStep} />
+        <Row icon={Target} label="Objetivo" value={objective} sub={objectiveSub} step={1} onEditStep={onEditStep} />
         <Row icon={ed.audienceSource === 'segment' ? Bookmark : Users} label={ed.audienceSource === 'segment' ? 'Segmento selecionado' : 'Público selecionado'} value={ed.audienceSource === 'segment' ? ed.selectedSegment?.name ?? '—' : `${fmtInt(ed.selectedContacts.length)} contatos`} sub={`${fmtInt(ed.eligibleCount)} contatos elegíveis`} ok={audienceOk} step={1} onEditStep={onEditStep} />
         <Row icon={Ban} label="Exclusões / Supressão" value={ed.respectSuppression ? 'Lista de supressão ativa' : 'Supressão desativada'} sub={ed.respectSuppression ? `${fmtInt(ed.suppressedCount)} contatos excluídos` : 'Atenção: opt-outs ainda são pulados no envio'} ok={ed.respectSuppression} step={3} onEditStep={onEditStep} />
         <Row icon={MessageSquare} label="Template de mensagem" value={ed.selectedTemplate?.name ?? 'Mensagem personalizada'} sub={ed.selectedTemplate ? (ed.selectedTemplate.status === 'approved' ? 'Template aprovado' : 'Template em revisão') : `${ed.messageTemplate.length} caracteres`} ok={ed.selectedTemplate ? ed.selectedTemplate.status === 'approved' : undefined} step={2} onEditStep={onEditStep} />
