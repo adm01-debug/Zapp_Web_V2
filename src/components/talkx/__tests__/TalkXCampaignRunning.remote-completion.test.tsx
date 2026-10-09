@@ -147,8 +147,8 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
   });
 
   const cases = [
-    { nome: 'Pausar', gatilho: /^Pausar$/, titulo: 'Pausar Campanha?' },
-    { nome: 'Cancelar', gatilho: /^Cancelar campanha$/, titulo: 'Cancelar Campanha?' },
+    { nome: 'Pausar', gatilho: /^Pausar$/, titulo: 'Pausar campanha?' },
+    { nome: 'Cancelar', gatilho: /^Cancelar campanha$/, titulo: 'Cancelar campanha?' },
     { nome: 'Limites', gatilho: /^Editar Limites$/, titulo: 'Editar Limites de Envio' },
   ] as const;
 
@@ -179,12 +179,12 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
     const rendered = render(view());
 
     fireEvent.click(screen.getByRole('button', { name: /^Pausar$/ }));
-    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();
+    expect(screen.getByText('Pausar campanha?')).toBeTruthy();
 
     state.campaignList = [{ ...CAMPAIGN_SENDING, status: 'cancelled' }];
     rendered.rerender(view());
 
-    expect(screen.queryByText('Pausar Campanha?')).toBeNull();
+    expect(screen.queryByText('Pausar campanha?')).toBeNull();
     expect((screen.getByLabelText('Selecionar campanha') as HTMLSelectElement).value).toBe('');
     expect(toastInfo).toHaveBeenCalledWith('Campanha concluída ou cancelada.');
   });
@@ -193,13 +193,13 @@ describe('TalkXCampaignRunning · conclusão remota limpa seleção e modais (R2
     const rendered = render(view());
 
     fireEvent.click(screen.getByRole('button', { name: /^Pausar$/ }));
-    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();
+    expect(screen.getByText('Pausar campanha?')).toBeTruthy();
 
     // Re-render com a mesma campanha ativa (a lista pode chegar nova do servidor).
     state.campaignList = [{ ...CAMPAIGN_SENDING }];
     rendered.rerender(view());
 
-    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();
+    expect(screen.getByText('Pausar campanha?')).toBeTruthy();
     expect((screen.getByLabelText('Selecionar campanha') as HTMLSelectElement).value).toBe('c1');
     expect(toastInfo).not.toHaveBeenCalled();
   });
