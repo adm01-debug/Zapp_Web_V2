@@ -35,7 +35,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.setTimeout(120_000);
 
 const PALETA = 'Paleta de comandos';
-const CAMPO_PALETA = 'Buscar módulo… (ex: pipeline, chatbot)';
+const CAMPO_PALETA = 'Buscar módulo… (ex: tarefas, chatbot)';
 
 /**
  * Abre a paleta pelo CAMINHO PEDIDO (atalho ou clique) e devolve o diálogo.

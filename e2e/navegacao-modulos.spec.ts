@@ -129,7 +129,7 @@ const SECOES: SecaoNav[] = [
 ];
 
 const TITULO_BASE = 'WhatsApp Omnichannel';
-const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: pipeline, chatbot)';
+const PLACEHOLDER_BUSCA = 'Buscar módulo… (ex: tarefas, chatbot)';
 const MENU_DESKTOP = 'Menu de navegação principal';
 const MENU_CELULAR = 'Menu de navegação';
 const NAV_INFERIOR = 'Navegação principal';

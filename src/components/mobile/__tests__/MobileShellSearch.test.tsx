@@ -36,7 +36,7 @@ vi.mock('@/hooks/system/useNotifications', () => ({
   }),
 }));
 
-const PLACEHOLDER = 'Buscar módulo… (ex: pipeline, chatbot)';
+const PLACEHOLDER = 'Buscar módulo… (ex: tarefas, chatbot)';
 
 // O cmdk chama scrollIntoView no item ativo; o jsdom não implementa a função.
 beforeAll(() => {
