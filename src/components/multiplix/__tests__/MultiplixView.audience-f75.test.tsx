@@ -80,7 +80,7 @@ function respostaDe(companyId: string) {
 }
 
 /** Última chamada registrada pelo mock (o lib de tipos do projeto não tem `.at`). */
-function ultima(chamadas: unknown[][]): unknown[] {
+function ultima<T extends unknown[]>(chamadas: T[]): T {
   return chamadas[chamadas.length - 1];
 }
 
