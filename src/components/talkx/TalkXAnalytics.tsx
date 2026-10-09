@@ -13,6 +13,10 @@ import type { Database } from '@/integrations/supabase/types';
 import { IconTile, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct, pct } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { AnalyticsPerformanceChart } from './analytics/AnalyticsPerformanceChart';
+import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsPerformanceChart';
+import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
+import type { FunnelStep } from './analytics/AnalyticsFunnel';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
 
 interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
@@ -23,6 +27,9 @@ const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   const [period, setPeriod] = useState<Period>('30d');
+  // X186: seletor PRÓPRIO do gráfico de performance. `null` = ainda não foi tocado, então
+  // ele segue o filtro da tela (padrão pedido no cartão); escolhido, passa a mandar só nele.
+  const [chartPeriod, setChartPeriod] = useState<Period | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
   const days = DAYS[period];
   // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
@@ -114,7 +121,6 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   );
 
   const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
-  const barData = useMemo(() => topCampaigns.map((c) => ({ name: c.name.slice(0, 18) + (c.name.length > 18 ? '…' : ''), Enviadas: c.sent_count, Falhas: c.failed_count })), [topCampaigns]);
 
   // E82: comparativo taxa de entrega
   // E82: usa campaigns (nao filtered) — periodo nao deve excluir campanhas antigas do comparativo
@@ -132,14 +138,45 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
       .reverse();
     return comp;
   }, [campaigns]);
-  const funnelData = useMemo(() => {
-    return [
-      { name: 'Enviadas', value: stats.sent, reported: true, fill: 'hsl(var(--primary))' },
-      { name: 'Entregues', value: stats.delivered, reported: true, fill: 'hsl(var(--dash-green))' },
-      { name: 'Lidas', value: stats.read, reported: true, fill: 'hsl(var(--dash-violet))' },
-      { name: 'Conversões', value: null, reported: false, fill: 'hsl(var(--dash-amber))' },
-    ];
-  }, [stats]);
+  // X186: degraus do funil da campanha. Conversão por mensagem ainda não é medida pela
+  // plataforma (etapa de banco X073): a fonte entra como `null` e a tela mostra "sem dados
+  // ainda" — nunca um zero que não foi medido (A9).
+  const funnelSteps = useMemo<FunnelStep[]>(() => ([
+    { key: 'sent', label: 'Enviadas', value: stats.sent, token: 'primary' },
+    { key: 'delivered', label: 'Entregues', value: stats.delivered, token: 'dash-green' },
+    { key: 'read', label: 'Lidas', value: stats.read, token: 'info' },
+    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'dash-violet' },
+    { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
+  ]), [stats, repliedTotal]);
+
+  // X186: série diária do gráfico de performance. O período é o do seletor próprio do
+  // gráfico (padrão = filtro da tela); o corte da tela continua valendo para os KPIs.
+  const effectiveChartPeriod: PerformancePeriod = chartPeriod ?? period;
+  const chartCutoff = useMemo(
+    () => new Date(pageLoadTime - DAYS[effectiveChartPeriod] * 86_400_000),
+    [pageLoadTime, effectiveChartPeriod],
+  );
+  const { data: performancePoints, isLoading: performanceLoading, isError: performanceError } = useQuery({
+    queryKey: ['talkx-performance-daily', effectiveChartPeriod],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('talkx_overview_stats', {
+        p_from: chartCutoff.toISOString(),
+        p_to: new Date(pageLoadTime).toISOString(),
+      });
+      // `daily` é contada no servidor pelos carimbos de envio, entrega e resposta.
+      // `conversions` só passa a existir depois da etapa de banco X073: enquanto o campo
+      // não vier, a série fica nula (o gráfico mostra "sem dados ainda"), nunca zero.
+      const daily = (data as unknown as { daily?: Array<Record<string, unknown>> } | null)?.daily ?? [];
+      return daily.map((row): PerformancePoint => ({
+        day: String(row.day ?? ''),
+        sent: typeof row.sent === 'number' ? row.sent : null,
+        delivered: typeof row.delivered === 'number' ? row.delivered : null,
+        replied: typeof row.replied === 'number' ? row.replied : null,
+        conversions: typeof row.conversions === 'number' ? row.conversions : null,
+      }));
+    },
+    staleTime: 60_000,
+  });
   const heatmaxVal = useMemo(() => Math.max(...(hourlyData?.hourTotals ?? [0]), 1), [hourlyData]);
 
   // Por dia da semana: soma de todas as horas de cada dia
@@ -206,49 +243,18 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
       {/* E75: respondentes agora derivam de replied_count no servidor (V18); a
           segmentação individual de respondentes deixa de ser consultada aqui. */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {barData.length > 0 && (
-          <section className="rounded-2xl bg-card border border-border/70 p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <IconTile icon={BarChart3} size={36} />
-              <div><p className="text-[15px] font-bold text-foreground">Performance por Campanha</p><p className="text-xs text-foreground-secondary">Top {barData.length} campanhas por envio</p></div>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE }} stroke="hsl(var(--muted-foreground))" />
-                <ReTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: CHART_TOOLTIP_FONT_SIZE }} />
-                <Bar dataKey="Enviadas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Falhas" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        )}
+      {/* X186: performance no tempo (4 séries) e funil em SVG proporcional. Os dois
+          substituem o gráfico de barras "Performance por Campanha" e o funil de larguras
+          fixas (100/80/55/35 %), que não media a perda real entre os degraus. */}
+      <AnalyticsPerformanceChart
+        data={performancePoints ?? []}
+        period={effectiveChartPeriod}
+        onPeriodChange={setChartPeriod}
+        isLoading={performanceLoading}
+        isError={performanceError}
+      />
 
-        <section className="rounded-2xl bg-card border border-border/70 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <IconTile icon={Target} color="violet" size={36} />
-            <div><p className="text-[15px] font-bold text-foreground">Funil da Campanha</p><p className="text-xs text-foreground-secondary">Somente métricas confirmadas pela plataforma</p></div>
-          </div>
-          <div className="space-y-2.5">
-            {funnelData.map((f, i) => {
-              const widths = [100, 80, 55, 35];
-              return (
-                <div key={f.name} className="flex items-center gap-3">
-                  <span className="text-xs text-foreground-secondary w-20 text-right shrink-0">{f.name}</span>
-                  <div style={{ width: `${widths[i]}%` }} className="relative h-9 flex items-center justify-center rounded-lg" >
-                    <div className="w-full h-9 rounded-lg flex items-center justify-center" style={{ background: f.fill + '33', border: `1.5px solid ${f.fill}55` }}>
-                      <span className="text-[13px] font-bold text-foreground">{f.reported ? fmtInt(f.value ?? 0) : 'Não rastreado'}</span>
-                    </div>
-                  </div>
-                  <span className="text-xs text-foreground-secondary w-12 shrink-0">{f.reported ? fmtPct(f.value ?? 0, funnelData[0].value ?? 0) : '—'}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+      <AnalyticsFunnel steps={funnelSteps} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
         {/* Barra por dia da semana */}
