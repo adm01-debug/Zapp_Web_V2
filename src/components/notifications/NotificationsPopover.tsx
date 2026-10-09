@@ -98,7 +98,7 @@ export function NotificationsPopover({ collapsed = false }: NotificationsPopover
           )}
           {loading && notifications.length === 0 ? (
             <div role="status" aria-live="polite" className="flex flex-col items-center justify-center py-10 px-4">
-              <Loader2 className="w-5 h-5 text-muted-foreground/60 animate-spin" aria-hidden="true" />
+              <Loader2 className="w-5 h-5 text-muted-foreground motion-safe:animate-spin" aria-hidden="true" />
               <p className="text-xs text-muted-foreground text-center mt-2">Carregando notificações…</p>
             </div>
           ) : error && notifications.length === 0 ? (
