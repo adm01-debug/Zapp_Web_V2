@@ -14,6 +14,14 @@
 //   3. o histórico do prompt carrega só as mensagens da conexão da mensagem;
 //   4. as consultas emitidas SEMPRE carregam o filtro `whatsapp_connection_id`.
 //
+// IA-106 (SL-086 — Bloco 11): a mensagem de entrada não pode ir DUAS vezes ao
+// modelo. O webhook grava a fala do cliente em `messages` antes de acionar o
+// bot, então ela já é a linha mais recente do histórico; o handler, porém,
+// anexava a mesma fala outra vez. O que se mede aqui: com a mensagem JÁ
+// persistida ela entra no prompt UMA vez (e o histórico anterior fica); sem
+// persistência ela é anexada como sempre, uma vez; e a fala do ATENDENTE com o
+// mesmo texto não é comida pelo dedupe.
+//
 // Run with: deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
 
 import { handleChatbotL1Request } from "./index.ts";
@@ -446,6 +454,88 @@ Deno.test("IA-CHATBOT-001: connectionId de TIPO ERRADO (não-string) é rejeitad
       }
       igual(vivo.chamadas.length, 0, "nenhuma consulta ao banco pode acontecer com conexão de tipo errado");
       igual(vivo.prompts.length, 0, "nenhuma chamada à IA pode acontecer com conexão de tipo errado");
+    },
+  );
+});
+
+// ── IA-106: a fala do cliente não pode ir duas vezes ao modelo ───────────────
+
+/** Conta quantas vezes `alvo` aparece no corpo enviado ao provedor. */
+function ocorrencias(texto: string, alvo: string): number {
+  return texto.split(alvo).length - 1;
+}
+
+Deno.test("IA-106: mensagem de entrada JÁ persistida entra no prompt uma única vez", async () => {
+  // O webhook grava a mensagem do cliente em `messages` ANTES de acionar o bot:
+  // ela é a linha mais recente do histórico e o handler a anexava de novo.
+  const ENTRADA = "PRAZO-DE-ENTREGA-DO-PEDIDO-123";
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [
+        mensagem("FALA-ANTERIOR-DO-CLIENTE", CONEXAO_A, "2026-01-01T00:00:10Z"),
+        mensagem(ENTRADA, CONEXAO_A, "2026-01-01T00:00:20Z"),
+      ],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A, ENTRADA);
+
+      igual(status, 200, "resposta do handler");
+      igual(corpo.handled, true, "com flow da conexão, o bot atende");
+      igual(vivo.prompts.length, 1, "uma chamada de IA");
+
+      const prompt = vivo.prompts[0];
+      igual(
+        ocorrencias(prompt, ENTRADA),
+        1,
+        "a fala do cliente já persistida não pode ser enviada duas vezes ao modelo",
+      );
+      afirma(prompt.includes("FALA-ANTERIOR-DO-CLIENTE"), "a fala anterior do histórico continua no prompt");
+      igual(consulta(vivo, "messages").length, 1, "o histórico continua sendo consultado uma vez");
+    },
+  );
+});
+
+Deno.test("IA-106: mensagem de entrada AINDA NÃO persistida é anexada uma única vez", async () => {
+  // Se o chamador não persistiu a mensagem, o histórico não a contém: nada é
+  // descartado e a fala entra como sempre — o dedupe não pode engolir a entrada.
+  const ENTRADA = "PEDIDO-DE-ORCAMENTO-456";
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [mensagem("FALA-ANTERIOR-DO-CLIENTE", CONEXAO_A, "2026-01-01T00:00:10Z")],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A, ENTRADA);
+
+      igual(status, 200, "resposta do handler");
+      igual(corpo.handled, true, "com flow da conexão, o bot atende");
+      const prompt = vivo.prompts[0];
+      igual(ocorrencias(prompt, ENTRADA), 1, "sem persistência a entrada é anexada (uma vez)");
+      afirma(prompt.includes("FALA-ANTERIOR-DO-CLIENTE"), "a fala anterior do histórico continua no prompt");
+    },
+  );
+});
+
+Deno.test("IA-106: fala do ATENDENTE com o mesmo texto não é comida pelo dedupe", async () => {
+  // A linha mais recente é do atendente com o MESMO texto da entrada: o dedupe
+  // só pode remover fala do CLIENTE — o histórico do atendente é preservado.
+  const ENTRADA = "OBRIGADO-PELO-RETORNO-789";
+  await comCenario(
+    {
+      fluxos: [flow("flow-a", CONEXAO_A)],
+      mensagens: [{ ...mensagem(ENTRADA, CONEXAO_A, "2026-01-01T00:00:20Z"), sender: "agent" }],
+    },
+    async (vivo) => {
+      const { status, corpo } = await chamarChatbot(CONEXAO_A, ENTRADA);
+
+      igual(status, 200, "resposta do handler");
+      igual(corpo.handled, true, "com flow da conexão, o bot atende");
+      igual(
+        ocorrencias(vivo.prompts[0], ENTRADA),
+        2,
+        "a fala do atendente fica no histórico e a do cliente é anexada: duas falas distintas",
+      );
     },
   );
 });

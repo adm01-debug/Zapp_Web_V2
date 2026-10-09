@@ -134,7 +134,19 @@ export async function handleChatbotL1Request(req: Request): Promise<Response> {
       .order('created_at', { ascending: false })
       .limit(15);
 
-    const conversationHistory = (history || []).reverse().map((m: { sender: string; content: string }) => ({
+    // IA-106: a mensagem de entrada já está GRAVADA em `messages` (o webhook
+    // persiste a fala do cliente antes de acionar o bot), então ela é a linha
+    // MAIS RECENTE do histórico — que vem em ordem decrescente. Anexá-la de
+    // novo mandaria a mesma fala do cliente DUAS vezes ao modelo e o contexto
+    // declarado deixaria de corresponder à conversa real. Descarta só quando a
+    // linha mais recente é a PRÓPRIA mensagem que chegou: se o chamador não a
+    // persistiu, o histórico não a contém e nada é removido.
+    const historico = history || [];
+    if (historico.length > 0 && historico[0].sender === 'contact' && historico[0].content === message) {
+      historico.shift();
+    }
+
+    const conversationHistory = [...historico].reverse().map((m: { sender: string; content: string }) => ({
       role: m.sender === 'agent' ? 'assistant' : 'user',
       content: m.content,
     }));
