@@ -348,7 +348,7 @@ export default function MultiplixView() {
             onClick={() => void selectAllResults()}
             disabled={loadingAll || count.data === 0}
           >
-            {loadingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <ListChecks className="h-4 w-4" />}
+            {loadingAll ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : <ListChecks className="h-4 w-4" />}
             {count.data > 0 && selected.size >= Math.min(count.data, POLICY_MAX_IDS)
               ? `Desmarcar os ${fmtInt(Math.min(count.data, POLICY_MAX_IDS))} resultados`
               : `Selecionar todos os ${fmtInt(count.data)} resultados`}
