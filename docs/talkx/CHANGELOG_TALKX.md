@@ -104,7 +104,7 @@
 - `b313391a` — corrige a view de métricas usada pelos insights
 
 ### E93 — talkx_settings + TalkXSettings UI (#432)
-- `05da94d6` (mesma leva do E92) — `TalkXSettings.tsx`, `useTalkXSettings.ts`, migration `20260916220000_talkx_e93_settings.sql`
+- `05da94d6` (mesma leva do E92) — `TalkXSettings.tsx`, `useTalkXSettings.ts`, migration `20260916230000_talkx_e93_settings.sql`
 - `0c71bd83` — renomeia migration por colisão de versão com PR concorrente
 
 ## Fase 9 — Importação, CRM 360 & Estados (2026-09-22)

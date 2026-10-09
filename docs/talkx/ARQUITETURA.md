@@ -2,9 +2,10 @@
 
 > Gerado em 2026-09-08 · Commit base: `80f139c6` · Graphify: 12.097 nodes
 >
-> **⚠️ Correções pendentes (auditoria de 2026-09-29):** `TalkXSegmentBuilder.tsx`, `TalkXCampaignPaused.tsx` e
-> `TalkXCampaignReport.tsx` citados abaixo **não existem** (builder é inline em `TalkXSegments.tsx`; `paused` abre
-> `TalkXCampaignRunning`; `completed/cancelled` abrem o Monitor). "Lidas/`read_at` E87 ✅" e "Tempo médio E88 ✅"
+> **⚠️ Correções pendentes (auditoria de 2026-09-29):** `TalkXSegmentBuilder.tsx` e
+> `TalkXCampaignReport.tsx` citados abaixo **não existem** (builder é inline em `TalkXSegments.tsx`;
+> `completed/cancelled` abrem o Monitor). `TalkXCampaignPaused.tsx` (TL-075) **passou a existir**, mas ainda não
+> está ligado em `TalkXView.tsx`: `paused` continua abrindo `TalkXCampaignRunning`. "Lidas/`read_at` E87 ✅" e "Tempo médio E88 ✅"
 > são falsos (`read_at` não existe). "E94 ✅ via `ContactImportDialog`": arquivo apagado em `ef300d1`. "E97 ✅": há
 > 11 `AlertDialog` diretos. "Ajuda não implementada": `TalkXHelp` existe (Dialog estático). O diagrama de estados
 > omite `scheduled → draft` (Cancelar agendamento). Reescrita completa na etapa X197 do
