@@ -4,8 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Zap, Users, ChevronLeft,
-  Pause, Square, Eye, RefreshCw, Activity, Settings2, Mail, Send,
+  Users, ChevronLeft, RefreshCw, Activity, Send,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -17,12 +16,18 @@ import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
-import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
+import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
-import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { supabase } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
+import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
+import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
+import {
+  EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
+  type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
+} from './tracking/talkxCampaignRules';
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
@@ -169,17 +174,29 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
 }
 
 // ─── Tab: Configurações ────────────────────────────────────────────────────────
-function TabConfig({ c }: { c: TalkXCampaign }) {
+// X154: a conexão aparece pelo NOME e número (nunca o UUID), e o resumo ganha fuso e
+// dias de envio. Cada linha só renderiza quando a campanha traz o dado (A9).
+type TalkXConnectionRef = { name: string | null; phone_number: string | null };
+
+function connectionLabel(connection: TalkXConnectionRef | null): string {
+  if (!connection?.name) return '—';
+  return connection.phone_number ? `${connection.name} · ${connection.phone_number}` : connection.name;
+}
+
+function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: TalkXConnectionRef | null }) {
+  const daysLabel = formatSendDays(c.send_days);
   return (
     <RailCard title="Configurações da Campanha" color="amber" icon={Activity}>
       <div className="pt-1 space-y-0.5">
+        <MetaRow label="Conexão" value={connectionLabel(connection)} />
         <MetaRow label="Velocidade" value={SPEED_LABEL[c.speed_profile ?? ''] ?? c.speed_profile ?? '—'} />
         <MetaRow label="Intervalo entre msgs" value={`${msToSeconds(c.send_interval_min)}s – ${msToSeconds(c.send_interval_max)}s`} />
         <MetaRow label="Delay de digitação" value={`${c.typing_delay_min}s – ${c.typing_delay_max}s`} />
         <MetaRow label="Janela de envio" value={c.send_window_start ? `${c.send_window_start?.slice(0, 5)} – ${c.send_window_end?.slice(0, 5)}` : 'Sem restrição'} />
         <MetaRow label="Horário comercial" value={c.business_hours_only ? 'Sim' : 'Não'} />
+        {daysLabel !== null && <MetaRow label="Dias de envio" value={daysLabel} />}
+        {c.schedule_timezone ? <MetaRow label="Fuso horário" value={c.schedule_timezone} /> : null}
         <MetaRow label="Iniciada em" value={fmtDateTime(c.started_at) ?? '—'} />
-        <MetaRow label="Canal WhatsApp" value={c.whatsapp_connection_id ?? '—'} />
       </div>
     </RailCard>
   );
@@ -572,22 +589,11 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const [pauseReason, setPauseReason] = useState('');
   const [cancelOpen, setCancelOpen] = useState(false);
   const [limitsOpen, setLimitsOpen] = useState(false);
-  // E78: limites editaveis
-  const [lSpeed, setLSpeed] = useState<string>('');
-  const [lIntMin, setLIntMin] = useState<number>(0);
-  const [lIntMax, setLIntMax] = useState<number>(0);
-  const [lWinStart, setLWinStart] = useState<string>('');
-  const [lWinEnd, setLWinEnd] = useState<string>('');
-  const [lBizHours, setLBizHours] = useState<boolean>(false);
+  // E78/X154: limites editaveis — o rascunho do formulario vive aqui e o modal
+  // (tracking/TalkXLimitsDialog) so desenha e monta o payload.
+  const [limitsDraft, setLimitsDraft] = useState<TalkXLimitsDraft>(EMPTY_LIMITS_DRAFT);
   const [lSaving, setLSaving] = useState(false);
   const [resuming, setResuming] = useState(false);
-
-  // X006: o select de velocidade mostra "Personalizado" quando o intervalo
-  // digitado à mão difere do intervalo do perfil escolhido (o perfil é mantido).
-  const intervaloCustomizado = useMemo(() => {
-    const [pMin, pMax] = intervalForProfile(lSpeed);
-    return lIntMin !== msToSeconds(pMin) || lIntMax !== msToSeconds(pMax);
-  }, [lSpeed, lIntMin, lIntMax]);
 
   // P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
@@ -654,36 +660,42 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   };
   const handleRetryHistory = useCallback(() => { void refetchHistory(); }, [refetchHistory]);
 
+  // X154: a aba Configurações mostra a conexão pelo nome e número. A leitura é da
+  // própria tabela de conexões (a campanha só guarda o id) e o mesmo dado alimenta a
+  // linha "Conexão" — nunca o UUID.
+  const connectionId = campaign?.whatsapp_connection_id ?? null;
+  const { data: connection } = useQuery({
+    queryKey: ['talkx-campaign-connection', connectionId],
+    enabled: !!connectionId,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await fromTable('whatsapp_connections')
+        .select('name, phone_number')
+        .eq('id', connectionId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as TalkXConnectionRef | null;
+    },
+  });
+
   const handleOpenLimits = useCallback(() => {
     if (!campaign) return;
-    setLSpeed(campaign.speed_profile ?? 'moderate');
-    setLIntMin(msToSeconds(campaign.send_interval_min));
-    setLIntMax(msToSeconds(campaign.send_interval_max));
-    setLWinStart(campaign.send_window_start?.slice(0, 5) ?? '');
-    setLWinEnd(campaign.send_window_end?.slice(0, 5) ?? '');
-    setLBizHours(campaign.business_hours_only ?? false);
+    setLimitsDraft(limitsDraftFromCampaign(campaign));
     setLimitsOpen(true);
   }, [campaign]);
 
-  const handleSaveLimits = useCallback(async () => {
+  const handleChangeLimits = useCallback((patch: Partial<TalkXLimitsDraft>) => {
+    setLimitsDraft((current) => ({ ...current, ...patch }));
+  }, []);
+
+  const handleSaveLimits = useCallback(async (limits: TalkXLimitsPayload) => {
     if (!campaign) return;
-    if (!isValidIntervalSeconds(lIntMin) || !isValidIntervalSeconds(lIntMax)) {
-      toast.error(`Intervalos devem ser inteiros entre ${LIMITS_MIN_S}s e ${LIMITS_MAX_S}s.`);
-      return;
-    }
     setLSaving(true);
     try {
       await updateCampaignLimits.mutateAsync({
         id: campaign.id,
         expectedRevision: campaign.revision ?? null,
-        limits: {
-          speed_profile: lSpeed,
-          send_interval_min: secondsToMs(lIntMin),
-          send_interval_max: secondsToMs(Math.max(lIntMin, lIntMax)),
-          send_window_start: lWinStart ? `${lWinStart}:00` : null,
-          send_window_end: lWinEnd ? `${lWinEnd}:00` : null,
-          business_hours_only: lBizHours,
-        },
+        limits,
       });
       setLimitsOpen(false);
       toast.success('Limites atualizados. Vale a partir do próximo envio.');
@@ -695,7 +707,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     } finally {
       setLSaving(false);
     }
-  }, [campaign, updateCampaignLimits, lSpeed, lIntMin, lIntMax, lWinStart, lWinEnd, lBizHours]);
+  }, [campaign, updateCampaignLimits]);
 
   const handlePause = useCallback(async () => {
     if (!campaign) return;
@@ -720,6 +732,17 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
       toast.error('Erro ao cancelar a campanha.');
     }
   }, [campaign, cancelCampaign, onBack]);
+
+  const handleResume = useCallback(async () => {
+    if (!campaign) return;
+    setResuming(true);
+    try {
+      // startCampaign aguarda o invoke e mostra toasts internamente
+      await startCampaign(campaign.id);
+    } catch {
+      toast.error('Erro ao retomar campanha.');
+    } finally { setResuming(false); }
+  }, [campaign, startCampaign]);
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -804,133 +827,37 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                   <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
                 </>
               )}
-              {activeTab === 'config' && <TabConfig c={campaign} />}
+              {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
               {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
             </div>
 
-            {/* Card Ações */}
-            <div className="rounded-2xl bg-card border border-border/70 p-4">
-              <p className="text-[13px] font-bold text-foreground mb-3">Ações da Campanha</p>
-              <div className="flex flex-wrap gap-2">
-                {campaign.status === 'sending' && (
-                  <button type="button" onClick={() => setPauseOpen(true)}
-                    className="h-9 px-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-2 hover:bg-amber-500/20">
-                    <Pause className="w-4 h-4" />Pausar
-                  </button>
-                )}
-                {campaign.status === 'paused' && (
-                  <button type="button" disabled={resuming} onClick={async () => {
-                    setResuming(true);
-                    try {
-                      // startCampaign aguarda o invoke e mostra toasts internamente
-                      await startCampaign(campaign.id);
-                    } catch {
-                      toast.error('Erro ao retomar campanha.');
-                    } finally { setResuming(false); }
-                  }}
-                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20 disabled:opacity-50">
-                    <Zap className="w-4 h-4" />{resuming ? 'Retomando…' : 'Retomar'}
-                  </button>
-                )}
-                <button type="button" onClick={handleOpenLimits}
-                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                  <Settings2 className="w-4 h-4" />Editar Limites
-                </button>
-                <button type="button" onClick={() => onViewMonitor(campaign.id)}
-                  className="h-9 px-4 rounded-lg border border-border/70 bg-input/40 text-xs font-semibold flex items-center gap-2 hover:bg-muted/50">
-                  <Eye className="w-4 h-4" />Ver Monitor
-                </button>
-                {(campaign.status === 'completed' || campaign.status === 'paused') && (
-                  <button type="button" onClick={async () => {
-                    try {
-                      await invokeEdge('talkx-report', { campaignId: campaign.id });
-                      toast.success('Relatório enviado por e-mail!');
-                    } catch {
-                      toast.error('Erro ao enviar relatório.');
-                    }
-                  }}
-                    className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20">
-                    <Mail className="w-4 h-4" />Enviar Relatório
-                  </button>
-                )}
-                <button type="button" onClick={() => setCancelOpen(true)}
-                  className="h-9 px-4 rounded-lg border border-red-500/30 bg-red-500/8 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2 hover:bg-red-500/15 ml-auto">
-                  <Square className="w-4 h-4" />Cancelar campanha
-                </button>
-              </div>
-            </div>
+            {/* Card Ações + Configurações Atuais (X154) */}
+            <TalkXCampaignActionsCard
+              campaign={campaign}
+              onPause={() => setPauseOpen(true)}
+              onResume={() => { void handleResume(); }}
+              onCancel={() => setCancelOpen(true)}
+              onEditLimits={handleOpenLimits}
+              onViewMonitor={() => onViewMonitor(campaign.id)}
+              resuming={resuming}
+            />
           </>
         ) : null}
       </TalkXQueryBoundary>
 
 
-      {/* Modal: Editar Limites (E78) */}
-      <AlertDialog open={limitsOpen} onOpenChange={setLimitsOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Editar Limites de Envio</AlertDialogTitle>
-            <AlertDialogDescription>Vale a partir do próximo envio.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-foreground">Velocidade</label>
-              <select value={intervaloCustomizado ? 'personalizado' : lSpeed}
-                onChange={(e) => {
-                  const p = e.target.value;
-                  if (p === 'personalizado') return;
-                  setLSpeed(p);
-                  const [minMs, maxMs] = intervalForProfile(p);
-                  setLIntMin(msToSeconds(minMs));
-                  setLIntMax(msToSeconds(maxMs));
-                }}
-                className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary">
-                <option value="slow">Lento (seguro)</option>
-                <option value="moderate">Moderado</option>
-                <option value="fast">Rápido</option>
-                {intervaloCustomizado && <option value="personalizado">Personalizado</option>}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Intervalo mínimo (s)</label>
-                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMin} onChange={(e) => setLIntMin(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Intervalo máximo (s)</label>
-                <input type="number" min={LIMITS_MIN_S} max={LIMITS_MAX_S} value={lIntMax} onChange={(e) => setLIntMax(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Janela início</label>
-                <input type="time" value={lWinStart} onChange={(e) => setLWinStart(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-foreground">Janela fim</label>
-                <input type="time" value={lWinEnd} onChange={(e) => setLWinEnd(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={lBizHours} onChange={(e) => setLBizHours(e.target.checked)} className="rounded" />
-              <span className="text-xs text-foreground">Apenas horário comercial (seg–sex 8h–18h)</span>
-            </label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveLimits} disabled={lSaving}
-              className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {lSaving ? 'Salvando…' : 'Salvar Limites'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Modal: Editar Limites (E78/X154) */}
+      <TalkXLimitsDialog
+        open={limitsOpen}
+        onOpenChange={setLimitsOpen}
+        draft={limitsDraft}
+        onChange={handleChangeLimits}
+        onSave={handleSaveLimits}
+        saving={lSaving}
+      />
 
       {/* Modal: Pausar */}
       <AlertDialog open={pauseOpen} onOpenChange={setPauseOpen}>
