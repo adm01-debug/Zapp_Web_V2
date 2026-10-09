@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
@@ -280,29 +281,36 @@ export default function TalkXView() {
 
   return (
     <div className="min-h-full w-full min-w-0 bg-background space-y-5">
-      <ModuleHeader
-        icon={Zap}
-        title="Campanhas"
-        subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
-        right={
-          <div className="flex items-center gap-3">
-            {isLive && (
-              <span className="flex items-center gap-1.5 text-2xs text-success font-medium">
-                <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
-                Ao vivo
-              </span>
-            )}
-            <button
-              type="button" onClick={() => setHelpOpen(true)}
-              className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
-            >
-              <HelpCircle className="w-4 h-4" />Ajuda
-            </button>
-            <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
-          </div>
-        }
-      />
-      <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
+      {/* A raiz do Dialog fica aqui, envolvendo o gatilho do cabeçalho e o conteúdo:
+          o Radix só devolve o foco ao fechar (`DialogContentModal.onCloseAutoFocus` ->
+          `triggerRef.current.focus()`) quando o gatilho é um `DialogTrigger` seu. */}
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <ModuleHeader
+          icon={Zap}
+          title="Campanhas"
+          subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
+          right={
+            <div className="flex items-center gap-3">
+              {isLive && (
+                <span className="flex items-center gap-1.5 text-2xs text-success font-medium">
+                  <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
+                  Ao vivo
+                </span>
+              )}
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
+                >
+                  <HelpCircle className="w-4 h-4" />Ajuda
+                </button>
+              </DialogTrigger>
+              <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
+            </div>
+          }
+        />
+        <TalkXHelp />
+      </Dialog>
 
       <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
         <div className="overflow-x-auto">

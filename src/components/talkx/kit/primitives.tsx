@@ -111,7 +111,7 @@ export function TalkXPrimaryButton({ children, onClick, icon: Icon, tone = 'prim
   );
 }
 export function AlertCard({ children, tone = 'warning', actionLabel, onAction }: { children: ReactNode; tone?: 'warning' | 'info' | 'danger'; actionLabel?: string; onAction?: () => void }) {
-  const s = tone === 'danger' ? 'bg-destructive/8 border-destructive/25 text-destructive' : tone === 'info' ? 'bg-primary/8 border-primary/25 text-primary' : 'bg-warning/8 border-warning/25 text-warning';
+  const s = tone === 'danger' ? 'bg-destructive/8 border-destructive/25 text-[hsl(var(--destructive-text))]' : tone === 'info' ? 'bg-primary/8 border-primary/25 text-primary' : 'bg-warning/8 border-warning/25 text-warning';
   return (
     <div className={cn('p-3 rounded-xl border text-xs leading-snug', s)}>
       {children}

@@ -374,7 +374,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
-              className={cn((!eName.trim() || !eContent.trim() || saving) && 'opacity-50 pointer-events-none')}
+              disabled={!eName.trim() || !eContent.trim() || saving}
             >
               {saving ? 'Salvando…' : 'Salvar template'}
             </PrimaryButton>
@@ -386,16 +386,16 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
             <div><Label className="text-xs text-foreground-secondary">Nome do Template</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} placeholder="Boas-vindas" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
             <div>
-              <Label className="text-xs text-foreground-secondary">Categoria</Label>
+              <Label htmlFor="talkx-template-categoria" className="text-xs text-foreground-secondary">Categoria</Label>
               <Select value={eCat} onValueChange={setECat}>
-                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="talkx-template-categoria" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-foreground-secondary">Status</Label>
+              <Label htmlFor="talkx-template-status" className="text-xs text-foreground-secondary">Status</Label>
               <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
-                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="talkx-template-status" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -426,7 +426,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <p className="text-2xs text-foreground-secondary mb-1.5">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIABLE_KEYS.map((v) => (
-                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v}</button>
+                <button key={v} type="button" onClick={() => insertAtCursor(v)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v}</button>
               ))}
             </div>
           </div>
@@ -456,12 +456,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-[hsl(var(--primary-text))]">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
                   {'{{'}{v}{'}}'}
-                  <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-[hsl(var(--destructive-text))]"><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
@@ -490,7 +490,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     setECustomVarInput('');
                   }
                 }}
-                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20 disabled:opacity-40"
+                className="h-7 px-2 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20 disabled:opacity-40"
               >
                 + Inserir
               </button>
@@ -502,9 +502,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
             <Label className="text-xs text-foreground-secondary">Tags</Label>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {eTags.map((t) => (
-                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-primary-glow">
+                <span key={t} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-medium text-[hsl(var(--primary-text))]">
                   #{t}
-                  <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => setETags((p) => p.filter((x) => x !== t))} aria-label={`Remover tag ${t}`} className="hover:text-[hsl(var(--destructive-text))]"><X className="w-3 h-3" /></button>
                 </span>
               ))}
               <Input
@@ -548,7 +548,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                     </span>
                     <button type="button"
                       onClick={() => void removeVariant(v)}
-                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">x</button>
+                      className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-[hsl(var(--destructive-text))] text-3xs">x</button>
                   </div>
                   <textarea value={v.content}
                     onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))}
@@ -565,7 +565,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 </button>
               )}
               {variants.length > 0 && (
-                <p className={"text-3xs " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground')}>
+                <p className={"text-3xs " + (variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-[hsl(var(--destructive-text))]' : 'text-muted-foreground')}>
                   Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}
                 </p>
               )}
@@ -597,7 +597,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 <div key={v.id} className="rounded-xl border border-border/60 bg-input/20 p-2 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-2xs font-bold text-primary flex items-center gap-1">Variante {v.label} · <input type="number" min={1} max={100} value={v.weight} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value)||1))} : x))} onBlur={(e) => void saveActiveVariant({ ...v, weight: Math.max(1, Math.min(100, Number.parseInt(e.target.value) || 1)) })} className="w-9 text-center bg-transparent border-b border-primary/40 outline-none text-2xs font-bold text-primary" />%</span>
-                    <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive text-3xs">×</button>
+                    <button type="button" onClick={() => void removeVariant(v)} className="h-5 w-5 rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-[hsl(var(--destructive-text))] text-3xs">×</button>
                   </div>
                   <textarea value={v.content} onChange={(e) => setVariants(vs => vs.map(x => x.id === v.id ? {...x, content: e.target.value.slice(0, 1024)} : x))} onBlur={() => { if (v.content.trim()) void saveActiveVariant(v); }} className="w-full h-16 text-2xs bg-transparent border-0 resize-none outline-none text-foreground" placeholder="Conteúdo da variante..." />
                 </div>
@@ -606,7 +606,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
                 <button type="button" disabled={savingVariant || !activeTemplateId} onClick={() => void addVariant()} className="w-full h-7 rounded-lg border border-dashed border-primary/40 text-2xs text-primary hover:bg-primary/5 disabled:opacity-50">+ Adicionar variante {(['A','B','C']).find(l => !variants.find(v => v.label === l))}</button>
               )}
               {variants.length > 0 && (
-                <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-dash-red' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
+                <p className={`text-3xs ${variants.reduce((s,v) => s + v.weight, 0) !== 100 ? 'text-[hsl(var(--destructive-text))]' : 'text-muted-foreground'}`}>Peso total: {variants.reduce((s,v) => s + v.weight, 0)}% {variants.reduce((s,v) => s + v.weight, 0) !== 100 ? '⚠ deve ser 100%' : '✓'}</p>
               )}
             </div>
           )}
@@ -652,7 +652,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose }: 
               <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
             </div>
             {testResult && (
-              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
+              <div className={testResult.ok ? 'flex items-center gap-2 text-success text-xs' : 'flex items-center gap-2 text-[hsl(var(--destructive-text))] text-xs'}>
                 {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
                 {testResult.msg}
               </div>

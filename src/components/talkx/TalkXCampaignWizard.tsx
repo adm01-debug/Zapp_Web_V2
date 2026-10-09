@@ -164,16 +164,16 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
               <GhostButton icon={Save} onClick={saveDraft}>{ed.saving ? 'Salvando…' : 'Salvar rascunho'}</GhostButton>
               {ed.autosaveStatus === 'saving' && <span className="text-3xs text-muted-foreground" role="status">Salvando alterações…</span>}
               {ed.autosaveStatus === 'offline' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-dash-amber hover:underline">
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="text-3xs text-[hsl(var(--warning-text))] hover:underline">
                   Sem conexão — tentar novamente
                 </button>
               )}
               {ed.autosaveStatus === 'error' && (
-                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-dash-red hover:underline" title={ed.autosaveError ?? undefined}>
+                <button type="button" onClick={() => { void ed.retryAutosave(); }} className="max-w-[260px] truncate text-3xs text-[hsl(var(--destructive-text))] hover:underline" title={ed.autosaveError ?? undefined}>
                   Não salvo — tentar novamente
                 </button>
               )}
-              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-dash-amber">Alterações não salvas</span>}
+              {ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && <span className="text-3xs text-[hsl(var(--warning-text))]">Alterações não salvas</span>}
               {ed.lastAutosave && !ed.autosaveIsDirty && ed.autosaveStatus === 'idle' && (
                 <span className="text-3xs text-muted-foreground">
                   Salvo {fmtDateTime(ed.lastAutosave.toISOString()).split(',')[1]?.trim() ?? ''}
@@ -300,7 +300,7 @@ function AudienceRulesEditor({ ed }: { ed: WizardState }) {
             <button
               type="button"
               onClick={() => ed.setGroupMatch(group.id, group.match === 'and' ? 'or' : 'and')}
-              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-primary-glow"
+              className="h-7 px-2 rounded-md text-3xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))]"
             >
               {group.match === 'and' ? 'Todas as regras (E)' : 'Qualquer regra (OU)'}
             </button>
@@ -333,13 +333,17 @@ function StepAudience({ ed }: { ed: WizardState }) {
             <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
             <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={ed.name.trim().length > 0 && ed.name.trim().length < 3} className="mt-1.5 h-10 bg-input/40 border-border/70" />
             {ed.name.trim().length > 0 && ed.name.trim().length < 3 && (
-              <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos 3 caracteres</p>
+              <p role="alert" className="mt-1.5 text-2xs text-[hsl(var(--destructive-text))]">O nome precisa de pelo menos 3 caracteres</p>
             )}
           </div>
           <div>
             <Label className="text-xs text-foreground-secondary">Objetivo</Label>
             <Select value={ed.objective} onValueChange={ed.setObjective}>
-              <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              {/* O gatilho do Select e um `button role="combobox"` e, nesse papel, a AccName
+                  NAO tira nome do conteudo: o texto "Engajamento" nao nomeava o controle
+                  (axe `button-name` critico nos dois temas). O rotulo da linha — "Objetivo" —
+                  passa a nomea-lo explicitamente. */}
+              <SelectTrigger aria-label="Objetivo" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {OBJECTIVES.map(({ value, label, icon: ObjectiveIcon }) => (
                   <SelectItem key={value} value={value}>
@@ -395,7 +399,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
                     <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                   </div>
                   <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
-                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
+                  <p className="text-xs font-semibold text-[hsl(var(--primary-text))] mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
                 </button>
               );
             })}
@@ -404,7 +408,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       {ed.audienceSource === 'contacts' && (
-        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-primary-glow hover:underline">Limpar filtros</button>}>
+        <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos." right={<button type="button" onClick={ed.clearFilters} className="text-xs font-medium text-[hsl(var(--primary-text))] hover:underline">Limpar filtros</button>}>
           <AudienceRulesEditor ed={ed} />
           <TalkXContactSelector
             contacts={ed.contacts || []}
@@ -439,7 +443,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
         right={(
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-primary-glow border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><button type="button" className="h-8 px-3 rounded-lg text-xs font-medium text-[hsl(var(--primary-text))] border border-primary/30 bg-primary/10 hover:bg-primary/15 flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />Templates</button></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-auto">
               {approved.length > 0 && <p className="px-2 py-1 text-3xs uppercase tracking-wide text-muted-foreground">Biblioteca</p>}
               {approved.map((t) => (
@@ -487,7 +491,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>
@@ -513,7 +517,7 @@ function StepMessage({ ed }: { ed: WizardState }) {
       {/* E64: aviso de boas praticas - heuristica simples, nao bloqueante */}
       {(ed.messageTemplate.split('http').length - 1) > 2 && (
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
-          <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <Sparkles className="w-4 h-4 text-[hsl(var(--warning-text))] shrink-0 mt-0.5" />
           <p className="text-xs text-foreground-secondary">Mais de 2 links podem acionar filtros de spam. Use com moderação.</p>
         </div>
       )}
@@ -604,8 +608,8 @@ function WizardRail({ ed }: { ed: WizardState }) {
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
         <div className="grid grid-cols-2 gap-2.5">
           <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-success" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-[hsl(var(--destructive-text))]" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
