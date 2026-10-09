@@ -193,6 +193,13 @@ function bateriaDoVolume(
   // 1) o volume global chega no mount, já com a curva perceptual do app
   expect(elemento.volume, 'volume no mount').toBeCloseTo(toGain(AJUSTE_PADRAO), 5);
 
+  // 1b) os listeners do elemento também já estão ligados no mount: sujo o volume à mão e um
+  // `loadedmetadata` (a URL renovou, o elemento recarregou) devolve o valor do store. Um
+  // player que só se ligasse depois de um re-render falharia aqui.
+  elemento.volume = 0.2;
+  elemento.dispatchEvent(new Event('loadedmetadata'));
+  expect(elemento.volume, 'loadedmetadata no mount').toBeCloseTo(toGain(AJUSTE_PADRAO), 5);
+
   act(() => setVolume(AJUSTE_ALTERADO));
   expect(elemento.volume, 'volume global alterado').toBeCloseTo(toGain(AJUSTE_ALTERADO), 5);
 
