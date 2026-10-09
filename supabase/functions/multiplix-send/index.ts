@@ -1056,8 +1056,18 @@ export async function handleMultiplixSend(
       // horas e podia estourar o limite de tempo no meio do disparo.
       break passLoop;
     }
+    // MX03 (TL-034): a conclusao tem de olhar a fila que ESTE worker consome — os
+    // ITENS (`multiplix_delivery_items`). A antiga
+    // `complete_multiplix_dispatch_if_drained` conta pending/sending em
+    // `multiplix_recipients`, fila que `record_multiplix_item_sent` /
+    // `complete_multiplix_item` NAO alimentam: com todo item terminal o recipient
+    // seguia 'pending' e o disparo NUNCA concluia (o cron reinvocava a toa, e
+    // contadores/UI ficavam inconsistentes). A equivalente por item e
+    // `complete_multiplix_dispatch_if_items_drained` (f32b §10); a antiga esta
+    // marcada DEPRECATED em 20261001231230:677 e continua existindo so para os
+    // workers ainda nao migrados.
     const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_multiplix_dispatch_if_drained", { p_dispatch_id: dispatchId },
+      "complete_multiplix_dispatch_if_items_drained", { p_dispatch_id: dispatchId },
     );
     if (completionError) throw new Error(`multiplix_dispatch_completion_failed: ${completionError.message}`);
 
