@@ -330,21 +330,21 @@ function FrameBody({
         </div>
         {hasImage && (
           <div data-testid="talkx-preview-media-bubble" className="flex justify-end mb-1">
-            <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-whatsapp/10 border border-whatsapp/25 p-1">
+            <div className="max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 p-1">
               <PreviewMedia kind="image" url={mediaUrl} fileName={mediaFileName} sizeBytes={mediaSizeBytes} />
-              <span className="block text-right text-3xs text-muted-foreground mt-0.5">{clock} ✓✓</span>
+              <span className="block text-right text-3xs text-white/70 mt-0.5">{clock} ✓✓</span>
             </div>
           </div>
         )}
         <div className="flex justify-end">
-          <div className={cn('max-w-[86%] rounded-xl rounded-tr-sm bg-whatsapp/10 border border-whatsapp/25 px-2 py-1.5 text-foreground leading-snug break-words space-y-1', textSize)}>
+          <div className={cn('max-w-[86%] rounded-xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-2 py-1.5 text-white leading-snug break-words whitespace-pre-wrap', textSize)}>
             {hasOtherMedia && <PreviewMedia kind={kind} url={mediaUrl} fileName={mediaFileName} sizeBytes={mediaSizeBytes} />}
             {text ? (
               renderMessageBody(text, context)
             ) : empty ? (
-              <span className="text-muted-foreground italic">Prévia da mensagem…</span>
+              <span className="text-white/70 italic">Prévia da mensagem…</span>
             ) : null}
-            <span className="block text-right text-3xs text-muted-foreground mt-0.5">{clock} ✓✓</span>
+            <span className="block text-right text-3xs text-white/70 mt-0.5">{clock} ✓✓</span>
           </div>
         </div>
         <PreviewInteractive interactive={interactive} />
@@ -383,12 +383,12 @@ export function WhatsAppBubble({
       className={cn('rounded-2xl border border-border/60 bg-card overflow-hidden', className)}
     >
       <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50 bg-muted/30">
-        <div className="w-8 h-8 rounded-full bg-whatsapp/20 flex items-center justify-center text-2xs font-bold text-whatsapp">
+        <div className="w-8 h-8 rounded-full bg-whatsapp/20 flex items-center justify-center text-2xs font-bold text-success">
           {senderName.slice(0, 1)}
         </div>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground leading-tight truncate">{senderName}</p>
-          <p className="text-3xs text-whatsapp">online</p>
+          <p className="text-3xs text-success">online</p>
         </div>
       </div>
       <div className="p-3 bg-muted/20">
@@ -397,21 +397,21 @@ export function WhatsAppBubble({
         </div>
         {hasImage && (
           <div data-testid="talkx-preview-media-bubble" className="flex justify-end mb-1">
-            <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-whatsapp/10 border border-whatsapp/25 p-1.5">
+            <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 p-1.5">
               <PreviewMedia kind="image" url={mediaUrl} fileName={mediaFileName} sizeBytes={mediaSizeBytes} />
-              <span className="block text-right text-3xs text-muted-foreground mt-1">{clock} ✓✓</span>
+              <span className="block text-right text-3xs text-white/70 mt-1">{clock} ✓✓</span>
             </div>
           </div>
         )}
         <div className="flex justify-end">
-          <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-whatsapp/10 border border-whatsapp/25 px-3 py-2 text-[13px] text-foreground leading-relaxed space-y-1">
+          <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-[13px] text-white leading-relaxed whitespace-pre-wrap">
             {hasOtherMedia && <PreviewMedia kind={kind} url={mediaUrl} fileName={mediaFileName} sizeBytes={mediaSizeBytes} />}
             {text ? (
               renderMessageBody(text, context)
             ) : empty ? (
-              <span className="text-muted-foreground italic">Digite uma mensagem…</span>
+              <span className="text-white/70 italic">Digite uma mensagem…</span>
             ) : null}
-            <span className="block text-right text-3xs text-muted-foreground mt-1">{clock} ✓✓</span>
+            <span className="block text-right text-3xs text-white/70 mt-1">{clock} ✓✓</span>
           </div>
         </div>
         <PreviewInteractive interactive={interactive} />
