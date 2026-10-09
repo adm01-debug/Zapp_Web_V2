@@ -423,6 +423,12 @@ jobs:
             const gate1 = '${{ steps.gate1.outputs.passed }}';
             const gate2 = '${{ steps.gate2.outputs.passed }}';
             const gate3 = '${{ steps.gate3.outputs.passed }}';
+            // E20 (plano de 2026-10-08): a CAUSA do alerta e' o gate que falhou,
+            // num identificador sem espaco. E' ela que vai no marcador invisivel do
+            // corpo e decide o dedupe abaixo — mesmo mecanismo do db-live-guard.yml
+            // (E05/E06/E44), que ja comentava so quando a causa mudava.
+            const causa = gate1 === 'false' ? 'typescript' :
+              gate2 === 'false' ? 'usage-guard' : 'remocoes-destrutivas';
             const failed = gate1 === 'false' ? 'TypeScript' :
               gate2 === 'false' ? 'usage-guard' : 'remocoes destrutivas';
             const fs = require('fs');
@@ -436,8 +442,10 @@ jobs:
                 : gate3 === 'false' && fs.existsSync('/tmp/gate3.log')
                   ? fs.readFileSync('/tmp/gate3.log', 'utf8').slice(0, 2000)
                   : '';
+            const marker = `<!-- causa:${causa} -->`;
             const title = '[types-sync] Falha ao propor sincronizacao';
             const body = [
+              marker,
               `**Gate:** ${failed}`,
               `**Commit da main:** ${{ github.sha }}`,
               `**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
@@ -451,6 +459,36 @@ jobs:
             });
             const existing = issues.find(issue => issue.title === title);
             if (existing) {
+              // E20: sem este dedupe cada run com o mesmo gate vermelho comentava de
+              // novo (o job roda no agendamento semanal e a cada push na main que toca
+              // migrations) e a issue virava ruido que ninguem le. Mesma regra do
+              // db-live-guard.yml: so comenta quando a causa MUDA ou o ultimo
+              // comentario passou de 6h. O ultimo comentario vem pelo header Link com
+              // per_page: 1 -- a issue ja tem historico e ler so a 1a pagina daria a
+              // causa errada (bug ja achado no db-live-guard, issue #724).
+              const primeira = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1
+              });
+              const ultimaPaginaMatch = (primeira.headers?.link || '')
+                .match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+              const ultimaPagina = ultimaPaginaMatch ? Number(ultimaPaginaMatch[1]) : 1;
+              const { data: comentarios } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 1,
+                page: ultimaPagina
+              });
+              const ultimo = comentarios[0];
+              const causaAnterior = ultimo?.body?.match(/<!-- causa:([a-z-]+) -->/)?.[1] ?? null;
+              const idadeUltimoMs = ultimo ? Date.now() - new Date(ultimo.created_at).getTime() : Infinity;
+              if (causaAnterior === causa && idadeUltimoMs < 6 * 60 * 60 * 1000) {
+                core.info(`Dedupe: mesma causa (${causa}) ha menos de 6h; comentario suprimido.`);
+                return;
+              }
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
