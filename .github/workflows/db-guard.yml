@@ -609,7 +609,14 @@ jobs:
           TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
 
-      # Auditoria: correção de DUAS regressões vivas por recriação de função —
+      # N-103: pesos das variantes do Talk X somam 100 e atribuicao
+      # estavel (constraint trigger talkx_template_variants_weight_sum).
+      - name: Provar constraint de pesos de variantes do Talk X (N-103)
+        env:
+          TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-ab-weights.test.sh
+
+      # Auditoria: correcao de DUAS regressoes vivas por recriacao de funcao —
       # save_talkx_campaign_draft perdeu template_version_id (V26) e
       # transition_talkx_campaign não gravava launched_by/launched_at no start
       # (V21). O harness aplica a CADEIA COMPLETA das migrations Talk X (do zero,
