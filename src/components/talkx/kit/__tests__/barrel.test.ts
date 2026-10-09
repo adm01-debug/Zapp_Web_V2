@@ -67,6 +67,7 @@ const EXPORTED_NAMES = [
   'RecentList',
   'TipCard',
   'TalkXConfirmDialog',
+  'TalkXDialogShell',
   'InsightCard',
   'EntityCell',
   'ProgressCell',
