@@ -125,3 +125,16 @@ describe('AbandonmentRate — contrato de abandono (R2-MOD-020)', () => {
     expect(valor(/Respondidas/)).toBe('0');
   });
 });
+
+describe('AbandonmentRate — acessibilidade do filtro (N-091)', () => {
+  beforeEach(() => {
+    h.state.error = null;
+    h.state.rows = [];
+    h.state.orderCalls = [];
+  });
+
+  it('getByRole acha o combobox Período pelo nome acessível', async () => {
+    render(<AbandonmentRate />, { wrapper: TestQueryWrapper });
+    expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+  });
+});
