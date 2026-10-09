@@ -14,6 +14,12 @@ export type KpiComparisonKind = 'relative' | 'points';
 export interface KpiComparison {
   /** Valor do período anterior. Sem ele (ou <= 0) não há variação. */
   previous?: number | null;
+  /**
+   * Valor do período atual usado no cálculo da variação (default: o `value` exibido).
+   * Use quando a grandeza comparada difere do número mostrado no card — ex.: "Total de
+   * Templates" exibe o total acumulado, mas compara criados no mês atual vs. o anterior.
+   */
+  current?: number | null;
   /** 'relative' = % de variação; 'points' = diferença em pontos percentuais. */
   kind: KpiComparisonKind;
   /** Base mínima para exibir a variação (evita ruído em bases pequenas). */
@@ -58,15 +64,17 @@ function computeVariation(
   value: number | string | null | undefined,
   comparison?: KpiComparison,
 ): Variation | null {
-  if (!comparison || typeof value !== 'number') return null;
+  if (!comparison) return null;
+  const cur = comparison.current ?? value;
+  if (typeof cur !== 'number') return null;
   const prev = comparison.previous;
   if (prev == null || prev <= 0) return null;
   const base = comparison.baseValue ?? prev;
   if (base < (comparison.minBase ?? 0)) return null;
 
   const raw = comparison.kind === 'points'
-    ? value - prev
-    : ((value - prev) / base) * 100;
+    ? cur - prev
+    : ((cur - prev) / base) * 100;
   const up = raw >= 0;
   const good = comparison.goodWhen === 'down' ? !up : up;
   const magnitude = comparison.kind === 'points'
