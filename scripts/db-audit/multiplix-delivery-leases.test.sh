@@ -514,6 +514,87 @@ intruso="$(psql_test -Atqc "$service_session SELECT public.heartbeat_multiplix_i
 [[ "$intruso" == 'f' ]] \
   || fail "F55.1: heartbeat com claim_token de OUTRO dono foi aceito (veio: $intruso)"
 
+# ══ F56 · ORDEM POR DESTINATARIO com DOIS destinatarios x TRES blocos ══════════
+# O bloco acima prova a ordem com UM destinatario. A reconciliacao de 04/10 pede o
+# cenario de 2 contatos x 3 blocos: aqui cada destinatario tem a PROPRIA cadeia de
+# blocos, e o que se prova e que (a) as cadeias NAO se cruzam (a fase de um
+# destinatario nao trava nem libera o outro), (b) a fronteira de cada um avanca
+# sozinha e (c) nenhum item entra na fila duas vezes. Uma regra que ordenasse pelo
+# bloco GLOBAL — ou que esquecesse o `prev.recipient_id = item.recipient_id` — passaria
+# no caso de um destinatario so e falharia AQUI; e este caso que a denuncia.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000050', 'Ordem 2x3', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 2, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', 0, 'text', 'bloco 0'),
+  ('60000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', 1, 'text', 'bloco 1'),
+  ('60000000-0000-0000-0000-000000000053', '30000000-0000-0000-0000-000000000050', 2, 'text', 'bloco 2');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at)
+VALUES
+  ('40000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '50000000-0000-0000-0000-000000000051', '+551****0041', 'pending', statement_timestamp()),
+  ('40000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', '50000000-0000-0000-0000-000000000052', '+551****0042', 'pending', statement_timestamp());
+-- A = itens 41/43/45 (blocos de ordem 0/1/2); B = itens 42/44/46 (os MESMOS blocos, mas
+-- item e destinatario PROPRIOS: e assim que o bloco "distinto" de cada um fica amarrado).
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000051', 1, 'pending', 'x-a0'),
+  ('80000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000051', 1, 'pending', 'x-b0'),
+  ('80000000-0000-0000-0000-000000000053', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000052', 1, 'pending', 'x-a1'),
+  ('80000000-0000-0000-0000-000000000054', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000052', 1, 'pending', 'x-b1'),
+  ('80000000-0000-0000-0000-000000000055', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000053', 1, 'pending', 'x-a2'),
+  ('80000000-0000-0000-0000-000000000056', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000053', 1, 'pending', 'x-b2');
+SQL
+
+disp_2x3='30000000-0000-0000-0000-000000000050'
+# A fila visivel AGORA, com o par (bloco, item) de cada destinatario na ordem de trabalho.
+fila2x3() { psql_test -Atqc "$service_session SELECT coalesce(string_agg(block_order || ':' || item_id::text, ',' ORDER BY block_order, item_id), 'VAZIO') FROM public.list_multiplix_claimable_items('$disp_2x3', 10);" 2>&1 || true; }
+# Conclui UM item como o worker faz: claim -> marcou envio ao provedor -> sent.
+concluir() {
+  local token
+  token="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_2x3','$1','worker-2x3',90);" 2>&1 || true)"
+  [[ "$token" =~ $is_uuid ]] || fail "F56.2x3: nao consegui reivindicar o item $1 (veio: $token)"
+  psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$1','$token'::uuid);
+SELECT public.record_multiplix_item_sent('$1','$token'::uuid,'ext-$1');
+SQL
+}
+
+# (F56.4) Na 1a passada, so a fronteira (bloco 0) dos DOIS destinatarios — nada de bloco 1/2.
+esperado="0:80000000-0000-0000-0000-000000000051,0:80000000-0000-0000-0000-000000000052"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.4: a 1a passada nao ofereceu so o bloco 0 dos DOIS destinatarios (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000051'   # A concluiu o bloco 0
+# (F56.5) A avancou para o bloco 1 enquanto B segue no bloco 0: cadeia de um NAO trava a do outro.
+esperado="0:80000000-0000-0000-0000-000000000052,1:80000000-0000-0000-0000-000000000053"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.5: com A no bloco 0, esperava B(bloco 0) + A(bloco 1) (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000052'   # B concluiu o bloco 0
+esperado="1:80000000-0000-0000-0000-000000000053,1:80000000-0000-0000-0000-000000000054"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.6: com A e B no bloco 1, esperava os dois itens do bloco 1 (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000053'   # A concluiu o bloco 1
+esperado="1:80000000-0000-0000-0000-000000000054,2:80000000-0000-0000-0000-000000000055"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.7: com B ainda no bloco 1, esperava B(bloco 1) + A(bloco 2) (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000054'   # B concluiu o bloco 1
+esperado="2:80000000-0000-0000-0000-000000000055,2:80000000-0000-0000-0000-000000000056"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.8: o ultimo par (bloco 2 dos dois) nao saiu (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000055'   # A concluiu o bloco 2
+concluir '80000000-0000-0000-0000-000000000056'   # B concluiu o bloco 2
+# (F56.9) Cadeia inteira consumida: a fila fica VAZIA — nada repetido, nada sobrando.
+[[ "$(fila2x3)" == "VAZIO" ]] \
+  || fail "F56.9: a fila nao esvaziou ao fim das duas cadeias (veio: $(fila2x3))"
+# (F56.10) NENHUMA DUPLICACAO: os 6 itens (2 x 3) saem 'sent' exatamente UMA vez cada.
+enviados="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_2x3' AND status='sent';" 2>&1 | tail -1 || true)"
+[[ "$enviados" == "6" ]] \
+  || fail "F56.10: esperava 6 itens 'sent' (2 destinatarios x 3 blocos), veio $enviados"
+total="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_2x3';" 2>&1 | tail -1 || true)"
+[[ "$total" == "6" ]] \
+  || fail "F56.10: a fila criou/duplicou itens — esperava 6 no total, veio $total"
+
 # ══════════════════════════════════════════════════════════════════════════════
 # F59: dead letter consultavel (admin), recalculo de elegibilidade no disparo
 # ══════════════════════════════════════════════════════════════════════════════
@@ -929,6 +1010,5 @@ ack_nao="$(psql_test -Atqc "$service_session SELECT public.record_multiplix_item
   || fail 'F89.10: o ACK desconhecido mexeu no item ja reconciliado'
 
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56). E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo)\n'
-
+printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56) — e com DOIS destinatarios x tres blocos as duas cadeias nao se cruzam (a fronteira de cada um avanca sozinha) e nenhum item entra na fila duas vezes. E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo)\n'
 
