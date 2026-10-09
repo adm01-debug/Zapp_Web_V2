@@ -30,14 +30,26 @@ vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
 vi.mock('@/components/talkx/TalkXOverview', () => ({
   TalkXOverview: ({ onNew }: { onNew: () => void }) => <button type="button" onClick={onNew}>Abrir novo wizard</button>,
 }));
-vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
+vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({
+  TalkXLiveMonitor: ({ campaignId }: { campaignId?: string | null }) => (
+    <div data-testid="monitor" data-campaign-id={campaignId ?? ''} />
+  ),
+}));
 vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
 vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div data-testid="suppression" /> }));
 vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div data-testid="analytics" /> }));
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
-vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
-vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
+vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({
+  TalkXCampaignScheduled: ({ campaignId }: { campaignId: string }) => (
+    <div data-testid="scheduled" data-campaign-id={campaignId} />
+  ),
+}));
+vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({
+  TalkXCampaignRunning: ({ initialCampaignId }: { initialCampaignId?: string | null }) => (
+    <div data-testid="running" data-campaign-id={initialCampaignId ?? ''} />
+  ),
+}));
 
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
@@ -239,5 +251,110 @@ describe('TalkXWizardReview — "Editar" respeita a rota (V22)', () => {
     });
 
     expect(onEditStep).toHaveBeenCalledWith(2);
+  });
+});
+
+/**
+ * X143 — a tela de acompanhamento tem endereço: `?campaign=<id>` abre a tela da
+ * situação da campanha (e o endereço passa a registrá-la em `?screen=`). O estado não
+ * vive mais em useState por tela, então trocar o status com a tela aberta move o
+ * endereço junto.
+ */
+function campaignWith(id: string, status: string) {
+  return {
+    id, name: `Campanha ${id}`, status, sent_count: 0, failed_count: 0,
+    delivered_count: 0, total_recipients: 0,
+  };
+}
+
+describe('TalkXView — endereço das telas de acompanhamento (X143)', () => {
+  beforeEach(() => {
+    f.isLoading = false;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('rascunho abre o wizard e troca o endereço da campanha pelo do wizard', async () => {
+    f.campaigns = [campaignWith('camp_draft', 'draft')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_draft');
+    render(<TalkXView />);
+
+    const wizard = await screen.findByTestId('wizard');
+    expect(wizard).toHaveAttribute('data-campaign-id', 'camp_draft');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('wizard')).toBe('camp_draft'));
+    expect(new URLSearchParams(window.location.search).has('campaign')).toBe(false);
+  });
+
+  it('agendada abre a tela 10', async () => {
+    f.campaigns = [campaignWith('camp_scheduled', 'scheduled')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_scheduled');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('scheduled')).toHaveAttribute('data-campaign-id', 'camp_scheduled');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('scheduled'));
+  });
+
+  it('enviando abre a tela 12 e grava screen=running no endereço', async () => {
+    f.campaigns = [campaignWith('camp_sending', 'sending')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_sending');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('running')).toHaveAttribute('data-campaign-id', 'camp_sending');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('running'));
+  });
+
+  it('pausada abre a tela 13 (cai na 12 até X156)', async () => {
+    f.campaigns = [campaignWith('camp_paused', 'paused')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_paused');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('running')).toHaveAttribute('data-campaign-id', 'camp_paused');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('running'));
+  });
+
+  it('concluída abre o relatório (monitor em leitura até a trilha de dados existir)', async () => {
+    f.campaigns = [campaignWith('camp_completed', 'completed')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_completed');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('monitor')).toHaveAttribute('data-campaign-id', 'camp_completed');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('report'));
+  });
+
+  it('cancelada também abre o relatório', async () => {
+    f.campaigns = [campaignWith('camp_cancelled', 'cancelled')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_cancelled');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('monitor')).toHaveAttribute('data-campaign-id', 'camp_cancelled');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('report'));
+  });
+
+  it('id inexistente ou sem acesso mostra o estado do kit com "Voltar para campanhas"', async () => {
+    f.campaigns = [campaignWith('camp_sending', 'sending')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_fantasma&screen=monitor');
+    render(<TalkXView />);
+
+    expect(await screen.findByText('Campanha não encontrada')).toBeInTheDocument();
+    expect(screen.queryByTestId('monitor')).not.toBeInTheDocument();
+
+    await act(async () => screen.getByRole('button', { name: 'Voltar para campanhas' }).click());
+    expect(screen.queryByText('Campanha não encontrada')).not.toBeInTheDocument();
+    expect(screen.getByText('Abrir novo wizard')).toBeInTheDocument();
+  });
+
+  it('mudança de status com a tela aberta navega para a tela nova', async () => {
+    f.campaigns = [campaignWith('camp_sending', 'sending')];
+    window.history.replaceState(null, '', '/?view=talkx&campaign=camp_sending&screen=running');
+    const { rerender } = render(<TalkXView />);
+    await screen.findByTestId('running');
+
+    await act(async () => {
+      f.campaigns = [campaignWith('camp_sending', 'completed')];
+      rerender(<TalkXView />);
+    });
+
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('screen')).toBe('report'));
+    expect(screen.getByTestId('monitor')).toHaveAttribute('data-campaign-id', 'camp_sending');
   });
 });
