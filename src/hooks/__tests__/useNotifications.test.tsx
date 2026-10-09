@@ -84,6 +84,7 @@ describe('useNotifications', () => {
     });
 
     expect(result.current.notifications).toHaveLength(2);
+    expect(result.current.error).toBeNull();
   });
 
   it('calculates unread count correctly', async () => {
@@ -112,5 +113,35 @@ describe('useNotifications', () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
+    expect(result.current.error).toBeInstanceOf(Error);
+  });
+
+  it('conserva a lista anterior e expõe o erro quando a atualização falha', async () => {
+    const { result } = renderHook(() => useNotifications(), { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+    expect(result.current.notifications).toHaveLength(2);
+    expect(result.current.error).toBeNull();
+
+    // A consulta passa a falhar e a atualização é refeita.
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: null, error: new Error('rede fora') }),
+          }),
+        }),
+      }),
+    });
+
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.notifications).toHaveLength(2);
+    expect(result.current.loading).toBe(false);
   });
 });
