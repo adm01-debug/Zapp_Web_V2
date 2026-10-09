@@ -88,6 +88,15 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   "audio/webm": "webm",
 };
 
+/**
+ * Containers que o detector classifica como vídeo, mas que neste endpoint são
+ * áudio: WebM gravado pelo navegador e MP4/M4A (`ftyp`) do WhatsApp/iOS.
+ */
+const AUDIO_CONTAINER_BY_VIDEO_MIME: Record<string, string> = {
+  "video/webm": "audio/webm",
+  "video/mp4": "audio/mp4",
+};
+
 /** Tipo declarado (content-type informado + extensão da URL) — fallback. */
 function formatFromMetadata(
   audioUrl: string,
@@ -120,11 +129,17 @@ function formatFromMetadata(
  * O `content-type` informado e a extensão da URL são entradas NÃO confiáveis: um
  * `.mp3`/`audio/mpeg` que serve um OGG era enviado ao provedor com o tipo
  * errado. O detector real (`detectMediaKind`) decide primeiro; só quando ele não
- * reconhece a assinatura (arquivo desconhecido) o metadado declarado é usado.
+ * reconhece um ÁUDIO conhecido (assinatura desconhecida ou de outro tipo) o
+ * metadado declarado é usado.
  *
- * O container EBML/WebM é classificado como VÍDEO pelo detector por ser um
- * container ambíguo; neste endpoint, que só transcreve áudio, ele é a gravação
- * de áudio do navegador e vai como `audio/webm`.
+ * Os containers EBML/WebM e ISO-BMFF/MP4 (`ftyp`) são classificados como VÍDEO
+ * pelo detector por serem ambíguos; neste endpoint, que só transcreve áudio, eles
+ * são a gravação de áudio do navegador (`audio/webm`) e o áudio M4A do
+ * WhatsApp/iOS (`audio/mp4` + `audio.m4a`).
+ *
+ * Só vale o resultado do detector que é um áudio conhecido (`EXTENSION_BY_MIME`):
+ * assinatura de outro tipo (imagem, PDF, texto...) com metadado de áudio cai no
+ * metadado declarado — nunca sai um mime arbitrário nem `audio.bin`.
  *
  * Não precisa do arquivo inteiro: os primeiros bytes já carregam a assinatura.
  */
@@ -134,15 +149,15 @@ export function resolveTranscriptionAudioFormat(
   bytes: Uint8Array,
 ): TranscriptionAudioFormat {
   const detected = detectMediaKind(bytes);
-  if (detected) {
+  const detectedMime = detected
+    ? (AUDIO_CONTAINER_BY_VIDEO_MIME[detected.mime] ?? detected.mime)
+    : null;
+  const extension = detectedMime ? EXTENSION_BY_MIME[detectedMime] : undefined;
+  if (detectedMime && extension) {
     // SL-195a: os magic bytes do ARQUIVO vencem o `content-type` informado e a
     // extensão da URL — os dois são entradas não confiáveis (um `.mp3` que serve
-    // OGG era enviado como audio/mpeg). O container EBML/WebM é classificado
-    // como vídeo pelo detector por ser ambíguo, mas neste endpoint é a gravação
-    // de ÁUDIO do navegador e vai como `audio/webm`.
-    const mimeType = detected.mime === "video/webm" ? "audio/webm" : detected.mime;
-    const extension = EXTENSION_BY_MIME[mimeType] ?? "bin";
-    return { mimeType, fileName: `audio.${extension}`, source: "magic" };
+    // OGG era enviado como audio/mpeg).
+    return { mimeType: detectedMime, fileName: `audio.${extension}`, source: "magic" };
   }
   const { mimeType, fileName } = formatFromMetadata(audioUrl, contentType);
   return { mimeType, fileName, source: "metadata" };
@@ -261,7 +276,7 @@ export async function handleTranscribeAudio(
 
     // Determine correct MIME type and file extension — SL-195a: os magic bytes do
     // ARQUIVO decidem; `contentType` e extensão da URL só entram quando o
-    // detector não reconhece a assinatura.
+    // detector não reconhece um áudio conhecido.
     const { mimeType, fileName, source } = resolveTranscriptionAudioFormat(
       audioUrl,
       contentType,

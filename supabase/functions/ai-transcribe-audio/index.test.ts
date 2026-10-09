@@ -36,6 +36,14 @@ const OGG_HEADER = new Uint8Array([0x4f, 0x67, 0x67, 0x53, 0x00, 0x02, 0x00, 0x0
 const MP3_HEADER = new Uint8Array([0xff, 0xfb, 0x90, 0x64, 0x00, 0x00]);
 // Nenhuma assinatura conhecida (0x99 não é texto imprimível).
 const UNKNOWN_HEADER = new Uint8Array([0x99, 0x98, 0x97, 0x96]);
+// ISO-BMFF com brand genérico ("isom"), como o áudio M4A do WhatsApp/iOS: o
+// detector classifica como `video/mp4`.
+const M4A_ISOM_HEADER = new Uint8Array([
+  0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, // size + "ftyp"
+  0x69, 0x73, 0x6f, 0x6d, 0x00, 0x00, 0x02, 0x00, // "isom" + minor version
+]);
+// PNG: assinatura de arquivo que NÃO é áudio.
+const PNG_HEADER = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
 
 // `.mp3` de propósito: a extensão mente junto com o content-type.
 const AUDIO_URL = "https://local.test/storage/v1/object/public/whatsapp-media/audio.mp3";
@@ -167,3 +175,56 @@ Deno.test("SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão", 
   assertEquals(byMetadata.mimeType, "audio/mpeg", "fallback pelo metadado");
   assertEquals(byMetadata.source, "metadata", "decisão pelo metadado declarado");
 });
+
+Deno.test(
+  "SL-195a: M4A em container ftyp (detectado como video/mp4) vai como audio/mp4 + audio.m4a",
+  async () => {
+    const captured: Captured = { form: null };
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: M4A_ISOM_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        }),
+      fetch: capturingFetch(captured),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    assert(captured.form, "o fetch ao provedor não foi chamado");
+    const file = captured.form.get("file") as File;
+    assertEquals(file.type, "audio/mp4", "o container MP4 de áudio deve ir como audio/mp4");
+    assertEquals(file.name, "audio.m4a", "o nome do arquivo deve ser .m4a, nunca .bin");
+
+    const format = resolveTranscriptionAudioFormat("audio.mp3", "audio/ogg", M4A_ISOM_HEADER);
+    assertEquals(format.source, "magic", "a decisão vem dos magic bytes");
+  },
+);
+
+Deno.test(
+  "SL-195a: assinatura que não é áudio (PNG) com metadado de áudio cai no metadado, sem .bin",
+  async () => {
+    const captured: Captured = { form: null };
+    const deps = baseDeps({
+      downloadAudio: () =>
+        Promise.resolve({
+          buffer: PNG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        }),
+      fetch: capturingFetch(captured),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+    assertEquals(res.status, 200, "o handler deveria concluir 200");
+
+    assert(captured.form, "o fetch ao provedor não foi chamado");
+    const file = captured.form.get("file") as File;
+    assertEquals(file.type, "audio/ogg", "mime não-áudio não pode ir ao STT: vale o metadado");
+    assertEquals(file.name, "audio.ogg", "o nome segue o metadado, nunca audio.bin");
+
+    const format = resolveTranscriptionAudioFormat("audio.mp3", "audio/ogg", PNG_HEADER);
+    assertEquals(format.source, "metadata", "a decisão cai no metadado declarado");
+    assert(!format.fileName.endsWith(".bin"), "nunca gerar audio.bin");
+  },
+);
