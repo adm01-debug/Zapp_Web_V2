@@ -174,6 +174,33 @@ describe('Sidebar — nav primária e grupos compartilham uma única área de ro
   });
 });
 
+/**
+ * F71 — o item do menu e "Multiplix · NOVO". O selo e da ENTRADA: quem nao tem
+ * `multiplix.dispatch.create` nao ve entrada nem selo (o gate nao mudou, o selo
+ * apenas acompanha). O nome acessivel do botao carrega o selo porque o
+ * `aria-label` do botao mascara o texto interno para o leitor de tela.
+ */
+describe('Sidebar — selo "NOVO" da entrada do Multiplix (F71)', () => {
+  it('quem tem a permissão vê "Multiplix · NOVO", com o selo lido no nome acessível', () => {
+    const { container } = renderSidebar();
+    const entrada = container.querySelector('[data-tour="multiplix"]');
+
+    expect(entrada).not.toBeNull();
+    expect(entrada?.textContent).toContain('Multiplix');
+    expect(entrada?.textContent).toContain('NOVO');
+    expect(entrada).toHaveAccessibleName('Multiplix (novo)');
+  });
+
+  it('sem a permissão não existe entrada nem selo (nada de "NOVO" solto no menu)', () => {
+    mockRoles = ['supervisor', 'admin'];
+    mockPermissions = [];
+    const { container } = renderSidebar();
+
+    expect(container.querySelector('[data-tour="multiplix"]')).toBeNull();
+    expect(container.textContent).not.toContain('NOVO');
+  });
+});
+
 describe('Sidebar — Favoritos não duplica item que já vive na nav primária', () => {
   it('Multiplix favoritado não aparece de novo na seção Favoritos (já é sempre visível)', () => {
     mockFavorites = ['multiplix'];
