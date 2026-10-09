@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, useAudienceEstimate, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type RuleField, type RuleOp } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -538,6 +538,19 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     enabled: audienceSource === 'segment' && !!selectedSegment,
   });
 
+  // X132 — a amostra da prévia é o primeiro contato ELEGÍVEL devolvido pela RPC
+  // de audiência (`talkx_resolve_audience`, a MESMA do motor), com os campos
+  // customizados dele — não o primeiro da lista crua nem um contato fictício.
+  // No público por segmento a lista `contacts` nem é consultada (o `enabled`
+  // dela é só `'contacts'`), então a amostra vem do próprio segmento.
+  const { data: segmentAudience } = useAudienceEstimate(
+    (selectedSegment?.rules as SegmentRules) ?? null,
+    audienceSource === 'segment' && !!selectedSegment,
+  );
+  const previewSample = audienceSource === 'segment'
+    ? (segmentAudience?.sample?.[0] ?? null)
+    : (contacts?.[0] ?? null);
+
   const { companies, tags } = useMemo(() => {
     if (!contacts) return { companies: [] as string[], tags: [] as string[] };
     const companySet = new Set<string>();
@@ -967,7 +980,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, tags, filteredContacts,
-    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
+    previewMessage, previewSample, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
     insertVariable, toggleContact, selectAll, handleSave,
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };

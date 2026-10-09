@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
   Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, Plus,
+  Send, CheckCircle2, XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +20,11 @@ import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, type Wiza
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, PhoneFrame, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
+import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { toast } from 'sonner';
 
@@ -580,7 +584,11 @@ function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string
 }
 
 function WizardRail({ ed }: { ed: WizardState }) {
-  const sample = ed.contacts?.[0];
+  // X132 — a amostra da prévia é o primeiro contato ELEGÍVEL devolvido pela RPC
+  // de audiência (com os campos customizados dele), não o primeiro da lista
+  // crua: `previewSample` já resolve isso para público por contatos e por
+  // segmento. Sem público, a prévia cai no exemplo padrão do personalizador.
+  const sample = ed.previewSample;
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
   // real (personalize()) já resolvia o dado verdadeiro de contact_custom_fields.
@@ -598,6 +606,12 @@ function WizardRail({ ed }: { ed: WizardState }) {
     }
     return values;
   }, [sampleCustomFields]);
+  // A moldura mostra o cabeçalho como o CONTATO vê: nome e número da conexão
+  // escolhida no passo 1 (X132).
+  const connection = (ed.connections ?? []).find((c) => c.id === ed.connectionId);
+  const { profile } = useAuth();
+  const [verNoCelularOpen, setVerNoCelularOpen] = React.useState(false);
+  const previewText = personalizePreview(ed.messageTemplate, sample, sampleCustomValues);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
   return (
     <div className="space-y-4 min-w-0">
@@ -611,10 +625,103 @@ function WizardRail({ ed }: { ed: WizardState }) {
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
         </div>
       </RailCard>
-      <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
+      <RailCard
+        icon={Smartphone}
+        color="green"
+        title="Prévia da mensagem"
+        subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}
+        right={
+          <GhostButton icon={Smartphone} onClick={() => setVerNoCelularOpen(true)}>Ver no celular</GhostButton>
+        }
+      >
+        <PhoneFrame
+          text={previewText}
+          mediaUrl={ed.hasMedia ? ed.mediaUrl : null}
+          mediaType={ed.hasMedia ? ed.mediaType : null}
+          senderName={connection?.name ?? 'Sua Empresa'}
+          senderPhone={connection?.phone_number ?? null}
+        />
       </RailCard>
       {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
+      {verNoCelularOpen && (
+        <VerNoCelularDialog
+          text={previewText}
+          mediaUrl={ed.hasMedia ? ed.mediaUrl : null}
+          mediaType={ed.hasMedia ? ed.mediaType : null}
+          defaultPhone={profile?.phone ?? ''}
+          onClose={() => setVerNoCelularOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * X132 — "Ver no celular": envia a mensagem da campanha já personalizada com os
+ * dados do contato de amostra para um número real, pela MESMA edge
+ * (`talkx-send`, ação `test`) que o editor de template usa. Mostra o sucesso ou
+ * o motivo da falha; nada é enviado contra a base de contatos.
+ */
+function VerNoCelularDialog({ text, mediaUrl, mediaType, defaultPhone, onClose }: {
+  text: string;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
+  defaultPhone: string;
+  onClose: () => void;
+}) {
+  const { testTemplate } = useTalkXTemplates();
+  const [phone, setPhone] = React.useState(defaultPhone);
+  const [sending, setSending] = React.useState(false);
+  const [result, setResult] = React.useState<{ ok: boolean; msg: string } | null>(null);
+
+  const send = async () => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) { setResult({ ok: false, msg: 'Número inválido' }); return; }
+    if (!text.trim()) { setResult({ ok: false, msg: 'Escreva a mensagem da campanha' }); return; }
+    setSending(true);
+    setResult(null);
+    try {
+      await testTemplate({ templateContent: text, mediaUrl, mediaType, phone: digits });
+      setResult({ ok: true, msg: `Mensagem enviada para ${digits}` });
+    } catch (e) {
+      setResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro ao enviar o teste' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Ver no celular</DialogTitle>
+          <DialogDescription>
+            Envia a mensagem já personalizada com os dados do contato de amostra para um número via WhatsApp.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
+          <Label className="text-xs text-foreground-secondary">Número de destino</Label>
+          <Input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            aria-label="Número de destino"
+            placeholder="5541999001234"
+            className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono"
+          />
+        </div>
+        {result && (
+          <p role="status" className={result.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
+            {result.ok ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+            {result.msg}
+          </p>
+        )}
+        <div className="flex gap-2 pt-1">
+          <GhostButton onClick={onClose} className="flex-1 justify-center">Fechar</GhostButton>
+          <PrimaryButton icon={Send} onClick={send} disabled={sending || !phone.trim()} className="flex-1 justify-center">
+            {sending ? 'Enviando…' : 'Enviar'}
+          </PrimaryButton>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

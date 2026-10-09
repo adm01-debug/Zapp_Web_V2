@@ -13,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
-import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble } from './talkxShared';
+import { IconTile, RailCard, MetaRow, PhoneFrame, fmtDateTime, fmtInt } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -339,7 +339,11 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             {campaign.message_template && (
               <div>
                 <p className="text-2xs text-muted-foreground mb-1.5 font-medium">Mensagem</p>
-                <WhatsAppBubble text={campaign.message_template.slice(0, 120) + (campaign.message_template.length > 120 ? '…' : '')} />
+                <PhoneFrame
+                  text={campaign.message_template.slice(0, 120) + (campaign.message_template.length > 120 ? '…' : '')}
+                  mediaUrl={campaign.media_url ?? null}
+                  mediaType={campaign.media_type ?? null}
+                />
               </div>
             )}
             <div className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 flex items-start gap-2.5">
