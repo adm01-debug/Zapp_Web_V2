@@ -77,6 +77,18 @@ describe('ChurnPredictionDashboard', () => {
       });
     });
 
+    it('barras de progresso de risco têm aria-label com nome e score', async () => {
+      render(<ChurnPredictionDashboard />);
+      await waitFor(() => {
+        expect(screen.getByText(/Contatos em Risco/)).toBeInTheDocument();
+      });
+      const progressBars = screen.getAllByRole('progressbar');
+      expect(progressBars.length).toBeGreaterThan(0);
+      progressBars.forEach(bar => {
+        expect(bar).toHaveAttribute('aria-label');
+      });
+    });
+
     it('shows loading skeletons while fetching', () => {
       const { container } = render(<ChurnPredictionDashboard />);
       expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
