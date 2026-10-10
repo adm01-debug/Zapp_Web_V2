@@ -13,10 +13,31 @@ export interface MonitorRecipient {
   personalized_message: string | null;
 }
 
+/**
+ * X144 — a leitura do ritmo tem JANELA de tempo, não teto de linhas.
+ *
+ * Antes eram as 2.000 linhas mais recentes da campanha (teto fixo): a série
+ * dos últimos 60 min era montada em cima de uma amostra que, em campanha grande,
+ * nem chegava ao minuto atual — e, quando chegava, o número era o de uma amostra
+ * com cara de total. Agora o recorte é pelo `sent_at` da própria janela do
+ * gráfico, então toda linha que pode cair num bucket da tela é lida; e
+ * `truncated` avisa quando o servidor devolveu menos linhas do que existem na
+ * janela (teto do PostgREST), para a tela não apresentar série parcial como
+ * definitiva. A série por minuto passa a sair do servidor na etapa X140
+ * (`talkx_monitor_panel.series`, via `useTalkXMonitorPanel`).
+ */
+export const MONITOR_WINDOW_MINUTES = 60;
+export const MONITOR_WINDOW_MS = MONITOR_WINDOW_MINUTES * 60_000;
+
+/** Início da janela em ISO — o mesmo recorte que `buildRateByMinute` desenha. */
+export function monitorWindowStart(now: number = Date.now()): string {
+  return new Date(now - MONITOR_WINDOW_MS).toISOString();
+}
+
 export function buildRateByMinute(data: { sent_at: string | null; delivered_at: string | null }[]): RatePoint[] {
   if (!data.length) return [];
   const now = Date.now();
-  const windowMs = 60 * 60_000;
+  const windowMs = MONITOR_WINDOW_MS;
   const buckets = new Map<string, { sent: number; delivered: number }>();
 
   for (const r of data) {
@@ -35,29 +56,38 @@ export function buildRateByMinute(data: { sent_at: string | null; delivered_at: 
     .map(([label, { sent, delivered }]) => ({ label, Enviadas: sent, Entregues: delivered }));
 }
 
-export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all') {
+export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all', refetchInterval?: number | false) {
   const query = useQuery({
     queryKey: ['talkx-monitor-recipients', campaignId, statusFilter],
     queryFn: async () => {
       let q = fromTable('talkx_recipients')
-        .select('id, contact_id, status, sent_at, delivered_at, error_message, personalized_message')
+        .select('id, contact_id, status, sent_at, delivered_at, error_message, personalized_message', { count: 'exact' })
         .eq('campaign_id', campaignId!)
-        .order('sent_at', { ascending: false })
-        .limit(2000);
+        .gte('sent_at', monitorWindowStart())
+        .order('sent_at', { ascending: false });
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
+      const { data, error, count } = await q;
       if (error) throw error;
-      return (data ?? []) as MonitorRecipient[];
+      const rows = (data ?? []) as MonitorRecipient[];
+      const total = typeof count === 'number' ? count : null;
+      return { rows, total, truncated: total !== null && total > rows.length };
     },
     enabled: !!campaignId,
-    refetchInterval: 5_000,
+    refetchInterval: refetchInterval ?? 5_000,
   });
 
+  const rows = query.data?.rows ?? [];
   return {
-    recipients: query.data ?? [],
+    recipients: rows,
     isLoading: query.isLoading,
     isError: query.isError,
-    rateByMinute: buildRateByMinute(query.data ?? []),
+    error: (query.error as Error | null) ?? null,
+    rateByMinute: buildRateByMinute(rows),
+    /** Quantas linhas existem na janela no servidor (null quando o servidor não informa). */
+    total: query.data?.total ?? null,
+    /** O servidor devolveu menos linhas do que existem na janela. */
+    truncated: query.data?.truncated ?? false,
+    windowMinutes: MONITOR_WINDOW_MINUTES,
     refetch: query.refetch,
   };
 }
