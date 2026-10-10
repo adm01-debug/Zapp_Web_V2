@@ -95,10 +95,10 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
 
   it('axe não aponta violações no botão olho', async () => {
     const { container } = render(<IntegrationKeysSection />);
-    await screen.findByRole('button', { name: /Mostrar chave ElevenLabs API Key/i });
-    const results = await axe(container, {
-      rules: { 'heading-order': { enabled: false }, label: { enabled: false } },
+    const botaoOlho = await screen.findByRole('button', {
+      name: /Mostrar chave ElevenLabs API Key/i,
     });
+    const results = await axe(botaoOlho);
     expect(results).toHaveNoViolations();
   });
 });
