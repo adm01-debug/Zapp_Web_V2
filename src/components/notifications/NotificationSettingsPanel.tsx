@@ -65,7 +65,7 @@ export function NotificationSettingsPanel() {
               <Label className="text-sm font-medium">Testar som</Label>
               <div className="flex gap-3 items-center">
                 <Button variant="outline" size="icon" onClick={handleTestSound} disabled={isTestingSound}
-                  className={cn("transition-all", isTestingSound && "bg-primary/10")}>
+                  className={cn("transition-all", isTestingSound && "bg-primary/10")} aria-label="Testar som">
                   <Play className={cn("w-4 h-4", isTestingSound && "animate-pulse")} />
                 </Button>
                 <span className="text-xs text-muted-foreground">
