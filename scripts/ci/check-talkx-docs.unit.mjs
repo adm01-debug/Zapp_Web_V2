@@ -52,6 +52,7 @@ export const DOCS_CORRENTES = [
   'PARIDADE.md',
   'CHANGELOG_TALKX.md',
   'CONVERSOES.md',
+  'ESTADOS.md',
   'v4/README.md',
   'v4/STATUS.md',
   'v4/DECISOES.md',
