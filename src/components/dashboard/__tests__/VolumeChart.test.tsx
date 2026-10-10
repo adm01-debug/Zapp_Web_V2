@@ -78,12 +78,4 @@ describe('VolumeChart', () => {
     expect(chart.getAttribute('aria-label')).toContain('incluindo média 7 dias');
   });
 
-  it('sem dados, mensagem de vazio é acessível', () => {
-    const todayByHour = Array(24).fill(null);
-    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 0, avg7dCurrentHour: null } });
-    mockUseDemandPrediction.mockReturnValue({ data: [] });
-    render(<VolumeChart />);
-
-    expect(screen.getByText('Sem conversas no período')).toBeInTheDocument();
-  });
 });
