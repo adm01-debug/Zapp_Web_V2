@@ -48,6 +48,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // N-116 / X102: saude do segmento (risco de entrega, sinais, composicao, sugestoes).
+  // Prova em Postgres 17 descartavel com papel real (SET ROLE authenticated + claims).
+  // Registro do passo de CI fica para o dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/talkx-segment-health.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',

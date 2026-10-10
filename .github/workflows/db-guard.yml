@@ -600,6 +600,12 @@ jobs:
           TALKX_AUDIENCE_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-rpc.test.sh
 
+      # N-116 / X102: saude do segmento (risco de entrega, sinais, composicao, sugestoes).
+      - name: Simular a RPC de saude do segmento do Talk X (X102)
+        env:
+          TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-health.test.sh
+
       # X017: geracao de destinatarios no servidor a partir do rascunho salvo
       # (snapshot_talkx_campaign_audience) — colunas respect_suppression/
       # audience_snapshot_at, criterio de elegivel no replace e recusa de
