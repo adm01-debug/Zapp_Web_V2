@@ -119,7 +119,7 @@ export function CampaignABTesting({ campaignId }: CampaignABTestingProps) {
                           <Trophy className="w-3 h-3 mr-1" /> Vencedor
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => deleteVariant(v.id)}>
+                      <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => deleteVariant(v.id)} aria-label={`Excluir variante ${v.variant_name}`}>
                         <Trash2 className="w-3 h-3 text-destructive" />
                       </Button>
                     </div>
