@@ -1,3 +1,4 @@
+-- Rollback: drop function, trigger, indexes e column adicionados por esta migration.
 --   drop function if exists public.talkx_monitor_panel(uuid, integer, text, date, uuid);
 --   drop trigger if exists trg_talkx_recipients_failed_at on public.talkx_recipients;
 --   drop function if exists public.trg_talkx_recipients_failed_at();
