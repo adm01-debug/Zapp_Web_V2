@@ -73,11 +73,11 @@ JOBS="$("${PSQL[@]}" -Atc "select count(*) || ',' || min(schedule) from cron.job
 echo "[OK] GREEN: 1 job diario no pg_cron (stub), sem duplicar ao reaplicar"
 
 for R in authenticated anon; do
-  if "${PSQL[@]}" -c "set role $R; select public.expire_user_sessions()" >/dev/null 2>&1; then
+  if "${PSQL[@]}" -Atc "BEGIN; SET LOCAL ROLE $R; SET LOCAL request.jwt.claims TO '{\"sub\":\"00000000-0000-4000-8000-000000000000\",\"role\":\"$R\"}'; SELECT public.expire_user_sessions(); ROLLBACK;" >/dev/null 2>&1; then
     echo "[FALHOU] $R executou expire_user_sessions"; exit 1
   fi
 done
-echo "[OK] privilegio: authenticated/anon negados"
+echo "[OK] privilegio: authenticated/anon negados (SET LOCAL ROLE em transacao, com request.jwt.claims)"
 
 ROLLBACK="$(sed -n 's/^-- Rollback: //p' "$MIGRATION" | head -1)"
 "${PSQL[@]}" -c "$ROLLBACK"

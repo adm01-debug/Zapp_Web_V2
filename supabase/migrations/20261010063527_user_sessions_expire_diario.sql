@@ -1,7 +1,6 @@
 -- user_sessions_expire_diario
--- Rollback: remove a funcao expire_user_sessions e o job do pg_cron.
---   select cron.unschedule('user-sessions-expire-diario');
---   drop function if exists public.expire_user_sessions();
+-- Rollback: DO $$ BEGIN IF to_regclass('cron.job') IS NOT NULL THEN PERFORM cron.unschedule('user-sessions-expire-diario'); END IF; END $$; DROP FUNCTION IF EXISTS public.expire_user_sessions();
+-- Remove a funcao expire_user_sessions e o job do pg_cron (tolerando banco sem pg_cron).
 
 -- N-008: sessoes com expires_at vencido continuavam is_active=true e confundiam quem esta online.
 -- Rotina diaria encerra as vencidas (is_active=false, ended_at preenchido). So service_role/cron executam.
