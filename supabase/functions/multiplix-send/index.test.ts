@@ -2970,3 +2970,116 @@ Deno.test("R2-API-013: falha da RPC de heartbeat e tratada (nao derruba o envio 
     globalThis.removeEventListener("unhandledrejection", onRejeicao);
   }
 });
+
+// ------------------------------------------------------------------- F43 (correlação)
+//
+// Prova da metade "correlation_id por request, logger sem conteudo" do F43. O
+// teste chama o HANDLER real DUAS vezes e zera o buffer do console a cada
+// request: dentro do mesmo request todas as linhas estruturadas têm o MESMO id;
+// entre requests, o id muda. Nada aqui depende de telefone/texto coincidir por
+// acaso: o corpo do log é inspecionado recursivamente e as linhas não JSON
+// também são varridas como texto cru.
+const F43_CHAVES_PROIBIDAS = new Set([
+  "phone", "contact_phone", "personalized_message", "text", "message", "nome", "name", "telefone",
+]);
+
+function f43JsonDaLinha(linha: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(linha) as unknown;
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function f43CaminhosComChaveProibida(valor: unknown, caminho = "$", achados: string[] = []): string[] {
+  if (Array.isArray(valor)) {
+    valor.forEach((item, index) => f43CaminhosComChaveProibida(item, `${caminho}[${index}]`, achados));
+    return achados;
+  }
+  if (valor !== null && typeof valor === "object") {
+    for (const [chave, filho] of Object.entries(valor as Record<string, unknown>)) {
+      const proximo = `${caminho}.${chave}`;
+      if (F43_CHAVES_PROIBIDAS.has(chave.toLowerCase())) achados.push(proximo);
+      f43CaminhosComChaveProibida(filho, proximo, achados);
+    }
+  }
+  return achados;
+}
+
+function f43CorrelationIdUnicoDoRequest(linhas: string[], rotulo: string): string {
+  const estruturadas = linhas.map(f43JsonDaLinha).filter((linha): linha is Record<string, unknown> => linha !== null);
+  const ids = estruturadas.map((linha) => linha.correlationId);
+  const idsValidos = ids.filter((id): id is string => typeof id === "string" && id.length > 0);
+
+  assert(idsValidos.length >= 1, `${rotulo}: esperava ao menos 1 linha com correlationId, veio ${idsValidos.length}`);
+  assert(
+    idsValidos.length === estruturadas.length,
+    `${rotulo}: toda linha estruturada precisa carregar correlationId: ${JSON.stringify(linhas)}`,
+  );
+  const unicos = new Set(idsValidos);
+  assert(unicos.size === 1, `${rotulo}: correlationId variou dentro do mesmo request: ${JSON.stringify(idsValidos)}`);
+  return idsValidos[0];
+}
+
+function f43AssertSemConteudo(linhas: string[], valoresProibidos: string[], rotulo: string): void {
+  for (const linha of linhas) {
+    for (const valor of valoresProibidos) {
+      assert(!linha.includes(valor), `${rotulo}: log carregou valor proibido '${valor}': ${linha}`);
+    }
+    const evento = f43JsonDaLinha(linha);
+    if (evento === null) continue;
+    const caminhos = f43CaminhosComChaveProibida(evento);
+    assert(caminhos.length === 0, `${rotulo}: log carregou chave proibida em ${caminhos.join(", ")}: ${linha}`);
+  }
+}
+
+async function f43CapturarLogsDoRequest(run: () => Promise<void>): Promise<string[]> {
+  const linhas: string[] = [];
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  const capturar = (...args: unknown[]) => {
+    linhas.push(args.map((arg) => String(arg)).join(" "));
+  };
+  console.log = capturar as typeof console.log;
+  console.warn = capturar as typeof console.warn;
+  console.error = capturar as typeof console.error;
+  try {
+    await run();
+  } finally {
+    console.log = originalLog;
+    console.warn = originalWarn;
+    console.error = originalError;
+  }
+  return linhas;
+}
+
+Deno.test("F43: correlationId é propagado por request e o log não carrega conteúdo", async () => {
+  const telefoneMock = "5511987654321";
+  const textoMock = "Texto sigiloso {{empresa}}";
+  const opts = (): MockOpts => ({
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: textoMock, total_recipients: 1 }),
+    recipients: [recipientRow(1, telefoneMock, { company_name_snapshot: "Empresa Sigilosa" })],
+    suppressedPhones: [telefoneMock],
+    // Força duas linhas estruturadas no mesmo request (warn de cota + done) para
+    // provar propagação, não só unicidade entre requests.
+    dailyRemaining: Number.NaN,
+  });
+
+  const logsPorRequest = [
+    await f43CapturarLogsDoRequest(async () => { await runWithProviderBlocked(opts()); }),
+    await f43CapturarLogsDoRequest(async () => { await runWithProviderBlocked(opts()); }),
+  ];
+
+  const idRequest1 = f43CorrelationIdUnicoDoRequest(logsPorRequest[0], "request 1");
+  const idRequest2 = f43CorrelationIdUnicoDoRequest(logsPorRequest[1], "request 2");
+  assert(idRequest1 !== idRequest2, `correlationId repetido entre requests: ${idRequest1}`);
+
+  for (const [index, linhas] of logsPorRequest.entries()) {
+    f43AssertSemConteudo(linhas, [telefoneMock, textoMock, "Empresa Sigilosa"], `request ${index + 1}`);
+  }
+});
