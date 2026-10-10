@@ -975,3 +975,17 @@ jobs:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+
+      # N-126b (fonte X083, parte 2 de 2 · a migration N-126a veio no cartao anterior): as
+      # colunas channel/icon/interactive/media_*/archived_at de public.talkx_templates
+      # existiam sem nenhum teste. O contrato aplica os ARQUIVOS de migration reais num
+      # PostgreSQL 17 descartavel — inclusive 20260908120000, que CRIA a tabela (nada de
+      # CREATE TABLE a mao) — e prova tipo/default/CHECK das 8 colunas, que a migration e
+      # so aditiva (media_type intacta) e que a leitura do papel authenticated nao muda.
+      # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role — as
+      # roles sao globais ao cluster, entao o docker-shim do E47 colidiria com as do shim.
+      - name: Provar as colunas novas de talkx_templates (N-126b)
+        env:
+          TALKX_TEMPLATE_COLUMNS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-columns.test.sh
