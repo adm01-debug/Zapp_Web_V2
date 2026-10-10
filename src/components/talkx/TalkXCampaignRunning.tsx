@@ -630,14 +630,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
     queryKey: ['talkx-running-history', selectedId],
     queryFn: async () => {
       if (!selectedId) return [];
-      // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
-      // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
+      // Ordem decrescente + janela de tempo (X144): recorta pelos últimos
+      // 20 min + 1 min de folga de relógio, sem teto de linhas.
+      const desde = new Date(Date.now() - 21 * 60_000).toISOString();
       const { data, error } = await fromTable('talkx_recipients')
         .select('sent_at, delivered_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
-        .order('sent_at', { ascending: false })
-        .limit(2000);
+        .gte('sent_at', desde)
+        .order('sent_at', { ascending: false });
       // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
       if (error) throw error;
       if (!data?.length) return [];
