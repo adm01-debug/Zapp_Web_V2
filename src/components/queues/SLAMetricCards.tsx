@@ -47,7 +47,7 @@ export function SLAMetricCards({ data, periodLabel, sparkOverall, sparkFR, spark
               </div>
             </div>
             <div className="flex items-center gap-3 mt-3">
-              <Progress value={data.overallRate} className="h-2 flex-1" />
+              <Progress value={data.overallRate} className="h-2 flex-1" aria-label="Taxa de SLA geral" />
               {sparkOverall.length >= 2 && <Sparkline data={sparkOverall} width={64} height={20} color="hsl(var(--primary))" />}
             </div>
           </CardContent>

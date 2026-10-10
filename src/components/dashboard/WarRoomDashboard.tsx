@@ -73,9 +73,9 @@ export function WarRoomDashboard({
           <span className="text-sm text-muted-foreground">Atualizado: {lastUpdate.toLocaleTimeString()}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Som de alertas</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => setAutoRefresh(!autoRefresh)}><RefreshCw className={cn("w-4 h-4", autoRefresh && "animate-spin-slow")} /></Button></TooltipTrigger><TooltipContent>Auto-atualização</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={toggleFullscreen}>{isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Tela cheia</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={settings.soundEnabled ? "Desativar som de alertas" : "Ativar som de alertas"} onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Som de alertas</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={autoRefresh ? "Desativar auto-atualização" : "Ativar auto-atualização"} onClick={() => setAutoRefresh(!autoRefresh)}><RefreshCw className={cn("w-4 h-4", autoRefresh && "motion-safe:animate-spin-slow")} /></Button></TooltipTrigger><TooltipContent>Auto-atualização</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={isFullscreen ? "Sair de tela cheia" : "Entrar em tela cheia"} onClick={toggleFullscreen}>{isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent>Tela cheia</TooltipContent></Tooltip>
         </div>
       </div>
 

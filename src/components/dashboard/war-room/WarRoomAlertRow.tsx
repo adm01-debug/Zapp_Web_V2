@@ -29,7 +29,7 @@ export function WarRoomAlertRow({ alert, onDismiss }: AlertRowProps) {
         <div className="text-xs opacity-80">{alert.message}</div>
         <div className="text-xs opacity-60 mt-1">{alert.timestamp.toLocaleTimeString()}</div>
       </div>
-      <Button variant="ghost" size="icon" className="shrink-0 h-6 w-6" onClick={onDismiss}><XCircle className="w-4 h-4" /></Button>
+      <Button variant="ghost" size="icon" className="shrink-0 h-6 w-6" onClick={onDismiss} aria-label="Dispensar alerta"><XCircle className="w-4 h-4" /></Button>
     </motion.div>
   );
 }

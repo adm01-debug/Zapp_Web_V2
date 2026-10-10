@@ -79,7 +79,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                 </div>
 
                 <div className="hidden md:block w-32">
-                  <Progress value={agent.overallRate} className="h-2" />
+                  <Progress value={agent.overallRate} className="h-2" aria-label={`Cumprimento do SLA do ${agent.agentName}`} />
                 </div>
               </motion.div>
             ))}

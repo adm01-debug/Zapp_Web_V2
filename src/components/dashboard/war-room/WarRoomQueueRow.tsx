@@ -36,7 +36,7 @@ export function WarRoomQueueRow({ queue, onClick }: QueueRowProps) {
         <div><div className="text-muted-foreground text-xs">Aguardando</div><div className="font-semibold">{queue.waiting}</div></div>
         <div><div className="text-muted-foreground text-xs">Em Atendimento</div><div className="font-semibold">{queue.inProgress}</div></div>
         <div><div className="text-muted-foreground text-xs">Tempo Médio</div><div className="font-semibold">{queue.avgWaitTime === null ? '—' : `${queue.avgWaitTime.toFixed(1)}min`}</div></div>
-        <div><div className="text-muted-foreground text-xs mb-1">Utilização</div><Progress value={utilizationPercent} className="h-2" /></div>
+        <div><div className="text-muted-foreground text-xs mb-1">Utilização</div><Progress value={utilizationPercent} className="h-2" aria-label={`Utilização da fila ${queue.name}`} /></div>
       </div>
     </motion.div>
   );

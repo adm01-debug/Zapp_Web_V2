@@ -177,7 +177,7 @@ export const SLADashboard = () => {
                   {data.overall.firstResponse.rate.toFixed(1)}%
                 </span>
               </div>
-              <Progress value={data.overall.firstResponse.rate} className="h-3" />
+              <Progress value={data.overall.firstResponse.rate} className="h-3" aria-label="Cumprimento do SLA de primeira resposta" />
               <div className="flex justify-between mt-1 text-xs text-muted-foreground">
                 <span>{data.overall.firstResponse.onTime} no prazo</span>
                 <span>{data.overall.firstResponse.breached} atrasados</span>
