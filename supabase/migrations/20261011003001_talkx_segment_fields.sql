@@ -1,8 +1,10 @@
 -- talkx_segment_fields: lista oficial de campos e operadores de segmento do
 -- Talk X + funcao talkx_compile_segment_rules (compila regras em predicado SQL).
 --
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_compile_segment_rules(jsonb, integer);
---   e DROP TABLE IF EXISTS public.talkx_segment_fields; (nesta ordem)
+-- Rollback: dropa a funcao nova e, depois, a tabela nova (o SQL executavel esta logo abaixo).
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_compile_segment_rules(jsonb, integer);
+--   drop table if exists public.talkx_segment_fields;
 --
 -- N-111. Esta tabela passa a ser a unica lista de campos/operadores permitidos.
 -- Ela substitui a whitelist hardcoded no front
