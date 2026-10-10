@@ -4,15 +4,15 @@ import { auditFonts, extractFontFamiliesFromCSS, extractFontFamiliesFromJS } fro
 describe("audit-fontes", () => {
   describe("extractFontFamiliesFromCSS", () => {
     it("detecta fonte fora do padrao (deviation)", () => {
-      const html = '<div style="font-family: Plus Jakarta Sans, sans-serif">texto</div>';
+      const html = '<div style="font-family: segoe ui, sans-serif">texto</div>';
       const findings = extractFontFamiliesFromCSS(html, "test.html");
       expect(findings.length).toBe(1);
       expect(findings[0].status).toBe("deviation");
-      expect(findings[0].deviations).toContain("plus jakarta sans");
+      expect(findings[0].deviations).toContain("segoe ui");
     });
 
     it("detecta fonte dentro do padrao (ok)", () => {
-      const html = '<div style="font-family: system-ui, -apple-system, sans-serif">texto</div>';
+      const html = '<div style="font-family: system-ui, sans-serif">texto</div>';
       const findings = extractFontFamiliesFromCSS(html, "test.html");
       expect(findings.length).toBe(1);
       expect(findings[0].status).toBe("ok");
