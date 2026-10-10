@@ -8,16 +8,24 @@ import { axe } from 'vitest-axe';
  * O componente é REAL (o `AudioPlayButton` e o resolver de URL assinada são os de produção);
  * o que se troca é a fronteira de plataforma: o cliente do Supabase (a guarda de rede do
  * `src/test/setup.ts` proíbe falar com o banco real) e `Audio`, que no jsdom não decodifica
- * nada. `attachMediaVolume` (WebAudio) também é mockado — ele TEM de ser chamado, e isso é
- * verificado à parte pelo contrato de volume de mídia.
+ * nada.
+ *
+ * Q08 — `attachMediaVolume` é um ESPIÃO cuja implementação padrão é a REAL (antes era um
+ * no-op mockado: o mock "já trazia a resposta" e nada media o volume do áudio do cartão).
+ * Agora quem responde é `element.volume`/`element.muted` de verdade, e o espião continua
+ * provando QUEM foi ligado e que o desligamento roda no unmount.
  */
 const { createSignedUrl } = vi.hoisted(() => ({ createSignedUrl: vi.fn() }));
-const { attachMediaVolume } = vi.hoisted(() => ({ attachMediaVolume: vi.fn(() => () => {}) }));
+const { attachMediaVolume } = vi.hoisted(() => ({ attachMediaVolume: vi.fn() }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { storage: { from: () => ({ createSignedUrl }) } },
 }));
-vi.mock('@/lib/mediaVolumeElement', () => ({ attachMediaVolume }));
+vi.mock('@/lib/mediaVolumeElement', async (importOriginal) => {
+  const moduloReal = await importOriginal<typeof import('@/lib/mediaVolumeElement')>();
+  attachMediaVolume.mockImplementation(moduloReal.attachMediaVolume);
+  return { ...moduloReal, attachMediaVolume };
+});
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 import { AudioPlayButton } from '../AudioPlayButton';
@@ -25,6 +33,7 @@ import { FileCard } from '../FileCard';
 import { FilesListView } from '../FilesListView';
 import { FilesTableView } from '../FilesTableView';
 import { getPlayingAudioId } from '@/hooks/chat/useExclusiveAudio';
+import { setMuted, setVolume } from '@/lib/mediaVolumeStore';
 import { SUPABASE_URL } from '@/config/supabase';
 import { toast } from 'sonner';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -44,6 +53,11 @@ class FakeAudio {
   currentTime = 0;
   duration = 0;
   paused = true;
+  /** Q08 — é AQUI que o volume global tem de aparecer (caminho nativo do `element.volume`). */
+  volume = 1;
+  muted = false;
+  /** Listeners de DOM: o `attachMediaVolume` real liga `loadedmetadata` e `play` no elemento. */
+  listeners = new Map<string, Set<EventListener>>();
   onloadedmetadata: (() => void) | null = null;
   ontimeupdate: (() => void) | null = null;
   onplay: (() => void) | null = null;
@@ -59,6 +73,8 @@ class FakeAudio {
     if (FakeAudio.playQueue.shift() === 'reject') return Promise.reject(new Error('expirada'));
     this.paused = false;
     this.onplay?.();
+    // Evento de DOM de verdade: é nele que o controle de volume reaquece e reaplica.
+    this.emit('play');
     return Promise.resolve();
   });
 
@@ -68,9 +84,24 @@ class FakeAudio {
     this.onpause?.();
   });
 
+  addEventListener(type: string, callback: EventListener) {
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type)!.add(callback);
+  }
+
+  removeEventListener(type: string, callback: EventListener) {
+    this.listeners.get(type)?.delete(callback);
+  }
+
+  /** Reemite um evento de DOM para os listeners que o controle de volume registrou. */
+  emit(type: string) {
+    this.listeners.get(type)?.forEach((callback) => callback(new Event(type)));
+  }
+
   loadMetadata(seconds: number) {
     this.duration = seconds;
     this.onloadedmetadata?.();
+    this.emit('loadedmetadata');
   }
 
   seek(seconds: number) {
@@ -462,5 +493,64 @@ describe('vistas da aba Arquivos (A03/A04)', () => {
     expect(props.onPreview).not.toHaveBeenCalled();
     expect(within(screen.getByTestId('files-item-m1')).queryByRole('button', { name: /^Tocar áudio/ }))
       .not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Q08 — o player do cartão (Grid, Lista e Tabela renderizam este mesmo botão) tem de
+ * obedecer ao controle ÚNICO de volume das mídias de conversa, ao vivo.
+ *
+ * O volume global começa em 40 (ganho 0.16, ≠ 1) DE PROPÓSITO: o duplo de `Audio` nasce
+ * com `volume = 1`, então só um valor diferente do padrão prova que a ligação rodou —
+ * um teste que montasse no estado final passaria sem o `attachMediaVolume`.
+ */
+describe('Q08 — o áudio do cartão obedece o volume das mídias', () => {
+  beforeEach(() => {
+    act(() => {
+      setVolume(40);
+      setMuted(false);
+    });
+  });
+
+  it('nasce no volume global e o acompanha ENQUANTO toca (mudar o volume muda element.volume)', async () => {
+    render(<AudioPlayButton item={audioItem()} />);
+    await tocar();
+    const audio = FakeAudio.created[0];
+
+    // Já no primeiro play: 40 no controle → 0.16 no elemento (curva perceptual de `toGain`).
+    expect(audio.volume).toBeCloseTo(0.16, 5);
+
+    // Melhor caso: o teto do controle.
+    act(() => setVolume(100));
+    expect(audio.volume).toBeCloseTo(1, 5);
+
+    // Pior caso: silêncio de verdade, com o som em reprodução.
+    act(() => setVolume(0));
+    expect(audio.volume).toBeCloseTo(0, 5);
+
+    // Meio da escala.
+    act(() => setVolume(50));
+    expect(audio.volume).toBeCloseTo(0.25, 5);
+
+    // Tudo no MESMO elemento: o ajuste vem do controle global, sem recriar o player.
+    expect(FakeAudio.created).toHaveLength(1);
+    expect(audio.paused).toBe(false);
+    expect(getPlayingAudioId()).toBe('a1');
+  });
+
+  it('o mudo global silencia o áudio do cartão e o desmudo devolve o volume, sem zerar', async () => {
+    render(<AudioPlayButton item={audioItem()} />);
+    await tocar();
+    const audio = FakeAudio.created[0];
+    expect(audio.muted).toBe(false);
+
+    act(() => setMuted(true));
+    expect(audio.muted).toBe(true);
+    // D4: o mudo é estado próprio — desmutar devolve o volume de antes, não zera.
+    expect(audio.volume).toBeCloseTo(0.16, 5);
+
+    act(() => setMuted(false));
+    expect(audio.muted).toBe(false);
+    expect(audio.volume).toBeCloseTo(0.16, 5);
   });
 });
