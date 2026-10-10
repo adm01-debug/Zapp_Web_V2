@@ -325,4 +325,106 @@ as_user "$OWNER_UID" "DELETE FROM public.talkx_campaigns WHERE id = '$CAMPAIGN'"
 assert_eq 'CASCADE sobrevive ao REVOKE: eventos do rascunho apagado somem (0 linhas, visto por superuser)' '0' \
   "$(psql_query "SELECT count(*) FROM public.talkx_campaign_events WHERE campaign_id = '$CAMPAIGN'")"
 
+# ═══════════════════════════════════════════════════════════════════════
+# N-114 — talkx_campaign_timeline_page: linha do tempo paginada (keyset)
+# ═══════════════════════════════════════════════════════════════════════
+migration_timeline="$repo_root/supabase/migrations/20261011003004_talkx_campaign_timeline_page.sql"
+TL_CAMPAIGN="dddddddd-0000-4000-8000-000000000001"
+STRANGER_UID="aaaaaaaa-0000-4000-8000-000000000009"
+STRANGER_PROFILE="bbbbbbbb-0000-4000-8000-000000000009"
+
+# ── BLOCO A (defeito): sem a migration a função não existe ───────────────
+assert_fails_like 'N-114 BLOCO A: função ainda não existe' 'does not exist' \
+  "SELECT * FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 20)"
+
+# ── shim de auth.role (mesmo dos demais testes de autorização) ───────────
+psql_script >/dev/null <<SQL
+CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE
+  AS \$\$ SELECT coalesce(
+       nullif(current_setting('request.jwt.claim.role', true), ''),
+       nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'
+     )::text \$\$;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+INSERT INTO public.profiles(id, user_id, name, role) VALUES
+  ('$STRANGER_PROFILE', '$STRANGER_UID', 'Estranho', 'agent');
+INSERT INTO public.talkx_campaigns(id, created_by) VALUES ('$TL_CAMPAIGN', '$OWNER_PROFILE');
+INSERT INTO public.talkx_campaign_events(campaign_id, event_type, message, created_at) VALUES
+  ('$TL_CAMPAIGN','created','tl-1', now() - interval '50 minutes'),
+  ('$TL_CAMPAIGN','started','tl-2', now() - interval '40 minutes'),
+  ('$TL_CAMPAIGN','paused','tl-3', now() - interval '30 minutes'),
+  ('$TL_CAMPAIGN','resumed','tl-4', now() - interval '20 minutes'),
+  ('$TL_CAMPAIGN','note','tl-5', now() - interval '10 minutes');
+SQL
+
+as_anon() {
+  docker exec "$pg_name" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET LOCAL role anon; $1"
+}
+as_service() {
+  docker exec "$pg_name" psql -X -Atq -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET LOCAL role service_role; SET LOCAL request.jwt.claim.role='service_role'; $1"
+}
+
+# ── BLOCO B: aplica a migration REAL ─────────────────────────────────────
+psql_script < "$migration_timeline" >/dev/null
+pass 'N-114 migration aplicada'
+
+# ── dono lê a própria campanha, página 1 (ordem determinística) ──────────
+assert_eq 'N-114 dono: total/linhas/cursor na 1a pagina' '5/2/cursor' \
+  "$(as_user "$OWNER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || CASE WHEN next_cursor IS NULL THEN 'null' ELSE 'cursor' END FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 2)")"
+assert_eq 'N-114 dono: linha mais nova primeiro' 'tl-5' \
+  "$(as_user "$OWNER_UID" "SELECT rows->0->>'message' FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 2)")"
+assert_eq 'N-114 contrato das chaves (sem actor_name, com entity_*)' 'actor_id,campaign_id,created_at,entity_id,entity_type,event_type,id,message' \
+  "$(as_user "$OWNER_UID" "SELECT (SELECT string_agg(k, ',' ORDER BY k) FROM jsonb_object_keys(rows->0) k) FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 1)")"
+
+# ── keyset: página 2 e 3 pelo cursor ──────────────────────────────────────
+TL_CUR="$(as_user "$OWNER_UID" "SELECT next_cursor FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 2)")"
+assert_eq 'N-114 dono: 2a pagina a partir do cursor' 'tl-3/5' \
+  "$(as_user "$OWNER_UID" "SELECT (rows->0->>'message') || '/' || total::text FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', '$TL_CUR', 2)")"
+TL_CUR2="$(as_user "$OWNER_UID" "SELECT next_cursor FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', '$TL_CUR', 2)")"
+assert_eq 'N-114 dono: 3a pagina tem 1 linha e acaba o cursor' 'tl-1/1-null' \
+  "$(as_user "$OWNER_UID" "SELECT (rows->0->>'message') || '/' || jsonb_array_length(rows)::text || '-' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', '$TL_CUR2', 2)")"
+
+# ── admin lê campanha de outro dono; service_role lê ─────────────────────
+assert_eq 'N-114 admin: lê campanha de outro dono' '5/5/null' \
+  "$(as_user "$ADMIN_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 20)")"
+assert_eq 'N-114 service_role: lê tudo' '5/2/cursor' \
+  "$(as_service "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || CASE WHEN next_cursor IS NULL THEN 'null' ELSE 'cursor' END FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 2)")"
+
+# ── sem vínculo e anon: linha vazia, nunca 42501 (mesma forma p/ id novo) ─
+assert_eq 'N-114 estranho: vazio sem erro' '0/0/null' \
+  "$(as_user "$STRANGER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 20)")"
+assert_eq 'N-114 anon: vazio sem erro (nunca 42501)' '0/0/null' \
+  "$(as_anon "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 20)")"
+assert_eq 'N-114 sem oráculo: campanha inexistente tem a mesma forma' '0/0/null' \
+  "$(as_user "$ADMIN_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page(gen_random_uuid(), NULL, 20)")"
+
+# ── entradas inválidas: cursor ruim volta à 1a; limite é travado 1..100 ───
+assert_eq 'N-114 cursor inválido: volta à 1a pagina' '5/2/cursor' \
+  "$(as_user "$OWNER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || CASE WHEN next_cursor IS NULL THEN 'null' ELSE 'cursor' END FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', 'xxx', 2)")"
+assert_eq 'N-114 limite 0: trava no mínimo 1' '5/1/cursor' \
+  "$(as_user "$OWNER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || CASE WHEN next_cursor IS NULL THEN 'null' ELSE 'cursor' END FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 0)")"
+assert_eq 'N-114 limite nulo: usa o padrão 20' '5/5/null' \
+  "$(as_user "$OWNER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, NULL)")"
+assert_eq 'N-114 limite 999: trava no teto 100' '5/5/null' \
+  "$(as_user "$OWNER_UID" "SELECT total::text || '/' || jsonb_array_length(rows)::text || '/' || COALESCE(next_cursor,'null') FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 999)")"
+
+# ── GRANTs: só quem precisa executa ───────────────────────────────────────
+assert_eq 'N-114 anon tem EXECUTE (entra e recebe vazio, sem dado)' 'true' \
+  "$(psql_query "SELECT has_function_privilege('anon', 'public.talkx_campaign_timeline_page(uuid, text, integer)', 'EXECUTE')::text")"
+assert_eq 'N-114 authenticated tem EXECUTE' 'true' \
+  "$(psql_query "SELECT has_function_privilege('authenticated', 'public.talkx_campaign_timeline_page(uuid, text, integer)', 'EXECUTE')::text")"
+assert_eq 'N-114 service_role tem EXECUTE' 'true' \
+  "$(psql_query "SELECT has_function_privilege('service_role', 'public.talkx_campaign_timeline_page(uuid, text, integer)', 'EXECUTE')::text")"
+
+# ── Rollback da migration roda e devolve o estado anterior ────────────────
+TL_ROLLBACK="$(sed -n 's/^-- Rollback: //p' "$migration_timeline")"
+[[ -n "$TL_ROLLBACK" ]] || fail 'N-114: linha -- Rollback: ausente na migration'
+psql_query "$TL_ROLLBACK" >/dev/null || fail 'N-114: rollback não executou'
+pass 'N-114 rollback executa'
+assert_fails_like 'N-114 rollback remove a função' 'does not exist' \
+  "SELECT * FROM public.talkx_campaign_timeline_page('$TL_CAMPAIGN', NULL, 20)"
+psql_script < "$migration_timeline" >/dev/null
+pass 'N-114 migration reaplicada após o rollback'
+
 printf '[OK] Talk X V11/V11.1/X021: contrato de eventos aceita os 27 tipos (19 do V11 + 8 do X021), alvo XOR obrigatorio, formato do entity_type guardado e trilha append-only com cascade preservado (%s cenarios).\n' "$passed"
