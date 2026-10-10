@@ -37,6 +37,7 @@ DECLARE
   v_content_count integer;
   v_weight_sum integer;
   v_recipient_count bigint;
+  v_delete_count integer := 0;
   v_variant jsonb;
   v_label text;
   v_id uuid;
@@ -184,9 +185,13 @@ BEGIN
   -- Tudo validado: aplicar as mudanças
 
   -- Remover variantes que não estão no input (já verificado que não têm recipients)
-  IF v_existing_variant_ids IS NOT NULL AND array_length(v_existing_variant_ids, 1) <= 3 THEN
+  IF v_existing_variant_ids IS NOT NULL THEN
     FOREACH v_id_to_remove IN ARRAY v_existing_variant_ids
     LOOP
+      v_delete_count := v_delete_count + 1;
+      IF v_delete_count > 3 THEN
+        RAISE EXCEPTION 'too_many_variants_to_remove';
+      END IF;
       IF v_input_ids IS NULL OR NOT (v_id_to_remove = ANY(v_input_ids)) THEN
         DELETE FROM public.talkx_template_variants WHERE id = v_id_to_remove;
       END IF;
