@@ -152,7 +152,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5"/>
+        <Progress value={progress} className="h-3 mb-1.5" aria-label="Progresso do envio"/>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
@@ -227,7 +227,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
             <p className="text-sm font-bold text-foreground">Destinatários</p>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
+              <SelectTrigger aria-label="Filtrar status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos"/></SelectTrigger>
               <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v,m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>

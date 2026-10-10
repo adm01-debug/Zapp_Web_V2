@@ -308,9 +308,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             <p className="text-2xs text-muted-foreground">Data e horário no fuso {localTz}.</p>
 
             <div>
-              <Label className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
+              <Label htmlFor="talkx-timezone" className="text-2xs text-muted-foreground mb-1.5 block">Fuso horário</Label>
               <Select value={localTz} onValueChange={handleTimezoneChange}>
-                <SelectTrigger className="h-10 bg-input/40 border-border/70 text-[13px]">
+                <SelectTrigger id="talkx-timezone" className="h-10 bg-input/40 border-border/70 text-[13px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
