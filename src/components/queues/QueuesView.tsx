@@ -76,7 +76,7 @@ export function QueuesView() {
 
       {alerts.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2"><AlertTriangle className="w-4 h-4" />Alertas Ativos ({alerts.length})</h2>
+          <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2"><AlertTriangle className="w-4 h-4" />Alertas Ativos ({alerts.length})</h3>
           <QueueAlertsDisplay alerts={alerts} onDismiss={(a) => setDismissedAlerts(prev => new Set([...prev, `${a.queueId}-${a.type}`]))} onNavigate={(queueId) => navigate(`/queue/${queueId}`)} />
         </div>
       )}

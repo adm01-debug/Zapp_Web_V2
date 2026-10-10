@@ -125,4 +125,22 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     expect(screen.getAllByText('Aguardando')).toHaveLength(2);
     expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(2);
   });
+
+  it('o titulo Alertas Ativos usa h3 (mesmo nivel dos cartoes de fila) e o botao de dispensar tem aria-label', async () => {
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByText('Alertas Ativos (2)')).toBeInTheDocument();
+    });
+
+    // O titulo 'Alertas Ativos' deve ser h3 (nao h2) para manter a ordem de heading
+    // consistente com os CardTitle dos QueueCards que tambem sao h3.
+    const alertasHeading = screen.getByText('Alertas Ativos (2)').closest('h3');
+    expect(alertasHeading).toBeTruthy();
+    expect(alertasHeading?.tagName).toBe('H3');
+
+    // O botao de dispensar alerta deve ter um aria-label acessivel.
+    const dismissButtons = screen.getAllByRole('button', { name: /dispensar alerta/i });
+    expect(dismissButtons.length).toBeGreaterThan(0);
+  });
 });
