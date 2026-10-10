@@ -70,6 +70,15 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
+  // V27 — A/B testing: habilita teste de variante, métrica de sucesso,
+  // amostra mínima e registro do vencedor (colunas adicionadas pela
+  // migration 20261010_talkx_campaigns_ab_testing).
+  ab_enabled?: boolean;
+  ab_metric?: 'reply_rate' | 'click_rate' | 'delivery_rate' | null;
+  ab_min_sample?: number | null;
+  ab_winner_variant_id?: string | null;
+  ab_winner_decided_at?: string | null;
+  ab_winner_decided_by?: string | null;
 }
 
 export interface TalkXRecipient {
@@ -224,6 +233,28 @@ export function useTalkX() {
         .order('created_at');
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
+    },
+    enabled: !!selectedCampaignId,
+  });
+
+  // V27 — AB testing: per-variant stats for the winner badge and variant bars.
+  const abStatsQuery = useQuery({
+    queryKey: ['talkx-ab-stats', selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return null;
+      const { data, error } = await supabase.rpc('talkx_determine_winner', {
+        p_campaign_id: selectedCampaignId,
+        p_min_sample: 0,
+      });
+      if (error) throw error;
+      // Also fetch per-variant sample sizes and metric values directly.
+      const { data: recipients, error: recErr } = await supabase
+        .from('talkx_recipients')
+        .select('variant_id, status, replied_at, clicked_at, delivered_at')
+        .eq('campaign_id', selectedCampaignId)
+        .not('variant_id', 'is', null);
+      if (recErr) throw recErr;
+      return { winner: data, recipients: (recipients ?? []) as unknown[] };
     },
     enabled: !!selectedCampaignId,
   });
@@ -481,6 +512,8 @@ export function useTalkX() {
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
+    abStats: abStatsQuery.data,
+    abStatsLoading: abStatsQuery.isLoading,
     selectedCampaignId,
     setSelectedCampaignId,
     createCampaign,
