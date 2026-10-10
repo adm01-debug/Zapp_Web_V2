@@ -1,0 +1,608 @@
+-- N-102 · janela de envio das campanhas TalkX (send_weekdays + DND): correcao
+-- Rollback: CREATE OR REPLACE FUNCTION public.save_talkx_campaign_draft( p_campaign_id uuid, p_expected_revision bigint, p_creation_key uuid, p_payload jsonb ) RETURNS TABLE(campaign_id uuid, revision bigint, creation_replayed boolean) LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $function$ DECLARE v_actor_profile_id uuid; v_campaign public.talkx_campaigns%ROWTYPE; v_now timestamptz := statement_timestamp(); v_name text; v_message_template text; v_description text; v_objective text; v_audience_source text; v_audience_filters jsonb; v_segment_id uuid; v_template_id uuid; v_connection_id uuid; v_media_url text; v_media_type text; v_scheduled_at timestamptz; v_schedule_timezone text; v_window_start time; v_window_end time; v_speed_profile text; v_typing_delay_min integer; v_typing_delay_max integer; v_send_interval_min integer; v_send_interval_max integer; v_business_hours_only boolean; v_requested_status text; v_send_weekdays smallint[]; v_respect_dnd boolean; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; SELECT profile.id INTO v_actor_profile_id FROM public.profiles profile WHERE profile.user_id = auth.uid() AND profile.is_active = true LIMIT 1 FOR SHARE; IF v_actor_profile_id IS NULL THEN RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501'; END IF; IF p_payload IS NULL OR jsonb_typeof(p_payload) <> 'object' OR pg_column_size(p_payload) > 65536 THEN RAISE EXCEPTION 'invalid_talkx_campaign_payload' USING ERRCODE = '22023'; END IF; v_name := NULLIF(btrim(p_payload ->> 'name'), ''); v_message_template := p_payload ->> 'message_template'; v_description := p_payload ->> 'description'; v_objective := p_payload ->> 'objective'; v_audience_source := p_payload ->> 'audience_source'; v_audience_filters := COALESCE(p_payload -> 'audience_filters', '{}'::jsonb); v_segment_id := NULLIF(p_payload ->> 'segment_id', '')::uuid; v_template_id := NULLIF(p_payload ->> 'template_id', '')::uuid; v_connection_id := NULLIF(p_payload ->> 'whatsapp_connection_id', '')::uuid; v_media_url := p_payload ->> 'media_url'; v_media_type := p_payload ->> 'media_type'; v_scheduled_at := NULLIF(p_payload ->> 'scheduled_at', '')::timestamptz; v_schedule_timezone := COALESCE(NULLIF(p_payload ->> 'schedule_timezone', ''), 'America/Sao_Paulo'); v_window_start := NULLIF(p_payload ->> 'send_window_start', '')::time; v_window_end := NULLIF(p_payload ->> 'send_window_end', '')::time; v_speed_profile := COALESCE(NULLIF(p_payload ->> 'speed_profile', ''), 'moderate'); v_typing_delay_min := COALESCE(NULLIF(p_payload ->> 'typing_delay_min', '')::integer, 1500); v_typing_delay_max := COALESCE(NULLIF(p_payload ->> 'typing_delay_max', '')::integer, 4000); v_send_interval_min := COALESCE(NULLIF(p_payload ->> 'send_interval_min', '')::integer, 8000); v_send_interval_max := COALESCE(NULLIF(p_payload ->> 'send_interval_max', '')::integer, 20000); v_business_hours_only := COALESCE((p_payload ->> 'business_hours_only')::boolean, false); v_requested_status := NULLIF(p_payload ->> 'status', ''); v_send_weekdays := (p_payload -> 'send_weekdays')::smallint[]; v_respect_dnd := COALESCE((p_payload ->> 'respect_dnd')::boolean, true); IF v_name IS NULL OR length(v_name) > 200 OR v_message_template IS NULL OR length(btrim(v_message_template)) = 0 OR length(v_message_template) > 65536 OR (v_description IS NOT NULL AND length(v_description) > 4000) OR v_objective NOT IN ('vendas', 'engajamento', 'reativacao', 'relacionamento', 'pesquisa', 'institucional') OR v_audience_source NOT IN ('contacts', 'segment', 'crm360') OR jsonb_typeof(v_audience_filters) <> 'object' OR (v_audience_source = 'segment' AND v_segment_id IS NULL) OR (v_audience_source <> 'segment' AND v_segment_id IS NOT NULL) OR v_typing_delay_min < 0 OR v_typing_delay_min > v_typing_delay_max OR v_typing_delay_max > 60000 OR v_send_interval_min < 0 OR v_send_interval_min > v_send_interval_max OR v_send_interval_max > 300000 OR v_speed_profile NOT IN ('slow', 'moderate', 'fast') OR (v_media_url IS NOT NULL AND (length(v_media_url) > 8192 OR v_media_url !~ '^https://')) OR (v_media_type IS NOT NULL AND v_media_type NOT IN ('image', 'video', 'document', 'audio')) OR ((v_media_url IS NULL) <> (v_media_type IS NULL)) OR public.is_valid_talkx_schedule_timezone(v_schedule_timezone) IS NOT TRUE OR ((v_window_start IS NULL) <> (v_window_end IS NULL)) OR (v_window_start IS NOT NULL AND v_window_start >= v_window_end) OR (v_requested_status IS NOT NULL AND v_requested_status <> 'draft') OR (v_send_weekdays IS NOT NULL AND ( SELECT bool_or(n < 0 OR n > 6) FROM unnest(v_send_weekdays) AS n )) THEN RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023'; END IF; IF v_connection_id IS NOT NULL AND NOT EXISTS ( SELECT 1 FROM public.whatsapp_connections connection WHERE connection.id = v_connection_id AND connection.status = 'connected' AND NULLIF(btrim(connection.instance_id), '') IS NOT NULL ) THEN RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023'; END IF; IF p_campaign_id IS NULL THEN IF p_creation_key IS NULL THEN RAISE EXCEPTION 'talkx_draft_creation_key_required' USING ERRCODE = '22023'; END IF; INSERT INTO public.talkx_campaigns ( name, message_template, description, objective, audience_source, audience_filters, segment_id, template_id, whatsapp_connection_id, media_url, media_type, scheduled_at, schedule_timezone, send_window_start, send_window_end, business_hours_only, speed_profile, typing_delay_min, typing_delay_max, send_interval_min, send_interval_max, send_weekdays, respect_dnd, status, created_by, draft_creation_key, revision, created_at, updated_at ) VALUES ( v_name, v_message_template, v_description, v_objective, v_audience_source, v_audience_filters, v_segment_id, v_template_id, v_connection_id, v_media_url, v_media_type, v_scheduled_at, v_schedule_timezone, v_window_start, v_window_end, v_business_hours_only, v_speed_profile, v_typing_delay_min, v_typing_delay_max, v_send_interval_min, v_send_interval_max, v_send_weekdays, v_respect_dnd, 'draft', v_actor_profile_id, p_creation_key, 1, v_now, v_now ) ON CONFLICT (created_by, draft_creation_key) WHERE draft_creation_key IS NOT NULL DO NOTHING RETURNING * INTO v_campaign; IF FOUND THEN RETURN QUERY SELECT v_campaign.id, v_campaign.revision, false; RETURN; END IF; SELECT * INTO v_campaign FROM public.talkx_campaigns campaign WHERE campaign.created_by = v_actor_profile_id AND campaign.draft_creation_key = p_creation_key FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_draft_creation_recovery_failed' USING ERRCODE = '40001'; END IF; IF v_campaign.name IS DISTINCT FROM v_name OR v_campaign.message_template IS DISTINCT FROM v_message_template OR v_campaign.description IS DISTINCT FROM v_description OR v_campaign.objective IS DISTINCT FROM v_objective OR v_campaign.audience_source IS DISTINCT FROM v_audience_source OR v_campaign.audience_filters IS DISTINCT FROM v_audience_filters OR v_campaign.segment_id IS DISTINCT FROM v_segment_id OR v_campaign.template_id IS DISTINCT FROM v_template_id OR v_campaign.whatsapp_connection_id IS DISTINCT FROM v_connection_id OR v_campaign.media_url IS DISTINCT FROM v_media_url OR v_campaign.media_type IS DISTINCT FROM v_media_type OR v_campaign.scheduled_at IS DISTINCT FROM v_scheduled_at OR v_campaign.schedule_timezone IS DISTINCT FROM v_schedule_timezone OR v_campaign.send_window_start IS DISTINCT FROM v_window_start OR v_campaign.send_window_end IS DISTINCT FROM v_window_end OR v_campaign.business_hours_only IS DISTINCT FROM v_business_hours_only OR v_campaign.speed_profile IS DISTINCT FROM v_speed_profile OR v_campaign.typing_delay_min IS DISTINCT FROM v_typing_delay_min OR v_campaign.typing_delay_max IS DISTINCT FROM v_typing_delay_max OR v_campaign.send_interval_min IS DISTINCT FROM v_send_interval_min OR v_campaign.send_interval_max IS DISTINCT FROM v_send_interval_max OR v_campaign.send_weekdays IS DISTINCT FROM v_send_weekdays OR v_campaign.respect_dnd IS DISTINCT FROM v_respect_dnd THEN RAISE EXCEPTION 'talkx_draft_creation_key_payload_conflict' USING ERRCODE = '40001'; END IF; RETURN QUERY SELECT v_campaign.id, v_campaign.revision, true; RETURN; END IF; IF p_expected_revision IS NULL OR p_expected_revision < 1 THEN RAISE EXCEPTION 'talkx_draft_expected_revision_required' USING ERRCODE = '22023'; END IF; SELECT * INTO v_campaign FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF; IF v_campaign.created_by IS DISTINCT FROM v_actor_profile_id AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_not_authorized' USING ERRCODE = '42501'; END IF; IF v_campaign.status NOT IN ('draft', 'scheduled') THEN RAISE EXCEPTION 'talkx_campaign_not_editable' USING ERRCODE = '55000'; END IF; IF v_campaign.revision IS DISTINCT FROM p_expected_revision THEN RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001'; END IF; UPDATE public.talkx_campaigns campaign SET name = v_name, message_template = v_message_template, description = v_description, objective = v_objective, audience_source = v_audience_source, audience_filters = v_audience_filters, segment_id = v_segment_id, template_id = v_template_id, whatsapp_connection_id = v_connection_id, media_url = v_media_url, media_type = v_media_type, scheduled_at = v_scheduled_at, schedule_timezone = v_schedule_timezone, send_window_start = v_window_start, send_window_end = v_window_end, business_hours_only = v_business_hours_only, speed_profile = v_speed_profile, typing_delay_min = v_typing_delay_min, typing_delay_max = v_typing_delay_max, send_interval_min = v_send_interval_min, send_interval_max = v_send_interval_max, send_weekdays = v_send_weekdays, respect_dnd = v_respect_dnd, revision = campaign.revision + 1, updated_at = v_now WHERE campaign.id = p_campaign_id AND campaign.revision = p_expected_revision RETURNING * INTO v_campaign; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001'; END IF; RETURN QUERY SELECT p_campaign_id, v_campaign.revision, false; END; $function$; CREATE OR REPLACE FUNCTION public.update_talkx_campaign_limits( p_campaign_id uuid, p_expected_revision bigint, p_limits jsonb ) RETURNS TABLE(campaign_id uuid, revision bigint) LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $function$ DECLARE v_actor_profile_id uuid; v_campaign public.talkx_campaigns%ROWTYPE; v_now timestamptz := statement_timestamp(); v_speed_profile text; v_send_interval_min integer; v_send_interval_max integer; v_typing_delay_min integer; v_typing_delay_max integer; v_send_window_start time; v_send_window_end time; v_business_hours_only boolean; v_send_weekdays smallint[]; v_respect_dnd boolean; v_eff_start time; v_eff_end time; v_before jsonb; v_after jsonb; BEGIN IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501'; END IF; SELECT profile.id INTO v_actor_profile_id FROM public.profiles profile WHERE profile.user_id = auth.uid() AND profile.is_active = true LIMIT 1 FOR SHARE; IF v_actor_profile_id IS NULL THEN RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501'; END IF; IF p_limits IS NULL OR jsonb_typeof(p_limits) <> 'object' OR pg_column_size(p_limits) > 8192 THEN RAISE EXCEPTION 'invalid_talkx_limits_payload' USING ERRCODE = '22023'; END IF; IF EXISTS ( SELECT 1 FROM jsonb_object_keys(p_limits) AS k WHERE k NOT IN ('speed_profile','send_interval_min','send_interval_max', 'typing_delay_min','typing_delay_max','send_window_start', 'send_window_end','business_hours_only','send_weekdays','respect_dnd') ) THEN RAISE EXCEPTION 'invalid_talkx_limits_field' USING ERRCODE = '22023'; END IF; BEGIN v_speed_profile := NULLIF(p_limits ->> 'speed_profile', ''); v_send_interval_min := NULLIF(p_limits ->> 'send_interval_min', '')::integer; v_send_interval_max := NULLIF(p_limits ->> 'send_interval_max', '')::integer; v_typing_delay_min := NULLIF(p_limits ->> 'typing_delay_min', '')::integer; v_typing_delay_max := NULLIF(p_limits ->> 'typing_delay_max', '')::integer; v_send_window_start := NULLIF(p_limits ->> 'send_window_start', '')::time; v_send_window_end := NULLIF(p_limits ->> 'send_window_end', '')::time; v_business_hours_only := NULLIF(p_limits ->> 'business_hours_only', '')::boolean; v_send_weekdays := (p_limits -> 'send_weekdays')::smallint[]; v_respect_dnd := COALESCE((p_limits ->> 'respect_dnd')::boolean, true); EXCEPTION WHEN invalid_text_representation OR invalid_datetime_format OR datetime_field_overflow OR numeric_value_out_of_range THEN RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023'; END; IF (v_speed_profile IS NOT NULL AND v_speed_profile NOT IN ('slow','moderate','fast')) OR (v_send_interval_min IS NOT NULL AND v_send_interval_min < 1) OR (v_send_interval_max IS NOT NULL AND v_send_interval_max < 1) OR (v_send_interval_min IS NOT NULL AND v_send_interval_max IS NOT NULL AND v_send_interval_min > v_send_interval_max) OR (v_typing_delay_min IS NOT NULL AND v_typing_delay_min < 0) OR (v_typing_delay_max IS NOT NULL AND v_typing_delay_max < 0) OR (v_typing_delay_min IS NOT NULL AND v_typing_delay_max IS NOT NULL AND v_typing_delay_min > v_typing_delay_max) THEN RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023'; END IF; IF (v_send_weekdays IS NOT NULL AND ( SELECT bool_or(n < 0 OR n > 6) FROM unnest(v_send_weekdays) AS n )) THEN RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023'; END IF; SELECT * INTO v_campaign FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id FOR UPDATE; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF; IF v_campaign.created_by IS DISTINCT FROM v_actor_profile_id AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_not_authorized' USING ERRCODE = '42501'; END IF; IF p_expected_revision IS NULL OR v_campaign.revision IS DISTINCT FROM p_expected_revision THEN RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001'; END IF; v_eff_start := CASE WHEN p_limits ? 'send_window_start' THEN v_send_window_start ELSE v_campaign.send_window_start END; v_eff_end   := CASE WHEN p_limits ? 'send_window_end'   THEN v_send_window_end   ELSE v_campaign.send_window_end END; IF NOT ( (v_eff_start IS NULL AND v_eff_end IS NULL) OR (v_eff_start IS NOT NULL AND v_eff_end IS NOT NULL AND v_eff_start < v_eff_end) ) THEN RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023'; END IF; v_before := jsonb_build_object( 'speed_profile', v_campaign.speed_profile, 'send_interval_min', v_campaign.send_interval_min, 'send_interval_max', v_campaign.send_interval_max, 'typing_delay_min', v_campaign.typing_delay_min, 'typing_delay_max', v_campaign.typing_delay_max, 'send_window_start', v_campaign.send_window_start, 'send_window_end', v_campaign.send_window_end, 'business_hours_only', v_campaign.business_hours_only, 'send_weekdays', v_campaign.send_weekdays, 'respect_dnd', v_campaign.respect_dnd ); PERFORM set_config('app.talkx_limits_write', 'on', true); UPDATE public.talkx_campaigns campaign SET speed_profile = COALESCE(v_speed_profile, campaign.speed_profile), send_interval_min = COALESCE(v_send_interval_min, campaign.send_interval_min), send_interval_max = COALESCE(v_send_interval_max, campaign.send_interval_max), typing_delay_min = COALESCE(v_typing_delay_min, campaign.typing_delay_min), typing_delay_max = COALESCE(v_typing_delay_max, campaign.typing_delay_max), send_window_start = CASE WHEN p_limits ? 'send_window_start' THEN v_send_window_start ELSE campaign.send_window_start END, send_window_end = CASE WHEN p_limits ? 'send_window_end' THEN v_send_window_end ELSE campaign.send_window_end END, business_hours_only = COALESCE(v_business_hours_only, campaign.business_hours_only), send_weekdays = CASE WHEN p_limits ? 'send_weekdays' THEN v_send_weekdays ELSE campaign.send_weekdays END, respect_dnd = CASE WHEN p_limits ? 'respect_dnd' THEN v_respect_dnd ELSE campaign.respect_dnd END, revision = campaign.revision + 1, updated_at = v_now WHERE campaign.id = p_campaign_id AND campaign.revision = p_expected_revision RETURNING * INTO v_campaign; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001'; END IF; PERFORM set_config('app.talkx_limits_write', '', true); v_after := jsonb_build_object( 'speed_profile', v_campaign.speed_profile, 'send_interval_min', v_campaign.send_interval_min, 'send_interval_max', v_campaign.send_interval_max, 'typing_delay_min', v_campaign.typing_delay_min, 'typing_delay_max', v_campaign.typing_delay_max, 'send_window_start', v_campaign.send_window_start, 'send_window_end', v_campaign.send_window_end, 'business_hours_only', v_campaign.business_hours_only, 'send_weekdays', v_campaign.send_weekdays, 'respect_dnd', v_campaign.respect_dnd ); INSERT INTO public.talkx_campaign_events (campaign_id, event_type, actor_id, message) VALUES (p_campaign_id, 'limits_updated', v_actor_profile_id, jsonb_build_object('before', v_before, 'after', v_after)::text); RETURN QUERY SELECT p_campaign_id, v_campaign.revision; END; $function$; CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open( p_campaign_id uuid, p_at timestamptz ) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $function$ DECLARE v_campaign public.talkx_campaigns%ROWTYPE; v_dnd_hours jsonb; v_weekday integer; v_start_minutes integer; v_end_minutes integer; v_minutes_of_day integer; BEGIN SELECT * INTO v_campaign FROM public.talkx_campaigns WHERE id = p_campaign_id; IF NOT FOUND THEN RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002'; END IF; IF v_campaign.send_weekdays IS NOT NULL THEN v_weekday := EXTRACT(ISODOW FROM p_at)::integer % 7; IF NOT (v_weekday = ANY(v_campaign.send_weekdays)) THEN RETURN false; END IF; END IF; IF v_campaign.respect_dnd THEN SELECT value INTO v_dnd_hours FROM public.talkx_settings WHERE key = 'dnd_hours'; IF v_dnd_hours IS NOT NULL AND jsonb_typeof(v_dnd_hours) = 'object' THEN v_minutes_of_day := EXTRACT(HOUR FROM p_at)::integer * 60 + EXTRACT(MINUTE FROM p_at)::integer; v_start_minutes := (split_part(v_dnd_hours ->> 'start', ':', 1))::integer * 60 + (split_part(v_dnd_hours ->> 'start', ':', 2))::integer; v_end_minutes := (split_part(v_dnd_hours ->> 'end', ':', 1))::integer * 60 + (split_part(v_dnd_hours ->> 'end', ':', 2))::integer; IF EXTRACT(DOW FROM p_at) = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN RETURN true; END IF; IF jsonb_array_length(v_dnd_hours -> 'holidays') > 0 THEN IF p_at::date = ANY(v_dnd_hours -> 'holidays')::date[] THEN RETURN true; END IF; END IF; IF v_start_minutes < v_end_minutes THEN IF v_minutes_of_day >= v_start_minutes AND v_minutes_of_day < v_end_minutes THEN RETURN false; END IF; ELSIF v_start_minutes > v_end_minutes THEN IF v_minutes_of_day >= v_start_minutes OR v_minutes_of_day < v_end_minutes THEN RETURN false; END IF; END IF; END IF; END IF; RETURN true; END; $function$; delete from public.talkx_settings where key = 'dnd_hours' and value = '{"start":"22:00","end":"08:00","sundays":true,"holidays":[]}'::jsonb and description = 'Janela "não perturbe": envios só fora deste horário quando respect_dnd=true';
+-- Corrige 20261009203548_talkx_campaigns_send_weekdays_dnd.sql (refazer):
+--   1) save_talkx_campaign_draft / update_talkx_campaign_limits faziam
+--      (jsonb -> 'send_weekdays')::smallint[], cast por I/O que estourava 22P02
+--      (invalid_input_syntax) para valor nao-inteiro e aceitava fora de 0..6.
+--      Agora a conversao e validada elemento a elemento e rejeita com 22023.
+--   2) talkx_campaign_window_open ignorava schedule_timezone: avaliava weekday,
+--      feriados e DND no fuso da sessao (UTC). Agora converte p_at uma vez para o
+--      horario local da campanha e usa EXTRACT(DOW ...) de ponta a ponta.
+--   3) talkx_campaign_window_open era executavel por authenticated. Agora so
+--      service_role (REVOKE de PUBLIC, anon e authenticated).
+--   4) o INSERT de 'dnd_hours' era destrutivo (ON CONFLICT DO UPDATE) e sobrescrevia
+--      valor/descricao de outro dono. Agora e ON CONFLICT DO NOTHING.
+--
+-- O QUE NAO MUDAR: default do setting dnd_hours, semantica de send_weekdays
+-- (null = todos os dias; 0=domingo .. 6=sabado), assinaturas das quatro funcoes.
+-- Sem BEGIN/COMMIT (o ledger aplica cada migration em transacao propria).
+--
+-- Reversao: a linha '-- Rollback:' do cabecalho (acima, executavel) restaura as tres
+-- funcoes de 20261009203548 e remove 'dnd_hours' apenas se ainda estiver no default
+-- desta serie (preserva valor de outro dono). O ACL endurecido NAO e revertido de
+-- proposito: o rollback nao reabre authenticated.
+
+-- =========================================================================
+-- 1) send_weekdays nas duas RPCs: validacao elemento a elemento -> 22023
+-- =========================================================================
+CREATE OR REPLACE FUNCTION public.save_talkx_campaign_draft(
+  p_campaign_id uuid,
+  p_expected_revision bigint,
+  p_creation_key uuid,
+  p_payload jsonb
+)
+RETURNS TABLE(campaign_id uuid, revision bigint, creation_replayed boolean)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_actor_profile_id uuid;
+  v_campaign public.talkx_campaigns%ROWTYPE;
+  v_now timestamptz := statement_timestamp();
+  v_name text;
+  v_message_template text;
+  v_description text;
+  v_objective text;
+  v_audience_source text;
+  v_audience_filters jsonb;
+  v_segment_id uuid;
+  v_template_id uuid;
+  v_connection_id uuid;
+  v_media_url text;
+  v_media_type text;
+  v_scheduled_at timestamptz;
+  v_schedule_timezone text;
+  v_window_start time;
+  v_window_end time;
+  v_speed_profile text;
+  v_typing_delay_min integer;
+  v_typing_delay_max integer;
+  v_send_interval_min integer;
+  v_send_interval_max integer;
+  v_business_hours_only boolean;
+  v_requested_status text;
+  v_send_weekdays smallint[];
+  v_respect_dnd boolean;
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT profile.id INTO v_actor_profile_id
+   FROM public.profiles profile
+   WHERE profile.user_id = auth.uid()
+     AND profile.is_active = true
+   LIMIT 1
+   FOR SHARE;
+  IF v_actor_profile_id IS NULL THEN
+    RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_payload IS NULL OR jsonb_typeof(p_payload) <> 'object'
+     OR pg_column_size(p_payload) > 65536 THEN
+    RAISE EXCEPTION 'invalid_talkx_campaign_payload' USING ERRCODE = '22023';
+  END IF;
+
+  v_name := NULLIF(btrim(p_payload ->> 'name'), '');
+  v_message_template := p_payload ->> 'message_template';
+  v_description := p_payload ->> 'description';
+  v_objective := p_payload ->> 'objective';
+  v_audience_source := p_payload ->> 'audience_source';
+  v_audience_filters := COALESCE(p_payload -> 'audience_filters', '{}'::jsonb);
+  v_segment_id := NULLIF(p_payload ->> 'segment_id', '')::uuid;
+  v_template_id := NULLIF(p_payload ->> 'template_id', '')::uuid;
+  v_connection_id := NULLIF(p_payload ->> 'whatsapp_connection_id', '')::uuid;
+  v_media_url := p_payload ->> 'media_url';
+  v_media_type := p_payload ->> 'media_type';
+  v_scheduled_at := NULLIF(p_payload ->> 'scheduled_at', '')::timestamptz;
+  v_schedule_timezone := COALESCE(NULLIF(p_payload ->> 'schedule_timezone', ''), 'America/Sao_Paulo');
+  v_window_start := NULLIF(p_payload ->> 'send_window_start', '')::time;
+  v_window_end := NULLIF(p_payload ->> 'send_window_end', '')::time;
+  v_speed_profile := COALESCE(NULLIF(p_payload ->> 'speed_profile', ''), 'moderate');
+  v_typing_delay_min := COALESCE(NULLIF(p_payload ->> 'typing_delay_min', '')::integer, 1500);
+  v_typing_delay_max := COALESCE(NULLIF(p_payload ->> 'typing_delay_max', '')::integer, 4000);
+  v_send_interval_min := COALESCE(NULLIF(p_payload ->> 'send_interval_min', '')::integer, 8000);
+  v_send_interval_max := COALESCE(NULLIF(p_payload ->> 'send_interval_max', '')::integer, 20000);
+  v_business_hours_only := COALESCE((p_payload ->> 'business_hours_only')::boolean, false);
+  v_requested_status := NULLIF(p_payload ->> 'status', '');
+  IF (p_payload -> 'send_weekdays') IS NOT NULL AND jsonb_typeof((p_payload -> 'send_weekdays')) <> 'null' THEN
+    IF jsonb_typeof((p_payload -> 'send_weekdays')) <> 'array' THEN
+      RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
+    END IF;
+    IF EXISTS (
+      SELECT 1
+        FROM jsonb_array_elements((p_payload -> 'send_weekdays')) AS item
+       WHERE jsonb_typeof(item) <> 'number'
+          OR (item)::text ~ '[.eE]'
+    ) THEN
+      RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
+    END IF;
+    v_send_weekdays := ARRAY(
+      SELECT element.value::text::smallint
+        FROM jsonb_array_elements((p_payload -> 'send_weekdays')) WITH ORDINALITY AS element(value, ord)
+       ORDER BY element.ord
+    );
+  ELSE
+    v_send_weekdays := NULL;
+  END IF;
+  v_respect_dnd := COALESCE((p_payload ->> 'respect_dnd')::boolean, true);
+
+  IF v_name IS NULL OR length(v_name) > 200
+     OR v_message_template IS NULL OR length(btrim(v_message_template)) = 0 OR length(v_message_template) > 65536
+     OR (v_description IS NOT NULL AND length(v_description) > 4000)
+     OR v_objective NOT IN ('vendas', 'engajamento', 'reativacao', 'relacionamento', 'pesquisa', 'institucional')
+     OR v_audience_source NOT IN ('contacts', 'segment', 'crm360')
+     OR jsonb_typeof(v_audience_filters) <> 'object'
+     OR (v_audience_source = 'segment' AND v_segment_id IS NULL)
+     OR (v_audience_source <> 'segment' AND v_segment_id IS NOT NULL)
+     OR v_typing_delay_min < 0 OR v_typing_delay_min > v_typing_delay_max OR v_typing_delay_max > 60000
+     OR v_send_interval_min < 0 OR v_send_interval_min > v_send_interval_max OR v_send_interval_max > 300000
+     OR v_speed_profile NOT IN ('slow', 'moderate', 'fast')
+     OR (v_media_url IS NOT NULL AND (length(v_media_url) > 8192 OR v_media_url !~ '^https://'))
+     OR (v_media_type IS NOT NULL AND v_media_type NOT IN ('image', 'video', 'document', 'audio'))
+     OR ((v_media_url IS NULL) <> (v_media_type IS NULL))
+     OR public.is_valid_talkx_schedule_timezone(v_schedule_timezone) IS NOT TRUE
+     OR ((v_window_start IS NULL) <> (v_window_end IS NULL))
+     OR (v_window_start IS NOT NULL AND v_window_start >= v_window_end)
+     OR (v_requested_status IS NOT NULL AND v_requested_status <> 'draft')
+     OR (v_send_weekdays IS NOT NULL AND (
+       SELECT bool_or(n < 0 OR n > 6) FROM unnest(v_send_weekdays) AS n
+     )) THEN
+    RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
+  END IF;
+
+  IF v_connection_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1
+         FROM public.whatsapp_connections connection
+        WHERE connection.id = v_connection_id
+          AND connection.status = 'connected'
+          AND NULLIF(btrim(connection.instance_id), '') IS NOT NULL
+     ) THEN
+    RAISE EXCEPTION 'selected_whatsapp_connection_unavailable' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_campaign_id IS NULL THEN
+    IF p_creation_key IS NULL THEN
+      RAISE EXCEPTION 'talkx_draft_creation_key_required' USING ERRCODE = '22023';
+    END IF;
+
+    INSERT INTO public.talkx_campaigns (
+      name, message_template, description, objective, audience_source,
+      audience_filters, segment_id, template_id, whatsapp_connection_id,
+      media_url, media_type, scheduled_at, schedule_timezone,
+      send_window_start, send_window_end, business_hours_only, speed_profile,
+      typing_delay_min, typing_delay_max, send_interval_min, send_interval_max,
+      send_weekdays, respect_dnd,
+      status, created_by, draft_creation_key, revision, created_at, updated_at
+    ) VALUES (
+      v_name, v_message_template, v_description, v_objective, v_audience_source,
+      v_audience_filters, v_segment_id, v_template_id, v_connection_id,
+      v_media_url, v_media_type, v_scheduled_at, v_schedule_timezone,
+      v_window_start, v_window_end, v_business_hours_only, v_speed_profile,
+      v_typing_delay_min, v_typing_delay_max, v_send_interval_min, v_send_interval_max,
+      v_send_weekdays, v_respect_dnd,
+      'draft', v_actor_profile_id, p_creation_key, 1, v_now, v_now
+    )
+    ON CONFLICT (created_by, draft_creation_key) WHERE draft_creation_key IS NOT NULL DO NOTHING
+    RETURNING * INTO v_campaign;
+
+    IF FOUND THEN
+      RETURN QUERY SELECT v_campaign.id, v_campaign.revision, false;
+      RETURN;
+    END IF;
+
+    SELECT * INTO v_campaign
+      FROM public.talkx_campaigns campaign
+     WHERE campaign.created_by = v_actor_profile_id
+       AND campaign.draft_creation_key = p_creation_key
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'talkx_draft_creation_recovery_failed' USING ERRCODE = '40001';
+    END IF;
+
+    IF v_campaign.name IS DISTINCT FROM v_name
+       OR v_campaign.message_template IS DISTINCT FROM v_message_template
+       OR v_campaign.description IS DISTINCT FROM v_description
+       OR v_campaign.objective IS DISTINCT FROM v_objective
+       OR v_campaign.audience_source IS DISTINCT FROM v_audience_source
+       OR v_campaign.audience_filters IS DISTINCT FROM v_audience_filters
+       OR v_campaign.segment_id IS DISTINCT FROM v_segment_id
+       OR v_campaign.template_id IS DISTINCT FROM v_template_id
+       OR v_campaign.whatsapp_connection_id IS DISTINCT FROM v_connection_id
+       OR v_campaign.media_url IS DISTINCT FROM v_media_url
+       OR v_campaign.media_type IS DISTINCT FROM v_media_type
+       OR v_campaign.scheduled_at IS DISTINCT FROM v_scheduled_at
+       OR v_campaign.schedule_timezone IS DISTINCT FROM v_schedule_timezone
+       OR v_campaign.send_window_start IS DISTINCT FROM v_window_start
+       OR v_campaign.send_window_end IS DISTINCT FROM v_window_end
+       OR v_campaign.business_hours_only IS DISTINCT FROM v_business_hours_only
+       OR v_campaign.speed_profile IS DISTINCT FROM v_speed_profile
+       OR v_campaign.typing_delay_min IS DISTINCT FROM v_typing_delay_min
+       OR v_campaign.typing_delay_max IS DISTINCT FROM v_typing_delay_max
+       OR v_campaign.send_interval_min IS DISTINCT FROM v_send_interval_min
+       OR v_campaign.send_interval_max IS DISTINCT FROM v_send_interval_max
+       OR v_campaign.send_weekdays IS DISTINCT FROM v_send_weekdays
+       OR v_campaign.respect_dnd IS DISTINCT FROM v_respect_dnd THEN
+      RAISE EXCEPTION 'talkx_draft_creation_key_payload_conflict' USING ERRCODE = '40001';
+    END IF;
+
+    RETURN QUERY SELECT v_campaign.id, v_campaign.revision, true;
+    RETURN;
+  END IF;
+
+  IF p_expected_revision IS NULL OR p_expected_revision < 1 THEN
+    RAISE EXCEPTION 'talkx_draft_expected_revision_required' USING ERRCODE = '22023';
+  END IF;
+
+  SELECT * INTO v_campaign
+    FROM public.talkx_campaigns campaign
+   WHERE campaign.id = p_campaign_id
+   FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_campaign.created_by IS DISTINCT FROM v_actor_profile_id
+     AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'talkx_campaign_not_authorized' USING ERRCODE = '42501';
+  END IF;
+  IF v_campaign.status NOT IN ('draft', 'scheduled') THEN
+    RAISE EXCEPTION 'talkx_campaign_not_editable' USING ERRCODE = '55000';
+  END IF;
+  IF v_campaign.revision IS DISTINCT FROM p_expected_revision THEN
+    RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
+  END IF;
+
+  UPDATE public.talkx_campaigns campaign
+     SET name = v_name,
+         message_template = v_message_template,
+         description = v_description,
+         objective = v_objective,
+         audience_source = v_audience_source,
+         audience_filters = v_audience_filters,
+         segment_id = v_segment_id,
+         template_id = v_template_id,
+         whatsapp_connection_id = v_connection_id,
+         media_url = v_media_url,
+         media_type = v_media_type,
+         scheduled_at = v_scheduled_at,
+         schedule_timezone = v_schedule_timezone,
+         send_window_start = v_window_start,
+         send_window_end = v_window_end,
+         business_hours_only = v_business_hours_only,
+         speed_profile = v_speed_profile,
+         typing_delay_min = v_typing_delay_min,
+         typing_delay_max = v_typing_delay_max,
+         send_interval_min = v_send_interval_min,
+         send_interval_max = v_send_interval_max,
+         send_weekdays = v_send_weekdays,
+         respect_dnd = v_respect_dnd,
+         revision = campaign.revision + 1,
+         updated_at = v_now
+   WHERE campaign.id = p_campaign_id
+     AND campaign.revision = p_expected_revision
+   RETURNING * INTO v_campaign;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
+  END IF;
+
+  RETURN QUERY SELECT p_campaign_id, v_campaign.revision, false;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.save_talkx_campaign_draft(uuid, bigint, uuid, jsonb)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.save_talkx_campaign_draft(uuid, bigint, uuid, jsonb)
+  TO authenticated;
+
+
+-- =========================================================================
+-- 2) update_talkx_campaign_limits: mesma validacao
+-- =========================================================================
+CREATE OR REPLACE FUNCTION public.update_talkx_campaign_limits(
+  p_campaign_id uuid,
+  p_expected_revision bigint,
+  p_limits jsonb
+)
+RETURNS TABLE(campaign_id uuid, revision bigint)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_actor_profile_id uuid;
+  v_campaign public.talkx_campaigns%ROWTYPE;
+  v_now timestamptz := statement_timestamp();
+  v_speed_profile text;
+  v_send_interval_min integer;
+  v_send_interval_max integer;
+  v_typing_delay_min integer;
+  v_typing_delay_max integer;
+  v_send_window_start time;
+  v_send_window_end time;
+  v_business_hours_only boolean;
+  v_send_weekdays smallint[];
+  v_respect_dnd boolean;
+  v_eff_start time;
+  v_eff_end time;
+  v_before jsonb;
+  v_after jsonb;
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT profile.id INTO v_actor_profile_id
+    FROM public.profiles profile
+   WHERE profile.user_id = auth.uid()
+     AND profile.is_active = true
+   LIMIT 1
+   FOR SHARE;
+  IF v_actor_profile_id IS NULL THEN
+    RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_limits IS NULL OR jsonb_typeof(p_limits) <> 'object' OR pg_column_size(p_limits) > 8192 THEN
+    RAISE EXCEPTION 'invalid_talkx_limits_payload' USING ERRCODE = '22023';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM jsonb_object_keys(p_limits) AS k
+     WHERE k NOT IN ('speed_profile','send_interval_min','send_interval_max',
+                     'typing_delay_min','typing_delay_max','send_window_start',
+                     'send_window_end','business_hours_only','send_weekdays','respect_dnd')
+  ) THEN
+    RAISE EXCEPTION 'invalid_talkx_limits_field' USING ERRCODE = '22023';
+  END IF;
+
+  BEGIN
+    v_speed_profile := NULLIF(p_limits ->> 'speed_profile', '');
+    v_send_interval_min := NULLIF(p_limits ->> 'send_interval_min', '')::integer;
+    v_send_interval_max := NULLIF(p_limits ->> 'send_interval_max', '')::integer;
+    v_typing_delay_min := NULLIF(p_limits ->> 'typing_delay_min', '')::integer;
+    v_typing_delay_max := NULLIF(p_limits ->> 'typing_delay_max', '')::integer;
+    v_send_window_start := NULLIF(p_limits ->> 'send_window_start', '')::time;
+    v_send_window_end := NULLIF(p_limits ->> 'send_window_end', '')::time;
+    v_business_hours_only := NULLIF(p_limits ->> 'business_hours_only', '')::boolean;
+    IF (p_limits -> 'send_weekdays') IS NOT NULL AND jsonb_typeof((p_limits -> 'send_weekdays')) <> 'null' THEN
+      IF jsonb_typeof((p_limits -> 'send_weekdays')) <> 'array' THEN
+        RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+      END IF;
+      IF EXISTS (
+        SELECT 1
+          FROM jsonb_array_elements((p_limits -> 'send_weekdays')) AS item
+         WHERE jsonb_typeof(item) <> 'number'
+            OR (item)::text ~ '[.eE]'
+      ) THEN
+        RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+      END IF;
+      v_send_weekdays := ARRAY(
+        SELECT element.value::text::smallint
+          FROM jsonb_array_elements((p_limits -> 'send_weekdays')) WITH ORDINALITY AS element(value, ord)
+         ORDER BY element.ord
+      );
+    ELSE
+      v_send_weekdays := NULL;
+    END IF;
+    v_respect_dnd := COALESCE((p_limits ->> 'respect_dnd')::boolean, true);
+  EXCEPTION
+    WHEN invalid_text_representation OR invalid_datetime_format OR datetime_field_overflow OR numeric_value_out_of_range THEN
+      RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+  END;
+
+  IF (v_speed_profile IS NOT NULL AND v_speed_profile NOT IN ('slow','moderate','fast'))
+     OR (v_send_interval_min IS NOT NULL AND v_send_interval_min < 1)
+     OR (v_send_interval_max IS NOT NULL AND v_send_interval_max < 1)
+     OR (v_send_interval_min IS NOT NULL AND v_send_interval_max IS NOT NULL
+         AND v_send_interval_min > v_send_interval_max)
+     OR (v_typing_delay_min IS NOT NULL AND v_typing_delay_min < 0)
+     OR (v_typing_delay_max IS NOT NULL AND v_typing_delay_max < 0)
+     OR (v_typing_delay_min IS NOT NULL AND v_typing_delay_max IS NOT NULL
+         AND v_typing_delay_min > v_typing_delay_max) THEN
+    RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+  END IF;
+
+  IF (v_send_weekdays IS NOT NULL AND (
+    SELECT bool_or(n < 0 OR n > 6) FROM unnest(v_send_weekdays) AS n
+  )) THEN
+    RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+  END IF;
+
+  SELECT * INTO v_campaign
+    FROM public.talkx_campaigns campaign
+   WHERE campaign.id = p_campaign_id
+   FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_campaign.created_by IS DISTINCT FROM v_actor_profile_id
+     AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'talkx_campaign_not_authorized' USING ERRCODE = '42501';
+  END IF;
+  IF p_expected_revision IS NULL OR v_campaign.revision IS DISTINCT FROM p_expected_revision THEN
+    RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
+  END IF;
+
+  v_eff_start := CASE WHEN p_limits ? 'send_window_start' THEN v_send_window_start ELSE v_campaign.send_window_start END;
+  v_eff_end   := CASE WHEN p_limits ? 'send_window_end'   THEN v_send_window_end   ELSE v_campaign.send_window_end END;
+  IF NOT (
+    (v_eff_start IS NULL AND v_eff_end IS NULL)
+    OR (v_eff_start IS NOT NULL AND v_eff_end IS NOT NULL AND v_eff_start < v_eff_end)
+  ) THEN
+    RAISE EXCEPTION 'invalid_talkx_limits_values' USING ERRCODE = '22023';
+  END IF;
+
+  v_before := jsonb_build_object(
+    'speed_profile', v_campaign.speed_profile,
+    'send_interval_min', v_campaign.send_interval_min,
+    'send_interval_max', v_campaign.send_interval_max,
+    'typing_delay_min', v_campaign.typing_delay_min,
+    'typing_delay_max', v_campaign.typing_delay_max,
+    'send_window_start', v_campaign.send_window_start,
+    'send_window_end', v_campaign.send_window_end,
+    'business_hours_only', v_campaign.business_hours_only,
+    'send_weekdays', v_campaign.send_weekdays,
+    'respect_dnd', v_campaign.respect_dnd
+  );
+
+  PERFORM set_config('app.talkx_limits_write', 'on', true);
+
+  UPDATE public.talkx_campaigns campaign
+     SET speed_profile = COALESCE(v_speed_profile, campaign.speed_profile),
+         send_interval_min = COALESCE(v_send_interval_min, campaign.send_interval_min),
+         send_interval_max = COALESCE(v_send_interval_max, campaign.send_interval_max),
+         typing_delay_min = COALESCE(v_typing_delay_min, campaign.typing_delay_min),
+         typing_delay_max = COALESCE(v_typing_delay_max, campaign.typing_delay_max),
+         send_window_start = CASE WHEN p_limits ? 'send_window_start' THEN v_send_window_start ELSE campaign.send_window_start END,
+         send_window_end = CASE WHEN p_limits ? 'send_window_end' THEN v_send_window_end ELSE campaign.send_window_end END,
+         business_hours_only = COALESCE(v_business_hours_only, campaign.business_hours_only),
+         send_weekdays = CASE WHEN p_limits ? 'send_weekdays' THEN v_send_weekdays ELSE campaign.send_weekdays END,
+         respect_dnd = CASE WHEN p_limits ? 'respect_dnd' THEN v_respect_dnd ELSE campaign.respect_dnd END,
+         revision = campaign.revision + 1,
+         updated_at = v_now
+   WHERE campaign.id = p_campaign_id
+     AND campaign.revision = p_expected_revision
+   RETURNING * INTO v_campaign;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_campaign_stale_revision' USING ERRCODE = '40001';
+  END IF;
+
+  PERFORM set_config('app.talkx_limits_write', '', true);
+
+  v_after := jsonb_build_object(
+    'speed_profile', v_campaign.speed_profile,
+    'send_interval_min', v_campaign.send_interval_min,
+    'send_interval_max', v_campaign.send_interval_max,
+    'typing_delay_min', v_campaign.typing_delay_min,
+    'typing_delay_max', v_campaign.typing_delay_max,
+    'send_window_start', v_campaign.send_window_start,
+    'send_window_end', v_campaign.send_window_end,
+    'business_hours_only', v_campaign.business_hours_only,
+    'send_weekdays', v_campaign.send_weekdays,
+    'respect_dnd', v_campaign.respect_dnd
+  );
+
+  INSERT INTO public.talkx_campaign_events (campaign_id, event_type, actor_id, message)
+  VALUES (p_campaign_id, 'limits_updated', v_actor_profile_id,
+          jsonb_build_object('before', v_before, 'after', v_after)::text);
+
+  RETURN QUERY SELECT p_campaign_id, v_campaign.revision;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.update_talkx_campaign_limits(uuid, bigint, jsonb)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.update_talkx_campaign_limits(uuid, bigint, jsonb)
+  TO authenticated;
+
+
+-- =========================================================================
+-- 3) talkx_campaign_window_open: horario local (schedule_timezone) + ACL
+-- =========================================================================
+CREATE OR REPLACE FUNCTION public.talkx_campaign_window_open(
+  p_campaign_id uuid,
+  p_at timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_campaign public.talkx_campaigns%ROWTYPE;
+  v_dnd_hours jsonb;
+  v_timezone text;
+  v_local_at timestamp;
+  v_local_date date;
+  v_weekday integer;
+  v_start_minutes integer;
+  v_end_minutes integer;
+  v_minutes_of_day integer;
+BEGIN
+  SELECT * INTO v_campaign
+    FROM public.talkx_campaigns
+   WHERE id = p_campaign_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Fuso da campanha: weekday, feriados e DND sao avaliados no horario local do
+  -- schedule_timezone, nunca no fuso da sessao (Supabase = UTC). Mesmo fallback de
+  -- save_talkx_campaign_draft.
+  v_timezone := COALESCE(NULLIF(btrim(COALESCE(v_campaign.schedule_timezone, '')), ''), 'America/Sao_Paulo');
+  v_local_at := p_at AT TIME ZONE v_timezone;
+  v_local_date := v_local_at::date;
+
+  -- send_weekdays: null = todos os dias; array = dias permitidos (0=domingo .. 6=sabado)
+  IF v_campaign.send_weekdays IS NOT NULL THEN
+    v_weekday := EXTRACT(DOW FROM v_local_at)::integer;
+    IF NOT (v_weekday = ANY(v_campaign.send_weekdays)) THEN
+      RETURN false;
+    END IF;
+  END IF;
+
+  -- DND: se respect_dnd=true, verifica se o horario local esta na janela de nao perturbe
+  IF v_campaign.respect_dnd THEN
+    SELECT value INTO v_dnd_hours
+      FROM public.talkx_settings
+     WHERE key = 'dnd_hours';
+
+    IF v_dnd_hours IS NOT NULL AND jsonb_typeof(v_dnd_hours) = 'object' THEN
+      v_minutes_of_day := EXTRACT(HOUR FROM v_local_at)::integer * 60
+                          + EXTRACT(MINUTE FROM v_local_at)::integer;
+      v_start_minutes := (split_part(v_dnd_hours ->> 'start', ':', 1))::integer * 60
+                         + (split_part(v_dnd_hours ->> 'start', ':', 2))::integer;
+      v_end_minutes := (split_part(v_dnd_hours ->> 'end', ':', 1))::integer * 60
+                       + (split_part(v_dnd_hours ->> 'end', ':', 2))::integer;
+
+      -- domingo: se sundays=false, DND nao aplica (janela aberta)
+      IF EXTRACT(DOW FROM v_local_at) = 0 AND (v_dnd_hours ->> 'sundays')::boolean = false THEN
+        RETURN true;
+      END IF;
+
+      -- feriados: comparados por data local, sem cast jsonb -> date[]
+      IF jsonb_array_length(v_dnd_hours -> 'holidays') > 0 THEN
+        IF v_local_date::text = ANY(ARRAY(SELECT jsonb_array_elements_text(v_dnd_hours -> 'holidays'))) THEN
+          RETURN true;
+        END IF;
+      END IF;
+
+      -- Janela DND: se start < end, verifica se esta dentro; se start > end (cruza
+      -- meia-noite), verifica se esta fora do intervalo permitido
+      IF v_start_minutes < v_end_minutes THEN
+        IF v_minutes_of_day >= v_start_minutes AND v_minutes_of_day < v_end_minutes THEN
+          RETURN false;
+        END IF;
+      ELSIF v_start_minutes > v_end_minutes THEN
+        IF v_minutes_of_day >= v_start_minutes OR v_minutes_of_day < v_end_minutes THEN
+          RETURN false;
+        END IF;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN true;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.talkx_campaign_window_open(uuid, timestamptz)
+  TO service_role;
+
+-- =========================================================================
+-- 4) setting dnd_hours: nao sobrescreve valor de outro dono
+-- =========================================================================
+INSERT INTO public.talkx_settings (key, value, description)
+VALUES (
+  'dnd_hours',
+  '{"start":"22:00","end":"08:00","sundays":true,"holidays":[]}'::jsonb,
+  'Janela "não perturbe": envios só fora deste horário quando respect_dnd=true'
+)
+ON CONFLICT (key) DO NOTHING;
+
