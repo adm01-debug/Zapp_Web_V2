@@ -41,6 +41,13 @@ export const queryKeys = {
     'participantStats',
     conversationId,
   ],
+  /**
+   * Perfil do usuario logado (auth). A chave nao e do Team Chat, mas quem a
+   * invalida aqui e o modulo: sem a fabrica o hook escreveria o literal e o
+   * guard F52 (`contratosModulo.test.ts`) ficaria vermelho. O VALOR e o literal
+   * historico de `useSecureProfile`, que invalida pelo mesmo prefixo.
+   */
+  profile: (): QueryKey => ['profile'],
   departments: {
     list: (): QueryKey => ['departmentChat', 'list'],
     /**

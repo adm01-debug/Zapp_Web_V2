@@ -58,8 +58,8 @@ Storage.
 | `useTeamPresence`                  | `useTeamPresence.ts`         | canal   | `team-presence-<conversationId>`       |
 | `useDepartmentProfiles`            | `useDepartmentManagement.ts` | rpc     | `get_team_profiles`                    |
 | `useDepartmentAuditLogs`           | `useDepartmentManagement.ts` | tabela  | `department_audit_logs`                |
-| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invites`                   |
-| `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc     | `get_department_whatsapp_mode`         |
+| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |
+| `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc     | `get_department_whatsapp_config`       |
 | `uploadTeamMedia`                  | `uploadTeamMedia.ts`         | storage | `team-chat-files`                      |
 
 Eventos assinados nos canais de dados: `useTeamConversations` escuta `*` em
@@ -87,6 +87,9 @@ a fábrica sem argumento devolve a raiz (não um `undefined` no lugar do id):
 - `queryKeys.memberProfile(profileId)`
 - `queryKeys.performance(conversationId)`
 - `queryKeys.participantStats(conversationId)`
+- `queryKeys.profile()` — raiz `['profile']` do perfil logado: o convite aceito
+  troca o departamento do perfil, entao `useAcceptDepartmentInvite` revalida por
+  esse prefixo (mesmo literal que `useSecureProfile` invalida).
 - `queryKeys.departments.list()`
 - `queryKeys.departments.members()` — mesma chave de `useDepartmentProfiles`
   (o id do departamento NÃO entra: a RPC `get_team_profiles` devolve a lista
@@ -127,7 +130,8 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
   literal `['transfer-dialog-members', ...]` — arquivo da área de componentes,
   fora deste módulo.
 - `useDepartmentManagement` ainda grava em `department_audit_logs` pelo cliente
-  (e o `INSERT` de `authenticated` foi revogado) e faz `upsert` em
-  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
-  RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
-  F62 do plano de finalização.
+  em dois fluxos de membro (o `INSERT` de `authenticated` foi revogado). A troca
+  desses dois pelo vocabulário auditado pela RPC é do item F62 do plano de
+  finalização; a leitura do WhatsApp e o convite/aceite já usam as RPCs
+  (`get_department_whatsapp_config`, `create_department_invite`,
+  `accept_department_invite`, `set_department_whatsapp_config`).

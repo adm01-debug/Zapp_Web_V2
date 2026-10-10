@@ -11238,6 +11238,14 @@ export type Database = {
         Args: { p_department_id: string }
         Returns: string
       }
+      get_department_whatsapp_config: {
+        Args: { p_department_id: string }
+        Returns: {
+          has_api_key: boolean
+          instance_id: string
+          mode: string
+        }[]
+      }
       get_department_whatsapp_credentials: {
         Args: { p_department_id: string }
         Returns: Json
