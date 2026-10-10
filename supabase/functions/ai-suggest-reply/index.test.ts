@@ -177,3 +177,82 @@ for (const [nome, conteudo] of SEM_JSON) {
     );
   });
 }
+
+// ── Filtro de artigos da base de conhecimento ──────────────────
+
+/** Artigos que a busca retorna (simulando 3 de 12 publicados). */
+const ARTIGOS_BUSCA = [
+  { category: "Pedidos", title: "Como rastrear seu pedido", content: "Acompanhe pelo código de rastreio.", rank: 0.95 },
+  { category: "Devoluções", title: "Política de devolução", content: "Devolva em até 30 dias.", rank: 0.87 },
+  { category: "Pagamento", title: "Formas de pagamento aceitas", content: "Cartão, boleto e PIX.", rank: 0.82 },
+];
+
+/** Spy que registra chamadas e retorna ARTIGOS_BUSCA. */
+function spySearchKB(): {
+  fn: AiSuggestReplyDeps["searchKnowledgeBase"];
+  chamadas: Array<{ query: string; maxResults: number }>;
+} {
+  const chamadas: Array<{ query: string; maxResults: number }> = [];
+  const fn = (query: string, maxResults: number) => {
+    chamadas.push({ query, maxResults });
+    return Promise.resolve({ data: ARTIGOS_BUSCA });
+  };
+  return { fn, chamadas };
+}
+
+/** Spy que retorna nulo (sem resultado de busca). */
+function spySearchKBVazio(): {
+  fn: AiSuggestReplyDeps["searchKnowledgeBase"];
+  chamadas: Array<{ query: string; maxResults: number }>;
+} {
+  const chamadas: Array<{ query: string; maxResults: number }> = [];
+  const fn = (query: string, maxResults: number) => {
+    chamadas.push({ query, maxResults });
+    return Promise.resolve({ data: null });
+  };
+  return { fn, chamadas };
+}
+
+Deno.test("com 12 artigos publicados, só os devolvidos por search_knowledge_base para a última mensagem entram no prompt", async () => {
+  const { fn: searchKB, chamadas } = spySearchKB();
+  const { generate, seen } = fakeProvider(TRES_VALIDAS);
+  Deno.env.set("SUPABASE_URL", "http://localhost:9999");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fake-key");
+  try {
+    const res = await handleAiSuggestReply(
+      pedido(corpo({ requestId: REQUEST_ID })),
+      { ...SEM_DONO, generate, searchKnowledgeBase: searchKB },
+    );
+    assertEquals(res.status, 200);
+    assertEquals(chamadas.length, 1, "search_knowledge_base foi chamada uma vez");
+    assertEquals(chamadas[0].query, "Bom dia, cadê meu pedido?");
+    const systemPrompt = seen[0].system ?? "";
+    assert(systemPrompt.includes("Como rastrear seu pedido"), "artigo 1 no prompt");
+    assert(systemPrompt.includes("Política de devolução"), "artigo 2 no prompt");
+    assert(systemPrompt.includes("Formas de pagamento aceitas"), "artigo 3 no prompt");
+    assertEquals(systemPrompt.includes("não relevante"), false, "artigos não buscados não entram");
+  } finally {
+    Deno.env.delete("SUPABASE_URL");
+    Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  }
+});
+
+Deno.test("sem resultado de busca, nenhum artigo entra no prompt", async () => {
+  const { fn: searchKB, chamadas } = spySearchKBVazio();
+  const { generate, seen } = fakeProvider(TRES_VALIDAS);
+  Deno.env.set("SUPABASE_URL", "http://localhost:9999");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fake-key");
+  try {
+    const res = await handleAiSuggestReply(
+      pedido(corpo({ requestId: REQUEST_ID })),
+      { ...SEM_DONO, generate, searchKnowledgeBase: searchKB },
+    );
+    assertEquals(res.status, 200);
+    assertEquals(chamadas.length, 1, "search_knowledge_base foi chamada uma vez");
+    const systemPrompt = seen[0].system ?? "";
+    assertEquals(systemPrompt.includes("BASE DE CONHECIMENTO"), false, "nenhum artigo de KB no prompt");
+  } finally {
+    Deno.env.delete("SUPABASE_URL");
+    Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  }
+});
