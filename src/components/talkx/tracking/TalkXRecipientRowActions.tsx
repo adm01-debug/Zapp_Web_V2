@@ -62,7 +62,7 @@ export function TalkXRecipientRowActions({ recipient, onActionDone }: TalkXRecip
         p_origin: 'manual_block',
         p_phone: recipient.contacts?.phone ?? '',
         p_reason: 'Bloqueado manualmente pelo operador',
-        p_reason_code: 'manual_block',
+        p_reason_code: 'manual',
         p_source_message_id: '',
       });
       if (error) throw error;
