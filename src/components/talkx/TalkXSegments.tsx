@@ -13,6 +13,7 @@ import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
+import { RuleValueInput } from './segments/RuleValueInput';
 import { toast } from 'sonner';
 
 interface Props {
@@ -336,3 +337,4 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
     </RailCard>
   );
 }
+
