@@ -150,12 +150,13 @@ function setQueryState(over: Partial<QueryState>) {
   };
 }
 
-function view() {
+function view({ pausedByName }: { pausedByName?: string | null } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={queryClient}>
       <TalkXCampaignPaused
         campaignId="camp-pausada-1"
+        pausedByName={pausedByName}
         onBack={h.onBack}
         onStatusChange={h.onStatusChange}
       />
@@ -186,6 +187,13 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     expect(screen.getByText(/Pausada em 06 set 2026/)).toBeTruthy();
     // a campanha está pausada: nada de avisar o pai para navegar
     expect(h.onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('quem pausou é nomeado quando o contêiner resolve paused_by', () => {
+    setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
+    render(view({ pausedByName: 'Ana Souza' }));
+
+    expect(screen.getByText(/Pausada por Ana Souza em 06 set 2026/)).toBeTruthy();
   });
 
   it('retomar: o modal não fecha antes de o servidor confirmar', async () => {

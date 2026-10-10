@@ -26,6 +26,7 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { TalkXCampaignPaused } from './TalkXCampaignPaused';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import {
   goTab,
@@ -42,7 +43,7 @@ import {
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -71,6 +72,9 @@ export default function TalkXView() {
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
+  // X156/T13: campanha pausada tem tela própria (TalkXCampaignPaused), separada da
+  // genérica "Campanha em Andamento" (TalkXCampaignRunning), que segue sendo a de 'sending'.
+  const [pausedCampaignId, setPausedCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
   // TL-152: a rota de tela resolve os ids quando as campanhas chegam
@@ -244,9 +248,12 @@ export default function TalkXView() {
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); writeScreenRoute(c.id, 'monitor'); }, [writeScreenRoute]);
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
   const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
+  // X156/T13: pausada tem tela própria sem endereço ?screen= na rota (a rota só
+  // conhece monitor/scheduled/running); voltar retorna à lista, como no trabalho original.
+  const openPaused = useCallback((c: TalkXCampaign) => { setPausedCampaignId(c.id); setTopView('paused'); }, []);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
-    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
+    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
     replaceTalkXRoute(null);
   }, [writeWizardRoute]);
@@ -314,9 +321,17 @@ export default function TalkXView() {
   // E72: routing por status
   const onView = useCallback((c: TalkXCampaign) => {
     if (c.status === 'scheduled') { openScheduled(c); return; }
-    if (c.status === 'sending' || c.status === 'paused') { openRunning(c); return; }
+    if (c.status === 'paused') { openPaused(c); return; }
+    if (c.status === 'sending') { openRunning(c); return; }
     openMonitor(c);
-  }, [openMonitor, openScheduled, openRunning]);
+  }, [openMonitor, openScheduled, openRunning, openPaused]);
+  // As ações de linha decidem o destino por status antes de chamar o contêiner
+  // (`useCampaignRowActions`): 'sending' e 'paused' chegam no mesmo handler. Aqui
+  // 'paused' desvia para a tela própria (X156/T13) e 'sending' segue na genérica.
+  const onViewRunning = useCallback((c: TalkXCampaign) => {
+    if (c.status === 'paused') { openPaused(c); return; }
+    openRunning(c);
+  }, [openPaused, openRunning]);
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
@@ -345,6 +360,31 @@ export default function TalkXView() {
         initialCampaignId={runningCampaignId}
         onBack={backToList}
         onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor', true); }}
+      />
+    );
+  }
+
+  // X156/T13: tela própria da campanha pausada. O nome de quem pausou vem de
+  // `paused_by` (uuid) resolvido pela lista de perfis já carregada na Visão geral.
+  if (topView === 'paused' && pausedCampaignId) {
+    const pausedCampaign = campaigns.find((c) => c.id === pausedCampaignId);
+    const pausedById = (pausedCampaign as { paused_by?: string | null } | undefined)?.paused_by;
+    const pausedByName = pausedById ? creators[pausedById] ?? null : null;
+    return (
+      <TalkXCampaignPaused
+        campaignId={pausedCampaignId}
+        pausedByName={pausedByName}
+        onBack={backToList}
+        onStatusChange={(campaign) => {
+          setPausedCampaignId(null);
+          // Retomada: a campanha voltou a enviar — abre a genérica "em andamento".
+          if (campaign.status === 'sending') {
+            setRunningCampaignId(campaign.id);
+            setTopView('running');
+            return;
+          }
+          backToList();
+        }}
       />
     );
   }
@@ -495,7 +535,7 @@ export default function TalkXView() {
           <TalkXOverview
             campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
             isError={isError} error={campaignsError} onRetry={() => refetchCampaigns()}
-            onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={openRunning} onDuplicate={duplicateCampaign}
+            onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={onViewRunning} onDuplicate={duplicateCampaign}
             onStart={(id) => { void startCampaign(id); }}
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
             onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
