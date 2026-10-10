@@ -144,3 +144,94 @@ export function pushTalkXOpenRoute(target: TalkXOpenTarget): void {
 export function replaceTalkXOpenRoute(target: TalkXOpenTarget): void {
   window.history.replaceState(null, '', formatTalkXOpenRoute(new URL(window.location.href), target));
 }
+
+// --- Screen routing (TL-152): campaign monitor screen via ?screen= ---
+
+export type TalkXScreen = 'monitor' | 'scheduled' | 'running' | 'report';
+export type TalkXScreenTarget = TalkXScreen | 'wizard';
+
+export type TalkXRoute = {
+  campaignId: string;
+  screen?: TalkXScreen;
+};
+
+export type ParsedTalkXScreenRoute = {
+  route: TalkXRoute | null;
+  needsNormalization: boolean;
+};
+
+const SCREENS = new Set<string>(['monitor', 'scheduled', 'running', 'report']);
+const CAMPAIGN_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+
+/**
+ * A situação da campanha decide a tela de acompanhamento.
+ * `paused` cai na tela running e `completed`/`cancelled` caem no report.
+ */
+export function screenForStatus(status: string | null | undefined): TalkXScreenTarget {
+  switch (status) {
+    case 'draft':
+      return 'wizard';
+    case 'scheduled':
+      return 'scheduled';
+    case 'sending':
+      return 'running';
+    case 'paused':
+      return 'running';
+    case 'completed':
+    case 'cancelled':
+      return 'report';
+    default:
+      return 'monitor';
+  }
+}
+
+/**
+ * Lê só a parte da campanha aberta do query string.
+ * `undefined` na tela significa "a situação decide";
+ * `null` (duplicado) ou valor malformado nunca abrem campanha.
+ */
+export function parseTalkXScreenRoute(search: string): ParsedTalkXScreenRoute {
+  const params = new URLSearchParams(search);
+  const rawCampaign = readSingle(params, 'campaign');
+  const rawScreen = readSingle(params, 'screen');
+
+  if (rawCampaign === undefined) {
+    return { route: null, needsNormalization: rawScreen !== undefined && rawScreen !== 'help' };
+  }
+
+  if (rawCampaign === null || !CAMPAIGN_ID.test(rawCampaign)) {
+    return { route: null, needsNormalization: true };
+  }
+
+  if (rawScreen === null) {
+    return { route: null, needsNormalization: true };
+  }
+
+  if (rawScreen !== undefined && !SCREENS.has(rawScreen)) {
+    return { route: null, needsNormalization: true };
+  }
+
+  return {
+    route: rawScreen === undefined
+      ? { campaignId: rawCampaign }
+      : { campaignId: rawCampaign, screen: rawScreen as TalkXScreen },
+    needsNormalization: false,
+  };
+}
+
+export function formatTalkXRoute(current: URL, route: TalkXRoute | null): string {
+  const url = new URL(current.href);
+  if (route) {
+    url.searchParams.set('campaign', route.campaignId);
+    if (route.screen) url.searchParams.set('screen', route.screen);
+    else url.searchParams.delete('screen');
+  } else {
+    url.searchParams.delete('campaign');
+    url.searchParams.delete('screen');
+  }
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+export function replaceTalkXRoute(route: TalkXRoute | null): void {
+  window.history.replaceState(null, '', formatTalkXRoute(new URL(window.location.href), route));
+}

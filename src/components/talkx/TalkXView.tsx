@@ -32,8 +32,12 @@ import {
   pushTalkXWizardRoute,
   replaceTalkXTabRoute,
   replaceTalkXWizardRoute,
+  parseTalkXScreenRoute,
+  screenForStatus,
+  replaceTalkXRoute,
   type TalkXTab,
   type TalkXWizardRoute,
+  type TalkXRoute,
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
 
@@ -50,7 +54,13 @@ export default function TalkXView() {
   // estado não aparece (nunca um falso "desconectado" na tela).
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
-  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXRoute(window.location.search).wizard.route ? 'wizard' : 'tabs');
+  const [topView, setTopView] = useState<TalkXTopView>(() => {
+    const wizard = parseTalkXRoute(window.location.search).wizard.route;
+    if (wizard) return 'wizard';
+    const screenRoute = parseTalkXScreenRoute(window.location.search).route;
+    if (screenRoute?.screen) return screenRoute.screen;
+    return 'tabs';
+  });
   const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
@@ -79,6 +89,8 @@ export default function TalkXView() {
 
   const syncFromBrowserHistory = useCallback(() => {
     const parsedWizard = parseTalkXRoute(window.location.search).wizard;
+    const parsedScreen = parseTalkXScreenRoute(window.location.search);
+
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
 
     // The browser history event, rather than a render effect, is the source of
@@ -87,6 +99,26 @@ export default function TalkXView() {
     setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
+
+    // TL-152: screen routing takes priority over wizard routing when
+    // ?screen= is present in the URL.
+    if (parsedScreen.route?.screen) {
+      const campaignId = parsedScreen.route.campaignId;
+      const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
+      setEditingCampaign(null);
+      setMonitorId(null);
+      setScheduledCampaignId(null);
+      setRunningCampaignId(null);
+      switch (parsedScreen.route.screen) {
+        case 'scheduled': setScheduledCampaignId(campaignId); break;
+        case 'running': setRunningCampaignId(campaignId); break;
+        default: setMonitorId(campaignId); break;
+      }
+      setTopView(parsedScreen.route.screen === 'scheduled' || parsedScreen.route.screen === 'running'
+        ? parsedScreen.route.screen
+        : 'monitor');
+      return;
+    }
 
     if (!parsedWizard.route) {
       setEditingCampaign(null);
@@ -112,6 +144,10 @@ export default function TalkXView() {
     // entrada nova no histórico) em vez de mostrar área vazia.
     const initialTab = parseTalkXRoute(window.location.search);
     if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
+    // TL-152: normaliza ?screen= desconhecido (remove o parâmetro sem
+    // entrar no histórico, para não criar entradas inúteis).
+    const initialScreen = parseTalkXScreenRoute(window.location.search);
+    if (initialScreen.needsNormalization) replaceTalkXRoute(null);
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
   }, [syncFromBrowserHistory]);
