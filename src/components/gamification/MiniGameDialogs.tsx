@@ -75,7 +75,7 @@ export function SpeedTypingGame({ isOpen, onClose, onComplete }: GameDialogProps
             </p>
           </Card>
           <Input value={userInput} onChange={(e) => handleInputChange(e.target.value)} placeholder="Digite aqui..." className="text-lg" autoFocus />
-          <Progress value={accuracy} className="h-2" />
+          <Progress value={accuracy} className="h-2" aria-label="Precisão de digitação" />
           <p className="text-sm text-center text-muted-foreground">Precisão: {accuracy.toFixed(0)}%</p>
         </div>
       </DialogContent>
@@ -115,7 +115,7 @@ export function QuizGame({ isOpen, onClose, onComplete }: GameDialogProps) {
               <Badge variant="outline">Pergunta {currentQuestion + 1}/{QUIZ_QUESTIONS.length}</Badge>
               <Badge><Star className="h-4 w-4 mr-1" />{score} pts</Badge>
             </div>
-            <Progress value={((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100} className="h-2" />
+            <Progress value={((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100} className="h-2" aria-label="Progresso do quiz" />
             <Card className="p-4"><p className="text-lg font-medium">{question.question}</p></Card>
             <div className="grid gap-2">
               {question.options.map((option, index) => (

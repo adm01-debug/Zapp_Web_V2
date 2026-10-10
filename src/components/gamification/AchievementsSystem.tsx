@@ -62,7 +62,7 @@ export const AchievementsSystem = ({ showCompact = false }: AchievementsSystemPr
             <span className="text-muted-foreground">{totalXp} XP</span>
             <span className="text-muted-foreground">{Math.max(0, xpForNextLevel(level) - totalXp)} XP para nível {level + 1}</span>
           </div>
-          <Progress value={levelProgress(totalXp, level)} className="h-2" />
+          <Progress value={levelProgress(totalXp, level)} className="h-2" aria-label={`Progresso para o nível ${level + 1}`} />
           {recentAchievements.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {recentAchievements.map(a => <Badge key={a.id} variant="secondary" className="text-3xs">{a.achievement_name}</Badge>)}

@@ -161,6 +161,11 @@
     /* ===== GAMIFICAÇÓO ===== */
     --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
+    /* N-191: par de TEXTO do selo de XP (badge `bg-xp/10`). `text-xp` (L53) sobre a
+       própria tinta /10 dava 4,5:1 no claro e 3,1:1 no escuro — o par escurece no
+       claro e clareia no escuro (mesma matiz/saturação 221 83%), sem mexer no
+       preenchimento. Não reutilizar `--primary-text`: o par é do XP. */
+    --xp-text: 221 83% 35%;
     --coins: 45 93% 50%;
     --coins-foreground: 0 0% 10%;
     --streak: 24 95% 55%;
@@ -446,6 +451,8 @@
 
     --xp: 221 83% 53%;
     --xp-foreground: 0 0% 100%;
+    /* N-191: par de TEXTO do selo de XP no escuro (ver comentário no :root). */
+    --xp-text: 221 83% 78%;
     --coins: 42 100% 58%;
     --coins-foreground: 0 0% 8%;
     --streak: 20 100% 60%;
