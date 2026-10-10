@@ -95,7 +95,7 @@ function SyncStatusChip({ lastSyncAt }: { lastSyncAt: string | null | undefined 
       'flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border',
       isFresh ? 'text-success border-success/30 bg-success/10' : 'text-muted-foreground border-border bg-muted/30'
     )}>
-      <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success animate-pulse' : 'bg-muted-foreground')} />
+      <span className={cn('w-1.5 h-1.5 rounded-full', isFresh ? 'bg-success motion-safe:animate-pulse' : 'bg-muted-foreground')} />
       {label}
     </span>
   );

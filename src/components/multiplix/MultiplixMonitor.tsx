@@ -279,7 +279,7 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
         <Progress value={progress} className="h-3 mb-1.5" />
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(dispatch.total_recipients)}</span>
-          {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
+          {isRunning && <span className="text-primary-glow font-medium motion-safe:animate-pulse">Enviando agora…</span>}
           {dispatch.completed_at && <span>Concluído em {fmtDateTime(dispatch.completed_at)}</span>}
         </div>
         {/* F80: a contagem de "sem WhatsApp" pode falhar sozinha (o servidor sem o

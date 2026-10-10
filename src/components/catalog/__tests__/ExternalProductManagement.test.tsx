@@ -145,7 +145,12 @@ describe('ExternalProductManagement', () => {
       error: null,
     });
     renderManagement();
-    expect(screen.getByText(/^Sincronizado /)).toBeInTheDocument();
+    const chip = screen.getByText(/^Sincronizado /).closest('span')!;
+    expect(chip).toBeInTheDocument();
+    // O ponto de "sincronizando" pisca só sob motion-safe (respeita reduzir movimento).
+    const ponto = chip.querySelector('.bg-success') as HTMLElement;
+    expect(ponto.className).toMatch(/(^|\s)motion-safe:animate-pulse(\s|$)/);
+    expect(ponto.className).not.toMatch(/(^|\s)animate-pulse(\s|$)/);
   });
 
   it('E32: chip de sync com mais de 24h mostra data/hora (tom neutro)', () => {
