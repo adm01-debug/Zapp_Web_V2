@@ -252,3 +252,73 @@ describe('Tela 10 — configurações de agendamento (X137)', () => {
     expect(h.updateAsync.mock.calls[0][0].confirm_consent).toBe(false);
   });
 });
+
+describe('Tela 10 — cabeçalho, selo e estado pronta para envio (TL-151)', () => {
+  it('mostra o breadcrumb "Campanhas › Talk X › Campanha Agendada" num só contêiner', () => {
+    const { container } = render(view());
+    expect(container.textContent).toContain('Campanhas › Talk X › Campanha Agendada');
+  });
+
+  it('breadcrumb: as duas primeiras partes têm estilo de link e a atual texto comum', () => {
+    const { container } = render(view());
+    const links = Array.from(container.querySelectorAll('span.text-primary'));
+    const texts = links.map((el) => el.textContent);
+    expect(texts).toContain('Campanhas');
+    expect(texts).toContain('Talk X');
+    const atual = Array.from(container.querySelectorAll('span.text-foreground')).find(
+      (el) => el.textContent === 'Campanha Agendada',
+    );
+    expect(atual).toBeTruthy();
+    expect(atual?.className).not.toContain('text-primary');
+  });
+
+  it('mostra o título "Campanha Agendada • {nome}" num só elemento', () => {
+    render(view());
+    expect(screen.getByText('Campanha Agendada • Promoção de Outubro')).toBeTruthy();
+  });
+
+  it('título com nome longo mantém o separador num só elemento', () => {
+    const longo = 'Promoção de Outubro com nome muito longo para quebrar linha junto do título';
+    h.campaigns = [{ ...CAMPAIGN, name: longo }];
+    render(view());
+    expect(screen.getByText(`Campanha Agendada • ${longo}`)).toBeTruthy();
+  });
+
+  it('mostra a descrição da campanha como subtítulo quando existe', () => {
+    h.campaigns = [{ ...CAMPAIGN, description: 'Campanha de verão' }];
+    render(view());
+    expect(screen.getByText('Campanha de verão')).toBeTruthy();
+  });
+
+  it('sem descrição não repete o nome como subtítulo', () => {
+    h.campaigns = [{ ...CAMPAIGN, description: null }];
+    render(view());
+    const titulo = screen.getByText('Campanha Agendada • Promoção de Outubro');
+    expect(titulo).toBeTruthy();
+    const headerBox = titulo.closest('div');
+    expect(headerBox?.textContent?.split('Promoção de Outubro')).toHaveLength(2);
+  });
+
+  it('mostra o selo com data no fuso da campanha (dd/mm • HH:mm)', () => {
+    render(view());
+    expect(screen.getByText(/Agendada para 09\/06 • 22:30/)).toBeTruthy();
+  });
+
+  it('mostra "pronta para ser enviada" como texto fixo (X120 ainda sem hook nesta base)', () => {
+    render(view());
+    expect(screen.getByText(/Campanha pronta para ser enviada/)).toBeTruthy();
+  });
+});
+
+describe('TL-151 — formatTalkXScheduleLabel (extração do selo)', () => {
+  it('formata a parede local como dd/mm • HH:mm', async () => {
+    const { formatTalkXScheduleLabel } = await import('../TalkXCampaignScheduled');
+    expect(formatTalkXScheduleLabel('2030-06-09T22:30')).toBe('09/06 • 22:30');
+  });
+
+  it('entrada vazia ou inválida vira traço', async () => {
+    const { formatTalkXScheduleLabel } = await import('../TalkXCampaignScheduled');
+    expect(formatTalkXScheduleLabel('')).toBe('—');
+    expect(formatTalkXScheduleLabel('invalida')).toBe('—');
+  });
+});

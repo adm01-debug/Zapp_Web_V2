@@ -44,6 +44,19 @@ const TIMEZONES = [
   ['UTC', 'UTC'],
 ] as const;
 
+/**
+ * TL-151: formata a parede local como selo da Tela 10.
+ * Entrada: parede local YYYY-MM-DDTHH:mm (saida de utcToLocalInTimezone).
+ * Saida: dd/mm com ponto medio HH:mm. Entrada vazia ou invalida vira traco.
+ * Extracao unica dos dois ramos (agendado e rascunho local).
+ */
+export function formatTalkXScheduleLabel(local: string): string {
+  if (!local) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
+  if (!m) return '—';
+  return `${m[3]}/${m[2]} • ${m[4]}:${m[5]}`;
+}
+
 interface Props {
   campaignId: string; // P1: recebe ID, deriva da query -- evita stale
   onBack: () => void;
@@ -232,9 +245,13 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     }
   }, [campaign, updateCampaign, onBack]);
 
-  const scheduledLabel = campaign?.scheduled_at
-    ? fmtDateTime(campaign.scheduled_at)
-    : localDate && localTime ? fmtDateTime(localToUTCInTimezone(`${localDate}T${localTime}`, localTz)) : '—';
+  const scheduledLabel = formatTalkXScheduleLabel(
+    campaign?.scheduled_at
+      ? utcToLocalInTimezone(campaign.scheduled_at, campaign.schedule_timezone ?? DEFAULT_SCHEDULE_TIMEZONE)
+      : localDate && localTime
+        ? utcToLocalInTimezone(localToUTCInTimezone(`${localDate}T${localTime}`, localTz), localTz)
+        : '',
+  );
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -247,8 +264,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-2xs text-muted-foreground hidden sm:inline">
-          Campanhas / <span className="text-foreground">{campaign.name}</span>
+        <span className="text-2xs hidden sm:inline">
+          <span className="text-primary hover:underline cursor-pointer">Campanhas</span>
+          <span className="text-muted-foreground"> › </span>
+          <span className="text-primary hover:underline cursor-pointer">Talk X</span>
+          <span className="text-muted-foreground"> › </span>
+          <span className="text-foreground">Campanha Agendada</span>
         </span>
       </div>
 
@@ -257,9 +278,14 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <div className="flex items-center gap-3">
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
-            <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
+            <p className="text-[13px] font-semibold text-foreground">Campanha Agendada • {campaign.name}</p>
+            {campaign.description ? (
+              <p className="text-2xs text-muted-foreground">{campaign.description}</p>
+            ) : null}
           </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
+            Talk X · Agendamento de campanha
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <GhostButton icon={Pencil} onClick={() => onEdit(campaign)}>Editar no wizard</GhostButton>
