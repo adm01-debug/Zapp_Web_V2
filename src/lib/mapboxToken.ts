@@ -136,11 +136,38 @@ export function reportMapboxFailure(kind: MapboxFailureKind, where: 'picker' | '
   reportClientError(new Error(`mapbox_${kind}`), { source: `mapbox_${where}`, kind });
 }
 
-/** Remove campos que podem vazar segredos (ex.: access_token) antes de logar. */
-function sanitizeLogDetail(detail: unknown): unknown {
-  if (detail && typeof detail === 'object') {
-    const { access_token, ...rest } = detail as Record<string, unknown>;
-    return rest;
+/** Redige `access_token=<valor>` (querystring de URL de tile/estilo) em qualquer texto. */
+const ACCESS_TOKEN_IN_TEXT = /access_token=[^&\s"']+/gi;
+const MAX_SANITIZE_DEPTH = 4;
+
+function redactTokenText(text: string): string {
+  return text.replace(ACCESS_TOKEN_IN_TEXT, '[redigido]');
+}
+
+/**
+ * Redige segredos (ex.: `access_token`) antes de logar, sem descartar o diagnóstico.
+ * Trata explicitamente string, Error, array e objeto (aninhado), em vez de espalhar o
+ * valor e mandar `{}` ou o token cru. O valor inteiro sai do log, inclusive a chave `=`.
+ */
+function sanitizeLogDetail(detail: unknown, depth = 0): unknown {
+  if (detail == null || depth > MAX_SANITIZE_DEPTH) return detail;
+  if (typeof detail === 'string') return redactTokenText(detail);
+  if (detail instanceof Error) {
+    const errorLike: Record<string, unknown> = { name: detail.name, message: redactTokenText(detail.message) };
+    for (const [key, value] of Object.entries(detail)) {
+      if (key === 'access_token') continue;
+      errorLike[key] = sanitizeLogDetail(value, depth + 1);
+    }
+    return errorLike;
+  }
+  if (Array.isArray(detail)) return detail.map((item) => sanitizeLogDetail(item, depth + 1));
+  if (typeof detail === 'object') {
+    const clean: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(detail as Record<string, unknown>)) {
+      if (key === 'access_token') continue;
+      clean[key] = sanitizeLogDetail(value, depth + 1);
+    }
+    return clean;
   }
   return detail;
 }

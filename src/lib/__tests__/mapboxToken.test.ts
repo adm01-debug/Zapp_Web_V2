@@ -130,15 +130,39 @@ describe('classificação e telemetria', () => {
     );
   });
 
-  it('log.error não recebe access_token no detail', () => {
-    reportMapboxFailure('timeout', 'picker', { access_token: 'pk.secret', status: 401 });
-    const args = h.logError.mock.calls[0];
-    for (const arg of args) {
-      if (typeof arg === 'string') {
-        expect(arg).not.toContain('access_token=');
-      } else if (arg && typeof arg === 'object') {
-        expect(arg as Record<string, unknown>).not.toHaveProperty('access_token');
+  it('log.error não recebe o token nem `access_token=` em nenhum argumento', () => {
+    const serialized = (arg: unknown) => (typeof arg === 'string' ? arg : JSON.stringify(arg) ?? String(arg));
+    const cases: unknown[] = [
+      { access_token: 'pk.secret', status: 401 },
+      'GET https://api.mapbox.com/styles/v1/mapbox?access_token=pk.secret 401',
+      new Error('GET https://api.mapbox.com/styles/v1/mapbox?access_token=pk.secret 401'),
+      {
+        url: 'https://api.mapbox.com/styles/v1/mapbox?access_token=pk.secret',
+        error: { message: 'falhou com access_token=pk.secret' },
+        status: 401,
+      },
+      ['https://api.mapbox.com/styles/v1/mapbox?access_token=pk.secret'],
+    ];
+    cases.forEach((detail, index) => {
+      h.logError.mockClear();
+      reportMapboxFailure('timeout', 'picker', detail);
+      expect(h.logError).toHaveBeenCalledTimes(1);
+      const args = h.logError.mock.calls[0] as unknown[];
+      expect(args.length, `caso ${index}: log.error recebeu ${args.length} argumentos`).toBe(2);
+      for (const arg of args) {
+        const text = serialized(arg);
+        expect(text, `caso ${index} vazou o token: ${text}`).not.toContain('pk.secret');
+        expect(text, `caso ${index} vazou a chave: ${text}`).not.toContain('access_token=');
       }
-    }
+    });
+  });
+
+  it('detail com Error preserva o diagnóstico (name/message) já redigido', () => {
+    reportMapboxFailure('server_error', 'bubble', new Error('GET https://api.mapbox.com/?access_token=pk.secret'));
+    const detail = (h.logError.mock.calls[0] as unknown[])[1] as { name?: string; message?: string };
+    expect(detail.name).toBe('Error');
+    expect(detail.message).toContain('https://api.mapbox.com/');
+    expect(detail.message).not.toContain('access_token=');
+    expect(detail.message).not.toContain('pk.secret');
   });
 });
