@@ -4,7 +4,7 @@ import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolutio
 import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { authorizeCronOrUser, forbiddenResponse, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleConnectionHealthCheck(
@@ -25,20 +25,27 @@ export async function handleConnectionHealthCheck(
   try {
 
     // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
-    // aceitava como "um JWT valido", entao qualquer visitante anonimo passava daqui.
-    // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
-    // literal da RPC fica AQUI de proposito, para o guard de catalogo
-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
-    const authorized = await isAuthorizedCronOrUser(req, supabase, {
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU usuario autenticado COM
+    // papel admin/supervisor. A ANON KEY deixa de entrar: ela e publica (vai no bundle
+    // do front) e o gateway a aceitava como "um JWT valido", entao qualquer visitante
+    // anonimo passava daqui. Um usuario autenticado sem papel (ex.: agent) dispara a
+    // varredura de TODAS as conexoes e o e-mail a todos os admins — por isso esse
+    // caminho exige `is_admin_or_supervisor` (403 sem ele). O cron e a service key
+    // seguem inalterados (nao passam pela checagem de papel). O guard vive em
+    // _shared/cron-secret-auth.ts; os literais das RPCs ficam AQUI de proposito, para o
+    // guard de catalogo (scripts/db-audit/supabase-usage-guard.mjs) validar os alvos.
+    const authz = await authorizeCronOrUser(req, supabase, {
       serviceKey,
       readVaultSecret: async () => {
         const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
         return !error && typeof data === 'string' ? data : null;
       },
+      isUserPrivileged: async (userId) => {
+        const { data, error } = await supabase.rpc('is_admin_or_supervisor', { _user_id: userId });
+        return !error && data === true;
+      },
     });
-    if (!authorized) return unauthorizedResponse(headers);
+    if (!authz.ok) return authz.status === 403 ? forbiddenResponse(headers) : unauthorizedResponse(headers);
 
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
