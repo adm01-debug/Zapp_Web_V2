@@ -62,7 +62,7 @@ describe('ChannelRoutingRules — a11y: nomes nos seletores e no interruptor', (
     vi.clearAllMocks();
   });
 
-  it('3 comboboxes têm aria-label: Canal, Fila e Tipo de canal', async () => {
+  it('2 comboboxes têm aria-label: Canal e Fila (Tipo de canal está em OmnichannelManager.tsx:182)', async () => {
     wrap(<ChannelRoutingRules />);
 
     await waitFor(() => {
@@ -103,7 +103,7 @@ describe('ChannelRoutingRules — a11y: nomes nos seletores e no interruptor', (
     expect(switchEl).toHaveAttribute('aria-label', 'Ativar regra WhatsApp');
   });
 
-  it('axe não acusa violações nos controles de roteamento', async () => {
+  it('axe não acusa violações nos controles de roteamento com o formulário aberto', async () => {
     mockState.rulesData = {
       data: [
         {
@@ -131,8 +131,16 @@ describe('ChannelRoutingRules — a11y: nomes nos seletores e no interruptor', (
       ).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: /nova regra/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Canal' })).toBeInTheDocument();
+    });
+
     const results = await axe(container, {
-      rules: { 'heading-order': { enabled: false } },
+      rules: {
+        'heading-order': { enabled: false, description: 'AlertTitle usa h5 sem h4 precedente; defeito pré-existente fora do escopo deste cartão' },
+      },
     });
     expect(results).toHaveNoViolations();
   });
