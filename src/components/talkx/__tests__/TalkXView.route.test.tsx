@@ -147,6 +147,25 @@ describe('TalkXView tab deep links (X007)', () => {
     expect(screen.getByTestId('settings')).toBeInTheDocument();
   });
 
+  it('?tab=campaigns é o alias da Visão geral: mostra a lista em vez de área vazia', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=campaigns');
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(screen.queryByTestId('analytics')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('suppression')).not.toBeInTheDocument();
+  });
+
+  it('?tab=analytics&tab=suppression não escolhe aba por acaso: cai na Visão geral e reescreve o endereço', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=analytics&tab=suppression');
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).getAll('tab')).toEqual(['overview']);
+    });
+  });
+
   it('voltar no navegador restaura a aba', async () => {
     window.history.replaceState(null, '', '/?view=talkx&tab=suppression');
     render(<TalkXView />);
