@@ -66,7 +66,7 @@ export async function syncContacts(
   for (const contact of contacts) {
     const { remoteJid, name: rawName, avatarUrl } = normalizeEvoContact(contact);
     // só JIDs de usuário; exclui grupos, broadcast e @lid (GO expõe contatos LID)
-    if (!remoteJid.endsWith('@s.whatsapp.net')) { skipped++; continue; }
+    if (!remoteJid.endsWith('@s.whatsapp.net') || contact.isGroup) { skipped++; continue; }
     const phone = remoteJid.replace('@s.whatsapp.net', '');
     if (!phone || phone.length < 6) { skipped++; continue; }
     const name = rawName || phone;
