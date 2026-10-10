@@ -194,3 +194,19 @@ describe('NotificationsPopover — R2-PLAT-005 (#443)', () => {
     expect(screen.queryByText(/não foi possível atualizar as notifica/i)).toBeNull();
   });
 });
+
+/**
+ * U12 — o botão de notificações no modo expandido tinha 28 px de área
+ * clicável, abaixo do mínimo de 44 px para ponteiro grosso
+ * (pointer: coarse). Agora usa min-w-[44px] min-h-[44px], mantendo o
+ * ícone no tamanho visual original.
+ */
+describe('NotificationsPopover — área clicável ≥ 44 px (pointer: coarse)', () => {
+  it('no modo expandido tem min-w-[44px] min-h-[44px]', () => {
+    supa.limit.mockResolvedValue({ data: [], error: null });
+    render(popoverUi(makeQc()));
+    const btn = screen.getByRole('button', { name: /^Notificações/ });
+    expect(btn.className).toContain('min-w-[44px]');
+    expect(btn.className).toContain('min-h-[44px]');
+  });
+});

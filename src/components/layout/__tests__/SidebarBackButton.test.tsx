@@ -73,3 +73,18 @@ describe('SidebarBackButton', () => {
     expect(screen.getAllByRole('button', { name: 'Voltar à tela anterior' })).toHaveLength(1);
   });
 });
+
+/**
+ * U12 — o botão "Voltar" no modo expandido tinha 28 px de área clicável,
+ * abaixo do mínimo de 44 px para ponteiro grosso (pointer: coarse).
+ * Agora usa min-w-[44px] min-h-[44px], mantendo o ícone no tamanho visual original.
+ */
+describe('SidebarBackButton — área clicável ≥ 44 px (pointer: coarse)', () => {
+  it('no modo expandido tem min-w-[44px] min-h-[44px]', () => {
+    const onGoBack = vi.fn();
+    renderButton({ canGoBack: true, onGoBack, collapsed: false });
+    const btn = screen.getByRole('button', { name: 'Voltar à tela anterior' });
+    expect(btn.className).toContain('min-w-[44px]');
+    expect(btn.className).toContain('min-h-[44px]');
+  });
+});
