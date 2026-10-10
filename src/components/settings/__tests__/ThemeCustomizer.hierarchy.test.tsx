@@ -23,7 +23,7 @@ vi.mock('@/hooks/ui/useReducedMotion', () => ({
   useReducedMotion: () => false,
 }));
 
-vi.mock('./theme/useThemePreset', () => ({
+vi.mock('../theme/useThemePreset', () => ({
   useThemePreset: () => ({
     config: { preset: 'classic', borderRadius: 8 },
     hasUnsavedChanges: false,
