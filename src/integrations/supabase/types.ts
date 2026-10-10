@@ -12253,6 +12253,7 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      talkx_insights: { Args: { p_from: string; p_to: string }; Returns: Json }
       talkx_match_optout: { Args: { p_text: string }; Returns: string }
       talkx_next_recipients: {
         Args: { p_campaign_id: string; p_limit?: number }
