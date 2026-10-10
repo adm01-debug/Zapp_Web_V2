@@ -4,18 +4,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Users, ChevronLeft, RefreshCw, Activity, Send,
+  ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, RECIPIENT_STATUS, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -24,7 +25,7 @@ import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
-import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
+import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -203,109 +204,48 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
   );
 }
 
-
-// ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
-const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
-const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
-
-function TabRecipients({ campaignId }: { campaignId: string }) {
-  const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-recipients', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('id, campaign_id, contact_id, personalized_message, status, sent_at, delivered_at, error_message, manual_retry_count, created_at, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
-      if (error) throw error;
-      return (data ?? []) as RecipRow[];
-    },
-    refetchInterval: 15_000,
-    staleTime: 10_000,
-  });
-
-  return (
-    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
-      <TalkXQueryBoundary
-        query={{ isLoading, isFetching, isError, error }}
-        entity="informações dos destinatários"
-        onRetry={() => { void refetch(); }}
-        skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
-        isEmpty={(recips?.length ?? 0) === 0}
-        empty={(
-          <div className="p-8 text-center">
-            <Users className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
-          </div>
-        )}
-      >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-          <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-          <p className="text-xs text-foreground-secondary">{`Mostrando ${recips?.length ?? 0} recentes`}</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[540px] border-collapse">
-            <thead><tr>
-              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em', ''].map((h) => (
-                <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {(recips ?? []).map((r, i) => (
-                <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                  <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                  <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs">
-                    <TalkXRecipientRowActions recipient={r} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
-        </div>
-      </TalkXQueryBoundary>
-    </div>
-  );
-}
-
-// ─── Tab: Mensagens ────────────────────────────────────────────────────────────
-// A campanha pode ser alterada depois de iniciada. Por isso, esta tela só mostra
-// o snapshot individual gravado pelo worker; nunca reconstitui conteúdo usando o
-// template atual da campanha.
-type MessageRow = {
-  id: string;
-  status: string;
-  personalized_message: string | null;
-  sent_at: string | null;
-  delivered_at: string | null;
-  error_message: string | null;
-  contacts: { name: string; phone: string } | null;
-};
-
 function TabMessages({ campaignId }: { campaignId: string }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
-  const { data: messages, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-messages', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('id, status, personalized_message, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId)
-        .order('updated_at', { ascending: false })
-        .limit(100);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [pageRows, setPageRows] = useState<MessageRow[]>([]);
+  const [pageNextCursor, setPageNextCursor] = useState<string | null>(null);
 
-      if (error) throw error;
-      return (data ?? []) as MessageRow[];
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ['talkx-running-messages-page', campaignId, statusFilter, search],
+    queryFn: async () => {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+        p_campaign_id: campaignId,
+        p_limit: 50,
+        p_cursor: cursor ?? null,
+        p_status: statusFilter === 'all' ? null : statusFilter,
+        p_search: search || null,
+      });
+      if (rpcError) throw rpcError;
+      return rpcData as { rows: MessageRow[]; next_cursor: string | null; total: number };
     },
     refetchInterval: 15_000,
     staleTime: 10_000,
   });
 
-  const snapshotCount = messages?.filter((message) => Boolean(message.personalized_message?.trim())).length ?? 0;
+  // Sync RPC result into local pagination state
+  useEffect(() => {
+    if (data) {
+      setPageRows(data.rows);
+      setPageNextCursor(data.next_cursor);
+    }
+  }, [data]);
+
+  const loadMore = () => {
+    if (pageNextCursor) setCursor(pageNextCursor);
+  };
+
+  // Reset pagination when filters change
+  const handleStatusChange = (v: string) => { setStatusFilter(v); setCursor(null); setPageRows([]); };
+  const handleSearchChange = (v: string) => { setSearch(v); setCursor(null); setPageRows([]); };
+
+  const snapshotCount = pageRows.filter((message) => Boolean(message.personalized_message?.trim())).length ?? 0;
   const toggleExpanded = (id: string) => {
     setExpandedIds((current) => {
       const next = new Set(current);
@@ -323,7 +263,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
         entity="mensagens"
         onRetry={() => { void refetch(); }}
         skeleton={<div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>}
-        isEmpty={(messages?.length ?? 0) === 0}
+        isEmpty={(pageRows?.length ?? 0) === 0}
         empty={(
           <div className="p-8 text-center">
             <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
@@ -331,18 +271,29 @@ function TabMessages({ campaignId }: { campaignId: string }) {
           </div>
         )}
       >
-        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
-            <p className="text-2xs text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
+        {/* Filters */}
+        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-[180px] relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar por nome ou telefone..."
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-input/40 border border-border/70 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
           </div>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
+          </Select>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
             <Send className="h-3.5 w-3.5 text-primary" />
             {`${snapshotCount} com conteúdo`}
           </span>
         </div>
         <div className="divide-y divide-border/40">
-          {messages?.map((message) => {
+          {pageRows.map((message) => {
             const materialized = message.personalized_message?.trim() ?? '';
             const canExpand = materialized.length > 360;
             const isExpanded = expandedIds.has(message.id);
@@ -373,7 +324,11 @@ function TabMessages({ campaignId }: { campaignId: string }) {
             );
           })}
         </div>
-        {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-2xs text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+        {pageNextCursor && (
+          <div className="p-3 text-center">
+            <button type="button" onClick={loadMore} className="text-xs font-semibold text-primary hover:underline">Carregar mais</button>
+          </div>
+        )}
       </TalkXQueryBoundary>
     </div>
   );
@@ -832,7 +787,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
-              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
+              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
               {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}

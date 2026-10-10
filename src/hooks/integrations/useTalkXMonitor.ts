@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fromTable } from '@/lib/supabaseHelpers';
+import { supabase } from '@/lib/supabaseHelpers';
 
 export interface RatePoint { label: string; Enviadas: number; Entregues: number }
 
@@ -36,28 +37,48 @@ export function buildRateByMinute(data: { sent_at: string | null; delivered_at: 
 }
 
 export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all') {
-  const query = useQuery({
-    queryKey: ['talkx-monitor-recipients', campaignId, statusFilter],
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [pageRows, setPageRows] = useState<MonitorRecipient[]>([]);
+  const [pageNextCursor, setPageNextCursor] = useState<string | null>(null);
+
+  type RpcResult = { rows: MonitorRecipient[]; next_cursor: string | null; total: number };
+
+  const query = useQuery<RpcResult>({
+    queryKey: ['talkx-monitor-recipients', campaignId, statusFilter, cursor],
     queryFn: async () => {
-      let q = fromTable('talkx_recipients')
-        .select('id, contact_id, status, sent_at, delivered_at, error_message, personalized_message')
-        .eq('campaign_id', campaignId!)
-        .order('sent_at', { ascending: false })
-        .limit(2000);
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as MonitorRecipient[];
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+        p_campaign_id: campaignId!,
+        p_limit: 200,
+        p_cursor: cursor ?? null,
+        p_status: statusFilter === 'all' ? null : statusFilter,
+        p_search: null,
+      });
+      if (rpcError) throw rpcError;
+      return rpcData as RpcResult;
     },
     enabled: !!campaignId,
     refetchInterval: 5_000,
   });
 
+  // Sync RPC result into local pagination state
+  useEffect(() => {
+    if (query.data) {
+      setPageRows(query.data.rows);
+      setPageNextCursor(query.data.next_cursor);
+    }
+  }, [query.data]);
+
+  const loadMore = () => {
+    if (pageNextCursor) setCursor(pageNextCursor);
+  };
+
   return {
-    recipients: query.data ?? [],
+    recipients: pageRows,
+    recipientsNextCursor: pageNextCursor,
+    loadMoreRecipients: loadMore,
     isLoading: query.isLoading,
     isError: query.isError,
-    rateByMinute: buildRateByMinute(query.data ?? []),
+    rateByMinute: buildRateByMinute(pageRows),
     refetch: query.refetch,
   };
 }
