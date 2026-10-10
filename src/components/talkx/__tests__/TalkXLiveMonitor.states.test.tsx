@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { TalkXLiveStatus } from '@/hooks/integrations/useTalkXLiveChannel';
 
 /**
  * X047c — matriz de estados, linha da tela Monitor (TalkXLiveMonitor).
@@ -27,6 +28,7 @@ const h = vi.hoisted(() => ({
   recipientsPending: false,
   rateError: null as Error | null,
   eventsError: null as Error | null,
+  monitorInterval: null as number | false | null,
   refetchRate: vi.fn(),
   refetchEvents: vi.fn(),
 }));
@@ -108,12 +110,19 @@ vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
 }));
 
 vi.mock('@/hooks/integrations/useTalkXMonitor', () => ({
-  useTalkXMonitor: () => ({
-    rateByMinute: [],
-    isLoading: false,
-    isError: h.rateError !== null,
-    refetch: h.refetchRate,
-  }),
+  useTalkXMonitor: (
+    _campaignId: string,
+    _statusFilter: string | null,
+    interval?: number | false | null,
+  ) => {
+    h.monitorInterval = interval ?? null;
+    return {
+      rateByMinute: [],
+      isLoading: false,
+      isError: h.rateError !== null,
+      refetch: h.refetchRate,
+    };
+  },
 }));
 
 import { TalkXLiveMonitor } from '../TalkXLiveMonitor';
@@ -143,6 +152,7 @@ beforeEach(() => {
   h.recipientsPending = false;
   h.rateError = null;
   h.eventsError = null;
+  h.monitorInterval = null;
   h.refetchRate = vi.fn();
   h.refetchEvents = vi.fn();
 });
@@ -250,5 +260,35 @@ describe('matriz de estados — TalkXLiveMonitor (X047c)', () => {
 
     fireEvent.click(within(section).getByRole('button', { name: /Tentar novamente/ }));
     expect(h.refetchEvents).toHaveBeenCalled();
+  });
+
+  it('quando live=true, useTalkXMonitor recebe false como intervalo (polling desligado)', async () => {
+    const mod = await import('@/hooks/integrations/useTalkXLiveChannel');
+    vi.spyOn(mod, 'useTalkXLiveChannel').mockReturnValue({
+      status: 'live' as TalkXLiveStatus,
+      live: true,
+      degraded: false,
+      offline: false,
+      panelPollMs: null,
+      tablePollMs: null,
+    });
+    renderMonitor();
+    await waitFor(() => expect(screen.getByText('Campanha X047')).toBeTruthy());
+    expect(h.monitorInterval).toBe(false);
+  });
+
+  it('quando live=false, useTalkXMonitor recebe panelPollMs do canal degradado', async () => {
+    const mod = await import('@/hooks/integrations/useTalkXLiveChannel');
+    vi.spyOn(mod, 'useTalkXLiveChannel').mockReturnValue({
+      status: 'degraded' as TalkXLiveStatus,
+      live: false,
+      degraded: true,
+      offline: false,
+      panelPollMs: 15000,
+      tablePollMs: 30000,
+    });
+    renderMonitor();
+    await waitFor(() => expect(screen.getByText('Campanha X047')).toBeTruthy());
+    expect(h.monitorInterval).toBe(15000);
   });
 });

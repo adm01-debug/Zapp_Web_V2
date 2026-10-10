@@ -108,7 +108,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   // X144: a leitura é a JANELA de 60 min do gráfico (sem teto de linhas); quando o
   // servidor devolve menos linhas do que existem na janela, a série é parcial e a
   // tela diz isso em vez de apresentar a amostra como total.
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate, truncated: rateTruncated, total: rateTotal } = useTalkXMonitor(campaignId, statusFilter);
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate, truncated: rateTruncated, total: rateTotal } = useTalkXMonitor(campaignId, statusFilter, liveChannel.live ? false : (liveChannel.panelPollMs ?? undefined));
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
