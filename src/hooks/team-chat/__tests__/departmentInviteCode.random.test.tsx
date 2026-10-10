@@ -106,6 +106,20 @@ describe('useCreateDepartmentInvite — codigo do convite', () => {
     expect(migration).not.toMatch(/\brandom\s*\(/i);
   });
 
+  it('o hook nao sorteia o codigo no cliente: nem crypto.getRandomValues nem Math.random', async () => {
+    // Prova em RUNTIME (a cerca na fonte, abaixo, e o complemento): o sorteio saiu do
+    // cliente de vez. No contrato anterior o hook chamava crypto.getRandomValues 8 vezes
+    // por convite; agora nao chama nenhuma vez, e o codigo entregue e o do banco.
+    const espiaoCrypto = vi.spyOn(globalThis.crypto, 'getRandomValues');
+    const espiaoMath = vi.spyOn(Math, 'random');
+
+    const codigo = await criarConvite();
+
+    expect(espiaoCrypto).not.toHaveBeenCalled();
+    expect(espiaoMath).not.toHaveBeenCalled();
+    expect(codigo).toBe('SRV000000001');
+  });
+
   it('dois convites seguidos saem com codigos distintos, os que o banco entregou', async () => {
     const primeiro = await criarConvite();
     const segundo = await criarConvite();
