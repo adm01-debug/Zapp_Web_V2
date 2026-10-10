@@ -84,10 +84,23 @@ export const WorkItemCard = React.memo(function WorkItemCard({
     </button>
   ) : null;
 
+  // N-180: o título é o ÚNICO controle de superfície que abre a tarefa —
+  // <button> nativo (foco + Enter/Espaço grátis), fora de qualquer outro
+  // controle. O keydown trata só x/X/Delete: Enter/Espaço caem no onClick
+  // nativo, e tratá-los aqui duplicaria o onOpen no navegador.
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') return;
+    handleKeyDown(e);
+  };
+
   const titulo = (
-    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onOpen?.(); }}
+      onKeyDown={handleTitleKeyDown}
+      className={`flex-1 min-w-0 cursor-pointer rounded-sm text-left text-sm font-semibold leading-snug truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
       {item.title}
-    </span>
+    </button>
   );
 
   const contexto = (
@@ -183,18 +196,23 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // "tarefa arrastável" em vez do "button" cru da lib de DnD.
   const roleDescription = mode === 'board' ? { 'aria-roledescription': 'tarefa arrastável' } : {};
 
+  // N-180.4: o spread do dragHandleProps vem ANTES do role="article", então
+  // o card continua article mesmo quando a lib de DnD manda role="button"
+  // (sem botão-dentro-de-botão); tabIndex e dados de arrasto passam.
   return (
     <article
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
-      tabIndex={0}
+      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       role="article"
+      // No quadro o article é a alça de arrasto (focável pelo Tab): o tabIndex
+      // explícito não depende da lib de DnD e mantém o anel de foco do E16.
+      tabIndex={mode === 'board' ? 0 : undefined}
       aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
       onKeyDown={handleKeyDown}
-      onClick={onOpen}
       className={[
-        'group relative border bg-card cursor-pointer',
+        'group relative border bg-card',
         isAgenda
           ? 'flex flex-row h-11 items-center gap-2 rounded-xl px-3'
           : 'flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px]',
@@ -206,7 +224,6 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             ? 'border-border/40 opacity-60'
             : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
       ].join(' ')}
-      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       {...roleDescription}
     >
       {isAgenda ? (
@@ -258,7 +275,10 @@ export const WorkItemCard = React.memo(function WorkItemCard({
               // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
               // num controle invisível — o anel de foco do `button:focus-visible` some
               // junto com o `opacity-0`, que apaga também a sombra).
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              // E18: área mínima de toque de 44 px em mobile (WCAG 2.5.5).
+              // N-180.5: escondido ele não intercepta clique sobre o conteúdo
+              // (pointer-events-none); o mouse volta no hover e no foco.
+              className="absolute bottom-2 right-2 flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-md bg-muted/80 hover:bg-primary/20 opacity-0 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >
