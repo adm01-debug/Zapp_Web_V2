@@ -3,7 +3,7 @@
 //
 // Uma quarentena sem prazo e' um `skip` com outro nome: ninguem revisa, o motivo se
 // perde e o teste nunca volta. Este verificador existe para a quarentena ter FIM --
-// ele le e2e/quarantine.json e falha quando um item passa do prazo.
+// ele le e2e/quarantine.js e falha quando um item passa do prazo.
 //
 // CUMPRE DOIS PAPEIS, e os dois importam:
 //  1. validar a FORMA dos itens (spec existente, motivo, issue, prazo valido). Item sem
@@ -14,13 +14,13 @@
 // Uso: node scripts/ci/check-quarantine.mjs [--hoje=AAAA-MM-DD] [--json]
 // O --hoje existe para o teste poder fixar a data; o CI roda sem ele.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 export const RAIZ = join(AQUI, '../..');
-export const CAMINHO_PADRAO = 'e2e/quarantine.json';
+export const CAMINHO_PADRAO = 'e2e/quarantine.js';
 
 const CAMPOS_OBRIGATORIOS = ['spec', 'motivo', 'issue', 'prazo'];
 const FORMATO_DE_DATA = /^\d{4}-\d{2}-\d{2}$/u;
@@ -30,15 +30,15 @@ export function hojeISO(agora = new Date()) {
   return agora.toISOString().slice(0, 10);
 }
 
-export function carregarQuarentena(raiz = RAIZ, caminho = CAMINHO_PADRAO) {
+export async function carregarQuarentena(raiz = RAIZ, caminho = CAMINHO_PADRAO) {
   const arquivo = join(raiz, caminho);
   if (!existsSync(arquivo)) {
     // Arquivo ausente nao e' erro: o projeto pode nao ter quarentena nenhuma. Mas o
     // verificador continua rodando, para o dia em que o arquivo existir.
     return { itens: [], avisos: [`${caminho} nao existe -- nada em quarentena`] };
   }
-  const cru = JSON.parse(readFileSync(arquivo, 'utf8'));
-  const itens = Array.isArray(cru.quarentena) ? cru.quarentena : [];
+  const mod = await import(`file://${arquivo}`);
+  const itens = Array.isArray(mod.quarentena) ? mod.quarentena : [];
   return { itens, avisos: [] };
 }
 
@@ -79,9 +79,9 @@ export function specsEmQuarentena(itens) {
     .sort();
 }
 
-function principal(argv) {
+async function principal(argv) {
   const hoje = argv.find((a) => a.startsWith('--hoje='))?.slice('--hoje='.length) ?? hojeISO();
-  const { itens, avisos } = carregarQuarentena();
+  const { itens, avisos } = await carregarQuarentena();
   for (const aviso of avisos) console.log(`aviso: ${aviso}`);
   const problemas = validar(itens, { hoje });
   if (problemas.length > 0) {
@@ -94,5 +94,5 @@ function principal(argv) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.exit(principal(process.argv.slice(2)));
+  principal(process.argv.slice(2)).then((exitCode) => process.exit(exitCode));
 }
