@@ -1,3 +1,9 @@
+// A14/TZ: fixa o fuso do PROCESSO (o "navegador" do teste) em São Paulo ANTES
+// de qualquer `Date` ser criado. Assim o piso do calendário tem de vir da
+// campanha (Europa/Londres, no teste A14) e não do relógio local do processo —
+// sem isso os dois fusos coincidiriam e o teste não provaria nada.
+process.env.TZ = 'America/Sao_Paulo';
+
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
@@ -9,7 +15,8 @@ import React from 'react';
  * inglês), aceitava qualquer data passada (o único limite era o `min` do campo
  * de texto, calculado em UTC) e o "Resumo da Programação" eram cinco linhas
  * soltas. Aqui se prova:
- *   1. o mês e os dias da semana em português com inicial maiúscula;
+ *   1. o mês e os dias da semana em português com inicial maiúscula — INCLUSIVE
+ *      o sábado acentuado ("Sáb"), que o `date-fns` ('cccccc') devolvia "sab";
  *   2. o piso do calendário é "hoje" na parede local da CAMPANHA, não a do
  *      navegador (caso do processo de teste em outro fuso);
  *   3. o dia marcado sai do horário local da campanha;
@@ -133,14 +140,20 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
     render(view());
 
     expect(screen.getByText('Outubro de 2026')).toBeTruthy();
-    for (const dia of ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex']) {
+    // Os SETE cabeçalhos, incluindo o sábado acentuado — o defeito era justamente
+    // o "Sáb" sair como "Sab" (date-fns 'cccccc' sem acento).
+    for (const dia of ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']) {
       expect(screen.getByText(dia)).toBeTruthy();
     }
+    expect(screen.queryByText('Sab')).toBeNull();
   });
 
   it('A14: o piso é hoje na parede da CAMPANHA, mesmo com o navegador em outro dia', () => {
-    // 09/10/2026 23:30 UTC = 10/10 00:30 em Londres (BST) e ainda 09/10 em
-    // qualquer fuso a oeste de UTC — o navegador do teste está atrás de Londres.
+    // O processo roda em São Paulo (UTC-3) — fixado no topo deste arquivo; a
+    // campanha está em Londres. 09/10/2026 23:30 UTC é 10/10 00:30 em Londres
+    // (BST, UTC+1) e 09/10 20:30 em São Paulo: o piso tem de ser o DIA DA
+    // CAMPANHA (10), não o do processo (09).
+    expect(new Date('2026-10-09T23:30:00.000Z').getHours()).toBe(20);
     vi.setSystemTime(new Date('2026-10-09T23:30:00.000Z'));
     h.state.campaigns = [{ ...BASE_CAMPAIGN, schedule_timezone: 'Europe/London' }];
     render(view());
