@@ -120,7 +120,7 @@ export function TeamConversationList({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas">
+      <div className="flex-1 overflow-y-auto" role="list" aria-label="Conversas">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
@@ -137,7 +137,7 @@ export function TeamConversationList({
               <div
                 key={conv.id}
                 ref={el => { itemRefs.current[idx] = el; }}
-                role="option"
+                role="listitem"
                 aria-selected={isSelected}
                 tabIndex={0}
                 onClick={() => onSelect(conv.id)}
