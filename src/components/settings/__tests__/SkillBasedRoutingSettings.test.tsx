@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
 // Item 270 / R2-AUTH-046 — "Seletor de proficiência sempre cadastra nível 3".
@@ -20,7 +21,7 @@ const h = vi.hoisted(() => {
   const inserts: Array<{ table: string; payload: Record<string, unknown> }> = [];
   const rows: Record<string, unknown[]> = {
     profiles: [{ id: 'p1', name: 'Ana' }],
-    queues: [],
+    queues: [{ id: 'q1', name: 'Suporte', color: '#000000' }],
     agent_skills: [],
     queue_skill_requirements: [],
   };
@@ -33,20 +34,34 @@ vi.mock('@/components/ui/select', () => ({
     defaultValue,
     onValueChange,
     children,
+    ...rest
   }: {
     value?: string;
     defaultValue?: string;
     onValueChange?: (v: string) => void;
     children?: ReactNode;
-  }) => (
-    <select
-      value={value ?? defaultValue ?? ''}
-      onChange={e => onValueChange?.(e.target.value)}
-    >
-      {children}
-    </select>
+    [key: string]: unknown;
+  }) => {
+    let ariaLabel: string | undefined;
+    React.Children.forEach(children, child => {
+      if (React.isValidElement(child) && child.props['aria-label']) {
+        ariaLabel = child.props['aria-label'];
+      }
+    });
+    return (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? defaultValue ?? ''}
+        onChange={e => onValueChange?.(e.target.value)}
+        {...rest}
+      >
+        {children}
+      </select>
+    );
+  },
+  SelectTrigger: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => (
+    <span {...props}>{children}</span>
   ),
-  SelectTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
   SelectItem: ({ value, children }: { value: string; children?: ReactNode }) => (
@@ -154,5 +169,44 @@ describe('SkillBasedRoutingSettings — seletor de proficiência (item 270)', ()
       skill_name: 'Espanhol',
       skill_level: 3,
     });
+  });
+});
+
+describe('SkillBasedRoutingSettings — acessibilidade dos seletores (N-157)', () => {
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+  });
+
+  it('4 comboboxes são encontrados por nome e axe não aponta violações', async () => {
+    render(<SkillBasedRoutingSettings />, { wrapper });
+
+    // Seleciona um agente para revelar o seletor de nível de proficiência.
+    const seletorAgente = await waitFor(
+      () => comboComOpcao('Ana'),
+      { timeout: ESPERA_ESTADO_REAL }
+    );
+    fireEvent.change(seletorAgente, { target: { value: 'p1' } });
+
+    // Seleciona uma fila para revelar o seletor de nível mínimo da fila.
+    const seletorFila = await waitFor(
+      () => comboComOpcao('Suporte'),
+      { timeout: ESPERA_ESTADO_REAL }
+    );
+    fireEvent.change(seletorFila, { target: { value: 'q1' } });
+
+    // 4 comboboxes encontrados por nome acessível
+    expect(screen.getByRole('combobox', { name: 'Selecionar agente' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Nível de proficiência' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Selecionar fila' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Nível mínimo da fila' })).toBeInTheDocument();
+
+    // Axe zerado — escopo no container do componente para evitar ruídos de região do page-level.
+    const componentRoot = screen.getByRole('heading', { name: /Roteamento por Habilidades/ })
+      .closest('div');
+    expect(componentRoot).toBeTruthy();
+    const results = await axe(componentRoot!);
+    expect(results).toHaveNoViolations();
   });
 });
