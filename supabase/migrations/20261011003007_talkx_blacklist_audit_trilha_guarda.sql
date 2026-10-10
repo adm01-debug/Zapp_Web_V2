@@ -1,5 +1,13 @@
 -- 20261011003007_talkx_blacklist_audit_trilha_guarda (N-107: lista de bloqueio guarda trilha e nao apaga linha)
 -- Rollback: DROP POLICY IF EXISTS talkx_blacklist_no_delete ON public.talkx_blacklist; DROP TRIGGER IF EXISTS trg_talkx_blacklist_no_delete ON public.talkx_blacklist; DROP FUNCTION IF EXISTS public.talkx_blacklist_no_delete(); DROP TRIGGER IF EXISTS trg_talkx_blacklist_audit ON public.talkx_blacklist; DROP FUNCTION IF EXISTS public.talkx_blacklist_audit_trigger(); ALTER TABLE public.talkx_blacklist DROP COLUMN IF EXISTS import_batch_id; ALTER TABLE public.talkx_blacklist DROP COLUMN IF EXISTS removal_reason;
+-- Rollback (SQL executável, na ordem — espelho comentado da linha 2):
+--   DROP POLICY IF EXISTS talkx_blacklist_no_delete ON public.talkx_blacklist;
+--   DROP TRIGGER IF EXISTS trg_talkx_blacklist_no_delete ON public.talkx_blacklist;
+--   DROP FUNCTION IF EXISTS public.talkx_blacklist_no_delete();
+--   DROP TRIGGER IF EXISTS trg_talkx_blacklist_audit ON public.talkx_blacklist;
+--   DROP FUNCTION IF EXISTS public.talkx_blacklist_audit_trigger();
+--   ALTER TABLE public.talkx_blacklist DROP COLUMN IF EXISTS import_batch_id;
+--   ALTER TABLE public.talkx_blacklist DROP COLUMN IF EXISTS removal_reason;
 
 -- =============================================================================
 -- N-107 Talk X banco: lista de bloqueio guarda trilha e nao apaga linha.

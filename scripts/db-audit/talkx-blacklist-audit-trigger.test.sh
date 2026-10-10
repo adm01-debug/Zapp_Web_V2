@@ -43,6 +43,17 @@ ok()   { echo "[OK] $*"; }
 for f in "$F_CREATE" "$F_AUDIT" "$F_V2" "$F_UPDATE_POL" "$F_V05" "$F_V07" "$F_PHONE_AXIS" "$F_NEW"; do
   [[ -f "$f" ]] || fail "migration real ausente: $f"
 done
+# O espelho comentado (--   stmt;) precisa ser identico ao SQL da linha 2.
+RB_LINE2=$(sed -n 's/^-- Rollback: //p' "$F_NEW")
+[[ -n "$RB_LINE2" ]] || fail "linha 2 da migration nova nao e -- Rollback: com SQL"
+grep -q '^-- Rollback (SQL execut' "$F_NEW" || fail "migration nova sem bloco -- Rollback (SQL executavel)"
+while IFS= read -r stmt; do
+  body="${stmt#--   }"
+  [[ "$body" == *";" ]] || fail "linha de rollback sem ponto-e-virgula: $stmt"
+  [[ "$RB_LINE2" == *"$body"* ]] || fail "rollback comentado diverge da linha 2: $stmt"
+done < <(grep '^--   [^ ]' "$F_NEW")
+[[ "$(grep -c '^--   [^ ]' "$F_NEW")" == "7" ]] || fail "espelho do rollback incompleto"
+echo "[OK] rollback da linha 2 e espelho comentado conferem (7 comandos)"
 ok "migrations reais presentes (create, audit, v2, update-policy, V05, V07, phone-axis, N-107)"
 
 # --- postgres descartavel ------------------------------------------------------
