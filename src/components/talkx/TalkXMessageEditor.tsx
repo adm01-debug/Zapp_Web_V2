@@ -60,11 +60,23 @@ export interface TalkXMessageEditorProps {
   channel?: string;
   /** Ícone do template (emoji, até 16 caracteres). */
   icon?: string;
+  /** Template suporta elementos interativos (botões, lista). */
+  interactive?: boolean;
+  /** Nome do arquivo de mídia anexado. */
+  media_file_name?: string | null;
+  /** Tamanho do arquivo de mídia em bytes. */
+  media_size_bytes?: number | null;
+  /** Largura da mídia em pixels. */
+  media_width?: number | null;
+  /** Altura da mídia em pixels. */
+  media_height?: number | null;
+  /** Data de arquivamento (null = ativo). */
+  archived_at?: string | null;
 }
 
 export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, TalkXMessageEditorProps>(
   function TalkXMessageEditor(
-    { value, onChange, placeholder, rows = 7, disabled = false, limit, knownVariables, footer, onKeyDown, className, channel, icon },
+    { value, onChange, placeholder, rows = 7, disabled = false, limit, knownVariables, footer, onKeyDown, className, channel, icon, interactive, media_file_name, media_size_bytes, media_width, media_height, archived_at },
     ref,
   ) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
