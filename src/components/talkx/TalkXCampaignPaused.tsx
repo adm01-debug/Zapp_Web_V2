@@ -30,11 +30,13 @@ import {
 interface Props {
   campaignId: string;
   onBack: () => void;
+  /** Nome de quem pausou (resolvido pelo contêiner a partir de `paused_by`). */
+  pausedByName?: string | null;
   /** Avisa o contêiner pai que a campanha saiu de "pausada" (retomada/encerrada por fora). */
   onStatusChange: (campaign: TalkXCampaign) => void;
 }
 
-export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Props) {
+export function TalkXCampaignPaused({ campaignId, onBack, pausedByName, onStatusChange }: Props) {
   const {
     campaigns, isLoading, isFetching, isError, error, refetchCampaigns,
     startCampaign, cancelCampaign,
@@ -211,7 +213,9 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
               sendo entregues.
             </p>
             <p className="mt-1 text-2xs">
-              {campaign.paused_at ? `Pausada em ${fmtDateTime(campaign.paused_at)}` : 'Pausada sem data registrada'}
+              {pausedByName
+                ? `Pausada por ${pausedByName}${campaign.paused_at ? ` em ${fmtDateTime(campaign.paused_at)}` : ''}`
+                : campaign.paused_at ? `Pausada em ${fmtDateTime(campaign.paused_at)}` : 'Pausada sem data registrada'}
             </p>
           </AlertCard>
 
