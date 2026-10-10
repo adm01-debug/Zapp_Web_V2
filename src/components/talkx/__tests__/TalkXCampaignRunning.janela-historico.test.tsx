@@ -13,7 +13,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  *
  * Aceite coberto aqui (o que faltava de prova):
  *  1. "Envio 2001 e posteriores alteram a série recente" — a consulta pede os envios
- *     MAIS RECENTES (`sent_at` decrescente, teto 2000), não os primeiros.
+ *     da JANELA do gráfico (`sent_at` decrescente recortado por `gte`, desde X144),
+ *     então o envio recente entra na série sem depender de um teto de linhas.
  *  2. "Dez minutos sem envio resultam em ritmo zero/indisponível, sem previsão
  *     otimista" — com envios só fora da janela dos últimos 10 minutos o prazo sai
  *     INDISPONÍVEL, nunca um número.
@@ -61,8 +62,9 @@ const { state, captured } = vi.hoisted(() => {
       // Resposta por `limit(n)`: 2000 = histórico de envios.
       rows: {} as Record<number, { data: unknown; error: null }>,
     },
-    // O que o componente PEDE ao servidor: colunas/window do `order` e os `limit`.
-    captured: { orders: [] as Array<[string, unknown]>, limits: [] as number[] },
+    // O que o componente PEDE ao servidor: colunas/window do `order`, os `limit` e,
+    // desde X144, a JANELA de tempo do histórico (`gte('sent_at', …)`).
+    captured: { orders: [] as Array<[string, unknown]>, limits: [] as number[], gte: [] as Array<[string, string]> },
   };
 });
 
@@ -102,7 +104,9 @@ vi.mock('@/components/dashboard/overview/DashboardKpiCard', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } }));
 
-// Cadeia thenable: registra `order`/`limit` e responde pela chave do `limit`.
+// Cadeia thenable: registra `order`/`limit`/`gte` e responde pela chave do `limit`.
+// X144: o histórico deixou de pedir 2.000 linhas e passou a pedir a JANELA do gráfico
+// (`gte('sent_at', …)`) — o recorte continua respondendo por `state.rows[2000]`.
 const chain = (limitKey: number): Record<string, unknown> => ({
   select: () => chain(limitKey),
   eq: () => chain(limitKey),
@@ -111,6 +115,10 @@ const chain = (limitKey: number): Record<string, unknown> => ({
     return chain(limitKey);
   },
   not: () => chain(limitKey),
+  gte: (col: string, value: string) => {
+    captured.gte.push([col, value]);
+    return chain(2000);
+  },
   limit: (n: number) => {
     captured.limits.push(n);
     return chain(n);
@@ -155,14 +163,23 @@ describe('janela e ritmo do histórico — TalkXCampaignRunning / Resultados (R2
     state.rows = { 2000: { data: [], error: null } };
     captured.orders = [];
     captured.limits = [];
+    captured.gte = [];
   });
 
-  it('pede os envios MAIS RECENTES (sent_at decrescente, teto 2000) — o envio 2001+ entra na série', async () => {
+  it('recorta o histórico pela JANELA do gráfico, sem teto de linhas — o envio recente entra na série', async () => {
     state.rows[2000] = { data: [{ sent_at: new Date().toISOString(), delivered_at: null }], error: null };
 
     renderView();
 
-    await waitFor(() => expect(captured.limits).toContain(2000));
+    await waitFor(() => expect(captured.gte.length).toBeGreaterThan(0));
+    const [coluna, desde] = captured.gte[0];
+    expect(coluna).toBe('sent_at');
+    // Janela da série (20 buckets de 1 min) + 1 min de folga de relógio.
+    const janelaMs = Date.now() - new Date(desde).getTime();
+    expect(janelaMs).toBeGreaterThanOrEqual(20 * 60_000);
+    expect(janelaMs).toBeLessThanOrEqual(22 * 60_000);
+    // X144: o teto fixo de 2.000 linhas saiu — a leitura é limitada pelo TEMPO.
+    expect(captured.limits).not.toContain(2000);
     const porSentAt = captured.orders.filter(([col]) => col === 'sent_at');
     expect(porSentAt.length).toBeGreaterThan(0);
     for (const [, opts] of porSentAt) {
