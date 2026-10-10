@@ -214,6 +214,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
                   size="icon"
                   className="w-8 h-8 text-foreground"
                   onClick={togglePlayback}
+                  aria-label={isPlaying ? 'Pausar áudio' : 'Tocar áudio'}
                 >
                   {isPlaying ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 </Button>
