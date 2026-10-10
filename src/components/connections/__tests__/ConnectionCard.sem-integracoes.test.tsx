@@ -31,4 +31,9 @@ describe('ConnectionCard — menu sem as integrações que a GO não tem (E43)',
     expect(screen.queryByText(/Integrações \(IA\/Bots\)/)).toBeNull();
     expect(screen.queryByText(/Integrações/)).toBeNull();
   });
+
+  it('o botão do menu do card tem aria-label com o nome da conexão', () => {
+    render(<ConnectionCard {...props} />);
+    expect(screen.getByRole('button', { name: 'Ações da conexão Principal' })).toBeTruthy();
+  });
 });

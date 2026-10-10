@@ -168,6 +168,7 @@ export function BusinessHoursDialog({
                               onCheckedChange={(checked) =>
                                 updateHour(hour.day_of_week, 'is_open', checked)
                               }
+                              aria-label={`Aberto ${day?.label}`}
                             />
                             <span className={cn('font-medium', !hour.is_open && 'text-muted-foreground')}>
                               {day?.label}
@@ -220,6 +221,7 @@ export function BusinessHoursDialog({
                 <Switch
                   checked={localAway.is_enabled}
                   onCheckedChange={(checked) => setLocalAway((prev) => ({ ...prev, is_enabled: checked }))}
+                  aria-label="Ativar mensagem automática fora do horário"
                 />
               </div>
 
