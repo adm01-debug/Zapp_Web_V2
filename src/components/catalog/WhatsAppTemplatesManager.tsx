@@ -48,14 +48,14 @@ export function WhatsAppTemplatesManager() {
           <Input placeholder="Buscar templates..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectTrigger className="w-[160px]" aria-label="Filtrar por categoria"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas categorias</SelectItem>
             {TEMPLATE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]" aria-label="Filtrar por status"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos status</SelectItem>
             <SelectItem value="approved">Aprovado</SelectItem>
@@ -109,10 +109,10 @@ export function WhatsAppTemplatesManager() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(template.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => handleDelete(template.id)}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </motion.tr>
@@ -141,7 +141,7 @@ export function WhatsAppTemplatesManager() {
               <div className="space-y-2">
                 <Label>Categoria</Label>
                 <Select value={editingTemplate.category || 'utility'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, category: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Categoria do template"><SelectValue /></SelectTrigger>
                   <SelectContent>{TEMPLATE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
@@ -150,14 +150,14 @@ export function WhatsAppTemplatesManager() {
               <div className="space-y-2">
                 <Label>Idioma</Label>
                 <Select value={editingTemplate.language || 'pt_BR'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, language: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Idioma do template"><SelectValue /></SelectTrigger>
                   <SelectContent>{TEMPLATE_LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={editingTemplate.status || 'draft'} onValueChange={(value) => setEditingTemplate(prev => ({ ...prev, status: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Status do template"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Rascunho</SelectItem><SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="approved">Aprovado</SelectItem><SelectItem value="rejected">Rejeitado</SelectItem>
