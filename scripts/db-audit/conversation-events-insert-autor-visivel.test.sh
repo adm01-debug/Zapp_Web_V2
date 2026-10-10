@@ -85,6 +85,23 @@ como() {
   printf "BEGIN; SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claims', '{\"sub\":\"%s\",\"role\":\"authenticated\"}', true); %s COMMIT;" "$1" "$2"
 }
 
+# Extrai o bloco executavel de rollback (linhas comentadas '--   <stmt>;') do proprio arquivo da
+# migration, verbatim — prova que o rollback escrito no cabecalho roda.
+extrair_rollback() {
+  python3 - "$1" <<'PY'
+import sys
+saida = []
+for l in open(sys.argv[1], encoding='utf-8').read().splitlines():
+    if l.startswith('--   '):
+        saida.append(l[len('--   '):])
+    elif saida and not l.startswith('--'):
+        break
+if not saida:
+    sys.exit('bloco de rollback executavel nao encontrado em %s' % sys.argv[1])
+sys.stdout.write('\n'.join(saida) + '\n')
+PY
+}
+
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
@@ -225,4 +242,23 @@ expect_ok 'B9 service_role segue gravando evento sem autor' \
 expect_value 'B10 evento do servidor permaneceu sem autor' '1' \
   "SELECT count(*) FROM public.conversation_events WHERE contact_id='$C1' AND performed_by IS NULL"
 
-echo 'OK: conversation_events so aceita INSERT com o proprio autor e contato visivel'
+if [[ "$sem_correcao" != "1" ]]; then
+  echo '== BLOCO C: rollback do cabecalho devolve o estado anterior =='
+  psql_sql 'TRUNCATE public.conversation_events'
+  rollback_sql="$tmp_dir/rollback.sql"
+  extrair_rollback "$migration" > "$rollback_sql"
+  psql_file "$rollback_sql"
+  expect_value 'C1 funcao do gatilho removida' '0' \
+    "SELECT count(*) FROM pg_proc WHERE proname='conversation_events_default_performed_by'"
+  expect_value 'C2 gatilho removido' '0' \
+    "SELECT count(*) FROM pg_trigger WHERE tgname='trg_conversation_events_default_performed_by'"
+  expect_ok 'C3 politica anterior de volta: agente grava SEM autor de novo' \
+    "$(como "$UA" "$(ins "$C1" NULL)")"
+  expect_value 'C4 evento sem autor aceito apos o rollback (trigger nao preenche)' '1' \
+    "SELECT count(*) FROM public.conversation_events WHERE contact_id='$C1' AND performed_by IS NULL"
+  psql_file "$migration"
+  expect_value 'C5 migration reaplica (idempotente): gatilho volta' '1' \
+    "SELECT count(*) FROM pg_trigger WHERE tgname='trg_conversation_events_default_performed_by'"
+fi
+
+echo 'OK: conversation_events so aceita INSERT com o proprio autor e contato visivel (rollback devolve o estado anterior)'

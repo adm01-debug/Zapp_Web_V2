@@ -1,21 +1,8 @@
--- Rollback: DROP TRIGGER trg_conversation_events_default_performed_by ON public.conversation_events; DROP FUNCTION public.conversation_events_default_performed_by(); DROP POLICY "Authorized users can insert events" ON public.conversation_events;
--- DROP TRIGGER IF EXISTS trg_conversation_events_default_performed_by ON public.conversation_events;
--- DROP FUNCTION IF EXISTS public.conversation_events_default_performed_by();
--- DROP POLICY IF EXISTS "Authorized users can insert events" ON public.conversation_events;
--- CREATE POLICY "Authorized users can insert events"
--- ON public.conversation_events
--- FOR INSERT
--- TO authenticated
--- WITH CHECK (
---   (performed_by IS NULL OR performed_by = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1))
---   AND (
---     is_admin_or_supervisor(auth.uid())
---     OR contact_id IN (
---       SELECT c.id FROM contacts c
---       WHERE c.assigned_to = (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1)
---     )
---   )
--- );
+-- Rollback: desfaz o gatilho e a policy desta migration e devolve a policy anterior inteira; SQL executavel, na ordem, logo abaixo.
+--   drop trigger if exists trg_conversation_events_default_performed_by on public.conversation_events;
+--   drop function if exists public.conversation_events_default_performed_by();
+--   drop policy if exists "Authorized users can insert events" on public.conversation_events;
+--   create policy "Authorized users can insert events" on public.conversation_events for insert to authenticated with check ((performed_by is null or performed_by = (select p.id from public.profiles p where p.user_id = auth.uid() limit 1)) and (public.is_admin_or_supervisor(auth.uid()) or contact_id in (select c.id from public.contacts c where c.assigned_to = (select p.id from public.profiles p where p.user_id = auth.uid() limit 1))));
 --
 -- N-143 (SEC-RLS_CONTATOS_MENSAGENS-09): evento de conversa so e gravado com o proprio autor
 -- e para contato visivel ao usuario.
