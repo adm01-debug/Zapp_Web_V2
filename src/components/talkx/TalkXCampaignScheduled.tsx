@@ -52,7 +52,7 @@ interface Props {
 }
 
 export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onStatusChange }: Props) {
-  const { campaigns, isLoading, isError, error, isFetching, refetchCampaigns } = useTalkX();
+  const { campaigns, isLoading, isError, error, isFetching, refetchCampaigns, confirmCampaignLaunch } = useTalkX();
   // P1: deriva sempre da query -- nunca stale
   const campaign = campaigns.find((c) => c.id === campaignId) ?? null;
 
@@ -151,6 +151,9 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   // apenas a exibe travada e a reenvia no payload.
   const respectSuppression = campaign.respect_suppression ?? true;
   const [confirmConsent, setConfirmConsent] = useState<boolean>(campaign.confirm_consent ?? false);
+  const [confirmContent, setConfirmContent] = useState<boolean>(false);
+  const [confirmSuppression, setConfirmSuppression] = useState<boolean>(false);
+  const [confirmingLaunch, setConfirmingLaunch] = useState(false);
   const [saving, setSaving] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -432,6 +435,34 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                   </span>
                 </Label>
               </div>
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="talkx-confirm-content"
+                  checked={confirmContent}
+                  onCheckedChange={(v) => setConfirmContent(!!v)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="talkx-confirm-content" className="text-xs font-normal text-foreground leading-snug">
+                  Revisei e estou de acordo com o conteúdo da mensagem
+                  <span className="block text-2xs text-muted-foreground">
+                    Confirme antes de lançar a campanha.
+                  </span>
+                </Label>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="talkx-confirm-suppression"
+                  checked={confirmSuppression}
+                  onCheckedChange={(v) => setConfirmSuppression(!!v)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="talkx-confirm-suppression" className="text-xs font-normal text-foreground leading-snug">
+                  A lista de supressão foi aplicada corretamente
+                  <span className="block text-2xs text-muted-foreground">
+                    Confirme que a supressão está atualizada antes do lançamento.
+                  </span>
+                </Label>
+              </div>
             </div>
           </div>
         </RailCard>
@@ -511,9 +542,39 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <GhostButton icon={XCircle} onClick={() => setCancelOpen(true)} className="text-destructive hover:bg-destructive/10 border-destructive/30">
           Cancelar agendamento
         </GhostButton>
-        <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">
-          {lifecycle.isPending ? 'Iniciando…' : 'Iniciar agora'}
-        </PrimaryButton>
+        <div className="flex items-center gap-2">
+          <PrimaryButton
+            icon={ShieldCheck}
+            onClick={async () => {
+              if (!campaign) return;
+              setConfirmingLaunch(true);
+              try {
+                const result = await confirmCampaignLaunch(campaign.id, campaign.revision ?? 0, {
+                  consent: confirmConsent,
+                  content: confirmContent,
+                  suppression: confirmSuppression,
+                });
+                if (result.ok) {
+                  toast.success('Campanha confirmada para lançamento');
+                  lifecycle.request({ kind: 'start', target: campaign });
+                } else {
+                  toast.error('Falha ao confirmar lançamento');
+                }
+              } catch {
+                toast.error('Erro ao confirmar lançamento');
+              } finally {
+                setConfirmingLaunch(false);
+              }
+            }}
+            disabled={!confirmConsent || !confirmContent || !confirmSuppression || confirmingLaunch || lifecycle.isPending}
+            className="shadow-[var(--shadow-glow-primary)]"
+          >
+            {confirmingLaunch ? 'Confirmando…' : 'Confirmar lançamento'}
+          </PrimaryButton>
+          <PrimaryButton icon={Play} onClick={() => { lifecycle.request({ kind: 'start', target: campaign }); }} className="shadow-[var(--shadow-glow-primary)]">
+            {lifecycle.isPending ? 'Iniciando…' : 'Iniciar agora'}
+          </PrimaryButton>
+        </div>
       </div>
 
       {/* X051 (parcial): o "Cancelar agendamento" segue local porque o hook

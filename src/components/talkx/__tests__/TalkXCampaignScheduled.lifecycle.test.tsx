@@ -28,6 +28,7 @@ const h = vi.hoisted(() => ({
   startCampaign: vi.fn(),
   pauseCampaign: vi.fn(),
   cancelCampaign: vi.fn(),
+  confirmCampaignLaunch: vi.fn(),
   updateCampaign: { mutateAsync: vi.fn() },
   refetchCampaigns: vi.fn(),
 }));
@@ -48,6 +49,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     startCampaign: h.startCampaign,
     pauseCampaign: h.pauseCampaign,
     cancelCampaign: h.cancelCampaign,
+    confirmCampaignLaunch: h.confirmCampaignLaunch,
   }),
 }));
 
@@ -188,5 +190,57 @@ describe('Agendada — disparo pelo controlador único (X051)', () => {
       }),
     );
     await waitFor(() => expect(onBack).toHaveBeenCalled());
+  });
+
+  it('"Confirmar lançamento" chama a RPC com as 3 confirmações e depois inicia a campanha', async () => {
+    h.confirmCampaignLaunch.mockResolvedValue({ ok: true, applied: true });
+    h.startCampaign.mockResolvedValue(true);
+    abrirTela();
+
+    // o botão está desabilitado enquanto as 3 confirmações não estiverem marcadas
+    expect(screen.getByRole('button', { name: /Confirmar lançamento/ })).toBeDisabled();
+
+    // marca as 3 confirmações
+    fireEvent.click(screen.getByRole('checkbox', { name: /Confirmo que possuo o consentimento/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Revisei e estou de acordo com o conteúdo/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /A lista de supressão foi aplicada corretamente/ }));
+
+    // agora o botão está habilitado
+    const btnConfirmar = screen.getByRole('button', { name: /Confirmar lançamento/ });
+    expect(btnConfirmar).not.toBeDisabled();
+
+    fireEvent.click(btnConfirmar);
+
+    // a RPC é chamada com os argumentos corretos
+    await waitFor(() =>
+      expect(h.confirmCampaignLaunch).toHaveBeenCalledWith(
+        'camp-agendada-1',
+        1,
+        { consent: true, content: true, suppression: true },
+      ),
+    );
+
+    // após a RPC ter sucesso, o lifecycle dispara o início
+    await waitFor(() => expect(h.startCampaign).toHaveBeenCalledWith('camp-agendada-1'));
+  });
+
+  it('"Confirmar lançamento" exibe erro quando a RPC recusa', async () => {
+    h.confirmCampaignLaunch.mockResolvedValue({ ok: false, applied: false });
+    abrirTela();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Confirmo que possuo o consentimento/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /Revisei e estou de acordo com o conteúdo/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /A lista de supressão foi aplicada corretamente/ }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar lançamento/ }));
+
+    await waitFor(() =>
+      expect(h.confirmCampaignLaunch).toHaveBeenCalledWith(
+        'camp-agendada-1',
+        1,
+        { consent: true, content: true, suppression: true },
+      ),
+    );
+    expect(h.startCampaign).not.toHaveBeenCalled();
   });
 });
