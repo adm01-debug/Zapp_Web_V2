@@ -10,6 +10,7 @@
  * remover alarme).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { axe } from 'vitest-axe';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
 // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
@@ -102,20 +103,52 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(kebab().className).toContain('opacity-0');
   });
 
-  it('Enter no card abre a tarefa', () => {
+  it('o título é o controle que abre a tarefa (botão dedicado, sem aninhamento)', () => {
     const onOpen = vi.fn();
     render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} />);
 
-    fireEvent.keyDown(card(), { key: 'Enter' });
+    // Botão nativo com o nome da tarefa: foco + Enter/Espaço vêm do navegador.
+    const titulo = screen.getByRole('button', { name: 'Ligar para o cliente' });
+    titulo.focus();
+    expect(document.activeElement).toBe(titulo);
+
+    // Nenhum ancestral é botão/link: o título não mora dentro de outro controle.
+    let ancestral: HTMLElement | null = titulo.parentElement;
+    while (ancestral) {
+      expect(['BUTTON', 'A']).not.toContain(ancestral.tagName);
+      ancestral = ancestral.parentElement;
+    }
+
+    // O article saiu do esquema clicável: sem tabindex, sem onClick.
+    expect(card().hasAttribute('tabindex')).toBe(false);
+    expect(card().className).not.toContain('cursor-pointer');
+
+    fireEvent.click(titulo);
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('as teclas x e X alternam a conclusão', () => {
+  it('Enter no título não duplica a abertura (é o clique nativo do botão)', () => {
+    const onOpen = vi.fn();
+    render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} />);
+
+    const titulo = screen.getByRole('button', { name: 'Ligar para o cliente' });
+    // O keydown de Enter/Espaço é ignorado de propósito: no navegador o
+    // <button> já dispara o clique — tratá-lo aqui abriria duas vezes.
+    fireEvent.keyDown(titulo, { key: 'Enter' });
+    fireEvent.keyDown(titulo, { key: ' ' });
+    expect(onOpen).not.toHaveBeenCalled();
+
+    fireEvent.click(titulo);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('as teclas x e X no título alternam a conclusão (atalhos no controle focável)', () => {
     const onToggleDone = vi.fn();
     render(<WorkItemCard item={item()} mode="list" onToggleDone={onToggleDone} />);
 
-    fireEvent.keyDown(card(), { key: 'x' });
-    fireEvent.keyDown(card(), { key: 'X' });
+    const titulo = screen.getByRole('button', { name: 'Ligar para o cliente' });
+    fireEvent.keyDown(titulo, { key: 'x' });
+    fireEvent.keyDown(titulo, { key: 'X' });
     expect(onToggleDone).toHaveBeenCalledTimes(2);
   });
 
@@ -134,7 +167,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(onToggleDone).not.toHaveBeenCalled();
   });
 
-  it('o checkbox conclui sem abrir o card; clicar no corpo abre', () => {
+  it('o checkbox conclui sem abrir o card; clicar no título abre', () => {
     const onOpen = vi.fn();
     const onToggleDone = vi.fn();
     render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} onToggleDone={onToggleDone} />);
@@ -143,7 +176,9 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(onToggleDone).toHaveBeenCalledTimes(1);
     expect(onOpen).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText('Ligar para o cliente'));
+    // O título é o controle de abertura (a intenção original do "clicar no
+    // corpo abre", agora apontada para o botão dedicado, sem aninhamento).
+    fireEvent.click(screen.getByRole('button', { name: 'Ligar para o cliente' }));
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
@@ -211,5 +246,59 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     abrirSubmenu(/Lembrar-me/);
     await screen.findByRole('menuitem', { name: '15 min' });
     expect(screen.queryByRole('menuitem', { name: 'Remover alarme' })).toBeNull();
+  });
+
+  it('alvo de toque de 44 px no botão "Abrir conversa" (WCAG 2.5.5)', () => {
+    render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+      />,
+    );
+
+    const btn = screen.getByRole('button', { name: 'Abrir conversa' });
+    const cls = (btn as HTMLElement).className;
+    expect(cls.includes('min-h-[44px]') || cls.includes('h-11')).toBe(true);
+    expect(cls.includes('min-w-[44px]') || cls.includes('w-11')).toBe(true);
+    // Escondido ele não intercepta clique sobre o conteúdo (só no hover/foco).
+    expect(cls).toContain('pointer-events-none');
+    expect(cls).toContain('group-hover:pointer-events-auto');
+  });
+
+  it('o elemento com dragHandleProps preserva role article (sem botão-dentro-de-botão)', async () => {
+    // dragHandleProps real da lib de DnD: ela manda role="button" + tabIndex.
+    const { container } = render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+        dragHandleProps={{
+          role: 'button',
+          tabIndex: 0,
+          'aria-describedby': 'dnd-desc',
+          'data-rbd-drag-handle-draggable-id': 't1',
+        }}
+      />,
+    );
+
+    // O card continua article (o spread vem antes do role) e segue focável
+    // pelo tabIndex da lib — o arrasto por teclado não morre.
+    expect(card().getAttribute('role')).toBe('article');
+    expect(card().getAttribute('tabindex')).toBe('0');
+
+    const resultado = await axe(container, {
+      runOnly: { type: 'rule', values: ['nested-interactive', 'aria-allowed-role'] },
+    });
+    expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+
+  it('não viola nested-interactive nem aria-allowed-role (axe)', async () => {
+    const { container } = render(<WorkItemCard item={item()} mode="list" />);
+
+    const resultado = await axe(container, {
+      runOnly: { type: 'rule', values: ['nested-interactive', 'aria-allowed-role'] },
+    });
+    expect(resultado.violations.map((v) => v.id)).toEqual([]);
   });
 });
