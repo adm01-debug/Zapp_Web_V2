@@ -179,7 +179,7 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
   });
 
   it('carrega as filas com waiting_count mesmo se as RPCs de métricas falharem', async () => {
-    vi.mocked(supabase.rpc).mockImplementation((fn: string) => {
+    (supabase.rpc as unknown as ReturnType<typeof vi.fn>).mockImplementation((fn: string) => {
       if (fn === 'talk_me_list_queues' || fn === 'talk_me_list_waiting') {
         return Promise.reject(new Error('rpc indisponível'));
       }
