@@ -192,15 +192,38 @@ export function TalkXSuppression() {
   });
 
   const { data: blacklist = [], isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-blacklist'],
+    queryKey: ['talkx-blacklist', search],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const base = (embed: string) => supabase
         .from('talkx_blacklist')
-        .select('*, contacts:contact_id(name, phone, company, avatar_url)')
+        .select(`*, ${embed}(name, phone, company, avatar_url)`)
         .is('removed_at', null)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as BlacklistEntry[];
+      const q = search.trim().toLowerCase();
+      if (!q) {
+        const { data, error } = await base('contacts');
+        if (error) throw error;
+        return (data ?? []) as unknown as BlacklistEntry[];
+      }
+      // Um `.or()` não mistura colunas da supressão com colunas do contato:
+      // duas consultas filtradas no servidor, cada uma com o seu grupo, unidas por id.
+      // O join interno só entra na consulta do contato — a de colunas próprias
+      // precisa manter as supressões por telefone avulso (sem contato).
+      const qDigits = q.replace(/\D/g, '');
+      const phoneQuery = qDigits.length > 0 && /^[\d\s()+.-]+$/.test(q);
+      const term = escapeOrFilterValue(`%${q}%`);
+      const ownFilter = phoneQuery
+        ? `reason.ilike.${term},phone.ilike.${escapeOrFilterValue(`%${qDigits}%`)}`
+        : `reason.ilike.${term}`;
+      const [own, joined] = await Promise.all([
+        base('contacts').or(ownFilter),
+        base('contacts!inner').or(`name.ilike.${term},phone.ilike.${term}`, { referencedTable: 'contacts' }),
+      ]);
+      if (own.error) throw own.error;
+      if (joined.error) throw joined.error;
+      const byId = new Map<string, BlacklistEntry>();
+      for (const row of [...(own.data ?? []), ...(joined.data ?? [])] as unknown as BlacklistEntry[]) byId.set(row.id, row);
+      return [...byId.values()].sort((x, y) => y.created_at.localeCompare(x.created_at));
     },
   });
 
@@ -244,21 +267,8 @@ export function TalkXSuppression() {
     let r = blacklist;
     if (filterValues.origin !== 'all') r = r.filter((b) => b.origin === filterValues.origin);
     if (filterValues.motivo !== 'all') r = r.filter((b) => (b.reason ?? '').toLowerCase().includes(filterValues.motivo.toLowerCase()));
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      // Busca de telefone (só dígitos e pontuação): o número da supressão fica gravado em
-      // dígitos, então é preciso normalizar o termo para encontrar um bloqueio feito só
-      // por telefone — sem isso, qualquer busca com dígito casaria por acidente.
-      const qDigits = q.replace(/\D/g, '');
-      const phoneQuery = qDigits.length > 0 && /^[\d\s()+.-]+$/.test(q);
-      r = r.filter((b) =>
-        b.contacts?.name?.toLowerCase().includes(q)
-        || b.contacts?.phone?.includes(q)
-        || (phoneQuery && (b.phone ?? '').includes(qDigits))
-        || (b.reason ?? '').toLowerCase().includes(q));
-    }
     return r;
-  }, [blacklist, filterValues.origin, filterValues.motivo, search]);
+  }, [blacklist, filterValues.origin, filterValues.motivo]);
 
   const filterDefs = useMemo(() => [
     { key: 'origin', label: 'Todas as origens', allLabel: 'Todas as origens', options: Object.entries(SUPPRESSION_ORIGIN).map(([v, m]) => ({ value: v, label: m.label })) },
