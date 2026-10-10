@@ -64,6 +64,10 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // N142 (t_8d3c61ff): prova que a policy message_reactions_select_policy usa
+  // get_profile_id_for_user(auth.uid()) e nao user_id = auth.uid(). Roda em PG 17
+  // descartavel com roles reais authenticated/anon (sem BYPASSRLS).
+  'scripts/db-audit/message-reactions-rls.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

@@ -965,3 +965,16 @@ jobs:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+
+      # N142 (cartão t_8d3c61ff): a policy message_reactions_select_policy comparava
+      # user_id (profile id) com auth.uid() (auth user uuid), o que nunca casa para
+      # usuarios nao-admin. A correcao usa get_profile_id_for_user(auth.uid()).
+      # O teste aplica a migration real num PostgreSQL 17 descartavel e prova,
+      # com roles reais authenticated/anon (sem BYPASSRLS): o author enxerga sua
+      # propria reacao, um terceiro sem vinculo nao enxerga, admin enxerga tudo,
+      # e anon nao enxerga.
+      - name: Provar que author vê sua reacao e terceiro nao (N142)
+        env:
+          MESSAGE_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/message-reactions-rls.test.sh
