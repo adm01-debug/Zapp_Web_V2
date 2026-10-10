@@ -28,14 +28,20 @@ import { toast } from 'sonner';
 
 /**
  * X138: o mock 10 escreve mês e dias da semana em português com inicial
- * maiúscula ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex Sab"); o locale do
- * date-fns devolve "novembro 2026" e "dom".
+ * maiúscula e o sábado acentuado ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex
+ * Sáb"); o locale do date-fns devolve "novembro 2026" e "sab" SEM acento, e o
+ * `Intl` de "short" devolve "sáb." com ponto. Por isso o rótulo do dia da
+ * semana é um mapa fixo por `getDay()` — sai idêntico em qualquer plataforma,
+ * com o acento correto, e não depende do fuso do processo.
  */
 const comInicialMaiuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
 
+/** Domingo..sábado, a partir de `Date.getDay()` (0 = domingo). */
+const DIAS_SEMANA_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'] as const;
+
 const CALENDAR_FORMATTERS = {
   formatCaption: (mes: Date) => `${comInicialMaiuscula(format(mes, 'LLLL', { locale: ptBR }))} de ${format(mes, 'yyyy')}`,
-  formatWeekdayName: (dia: Date) => comInicialMaiuscula(format(dia, 'cccccc', { locale: ptBR })),
+  formatWeekdayName: (dia: Date) => DIAS_SEMANA_PT[dia.getDay()] ?? '',
 };
 
 /**
