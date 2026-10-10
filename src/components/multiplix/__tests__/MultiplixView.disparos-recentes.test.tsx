@@ -50,9 +50,8 @@ vi.mock('@/components/multiplix/MultiplixMonitor', () => ({
   ),
 }));
 
-vi.mock('@/components/multiplix/MultiplixComposerDialog', () => ({
-  MultiplixComposerDialog: () => null,
-}));
+// TL-006/F72: o mock do `MultiplixComposerDialog` deixou de existir (a
+// composição passou para a região 02 da própria tela).
 
 import MultiplixView from '@/components/multiplix/MultiplixView';
 
