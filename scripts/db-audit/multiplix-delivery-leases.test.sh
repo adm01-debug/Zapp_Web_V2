@@ -325,6 +325,9 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
+# F89/TL-048: cast explicito do ENUM no UPDATE de conclusao das DUAS RPCs de drenagem. Sem ela
+# os casos (8)/(9) deste arquivo falham com 42804 no passo em que a drenagem CONCLUI o disparo.
+migration "20261009011641_multiplix_drain_enum_cast.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
