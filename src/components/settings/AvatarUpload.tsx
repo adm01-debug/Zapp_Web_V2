@@ -103,8 +103,9 @@ export function AvatarUpload() {
             .from(AVATAR_BUCKET)
             .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
           if (signed?.signedUrl) setAvatarUrl(signed.signedUrl);
-        } catch {
+        } catch (signError) {
           // Mantém a prévia via refreshProfile; a próxima renderização reassina.
+          log.warn('avatar_resign_after_upload_error', { error: signError instanceof Error ? signError.message : 'desconhecido' });
         }
       },
       {
