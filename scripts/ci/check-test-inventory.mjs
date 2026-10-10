@@ -38,6 +38,9 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // R2-DB-005: harness que prova o segundo UPDATE do template nao e rejeitado
+  // pela guarda de snapshot da RPC (transaction_timestamp vs statement_timestamp).
+  'scripts/db-audit/talkx-template-second-update-snapshot.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
