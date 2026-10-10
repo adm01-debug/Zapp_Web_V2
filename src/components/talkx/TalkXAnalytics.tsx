@@ -18,7 +18,19 @@ import { AnalyticsTopSegments } from './analytics/AnalyticsTopSegments';
 import { AnalyticsHeatmap } from './analytics/AnalyticsHeatmap';
 import type { HeatmapCell } from './analytics/AnalyticsHeatmap';
 import { AnalyticsTopCampaigns } from './analytics/AnalyticsTopCampaigns';
-import { goTab, readSub } from './talkxTabRoute';
+
+function goTab(tab: string, sub?: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', tab);
+  if (sub) url.searchParams.set('sub', sub);
+  else url.searchParams.delete('sub');
+  window.history.pushState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+function readSub(search: string): string | undefined {
+  return new URLSearchParams(search).get('sub') ?? undefined;
+}
 
 interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
 type Period = '7d' | '30d' | '90d';
@@ -53,7 +65,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     return { sent, failed, delivered, read, outcomeUnknown, total, successRate: total > 0 ? Math.round((sent / total) * 1000) / 10 : 0 };
   }, [filtered]);
 
-  const { data: hourlyData, isError: hourlyError } = useQuery({
+  const { data: hourlyData, isLoading: hourlyIsLoading, isError: hourlyError } = useQuery({
     queryKey: ['talkx-hourly-stats', period],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
@@ -333,7 +345,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
 
       {/* X187: mapa de calor por engajamento (taxa de resposta) no lugar do mapa
           por volume de envio; a leitura de horário continua a mesma query. */}
-      <AnalyticsHeatmap cells={heatCells} hasError={hourlyError} />
+      <AnalyticsHeatmap cells={heatCells} hasError={hourlyError} isLoading={hourlyIsLoading} />
 
       {/* X187: tabela de melhor resultado com "Ordenar por"; abrir a campanha
           continua alimentando o painel de destinatários abaixo. */}

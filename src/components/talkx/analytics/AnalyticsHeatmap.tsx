@@ -37,7 +37,7 @@ function rateOf(cell: HeatmapCell, minBase: number): number | null {
 
 const hourLabel = (h: number) => `${String(h).padStart(2, '0')}h`;
 
-export function AnalyticsHeatmap({ cells, minBase = HEATMAP_MIN_BASE, hasError = false }: { cells: HeatmapCell[]; minBase?: number; hasError?: boolean }) {
+export function AnalyticsHeatmap({ cells, minBase = HEATMAP_MIN_BASE, hasError = false, isLoading = false }: { cells: HeatmapCell[]; minBase?: number; hasError?: boolean; isLoading?: boolean }) {
   const { index, maxRate, comDados } = useMemo(() => {
     const index = new Map<string, HeatmapCell>();
     let maxRate = 0;
@@ -63,9 +63,11 @@ export function AnalyticsHeatmap({ cells, minBase = HEATMAP_MIN_BASE, hasError =
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-2xs text-muted-foreground">
-            <span className="w-8 h-2.5 rounded-sm bg-muted/50 inline-block" />Menor engajamento
-            <span className="w-8 h-2.5 rounded-sm bg-primary/80 inline-block" />Maior engajamento
+          <div className="flex items-center gap-3 text-2xs text-muted-foreground">
+            <span className="w-8 h-2.5 rounded-sm bg-primary/20 inline-block" />Baixo
+            <span className="w-8 h-2.5 rounded-sm bg-primary/50 inline-block" />Médio
+            <span className="w-8 h-2.5 rounded-sm bg-primary/80 inline-block" />Alto
+            <span className="w-3 h-2.5 rounded-sm inline-block" style={{ background: 'hsl(var(--muted) / 0.3)' }} />Menos de {minBase} envios (sem base)
           </div>
           <span
             role="img"
@@ -133,6 +135,8 @@ export function AnalyticsHeatmap({ cells, minBase = HEATMAP_MIN_BASE, hasError =
       </table>
       {hasError ? (
         <p className="text-[13px] text-destructive text-center py-4">Não foi possível carregar os envios do período.</p>
+      ) : isLoading ? (
+        <p className="text-[13px] text-muted-foreground text-center py-4">Carregando…</p>
       ) : comDados.length === 0 ? (
         <p className="text-[13px] text-muted-foreground text-center py-4">Sem envios no período selecionado.</p>
       ) : null}

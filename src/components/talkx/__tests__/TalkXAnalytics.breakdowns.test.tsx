@@ -70,15 +70,18 @@ const CAMPAIGNS = [
 /* ------------------------------------------------------------------ */
 
 let falhaHorario = false;
+let carregando = false;
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   fromTable: () => {
     const b: Record<string, unknown> = {};
     const chain = () => b;
     b.select = chain; b.in = chain; b.gte = chain; b.eq = chain; b.order = chain; b.limit = chain;
-    b.not = () => Promise.resolve(
-      falhaHorario ? { data: null, error: { message: 'falha na leitura' } } : { data: hourlyRows, error: null },
-    );
+    b.not = () => carregando
+      ? new Promise(() => {})
+      : Promise.resolve(
+          falhaHorario ? { data: null, error: { message: 'falha na leitura' } } : { data: hourlyRows, error: null },
+        );
     return b;
   },
 }));
@@ -118,6 +121,7 @@ const campaigns = CAMPAIGNS as unknown as TalkXCampaign[];
 
 beforeEach(() => {
   falhaHorario = false;
+  carregando = false;
   window.history.replaceState(null, '', '/');
 });
 
@@ -185,6 +189,26 @@ describe('TalkXAnalytics — mapa de calor por engajamento (X187)', () => {
     wrap(<TalkXAnalytics campaigns={campaigns} />);
     await waitFor(() => expect(screen.getByText('Não foi possível carregar os envios do período.')).toBeTruthy());
     expect(screen.queryByText('Sem envios no período selecionado.')).toBeNull();
+  });
+
+  it('em carregamento sem dados exibe "Carregando…" em vez de "Sem envios"', async () => {
+    carregando = true;
+    wrap(<TalkXAnalytics campaigns={campaigns} />);
+    await waitFor(() => expect(screen.getByText('Carregando…')).toBeTruthy());
+    expect(screen.queryByText('Sem envios no período selecionado.')).toBeNull();
+    carregando = false;
+  });
+
+  it('legenda mostra escala de engajamento e item "sem base", não "Menor/Maior engajamento"', async () => {
+    const { container } = wrap(<TalkXAnalytics campaigns={campaigns} />);
+    await waitFor(() => expect(screen.getByText('Engajamento por dia e horário')).toBeTruthy());
+    const legendText = container.textContent ?? '';
+    expect(legendText).toContain('Baixo');
+    expect(legendText).toContain('Médio');
+    expect(legendText).toContain('Alto');
+    expect(legendText).toContain('sem base');
+    expect(screen.queryByText('Menor engajamento')).toBeNull();
+    expect(screen.queryByText('Maior engajamento')).toBeNull();
   });
 });
 
