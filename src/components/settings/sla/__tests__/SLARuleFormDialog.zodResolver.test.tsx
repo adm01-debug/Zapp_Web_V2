@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 /**
  * SL-085 — o formulário de regra de SLA é o primeiro do app validado por schema
@@ -129,5 +130,25 @@ describe('SLARuleFormDialog — validação por schema (zodResolver)', () => {
         priority: 10,
       })
     );
+  });
+
+  it('seletor de escopo tem rótulo ligado via combobox nomeado', () => {
+    // Usa scope='contact_type' (e não 'contact') porque com 'contact' o
+    // componente renderiza um campo de busca e uma lista, não um Select/combobox;
+    // o combobox com aria-label 'Escopo da regra' só existe quando o escopo
+    // é um seletor (contact_type, company, job_title, queue, agent).
+    render(
+      <SLARuleFormDialog open onOpenChange={() => {}} scope="contact_type" editingRule={null} />
+    );
+    expect(screen.getByRole('combobox', { name: 'Escopo da regra' })).toBeInTheDocument();
+  });
+
+  it('axe zerado no SLARuleFormDialog', async () => {
+    const { container } = renderDialog();
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra de SLA')).toBeInTheDocument();
+    });
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(results).toHaveNoViolations();
   });
 });
