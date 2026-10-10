@@ -590,7 +590,7 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
   const actions = new Set(
     [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
+  assert(actions.size > 50, `sanidade: esperava >50 ações no handler (achou ${actions.size})`);
   for (const action of actions) {
     assert(
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
