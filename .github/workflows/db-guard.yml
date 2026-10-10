@@ -405,6 +405,22 @@ jobs:
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_LIVE_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
           TALKX_HISTORY_PRECREATE_RUNTIME=true TALKX_HISTORY_INVALID_VARIANT_PRESTATE=true bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-history-behavior.test.sh
 
+      # R2-DB-013 (cartao t_ca15ba02): o 2o UPDATE de update_talkx_template_with_snapshot
+      # (SET current_version_id) era recusado com 42501 talkx_template_update_requires_
+      # authorized_rpc quando o snapshot do estado NOVO gravava created_at = o updated_at
+      # persistido (transaction_timestamp() via trigger) em vez de statement_timestamp().
+      # O harness roda contra PostgreSQL 17 descartavel, aplica as migrations reais e chama
+      # a RPC como 'authenticated': RED (42501) sem a correcao de t_d412bd86, GREEN com ela,
+      # e um dente que volta o carimbo do estado NOVO e derruba a prova. A migration da
+      # correcao e 20261011000017_talkx_template_snapshot_second_update.sql.
+      # E47: SKIP_DOCKER_SHIM=1 — o harness valida current_database() === 'postgres'; com o
+      # shim o banco criado e shim_<container> e essa assercao quebraria.
+      - name: Simular snapshot do 2o UPDATE de template Talk X (R2-DB-013)
+        env:
+          TALKX_SECOND_UPDATE_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-second-update-snapshot.test.sh
+
       - name: Simular correção forward-only da FK saved_by do Talk X
         env:
           TALKX_HISTORY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
