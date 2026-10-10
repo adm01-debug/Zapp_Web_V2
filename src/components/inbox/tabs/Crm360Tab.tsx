@@ -190,7 +190,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" action={{ label: 'Ver no SalesView →', onClick: () => onTabChange('orders') }}>
+        <SectionCard icon={ShoppingBag} title="Últimas compras" tone="blue" headerRight={<button type="button" onClick={() => onTabChange('orders')} className="h-7 px-3 rounded-lg bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/25 transition-colors">Ver no SalesView →</button>}>
           {!crm360 || crm360.purchases.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="Nenhuma compra registrada" description="Compras deste contato aparecerão aqui." size="sm" />
           ) : (
@@ -252,7 +252,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
               </div>
               <button
                 type="button"
-                className="text-xs font-semibold text-primary hover:underline shrink-0"
+                className="h-7 px-3 rounded-lg bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/25 transition-colors shrink-0"
                 onClick={() => void createTask({ title: nextActions[0].label, contactId, clientTaskId: nextActionTaskKey })}
               >
                 Criar tarefa →
@@ -280,7 +280,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
           )}
         </SectionCard>
 
-        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" action={{ label: 'Ver na Journey →', onClick: () => onTabChange('history') }} className="xl:col-span-2">
+        <SectionCard icon={HistoryIcon} title="Últimas interações comerciais" headerRight={<button type="button" onClick={() => onTabChange('history')} className="h-7 px-3 rounded-lg bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/25 transition-colors">Ver na Journey →</button>} className="xl:col-span-2">
           {!crm360 || crm360.interacoes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma interação comercial</p>
           ) : (

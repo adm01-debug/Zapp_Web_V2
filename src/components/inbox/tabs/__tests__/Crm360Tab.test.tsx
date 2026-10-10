@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { axe } from 'vitest-axe';
+import { readFileSync } from 'node:fs';
 import { Crm360Tab } from '../Crm360Tab';
 import type { Conversation } from '@/types/chat';
 import type { Crm360Result } from '@/hooks/crm/useContactCrm360';
@@ -29,9 +31,56 @@ vi.mock('@/hooks/crm/useContactCrm360', () => ({
   useAdvanceDealStage: () => ({ mutate: mockAdvanceMutate, isPending: false }),
 }));
 
+// Controle da ação sugerida: o card "Próxima melhor ação" só renderiza o botão
+// "Criar tarefa →" quando existe uma ação — sem isso o 3º link não entra no teste.
+const h = vi.hoisted(() => ({ nextActions: [] as { label: string; description: string }[] }));
+
 vi.mock('@/hooks/chat/useNextBestAction', () => ({
-  useNextBestAction: () => ({ actions: [], loading: false }),
+  useNextBestAction: () => ({ actions: h.nextActions, loading: false }),
 }));
+
+/**
+ * Contraste real medido a partir do tokens.css (não de string fixa): o jsdom não tem
+ * layout, então o axe marca `color-contrast` como "incomplete" e nunca como violação.
+ * A prova do AA é a razão calculada do par de TEXTO `--primary-text` sobre o `--card`.
+ */
+const TOKENS_CSS = readFileSync('src/styles/tokens.css', 'utf8');
+const DARK_TOKENS = TOKENS_CSS.split(/\.dark\s*\{/)[1] ?? '';
+
+function tokenHsl(css: string, name: string) {
+  const m = new RegExp(`--${name}:\\s*([\\d.]+)\\s+([\\d.]+)%\\s+([\\d.]+)%`).exec(css);
+  if (!m) throw new Error(`token --${name} ausente em tokens.css`);
+  return { h: Number(m[1]) / 360, s: Number(m[2]) / 100, l: Number(m[3]) / 100 };
+}
+function hslToRgb({ h, s, l }: { h: number; s: number; l: number }): [number, number, number] {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h * 6) % 2) - 1));
+  const m = l - c / 2;
+  const [r, g, b] =
+    h < 1 / 6 ? [c, x, 0] : h < 2 / 6 ? [x, c, 0] : h < 3 / 6 ? [0, c, x] :
+    h < 4 / 6 ? [0, x, c] : h < 5 / 6 ? [x, 0, c] : [c, 0, x];
+  return [r + m, g + m, b + m];
+}
+function luminancia([r, g, b]: [number, number, number]) {
+  const f = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+function razaoContraste(fg: [number, number, number], bg: [number, number, number]) {
+  const [alto, baixo] = [luminancia(fg), luminancia(bg)].sort((a, b) => b - a);
+  return (alto + 0.05) / (baixo + 0.05);
+}
+// Cor de TEXTO realmente aplicada pelo link: o token vem da classe do componente (o par
+// arbitrário `text-[hsl(var(--x))]` ou a semântica `text-primary`), nunca de um literal do teste.
+const TEXT_TOKEN_CLASS = /text-\[hsl\(var\(--([a-z-]+)\)\)\]/;
+const SEMANTIC_TEXT: Record<string, string> = { 'text-primary': 'primary' };
+function tokenDeTexto(el: Element): string {
+  const cls = el.className;
+  const arb = TEXT_TOKEN_CLASS.exec(cls)?.[1];
+  if (arb) return arb;
+  const sem = Object.keys(SEMANTIC_TEXT).find((c) => cls.split(/\s+/).includes(c));
+  if (sem) return SEMANTIC_TEXT[sem];
+  throw new Error(`link sem cor de texto resolvível: "${cls}"`);
+}
 
 vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
   useMyWorkItems: () => ({ create: mockCreateTask, byDue: { overdue:[], today:[], tomorrow:[], upcoming:[], noDue:[], done7d:[], doneOlder:[] }, isLoading: false }),
@@ -101,7 +150,10 @@ function renderTab(crm360: Partial<Crm360Result> | undefined = EMPTY_CRM360) {
 }
 
 describe('Crm360Tab', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.nextActions.length = 0;
+  });
 
   it('renderiza a faixa de KPIs', () => {
     renderTab();
@@ -218,5 +270,47 @@ describe('Crm360Tab', () => {
 
     const stub = await screen.findByTestId('edit-contact-stub');
     expect(JSON.parse(stub.getAttribute('data-contact') ?? '{}')).toMatchObject({ address: 'Av. Paulista' });
+  });
+
+  /**
+   * Refazer (TL a11y links CRM 360°): os três links de ação tinham área de toque de 16 px
+   * (text-xs, sem altura) e usavam a primária de PREENCHIMENTO como cor de TEXTO
+   * (`text-primary`), 3,4:1 sobre o card branco — reprovado como AA. Agora cada link
+   * carrega `h-7` (1,75rem = 28 px ≥ 24 px) e o par de TEXTO `--primary-text`.
+   */
+  it('links de ação do CRM 360° têm área de toque ≥24px e usam o par de texto --primary-text', () => {
+    h.nextActions.push({ label: 'Ligar de volta', description: 'Cliente pediu retorno' });
+    renderTab();
+    for (const label of ['Ver no SalesView →', 'Criar tarefa →', 'Ver na Journey →']) {
+      const el = screen.getByText(label);
+      // jsdom não tem layout: o contrato medido aqui é a classe; h-7 = 1,75rem = 28px.
+      expect(el.className, label).toContain('h-7');
+      expect(el.className, label).toContain('text-[hsl(var(--primary-text))]');
+    }
+  });
+
+  it('o par de texto aplicado nos links fecha AA (≥4,5:1) sobre o card nos temas claro e escuro', () => {
+    h.nextActions.push({ label: 'Ligar de volta', description: 'Cliente pediu retorno' });
+    renderTab();
+    for (const label of ['Ver no SalesView →', 'Criar tarefa →', 'Ver na Journey →']) {
+      const token = tokenDeTexto(screen.getByText(label));
+      for (const [tema, css] of [['claro', TOKENS_CSS], ['escuro', DARK_TOKENS]] as const) {
+        const razao = razaoContraste(hslToRgb(tokenHsl(css, token)), hslToRgb(tokenHsl(css, 'card')));
+        expect(razao, `${label} / ${tema} (--${token}): ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it('axe não acusa color-contrast no CRM 360° nos temas claro e escuro', async () => {
+    h.nextActions.push({ label: 'Ligar de volta', description: 'Cliente pediu retorno' });
+    renderTab();
+    // A regra color-contrast fica LIGADA; o jsdom a devolve como "incomplete" (sem layout),
+    // então o alvo é zero violações — a razão real é provada pelo teste acima.
+    for (const tema of ['claro', 'escuro'] as const) {
+      document.documentElement.classList.toggle('dark', tema === 'escuro');
+      const results = await axe(document.body);
+      expect(results.violations.filter((v) => v.id === 'color-contrast'), tema).toEqual([]);
+    }
+    document.documentElement.classList.remove('dark');
   });
 });
