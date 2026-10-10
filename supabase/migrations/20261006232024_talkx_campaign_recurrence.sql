@@ -1,11 +1,13 @@
 -- talkx_campaign_recurrence
--- Rollback: DROP FUNCTION IF EXISTS public.schedule_next_talkx_recurrence(uuid);
--- Rollback: DROP TRIGGER IF EXISTS guard_talkx_campaign_recurrence_series ON public.talkx_campaigns;
--- Rollback: DROP FUNCTION IF EXISTS public.guard_talkx_campaign_recurrence_series();
--- Rollback: DROP INDEX IF EXISTS public.idx_talkx_campaigns_recurrence_pending;
--- Rollback: DROP INDEX IF EXISTS public.idx_talkx_campaigns_recurrence_series;
--- Rollback: ALTER TABLE public.talkx_campaigns DROP CONSTRAINT IF EXISTS talkx_campaigns_recurrence_shape_check;
--- Rollback: ALTER TABLE public.talkx_campaigns DROP COLUMN IF EXISTS recurrence_closed_reason, DROP COLUMN IF EXISTS recurrence_closed_at, DROP COLUMN IF EXISTS recurrence_next_campaign_id, DROP COLUMN IF EXISTS recurrence_series_id, DROP COLUMN IF EXISTS recurrence_end_at, DROP COLUMN IF EXISTS recurrence_weekdays, DROP COLUMN IF EXISTS recurrence_frequency;
+-- Rollback: remove a RPC, o trigger de guarda e as colunas de recorrencia (na ordem abaixo).
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.schedule_next_talkx_recurrence(uuid);
+--   drop trigger if exists guard_talkx_campaign_recurrence_series on public.talkx_campaigns;
+--   drop function if exists public.guard_talkx_campaign_recurrence_series();
+--   drop index if exists public.idx_talkx_campaigns_recurrence_pending;
+--   drop index if exists public.idx_talkx_campaigns_recurrence_series;
+--   alter table public.talkx_campaigns drop constraint if exists talkx_campaigns_recurrence_shape_check;
+--   alter table public.talkx_campaigns drop column if exists recurrence_closed_reason, drop column if exists recurrence_closed_at, drop column if exists recurrence_next_campaign_id, drop column if exists recurrence_series_id, drop column if exists recurrence_end_at, drop column if exists recurrence_weekdays, drop column if exists recurrence_frequency;
 --
 -- Talk X · recorrencia de campanha (cartao t_c1904679, Onda 3.6 do redesign).
 -- Primeira entrega: SO "Diariamente" e "Semanalmente". "Personalizado" nao existe aqui.
