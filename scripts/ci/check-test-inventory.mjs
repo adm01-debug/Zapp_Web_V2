@@ -48,6 +48,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // N-119 [refazer] (talkx-campaign-ab-winner): vencedor AB calculado E gravado
+  // pela RPC + lote por tick (SKIP LOCKED) em PG 17 descartavel (docker local).
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-ab-winner.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',

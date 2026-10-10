@@ -11,7 +11,7 @@
  * Roda sem rede, sem banco e sem env: tudo entra por `_injected`.
  * Comando do CI: deno test --config scripts/ci/deno.json --frozen --allow-env <este arquivo>
  */
-import { handleTalkxScheduler, MAX_CAMPAIGNS_PER_TICK, TALKX_SEND_TIMEOUT_MS } from "./index.ts";
+import { handleTalkxScheduler, MAX_AB_DECISIONS_PER_TICK, MAX_CAMPAIGNS_PER_TICK, TALKX_SEND_TIMEOUT_MS } from "./index.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -31,12 +31,17 @@ interface ClientOpts {
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
   settings?: Array<{ key: string; value: unknown }>;
+  /** N-119: linhas decididas (ou erro) da RPC talkx_decide_ab_winners no lote do tick. */
+  abBatch?: Array<{ campaign_id: string; winner_variant_id: string }>;
+  abBatchError?: string;
 }
 
 interface ClientCtx {
   dueQueries: number;
   pausedQueries: number;
   events: Array<Record<string, unknown>>;
+  rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
+  updates: Array<Record<string, unknown>>;
 }
 
 /**
@@ -45,10 +50,11 @@ interface ClientCtx {
  * (thenable), sem tocar banco nenhum.
  */
 function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
-  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [] };
+  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [], rpcCalls: [], updates: [] };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function from(table: string): any {
     let status: string | null = null;
+    let byId = false;
     const resolveRows = () => {
       if (table === "talkx_campaigns") {
         if (status === "scheduled") {
@@ -74,6 +80,12 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.in = chain; b.limit = chain; b.order = chain;
     b.eq = (col: string, val: unknown) => {
       if (col === "status") status = String(val);
+      if (col === "id") byId = true;
+      return b;
+    };
+    b.single = () => Promise.resolve({ data: null, error: null });
+    b.update = (row: Record<string, unknown>) => {
+      ctx.updates.push(row);
       return b;
     };
     b.insert = (row: Record<string, unknown>) => {
@@ -85,7 +97,18 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.catch = (rej: (e: unknown) => unknown) => Promise.resolve(resolveRows()).catch(rej);
     return b;
   }
-  return { client: { rpc: () => Promise.resolve({ data: null, error: null }), from }, ctx };
+  const rpc = (fn: string, args: Record<string, unknown>) => {
+    ctx.rpcCalls.push({ fn, args });
+    if (fn === "talkx_decide_ab_winners") {
+      return Promise.resolve(
+        opts.abBatchError
+          ? { data: null, error: { message: opts.abBatchError } }
+          : { data: opts.abBatch ?? [], error: null },
+      );
+    }
+    return Promise.resolve({ data: null, error: null });
+  };
+  return { client: { rpc, from }, ctx };
 }
 
 interface FetchOpts {
@@ -397,4 +420,69 @@ Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (s
   } finally {
     console.error = originalError;
   }
+});
+
+// --------------------------------------------------------------------------- N-119 (AB)
+
+const AB_BATCH_DECIDED = [
+  { campaign_id: "c-ab1", winner_variant_id: "variant-a" },
+  { campaign_id: "c-ab2", winner_variant_id: "variant-b" },
+];
+
+/** Captura console.log/info (Logger.info) e console.error (Logger.error) durante o tick. */
+async function runBatchTick(opts: ClientOpts): Promise<{ ctx: ClientCtx; out: string[]; res: Response; posts: number }> {
+  const { client, ctx } = makeClient(opts);
+  const fetch = makeFetch();
+  const out: string[] = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  console.log = (...args: unknown[]) => { out.push(args.map((a) => String(a)).join(" ")); };
+  console.error = (...args: unknown[]) => { out.push(args.map((a) => String(a)).join(" ")); };
+  try {
+    const res = await handleTalkxScheduler(
+      makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, fetch: fetch.impl, cronSecretValue: TEST_CRON_SECRET }),
+    );
+    return { ctx, out, res, posts: fetch.posts.length };
+  } finally {
+    console.log = originalLog;
+    console.error = originalError;
+  }
+}
+
+Deno.test("N-119: tick com N campanhas devidas faz UMA chamada de lote AB (sem N+1, sem escrita fora da RPC)", async () => {
+  const { ctx, out, res } = await runBatchTick({
+    due: [dueRow("c-1"), dueRow("c-2"), dueRow("c-3")],
+    abBatch: AB_BATCH_DECIDED,
+  });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const batch = ctx.rpcCalls.filter((c) => c.fn === "talkx_decide_ab_winners");
+  assert(batch.length === 1, `lote AB deve ser 1 chamada por tick (houve ${batch.length})`);
+  assert(
+    batch[0].args.p_limit === MAX_AB_DECISIONS_PER_TICK,
+    `p_limit deve ser o teto do tick: ${JSON.stringify(batch[0].args)}`,
+  );
+  assert(
+    !ctx.rpcCalls.some((c) => c.fn === "talkx_determine_winner"),
+    "nao pode haver RPC por campanha (N+1)",
+  );
+  assert(ctx.updates.length === 0, `gravacao mora na RPC; fora dela nada pode dar update: ${JSON.stringify(ctx.updates)}`);
+  assert(out.some((l) => l.includes("AB winners decided: 2")), `log de decididas ausente:\n${out.join("\n")}`);
+});
+
+Deno.test("N-119: erro do lote AB nao quebra o tick nem grava vencedor", async () => {
+  const { ctx, out, res, posts } = await runBatchTick({ due: [dueRow("c-1")], abBatchError: "boom" });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(ctx.updates.length === 0, "erro no lote nao pode gravar vencedor");
+  assert(posts === 1, `o despacho das devidas precisa continuar (houve ${posts} POST)`);
+  assert(out.some((l) => l.includes("AB winner selection failed")), `falha do lote precisa ir ao log:\n${out.join("\n")}`);
+});
+
+Deno.test("N-119: tick sem campanhas devidas ainda roda o lote AB uma vez", async () => {
+  const { ctx, res } = await runBatchTick({ abBatch: [AB_BATCH_DECIDED[0]] });
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const body = await res.json();
+  assert(body.message === "No campaigns due or resumable", `resumo de nada devido mantido: ${JSON.stringify(body)}`);
+  const batch = ctx.rpcCalls.filter((c) => c.fn === "talkx_decide_ab_winners");
+  assert(batch.length === 1, "lote AB precisa rodar mesmo sem campanha devida (decisao nao depende de agenda)");
 });
