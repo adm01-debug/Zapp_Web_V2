@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Users, ChevronLeft, RefreshCw, Activity, Send,
+  ChevronLeft, RefreshCw, Activity, Send,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -24,6 +24,7 @@ import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
+import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -203,71 +204,8 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 }
 
 
-// ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
-
-function TabRecipients({ campaignId }: { campaignId: string }) {
-  const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-recipients', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
-      if (error) throw error;
-      return (data ?? []) as RecipRow[];
-    },
-    refetchInterval: 15_000,
-    staleTime: 10_000,
-  });
-
-  return (
-    <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
-      <TalkXQueryBoundary
-        query={{ isLoading, isFetching, isError, error }}
-        entity="informações dos destinatários"
-        onRetry={() => { void refetch(); }}
-        skeleton={<div className="p-4"><TalkXSkeletonRows rows={5} /></div>}
-        isEmpty={(recips?.length ?? 0) === 0}
-        empty={(
-          <div className="p-8 text-center">
-            <Users className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
-            <p className="text-xs font-semibold text-foreground">Nenhum destinatário nesta campanha.</p>
-          </div>
-        )}
-      >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-          <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-          <p className="text-xs text-foreground-secondary">{`Mostrando ${recips?.length ?? 0} recentes`}</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[540px] border-collapse">
-            <thead><tr>
-              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
-                <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {(recips ?? []).map((r, i) => (
-                <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
-                  <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
-                  <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(recips?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center p-3">Mostrando 200 mais recentes.</p>}
-        </div>
-      </TalkXQueryBoundary>
-    </div>
-  );
-}
 
 // ─── Tab: Mensagens ────────────────────────────────────────────────────────────
 // A campanha pode ser alterada depois de iniciada. Por isso, esta tela só mostra
@@ -828,7 +766,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                 </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
-              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
+              {activeTab === 'recipients' && <TalkXRecipientsTable campaignId={campaign.id} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
               {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}

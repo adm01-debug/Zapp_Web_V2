@@ -126,7 +126,24 @@ vi.mock('@/lib/supabaseHelpers', () => {
     fromTable: () => chain(-1),
     supabase: {
       from: () => chain(-1),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+      // N-131: a aba Destinatários passou a ler pela RPC de paginação por cursor.
+      // O caso X047 continua dirigindo `state.rows[200]` (destinatários); a RPC
+      // espelha esse estado, incluindo o erro, para o retry seguir valendo.
+      rpc: vi.fn((fn: string) => {
+        if (fn !== 'talkx_campaign_recipients_page') return Promise.resolve({ data: null, error: null });
+        const page = state.rows[200] ?? { data: [], error: null };
+        if (page.error) return Promise.resolve({ data: null, error: page.error });
+        const list = (page.data ?? []) as unknown[];
+        return Promise.resolve({
+          data: {
+            rows: list,
+            next_cursor: null,
+            total: list.length,
+            kpis: { total: 0, sent: 0, delivered: 0, failed: 0, pending: 0, outcome_unknown: 0 },
+          },
+          error: null,
+        });
+      }),
       channel: realtimeChannel,
       removeChannel: vi.fn(),
     },
@@ -146,6 +163,7 @@ function renderView() {
 }
 
 const RECIPIENT_ROW = {
+  id: 'r1',
   status: 'sent',
   sent_at: '2026-10-05T12:00:00.000Z',
   delivered_at: null,
