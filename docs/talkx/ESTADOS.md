@@ -29,7 +29,7 @@ com `VITE_TALKX_KIT=1`):
 | `src/components/talkx/TalkXOverview.tsx` | `213`, `301` | `206`, `208` | `198` | — | — | — |
 | `src/components/talkx/TalkXSegments.tsx` | `141`, `143` | `139`, `233` | `110`, `135` | — | — | — |
 | `src/components/talkx/TalkXSettings.tsx` | — | `32` | `28` | — | — | — |
-| `src/components/talkx/TalkXSuppression.tsx` | `362`, `364` | `360`, `441`, `552` | `356` | — | — | — |
+| `src/components/talkx/TalkXSuppression.tsx` | `597`, `599` | `595`, `678`, `836` | `591` | — | — | — |
 | `src/components/talkx/TalkXTemplateEditor.tsx` | — | `320` | — | — | — | — |
 | `src/components/talkx/TalkXTemplates.tsx` | `152`, `156`, `163` | `150` | `146` | — | — | — |
 | `src/components/talkx/TalkXView.tsx` | — | `275` | — | — | `398` | — |
