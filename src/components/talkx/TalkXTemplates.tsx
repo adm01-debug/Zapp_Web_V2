@@ -220,9 +220,11 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
   // TL-175D (t_eedf548a): o cartao NAO e um controle. Era `role="button"` com os
   // botoes de acao DENTRO dele — o axe reprovava `nested-interactive` nos cartoes
   // da grade (controle interativo dentro de controle: o leitor de tela anuncia mal e
-  // o Tab entra num controle que ja esta dentro de outro). O clique por mouse
-  // continua; quem seleciona o cartao nao tem papel de controle, e cada acao
-  // (Usar/Editar/Duplicar/Excluir) segue sendo um `<button>` real e alcancavel.
+  // o Tab entra num controle que ja esta dentro de outro). O clique por mouse do
+  // cartao continua; a selecao por TECLADO volta pelo BOTAO do NOME (WCAG 2.1.1):
+  // ele e IRMAO dos botoes de acao, chama `onClick`, `aria-pressed` liga o estado e
+  // o `stopPropagation` evita o clique duplo quando o mouse acerta o proprio nome.
+  // Cada acao (Usar/Editar/Duplicar/Excluir) segue sendo um `<button>` real.
   return (
     <div
       data-talkx-template-card={t.id}
@@ -247,7 +249,13 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
         </div>
       </div>
       <div className="p-3.5">
-        <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          aria-pressed={selected}
+          aria-label={`Selecionar ${t.name}`}
+          className="block max-w-full text-left text-sm font-semibold text-foreground truncate"
+        >{t.name}</button>
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
           <Pill label={sm.label} tone={sm.tone} dot />
           <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
@@ -277,9 +285,10 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
   const aprovado = t.status === 'approved';
   const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
   // TL-175D (t_eedf548a): a linha da lista tambem deixa de ser `role="button"` pelo
-  // MESMO motivo do cartao da grade (`nested-interactive`, o outro componente deste
-  // arquivo): controle interativo dentro de controle. O clique por mouse continua e
-  // as acoes da linha seguem sendo `<button>` reais.
+  // MESMO motivo do cartao da grade (`nested-interactive`: controle interativo dentro
+  // de controle). O clique por mouse da linha continua; a selecao por TECLADO volta
+  // pelo BOTAO do NOME (WCAG 2.1.1), IRMAO dos botoes de acao, com `aria-pressed` e
+  // `stopPropagation` contra o clique duplo. As acoes da linha seguem `<button>` reais.
   return (
     <div
       onClick={onClick}
@@ -287,7 +296,13 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
     >
       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          aria-pressed={selected}
+          aria-label={`Selecionar ${t.name}`}
+          className="block max-w-full text-left text-sm font-semibold text-foreground truncate"
+        >{t.name}</button>
         <p className="text-xs text-muted-foreground truncate">{descricao}</p>
         {t.tags.length > 0 && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">

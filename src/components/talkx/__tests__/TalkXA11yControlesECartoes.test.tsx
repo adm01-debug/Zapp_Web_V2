@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 /**
@@ -96,10 +96,55 @@ describe('tela 04 · o cartão de template não é controle com controle dentro 
 
   it('o cartão continua respondendo ao clique do mouse', () => {
     render(<TalkXTemplates onUseTemplate={vi.fn()} />);
-    const cartao = screen.getByRole('button', { name: 'Usar template' }).closest('div.rounded-2xl');
+    const cartao = screen.getByRole('button', { name: 'Usar template' }).closest('[data-talkx-template-card]');
     expect(cartao).toBeTruthy();
     expect(cartao!.className).not.toContain('bg-primary/5');
     fireEvent.click(cartao!);
     expect(cartao!.className).toContain('bg-primary/5');
+  });
+
+  it('a seleção por teclado volta pelo botão do nome — no cartão (WCAG 2.1.1)', () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const selecionar = screen.getByRole('button', { name: 'Selecionar Boas-vindas' });
+    // é um <button> real: entra no Tab e responde a Enter/Espaço sem onKeyDown manual
+    expect(selecionar.tagName).toBe('BUTTON');
+    expect(selecionar.getAttribute('aria-pressed')).toBe('false');
+    expect(selecionar.closest('[role="button"]')).toBeNull();
+    selecionar.focus();
+    expect(document.activeElement).toBe(selecionar);
+    fireEvent.click(selecionar);
+    expect(selecionar.getAttribute('aria-pressed')).toBe('true');
+    const cartao = selecionar.closest('[data-talkx-template-card]');
+    expect(cartao!.className).toContain('bg-primary/5');
+  });
+});
+
+describe('tela 04 · a linha da lista também seleciona por teclado (TL-175D)', () => {
+  beforeEach(() => {
+    localStorage.setItem('talkx.templates.view', 'list');
+  });
+  afterEach(() => {
+    localStorage.removeItem('talkx.templates.view');
+  });
+
+  it('a linha tem o botão de seleção e nenhuma ação fica dentro de um botão', () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const usar = screen.getByRole('button', { name: 'Usar' });
+    expect(
+      usar.closest('[role="button"]'),
+      'a linha não pode ter papel de botão com os botões de ação dentro (nested-interactive)',
+    ).toBeNull();
+    expect(usar.parentElement?.closest('button') ?? null, 'nenhum botão de ação da linha pode ter um botão como ancestral').toBeNull();
+  });
+
+  it('seleciona a linha pelo botão do nome', () => {
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const selecionar = screen.getByRole('button', { name: 'Selecionar Boas-vindas' });
+    expect(selecionar.tagName).toBe('BUTTON');
+    expect(selecionar.getAttribute('aria-pressed')).toBe('false');
+    selecionar.focus();
+    expect(document.activeElement).toBe(selecionar);
+    fireEvent.click(selecionar);
+    expect(selecionar.getAttribute('aria-pressed')).toBe('true');
   });
 });
