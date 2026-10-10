@@ -28,7 +28,8 @@ export function TalkXRecipientsTable({ campaignId }: TalkXRecipientsTableProps) 
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-recipients-page', campaignId, statusFilter, search],
     queryFn: async () => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (N-131), types.ts ainda não sincronizado
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page' as any, {
         p_campaign_id: campaignId,
         p_limit: 50,
         p_cursor: cursor ?? null,
@@ -42,6 +43,7 @@ export function TalkXRecipientsTable({ campaignId }: TalkXRecipientsTableProps) 
     staleTime: 10_000,
   });
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (data) {
       setPageRows(data.rows);
@@ -49,6 +51,7 @@ export function TalkXRecipientsTable({ campaignId }: TalkXRecipientsTableProps) 
       setPageNextCursor(data.next_cursor);
     }
   }, [data]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const loadMore = useCallback(() => {
     if (pageNextCursor) setCursor(pageNextCursor);
@@ -65,7 +68,7 @@ export function TalkXRecipientsTable({ campaignId }: TalkXRecipientsTableProps) 
   const failedCount = pageRows.filter((r) => r.status === 'failed').length;
 
   return (
-    <RailCard>
+    <RailCard title="Destinatários">
       {/* Filters — sempre visíveis */}
       <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center gap-2">
         <div className="flex-1 min-w-[180px] relative">

@@ -69,9 +69,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   } = useQuery({
     queryKey: ['talkx-recipients-monitor', campaignId, statusFilter, recipientsCursor],
     queryFn: async () => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (N-131), types.ts ainda não sincronizado
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page' as any, {
         p_campaign_id: campaignId,
-        p_limit: 50,
+        p_limit: 200,
         p_cursor: recipientsCursor ?? null,
         p_status: statusFilter === 'all' ? null : statusFilter,
         p_search: null,
@@ -83,12 +84,14 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   });
 
   // Sync RPC result into local pagination state
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (recipientsData) {
       setRecipientsPage(recipientsData.rows);
       setRecipientsNextCursor(recipientsData.next_cursor);
     }
   }, [recipientsData]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const loadMoreRecipients = () => {
     if (recipientsNextCursor) setRecipientsCursor(recipientsNextCursor);

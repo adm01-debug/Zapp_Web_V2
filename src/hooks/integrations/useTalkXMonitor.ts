@@ -46,7 +46,8 @@ export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all')
   const query = useQuery<RpcResult>({
     queryKey: ['talkx-monitor-recipients', campaignId, statusFilter, cursor],
     queryFn: async () => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (N-131), types.ts ainda não sincronizado
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page' as any, {
         p_campaign_id: campaignId!,
         p_limit: 200,
         p_cursor: cursor ?? null,
@@ -61,12 +62,14 @@ export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all')
   });
 
   // Sync RPC result into local pagination state
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (query.data) {
       setPageRows(query.data.rows);
       setPageNextCursor(query.data.next_cursor);
     }
   }, [query.data]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const loadMore = () => {
     if (pageNextCursor) setCursor(pageNextCursor);

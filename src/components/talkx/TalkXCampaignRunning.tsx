@@ -33,6 +33,11 @@ import {
 
 // ─── Sub-tab type ──────────────────────────────────────────────────────────────
 type RunTab = 'overview' | 'recipients' | 'messages' | 'config' | 'results' | 'logs';
+type MessageRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
+
+const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
+const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
+
 const RUN_TABS: { id: RunTab; label: string }[] = [
   { id: 'overview', label: 'Visão Geral' },
   { id: 'recipients', label: 'Destinatários' },
@@ -216,7 +221,8 @@ function TabMessages({ campaignId }: { campaignId: string }) {
   const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-messages-page', campaignId, statusFilter, search],
     queryFn: async () => {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (N-131), types.ts ainda não sincronizado
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page' as any, {
         p_campaign_id: campaignId,
         p_limit: 50,
         p_cursor: cursor ?? null,
@@ -231,12 +237,14 @@ function TabMessages({ campaignId }: { campaignId: string }) {
   });
 
   // Sync RPC result into local pagination state
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (data) {
       setPageRows(data.rows);
       setPageNextCursor(data.next_cursor);
     }
   }, [data]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const loadMore = () => {
     if (pageNextCursor) setCursor(pageNextCursor);
