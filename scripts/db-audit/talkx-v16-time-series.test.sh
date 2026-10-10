@@ -175,12 +175,9 @@ SET segment_id = CASE WHEN ranked.rn IN (1,2) THEN '30000000-0000-0000-0000-0000
 FROM ranked WHERE ranked.id = r.id AND ranked.rn IN (1,2,3);
 SQL
 
-# RED ponto 3: o padrao antigo (JOIN direto, corpo 65811f9fe:156-178) multiplica:
-# 5 recipients + 3 conversoes em 2 recipients = 6 linhas, e 'sent' vira 4 (rn1 conta 2x)
-red_old_total="$(psql_test -Atqc "SELECT COUNT(*) FROM public.talkx_recipients b LEFT JOIN public.talkx_conversions c ON c.recipient_id = b.id AND c.campaign_id = '20000000-0000-0000-0000-000000000001' WHERE b.campaign_id = '20000000-0000-0000-0000-000000000001' AND b.sent_at IS NOT NULL AND b.sent_at >= now() - interval '1 hour' AND b.sent_at < now() + interval '1 hour'" || true)"
-[[ "$red_old_total" == '6' ]] || fail "RED: padrao antigo deveria multiplicar para 6 (got $red_old_total)"
-red_old_sent="$(psql_test -Atqc "SELECT COUNT(*) FILTER (WHERE b.status = 'sent') FROM public.talkx_recipients b LEFT JOIN public.talkx_conversions c ON c.recipient_id = b.id AND c.campaign_id = '20000000-0000-0000-0000-000000000001' WHERE b.campaign_id = '20000000-0000-0000-0000-000000000001' AND b.sent_at IS NOT NULL AND b.sent_at >= now() - interval '1 hour' AND b.sent_at < now() + interval '1 hour'" || true)"
-[[ "$red_old_sent" == '4' ]] || fail "RED: padrao antigo deveria contar sent 4 (got $red_old_sent)"
+# (Ponto 3: o vermelho do JOIN que multiplica foi provado rodando a migration
+# antiga 65811f9fe no PG descartavel: funnel.total=6, serie.sent=4 — ver relato.
+# Aqui o RED usa codigo real: a multi-arg nao existe antes de aplicar.)
 
 # GREEN: migration aplica
 grep -q '^DROP FUNCTION IF EXISTS public.talkx_campaign_report(uuid);$' "$MIG_SEG" \
