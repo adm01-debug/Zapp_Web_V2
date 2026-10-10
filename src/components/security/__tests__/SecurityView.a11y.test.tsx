@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
+import { MemoryRouter } from 'react-router-dom';
 
 /**
  * Y18-1 / SHELL-01 — abas de Segurança sem nome acessível abaixo de 640 px.
@@ -58,7 +59,7 @@ const ROTULOS = [
 
 describe('a11y: abas da Central de Segurança (SHELL-01)', () => {
   it('todas as 11 abas têm nome acessível mesmo com o rótulo escondido no celular', () => {
-    render(<SecurityView />);
+    render(<MemoryRouter><SecurityView /></MemoryRouter>);
 
     expect(screen.getAllByRole('tab')).toHaveLength(ROTULOS.length);
     for (const rotulo of ROTULOS) {
@@ -69,7 +70,7 @@ describe('a11y: abas da Central de Segurança (SHELL-01)', () => {
   });
 
   it('axe não acusa aba sem nome (regra button-name)', async () => {
-    render(<SecurityView />);
+    render(<MemoryRouter><SecurityView /></MemoryRouter>);
 
     // jsdom não tem layout: `color-contrast` fica fora (declarado); `button-name` é o alvo aqui.
     const results = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });
