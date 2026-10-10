@@ -10,13 +10,14 @@
  * aba abre. Por isso o valor é lido logo depois do import abaixo (`buscasNoImport`)
  * e comparado dentro do teste — zerar o contador no `beforeEach` esconderia a prova.
  *
- * Antes da correção o TalkXView importava as onze telas de uma vez: os três
- * contadores nasciam em 1 no import e o primeiro teste ficava vermelho.
+ * Antes da correção o TalkXView importava as telas de uma vez (onze imports
+ * estáticos): os quatro contadores nasciam em 1 no import e o primeiro teste
+ * ficava vermelho.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const buscas = vi.hoisted(() => ({ analytics: 0, segments: 0, templates: 0 }));
+const buscas = vi.hoisted(() => ({ analytics: 0, segments: 0, templates: 0, help: 0 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
@@ -44,7 +45,12 @@ vi.mock('@/components/talkx/TalkXAnalytics', () => {
   buscas.analytics += 1;
   return { TalkXAnalytics: () => <div data-testid="analytics" /> };
 });
-vi.mock('@/components/talkx/TalkXHelp', () => ({ TalkXHelp: () => <div data-testid="help" /> }));
+// X194 — a Ajuda é `help/TalkXHelpCenter` (não existe `@/components/talkx/TalkXHelp`);
+// o contador prova que ela também chega por chunk sob demanda.
+vi.mock('@/components/talkx/help/TalkXHelpCenter', () => {
+  buscas.help += 1;
+  return { TalkXHelpCenter: () => <div data-testid="help" /> };
+});
 vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div /> }));
 vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
@@ -66,7 +72,7 @@ describe('TalkXView — carregamento sob demanda das telas (X194)', () => {
   afterEach(() => vi.clearAllMocks());
 
   it('importar o TalkXView não busca a tela de nenhuma aba', () => {
-    expect(buscasNoImport).toEqual({ analytics: 0, segments: 0, templates: 0 });
+    expect(buscasNoImport).toEqual({ analytics: 0, segments: 0, templates: 0, help: 0 });
   });
 
   it('abrir o módulo na Visão geral não busca as telas das outras abas', async () => {
@@ -76,6 +82,7 @@ describe('TalkXView — carregamento sob demanda das telas (X194)', () => {
     expect(buscas.segments).toBe(buscasNoImport.segments);
     expect(buscas.templates).toBe(buscasNoImport.templates);
     expect(buscas.analytics).toBe(buscasNoImport.analytics);
+    expect(buscas.help).toBe(buscasNoImport.help);
   });
 
   it('busca a tela — e só então a mostra — quando a aba é aberta pela barra', async () => {
@@ -90,5 +97,19 @@ describe('TalkXView — carregamento sob demanda das telas (X194)', () => {
 
     expect(await screen.findByTestId('analytics')).toBeInTheDocument();
     await waitFor(() => expect(buscas.analytics).toBe(antes + 1));
+  });
+
+  it('busca a Ajuda — e só então a mostra — quando o botão Ajuda do cabeçalho abre', async () => {
+    render(<TalkXView />);
+    await screen.findByTestId('overview');
+    const antes = { ...buscas };
+
+    fireEvent.click(screen.getByRole('button', { name: /Ajuda/ }));
+
+    expect(await screen.findByTestId('help')).toBeInTheDocument();
+    await waitFor(() => expect(buscas.help).toBe(antes.help + 1));
+    expect(buscas.segments).toBe(antes.segments);
+    expect(buscas.templates).toBe(antes.templates);
+    expect(buscas.analytics).toBe(antes.analytics);
   });
 });

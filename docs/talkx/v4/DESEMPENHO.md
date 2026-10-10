@@ -1,7 +1,5 @@
 # Talk X — Desempenho (X194 / card TL-177)
 
-- **Data da medição:** 2026-10-09
-- **Base:** `dia/2026-10-09` · **Branch do cartão:** `v2/t-bd501a84-2610090522c8c1`
 - **Máquina:** WSL Ubuntu-24.04 (local; sem push, sem deploy)
 - **Como medir:** `bun run build` e depois `node scripts/ci/bundle-budget.mjs`
   (os tamanhos abaixo são o gzip de cada arquivo de `dist/assets/`, o mesmo número que o
@@ -10,8 +8,10 @@
 ## 1. Cada tela em arquivo próprio, buscada só quando a aba abre
 
 Antes, `src/components/talkx/TalkXView.tsx` importava as onze telas de uma vez (import
-estático). Resultado: um único chunk com o módulo inteiro **e** o `vendor-charts`
-(recharts) arrastado junto, por import estático.
+estático: `TalkXHelpCenter`, `TalkXOverview`, `TalkXCampaignWizard`, `TalkXLiveMonitor`,
+`TalkXSegments`, `TalkXTemplates`, `TalkXSuppression`, `TalkXAnalytics`, `TalkXSettings`,
+`TalkXCampaignScheduled`, `TalkXCampaignRunning`). Resultado: um único chunk com o módulo
+inteiro **e** o `vendor-charts` (recharts) arrastado junto, por import estático.
 
 Depois (correção deste cartão): cada tela é carregada por
 `lazyWithRetry(() => import('./TalkX…'))` — `src/lib/lazyWithRetry.ts`, o mesmo
@@ -21,66 +21,70 @@ do próprio kit (`TalkXSkeletonRows`).
 O chunk do `TalkXView` passou a listar **10 `import()` dinâmicos** e **nenhum import
 estático de gráficos**.
 
-| Medida (gzip) | Antes | Depois |
-| --- | ---: | ---: |
-| chunk do módulo (`TalkXView`) | 69,2 KB (285.560 B) | 17,0 KB (60.180 B) |
-| kit compartilhado (`talkxShared`) | — | 11,7 KB (41.135 B) |
-| `vendor-charts` (recharts) no import do módulo | 122,9 KB | não entra no import do módulo |
+| Medida (gzip) | Depois (medido neste workspace) |
+| --- | ---: |
+| chunk do módulo (`TalkXView-DidHW89J.js`) | 21,3 KB (72.966 B) |
+| kit compartilhado (`talkxShared-BgUzfxGZ.js`) | 14,4 KB (50.167 B) |
+| `vendor-charts` (recharts) no import do módulo | não entra no import do módulo |
 
 ## 2. Tamanho de cada tela (chunk próprio, gzip)
 
 | Tela (arquivo) | raw | gzip |
 | --- | ---: | ---: |
-| `TalkXCampaignWizard` | 53.220 B | 13,3 KB |
-| `TalkXTemplates` | 34.718 B | 8,7 KB |
-| `TalkXCampaignRunning` | 34.100 B | 8,9 KB |
-| `TalkXSegments` | 23.099 B | 6,8 KB |
-| `TalkXAnalytics` | 20.593 B | 5,4 KB |
-| `TalkXLiveMonitor` | 17.092 B | 5,5 KB |
-| `TalkXSuppression` | 12.846 B | 4,2 KB |
-| `TalkXCampaignScheduled` | 12.332 B | 4,0 KB |
-| `TalkXMessageEditor` | 4.956 B | 2,0 KB |
-| `TalkXHelp` | 4.824 B | 1,8 KB |
-| `TalkXSettings` | 3.366 B | 1,4 KB |
+| `TalkXCampaignWizard` | 58.182 B | 15,1 KB |
+| `TalkXCampaignRunning` | 43.100 B | 12,1 KB |
+| `TalkXTemplates` | 36.079 B | 9,2 KB |
+| `TalkXSegments` | 33.676 B | 9,7 KB |
+| `TalkXSuppression` | 26.786 B | 8,0 KB |
+| `TalkXAnalytics` | 25.362 B | 6,9 KB |
+| `TalkXCampaignScheduled` | 17.135 B | 5,0 KB |
+| `help/TalkXHelpCenter` | 17.106 B | 5,1 KB |
+| `TalkXLiveMonitor` | 14.446 B | 4,9 KB |
+| `TalkXSettings` | 3.364 B | 1,5 KB |
 
 `TalkXOverview` (Visão geral, a tela de entrada) continua no import direto: ela é
 renderizada já na primeira pintura, então um `lazy` ali só acrescentaria uma ida
 extra à rede sem tirar byte nenhum do caminho inicial.
 
+`TalkXMessageEditor` (`TalkXMessageEditor-DEshEw_d.js`, 40.926 B / 12,5 KB gzip) **não**
+é tela do `TalkXView`: ele é importado estaticamente pelo `TalkXCampaignWizard` e pelo
+`TalkXTemplateEditor` (usado dentro da aba Templates), então viaja dentro desses chunks
+e nunca no carregamento inicial do módulo. Não existe componente `TalkXHelp` — a Ajuda
+é `help/TalkXHelpCenter` (linha da tabela acima).
+
 ## 3. Bibliotecas pesadas só na tela que usa
 
-`vendor-charts` (recharts, 458.524 B / 122,9 KB gzip) é importado estaticamente por 16
-chunks, entre eles as três telas do Talk X que desenham gráfico:
+`vendor-charts` (recharts, 458.524 B / 122,9 KB gzip) é importado estaticamente só pelas
+três telas do Talk X que desenham gráfico (1 import em cada chunk, medido no `dist`):
 
 - `TalkXAnalytics` (Comparativo)
 - `TalkXLiveMonitor` (Monitor ao vivo)
 - `TalkXCampaignRunning` (Campanha em andamento)
 
 O chunk do `TalkXView` **não** importa `vendor-charts`
-(`grep -c 'from"\./vendor-charts' dist/assets/TalkXView-*.js` → `0`). A única referência
-que sobra ali é a lista de pré-carregamento (`__vite__mapDeps`), que só é buscada quando o
-`import()` da tela correspondente roda.
+(`grep -c 'from"\./vendor-charts' dist/assets/TalkXView-*.js` → `0`; a única menção é a
+lista de pré-carregamento (`__vite__mapDeps`), que só é buscada quando o `import()` da
+tela correspondente roda). `help/TalkXHelpCenter` também não importa gráficos (→ `0`).
 
-Confirmação no código-fonte antes da correção: só recharts aparecia como biblioteca
-pesada no módulo (gráficos). PDF, leitor de planilha e leitor de markdown ainda não
-existem no Talk X — entram já atrás de `lazy` quando as telas existirem.
+Confirmação no código-fonte: só recharts aparece como biblioteca pesada no módulo
+(gráficos) — busca por `jspdf|xlsx|marked|react-markdown|pdfjs|leaflet|mapbox|monaco|ace-builds|draft-js|slate|tiptap|quill`
+em `src/components/talkx/**` retorna 0. PDF, leitor de planilha e leitor de markdown
+ainda não existem no Talk X — entram já atrás de `lazy` quando as telas existirem.
 
 ## 4. Orçamento do carregamento inicial (`scripts/ci/bundle-budget.mjs`)
 
-Medição de 2026-10-09, com e sem o diff do cartão:
+Medido neste workspace, com o diff do cartão:
 
-| Medida | Base (`dia/2026-10-09`, sem o diff) | Com o cartão | Teto |
-| --- | ---: | ---: | ---: |
-| JS inicial | 342,6 KB | 342,6 KB | 341 KB |
-| CSS inicial | 41,5 KB | 41,5 KB | 80 KB |
-| Maior chunk JS (inclui lazy) | 492,3 KB | 492,3 KB | 550 KB |
-| Assets totais | 3.028,6 KB | 3.046,5 KB | 4.100 KB |
+| Medida | Com o cartão | Teto |
+| --- | ---: | ---: |
+| JS inicial | 292,4 KB | 341 KB |
+| CSS inicial | 42,1 KB | 80 KB |
+| Maior chunk JS (inclui lazy) | 492,3 KB | 550 KB |
+| Assets totais | 3.629,0 KB | 4.100 KB |
 
-O guard **já falhava antes do cartão** (`initial-js: 342,6 KB > 341 KB`), com o mesmo
-número: o estouro está no grafo do entry (`vite.config.ts` / imports estáticos do entry),
-que não é área de telas e não foi tocado aqui. O cartão **não aumenta** o orçamento —
-`initial-js` e `largest-chunk` ficam idênticos; `total-assets` sobe 18 KB (o custo de
-separar 11 chunks) e continua 26% abaixo do teto.
+`OK: bundle inicial dentro do budget.` O `initial-js` **não estoura** o teto de 341 KB
+(292,4 KB, 13 chunks no entry). Os números antigos (342,6 KB / 3.046,5 KB, medidos em
+09/10 sobre outra base) não valem mais e foram substituídos pelos acima.
 
 ## 5. Listas grandes
 
