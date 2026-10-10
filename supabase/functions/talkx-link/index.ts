@@ -1,7 +1,7 @@
 /**
  * talkx-link — Edge function de links rastreáveis (E90) e conversões (X022)
  *
- * GET  /talkx-link?s=<slug>&r=<recipient_id>  → registra clique, adiciona UTM e redireciona (302)
+ * GET  /talkx-link?s=<slug>&r=<recipient_id>&t=<hmac_token> → registra clique, adiciona UTM e redireciona (302)
  * POST /talkx-link                            → registra conversão autenticada por HMAC-SHA256
  *
  * O worker é stateless; toda a lógica de persistência fica em RPCs seguras (SECURITY DEFINER).
@@ -88,6 +88,22 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
+    }
+
+    // HMAC token validation: when TALKX_CONVERT_SECRET is configured,
+    // the `t` query parameter must carry a valid HMAC-SHA256 token
+    // computed from the recipient_id (`r`). Missing or invalid token
+    // rejects the request before any click is recorded.
+    const convertSecret = env.get("TALKX_CONVERT_SECRET");
+    if (convertSecret) {
+      const token = url.searchParams.get("t") ?? undefined;
+      if (!token || !recipient) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      const valid = await verifyHmacSignature(recipient, token, convertSecret);
+      if (!valid) {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada

@@ -125,13 +125,14 @@ Deno.test("mergeUtm preserva URL sem link e URL inválida", () => {
   assert(mergeUtm("não-é-url", { utm_source: "x" }) === "não-é-url", "URL inválida deveria devolver original");
 });
 
-// ── handleTalkxLink: GET ─────────────────────────────────────────────────────
+// ── handleTalkxLink: GET ──────────────────────────────────────────────────
 Deno.test("GET registra clique e redireciona com UTM do link", async () => {
   const supabase = makeFakeSupabase({
     linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
     linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo", utm_content: null, utm_term: null },
   });
-  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 302, `status ${res.status} != 302`);
   const location = res.headers.get("location") ?? "";
@@ -142,10 +143,56 @@ Deno.test("GET registra clique e redireciona com UTM do link", async () => {
 
 Deno.test("GET slug inexistente devolve 404 neutro (sem redirecionar)", async () => {
   const supabase = makeFakeSupabase({ linkClickResult: { error: "link_not_found" } });
-  const req = new Request("https://example.com/talkx-link?s=inexistente", { method: "GET" });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=inexistente&r=rec-1&t=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 404, `status ${res.status} != 404`);
   assert(res.headers.get("location") === null, "não deveria redirecionar");
+});
+
+// ── handleTalkxLink: GET — HMAC token validation ──────────────────
+Deno.test("GET sem token devolve 401 quando secret está configurado", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+});
+
+Deno.test("GET com token inválido devolve 401 quando secret está configurado", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1&t=wrongtoken", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+});
+
+Deno.test("GET com token válido devolve 302 e registra clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 302, `status ${res.status} != 302`);
+  const location = res.headers.get("location") ?? "";
+  const u = new URL(location);
+  assert(u.searchParams.get("utm_source") === "whatsapp", `utm_source ausente em Location: ${location}`);
+});
+
+Deno.test("GET sem token devolve 302 quando secret NÃO está configurado (compatibilidade)", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: "" }) });
+  assert(res.status === 302, `status ${res.status} != 302`);
 });
 
 // ── handleTalkxLink: POST (autenticação + valor + dedupe) ────────────────────
