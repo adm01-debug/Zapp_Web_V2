@@ -48,7 +48,11 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{automation.description}</p>
           <div className="flex items-center gap-1 mt-2 flex-wrap">
-            <Badge variant="outline" className="text-xs">{triggerInfo?.label}</Badge>
+            {triggerInfo ? (
+              <Badge variant="outline" className="text-xs">{triggerInfo.label}</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs" role="alert">Tipo de gatilho desconhecido</Badge>
+            )}
             <ArrowRight className="w-3 h-3 text-muted-foreground" />
             {actions.map((action: AutomationAction, i: number) => {
               const actionInfo = ACTION_TYPES.find(a => a.type === action.type);
@@ -63,10 +67,10 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Switch checked={automation.is_active} onCheckedChange={onToggle} />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label="Editar automação"><Edit2 className="w-4 h-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} aria-label="Duplicar automação"><Copy className="w-4 h-4" /></Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={onDelete} aria-label="Excluir automação"><Trash2 className="w-4 h-4" /></Button>
+          <Switch checked={automation.is_active} onCheckedChange={onToggle} aria-label={`Ativar automação ${automation.name}`} />
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label={`Editar automação ${automation.name}`}><Edit2 className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} aria-label={`Duplicar automação ${automation.name}`}><Copy className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={onDelete} aria-label={`Excluir automação ${automation.name}`}><Trash2 className="w-4 h-4" /></Button>
         </div>
       </div>
     </motion.div>

@@ -207,7 +207,7 @@ describe('AutomationsManager — o editor só fecha após a confirmação da per
     const deferred = hoisted.make();
     renderManager();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Editar automação' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar automação Boas-vindas' }));
     fireEvent.change(screen.getByPlaceholderText(NOTE_NAME), { target: { value: 'Boas-vindas v2' } });
     fireEvent.click(saveButton());
 
