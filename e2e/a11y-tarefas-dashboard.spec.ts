@@ -67,6 +67,10 @@ async function mockDashboardVazio(page: Page): Promise<void> {
     json(route, []),
   );
   await page.route(/\/rest\/v1\/conversation_events/, (route) => json(route, []));
+  // A Visao Geral dispara consultas diretas a messages/contacts (contagens,
+  // atividade recente, desempenho por agente). Sem mock, o bloqueio de rede
+  // real registra e o afterEach falha: vazio valido, mesmo padrao acima.
+  await page.route(/\/rest\/v1\/(messages|contacts)/, (route) => json(route, []));
 }
 
 let registro: Registro;
