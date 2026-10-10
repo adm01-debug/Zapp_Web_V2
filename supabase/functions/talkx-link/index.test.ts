@@ -1,4 +1,5 @@
 import { handleTalkxLink, mergeUtm } from "./index.ts";
+import { buildTalkxLinkUrl } from "../talkx-send/index.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -11,6 +12,10 @@ interface FakeOpts {
   linkClickResult?: unknown;
   linkRow?: Record<string, unknown> | null;
   recipientRow?: Record<string, unknown> | null;
+  // Linhas para a resolução do token (o handler lista os recipients da
+  // campanha com order+range; o filtro por campaign_id é respeitado aqui
+  // para o teste de escopo entre campanhas).
+  recipientRows?: Array<{ id: string; campaign_id?: string }>;
   conversionResult?: unknown;
   conversionError?: { message: string } | null;
 }
@@ -29,17 +34,75 @@ function makeFakeSupabase(opts: FakeOpts = {}) {
     return { data: null, error: { message: `rpc inesperada: ${fn}` } };
   };
   const from = (table: string) => ({
-    select: (_cols: string) => ({
-      eq: (_col: string, _val: unknown) => ({
+    select: (_cols: string) => {
+      let eqCol: string | null = null;
+      let eqVal: unknown = undefined;
+      let rangeFrom = 0;
+      let rangeTo = Number.POSITIVE_INFINITY;
+      const api = {
+        eq: (col: string, val: unknown) => {
+          eqCol = col;
+          eqVal = val;
+          return api;
+        },
+        order: (_col: string, _dir?: unknown) => api,
+        range: (fromIdx: number, toIdx: number) => {
+          rangeFrom = fromIdx;
+          rangeTo = toIdx;
+          return api;
+        },
         maybeSingle: async () => {
           if (table === "talkx_recipients") return { data: opts.recipientRow ?? null, error: null };
           if (table === "talkx_links") return { data: opts.linkRow ?? null, error: null };
           return { data: null, error: { message: `tabela inesperada: ${table}` } };
         },
-      }),
-    }),
+        // Listagem direta (await na query, sem maybeSingle): usada pela
+        // resolução do token opaco no GET com HMAC.
+        then: (resolve: (v: unknown) => void, reject?: (e: unknown) => void) => {
+          try {
+            if (table === "talkx_recipients") {
+              let rows = [...(opts.recipientRows ?? [])];
+              if (eqCol === "campaign_id") {
+                rows = rows.filter((r) => r.campaign_id === undefined || r.campaign_id === eqVal);
+              }
+              const end = rangeTo === Number.POSITIVE_INFINITY ? undefined : rangeTo + 1;
+              resolve({ data: rows.slice(rangeFrom, end), error: null });
+            } else if (table === "talkx_links") {
+              resolve({ data: opts.linkRow ? [opts.linkRow] : [], error: null });
+            } else {
+              resolve({ data: null, error: { message: `tabela inesperada: ${table}` } });
+            }
+          } catch (e) {
+            if (reject) reject(e);
+          }
+        },
+      };
+      return api;
+    },
   });
   return { rpc, from, rpcCalls } as unknown as SupabaseClient & { rpcCalls: typeof rpcCalls };
+}
+
+// Cenário padrão do clique com HMAC: link da campanha camp-1 e os
+// recipients informados como linhas dessa campanha.
+function clickSupabase(recipientIds: string[], campaignId = "camp-1") {
+  return makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1", campaign_id: campaignId },
+    linkRow: {
+      id: "link-1",
+      campaign_id: campaignId,
+      utm_source: "whatsapp",
+      utm_medium: "talkx",
+      utm_campaign: "promo",
+      utm_content: null,
+      utm_term: null,
+    },
+    recipientRows: recipientIds.map((id) => ({ id, campaign_id: campaignId })),
+  });
+}
+
+function clickRpcCalls(supabase: { rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> }) {
+  return supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
 }
 
 function makeEnv(overrides: Record<string, string> = {}) {
@@ -126,20 +189,23 @@ Deno.test("mergeUtm preserva URL sem link e URL inválida", () => {
 });
 
 // ── handleTalkxLink: GET ─────────────────────────────────────────────────────
+// Contrato X022 (com TALKX_CONVERT_SECRET): o `r` é o token opaco
+// (HMAC-SHA256 do recipient_id) gerado pelo talkx-send via
+// buildTalkxLinkUrl — o recipient_id cru nunca viaja na URL, e o link
+// resolve o recipient correspondente ao token antes de registrar o clique.
 Deno.test("GET registra clique e redireciona com UTM do link", async () => {
-  const supabase = makeFakeSupabase({
-    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
-    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo", utm_content: null, utm_term: null },
-  });
-  const recipientId = "rec-1";
-  const token = await hmacHex(CONVERT_SECRET, recipientId);
-  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${encodeURIComponent(recipientId)}&t=${encodeURIComponent(token)}`, { method: "GET" });
+  const supabase = clickSupabase(["rec-1", "rec-2"]);
+  const token = await hmacHex(CONVERT_SECRET, "rec-2");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 302, `status ${res.status} != 302`);
   const location = res.headers.get("location") ?? "";
   const u = new URL(location);
   assert(u.searchParams.get("utm_source") === "whatsapp", `utm_source ausente em Location: ${location}`);
   assert(u.searchParams.get("utm_campaign") === "promo", `utm_campaign ausente em Location: ${location}`);
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 1, `deveria gravar 1 clique (chamadas=${calls.length})`);
+  assert(calls[0].args.p_recipient === "rec-2", `o clique deve levar o recipient resolvido, não o token: ${JSON.stringify(calls[0].args)}`);
 });
 
 Deno.test("GET slug inexistente devolve 404 neutro (sem redirecionar)", async () => {
@@ -148,49 +214,66 @@ Deno.test("GET slug inexistente devolve 404 neutro (sem redirecionar)", async ()
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 404, `status ${res.status} != 404`);
   assert(res.headers.get("location") === null, "não deveria redirecionar");
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 1, `o RPC decide o 404 (chamadas=${calls.length})`);
+  assert(calls[0].args.p_recipient === null, `token nunca chega ao RPC (coluna uuid): ${JSON.stringify(calls[0].args)}`);
 });
 
 // ── handleTalkxLink: GET com HMAC token (X022) ──────────────────
-Deno.test("GET sem token com TALKX_CONVERT_SECRET configurado devolve 401", async () => {
+Deno.test("GET sem r com TALKX_CONVERT_SECRET configurado devolve 401 sem clicar", async () => {
+  const supabase = clickSupabase(["rec-1"]);
+  const req = new Request("https://example.com/talkx-link?s=abc123", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  assert(res.headers.get("location") === null, "não deveria redirecionar");
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 0, `não deveria gravar clique sem token (chamadas=${calls.length})`);
+});
+
+Deno.test("GET com token inválido devolve 401 sem registrar clique", async () => {
+  const supabase = clickSupabase(["rec-1"]);
+  for (const bad of ["invalid-token", "0".repeat(64), await hmacHex("outro-secret", "rec-1")]) {
+    const req = new Request(`https://example.com/talkx-link?s=abc123&r=${encodeURIComponent(bad)}`, { method: "GET" });
+    const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+    assert(res.status === 401, `r=${bad.slice(0, 16)}… deveria ser 401, status=${res.status}`);
+    assert(res.headers.get("location") === null, "não deveria redirecionar");
+  }
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 0, `não deveria gravar clique com token inválido (chamadas=${calls.length})`);
+});
+
+Deno.test("GET com token de recipient de outra campanha devolve 401", async () => {
   const supabase = makeFakeSupabase({
-    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
-    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1", campaign_id: "camp-1" },
+    linkRow: {
+      id: "link-1",
+      campaign_id: "camp-1",
+      utm_source: "whatsapp",
+      utm_medium: "talkx",
+      utm_campaign: "promo",
+      utm_content: null,
+      utm_term: null,
+    },
+    recipientRows: [{ id: "rec-outra", campaign_id: "camp-outra" }],
   });
+  const token = await hmacHex(CONVERT_SECRET, "rec-outra");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 0, `token de outra campanha não grava clique (chamadas=${calls.length})`);
+});
+
+Deno.test("GET com recipient cru no lugar do token devolve 401", async () => {
+  const supabase = clickSupabase(["rec-1"]);
   const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 401, `status ${res.status} != 401`);
-  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
-  assert(rpcCalls.length === 0, `não deveria gravar clique sem token válido (chamadas=${rpcCalls.length})`);
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 0, `URL legada (id cru) não grava clique com o secret ligado (chamadas=${calls.length})`);
 });
 
-Deno.test("GET com token inválido devolve 401", async () => {
-  const supabase = makeFakeSupabase({
-    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
-    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
-  });
-  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1&t=invalid-token", { method: "GET" });
-  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
-  assert(res.status === 401, `status ${res.status} != 401`);
-  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
-  assert(rpcCalls.length === 0, `não deveria gravar clique com token inválido (chamadas=${rpcCalls.length})`);
-});
-
-Deno.test("GET com token HMAC válido devolve 302 e grava o clique", async () => {
-  const supabase = makeFakeSupabase({
-    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
-    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
-  });
-  const recipientId = "rec-1";
-  const token = await hmacHex(CONVERT_SECRET, recipientId);
-  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${encodeURIComponent(recipientId)}&t=${encodeURIComponent(token)}`, { method: "GET" });
-  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
-  assert(res.status === 302, `status ${res.status} != 302`);
-  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
-  assert(rpcCalls.length === 1, `deveria gravar clique com token válido (chamadas=${rpcCalls.length})`);
-  assert(rpcCalls[0].args.p_recipient === recipientId, `recipient errado: ${JSON.stringify(rpcCalls[0].args)}`);
-});
-
-Deno.test("GET sem TALKX_CONVERT_SECRET funciona como antes (sem token)", async () => {
+Deno.test("GET sem TALKX_CONVERT_SECRET funciona como antes (r cru, sem token)", async () => {
   const supabase = makeFakeSupabase({
     linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
     linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
@@ -198,8 +281,26 @@ Deno.test("GET sem TALKX_CONVERT_SECRET funciona como antes (sem token)", async 
   const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: "" }) });
   assert(res.status === 302, `status ${res.status} != 302`);
-  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
-  assert(rpcCalls.length === 1, `deveria gravar clique sem secret configurado (chamadas=${rpcCalls.length})`);
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 1, `deveria gravar clique sem secret configurado (chamadas=${calls.length})`);
+  assert(calls[0].args.p_recipient === "rec-1", `sem secret o r cru segue para o RPC: ${JSON.stringify(calls[0].args)}`);
+});
+
+// Ponto 3 da revisão: a URL REAL produzida pelo send abre o clique de
+// ponta a ponta até o 302, sem vazar o recipient cru no caminho.
+Deno.test("integração: URL real do buildTalkxLinkUrl resolve o recipient e devolve 302", async () => {
+  const recipientId = "11111111-2222-3333-4444-555555555555";
+  const supabase = clickSupabase([recipientId]);
+  const url = await buildTalkxLinkUrl("abc123", recipientId, CONVERT_SECRET, "", "https://supabase.example.com");
+  assert(!url.includes(recipientId), `URL vazou o recipient_id cru: ${url}`);
+  const req = new Request(url, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 302, `status ${res.status} != 302 (url=${url})`);
+  const calls = clickRpcCalls(supabase);
+  assert(calls.length === 1, `deveria gravar 1 clique (chamadas=${calls.length})`);
+  assert(calls[0].args.p_recipient === recipientId, `o clique deve levar o UUID resolvido: ${JSON.stringify(calls[0].args)}`);
+  const location = res.headers.get("location") ?? "";
+  assert(location.startsWith("https://loja.com/checkout"), `redirect errado: ${location}`);
 });
 
 // ── handleTalkxLink: POST (autenticação + valor + dedupe) ────────────────────
@@ -460,13 +561,3 @@ Deno.test("POST com value acima do teto (erro da RPC) devolve 422 sem vazar text
   assert(!JSON.stringify(body).includes("exceeds_max"), `vazou texto do banco: ${JSON.stringify(body)}`);
 });
 
-Deno.test("GET com token HMAC de um recipient diferente do URL é rejeitado com 401", async () => {
-  const supabase = makeFakeSupabase();
-  const recipientA = "recipient-aaa-different";
-  const recipientB = "recipient-bbb-different";
-  const token = await hmacHex(CONVERT_SECRET, recipientA);
-  const url = `/talkx-link?s=abc123&r=${encodeURIComponent(recipientB)}&t=${encodeURIComponent(token)}`;
-  const req = new Request(`http://localhost${url}`, { method: "GET" });
-  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
-  assert(res.status === 401, `token de ${recipientA} deve ser rejeitado quando URL usa ${recipientB}, status=${res.status}`);
-});

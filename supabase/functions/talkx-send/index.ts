@@ -45,7 +45,7 @@ export async function buildTalkxLinkUrl(
   configuredBase: string,
   supabaseUrl: string,
 ): Promise<string> {
-  const token = secret ? await hmacTokenForRecipient(recipientId) : undefined;
+  const token = secret ? await hmacTokenForRecipient(recipientId, secret) : undefined;
   const rParam = token ?? encodeURIComponent(recipientId);
   return configuredBase.length > 0
     ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${rParam}`
@@ -67,11 +67,11 @@ async function deriveTestSendKey(parts: Array<string | null | undefined>): Promi
 
 /**
  * Gera um token HMAC-SHA256 em hex a partir do recipient_id.
- * Usa TALKX_CONVERT_SECRET como chave; se não estiver configurada,
- * recusa-se a gerar o token (retorna undefined).
+ * O secret vem por parâmetro (o urlFor de produção repassa o
+ * TALKX_CONVERT_SECRET lido no escopo do handler; testes o injetam
+ * direto, sem Deno.env). Sem secret, recusa-se a gerar (undefined).
  */
-async function hmacTokenForRecipient(recipientId: string): Promise<string | undefined> {
-  const secret = Deno.env.get("TALKX_CONVERT_SECRET");
+async function hmacTokenForRecipient(recipientId: string, secret: string | undefined): Promise<string | undefined> {
   if (!secret) return undefined;
   const keyData = new TextEncoder().encode(secret);
   const cryptoKey = await crypto.subtle.importKey(

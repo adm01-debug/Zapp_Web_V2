@@ -1347,43 +1347,42 @@ Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o 
   }
 });
 
+// O secret entra por parâmetro (sem Deno.env.set): estes testes provam o
+// contrato sem exigir permissão de ambiente.
+const HMAC_TEST_SECRET = "test-secret-for-hmac";
+
 Deno.test('hmacTokenForRecipient produces a deterministic hex token for a recipient', async () => {
-  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
-  try {
-    const token1 = await hmacTokenForRecipient('recipient-abc-123');
-    const token2 = await hmacTokenForRecipient('recipient-abc-123');
-    assert(token1 !== undefined, 'token should not be undefined');
-    assert(token1 === token2, 'same recipient_id must produce the same token');
-    assert(/^[0-9a-f]+$/.test(token1), `token must be hex, got: ${token1}`);
-  } finally {
-    Deno.env.delete("TALKX_CONVERT_SECRET");
-  }
+  const token1 = await hmacTokenForRecipient('recipient-abc-123', HMAC_TEST_SECRET);
+  const token2 = await hmacTokenForRecipient('recipient-abc-123', HMAC_TEST_SECRET);
+  assert(token1 !== undefined, 'token should not be undefined');
+  assert(token1 === token2, 'same recipient_id must produce the same token');
+  assert(/^[0-9a-f]{64}$/.test(token1), `token must be 64-char hex, got: ${token1}`);
 });
 
 Deno.test("hmacTokenForRecipient produces different tokens for different recipients", async () => {
-  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
-  try {
-    const token1 = await hmacTokenForRecipient("recipient-aaa");
-    const token2 = await hmacTokenForRecipient("recipient-bbb");
-    assert(token1 !== token2, "different recipient_ids must produce different tokens");
-  } finally {
-    Deno.env.delete("TALKX_CONVERT_SECRET");
+  const token1 = await hmacTokenForRecipient("recipient-aaa", HMAC_TEST_SECRET);
+  const token2 = await hmacTokenForRecipient("recipient-bbb", HMAC_TEST_SECRET);
+  assert(token1 !== token2, "different recipient_ids must produce different tokens");
+});
+
+Deno.test("hmacTokenForRecipient without secret refuses to generate a token", async () => {
+  for (const missing of [undefined, ""]) {
+    const token = await hmacTokenForRecipient("recipient-abc-123", missing);
+    assert(token === undefined, `sem secret não há token, got: ${token}`);
   }
 });
 
 Deno.test("buildTalkxLinkUrl with TALKX_CONVERT_SECRET uses HMAC token, not raw recipient_id", async () => {
-  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
-  try {
-    const url = await buildTalkxLinkUrl("my-slug", "recipient-abc-123", "test-secret-for-hmac", "https://link.example.com", "https://supabase.example.com");
-    assert(url.includes("r="), "URL must contain r= parameter");
-    assert(!url.includes("recipient-abc-123"), "URL must not contain raw recipient_id when HMAC secret is configured");
-    const tokenMatch = url.match(/[?&]r=([^&]+)/);
-    assert(tokenMatch, "URL must have r= parameter");
-    const tokenValue = decodeURIComponent(tokenMatch[1]);
-    assert(/^[a-f0-9]{64}$/.test(tokenValue), `r= parameter must be a 64-char hex HMAC token, got: ${tokenValue}`);
-  } finally {
-    Deno.env.delete("TALKX_CONVERT_SECRET");
-  }
+  const url = await buildTalkxLinkUrl("my-slug", "recipient-abc-123", HMAC_TEST_SECRET, "https://link.example.com", "https://supabase.example.com");
+  assert(url.includes("r="), "URL must contain r= parameter");
+  assert(!url.includes("recipient-abc-123"), "URL must not contain raw recipient_id when HMAC secret is configured");
+  assert(!url.includes("t="), "URL must not carry a separate t= parameter (o token vai em r)");
+  const tokenMatch = url.match(/[?&]r=([^&]+)/);
+  assert(tokenMatch, "URL must have r= parameter");
+  const tokenValue = decodeURIComponent(tokenMatch[1]);
+  assert(/^[a-f0-9]{64}$/.test(tokenValue), `r= parameter must be a 64-char hex HMAC token, got: ${tokenValue}`);
+  const expected = await hmacTokenForRecipient("recipient-abc-123", HMAC_TEST_SECRET);
+  assert(tokenValue === expected, "r= deve ser o HMAC do recipient com o secret informado");
 });
 
 Deno.test("buildTalkxLinkUrl without TALKX_CONVERT_SECRET encodes raw recipient_id in URL", async () => {
@@ -1396,12 +1395,7 @@ Deno.test("buildTalkxLinkUrl without TALKX_CONVERT_SECRET encodes raw recipient_
 });
 
 Deno.test("buildTalkxLinkUrl with TALKX_CONVERT_SECRET and custom base URL", async () => {
-  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
-  try {
-    const url = await buildTalkxLinkUrl("my-slug", "recipient-xyz", "test-secret-for-hmac", "https://link.example.com", "https://supabase.example.com");
-    const expectedToken = await hmacTokenForRecipient("recipient-xyz");
-    assert(url === "https://link.example.com/l/my-slug?r=" + expectedToken, `URL mismatch: ${url}`);
-  } finally {
-    Deno.env.delete("TALKX_CONVERT_SECRET");
-  }
+  const url = await buildTalkxLinkUrl("my-slug", "recipient-xyz", HMAC_TEST_SECRET, "https://link.example.com", "https://supabase.example.com");
+  const expectedToken = await hmacTokenForRecipient("recipient-xyz", HMAC_TEST_SECRET);
+  assert(url === "https://link.example.com/l/my-slug?r=" + expectedToken, `URL mismatch: ${url}`);
 });

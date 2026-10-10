@@ -8,7 +8,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
-import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import { timingSafeEqual, verifyHmacSignature } from "../_shared/hmac-validation.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -85,22 +85,34 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   if (method === "GET") {
     const slug      = url.searchParams.get("s");
     const recipient = url.searchParams.get("r") ?? undefined;
-    const token     = url.searchParams.get("t") ?? undefined;
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
     }
 
-    // X022: gate HMAC — quando o TALKX_CONVERT_SECRET está configurado,
-    // o token `t` (HMAC-SHA256 de `r` com o secret) é obrigatório.
-    // Se o secret não está configurado, o fluxo continua como antes
-    // (compatibilidade com ambientes sem secret).
+    // X022: gate HMAC — quando o TALKX_CONVERT_SECRET está configurado, o
+    // `r` é o token opaco (HMAC-SHA256 do recipient_id) gerado pelo
+    // talkx-send via buildTalkxLinkUrl; o recipient_id cru nunca viaja na
+    // URL. O link resolve o recipient correspondente ao token ANTES de
+    // registrar o clique. Sem token válido não há atribuição possível:
+    // r ausente ou sem par ⇒ 401, sem registrar clique. Slug inexistente
+    // cai no caminho do RPC, que devolve o 404 neutro (nenhum clique é
+    // gravado), como antes. Sem secret, o fluxo legado (r cru) continua.
     const convertSecret = env.get("TALKX_CONVERT_SECRET");
-    if (convertSecret && recipient) {
-      const ok = await verifyHmacSignature(recipient, token ?? "", convertSecret);
-      if (!ok) {
+    let clickRecipient: string | null | undefined;
+    let preloadedLinkRow: Record<string, unknown> | null | undefined;
+    if (convertSecret) {
+      const resolved = await resolveTalkxClickRecipient(supabase, slug, recipient, convertSecret);
+      if (resolved.status === "unauthorized") {
         return new Response("Unauthorized", { status: 401 });
       }
+      if (resolved.status === "ok") {
+        clickRecipient = resolved.recipientId;
+        preloadedLinkRow = resolved.linkRow;
+      }
+      // "passthrough" (slug inexistente): o token nunca chega ao RPC (a
+      // coluna é uuid e o token não faz cast) — p_recipient vai NULL e o
+      // RPC devolve o 404 neutro sem gravar clique.
     }
 
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
@@ -118,7 +130,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     const { data, error } = await supabase.rpc("record_talkx_link_click", {
       p_slug:      slug,
-      p_recipient: recipient ?? null,
+      p_recipient: clickRecipient ?? (convertSecret ? null : (recipient ?? null)),
       p_ua:        ua ?? null,
       p_ip_hash:   ipHash ?? null,
     });
@@ -134,13 +146,18 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     if (!targetUrl) return new Response("Not found", { status: 404 });
 
     // X022: acrescenta os UTM do link ao destino, sem sobrescrever parâmetro
-    // que o destino já tenha.
-    const { data: linkRow } = await supabase
-      .from("talkx_links")
-      .select("utm_source, utm_medium, utm_campaign, utm_content, utm_term")
-      .eq("id", data.link_id)
-      .maybeSingle();
-    const finalUrl = mergeUtm(targetUrl, linkRow as Record<string, unknown> | null | undefined);
+    // que o destino já tenha. Com o gate HMAC a linha já veio na resolução
+    // (por slug); sem ela, busca pelo link_id como antes.
+    let linkRow: Record<string, unknown> | null | undefined = preloadedLinkRow;
+    if (!linkRow) {
+      const { data: utmRow } = await supabase
+        .from("talkx_links")
+        .select("utm_source, utm_medium, utm_campaign, utm_content, utm_term")
+        .eq("id", data.link_id)
+        .maybeSingle();
+      linkRow = utmRow as Record<string, unknown> | null | undefined;
+    }
+    const finalUrl = mergeUtm(targetUrl, linkRow);
 
     return Response.redirect(finalUrl, 302);
   }
@@ -289,6 +306,70 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   }
 
   return new Response("Method not allowed", { status: 405 });
+}
+
+
+type TalkxClickResolution =
+  | { status: "ok"; recipientId: string; linkRow: Record<string, unknown> }
+  | { status: "passthrough" }
+  | { status: "unauthorized" };
+
+// X022: resolve o recipient correspondente ao token opaco `r` (HMAC-SHA256
+// do recipient_id com o TALKX_CONVERT_SECRET). O HMAC é unidirecional, então
+// a resolução varre os recipients da campanha do link comparando em tempo
+// constante; a chave é importada uma única vez. Falha fechado: sem par
+// válido, "unauthorized" (401 sem clique). Slug inexistente devolve
+// "passthrough" para o RPC responder o 404 neutro, como antes.
+async function resolveTalkxClickRecipient(
+  supabase: SupabaseClient,
+  slug: string,
+  token: string | undefined,
+  secret: string,
+): Promise<TalkxClickResolution> {
+  const { data: linkData } = await supabase
+    .from("talkx_links")
+    .select("id, campaign_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term")
+    .eq("slug", slug)
+    .maybeSingle();
+  const linkRow = linkData as Record<string, unknown> | null;
+  const campaignId = linkRow?.campaign_id;
+  if (!linkRow?.id || typeof campaignId !== "string" || campaignId === "") {
+    return { status: "passthrough" };
+  }
+  if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
+    return { status: "unauthorized" };
+  }
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const wanted = token.toLowerCase();
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase
+      .from("talkx_recipients")
+      .select("id")
+      .eq("campaign_id", campaignId)
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE - 1);
+    // Sem conseguir listar, não há como atribuir: nega sem clicar.
+    if (error) return { status: "unauthorized" };
+    const rows = (data ?? []) as { id?: unknown }[];
+    for (const row of rows) {
+      if (typeof row.id !== "string" || row.id === "") continue;
+      const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(row.id));
+      const hex = Array.from(new Uint8Array(sig))
+        .map((b) => b.toString(16).padStart(2, "0")).join("");
+      if (timingSafeEqual(hex, wanted)) {
+        return { status: "ok", recipientId: row.id, linkRow };
+      }
+    }
+    if (rows.length < PAGE) break;
+  }
+  return { status: "unauthorized" };
 }
 
 async function hashIp(ip: string, salt: string): Promise<string> {
