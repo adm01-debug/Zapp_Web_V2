@@ -191,7 +191,7 @@ export function N8nIntegrationView() {
                   <CardContent className="py-3 flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       {wf.isActive ? <CheckCircle2 className="w-4 h-4 text-success" /> : <XCircle className="w-4 h-4 text-muted-foreground" />}
-                      <Switch checked={wf.isActive} onCheckedChange={() => toggleWorkflow(wf.id)} />
+                      <Switch checked={wf.isActive} onCheckedChange={() => toggleWorkflow(wf.id)} aria-label={`Ativar ${wf.name}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground text-sm">{wf.name}</p>
@@ -200,8 +200,8 @@ export function N8nIntegrationView() {
                     <Badge variant="outline" className="text-xs">{triggerEvents.find(t => t.value === wf.triggerEvent)?.label}</Badge>
                     {wf.lastTriggered && <span className="text-xs text-muted-foreground">Último: {new Date(wf.lastTriggered).toLocaleTimeString('pt-BR')}</span>}
                     <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => testWorkflow(wf)}><Play className="w-3 h-3" /></Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeWorkflow(wf.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" aria-label={`Testar ${wf.name}`} onClick={() => testWorkflow(wf)}><Play className="w-3 h-3" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" aria-label={`Remover ${wf.name}`} onClick={() => removeWorkflow(wf.id)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </CardContent>
                 </Card>
