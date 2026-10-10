@@ -1,12 +1,10 @@
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_monitor_panel(uuid, integer, text, date, uuid);
--- Rollback: DROP TRIGGER IF EXISTS trg_talkx_recipients_failed_at ON public.talkx_recipients;
--- Rollback: DROP FUNCTION IF EXISTS public.trg_talkx_recipients_failed_at();
--- Rollback: DROP INDEX IF EXISTS public.idx_talkx_recipients_campaign_sent_at;
--- Rollback: DROP INDEX IF EXISTS public.idx_talkx_recipients_campaign_delivered_at;
--- Rollback: DROP INDEX IF EXISTS public.idx_talkx_recipients_campaign_replied_at;
--- Rollback: ALTER TABLE public.talkx_recipients DROP COLUMN IF EXISTS failed_at;
--- 20261010060000_talkx_monitor_panel
---
+--   drop function if exists public.talkx_monitor_panel(uuid, integer, text, date, uuid);
+--   drop trigger if exists trg_talkx_recipients_failed_at on public.talkx_recipients;
+--   drop function if exists public.trg_talkx_recipients_failed_at();
+--   drop index if exists public.idx_talkx_recipients_campaign_sent_at;
+--   drop index if exists public.idx_talkx_recipients_campaign_delivered_at;
+--   drop index if exists public.idx_talkx_recipients_campaign_replied_at;
+--   alter table public.talkx_recipients drop column if exists failed_at;
 -- X140 (Fase 11 · telas 11, 12, 13 · banco + testes · DDL aditivo): o monitor passa a ler os
 -- numeros da campanha de uma conta unica no servidor.
 --   (1) talkx_recipients.failed_at, preenchida por trigger quando o status vira 'failed'
