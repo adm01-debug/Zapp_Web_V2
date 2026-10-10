@@ -1,5 +1,6 @@
 -- talkx_blacklist_realtime_column_scope
 -- Rollback: alter publication supabase_realtime drop table public.talkx_blacklist;
+--   alter publication supabase_realtime drop table public.talkx_blacklist;
 --
 -- Nota de rollback: retira public.talkx_blacklist da publicacao supabase_realtime, devolvendo o
 -- estado anterior (tabela NAO publicada). Nenhuma outra mudanca e desfeita porque
