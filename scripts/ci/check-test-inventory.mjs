@@ -38,6 +38,10 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-v23-draft-step.test.sh',
   'scripts/db-audit/talkx-v25-owner.test.sh',
   'scripts/db-audit/talkx-v26-template-version.test.sh',
+  // X140: painel do monitor TalkX (kpis, comparativo com ontem, serie com zeros,
+  // saude do worker, autorizacao dono/admin). Migration real em PostgreSQL 17
+  // descartavel; passo de YAML fica para o dono do workflow.
+  'scripts/db-audit/talkx-monitor-panel.test.sh',
   // --- .test.sh — prova em container descartável (docker); passo de YAML
   // a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
   // Item 293 (R2-DB-005): prova que a associação reminders→conversation_tasks preserva a
