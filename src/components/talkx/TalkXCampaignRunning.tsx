@@ -205,7 +205,7 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; contacts: { name: string; phone: string } | null };
+type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
@@ -214,7 +214,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, manual_retry_count, contacts:contact_id(name, phone)')
+        .select('id, campaign_id, contact_id, personalized_message, status, sent_at, delivered_at, error_message, manual_retry_count, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
       if (error) throw error;
