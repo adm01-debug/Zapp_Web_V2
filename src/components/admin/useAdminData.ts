@@ -1,8 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
+import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { AppRole } from '@/hooks/system/useUserRole';
+
+const log = getLogger('useAdminData');
 
 const AVATAR_BUCKET = 'avatars';
 // Mesma validade curta usada no AvatarUpload: o perfil guarda só o caminho e a
@@ -117,10 +120,14 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         const usersWithSignedAvatars = await Promise.all(
           usersWithRoles.map(async (user) => {
             if (!user.avatar_url || isStorageUrl(user.avatar_url)) return user;
-            const { data } = await supabase.storage
+            const { data, error } = await supabase.storage
               .from(AVATAR_BUCKET)
               .createSignedUrl(user.avatar_url, AVATAR_SIGNED_URL_TTL_SECONDS);
-            return { ...user, avatar_url: data?.signedUrl ?? user.avatar_url };
+            if (error || !data?.signedUrl) {
+              log.warn('avatar_signed_url_error', { error: error?.message ?? 'sem signedUrl' });
+              return user;
+            }
+            return { ...user, avatar_url: data.signedUrl };
           })
         );
         setUsers(usersWithSignedAvatars);
