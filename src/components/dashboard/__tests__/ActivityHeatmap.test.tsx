@@ -22,20 +22,20 @@ const wrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const dadosDeTeste = [
-  { date: new Date('2026-10-01'), count: 5, level: 1 },
-  { date: new Date('2026-10-02'), count: 25, level: 2 },
-  { date: new Date('2026-10-03'), count: 60, level: 3 },
+  { date: new Date('2026-10-01'), count: 5, level: 1 as const },
+  { date: new Date('2026-10-02'), count: 25, level: 2 as const },
+  { date: new Date('2026-10-03'), count: 60, level: 3 as const },
 ];
 
 describe('ActivityHeatmap — acessibilidade', () => {
   it('SelectTrigger do seletor de período tem aria-label acessível', () => {
-    render(<ActivityHeatmap propData={dadosDeTeste} />, { wrapper });
+    render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
     const trigger = screen.getByLabelText('Filtrar período');
     expect(trigger).toBeInTheDocument();
   });
 
   it('container rolável do mapa recebe foco pelo teclado e tem nome acessível', () => {
-    render(<ActivityHeatmap propData={dadosDeTeste} />, { wrapper });
+    render(<ActivityHeatmap data={dadosDeTeste} />, { wrapper });
     const region = screen.getByRole('region', { name: /mapa de atividade/i });
     expect(region).toHaveAttribute('tabIndex', '0');
   });
