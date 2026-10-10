@@ -11,10 +11,12 @@
 # E, na segunda metade (F89), a INTEGRACAO da fila contra o banco:
 #   6. o confirm materializa um item por (destinatario APTO x bloco) e nao duplica no 2o clique;
 #   7. a drenagem com fila aberta NAO conclui o disparo;
-#   8/9. a drenagem ate a conclusao ficam reservadas ao limite conhecido t_1ecff9cb;
+#   8. a drenagem com a fila toda terminal CONCLUI o disparo ('completed');
+#   9/9b. a drenagem com falha (failed_count>0 ou outcome_unknown_count>0) conclui como
+#       'completed_with_failures' (MX03: cast do enum, mesma classe do F59);
 #   10. o ACK reconcilia o item que estava em outcome_unknown.
-# A drenagem que CONCLUI o disparo segue BLOQUEADA por defeito de producao aberto (42804 na
-# RPC de drenagem), registrado no cartao t_1ecff9cb; este harness ainda nao fecha esse criterio.
+# A drenagem que CONCLUI o disparo era BLOQUEADA pelo 42804 (CASE text em coluna enum);
+# a migration MX03 deste cartao aplica o cast e os casos 8/9/9b provam os dois ramos.
 #
 # Herda o harness e o fixture de infraestrutura do multiplix-rls.test.sh (mesma infra
 # Supabase: auth, vault, cron, pg_net) e acrescenta as migrations do modelo v2
@@ -325,6 +327,12 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
+# MX03 (TL-033): cast explicito do enum no dreno POR ITEM
+# (complete_multiplix_dispatch_if_items_drained). A f30 trocou o tipo de
+# multiplix_dispatches.status e deixou o CASE do dreno resolvendo para text (42804) —
+# mesma classe do F59 em transition_multiplix_dispatch. Sem ela, os casos 8/9/9b abaixo
+# nao tem como passar — e e justamente o teste que expoe o defeito.
+migration "20261008235150_mx03_items_drain_enum_cast.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -851,12 +859,13 @@ r6="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_r
 #   (6) confirma   -> revalida (F49), avanca a versao e materializa UM item por (apto x
 #                     bloco); o 2o clique NAO duplica a fila (idempotencia por dispatch_version);
 #   (7) drena      -> com item pendente o disparo NAO pode ser dado como drenado;
-#   (8) drenagem completa com sucesso -> reservado ao limite conhecido t_1ecff9cb;
-#   (9) drenagem completa com falha parcial -> reservado ao limite conhecido t_1ecff9cb;
+#   (8) drenagem completa com sucesso -> fila toda terminal, disparo 'completed';
+#   (9) drenagem completa com falha (failed_count>0) -> 'completed_with_failures';
+#   (9b) drenagem completa com item em outcome_unknown (outcome_unknown_count>0) ->
+#        'completed_with_failures';
 #   (10) reconcilia -> o ACK casa o external_id e fecha o item que estava em outcome_unknown.
-# As duas drenagens que CONCLUEM o disparo (fila inteira terminal -> 'completed'; com um item
-# em outcome_unknown -> 'completed_with_failures') estao BLOQUEADAS por defeito de producao
-# aberto — ver a nota logo depois do caso (7).
+# Os casos 8/9/9b exercem o UPDATE do dreno (o passo que o 42804 quebrava): sem o cast da
+# migration MX03 eles estouram 42804 em vez de concluir — ver a nota logo depois do caso (7).
 #
 # Fixture: o dispatch nasce em 'scheduled' (estado que o F31 grava no draft.create e que o
 # confirm aceita — passo 2 da RPC) e SEM `scheduled_at`: nao ha nada a agendar, entao ele
@@ -947,31 +956,144 @@ drena_aberta="$(psql_test -Atqc "$service_session SELECT public.complete_multipl
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_conf';")" == 'sending' ]] \
   || fail 'F89.7: a drenagem recusada mexeu no status do disparo'
 
-# (8)/(9) DRENA ATE A CONCLUSAO — BLOQUEADOS por DEFEITO DE PRODUCAO aberto:
-#   ERROR: column "status" is of type multiplix_dispatch_status but expression is of type text
-# `complete_multiplix_dispatch_if_items_drained` (f32b, 20261001231230) — e a gemea antiga
-# `complete_multiplix_dispatch_if_drained`, que o worker ainda chama — montam o novo status
-# num CASE de literais `text` e o ATRIBUEM a coluna ENUM:
-#   `SET status = CASE WHEN failed_count + outcome_unknown_count > 0
-#                      THEN 'completed_with_failures' ELSE 'completed' END`
-# O PostgreSQL resolve esse CASE para `text` e recusa a atribuicao (42804) SEMPRE. Isto e:
-# toda vez que a drenagem chega ao UPDATE — exatamente o passo em que ela CONCLUI o disparo
-# — a RPC levanta erro. A fila esvazia e o disparo NUNCA conclui; e a "integracao da
-# confirmacao ate dreno esta quebrada" que o inventario do F89 aponta. Mesma classe que o F59
-# ja consertou em `transition_multiplix_dispatch`
-# (`v_next_status::public.multiplix_dispatch_status`, 20261002521230) — aquele caso tinha
-# teste; o dreno nao tinha, por isso sobreviveu ate aqui.
-# O CONSERTO E DDL (migration) e este cartao proibe DDL: a correcao foi para o cartao
-# t_1ecff9cb (fix do cast em complete_multiplix_dispatch_if_*_drained).
-#
-# Limite conhecido t_1ecff9cb: com o cast no lugar, religar AQUI dois casos de drenagem
-# ate a conclusao —
-#   (8) fila inteira terminal -> drena_fecha='true', disparo 'completed', sent_count=4 (itens
-#       fechados pela rota real: claim_multiplix_item -> mark_multiplix_item_dispatch_started
-#       -> record_multiplix_item_sent, na ORDEM POR BLOCO);
-#   (9) um item em outcome_unknown (terminal) -> drena='true' e disparo
-#       'completed_with_failures' (parcial NUNCA aparece como "Concluido", F13).
-# Esses dois casos ficam FORA da execucao (nao fingem passar) enquanto o defeito existir.
+# (8)/(9)/(9b) DRENA ATE A CONCLUSAO — o cast MX03 destravou o UPDATE (era 42804).
+# Sem a migration 20261008235150 o dreno abaixo levanta
+#   42804: column "status" is of type multiplix_dispatch_status but expression is of type text
+# em vez de concluir: e ESTE o teste que expoe o defeito (vermelho = erro 42804, verde =
+# disparo concluido com o status certo). Mesma classe que o F59 ja consertou em
+# `transition_multiplix_dispatch`. Os tres casos fecham os itens pela rota REAL
+# (claim_multiplix_item -> mark_multiplix_item_dispatch_started -> record_sent/complete/sweep).
+
+# (8) Fila inteira terminal SEM falha -> 'completed'.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000060', 'Dreno completo F89', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000060', '30000000-0000-0000-0000-000000000060', 0, 'text', 'b1'),
+  ('60000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', 1, 'text', 'b2');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at) VALUES
+  ('40000000-0000-0000-0000-000000000060', '30000000-0000-0000-0000-000000000060', '50000000-0000-0000-0000-000000000060', '+551****0060', 'pending', statement_timestamp());
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000060', '30000000-0000-0000-0000-000000000060', '40000000-0000-0000-0000-000000000060', '60000000-0000-0000-0000-000000000060', 1, 'pending', 'ext-f89-8a'),
+  ('80000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', '40000000-0000-0000-0000-000000000060', '60000000-0000-0000-0000-000000000061', 1, 'pending', 'ext-f89-8b');
+SQL
+disp_ok='30000000-0000-0000-0000-000000000060'
+tok8a="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ok','80000000-0000-0000-0000-000000000060','worker-a',90);" 2>&1 || true)"
+[[ "$tok8a" =~ $is_uuid ]] || fail "F89.8: nao consegui reivindicar o item 1 (veio: $tok8a)"
+tok8b="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ok','80000000-0000-0000-0000-000000000061','worker-a',90);" 2>&1 || true)"
+[[ "$tok8b" =~ $is_uuid ]] || fail "F89.8: nao consegui reivindicar o item 2 (veio: $tok8b)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000060','$tok8a'::uuid);
+SELECT public.record_multiplix_item_sent('80000000-0000-0000-0000-000000000060','$tok8a'::uuid,'ext-f89-8a');
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000061','$tok8b'::uuid);
+SELECT public.record_multiplix_item_sent('80000000-0000-0000-0000-000000000061','$tok8b'::uuid,'ext-f89-8b');
+SQL
+# Controle do fixture: sem a fila terminal o resto do caso nao provaria nada.
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_ok' AND status IN ('pending','sending','failed_transient');")" == '0' ]] \
+  || fail 'F89.8: fixture invalido — ainda ha item nao-terminal na fila'
+drena_ok="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_ok')::text;" 2>&1 || true)"
+[[ "$drena_ok" == 'true' ]] \
+  || fail "F89.8: o dreno POR ITEM deveria concluir o disparo com a fila terminal (veio: $drena_ok)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ok';")" == 'completed' ]] \
+  || fail "F89.8: esperava status 'completed' (sem falha), veio: $(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ok';")"
+[[ "$(psql_test -Atqc "SELECT sent_count FROM public.multiplix_dispatches WHERE id='$disp_ok';")" == '2' ]] \
+  || fail 'F89.8: sent_count devia ser 2 (os dois itens fecharam pela rota real)'
+# Idempotente: repetir o dreno nao reabre nem reconclui um disparo ja fechado.
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_ok')::text;")" == 'false' ]] \
+  || fail 'F89.8: o segundo dreno deveria devolver false (disparo ja concluido)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ok';")" == 'completed' ]] \
+  || fail 'F89.8: o segundo dreno mexeu no status de um disparo ja concluido'
+
+# (9) Fila terminal COM falha (failed_count>0) -> 'completed_with_failures'.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000061', 'Dreno com falha F89', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000062', '30000000-0000-0000-0000-000000000061', 0, 'text', 'b1'),
+  ('60000000-0000-0000-0000-000000000063', '30000000-0000-0000-0000-000000000061', 1, 'text', 'b2');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at) VALUES
+  ('40000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000061', '50000000-0000-0000-0000-000000000061', '+551****0061', 'pending', statement_timestamp());
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000062', '30000000-0000-0000-0000-000000000061', '40000000-0000-0000-0000-000000000061', '60000000-0000-0000-0000-000000000062', 1, 'pending', 'ext-f89-9a'),
+  ('80000000-0000-0000-0000-000000000063', '30000000-0000-0000-0000-000000000061', '40000000-0000-0000-0000-000000000061', '60000000-0000-0000-0000-000000000063', 1, 'pending', 'ext-f89-9b');
+SQL
+disp_fail='30000000-0000-0000-0000-000000000061'
+tok9a="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_fail','80000000-0000-0000-0000-000000000062','worker-a',90);" 2>&1 || true)"
+[[ "$tok9a" =~ $is_uuid ]] || fail "F89.9: nao consegui reivindicar o item 1 (veio: $tok9a)"
+tok9b="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_fail','80000000-0000-0000-0000-000000000063','worker-a',90);" 2>&1 || true)"
+[[ "$tok9b" =~ $is_uuid ]] || fail "F89.9: nao consegui reivindicar o item 2 (veio: $tok9b)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000062','$tok9a'::uuid);
+SELECT public.record_multiplix_item_sent('80000000-0000-0000-0000-000000000062','$tok9a'::uuid,'ext-f89-9a');
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000063','$tok9b'::uuid);
+SELECT public.complete_multiplix_item('80000000-0000-0000-0000-000000000063','$tok9b'::uuid,'failed','numero inexistente no WhatsApp');
+SQL
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_fail' AND status IN ('pending','sending','failed_transient');")" == '0' ]] \
+  || fail 'F89.9: fixture invalido — ainda ha item nao-terminal na fila'
+[[ "$(psql_test -Atqc "SELECT failed_count FROM public.multiplix_dispatches WHERE id='$disp_fail';")" == '1' ]] \
+  || fail 'F89.9: failed_count devia ser 1 (um item fechou como failed pela rota real)'
+drena_fail="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_fail')::text;" 2>&1 || true)"
+[[ "$drena_fail" == 'true' ]] \
+  || fail "F89.9: o dreno POR ITEM deveria concluir o disparo com a fila terminal (veio: $drena_fail)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_fail';")" == 'completed_with_failures' ]] \
+  || fail "F89.9: esperava 'completed_with_failures' (failed_count>0), veio: $(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_fail';")"
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_fail')::text;")" == 'false' ]] \
+  || fail 'F89.9: o segundo dreno deveria devolver false (disparo ja concluido)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_fail';")" == 'completed_with_failures' ]] \
+  || fail 'F89.9: o segundo dreno mexeu no status de um disparo ja concluido'
+
+# (9b) Fila terminal com item em outcome_unknown (outcome_unknown_count>0) ->
+# 'completed_with_failures'. O item chega la pela rota real do timeout: claim ->
+# POST feito -> lease vencido -> sweep (F57.5). Parcial NUNCA aparece como "Concluido" (F13).
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000062', 'Dreno outcome_unknown F89', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000064', '30000000-0000-0000-0000-000000000062', 0, 'text', 'b1'),
+  ('60000000-0000-0000-0000-000000000065', '30000000-0000-0000-0000-000000000062', 1, 'text', 'b2');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at) VALUES
+  ('40000000-0000-0000-0000-000000000062', '30000000-0000-0000-0000-000000000062', '50000000-0000-0000-0000-000000000062', '+551****0062', 'pending', statement_timestamp());
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000064', '30000000-0000-0000-0000-000000000062', '40000000-0000-0000-0000-000000000062', '60000000-0000-0000-0000-000000000064', 1, 'pending', 'ext-f89-9c'),
+  ('80000000-0000-0000-0000-000000000065', '30000000-0000-0000-0000-000000000062', '40000000-0000-0000-0000-000000000062', '60000000-0000-0000-0000-000000000065', 1, 'pending', 'ext-f89-9d');
+SQL
+disp_ou='30000000-0000-0000-0000-000000000062'
+tok9ca="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ou','80000000-0000-0000-0000-000000000064','worker-a',90);" 2>&1 || true)"
+[[ "$tok9ca" =~ $is_uuid ]] || fail "F89.9b: nao consegui reivindicar o item 1 (veio: $tok9ca)"
+tok9cb="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_ou','80000000-0000-0000-0000-000000000065','worker-a',90);" 2>&1 || true)"
+[[ "$tok9cb" =~ $is_uuid ]] || fail "F89.9b: nao consegui reivindicar o item 2 (veio: $tok9cb)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000064','$tok9ca'::uuid);
+SELECT public.record_multiplix_item_sent('80000000-0000-0000-0000-000000000064','$tok9ca'::uuid,'ext-f89-9c');
+SELECT public.mark_multiplix_item_dispatch_started('80000000-0000-0000-0000-000000000065','$tok9cb'::uuid);
+UPDATE public.multiplix_delivery_items
+   SET lease_until = statement_timestamp() - interval '1 second'
+ WHERE id = '80000000-0000-0000-0000-000000000065';
+SQL
+[[ "$(psql_test -Atqc "$service_session SELECT public.sweep_multiplix_stuck_items(500);")" == '1' ]] \
+  || fail 'F89.9b: o sweeper nao fechou o item com POST feito e lease vencido'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_delivery_items WHERE id='80000000-0000-0000-0000-000000000065';")" == 'outcome_unknown' ]] \
+  || fail 'F89.9b: item com POST feito e lease vencido nao virou outcome_unknown'
+[[ "$(psql_test -Atqc "SELECT outcome_unknown_count FROM public.multiplix_dispatches WHERE id='$disp_ou';")" == '1' ]] \
+  || fail 'F89.9b: outcome_unknown_count devia ser 1 (sweeper recalcula o contador)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_ou' AND status IN ('pending','sending','failed_transient');")" == '0' ]] \
+  || fail 'F89.9b: fixture invalido — ainda ha item nao-terminal na fila'
+drena_ou="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_ou')::text;" 2>&1 || true)"
+[[ "$drena_ou" == 'true' ]] \
+  || fail "F89.9b: o dreno POR ITEM deveria concluir o disparo com a fila terminal (veio: $drena_ou)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ou';")" == 'completed_with_failures' ]] \
+  || fail "F89.9b: esperava 'completed_with_failures' (outcome_unknown_count>0), veio: $(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ou';")"
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_ou')::text;")" == 'false' ]] \
+  || fail 'F89.9b: o segundo dreno deveria devolver false (disparo ja concluido)'
 
 # (10) RECONCILIA (outcome_unknown -> ack): o WAMID ja era conhecido quando o timeout
 # aconteceu, entao o ACK de entrega tem de casar por external_id e fechar o item. Fixture
@@ -1010,5 +1132,5 @@ ack_nao="$(psql_test -Atqc "$service_session SELECT public.record_multiplix_item
   || fail 'F89.10: o ACK desconhecido mexeu no item ja reconciliado'
 
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56) — e com DOIS destinatarios x tres blocos as duas cadeias nao se cruzam (a fronteira de cada um avanca sozinha) e nenhum item entra na fila duas vezes. E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo)\n'
+printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56) — e com DOIS destinatarios x tres blocos as duas cadeias nao se cruzam (a fronteira de cada um avanca sozinha) e nenhum item entra na fila duas vezes. E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem com a fila terminal CONCLUI — 'completed' sem falha, 'completed_with_failures' com failed_count ou outcome_unknown_count>0, o cast MX03 destravou o 42804)\n'
 
