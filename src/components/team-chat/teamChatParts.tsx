@@ -65,7 +65,7 @@ export const MediaContent = memo(function MediaContent({ msg }: { msg: TeamMessa
           alt="Imagem enviada"
           className="rounded-lg max-h-48 max-w-full object-contain cursor-pointer"
           onError={() => { void refresh(); }}
-          onClick={() => window.open(resolvedUrl, '_blank')}
+          onClick={() => window.open(resolvedUrl, '_blank', 'noopener,noreferrer')}
         />
       );
     case 'sticker':
