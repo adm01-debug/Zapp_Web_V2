@@ -77,10 +77,10 @@ echo '== BLOCO A (defeito) =='
 expect_error_as 'A1 sem tabela' 'does not exist' "$JWT_A" "SELECT count(*) FROM public.talkx_contact_attributes;"
 expect_error_as 'A2 sem funcao' 'does not exist' "$JWT_O" "SELECT * FROM public.talkx_refresh_local_attributes(10, NULL);"
 expect_error_as 'A3 sem helper' 'does not exist' "$JWT_O" "SELECT public.can_manage_contacts('$UID_O');"
-echo '== aplica migration REAL =='
+echo '== aplica migration =='
 psql_file "$migration"
 psql_sql "INSERT INTO public.sales_pipeline_stages (id, name) VALUES ('20000000-0000-0000-0000-000000000001', 'Prospecção'), ('20000000-0000-0000-0000-000000000002', 'Negociação');" >/dev/null
-# 27 elegiveis: 14 A, 12 B, 1 sem vendedor. DDDs 31/11/81/41/61.
+# 27 elegiveis: 14 A, 12 B, 1 sem vendedor.
 docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres <<SQL
 INSERT INTO public.contacts (name, phone, assigned_to)
 SELECT 'Contato Silva ' || g,
