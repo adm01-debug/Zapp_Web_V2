@@ -14,6 +14,9 @@
 --
 -- Rollback: DROP FUNCTION; não há dependências de DDL externas.
 
+-- Rollback (SQL executável, na ordem):
+--   DROP FUNCTION IF EXISTS public.save_talkx_template_variants(uuid, timestamptz, jsonb);
+
 CREATE OR REPLACE FUNCTION public.save_talkx_template_variants(
   p_template_id uuid,
   p_expected_updated_at timestamptz,
