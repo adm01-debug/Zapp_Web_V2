@@ -517,6 +517,70 @@ Deno.test("E45: ação global (list-instances) continua sem exigir instância", 
   }
 });
 
+// ─── SL-075 E43: ações sem equivalente na Evolution GO ──────────────────────
+// Lista gerada por script (ação × translateV2ToGo → null), não por heurística.
+const REMOVED_GOLESS_ACTIONS = [
+  // integrações do painel removidas na E43
+  "set-chatwoot", "get-chatwoot", "delete-chatwoot",
+  "set-typebot", "get-typebot", "delete-typebot",
+  "typebot-sessions", "typebot-change-status", "start-typebot",
+  "set-openai", "get-openai", "delete-openai",
+  "set-dify", "get-dify", "delete-dify",
+  "set-flowise", "get-flowise", "delete-flowise",
+  "set-evolution-bot", "get-evolution-bot", "delete-evolution-bot",
+  // infra/eventos e demais rotas v2 sem equivalente GO
+  "set-rabbitmq", "get-rabbitmq", "set-sqs", "get-sqs",
+  "create-template", "find-templates", "delete-template",
+  "set-evoai", "get-evoai", "delete-evoai",
+  "set-n8n", "get-n8n", "delete-n8n",
+  "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher", "get-pusher",
+  "set-proxy", "get-proxy", "get-catalog", "get-collections", "offer-call",
+  "set-presence", "set-settings", "get-settings", "get-webhook",
+  "send-template", "mark-unread",
+  "find-chats", "find-messages", "find-status-messages",
+  "invite-info", "toggle-ephemeral",
+];
+for (const action of REMOVED_GOLESS_ACTIONS) {
+  Deno.test(`E43: '${action}' (sem equivalente GO) cai em 'Unknown action' 404 sem I/O no provedor`, async () => {
+    const fake = createFakeEvolution();
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    try {
+      const res = await handleEvolutionApi(
+        controlRequest(action, { instanceName: "PRINCIPAL" }),
+        {
+          callerClient: makeCallerClient({ isAdminOrSupervisor: true }),
+          supabase: makeServiceClient(),
+        },
+      );
+      const json = await res.json();
+      assertEquals(res.status, 404, `'${action}' deve cair no 'Unknown action' do handler (veio ${res.status})`);
+      assertEquals(json?.error, "Unknown action");
+      assertEquals(fake.posts.length, 0, `'${action}' não pode produzir I/O no provedor`);
+    } finally {
+      await fake.stop();
+    }
+  });
+}
+
+// E43: ação removida que era 'read' nega agente sem papel (deny-by-default)
+Deno.test("E43: ação removida que era 'read' nega agente sem papel (deny-by-default)", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("get-settings", { instanceName: "PRINCIPAL" }),
+      {
+        callerClient: makeCallerClient({ isAdminOrSupervisor: false }),
+        supabase: makeServiceClient(),
+      },
+    );
+    assertEquals(res.status, 403, "leitura removida deve negar agente pelo classifyEvolutionAction");
+    assertEquals(fake.posts.length, 0);
+  } finally {
+    await fake.stop();
+  }
+});
+
 Deno.test("E45: a lista de ações do schema cobre toda ação que o handler implementa", async () => {
   // Guarda contra a única falha grave deste cartão: recusar em 422 uma ação que
   // o handler suporta. O fonte do handler é a fonte da verdade (mesma extração
@@ -526,7 +590,7 @@ Deno.test("E45: a lista de ações do schema cobre toda ação que o handler imp
   const actions = new Set(
     [...source.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(actions.size > 100, `sanidade: esperava >100 ações no handler (achou ${actions.size})`);
+  assert(actions.size > 50, `sanidade: esperava >50 ações no handler (achou ${actions.size})`);
   for (const action of actions) {
     assert(
       EvolutionApiRequestSchema.safeParse({ action, instanceName: "PRINCIPAL" }).success,
