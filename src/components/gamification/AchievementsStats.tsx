@@ -30,7 +30,7 @@ export function AchievementsStatsHeader({ achievements, stats }: AchievementsSta
             <span className="text-sm font-medium text-foreground">Progresso para Nível {stats.level + 1}</span>
             <span className="text-xs text-muted-foreground">{stats.xp.toLocaleString()} / {xpForNextLevel(stats.level).toLocaleString()} XP</span>
           </div>
-          <Progress value={levelProgress(stats.xp, stats.level)} className="h-2" />
+          <Progress value={levelProgress(stats.xp, stats.level)} className="h-2" aria-label={`Progresso para o nível ${stats.level + 1}`} />
         </motion.div>
       )}
 
@@ -77,7 +77,7 @@ export function AchievementsHeaderBadges({ stats }: { stats: { level: number; xp
       <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-0">
         <TrendingUp className="w-3 h-3" />Nv {stats.level}
       </Badge>
-      <Badge variant="secondary" className="gap-1 bg-xp/10 text-xp border-0">
+      <Badge variant="secondary" className="gap-1 bg-xp/10 text-[hsl(var(--xp-text))] border-0">
         <Zap className="w-3 h-3" />{stats.xp.toLocaleString()} XP
       </Badge>
     </div>
