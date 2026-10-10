@@ -1,15 +1,21 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TalkXRecipientRowActions } from '../tracking/TalkXRecipientRowActions';
 import type { TalkXRecipient } from '@/hooks/integrations/useTalkX';
-import { supabase } from '@/lib/supabaseHelpers';
+import { toast } from 'sonner';
+
+const rpcMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/supabaseHelpers', () => ({
   supabase: {
-    rpc: vi.fn(),
+    rpc: rpcMock,
   },
+}));
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
 
 function wrap(ui: React.ReactElement) {
@@ -33,6 +39,7 @@ const baseRecipient: TalkXRecipient = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  rpcMock.mockResolvedValue({ data: { ok: true }, error: null });
 });
 
 describe('TalkXRecipientRowActions', () => {
@@ -43,38 +50,40 @@ describe('TalkXRecipientRowActions', () => {
 
   it('renderiza "Reenviar" quando status=failed e manual_retry_count < 3', () => {
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
-    expect(screen.getByRole('button', { name: /reenviar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^reenviar$/i })).toBeInTheDocument();
   });
 
   it('NÃO renderiza "Reenviar" quando manual_retry_count >= 3', () => {
     const recipient = { ...baseRecipient, manual_retry_count: 3 };
     wrap(<TalkXRecipientRowActions recipient={recipient} />);
-    expect(screen.queryByRole('button', { name: /reenviar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^reenviar$/i })).not.toBeInTheDocument();
   });
 
   it('NÃO renderiza "Reenviar" quando status=delivered', () => {
     const recipient = { ...baseRecipient, status: 'delivered' };
     wrap(<TalkXRecipientRowActions recipient={recipient} />);
-    expect(screen.queryByRole('button', { name: /reenviar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^reenviar$/i })).not.toBeInTheDocument();
   });
 
   it('renderiza "Bloquear" para todo destinatário', () => {
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
-    expect(screen.getByRole('button', { name: /bloquear/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^bloquear$/i })).toBeInTheDocument();
   });
 
-  it('clicar "Bloquear" abre diálogo de confirmação', () => {
+  it('clicar "Bloquear" abre diálogo de confirmação e NÃO chama a RPC antes de confirmar', () => {
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
-    fireEvent.click(screen.getByRole('button', { name: /bloquear/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     expect(screen.getByText(/bloquear contato/i)).toBeInTheDocument();
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('clicar "Cancelar" no diálogo de bloqueio fecha o diálogo', () => {
+  it('clicar "Cancelar" no diálogo de bloqueio fecha o diálogo sem chamar a RPC', () => {
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
-    fireEvent.click(screen.getByRole('button', { name: /bloquear/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
     fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 
   it('clicar "Abrir conversa" dispara o evento open-contact-chat', () => {
@@ -90,18 +99,95 @@ describe('TalkXRecipientRowActions', () => {
     );
   });
 
-  it('ao confirmar bloqueio, chama talkx_suppress_contact RPC', async () => {
-    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /bloquear/i }));
-    fireEvent.click(screen.getByRole('button', { name: /bloquear/i }));
+  it('ao confirmar bloqueio, chama talkx_suppress_contact sem uuid vazio e chama onActionDone UMA vez', async () => {
+    rpcMock.mockResolvedValue({ data: 'suppression-uuid-1', error: null });
+    const onActionDone = vi.fn();
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+    fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^bloquear$/i }));
 
-    await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('talkx_suppress_contact', expect.any(Object)));
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith(
+      'talkx_suppress_contact',
+      expect.objectContaining({
+        p_campaign_id: 'c1',
+        p_contact_id: 'ct1',
+        p_reason_code: 'manual',
+      }),
+    ));
+    const params = rpcMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(params.p_source_message_id).not.toBe('');
+    expect(params.p_phone).not.toBe('');
+    expect(vi.mocked(toast.success)).toHaveBeenCalled();
+    expect(vi.mocked(toast.warning)).not.toHaveBeenCalled();
+    await waitFor(() => expect(onActionDone).toHaveBeenCalledTimes(1));
   });
 
-  it('ao clicar "Reenviar", chama retry_talkx_recipients RPC', async () => {
+  it('bloqueio já suprimido (data null) mostra toast.warning', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
     wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /reenviar/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^bloquear$/i }));
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^bloquear$/i }));
 
-    await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('retry_talkx_recipients', expect.any(Object)));
+    await waitFor(() => expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
+      expect.stringMatching(/já estava bloqueado/i),
+    ));
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+  });
+
+  it('clicar "Reenviar" abre o modal "Reenviar para <nome>?" e NÃO chama a RPC antes de confirmar', () => {
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} />);
+    fireEvent.click(screen.getByRole('button', { name: /^reenviar$/i }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByText(/reenviar para joão/i)).toBeInTheDocument();
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('ao confirmar reenvio, chama retry_talkx_recipients e mostra sucesso', async () => {
+    rpcMock.mockResolvedValue({ data: { ok: true, retried: 1 }, error: null });
+    const onActionDone = vi.fn();
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+    fireEvent.click(screen.getByRole('button', { name: /^reenviar$/i }));
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^reenviar$/i }));
+
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledWith(
+      'retry_talkx_recipients',
+      { p_campaign_id: 'c1', p_recipient_ids: ['r1'] },
+    ));
+    await waitFor(() => expect(vi.mocked(toast.success)).toHaveBeenCalled());
+    expect(vi.mocked(toast.warning)).not.toHaveBeenCalled();
+    expect(onActionDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('recusa do retry (contato suprimido) mostra toast.warning e não chama onActionDone', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: new Error('talkx_retry_recipient_suppressed') });
+    const onActionDone = vi.fn();
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+    fireEvent.click(screen.getByRole('button', { name: /^reenviar$/i }));
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^reenviar$/i }));
+
+    await waitFor(() => expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
+      expect.stringMatching(/bloqueado/i),
+    ));
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+    expect(onActionDone).not.toHaveBeenCalled();
+  });
+
+  it('recusa do retry no corpo jsonb (ok:false) mostra toast.warning', async () => {
+    rpcMock.mockResolvedValue({ data: { ok: false, reason: 'talkx_retry_limit_reached' }, error: null });
+    const onActionDone = vi.fn();
+    wrap(<TalkXRecipientRowActions recipient={baseRecipient} onActionDone={onActionDone} />);
+    fireEvent.click(screen.getByRole('button', { name: /^reenviar$/i }));
+    const dialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^reenviar$/i }));
+
+    await waitFor(() => expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
+      expect.stringMatching(/limite/i),
+    ));
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+    expect(onActionDone).not.toHaveBeenCalled();
   });
 });

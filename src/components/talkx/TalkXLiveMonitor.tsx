@@ -253,7 +253,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                     </div>
                     <Pill label={sm.label} tone={sm.tone}/>
                     {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
-                    <TalkXRecipientRowActions recipient={r} />
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-recipients-monitor', campaignId, statusFilter] }); }} />
                   </motion.div>
                 );
               })}

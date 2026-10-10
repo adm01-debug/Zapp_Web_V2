@@ -210,6 +210,7 @@ const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: '
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
 function TabRecipients({ campaignId }: { campaignId: string }) {
+  const qc = useQueryClient();
   const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
@@ -260,7 +261,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                   <td className="px-4 py-2.5 text-2xs">
-                    <TalkXRecipientRowActions recipient={r} />
+                    <TalkXRecipientRowActions recipient={r} onActionDone={() => { void qc.invalidateQueries({ queryKey: ['talkx-running-recipients', campaignId] }); }} />
                   </td>
                 </tr>
               ))}
