@@ -82,6 +82,8 @@ const ALLOWLIST = new Set([
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
+  // N-098: checagens de lançamento da campanha Talk X no servidor.
+  'scripts/db-audit/talkx-campaign-launch-checks.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
