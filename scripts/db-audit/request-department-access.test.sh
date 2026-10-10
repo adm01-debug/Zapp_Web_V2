@@ -279,6 +279,10 @@ expect_line_as 'B.1 authenticated chama request_department_access e recebe ok' \
 expect_line_as 'B.2 notificacao criada para o admin do departamento' '1' \
   "$ADMIN_USER" "SELECT count(*) FROM public.notifications WHERE user_id = '$ADMIN_USER' AND title = 'Pedido de acesso ao departamento';"
 
+# B.2b o agente (requester) nao ve a notificacao do admin pelo RLS (propria SELECT).
+expect_line_as 'B.2b agente nao ve notificacao do admin pelo RLS' '0' \
+  "$REQUESTER_USER" "SELECT count(*) FROM public.notifications WHERE user_id = '$ADMIN_USER';"
+
 # B.3 nasce 1 linha access_requested na auditoria.
 expect_line_as 'B.3 linha access_requested na auditoria' '1' \
   "$ADMIN_USER" "SELECT count(*) FROM public.department_audit_logs WHERE department_id = '$DEPT_ID' AND action = 'access_requested';"
