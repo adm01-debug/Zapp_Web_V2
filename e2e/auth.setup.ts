@@ -36,9 +36,14 @@ setup('authenticate', async ({ page }) => {
   // "timeout aguardando #main-navigation" e nao diz nada sobre a causa (medido
   // em 02/10: senha invalida reproduz exatamente essa mensagem muda).
   const shell = page.locator('#main-navigation');
+  // NAO incluir "tente novamente": o provisionamento de SIP local falha apos o
+  // login e mostra "Erro ao conectar ao servidor SIP ... e tente novamente",
+  // que casaria com o erro de credencial e derrubava o setup a frio (falso
+  // negativo — a sidebar so' monta um pouco depois). Erro real de login traz
+  // "senha"/"credenci"/"e-mail ou senha"/"erro ao entrar", cobertos abaixo.
   const erroLogin = page
     .getByRole('alert')
-    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel|tente novamente|sem resposta|timeout/i));
+    .or(page.getByText(/inv[aá]lid|credenci|senha incorreta|e-?mail ou senha|erro ao entrar|temporariamente indispon[ií]vel|sem resposta|timeout/i));
   await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 30_000 });
 
   const entrou = await shell.isVisible().catch(() => false);
