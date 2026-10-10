@@ -77,12 +77,12 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     if (activeTab === 'users') {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, name, email, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, is_active, created_at')
         .order('name');
 
       const { data: roles } = await supabase
         .from('user_roles')
-        .select('*');
+        .select('user_id, role');
 
       if (profiles && roles) {
         const usersWithRoles = profiles.map(profile => {
@@ -97,7 +97,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     } else if (activeTab === 'audit') {
       const { data: logs } = await supabase
         .from('audit_logs')
-        .select('*')
+        .select('id, user_id, action, entity_type, details, created_at')
         .order('created_at', { ascending: false })
         .limit(100);
 
