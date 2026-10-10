@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-10`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
