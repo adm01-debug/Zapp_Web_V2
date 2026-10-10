@@ -58,8 +58,8 @@ vi.mock('@/components/ui/select', async () => {
   return {
     Select: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
     SelectContent: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-    SelectItem: ({ children, value }: { children?: React.ReactNode; value: string }) => (
-      <div role="option" value={value}>{children}</div>
+    SelectItem: ({ children, value, ...props }: { children?: React.ReactNode; value: string; [key: string]: unknown }) => (
+      <div role="option" {...props}>{children}</div>
     ),
     SelectTrigger: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => (
       <div {...props}>{children}</div>
