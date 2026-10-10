@@ -56,6 +56,7 @@ export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all')
   return {
     recipients: query.data ?? [],
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
     isError: query.isError,
     rateByMinute: buildRateByMinute(query.data ?? []),
     refetch: query.refetch,

@@ -836,8 +836,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                       />
                     )}
                   />
-                </>
-
+                </>}
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
