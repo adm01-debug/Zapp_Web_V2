@@ -135,7 +135,7 @@ export function useDiagnosticsData() {
   const fetchConnections = async () => {
     const { data } = await supabase
       .from('whatsapp_connections')
-      .select('id, instance_id, status, phone_number, created_at, updated_at')
+      .select('*')
       .order('created_at', { ascending: false });
     if (data) setConnections(data as ConnectionStatus[]);
   };
@@ -232,7 +232,7 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     const { count: messagesCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-    const { count: connectionsCount } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
+    const { count: connectionsCount } = await supabase.from('whatsapp_connections').select('*', { count: 'exact', head: true });
 
     const realtime = await probeRealtime();
 
