@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
+import { TalkXServerResumePrecheck } from './tracking/TalkXServerResumePrecheck';
+import { useTalkXServerResumePrecheck } from '@/hooks/integrations/useTalkXServerResumePrecheck';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, InsightCard, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
@@ -709,6 +711,8 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   const campaign = useMemo(() => sending.find((c) => c.id === selectedId) ?? null, [sending, selectedId]);
   // X159: o "Checklist para retomar" só monta os 5 itens quando a campanha está pausada.
   const resumeChecklist = useTalkXResumeChecklist(campaign);
+  // N-097: pré-checagem de retomada no servidor (can_resume + blockers), só com a campanha pausada.
+  const { precheck: serverPrecheck } = useTalkXServerResumePrecheck(campaign);
   // X159: o atalho de cada item leva à aba onde ele se resolve nesta tela.
   const handleChecklistNavigate = useCallback((key: TalkXResumeChecklistItemKey) => {
     setActiveTab(key === 'templates' ? 'messages' : key === 'segments' ? 'recipients' : 'config');
@@ -943,12 +947,15 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               {activeTab === 'overview' && (
                 <>
                   {campaign.status === 'paused' && (
-                    <TalkXResumeChecklist
-                      items={resumeChecklist.items}
-                      onToggle={resumeChecklist.toggle}
-                      onNavigate={handleChecklistNavigate}
-                      className="mb-4"
-                    />
+                    <>
+                      <TalkXServerResumePrecheck precheck={serverPrecheck} className="mb-3" />
+                      <TalkXResumeChecklist
+                        items={resumeChecklist.items}
+                        onToggle={resumeChecklist.toggle}
+                        onNavigate={handleChecklistNavigate}
+                        className="mb-4"
+                      />
+                    </>
                   )}
                   <TabOverview c={campaign} chartData={sentHistory?.buckets ?? []} replyGrowthPct={sentHistory?.replyGrowthPct ?? null} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
                 </>
