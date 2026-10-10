@@ -3,17 +3,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-/**
- * X077 · N-125 — o comparativo dos KPIs da Visão geral.
- *
- * Aqui o HOOK e o COMPONENTE são os reais; a única coisa falsa é a RPC
- * `talkx_overview_stats` (o `supabase.rpc`). A prova é de ponta:
- * - a barra entrega o período ao hook e os números saem da RPC, sem conta na tela;
- * - com `previous`, o card mostra a variação (com os tokens de cor de sempre);
- * - com movimento reduzido a variação é texto estático (sem animation-delay);
- * - em "Todo o período" a RPC não tem período anterior e o hook devolve
- *   `previous: null` — mesmo a RPC trazendo `previous`, nenhuma variação aparece.
- */
+/** X077 · N-125 — comparativo dos KPIs: hook e componente reais, só a RPC é mock.
+ * Com `previous` o card mostra a variação; sem base mínima (50 enviados) ou sem
+ * taxa no anterior, a taxa não varia; em "Todo o período" nada varia; com
+ * movimento reduzido a variação é estática (sem animation-delay). */
 
 const rpc = vi.hoisted(() => vi.fn());
 
