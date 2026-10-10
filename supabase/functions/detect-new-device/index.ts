@@ -7,7 +7,9 @@ import {
   Logger,
   getClientIP,
   internalErrorResponse,
+  enforceRateLimit,
 } from "../_shared/validation.ts";
+import { escapeHtml } from "../_shared/notification-events.ts";
 import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
@@ -156,6 +158,10 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
       // Send email notification
       const userEmail = user.email;
       if (userEmail && RESEND_API_KEY) {
+        const rate = await enforceRateLimit(`detect-new-device:${user.id}:${getClientIP(req)}`, 5, 60_000);
+        if (!rate.allowed) {
+          return errorResponse("Rate limit exceeded", 429, req);
+        }
         try {
           const emailHtml = `
             <!DOCTYPE html>
@@ -170,10 +176,10 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
                 <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #667eea;">Detalhes do Dispositivo:</h3>
                   <table style="width: 100%; font-size: 14px;">
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${device_name}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${browser}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${os}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${clientIp}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${escapeHtml(device_name)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${escapeHtml(browser)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${escapeHtml(os)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${escapeHtml(clientIp)}</td></tr>
                     <tr><td style="padding: 8px 0; color: #666;"><strong>Data/Hora:</strong></td><td>${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
                   </table>
                 </div>
