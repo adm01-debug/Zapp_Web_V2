@@ -1,8 +1,5 @@
--- Rollback: Remove a view team_message_read_state e revoga o acesso de leitura.
--- Rollback (SQL executável, na ordem):
+-- Rollback: remove a view (ela nao existia antes desta migration).
 --   DROP VIEW IF EXISTS public.team_message_read_state;
---   REVOKE SELECT ON public.team_message_read_state FROM authenticated;
---   GRANT SELECT ON public.team_message_read_state TO PUBLIC;
 
 CREATE VIEW public.team_message_read_state
 WITH (security_invoker = true)

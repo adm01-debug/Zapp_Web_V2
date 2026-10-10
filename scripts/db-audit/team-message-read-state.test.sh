@@ -58,6 +58,17 @@ expect_ok_as() {
   as_user "$jwt" "$sql" >/dev/null || fail "$label: deveria ter sucesso (como authenticated)"
   printf '[PASS] %s\n' "$label"
 }
+expect_error_anon() {
+  local label="$1" needle="$2" sql="$3" output status
+  set +e
+  output="$(docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET ROLE anon; $sql" 2>&1)"
+  status=$?
+  set -e
+  (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
+  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  printf '[PASS] %s\n' "$label"
+}
 expect_error_as() {
   local label="$1" needle="$2" jwt="$3" sql="$4" output status
   set +e
@@ -274,5 +285,28 @@ expect_value_as 'B.9 read_count = 2' '2' \
 # Nao-membro D nao enxerga nenhuma linha.
 expect_value_as 'B.10 nao-membro D nao vê linhas' '0' \
   "$EVA" "SELECT count(*) FROM public.team_message_read_state WHERE message_id = '$MSG';"
+
+# anon nao le a view; a view e security_invoker.
+expect_error_anon 'B.11 anon nao consegue ler a view' 'permission denied' \
+  "SELECT * FROM public.team_message_read_state;"
+expect_value 'B.12 reloptions contem security_invoker=true' 't' \
+  "SELECT coalesce('security_invoker=true' = ANY(reloptions), false) FROM pg_class WHERE oid = 'public.team_message_read_state'::regclass;"
+
+printf '\n============ BLOCO C — rollback da migration e reaplicacao ============\n'
+
+# A linha de rollback vem do proprio arquivo da migration (comeca com "--   DROP VIEW").
+rollback_sql="$(sed -n 's/^--[[:space:]]*\(DROP VIEW.*\)$/\1/p' "$migration" | head -n1)"
+[[ -n "$rollback_sql" ]] || fail 'C.0 linha de rollback (-- DROP VIEW) nao encontrada na migration'
+printf '[INFO] rollback extraido: %s\n' "$rollback_sql"
+
+psql_sql "$rollback_sql" >/dev/null || fail 'C.1 rollback falhou'
+printf '[PASS] C.1 rollback executado\n'
+expect_value 'C.2 view sumiu apos o rollback' 't' \
+  "SELECT to_regclass('public.team_message_read_state') IS NULL;"
+
+psql_file "$migration" >/dev/null || fail 'C.3 reaplicacao da migration falhou'
+printf '[PASS] C.3 migration reaplicada\n'
+expect_value 'C.4 view voltou (reloptions contem security_invoker=true, como B.12)' 't' \
+  "SELECT coalesce('security_invoker=true' = ANY(reloptions), false) FROM pg_class WHERE oid = 'public.team_message_read_state'::regclass;"
 
 printf '\n============ Todos os testes passaram ============\n'
