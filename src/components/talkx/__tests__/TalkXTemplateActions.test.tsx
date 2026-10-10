@@ -39,6 +39,8 @@ const f = vi.hoisted(() => {
     deleteAsync: vi.fn(),
     updateAsync: vi.fn(),
     testTemplate: vi.fn(),
+    // Exposto para provar que a janela do EDITOR (override) NÃO busca variações.
+    fetchVariants: vi.fn(),
     templates: [
       // rascunho do PRÓPRIO usuário logado (`p-hugo`): pode enviar à revisão
       { ...base, id: 'tpl-A', name: 'Promoção do mês', content: 'Promoção do mês: 20% off', status: 'draft' as const, use_count: 10, custom_variables: ['primeiro_nome'] },
@@ -63,7 +65,7 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
     duplicateTemplate: { mutate: vi.fn(), mutateAsync: f.duplicateAsync, isPending: false },
     testTemplate: f.testTemplate,
     fetchVersionHistory: vi.fn().mockResolvedValue([]),
-    fetchVariants: vi.fn().mockResolvedValue([]),
+    fetchVariants: f.fetchVariants,
     saveVariant: vi.fn(),
     deleteVariant: vi.fn(),
     countVariantRecipients: vi.fn(),
@@ -116,6 +118,7 @@ beforeEach(() => {
   f.deleteAsync.mockResolvedValue(undefined);
   f.updateAsync.mockResolvedValue(undefined);
   f.testTemplate.mockResolvedValue({ success: true });
+  f.fetchVariants.mockResolvedValue([]);
 });
 
 describe('X090 — ações de template unificadas', () => {
@@ -314,5 +317,55 @@ describe('TL-122 refazer 1 — regressões da unificação', () => {
     expect(within(cartaoDoAutor).getByRole('button', { name: /^Enviar para revisão$/ })).toBeTruthy();
     expect(within(cartaoDoOutro).queryByRole('button', { name: /^Enviar para revisão$/ })).toBeNull();
     expect(screen.getAllByRole('button', { name: /^Enviar para revisão$/ })).toHaveLength(1);
+  });
+});
+
+/**
+ * TL-122 refazer 2 — o editor SEMPRE passa `contentOverride` (`eContent`), então
+ * a janela tem de decidir o override pela PRESENÇA da prop, não pelo texto ter
+ * caracteres. Com o editor vazio o teste tem de acusar "Template vazio" (e não
+ * enviar o conteúdo SALVO do template) e não pode oferecer/nem buscar variações.
+ */
+describe('TL-122 refazer 2 — editor vazio testa vazio, não o template salvo', () => {
+  const tpl = { ...f.templates[0], content: 'Conteúdo salvo do template' };
+
+  it('contentOverride="" recusa com "Template vazio" e não chama o envio', async () => {
+    render(<TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} contentOverride="" />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    expect(await screen.findByText('Template vazio')).toBeTruthy();
+    expect(f.testTemplate).not.toHaveBeenCalled();
+    // editor é override: não oferece a escolha de variação nem busca as variantes
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(f.fetchVariants).not.toHaveBeenCalled();
+  });
+
+  it('contentOverride só com espaços também testa vazio, sem enviar nem buscar variantes', async () => {
+    render(<TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} contentOverride="   " />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    expect(await screen.findByText('Template vazio')).toBeTruthy();
+    expect(f.testTemplate).not.toHaveBeenCalled();
+    expect(f.fetchVariants).not.toHaveBeenCalled();
+  });
+
+  it('contentOverride="texto na tela" envia o texto DA TELA, não o salvo', async () => {
+    render(<TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} contentOverride="texto na tela" />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    await waitFor(() => expect(f.testTemplate).toHaveBeenCalledTimes(1));
+    expect(f.testTemplate.mock.calls[0][0]).toMatchObject({ templateContent: 'texto na tela' });
+  });
+
+  it('SEM a prop (cartão/lista), vale o conteúdo do template', async () => {
+    render(<TalkXTemplateTestDialog template={tpl as never} open onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar$/ }));
+
+    await waitFor(() => expect(f.testTemplate).toHaveBeenCalledTimes(1));
+    expect(f.testTemplate.mock.calls[0][0]).toMatchObject({ templateContent: 'Conteúdo salvo do template' });
   });
 });
