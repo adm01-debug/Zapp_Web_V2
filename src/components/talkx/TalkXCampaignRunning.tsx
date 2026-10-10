@@ -24,6 +24,7 @@ import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
 import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -204,7 +205,7 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
+type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 
@@ -213,7 +214,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .select('id, campaign_id, contact_id, personalized_message, status, sent_at, delivered_at, error_message, manual_retry_count, created_at, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
       if (error) throw error;
@@ -246,7 +247,7 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[540px] border-collapse">
             <thead><tr>
-              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
+              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em', ''].map((h) => (
                 <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
               ))}
             </tr></thead>
@@ -258,6 +259,9 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
                   <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                  <td className="px-4 py-2.5 text-2xs">
+                    <TalkXRecipientRowActions recipient={r} />
+                  </td>
                 </tr>
               ))}
             </tbody>
