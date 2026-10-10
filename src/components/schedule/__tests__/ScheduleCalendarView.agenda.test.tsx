@@ -151,20 +151,39 @@ describe('ScheduleCalendarView — R2-MOD-029', () => {
     expect(screen.queryByText('0 pendentes')).toBeNull();
   });
 
-  it('filtro de agente tem nome acessível e botão cancelar tem nome', async () => {
+  it('filtro de agente tem nome acessível derivado do rótulo', async () => {
     renderAgenda();
 
     expect(await screen.findByText('2 pendentes')).toBeInTheDocument();
 
-    // O SelectTrigger do filtro de agente tem aria-label
-    expect(screen.getByLabelText('Filtrar agente')).toBeInTheDocument();
+    // O filtro expõe nome acessível via papel + nome (rótulo associado ao trigger).
+    expect(screen.getByRole('combobox', { name: 'Filtrar por agente' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Filtrar por agente')).toBeInTheDocument();
+  });
 
-    // Abre o diálogo do dia clicando no dia 10 (tem mensagem pendente)
-    const botaoDia = screen.getByText('10').closest('button');
-    expect(botaoDia).toBeTruthy();
-    fireEvent.click(botaoDia!);
+  it('cada botão de cancelar tem nome único com o conteúdo da mensagem', async () => {
+    renderAgenda();
 
-    // O botão de cancelar tem aria-label
-    expect(screen.getByRole('button', { name: 'Cancelar envio' })).toBeInTheDocument();
+    expect(await screen.findByText('2 pendentes')).toBeInTheDocument();
+
+    // Dia 10: mensagem 'Confirmar entrega do pedido' às 14:30.
+    fireEvent.click(screen.getByText('10').closest('button')!);
+    const cancelarDia10 = await screen.findByRole('button', {
+      name: 'Cancelar envio de "Confirmar entrega do pedido" às 14:30',
+    });
+    expect(cancelarDia10).toBeInTheDocument();
+    // Nenhum botão genérico repetido sem identificar a mensagem.
+    expect(screen.queryByRole('button', { name: 'Cancelar envio' })).toBeNull();
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    // Dia 12: outra mensagem, outro nome — os dois nomes são distintos.
+    fireEvent.click(await screen.findByText('12').then((el) => el.closest('button')!));
+    const cancelarDia12 = await screen.findByRole('button', {
+      name: 'Cancelar envio de "Enviar proposta revisada" às 09:15',
+    });
+    expect(cancelarDia12).toBeInTheDocument();
+    expect(cancelarDia12.getAttribute('aria-label')).not.toBe(
+      cancelarDia10.getAttribute('aria-label'),
+    );
   });
 });
