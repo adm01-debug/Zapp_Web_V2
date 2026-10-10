@@ -14,18 +14,8 @@ import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatu
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
-import { TalkXHelpCenter } from './help/TalkXHelpCenter';
 import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
 import { TalkXOverview } from './TalkXOverview';
-import { TalkXCampaignWizard } from './TalkXCampaignWizard';
-import { TalkXLiveMonitor } from './TalkXLiveMonitor';
-import { TalkXSegments } from './TalkXSegments';
-import { TalkXTemplates } from './TalkXTemplates';
-import { TalkXSuppression } from './TalkXSuppression';
-import { TalkXAnalytics } from './TalkXAnalytics';
-import { TalkXSettings } from './TalkXSettings';
-import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
-import { TalkXCampaignRunning } from './TalkXCampaignRunning';
 import {
   goTab,
   parseTalkXRoute,
@@ -44,7 +34,7 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 // ao vivo e Campanha em andamento) entrava no carregamento inicial do módulo.
 // lazyWithRetry é o mesmo carregador da entrada do módulo (src/pages/lazyViews.ts):
 // repete a busca do chunk 3x com espera antes de desistir.
-const TalkXHelp = lazyWithRetry(() => import('./TalkXHelp').then((m) => ({ default: m.TalkXHelp })));
+const TalkXHelpCenter = lazyWithRetry(() => import('./help/TalkXHelpCenter').then((m) => ({ default: m.TalkXHelpCenter })));
 const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
 const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
 const TalkXSegments = lazyWithRetry(() => import('./TalkXSegments').then((m) => ({ default: m.TalkXSegments })));
@@ -352,7 +342,9 @@ export default function TalkXView() {
   if (helpRoute) {
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
+        <Suspense fallback={null}>
+          <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
+        </Suspense>
       </div>
     );
   }
@@ -381,12 +373,6 @@ export default function TalkXView() {
           </div>
         }
       />
-      {/* X194 — a ajuda (com a sua explicação longa) só é buscada quando é solicitada. */}
-      {helpOpen && (
-        <Suspense fallback={null}>
-          <TalkXHelp open={helpOpen} onOpenChange={setHelpOpen} />
-        </Suspense>
-      )}
       <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
         <div className="overflow-x-auto">
           <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
