@@ -1,6 +1,6 @@
 # TESTING_CONVENTION.md — onde cada teste mora e como ele roda
 
-Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-08`. O objetivo é
+Convenção de testes do Zapp Web V2 na ponta do dia `dia/2026-10-10`. O objetivo é
 responder, para qualquer teste novo, **onde ele mora e qual comando o executa** — sem
 descobrir isso lendo o `package.json` e o `ci.yml`.
 

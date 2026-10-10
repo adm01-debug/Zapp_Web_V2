@@ -162,8 +162,11 @@ test('ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge'
       const caminho = path.join(raiz, arquivo);
       assert.ok(fs.existsSync(caminho), `ESTADO.md cita \`${ancora}\` para \`${linha.edge}\`, arquivo que não existe`);
       const conteudo = linhasDe(caminho)[Number(numero) - 1] || '';
+      const edgeComFronteira = new RegExp(
+        `(?<![\\w-])${linha.edge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`,
+      );
       assert.ok(
-        conteudo.includes(linha.edge),
+        edgeComFronteira.test(conteudo),
         `âncora desatualizada: ${ancora} não cita \`${linha.edge}\``,
       );
     }
