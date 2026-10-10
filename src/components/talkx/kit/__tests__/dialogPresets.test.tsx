@@ -184,7 +184,7 @@ describe('X049 — espera da ação', () => {
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
 
     await act(async () => { resolver(); });
@@ -221,7 +221,7 @@ describe('X049 — espera da ação', () => {
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
   });
 
@@ -230,16 +230,19 @@ describe('X049 — espera da ação', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus());
   });
 
-  it('onConfirm legado `() => void` (sem payload) segue fechando o modal', () => {
+  it('onConfirm legado `() => void` (sem payload) segue compatível: o consumidor controla o fechamento', () => {
     const onConfirm = vi.fn(() => { /* assinatura antiga, ignora o payload */ });
     const onClose = vi.fn();
-    // chamador legado: `() => void`, sem `reasonField` — continua compatível
+    // chamador legado: `() => void`, sem `reasonField` — o shell chama o
+    // onConfirm com o payload e NÃO fecha por conta própria (quem fecha é o
+    // consumidor, ex.: TalkXCampaignPaused só fecha depois do servidor).
     renderConfirm('duplicarCampanha', { onConfirm: onConfirm as () => void, onClose });
 
     fireEvent.click(screen.getByRole('button', { name: 'Duplicar' }));
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith({ reason: '' });
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('com check pendente o botão não confirma; marcado, confirma', () => {
