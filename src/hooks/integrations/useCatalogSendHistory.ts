@@ -19,7 +19,8 @@
  * hint o PostgREST não tem como escolher.
  */
 import { useQuery } from '@tanstack/react-query';
-import { CATALOG_EXPORT_BOM, esc } from '@/components/catalog/catalogExport';
+import { CATALOG_EXPORT_BOM, esc, triggerCsvDownload } from '@/components/catalog/catalogExport';
+import { logAudit } from '@/lib/audit';
 import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { CATALOG_SEND_EVENTS_KEY } from './useCatalogRecentSends';
@@ -196,4 +197,33 @@ export function sendHistoryFilename(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   const stamp = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
   return `catalogo_enviados_${stamp}.csv`;
+}
+
+/**
+ * Exporta o histórico de envios como CSV e registra no log de auditoria
+ * quem exportou, com filtro e número de linhas.
+ */
+export function exportSendHistoryCsv(
+  rows: CatalogSendHistoryRow[],
+  options?: {
+    filterKey?: string | null;
+    filters?: Record<string, unknown>;
+    canDownload?: boolean;
+    download?: (csv: string, filename: string) => boolean | void;
+    date?: Date;
+  },
+): boolean {
+  const date = options?.date ?? new Date();
+  const filename = sendHistoryFilename(date);
+  const csv = buildSendHistoryCsv(rows);
+  const download = options?.download ?? ((csv: string, name: string) => triggerCsvDownload(csv, name, options?.canDownload ?? true));
+  const wrote = download(csv, filename);
+  if (wrote === false) return false;
+  void logAudit({
+    action: 'catalog_send_history_export',
+    entityType: 'catalog_send_history_export',
+    entityId: filename,
+    details: { filter: options?.filterKey ?? 'todos', filters: options?.filters ?? {}, rows: rows.length },
+  });
+  return true;
 }

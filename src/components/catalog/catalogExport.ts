@@ -17,6 +17,7 @@
  */
 import { toast } from 'sonner';
 import { downloadFileWithPermission } from '@/lib/downloadFile';
+import { logAudit } from '@/lib/audit';
 
 // ─── Constantes do contrato (E29.1-E29.5) ──────────────────────
 
@@ -289,6 +290,12 @@ export async function exportCatalogCsv(options: CatalogExportOptions = {}): Prom
     toast.dismiss(toastId);
     return { ok: false, rows: rows.length, filename, error: 'download-blocked', downloaded: false };
   }
+  void logAudit({
+    action: 'catalog_export',
+    entityType: 'catalog_export',
+    entityId: filename,
+    details: { filter: options.filterKey ?? 'todos', filters: options.filters ?? {}, rows: rows.length },
+  });
   toast.success(`${rows.length.toLocaleString('pt-BR')} produto(s) exportado(s) em ${filename}`, { id: toastId });
   return { ok: true, rows: rows.length, filename, downloaded: true };
 }

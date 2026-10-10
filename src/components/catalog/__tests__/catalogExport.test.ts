@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { toast } from 'sonner';
+import { logAudit } from '@/lib/audit';
 import {
   CATALOG_EXPORT_BOM,
   CATALOG_EXPORT_COLUMNS,
@@ -18,6 +19,10 @@ import {
   defaultCatalogExportFetcher,
   type CatalogExportProduct,
 } from '../catalogExport';
+
+vi.mock('@/lib/audit', () => ({
+  logAudit: vi.fn().mockResolvedValue(undefined),
+}));
 
 // CT-20 — o módulo fala com a edge real e com o sonner; nos testes os dois
 // entram por injeção (fetchPage/download) ou por mock.
@@ -307,6 +312,34 @@ describe('CT-20 — exportCatalogCsv (toast loading -> success, sem parcial)', (
 
     expect(result.filename).toBe('catalogo_todos_20261001.csv');
     expect(download).toHaveBeenCalledTimes(1);
+  });
+
+  it('registra no log de auditoria quem exportou, com filtro e número de linhas', async () => {
+    const fetchPage = vi.fn(async () => ({ data: [prod(), prod({ id: 'p2' })] }));
+    const download = vi.fn(() => true);
+
+    await exportCatalogCsv({ filterKey: 'in_stock', date: new Date(2026, 9, 1), fetchPage, download });
+
+    expect(logAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'catalog_export',
+        entityType: 'catalog_export',
+        entityId: 'catalogo_in_stock_20261001.csv',
+        details: expect.objectContaining({
+          filter: 'in_stock',
+          rows: 2,
+        }),
+      }),
+    );
+  });
+
+  it('não registra auditoria quando o download é bloqueado', async () => {
+    const fetchPage = vi.fn(async () => ({ data: [prod()] }));
+    const download = vi.fn(() => false);
+
+    await exportCatalogCsv({ filterKey: 'todos', date: new Date(2026, 9, 1), fetchPage, download });
+
+    expect(logAudit).not.toHaveBeenCalled();
   });
 });
 
