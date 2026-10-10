@@ -16,14 +16,16 @@ function isStorageUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
-/** Devolve o caminho durável do objeto a partir de uma URL assinada (ou do próprio caminho). */
+/** Devolve o caminho durável do objeto a partir de uma URL assinada (ou do próprio caminho).
+ * URL http que não é do bucket `avatars` devolve null: nunca gravamos URL http
+ * em profiles.avatar_url (o bucket é privado e a URL assinada expira). */
 function avatarObjectPath(value: string | null): string | null {
   if (!value || !isStorageUrl(value)) return value;
   try {
     const origin = new URL(SUPABASE_URL).origin;
-    return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [origin])?.path ?? value;
+    return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [origin])?.path ?? null;
   } catch {
-    return value;
+    return null;
   }
 }
 

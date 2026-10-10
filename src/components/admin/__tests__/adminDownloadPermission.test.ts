@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock supabase
 const mockUpdate = vi.fn();
@@ -43,6 +43,7 @@ vi.mock('sonner', () => ({
 
 import { useAdminData, type UserWithRole } from '@/components/admin/useAdminData';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { renderHook, act } from '@testing-library/react';
 
 describe('useAdminData - can_download no handleSaveUser', () => {
@@ -338,5 +339,86 @@ describe('useAdminData — avatares no bucket privado', () => {
     expect(createSignedUrl).toHaveBeenCalledWith('auth-1/avatar.png', 300);
     expect(result.current.users[0].avatar_url).toBe('https://signed.example.com/avatar.png');
   });
+
+  it('URL http de outra origem não é gravada em profiles.avatar_url', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+
+    await act(async () => {
+      await result.current.handleSaveUser(buildUser('https://outro.exemplo.com/foto.png'), null);
+    });
+
+    expect(lastUpdate?.avatar_url).toBeNull();
+    expect(getPublicUrl).not.toHaveBeenCalled();
+  });
 });
 
+describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => {
+  const storageFrom = supabase.storage.from as unknown as ReturnType<typeof vi.fn>;
+  const tableFrom = supabase.from as unknown as ReturnType<typeof vi.fn>;
+  const upload = vi.fn();
+  const getPublicUrl = vi.fn();
+  const createSignedUrl = vi.fn();
+  const getSession = vi.fn();
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    upload.mockResolvedValue({ error: null });
+    createSignedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.png' }, error: null });
+    storageFrom.mockReturnValue({ upload, getPublicUrl, createSignedUrl });
+    // fetchData pós-criação não importa aqui: perfis vazios, sem assinar nada.
+    tableFrom.mockReturnValue({
+      select: () => ({
+        order: async () => ({ data: [], error: null }),
+        in: async () => ({ data: [], error: null }),
+      }),
+      update: () => ({ eq: async () => ({ error: null }) }),
+      insert: async () => ({ data: null, error: null }),
+    });
+    getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } } });
+    Object.assign(supabase.auth, { getSession });
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('upload de avatar na criação grava o caminho <uuid>.<ext>, não a URL', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+    const file = new File(['avatar'], 'foto.jpg', { type: 'image/jpeg' });
+
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.handleCreateUser({
+        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+      });
+    });
+
+    expect(ok).toBe(true);
+    expect(upload).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('create-user');
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
+    expect(getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('falha no upload da foto retorna false com toast e não chama a Edge', async () => {
+    upload.mockResolvedValue({ error: { message: 'boom' } });
+    const { result } = renderHook(() => useAdminData('users'));
+    const file = new File(['avatar'], 'foto.png', { type: 'image/png' });
+
+    let ok = true;
+    await act(async () => {
+      ok = await result.current.handleCreateUser({
+        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+      });
+    });
+
+    expect(ok).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith('Erro ao fazer upload da foto');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
