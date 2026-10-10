@@ -1,0 +1,19 @@
+comparador real extraido: 21 linhas  sha256=77546fc4461befe263f183a436189b4b3fceac884f7a889154e936d608a101ff
+comparador rc=1
+[rls] só produção=0 só local=1 diferentes=0
+    só local: inbound_message_effects
+[columns] só produção=0 só local=9 diferentes=0
+    só local: inbound_message_effects.applied_at
+    só local: inbound_message_effects.attempts
+    só local: inbound_message_effects.created_at
+    só local: inbound_message_effects.effect
+    só local: inbound_message_effects.external_id
+    só local: inbound_message_effects.id
+    só local: inbound_message_effects.last_error
+    só local: inbound_message_effects.payload
+[indexes] só produção=0 só local=3 diferentes=0
+    só local: inbound_message_effects.idx_inbo
+reproduzidas=47  ao vivo=47  iguais=True
+ledger=793 versoes | migrations .sql na copia=794 | PENDENTES=1
+  pendente: 20261007095739_indeterminate_optout_outbox.sql
+OK passo 1

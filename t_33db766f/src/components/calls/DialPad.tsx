@@ -1,0 +1,233 @@
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Phone, PhoneOff, Mic, MicOff, Delete, Wifi, WifiOff, Loader2,
+} from 'lucide-react';
+import type { SipStatus, CallStatus, CallDirection } from '@/hooks/communication/useSipClient';
+import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
+import { Keypad } from './Keypad';
+
+interface DialPadProps {
+  sipStatus: SipStatus;
+  callStatus: CallStatus;
+  callDuration: number;
+  isMuted: boolean;
+  currentNumber: string;
+  /**
+   * Numero ja pedido pelo clique-para-discar (T29). Preenche o campo SOMENTE se
+   * ele estiver vazio - nunca apaga o que o agente digitou.
+   */
+  numeroInicial?: string | null;
+  callDirection: CallDirection | null;
+  /**
+   * T20 — motivo (opcional) da linha VoIP limitada, o mesmo `CapabilityReason`
+   * que circula para microfone (T17) e para `line_in_use_other_user`. Quando é
+   * `line_in_use_other_tab`, esta aba NÃO é dona do registro SIP: o rótulo de
+   * estado da conexão dá lugar ao texto operacional do motivo e o botão de
+   * conectar fica desabilitado (não se oferece conectar numa aba que não é a
+   * dona do registro). Ausente/`null` → comportamento antigo, intacto.
+   */
+  sipReason?: CapabilityReason | null;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onCall: (number: string) => void;
+  onHangUp: () => void;
+  onAcceptIncoming: () => void;
+  onToggleMute: () => void;
+  onDTMF: (digit: string) => void;
+}
+
+function formatTime(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+}
+
+export function DialPad({
+  sipStatus, callStatus, callDuration, isMuted, currentNumber, callDirection, sipReason = null, numeroInicial = null,
+  onConnect, onDisconnect, onCall, onHangUp, onAcceptIncoming, onToggleMute, onDTMF,
+}: DialPadProps) {
+  // T29: o clique-para-discar abre este painel ja preenchido. O numero entra como
+  // estado INICIAL (o painel monta ao navegar para ?view=voip) em vez de um efeito
+  // que chama setState - efeito aqui causaria render em cascata (e a guarda de
+  // react-hooks do repo reprova, com razao).
+  const [number, setNumber] = useState(() => numeroInicial ?? '');
+  const isInCall = callStatus === 'calling' || callStatus === 'ringing' || callStatus === 'active';
+  const isIncomingRinging = callStatus === 'ringing' && callDirection === 'inbound';
+  const isConnected = sipStatus === 'registered';
+  // T20: a linha está tocando em OUTRA aba — esta não é a dona do registro.
+  // O texto vem do domínio (`REASON_LABEL` via `describeReason`), nunca solto aqui.
+  const lineInUseOtherTab = sipReason === 'line_in_use_other_tab';
+  const reasonLabel = describeReason(sipReason);
+
+  const handleDigit = useCallback((digit: string) => {
+    if (isInCall) {
+      onDTMF(digit);
+    } else {
+      setNumber(prev => prev + digit);
+    }
+  }, [isInCall, onDTMF]);
+
+  const handleDelete = useCallback(() => {
+    setNumber(prev => prev.slice(0, -1));
+  }, []);
+
+  const handleCall = useCallback(() => {
+    if (number.trim()) {
+      onCall(number.trim());
+    }
+  }, [number, onCall]);
+
+  const statusColor = {
+    idle: 'bg-muted text-muted-foreground',
+    connecting: 'bg-warning/20 text-warning',
+    registered: 'bg-success/20 text-success',
+    reconnecting: 'bg-warning/20 text-warning',
+    unavailable: 'bg-destructive/20 text-destructive',
+  };
+
+  const statusLabel = {
+    idle: 'Desconectado',
+    connecting: 'Conectando...',
+    registered: 'Conectado',
+    reconnecting: 'Reconectando...',
+    unavailable: 'Indisponível',
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {/* Connection Status — T20: com a linha em outra aba o estado da conexão
+          dá lugar ao motivo operacional (texto do domínio). */}
+      <div className="flex items-center gap-2 w-full justify-between">
+        <Badge className={`${lineInUseOtherTab ? 'bg-warning/20 text-warning' : statusColor[sipStatus]} text-xs`}>
+          {sipStatus === 'registered' ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
+          {lineInUseOtherTab ? reasonLabel : statusLabel[sipStatus]}
+        </Badge>
+      </div>
+
+      {/* Active Call Display */}
+      <AnimatePresence>
+        {isInCall && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full"
+          >
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-foreground">{currentNumber || number}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {callStatus === 'calling' && 'Chamando...'}
+                  {isIncomingRinging && 'Chamada recebida...'}
+                  {callStatus === 'ringing' && !isIncomingRinging && 'Tocando...'}
+                  {callStatus === 'active' && formatTime(callDuration)}
+                </p>
+                <div className="flex justify-center gap-3 mt-4">
+                  {isIncomingRinging ? (
+                    <>
+                      <Button
+                        size="icon"
+                        className="rounded-full w-14 h-14 bg-success hover:bg-success/90"
+                        onClick={onAcceptIncoming}
+                        aria-label="Atender"
+                      >
+                        <Phone className="w-6 h-6" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="rounded-full w-14 h-14"
+                        onClick={onHangUp}
+                        aria-label="Encerrar"
+                      >
+                        <PhoneOff className="w-6 h-6" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-12 h-12"
+                        onClick={onToggleMute}
+                        disabled={callStatus !== 'active'}
+                        aria-label={isMuted ? 'Ativar microfone' : 'Silenciar'}
+                      >
+                        {isMuted ? <MicOff className="w-5 h-5 text-destructive" /> : <Mic className="w-5 h-5" />}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="rounded-full w-14 h-14"
+                        onClick={onHangUp}
+                        aria-label="Encerrar"
+                      >
+                        <PhoneOff className="w-6 h-6" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Number Display */}
+      {!isInCall && (
+        <div className="relative w-full">
+          <Input
+            value={number}
+            onChange={(e) => setNumber(e.target.value.replace(/[^0-9+*#]/g, ''))}
+            placeholder="Digite o número"
+            className="text-center text-xl font-mono tracking-widest h-14 bg-muted/50 border-border pr-10"
+          />
+          {number && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8"
+              onClick={handleDelete}
+              aria-label="Apagar dígito"
+            >
+              <Delete className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Teclado (T58): extraido para Keypad.tsx e reusado pelo painel lateral.
+          Em chamada as teclas viram tom (DTMF); fora dela, montam o numero. */}
+      <Keypad
+        onKey={handleDigit}
+        onBackspace={isInCall ? undefined : handleDelete}
+        mode={isInCall ? 'dtmf' : 'edit'}
+      />
+
+      {/* Call Button */}
+      {!isInCall && (
+        <Button
+          size="lg"
+          className="rounded-full w-16 h-16 bg-success hover:bg-success/90"
+          onClick={handleCall}
+          disabled={!number.trim() || !isConnected}
+          aria-label="Ligar"
+        >
+          <Phone className="w-7 h-7 text-success-foreground" />
+        </Button>
+      )}
+
+      {!isConnected && !isInCall && (
+        <p className="text-xs text-muted-foreground text-center">
+          Conecte-se ao servidor SIP para fazer chamadas
+        </p>
+      )}
+    </div>
+  );
+}

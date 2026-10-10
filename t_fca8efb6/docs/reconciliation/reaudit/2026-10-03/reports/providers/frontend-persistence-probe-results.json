@@ -1,0 +1,116 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_source_pins": [
+    {
+      "path": "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+      "git_blob_sha": "bfed9d208ddb81ae5c3a75b5b22a0f1259c910cf",
+      "sha256": "4ba9c7cf41156ef3dd52744d95469c07df8a04e1e08a9c5263e41980d3ba9242"
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXInsights.ts",
+      "git_blob_sha": "ac88e32e0413fc3010187bb2bda566feba9288fb",
+      "sha256": "255fb469415d1f0255226c5285c2cd50ce5fd7c606f2bc5281079ca2b0c17d0b"
+    },
+    {
+      "path": "src/hooks/integrations/useKnowledgeBaseSearch.ts",
+      "git_blob_sha": "154a44d6fb43811ecf54d200310e380ce56329c5",
+      "sha256": "e0fd5d06fc1b4cc4073359d0438b439b5b4ddac975a3fbef19479f12310d6047"
+    },
+    {
+      "path": "supabase/migrations/20260929420000_fix_talkx_transition_overload_and_status_check.sql",
+      "git_blob_sha": "bb64d89bc8d4c69629f8323c996b3cfad2d08cf4",
+      "sha256": "fe157dbb5db2d02ccc96f5adcc68ca1b897e98ea78f6942d32d54ca0b6ea1320"
+    }
+  ],
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "evaluated_application_imports": "None; verified source text evaluated only after all pins passed, using explicit memory dependencies.",
+  "results": [
+    {
+      "id": "P31",
+      "acceptedScreenCounts": [
+        2,
+        1
+      ],
+      "reopenedScreenCount": 1,
+      "outcome": "Second screen accepted by simulated DB is absent from the stale list item; reopen and edit replaces screens with the one-screen snapshot. No failed request or response reordering is required.",
+      "evaluated_range": {
+        "from": 52,
+        "through": 141
+      },
+      "method": "Exact complete data/callback prefix plus extracted navigation statements; JSX rendering omitted; React and persistence boundaries in memory."
+    },
+    {
+      "id": "P32",
+      "advertisedWinner": {
+        "id": "best-template",
+        "type": "template",
+        "priority": "medium",
+        "title": "Mensagem com maior engajamento",
+        "description": "A campanha \"Volume\" teve 5.0% de resposta. Reutilize o tom nas próximas.",
+        "meta": {
+          "campaignId": "campaign-volume"
+        }
+      },
+      "candidateRates": {
+        "Volume": 0.05,
+        "Taxa": 0.4
+      },
+      "lowClickInsightPresent": false,
+      "lowClickCampaignQuery": {
+        "table": "talkx_campaigns",
+        "filters": [
+          [
+            "eq",
+            "status",
+            "finished"
+          ],
+          [
+            "gte",
+            "created_at",
+            "2026-07-06T02:44:33.985Z"
+          ]
+        ],
+        "select": "id",
+        "count": true,
+        "order": null,
+        "limit": null
+      },
+      "allowedCampaignStatus": [
+        "draft",
+        "scheduled",
+        "sending",
+        "paused",
+        "completed",
+        "cancelled"
+      ],
+      "outcome": "Exact hook recommends a 5% campaign as highest engagement despite a 40% eligible campaign. Three completed no-click campaigns are excluded by status=finished; no enum error is assumed.",
+      "method": "Complete unchanged hook with a query builder enforcing source projections/count boundaries; no live SQL or RLS."
+    },
+    {
+      "id": "P33",
+      "visibleQuery": "",
+      "effectiveQuery": "contrato anterior",
+      "enabledAfterClear": true,
+      "hasResultsAfterClear": true,
+      "outcome": "Clear empties the input but the retained timer restores the old effective query; the exact hook enables that search and exposes results while the visible input remains empty.",
+      "method": "Complete unchanged hook, controlled state/ref/time callbacks and query boundary; no DOM or real query."
+    }
+  ]
+}

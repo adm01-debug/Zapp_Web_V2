@@ -1,0 +1,138 @@
+import type { Database } from '@/integrations/supabase/types';
+
+/**
+ * Estados canonicos de `contacts.conversation_status` — fonte unica para o front.
+ * Espelha o CHECK `chk_conversation_status_values` e o FSM
+ * `enforce_conversation_status_transition` (migration 20260929560000: um unico conjunto,
+ * com `pending` e `closed` incluidos; antes havia dois CHECKs conflitantes e so
+ * `open`/`resolved` passavam).
+ */
+export const CONVERSATION_STATUSES = [
+  'open',
+  'pending',
+  'waiting',
+  'resolved',
+  'closed',
+  'archived',
+] as const;
+
+export type ConversationStatus = typeof CONVERSATION_STATUSES[number];
+
+export type MessageRow = Database['public']['Tables']['messages']['Row'];
+export type MessageInsert = Database['public']['Tables']['messages']['Insert'];
+export type MessageUpdate = Database['public']['Tables']['messages']['Update'];
+
+export interface MessageReaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  userName?: string;
+  createdAt?: string;
+}
+
+export interface Message extends Partial<Omit<MessageRow, 'id' | 'content' | 'sender'>> {
+  id: string;
+  content: string;
+  created_at?: string;
+  sender: 'agent' | 'contact';
+  senderName?: string;
+  timestamp: Date;
+  type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'document' | 'location' | 'interactive' | 'sticker';
+  mediaUrl?: string;
+  isEdited?: boolean;
+  replyTo?: { messageId: string; content: string; sender: 'agent' | 'contact'; type?: string } | null;
+  buttonResponse?: { buttonId: string; buttonTitle: string; title?: string } | null;
+  interactive?: InteractiveMessage | null;
+  location?: LocationMessage | null;
+  transcriptionStatus?: string | null;
+  reactions?: MessageReaction[];
+  conversationId?: string;
+}
+
+
+export interface ConversationContact {
+  id: string;
+  name: string;
+  surname?: string | null;
+  nickname?: string | null;
+  phone: string;
+  email?: string | null;
+  avatar_url?: string | null;
+  avatar?: string | null;
+  tags?: string[] | null;
+  company?: string | null;
+  job_title?: string | null;
+  assigned_to?: string | null;
+  queue_id?: string | null;
+  /** SLA de 1a resposta canônico do banco (embed do relacionamento conversation_sla;
+   *  relação 1:N — o PostgREST devolve array; usamos o item mais recente) */
+  conversation_sla?: Array<{
+    first_response_at: string | null;
+    first_message_at: string | null;
+    first_response_breached: boolean | null;
+  }> | null;
+  created_at?: string;
+  createdAt?: Date;
+  updated_at?: string;
+  whatsapp_connection_id?: string | null;
+  contact_type?: string | null;
+  group_category?: string | null;
+  ai_sentiment?: string | null;
+  conversation_status?: ConversationStatus | null;
+}
+
+export interface AssignedAgentInfo {
+  id: string;
+  name: string;
+  avatar?: string | null;
+}
+
+export interface Conversation {
+  id: string;
+  contact: ConversationContact;
+  lastMessage?: any;
+  unreadCount: number;
+  status: 'open' | 'closed' | 'pending' | 'waiting' | 'resolved';
+  priority: 'low' | 'medium' | 'high';
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  firstResponseAt?: Date | null;
+  assignedTo?: AssignedAgentInfo | null;
+  queue?: { id: string; name: string; color?: string } | null;
+  sentiment?: string | null;
+  sentimentScore?: number | null;
+}
+
+export interface InteractiveMessage {
+  type: 'button' | 'buttons' | 'list';
+  header?: { type: 'text' | 'image' | 'video'; text?: string; media_url?: string; mediaUrl?: string };
+  body: string;
+  footer?: string;
+  buttons?: InteractiveButton[];
+  sections?: InteractiveListSection[];
+  listButtonText?: string;
+}
+
+export interface InteractiveButton {
+  id: string;
+  text?: string;
+  title?: string;
+  type?: 'reply' | 'url' | 'call' | 'phone';
+  url?: string;
+  phoneNumber?: string;
+}
+
+export interface InteractiveListSection {
+  title: string;
+  rows: { id: string; title: string; description?: string }[];
+}
+
+export interface LocationMessage {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  address?: string;
+  isLive?: boolean;
+  liveUntil?: string | Date;
+}

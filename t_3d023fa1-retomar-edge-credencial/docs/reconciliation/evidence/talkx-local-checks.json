@@ -1,0 +1,47 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "captured_at": "2026-10-03T22:38:17.702180+00:00",
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--test",
+        "scripts/talkx/v4-status.unit.mjs",
+        "scripts/ci/check-talkx-pr-body.unit.mjs",
+        "scripts/edge-deploy/talkx-preflight.unit.mjs"
+      ],
+      "exit_code": 0,
+      "stdout": "✔ título sem (X<NNN>) → verificador não se aplica (1.32988ms)\n✔ extrai o id da etapa do título (0.145886ms)\n✔ corpo sem ## Evidência → falha (0.612397ms)\n✔ etapa com DDL e ## Banco vazio → falha (0.321206ms)\n✔ etapa com DDL e ## Banco \"sem DDL\" → falha (0.25663ms)\n✔ etapa com tela e sem ## Print → falha (0.164064ms)\n✔ ## Fecha sem um dos IDs da etapa → falha (0.177093ms)\n✔ etapa com edge e ## Edge \"sem edge\" → falha (0.181289ms)\n✔ título (X999) com etapa inexistente → falha (0.335337ms)\n✔ PR de etapa completa → passa (0.52655ms)\n✔ secao() extrai o conteúdo sob o cabeçalho e ignora o seguinte (0.149732ms)\n✔ temTelaVisual distingue tela visual de motor/dados/— (0.084856ms)\n✔ X023: manifesto em paridade com o fonte → diverged: 0 (1.340516ms)\n✔ X023: digest divergente (fonte editado sem regenerar o manifesto) → diverged > 0 (0.292313ms)\n✔ X023: verify_jwt drift (config.toml virou a exceção) é sinalizado à parte (0.23617ms)\n✔ X023: função ausente do manifesto (commitado ou fresco) conta como divergência (0.160027ms)\n✔ X023: segredos — ausentes, todos presentes e leitura falhada (null) (0.216561ms)\n✔ X023: paridade remota — verify_jwt, ACTIVE e digest com forma válida (0.379212ms)\n✔ X023: a evidência resume diverged/missing e cita a query do Vault + job (0.486601ms)\n✔ X023: digest divergente → o CLI sai com código ≠ 0 (aceite) (102.243388ms)\n✔ extractStepIds: título com (X001) vira etapa concluída (inclusive com sufixo de squash) (1.381667ms)\n✔ extractStepIds: título com (X999) → erro \"etapa inexistente\" (0.358041ms)\n✔ extractStepIds: commit sem escopo talkx (ex. fix(ci)) é ignorado, mesmo com (XNNN) (0.136021ms)\n✔ computeStatus: etapa sem commit fica aberta (0.25666ms)\n✔ computeStatus: elemento citado por duas etapas só fecha com as duas concluídas (0.228028ms)\n✔ computeStatus: elemento OK conta como fechado sem citar etapa (0.179957ms)\n✔ computeStatus: elemento excluído (sem etapa citante, Hoje≠OK) não conta como fechado (0.13549ms)\n✔ computeStatus: IDs CAP-* e dados:* em fecha não afetam o placar por tela (0.116462ms)\n✔ generateMarkdown: determinístico e contém as contagens (0.614109ms)\n✔ dados reais: 200 etapas, 1135 elementos (217 OK) e todo T do fecha existe no inventário (10.110649ms)\n✔ detectDoneSteps: lê commits de um repositório de fixture (38.064023ms)\nℹ tests 31\nℹ suites 0\nℹ pass 31\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 189.087907\n",
+      "stderr": "",
+      "network": "none",
+      "production_writes": "none"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/talkx/v4-status.mjs",
+        "--check",
+        "--ref",
+        "HEAD"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "STATUS.md divergente do gerado. Rode `node scripts/talkx/v4-status.mjs` para regenerar.\n",
+      "network": "none",
+      "production_writes": "none"
+    },
+    {
+      "command": [
+        "node",
+        "--input-type=module",
+        "-e",
+        "import {loadEtapas,loadElementos,detectDoneSteps,computeStatus} from './scripts/talkx/v4-status.mjs';const e=loadEtapas();const d=detectDoneSteps('HEAD',new Set(e.map(x=>x.id)));const s=computeStatus(e,loadElementos(),d);console.log(JSON.stringify({doneCount:s.doneCount,fechadosTotal:s.fechadosTotal,elementosTotal:s.elementosTotal,ids:[...d].sort()}));"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"doneCount\":36,\"fechadosTotal\":242,\"elementosTotal\":1135,\"ids\":[\"X001\",\"X002\",\"X003\",\"X004\",\"X005\",\"X006\",\"X007\",\"X008\",\"X009\",\"X010\",\"X011\",\"X012\",\"X013\",\"X014\",\"X015\",\"X016\",\"X017\",\"X018\",\"X019\",\"X020\",\"X021\",\"X022\",\"X023\",\"X024\",\"X025\",\"X026\",\"X027\",\"X029\",\"X042\",\"X043\",\"X044\",\"X045\",\"X046\",\"X047\",\"X057\",\"X072\"]}\n",
+      "stderr": "",
+      "network": "none",
+      "production_writes": "none"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "verified_at": "2026-10-04T02:23:04.931468+00:00",
+  "all_tracked_files_checked": 4068,
+  "source_blob_mismatches": [],
+  "source_git_status_clean": true,
+  "findings": 48,
+  "evidence_ranges_covered": true,
+  "compared_to_baseline": 151,
+  "all_identical_to_baseline": true,
+  "offline_probes": 41,
+  "original_20_probe_artifacts_unchanged": true,
+  "previous_28_probe_artifacts_unchanged": true,
+  "previous_39_findings_unchanged": true,
+  "communication_batch_full_semantic_files": 8,
+  "coverage_counts": {
+    "targeted": 56,
+    "semantic": 95,
+    "structural": 257
+  }
+}

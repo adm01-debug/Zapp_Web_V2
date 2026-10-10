@@ -1,0 +1,2 @@
+functions|f:complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text)
+functions|f:sweep_multiplix_stuck_items(p_limit integer)

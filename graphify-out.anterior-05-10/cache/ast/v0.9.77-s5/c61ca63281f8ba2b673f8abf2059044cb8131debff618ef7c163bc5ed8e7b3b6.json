@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260929850000_multiplix_revoke_recipient_writes_sql", "label": "20260929850000_multiplix_revoke_recipient_writes.sql", "file_type": "code", "source_file": "supabase/migrations/20260929850000_multiplix_revoke_recipient_writes.sql", "source_location": null}], "edges": []}

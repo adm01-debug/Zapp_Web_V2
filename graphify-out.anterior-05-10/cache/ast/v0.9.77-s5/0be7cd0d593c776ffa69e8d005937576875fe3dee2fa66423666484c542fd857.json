@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260928460000_team_chat_e10_revoke_all_anon_sql", "label": "20260928460000_team_chat_e10_revoke_all_anon.sql", "file_type": "code", "source_file": "supabase/migrations/20260928460000_team_chat_e10_revoke_all_anon.sql", "source_location": null}], "edges": []}

@@ -1,0 +1,77 @@
+DRIFT-b	rls|gmail_oauth_states
+DRIFT-b	rls|talkx_storage_purge_queue
+DRIFT-b	columns|audit_logs.dedupe_key
+DRIFT-b	columns|gmail_oauth_states.consumed_at
+DRIFT-b	columns|gmail_oauth_states.created_at
+DRIFT-b	columns|gmail_oauth_states.expires_at
+DRIFT-b	columns|gmail_oauth_states.state
+DRIFT-b	columns|gmail_oauth_states.user_id
+DRIFT-b	columns|talkx_storage_purge_queue.attempts
+DRIFT-b	columns|talkx_storage_purge_queue.bucket_id
+DRIFT-b	columns|talkx_storage_purge_queue.enqueued_at
+DRIFT-b	columns|talkx_storage_purge_queue.last_error
+DRIFT-b	columns|talkx_storage_purge_queue.object_id
+DRIFT-b	columns|talkx_storage_purge_queue.object_name
+DRIFT-b	columns|talkx_storage_purge_queue.processed_at
+DRIFT-b	columns|talkx_storage_purge_queue.reason
+DRIFT-b	columns|user_sessions.auth_session_id
+DRIFT-b	indexes|audit_logs.ux_audit_logs_dedupe_key
+DRIFT-b	indexes|gmail_oauth_states.gmail_oauth_states_open_user_state_idx
+DRIFT-b	indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pending_dedup
+DRIFT-b	indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pending_idx
+DRIFT-b	indexes|user_sessions.idx_user_sessions_auth_session_id
+DRIFT-b	indexes|user_sessions.idx_user_sessions_user_auth_session
+DRIFT-b	defaults|gmail_oauth_states.created_at
+DRIFT-b	defaults|gmail_oauth_states.expires_at
+DRIFT-b	defaults|talkx_storage_purge_queue.attempts
+DRIFT-b	defaults|talkx_storage_purge_queue.enqueued_at
+DRIFT-b	defaults|talkx_storage_purge_queue.reason
+DRIFT-a	policies|team_conversation_members.tcm_delete_own_or_admin
+DRIFT-a	policies|team_conversation_members.tcm_insert_member
+DRIFT-b	triggers|profiles.trg_revoke_sessions_on_profile_deactivate
+DRIFT-b	triggers|user_sessions.trg_user_sessions_auth_session_guard
+DRIFT-a	functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+DRIFT-b	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+DRIFT-b	functions|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)
+DRIFT-b	functions|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)
+DRIFT-b	functions|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)
+DRIFT-b	functions|f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)
+DRIFT-b	functions|f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_preserve_session_id uuid)
+DRIFT-b	functions|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)
+DRIFT-b	functions|f:trg_revoke_sessions_on_profile_deactivate()
+DRIFT-b	functions|f:trg_user_sessions_auth_session_guard()
+DRIFT-a	functions|f:purge_talkx_expired_data(p_limit integer)
+DRIFT-a	functions|f:set_team_member_role(p_conversation_id uuid, p_profile_id uuid, p_new_role text)
+DRIFT-a	functions|f:talkx_engine_alerts()
+DRIFT-a	functions|f:trigger_talkx_engine_tick()
+DRIFT-b	constraints|relation:talkx_storage_purge_queue.talkx_storage_purge_queue_attempts_check
+DRIFT-a	constraints|relation:talkx_alerts.talkx_alerts_kind_check
+DRIFT-b	column_grants|r:public.team_conversations.avatar_url|authenticated|UPDATE|grantor=postgres
+DRIFT-b	column_grants|r:public.team_conversations.name|authenticated|UPDATE|grantor=postgres
+DRIFT-a	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_preserve_session_id uuid)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:trg_revoke_sessions_on_profile_deactivate()|postgres|EXECUTE|grantor=postgres
+DRIFT-b	routine_grants|f:trg_user_sessions_auth_session_guard()|postgres|EXECUTE|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|DELETE|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|INSERT|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|MAINTAIN|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|REFERENCES|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|SELECT|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|TRIGGER|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|TRUNCATE|grantor=postgres
+DRIFT-b	relation_grants|r:public.gmail_oauth_states|postgres|UPDATE|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|DELETE|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|INSERT|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|MAINTAIN|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|REFERENCES|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|SELECT|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|TRIGGER|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|TRUNCATE|grantor=postgres
+DRIFT-b	relation_grants|r:public.talkx_storage_purge_queue|postgres|UPDATE|grantor=postgres
+DRIFT por prova: (a) retrato canonico=9  (b) migrations ja aplicadas=67

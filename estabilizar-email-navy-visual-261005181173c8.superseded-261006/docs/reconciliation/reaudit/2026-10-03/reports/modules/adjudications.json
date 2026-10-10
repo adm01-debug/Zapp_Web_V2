@@ -1,0 +1,357 @@
+{
+  "R2-MOD-001": {
+    "preconditions": "Abrir a tela de automações e escolher editar uma automação existente; ou trocar a automação selecionada sem desmontar o manager.",
+    "cause": "O diálogo fica montado no manager e inicializa o formulário com useState(automation) apenas uma vez. O registro selecionado muda por prop, sem key ou sincronização do draft.",
+    "observed_behavior": "Na primeira edição, o estado originalmente criado com automation=null permanece vazio. Em edições seguintes, os campos podem pertencer ao draft anterior, mas handleSave usa o ID atualmente selecionado.",
+    "impact": "Salvar pode sobrescrever a automação B com nome, trigger e ação preparados para A, ou apagar dados de uma automação que deveria apenas ser editada.",
+    "recommendation": "Vincular o ciclo de vida do draft ao ID e à abertura do diálogo, com política explícita para descartar ou preservar alterações pendentes.",
+    "acceptance": [
+      "Editar uma automação preenche os campos persistidos.",
+      "Editar A, alterar um campo e depois abrir B nunca exibe nem salva o draft de A em B.",
+      "Criar após editar abre os defaults de criação sem reaproveitar estado anterior."
+    ]
+  },
+  "R2-MOD-002": {
+    "preconditions": "Salvar uma automação com trigger_config existente, múltiplas ações ou ações que exigem parâmetros além de message.",
+    "cause": "O editor lê apenas a primeira ação e sempre reconstrói trigger_config como objeto vazio e actions como uma única ação com config.message. Não há editores para condições ou parâmetros dos demais tipos oferecidos.",
+    "observed_behavior": "Uma edição de nome também substitui as condições e toda a lista de ações; tipos como atribuição e tag são oferecidos sem controles para os IDs correspondentes.",
+    "impact": "Configuração persistida é perdida ou a automação resultante fica incompleta. O problema independe da disponibilidade do executor.",
+    "recommendation": "Preservar campos não editados e permitir configuração completa por trigger/ação; bloquear tipos cuja configuração necessária não está disponível.",
+    "acceptance": [
+      "Renomear preserva trigger_config e todas as ações existentes.",
+      "Cada tipo oferecido valida seus parâmetros obrigatórios.",
+      "Salvar e reabrir produz o mesmo contrato sem remover campos que a UI não edita."
+    ]
+  },
+  "R2-MOD-003": {
+    "preconditions": "Salvar uma automação enquanto a mutation ainda está pendente, especialmente em falha de persistência.",
+    "cause": "O manager declara handleSave async, mas chama mutate, que não devolve a confirmação da mutation. O await do diálogo aguarda somente o callback já resolvido.",
+    "observed_behavior": "O diálogo fecha antes da resposta do banco; o erro aparece depois via toast, sem preservar a edição para correção imediata.",
+    "impact": "A UI dá aparência de conclusão e obriga o operador a reconstruir a edição após erro; também permite iniciar outra operação enquanto a anterior está pendente.",
+    "recommendation": "Retornar mutateAsync e fechar somente após confirmação; manter draft, mensagem de erro e botão em estado pendente até o desfecho.",
+    "acceptance": [
+      "Uma Promise de persistência pendente mantém o diálogo aberto e impede reenvio concorrente.",
+      "Rejeição preserva campos e permite retry; sucesso fecha apenas depois da confirmação."
+    ]
+  },
+  "R2-MOD-004": {
+    "status": "DEFERRED_DEPENDENCY_CONTRACT",
+    "preconditions": "Abrir o formulário da carteira que contém SelectItem value vazio.",
+    "cause": "A fonte passa value=\"\" ao wrapper que encaminha props ao Radix Select Item.",
+    "observed_behavior": "O valor vazio está confirmado na fonte. O pacote Radix resolvido não está disponível no ambiente de revisão e o componente não foi montado.",
+    "impact": "Possível falha de renderização pelo contrato do Radix; não contada como achado confirmado nesta rodada.",
+    "recommendation": "Confirmar com a versão efetivamente instalada e substituir a opção vazia por um sentinel se o contrato a proibir.",
+    "acceptance": [
+      "Abrir o formulário da carteira com a dependência resolvida e confirmar a seleção de Todas as conexões sem exceção."
+    ]
+  },
+  "R2-MOD-005": {
+    "severity": "P2",
+    "preconditions": "Criar campanha no módulo campaigns com público tag/fila/grupo/custom ou mensagem de imagem, vídeo ou documento.",
+    "cause": "O formulário oferece tipos sem pedir seleção de destinatários/filtros ou URL da mídia; a criação apenas insere o form e o comando de iniciar apenas altera status.",
+    "observed_behavior": "O consumidor cria uma linha de campanha sem materializar os contatos pelas opções oferecidas. addContacts existe no hook, mas não é chamado pela UI revisada.",
+    "impact": "A campanha aparenta estar pronta ou iniciada sem o público e a mídia necessários para corresponder ao que foi escolhido.",
+    "recommendation": "Ligar os tipos de público e mídia a payloads validados e à materialização autorizada; definir a passagem para executor ou apresentar o módulo como indisponível.",
+    "acceptance": [
+      "Uma campanha por tag/fila/grupo preserva a seleção e cria a audiência correspondente.",
+      "Imagem, vídeo e documento exigem e conservam a mídia.",
+      "Iniciar tem confirmação de processamento ou um estado explícito de indisponibilidade."
+    ],
+    "limitations": [
+      "Ausência de consumidor/executor foi pesquisada no repositório; não demonstra inexistência de automação externa ao código versionado."
+    ]
+  },
+  "R2-MOD-006": {
+    "preconditions": "Uma campanha do módulo campaigns está no estado paused após o comando Pausar.",
+    "cause": "A lista só oferece iniciar para draft e pausar para sending. O filtro de status omite paused e o painel de detalhes não implementa retomada.",
+    "observed_behavior": "Depois de pausar pela UI, a ação de retomar deixa de existir no mesmo fluxo.",
+    "impact": "O operador não consegue continuar a campanha por esse módulo e precisa de outro meio para alterar o estado.",
+    "recommendation": "Definir e expor a transição paused→sending com tratamento de pendência/erro e incluir paused no filtro.",
+    "acceptance": [
+      "Pausar e retomar pela UI percorre os estados esperados e a falha de retomada permanece visível.",
+      "Campanhas pausadas podem ser filtradas e abertas."
+    ]
+  },
+  "R2-MOD-007": {
+    "preconditions": "Enviar em lote um produto sem imagem cuja única tentativa de texto falha; ou concluir um lote com produtos falhados.",
+    "cause": "imageOk começa true mesmo sem tentativa de imagem. Texto rejeitado produz partial; o agregador conta partial como sucesso e chama onSent/fecha mesmo quando há falhas.",
+    "observed_behavior": "O callback original devolveu partial para zero messageIds confirmados no probe. O loop incrementa ok e o encerramento limpa a seleção pelo callback de envio.",
+    "impact": "Falha integral é anunciada como envio parcial/bem-sucedido e itens que precisam de retry desaparecem da seleção.",
+    "recommendation": "Classificar com base em tentativas efetivas e confirmações reais; só considerar parcial quando pelo menos uma parte foi enviada e manter seleção dos itens não concluídos.",
+    "acceptance": [
+      "Produto sem imagem e texto rejeitado resulta failed, zero sucesso e item preservado para retry.",
+      "Lote misto discrimina enviados, parciais e falhados com contagem e seleção correspondentes."
+    ]
+  },
+  "R2-MOD-008": {
+    "preconditions": "Usar envio em lote do catálogo; ou falhar a consulta de prontidão no envio individual.",
+    "cause": "O lote não conecta useCatalogSendReadiness/blockedContactIds/isChecking ao seletor. No hook de envio individual, error/isError não integra o estado devolvido; dados ausentes resultam em bloqueio vazio.",
+    "observed_behavior": "O seletor do lote recebe os defaults que permitem selecionar e continuar. Uma consulta de prontidão rejeitada termina com isChecking=false e sem motivo de bloqueio.",
+    "impact": "A pré-validação apresentada pelo catálogo é inconsistente e falha aberta quando não consegue verificar as condições de envio.",
+    "recommendation": "Compartilhar a mesma verificação nos fluxos de lote e individual; distinguir indisponível de liberado e tornar o resultado de validação explícito.",
+    "acceptance": [
+      "Falha controlada da consulta impede prosseguir e oferece retry com motivo claro.",
+      "Lote e individual aplicam as mesmas restrições para o mesmo contato/conexão."
+    ],
+    "limitations": [
+      "Este achado é da barreira de UI. Não afirma que o backend entrega mensagens a um contato que deveria estar bloqueado."
+    ]
+  },
+  "R2-MOD-009": {
+    "preconditions": "Navegar do índice 1 ou maior para o índice 0 usando Anterior, no catálogo do chat ou na gestão.",
+    "cause": "O efeito de paginação chama fetchProducts somente quando page>0. Mudar para zero não altera os filtros internos do hook que compõem sua queryKey.",
+    "observed_behavior": "A etiqueta passa para a primeira página, mas os produtos da página anterior permanecem porque nenhuma consulta da página zero é solicitada.",
+    "impact": "Paginação exibe conteúdo incorreto e pode induzir seleção/exportação de produtos que não correspondem à página indicada.",
+    "recommendation": "Usar a página como entrada única da consulta e buscar também zero; separar claramente reset de filtros de navegação.",
+    "acceptance": [
+      "Ir página 1→2→1 retorna os mesmos IDs da primeira página e emite a consulta de retorno.",
+      "O teste verifica IDs e parâmetros da consulta, não só o número mostrado.",
+      "A mesma transição é verificada nos dois consumidores, ExternalProductCatalog e ExternalProductManagement."
+    ],
+    "title": "Retorno à primeira página não consulta produtos no catálogo do chat e na gestão"
+  },
+  "R2-MOD-010": {
+    "preconditions": "Selecionar produtos e mudar filtro/página mantendo IDs selecionados que saem de displayedProducts.",
+    "cause": "O contador usa selectedIds.size, enquanto selectedProducts é a interseção com displayedProducts; lote e exportação usam somente essa interseção.",
+    "observed_behavior": "O número anunciado inclui produtos ocultos, mas o payload contém apenas os visíveis.",
+    "impact": "Envio/exportação omite produtos selecionados e o operador recebe uma contagem diferente da operação real.",
+    "recommendation": "Resolver toda a seleção por ID ou limitar/limpar a seleção de forma explícita ao mudar o conjunto visível.",
+    "acceptance": [
+      "Selecionar A, mudar filtro, selecionar B e enviar/exportar tem resultado consistente com a contagem anunciada.",
+      "Produtos ocultos não são silenciosamente descartados."
+    ],
+    "prior_note": "OTH-001 descreve o mesmo padrão em Arquivos. Catálogo tem consumidor, estado e payload distintos; é descoberta nova com antecedente análogo.",
+    "prior_ids": [
+      "OTH-001"
+    ]
+  },
+  "R2-MOD-011": {
+    "preconditions": "Abrir SendProductDialog para um produto que fornece mais de dez imagens base.",
+    "cause": "A seleção inicial e seu reset incluem todas as imagens. MAX_IMAGES limita somente adicionar/toggle; o comando de enviar não revalida o tamanho.",
+    "observed_behavior": "A UI pode iniciar acima do máximo anunciado e enviar todas as imagens selecionadas.",
+    "impact": "O lote enviado excede o limite de dez e pode produzir envio inesperado ou rejeição parcial.",
+    "recommendation": "Aplicar o limite na inicialização, em toda transformação da seleção e no comando final.",
+    "acceptance": [
+      "Produto com onze ou mais imagens abre com no máximo dez selecionadas e explica a limitação.",
+      "O comando final recusa qualquer estado acima do limite, inclusive estado inicial ou restaurado."
+    ]
+  },
+  "R2-MOD-012": {
+    "preconditions": "Iniciar resposta da University, alterar o período enquanto a requisição está pendente e receber a resposta antiga depois.",
+    "cause": "O efeito de período limpa resposta/seleção, mas não invalida a geração em voo. O callback assíncrono sempre aplica resultado e toast ao terminar.",
+    "observed_behavior": "O probe executou o hook: período atual today, seleção vazia e resposta do período anterior aplicada após a limpeza.",
+    "impact": "O operador pode usar texto gerado de um contexto que já deixou de ser o período escolhido.",
+    "recommendation": "Aplicar o mecanismo de geração/cancelamento usado pelas outras ferramentas de IA também à University e atrelar a conclusão ao período/contexto que iniciou a requisição.",
+    "acceptance": [
+      "Resposta atrasada após troca do período é descartada e não emite toast de sucesso.",
+      "Resumo, objeções, assistente e University têm o mesmo contrato de invalidação."
+    ],
+    "limitations": [
+      "Não é afirmado vazamento entre contatos: RealtimeInboxView atribui key da conversa ao ChatPanel atual.",
+      "IA-048 é referência de implementação, não um dos IDs dos 104 achados anteriores."
+    ]
+  },
+  "R2-MOD-013": {
+    "preconditions": "Escrever anotação na chamada A e selecionar B no histórico enquanto o painel permanece montado.",
+    "cause": "rascunho é estado local sem reset por call.id. salvar usa o call.id atual com valor derivado do rascunho anterior.",
+    "observed_behavior": "O callback original, sob driver de hooks, chamou addCallNotes('call-B', 'Draft for A'). O pai renderiza o painel sem key por chamada.",
+    "impact": "Anotações de uma chamada podem sobrescrever as de outra, comprometendo o histórico operacional.",
+    "recommendation": "Associar o draft ao ID da chamada e tratar mudança de registro com edição pendente antes de salvar.",
+    "acceptance": [
+      "Após editar A e escolher B, salvar nunca grava o texto de A no ID B.",
+      "Preservar/cancelar a edição de A é explícito, e o painel mostra as notas reais de B."
+    ]
+  },
+  "R2-MOD-014": {
+    "preconditions": "Selecionar uma chamada presente na segunda página ou posterior do histórico.",
+    "cause": "setFilter reseta page=1 para qualquer chave diferente de page, inclusive call. O detalhe deriva apenas de historicos.rows da página consultada.",
+    "observed_behavior": "O probe do hook original mudou page=3 para page=1 ao escolher call. A linha deixa o conjunto atual e o detalhe pode desaparecer.",
+    "impact": "É impossível manter aberto o detalhe de uma chamada de outra página pelo fluxo normal da lista.",
+    "recommendation": "Tratar seleção de chamada como estado de detalhe sem reset de paginação, ou carregar a chamada selecionada por ID de forma independente.",
+    "acceptance": [
+      "Selecionar uma chamada da página 3 mantém a página e abre o detalhe correspondente.",
+      "Teste usa ID ausente na página 1 e verifica resultado do detalhe."
+    ]
+  },
+  "R2-MOD-015": {
+    "preconditions": "A URL aponta para página maior que o número atual de páginas, por edição manual, exclusão ou mudança de total.",
+    "cause": "useMyCalls consulta o offset inválido e só depois calcula pageEfetiva; o clamp não atualiza URL nem dispara nova consulta. O total é extraído da primeira linha, inexistente em uma página vazia.",
+    "observed_behavior": "Pode apresentar página 1 e total zero com os dados vazios retornados da página 99. O teste existente fornece linhas para offset além do total e só verifica o número clampado.",
+    "impact": "Um histórico existente parece vazio e a correção visual de paginação não recupera os registros.",
+    "recommendation": "Obter total independente da primeira linha e refazer a consulta/URL quando a página estiver fora do intervalo.",
+    "acceptance": [
+      "Página 99 com total de uma página converge para URL e dados da página 1.",
+      "Fixture respeita o resultado vazio real de offset fora do intervalo e verifica a segunda consulta."
+    ]
+  },
+  "R2-MOD-016": {
+    "severity": "P3",
+    "title": "Discador mantém chip do contato após alterar o número pelo teclado",
+    "preconditions": "Escolher um contato no NewCallPanel e alterar o número usando seu teclado numérico/backspace.",
+    "cause": "As ações do teclado alteram numero, mas não limpam contato. ligar constrói phone com o número atual e metadados do contato antigo.",
+    "observed_behavior": "A tela pode mostrar contato A ao lado de um destino diferente. O provider atual disca apenas phone e useSipClient resolve o contato pelo telefone.",
+    "impact": "Identificação visual enganosa antes da ligação; o operador pode acreditar que está ligando para o contato mostrado.",
+    "recommendation": "Limpar/reconciliar a identidade selecionada quando o número for modificado e tornar o destino efetivo visível.",
+    "acceptance": [
+      "Selecionar A e alterar o número remove ou revalida o chip de A antes de habilitar a ligação."
+    ],
+    "limitations": [
+      "Não foi confirmado registro da chamada no contato errado: o provider descarta os metadados e resolve pelo phone. O achado foi reduzido à inconsistência comprovada da UI."
+    ]
+  },
+  "R2-MOD-017": {
+    "preconditions": "Selecionar 7, 30 ou 90 dias nos Relatórios Avançados e comparar com o período anterior.",
+    "cause": "O período atual vai do começo de N dias atrás ao fim de hoje, totalizando N+1 dias; o anterior tem N. A média divide por N e a etiqueta anterior deriva de outra subtração.",
+    "observed_behavior": "Com 7 e tempo fixo, helpers originais produzem 8 dias atuais e 7 anteriores. O probe com 70 mensagens/dia resulta em média anunciada 80. A data inicial anterior exibida difere da query.",
+    "impact": "Totais, médias e crescimento comparativo ficam enviesados mesmo com dados completos e sem erro de rede.",
+    "recommendation": "Definir períodos de dias de calendário com fronteiras compartilhadas para queries, rótulos e denominadores.",
+    "acceptance": [
+      "7 significa sete dias em ambos os intervalos, sem lacuna nem sobreposição.",
+      "Média de uma série uniforme de 70/dia permanece 70 e as etiquetas são as fronteiras consultadas."
+    ]
+  },
+  "R2-MOD-018": {
+    "preconditions": "O período contém mais mensagens ou contatos que o limite de linhas aplicado pelo PostgREST.",
+    "cause": "As quatro consultas current/previous usam select sem paginação, count ou RPC agregadora, e os totais/repartições são reduzidos dos arrays devolvidos.",
+    "observed_behavior": "A UI chama os valores de total, média e distribuição do período, mas só vê a primeira página. Não verifica truncamento.",
+    "impact": "Relatórios e comparativos subcontam de forma silenciosa; a proporção por agente/tipo também depende de quais linhas couberam na página.",
+    "recommendation": "Agregar no servidor com o escopo autorizado ou percorrer todas as páginas de forma estável e indicar incompletude.",
+    "acceptance": [
+      "Base sintética acima do cap mantém o total e as distribuições corretos.",
+      "Se a leitura for incompleta, o relatório não publica o valor como total definitivo."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "A auditoria anterior apontou caps em outros hooks do Dashboard; esta extensão identifica o consumidor AdvancedReports/useReportsData e seu comparativo.",
+    "limitations": [
+      "O cap efetivo do ambiente não foi consultado; não se presume valor exato de 1000."
+    ]
+  },
+  "R2-MOD-019": {
+    "preconditions": "Falha de leitura em uma ou mais consultas dos Relatórios Avançados sem dados prévios em cache.",
+    "cause": "As queries lançam erro, mas o hook expõe somente data/isLoading e substitui ausências por arrays vazios; o consumidor não recebe error.",
+    "observed_behavior": "Depois de loading=false, métricas e gráficos são derivados de zero registros como se não houvesse atividade.",
+    "impact": "Falha de rede/permissão é apresentada como resultado de negócio e pode contaminar comparação/exportação.",
+    "recommendation": "Propagar erro por conjunto de dados e distinguir zero confirmado, falha e conteúdo desatualizado.",
+    "acceptance": [
+      "Erro em mensagens ou contatos é visível no relatório e não aparece como zero confirmado.",
+      "Comparativo não usa ausência por erro como base válida."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "Extensão do problema de ausência/erro para as quatro queries e seus consumidores de Relatórios Avançados."
+  },
+  "R2-MOD-020": {
+    "preconditions": "Um contato tem mensagem de agente anterior a uma nova mensagem de cliente ainda sem resposta, dentro do intervalo consultado.",
+    "cause": "AbandonmentRate só lê contact_id e sender e marca o contato como respondido se existir qualquer mensagem de agente; não considera ordem, sessão ou prazo.",
+    "observed_behavior": "A mensagem antiga do agente elimina o contato do conjunto abandonado mesmo quando a demanda mais recente continua sem resposta.",
+    "impact": "O indicador não mede abandono de atendimento e pode mostrar melhora por atividade anterior sem relação com a solicitação atual.",
+    "recommendation": "Definir abandono por episódio/conversa e ordem temporal, com prazo de resposta e denominador explícitos.",
+    "acceptance": [
+      "Agente às 10h e cliente às 11h sem resposta não contam como atendimento respondido às 11h.",
+      "Sessões repetidas do mesmo contato são avaliadas pelo contrato de abandono escolhido."
+    ]
+  },
+  "R2-MOD-021": {
+    "preconditions": "Há disparos Multiplix válidos mais antigos que os oito apresentados, ou um monitor aberto cujo disparo sai dos cinquenta mais recentes.",
+    "cause": "A UI principal mostra somente slice(0,8), sem histórico completo. A query de detalhe busca a lista limit=50, offset=0 e faz find pelo ID, em vez de pedir o registro.",
+    "observed_behavior": "Disparo existente fora da janela resulta not found; o monitor ignora error e renderiza skeleton enquanto dispatch é null, antes de seu botão Voltar.",
+    "impact": "Histórico fica inacessível e monitor de um disparo existente pode parecer carregar indefinidamente.",
+    "recommendation": "Adicionar navegação paginada de histórico, detalhe por ID e estados independentes de não encontrado/erro.",
+    "acceptance": [
+      "Abrir diretamente um disparo além dos cinquenta recentes retorna o registro correto.",
+      "Erro/não encontrado tem explicação, retry e saída; histórico permite acessar além dos oito."
+    ],
+    "limitations": [
+      "Cenário usa registros existentes válidos; não presume que o contrato de criação hoje esteja corrigido (MX08)."
+    ]
+  },
+  "R2-MOD-022": {
+    "preconditions": "Um disparo Multiplix tem mais de quinhentos destinatários, ou a consulta de destinatários falha.",
+    "cause": "useMultiplixRecipients pede limit=500/offset=0 e devolve somente rows, descartando total/continuação. O monitor usa data=[] e não consome error.",
+    "observed_behavior": "A tela lista somente o primeiro lote sem paginação; uma rejeição é mostrada como nenhum destinatário.",
+    "impact": "Operação e diagnóstico ficam incompletos, especialmente para destinatários falhados fora do lote visível.",
+    "recommendation": "Preservar total/continuação e estados de erro, e paginar ou rotular claramente uma amostra deliberada.",
+    "acceptance": [
+      "Destinatário 501 é alcançável e o total corresponde ao servidor.",
+      "Erro de leitura não aparece como lista vazia confirmada."
+    ],
+    "limitations": [
+      "O teste de volume depende de um disparo válido acima do limite; não foi executado contra o backend."
+    ]
+  },
+  "R2-MOD-023": {
+    "severity": "P2",
+    "preconditions": "O servidor aceita a criação, mas a resposta se perde ou um passo posterior falha; o operador tenta de novo o mesmo conteúdo.",
+    "cause": "A chave de idempotência é limpa em onSettled, inclusive na rejeição. Retry recebe novo UUID em vez de reconciliar o resultado incerto da tentativa anterior.",
+    "observed_behavior": "O probe do callback original confirmou duas chaves distintas para o mesmo input após falha simulada de resposta.",
+    "impact": "Quando a criação está funcional e o servidor usa a chave como identidade da operação, retry pode criar disparo duplicado em vez de reencontrar o primeiro.",
+    "recommendation": "Preservar a chave até conclusão/reconciliação inequívoca ou mudança intencional do draft; consultar o resultado pelo identificador após desfecho incerto.",
+    "acceptance": [
+      "Commit aceito com resposta perdida seguido de retry reutiliza a identidade e resulta em um único disparo.",
+      "Alteração intencional de novo draft é o que gera uma nova chave."
+    ],
+    "prior_ids": [
+      "MX08"
+    ],
+    "prior_note": "MX08 é antecedente de contrato bloqueado, não duplicata desta falha de identidade de retry.",
+    "limitations": [
+      "A criação aceita é uma precondição sintética. O caminho backend dispatch.create não foi homologado nesta revisão e os bloqueios anteriores MX08 continuam relevantes."
+    ]
+  },
+  "R2-MOD-024": {
+    "preconditions": "Pedir variantes/histórico de A, trocar para B e abrir o mesmo painel, recebendo B antes da resposta atrasada de A.",
+    "cause": "Os loaders aplicam setVariants/setVersions sem comparar templateId/generation. Limpar o painel na troca não invalida Promises antigas.",
+    "observed_behavior": "A resposta antiga substitui o painel de B. Um onBlur de variante envia o ID/payload da variante A; saveVariant atualiza por esse ID, embora o editor esteja identificado como B. Restaurar histórico também aplica campos sem validar a origem ativa.",
+    "impact": "Edição/exclusão de variante ou restauração de conteúdo pode atingir um template diferente do que o operador acredita estar editando.",
+    "recommendation": "Chavear os dados pelo template e descartar respostas obsoletas; validar que variante/versão pertencem ao ativo antes de permitir uma mutação.",
+    "acceptance": [
+      "No cenário A lento/B rápido, somente dados de B permanecem acionáveis.",
+      "Payload de salvar/excluir/restaurar é recusado se sua origem não corresponde ao template ativo."
+    ]
+  },
+  "R2-MOD-025": {
+    "preconditions": "Reabrir draft ou scheduled com audience_source=contacts e mais recipients que o cap de retorno da consulta, mantendo válidos os demais campos exigidos pela RPC.",
+    "cause": "A hidratação de contact_ids é uma consulta sem paginação. Ela altera selectedContacts depois do snapshot inicial do autosave. buildPayload persiste essa seleção e snapshotDraftAudience substitui integralmente os recipients pelo conjunto filtrado.",
+    "observed_behavior": "Mesmo sem editar o público, a hidratação da primeira página torna autosaveFields diferente; após 3 s o save grava contact_ids parciais. A RPC vigente preserva audience_filters; o snapshot passa esses IDs ao motor e faz DELETE/INSERT de toda a audiência.",
+    "impact": "Somente reabrir um rascunho grande pode reduzir sua audiência e total_recipients. A operação transacional garante consistência do conjunto errado, sem recuperar os IDs omitidos pelo cliente.",
+    "recommendation": "Hidratar a seleção completa por contrato paginado ou preservar o snapshot no servidor quando o público não foi editado; a hidratação inicial não deve marcar o draft como alteração do usuário.",
+    "acceptance": [
+      "Reabrir uma audiência manual acima do cap e aguardar autosave não altera nenhum recipient ou total.",
+      "Uma edição apenas de nome preserva integralmente a audiência.",
+      "Uma mudança intencional de público segue sendo validada e substituída de forma transacional."
+    ],
+    "limitations": [
+      "O ramo audience_source=segment define v_contact_ids=NULL e não sofre esta truncação por hidratação manual.",
+      "SQL foi rastreado estaticamente no conjunto de migrations vencedor confirmado pelo agente de banco, sem executar migração nem consultar banco.",
+      "Não se presume um valor específico para o cap de linhas remoto."
+    ]
+  },
+  "R2-MOD-026": {
+    "preconditions": "Duas campanhas diferentes recebem UPDATE Realtime dentro de 500 ms com a assinatura marcada como live.",
+    "cause": "Há um único debounceRef para todas as campanhas. O segundo evento cancela o timer que aplicaria o primeiro e a atualização restante modifica só o ID do último payload.",
+    "observed_behavior": "O probe original manteve A.sent_count=0 e atualizou apenas B após eventos A=1/B=1. isLive desativa o fallback de polling de campanhas.",
+    "impact": "Contadores e estados de campanhas ficam silenciosamente desatualizados mesmo com indicador Ao vivo.",
+    "recommendation": "Acumular todos os payloads por ID ou invalidar/refetch uma vez para o lote inteiro; manter recuperação de eventos perdidos.",
+    "acceptance": [
+      "Eventos intercalados de A e B dentro do debounce atualizam ambos.",
+      "A recuperação não depende de uma ação manual incidental do operador."
+    ]
+  },
+  "R2-MOD-027": {
+    "preconditions": "Editar o wizard e clicar Voltar ou navegar internamente antes dos 3 s do autosave, sem usar Salvar rascunho.",
+    "cause": "A única guarda instalada é beforeunload. onClose chama diretamente backToList, desmonta o editor e o cleanup cancela o timer de autosave.",
+    "observed_behavior": "A navegação SPA não produz beforeunload e a alteração pendente não chega a persistSave.",
+    "impact": "Edição é perdida sem aviso, apesar de existir uma proteção declarada para dados não salvos.",
+    "recommendation": "Vincular navegação interna ao estado dirty e aguardar flush ou oferecer descarte explícito; guardar somente mudanças realmente pendentes.",
+    "acceptance": [
+      "Editar e voltar em menos de 3 s preserva a edição ou apresenta escolha clara antes de desmontar.",
+      "Histórico do navegador e mudança de rota seguem o mesmo contrato.",
+      "Teste exercita o wizard real e a Promise/timer de save, não só um stub de navegação."
+    ]
+  }
+}

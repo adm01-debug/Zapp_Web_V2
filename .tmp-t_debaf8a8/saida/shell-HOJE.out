@@ -1,0 +1,7 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+VERIFY: VERMELHO em banco_local (0s)

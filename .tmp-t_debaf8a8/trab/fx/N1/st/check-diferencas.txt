@@ -1,0 +1,1 @@
+indexes|sonda_cartao.sonda_cartao_pkey

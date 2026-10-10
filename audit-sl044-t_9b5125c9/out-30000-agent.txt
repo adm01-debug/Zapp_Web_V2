@@ -1,0 +1,90 @@
+### container=zapp-sl044-audit-824322 imagem=postgres:17 volume=30000 caller=agent runs=6
+### [1/5] esqueleto minimo (00-schema.sql)
+### [2/5] migration REAL 02-canonical-20260930450000.sql (sha256 abaixo)
+02b48db7c055ac38dc87bf74a80dbe139a2760e8b58b99a13c1aa6718b005390  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/audit-sl044-t_9b5125c9/02-canonical-20260930450000.sql
+psql:<stdin>:20: NOTICE:  function public.search_contacts(text,text,text,text,text,timestamptz,text,text,pg_catalog.int4,pg_catalog.int4) does not exist, skipping
+psql:<stdin>:75: NOTICE:  function public.contacts_count_by_type() does not exist, skipping
+### [3/5] seed :vol=30000 caller=agent
+ seeded | visiveis_todos | visiveis_agent 
+--------+----------------+----------------
+  30000 |          27000 |           7500
+(1 row)
+
+### [4/5] versao do Postgres e definicao vigente de search_contacts
+PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+search_contacts(text,text,text,text,text,timestamp with time zone,text,text,integer,integer,boolean)|t
+COUNT(*) OVER() presente: true
+### [5/5] medicao
+==== A) search_contacts REAL, 1a pagina (page_size=50, offset=0, name/asc) ====
+psql:<stdin>:26: NOTICE:  run 1: 263.0 ms
+psql:<stdin>:26: NOTICE:  run 2: 236.0 ms
+psql:<stdin>:26: NOTICE:  run 3: 251.0 ms
+psql:<stdin>:26: NOTICE:  run 4: 290.9 ms
+psql:<stdin>:26: NOTICE:  run 5: 296.3 ms
+psql:<stdin>:26: NOTICE:  run 6: 280.8 ms
+psql:<stdin>:26: NOTICE:  total_count devolvido pela funcao = 7500
+
+==== B) contacts_count_by_type REAL (contagem exata, KPI do Dashboard) ====
+psql:<stdin>:44: NOTICE:  run 1: 47.3 ms
+psql:<stdin>:44: NOTICE:  run 2: 51.9 ms
+psql:<stdin>:44: NOTICE:  run 3: 55.4 ms
+psql:<stdin>:44: NOTICE:  run 4: 48.1 ms
+psql:<stdin>:44: NOTICE:  run 5: 39.3 ms
+psql:<stdin>:44: NOTICE:  run 6: 46.8 ms
+psql:<stdin>:44: NOTICE:  tipo=cliente count=9000
+psql:<stdin>:44: NOTICE:  tipo=fornecedor count=9000
+psql:<stdin>:44: NOTICE:  tipo=parceiro count=9000
+
+==== C) ISOLAMENTO: EXPLAIN ANALYZE da MESMA leitura COM e SEM COUNT(*) OVER () ====
+--- C1) SEM a janela (so a pagina) ---
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.37..6.14 rows=50 width=32) (actual rows=50 loops=1)
+   Buffers: shared hit=4
+   ->  Incremental Sort  (cost=0.37..3124.53 rows=27072 width=32) (actual rows=50 loops=1)
+         Sort Key: name, id
+         Presorted Key: name
+         Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+         Buffers: shared hit=4
+         ->  Index Scan using idx_contacts_name_asc on contacts c  (cost=0.29..1906.29 rows=27072 width=32) (actual rows=51 loops=1)
+               Filter: ((deleted_at IS NULL) AND (NOT is_lid_legacy) AND (phone ~ '^[0-9]{10,15}$'::text))
+               Rows Removed by Filter: 5
+               Buffers: shared hit=4
+ Planning Time: 0.257 ms
+ Execution Time: 0.159 ms
+(13 rows)
+
+--- C2) COM COUNT(*) OVER () (o que a funcao vigente faz) ---
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=2244.61..2246.86 rows=50 width=40) (actual rows=50 loops=1)
+   Buffers: shared hit=1026
+   ->  Incremental Sort  (cost=2244.61..3462.93 rows=27072 width=40) (actual rows=50 loops=1)
+         Sort Key: name, id
+         Presorted Key: name
+         Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+         Buffers: shared hit=1026
+         ->  WindowAgg  (cost=2244.60..2244.69 rows=27072 width=40) (actual rows=51 loops=1)
+               Buffers: shared hit=1026
+               ->  Index Scan using idx_contacts_name_asc on contacts c  (cost=0.29..1906.29 rows=27072 width=32) (actual rows=27000 loops=1)
+                     Filter: ((deleted_at IS NULL) AND (NOT is_lid_legacy) AND (phone ~ '^[0-9]{10,15}$'::text))
+                     Rows Removed by Filter: 3000
+                     Buffers: shared hit=1026
+ Planning Time: 0.266 ms
+ Execution Time: 55.739 ms
+(15 rows)
+
+--- C3) so a contagem exata, sem pagina ---
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1352.68..1352.69 rows=1 width=8) (actual rows=1 loops=1)
+   Buffers: shared hit=910
+   ->  Seq Scan on contacts c  (cost=0.00..1285.00 rows=27072 width=0) (actual rows=27000 loops=1)
+         Filter: ((deleted_at IS NULL) AND (NOT is_lid_legacy) AND (phone ~ '^[0-9]{10,15}$'::text))
+         Rows Removed by Filter: 3000
+         Buffers: shared hit=910
+ Planning Time: 0.266 ms
+ Execution Time: 41.025 ms
+(8 rows)
+
+### fim

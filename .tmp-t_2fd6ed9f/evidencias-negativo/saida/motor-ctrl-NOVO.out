@@ -1,0 +1,9 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     0s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261007095739_cartao_drift_novo.sql; 2
+drift: columns|clientes.antiga
+drift: functions|f:fn_antiga() diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: columns|clientes.antiga;functions|f:fn_antiga()) (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/ctrl-NOVO/.local/state/zapp-verify/807d6e50c211/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/ctrl-NOVO/.local/state/zapp-verify/807d6e50c211

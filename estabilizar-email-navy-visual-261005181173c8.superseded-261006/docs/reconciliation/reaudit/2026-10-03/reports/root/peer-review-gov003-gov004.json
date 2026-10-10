@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "reviewer": "/root/grill_me_primary_review",
+  "reviewed_source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "APPROVED_WITH_EXPLICIT_LIMITS_AFTER_CORRECTIONS",
+  "reviewed_artifacts": [
+    {
+      "path": "reports/root/findings.json",
+      "sha256": "a74001c40b802bdb94722722b13dc40dd5a80025cadec2d738102ad84927c863"
+    },
+    {
+      "path": "reports/root/export-validation-probe-results.json",
+      "sha256": "f19e0136573b8e6a58fc8c1074f9ed2f56f6224db02b681f1bb524dbacdf101c"
+    },
+    {
+      "path": "tools/export_validation_probe.py",
+      "sha256": "a16d092eefd6725da316669ace57d2abd033859461a310a1b9954a0e345131a1"
+    }
+  ],
+  "findings": [
+    {
+      "id": "R2-GOV-003",
+      "disposition": "APPROVED_AS_REFINEMENT_OF_TC_011",
+      "reason": "Os loci citados demonstram assertivas literais, réplicas locais ou mocks que não discriminam a propriedade alegada. O achado anterior TC-011 já trata qualidade de prova; ampliação a outros módulos é refinamento da mesma família, sem um novo defeito de produto por arquivo.",
+      "accepted_corrections": [
+        "Nome correto do estado useQueuesComparison: loading, não isLoading.",
+        "Inclusão de useQueuesComparison.ts:139–144 para catch/finally que permite concluir loading=false após erro.",
+        "Inclusão de scenario-simulation.test.ts:8–13 para demonstrar import da regra real usada no controle positivo."
+      ],
+      "positive_controls_verified": [
+        "scenario-simulation:8–13 e 188–232 importam/classificam dados reais do módulo, preservando confiança zero.",
+        "useMessages.test.tsx:135–199 exercita o hook real com promessas controladas, troca de contato e desabilitação; 246–272 preserva páginas antigas após refetch.",
+        "useContactMedia.test.tsx:123–152 verifica cursor e 201 itens; 179–210 verifica assinatura por bucket e estados de erro no hook real."
+      ],
+      "limits": [
+        "Revisão estática dos testes; nenhuma execução Vitest, React ou mutação foi repetida.",
+        "O teste useMessages:107–110 isoladamente só verifica objeto definido; o controle positivo de desabilitação é 171–199.",
+        "Contratos textuais declarados e controles positivos não foram classificados como tautologias.",
+        "Igualdade de IDs com randomUUID constante prova insuficiência do teste, não defeito confirmado no serviço de idempotência."
+      ]
+    },
+    {
+      "id": "R2-GOV-004",
+      "disposition": "APPROVED_AS_SEPARATE_RUNNER_FINDING",
+      "reason": "Pipeline sem pipefail observa status de tee, e gerações posteriores não condicionam exit 0. É script diferente de replay-local.sh do R2-INF-014, com causa local verificável e caminho próprio.",
+      "accepted_corrections": [
+        "Precondição especifica falha durante validate_destino.sh e ausência de métrica FAIL reconhecida.",
+        "Incluído import.sh:1–2 e explicitado set -e: falha do Node que aplica um bloco aborta a importação.",
+        "Bloco ausente causa anúncio prematuro; não se presume sucesso final da cadeia, que depende do validador posterior."
+      ],
+      "probe_review": {
+        "runner_read": "tools/export_validation_probe.py:1–68",
+        "results_read": "reports/root/export-validation-probe-results.json",
+        "primary_reproductions_recorded": 1,
+        "behavior_controls_recorded": 2,
+        "reexecuted_by_peer": false,
+        "assessment": "Runner confere pin Git e executa Bash original com node falso em PATH; caso connection_error sai 42 no stub, mas Bash anuncia sucesso e sai 0 sem JSON. Métrica FAIL sai 1, sucesso sintético cria JSON/CSV. Temporários isolados e nenhuma chamada ao PostgreSQL no harness."
+      },
+      "limits": [
+        "import.sh foi lido, não executado.",
+        "Não houve conexão ao banco real nem confirmação de uma importação incompleta em produção.",
+        "Controle de sucesso contém métricas sintéticas e não valida as consultas SQL.",
+        "A prova comportamental é de harness offline; runtime_observed=false deve significar ausência de observação de produção, não ausência dessa execução local documentada."
+      ]
+    }
+  ],
+  "evidence_hash_and_range_checks": [
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/hooks/__tests__/useAgents.test.tsx",
+      "line_start": 66,
+      "line_end": 91,
+      "git_blob_sha": "ebaf901e4db69bc166d967af1e09c34076871349",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
+      "line_start": 1089,
+      "line_end": 1097,
+      "git_blob_sha": "4e6d4ee12143ec9de7b1f84d63420d27a023938f",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/components/settings/__tests__/MediaLibraryAdmin.test.tsx",
+      "line_start": 1418,
+      "line_end": 1446,
+      "git_blob_sha": "4e6d4ee12143ec9de7b1f84d63420d27a023938f",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx",
+      "line_start": 197,
+      "line_end": 215,
+      "git_blob_sha": "3e76edd1b3fc41073d1f04b425e863e71d6073af",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/lib/__tests__/webhookStatusPriority.test.ts",
+      "line_start": 1,
+      "line_end": 28,
+      "git_blob_sha": "154b939e33ef726a7e016f4bd8152bb815e84acf",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/components/ai/__tests__/AutoTicketClassifier.test.tsx",
+      "line_start": 168,
+      "line_end": 193,
+      "git_blob_sha": "fcde975678be6389d73cd8b6bd2c33cd371255da",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/lib/__tests__/scenario-simulation.test.ts",
+      "line_start": 188,
+      "line_end": 232,
+      "git_blob_sha": "f6f014a70eaa20e30880e0b8080e0cc85ec0dc97",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/hooks/__tests__/useQueuesComparison.test.tsx",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "f9037560dfec18d06edbe35ca78f8ea783762a9b",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/hooks/business/useQueuesComparison.ts",
+      "line_start": 72,
+      "line_end": 84,
+      "git_blob_sha": "45d7b93db8f133abccd16247ccbb5bdfb95a8b3d",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/services/__tests__/outbound-message.service.test.ts",
+      "line_start": 11,
+      "line_end": 15,
+      "git_blob_sha": "fe47c2a45573346de738392d2a91ee1b75212958",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/services/__tests__/outbound-message.service.test.ts",
+      "line_start": 55,
+      "line_end": 70,
+      "git_blob_sha": "fe47c2a45573346de738392d2a91ee1b75212958",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/hooks/business/useQueuesComparison.ts",
+      "line_start": 139,
+      "line_end": 144,
+      "git_blob_sha": "45d7b93db8f133abccd16247ccbb5bdfb95a8b3d",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-003",
+      "path": "src/lib/__tests__/scenario-simulation.test.ts",
+      "line_start": 8,
+      "line_end": 13,
+      "git_blob_sha": "f6f014a70eaa20e30880e0b8080e0cc85ec0dc97",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-004",
+      "path": "supabase-export/validate_destino.sh",
+      "line_start": 17,
+      "line_end": 45,
+      "git_blob_sha": "6ff9558ba387a7dce03e9e8c9ea8e632a8d7780e",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-004",
+      "path": "supabase-export/validate_destino.sh",
+      "line_start": 47,
+      "line_end": 95,
+      "git_blob_sha": "6ff9558ba387a7dce03e9e8c9ea8e632a8d7780e",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-004",
+      "path": "supabase-export/import.sh",
+      "line_start": 30,
+      "line_end": 43,
+      "git_blob_sha": "53f53e740054c816faf60543b67f574668bbb1d3",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-004",
+      "path": "supabase-export/POST_EXPORT_CHECKLIST.sh",
+      "line_start": 44,
+      "line_end": 94,
+      "git_blob_sha": "339cd06a594a73c3eab1aee03ac1115af53f7f5f",
+      "result": "MATCH"
+    },
+    {
+      "finding_id": "R2-GOV-004",
+      "path": "supabase-export/import.sh",
+      "line_start": 1,
+      "line_end": 2,
+      "git_blob_sha": "53f53e740054c816faf60543b67f574668bbb1d3",
+      "result": "MATCH"
+    }
+  ],
+  "tests_or_probes_executed_by_peer": 0,
+  "product_files_modified": 0,
+  "blocking_issues_remaining": []
+}

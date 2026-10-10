@@ -1,0 +1,8 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     0s  ESTRUTURA: 1 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261007095739_indeterminate_optout_outbox.sql; 1
+drift: functions|f:accept_department_invite(p_code text) diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: functions|f:accept_department_invite(p_code text)) (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f

@@ -1,0 +1,5 @@
+[functions] só produção=0 só local=0 diferentes=1
+    diferente: f:accept_department_invite(p_code text)
+[indexes] só produção=0 só local=1 diferentes=0
+    só local: sonda_cartao.sonda_cartao_pkey
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção

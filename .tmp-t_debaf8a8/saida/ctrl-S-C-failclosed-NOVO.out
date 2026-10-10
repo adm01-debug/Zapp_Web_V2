@@ -1,0 +1,11 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f/banco_local.log)
+[functions] só produção=0 só local=0 diferentes=1
+    diferente: f:accept_department_invite(p_code text)
+ESTRUTURA: 1 diferença(s) em relação ao retrato da produção
+VERIFY: VERMELHO em banco_local (0s)

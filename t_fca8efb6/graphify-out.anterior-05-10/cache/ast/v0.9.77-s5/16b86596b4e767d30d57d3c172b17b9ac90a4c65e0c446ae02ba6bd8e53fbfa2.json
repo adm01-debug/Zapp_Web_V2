@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260930690000_cleanup_seed_contacts_auditoria_sql", "label": "20260930690000_cleanup_seed_contacts_auditoria.sql", "file_type": "code", "source_file": "supabase/migrations/20260930690000_cleanup_seed_contacts_auditoria.sql", "source_location": null}], "edges": []}

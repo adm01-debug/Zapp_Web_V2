@@ -1,0 +1,43 @@
+{
+  "purpose": "Portable package recheck after root packaging fixes; copies in a different directory depth, explicit repo via environment/argv, synthetic fixtures only.",
+  "runtime": "Node.js v24.19.0; Python from workspace",
+  "results": [
+    {
+      "name": "other_generator",
+      "exit_code": 0,
+      "stdout_bytes": 0,
+      "stderr": "",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "other_generated_probe",
+      "exit_code": 0,
+      "stdout_bytes": 1780,
+      "stderr": "",
+      "output_sha256": "bbbf7a12c36e5773b57bb627656507a13043f74191ba9b565eccb94eb91cedec"
+    },
+    {
+      "name": "transversal_probe",
+      "exit_code": 0,
+      "stdout_bytes": 1416,
+      "stderr": "[Evolution GO] instanceToken não informado para rota de instância (/send/text) — usando fallback EVOLUTION_INSTANCE_TOKEN (remover após E10/E21).\n",
+      "output_sha256": "b2c8d48505b1ce918e7362de62b1d8284bf61d6d8ab77d69f88cb153de492f18"
+    },
+    {
+      "name": "cross_module_probe",
+      "exit_code": 0,
+      "stdout_bytes": 239,
+      "stderr": "(node:23) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+      "output_sha256": "de3b3e30fea0f284ddb15e3c0ed67d3203549727a4ad3638800c13f7700f4fc1"
+    },
+    {
+      "name": "multiplix_probe",
+      "exit_code": 0,
+      "stdout_bytes": 3463,
+      "stderr": "(node:32) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+      "output_sha256": "a46f5657f81b5bda3ce35da69b2098d06db5dc13e1ae95747230003da102ce2f"
+    }
+  ],
+  "baseline_source_worktree_clean": true,
+  "writes": "Only isolated audit/consolidation-probe-check/retest/portable copies and outputs; source and final deliverable scripts not edited."
+}

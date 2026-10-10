@@ -1,0 +1,1 @@
+relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres

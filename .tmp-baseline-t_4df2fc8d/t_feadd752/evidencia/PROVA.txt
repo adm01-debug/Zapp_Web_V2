@@ -1,0 +1,56 @@
+######## PROVA CONSOLIDADA — t_feadd752 ########
+== 0. entradas e sha256 ==
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/zapp-verify.original
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/zapp-verify.novo
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+5c56eaa4ff19cbfaf5dc3d36385da03041831e4a32f823fcbd5dc6cdba25261c  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-hoje.py
+f6828357521bfb7d05abf869cf867d8ec763fa2eb7c84945f0a164e0e3f50d5f  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-novo.py
+
+== 1. cabecalhos das 4 classificacoes ==
+total=128 explicadas=44 drift_canonico=0 SEM=84
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/arvore-A/supabase/schema-manifest.json
+total=128 explicadas=44 drift_canonico=76 SEM=8
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/arvore-A/supabase/schema-manifest.json
+total=2 explicadas=2 drift_canonico=0 SEM=0
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/arvore-B/supabase/schema-manifest.json
+total=2 explicadas=2 drift_canonico=0 SEM=0
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/arvore-B/supabase/schema-manifest.json
+
+== 2. as 9 residuais ==
+linhas das 9 residuais: 9
+HOJE=SEM      NOVO=drift  functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+HOJE=SEM      NOVO=drift  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+
+debitadas (SEM) HOJE=2  NOVO=0  de 9
+
+== 3. passo banco_local real (antes x depois) ==
+--- A-retrato-velho-hoje ---
+OK      travas          7s
+FALHOU  banco_local     1s  diferença não explicada por migration pendente: rls|gmail_oauth_states; rls|talkx_storage_purge_queue; columns|audit_logs.dedupe_key (+81)
+VERIFY: VERMELHO em banco_local (8s)
+--- A-retrato-velho-ajuste ---
+OK      travas          8s
+FALHOU  banco_local     5s  diferença não explicada por migration pendente: indexes|gmail_oauth_states.gmail_oauth_states_pkey; indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pkey; constraints|relation:gmail_oauth_states.gmail_oauth_states_pkey (+5)
+VERIFY: VERMELHO em banco_local (13s)
+--- B-retrato-fresco-hoje ---
+OK      travas          7s
+AVISO   banco_local     1s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/home-ensaio/.local/state/zapp-verify/96fb25e06abb/banco_local.log)
+--- B-retrato-fresco-ajuste ---
+OK      travas          8s
+AVISO   banco_local     1s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/home-ensaio/.local/state/zapp-verify/96fb25e06abb/banco_local.log)
+
+== 4. controle negativo ==
+== corpo=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-novo.py
+total=3 explicadas=1 drift_canonico=1 SEM=1
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/negativo/arvore/supabase/schema-manifest.json
+-- classificacao por linha (classe<TAB>linha) --
+SEM	indexes|sonda_cartao.sonda_cartao_pkey
+explicada	columns|r:public.sonda_cartao.col_citada
+drift	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)

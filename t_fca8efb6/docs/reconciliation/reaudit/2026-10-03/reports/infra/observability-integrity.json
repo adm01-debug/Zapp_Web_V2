@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_hashes_checked": 594,
+  "evidence_refs": 134,
+  "source_evidence_refs": 130,
+  "finding_total": 31,
+  "finding_counts": {
+    "P1": 8,
+    "P2": 22,
+    "P3": 1
+  },
+  "coverage_counts": {
+    "total": 594,
+    "targeted": 40,
+    "semantic": 232,
+    "structural": 322
+  },
+  "observability_ids": [
+    "R2-INF-026",
+    "R2-INF-027",
+    "R2-INF-028",
+    "R2-INF-029",
+    "R2-INF-030",
+    "R2-INF-031"
+  ],
+  "observability_primary_files": 27,
+  "observability_primary_lines": 4550,
+  "observability_primary_unread": 0,
+  "preserved_prior_findings_sha256": "e5a2e6ee2309e71532838ac77f607f2a7f8256553e8a403158a31fa918d3aa0a",
+  "artifact_hashes": {
+    "findings.json": "60917489d2c320c47fa947690e4855ff18677f16251046cf80920a0b4d968a90",
+    "coverage.json": "0b4c106a57372f70788178ce292e4f504038d18f345d419e77a02c6d65b35883",
+    "report.md": "7b72a854c10c96774d05dee486da92e772dbe0f9f8166a135df47de96ecb32cf",
+    "observability-findings.json": "320b4fdebd22524dca1375b2e9239d7729bb52d8db7bbc06a58e1ea64e844bc8",
+    "observability-coverage.json": "3b6861ed4f81b4543c544f257f4f92d7dcf06ed907b3031a8a58d499f43752e7",
+    "observability-report.md": "831e7b171f26eb3f9eb841845ed68561680c6c48343a67bfa845bc222598373a",
+    "observability-probes.json": "04ae19cd961933df8b8aa9d59137abf8d38598c1f6f19826aebe2a3fc1d1d7a9",
+    "probe-observability.mjs": "b3a3c2cedd20fe682b5a1d19d03293a4898e5a412035fe736cce3f9c8a9bb328",
+    "observability-probe-pins.json": "03dfe6f977f37d457a594db5dd83a17c48bafe081a58e29ab0d2d79e657bdde6",
+    "build_observability_review.py": "1b872e80def1fdfe1536afe64022774839e4e2cc8be55051f81c20fed9005fe5",
+    "finalize_observability_review.py": "bd21b1adcd012eef6a9b643c57b6c9f73a2b3bafb926c7bbe93b9cd543b4fb03"
+  }
+}

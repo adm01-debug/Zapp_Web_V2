@@ -1,0 +1,9 @@
+#!/bin/sh
+# Local (não versionado, listado em .git/info/exclude): reconstrói o grafo do
+# Graphify depois de um git pull, que dispara post-merge e não post-commit.
+[ "${GRAPHIFY_SKIP_HOOK:-0}" = "1" ] && exit 0
+_GD=$(cd "$(git rev-parse --git-dir)" && pwd); _CD=$(cd "$(git rev-parse --git-common-dir)" && pwd)
+[ "$_GD" != "$_CD" ] && exit 0
+mkdir -p graphify-out
+( PYTHONHASHSEED=0 nohup "$HOME/.local/bin/graphify" update . >graphify-out/.post-merge.log 2>&1 & )
+exit 0

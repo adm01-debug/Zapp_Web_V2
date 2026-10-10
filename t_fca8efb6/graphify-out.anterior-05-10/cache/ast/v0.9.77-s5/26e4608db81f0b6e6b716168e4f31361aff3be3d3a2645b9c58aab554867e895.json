@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260901000001_drop_dead_indexes_e52_e53_sql", "label": "20260901000001_drop_dead_indexes_e52_e53.sql", "file_type": "code", "source_file": "supabase/migrations/20260901000001_drop_dead_indexes_e52_e53.sql", "source_location": null}], "edges": []}

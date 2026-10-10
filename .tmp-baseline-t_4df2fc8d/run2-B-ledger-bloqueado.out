@@ -1,0 +1,8 @@
+OK      travas         17s
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     3s  (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline/home-ensaio/.local/state/zapp-verify/34b17af0d919/banco_local.log)
+[functions] só produção=0 só local=0 diferentes=2
+    diferente: f:complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text)
+    diferente: f:sweep_multiplix_stuck_items(p_limit integer)
+ESTRUTURA: 2 diferença(s) em relação ao retrato da produção
+VERIFY: VERMELHO em banco_local (23s)

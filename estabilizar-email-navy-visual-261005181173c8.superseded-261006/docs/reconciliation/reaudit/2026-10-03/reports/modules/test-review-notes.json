@@ -1,0 +1,1138 @@
+{
+  "src/hooks/__tests__/useWarRoomAlerts.test.tsx": {
+    "classification": "REAL_HOOK_WITH_MOCKED_BACKEND",
+    "assertions": [
+      "Hook monta com QueryClient real; retorna array/função de dismiss e aplica volume40 como0.4."
+    ],
+    "mocks_or_fixtures": [
+      "Supabase select/update/insert/channel simulados; conversation_sla devolve array vazio; Audio e preferências são doubles."
+    ],
+    "limits": [
+      "Não republica página após insert nem testa >50 violações. exists/toBeDefined e typeof não asseguram idempotência ou sucesso de dismiss."
+    ],
+    "related_findings": [
+      "R2-MOD-074"
+    ]
+  },
+  "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx": {
+    "classification": "REAL_HOOK_WITH_SYNTHETIC_REALTIME",
+    "assertions": [
+      "INSERT crítico manual toca quando habilitado; mute e quiet hours bloqueiam play."
+    ],
+    "mocks_or_fixtures": [
+      "Audio fake, estado de settings mutável, canal entrega callback capturado, backend vazio."
+    ],
+    "limits": [
+      "Não verifica contagem de beeps, persistência da preferência nem criação/deduplicação SLA."
+    ],
+    "related_findings": [
+      "R2-MOD-074"
+    ]
+  },
+  "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx": {
+    "classification": "REAL_HOOK_WITH_ROUTER_STUB",
+    "assertions": [
+      "Defaults/leitura de period/queue/agent; roundtrip custom e limpeza de from/to; flags replace e recorte de calendário São Paulo."
+    ],
+    "mocks_or_fixtures": [
+      "useSearchParams substituído por um URLSearchParams estático e mockSetter; updater executado manualmente; localDay real."
+    ],
+    "limits": [
+      "Não exercita navegação/history real, passagem de meia-noite, datas de calendário inválidas/ordem invertida nem a seleção visual Personalizada."
+    ],
+    "related_findings": [
+      "R2-MOD-065"
+    ]
+  },
+  "src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts": {
+    "classification": "REAL_PURE_HELPER_ONLY",
+    "assertions": [
+      "eventText real mapeia oito casos, incluindo nomes ausentes e tipo desconhecido."
+    ],
+    "mocks_or_fixtures": [
+      "Strings de nomes/eventos; nenhuma chamada de query do hook."
+    ],
+    "limits": [
+      "Não cobre embed fallback, erros/identidade dos lookups, janela24h nem cache."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts": {
+    "classification": "REAL_PURE_AGGREGATE_WITH_LOCAL_CALENDAR_FIXTURE",
+    "assertions": [
+      "24 horas, null futuro, contagem da hora corrente, sete dias e média com dias zero; bucket vazio."
+    ],
+    "mocks_or_fixtures": [
+      "NOW e day são gerados no mesmo fuso local; buckets pequenos em memória."
+    ],
+    "limits": [
+      "Não compõe bucket SQL São Paulo com navegador em fuso diferente nem executa a RPC/query."
+    ],
+    "related_findings": [
+      "R2-MOD-075"
+    ]
+  },
+  "src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx": {
+    "classification": "REAL_UI_AND_NAVIGATION_WITH_NEGATIVE_ASSERTIONS",
+    "assertions": [
+      "Navegação avançada omite public-api; componente real expõe status desativado e nenhum textbox/botão/x-api-key."
+    ],
+    "mocks_or_fixtures": [
+      "Render RTL dos imports reais, sem mocks locais."
+    ],
+    "limits": [
+      "Não valida desligamento do endpoint no backend nem acesso por outra rota; contrato comprovado é apresentação/navegação."
+    ],
+    "related_findings": []
+  },
+  "src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx": {
+    "classification": "MIXED_REAL_RENDER_AND_TAUTOLOGICAL_LOCAL_LOGIC",
+    "assertions": [
+      "Render real de título/subtítulo/cards/loading e botão IA habilitado."
+    ],
+    "mocks_or_fixtures": [
+      "Supabase sempre devolve quatro contatos; funções IA devolvem not found. Bloco algoritmo usa constantes, Math.min local e arrays locais."
+    ],
+    "limits": [
+      "Linhas82–150 não invocam algoritmo produtivo: níveis são strings comparadas a si mesmas; higher/lower só exigem que fixture exista. Limite500 é constante comparada a500 (207–210). Cores/sorting/filter/reasons são implementações locais. Botão clickable não é clicado nem resultado IA verificado."
+    ],
+    "related_findings": []
+  },
+  "src/components/campaigns/__tests__/CampaignsView.test.tsx": {
+    "classification": "REAL_VIEW_RENDER_WITH_HOOK_STUB",
+    "assertions": [
+      "Só confirma que o título Campanhas aparece."
+    ],
+    "mocks_or_fixtures": [
+      "useCampaigns vazio/mutations mockadas; Supabase/auth/toast/motion doubles."
+    ],
+    "limits": [
+      "Describe Target Type Options não interage com público, create, pause, filtros ou envio. Não contradiz os defeitos de audience/materialização ou status."
+    ],
+    "related_findings": [
+      "R2-MOD-005",
+      "R2-MOD-006"
+    ]
+  },
+  "src/components/catalog/__tests__/CT25_cardActions.test.tsx": {
+    "classification": "REAL_CARD_ACTIONS_WITH_BOUNDARY_STUBS",
+    "assertions": [
+      "Menu grade/lista, favorito callback, detalhe, propagação, Enviar, clipboard/link/slug, window.open e atalhos Enter/e com stockout/target interno."
+    ],
+    "mocks_or_fixtures": [
+      "ProductDetailDialog é stub de abertura; clipboard/open/toast doubles, ResizeObserver polyfill, produto único."
+    ],
+    "limits": [
+      "Valida despacho do card, sem executar detalhe ou envio; não cobre navegação A→B→Fechar→reabrir pelo cartão A do diálogo nem payload assíncrono após trocar produto."
+    ],
+    "related_findings": [
+      "R2-MOD-046"
+    ]
+  },
+  "src/components/catalog/__tests__/CT28_bulkBar.test.tsx": {
+    "classification": "REAL_BAR_AND_PARENT_WITH_CHILD_STUBS",
+    "assertions": [
+      "Limites10/11/maxSend; seleção da página, seleção grade/lista, CSV real com3 linhas, favorito só não favorito, limpeza, produtos/cor encaminhados aos dialogs."
+    ],
+    "mocks_or_fixtures": [
+      "Card/SendProductDialog/BulkSendDialog e hooks de catálogo/favoritos stubados; downloadCSV é spy, geração CSV real."
+    ],
+    "limits": [
+      "Cor é emitida diretamente pelo card fake, logo não cobre a perda no card real. Seleção só dentro da mesma página; favorito usa vi.fn síncrono, sem falha ou promise tardia. Não executa envio em massa."
+    ],
+    "related_findings": [
+      "R2-MOD-010",
+      "R2-MOD-043",
+      "R2-MOD-045"
+    ]
+  },
+  "src/components/catalog/__tests__/CT30_responsivo.test.tsx": {
+    "classification": "REAL_RESPONSIVE_COMPONENTS_WITH_BREAKPOINT_STUB",
+    "assertions": [
+      "Accordion rotulado monta rail; detalhe real usa Drawer vaul quando mobile e Sheet quando desktop."
+    ],
+    "mocks_or_fixtures": [
+      "useIsMobile controlado, hooks de catálogo/auth fake, reducedMotion false; jsdom."
+    ],
+    "limits": [
+      "Breakpoints CSS medidos por classe xl:hidden ou hook simulado, sem viewport real, layout/overflow/touch ou transição responsiva em navegador."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT39_downloadFotos.test.tsx": {
+    "classification": "REAL_DIALOG_HANDLER_WITH_DOWNLOAD_STUB",
+    "assertions": [
+      "Nenhuma foto impede download; parcial informa1/2; falha total não promete sucesso; duas URLs e nome de arquivo."
+    ],
+    "mocks_or_fixtures": [
+      "downloadImageAsBlob devolve booleans; readiness sempretrue; auth/busca/envio/menu stubados; variantes já hidratadas."
+    ],
+    "limits": [
+      "Não executa rede/CORS/blob/âncora de download, rejeição inesperada ou carregamento de variantes. O teste positivo de falha total é de download, não cobre o contrato diferente de envio MOD007."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT40_badgeTokens.test.tsx": {
+    "classification": "SOURCE_TEXT_CONTRACT",
+    "assertions": [
+      "Top-level TS/TSX do catálogo não contém text-white/bg-violet-500/hex6; tokens.css tem --badge-new iniciando por dígito e consumidor textual hsl(var(...))."
+    ],
+    "mocks_or_fixtures": [
+      "readFileSync/readdirSync reais no teste; sem render."
+    ],
+    "limits": [
+      "Busca não é recursiva nem proíbe todo literal CSS; presença de string não valida sintaxe/estilo computado, contraste ou aplicação visual."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT55_57_management.test.tsx": {
+    "classification": "REAL_PARENT_WITH_DATA_AND_DIALOG_STUBS",
+    "assertions": [
+      "Tab enviada por URL/default; duas linhas ou vazio; deeplink fetch produto/contato antes de preset, ausência/null/telefone inválido não inventa contato."
+    ],
+    "mocks_or_fixtures": [
+      "Hooks dados/favoritos/recentes/histórico e dialog stubados; fetch presets resolvidos por fixture; history URL local."
+    ],
+    "limits": [
+      "Caso chamado RLS/inexistente é null simulado, sem política real. Sem paginação>500, erro do histórico, resposta fora de ordem ou envio real."
+    ],
+    "related_findings": [
+      "R2-MOD-042"
+    ]
+  },
+  "src/components/catalog/__tests__/CT61_62_65_catalogFilters.test.tsx": {
+    "classification": "REAL_FILTER_AND_KEYBOARD_CONSUMERS_WITH_QUERY_STUBS",
+    "assertions": [
+      "Novidades envia is_new, clear remove busca/flag na UI; chip condicional; atalhos /, Ctrl/Cmd+F, Esc e guard de campo/Sheet fechado."
+    ],
+    "mocks_or_fixtures": [
+      "Catálogo/dados/card/dialog/preset stubs; debounce real aguardado350ms; KeyboardEvent em jsdom."
+    ],
+    "limits": [
+      "Após clear, lastQuery opcional pode ser undefined e ambas assertions toBeUndefined passam mesmo sem nova consulta (210–215); não exige número de chamadas. Não verifica página2→1, resultado real, ordenação nem competição com outros listeners globais."
+    ],
+    "related_findings": [
+      "R2-MOD-009"
+    ]
+  },
+  "src/components/catalog/__tests__/CT67_a11y.test.tsx": {
+    "classification": "REAL_COMPONENT_AXE_WITH_SEVERITY_PARTITION",
+    "assertions": [
+      "Axe dos cinco componentes reais, portais pelo document.body; zero critical/serious, IDs moderate/minor pinados; controle negativo button-name prova matcher não no-op."
+    ],
+    "mocks_or_fixtures": [
+      "Hooks de dados/envio/auth/readiness e ResizeObserver doubles, fixtures estáticas; não mocka Radix."
+    ],
+    "limits": [
+      "Lido, não executado. Inventário não sério compara IDs de violações, não quantidade de nós atingidos; mais nós no mesmo heading-order não alteram a lista. Não cobre todos os estados/interações, contraste visual ou leitor de tela real."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT68_acessibilidade.test.tsx": {
+    "classification": "REAL_UI_ATTRIBUTE_CONTRACT_WITH_TARGETED_IMPORTACTUAL",
+    "assertions": [
+      "Live-region status/polite e nó preservado ao mudar favoritos; constantes/classes de foco em chips, card real, favorito, seleção, thumbs, swatches e variações."
+    ],
+    "mocks_or_fixtures": [
+      "Dados/hooks e filhos stubados no cenário de contagem; importActual obtém card/detalhe reais nos casos de foco."
+    ],
+    "limits": [
+      "Afirma atributo/classe, não anúncio falado nem ring visual. Fixture tem2 produtos/total60 e só verifica rótulo1–24; não prova número real exibido ou debounce de consulta."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT69_alts.test.tsx": {
+    "classification": "REAL_ALT_HELPERS_AND_COMPONENTS",
+    "assertions": [
+      "Helpers nome/cor e ausência/multicor; alt de capa grade/lista; detalhe real muda alt ao selecionar swatch e conserva alt vazio decorativo das thumbs; foto de variante."
+    ],
+    "mocks_or_fixtures": [
+      "Dados/hidratação/favoritos fake; detalhe via importActual, sem carregar imagens de rede."
+    ],
+    "limits": [
+      "Testa strings/atributos e seleção, sem comprovar correspondência visual da cor/foto, carregamento, fallback ou leitura por tecnologia assistiva."
+    ],
+    "related_findings": [
+      "R2-MOD-066"
+    ]
+  },
+  "src/components/catalog/__tests__/CT70_reducedMotion.test.tsx": {
+    "classification": "MIXED_SOURCE_TEXT_AND_RENDER_WITH_PREFERENCE_STUB",
+    "assertions": [
+      "Varre imports/chamada useReducedMotion; opacity/transform iniciais mudam no wrapper da grade e linha de templates conforme flag."
+    ],
+    "mocks_or_fixtures": [
+      "Hook useReducedMotion é substituído; dados/card/dialog e hook templates simulados; framer-motion restante real."
+    ],
+    "limits": [
+      "Cabeçalho cita singleton motion-dom, mas código controla hook fake (30–33), não preferência do SO. Regex não prova que retorno do hook controla toda animação; dois cenários DOM não cobrem todo módulo."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT72_imagens.test.tsx": {
+    "classification": "MIXED_REAL_IMG_ATTRIBUTES_AND_SOURCE_CSS",
+    "assertions": [
+      "ProductThumb/card real: eager/high ou lazy, sizes/srcset, classes offscreen; regraCSS content-visibility e intrinsic-size em texto."
+    ],
+    "mocks_or_fixtures": [
+      "Detalhe stubado; URLs sintéticas sem load/error de imagem."
+    ],
+    "limits": [
+      "Prova atributos/CSS textual, não download prioritário, dobra real, layout/paint ou CLS medido. Não cobre ciclo erro→fallback→load do MOD066."
+    ],
+    "related_findings": [
+      "R2-MOD-066"
+    ]
+  },
+  "src/components/catalog/__tests__/CT74_headerSemTroca.test.tsx": {
+    "classification": "SOURCE_TEXT_REGRESSION_GUARD",
+    "assertions": [
+      "Presença ModuleHeader, ausência de ternário/esqueletos específicos e fallback stats.total??totalProducts."
+    ],
+    "mocks_or_fixtures": [
+      "Lê arquivo real, sem render."
+    ],
+    "limits": [
+      "É guarda de padrões literais, não ausência de todo condicional ou medida de altura/CLS. Métricas Lighthouse citadas no comentário não foram reproduzidas nesta revisão."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx": {
+    "classification": "REAL_COMPONENT_PLACEHOLDER_ASSERTION",
+    "assertions": [
+      "Componente real sem stats/loading monta placeholder e não strip carregado."
+    ],
+    "mocks_or_fixtures": [
+      "Props estáticas; render RTL."
+    ],
+    "limits": [
+      "Não compara geometria dos estados nem mede deslocamento de layout; existência do placeholder não equivale a CLS zero."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx": {
+    "classification": "REAL_TOUR_LOCAL_STORAGE_LIFECYCLE",
+    "assertions": [
+      "Ajuda5 passos, tour4 dicas, concluir/pular persistem, remontagem respeita chave e Storage lançando não quebra."
+    ],
+    "mocks_or_fixtures": [
+      "localStorage jsdom e spies para falha get/set; ResizeObserver fake."
+    ],
+    "limits": [
+      "Passos textuais e contagem não provam prints reais ou fluxo de envio; arquivo declara a limitação visual. Não mede experiência/atalhos de cada dica no produto."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx": {
+    "classification": "REAL_FILTERS_WITH_SLIDER_STUB",
+    "assertions": [
+      "Teto price_max/fallback/clamp, callbacks dos dois thumbs, cores/materiais, badge, clear/fechar e ausência de bestseller sem dados."
+    ],
+    "mocks_or_fixtures": [
+      "Slider substituído por dois botões que emitem100/500; props stats em fixtures."
+    ],
+    "limits": [
+      "Título diz slider real, mas não há interação com Radix ou pointer. Clear só verifica callbacks, não todos os valores resetados; nenhum fetch/CSV consumidor é exercitado."
+    ],
+    "related_findings": [
+      "R2-MOD-041"
+    ]
+  },
+  "src/components/catalog/__tests__/CatalogRail.test.tsx": {
+    "classification": "REAL_RAIL_AND_HELPERS_WITH_AGGREGATE_FIXTURES",
+    "assertions": [
+      "Banner/filtro, delta mensal/zero, cardscontagens, status sent/failed/partial, destinatário, callbacks, exportflags, links, alertas sync/estoque, persistência de dismiss e daysSince real."
+    ],
+    "mocks_or_fixtures": [
+      "Stats/recentes/topSent precomputados, exportador orquestrador spy, relógio/sessionStorage controlados."
+    ],
+    "limits": [
+      "Não mede gráfico real nem origem dos agregados/topSent. Caso mudança de dica356–364 não renderiza dia4; só calcula índice diferente e renderiza dia3. Export só verifica flags do rail, sem filtro avançado geral."
+    ],
+    "related_findings": [
+      "R2-MOD-041",
+      "R2-MOD-044"
+    ]
+  },
+  "src/components/catalog/__tests__/catalogMocks.ts": {
+    "classification": "SHARED_TEST_FIXTURE_MODULE",
+    "assertions": [
+      "Não contém tests/assertions; compartilha toast spy e ResizeObserver sem comportamento."
+    ],
+    "mocks_or_fixtures": [
+      "vi.mock sonner e API de medição com métodos vazios."
+    ],
+    "limits": [
+      "Arquivo de suporte lido, não prova funcionalidade, geometria ou resultado positivo de nenhum teste."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/ExternalProductCatalog.test.tsx": {
+    "classification": "REAL_PARENT_WITH_MOCKED_HOOKS_AND_CHILDREN",
+    "assertions": [
+      "Estados erro/vazio/429, retrycallback, opções/contagens, favoritos, preset ao dialog, quatro capas priority, estrutura lista/sticky e fetching sem skeleton."
+    ],
+    "mocks_or_fixtures": [
+      "Card/dialog/hooks de catálogo/favoritos stubados; estados da query definidos por fixture;2produtos/total60."
+    ],
+    "limits": [
+      "Não navega de página ou executa carregamento real; 429 verifica bloqueio inicial, não duração/retentativa. Favorito incompleto tem só nome/sku e card fake não valida preço/hidratação."
+    ],
+    "related_findings": [
+      "R2-MOD-048"
+    ]
+  },
+  "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx": {
+    "classification": "REAL_VIRTUALIZER_WITH_SYNTHETIC_LAYOUT",
+    "assertions": [
+      "Virtualizador real entrega16linhas de50 e spacer conservaaltura; desliga para pageSize24/grade; não duplica nomes na janela inicial."
+    ],
+    "mocks_or_fixtures": [
+      "offsetHeight720 e ResizeObserver imediato, card/hooks/dados fake;50produtos fixos inclusive quando pageSize24."
+    ],
+    "limits": [
+      "Não mede performance/viewport real ou scroll para outras janelas. Caso pageSize24 aceita50rows porque backendfake ignora limite; não é prova de paginação da consulta."
+    ],
+    "related_findings": []
+  },
+  "src/components/catalog/__tests__/ExternalProductManagement.test.tsx": {
+    "classification": "REAL_MANAGEMENT_CONSUMERS_WITH_BACKEND_HOOK_STUBS",
+    "assertions": [
+      "Header/sync, callbacksKPI/filtroURL/search, cor/materialarrays e clientfilter, erros/retry, categorias, ausênciaMaisPedidos, bulk CSV/favorito, ajuda e reducedMotion."
+    ],
+    "mocks_or_fixtures": [
+      "Catálogo/stats/favoritos/auth simulados; exportador e downloadspy; dois produtos; promises imediato/debounce aguardado."
+    ],
+    "limits": [
+      "Teste298–304 clica último botão e só mantém nome visível, sem provar mudança para lista. Nenhum ciclo página2→1, export com combinação de filtros avançados ou falha de favorito. Provas de filtros são args de callback, não backend."
+    ],
+    "related_findings": [
+      "R2-MOD-009",
+      "R2-MOD-010",
+      "R2-MOD-041",
+      "R2-MOD-043"
+    ]
+  },
+  "src/components/catalog/__tests__/ProductDetailDialog.test.tsx": {
+    "classification": "REAL_DIALOG_WITH_DATA_HOOK_STUBS",
+    "assertions": [
+      "Galeria avança e retorna, mostra contador, copia SKU e renderiza metadados, descrição, ficha técnica, cores/estoque agrupado e categorias/fallbacks.",
+      "Selecionar Vermelho entrega produto e cor ao callback direto; navegação aberta entre três produtos atualiza título e querystring e retorna ao produto anterior."
+    ],
+    "mocks_or_fixtures": [
+      "useExternalProduct/favoritos simulados; produto inicial já possui três imagens e variantes locais; Clipboard e ResizeObserver substituídos."
+    ],
+    "limits": [
+      "O callback direto preserva a cor, mas não compõe CatalogProductCard, onde o segundo argumento é perdido (MOD045).",
+      "A navegação A→B→A enquanto aberto é exercitada; não há ciclo A→B→Fechar→reabrir pelo cartão A que reproduz MOD046.",
+      "Todas as fixtures navegáveis têm três imagens; não verifica índice avançado seguido de produto com menos imagens (MOD047), nem hidratação assíncrona/erro real."
+    ],
+    "related_findings": [
+      "R2-MOD-045",
+      "R2-MOD-046",
+      "R2-MOD-047"
+    ]
+  },
+  "src/components/catalog/__tests__/SendProductDialog.test.tsx": {
+    "classification": "REAL_DIALOG_WITH_OUTBOUND_AND_READINESS_DOUBLES",
+    "assertions": [
+      "Limite de texto, bloqueio do 11º clique de foto, links com variante, preview, rascunho debounce/restauração/descarte, confirmação de fechamento, remount por key, atalhos e contato preset atravessam o diálogo real.",
+      "Readiness blocked impede botão e Ctrl+Enter; caminho permitido gera payload image/caption para o contato; promise pendente produz região aria-live."
+    ],
+    "mocks_or_fixtures": [
+      "Readiness já resolvido, busca, outbound e log de evento simulados; fixtures com variants=[] eliminam hidratação; menu Radix substituído, fake timers/sessionStorage."
+    ],
+    "limits": [
+      "130–149 remove as 11 fotos inicialmente selecionadas antes de testar o 11º clique; não cobre o limite inicial/global (MOD011).",
+      "Readiness de erro não é produzido pelo hook real (MOD008), e outbound nunca chega a backend/provedor.",
+      "Key distinta demonstra isolamento por remount; não testa troca sem key. Promise pendente é usada só para anúncio de progresso, sem resolver erro/troca de produto."
+    ],
+    "related_findings": [
+      "R2-MOD-008",
+      "R2-MOD-011"
+    ]
+  },
+  "src/components/catalog/__tests__/catalogExport.test.ts": {
+    "classification": "REAL_EXPORT_HELPERS_WITH_FETCH_DOWNLOAD_DOUBLES",
+    "assertions": [
+      "Escape CSV/BOM em bytes, 13 colunas, preço/links/nome de arquivo e três filtros rail. Paginação real do coletor com offsets, cap1000, dedupe, vazio e erro abortando download parcial.",
+      "Fetcher real envia action/params e rejeita erro transport/body; Blob e revogação de URL verificados."
+    ],
+    "mocks_or_fixtures": [
+      "Páginas injetadas ou functions.invoke fake; sonner/download/anchor.click substituídos."
+    ],
+    "limits": [
+      "Não compõe os filtros avançados do consumidor: teste valida apenas filterKey e params passados diretamente; permanece MOD041.",
+      "Não valida Excel/navegação/download real, ordenação consistente de backend concorrente ou sanitização de fórmulas; nenhum resultado de execução alegado."
+    ],
+    "related_findings": [
+      "R2-MOD-041"
+    ]
+  },
+  "src/components/catalog/__tests__/catalogShared.test.tsx": {
+    "classification": "REAL_HELPERS_COMPONENTS_AND_HOOK",
+    "assertions": [
+      "Formatadores, prioridade de badge, chips/estoque/preço, botões de favorito, KPI/skeleton, categorias/ícones, filtros OR e callbacks são exercitados.",
+      "ProductThumb percorre erro primário→fallback→erro; cooldown com fake timers verifica bloquear9s/liberar10s, e estados de erro/preview renderizam."
+    ],
+    "mocks_or_fixtures": [
+      "Fixtures locais, sonner fake; fireEvent de imagem sem navegador carregando; timers sintéticos."
+    ],
+    "limits": [
+      "ProductThumb149–155 não emite load bem-sucedido no fallback nem rerender com novo src após erro, justamente MOD066.",
+      "Skeleton/classname e regex de hex não medem CLS/contraste. Texto espera1min mas assertion libera10s; teste descreve comportamento local, não orçamento servidor.",
+      "Chips locais não compõem exportação nem persistência de favoritos."
+    ],
+    "related_findings": [
+      "R2-MOD-066",
+      "R2-MOD-041",
+      "R2-MOD-043"
+    ]
+  },
+  "src/components/catalog/__tests__/sendProductUtils.test.ts": {
+    "classification": "REAL_PURE_HELPERS_WITH_BROWSER_IO_DOUBLES",
+    "assertions": [
+      "Agrupa variantes e deduplica thumbs, inclui imagem principal, gera textos formal/informal/promo/variante e resolve nome/empresa com fallback sem exemplo.",
+      "downloadImageAsBlob cria Blob URL, nome e revogação; rejeição fetch retorna false sem click."
+    ],
+    "mocks_or_fixtures": [
+      "Produtos/variantes locais; fetch, object URL e anchor.click simulados."
+    ],
+    "limits": [
+      "Não testa envio/quantidade máxima de fotos, preservação de seleção no wrapper, estoque atualizado nem execução CORS real.",
+      "Textos são conferidos por trechos e não validam todas as combinações de campos/formatação."
+    ],
+    "related_findings": [
+      "R2-MOD-011",
+      "R2-MOD-045"
+    ]
+  },
+  "src/components/catalog/__tests__/useSendProduct.test.tsx": {
+    "classification": "REAL_HOOK_WITH_TRANSPORT_DOUBLE",
+    "assertions": [
+      "Texto sozinho/imagens com caption só na primeira, intervalo de fotos, falha parcial/total com retry e progresso por promises controladas.",
+      "Busca debounce, evento com messageIds/status, invalidação do rail e navegação/evento para abrir contato são exercitados no hook real."
+    ],
+    "mocks_or_fixtures": [
+      "Outbound, busca e log substituídos; QueryClient real, fake timers/resolvers; navegação mockada."
+    ],
+    "limits": [
+      "349–351 afirma fórmula comum ao lote, mas 352–413 só testam useSendToContact; falha total do hook é controle positivo e não cobre CatalogBulkSendDialog sem imagem (MOD007).",
+      "Evento e invalidate são chamadas a doubles; nenhuma persistência/RLS, recibo de entrega ou seleção final do lote é provada.",
+      "Não há concorrência entre dois envios nem busca respondendo fora de ordem."
+    ],
+    "related_findings": [
+      "R2-MOD-007"
+    ]
+  },
+  "src/components/tasks/__tests__/TasksAgendaMode.test.tsx": {
+    "classification": "REAL_AGENDA_WITH_FIXED_LOCAL_CLOCK",
+    "assertions": [
+      "Faixa7dias, rótulos/aria-current, QuickAdd dia inicial, seleção Amanhã, fronteira7º/8ºdia, pontos por dia, classes fim de semana e skeleton exercitam componente real."
+    ],
+    "mocks_or_fixtures": [
+      "Date local fixo1out2026; tarefas fornecidas e mutations vi.fn; QueryClient/Tooltip reais."
+    ],
+    "limits": [
+      "Relógio fica fixo e dados pré-carregados; não verifica virada do dia, população além do teto, quick-add pendente enquanto muda dia ou resultado de mutation.",
+      "Geometria citada no comentário é rótulo/classe em jsdom, não medição de layout."
+    ],
+    "related_findings": [
+      "R2-MOD-054",
+      "R2-MOD-056",
+      "R2-MOD-058"
+    ]
+  },
+  "src/components/tasks/__tests__/TasksBoardMode.test.tsx": {
+    "classification": "REAL_PURE_DRAG_DECISION",
+    "assertions": [
+      "resolveDragEnd real cobre reorder cinco colunas/positions, WIP real, motivo waiting, move com índice, destino nulo/id desconhecido e transição inválida."
+    ],
+    "mocks_or_fixtures": [
+      "DropResult e arrays locais; makeTaskRow fixture; nenhum React/DnD renderizado neste arquivo."
+    ],
+    "limits": [
+      "Título de arquivo não significa montagem do quadro: os testes conscientemente isolam decisão.",
+      "Índice de destino é validado contra a mesma lista fornecida; não compõe lista filtrada com ordenação completa de useMyWorkItems (MOD055), nem persistência/conflito."
+    ],
+    "related_findings": [
+      "R2-MOD-055"
+    ]
+  },
+  "src/components/tasks/__tests__/TasksListMode.test.tsx": {
+    "classification": "REAL_LIST_WITH_BUCKET_FIXTURES",
+    "assertions": [
+      "Ordem DOM das seis seções, concluídas recolhidas, grupos de Próximas, vazio total/filtrado, limpar callback, checkbox sem abrir e reabrir tarefa; skeleton."
+    ],
+    "mocks_or_fixtures": [
+      "Buckets fornecidos diretamente, makeTaskRow e callbacks vi.fn; Tooltip real."
+    ],
+    "limits": [
+      "Não calcula buckets com hook/query nem confirma alteração de status/persistência ou restauração de lembrete."
+    ],
+    "related_findings": [
+      "R2-MOD-053",
+      "R2-MOD-054"
+    ]
+  },
+  "src/components/tasks/__tests__/TasksModule.test.tsx": {
+    "classification": "REAL_MODULE_WITH_DATABASE_HARNESS",
+    "assertions": [
+      "Filtros chegam à URL e recortam quadro/lista; modos compartilham select e respeitam preferência/default/forceMode; KPIs/contagens e classes respondem à carga.",
+      "Eventos tasks-shortcut reais no módulo focam campos, abrem sheet, concluem/cancelam/movem e anunciam; deep-link task seleciona item carregado."
+    ],
+    "mocks_or_fixtures": [
+      "Harness tarefas/Supabase, QueryClient e MemoryRouter; dados predefinidos e efeitos update/undoToast observados como chamadas."
+    ],
+    "limits": [
+      "401–425 explicita segunda metade do teclado: CustomEvent direto não valida keydown, defaultPrevented, guarda de input ou interação com listener do card.",
+      "Teste1234tarefas (:299–307) retorna1234viafixture; não reproduz teto PostgREST de MOD054.",
+      "Cancelar só exige undoToast chamado (:512–520); não executa desfazer nem triggers que limpam remind_at (MOD053). Criar/anunciar não verifica payload contactId (MOD049) ou promise rejeitada (MOD051).",
+      "Classe h88/grid não mede layout. Sem avança relógio à meia-noite MOD058."
+    ],
+    "related_findings": [
+      "R2-MOD-049",
+      "R2-MOD-051",
+      "R2-MOD-053",
+      "R2-MOD-054",
+      "R2-MOD-058"
+    ]
+  },
+  "src/components/tasks/__tests__/WorkItemCard.test.tsx": {
+    "classification": "REAL_CARD_WITH_CALLBACK_SPIES",
+    "assertions": [
+      "Render de done/waiting/agenda, teclas Enter/x e guarda de evento vindo de filho, checkbox/body sem propagação indevida, chip contato, menu abrir/mover/WIP e remover alarme."
+    ],
+    "mocks_or_fixtures": [
+      "Callbacks vi.fn; item fixture, shims Pointer API; Radix menus dirigidos pelo teclado."
+    ],
+    "limits": [
+      "Keydown é só do card: não monta registro global. As ações não chegam ao hook nem ao SQL; tarefas done com novo reminder não são salvas."
+    ],
+    "related_findings": [
+      "R2-MOD-052",
+      "R2-MOD-057"
+    ]
+  },
+  "src/components/tasks/__tests__/agendaGroups.test.tsx": {
+    "classification": "REAL_AGENDA_WITH_CALLBACK_SPIES",
+    "assertions": [
+      "QuickAdd cria no dia23:59, preserva draft ao trocar dia antes de enviar e segundo create mantém prazo.",
+      "aria-controls aponta região distinta do botão; grupos alarme/prazo/semhora, pontos, classes de card, expansão atrasadas e vazio."
+    ],
+    "mocks_or_fixtures": [
+      "Relógio local real no módulo do teste; mutation resolve imediatamente, items/overdue fornecidos."
+    ],
+    "limits": [
+      "Troca de dia ocorre antes da primeira criação, não enquanto await antigo está pendente (MOD056).",
+      "Sem persistência de data no SQL nem horário de verão/fuso alternativo ou virada do dia."
+    ],
+    "related_findings": [
+      "R2-MOD-056",
+      "R2-MOD-058"
+    ]
+  },
+  "src/components/tasks/__tests__/cardAcoes.test.tsx": {
+    "classification": "REAL_COMPONENTS_AND_MODULE_WITH_DATABASE_HARNESS",
+    "assertions": [
+      "Gate waiting pede motivo sem update/upsert; sheet focusField seleciona waiting. Menus completos, WIP3/3, snooze/remover/escolher e coarse-pointer move são exercitados.",
+      "Módulo renderiza contato; callbacks do card separam concluir/cancelar."
+    ],
+    "mocks_or_fixtures": [
+      "Harness Supabase, dados locais e callback spies; matchMedia coarse sintético."
+    ],
+    "limits": [
+      "Cancelar verifica callback, não desfazer/restaurar lembrete. Snooze verifica argumento15/tomorrow9, não notified_at ou execução do alarme.",
+      "RemindChip217–232 limpa spy do pai após clique inicial antes de verificar ação; esse caso não prova ausência de propagação do clique inicial."
+    ],
+    "related_findings": [
+      "R2-MOD-052",
+      "R2-MOD-053",
+      "R2-MOD-057"
+    ]
+  },
+  "src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx": {
+    "classification": "REAL_MODULE_WITH_FILTERED_FIXTURE",
+    "assertions": [
+      "Mesmo cenário real do módulo diferencia cabeçalho6abertas/3hoje, KPIWIP3/3, KPIhoje filtrado1 e colunaDoingvisível0/WIPreal3."
+    ],
+    "mocks_or_fixtures": [
+      "Seis tarefas Supabase harness; filtro via URLprio=urgent."
+    ],
+    "limits": [
+      "Bom controle de contagem filtrada vs carga; não testa ordem ao arrastar recorte contra lista completa (MOD055), nem mais linhas que teto remoto."
+    ],
+    "related_findings": [
+      "R2-MOD-054",
+      "R2-MOD-055"
+    ]
+  },
+  "src/components/tasks/__tests__/movimentoEContraste.test.tsx": {
+    "classification": "SOURCE_CONTRACT_AND_RENDERED_TOKEN_CONTRAST",
+    "assertions": [
+      "Lê CSS/TS de produção, valida seletores reduced-motion e ligação useReducedMotion; render chips e verifica classes dos tokens.",
+      "Calcula contraste HSL→RGB com alpha usando tokens reais claros/escuros para texto sobre card/tinta15%, valores>=4.5."
+    ],
+    "mocks_or_fixtures": [
+      "Medidor WCAG local e parser CSS simples; tokens do disco, sem computed styles no navegador."
+    ],
+    "limits": [
+      "Não é teste tautológico de constantes isoladas: há ligação ao CSS e componentes reais. Entretanto não mede cascade/computed styles/animação/navegador nem temas customizados; comentários E.2/E.3 são referência, não execução nesta revisão."
+    ],
+    "related_findings": []
+  },
+  "src/components/tasks/__tests__/taskComponents.test.tsx": {
+    "classification": "REAL_LIST_BOARD_CARD_WITH_DND_CALLBACK_DOUBLE",
+    "assertions": [
+      "Lista seções/acentos/colapsos7e30dias/empty state e transição de saída; card DeletevsBackspace, prioridadefallback, contatoindisponível e ordem colunas DOM.",
+      "Dndcallback capturado comprova onMove índice, WIP dropdisabled por origem e feedbackclasses; skeleton15cards."
+    ],
+    "mocks_or_fixtures": [
+      "Dnd substituído por wrappers sem geometria; buckets/items e spies; timers reais para observar saída por60ms/waitFor."
+    ],
+    "limits": [
+      "Drag manual não compõe persistência, filtro e lista total: permanece MOD055.",
+      "Classes/grid e callbacks não são dimensão real ou integração DnD pointer. RenderBuckets muda props diretamente, não aguarda mutation real."
+    ],
+    "related_findings": [
+      "R2-MOD-055"
+    ]
+  },
+  "src/hooks/shortcuts/__tests__/taskShortcutLabels.test.ts": {
+    "classification": "REAL_REGISTRY_AND_LABEL_HELPERS",
+    "assertions": [
+      "Sete IDs/scopes/bindings eager sem labels, globais mantêm labels, mapa de rótulos exato e aplicarRotulos preserva binding/id não conhecido."
+    ],
+    "mocks_or_fixtures": [
+      "Imports reais de registry e helpers; rótulos locais para teste de merge."
+    ],
+    "limits": [
+      "Não mede bundle340KB nem executa importlazy/computed keyboard matching/event propagation; valida estrutura de objetos."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/tasks/__tests__/useMyWorkItems.idempotencia.test.tsx": {
+    "classification": "REAL_HOOK_WITH_WRITE_HARNESS",
+    "assertions": [
+      "Mesma clientTaskId concorrente faz um insert; chaves distintas fazem dois; insert sem chave ganha string;23505trazsucesso e42501erro."
+    ],
+    "mocks_or_fixtures": [
+      "Supabase harness com respostas resolvidas; QueryClient/hook reais."
+    ],
+    "limits": [
+      "O teste de UUID exige apenas stringnão vazia, não formato/entropia.23505genérico é aceito sem conferir constraint/linha existente; não prova dedupe no banco nem retry após reload."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/tasks/__tests__/useMyWorkItems.test.tsx": {
+    "classification": "REAL_HOOK_WITH_DATABASE_HARNESS",
+    "assertions": [
+      "Payload creator/assignee, rejeição de reminder passado, WIP/waiting gates, mover e upsert posições de ambas colunas, snooze zera notified_at.",
+      "Rollback verifica snapshotoriginal (não só spycalled), badge contagem, contatojoin, invalidação e queryde30dias/cancelled."
+    ],
+    "mocks_or_fixtures": [
+      "Harness de leitura/escrita e undoToastfake; QueryClient real; listas pequenas."
+    ],
+    "limits": [
+      "Complete81–93 só verifica done e oferta undo, não executa callback de desfazer (MOD053).",
+      "Snooze157–169 é controle positivo distinto de update via Sheet sem zerar notified_at (MOD052).",
+      "Move usa índice0 de lista completa, não compõe destino filtrado (MOD055). Gate de reminder em create/setReminder não valida conversão offsetless do Sheet (MOD050).",
+      "Backendfixture não aplica RLS/triggers/limite remoto e rollback concorrente não exercitado."
+    ],
+    "related_findings": [
+      "R2-MOD-050",
+      "R2-MOD-052",
+      "R2-MOD-053",
+      "R2-MOD-054",
+      "R2-MOD-055"
+    ]
+  },
+  "src/hooks/tasks/__tests__/useTasksFilters.test.tsx": {
+    "classification": "REAL_HOOK_WITH_ROUTER_AND_FAKE_CLOCK",
+    "assertions": [
+      "InicializaURL, debounce200, controles separados e URL, clear cancela timer, filtro concorrente preserva busca, navigate reidrata e URLrealpreservaview/task contra routerobsoleto."
+    ],
+    "mocks_or_fixtures": [
+      "MemoryRouter real, fake timers e window.history; sem consultas."
+    ],
+    "limits": [
+      "Valida estado e URL, não semanticamente população resultante/paginações; SEARCH_DEBOUNCE_MS compartilhada testa encadeamento, não medição de desempenho."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/tasks/__tests__/useWorkItemNotifications.test.ts": {
+    "classification": "REAL_PURE_NOTIFICATION_HELPERS",
+    "assertions": [
+      "notificationTargets valida tipos; snoozePatch zera notified_at, completePatch limpaalarme/timestamp; títuloformat/stripnãoacumula."
+    ],
+    "mocks_or_fixtures": [
+      "Helpers importados reais, nowfixo; nenhum renderHook do listener."
+    ],
+    "limits": [
+      "Nome do arquivo não significa realtime/notificação entregue: não monta subscrição, guarda user, toast ou ação async. Helperbom não cobre SheetupdateMOD052 nem desfazerMOD053."
+    ],
+    "related_findings": [
+      "R2-MOD-052",
+      "R2-MOD-053"
+    ]
+  },
+  "src/hooks/tasks/__tests__/workItemAggregates.test.ts": {
+    "classification": "REAL_PURE_AGGREGATES",
+    "assertions": [
+      "Buscaacento/case, filtrosAND, statusordenado, vencimentobuckets/labels, concluídas7/30dias, local23:59/meianoite/invalid, Agenda grupos/duplapertença e prioridade.",
+      "KPIscontagens pequenas e cycleTime nullsem dados; lista null não derruba."
+    ],
+    "mocks_or_fixtures": [
+      "Fixtures WorkItem com now explícito; algumasdataslocais e outrasZ ao meio-dia."
+    ],
+    "limits": [
+      "Cycle time só tem caso nullsem dados, não cálculo numérico ou dispersão. NOWfornecido não testa memoização do consumidor atravessando dia(MOD058).",
+      "Arrays completos não exercitam teto/queryremota(MOD054) nem índiceDndapósfiltro(MOD055)."
+    ],
+    "related_findings": [
+      "R2-MOD-054",
+      "R2-MOD-055",
+      "R2-MOD-058"
+    ]
+  },
+  "src/hooks/tasks/__tests__/workItemFilters.test.ts": {
+    "classification": "REAL_PURE_FILTER_SERIALIZATION",
+    "assertions": [
+      "Parse defaults/inválidos, serialização sódiff e preservação view, clear, active e roundtriporçamento."
+    ],
+    "mocks_or_fixtures": [
+      "Imports reais, entradas estáticas de URL."
+    ],
+    "limits": [
+      "Não executa navegação/listeners/debounce nem backend; esses contratos estão em arquivosseparados."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/tasks/__tests__/workItemMachine.test.ts": {
+    "classification": "REAL_PURE_STATE_MACHINE",
+    "assertions": [
+      "canTransitionWIP, waitingreason,done→todo e cancelled→todo bloqueado; applyTransitiontimestamps, conclusão limpaalarme, reabrirlimpacompleted, sairwaitinglimpamotivo; aging3dias."
+    ],
+    "mocks_or_fixtures": [
+      "Objetos locais e now explícito."
+    ],
+    "limits": [
+      "São regras cliente; cancelled semsaída não prova restriçãoSQL e conflita com intenção de desfazer por reabrir(MOD053).",
+      "Não compõe undoToast com status/alarmeoriginal; nenhuma concorrênciaWIP no banco."
+    ],
+    "related_findings": [
+      "R2-MOD-053"
+    ]
+  },
+  "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts": {
+    "classification": "TAUTOLOGICAL_AND_LOCAL_EXAMPLES_NO_PRODUCTION_IMPORT",
+    "assertions": [
+      "Somente Vitest importado; blocos de segurança18–115 usam expect(true).toBe(true); exemplos locais verificam comprimentos, trim, split, startsWith e arrays constantes."
+    ],
+    "mocks_or_fixtures": [
+      "Sem montagem, hook, source read, banco ou provedor; supostas verificações estão em comentários."
+    ],
+    "limits": [
+      "As alegações de RLS, integração, render, áudio, acessibilidade e desempenho não são observadas pelos testes; também não são evidência válida de bugs atuais.",
+      "Os títulos ✓/FIXED/GAP e lista de200cenários não provam estado do produto. Incorporação fora do catálogo inicial de módulos: roster final do root; extensão da avaliação prévia TC011, sem ID por caso."
+    ],
+    "related_findings": [
+      "TC011"
+    ]
+  },
+  "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts": {
+    "classification": "SOURCE_STRING_CONTRACT_WITH_TODO_CASES",
+    "assertions": [
+      "Lê fonte real por fs/path e verifica tokens, branches, regex, classes, callbacks textuais e ausência de nomes em18grupos."
+    ],
+    "mocks_or_fixtures": [
+      "readSrc retorna string vazia se leitura falhar; vários casos são it.todo com callback, não execução de comportamento."
+    ],
+    "limits": [
+      "Presença de MarkdownPreview509–511 não prova sanitização; Loader2/isPending não prova spinner/disable na mesma condição; ausência de forward em um arquivo não exclui implementação em dependência.",
+      "Regex em fonte são controles estruturais reais, distintos de tautologias, mas sem render, banco ou fluxo de evento. Não afirmar que os it.todo executaram.",
+      "Incluído fora do catálogo inicial pelo roster final; associação à avaliação TC011 sem novo ID."
+    ],
+    "related_findings": [
+      "TC011"
+    ]
+  },
+  "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx": {
+    "classification": "REAL_MUTATION_WITH_DATABASE_DOUBLE",
+    "assertions": [
+      "Hook de convite real chama crypto.getRandomValues, payload apresenta8 caracteres base36 maiúsculos e dois resultados amostrados diferem."
+    ],
+    "mocks_or_fixtures": [
+      "Supabase auth/insert fake; QueryClient real; espião da API crypto real do ambiente."
+    ],
+    "limits": [
+      "Dois resultados diferentes não provam nunca colidir nem distribuição sem viés; spy>=8não verifica todos os caminhos excluindo Math.random.",
+      "Não executa aceitação do código/RPC/RLS, expiração ou UNIQUE remoto; comentário de credencial não é teste desses controles."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx": {
+    "classification": "REAL_QUERY_FUNCTION_WITH_QUERY_AND_RPC_DOUBLES",
+    "assertions": [
+      "queryFn capturada do hook real é chamada e entrega RPC get_department_whatsapp_credentials com p_department_id exato."
+    ],
+    "mocks_or_fixtures": [
+      "ReactQuery substituído, RPC retorna objeto constante; renderHook somente captura configuração."
+    ],
+    "limits": [
+      "Controle específico do nome do parâmetro é válido; não valida assinatura implantada, autorização/RLS, segredo retornado nem UI consumidora."
+    ],
+    "related_findings": []
+  },
+  "src/features/talk-me/__tests__/TalkMeView.test.tsx": {
+    "classification": "REAL_VIEW_WITH_CONTROLLER_FIXTURES",
+    "assertions": [
+      "Cartões/dados/fallbacks, seleção e foco, setas isoladas de outros controles, busca pendente bloqueando aceite e identidade selecionada no claim.",
+      "Remoção do cartão troca foco; claim pendente bloqueia navegação; drag da faixa não seleciona; loadMore, intenção de avanço após página nova e erro adicional preservando lista."
+    ],
+    "mocks_or_fixtures": [
+      "Controller inteiro fornecido como prop, claim/refresh/search spies, scroll mock; um harness usa estado React para adicionar página."
+    ],
+    "limits": [
+      "125–134 afirma só abrir após confirmação, mas claim resolve imediatamente; a ordenação temporal com promise pendente não é exercitada nesse caso de UI.",
+      "Não valida autorização/fila do banco ou produção dos tempos; título dados reais significa fixture. Hook e UI são testados separadamente."
+    ],
+    "related_findings": []
+  },
+  "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx": {
+    "classification": "REAL_HOOK_WITH_CONTROLLED_RPC_AND_REALTIME",
+    "assertions": [
+      "Feature flag, normalização e claim retirando item; claim simultâneo bloqueado; badge secundário pendente/falho não reverte aceite; conflito de domínio.",
+      "Resposta antiga de filas ignorada, debounce/realtime com espera máxima, reconciliação periódica/visibilidade/cleanup, paginação protegida contra busca nova, abort ao desmontar e preservação de páginas após refresh.",
+      "Dez páginas acumulam500 identidades sem duplicar e encerram hasMore."
+    ],
+    "mocks_or_fixtures": [
+      "RPC com promises controladas e abortSignal fake; useSupabaseRealtime captura opções/callbacks, tempo/document.hidden sintéticos."
+    ],
+    "limits": [
+      "128 diz fila autorizada mas a RPC retorna uma fixture; nenhuma política/RLS ou disputa entre usuários chega ao banco.",
+      "Paginação528–593 escolhe páginas por contador de chamadas, não por offset nos argumentos; comprova acumulação/reconciliação local, não offsets corretos no servidor.",
+      "Unmount verifica signal.aborted, sem usuário renderizado após unmount para observar reaplicação; sem rede/realtime real."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/__tests__/useCampaigns.test.tsx": {
+    "classification": "REAL_HOOK_WITH_WEAK_DATABASE_ASSERTIONS",
+    "assertions": [
+      "Monta hook e observa from(campaigns), existência de mutations e isLoading booleano; chama createCampaign.mutate."
+    ],
+    "mocks_or_fixtures": [
+      "Builder completo simulado com data predefinida, QueryClient real."
+    ],
+    "limits": [
+      "Fetch só exige campaigns definido, podendo ser array inicial; create64–69 só verifica from(campaigns), também chamado pela query inicial. Não exige insert/payload/resultado.",
+      "Não testa audiência/media materializados, start/pausa/filtros ou erro de mutation (MOD005/006)."
+    ],
+    "related_findings": [
+      "R2-MOD-005",
+      "R2-MOD-006"
+    ]
+  },
+  "src/hooks/__tests__/useDashboardData.test.tsx": {
+    "classification": "REAL_HOOK_WITH_PERMISSIVE_DATABASE_PROXY",
+    "assertions": [
+      "Aguarda isLoading=false e stats definido com filtros default/custom; refetch exposto como função."
+    ],
+    "mocks_or_fixtures": [
+      "Proxy aceita qualquer cadeia de query; cada tabela retorna uma linha fixa; toda RPC devolve mesmo objeto sem olhar argumentos."
+    ],
+    "limits": [
+      "O caso accepts custom filters83–99 não confere args, população ou valor, logo não prova efeito do filtro.",
+      "Não compara índices, fuso, identidade do perfil, erro ou truncação; insuficiente para afastar DASH-METRICS-001."
+    ],
+    "related_findings": [
+      "DASH-METRICS-001"
+    ]
+  },
+  "src/hooks/__tests__/useCatalogFavorites.test.ts": {
+    "classification": "REAL_HOOK_WITH_MUTABLE_FAKE_TABLE",
+    "assertions": [
+      "Consulta favoritos, toggle adiciona/remove com refetch, falha insert termina sem favorito e usuário ausente não escreve."
+    ],
+    "mocks_or_fixtures": [
+      "Tabela array mutável, insert resolve imediatamente; delete efetivado ao segundo eq sem validar owner; QueryClient real."
+    ],
+    "limits": [
+      "104–116 anuncia estado antes da confirmação mas não retém promise de escrita; observa só estado depois de act/waitFor.",
+      "Rollback136–146 só confere ausência final, sem testemunha intermediária nem snapshot original em falha concorrente.",
+      "Hook toggle é void e aguardar seu retorno não prova tratamento no bulk que anuncia sucesso (MOD043); não compõe erro de hidratação do produto favorito (MOD048)."
+    ],
+    "related_findings": [
+      "R2-MOD-043",
+      "R2-MOD-048"
+    ]
+  },
+  "src/hooks/__tests__/useDashboardWidgets.test.ts": {
+    "classification": "REAL_LOCAL_STATE_HOOK",
+    "assertions": [
+      "Widgets default/IDs/níveis, toggle tamanho/posição/boundaries/reorder/reset, localStorage persistir/carregar/JSON inválido e editMode."
+    ],
+    "mocks_or_fixtures": [
+      "localStorage do ambiente; hook real, sem backend."
+    ],
+    "limits": [
+      "move up103–106 pode retornar sem assertion se não houver row>0. Alguns forEach permitem arrays vazios; nível1 tem controle de quantidade.",
+      "Não monta personalização do Dashboard nem testa se configuração gera layout visível, fronteira MOD065; corrupção testada é JSON inválido, não shape válido incorreto."
+    ],
+    "related_findings": [
+      "R2-MOD-065"
+    ]
+  },
+  "src/hooks/__tests__/useExternalCatalog.test.ts": {
+    "classification": "MIXED_REAL_HOOK_SOURCE_CONTRACT_AND_LOCAL_EXAMPLES",
+    "assertions": [
+      "Hook real consulta lista/produto/bootstrap e preserva campos; loading pendente, erro de rede/corpo/HTTP e código/status são observados. Prefetch usa offset+limit e cache correspondente, e não roda na última página.",
+      "1028–1060 lê fonte real da Edge para configuração de cota, ordem de parse e chamada RPC; verificação estrutural distinta dos booleanos locais."
+    ],
+    "mocks_or_fixtures": [
+      "functions.invoke simulado por action, sem consultar servidor; QueryClient real. Fixtures de produto/tipos e fórmulas locais em várias seções."
+    ],
+    "limits": [
+      "304–323 promete last one wins mas só exige invoke chamado, sem respostas fora de ordem ou assertion do resultado final.",
+      "825–987 calcula paginação, preço, peso e filtros em código local do teste.993–1025/1063–1127 usa booleanos constantes para segurança/arquitetura; não comprova autorização, segredo, cache ou envio.",
+      "1098–1103 documenta página0 apenas com potentialIssue=true; não testa o defeito MOD009.",
+      "Prefetch é controle positivo do hook, sem consumidor voltar da página1 para0; regras de rate limit são regex, sem contador/RPC ou isolamento."
+    ],
+    "related_findings": [
+      "TC011",
+      "R2-MOD-009"
+    ]
+  },
+  "src/hooks/dashboard/__tests__/useDashboardKpi.test.ts": {
+    "classification": "REAL_PURE_AGGREGATE_GUARDS",
+    "assertions": [
+      "Repassa valores/buckets e aplica guarda de amostra>=5 ao delta de resolvidas/resposta; casos ontem0 e resposta null."
+    ],
+    "mocks_or_fixtures": [
+      "DashboardKpiRpcResult pronto, função real aggregateDashboardKpi; sem render de hook."
+    ],
+    "limits": [
+      "Comentários4–14 afirmam validação SQL manual anterior, não reproduzida nesta revisão; teste declara que não cobre cálculo servidor, fuso/percentis ou escopo por agente.",
+      "Não valida dados históricos e current-assignee que motivam DASH-METRICS-001; positivo limitado às guardas do cliente."
+    ],
+    "related_findings": [
+      "DASH-METRICS-001"
+    ]
+  },
+  "src/hooks/dashboard/__tests__/useDashboardStats.presence.test.tsx": {
+    "classification": "REAL_STATS_HOOK_WITH_PRESENCE_DOUBLE",
+    "assertions": [
+      "Quatro perfis e mapa de presença produzem1 online ativo e4 total."
+    ],
+    "mocks_or_fixtures": [
+      "Consulta de perfis e RPC fixas; useAgentPresenceMap substituído por mapa constante."
+    ],
+    "limits": [
+      "Não cobre TTL/heartbeat, conta ativa mudando ou dados de filas/métricas; não confundir presença com status autenticado no transporte."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts": {
+    "classification": "REAL_READINESS_FETCHER_WITH_QUERY_DOUBLE",
+    "assertions": [
+      "Sem conexão bloqueia sem segunda query; supressão bloqueia e filtro contém contactId, telefone normalizado e expiry; conexão válida sem bloqueio libera."
+    ],
+    "mocks_or_fixtures": [
+      "Thenable aceita qualquer select/eq/or/limit/maybeSingle e retorna respostas fixas."
+    ],
+    "limits": [
+      "Todos os cenários têm error=null; nenhum erro transport/RLS nem montagem do hook/diálogo que converte erro em disponibilidade (MOD008).",
+      "Inspeção de string OR não executa parser PostgREST nem prioridade entre conexões."
+    ],
+    "related_findings": [
+      "R2-MOD-008"
+    ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXMonitor.test.ts": {
+    "classification": "REAL_PURE_RATE_AGGREGATION",
+    "assertions": [
+      "buildRateByMinute real: vazio, sent_at ausente, agrupamento com3envios/1entrega, janela60min e repetição determinística."
+    ],
+    "mocks_or_fixtures": [
+      "Relógio falso fixo e recipients locais."
+    ],
+    "limits": [
+      "60–72 condiciona assertions de label a result.length>0; pode aceitar array vazio mesmo com hora dentro da janela fixture.",
+      "Determinismo em duas chamadas não prova ausência de Math.random em todos os ramos; não monta query limitada2000 (MOD033) nem compara curva completa."
+    ],
+    "related_findings": [
+      "R2-MOD-033"
+    ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXSegments.dia-calendario.test.ts": {
+    "classification": "REAL_RULE_COMPILER_WITH_FIXED_CLOCK",
+    "assertions": [
+      "rulesToPostgrest corta dias de calendário de São Paulo corretamente em exemplos de22:30 e09:00, incluindo hoje, e rejeita0/abc."
+    ],
+    "mocks_or_fixtures": [
+      "Módulos de banco/auth simulados só para import; relógio falso; função real."
+    ],
+    "limits": [
+      "Testa fronteira textual do compilador cliente, não a execução SQL de audiência ou estado de edição/estimativa; não generalizar para outros hooks temporais."
+    ],
+    "related_findings": []
+  },
+  "src/hooks/integrations/__tests__/useTalkXSegments.test.ts": {
+    "classification": "REAL_RULE_HELPERS_WITH_RPC_DOUBLE",
+    "assertions": [
+      "Compilador rejeita regra desconhecida, escapa barras/aspas sem corromper vírgula, mapeia novos campos/tipos e evita contains em uuid.",
+      "isRuleComplete/splitRules tratam campos vazios; countAudience usa modo count/eligible; resolveAudience entrega linha e modo page/limit5."
+    ],
+    "mocks_or_fixtures": [
+      "Supabase RPC devolve7/uma linha com has_more=false; from/auth/sonner substituídos."
+    ],
+    "limits": [
+      "222–240 intitula paginação, mas só recebe uma página terminal: não exercita has_more/next_after ou acumulação.",
+      "Não salva editor, não verifica seleção stale MOD038, nem hidratação/autosave manual truncado MOD025. Compilador puro não executa PostgREST."
+    ],
+    "related_findings": [
+      "R2-MOD-025",
+      "R2-MOD-038"
+    ]
+  },
+  "src/lib/__tests__/errorReporter.test.ts": {
+    "classification": "REAL_REPORTER_WITH_AUDIT_DOUBLE",
+    "assertions": [
+      "shouldReport deduplica source+message, espaça ocorrências e limita10 por sessão; reportClientError envia ação/contexto com mensagem truncada e aceita string."
+    ],
+    "mocks_or_fixtures": [
+      "logAudit substituído; now explícito para guarda e reset por teste."
+    ],
+    "limits": [
+      "Não persiste audit log, não monta window listeners/unhandled rejection, nem verifica serialização de todo contexto, rejeição de logAudit ou remoção de dados sensíveis."
+    ],
+    "related_findings": []
+  },
+  "tests/contracts/axe-campaigns.contract.test.ts": {
+    "classification": "SOURCE_ACCESSIBILITY_CONTRACT_NO_AXE_RUNTIME",
+    "assertions": [
+      "Fonte de CampaignsView contém SelectTriggerw40 com aria-label de status; diálogo sem tag SelectTrigger exata sem props e com label Tipo de mensagem."
+    ],
+    "mocks_or_fixtures": [
+      "fs lê TSX; regex, sem render/axe."
+    ],
+    "limits": [
+      "Nome axe e comentário de varredura anterior não significam axe executado. Segundo teste não demonstra que todo SelectTrigger com outras props possua label.",
+      "Contratos estruturais específicos não validam árvore acessível de Radix nem teclado/contraste; distintos de CT67 com axe real."
+    ],
+    "related_findings": []
+  },
+  "tests/contracts/axe-talkx.contract.test.ts": {
+    "classification": "SOURCE_ACCESSIBILITY_CONTRACT_NO_AXE_RUNTIME",
+    "assertions": [
+      "Primeiro bloco TabsList na fonte não contém DropdownMenu e contém TabsTrigger; aria-label fd.label próximo de min-w120;>=2 menus persistem no arquivo."
+    ],
+    "mocks_or_fixtures": [
+      "fs/regex, sem render/axe."
+    ],
+    "limits": [
+      "Verifica trechos textuais e primeiro tablist, não todos os elementos/árvore Radix ou nome acessível final. Comentário de varredura anterior não é evidência runtime nesta revisão."
+    ],
+    "related_findings": []
+  }
+}

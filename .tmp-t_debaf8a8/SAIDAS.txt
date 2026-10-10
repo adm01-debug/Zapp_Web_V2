@@ -1,0 +1,190 @@
+########## saida/passo1.out
+comparador real extraido: 21 linhas  sha256=77546fc4461befe263f183a436189b4b3fceac884f7a889154e936d608a101ff
+comparador rc=1
+[rls] só produção=0 só local=1 diferentes=0
+    só local: inbound_message_effects
+[columns] só produção=0 só local=9 diferentes=0
+    só local: inbound_message_effects.applied_at
+    só local: inbound_message_effects.attempts
+    só local: inbound_message_effects.created_at
+    só local: inbound_message_effects.effect
+    só local: inbound_message_effects.external_id
+    só local: inbound_message_effects.id
+    só local: inbound_message_effects.last_error
+    só local: inbound_message_effects.payload
+[indexes] só produção=0 só local=3 diferentes=0
+    só local: inbound_message_effects.idx_inbo
+reproduzidas=47  ao vivo=47  iguais=True
+ledger=793 versoes | migrations .sql na copia=794 | PENDENTES=1
+  pendente: 20261007095739_indeterminate_optout_outbox.sql
+OK passo 1
+
+########## saida/passo2.out
+== alvos ==
+HOJE (instalado) sha256 = 70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26
+NOVO (artefato)  sha256 = c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e
+PENDENTE do cartao = 20261007095739_indeterminate_optout_outbox.sql
+W (copia do conjunto vivo) = /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/indeterminate-optout-outbox-migration-re-26100709037ed9
+retrato canonico da copia sha256 = 46d02ce0b8406f3107c88d4c0f31e7d86c7240768c9beb9f9abe9b55a55b9bf4
+n linhas de diferenca (reais) = 47
+HOJE: explicador extraido com 41 linhas (drift_canonico=False)
+NOVO: explicador extraido com 85 linhas (drift_canonico=True)
+
+== execucao crua do explicador (rc = veredito do passo banco_local) ==
+HOJE rc=1
+   stdout: diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+   stderr: (vazio)
+NOVO rc=1
+   stdout: diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+   stderr: (vazio)
+
+== classificacao das 47 linhas reais ==
+-- HOJE -- total=47 explicadas=34 drift_canonico=0 SEM=13
+-- NOVO -- total=47 explicadas=34 drift_canonico=0 SEM=13
+
+DEBITADAS AO CARTAO (SEM): HOJE=13  NOVO=13  de 47
+o drift novo continua debitado com o ajuste? True
+OK passo 2
+
+########## saida/passo3.out
+================ HOJE : /home/joaquim_ataides/.local/bin/zapp-verify
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1   (gravado em saida/shell-HOJE.rc)
+================ NOVO : /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1   (gravado em saida/shell-NOVO.rc)
+
+=== veredito (passo banco_local) ===
+[HOJE] FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+[HOJE] VERIFY: VERMELHO em banco_local (0s)
+[NOVO] FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+[NOVO] VERIFY: VERMELHO em banco_local (0s)
+
+########## saida/passo3b.out
+chave no retrato da copia: f:accept_department_invite(p_code text) -> True
+================ S-B-positivo-NOVO (ledger ok) : zapp-verify.novo
+AVISO   banco_local     0s  ESTRUTURA: 1 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261007095739_indeterminate_optout_outbox.sql; 1
+drift: functions|f:accept_department_invite(p_code text) diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: functions|f:accept_department_invite(p_code text)) (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f/banco_local.log)
+VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f
+exit code = 0
+================ S-B-positivo-HOJE (ledger ok) : zapp-verify
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: functions|f:accept_department_invite(p_code text)
+VERIFY: VERMELHO em banco_local (1s)
+exit code = 1
+================ S-C-failclosed-NOVO (ledger ilegivel) : zapp-verify.novo
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f/banco_local.log)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+================ S-C-failclosed-HOJE (ledger ilegivel) : zapp-verify
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_debaf8a8/home/.local/state/zapp-verify/55140074240f/banco_local.log)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+================ S-D-misto-NOVO (ledger ok) : zapp-verify.novo
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+================ S-D-misto-HOJE (ledger ok) : zapp-verify
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: functions|f:accept_department_invite(p_code text); indexes|sonda_cartao.sonda_cartao_pkey
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1
+
+=== resumo dos controles ===
+S-B-positivo-NOVO        rc=0  AVISO   banco_local     0s  ESTRUTURA: 1 diferença(s) em relação ao retrato da produção — migration(s) pendente(s
+S-B-positivo-HOJE        rc=1  FALHOU  banco_local     0s  diferença não explicada por migration pendente: functions|f:accept_department_invite(p_cod
+S-C-failclosed-NOVO      rc=1  AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+S-C-failclosed-HOJE      rc=1  AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+S-D-misto-NOVO           rc=1  FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|sonda_cartao.sonda_cartao_pkey
+S-D-misto-HOJE           rc=1  FALHOU  banco_local     0s  diferença não explicada por migration pendente: functions|f:accept_department_invite(p_cod
+
+########## saida/passo4.out
+== sondas do caso negativo (explicador real, codigo sem alteracao) ==
+sonda                                                    HOJE    NOVO    esperado(NOVO) situacao
+N1 objeto novo do cartao (indice auto-nomeado, tabela citada) SEM     SEM     SEM            OK
+N2 objeto novo, nome fora do texto da pendente e fora das aplicadas SEM     SEM     SEM            OK
+N3 linha de diferenca sem separador |                    SEM     SEM     SEM            OK
+N4 retrato canonico ausente                              SEM     SEM     SEM            OK
+P1 controle (diferenca ja no retrato da copia)           SEM     drift   drift          OK
+R1 RISCO: nome fora da pendente E presente nas aplicadas SEM     drift   drift          RISCO (medido)
+
+== detalhe ==
+* N1 objeto novo do cartao (indice auto-nomeado, tabela citada)
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    a tabela sonda_cartao so existe na migration pendente
+* N2 objeto novo, nome fora do texto da pendente e fora das aplicadas
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    documento_novo nao existe em nenhuma migration aplicada
+* N3 linha de diferenca sem separador |
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    sem separador nao ha como provar drift canonico
+* N4 retrato canonico ausente
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    sem retrato legivel vale a regra estrita
+* P1 controle (diferenca ja no retrato da copia)
+    HOJE=SEM  NOVO=drift  esperado(NOVO)=drift  -> OK
+    a pendente nao cita a funcao: e drift pre-existente
+* R1 RISCO: nome fora da pendente E presente nas aplicadas
+    HOJE=SEM  NOVO=drift  esperado(NOVO)=drift  -> RISCO
+    DDL por funcao: nem clientes nem telefone aparecem no texto da pendente, e os dois aparecem numa migration antiga
+
+sondas normais=5 conforme=5 divergentes=0 | sondas de risco=1
+risco medido: R1 RISCO: nome fora da pendente E presente nas aplicadas -> NOVO=drift (HOJE=SEM)
+OK passo 4
+
+########## saida/passo5-confinamento.out
+== hashes ==
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.original
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+
+== semantica (bash -n) ==
+bash -n OK  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.original
+bash -n OK  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+
+== hunks do diff ==
+linhas do diff: 105
+hunks: 2
+@@ -65,23 +65,24 @@
+@@ -101,18 +102,66 @@
+
+== cabecalho (1-64) identico? ==
+IDEM linhas 1-64
+tamanho: original=130 novo=179 linhas
+
+== a mudanca toca quais passos do portao? ==
+49:> def drift_canonico(l):
+53:>     # objeto nem o seu dono: o que a pendente cita continua provado pelo explicada(); o que só existe
+68:<     if not explicada(l): sem.append(l)
+70:>     if explicada(l): continue
+71:>     if drift_canonico(l): pre.append(l); continue
+79:<       if [ $RM = 0 ] && [ "$MOTIVO" = ok ]; then
+81:>       DRIFT_N="${MOTIVO#*drift=}"; [ "$DRIFT_N" = "$MOTIVO" ] && DRIFT_N=0
+82:>       if [ $RM = 0 ] && [ "${MOTIVO%%|*}" = ok ] && [ "$DRIFT_N" = 0 ]; then
+84:>       elif [ $RM = 0 ] && [ "${MOTIVO%%|*}" = ok ]; then
+85:>         printf 'AVISO   %-12s %4ss  %s — migration(s) pendente(s): %s; %s diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: %s) (ver %s)\n' banco_local "$(( $(date +%s)-t0 ))" \
+86:>           "$(grep -m1 '^ESTRUTURA:' "$LOG/banco_local.log")" "$(printf '%s' "$NOVAS_MIG" | tr '\n' ' ')" "$DRIFT_N" "$(printf '%s' "$MOTIVO" | sed -n 's/^drift: //p' | head -2 | tr '\n' ';')" "$LOG/banco_local.log" | tee -a "$RES"
+
+########## exit codes
+saida/crua-HOJE.rc                       1
+saida/crua-NOVO.rc                       1
+saida/ctrl-S-B-positivo-HOJE.rc          1
+saida/ctrl-S-B-positivo-NOVO.rc          0
+saida/ctrl-S-C-failclosed-HOJE.rc        1
+saida/ctrl-S-C-failclosed-NOVO.rc        1
+saida/ctrl-S-D-misto-HOJE.rc             1
+saida/ctrl-S-D-misto-NOVO.rc             1
+saida/shell-HOJE.rc                      1
+saida/shell-NOVO.rc                      1

@@ -1,0 +1,83 @@
+[
+  {
+    "path": "docs/talkx/v4/STATUS.md",
+    "bytes": 1905,
+    "sha256": "3ff196bd0e98cb473c05c202f8896ae33c60ffd101afe7beeb1333bddf830871",
+    "git_blob_sha": "831e80366b1bd6fe75571c96f2e1fc1f1a50f05c",
+    "expected_git_blob_sha": "831e80366b1bd6fe75571c96f2e1fc1f1a50f05c",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/docs/talkx/v4/STATUS.md?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/deployment-manifest.json",
+    "bytes": 72909,
+    "sha256": "f9749f3c3ecf888d751b96c55bc2846c679b77cfdb1a60c194eb6095036fecc8",
+    "git_blob_sha": "27c44fb4c5d1aa13c8abc9712216d9a406909f89",
+    "expected_git_blob_sha": "27c44fb4c5d1aa13c8abc9712216d9a406909f89",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/deployment-manifest.json?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+    "bytes": 4287,
+    "sha256": "e30bd3a3f800610353f868f37adc41d736dd3cd63d7b1acaeab75d04c1933697",
+    "git_blob_sha": "003af675d225c7aaacf4efe435c52b18f1cc5664",
+    "expected_git_blob_sha": "003af675d225c7aaacf4efe435c52b18f1cc5664",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/__tests__/talkx-reply-window.test.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+    "bytes": 5783,
+    "sha256": "7981d2222fa3f16dd77308bbe39188962c45771386236363b7f738fd3cea0a5d",
+    "git_blob_sha": "6a98889637e41908e6d593d1e5f5f84f536df37c",
+    "expected_git_blob_sha": "6a98889637e41908e6d593d1e5f5f84f536df37c",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+    "bytes": 6719,
+    "sha256": "be71db492a111fe920b71e27db2c8ca40987749c5891bdb87bb15f5e8bb032bb",
+    "git_blob_sha": "1ec18f51c81e64702135872df6ffd9826e13a1a0",
+    "expected_git_blob_sha": "1ec18f51c81e64702135872df6ffd9826e13a1a0",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+    "bytes": 24655,
+    "sha256": "542d6b7c5e680e14d584d95fa26289d15e46f4247daac749d772694c3557f447",
+    "git_blob_sha": "caa7a475e68e4ed5e824dfb5c58c68017d35da88",
+    "expected_git_blob_sha": "caa7a475e68e4ed5e824dfb5c58c68017d35da88",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/evolution-webhook-messages.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+    "bytes": 19028,
+    "sha256": "da51efad6032e57a63405c7fd3026337437b3622bf400ff8aa65fc61ca24f694",
+    "git_blob_sha": "f50d966cbffc0603eaff9283a634b1a5ffa6ee84",
+    "expected_git_blob_sha": "f50d966cbffc0603eaff9283a634b1a5ffa6ee84",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/evolution-webhook-msg-handlers.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "supabase/functions/_shared/talkx-reply.ts",
+    "bytes": 4265,
+    "sha256": "94800984e840dba66b4a09b8243f171e3dc9436903db29f6bbe06ef3bf520bb1",
+    "git_blob_sha": "46a6c1958494755f5f07f69ca0092df3364cff96",
+    "expected_git_blob_sha": "46a6c1958494755f5f07f69ca0092df3364cff96",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/supabase/functions/_shared/talkx-reply.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  {
+    "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+    "bytes": 15997,
+    "sha256": "82f357cf4373a0333efac0de2b494cd124b0ad021eada202d3f0272b2dbaabe1",
+    "git_blob_sha": "15e002fab881f1d7a2b2352dded7806db4e7477e",
+    "expected_git_blob_sha": "15e002fab881f1d7a2b2352dded7806db4e7477e",
+    "matches": true,
+    "source_url": "https://api.github.com/repos/adm01-debug/Zapp_Web_V2/contents/tests/contracts/_adv_edge_legacy_producers.test.ts?ref=4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  }
+]

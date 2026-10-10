@@ -1,0 +1,10 @@
+#!/bin/sh
+# Mesmos gates do job "Lint & TypeCheck" do CI, antes de sair da maquina.
+set -e
+node scripts/ci/typecheck-ratchet.mjs
+node scripts/ci/lint-ratchet.mjs
+# E50 (auditoria de GitHub Actions, 2026-09-26): pega localmente o mesmo que
+# "Contrato DB offline" (db-guard.yml) pegaria remotamente — versao duplicada,
+# nome invalido, SQL malformado — sem esperar o CI. Sem DESTINO_URL: nao
+# consulta o banco, so valida o que esta em supabase/migrations/.
+node scripts/db-audit/check-migration-drift.mjs

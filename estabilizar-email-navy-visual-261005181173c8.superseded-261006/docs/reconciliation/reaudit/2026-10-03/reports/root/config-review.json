@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "COMPLETED_FINITE_CONFIG_READING",
+  "reviewed_files": 18,
+  "reviewed_lines": 804,
+  "files": [
+    {
+      "path": ".claude/ecc-tools.json",
+      "adjudication": [
+        "Leitura integral 1–251: metadados de geração, readiness, perfil solicitado security versus efetivo developer, componentes/pacotes selecionados e filtrados, dependências, arquivos e adapters foram examinados.",
+        "É um registro gerado em agosto, com readiness zero e workflows vazio; não comprova instalação ativa nem ausência atual de relatórios. A lista memory de outro arquivo não se confunde com Claude-Mem. Nenhum pacote ou adapter foi executado/instalado."
+      ],
+      "source_sha256": "37bf019fe69f11bcced461cd5c6db3b7142dde54abfd318f845606a7f5c4f1db",
+      "git_blob_sha": "b6339ea2fbb7f179c0b3c6f5b70d7ba7b5eafa71",
+      "line_start": 1,
+      "line_end": 251,
+      "reviewed_ranges": [
+        [
+          1,
+          251
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".claude/identity.json",
+      "adjudication": [
+        "Leitura integral 1–14: identidade sugerida, nível técnico, preferência de estilo e domínio TypeScript.",
+        "Metadado histórico gerado; não substitui instruções explícitas atuais nem demonstra configuração carregada em qualquer sessão."
+      ],
+      "source_sha256": "38cd47a8ed4791bb8c96b5e03e02f068b8307f034fe9916984ebf2fc50e56453",
+      "git_blob_sha": "cc095fb4ab12783f2fbaec0534417ff1cc488770",
+      "line_start": 1,
+      "line_end": 14,
+      "reviewed_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".claude/settings.json",
+      "adjudication": [
+        "Leitura integral 1–26: PreToolUse cobre Bash/Grep e Read/Glob, chama graphify hook-guard após command -v e usa timeout10.",
+        "A ausência do executável termina com exit0 por desenho, portanto configuração no arquivo não prova que a guarda esteja instalada/ativa. Não houve execução do hook nem alteração de permissões."
+      ],
+      "source_sha256": "34714cbaac87fd8491884fae9a3cee66794d27773fe10eff4dbedbf24b18a9df",
+      "git_blob_sha": "df8954581c1e4cc15c9cf7b30e00774a403f5cc2",
+      "line_start": 1,
+      "line_end": 26,
+      "reviewed_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".codex/config.toml",
+      "adjudication": [
+        "Leitura integral 1–48: baseline declara MCPs GitHub, Context7, Exa, memory, Playwright e sequential-thinking; registra configuração de seis threads/uma profundidade e três papéis de agente.",
+        "Declarações npx/latest não fixam uma instalação materializada; este exame não invocou comandos nem tomou as permissões do arquivo como autoridade sobre a sessão. MCP server-memory não é evidência de inclusão de Claude-Mem, Headroom ou Cartographer."
+      ],
+      "source_sha256": "9f3c06bc0ac723bfff4636b2e9f9dbd18c2d77909475ebee7c0e06056fab75b2",
+      "git_blob_sha": "bc1ee67f60844cb9744e0be8dc78bf97af259bf3",
+      "line_start": 1,
+      "line_end": 48,
+      "reviewed_ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".codex/agents/docs-researcher.toml",
+      "adjudication": [
+        "Leitura integral 1–9: papel de consulta documental, modelo/effort declarados e sandbox read-only.",
+        "Configuração local examinada como dado do repositório, sem disparar agente com esse modelo ou inferir disponibilidade atual do modelo."
+      ],
+      "source_sha256": "e14712b0a5f5e7378819200a07b2867ff84607d7b7dccd222e6fe38da17533e4",
+      "git_blob_sha": "0daae570b16c18326a81568204dd828213c23dbb",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".codex/agents/explorer.toml",
+      "adjudication": [
+        "Leitura integral 1–9: papel de exploração, sandbox read-only, rastreamento de execução e busca dirigida.",
+        "A existência da configuração não comprova que um executor a carregou; nenhuma política de sessão foi modificada."
+      ],
+      "source_sha256": "ba9d7a10cf04a9b25a35ae8fc094b840cceef624d542f45b9d7cf3cdc78126ab",
+      "git_blob_sha": "732df7aff20d5c1d5aed8926cb9a640d866f9b5f",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".codex/agents/reviewer.toml",
+      "adjudication": [
+        "Leitura integral 1–9: papel de revisão de correção/segurança/regressão, esforço declarado high e sandbox read-only.",
+        "O arquivo não é evidência de revisão executada ou aprovação de código; esse alcance foi preservado."
+      ],
+      "source_sha256": "9edbc2b5334fed555f2e8001142fcd78938bd1de8355aeb020c0dd8f0315cd80",
+      "git_blob_sha": "b13ed9cf1ffedccc2d36531d7f073f9a337d0ee7",
+      "line_start": 1,
+      "line_end": 9,
+      "reviewed_ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".agents/skills/zapp-web-v2/agents/openai.yaml",
+      "adjudication": [
+        "Leitura integral 1–6: nome/descrição/prompt de interface e allow_implicit_invocation.",
+        "Metadado de descoberta da skill do repositório, sem prova de instalação global ou execução. A skill não foi criada nem alterada neste passe."
+      ],
+      "source_sha256": "a0470a5ef10247fcf19efa1d1d7bef9bc470ab801f2e2062e65ecea0b2874224",
+      "git_blob_sha": "070b8b283e2b09b531278268e32eff77003e1b15",
+      "line_start": 1,
+      "line_end": 6,
+      "reviewed_ranges": [
+        [
+          1,
+          6
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".editorconfig",
+      "adjudication": [
+        "Leitura integral 1–30: UTF-8/LF, duas posições por padrão, exceção de Markdown, SQL com quatro posições e Makefile com tabs.",
+        "São preferências de editor, não verificação de formatação de todos os arquivos nem configuração de compilador."
+      ],
+      "source_sha256": "b01687baa25c1b5d9f04202a0f2212c847da188cb34a2df0bded7b936f920905",
+      "git_blob_sha": "9db2bf2075137455c2a8d83dca7b84278968472c",
+      "line_start": 1,
+      "line_end": 30,
+      "reviewed_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".gitattributes",
+      "adjudication": [
+        "Leitura integral da linha1: atribui merge driver graphify ao JSON do grafo.",
+        "O atributo não instala nem define o executável do driver; o repositório não foi submetido a merge por esta auditoria."
+      ],
+      "source_sha256": "d1580533de3f8a648e168aa83833886a092e0e07cee9da22df8aea2c31a4e428",
+      "git_blob_sha": "acc196711845f8af1ea15ea3e278bc55b9c966d3",
+      "line_start": 1,
+      "line_end": 1,
+      "reviewed_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".graphifyignore",
+      "adjudication": [
+        "Leitura integral 1–14: exclui ambientes/segredos, baselines, dependências, build/coverage e saídas do grafo; .env.example é exceção explícita.",
+        "Esse filtro vale para a ferramenta que o interpretar; não constitui controle de acesso ou remoção de arquivos Git e não prova ausência de dados sensíveis no histórico."
+      ],
+      "source_sha256": "9c9c6b9fb1681ebbf75cbcb4c91885ff0be20ad52c7c1e99ed014f2cb8a888c7",
+      "git_blob_sha": "364617a522facf7fe7b4714a6501f1f601edf953",
+      "line_start": 1,
+      "line_end": 14,
+      "reviewed_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".nvmrc",
+      "adjudication": [
+        "Leitura integral da linha1: major Node24 declarado.",
+        "O pin de major não fixa patch ou comprova runtime de CI/produção; nenhuma versão foi instalada."
+      ],
+      "source_sha256": "68ca3fba3b7e864770cb61aeb306d4bd4354b68ab4dd38450860c5d823e42a53",
+      "git_blob_sha": "a45fd52cc5891570d6299fab38643103c3955474",
+      "line_start": 1,
+      "line_end": 1,
+      "reviewed_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".prettierignore",
+      "adjudication": [
+        "Leitura integral 1–35: exclusões de dependências, build, locks, cache, tipos gerados, cobertura, IDE e minificados.",
+        "Exclusão de formatação não equivale a exclusão da auditoria; o vendor minificado permanece separado no denominador próprio."
+      ],
+      "source_sha256": "66ce434d6b681c192dedc06d982809f72ae012aed89c643674aacd7384fd1c51",
+      "git_blob_sha": "25d35cad367a51fd320751612a68390d0483c6a8",
+      "line_start": 1,
+      "line_end": 35,
+      "reviewed_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".prettierrc",
+      "adjudication": [
+        "Leitura integral 1–12: semicolons, aspas simples, trailingComma es5, largura100, parênteses de arrow, LF e plugin Tailwind.",
+        "É configuração de formatação; não prova que plugin esteja carregado ou que lint/testes passaram. Nenhum formatador executado."
+      ],
+      "source_sha256": "94e0d6ebf703f2d7b28a19328fab7b6b6dc52b4d0b09a539e526a62bb61a0429",
+      "git_blob_sha": "c73d85db8eef315f8a6d1283295eae353d59e07c",
+      "line_start": 1,
+      "line_end": 12,
+      "reviewed_ranges": [
+        [
+          1,
+          12
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".vscode/extensions.json",
+      "adjudication": [
+        "Leitura integral 1–19: recomendações de editor, lint, Tailwind, Git, corretor e assistência de código; lista de indesejadas vazia.",
+        "Recomendação não é instalação nem autorização para instalar; não foi inferido estado do ambiente do usuário."
+      ],
+      "source_sha256": "c0494cb916f0a1d149ffe0a3930ecf9e621bbda5e79123cd8f7b405baa241b36",
+      "git_blob_sha": "3187acabda6b5049d4fd85d73b076dfb191be47d",
+      "line_start": 1,
+      "line_end": 19,
+      "reviewed_ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".vscode/settings.json",
+      "adjudication": [
+        "Leitura integral 1–66: formatter e ações explícitas de save, preferências TypeScript/Emmet/Tailwind, regex de classes, lint e exclusões de busca/arquivos.",
+        "O tsdk aponta para dependência local; opções do editor não substituem tsconfig e exclusões visuais não removem arquivos rastreados. Nenhuma configuração do editor foi aplicada."
+      ],
+      "source_sha256": "d8f62de239e954be99ba86f5f32af356b908bfd1a4bda832b81948b6f305d3db",
+      "git_blob_sha": "22087c806bce24be90411f2610ae3c11bfa9e29c",
+      "line_start": 1,
+      "line_end": 66,
+      "reviewed_ranges": [
+        [
+          1,
+          66
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".gitignore",
+      "adjudication": [
+        "Leitura integral 1–127: regras de ambientes, segredos, CA explicitamente permitido, artefatos de build/teste, sessões E2E, caches, editor, locks e worktrees.",
+        "O próprio comentário permite .env.production para variáveis públicas; padrões ignore não removem dados já rastreados. A avaliação de credenciais/ambientes permanece na revisão Infra e não houve abertura de credenciais adicionais ou alteração de regras."
+      ],
+      "source_sha256": "513a6932650d0e6cf72766b2ec65ca916d7d7fe580abeeb73a0cbce954a8c482",
+      "git_blob_sha": "9d1dbd76cc644a7e56d20467384b5696e59be128",
+      "line_start": 1,
+      "line_end": 127,
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    },
+    {
+      "path": ".claude/homunculus/instincts/inherited/zapp-web-v2-instincts.yaml",
+      "adjudication": [
+        "Leitura integral 1–127: seis blocos de convenções de commit, comprimento, nomes, imports, exports e localização de testes, com confiança e origem declaradas.",
+        "Os dois blocos de commits citam amostra de um commit; são heurísticas históricas e não levantamento exaustivo do repositório atual. Conteúdo misto de frontmatter e Markdown não foi tratado como YAML de runtime nem como nova autorização para alterar padrões."
+      ],
+      "source_sha256": "d734d9c89718044e9588972799b6b236b34d92b02ccadf295f5a202ac2cd3ac1",
+      "git_blob_sha": "e5acba1d66f8701b425333e8b5935fac4d980d3c",
+      "line_start": 1,
+      "line_end": 127,
+      "reviewed_ranges": [
+        [
+          1,
+          127
+        ]
+      ],
+      "review_status": "SEMANTIC_FILE_REVIEW",
+      "reviewer": "root",
+      "runtime_executed": false
+    }
+  ],
+  "limits": "Repository configuration read as audit data, not activated; no install, hook execution, tool permission change or credential retrieval."
+}

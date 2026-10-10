@@ -1,0 +1,210 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "matrix_sha256": "ff1d35bdcb1a1fc5aee02593fbf021cddc822ada39beacdce44d6db882a246b8",
+  "excluded_already_read_by_root": [
+    "src/components/layout/AppShell.tsx",
+    "src/components/layout/ZenModeToggle.tsx"
+  ],
+  "targets": [
+    {
+      "path": "src/components/onboarding/TourOverlay.tsx",
+      "bodies_without_containing_review_span": 10,
+      "branch_nodes_in_those_bodies": 16,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 217
+    },
+    {
+      "path": "src/components/layout/Sidebar.tsx",
+      "bodies_without_containing_review_span": 19,
+      "branch_nodes_in_those_bodies": 15,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "REVIEWED_SOURCE_RANGES_LOCATED",
+      "lines": 258
+    },
+    {
+      "path": "src/components/layout/SidebarNavItem.tsx",
+      "bodies_without_containing_review_span": 4,
+      "branch_nodes_in_those_bodies": 14,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 139
+    },
+    {
+      "path": "src/components/onboarding/OnboardingChecklist.tsx",
+      "bodies_without_containing_review_span": 11,
+      "branch_nodes_in_those_bodies": 13,
+      "await_nodes_in_those_bodies": 1,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 137
+    },
+    {
+      "path": "src/components/layout/PageHeader.tsx",
+      "bodies_without_containing_review_span": 5,
+      "branch_nodes_in_those_bodies": 11,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 169
+    },
+    {
+      "path": "src/components/transitions/transitionVariants.ts",
+      "bodies_without_containing_review_span": 2,
+      "branch_nodes_in_those_bodies": 9,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 93
+    },
+    {
+      "path": "src/components/layout/SidebarNavGroup.tsx",
+      "bodies_without_containing_review_span": 8,
+      "branch_nodes_in_those_bodies": 7,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 137
+    },
+    {
+      "path": "src/components/onboarding/checklistSteps.ts",
+      "bodies_without_containing_review_span": 6,
+      "branch_nodes_in_those_bodies": 5,
+      "await_nodes_in_those_bodies": 11,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 121
+    },
+    {
+      "path": "src/components/layout/SidebarBackButton.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 46
+    },
+    {
+      "path": "src/components/layout/SidebarUserPill.tsx",
+      "bodies_without_containing_review_span": 5,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 80
+    },
+    {
+      "path": "src/components/layout/ViewContainer.tsx",
+      "bodies_without_containing_review_span": 2,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 55
+    },
+    {
+      "path": "src/components/onboarding/OnboardingTour.tsx",
+      "bodies_without_containing_review_span": 9,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 86
+    },
+    {
+      "path": "src/components/onboarding/WelcomeModal.tsx",
+      "bodies_without_containing_review_span": 6,
+      "branch_nodes_in_those_bodies": 4,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 177
+    },
+    {
+      "path": "src/components/layout/PageTemplate.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 2,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 133
+    },
+    {
+      "path": "src/components/transitions/transitionConfig.ts",
+      "bodies_without_containing_review_span": 5,
+      "branch_nodes_in_those_bodies": 2,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 45
+    },
+    {
+      "path": "src/components/layout/ViewLoadingFallback.tsx",
+      "bodies_without_containing_review_span": 2,
+      "branch_nodes_in_those_bodies": 1,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 44
+    },
+    {
+      "path": "src/components/transitions/RouteTransition.tsx",
+      "bodies_without_containing_review_span": 3,
+      "branch_nodes_in_those_bodies": 1,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 37
+    },
+    {
+      "path": "src/components/transitions/useTransitionPreferences.ts",
+      "bodies_without_containing_review_span": 6,
+      "branch_nodes_in_those_bodies": 1,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 33
+    },
+    {
+      "path": "src/components/layout/A11yBoilerplate.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 29
+    },
+    {
+      "path": "src/components/layout/MediaVolumeToggle.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 11
+    },
+    {
+      "path": "src/components/layout/RoleBadge.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 24
+    },
+    {
+      "path": "src/components/layout/VoiceCopilotFAB.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 25
+    },
+    {
+      "path": "src/components/transitions/PageTransitionProvider.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 14
+    },
+    {
+      "path": "src/contexts/LayoutContext.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 17
+    },
+    {
+      "path": "src/contexts/LayoutScrollContext.tsx",
+      "bodies_without_containing_review_span": 1,
+      "branch_nodes_in_those_bodies": 0,
+      "await_nodes_in_those_bodies": 0,
+      "review_state": "STRUCTURAL_INVENTORY_ONLY",
+      "lines": 9
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "columns": {
+    "clientes.id": "c-id",
+    "clientes.nome": "c-nome",
+    "clientes.antiga": "c-antiga",
+    "cartao_dinamico.coluna_gerada": "n0",
+    "cartao_novo.id": "n1",
+    "cartao_novo.payload": "n2"
+  },
+  "indexes": {
+    "clientes.clientes_pkey": "i-pkey",
+    "cartao_novo.cartao_novo_pkey": "n3"
+  },
+  "rls": {
+    "clientes": "rls-clientes",
+    "cartao_novo": "n4"
+  },
+  "relation_grants": {
+    "r:public.clientes|authenticated|SELECT|grantor=postgres": "g-sel",
+    "r:public.cartao_novo|service_role|SELECT|grantor=postgres": "n5"
+  },
+  "functions": {
+    "f:fn_antiga()": "f-h5"
+  }
+}

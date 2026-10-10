@@ -1,0 +1,10 @@
+DRIFT	functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+DRIFT	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|service_role|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|PUBLIC|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|authenticated|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+EXPLICADA	relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+TOTAL=9 EXPLICADAS=7 DRIFT=2 DEBITADAS=0

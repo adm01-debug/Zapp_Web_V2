@@ -1,0 +1,14 @@
+== migrations na branch canonica dia/2026-10-06 (ultimas 5) ==
+supabase/migrations/20261004185228_team_membership_bootstrap_owner_grants.sql
+supabase/migrations/20261004190606_audit_logs_dedupe_key_webhook_elevenlabs.sql
+supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql
+supabase/migrations/_foreign
+supabase/migrations/_superseded
+== migrations na copia do cartao (ultimas 5) ==
+20261004190606_audit_logs_dedupe_key_webhook_elevenlabs.sql
+20261004195051_gmail_oauth_state_attempts.sql
+20261006204953_multiplix_cascata_bloco_terminal.sql
+_foreign
+_superseded
+== diferenca (copiar em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/multiplix-fila-blocos-sucessores-294-26100617458c7f vs dia/2026-10-06) ==
+20261006204953_multiplix_cascata_bloco_terminal.sql

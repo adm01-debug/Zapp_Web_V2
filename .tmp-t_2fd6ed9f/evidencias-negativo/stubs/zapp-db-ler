@@ -1,0 +1,4 @@
+#!/bin/sh
+# dublê da leitura do registro de versões aplicadas da PRODUÇÃO (fixture medida; sem rede, sem banco).
+# Devolve o JSON no mesmo formato que o script espera: {"rows":[{"v":"versao1,versao2,..."}]}
+cat "${FIXTURE_LEDGER_JSON:?FIXTURE_LEDGER_JSON nao definido}"

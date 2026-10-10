@@ -1,0 +1,77 @@
+name: ✨ Feature Request
+description: Sugerir uma nova funcionalidade ou melhoria
+title: "[FEATURE]: "
+labels: ["enhancement", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ Obrigado pela sugestão!
+        Descreva sua ideia detalhadamente.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema ou Oportunidade
+      description: Qual problema esta feature resolve? Ou qual oportunidade ela aproveita?
+      placeholder: "Atualmente, quando preciso fazer X, tenho que..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solução Proposta
+      description: Descreva a solução que você imagina
+      placeholder: "Seria ideal se o sistema pudesse..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas Consideradas
+      description: Existem outras formas de resolver isso?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impacto Esperado
+      options:
+        - "🚀 Alto - Transforma significativamente a experiência"
+        - "📊 Médio - Melhora processos existentes"
+        - "👍 Baixo - Nice-to-have"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user_type
+    attributes:
+      label: Quem se beneficia?
+      options:
+        - "Agentes de atendimento"
+        - "Supervisores"
+        - "Administradores"
+        - "Todos os usuários"
+        - "Clientes finais (via WhatsApp)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups / Screenshots
+      description: Se tiver ideias visuais, compartilhe aqui
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto Adicional
+      description: Qualquer informação adicional relevante
+    validations:
+      required: false

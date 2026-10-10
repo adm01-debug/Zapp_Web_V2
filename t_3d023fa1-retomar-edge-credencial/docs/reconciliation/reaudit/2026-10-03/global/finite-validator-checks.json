@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "status": "PASS",
+  "case_count": 11,
+  "cases": [
+    {
+      "name": "journal_missing_stays_pending",
+      "expected": "ROSTER_READING_PENDING",
+      "observed": [
+        "ROSTER_READING_PENDING"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "sha256_wrong_rejected",
+      "expected": "SHA256_MISMATCH",
+      "observed": [
+        "SHA256_MISMATCH",
+        "COMPLETE_JOURNAL_HAS_GAPS"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "adjudication_missing_rejected",
+      "expected": "ADJUDICATION_MISSING",
+      "observed": [
+        "ADJUDICATION_MISSING",
+        "COMPLETE_JOURNAL_HAS_GAPS"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "whole_file_range_truncated_rejected",
+      "expected": "JOURNAL_NOT_WHOLE_FILE",
+      "observed": [
+        "JOURNAL_NOT_WHOLE_FILE",
+        "COMPLETE_JOURNAL_HAS_GAPS"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate_peer_counting_rejected",
+      "expected": "DUPLICATE_JOURNAL_ENTRY",
+      "observed": [
+        "DUPLICATE_JOURNAL_ENTRY"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "unknown_status_not_promoted",
+      "expected": "UNKNOWN_ENTRY_STATUS",
+      "observed": [
+        "UNKNOWN_ENTRY_STATUS",
+        "COMPLETE_JOURNAL_HAS_GAPS"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "sql_statement_pin_wrong_rejected",
+      "expected": "SQL_STATEMENT_PIN",
+      "observed": [
+        "SQL_STATEMENT_PIN"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "ddl_delete_and_recount_rejected",
+      "expected": "DDL_ALLOCATION_CROSSWALK",
+      "observed": [
+        "DDL_UNITS_COUNT",
+        "DDL_ALLOCATION_CROSSWALK"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "ddl_nonexistent_review_artifact_rejected",
+      "expected": "DDL_OWN_PROVENANCE",
+      "observed": [
+        "DDL_OWN_PROVENANCE"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "ddl_allocation_without_body_read_rejected",
+      "expected": "DDL_MANUAL_INSTRUCTION_MISSING",
+      "observed": [
+        "DDL_MANUAL_INSTRUCTION_MISSING"
+      ],
+      "status": "PASS"
+    },
+    {
+      "name": "body_complete_flag_without_ranges_rejected",
+      "expected": "BODY_CONTAINMENT_STATE",
+      "observed": [
+        "BODY_CONTAINMENT_STATE",
+        "BODY_CONTAINMENT_STATE",
+        "BODY_CONTAINMENT_STATE",
+        "BODY_CONTAINMENT_STATE",
+        "BODY_CONTAINMENT_STATE",
+        "BODY_CONTAINMENT_STATE",
+        "SUMMARY_MATRIX_MISMATCH"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "validator_sha256": "229348075509160281516d8e77502cf26e3034d2be7d098e9e8563a6a02b2c54",
+  "checker_sha256": "5d2f11f4d8ef3dc9a0d6a8e2cd4bc54e4a835bc9c13be32b420fbf6af37b73f3",
+  "product_code_executed": false,
+  "source_changes": 0,
+  "owner_artifact_changes": 0,
+  "limits": [
+    "These are in-memory adversarial checks of the audit validator, not application tests or new provider probes.",
+    "No finish() call: no simulated corruption is written to completion outputs; final CLI still needs its independent run."
+  ]
+}

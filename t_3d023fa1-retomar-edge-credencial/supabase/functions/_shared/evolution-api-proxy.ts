@@ -1,0 +1,345 @@
+// Shared proxy logic for Evolution API edge function
+import { translateV2ToGo } from "./evolution-go-routes.ts";
+import { instanceNameFromV2Path } from "./evolution-instance-token.ts";
+
+// GO responde envios como { message:'success', data:{ Info:{ ID, Chat, IsFromMe,… }, Message } }.
+// O frontend (messageSender, useChatMediaSending, useSendProduct) lê key.id/messageId (shape v2).
+// Injeta os campos v2 no topo sem remover o payload GO — normalização única para todos os consumidores.
+export function normalizeGoSendResponse(data: unknown): unknown {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  const d = data as {
+    key?: { id?: unknown };
+    data?: { Info?: { ID?: unknown; Chat?: unknown; IsFromMe?: unknown } };
+  };
+  if (d.key?.id) return data; // já é shape v2
+  const info = d.data?.Info;
+  const id = info?.ID;
+  if (typeof id !== 'string' || !id) return data;
+  return {
+    ...data,
+    key: { id, remoteJid: info?.Chat, fromMe: info?.IsFromMe ?? true },
+    messageId: id,
+  };
+}
+
+// Normalizações GO→v2 dependentes da rota traduzida (goPath):
+// /instance/all → remove `token` de cada instância (credencial de instância
+//   do GO; o da instância padrão é o EVOLUTION_INSTANCE_TOKEN). A edge
+//   evolution-api é chamável por qualquer usuário logado e nenhum consumidor
+//   do front precisa desse campo — com token + URL pública da GO dá pra
+//   operar a instância fora do app ·
+// /label/list → [{id,name,color}] (o front espera o array v2) ·
+// /user/check → [{exists,jid,number,name}] (contrato whatsappNumbers do v2) ·
+// demais respostas: injeção aditiva de key/messageId nos envios.
+export function normalizeGoResponse(goPath: string | null, data: unknown): unknown {
+  const d = data as {
+    data?: Array<Record<string, unknown>> & { Users?: Array<Record<string, unknown>> };
+  };
+  if (goPath === '/label/list' && Array.isArray(d.data)) {
+    return d.data.map((l: unknown) => {
+      const label = l as {
+        label_id?: unknown; id?: unknown;
+        label_name?: unknown; name?: unknown;
+        label_color?: unknown; color?: unknown;
+      };
+      return {
+        id: label.label_id ?? label.id, name: label.label_name ?? label.name, color: label.label_color ?? label.color,
+      };
+    });
+  }
+  if (goPath === '/user/check' && Array.isArray(d.data?.Users)) {
+    return d.data.Users.map((u: unknown) => {
+      const user = u as { IsInWhatsapp?: unknown; JID?: unknown; RemoteJID?: unknown; Query?: unknown; VerifiedName?: unknown };
+      return {
+        exists: user.IsInWhatsapp === true, jid: user.JID ?? user.RemoteJID ?? null,
+        number: user.Query ?? null, ...(user.VerifiedName ? { name: user.VerifiedName } : {}),
+      };
+    });
+  }
+  if (goPath === '/instance/all' && Array.isArray(d?.data)) {
+    const instances = d.data.map((instance: Record<string, unknown>) => {
+      const safe = { ...instance };
+      delete safe.token;
+      return safe;
+    });
+    return { ...d, data: instances };
+  }
+  return normalizeGoSendResponse(data);
+}
+
+const TIMEOUT_MS = 15000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
+const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+
+const CB_FAILURE_THRESHOLD = 5;
+const CB_OPEN_DURATION_MS = 60_000;
+// E22 (plano multi-conexão): breaker por instância — 5 falhas na instância A
+// não podem abrir o breaker para a instância B. Rotas admin (sem instância no
+// path) usam a chave '__admin'.
+const cbState = new Map<string, { failures: number; openUntil: number }>();
+function cbRecord(key: string, success: boolean): void {
+  const state = cbState.get(key) ?? { failures: 0, openUntil: 0 };
+  if (success) { state.failures = 0; cbState.set(key, state); return; }
+  state.failures++;
+  if (state.failures >= CB_FAILURE_THRESHOLD) state.openUntil = Date.now() + CB_OPEN_DURATION_MS;
+  cbState.set(key, state);
+}
+function cbIsOpen(key: string): boolean {
+  const state = cbState.get(key);
+  if (!state) return false;
+  if (Date.now() < state.openUntil) return true;
+  if (state.openUntil > 0) { state.openUntil = 0; state.failures = 0; }
+  return false;
+}
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function proxyToEvolution(
+  evolutionApiUrl: string,
+  evolutionApiKey: string,
+  corsHeaders: Record<string, string>,
+  path: string,
+  method: string = 'POST',
+  body?: unknown,
+  instanceInPath?: string,
+  // E22: chave do circuit breaker (normalmente o nome da instância). Cai em
+  // instanceInPath ou '__admin' quando o chamador não informa.
+  cbKey?: string,
+  // TRA-002 / #18: token da instância resolvido pelo chamador a partir da
+  // conexão (evolution-instance-token.ts). Sem ele, o fallback
+  // EVOLUTION_INSTANCE_TOKEN só vale quando o nome NO PATH é o da instância
+  // padrão — a GO seleciona a instância pela credencial, então a da padrão não
+  // pode autenticar rota de outra conexão.
+  instanceToken?: string,
+): Promise<Response> {
+  const breakerKey = cbKey || instanceInPath || '__admin';
+  if (cbIsOpen(breakerKey)) {
+    console.warn('[Evolution CB] circuit breaker aberto — rejeitando requisição');
+    return new Response(JSON.stringify({ error: true, status: 503, message: 'Evolution API temporariamente indisponível (circuit breaker aberto). Tente novamente em instantes.' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  let apikey = evolutionApiKey;
+  let goPath: string | null = null;
+  let contentType = 'application/json';
+  if ((Deno.env.get("EVOLUTION_API_FLAVOR") ?? "go") !== "v2") {
+    const v2Path = instanceInPath ? `${path}/${instanceInPath}` : path;
+    const go = translateV2ToGo(v2Path, method, body);
+    if (go?.invalid) {
+      console.error(`[Evolution GO] payload invalido em ${v2Path}: ${go.invalid}`);
+      // Convencao do proxy: 200 com { error: true, message } — e o que o
+      // useEvolutionApiCore le para mostrar toast. Um 400 cru cairia no ramo de
+      // erro de rede. Sem corsHeaders o browser nem entrega o corpo.
+      return new Response(JSON.stringify({ error: true, message: go.invalid }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (go) {
+      path = go.path; method = go.method; body = go.body; instanceInPath = undefined;
+      goPath = go.path;
+      if (go.contentType) contentType = go.contentType;
+      if (go.auth === "instance") {
+        const instName = instanceNameFromV2Path(v2Path);
+        if (instanceToken) {
+          apikey = instanceToken;
+        } else if (
+          Deno.env.get("EVOLUTION_INSTANCE_TOKEN") &&
+          instName === Deno.env.get("EVOLUTION_INSTANCE_NAME")
+        ) {
+          // Fallback de transição: EVOLUTION_INSTANCE_TOKEN é a credencial da
+          // instância PADRÃO. Só vale quando a rota é dela — o nome no path v2
+          // se perde na tradução, então é a última chance de reconhecer a dona.
+          console.error(`[Evolution GO] instanceToken não resolvido para a instância padrão ${instName} (${go.path}) — fallback EVOLUTION_INSTANCE_TOKEN.`);
+          apikey = Deno.env.get("EVOLUTION_INSTANCE_TOKEN")!;
+        } else {
+          // TRA-002 / #18: NUNCA usar a key global nem a credencial da padrão em
+          // rota de outra conexão — a GO executaria na instância errada.
+          console.error(`[Evolution GO] rota de instância sem credencial resolvida (${v2Path})`);
+          return new Response(JSON.stringify({
+            error: true,
+            message: `Credencial da instância '${instName || "desconhecida"}' não configurada.`,
+          }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+      console.log(`[Evolution GO] translated → ${method} ${path}`);
+    }
+  }
+
+  const fullUrl = instanceInPath
+    ? `${evolutionApiUrl}${path}/${instanceInPath}`
+    : `${evolutionApiUrl}${path}`;
+
+  const opts: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': contentType,
+      'apikey': apikey,
+    },
+  };
+  if (body && method !== 'GET') {
+    opts.body = JSON.stringify(body);
+  }
+
+  let lastError: Error | null = null;
+  const isIdempotent = method === 'GET' || method === 'PUT' || method === 'DELETE';
+  const maxAttempts = isIdempotent ? MAX_RETRIES + 1 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = RETRY_DELAY_MS * Math.pow(2, attempt - 1);
+        console.log(`[Evolution API] Retry ${attempt}/${MAX_RETRIES} after ${delay}ms for ${method} ${fullUrl}`);
+        await sleep(delay);
+      }
+
+      console.log(`[Evolution API] ${method} ${fullUrl} (attempt ${attempt + 1})`);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const response = await fetch(fullUrl, { ...opts, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (RETRYABLE_STATUSES.has(response.status) && attempt < maxAttempts - 1) {
+        console.warn(`[Evolution API] Got ${response.status}, will retry...`);
+        lastError = new Error(`HTTP ${response.status}`);
+        continue;
+      }
+
+      let data: unknown;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        try { data = JSON.parse(text); } catch { data = { rawResponse: text, status: response.status }; }
+      }
+
+      if (!response.ok) {
+        const errorData = data as Record<string, unknown>;
+        const responseMsg = (errorData?.response as { message?: unknown })?.message;
+        const goError = typeof errorData?.error === 'string' ? errorData.error : '';
+        let friendlyMessage = 'Erro na API Evolution';
+        if (Array.isArray(responseMsg) && responseMsg.some((m: unknown) => (m as { exists?: unknown }).exists === false)) {
+          friendlyMessage = 'Número não encontrado no WhatsApp. Verifique se o número está correto e registrado.';
+        } else if (response.status === 401) {
+          friendlyMessage = 'Chave de API inválida ou sem permissão.';
+        } else if (response.status === 404) {
+          // No GO um 404 quase sempre é endpoint v2 sem equivalente (gap
+          // intencional), não instância inexistente — mensagem honesta.
+          friendlyMessage = 'Recurso não suportado pela Evolution GO ou instância não encontrada.';
+        } else if (goError) {
+          // Shape de erro do GO: {"error":"..."} — expõe a causa real
+          friendlyMessage = `Erro na API Evolution: ${goError}`;
+        }
+        // Falha de infra = 5xx/timeout. Um 4xx significa que a GO respondeu: o
+        // servico esta de pe, entao conta como sucesso para o breaker. Antes
+        // estava invertido — 404 abria o breaker e 500 zerava o contador.
+        // 408 e a excecao: e timeout reportado pelo servidor, ja listado em
+        // RETRYABLE_STATUSES, entao continua contando como falha.
+        cbRecord(breakerKey, response.status < 500 && response.status !== 408);
+        return new Response(JSON.stringify({ error: true, status: response.status, message: friendlyMessage }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      cbRecord(breakerKey, true);
+      return new Response(JSON.stringify(normalizeGoResponse(goPath, data)), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (lastError.name === 'AbortError') {
+        lastError = new Error(`Timeout após ${TIMEOUT_MS / 1000}s aguardando a API Evolution`);
+      }
+      if (attempt >= maxAttempts - 1) break;
+    }
+  }
+
+  cbRecord(breakerKey, false);
+  return new Response(JSON.stringify({
+    error: true, status: 504,
+    message: `Falha ao conectar com a API Evolution: ${lastError?.message || 'Erro desconhecido'}`,
+    retries: maxAttempts - 1,
+  }), {
+    status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+const PRIVATE_STORAGE_URL_PREFIXES = [
+  '/storage/v1/object/sign/',
+  '/storage/v1/object/public/',
+  '/storage/v1/object/authenticated/',
+];
+
+function parsePrivateStorageObject(url: string, buckets: string[], expectedOrigin?: string): { bucket: string; path: string } | null {
+  try {
+    const unsafeRawSegment = url.split(/[?#]/, 1)[0].split('/').some((rawSegment) => {
+      const decodedSegment = decodeURIComponent(decodeURIComponent(rawSegment));
+      return decodedSegment === '.' || decodedSegment === '..' ||
+        decodedSegment.includes('\\') || decodedSegment.includes('\0');
+    });
+    if (unsafeRawSegment) return null;
+
+    const parsedUrl = new URL(url);
+    if (expectedOrigin && parsedUrl.origin !== new URL(expectedOrigin).origin) return null;
+    const prefix = PRIVATE_STORAGE_URL_PREFIXES.find((candidate) =>
+      parsedUrl.pathname.startsWith(candidate)
+    );
+    if (!prefix) return null;
+
+    const encodedLocation = parsedUrl.pathname.slice(prefix.length);
+    const separatorIndex = encodedLocation.indexOf('/');
+    if (separatorIndex <= 0 || separatorIndex === encodedLocation.length - 1) return null;
+
+    const bucket = decodeURIComponent(encodedLocation.slice(0, separatorIndex));
+    const path = decodeURIComponent(encodedLocation.slice(separatorIndex + 1));
+    const safePath = Boolean(path) && !path.includes('\\') && !path.includes('\0') &&
+      path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..');
+
+    if (!buckets.includes(bucket) || !safePath) return null;
+    return { bucket, path };
+  } catch {
+    return null;
+  }
+}
+
+// Generate a short-lived delivery URL from either a stable private-object
+// locator or a legacy (possibly expired) signed URL.
+interface PrivateStorageSigner {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (
+        path: string,
+        expiresIn: number
+      ) => PromiseLike<{
+        data?: { signedUrl?: string } | null;
+        error?: unknown;
+      }>;
+    };
+  };
+}
+
+export async function resolvePrivateBucketUrl(
+  supabase: PrivateStorageSigner,
+  url: string,
+  buckets: string[] = ['whatsapp-media', 'audio-messages'],
+  expectedOrigin?: string
+): Promise<string> {
+  if (typeof url !== 'string') return url;
+  const objectReference = parsePrivateStorageObject(url, buckets, expectedOrigin);
+  if (!objectReference) return url;
+
+  const { data: signedData, error } = await supabase.storage
+    .from(objectReference.bucket)
+    .createSignedUrl(objectReference.path, 300);
+
+  if (error) throw error;
+  if (!signedData?.signedUrl) {
+    throw new Error(`Unable to sign private object from bucket ${objectReference.bucket}`);
+  }
+
+  return signedData.signedUrl;
+}

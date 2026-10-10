@@ -1,0 +1,32 @@
+== sondas do caso negativo (explicador real, codigo sem alteracao) ==
+sonda                                                    HOJE    NOVO    esperado(NOVO) situacao
+N1 objeto novo do cartao (indice auto-nomeado, tabela citada) SEM     SEM     SEM            OK
+N2 objeto novo, nome fora do texto da pendente e fora das aplicadas SEM     SEM     SEM            OK
+N3 linha de diferenca sem separador |                    SEM     SEM     SEM            OK
+N4 retrato canonico ausente                              SEM     SEM     SEM            OK
+P1 controle (diferenca ja no retrato da copia)           SEM     drift   drift          OK
+R1 RISCO: nome fora da pendente E presente nas aplicadas SEM     drift   drift          RISCO (medido)
+
+== detalhe ==
+* N1 objeto novo do cartao (indice auto-nomeado, tabela citada)
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    a tabela sonda_cartao so existe na migration pendente
+* N2 objeto novo, nome fora do texto da pendente e fora das aplicadas
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    documento_novo nao existe em nenhuma migration aplicada
+* N3 linha de diferenca sem separador |
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    sem separador nao ha como provar drift canonico
+* N4 retrato canonico ausente
+    HOJE=SEM  NOVO=SEM  esperado(NOVO)=SEM  -> OK
+    sem retrato legivel vale a regra estrita
+* P1 controle (diferenca ja no retrato da copia)
+    HOJE=SEM  NOVO=drift  esperado(NOVO)=drift  -> OK
+    a pendente nao cita a funcao: e drift pre-existente
+* R1 RISCO: nome fora da pendente E presente nas aplicadas
+    HOJE=SEM  NOVO=drift  esperado(NOVO)=drift  -> RISCO
+    DDL por funcao: nem clientes nem telefone aparecem no texto da pendente, e os dois aparecem numa migration antiga
+
+sondas normais=5 conforme=5 divergentes=0 | sondas de risco=1
+risco medido: R1 RISCO: nome fora da pendente E presente nas aplicadas -> NOVO=drift (HOJE=SEM)
+OK passo 4

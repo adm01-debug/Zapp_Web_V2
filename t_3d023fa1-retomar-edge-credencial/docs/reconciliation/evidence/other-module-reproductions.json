@@ -1,0 +1,93 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "method": "Exact selectedItems expression, export function and Gmail sync onSuccess callback extracted from source, deterministic fixtures; invalidation keys inspected statically. Does not execute React, Supabase SDK, network or database.",
+  "selection": {
+    "displayed_count": 2,
+    "forwarded_count": 1,
+    "forwarded": [
+      "image-1"
+    ],
+    "omitted": [
+      "pdf-1"
+    ]
+  },
+  "selection_all_outside_filter": {
+    "displayed_count": 2,
+    "forwarded_count": 0,
+    "openForward_effect": "early return, as statically checked in FilesTab.tsx"
+  },
+  "gmail_partial_sync": {
+    "http_status": 207,
+    "http_ok": true,
+    "backend_payload": {
+      "success": false,
+      "synced": 4,
+      "failed": 1,
+      "failures": [
+        {
+          "id": "failed-message",
+          "error": "controlled failure"
+        }
+      ]
+    },
+    "toast_events": [
+      {
+        "kind": "success",
+        "message": "4 emails sincronizados"
+      }
+    ],
+    "invalidated_keys": [
+      [
+        "gmail-threads"
+      ],
+      [
+        "gmail-thread-counts"
+      ],
+      [
+        "gmail-labels"
+      ]
+    ],
+    "account_invalidated": false
+  },
+  "export": {
+    "legal_equal_name_orders": [
+      [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      [
+        "C",
+        "A",
+        "B",
+        "D"
+      ]
+    ],
+    "pages": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "B",
+        "D"
+      ]
+    ],
+    "returned": [
+      "A",
+      "B",
+      "D"
+    ],
+    "missing": [
+      "C"
+    ]
+  },
+  "invalidation": {
+    "after_delete_keys": [
+      "contactMediaKey",
+      "conversationTabCountsKey"
+    ],
+    "missing_key": "contactMediaCountsKey"
+  }
+}

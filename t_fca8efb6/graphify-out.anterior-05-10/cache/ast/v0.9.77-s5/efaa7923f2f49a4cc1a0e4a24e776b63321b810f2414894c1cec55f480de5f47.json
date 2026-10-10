@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260924224823_fix_talkx_link_clicks_rls_sql", "label": "20260924224823_fix_talkx_link_clicks_rls.sql", "file_type": "code", "source_file": "supabase/migrations/20260924224823_fix_talkx_link_clicks_rls.sql", "source_location": null}], "edges": []}

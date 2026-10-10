@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260925203000_revoke_anon_execute_cron_only_functions_sql", "label": "20260925203000_revoke_anon_execute_cron_only_functions.sql", "file_type": "code", "source_file": "supabase/migrations/20260925203000_revoke_anon_execute_cron_only_functions.sql", "source_location": null}], "edges": []}

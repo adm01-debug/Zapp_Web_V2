@@ -1,0 +1,2322 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "/root/grill_me_primary_review",
+  "status": "COMPLETE_FINITE_TEST_READING",
+  "allocation_roster": "test-review-roster.json",
+  "counting_rule": "Roster é atribuição. Apenas faixas lidas e adjudicação por arquivo contam como concluídas; nenhum resultado de suíte é afirmado.",
+  "counts": {
+    "assigned_files": 73,
+    "assigned_lines": 18496,
+    "full_body_read": 73,
+    "adjudicated": 73,
+    "pending": 0,
+    "tests_executed": 0
+  },
+  "files": [
+    {
+      "path": "src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx",
+      "git_blob_sha": "2a9290f79a57ad74edb7f33e392634e7d4648eb6",
+      "source_sha256": "ac6d40d84f5f86f9c95ea25583b9d664d6ef9a0c8af9259f495b71265dd70eb9",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 20,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          20
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_UI_AND_NAVIGATION_WITH_NEGATIVE_ASSERTIONS",
+        "assertions": [
+          "Navegação avançada omite public-api; componente real expõe status desativado e nenhum textbox/botão/x-api-key."
+        ],
+        "mocks_or_fixtures": [
+          "Render RTL dos imports reais, sem mocks locais."
+        ],
+        "limits": [
+          "Não valida desligamento do endpoint no backend nem acesso por outra rota; contrato comprovado é apresentação/navegação."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx",
+      "git_blob_sha": "3e76edd1b3fc41073d1f04b425e863e71d6073af",
+      "source_sha256": "68f5ade9cef7512bb7116e2feb6de1d3b1d060967a02d7053c0d88ba4be533ad",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 224,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          224
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "MIXED_REAL_RENDER_AND_TAUTOLOGICAL_LOCAL_LOGIC",
+        "assertions": [
+          "Render real de título/subtítulo/cards/loading e botão IA habilitado."
+        ],
+        "mocks_or_fixtures": [
+          "Supabase sempre devolve quatro contatos; funções IA devolvem not found. Bloco algoritmo usa constantes, Math.min local e arrays locais."
+        ],
+        "limits": [
+          "Linhas82–150 não invocam algoritmo produtivo: níveis são strings comparadas a si mesmas; higher/lower só exigem que fixture exista. Limite500 é constante comparada a500 (207–210). Cores/sorting/filter/reasons são implementações locais. Botão clickable não é clicado nem resultado IA verificado."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/campaigns/__tests__/CampaignsView.test.tsx",
+      "git_blob_sha": "fa69cd179c9389ae591c883c704a3c140e2406af",
+      "source_sha256": "505c94946b72303b6f9dc02d359f91f583deca9399d0679636b5190f315b19c1",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 67,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          67
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/campaigns/__tests__/CampaignsView.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_VIEW_RENDER_WITH_HOOK_STUB",
+        "assertions": [
+          "Só confirma que o título Campanhas aparece."
+        ],
+        "mocks_or_fixtures": [
+          "useCampaigns vazio/mutations mockadas; Supabase/auth/toast/motion doubles."
+        ],
+        "limits": [
+          "Describe Target Type Options não interage com público, create, pause, filtros ou envio. Não contradiz os defeitos de audience/materialização ou status."
+        ],
+        "related_findings": [
+          "R2-MOD-005",
+          "R2-MOD-006"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT25_cardActions.test.tsx",
+      "git_blob_sha": "c0dc1d2113bbe245b7020b89fa2a51981ce42611",
+      "source_sha256": "fbd6142e8983e9e0a0090c92d7d3030ba79e6143b0ebdd67a46c1e54d06f5e22",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 191,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          191
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT25_cardActions.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_CARD_ACTIONS_WITH_BOUNDARY_STUBS",
+        "assertions": [
+          "Menu grade/lista, favorito callback, detalhe, propagação, Enviar, clipboard/link/slug, window.open e atalhos Enter/e com stockout/target interno."
+        ],
+        "mocks_or_fixtures": [
+          "ProductDetailDialog é stub de abertura; clipboard/open/toast doubles, ResizeObserver polyfill, produto único."
+        ],
+        "limits": [
+          "Valida despacho do card, sem executar detalhe ou envio; não cobre navegação A→B→Fechar→reabrir pelo cartão A do diálogo nem payload assíncrono após trocar produto."
+        ],
+        "related_findings": [
+          "R2-MOD-046"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT28_bulkBar.test.tsx",
+      "git_blob_sha": "4878698344ed64ea14a7ea39586f77dbcb4703d1",
+      "source_sha256": "503d30f6d03d464b40a1bff6ba0919897077b335f2bd351ee75e39dcbbdb7ff6",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 327,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          327
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT28_bulkBar.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_BAR_AND_PARENT_WITH_CHILD_STUBS",
+        "assertions": [
+          "Limites10/11/maxSend; seleção da página, seleção grade/lista, CSV real com3 linhas, favorito só não favorito, limpeza, produtos/cor encaminhados aos dialogs."
+        ],
+        "mocks_or_fixtures": [
+          "Card/SendProductDialog/BulkSendDialog e hooks de catálogo/favoritos stubados; downloadCSV é spy, geração CSV real."
+        ],
+        "limits": [
+          "Cor é emitida diretamente pelo card fake, logo não cobre a perda no card real. Seleção só dentro da mesma página; favorito usa vi.fn síncrono, sem falha ou promise tardia. Não executa envio em massa."
+        ],
+        "related_findings": [
+          "R2-MOD-010",
+          "R2-MOD-043",
+          "R2-MOD-045"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT30_responsivo.test.tsx",
+      "git_blob_sha": "63901d9ddc9ee9a20dea7501a5ad23ee2d2b36be",
+      "source_sha256": "575852af50be8cbc6fe74df9dd97c45eddd0f891e51eace02b841b38e6a82fb9",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 168,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          168
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT30_responsivo.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_RESPONSIVE_COMPONENTS_WITH_BREAKPOINT_STUB",
+        "assertions": [
+          "Accordion rotulado monta rail; detalhe real usa Drawer vaul quando mobile e Sheet quando desktop."
+        ],
+        "mocks_or_fixtures": [
+          "useIsMobile controlado, hooks de catálogo/auth fake, reducedMotion false; jsdom."
+        ],
+        "limits": [
+          "Breakpoints CSS medidos por classe xl:hidden ou hook simulado, sem viewport real, layout/overflow/touch ou transição responsiva em navegador."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT39_downloadFotos.test.tsx",
+      "git_blob_sha": "08d6aae715a2926fe7ddcfcf608c1b64cb6e7c0e",
+      "source_sha256": "db302acf6af1401033d9e7fb146c1e08a2212a440ad02746a9bacab1fd1d2947",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 143,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          143
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT39_downloadFotos.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_DIALOG_HANDLER_WITH_DOWNLOAD_STUB",
+        "assertions": [
+          "Nenhuma foto impede download; parcial informa1/2; falha total não promete sucesso; duas URLs e nome de arquivo."
+        ],
+        "mocks_or_fixtures": [
+          "downloadImageAsBlob devolve booleans; readiness sempretrue; auth/busca/envio/menu stubados; variantes já hidratadas."
+        ],
+        "limits": [
+          "Não executa rede/CORS/blob/âncora de download, rejeição inesperada ou carregamento de variantes. O teste positivo de falha total é de download, não cobre o contrato diferente de envio MOD007."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT40_badgeTokens.test.tsx",
+      "git_blob_sha": "cdbeb07d391ac2a94b2a1561bd100e2b0880764c",
+      "source_sha256": "863f198ba0a0bf614ace1bba1879382fe559473f414dbccf8d9ca65f7627a535",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 55,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          55
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT40_badgeTokens.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_TEXT_CONTRACT",
+        "assertions": [
+          "Top-level TS/TSX do catálogo não contém text-white/bg-violet-500/hex6; tokens.css tem --badge-new iniciando por dígito e consumidor textual hsl(var(...))."
+        ],
+        "mocks_or_fixtures": [
+          "readFileSync/readdirSync reais no teste; sem render."
+        ],
+        "limits": [
+          "Busca não é recursiva nem proíbe todo literal CSS; presença de string não valida sintaxe/estilo computado, contraste ou aplicação visual."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT55_57_management.test.tsx",
+      "git_blob_sha": "5313e039dee7e0048d9b88ee8724aa4b23ead2c7",
+      "source_sha256": "5f7f1ffd41f3702a7382b89ea3cc44ee94a7172f8b5117a5992fabbaac86fdc1",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 314,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          314
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT55_57_management.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PARENT_WITH_DATA_AND_DIALOG_STUBS",
+        "assertions": [
+          "Tab enviada por URL/default; duas linhas ou vazio; deeplink fetch produto/contato antes de preset, ausência/null/telefone inválido não inventa contato."
+        ],
+        "mocks_or_fixtures": [
+          "Hooks dados/favoritos/recentes/histórico e dialog stubados; fetch presets resolvidos por fixture; history URL local."
+        ],
+        "limits": [
+          "Caso chamado RLS/inexistente é null simulado, sem política real. Sem paginação>500, erro do histórico, resposta fora de ordem ou envio real."
+        ],
+        "related_findings": [
+          "R2-MOD-042"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT61_62_65_catalogFilters.test.tsx",
+      "git_blob_sha": "91a6ade7bc3fd2cf59bd7c4451487adcacff1c11",
+      "source_sha256": "2f5f4d18e40a0c3d190c1254c202b884d6f44e6e005467f794f0ff2d5e313cfe",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 329,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          329
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT61_62_65_catalogFilters.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_FILTER_AND_KEYBOARD_CONSUMERS_WITH_QUERY_STUBS",
+        "assertions": [
+          "Novidades envia is_new, clear remove busca/flag na UI; chip condicional; atalhos /, Ctrl/Cmd+F, Esc e guard de campo/Sheet fechado."
+        ],
+        "mocks_or_fixtures": [
+          "Catálogo/dados/card/dialog/preset stubs; debounce real aguardado350ms; KeyboardEvent em jsdom."
+        ],
+        "limits": [
+          "Após clear, lastQuery opcional pode ser undefined e ambas assertions toBeUndefined passam mesmo sem nova consulta (210–215); não exige número de chamadas. Não verifica página2→1, resultado real, ordenação nem competição com outros listeners globais."
+        ],
+        "related_findings": [
+          "R2-MOD-009"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT67_a11y.test.tsx",
+      "git_blob_sha": "c1f679066efc728586f47993aeb38159110925e8",
+      "source_sha256": "b0082a45d484f908b7e03e54668d0f9fd439bf39bacbbb3b4a6e2f2899fded17",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 300,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          300
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT67_a11y.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_COMPONENT_AXE_WITH_SEVERITY_PARTITION",
+        "assertions": [
+          "Axe dos cinco componentes reais, portais pelo document.body; zero critical/serious, IDs moderate/minor pinados; controle negativo button-name prova matcher não no-op."
+        ],
+        "mocks_or_fixtures": [
+          "Hooks de dados/envio/auth/readiness e ResizeObserver doubles, fixtures estáticas; não mocka Radix."
+        ],
+        "limits": [
+          "Lido, não executado. Inventário não sério compara IDs de violações, não quantidade de nós atingidos; mais nós no mesmo heading-order não alteram a lista. Não cobre todos os estados/interações, contraste visual ou leitor de tela real."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT68_acessibilidade.test.tsx",
+      "git_blob_sha": "5654fdc670a96ef679a9940ef491d4c0350662a2",
+      "source_sha256": "5e533f26a12ea8203abafd0cc6a84b15c41861aea9edfed295b3dab32255d125",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 263,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          263
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT68_acessibilidade.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_UI_ATTRIBUTE_CONTRACT_WITH_TARGETED_IMPORTACTUAL",
+        "assertions": [
+          "Live-region status/polite e nó preservado ao mudar favoritos; constantes/classes de foco em chips, card real, favorito, seleção, thumbs, swatches e variações."
+        ],
+        "mocks_or_fixtures": [
+          "Dados/hooks e filhos stubados no cenário de contagem; importActual obtém card/detalhe reais nos casos de foco."
+        ],
+        "limits": [
+          "Afirma atributo/classe, não anúncio falado nem ring visual. Fixture tem2 produtos/total60 e só verifica rótulo1–24; não prova número real exibido ou debounce de consulta."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT69_alts.test.tsx",
+      "git_blob_sha": "35b367cee9953c38996b7708c9fd26a49410d41c",
+      "source_sha256": "db458b29ac22eb74da8bde22bea8c928b56f644d5bfe9d91d25e21e35fea5684",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 177,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          177
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT69_alts.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_ALT_HELPERS_AND_COMPONENTS",
+        "assertions": [
+          "Helpers nome/cor e ausência/multicor; alt de capa grade/lista; detalhe real muda alt ao selecionar swatch e conserva alt vazio decorativo das thumbs; foto de variante."
+        ],
+        "mocks_or_fixtures": [
+          "Dados/hidratação/favoritos fake; detalhe via importActual, sem carregar imagens de rede."
+        ],
+        "limits": [
+          "Testa strings/atributos e seleção, sem comprovar correspondência visual da cor/foto, carregamento, fallback ou leitura por tecnologia assistiva."
+        ],
+        "related_findings": [
+          "R2-MOD-066"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT70_reducedMotion.test.tsx",
+      "git_blob_sha": "760c917167dab3e0030852fc7dc1cc1217d9e554",
+      "source_sha256": "3177091d29faedd34c603b5813470888d317d18c6af569c9adce4e19b3a75f63",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 194,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          194
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT70_reducedMotion.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "MIXED_SOURCE_TEXT_AND_RENDER_WITH_PREFERENCE_STUB",
+        "assertions": [
+          "Varre imports/chamada useReducedMotion; opacity/transform iniciais mudam no wrapper da grade e linha de templates conforme flag."
+        ],
+        "mocks_or_fixtures": [
+          "Hook useReducedMotion é substituído; dados/card/dialog e hook templates simulados; framer-motion restante real."
+        ],
+        "limits": [
+          "Cabeçalho cita singleton motion-dom, mas código controla hook fake (30–33), não preferência do SO. Regex não prova que retorno do hook controla toda animação; dois cenários DOM não cobrem todo módulo."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT72_imagens.test.tsx",
+      "git_blob_sha": "2f8a88d80b0af138f2f504b30efb0dc07142717f",
+      "source_sha256": "f210476f763d82294064413812c795e0d0c8204040e52d8febecea5869707f63",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 122,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          122
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT72_imagens.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "MIXED_REAL_IMG_ATTRIBUTES_AND_SOURCE_CSS",
+        "assertions": [
+          "ProductThumb/card real: eager/high ou lazy, sizes/srcset, classes offscreen; regraCSS content-visibility e intrinsic-size em texto."
+        ],
+        "mocks_or_fixtures": [
+          "Detalhe stubado; URLs sintéticas sem load/error de imagem."
+        ],
+        "limits": [
+          "Prova atributos/CSS textual, não download prioritário, dobra real, layout/paint ou CLS medido. Não cobre ciclo erro→fallback→load do MOD066."
+        ],
+        "related_findings": [
+          "R2-MOD-066"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT74_headerSemTroca.test.tsx",
+      "git_blob_sha": "734f8a89fb8f3e33d0659e7c79643779cf5f9219",
+      "source_sha256": "1121272b535603fd8d344a17c14fd84d72285501aa5fdb74373c6fd3fccafe9a",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 44,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          44
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT74_headerSemTroca.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_TEXT_REGRESSION_GUARD",
+        "assertions": [
+          "Presença ModuleHeader, ausência de ternário/esqueletos específicos e fallback stats.total??totalProducts."
+        ],
+        "mocks_or_fixtures": [
+          "Lê arquivo real, sem render."
+        ],
+        "limits": [
+          "É guarda de padrões literais, não ausência de todo condicional ou medida de altura/CLS. Métricas Lighthouse citadas no comentário não foram reproduzidas nesta revisão."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx",
+      "git_blob_sha": "f0fa5d941072c1e606794172395bcbf7ad5c26e4",
+      "source_sha256": "e457305a948451d4f56cb78fde073bf54127ed40d4513289721ac1e02ccdc399",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 22,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          22
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT74_kpiStripCls.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_COMPONENT_PLACEHOLDER_ASSERTION",
+        "assertions": [
+          "Componente real sem stats/loading monta placeholder e não strip carregado."
+        ],
+        "mocks_or_fixtures": [
+          "Props estáticas; render RTL."
+        ],
+        "limits": [
+          "Não compara geometria dos estados nem mede deslocamento de layout; existência do placeholder não equivale a CLS zero."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx",
+      "git_blob_sha": "4c75e2f65c80ba94db2ac8ad9e1f4225a861e9f7",
+      "source_sha256": "8f63deb53fae449d794a63b394d34dce998f3cb5cd981d128a5b83048c4c986e",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 116,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          116
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_TOUR_LOCAL_STORAGE_LIFECYCLE",
+        "assertions": [
+          "Ajuda5 passos, tour4 dicas, concluir/pular persistem, remontagem respeita chave e Storage lançando não quebra."
+        ],
+        "mocks_or_fixtures": [
+          "localStorage jsdom e spies para falha get/set; ResizeObserver fake."
+        ],
+        "limits": [
+          "Passos textuais e contagem não provam prints reais ou fluxo de envio; arquivo declara a limitação visual. Não mede experiência/atalhos de cada dica no produto."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx",
+      "git_blob_sha": "2e5b6513e1068f0904ea98b86741e3fc83cba1b0",
+      "source_sha256": "2855cc4b1d36da5c9a228dc591444ab1a85cbc999f4804e0335bd191446c5695",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 188,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          188
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_FILTERS_WITH_SLIDER_STUB",
+        "assertions": [
+          "Teto price_max/fallback/clamp, callbacks dos dois thumbs, cores/materiais, badge, clear/fechar e ausência de bestseller sem dados."
+        ],
+        "mocks_or_fixtures": [
+          "Slider substituído por dois botões que emitem100/500; props stats em fixtures."
+        ],
+        "limits": [
+          "Título diz slider real, mas não há interação com Radix ou pointer. Clear só verifica callbacks, não todos os valores resetados; nenhum fetch/CSV consumidor é exercitado."
+        ],
+        "related_findings": [
+          "R2-MOD-041"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/CatalogRail.test.tsx",
+      "git_blob_sha": "10158e0ffc559ad11165612cccd3d0597b9a95fe",
+      "source_sha256": "43c28605e920b0d24f5eb2fffe73d90d4f9157e7b65887edfcfb1bfa7bbe73da",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 365,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          365
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/CatalogRail.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_RAIL_AND_HELPERS_WITH_AGGREGATE_FIXTURES",
+        "assertions": [
+          "Banner/filtro, delta mensal/zero, cardscontagens, status sent/failed/partial, destinatário, callbacks, exportflags, links, alertas sync/estoque, persistência de dismiss e daysSince real."
+        ],
+        "mocks_or_fixtures": [
+          "Stats/recentes/topSent precomputados, exportador orquestrador spy, relógio/sessionStorage controlados."
+        ],
+        "limits": [
+          "Não mede gráfico real nem origem dos agregados/topSent. Caso mudança de dica356–364 não renderiza dia4; só calcula índice diferente e renderiza dia3. Export só verifica flags do rail, sem filtro avançado geral."
+        ],
+        "related_findings": [
+          "R2-MOD-041",
+          "R2-MOD-044"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductCatalog.test.tsx",
+      "git_blob_sha": "ca5254db6b2b26c21b05b8e9534e51413ca4196a",
+      "source_sha256": "0d76b9f07ce45659a2d6c73cadedf4b285f36a1981a68c93367830fcd53ab575",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 460,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          460
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/ExternalProductCatalog.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PARENT_WITH_MOCKED_HOOKS_AND_CHILDREN",
+        "assertions": [
+          "Estados erro/vazio/429, retrycallback, opções/contagens, favoritos, preset ao dialog, quatro capas priority, estrutura lista/sticky e fetching sem skeleton."
+        ],
+        "mocks_or_fixtures": [
+          "Card/dialog/hooks de catálogo/favoritos stubados; estados da query definidos por fixture;2produtos/total60."
+        ],
+        "limits": [
+          "Não navega de página ou executa carregamento real; 429 verifica bloqueio inicial, não duração/retentativa. Favorito incompleto tem só nome/sku e card fake não valida preço/hidratação."
+        ],
+        "related_findings": [
+          "R2-MOD-048"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+      "git_blob_sha": "1fb737f6ccd0a89ff010a86c2f1c9fd7ad492490",
+      "source_sha256": "e1bc74198bb9a196c8da012642e76bf49fca3d25c6867004d5ef2223baebcbee",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 187,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          187
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_VIRTUALIZER_WITH_SYNTHETIC_LAYOUT",
+        "assertions": [
+          "Virtualizador real entrega16linhas de50 e spacer conservaaltura; desliga para pageSize24/grade; não duplica nomes na janela inicial."
+        ],
+        "mocks_or_fixtures": [
+          "offsetHeight720 e ResizeObserver imediato, card/hooks/dados fake;50produtos fixos inclusive quando pageSize24."
+        ],
+        "limits": [
+          "Não mede performance/viewport real ou scroll para outras janelas. Caso pageSize24 aceita50rows porque backendfake ignora limite; não é prova de paginação da consulta."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+      "git_blob_sha": "cdc4e649b86ad0f3bcc195e0bba0da3f49f52e04",
+      "source_sha256": "11b51146d7f887d47f53771ed586a9842bbb1333a6d24ad6a553878dda6df033",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 638,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          638
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_MANAGEMENT_CONSUMERS_WITH_BACKEND_HOOK_STUBS",
+        "assertions": [
+          "Header/sync, callbacksKPI/filtroURL/search, cor/materialarrays e clientfilter, erros/retry, categorias, ausênciaMaisPedidos, bulk CSV/favorito, ajuda e reducedMotion."
+        ],
+        "mocks_or_fixtures": [
+          "Catálogo/stats/favoritos/auth simulados; exportador e downloadspy; dois produtos; promises imediato/debounce aguardado."
+        ],
+        "limits": [
+          "Teste298–304 clica último botão e só mantém nome visível, sem provar mudança para lista. Nenhum ciclo página2→1, export com combinação de filtros avançados ou falha de favorito. Provas de filtros são args de callback, não backend."
+        ],
+        "related_findings": [
+          "R2-MOD-009",
+          "R2-MOD-010",
+          "R2-MOD-041",
+          "R2-MOD-043"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/ProductDetailDialog.test.tsx",
+      "git_blob_sha": "59203ffda005a29e651f27fa8c5a00aff3f7a0fe",
+      "source_sha256": "9de77adf2708b8d021c318ad6d0a65dfcdd8d38c41760f62adadeb6553a077b5",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 391,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          391
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/ProductDetailDialog.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_DIALOG_WITH_DATA_HOOK_STUBS",
+        "assertions": [
+          "Galeria avança e retorna, mostra contador, copia SKU e renderiza metadados, descrição, ficha técnica, cores/estoque agrupado e categorias/fallbacks.",
+          "Selecionar Vermelho entrega produto e cor ao callback direto; navegação aberta entre três produtos atualiza título e querystring e retorna ao produto anterior."
+        ],
+        "mocks_or_fixtures": [
+          "useExternalProduct/favoritos simulados; produto inicial já possui três imagens e variantes locais; Clipboard e ResizeObserver substituídos."
+        ],
+        "limits": [
+          "O callback direto preserva a cor, mas não compõe CatalogProductCard, onde o segundo argumento é perdido (MOD045).",
+          "A navegação A→B→A enquanto aberto é exercitada; não há ciclo A→B→Fechar→reabrir pelo cartão A que reproduz MOD046.",
+          "Todas as fixtures navegáveis têm três imagens; não verifica índice avançado seguido de produto com menos imagens (MOD047), nem hidratação assíncrona/erro real."
+        ],
+        "related_findings": [
+          "R2-MOD-045",
+          "R2-MOD-046",
+          "R2-MOD-047"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/SendProductDialog.test.tsx",
+      "git_blob_sha": "23405c63afdee3b2aac4a585a519d1a71a92af15",
+      "source_sha256": "c2618145bc661c0c65e998d6357e115149009844ed04645f601d2643c7e46f31",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 547,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          547
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/SendProductDialog.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_DIALOG_WITH_OUTBOUND_AND_READINESS_DOUBLES",
+        "assertions": [
+          "Limite de texto, bloqueio do 11º clique de foto, links com variante, preview, rascunho debounce/restauração/descarte, confirmação de fechamento, remount por key, atalhos e contato preset atravessam o diálogo real.",
+          "Readiness blocked impede botão e Ctrl+Enter; caminho permitido gera payload image/caption para o contato; promise pendente produz região aria-live."
+        ],
+        "mocks_or_fixtures": [
+          "Readiness já resolvido, busca, outbound e log de evento simulados; fixtures com variants=[] eliminam hidratação; menu Radix substituído, fake timers/sessionStorage."
+        ],
+        "limits": [
+          "130–149 remove as 11 fotos inicialmente selecionadas antes de testar o 11º clique; não cobre o limite inicial/global (MOD011).",
+          "Readiness de erro não é produzido pelo hook real (MOD008), e outbound nunca chega a backend/provedor.",
+          "Key distinta demonstra isolamento por remount; não testa troca sem key. Promise pendente é usada só para anúncio de progresso, sem resolver erro/troca de produto."
+        ],
+        "related_findings": [
+          "R2-MOD-008",
+          "R2-MOD-011"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogExport.test.ts",
+      "git_blob_sha": "1d631cd242db8c4da7a1748fe807f42d4c5acd5e",
+      "source_sha256": "66778f423dc6bc8f4066c30ed156fceca31c945dfa6ccd329d3ff983563faf92",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 383,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          383
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/catalogExport.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_EXPORT_HELPERS_WITH_FETCH_DOWNLOAD_DOUBLES",
+        "assertions": [
+          "Escape CSV/BOM em bytes, 13 colunas, preço/links/nome de arquivo e três filtros rail. Paginação real do coletor com offsets, cap1000, dedupe, vazio e erro abortando download parcial.",
+          "Fetcher real envia action/params e rejeita erro transport/body; Blob e revogação de URL verificados."
+        ],
+        "mocks_or_fixtures": [
+          "Páginas injetadas ou functions.invoke fake; sonner/download/anchor.click substituídos."
+        ],
+        "limits": [
+          "Não compõe os filtros avançados do consumidor: teste valida apenas filterKey e params passados diretamente; permanece MOD041.",
+          "Não valida Excel/navegação/download real, ordenação consistente de backend concorrente ou sanitização de fórmulas; nenhum resultado de execução alegado."
+        ],
+        "related_findings": [
+          "R2-MOD-041"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogMocks.ts",
+      "git_blob_sha": "b6c57043051b0045476fa8c3abddfc997d4792a2",
+      "source_sha256": "cca275360390af49b6b5e575abf1039b29c467b395480994de8a12f48ce54701",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 31,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          31
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/catalogMocks.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "SHARED_TEST_FIXTURE_MODULE",
+        "assertions": [
+          "Não contém tests/assertions; compartilha toast spy e ResizeObserver sem comportamento."
+        ],
+        "mocks_or_fixtures": [
+          "vi.mock sonner e API de medição com métodos vazios."
+        ],
+        "limits": [
+          "Arquivo de suporte lido, não prova funcionalidade, geometria ou resultado positivo de nenhum teste."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/catalogShared.test.tsx",
+      "git_blob_sha": "a5a1b506bdb75ffc3cd525c9d871527e2aa46b0c",
+      "source_sha256": "76f3982ef7486a33835b47904d35d56d00e409688e2c196ed98c41cf1f30f044",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 667,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          667
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/catalogShared.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HELPERS_COMPONENTS_AND_HOOK",
+        "assertions": [
+          "Formatadores, prioridade de badge, chips/estoque/preço, botões de favorito, KPI/skeleton, categorias/ícones, filtros OR e callbacks são exercitados.",
+          "ProductThumb percorre erro primário→fallback→erro; cooldown com fake timers verifica bloquear9s/liberar10s, e estados de erro/preview renderizam."
+        ],
+        "mocks_or_fixtures": [
+          "Fixtures locais, sonner fake; fireEvent de imagem sem navegador carregando; timers sintéticos."
+        ],
+        "limits": [
+          "ProductThumb149–155 não emite load bem-sucedido no fallback nem rerender com novo src após erro, justamente MOD066.",
+          "Skeleton/classname e regex de hex não medem CLS/contraste. Texto espera1min mas assertion libera10s; teste descreve comportamento local, não orçamento servidor.",
+          "Chips locais não compõem exportação nem persistência de favoritos."
+        ],
+        "related_findings": [
+          "R2-MOD-066",
+          "R2-MOD-041",
+          "R2-MOD-043"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/sendProductUtils.test.ts",
+      "git_blob_sha": "6ee63a0cddcbc93353e8868f52c8fe5def5ad3a1",
+      "source_sha256": "bb38bcf91409f6042a7572e564bea4b00e7145bb1eb5a01ccca9c1053dbfc6a2",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 236,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          236
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/sendProductUtils.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_HELPERS_WITH_BROWSER_IO_DOUBLES",
+        "assertions": [
+          "Agrupa variantes e deduplica thumbs, inclui imagem principal, gera textos formal/informal/promo/variante e resolve nome/empresa com fallback sem exemplo.",
+          "downloadImageAsBlob cria Blob URL, nome e revogação; rejeição fetch retorna false sem click."
+        ],
+        "mocks_or_fixtures": [
+          "Produtos/variantes locais; fetch, object URL e anchor.click simulados."
+        ],
+        "limits": [
+          "Não testa envio/quantidade máxima de fotos, preservação de seleção no wrapper, estoque atualizado nem execução CORS real.",
+          "Textos são conferidos por trechos e não validam todas as combinações de campos/formatação."
+        ],
+        "related_findings": [
+          "R2-MOD-011",
+          "R2-MOD-045"
+        ]
+      }
+    },
+    {
+      "path": "src/components/catalog/__tests__/useSendProduct.test.tsx",
+      "git_blob_sha": "594a1c0f0ce7fc710f29f6278a1dedfa1b8d02d5",
+      "source_sha256": "b222fa14f0201c2b522c39282fdc9711cfef37ba39c1f955d5928430f9b13b9f",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 413,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          413
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/catalog/__tests__/useSendProduct.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_TRANSPORT_DOUBLE",
+        "assertions": [
+          "Texto sozinho/imagens com caption só na primeira, intervalo de fotos, falha parcial/total com retry e progresso por promises controladas.",
+          "Busca debounce, evento com messageIds/status, invalidação do rail e navegação/evento para abrir contato são exercitados no hook real."
+        ],
+        "mocks_or_fixtures": [
+          "Outbound, busca e log substituídos; QueryClient real, fake timers/resolvers; navegação mockada."
+        ],
+        "limits": [
+          "349–351 afirma fórmula comum ao lote, mas 352–413 só testam useSendToContact; falha total do hook é controle positivo e não cobre CatalogBulkSendDialog sem imagem (MOD007).",
+          "Evento e invalidate são chamadas a doubles; nenhuma persistência/RLS, recibo de entrega ou seleção final do lote é provada.",
+          "Não há concorrência entre dois envios nem busca respondendo fora de ordem."
+        ],
+        "related_findings": [
+          "R2-MOD-007"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksAgendaMode.test.tsx",
+      "git_blob_sha": "53a4b75e00bd0b4fe1c5aedee98eb3da49ad4030",
+      "source_sha256": "81ea3ed3042be61df089254fbbd1fbc190bfa75eea7b56e0ccb1613e6414573c",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 193,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          193
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/TasksAgendaMode.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_AGENDA_WITH_FIXED_LOCAL_CLOCK",
+        "assertions": [
+          "Faixa7dias, rótulos/aria-current, QuickAdd dia inicial, seleção Amanhã, fronteira7º/8ºdia, pontos por dia, classes fim de semana e skeleton exercitam componente real."
+        ],
+        "mocks_or_fixtures": [
+          "Date local fixo1out2026; tarefas fornecidas e mutations vi.fn; QueryClient/Tooltip reais."
+        ],
+        "limits": [
+          "Relógio fica fixo e dados pré-carregados; não verifica virada do dia, população além do teto, quick-add pendente enquanto muda dia ou resultado de mutation.",
+          "Geometria citada no comentário é rótulo/classe em jsdom, não medição de layout."
+        ],
+        "related_findings": [
+          "R2-MOD-054",
+          "R2-MOD-056",
+          "R2-MOD-058"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksBoardMode.test.tsx",
+      "git_blob_sha": "4589f82e79f2c3f77bf452c59f4896a0b137969c",
+      "source_sha256": "b2e5ab04a46445929164844895e60a49b4ef4d830bcf5af6a50ab2406f347bc8",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 220,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          220
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/TasksBoardMode.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_DRAG_DECISION",
+        "assertions": [
+          "resolveDragEnd real cobre reorder cinco colunas/positions, WIP real, motivo waiting, move com índice, destino nulo/id desconhecido e transição inválida."
+        ],
+        "mocks_or_fixtures": [
+          "DropResult e arrays locais; makeTaskRow fixture; nenhum React/DnD renderizado neste arquivo."
+        ],
+        "limits": [
+          "Título de arquivo não significa montagem do quadro: os testes conscientemente isolam decisão.",
+          "Índice de destino é validado contra a mesma lista fornecida; não compõe lista filtrada com ordenação completa de useMyWorkItems (MOD055), nem persistência/conflito."
+        ],
+        "related_findings": [
+          "R2-MOD-055"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksListMode.test.tsx",
+      "git_blob_sha": "8494acba59e73735b51d36b22ae325314d8f014a",
+      "source_sha256": "eab0a0a4d7c00b416c105876c4b1e65fdad7b9e53a22c29e619a7c4386598ccd",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 179,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          179
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/TasksListMode.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_LIST_WITH_BUCKET_FIXTURES",
+        "assertions": [
+          "Ordem DOM das seis seções, concluídas recolhidas, grupos de Próximas, vazio total/filtrado, limpar callback, checkbox sem abrir e reabrir tarefa; skeleton."
+        ],
+        "mocks_or_fixtures": [
+          "Buckets fornecidos diretamente, makeTaskRow e callbacks vi.fn; Tooltip real."
+        ],
+        "limits": [
+          "Não calcula buckets com hook/query nem confirma alteração de status/persistência ou restauração de lembrete."
+        ],
+        "related_findings": [
+          "R2-MOD-053",
+          "R2-MOD-054"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/TasksModule.test.tsx",
+      "git_blob_sha": "f58307ff760e3f86e5ca79c5778379c9434527c6",
+      "source_sha256": "9ff0bef2ca6e70b1b262339a08af88b2acf415d0a0f3abdb2446efeb12e927ac",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 662,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          662
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/TasksModule.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_MODULE_WITH_DATABASE_HARNESS",
+        "assertions": [
+          "Filtros chegam à URL e recortam quadro/lista; modos compartilham select e respeitam preferência/default/forceMode; KPIs/contagens e classes respondem à carga.",
+          "Eventos tasks-shortcut reais no módulo focam campos, abrem sheet, concluem/cancelam/movem e anunciam; deep-link task seleciona item carregado."
+        ],
+        "mocks_or_fixtures": [
+          "Harness tarefas/Supabase, QueryClient e MemoryRouter; dados predefinidos e efeitos update/undoToast observados como chamadas."
+        ],
+        "limits": [
+          "401–425 explicita segunda metade do teclado: CustomEvent direto não valida keydown, defaultPrevented, guarda de input ou interação com listener do card.",
+          "Teste1234tarefas (:299–307) retorna1234viafixture; não reproduz teto PostgREST de MOD054.",
+          "Cancelar só exige undoToast chamado (:512–520); não executa desfazer nem triggers que limpam remind_at (MOD053). Criar/anunciar não verifica payload contactId (MOD049) ou promise rejeitada (MOD051).",
+          "Classe h88/grid não mede layout. Sem avança relógio à meia-noite MOD058."
+        ],
+        "related_findings": [
+          "R2-MOD-049",
+          "R2-MOD-051",
+          "R2-MOD-053",
+          "R2-MOD-054",
+          "R2-MOD-058"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/WorkItemCard.test.tsx",
+      "git_blob_sha": "bec8d3caf1be6162f1da7711c8122b96661ef1e7",
+      "source_sha256": "21ddbd764e21eae5babb944b2158480ff199296da9ceaecd47499adc5300bcc0",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 215,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          215
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/WorkItemCard.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_CARD_WITH_CALLBACK_SPIES",
+        "assertions": [
+          "Render de done/waiting/agenda, teclas Enter/x e guarda de evento vindo de filho, checkbox/body sem propagação indevida, chip contato, menu abrir/mover/WIP e remover alarme."
+        ],
+        "mocks_or_fixtures": [
+          "Callbacks vi.fn; item fixture, shims Pointer API; Radix menus dirigidos pelo teclado."
+        ],
+        "limits": [
+          "Keydown é só do card: não monta registro global. As ações não chegam ao hook nem ao SQL; tarefas done com novo reminder não são salvas."
+        ],
+        "related_findings": [
+          "R2-MOD-052",
+          "R2-MOD-057"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/agendaGroups.test.tsx",
+      "git_blob_sha": "92736721772f2af1c4f7365aa1a50dab49dea495",
+      "source_sha256": "4d77dc4e60d2b2b7002ba0d325e7f7c5bf621d45fa75c2515aeffce988721b5d",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 224,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          224
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/agendaGroups.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_AGENDA_WITH_CALLBACK_SPIES",
+        "assertions": [
+          "QuickAdd cria no dia23:59, preserva draft ao trocar dia antes de enviar e segundo create mantém prazo.",
+          "aria-controls aponta região distinta do botão; grupos alarme/prazo/semhora, pontos, classes de card, expansão atrasadas e vazio."
+        ],
+        "mocks_or_fixtures": [
+          "Relógio local real no módulo do teste; mutation resolve imediatamente, items/overdue fornecidos."
+        ],
+        "limits": [
+          "Troca de dia ocorre antes da primeira criação, não enquanto await antigo está pendente (MOD056).",
+          "Sem persistência de data no SQL nem horário de verão/fuso alternativo ou virada do dia."
+        ],
+        "related_findings": [
+          "R2-MOD-056",
+          "R2-MOD-058"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/cardAcoes.test.tsx",
+      "git_blob_sha": "f72a13adae5dd1f5aad7fc1d0ff628d950697c34",
+      "source_sha256": "d03469f43f1d2c018ec6a81ae85dc57e28936255872715b8052639579207fd47",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 338,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          338
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/cardAcoes.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_COMPONENTS_AND_MODULE_WITH_DATABASE_HARNESS",
+        "assertions": [
+          "Gate waiting pede motivo sem update/upsert; sheet focusField seleciona waiting. Menus completos, WIP3/3, snooze/remover/escolher e coarse-pointer move são exercitados.",
+          "Módulo renderiza contato; callbacks do card separam concluir/cancelar."
+        ],
+        "mocks_or_fixtures": [
+          "Harness Supabase, dados locais e callback spies; matchMedia coarse sintético."
+        ],
+        "limits": [
+          "Cancelar verifica callback, não desfazer/restaurar lembrete. Snooze verifica argumento15/tomorrow9, não notified_at ou execução do alarme.",
+          "RemindChip217–232 limpa spy do pai após clique inicial antes de verificar ação; esse caso não prova ausência de propagação do clique inicial."
+        ],
+        "related_findings": [
+          "R2-MOD-052",
+          "R2-MOD-053",
+          "R2-MOD-057"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx",
+      "git_blob_sha": "081f0be9a2d732f8a0b400262db29b6cfbd14e08",
+      "source_sha256": "5bc1533f6e231f8fe12dfd31c40a37172729c4fbfda5cff85869067e57dd3fc2",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 125,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          125
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_MODULE_WITH_FILTERED_FIXTURE",
+        "assertions": [
+          "Mesmo cenário real do módulo diferencia cabeçalho6abertas/3hoje, KPIWIP3/3, KPIhoje filtrado1 e colunaDoingvisível0/WIPreal3."
+        ],
+        "mocks_or_fixtures": [
+          "Seis tarefas Supabase harness; filtro via URLprio=urgent."
+        ],
+        "limits": [
+          "Bom controle de contagem filtrada vs carga; não testa ordem ao arrastar recorte contra lista completa (MOD055), nem mais linhas que teto remoto."
+        ],
+        "related_findings": [
+          "R2-MOD-054",
+          "R2-MOD-055"
+        ]
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+      "git_blob_sha": "359d6496d45b096440b3561614826b2e1b27ea06",
+      "source_sha256": "dac97ddb179fa928814eaa5772c73c57fa35be4a63ee8cbca69f7990908088fa",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 216,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          216
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_CONTRACT_AND_RENDERED_TOKEN_CONTRAST",
+        "assertions": [
+          "Lê CSS/TS de produção, valida seletores reduced-motion e ligação useReducedMotion; render chips e verifica classes dos tokens.",
+          "Calcula contraste HSL→RGB com alpha usando tokens reais claros/escuros para texto sobre card/tinta15%, valores>=4.5."
+        ],
+        "mocks_or_fixtures": [
+          "Medidor WCAG local e parser CSS simples; tokens do disco, sem computed styles no navegador."
+        ],
+        "limits": [
+          "Não é teste tautológico de constantes isoladas: há ligação ao CSS e componentes reais. Entretanto não mede cascade/computed styles/animação/navegador nem temas customizados; comentários E.2/E.3 são referência, não execução nesta revisão."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/components/tasks/__tests__/taskComponents.test.tsx",
+      "git_blob_sha": "a5348a8db3d72207c498309590f25c703eb9ef4c",
+      "source_sha256": "8337683569b4d440b88b13a4e353f3f2bd8ff89be164c9908ed418921f03288e",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 596,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          596
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/tasks/__tests__/taskComponents.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_LIST_BOARD_CARD_WITH_DND_CALLBACK_DOUBLE",
+        "assertions": [
+          "Lista seções/acentos/colapsos7e30dias/empty state e transição de saída; card DeletevsBackspace, prioridadefallback, contatoindisponível e ordem colunas DOM.",
+          "Dndcallback capturado comprova onMove índice, WIP dropdisabled por origem e feedbackclasses; skeleton15cards."
+        ],
+        "mocks_or_fixtures": [
+          "Dnd substituído por wrappers sem geometria; buckets/items e spies; timers reais para observar saída por60ms/waitFor."
+        ],
+        "limits": [
+          "Drag manual não compõe persistência, filtro e lista total: permanece MOD055.",
+          "Classes/grid e callbacks não são dimensão real ou integração DnD pointer. RenderBuckets muda props diretamente, não aguarda mutation real."
+        ],
+        "related_findings": [
+          "R2-MOD-055"
+        ]
+      }
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+      "git_blob_sha": "c898d6cce8b89caa094347fb5007f3f830ee37ac",
+      "source_sha256": "cee8fb1daf70795cf0be1447ee1780c2b0aa81f93d9263cac0697f76926f6791",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 1589,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          1589
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "TAUTOLOGICAL_AND_LOCAL_EXAMPLES_NO_PRODUCTION_IMPORT",
+        "assertions": [
+          "Somente Vitest importado; blocos de segurança18–115 usam expect(true).toBe(true); exemplos locais verificam comprimentos, trim, split, startsWith e arrays constantes."
+        ],
+        "mocks_or_fixtures": [
+          "Sem montagem, hook, source read, banco ou provedor; supostas verificações estão em comentários."
+        ],
+        "limits": [
+          "As alegações de RLS, integração, render, áudio, acessibilidade e desempenho não são observadas pelos testes; também não são evidência válida de bugs atuais.",
+          "Os títulos ✓/FIXED/GAP e lista de200cenários não provam estado do produto. Incorporação fora do catálogo inicial de módulos: roster final do root; extensão da avaliação prévia TC011, sem ID por caso."
+        ],
+        "related_findings": [
+          "TC011"
+        ]
+      }
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+      "git_blob_sha": "0d2a8999cdcd7a7d5facbeadacd0181861a92a7f",
+      "source_sha256": "792ea8dacdb277069f8853522b7358e43dfa281d5073c398d44d2bfafec665e0",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 727,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          727
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_STRING_CONTRACT_WITH_TODO_CASES",
+        "assertions": [
+          "Lê fonte real por fs/path e verifica tokens, branches, regex, classes, callbacks textuais e ausência de nomes em18grupos."
+        ],
+        "mocks_or_fixtures": [
+          "readSrc retorna string vazia se leitura falhar; vários casos são it.todo com callback, não execução de comportamento."
+        ],
+        "limits": [
+          "Presença de MarkdownPreview509–511 não prova sanitização; Loader2/isPending não prova spinner/disable na mesma condição; ausência de forward em um arquivo não exclui implementação em dependência.",
+          "Regex em fonte são controles estruturais reais, distintos de tautologias, mas sem render, banco ou fluxo de evento. Não afirmar que os it.todo executaram.",
+          "Incluído fora do catálogo inicial pelo roster final; associação à avaliação TC011 sem novo ID."
+        ],
+        "related_findings": [
+          "TC011"
+        ]
+      }
+    },
+    {
+      "path": "src/features/talk-me/__tests__/TalkMeView.test.tsx",
+      "git_blob_sha": "72bd11ee5abdf4bcac00d563d9af44c8f4d0047c",
+      "source_sha256": "43c78de9ea79ba6dc5fcd51125b8f5124201abf95c0295bdef23f605461f378a",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 334,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          334
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/features/talk-me/__tests__/TalkMeView.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_VIEW_WITH_CONTROLLER_FIXTURES",
+        "assertions": [
+          "Cartões/dados/fallbacks, seleção e foco, setas isoladas de outros controles, busca pendente bloqueando aceite e identidade selecionada no claim.",
+          "Remoção do cartão troca foco; claim pendente bloqueia navegação; drag da faixa não seleciona; loadMore, intenção de avanço após página nova e erro adicional preservando lista."
+        ],
+        "mocks_or_fixtures": [
+          "Controller inteiro fornecido como prop, claim/refresh/search spies, scroll mock; um harness usa estado React para adicionar página."
+        ],
+        "limits": [
+          "125–134 afirma só abrir após confirmação, mas claim resolve imediatamente; a ordenação temporal com promise pendente não é exercitada nesse caso de UI.",
+          "Não valida autorização/fila do banco ou produção dos tempos; título dados reais significa fixture. Hook e UI são testados separadamente."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/features/talk-me/__tests__/useTalkMeQueue.test.tsx",
+      "git_blob_sha": "830f1e52cc38433cb34f4ff1fea4954cdd9fd980",
+      "source_sha256": "c7db7ea6594655a956870958981033eaf4a3966170d47addba2eea90ffaa7b0b",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 594,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          594
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/features/talk-me/__tests__/useTalkMeQueue.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_CONTROLLED_RPC_AND_REALTIME",
+        "assertions": [
+          "Feature flag, normalização e claim retirando item; claim simultâneo bloqueado; badge secundário pendente/falho não reverte aceite; conflito de domínio.",
+          "Resposta antiga de filas ignorada, debounce/realtime com espera máxima, reconciliação periódica/visibilidade/cleanup, paginação protegida contra busca nova, abort ao desmontar e preservação de páginas após refresh.",
+          "Dez páginas acumulam500 identidades sem duplicar e encerram hasMore."
+        ],
+        "mocks_or_fixtures": [
+          "RPC com promises controladas e abortSignal fake; useSupabaseRealtime captura opções/callbacks, tempo/document.hidden sintéticos."
+        ],
+        "limits": [
+          "128 diz fila autorizada mas a RPC retorna uma fixture; nenhuma política/RLS ou disputa entre usuários chega ao banco.",
+          "Paginação528–593 escolhe páginas por contador de chamadas, não por offset nos argumentos; comprova acumulação/reconciliação local, não offsets corretos no servidor.",
+          "Unmount verifica signal.aborted, sem usuário renderizado após unmount para observar reaplicação; sem rede/realtime real."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useCampaigns.test.tsx",
+      "git_blob_sha": "381bc38dc173c13e6e0adf7b5e43cacb573f6d09",
+      "source_sha256": "5665fc5e2d4d9f18f1ef4d161b19ba455805db9e6898be2e48d900516984dad6",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 76,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          76
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useCampaigns.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_WEAK_DATABASE_ASSERTIONS",
+        "assertions": [
+          "Monta hook e observa from(campaigns), existência de mutations e isLoading booleano; chama createCampaign.mutate."
+        ],
+        "mocks_or_fixtures": [
+          "Builder completo simulado com data predefinida, QueryClient real."
+        ],
+        "limits": [
+          "Fetch só exige campaigns definido, podendo ser array inicial; create64–69 só verifica from(campaigns), também chamado pela query inicial. Não exige insert/payload/resultado.",
+          "Não testa audiência/media materializados, start/pausa/filtros ou erro de mutation (MOD005/006)."
+        ],
+        "related_findings": [
+          "R2-MOD-005",
+          "R2-MOD-006"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useCatalogFavorites.test.ts",
+      "git_blob_sha": "e500bdd6b6b295ed5dd6c865013ff3c71ceac1f4",
+      "source_sha256": "2fb49e7e8453ae1ddc543e7474aa64b8f5c59cca28616f241bc052d032fe8879",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 162,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          162
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useCatalogFavorites.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_MUTABLE_FAKE_TABLE",
+        "assertions": [
+          "Consulta favoritos, toggle adiciona/remove com refetch, falha insert termina sem favorito e usuário ausente não escreve."
+        ],
+        "mocks_or_fixtures": [
+          "Tabela array mutável, insert resolve imediatamente; delete efetivado ao segundo eq sem validar owner; QueryClient real."
+        ],
+        "limits": [
+          "104–116 anuncia estado antes da confirmação mas não retém promise de escrita; observa só estado depois de act/waitFor.",
+          "Rollback136–146 só confere ausência final, sem testemunha intermediária nem snapshot original em falha concorrente.",
+          "Hook toggle é void e aguardar seu retorno não prova tratamento no bulk que anuncia sucesso (MOD043); não compõe erro de hidratação do produto favorito (MOD048)."
+        ],
+        "related_findings": [
+          "R2-MOD-043",
+          "R2-MOD-048"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useDashboardData.test.tsx",
+      "git_blob_sha": "c34b935e1e54685b0c0f01f5af162c34f2944cff",
+      "source_sha256": "82940da6ae6ca198a68a8b393fd6a6986fbde8d9a3a454ed7f992860ac8cf43c",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 111,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          111
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useDashboardData.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_PERMISSIVE_DATABASE_PROXY",
+        "assertions": [
+          "Aguarda isLoading=false e stats definido com filtros default/custom; refetch exposto como função."
+        ],
+        "mocks_or_fixtures": [
+          "Proxy aceita qualquer cadeia de query; cada tabela retorna uma linha fixa; toda RPC devolve mesmo objeto sem olhar argumentos."
+        ],
+        "limits": [
+          "O caso accepts custom filters83–99 não confere args, população ou valor, logo não prova efeito do filtro.",
+          "Não compara índices, fuso, identidade do perfil, erro ou truncação; insuficiente para afastar DASH-METRICS-001."
+        ],
+        "related_findings": [
+          "DASH-METRICS-001"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useDashboardWidgets.test.ts",
+      "git_blob_sha": "1d7ce9cdbc583eafb836ce78767dd977bc3b046d",
+      "source_sha256": "4e1071cca5611e22b194666c5f4a5c5149dc5207b2b6f23c14f4fc1b34a89887",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 217,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          217
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useDashboardWidgets.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_LOCAL_STATE_HOOK",
+        "assertions": [
+          "Widgets default/IDs/níveis, toggle tamanho/posição/boundaries/reorder/reset, localStorage persistir/carregar/JSON inválido e editMode."
+        ],
+        "mocks_or_fixtures": [
+          "localStorage do ambiente; hook real, sem backend."
+        ],
+        "limits": [
+          "move up103–106 pode retornar sem assertion se não houver row>0. Alguns forEach permitem arrays vazios; nível1 tem controle de quantidade.",
+          "Não monta personalização do Dashboard nem testa se configuração gera layout visível, fronteira MOD065; corrupção testada é JSON inválido, não shape válido incorreto."
+        ],
+        "related_findings": [
+          "R2-MOD-065"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useExternalCatalog.test.ts",
+      "git_blob_sha": "0b7a48e65749d636d87f564f67076d61a56b978c",
+      "source_sha256": "a4de09c27738b75cf794d11318e9bc63e16cb0ebba8e45bb6b2c3d86cdd45898",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 1408,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          1408
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useExternalCatalog.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "MIXED_REAL_HOOK_SOURCE_CONTRACT_AND_LOCAL_EXAMPLES",
+        "assertions": [
+          "Hook real consulta lista/produto/bootstrap e preserva campos; loading pendente, erro de rede/corpo/HTTP e código/status são observados. Prefetch usa offset+limit e cache correspondente, e não roda na última página.",
+          "1028–1060 lê fonte real da Edge para configuração de cota, ordem de parse e chamada RPC; verificação estrutural distinta dos booleanos locais."
+        ],
+        "mocks_or_fixtures": [
+          "functions.invoke simulado por action, sem consultar servidor; QueryClient real. Fixtures de produto/tipos e fórmulas locais em várias seções."
+        ],
+        "limits": [
+          "304–323 promete last one wins mas só exige invoke chamado, sem respostas fora de ordem ou assertion do resultado final.",
+          "825–987 calcula paginação, preço, peso e filtros em código local do teste.993–1025/1063–1127 usa booleanos constantes para segurança/arquitetura; não comprova autorização, segredo, cache ou envio.",
+          "1098–1103 documenta página0 apenas com potentialIssue=true; não testa o defeito MOD009.",
+          "Prefetch é controle positivo do hook, sem consumidor voltar da página1 para0; regras de rate limit são regex, sem contador/RPC ou isolamento."
+        ],
+        "related_findings": [
+          "TC011",
+          "R2-MOD-009"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+      "git_blob_sha": "1dac6cacbebe56679921b7d81479b2e848174ef3",
+      "source_sha256": "c35d8aa3f2cc3bd08a06b8e13a2ade4aa058ccfea2ec8a214200496b4462c4d9",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 130,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          130
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_MOCKED_BACKEND",
+        "assertions": [
+          "Hook monta com QueryClient real; retorna array/função de dismiss e aplica volume40 como0.4."
+        ],
+        "mocks_or_fixtures": [
+          "Supabase select/update/insert/channel simulados; conversation_sla devolve array vazio; Audio e preferências são doubles."
+        ],
+        "limits": [
+          "Não republica página após insert nem testa >50 violações. exists/toBeDefined e typeof não asseguram idempotência ou sucesso de dismiss."
+        ],
+        "related_findings": [
+          "R2-MOD-074"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
+      "git_blob_sha": "18d1541040a1f2402dfaed44d9547e2a30e0ddb4",
+      "source_sha256": "160aebd9b0679c93f874e9833da80949615331cb61aac4b4198dd343c1f6b751",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 114,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          114
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_SYNTHETIC_REALTIME",
+        "assertions": [
+          "INSERT crítico manual toca quando habilitado; mute e quiet hours bloqueiam play."
+        ],
+        "mocks_or_fixtures": [
+          "Audio fake, estado de settings mutável, canal entrega callback capturado, backend vazio."
+        ],
+        "limits": [
+          "Não verifica contagem de beeps, persistência da preferência nem criação/deduplicação SLA."
+        ],
+        "related_findings": [
+          "R2-MOD-074"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardKpi.test.ts",
+      "git_blob_sha": "0fc689d2472cee597826fb92910b8862620e88ea",
+      "source_sha256": "cb932220abc45372d84f6f360f90c7c13ebc5097a5d1f2cb72e030e2c2de4826",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 105,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          105
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardKpi.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_AGGREGATE_GUARDS",
+        "assertions": [
+          "Repassa valores/buckets e aplica guarda de amostra>=5 ao delta de resolvidas/resposta; casos ontem0 e resposta null."
+        ],
+        "mocks_or_fixtures": [
+          "DashboardKpiRpcResult pronto, função real aggregateDashboardKpi; sem render de hook."
+        ],
+        "limits": [
+          "Comentários4–14 afirmam validação SQL manual anterior, não reproduzida nesta revisão; teste declara que não cobre cálculo servidor, fuso/percentis ou escopo por agente.",
+          "Não valida dados históricos e current-assignee que motivam DASH-METRICS-001; positivo limitado às guardas do cliente."
+        ],
+        "related_findings": [
+          "DASH-METRICS-001"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardStats.presence.test.tsx",
+      "git_blob_sha": "a64067615e73e181623dedf587d0f1bdaae1e3c2",
+      "source_sha256": "be3ffc10972e448eaca41aa5bf436ef06eb8a0be4f4b5c2ee7a06d0edf201e41",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 45,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          45
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardStats.presence.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_STATS_HOOK_WITH_PRESENCE_DOUBLE",
+        "assertions": [
+          "Quatro perfis e mapa de presença produzem1 online ativo e4 total."
+        ],
+        "mocks_or_fixtures": [
+          "Consulta de perfis e RPC fixas; useAgentPresenceMap substituído por mapa constante."
+        ],
+        "limits": [
+          "Não cobre TTL/heartbeat, conta ativa mudando ou dados de filas/métricas; não confundir presença com status autenticado no transporte."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+      "git_blob_sha": "2bf3a2c258c110d50936a69bf3b92774633284dc",
+      "source_sha256": "43bd55f76a54cf698a97b9963bb0acf3c1faa6c80901e794b387994f42e0df1f",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 162,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          162
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_ROUTER_STUB",
+        "assertions": [
+          "Defaults/leitura de period/queue/agent; roundtrip custom e limpeza de from/to; flags replace e recorte de calendário São Paulo."
+        ],
+        "mocks_or_fixtures": [
+          "useSearchParams substituído por um URLSearchParams estático e mockSetter; updater executado manualmente; localDay real."
+        ],
+        "limits": [
+          "Não exercita navegação/history real, passagem de meia-noite, datas de calendário inválidas/ordem invertida nem a seleção visual Personalizada."
+        ],
+        "related_findings": [
+          "R2-MOD-065"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts",
+      "git_blob_sha": "de0618a5353e6d33e448d58acf5de5cf613a153a",
+      "source_sha256": "9339001aaac19ef76419669fd1eda08b10d69cdfe8549c31680a104aff909a2a",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 29,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          29
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_HELPER_ONLY",
+        "assertions": [
+          "eventText real mapeia oito casos, incluindo nomes ausentes e tipo desconhecido."
+        ],
+        "mocks_or_fixtures": [
+          "Strings de nomes/eventos; nenhuma chamada de query do hook."
+        ],
+        "limits": [
+          "Não cobre embed fallback, erros/identidade dos lookups, janela24h nem cache."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+      "git_blob_sha": "3ef4669e48374ddc940312abf2ef196c90d2e2cc",
+      "source_sha256": "167aefd2141c56a1843ec55c474f699c983f455182ca8040f60e7a6133287257",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 56,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          56
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_AGGREGATE_WITH_LOCAL_CALENDAR_FIXTURE",
+        "assertions": [
+          "24 horas, null futuro, contagem da hora corrente, sete dias e média com dias zero; bucket vazio."
+        ],
+        "mocks_or_fixtures": [
+          "NOW e day são gerados no mesmo fuso local; buckets pequenos em memória."
+        ],
+        "limits": [
+          "Não compõe bucket SQL São Paulo com navegador em fuso diferente nem executa a RPC/query."
+        ],
+        "related_findings": [
+          "R2-MOD-075"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts",
+      "git_blob_sha": "ad5bfc56379ea409d37d5d8b08f51bf4cfe74b25",
+      "source_sha256": "b890b92475bec5c5e61d29dfc054ea7b812fb36f894175eca6e780ec63a35841",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 74,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          74
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/__tests__/useCatalogSendReadiness.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_READINESS_FETCHER_WITH_QUERY_DOUBLE",
+        "assertions": [
+          "Sem conexão bloqueia sem segunda query; supressão bloqueia e filtro contém contactId, telefone normalizado e expiry; conexão válida sem bloqueio libera."
+        ],
+        "mocks_or_fixtures": [
+          "Thenable aceita qualquer select/eq/or/limit/maybeSingle e retorna respostas fixas."
+        ],
+        "limits": [
+          "Todos os cenários têm error=null; nenhum erro transport/RLS nem montagem do hook/diálogo que converte erro em disponibilidade (MOD008).",
+          "Inspeção de string OR não executa parser PostgREST nem prioridade entre conexões."
+        ],
+        "related_findings": [
+          "R2-MOD-008"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXMonitor.test.ts",
+      "git_blob_sha": "ca0843bae590c7591949f4b9128555b6297759dc",
+      "source_sha256": "d0f96e2b7332effef78d7d79f2e748624353144bef4bfc175e8f8f942c2560d8",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 86,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          86
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/__tests__/useTalkXMonitor.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_RATE_AGGREGATION",
+        "assertions": [
+          "buildRateByMinute real: vazio, sent_at ausente, agrupamento com3envios/1entrega, janela60min e repetição determinística."
+        ],
+        "mocks_or_fixtures": [
+          "Relógio falso fixo e recipients locais."
+        ],
+        "limits": [
+          "60–72 condiciona assertions de label a result.length>0; pode aceitar array vazio mesmo com hora dentro da janela fixture.",
+          "Determinismo em duas chamadas não prova ausência de Math.random em todos os ramos; não monta query limitada2000 (MOD033) nem compara curva completa."
+        ],
+        "related_findings": [
+          "R2-MOD-033"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXSegments.dia-calendario.test.ts",
+      "git_blob_sha": "9ed6fb7b6657bd403226d67139c65ec3b066cb89",
+      "source_sha256": "122639c29d06ef90165aae5debff814f4ef7c85b4c73faa7b486df719cd0b0c2",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 63,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          63
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/__tests__/useTalkXSegments.dia-calendario.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_RULE_COMPILER_WITH_FIXED_CLOCK",
+        "assertions": [
+          "rulesToPostgrest corta dias de calendário de São Paulo corretamente em exemplos de22:30 e09:00, incluindo hoje, e rejeita0/abc."
+        ],
+        "mocks_or_fixtures": [
+          "Módulos de banco/auth simulados só para import; relógio falso; função real."
+        ],
+        "limits": [
+          "Testa fronteira textual do compilador cliente, não a execução SQL de audiência ou estado de edição/estimativa; não generalizar para outros hooks temporais."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/integrations/__tests__/useTalkXSegments.test.ts",
+      "git_blob_sha": "fac7f91c69c81f17c241d39c24b0065161cabaca",
+      "source_sha256": "acff1877a573b6b63e1bf857a2d7a44110cd24f3712b736a88e4c35d5fd857c5",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 242,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          242
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/integrations/__tests__/useTalkXSegments.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_RULE_HELPERS_WITH_RPC_DOUBLE",
+        "assertions": [
+          "Compilador rejeita regra desconhecida, escapa barras/aspas sem corromper vírgula, mapeia novos campos/tipos e evita contains em uuid.",
+          "isRuleComplete/splitRules tratam campos vazios; countAudience usa modo count/eligible; resolveAudience entrega linha e modo page/limit5."
+        ],
+        "mocks_or_fixtures": [
+          "Supabase RPC devolve7/uma linha com has_more=false; from/auth/sonner substituídos."
+        ],
+        "limits": [
+          "222–240 intitula paginação, mas só recebe uma página terminal: não exercita has_more/next_after ou acumulação.",
+          "Não salva editor, não verifica seleção stale MOD038, nem hidratação/autosave manual truncado MOD025. Compilador puro não executa PostgREST."
+        ],
+        "related_findings": [
+          "R2-MOD-025",
+          "R2-MOD-038"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/shortcuts/__tests__/taskShortcutLabels.test.ts",
+      "git_blob_sha": "702c76e6c3aa6d5ff6e9369bc55bd0819a2344db",
+      "source_sha256": "cb9acdc54af43e91ee8b6bcc65c81b62b8a52188adf841fb1877065419e5b3e8",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 98,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          98
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/shortcuts/__tests__/taskShortcutLabels.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_REGISTRY_AND_LABEL_HELPERS",
+        "assertions": [
+          "Sete IDs/scopes/bindings eager sem labels, globais mantêm labels, mapa de rótulos exato e aplicarRotulos preserva binding/id não conhecido."
+        ],
+        "mocks_or_fixtures": [
+          "Imports reais de registry e helpers; rótulos locais para teste de merge."
+        ],
+        "limits": [
+          "Não mede bundle340KB nem executa importlazy/computed keyboard matching/event propagation; valida estrutura de objetos."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useMyWorkItems.idempotencia.test.tsx",
+      "git_blob_sha": "2092b497a7dee7aa62fb0c3c06ba246ff344c83e",
+      "source_sha256": "3a05a07b37f3464aba25c7ebbfa63355d3b94ef1f0d8dbf2ea5ae6b367cd64eb",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 106,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          106
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/useMyWorkItems.idempotencia.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_WRITE_HARNESS",
+        "assertions": [
+          "Mesma clientTaskId concorrente faz um insert; chaves distintas fazem dois; insert sem chave ganha string;23505trazsucesso e42501erro."
+        ],
+        "mocks_or_fixtures": [
+          "Supabase harness com respostas resolvidas; QueryClient/hook reais."
+        ],
+        "limits": [
+          "O teste de UUID exige apenas stringnão vazia, não formato/entropia.23505genérico é aceito sem conferir constraint/linha existente; não prova dedupe no banco nem retry após reload."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useMyWorkItems.test.tsx",
+      "git_blob_sha": "9d0b86b1ad9435b9bcbf3e3742e1d73fe5b55b2d",
+      "source_sha256": "a37b5841c7137e4cc1cad01cf74debdf2f295626b521ad97bfed2803296d54d9",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 324,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          324
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/useMyWorkItems.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_DATABASE_HARNESS",
+        "assertions": [
+          "Payload creator/assignee, rejeição de reminder passado, WIP/waiting gates, mover e upsert posições de ambas colunas, snooze zera notified_at.",
+          "Rollback verifica snapshotoriginal (não só spycalled), badge contagem, contatojoin, invalidação e queryde30dias/cancelled."
+        ],
+        "mocks_or_fixtures": [
+          "Harness de leitura/escrita e undoToastfake; QueryClient real; listas pequenas."
+        ],
+        "limits": [
+          "Complete81–93 só verifica done e oferta undo, não executa callback de desfazer (MOD053).",
+          "Snooze157–169 é controle positivo distinto de update via Sheet sem zerar notified_at (MOD052).",
+          "Move usa índice0 de lista completa, não compõe destino filtrado (MOD055). Gate de reminder em create/setReminder não valida conversão offsetless do Sheet (MOD050).",
+          "Backendfixture não aplica RLS/triggers/limite remoto e rollback concorrente não exercitado."
+        ],
+        "related_findings": [
+          "R2-MOD-050",
+          "R2-MOD-052",
+          "R2-MOD-053",
+          "R2-MOD-054",
+          "R2-MOD-055"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useTasksFilters.test.tsx",
+      "git_blob_sha": "1cfeba27cd913cc0b6bbc51938e88fa76f981b4a",
+      "source_sha256": "07641d3c23eaeebb56565fc46887465a9ae3a946c3b0e5db70ada06653c7ee7a",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 152,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          152
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/useTasksFilters.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_HOOK_WITH_ROUTER_AND_FAKE_CLOCK",
+        "assertions": [
+          "InicializaURL, debounce200, controles separados e URL, clear cancela timer, filtro concorrente preserva busca, navigate reidrata e URLrealpreservaview/task contra routerobsoleto."
+        ],
+        "mocks_or_fixtures": [
+          "MemoryRouter real, fake timers e window.history; sem consultas."
+        ],
+        "limits": [
+          "Valida estado e URL, não semanticamente população resultante/paginações; SEARCH_DEBOUNCE_MS compartilhada testa encadeamento, não medição de desempenho."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/useWorkItemNotifications.test.ts",
+      "git_blob_sha": "817f1e7ebf3755cc88a9a13b08d842aef171c2b4",
+      "source_sha256": "6e438d4668990d91ba3e27cb07b03755017d01c378aeb8ebde7f51953049f868",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 78,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          78
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/useWorkItemNotifications.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_NOTIFICATION_HELPERS",
+        "assertions": [
+          "notificationTargets valida tipos; snoozePatch zera notified_at, completePatch limpaalarme/timestamp; títuloformat/stripnãoacumula."
+        ],
+        "mocks_or_fixtures": [
+          "Helpers importados reais, nowfixo; nenhum renderHook do listener."
+        ],
+        "limits": [
+          "Nome do arquivo não significa realtime/notificação entregue: não monta subscrição, guarda user, toast ou ação async. Helperbom não cobre SheetupdateMOD052 nem desfazerMOD053."
+        ],
+        "related_findings": [
+          "R2-MOD-052",
+          "R2-MOD-053"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemAggregates.test.ts",
+      "git_blob_sha": "228110fa8183cca09828e3a442d75bd790a1a471",
+      "source_sha256": "3dad57edbcafa47d3340b78351e8899e0fa8d61b93af48153035748a636deaf9",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 408,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          408
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/workItemAggregates.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_AGGREGATES",
+        "assertions": [
+          "Buscaacento/case, filtrosAND, statusordenado, vencimentobuckets/labels, concluídas7/30dias, local23:59/meianoite/invalid, Agenda grupos/duplapertença e prioridade.",
+          "KPIscontagens pequenas e cycleTime nullsem dados; lista null não derruba."
+        ],
+        "mocks_or_fixtures": [
+          "Fixtures WorkItem com now explícito; algumasdataslocais e outrasZ ao meio-dia."
+        ],
+        "limits": [
+          "Cycle time só tem caso nullsem dados, não cálculo numérico ou dispersão. NOWfornecido não testa memoização do consumidor atravessando dia(MOD058).",
+          "Arrays completos não exercitam teto/queryremota(MOD054) nem índiceDndapósfiltro(MOD055)."
+        ],
+        "related_findings": [
+          "R2-MOD-054",
+          "R2-MOD-055",
+          "R2-MOD-058"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemFilters.test.ts",
+      "git_blob_sha": "7c81b65a84b5f3be8bbe640f336971bffab5b752",
+      "source_sha256": "444589ebfb39a6c62a6a254753ad8b095a9029ba171cd7f1871629f9e3f38851",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 52,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          52
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/workItemFilters.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_FILTER_SERIALIZATION",
+        "assertions": [
+          "Parse defaults/inválidos, serialização sódiff e preservação view, clear, active e roundtriporçamento."
+        ],
+        "mocks_or_fixtures": [
+          "Imports reais, entradas estáticas de URL."
+        ],
+        "limits": [
+          "Não executa navegação/listeners/debounce nem backend; esses contratos estão em arquivosseparados."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/tasks/__tests__/workItemMachine.test.ts",
+      "git_blob_sha": "d211bfde37912eeee9617025113859e8bc26c8d0",
+      "source_sha256": "abc28fb9ed7bef9c389aaeda413576d411f541921a7231446d3fbffec2b45cb2",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 134,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          134
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/tasks/__tests__/workItemMachine.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_PURE_STATE_MACHINE",
+        "assertions": [
+          "canTransitionWIP, waitingreason,done→todo e cancelled→todo bloqueado; applyTransitiontimestamps, conclusão limpaalarme, reabrirlimpacompleted, sairwaitinglimpamotivo; aging3dias."
+        ],
+        "mocks_or_fixtures": [
+          "Objetos locais e now explícito."
+        ],
+        "limits": [
+          "São regras cliente; cancelled semsaída não prova restriçãoSQL e conflita com intenção de desfazer por reabrir(MOD053).",
+          "Não compõe undoToast com status/alarmeoriginal; nenhuma concorrênciaWIP no banco."
+        ],
+        "related_findings": [
+          "R2-MOD-053"
+        ]
+      }
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+      "git_blob_sha": "d73c89213493e648fa7d693b9f88a36ab38283fb",
+      "source_sha256": "f4fc765f309515b892bf68e4230c483191a8849c5e7124834b95243c4268a252",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 89,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          89
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_MUTATION_WITH_DATABASE_DOUBLE",
+        "assertions": [
+          "Hook de convite real chama crypto.getRandomValues, payload apresenta8 caracteres base36 maiúsculos e dois resultados amostrados diferem."
+        ],
+        "mocks_or_fixtures": [
+          "Supabase auth/insert fake; QueryClient real; espião da API crypto real do ambiente."
+        ],
+        "limits": [
+          "Dois resultados diferentes não provam nunca colidir nem distribuição sem viés; spy>=8não verifica todos os caminhos excluindo Math.random.",
+          "Não executa aceitação do código/RPC/RLS, expiração ou UNIQUE remoto; comentário de credencial não é teste desses controles."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "git_blob_sha": "aa245de8eaea57427ac3e7ae108a7cd20380d6af",
+      "source_sha256": "1a3f2fba892c4a42e9c61fcf7d991f52330bedd9d9bf56f6679f3ec0da08ae08",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 48,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          48
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_QUERY_FUNCTION_WITH_QUERY_AND_RPC_DOUBLES",
+        "assertions": [
+          "queryFn capturada do hook real é chamada e entrega RPC get_department_whatsapp_credentials com p_department_id exato."
+        ],
+        "mocks_or_fixtures": [
+          "ReactQuery substituído, RPC retorna objeto constante; renderHook somente captura configuração."
+        ],
+        "limits": [
+          "Controle específico do nome do parâmetro é válido; não valida assinatura implantada, autorização/RLS, segredo retornado nem UI consumidora."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "src/lib/__tests__/errorReporter.test.ts",
+      "git_blob_sha": "4abe310ab281fb099d10fc594dcb81b9af337d43",
+      "source_sha256": "2f6fe1c7fee8922d911084daee53e335c9afb8ec194671ea1e6447692c1b5f52",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 74,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          74
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/src/lib/__tests__/errorReporter.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "REAL_REPORTER_WITH_AUDIT_DOUBLE",
+        "assertions": [
+          "shouldReport deduplica source+message, espaça ocorrências e limita10 por sessão; reportClientError envia ação/contexto com mensagem truncada e aceita string."
+        ],
+        "mocks_or_fixtures": [
+          "logAudit substituído; now explícito para guarda e reset por teste."
+        ],
+        "limits": [
+          "Não persiste audit log, não monta window listeners/unhandled rejection, nem verifica serialização de todo contexto, rejeição de logAudit ou remoção de dados sensíveis."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "tests/contracts/axe-campaigns.contract.test.ts",
+      "git_blob_sha": "031ea70917a4417fc20989e3edcc3c5bb5aed93a",
+      "source_sha256": "b567e7fb5a572af8e4d95b34a64a054e7134c13316db5bda99db0ec3bd740566",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 26,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          26
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/tests/contracts/axe-campaigns.contract.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_ACCESSIBILITY_CONTRACT_NO_AXE_RUNTIME",
+        "assertions": [
+          "Fonte de CampaignsView contém SelectTriggerw40 com aria-label de status; diálogo sem tag SelectTrigger exata sem props e com label Tipo de mensagem."
+        ],
+        "mocks_or_fixtures": [
+          "fs lê TSX; regex, sem render/axe."
+        ],
+        "limits": [
+          "Nome axe e comentário de varredura anterior não significam axe executado. Segundo teste não demonstra que todo SelectTrigger com outras props possua label.",
+          "Contratos estruturais específicos não validam árvore acessível de Radix nem teclado/contraste; distintos de CT67 com axe real."
+        ],
+        "related_findings": []
+      }
+    },
+    {
+      "path": "tests/contracts/axe-talkx.contract.test.ts",
+      "git_blob_sha": "edeff8a1c04db08b7549f0811d6b1ad3ad567de1",
+      "source_sha256": "f9ad9638b523445dbba745e12a92fbd0c3c09de1c0a27869264091957daf200c",
+      "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "total_lines": 33,
+      "review_status": "ADJUDICATED_BODY_READ",
+      "ranges_read": [
+        [
+          1,
+          33
+        ]
+      ],
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/da307ba5626dce892f0b37cb6762463f55d14a96/tests/contracts/axe-talkx.contract.test.ts",
+      "executed": false,
+      "adjudication": {
+        "classification": "SOURCE_ACCESSIBILITY_CONTRACT_NO_AXE_RUNTIME",
+        "assertions": [
+          "Primeiro bloco TabsList na fonte não contém DropdownMenu e contém TabsTrigger; aria-label fd.label próximo de min-w120;>=2 menus persistem no arquivo."
+        ],
+        "mocks_or_fixtures": [
+          "fs/regex, sem render/axe."
+        ],
+        "limits": [
+          "Verifica trechos textuais e primeiro tablist, não todos os elementos/árvore Radix ou nome acessível final. Comentário de varredura anterior não é evidência runtime nesta revisão."
+        ],
+        "related_findings": []
+      }
+    }
+  ]
+}

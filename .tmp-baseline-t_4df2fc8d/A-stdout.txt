@@ -1,0 +1,91 @@
+[rls] só produção=0 só local=2 diferentes=0
+    só local: gmail_oauth_states
+    só local: talkx_storage_purge_queue
+[columns] só produção=0 só local=17 diferentes=0
+    só local: audit_logs.dedupe_key
+    só local: gmail_oauth_states.consumed_at
+    só local: gmail_oauth_states.created_at
+    só local: gmail_oauth_states.expires_at
+    só local: gmail_oauth_states.id
+    só local: gmail_oauth_states.state
+    só local: gmail_oauth_states.user_id
+    só local: talkx_storage_purge_queue.attempts
+[indexes] só produção=0 só local=8 diferentes=0
+    só local: audit_logs.ux_audit_logs_dedupe_key
+    só local: gmail_oauth_states.gmail_oauth_states_open_user_state_idx
+    só local: gmail_oauth_states.gmail_oauth_states_pkey
+    só local: talkx_storage_purge_queue.talkx_storage_purge_queue_pending_dedup
+    só local: talkx_storage_purge_queue.talkx_storage_purge_queue_pending_idx
+    só local: talkx_storage_purge_queue.talkx_storage_purge_queue_pkey
+    só local: user_sessions.idx_user_sessions_auth_session_id
+    só local: user_sessions.idx_user_sessions_user_auth_session
+[defaults] só produção=0 só local=7 diferentes=0
+    só local: gmail_oauth_states.created_at
+    só local: gmail_oauth_states.expires_at
+    só local: gmail_oauth_states.id
+    só local: talkx_storage_purge_queue.attempts
+    só local: talkx_storage_purge_queue.enqueued_at
+    só local: talkx_storage_purge_queue.id
+    só local: talkx_storage_purge_queue.reason
+[policies] só produção=0 só local=0 diferentes=2
+    diferente: team_conversation_members.tcm_delete_own_or_admin
+    diferente: team_conversation_members.tcm_insert_member
+[triggers] só produção=0 só local=2 diferentes=0
+    só local: profiles.trg_revoke_sessions_on_profile_deactivate
+    só local: user_sessions.trg_user_sessions_auth_session_guard
+[functions] só produção=1 só local=9 diferentes=6
+    só produção: f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+    só local: f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+    só local: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)
+    só local: f:is_team_conversation_creator(_user_id uuid, _conversation_id uuid)
+    só local: f:resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_de
+    só local: f:revoke_auth_sessions(p_scope text, p_actor_user_id uuid, p_target_user_id uuid, p_target_session_id uuid, p_
+    só local: f:transfer_team_conversation_ownership(p_conversation_id uuid, p_new_owner_id uuid)
+    só local: f:trg_revoke_sessions_on_profile_deactivate()
+    diferente: f:complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text)
+    diferente: f:purge_talkx_expired_data(p_limit integer)
+    diferente: f:set_team_member_role(p_conversation_id uuid, p_profile_id uuid, p_new_role text)
+    diferente: f:sweep_multiplix_stuck_items(p_limit integer)
+    diferente: f:talkx_engine_alerts()
+    diferente: f:trigger_talkx_engine_tick()
+[constraints] só produção=0 só local=4 diferentes=1
+    só local: relation:gmail_oauth_states.gmail_oauth_states_pkey
+    só local: relation:gmail_oauth_states.gmail_oauth_states_user_id_fkey
+    só local: relation:talkx_storage_purge_queue.talkx_storage_purge_queue_attempts_check
+    só local: relation:talkx_storage_purge_queue.talkx_storage_purge_queue_pkey
+    diferente: relation:talkx_alerts.talkx_alerts_kind_check
+[column_grants] só produção=0 só local=3 diferentes=0
+    só local: r:public.team_conversations.avatar_url|authenticated|UPDATE|grantor=postgres
+    só local: r:public.team_conversations.name|authenticated|UPDATE|grantor=postgres
+    só local: r:public.team_conversations.updated_at|authenticated|UPDATE|grantor=postgres
+[default_grants] só produção=0 só local=2 diferentes=0
+    só local: <global>|postgres|f|postgres|EXECUTE|grantor=postgres
+    só local: row:<global>|owner=postgres|object=f
+[routine_grants] só produção=7 só local=24 diferentes=0
+    só produção: f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+    só produção: f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+    só produção: f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+    só produção: f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+    só produção: f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+    só produção: f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+    só produção: f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+    só local: f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|postgres|EXECUTE|grantor=postgres
+    só local: f:consume_gmail_oauth_state(p_user_id uuid, p_state text)|service_role|EXECUTE|grantor=postgres
+    só local: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|authenticated|EXECUTE
+    só local: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|postgres|EXECUTE|gran
+    só local: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|service_role|EXECUTE|
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|authenticated|EXECUTE|grantor=postg
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|postgres|EXECUTE|grantor=postgres
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|service_role|EXECUTE|grantor=postgr
+[relation_grants] só produção=1 só local=32 diferentes=0
+    só produção: r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|DELETE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|INSERT|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|MAINTAIN|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|REFERENCES|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|SELECT|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|TRIGGER|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|TRUNCATE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|UPDATE|grantor=postgres
+ESTRUTURA: 128 diferença(s) em relação ao retrato da produção

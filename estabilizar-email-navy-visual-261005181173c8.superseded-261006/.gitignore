@@ -1,0 +1,127 @@
+# ============================================
+# ZAPP-WEB .gitignore - Segurança Primeiro!
+# ============================================
+
+# ====================
+# SECRETS E AMBIENTE (CRÍTICO!)
+# ====================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production.local
+.env.staging
+# .env.production PERMITIDO — só vars VITE_* públicas (embutidas no bundle)
+*.pem
+*.key
+*.crt
+!scripts/db-audit/certs/supabase-prod-ca-2021.crt
+*.p12
+secrets/
+.secrets
+credentials.json
+service-account.json
+firebase-adminsdk*.json
+*credencia*.txt
+*credential*.txt
+*cred*.txt
+*token*.txt
+*apikey*.txt
+*api_key*.txt
+*senha*.txt
+*password*.txt
+*secret*.txt
+*chave*.txt
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+node_modules
+.pnp
+.pnp.js
+.yarn/install-state.gz
+dist/
+dist-ssr/
+build/
+.next/
+out/
+*.local
+.cache/
+.parcel-cache/
+.turbo/
+.vercel/
+.netlify/
+.vite/
+*.tsbuildinfo
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+# storageState de sessão real gerado por e2e/auth.setup.ts (project "setup") — nunca commitar
+e2e/.auth/
+# capturas da régua visual (talkx-visual.spec.ts) geradas por CI/locais — nunca commitar
+e2e/talkx-visual/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.settings/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*:Zone.Identifier
+*.swp
+*.swo
+*~
+supabase/.branches/
+supabase/.temp/
+.supabase/
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.bak
+*.backup
+*_backup*
+*_old*
+*.orig
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.eslintcache
+.stylelintcache
+*.tgz
+.yarn-integrity
+
+# Deno (tooling local de deno check nas edge functions; o repo usa bun.lock)
+deno.lock
+!scripts/ci/deno.lock
+graphify-out/
+# Gerados por `graphify hook install` com o caminho do Python da máquina
+.husky/post-commit
+.husky/post-checkout
+
+# Scratch local — nunca deve ser versionado (achado G-05, auditoria 2026-08-30)
+tmp/
+docs/design/*.png
+
+# Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
+.claude/worktrees/
+.vercel

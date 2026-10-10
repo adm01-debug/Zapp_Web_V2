@@ -1,0 +1,23 @@
+== 6. EXECUCAO PONTA A PONTA do portao REAL (colaboradores stubados; HOME/$W em sandbox) ==
+fontes: HOJE=/home/joaquim_ataides/.local/bin/zapp-verify (70c0b223d5a63a17)
+        NOVO=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo (c95e371a054ea1d6)
+invocacao: bash <script> <copia> <nome> --rapido  |  PATH=<stubs>:$PATH  |  HOME=sandbox por cenario
+
+cenario                            quem  exit   veredito         linha do banco_local no resultado.txt
+----------------------------------------------------------------------------------------------------------------------------------------
+1. 9 residuais                     HOJE  1      VERMELHO         VERIFY: VERMELHO em banco_local (0s)
+2. 9 residuais                     NOVO  0      verde            drift: routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_conne
+3. A-128 velho                     HOJE  1      VERMELHO         VERIFY: VERMELHO em banco_local (1s)
+4. A-128 velho                     NOVO  1      VERMELHO         VERIFY: VERMELHO em banco_local (7s)
+5. B-2 fresco                      HOJE  0      verde(AVISO)     AVISO   banco_local     1s  ESTRUTURA: banco local difere do retrato canonico da copia
+6. B-2 fresco                      NOVO  0      verde(AVISO)     AVISO   banco_local     3s  ESTRUTURA: banco local difere do retrato canonico da copia
+7. 9 residuais LEDGER BLOQUEADO    NOVO  1      VERMELHO         VERIFY: VERMELHO em banco_local (1s)
+8. B-2 fresco LEDGER BLOQUEADO     NOVO  1      VERMELHO         VERIFY: VERMELHO em banco_local (1s)
+9. bordas E1-E6                    HOJE  1      VERMELHO         VERIFY: VERMELHO em banco_local (1s)
+10. bordas E1-E6                   NOVO  1      VERMELHO         VERIFY: VERMELHO em banco_local (0s)
+
+== 7. o que o portao REAL imprime no veredito (extrato do log do passo banco_local) ==
+   cenario 1 (HOJE): ESTRUTURA: banco local difere do retrato canonico da copia (9 linha(s)) [stub]
+   cenario 2 (NOVO): ESTRUTURA: banco local difere do retrato canonico da copia (9 linha(s)) [stub]
+   cenario 4 (NOVO): ESTRUTURA: banco local difere do retrato canonico da copia (128 linha(s)) [stub]
+   cenario 7 (NOVO): ESTRUTURA: banco local difere do retrato canonico da copia (9 linha(s)) [stub]

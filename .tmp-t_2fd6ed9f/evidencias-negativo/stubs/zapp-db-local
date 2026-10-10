@@ -1,0 +1,15 @@
+#!/bin/sh
+# dublê do banco local. 'travas' passa; 'check' roda o COMPARADOR REAL (extraído do próprio
+# zapp-db-local, sha256 77546fc4...) sobre os manifestos sintéticos do fixture e devolve o código
+# de saída dele (1 = há diferença não aceita). Nada de docker, banco ou rede.
+case "${1:-}" in
+  travas) exit 0 ;;
+  check)
+    W="$2"; NOME="$3"
+    ST="$HOME/.local/share/zapp-local/stacks/$NOME/estado"
+    exec python3 "${FIXTURE_COMPARADOR:?FIXTURE_COMPARADOR nao definido}" \
+        "${FIXTURE_LOCAL_MANIFEST:?FIXTURE_LOCAL_MANIFEST nao definido}" \
+        "$W/supabase/schema-manifest.json" "$ST/check-diferencas.txt" ""
+    ;;
+  *) exit 0 ;;
+esac

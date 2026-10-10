@@ -1,0 +1,34 @@
+-- ============================================================================
+-- DROP do subsistema de token de reset custom (morto e meio-projetado)
+-- ============================================================================
+-- Version: 20260827170000  ·  name: drop_dead_reset_token_subsystem
+--
+-- Remove public.validate_reset_token(text). Contexto verificado no banco e no
+-- codigo em 27/08/2026:
+--
+--   1. validate_reset_token fazia:
+--        SELECT user_id FROM public.password_reset_requests
+--        WHERE reset_token = encode(extensions.digest(p_token,'sha256'),'hex') ...
+--      Mas password_reset_requests NAO TEM coluna reset_token (13 colunas, nenhuma
+--      chamada reset_token). A funcao estouraria "column reset_token does not exist"
+--      se fosse chamada.
+--
+--   2. Ninguem chamava validate_reset_token: 0 referencias em corpos de funcao
+--      (pg_proc.prosrc), 0 em cron.job, 0 dependencias normais em pg_depend, e no
+--      codigo TS so aparecia na declaracao gerada de types.ts (nenhum call site).
+--
+--   3. O par de escrita store_reset_token nunca existiu no banco. O edge
+--      approve-password-reset chamava rpc("store_reset_token", ...) sem checar erro;
+--      como .rpc nao lanca, a chamada era no-op silencioso. Removida do edge neste PR.
+--
+--   4. Os hashes nem casavam: o edge passava resetData.properties.hashed_token (hash
+--      do proprio GoTrue), enquanto validate_reset_token recomputava sha256 do token
+--      cru. Nunca bateria.
+--
+-- O fluxo real de reset ja funciona pelo action_link nativo do GoTrue, retornado em
+-- resetData.properties.action_link. Todo o subsistema custom era peso morto.
+--
+-- Sem CASCADE de proposito: 0 dependentes, entao o DROP simples e seguro.
+-- ============================================================================
+
+DROP FUNCTION IF EXISTS public.validate_reset_token(text);

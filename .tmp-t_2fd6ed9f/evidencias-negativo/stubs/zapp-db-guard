@@ -1,0 +1,3 @@
+#!/bin/sh
+# dublê: as travas/tipos/lint não são o objeto desta verificação
+exit 0

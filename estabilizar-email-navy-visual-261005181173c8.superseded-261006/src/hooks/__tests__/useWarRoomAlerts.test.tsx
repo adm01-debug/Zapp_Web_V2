@@ -1,0 +1,130 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const mockFrom = vi.fn();
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: (...args: unknown[]) => mockFrom(...args),
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    }),
+    removeChannel: vi.fn(),
+  },
+}));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' } }),
+}));
+vi.mock('@/hooks/system/usePushNotifications', () => ({
+  usePushNotifications: () => ({
+    showNotification: vi.fn(),
+    permission: 'granted',
+  }),
+}));
+
+// --- Volume do alerta: vem do painel (achado: era 0.5 fixo no codigo) ---
+const audiosCriados: Array<{ volume: number; src?: string; play: ReturnType<typeof vi.fn> }> = [];
+
+vi.stubGlobal(
+  'Audio',
+  class FakeAudio {
+    volume = 1;
+    currentTime = 0;
+    play = vi.fn().mockResolvedValue(undefined);
+    constructor(public src?: string) {
+      audiosCriados.push(this as never);
+    }
+  },
+);
+
+vi.mock('@/hooks/system/useNotificationSettings', () => ({
+  useNotificationSettings: () => ({ settings: { soundVolume: 40 } }),
+}));
+
+import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
+
+function createWrapper() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+}
+
+describe('useWarRoomAlerts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'warroom_alerts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [
+                  { id: 'a1', alert_type: 'sla_breach', title: 'SLA Alert', message: 'Breach!', is_read: false, source: null, created_at: new Date().toISOString() },
+                ], error: null }),
+              }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      if (table === 'conversation_sla') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            or: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          or: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        }),
+      };
+    });
+  });
+
+  it('fetches unread alerts', async () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.alerts).toBeDefined());
+    expect(mockFrom).toHaveBeenCalledWith('warroom_alerts');
+  });
+
+  it('exposes dismissAlert function', () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    expect(typeof result.current.dismissAlert).toBe('function');
+  });
+
+  it('accepts soundEnabled parameter', () => {
+    const { result } = renderHook(() => useWarRoomAlerts(false), { wrapper: createWrapper() });
+    expect(result.current).toBeDefined();
+  });
+
+  it('alerts is an array', () => {
+    const { result } = renderHook(() => useWarRoomAlerts(), { wrapper: createWrapper() });
+    expect(Array.isArray(result.current.alerts)).toBe(true);
+  });
+});
+
+
+describe('useWarRoomAlerts — volume do alerta', () => {
+  it('aplica o volume persistido do painel (40 -> 0.4) em vez do 0.5 fixo', async () => {
+    audiosCriados.length = 0;
+
+    const { result } = renderHook(() => useWarRoomAlerts(true), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(audiosCriados.length).toBeGreaterThan(0));
+    expect(audiosCriados[0].volume).toBeCloseTo(0.4, 5);
+    expect(result.current).toBeTruthy();
+  });
+});

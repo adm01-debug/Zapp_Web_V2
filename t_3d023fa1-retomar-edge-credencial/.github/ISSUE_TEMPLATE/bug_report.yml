@@ -1,0 +1,102 @@
+name: 🐛 Bug Report
+description: Reportar um bug ou problema no sistema
+title: "[BUG]: "
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Obrigado por reportar este bug!
+        Preencha as informações abaixo para nos ajudar a investigar.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Bug
+      description: Uma descrição clara do problema
+      placeholder: "O botão de enviar mensagem não funciona quando..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir
+      description: Passos para reproduzir o comportamento
+      placeholder: |
+        1. Vá para '...'
+        2. Clique em '...'
+        3. Role até '...'
+        4. Veja o erro
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento Esperado
+      description: O que deveria acontecer?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento Atual
+      description: O que está acontecendo?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Se aplicável, adicione screenshots
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Navegador
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Dispositivo
+      options:
+        - Desktop
+        - Mobile (iOS)
+        - Mobile (Android)
+        - Tablet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options:
+        - "🔴 Crítico - Sistema inutilizável"
+        - "🟠 Alto - Funcionalidade importante quebrada"
+        - "🟡 Médio - Funcionalidade parcialmente afetada"
+        - "🟢 Baixo - Cosmético ou menor"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto Adicional
+      description: Qualquer informação adicional relevante
+    validations:
+      required: false

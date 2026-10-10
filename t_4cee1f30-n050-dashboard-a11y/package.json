@@ -1,0 +1,24 @@
+{
+  "name": "t_4cee1f30-n050-dashboard-a11y",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "jsdom": "^24.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "vitest-axe": "^0.1.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-collapsible": "^1.1.21",
+    "@radix-ui/react-progress": "^1.1.17",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^14.1.0",
+    "lucide-react": "^1.54.0"
+  }
+}

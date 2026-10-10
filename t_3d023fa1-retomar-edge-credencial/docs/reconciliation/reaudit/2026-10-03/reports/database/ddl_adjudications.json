@@ -1,0 +1,139 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "runtime_tested": false,
+  "adjudications": [
+    {
+      "candidate": "resolution_milestone_unique_index",
+      "status": "REJECTED_AS_CURRENT_SNAPSHOT_BUG",
+      "assessment": "Fonte CREATE top-level exclui quatro tipos, mas comentário da RPC e hash do snapshot são coerentes com cinco. Não se promove falha do segundo marco no estado capturado. Permanece drift entre DDL versionada e definição inferida do snapshot.",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260926101212_dashboard_fix_gamification_xp_resolution.sql",
+          "start_line": 23,
+          "end_line": 25,
+          "file_sha256": "082e8885c271ccd3fc71e2a245aa5326caef060585466f0f203bfba5a3da802e",
+          "assessment": "CREATE versionada exclui quatro tipos."
+        },
+        {
+          "path": "supabase/migrations/20260927470000_fix_gamification_closure_upsert_and_backfill.sql",
+          "start_line": 25,
+          "end_line": 31,
+          "file_sha256": "67551259fff4d77e27a31bb540c6c5ee14bc121a22a71f9cce4e277a9e2c5bd8",
+          "assessment": "Writer emite resolution_milestone."
+        },
+        {
+          "path": "supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql",
+          "start_line": 3,
+          "end_line": 6,
+          "file_sha256": "5a1441cde1dff9c2e3090a43a97396a5d3401a0b799daa0ee9e297854254b65a",
+          "assessment": "Intenção explícita de índice com cinco exclusões."
+        },
+        {
+          "path": "scripts/db-audit/manifest.sql",
+          "start_line": 69,
+          "end_line": 83,
+          "file_sha256": "efd529f78e974c22fe4888219582c3acd5979a7b9cb27738bdc53ca8f41e38ad",
+          "assessment": "Regra de hash do índice."
+        }
+      ],
+      "offline_string_hash_reconstruction": {
+        "canonical_flags_prefix": "true|false|false|true|false|true|true|true|",
+        "five_type_definition": "CREATE UNIQUE INDEX ux_agent_achievements_one_time ON public.agent_achievements USING btree (profile_id, achievement_type) WHERE (achievement_type <> ALL (ARRAY['daily_goal'::text, 'streak'::text, 'message_milestone'::text, 'resolution'::text, 'resolution_milestone'::text]))",
+        "five_type_md5": "e1ef615714441c0d456c65511cbe153c",
+        "four_type_definition": "CREATE UNIQUE INDEX ux_agent_achievements_one_time ON public.agent_achievements USING btree (profile_id, achievement_type) WHERE (achievement_type <> ALL (ARRAY['daily_goal'::text, 'streak'::text, 'message_milestone'::text, 'resolution'::text]))",
+        "four_type_md5": "afba58575033ef1240198aa1ae798a8b",
+        "snapshot_md5": "e1ef615714441c0d456c65511cbe153c",
+        "method": "Reconstrução inferencial finita de formato textual; apenas Python/hash de strings, sem parser/execução PostgreSQL."
+      }
+    },
+    {
+      "candidate": "profile_delete_set_null_not_null",
+      "status": "STRUCTURAL_LIMIT_WITHOUT_ACTIVE_DELETION_JOURNEY",
+      "assessment": "conversation_tasks.created_by e csat_surveys.agent_id tornam-se NOT NULL mantendo FKs SET NULL. Excluir perfil com dependentes falha nessa condição; Auth não encontrou consumidor de DELETE físico com obrigação de preservar/excluir dependentes. Não vira novo finding de fluxo."
+    },
+    {
+      "candidate": "legacy_waiting_backfill_unqualified_id",
+      "status": "HISTORICAL_SOURCE_OBSERVATION",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260905080000_conversation_status_fsm.sql",
+          "start_line": 68,
+          "end_line": 73,
+          "file_sha256": "1315e2b073c4894711916949f464546eed1c24ac5d17c052205f2df58c4da3c2",
+          "assessment": "id não qualificado no EXISTS encontra messages.id no escopo interno."
+        }
+      ],
+      "assessment": "Predicado compara message.contact_id a message.id, não ao contato externo. Não se infere que contatos vivos conservem o estado dessa backfill nem que reabertura atual esteja implementada por ela."
+    },
+    {
+      "candidate": "duplicate_e17_indexes",
+      "status": "KNOWN_REPLAY_LIMIT_NOT_NEW",
+      "evidence": [
+        {
+          "path": "docs/audits/adversarial-f1-f2-f3-onda2-2026-09-29/AUDITORIA-W3-REPLAY.md",
+          "start_line": 42,
+          "end_line": 65,
+          "file_sha256": "4a4a1ffb5ecdd06a862786e1af7900b14ba020eeefa063d991806d4d175a1da8",
+          "assessment": "Falhas preexistentes já documentadas, incluindo idx_gmail_accounts_user_id, notified_at e CONCURRENTLY."
+        }
+      ],
+      "assessment": "Repetição CREATE sem IF NOT EXISTS confirmada em E17, mas mecanismo já consta da auditoria anterior e não é recontado."
+    },
+    {
+      "candidate": "team_message_type_intersection",
+      "status": "REJECTED_AS_ACTIVE_UPLOAD_BUG",
+      "assessment": "A interseção dos CHECKs restringe message_type, mas o consumidor ativo useSendTeamMessage omite essa coluna e grava document/sticker em media_type. message_type mantém DEFAULT text, aceito nos dois CHECKs. Logo a DDL isolada não comprova falha de upload atual. TC-001 conserva seus outros mecanismos de URL/locators sem duplicação.",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260927270003_team_chat_e12_check_constraints.sql",
+          "start_line": 5,
+          "end_line": 7,
+          "file_sha256": "956bda0e9168b2ad3491d339e8f31bb5533eb9b1209f0870c34d202cd7b4f877",
+          "assessment": "CHECK restringe message_type a text/image/video/audio/document/system."
+        },
+        {
+          "path": "supabase/migrations/20260929160000_team_chat_e26_message_type_media_constraint.sql",
+          "start_line": 6,
+          "end_line": 6,
+          "file_sha256": "5c783211d13f38b683d9e3e384338b83daf183a909fcc0e318f60fbbbb0a298a",
+          "assessment": "CHECK posterior é sobre message_type, não media_type."
+        },
+        {
+          "path": "supabase/migrations/20260402130912_abca9ec2-dfde-4f76-908b-2e993e611ad5.sql",
+          "start_line": 28,
+          "end_line": 39,
+          "file_sha256": "af9b6fa87587c3a6dd2dd4d592000a3091b36cf58edce828da8791828b533ae7",
+          "assessment": "message_type NOT NULL DEFAULT text."
+        },
+        {
+          "path": "src/hooks/team-chat/useTeamChatMutations.ts",
+          "start_line": 6,
+          "end_line": 40,
+          "file_sha256": "a3d69885b17595269b7374e32db6111d63a8fbb5b1e4c9bfc23bd07698278f54",
+          "assessment": "INSERT transmite media_type, omitindo message_type."
+        },
+        {
+          "path": "src/components/team-chat/useTeamChatPanel.ts",
+          "start_line": 262,
+          "end_line": 280,
+          "file_sha256": "bda483b7f0584cddb2657e72c4dc10b45da594dd47b49269865f83b80c412473",
+          "assessment": "Callback de arquivo/sticker transmite mediaType e mediaUrl."
+        },
+        {
+          "path": "src/components/team-chat/TeamFileUploader.tsx",
+          "start_line": 23,
+          "end_line": 28,
+          "file_sha256": "b2522ee17209f0ea97583e77dfbfbc2c08482c54a5f01d35820fd757b17fc5d3",
+          "assessment": "Tipos não áudio/vídeo/imagem se tornam document."
+        },
+        {
+          "path": "src/components/team-chat/TeamFileUploader.tsx",
+          "start_line": 59,
+          "end_line": 89,
+          "file_sha256": "b2522ee17209f0ea97583e77dfbfbc2c08482c54a5f01d35820fd757b17fc5d3",
+          "assessment": "Upload chama onFileSent com URL e mediaType."
+        }
+      ]
+    }
+  ]
+}

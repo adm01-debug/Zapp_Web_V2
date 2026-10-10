@@ -1,0 +1,1281 @@
+{
+  "schema_version": 1,
+  "area": "infra/ai_delegated",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "mode": "READ_ONLY_STATIC_AND_BOUNDED_OFFLINE_PROBES",
+  "counts": {
+    "total": 44,
+    "semantic": 18,
+    "targeted": 26
+  },
+  "primary_scope": {
+    "files": 12,
+    "lines": 2692,
+    "fully_read": 12
+  },
+  "definitions": {
+    "semantic": "Arquivo inteiro lido, com gates/entradas/saídas/falhas/efeitos rastreados; não implica execução.",
+    "targeted": "Somente faixas explicitadas foram lidas para o fluxo descrito; não usar como leitura integral.",
+    "structural": "Inventário/hash/sinais, sem reivindicação comportamental."
+  },
+  "inventory": [
+    {
+      "path": "supabase/functions/_shared/ai-conversation-pipeline.ts",
+      "sha256": "2aa5c9290cc859bed55c6271b3d4ba9f165e6d6ca845eadaab2dc59bf79dce0f",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 18971,
+      "lines": 506,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          506
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          506
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral de montagem de prompt, leitura RLS de contato, contexto service role, versão da projeção, dispatcher, parsing, conversões, envelopes e persistência delegada. A versão lida é ai_projection_updated_at; não é token transacional de contexto.",
+      "gates": "resolveVisibleContactId usa cliente do usuário; ausência/erro de consulta não libera contato. Helper espera autenticação do handler.",
+      "input_output": "Texto recebido e três análises recentes entram em prompt; JSON de tool/content segue para schema do handler; outputs carregam cobertura e projeção.",
+      "errors": "Consulta de versão propaga erro; consulta de prompt usa data sem distinguir erro. 429/402 preservados, JSON ausente gera 502. Não executado o dispatcher.",
+      "cancellation": "A revalidação recebe callbacks; request.req não vira AbortSignal na chamada generateWithRouting.",
+      "consumers": [
+        "ai-conversation-analysis",
+        "ai-conversation-summary"
+      ],
+      "finding_ids": [
+        "R2-INF-023"
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/ai-image-input.ts",
+      "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 14831,
+      "lines": 399,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          399
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          399
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: parser de origem/bucket/path, modo data URL, ambiente por nome, construção de endpoint, download privilegiado, limites de tipo/tamanho, base64 e falhas tipadas. Allowlist de origem não confere autorização do usuário ao objeto.",
+      "gates": "Origem exata e buckets fixos; download usa service role, sem identidade/cliente RLS no contrato do helper.",
+      "input_output": "Storage próprio ou data URL vira bytes/base64; 4 MiB é conferido no header e depois da leitura integral.",
+      "errors": "Falhas tipadas; chamadores classificadores degradam para outros. Timer termina após headers, antes de arrayBuffer.",
+      "cancellation": "AbortController interno cobre fetch até headers; req.signal não entra; corpo é lido após clearTimeout.",
+      "consumers": [
+        "classify-emoji",
+        "classify-sticker"
+      ],
+      "finding_ids": [
+        "R2-INF-022"
+      ],
+      "related_previous_findings": [
+        "IA-TIMEOUT-001"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-conversation-analysis/index.ts",
+      "sha256": "e4731a289d2c7129b40e2281248529e3ab0b26136173323fdf237d4a5347de92",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 17120,
+      "lines": 309,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          309
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          309
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: autenticação/cotas/IP, schema e orçamento, visibilidade, versão inicial, prompt, saída validada/normalizada, revalidação e RPC transacional. Revalidação ocorre fora da transação e p_analyzed_at é gerado ao finalizar.",
+      "gates": "requireAuth, enforceAiGuards, 10/IP/min e cliente RLS para contato; service role apenas após visibilidade.",
+      "input_output": "Mensagens/contato/período/requestId/contextVersion; contrato de saída, análise completa e projeção via RPC, envelope com analysisId.",
+      "errors": "Não persiste saída inválida; erro da RPC produz 502; versão não medida segue por decisão explícita. Falhas gerais passam errorResponse.",
+      "cancellation": "Revalida contato e versão antes da RPC; cliente faz descarte lógico após await. Janela concorrente permanece no servidor.",
+      "consumers": [
+        "src/components/inbox/AIConversationAssistant.tsx"
+      ],
+      "finding_ids": [
+        "R2-INF-023"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-conversation-summary/index.ts",
+      "sha256": "cded06fb6964859231886daab87aad3e0f91d85bba1645c3849888c37dcca969",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 14791,
+      "lines": 282,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          282
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          282
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: equivalente de resumo com schema mínimo de cinco mensagens, contexto e persistência completa; valida vocabulário e campos opcionais. O gate de versão não está na mesma transação da projeção.",
+      "gates": "requireAuth, enforceAiGuards, limite local por IP e visibilidade RLS de contato.",
+      "input_output": "Mensagens, período opcional e versão declarada; saída validada e RPC de análise com timestamp do fim, envelope/projected.",
+      "errors": "JSON/contrato inválido e persistência falha são respostas explícitas; campo ausente continua ausente.",
+      "cancellation": "Revalida antes da RPC; callback do frontend rejeita retorno antigo após contato/período mudarem, sem desfazer persistência já feita.",
+      "consumers": [
+        "src/components/inbox/ConversationSummary.tsx"
+      ],
+      "finding_ids": [
+        "R2-INF-023"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-churn-analysis/index.ts",
+      "sha256": "de085f8f7ae029523d88e40b58cdb5bbc3a2209056521feeef429ad11e2e94f5",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 5257,
+      "lines": 131,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          131
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: até 50 IDs passam pela visibilidade RLS; consultas de mensagens/análises geram score heurístico, sem chamada ao modelo. Cálculo e UI são caminhos diferentes; dashboard ignora o retorno e recalcula por updated_at.",
+      "gates": "Token validado, guard de IA e IDs filtrados por cliente autenticado antes de leituras service role.",
+      "input_output": "Lista limitada de contatos; score/riscos calculados por regras e dados disponíveis, sem previsão de modelo treinado.",
+      "errors": "Erros de algumas consultas não são distinguidos de dados ausentes. UI usa fallback local inclusive após erro da Edge.",
+      "cancellation": "Laço serial de consultas, sem sinal de cancelamento propagado.",
+      "consumers": [
+        "src/components/ai/ChurnPredictionDashboard.tsx"
+      ],
+      "finding_ids": [],
+      "related_previous_findings": [
+        "IA-METRICS-001",
+        "IA-QUOTA-001"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-classify-tickets/index.ts",
+      "sha256": "9c0e48f28189c0ccc197b70a20ecb8df4e8b389a89f161c6dda4377164b0b422",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 3940,
+      "lines": 103,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: consulta ai_conversation_tags com cliente JWT do usuário e deriva categorias/prioridades sem chamar modelo nem persistir. confidence || 0.5 troca zero por 0.5; AutoTicketClassifier ignora a resposta e deriva o primeiro tag localmente, portanto não atribuir a esse zero o efeito da UI.",
+      "gates": "getUser, guard de IA e consulta direta de tags pelo callerClient submetida à RLS, sem cliente service role nesse handler.",
+      "input_output": "Limit limitado pelo schema, tags existentes viram classificações calculadas.",
+      "errors": "A consulta lê data sem distinguir error: ausência ou erro vira classified:0/200; o consumidor anuncia sucesso local até no catch.",
+      "cancellation": "Sem AbortSignal ou efeito persistente do handler; consultas e retorno podem terminar após desmontagem.",
+      "consumers": [
+        "src/components/ai/AutoTicketClassifier.tsx"
+      ],
+      "finding_ids": [],
+      "related_previous_findings": [
+        "IA-METRICS-001",
+        "IA-QUOTA-001"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-enhance-message/index.ts",
+      "sha256": "9c39192d88a50698c083b644cb1db982e57dabe9158ca604da2ff1445914c1e4",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 4874,
+      "lines": 86,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          86
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          86
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: texto limitado, enum de tom, despacho copilot com instrução do servidor, texto não vazio, eco de requestId. Não escreve no banco nem envia WhatsApp. requestId não é passado ao dispatcher nesta rota.",
+      "gates": "requireAuth, enforceAiGuards e 20/IP/min; não consulta objeto privado.",
+      "input_output": "Mensagem, tom e contactName recebidos; texto reescrito devolvido para revisão/aplicação pelo cliente.",
+      "errors": "429/402 e resposta vazia tratados, demais falhas via errorResponse.",
+      "cancellation": "Sem req.signal; os dois consumidores examinados aplicam após await sem verificar geração de rascunho/contato.",
+      "consumers": [
+        "src/components/inbox/chat/AIEnhanceButton.tsx",
+        "src/components/inbox/chat/AIRewriteButton.tsx"
+      ],
+      "finding_ids": [
+        "R2-INF-025"
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-suggest-reply/index.ts",
+      "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9065,
+      "lines": 198,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          198
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          198
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: identidade/cotas, schema/contexto, contato visível e notas/campos/artigos no prompt, routing com requestId. O JSON extraído por regex não passa por SuggestedRepliesOutput; falha de parse retorna três frases fixas como 200.",
+      "gates": "requireAuth e guard, contato RLS antes do contexto service role; artigos publicados são contexto adicional.",
+      "input_output": "Até as mensagens limitadas pelo schema entram na conversa do modelo; resposta é JSON sem verificação do formato de suggestions.",
+      "errors": "429/402 preservados; parse inválido é mascarado como sugestões normais. UI só verifica truthiness de data.suggestions.",
+      "cancellation": "Cliente rejeita retorno por geração/contato após await; Edge não persiste e não recebe AbortSignal para provedor.",
+      "consumers": [
+        "src/components/inbox/AISuggestions.tsx"
+      ],
+      "finding_ids": [
+        "R2-INF-024"
+      ]
+    },
+    {
+      "path": "supabase/functions/chatbot-l1/index.ts",
+      "sha256": "00bde368aa253ce9ec44de1cf226d12603497fa5cfff568543b6f7fc1fe4f816",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 11485,
+      "lines": 266,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          266
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          266
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: corpo/HMAC ou JWT, schema UUIDs, autorização por contato no ramo usuário, fluxo ativo, RAG/histórico e saída contratada. connectionId é recebido mas não isola escolha do fluxo/histórico; efeito observado é metadado do contato e flags de retorno.",
+      "gates": "Ramo HMAC de serviço ou requireAuth+guard; assinatura de serviço não equivale a endpoint anônimo sem gateway. Configuração remota não medida.",
+      "input_output": "contactId/message/connectionId; JSON validado e confiança normalizada, retorno de handled/transfer_to_human.",
+      "errors": "Saída inválida é recusada; erro de atualização de metadados apenas registrado. Testar Conexão UI envia UUIDs inválidos test.",
+      "cancellation": "Sem cancelamento de provedor; esta rota não prova envio automático nem transferência efetiva.",
+      "consumers": [
+        "src/components/settings/ChatbotL1Config.tsx"
+      ],
+      "finding_ids": [],
+      "related_previous_findings": [
+        "IA-CHATBOT-001"
+      ]
+    },
+    {
+      "path": "supabase/functions/classify-audio-meme/index.ts",
+      "sha256": "a3d89d46f978d644b752deae3f56d5460a7ddedf54a3bf17d066ba52f4ee88ee",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 3481,
+      "lines": 75,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: identidade/cotas, schema, prompt por file_name/audio_url, dispatcher e categoria em allowlist. O som não é baixado nem transcrito; classificação é por metadados.",
+      "gates": "requireAiIdentity; identidade verificada antes do provedor.",
+      "input_output": "URL/nome viram texto ao modelo; categoria sanitizada e validada contra lista fixa.",
+      "errors": "Falha do modelo/categoria inválida vira outros, caminho conhecido de degradação.",
+      "cancellation": "Timeout passado ao dispatcher, sem req.signal; limites centrais ficam na área providers.",
+      "consumers": [
+        "src/hooks/communication/useAudioMemes.ts",
+        "src/components/settings/media-library/useMediaUpload.ts",
+        "src/components/settings/media-library/useMediaLibrary.ts"
+      ],
+      "finding_ids": [],
+      "related_previous_findings": [
+        "IA-AUDIO-001"
+      ]
+    },
+    {
+      "path": "supabase/functions/classify-emoji/index.ts",
+      "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 7389,
+      "lines": 172,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: requireAiIdentity, entrada limitada, imagem preparada via service role sem autorização do objeto, routing de visão, categoria fixa e degradação registrada. userId é enviado ao log/dispatcher, mas não ao controle de acesso da imagem.",
+      "gates": "Autenticação e cotas presentes; ausência de autorização de leitura por objeto no ramo usuário.",
+      "input_output": "image_url/file_name; bytes da imagem vão ao provedor e categoria limitada volta ao chamador.",
+      "errors": "Erro de imagem ou provedor vira outros/200 com tentativa de registro; não devolve arquivo bruto.",
+      "cancellation": "15s declarado ao download/dispatcher; req.signal não é propagado.",
+      "consumers": [
+        "src/hooks/integrations/useCustomEmojis.ts",
+        "src/components/settings/media-library/useMediaUpload.ts",
+        "src/components/settings/media-library/useMediaLibrary.ts"
+      ],
+      "finding_ids": [
+        "R2-INF-022"
+      ]
+    },
+    {
+      "path": "supabase/functions/classify-sticker/index.ts",
+      "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 7050,
+      "lines": 165,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "full_file_read": true,
+      "role": "primary",
+      "layer": "ai_delegated",
+      "review_basis": "Leitura integral: aceita usuário autenticado ou token exato de serviço; imagem privada lida pelo helper sem verificar objeto do usuário. Webhook usa legitimamente o ramo serviço. O achado é sobre o mesmo poder oferecido ao ramo usuário.",
+      "gates": "requireAiIdentityOrService; service key comparada pelo helper, cotas por usuário ou limiter de serviço.",
+      "input_output": "image_url limitada; data URL enviada ao provedor de visão, retorno de categoria de allowlist.",
+      "errors": "Imagem/provedor falhos degradam para outros com log; não há download do conteúdo na resposta HTTP.",
+      "cancellation": "15s declarado ao helper/dispatcher, sem vínculo ao AbortSignal da requisição.",
+      "consumers": [
+        "src/hooks/sticker-picker/useStickerPicker.ts",
+        "supabase/functions/_shared/evolution-webhook-messages.ts",
+        "src/components/settings/media-library/useMediaLibrary.ts"
+      ],
+      "finding_ids": [
+        "R2-INF-022"
+      ]
+    },
+    {
+      "path": "supabase/config.toml",
+      "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 2909,
+      "lines": 78,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral das exceções locais de verify_jwt. Nenhuma das dez rotas IA deste lote declara verify_jwt=false. Estado remoto do gateway não foi observado."
+    },
+    {
+      "path": "supabase/functions/_shared/ai-auth.ts",
+      "sha256": "80ec690034f445416c1205b5863a4322fe6e260466d49ffaad45f89dc8633820",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 3945,
+      "lines": 107,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral: requireAuth+enforceAiGuards para usuário; token exato de serviço por comparação constante e limiter próprio. Não contém autorização de objeto Storage."
+    },
+    {
+      "path": "supabase/functions/_shared/ai-guards.ts",
+      "sha256": "5a91a96072a0fdbca38957dd7a7908ee505badff1f548093593f5071987ce2a2",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9364,
+      "lines": 238,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          238
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          238
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral de cotas por função/usuário, contadores compartilhados, fallback local e decisões fail-open de infraestrutura. Não confundir cotas com autorização por contato/objeto."
+    },
+    {
+      "path": "supabase/functions/_shared/ssrf.ts",
+      "sha256": "9330ea91548aeea4fb241e9eae651e258169c2a2b7bb0a59b6715c75bc42f097",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 3796,
+      "lines": 111,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          111
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral do parser puro, origem exata, prefixo public/sign, bucket e travessias. Controla destino de rede, não permissão do usuário à mídia."
+    },
+    {
+      "path": "supabase/functions/_shared/validation.ts",
+      "sha256": "257890b6c2c20f463f6bb01b670306681b00bdc3685eda012c4296aad620d61e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 12239,
+      "lines": 320,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          270,
+          319
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          270,
+          319
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Faixa de criação de clientes e requireAuth: valida Bearer por getUser; não certifica RLS de nenhum objeto apenas por autenticar."
+    },
+    {
+      "path": "supabase/functions/_shared/schemas.ts",
+      "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 29665,
+      "lines": 627,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          165
+        ],
+        [
+          193,
+          214
+        ],
+        [
+          245,
+          285
+        ],
+        [
+          335,
+          575
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          165
+        ],
+        [
+          193,
+          214
+        ],
+        [
+          245,
+          285
+        ],
+        [
+          335,
+          575
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Faixas lidas de limites/schema IA, helper puro de versão/revalidação e envelopes. Demais schemas não promovidos integralmente."
+    },
+    {
+      "path": "supabase/functions/_shared/ai-response-contracts.ts",
+      "sha256": "b7f4c6f6690e5c02dfbe8b4fea14a03e1ab16357629c823ff70a9542d7b0d38e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 10048,
+      "lines": 247,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          101,
+          171
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          101,
+          171
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Contratos de sugestões, auto-tag e chatbot: formato e validação de confidence. Dispatcher central revisado por providers."
+    },
+    {
+      "path": "supabase/migrations/20260905030000_private_media_buckets.sql",
+      "sha256": "893ad17f2d01f3fb410194c62e61289147fafb9756697aa2fe7d44deaa710fd1",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 837,
+      "lines": 11,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          11
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          11
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral: migração determina public=false para buckets de clientes. Nenhuma execução ou certificação do estado remoto."
+    },
+    {
+      "path": "supabase/migrations/20261003142707_whatsapp_media_recebida_select_via_messages.sql",
+      "sha256": "dcaad99b94189bef2b4960e605f8dffa12de883983f7932c504765dbb93ff84b",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 2999,
+      "lines": 50,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          50
+        ]
+      ],
+      "full_file_read": true,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Leitura integral da policy SELECT aditiva restrita a mídia de mensagem visível ao chamador, sem SECURITY DEFINER."
+    },
+    {
+      "path": "supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql",
+      "sha256": "348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9525,
+      "lines": 224,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          175
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Faixa da definição de persist_conversation_analysis: INSERT+UPDATE na mesma transação, ordenação por p_analyzed_at, sem expectedContextVersion no contrato. Revisão cruzada com área database."
+    },
+    {
+      "path": "src/components/ai/AutoTicketClassifier.tsx",
+      "sha256": "c8ae5f28eafdf3fa3a56867fd72d9c58ffe119c3138e719dde0bd9af8bbd104b",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 10601,
+      "lines": 246,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          165
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Cadeia do consumidor: lista tags, agrupa primeiro tag, normaliza confiança e deriva prioridade; invoke de batch ignora data e recarrega, inclusive fallback de sucesso no catch."
+    },
+    {
+      "path": "src/components/ai/ChurnPredictionDashboard.tsx",
+      "sha256": "e1009a99acd9b5f5d7a55179a693b7cb5d47a8ba574f5ebe06431d8debe32aad",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 10632,
+      "lines": 269,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          90,
+          153
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          90,
+          153
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Retorno do modelo local, estatísticas e runAIAnalysis: data da Edge ignorada, analyzeChurnRisk recarregado, fallback local anuncia sucesso."
+    },
+    {
+      "path": "src/hooks/integrations/useCustomEmojis.ts",
+      "sha256": "01d79225188ea46336b266d7757a18acdc1a309c284c18055bc65e24aaa9f1b3",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 5918,
+      "lines": 154,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          50,
+          103
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          50,
+          103
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Upload/locator e invocação do classificador no caminho de uso de emoji; retorno de categoria consumido."
+    },
+    {
+      "path": "src/hooks/sticker-picker/useStickerPicker.ts",
+      "sha256": "022383aec4fc6372f674b65b04b3902f8b23180b5e4e95047b8df1784ac74422",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 7812,
+      "lines": 122,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          30,
+          85
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          30,
+          85
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Faixa de upload/classificação de sticker, input image_url e fallback de categoria."
+    },
+    {
+      "path": "src/hooks/communication/useAudioMemes.ts",
+      "sha256": "47db455f8ed2537cc91c5fa1b3f8aa9002fc3f6875ab71639bbdb6785bf6fa32",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9499,
+      "lines": 239,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          118,
+          169
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          118,
+          169
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Cliente chama classify-audio-meme com URL/nome, trata erro conservando outros e oferece categoria para confirmação antes de INSERT."
+    },
+    {
+      "path": "src/components/inbox/AIConversationAssistant.tsx",
+      "sha256": "0bdf84859b7d26e879d2b3d771d956b27ebf381bbb694566c38f17965c25cfa0",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 14156,
+      "lines": 362,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          75,
+          178
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          75,
+          178
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Clique captura geração, envia mensagens/período/requestId, retry, descarte após await; ausência de contextVersion enviado e proteção só local depois da resposta."
+    },
+    {
+      "path": "src/components/inbox/ConversationSummary.tsx",
+      "sha256": "55d6c00ef4b4c110915edb976cdd7885df75bdcc95b285640a754c7d9d24ea36",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 10005,
+      "lines": 179,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          65,
+          142
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          65,
+          142
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Geração/visibilidade e clique de resumo, body não manda período nem versão de projeção, rejeita resposta antiga no cliente depois do await."
+    },
+    {
+      "path": "src/components/inbox/AISuggestions.tsx",
+      "sha256": "eee9de6283f635d6877e92efc5184a63701d638240e9860057d362061211135a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 8616,
+      "lines": 230,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          35,
+          145
+        ],
+        [
+          174,
+          221
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          35,
+          145
+        ],
+        [
+          174,
+          221
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Guarda lógica por contato/geração; invoke e tratamento de retorno apenas por truthiness de suggestions; .length e .map no render pressupõem array e escolha insere texto no callback."
+    },
+    {
+      "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
+      "sha256": "5543da64064a3d9e5ad9068cca08c4878124038144074aff8df455a51d0a4d2e",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 6134,
+      "lines": 174,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          15,
+          110
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          15,
+          110
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Envio/aplicação/undo do rascunho após await sem geração; sem afirmar montagem universal do componente."
+    },
+    {
+      "path": "src/components/inbox/chat/AIRewriteButton.tsx",
+      "sha256": "e350755f36fe88aaf8f3c22c7f3ba7497f7d14c92a7577564a71e38141a7349c",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 5182,
+      "lines": 135,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          15,
+          100
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          15,
+          100
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Invocação e callback de rewrite sem guarda por rascunho/contato; presença não equivale a uso em toda tela."
+    },
+    {
+      "path": "src/components/settings/ChatbotL1Config.tsx",
+      "sha256": "82335c16af235d2fb23a44a8e60b13b9909cecab50b6e116063dfe19348c45ab",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9863,
+      "lines": 251,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          213,
+          251
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          213,
+          251
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Botão Testar Conexão usa IDs test incompatíveis com UUID do schema; não houve clique real."
+    },
+    {
+      "path": "tests/contracts/ai-conversation-summary-contract.test.ts",
+      "sha256": "8a497126906a472927cfdb2f75aa06bde52921cc88151e8e52ef03a03efb739a",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 9212,
+      "lines": 200,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          165,
+          200
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          165,
+          200
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Contrato verifica ordem textual revalidação→RPC e guarda/envelope, não concorrência transacional. Não executado."
+    },
+    {
+      "path": "tests/contracts/ai-conversation-analysis-contract.test.ts",
+      "sha256": "0bc3fd3f155c6932e2b0665bfca0fcbc8eb0914a1b78f523f874b81d1a84b9a9",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 6335,
+      "lines": 134,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          100,
+          134
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          100,
+          134
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Contrato verifica substrings e ordem; não injeta commit concorrente entre leitura da versão e gravação. Não executado."
+    },
+    {
+      "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "sha256": "148dc546dd551b196d4ceb22167e396012e98c52e6552298d3468e605cb86746",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 16441,
+      "lines": 256,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          187,
+          219
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          187,
+          219
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Testes de inventário de defeitos congelam parse legado/fallback em sugestões; confirmação estrutural não prova contrato correto."
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "sha256": "232baff04c754c6407275bbdc89e0ca439c533cfb58ad0ec603c0afd3d727aec",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 34381,
+      "lines": 727,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          666,
+          722
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          666,
+          722
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Faixa do produtor interno: classifica sticker com service role e timeout; esse ramo legítimo não fornece autorização por objeto ao ramo usuário do classificador."
+    },
+    {
+      "path": "src/components/settings/media-library/useMediaUpload.ts",
+      "sha256": "f6dfb1a20f1b8d7e4029f0208d91b99c0e6fd7c57aa538526794f7be95e48a15",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 4938,
+      "lines": 92,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          36,
+          89
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          36,
+          89
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Upload em bucket da biblioteca seguido por classificador e INSERT; consumidores invocam URL sem contactId/messageId."
+    },
+    {
+      "path": "src/components/settings/media-library/useMediaLibrary.ts",
+      "sha256": "17d8e6ecac9e5bee3f8f026fa042205a538e69997a3caeb6be9118ce80ff5b54",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 11917,
+      "lines": 255,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          161,
+          208
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          161,
+          208
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Reclassificação chama handler por locator e atualiza categoria quando há resultado; ramo de leitura conhecido do usuário não autentica uma chamada arbitrária na Edge."
+    },
+    {
+      "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+      "sha256": "5dcaf0eaf2f8949b5e9d23d03125f6715ec8b9b8d8610bd82dd0c63232eedc3b",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 8623,
+      "lines": 188,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          72
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Cadeia de aplicação: SecondaryToolbar recebe inputRef e escreve diretamente o resultado da reescrita no textarea por native setter e evento input, sem comparar rascunho."
+    },
+    {
+      "path": "src/components/inbox/chat/ChatInputArea.tsx",
+      "sha256": "2afe2fca8725cc54161998a384a3eb332cc2488e4535d97121f97a80fcbaf70c",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 14823,
+      "lines": 279,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          22,
+          44
+        ],
+        [
+          175,
+          246
+        ],
+        [
+          249,
+          279
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          22,
+          44
+        ],
+        [
+          175,
+          246
+        ],
+        [
+          249,
+          279
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Textarea permanece editável; AIRewriteButton mobile permanece montado enquanto hasText e aplica via setNativeValue. O cenário do achado mantém mesma conversa e texto não vazio."
+    },
+    {
+      "path": "src/components/inbox/chat/useChatInputLogic.ts",
+      "sha256": "5f87bfd6aedf159c9724cb33adc752456040bad3315f149de6c3152022de17f3",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 4291,
+      "lines": 124,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          1,
+          55
+        ],
+        [
+          107,
+          124
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          1,
+          55
+        ],
+        [
+          107,
+          124
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Helpers de persistência local de rascunho e native setter: aplica o valor e emite input, sem condição de geração/valor esperado no setter."
+    },
+    {
+      "path": "src/components/inbox/chat/ChatMessageInput.tsx",
+      "sha256": "59fcd6aa95ee33218b3f9ce83a99fcae7afd3caaf96c0eaebf25bcd19099bee9",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 7878,
+      "lines": 179,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          95,
+          163
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          95,
+          163
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Textarea controlado permanece editável enquanto AIEnhanceButton chama o mesmo onInputChange ao resolver a reescrita."
+    },
+    {
+      "path": "src/components/team-chat/TeamChatInputArea.tsx",
+      "sha256": "4f6ad4f1ed547bc1eb66777d93d0f0497a9706534916f9e990df472027cdef21",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "bytes": 11009,
+      "lines": 192,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        [
+          62,
+          112
+        ]
+      ],
+      "reviewed_line_ranges": [
+        [
+          62,
+          112
+        ]
+      ],
+      "full_file_read": false,
+      "role": "support",
+      "layer": "ai_support",
+      "review_basis": "Consumidor adicional de AIRewriteButton passa setText direto; não é necessário ao cenário principal do Inbox e não certifica montagem/contato de todas as telas."
+    }
+  ],
+  "remaining_gaps": [
+    "Sem ensaio pago, leitura Storage real, credenciais reais, execução Deno do handler, RPC/SQL, deploy, rede de produto ou sessão de usuário.",
+    "Políticas e grants considerados como fonte versionada; estado publicado/currente remoto não certificado.",
+    "Helpers centrais ai-generate/ai-routing/ai-usage e migrações/RLS completas ficam com providers/database; somente faixas adicionais de suporte declaradas aqui.",
+    "Provas sintéticas usam funções puras/módulo local revisado e stubs; modelo do predicado SQL não é teste de PostgreSQL.",
+    "Consumidores fora das faixas declaradas, todos os layouts e toda combinação de provedor não foram promovidos a leitura integral."
+  ]
+}

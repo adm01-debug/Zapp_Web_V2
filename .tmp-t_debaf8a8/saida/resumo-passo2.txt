@@ -1,0 +1,24 @@
+== alvos ==
+HOJE (instalado) sha256 = 70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26
+NOVO (artefato)  sha256 = c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e
+PENDENTE do cartao = 20261007095739_indeterminate_optout_outbox.sql
+W (copia do conjunto vivo) = /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/indeterminate-optout-outbox-migration-re-26100709037ed9
+retrato canonico da copia sha256 = 46d02ce0b8406f3107c88d4c0f31e7d86c7240768c9beb9f9abe9b55a55b9bf4
+n linhas de diferenca (reais) = 47
+HOJE: explicador extraido com 41 linhas (drift_canonico=False)
+NOVO: explicador extraido com 85 linhas (drift_canonico=True)
+
+== execucao crua do explicador (rc = veredito do passo banco_local) ==
+HOJE rc=1
+   stdout: diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+   stderr: (vazio)
+NOVO rc=1
+   stdout: diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+   stderr: (vazio)
+
+== classificacao das 47 linhas reais ==
+-- HOJE -- total=47 explicadas=34 drift_canonico=0 SEM=13
+-- NOVO -- total=47 explicadas=34 drift_canonico=0 SEM=13
+
+DEBITADAS AO CARTAO (SEM): HOJE=13  NOVO=13  de 47
+o drift novo continua debitado com o ajuste? True

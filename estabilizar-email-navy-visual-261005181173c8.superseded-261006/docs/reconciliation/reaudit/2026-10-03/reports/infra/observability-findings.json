@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "area": "infra_observability",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "counts": {
+    "P2": 5,
+    "P3": 1
+  },
+  "findings": [
+    {
+      "id": "R2-INF-026",
+      "title": "Diagnóstico marca falhas rápidas de banco/Storage e Realtime não testado como saudáveis",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "fetchSystemHealth mede a duração de consultas de banco e listagem de Storage, mas não inspeciona seus campos error. O status depende apenas de latência; um erro que retorna rápido vira healthy. Realtime é definido diretamente como healthy sem subscribe/ack/status. DiagnosticsView converte isso em Saudável, Canal de tempo real ativo e, quando a Edge também retorna sem erro, Todos os sistemas operacionais.",
+      "consumer_chain": [
+        "ViewRouter autoriza diagnostics e monta DiagnosticsView",
+        "useDiagnosticsData dispara coleta inicial/intervalo30s ou refresh",
+        "Respostas normais com error retornam rápido → database/storage healthy; realtime constante",
+        "HealthBadge e resumo operacional afirmam saúde"
+      ],
+      "preconditions": [
+        "Usuário admitido no gate da rota abre diagnósticos.",
+        "A consulta/listagem resolve com error em menos dos limiares500ms/1000ms, ou o canal Realtime está indisponível sem erro correspondente nas outras consultas."
+      ],
+      "effect": "O operador pode interpretar falha de permissão/serviço como saúde confirmada; o painel não distingue teste com falha, teste não realizado e sucesso. O achado não presume que todo error prove indisponibilidade global: ele prova que a saúde exibida não é sustentada pela coleta.",
+      "evidence": [
+        {
+          "path": "src/hooks/system/useDiagnosticsData.ts",
+          "line_start": 137,
+          "line_end": 167,
+          "sha256": "c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Duração usada como status; error ignorado e realtime constante"
+        },
+        {
+          "path": "src/hooks/system/useDiagnosticsData.ts",
+          "line_start": 249,
+          "line_end": 275,
+          "sha256": "c665f66b86eb8a1116c77e34150d25fa0554a82e75684dc9c7ed867d4b46628a",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Coleta inicial/periódica e refresh"
+        },
+        {
+          "path": "src/components/diagnostics/DiagnosticsView.tsx",
+          "line_start": 31,
+          "line_end": 42,
+          "sha256": "9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "healthy é apresentado como Saudável"
+        },
+        {
+          "path": "src/components/diagnostics/DiagnosticsView.tsx",
+          "line_start": 72,
+          "line_end": 86,
+          "sha256": "9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Realtime ativo sem medição e hook consumidor"
+        },
+        {
+          "path": "src/components/diagnostics/DiagnosticsView.tsx",
+          "line_start": 237,
+          "line_end": 270,
+          "sha256": "9e23c355bbd03e5be2ee5d8102d88b32d551505b8032156d42ae2d862092ed8d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Resumo de todos os sistemas operacionais"
+        },
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 129,
+          "line_end": 151,
+          "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Gate de autorização precede montagem do painel"
+        }
+      ],
+      "acceptance": [
+        "Representar sucesso, falha de coleta e não testado separadamente; só avaliar latência de resultado bem-sucedido.",
+        "Marcar Realtime a partir de estado/ack observado com validade temporal ou mostrar não medido.",
+        "Teste com SELECT/List retornando error rápido não pode produzir Saudável; falha de autorização deve ser distinguida de serviço fora do ar.",
+        "Manter controle existente de error nas Edge Functions e derivar resumo apenas de sinais válidos."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-OBS-P01"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Probe executa callback real com interfaces falsas; texto da UI foi verificado no fonte, sem renderização React.",
+        "API001/API037 cobrem autorização e contagens globais da Edge webhook-diagnostic, que são mecanismos separados. Não se alegou acesso anônimo às rotas."
+      ]
+    },
+    {
+      "id": "R2-INF-027",
+      "title": "SLA de 24h e disponibilidade de 7 dias usam janela selecionada e aprovam ausência de checks",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "useMonitoringData consulta connection_health_logs a partir do período selecionado (padrão12h). computeUptime filtra mais24h sobre esse resultado já reduzido, sem recuperar as horas faltantes, e devolve100% quando não há checks. O mesmo estado abastece Uptime24h e SLA últimas24h; o heatmap7dias recebe os mesmos logs filtrados. Sua grade indica corretamente células sem dados, mas o badge agregado também mostra100% no vazio e o gauge de SLA diz Atingido.",
+      "consumer_chain": [
+        "evolution-monitor abre com period12h ou usuário escolhe1h",
+        "Consulta filtra healthLogs por esse período",
+        "computeUptime/heatmap calculam sobre dados incompletos para24h/7d",
+        "Cards fixos24h/7d e gauge de99.5% interpretam o valor"
+      ],
+      "preconditions": [
+        "Há seleção inferior à janela anunciada, ou o conjunto de checks resolvido está vazio.",
+        "Para o caso numérico, um check saudável está na última hora e outro com falha está oito horas antes, ambos nas últimas24h."
+      ],
+      "effect": "Sem mudança dos checks, selecionar1h produz uptime100% e selecionar24h produz50%, enquanto o texto de SLA permanece24h. Zero checks resulta SLA atingido. Não é medida observada de disponibilidade ou violação real de contrato de serviço; é inconsistência na janela e na suficiência do dado usado pelo painel.",
+      "evidence": [
+        {
+          "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+          "line_start": 9,
+          "line_end": 18,
+          "sha256": "2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Filtro adicional24h e default100% sem amostras"
+        },
+        {
+          "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+          "line_start": 68,
+          "line_end": 83,
+          "sha256": "2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consulta limitada pelo período antes de calcular uptime"
+        },
+        {
+          "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
+          "line_start": 10,
+          "line_end": 23,
+          "sha256": "432cee260294b361c1d943bd2aa7043f60784c08290691ba8928b00692a6ab1d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Período inicial12h e encaminhamento da seleção"
+        },
+        {
+          "path": "src/components/monitoring/MonitoringStatsCards.tsx",
+          "line_start": 83,
+          "line_end": 92,
+          "sha256": "6329681044c353e56a8cf0041dda9d663e55a3aee50090548caa5fcc59ee6237",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Título Uptime24h e Sem dados apenas no subtítulo"
+        },
+        {
+          "path": "src/components/monitoring/MonitoringSLAPanel.tsx",
+          "line_start": 16,
+          "line_end": 42,
+          "sha256": "9b0edabce5756c3f769f552641ab09c5fda09c7faa524908e3196122e64b3cee",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Gauge interpreta100 como SLA atingido"
+        },
+        {
+          "path": "src/components/monitoring/MonitoringSLAPanel.tsx",
+          "line_start": 46,
+          "line_end": 69,
+          "sha256": "9b0edabce5756c3f769f552641ab09c5fda09c7faa524908e3196122e64b3cee",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Descrição últimas24h e counts"
+        },
+        {
+          "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+          "line_start": 310,
+          "line_end": 328,
+          "sha256": "97802933f3d40202b9b802b28f0a90c1a671979e46e7aa37e82a04b703fea257",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Mesmo dataset encaminhado ao SLA e heatmap"
+        },
+        {
+          "path": "src/components/monitoring/MonitoringAvailabilityHeatmap.tsx",
+          "line_start": 43,
+          "line_end": 89,
+          "sha256": "1aac00d58a918f0ba45d98c3df251108f0fa4c73fb63e99d7a4b03e88741c6b0",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Grade 7 dias, células vazias diferenciadas e agregado vazio100"
+        }
+      ],
+      "acceptance": [
+        "Consultar a janela prometida por cada painel ou ajustar seu título, critério e tooltip à seleção efetiva.",
+        "Representar ausência de checks como dado insuficiente, sem sucesso do SLA ou porcentagem100 por default.",
+        "Definir e mostrar janela real/quantidade/cobertura de checks; tratar limite2000 e paginação antes de afirmar completude.",
+        "Fixar teste com check falho fora de1h mas dentro de 24h, e caso zero checks; preservar o estado cinza correto da grade."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-OBS-P02"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Probe usa duas linhas sintéticas e queries filtradas em memória; nenhum dado real de disponibilidade foi coletado.",
+        "Porcentagem de checks não é automaticamente disponibilidade ponderada por duração. Esta auditoria não impõe uma nova definição de SLA; exige coerência com a janela/estado anunciados.",
+        "Rótulos adicionais Checks(7d) sobre últimos50 e Última hora sobre health logs sem cutoff constam da cobertura como extensões de apresentação, sem novos IDs."
+      ]
+    },
+    {
+      "id": "R2-INF-028",
+      "title": "Gráfico de mensagens perde linhas válidas ao montar buckets de 7 dias e colapsa buckets de 1 hora",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "fetchData calcula buckets de tamanhos variáveis, mas usa chaves de hora civil tanto para a âncora quanto para cada mensagem. Em7d há sete âncoras diárias na hora atual; mensagens de outras horas do dia não encontram chave e são ignoradas no gráfico, embora contem no total. Em1h seis âncoras de10min geram chaves HH:00 repetidas, reduzindo a resolução a uma ou duas entradas.",
+      "consumer_chain": [
+        "Seleção7d ou1h em EvolutionMonitoringDashboard",
+        "fetchData recebe mensagens do período com sucesso",
+        "Loop de buckets usa intervalos diários/10min, lookup usa hora literal",
+        "MonitoringMessageChart plota hourlyData com soma diferente do total"
+      ],
+      "preconditions": [
+        "Resposta de messages contém linhas válidas dentro do período selecionado; não depende de erro, truncamento de API ou dados malformados.",
+        "Em7d ao menos uma mensagem está em hora diferente da âncora diária."
+      ],
+      "effect": "O volume/forma da série apresentados ao operador podem divergir do tráfego consultado. No probe, duas mensagens válidas somam total2 e apenas1 chega à área plotada; em1h seis buckets previstos viram dois.",
+      "evidence": [
+        {
+          "path": "src/components/monitoring/hooks/types.ts",
+          "line_start": 3,
+          "line_end": 13,
+          "sha256": "4564f84805039c7199daca72211a4f91425e6e169bfa2a2f5f3ec941864286c9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Duração e quantidade de buckets por período"
+        },
+        {
+          "path": "src/components/monitoring/hooks/useMonitoringData.ts",
+          "line_start": 84,
+          "line_end": 104,
+          "sha256": "2f866d9a0e6d6ea033f64f2063f50feacf684c4a873616e3e0f408a2d079d7ee",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Totais e chave por hora incompatível com bucketSize"
+        },
+        {
+          "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
+          "line_start": 196,
+          "line_end": 206,
+          "sha256": "97802933f3d40202b9b802b28f0a90c1a671979e46e7aa37e82a04b703fea257",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Cards e gráfico consomem o mesmo messageStats"
+        },
+        {
+          "path": "src/components/monitoring/MonitoringMessageChart.tsx",
+          "line_start": 37,
+          "line_end": 73,
+          "sha256": "add3ef18394dd94b624f1272a6d528df92316ac76351004105b6013cd50ee4bf",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Série e período são apresentados ao usuário"
+        }
+      ],
+      "acceptance": [
+        "Agrupar por índice temporal floor((timestamp-início)/bucketSize), ou por uma política equivalente explicitamente definida, e formatar o rótulo somente após agrupar.",
+        "Garantir que cada mensagem elegível entre em exatamente um bucket e que soma dos buckets corresponda aos totais do mesmo conjunto.",
+        "Testar limites inicial/final, horas diferentes no mesmo dia em7d, seis intervalos10min em1h e fusos/virada de dia."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-OBS-P03"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Probe executa o callback real e as funções auxiliares com respostas completas em memória; usa UTC explicitamente.",
+        "Não inferido volume real, limite efetivo do PostgREST ou comportamento em horário de verão a partir do caso sintético."
+      ]
+    },
+    {
+      "id": "R2-INF-029",
+      "title": "Score de desempenho trata APIs ausentes como memória livre, RTT zero e conexão 4g",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "collectMetrics transforma ausência de performance.memory em0MB/256MB e0% de uso, e ausência de navigator.connection em4g/RTT0. Esses valores recebem status good e entram com o mesmo peso no score; o payload salvo não inclui uma indicação de não medido. Navegação/pintura ausentes também viram0. A UI pode declarar Excelente com parcela relevante dos critérios inventada como default.",
+      "consumer_chain": [
+        "Rota performance autorizada monta PerformanceMonitor",
+        "collectMetrics lê APIs disponíveis e preenche defaults para APIs ausentes",
+        "Três critérios de memória/rede recebem good sem observação",
+        "Score/indicador Excelente e saveSnapshot propagam os defaults"
+      ],
+      "preconditions": [
+        "Navegador não fornece memory ou connection (ou entradas de timing ainda não estão disponíveis).",
+        "Os demais critérios têm valores bons para o exemplo100; gravação real depende de profile.id e sucesso do INSERT."
+      ],
+      "effect": "O score e o histórico tentado confundem desconhecido com bom. No mesmo fixture de navegação/DOM, APIs ausentes dão100 pontos; memória90%,2g e RTT500 observados dão63. Isso não mede diferença real entre navegadores, apenas demonstra a contribuição indevida dos valores de substituição.",
+      "evidence": [
+        {
+          "path": "src/components/performance/PerformanceMonitor.tsx",
+          "line_start": 26,
+          "line_end": 56,
+          "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Defaults e critérios good das medições ausentes"
+        },
+        {
+          "path": "src/components/performance/PerformanceMonitor.tsx",
+          "line_start": 70,
+          "line_end": 97,
+          "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Score, payload e coleta periódica"
+        },
+        {
+          "path": "src/components/performance/PerformanceMonitor.tsx",
+          "line_start": 165,
+          "line_end": 187,
+          "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Texto Excelente e apresentação do score/histórico"
+        },
+        {
+          "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
+          "line_start": 32,
+          "line_end": 55,
+          "sha256": "53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Payload segue para INSERT se profile existir"
+        },
+        {
+          "path": "src/pages/ViewRouter.tsx",
+          "line_start": 80,
+          "line_end": 84,
+          "sha256": "6cf287e71a19309582ed6406005bd43710fed41505b6c8127b825e130bf4c530",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Rota produtiva de PerformanceMonitor"
+        }
+      ],
+      "acceptance": [
+        "Usar estado indisponível/não medido para APIs ou entries ausentes; não fabricar valor numérico normal.",
+        "Calcular score apenas sobre medições válidas e exibir sua cobertura, ou não emitir score quando a amostra for insuficiente.",
+        "Persistir validade/origem das medições para que histórico não trate defaults como observações.",
+        "Teste com memory/connection ausentes deve mostrar cobertura parcial e nenhum4g ou memória livre presumidos; controle com APIs válidas deve manter classificação correspondente."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-OBS-P04"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Callback real executado com objetos de navegador falsos; payload capturado em saveSnapshot falso, sem gravação real.",
+        "Testes de metricThresholds isolados não provam a coleta: PerformanceMonitor possui thresholds inline; teste de suporte inicial foi lido, não executado como gate."
+      ]
+    },
+    {
+      "id": "R2-INF-030",
+      "title": "Limpar snapshots informa remoção mesmo quando DELETE devolve erro",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "clearOldSnapshots aguarda a cadeia delete().lt(), mas ignora o resultado com error. Como erro normal de SDK pode resolver a Promise, o catch não roda, o hook dispara Dados antigos removidos e recarrega histórico. O botão Limpar antigos da rota performance chama esse caminho diretamente.",
+      "consumer_chain": [
+        "Usuário clica Limpar antigos",
+        "DELETE resolve com {error:...}",
+        "Retorno não é inspecionado → toast.success",
+        "loadHistory roda apesar da limpeza rejeitada"
+      ],
+      "preconditions": [
+        "A chamada DELETE retorna erro por envelope resolvido, em vez de lançar rejeição.",
+        "Usuário está admitido na rota performance; não se pressupõe qual política/serviço originou o erro."
+      ],
+      "effect": "Confirmação falsa de uma ação solicitada e nenhuma orientação para tentar novamente ou corrigir a causa. O probe faz o mesmo callback mostrar sucesso para error resolvido e erro para Promise rejeitada.",
+      "evidence": [
+        {
+          "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
+          "line_start": 78,
+          "line_end": 90,
+          "sha256": "53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Retorno de DELETE ignorado antes da confirmação"
+        },
+        {
+          "path": "src/components/performance/PerformanceMonitor.tsx",
+          "line_start": 145,
+          "line_end": 161,
+          "sha256": "a5a7ad68039227a5fa4c45a141f8fb99021ca0edfc944fc31310e3206fe707f1",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Botão produtivo chama clearOldSnapshots"
+        },
+        {
+          "path": "src/hooks/analytics/usePerformanceSnapshots.ts",
+          "line_start": 58,
+          "line_end": 76,
+          "sha256": "53af871c26874ca6981a66dc74d2926a1f5641c73bd077a577e9c4e4877d43d0",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "loadHistory verifica seu próprio error, mas não confirma a remoção"
+        }
+      ],
+      "acceptance": [
+        "Inspecionar error do DELETE antes de anunciar sucesso e propagar causa de falha de forma tratável.",
+        "No erro, preservar estado e avisar que a limpeza não foi confirmada; não converter simples recarga em prova de remoção.",
+        "Cobrir envelope {error} e rejeição, mais controle de sucesso; manter período selecionado ao recarregar."
+      ],
+      "affected_tasks": [],
+      "probe_ids": [
+        "INF-OBS-P05"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Nenhuma exclusão real executada e nenhuma inferência de RLS/global delete baseada na ausência de filtro de profile_id.",
+        "Hook coordenado com revisão de módulos: não há ID duplicado criado por ela para este callback."
+      ]
+    },
+    {
+      "id": "R2-INF-031",
+      "title": "Coletor local rotula agregações incompatíveis como CLS e INP",
+      "severity": "P3",
+      "classification": "novo",
+      "area_extension": "finite_observability_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "O observador CLS soma shifts por toda a sessão visível, sem separar janelas; o INP usa o maior duration bruto, sem contar interações ou desconsiderar um pico por 50. As definições atuais usam maior janela de shifts para CLS e descartam um maior valor de interação por 50 no INP. O erro se manifesta no Map/log do coletor próprio inicializado em main, cujo getRating consulta o budget correto sobre um valor agregado incorretamente.",
+      "consumer_chain": [
+        "main inicializa web-vitals.ts",
+        "Observadores acumulam shifts e maior event.duration",
+        "pagehide/visibilitychange chama onMetric",
+        "Map/getWebVitalsReport e log de desenvolvimento expõem CLS/INP divergentes"
+      ],
+      "preconditions": [
+        "Navegador fornece entries de layout-shift/event e ocorre flush.",
+        "CLS: shifts separados por mais de1s; INP:50 interações distintas com um pico isolado."
+      ],
+      "effect": "Diagnóstico local contra o budget pode classificar estabilidade/responsividade incorretamente. No fixture, dois shifts0.06 separados por2s produzem0.12 em vez de0.06;50 interações com pico1000 e segundo valor160 produzem1000 em vez de160. PrioridadeP3 porque o consumidor confirmado é local/desenvolvimento: info é suprimido em produção e não foi identificado consumidor produtivo adicional de getWebVitalsReport.",
+      "evidence": [
+        {
+          "path": "src/lib/web-vitals.ts",
+          "line_start": 34,
+          "line_end": 64,
+          "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Threshold correto é aplicado ao valor agregado e salvo no Map/log"
+        },
+        {
+          "path": "src/lib/web-vitals.ts",
+          "line_start": 111,
+          "line_end": 141,
+          "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Soma de shifts e máximo bruto de event.duration"
+        },
+        {
+          "path": "src/lib/web-vitals.ts",
+          "line_start": 143,
+          "line_end": 166,
+          "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Flush por visibilidade/pagehide"
+        },
+        {
+          "path": "src/lib/web-vitals.ts",
+          "line_start": 185,
+          "line_end": 187,
+          "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Export de relatório local"
+        },
+        {
+          "path": "src/main.tsx",
+          "line_start": 30,
+          "line_end": 33,
+          "sha256": "df91ccf7d1d34c0321952a8ac9dcf9849a8b8092190912382d16c3aa9c742a1f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Coletor próprio e Speed Insights são inicializações separadas"
+        },
+        {
+          "path": "src/lib/logger.ts",
+          "line_start": 50,
+          "line_end": 64,
+          "sha256": "f45d5ba0fed8fcd36784de3223c995206f9767e7c961d5dab5f4badca8e1666e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "info/debug desativados fora de DEV"
+        },
+        {
+          "path": "src/lib/__tests__/web-vitals-budget.test.ts",
+          "line_start": 22,
+          "line_end": 49,
+          "sha256": "3990316d15c353fbc44f021f7e0a3c273fb96e66c9e8b1bf408d231ce15c481e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Teste verifica targets/rating, sem exercitar observadores ou agregação"
+        }
+      ],
+      "acceptance": [
+        "Usar implementação mantida das métricas ou implementar integralmente janelaCLS e cálculoINP por interação com os limites definidos.",
+        "Preservar o consumo dos thresholds do budget, separado da medição do valor.",
+        "Comparar fixtures de shifts separados/mesma janela e49/50+ interações com referência; incluir visibilidade e BFCache conforme a política adotada.",
+        "Não usar o resultado local como prova de métricas do Speed Insights sem demonstrar a cadeia real de dados."
+      ],
+      "affected_tasks": [
+        {
+          "plan_record_id": "P008",
+          "task_id": "E36",
+          "canonical_id": "docs--audits--plano_melhorias_50_etapas_2026-09-20::E36",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "Speed Insights lazy foi instrumentado e o coletor próprio lê os alvos do budget. O documento reporta zero datapoints antes do deploy; comparação com tráfego real e ajuste dos alvos permanecem abertos. Coletor manual/FID não significa ausência total de RUM.",
+          "affected_subcontract": "Agregação CLS/INP do coletor próprio, sem alterar aceite de budget ou statusPARTIAL.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P008.json",
+          "baseline_task_sha256": "48523ae0bd0da9057a3dab79f2b7ce86f1d8338a73094f498ee4ab6e0e0a506f"
+        },
+        {
+          "plan_record_id": "P041",
+          "task_id": "033",
+          "canonical_id": "docs--plans--plano_100_etapas_paridade_v1_v3_2026-09-01::033",
+          "previous_status": "PARTIAL",
+          "previous_assessment": "O coletor próprio continua manual/FID/Map, mas src/lib/speed-insights.ts injeta Speed Insights da Vercel de forma lazy. client-observability/analytics_events propostos não constam do inventário/catálogo; a instrumentação alternativa existe e o confronto de dados após24h por rota permanece pendente, sem afirmar ausência total de RUM.",
+          "affected_subcontract": "Coletor local e qualidade do valor; envio/RUM independente continua com limites já registrados.",
+          "proposed_status": "PARTIAL",
+          "baseline_task_file": "tasks/P041.json",
+          "baseline_task_sha256": "ed85b23c035246b11f7a8ea6f40dd7e4555fb53a1a13c8908757d48f8d35ad6f"
+        }
+      ],
+      "probe_ids": [
+        "INF-OBS-P06"
+      ],
+      "related_previous_findings": [],
+      "novelty_basis": "Mecanismo de fonte adicional aos104 achados anteriores; não implica regressão posterior. Fronteiras coordenadas com root, providers e revisão de módulos; limites específicos abaixo.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Sem browser autenticado, SQL, consulta de saúde/Storage, modelo pago, deploy ou rede de produto nesta revisão.",
+        "Probe executa o módulo completo em VM com PerformanceObserver/DOM/logger falsos e entradas sintéticas; não certifica Web Vitals de browser ou tráfego real.",
+        "Nenhuma falha atribuída à coleta independente do Speed Insights ou aos gates de tamanho de bundle.",
+        "P008E36 e P041033 já são PARTIAL; apenas o subcontrato do coletor local recebe evidência adicional."
+      ],
+      "external_references": [
+        {
+          "url": "https://web.dev/articles/cls",
+          "retrieved_on": "2026-10-04",
+          "source_kind": "primary_documentation",
+          "supports": "CLS é a maior janela de shifts, com intervalo entre shifts inferior a1s e duração máxima5s; a soma vitalícia é a definição anterior."
+        },
+        {
+          "url": "https://web.dev/articles/inp",
+          "retrieved_on": "2026-10-04",
+          "source_kind": "primary_documentation",
+          "supports": "INP considera interações lógicas, descartando uma maior a cada50; não é máximo incondicional de todos os eventos."
+        }
+      ]
+    }
+  ],
+  "duplicates_and_coordination": [
+    {
+      "related_id": "R2-API-001",
+      "disposition": "não duplicado",
+      "note": "Gates/auto-fix do webhook-diagnostic ficam com providers; INF026 é inferência de saúde no cliente."
+    },
+    {
+      "related_id": "R2-API-037",
+      "disposition": "não duplicado",
+      "note": "Tráfego global atribuído por instância fica com providers; INF027/028 usam leituras próprias e cálculos do cliente."
+    },
+    {
+      "related_id": "R2-API-043",
+      "disposition": "não duplicado",
+      "note": "AIProviderHealthPanel e filtro ai-proxy ficam com providers."
+    },
+    {
+      "related_id": "P008/E36 e P041/033",
+      "disposition": "extensão documental, status preservado",
+      "note": "Ambos PARTIAL. Fórmula do coletor local é evidência nova de subcontrato pendente; não reabre budgets DONE_VERIFIED."
+    },
+    {
+      "related_id": "P008/E24 e relatório REPLAY_LOCAL_MIGRATIONS_2026-10-03",
+      "disposition": "limite histórico preservado, não contado",
+      "note": "Faixa400–700LIDs já explicitada em57–60; comunicada à revisão de banco para evitar falsa novidade."
+    }
+  ]
+}

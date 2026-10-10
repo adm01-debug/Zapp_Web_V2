@@ -1,0 +1,3 @@
+[functions] só produção=0 só local=0 diferentes=1
+    diferente: f:accept_department_invite(p_code text)
+ESTRUTURA: 1 diferença(s) em relação ao retrato da produção

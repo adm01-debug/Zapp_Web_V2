@@ -1,0 +1,9 @@
+{
+ "id": "bbb111bbb222",
+ "branch": "v2/prova-sem-bbb111bbb222",
+ "base_dia": "dia/2026-10-04",
+ "sha": "05859cedfd480031cc0b072e492ca8abadb860e3",
+ "titulo": "cartao SEM migration",
+ "quando": "2026-10-07T06:00:00-03:00",
+ "estado": "pronto"
+}

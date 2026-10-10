@@ -1,0 +1,2 @@
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/zapp-verify-drift-canonico-261006193749e2/.tmp/zapp-verify.novo
+f6828357521bfb7d05abf869cf867d8ec763fa2eb7c84945f0a164e0e3f50d5f  /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline/filtro-novo.py

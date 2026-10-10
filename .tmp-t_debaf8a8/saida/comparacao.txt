@@ -1,0 +1,1 @@
+reproduzidas=47 vivo=47 iguais=True

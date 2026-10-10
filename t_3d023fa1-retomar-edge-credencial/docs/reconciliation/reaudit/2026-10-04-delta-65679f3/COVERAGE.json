@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "old_code_pin": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "new_code_pin": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+  "compare": {
+    "ahead_by": 6,
+    "changed_files": 23
+  },
+  "inspection_levels": {
+    "PARTIAL_SOURCE": 5,
+    "BINARY_NOT_VISUALLY_REVIEWED": 1,
+    "INVENTORY_OR_SNIPPET": 5,
+    "SOURCE_REVIEW": 12
+  },
+  "files": [
+    {
+      "path": ".github/workflows/db-guard.yml",
+      "level": "PARTIAL_SOURCE",
+      "note": "Trechos 1–início e 365–590; isolamento offline e encadeamento de harnesses lidos; não é execução de CI."
+    },
+    {
+      "path": "docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md",
+      "level": "PARTIAL_SOURCE",
+      "note": "Trecho inicial até o limite retornado; medições históricas não foram repetidas nesta rodada."
+    },
+    {
+      "path": "docs/design/salesview-journey/contraste-alto-por-elemento-2026-10-04.png",
+      "level": "BINARY_NOT_VISUALLY_REVIEWED",
+      "note": "Arquivo identificado no delta; não houve inspeção visual de seus bytes."
+    },
+    {
+      "path": "docs/talkx/OPERACAO.md",
+      "level": "INVENTORY_OR_SNIPPET",
+      "note": "Trecho indexado da operação X033; não foi lido integralmente neste adendo."
+    },
+    {
+      "path": "docs/talkx/n8n/talkx-alerts.json",
+      "level": "SOURCE_REVIEW",
+      "note": "Nós, parâmetros e encadeamento lidos. Sem execução nativa."
+    },
+    {
+      "path": "docs/talkx/v4/STATUS.md",
+      "level": "INVENTORY_OR_SNIPPET",
+      "note": "Alteração identificada no compare; placar não foi regenerado nem validado neste pin."
+    },
+    {
+      "path": "scripts/db-audit/talkx-engine-health.test.sh",
+      "level": "SOURCE_REVIEW",
+      "note": "Harness lido; PostgreSQL não executado."
+    },
+    {
+      "path": "scripts/db-audit/talkx-lgpd.test.sh",
+      "level": "SOURCE_REVIEW",
+      "note": "Harness lido; PostgreSQL e Storage não executados."
+    },
+    {
+      "path": "scripts/db-audit/talkx-retry-resolve.test.sh",
+      "level": "SOURCE_REVIEW",
+      "note": "Harness lido; PostgreSQL não executado."
+    },
+    {
+      "path": "scripts/edge-deploy/log-injection.unit.mjs",
+      "level": "SOURCE_REVIEW",
+      "note": "Bytes completos verificados; quatro testes originais executados."
+    },
+    {
+      "path": "scripts/edge-deploy/register-deployment.mjs",
+      "level": "SOURCE_REVIEW",
+      "note": "Bytes completos verificados; programa exercitado pelos testes com fetch simulado."
+    },
+    {
+      "path": "src/components/talkx/TalkXSettings.tsx",
+      "level": "SOURCE_REVIEW",
+      "note": "Componente lido; sem renderização React."
+    },
+    {
+      "path": "src/components/talkx/__tests__/TalkXSettings.states.test.tsx",
+      "level": "SOURCE_REVIEW",
+      "note": "Dois testes lidos, não executados."
+    },
+    {
+      "path": "supabase/deployment-manifest.json",
+      "level": "INVENTORY_OR_SNIPPET",
+      "note": "Delta identificado; não se declara recomposição nem validação do manifesto de deploy."
+    },
+    {
+      "path": "supabase/functions/_shared/validation.ts",
+      "level": "PARTIAL_SOURCE",
+      "note": "Trecho 1–180, incluindo Logger.child, lido no pin."
+    },
+    {
+      "path": "supabase/functions/talkx-send/_test-utils.ts",
+      "level": "INVENTORY_OR_SNIPPET",
+      "note": "Mudança e fragmento indexado identificados; fixture completa não reauditada aqui."
+    },
+    {
+      "path": "supabase/functions/talkx-send/index.ts",
+      "level": "PARTIAL_SOURCE",
+      "note": "Trechos 1–210 e 500–1180: auth, log, laço e finalização. Fora desses trechos, não fechar leitura integral."
+    },
+    {
+      "path": "supabase/functions/talkx-send/process-recipient.ts",
+      "level": "PARTIAL_SOURCE",
+      "note": "Trecho 1–220: variantes, contratos e claim. Restante não lido integralmente nesta rodada."
+    },
+    {
+      "path": "supabase/functions/talkx-send/x033-delivery-log.test.ts",
+      "level": "SOURCE_REVIEW",
+      "note": "Teste lido, não executado em Deno."
+    },
+    {
+      "path": "supabase/migrations/20261003222707_talkx_retry_resolve.sql",
+      "level": "SOURCE_REVIEW",
+      "note": "RPCs, guard e harness confrontados por trechos; não foi aplicada DDL."
+    },
+    {
+      "path": "supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql",
+      "level": "SOURCE_REVIEW",
+      "note": "Sequência de trechos sobre consentimento, audiência e retenção; leitura não é replay completo de migrations."
+    },
+    {
+      "path": "supabase/migrations/20261003242707_talkx_log_saude_alertas.sql",
+      "level": "SOURCE_REVIEW",
+      "note": "Tabela, helpers, view, alertas, expurgo e tick confrontados; não foi aplicada DDL."
+    },
+    {
+      "path": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "level": "INVENTORY_OR_SNIPPET",
+      "note": "Mudança identificada; ratchet de inventário não foi reexecutado neste pin."
+    }
+  ],
+  "historical_r2": {
+    "report_ref": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+    "records": 372,
+    "reported_files": 4068,
+    "reported_js_ts_bodies": 36853,
+    "reported_structural_only_files": 805,
+    "reported_canonical_probes": 217,
+    "repeated_entirely_in_this_run": false
+  },
+  "runtime_not_executed": [
+    "PostgreSQL/PostgREST",
+    "Deno send engine",
+    "n8n installed workflow",
+    "React/browser visual acceptance",
+    "live Singu CRM",
+    "live Evolution GO",
+    "Storage deletion",
+    "production deployment"
+  ],
+  "not_closed": [
+    "Source reading of the remaining partial/inventory-only delta files",
+    "Visual inspection of the changed PNG",
+    "Full composed R2 package verification",
+    "Runtime acceptance of SQL/provider/UX cases"
+  ],
+  "moving_main": {
+    "observed_after_freeze": "18689fa07f72bdc61b7285ae4f6a6adb3f0e016c",
+    "known_pr": 1875,
+    "included_in_frozen_delta": false,
+    "note": "Atualização de catálogo x-degraded observada durante a investigação. Não misturar seus arquivos com o pin deste adendo."
+  }
+}

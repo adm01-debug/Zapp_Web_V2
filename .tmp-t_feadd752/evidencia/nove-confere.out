@@ -1,0 +1,12 @@
+linhas das 9 residuais: 9
+HOJE=SEM      NOVO=drift  functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boole
+HOJE=SEM      NOVO=drift  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video 
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+HOJE=explicada NOVO=explicada relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+
+debitadas (SEM) HOJE=2  NOVO=0  de 9

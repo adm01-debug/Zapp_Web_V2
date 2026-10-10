@@ -1,0 +1,104 @@
+{
+  "inputs": [
+    {
+      "file": "modules/other/tasks.enriched.json",
+      "rows": 600,
+      "used": 600,
+      "sha256": "0fed2b06228268b7d11aadb48944dbd8576d8a8ba0e529da886f32980deeeb10"
+    },
+    {
+      "file": "modules/talkx_multiplix/tasks.json",
+      "rows": 300,
+      "used": 300,
+      "sha256": "c2f94914c49931b2d1abe459286350f40c29d9b8b3c4b5d9b41dedbf370d7c67"
+    },
+    {
+      "file": "modules/telefonia_ia_dashboard/tasks.json",
+      "rows": 400,
+      "used": 400,
+      "sha256": "fe21f4d1e28304c6158eaee3e36c8e643d955a42624777a2437bda67191d9587"
+    },
+    {
+      "file": "modules/secondary/tasks.json",
+      "rows": 300,
+      "used": 300,
+      "sha256": "671e97bc2b14dd5fb865ab352953db2acd4a3305e88f4edd36db884d07eeb518"
+    },
+    {
+      "file": "modules/salesview/tasks.enriched.json",
+      "rows": 50,
+      "used": 50,
+      "sha256": "98831499b2533fba3e6cccddea8263c49fc109bff335a1315681c822ac843385"
+    },
+    {
+      "file": "modules/layout_type/tasks.enriched.json",
+      "rows": 130,
+      "used": 130,
+      "sha256": "291a342253473c10782866551827cffee470563bac69ed3b54ab88d4a759e1ff"
+    },
+    {
+      "file": "modules/transversal/transversal-tasks.json",
+      "rows": 451,
+      "used": 451,
+      "sha256": "0e65bf9210320cbff64ae8e938c459210d7ded59dfd319b9f9ab936a1241ff7d"
+    },
+    {
+      "file": "code/team_chat_100_verification.json",
+      "rows": 100,
+      "used": 100,
+      "sha256": "8bf3a69591cf73959fe12b09cd348abcdbda9d20d72677b630d63fcb16c64549"
+    },
+    {
+      "file": "code/team_chat_tc_100_verification.json",
+      "rows": 100,
+      "used": 100,
+      "sha256": "8cdabc5c132f606fd580aae1d78decec563f16304b674bc5ed8c54337661e002"
+    },
+    {
+      "file": "modules/engineering_programs/tasks.enriched.json",
+      "rows": 200,
+      "used": 200,
+      "sha256": "ce709e8f262a02e3497168c0176a007c152f5400fb02185a1273cc5d4b281ac4"
+    },
+    {
+      "file": "modules/historical_database/tasks.enriched.json",
+      "rows": 200,
+      "used": 200,
+      "sha256": "f24fe91128b31f8b4f61c783531134e4d0ab791a68bf46834854e2fdb8d7dd79"
+    },
+    {
+      "file": "modules/remaining_current/tasks.enriched.json",
+      "rows": 56,
+      "used": 56,
+      "sha256": "70fc0f0db5f7f3dc96f2508da007698bd033549882a84f5033cd69bdadb932b3"
+    },
+    {
+      "file": "modules/root/tasks.enriched.json",
+      "rows": 170,
+      "used": 170,
+      "sha256": "d5afef12a5ba4da5a154bc2157babcfe1f38f592f907f4beec51e149ce5f5354"
+    },
+    {
+      "file": "modules/transversal/banco-unico-amendments.json",
+      "rows": 5,
+      "used": 5,
+      "sha256": "d85282cb66b671a146041f16c8cb6098b82b1291455fa71664d98b2d34726fdd"
+    }
+  ],
+  "overlaps": [],
+  "unmatched_assessments": [],
+  "finding_sources": [
+    "modules/other/findings.json",
+    "modules/talkx_multiplix/findings.json",
+    "modules/telefonia_ia_dashboard/findings.json",
+    "modules/telefonia_ia_dashboard/findings.source.json",
+    "modules/transversal/findings.json",
+    "modules/secondary/findings.json",
+    "modules/secondary/skins_findings.json",
+    "modules/secondary/talk_me_findings.json",
+    "modules/secondary/volume_findings.json",
+    "modules/salesview/findings.json",
+    "modules/layout_type/findings.json",
+    "code/findings.json"
+  ]
+}

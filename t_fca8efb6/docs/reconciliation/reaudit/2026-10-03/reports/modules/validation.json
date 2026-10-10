@@ -1,0 +1,66 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_blob_mismatches": [],
+  "confirmed_findings": 76,
+  "deferred_candidates": 1,
+  "evidence_records": 363,
+  "coverage_files": 570,
+  "read_files": 506,
+  "probe_ids": [
+    "R2-MOD-007",
+    "R2-MOD-012",
+    "R2-MOD-013",
+    "R2-MOD-014",
+    "R2-MOD-017",
+    "R2-MOD-023",
+    "R2-MOD-026",
+    "R2-MOD-032",
+    "R2-MOD-049",
+    "R2-MOD-050",
+    "R2-MOD-051",
+    "R2-MOD-052",
+    "R2-MOD-055",
+    "R2-MOD-056",
+    "R2-MOD-066",
+    "R2-MOD-068",
+    "R2-MOD-070",
+    "R2-MOD-071"
+  ],
+  "vendor_probe_ids": [
+    "VENDOR-P01",
+    "VENDOR-P02",
+    "VENDOR-P03"
+  ],
+  "final_frontend_probe_ids": [
+    "R2-MOD-074",
+    "R2-MOD-075",
+    "R2-MOD-076"
+  ],
+  "vendor_bodies_read": 208,
+  "final_test_review": {
+    "status": "COMPLETE_FINITE_TEST_READING",
+    "assigned_files": 73,
+    "assigned_lines": 18496,
+    "full_body_read": 73,
+    "adjudicated": 73,
+    "pending": 0,
+    "tests_executed": 0
+  },
+  "shell_review": {
+    "status": "COMPLETE_FINITE_SHELL_READING",
+    "assigned_files": 13,
+    "assigned_lines": 3608,
+    "adjudicated": 13,
+    "pending": 0,
+    "scripts_executed": 0,
+    "sql_executed": 0,
+    "all_sha256_and_git_blob_match_roster": true,
+    "all_ranges_1_to_eof_read": true,
+    "all_files_have_individual_adjudication": true
+  },
+  "all_final_test_sha256_and_git_blob_match_roster": true,
+  "all_final_test_full_ranges_and_adjudications_present": true,
+  "all_prior_references_exist": true,
+  "all_evidence_ranges_valid": true,
+  "all_coverage_and_evidence_blobs_match_pin": true
+}

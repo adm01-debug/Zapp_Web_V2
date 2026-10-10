@@ -1,0 +1,47 @@
+[rls] só produção=0 só local=1 diferentes=0
+    só local: inbound_message_effects
+[columns] só produção=0 só local=9 diferentes=0
+    só local: inbound_message_effects.applied_at
+    só local: inbound_message_effects.attempts
+    só local: inbound_message_effects.created_at
+    só local: inbound_message_effects.effect
+    só local: inbound_message_effects.external_id
+    só local: inbound_message_effects.id
+    só local: inbound_message_effects.last_error
+    só local: inbound_message_effects.payload
+[indexes] só produção=0 só local=3 diferentes=0
+    só local: inbound_message_effects.idx_inbound_message_effects_pending
+    só local: inbound_message_effects.inbound_message_effects_pkey
+    só local: inbound_message_effects.ux_inbound_message_effects
+[defaults] só produção=0 só local=4 diferentes=0
+    só local: inbound_message_effects.attempts
+    só local: inbound_message_effects.created_at
+    só local: inbound_message_effects.id
+    só local: inbound_message_effects.payload
+[functions] só produção=1 só local=3 diferentes=0
+    só produção: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+[constraints] só produção=0 só local=2 diferentes=0
+    só local: relation:inbound_message_effects.inbound_message_effects_effect_check
+    só local: relation:inbound_message_effects.inbound_message_effects_pkey
+[routine_grants] só produção=2 só local=6 diferentes=0
+    só produção: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só produção: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)|postgres|EXECUTE|grantor=postgres
+    só local: f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)|service_role|EXECUTE|grantor=postgre
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+    só local: f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type 
+[relation_grants] só produção=0 só local=16 diferentes=0
+    só local: r:public.inbound_message_effects|postgres|DELETE|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|INSERT|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|MAINTAIN|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|REFERENCES|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|SELECT|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|TRIGGER|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|TRUNCATE|grantor=postgres
+    só local: r:public.inbound_message_effects|postgres|UPDATE|grantor=postgres
+ESTRUTURA: 47 diferença(s) em relação ao retrato da produção

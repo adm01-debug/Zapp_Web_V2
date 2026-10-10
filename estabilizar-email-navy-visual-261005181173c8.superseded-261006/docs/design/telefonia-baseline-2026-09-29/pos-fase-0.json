@@ -1,0 +1,231 @@
+{
+  "scope": {
+    "relation": "public.calls",
+    "functions": [
+      "my_calls_kpi",
+      "record_incoming_call_event",
+      "search_my_calls",
+      "set_call_agent_notes",
+      "upsert_my_call"
+    ]
+  },
+  "counts": {
+    "total": 22,
+    "by_status": {
+      "ended": 2,
+      "failed": 20
+    },
+    "by_channel": {
+      "voip": 12,
+      "whatsapp": 10
+    },
+    "by_direction": {
+      "inbound": 10,
+      "outbound": 12
+    },
+    "ringing_older_than_1_day": 0
+  },
+  "source": "postgres schema public",
+  "columns": [
+    "calls.agent_id:uuid:null",
+    "calls.agent_notes:text:null",
+    "calls.answered_at:timestamp with time zone:null",
+    "calls.answered_by:uuid:null",
+    "calls.channel:text:null",
+    "calls.contact_id:uuid:null",
+    "calls.created_at:timestamp with time zone:not null",
+    "calls.direction:text:not null",
+    "calls.duration_seconds:integer:null",
+    "calls.end_reason:text:null",
+    "calls.ended_at:timestamp with time zone:null",
+    "calls.id:uuid:not null",
+    "calls.notes:text:null",
+    "calls.peer_name:text:null",
+    "calls.peer_number:text:null",
+    "calls.provider_call_id:text:null",
+    "calls.provider_event_id:text:null",
+    "calls.recording_status:text:not null",
+    "calls.recording_url:text:null",
+    "calls.started_at:timestamp with time zone:not null",
+    "calls.status:text:not null",
+    "calls.talk_seconds:integer:null",
+    "calls.whatsapp_connection_id:uuid:null"
+  ],
+  "indexes": [
+    {
+      "name": "calls_agent_started_idx",
+      "definition": "CREATE INDEX calls_agent_started_idx ON public.calls USING btree (agent_id, started_at DESC, id DESC)"
+    },
+    {
+      "name": "calls_channel_provider_call_unique",
+      "definition": "CREATE UNIQUE INDEX calls_channel_provider_call_unique ON public.calls USING btree (channel, provider_call_id) WHERE (provider_call_id IS NOT NULL)"
+    },
+    {
+      "name": "calls_connection_provider_event_unique",
+      "definition": "CREATE UNIQUE INDEX calls_connection_provider_event_unique ON public.calls USING btree (whatsapp_connection_id, provider_event_id) WHERE (provider_event_id IS NOT NULL)"
+    },
+    {
+      "name": "calls_pkey",
+      "definition": "CREATE UNIQUE INDEX calls_pkey ON public.calls USING btree (id)"
+    },
+    {
+      "name": "idx_calls_agent_id",
+      "definition": "CREATE INDEX idx_calls_agent_id ON public.calls USING btree (agent_id)"
+    },
+    {
+      "name": "idx_calls_answered_by",
+      "definition": "CREATE INDEX idx_calls_answered_by ON public.calls USING btree (answered_by) WHERE (answered_by IS NOT NULL)"
+    },
+    {
+      "name": "idx_calls_contact_id",
+      "definition": "CREATE INDEX idx_calls_contact_id ON public.calls USING btree (contact_id)"
+    },
+    {
+      "name": "idx_calls_whatsapp_connection_id",
+      "definition": "CREATE INDEX idx_calls_whatsapp_connection_id ON public.calls USING btree (whatsapp_connection_id)"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "INSERT",
+      "name": "Users can insert calls",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "with_check": "((agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+    },
+    {
+      "cmd": "UPDATE",
+      "name": "Users can update their calls",
+      "qual": "(agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+      "roles": [
+        "authenticated"
+      ],
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "name": "Users can view own calls",
+      "qual": "((agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "with_check": null
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "kind": "f",
+      "owner": "postgres",
+      "returns": "TABLE(total integer, outbound integer, inbound integer, missed_inbound integer, answered integer, avg_talk_seconds numeric)",
+      "signature": "my_calls_kpi(p_scope text, p_channel text, p_from timestamp with time zone, p_to timestamp with time zone)",
+      "definition": "CREATE OR REPLACE FUNCTION public.my_calls_kpi(p_scope text DEFAULT 'mine'::text, p_channel text DEFAULT NULL::text, p_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to timestamp with time zone DEFAULT NULL::timestamp with time zone)\n RETURNS TABLE(total integer, outbound integer, inbound integer, missed_inbound integer, answered integer, avg_talk_seconds numeric)\n LANGUAGE sql\n STABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  with eu as (\n    select pr.id as profile_id from public.profiles pr where pr.user_id = auth.uid()\n  ),\n  efetivo as (\n    select case\n             when p_scope = 'all' and public.is_admin_or_supervisor(auth.uid()) then 'all'\n             else 'mine'\n           end as escopo\n  )\n  select coalesce(count(*), 0)::int,\n         coalesce(count(*) filter (where c.direction = 'outbound'), 0)::int,\n         coalesce(count(*) filter (where c.direction = 'inbound'), 0)::int,\n         coalesce(count(*) filter (\n           where c.direction = 'inbound'\n             and (c.status = 'missed'\n                  or (c.status in ('ended', 'completed') and c.answered_at is null))\n         ), 0)::int,\n         coalesce(count(*) filter (where c.answered_at is not null), 0)::int,\n         avg(c.talk_seconds) filter (where c.talk_seconds is not null)\n    from public.calls c\n    cross join efetivo e\n    cross join eu\n   where (e.escopo = 'all' or c.agent_id = eu.profile_id)\n     and (p_channel is null or c.channel = p_channel)\n     and (p_from is null or c.started_at >= p_from)\n     and (p_to is null or c.started_at < p_to);\n$function$\n",
+      "volatility": "s",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "kind": "f",
+      "owner": "postgres",
+      "returns": "TABLE(call_id uuid, notification_id uuid, notification_created boolean, duplicate boolean)",
+      "signature": "record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)",
+      "definition": "CREATE OR REPLACE FUNCTION public.record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text DEFAULT NULL::text, p_should_notify boolean DEFAULT false)\n RETURNS TABLE(call_id uuid, notification_id uuid, notification_created boolean, duplicate boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_agent_id uuid;\n  v_agent_user_id uuid;\n  v_contact_name text;\n  v_contact_phone text;\n  v_contact_connection_id uuid;\n  v_event_id text := nullif(btrim(p_provider_event_id), '');\n  v_call_id uuid;\n  v_persisted_status text;\n  v_notification_id uuid;\n  v_notification_candidate uuid;\n  v_notification_created boolean := false;\n  v_call_duplicate boolean := false;\n  v_row_count integer := 0;\n  v_existing_notification record;\nBEGIN\n  IF p_status NOT IN ('ringing', 'answered', 'ended', 'missed', 'busy', 'failed') THEN\n    RAISE EXCEPTION 'invalid incoming call status' USING ERRCODE = '22023';\n  END IF;\n  IF v_event_id IS NOT NULL AND char_length(v_event_id) > 200 THEN\n    RAISE EXCEPTION 'provider event id exceeds 200 characters' USING ERRCODE = '22023';\n  END IF;\n  IF p_should_notify AND p_status <> 'ringing' THEN\n    RAISE EXCEPTION 'only ringing calls can create notifications' USING ERRCODE = '22023';\n  END IF;\n\n  SELECT c.assigned_to, c.name, c.phone, c.whatsapp_connection_id\n    INTO v_agent_id, v_contact_name, v_contact_phone, v_contact_connection_id\n  FROM public.contacts AS c\n  WHERE c.id = p_contact_id;\n  IF NOT FOUND THEN\n    RAISE EXCEPTION 'incoming call contact not found' USING ERRCODE = 'P0002';\n  END IF;\n  IF v_contact_connection_id IS DISTINCT FROM p_whatsapp_connection_id THEN\n    RAISE EXCEPTION 'incoming call connection does not match contact' USING ERRCODE = '23514';\n  END IF;\n\n  IF v_agent_id IS NOT NULL THEN\n    SELECT p.user_id INTO v_agent_user_id\n    FROM public.profiles AS p\n    WHERE p.id = v_agent_id;\n  END IF;\n\n  IF v_event_id IS NOT NULL THEN\n    SELECT EXISTS (\n      SELECT 1 FROM public.calls AS existing\n      WHERE existing.whatsapp_connection_id = p_whatsapp_connection_id\n        AND existing.provider_event_id = v_event_id\n    ) INTO v_call_duplicate;\n\n    INSERT INTO public.calls (\n      contact_id, whatsapp_connection_id, agent_id, direction, status,\n      started_at, answered_at, ended_at, notes, provider_event_id,\n      channel, provider_call_id, peer_number, peer_name\n    ) VALUES (\n      p_contact_id, p_whatsapp_connection_id, v_agent_id, 'inbound', p_status,\n      now(),\n      CASE WHEN p_status = 'answered' THEN now() ELSE NULL END,\n      CASE WHEN p_status IN ('ended', 'missed', 'busy', 'failed') THEN now() ELSE NULL END,\n      CASE WHEN p_is_video THEN 'Chamada de vídeo' ELSE 'Chamada de voz' END,\n      v_event_id,\n      'whatsapp', v_event_id, v_contact_phone, v_contact_name\n    )\n    ON CONFLICT (whatsapp_connection_id, provider_event_id)\n      WHERE provider_event_id IS NOT NULL\n    DO UPDATE SET\n      contact_id = EXCLUDED.contact_id,\n      -- preserva a atribuição histórica: o primeiro agente visto fica\n      agent_id = COALESCE(public.calls.agent_id, EXCLUDED.agent_id),\n      status = CASE\n        WHEN public.calls.status IN ('ended', 'missed', 'busy', 'failed')\n          THEN public.calls.status\n        WHEN public.calls.status = 'answered' AND EXCLUDED.status = 'ringing'\n          THEN public.calls.status\n        ELSE EXCLUDED.status\n      END,\n      answered_at = COALESCE(public.calls.answered_at, EXCLUDED.answered_at),\n      ended_at = COALESCE(public.calls.ended_at, EXCLUDED.ended_at),\n      -- `notes` é metadado do provedor: o primeiro valor vence, nunca é reescrito\n      notes = COALESCE(public.calls.notes, EXCLUDED.notes),\n      channel = COALESCE(public.calls.channel, EXCLUDED.channel),\n      provider_call_id = COALESCE(public.calls.provider_call_id, EXCLUDED.provider_call_id),\n      peer_number = COALESCE(public.calls.peer_number, EXCLUDED.peer_number),\n      peer_name = COALESCE(public.calls.peer_name, EXCLUDED.peer_name),\n      talk_seconds = COALESCE(\n        public.calls.talk_seconds,\n        CASE\n          WHEN COALESCE(public.calls.ended_at, EXCLUDED.ended_at) IS NOT NULL\n           AND COALESCE(public.calls.answered_at, EXCLUDED.answered_at) IS NOT NULL\n          THEN GREATEST(0, EXTRACT(EPOCH FROM (\n                 COALESCE(public.calls.ended_at, EXCLUDED.ended_at)\n                 - COALESCE(public.calls.answered_at, EXCLUDED.answered_at)\n               ))::int)\n          ELSE NULL\n        END\n      )\n    RETURNING id, status INTO v_call_id, v_persisted_status;\n  ELSE\n    INSERT INTO public.calls (\n      contact_id, whatsapp_connection_id, agent_id, direction, status,\n      started_at, answered_at, ended_at, notes,\n      channel, peer_number, peer_name\n    ) VALUES (\n      p_contact_id, p_whatsapp_connection_id, v_agent_id, 'inbound', p_status,\n      now(),\n      CASE WHEN p_status = 'answered' THEN now() ELSE NULL END,\n      CASE WHEN p_status IN ('ended', 'missed', 'busy', 'failed') THEN now() ELSE NULL END,\n      CASE WHEN p_is_video THEN 'Chamada de vídeo' ELSE 'Chamada de voz' END,\n      'whatsapp', v_contact_phone, v_contact_name\n    ) RETURNING id, status INTO v_call_id, v_persisted_status;\n  END IF;\n\n  IF p_should_notify AND v_persisted_status = 'ringing' AND v_agent_user_id IS NOT NULL THEN\n    v_notification_candidate := CASE\n      WHEN v_event_id IS NULL THEN gen_random_uuid()\n      ELSE md5(\n        'zapp:incoming-call:v1:' || p_whatsapp_connection_id::text || ':' || v_event_id\n      )::uuid\n    END;\n\n    INSERT INTO public.notifications (id, user_id, type, title, message, metadata)\n    VALUES (\n      v_notification_candidate,\n      v_agent_user_id,\n      'incoming_call',\n      CASE WHEN p_is_video THEN '📹 Chamada de vídeo recebida' ELSE '📞 Chamada de voz recebida' END,\n      COALESCE(NULLIF(v_contact_name, ''), v_contact_phone, 'Contato') || ' está ligando para você',\n      jsonb_strip_nulls(jsonb_build_object(\n        'contact_id', p_contact_id,\n        'contact_name', COALESCE(NULLIF(v_contact_name, ''), v_contact_phone, 'Contato'),\n        'phone', v_contact_phone,\n        'is_video', p_is_video,\n        'call_status', v_persisted_status,\n        'whatsapp_connection_id', p_whatsapp_connection_id,\n        'call_id', v_call_id,\n        'event_id', v_event_id\n      ))\n    )\n    ON CONFLICT (id) DO NOTHING\n    RETURNING id INTO v_notification_id;\n\n    GET DIAGNOSTICS v_row_count = ROW_COUNT;\n    v_notification_created := v_row_count = 1;\n    IF NOT v_notification_created THEN\n      v_notification_id := v_notification_candidate;\n      SELECT n.user_id, n.type, n.metadata INTO v_existing_notification\n      FROM public.notifications AS n\n      WHERE n.id = v_notification_candidate;\n      IF NOT FOUND\n        OR v_existing_notification.user_id IS DISTINCT FROM v_agent_user_id\n        OR v_existing_notification.type IS DISTINCT FROM 'incoming_call'\n        OR v_existing_notification.metadata->>'event_id' IS DISTINCT FROM v_event_id THEN\n        RAISE EXCEPTION 'incoming call notification identity conflict' USING ERRCODE = '23505';\n      END IF;\n    END IF;\n  END IF;\n\n  RETURN QUERY SELECT\n    v_call_id,\n    v_notification_id,\n    v_notification_created,\n    v_call_duplicate OR (\n      p_should_notify AND v_agent_user_id IS NOT NULL\n      AND v_event_id IS NOT NULL AND NOT v_notification_created\n    );\nEND;\n$function$\n",
+      "volatility": "v",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "kind": "f",
+      "owner": "postgres",
+      "returns": "TABLE(id uuid, channel text, direction text, status text, end_reason text, started_at timestamp with time zone, answered_at timestamp with time zone, ended_at timestamp with time zone, talk_seconds integer, peer_number text, peer_name text, contact_id uuid, contact_name text, contact_phone text, contact_avatar_url text, agent_id uuid, answered_by uuid, recording_status text, agent_notes text, notes text, total_count bigint)",
+      "signature": "search_my_calls(p_scope text, p_channel text, p_direction text, p_result text, p_from timestamp with time zone, p_to timestamp with time zone, p_q text, p_limit integer, p_offset integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.search_my_calls(p_scope text DEFAULT 'mine'::text, p_channel text DEFAULT NULL::text, p_direction text DEFAULT NULL::text, p_result text DEFAULT NULL::text, p_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_q text DEFAULT NULL::text, p_limit integer DEFAULT 8, p_offset integer DEFAULT 0)\n RETURNS TABLE(id uuid, channel text, direction text, status text, end_reason text, started_at timestamp with time zone, answered_at timestamp with time zone, ended_at timestamp with time zone, talk_seconds integer, peer_number text, peer_name text, contact_id uuid, contact_name text, contact_phone text, contact_avatar_url text, agent_id uuid, answered_by uuid, recording_status text, agent_notes text, notes text, total_count bigint)\n LANGUAGE sql\n STABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  with eu as (\n    select pr.id as profile_id\n      from public.profiles pr\n     where pr.user_id = auth.uid()\n  ),\n  efetivo as (\n    select case\n             when p_scope = 'all' and public.is_admin_or_supervisor(auth.uid()) then 'all'\n             else 'mine'\n           end as escopo\n  ),\n  base as (\n    select c.*,\n           ct.name as c_nome,\n           ct.phone as c_telefone,\n           ct.avatar_url as c_avatar\n      from public.calls c\n      left join public.contacts ct on ct.id = c.contact_id\n      cross join efetivo e\n      cross join eu\n     where (e.escopo = 'all' or c.agent_id = eu.profile_id)\n       and (p_channel is null or c.channel = p_channel)\n       and (p_direction is null or c.direction = p_direction)\n       and (p_from is null or c.started_at >= p_from)\n       and (p_to is null or c.started_at < p_to)\n       and (p_result is null or (\n              (p_result = 'completed'\n                and c.status in ('ended', 'completed') and c.answered_at is not null)\n           or (p_result = 'missed' and (\n                 c.status = 'missed'\n              or (c.status in ('ended', 'completed') and c.answered_at is null\n                  and c.direction = 'inbound')))\n           or (p_result = 'no_answer'\n                and c.status in ('ended', 'completed') and c.answered_at is null\n                and c.direction = 'outbound')\n           or (p_result = 'busy' and c.status = 'busy')\n           or (p_result = 'failed' and c.status = 'failed')\n           or (p_result = 'cancelled' and c.status = 'cancelled')\n           or (p_result = 'declined' and c.status = 'declined')\n           or (p_result = 'in_progress'\n                and c.status in ('answered', 'ongoing') and c.ended_at is null)\n           or (p_result = 'ringing' and c.status = 'ringing' and c.ended_at is null)\n       ))\n       and (\n         p_q is null or btrim(p_q) = ''\n         or (\n           length(regexp_replace(p_q, '\\D', '', 'g')) >= 4\n           and coalesce(c.peer_number, ct.phone) ilike '%' || regexp_replace(p_q, '\\D', '', 'g') || '%'\n         )\n         or coalesce(c.peer_name, ct.name) ilike '%' || btrim(p_q) || '%'\n       )\n  )\n  select b.id,\n         b.channel,\n         b.direction,\n         b.status,\n         b.end_reason,\n         b.started_at,\n         b.answered_at,\n         b.ended_at,\n         b.talk_seconds,\n         coalesce(b.peer_number, b.c_telefone) as peer_number,\n         coalesce(b.peer_name, b.c_nome) as peer_name,\n         b.contact_id,\n         b.c_nome as contact_name,\n         b.c_telefone as contact_phone,\n         b.c_avatar as contact_avatar_url,\n         b.agent_id,\n         b.answered_by,\n         b.recording_status,\n         b.agent_notes,\n         b.notes,\n         count(*) over () as total_count\n    from base b\n   order by b.started_at desc, b.id desc\n   limit least(greatest(coalesce(p_limit, 8), 1), 50)\n  offset greatest(coalesce(p_offset, 0), 0);\n$function$\n",
+      "volatility": "s",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "kind": "f",
+      "owner": "postgres",
+      "returns": "void",
+      "signature": "set_call_agent_notes(p_call_id uuid, p_notes text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_call_agent_notes(p_call_id uuid, p_notes text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_profile uuid;\n  v_owner uuid;\nbegin\n  select pr.id into v_profile from public.profiles pr where pr.user_id = auth.uid();\n  if v_profile is null then\n    raise exception 'perfil nao encontrado para o usuario autenticado' using errcode = '42501';\n  end if;\n  select c.agent_id into v_owner from public.calls c where c.id = p_call_id;\n  if not found then\n    raise exception 'chamada nao encontrada' using errcode = 'P0002';\n  end if;\n  if not (coalesce(v_owner = v_profile, false) or public.is_admin_or_supervisor(auth.uid())) then\n    raise exception 'not allowed' using errcode = '42501';\n  end if;\n  update public.calls set agent_notes = p_notes where id = p_call_id;\nend;\n$function$\n",
+      "volatility": "v",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "kind": "f",
+      "owner": "postgres",
+      "returns": "uuid",
+      "signature": "upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_id text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_end_reason text, p_talk_seconds integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.upsert_my_call(p_id uuid, p_direction text, p_status text DEFAULT NULL::text, p_channel text DEFAULT 'voip'::text, p_peer_number text DEFAULT NULL::text, p_peer_name text DEFAULT NULL::text, p_contact_id uuid DEFAULT NULL::uuid, p_provider_call_id text DEFAULT NULL::text, p_answered_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_ended_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_end_reason text DEFAULT NULL::text, p_talk_seconds integer DEFAULT NULL::integer)\n RETURNS uuid\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_profile uuid;\n  v_id uuid;\nbegin\n  select pr.id into v_profile from public.profiles pr where pr.user_id = auth.uid();\n  if v_profile is null then\n    raise exception 'perfil nao encontrado para o usuario autenticado' using errcode = '42501';\n  end if;\n  if p_direction not in ('inbound', 'outbound') then\n    raise exception 'direcao invalida' using errcode = '22023';\n  end if;\n\n  insert into public.calls (\n    id, agent_id, direction, status, channel, peer_number, peer_name, contact_id,\n    provider_call_id, started_at, answered_at, ended_at, end_reason, talk_seconds\n  ) values (\n    p_id, v_profile, p_direction, coalesce(p_status, 'ringing'), coalesce(p_channel, 'voip'),\n    p_peer_number, p_peer_name, p_contact_id, p_provider_call_id, now(),\n    p_answered_at, p_ended_at, p_end_reason, p_talk_seconds\n  )\n  on conflict (id) do update set\n    status = coalesce(excluded.status, public.calls.status),\n    peer_number = coalesce(excluded.peer_number, public.calls.peer_number),\n    peer_name = coalesce(excluded.peer_name, public.calls.peer_name),\n    contact_id = coalesce(excluded.contact_id, public.calls.contact_id),\n    provider_call_id = coalesce(excluded.provider_call_id, public.calls.provider_call_id),\n    answered_at = coalesce(excluded.answered_at, public.calls.answered_at),\n    ended_at = coalesce(excluded.ended_at, public.calls.ended_at),\n    end_reason = coalesce(excluded.end_reason, public.calls.end_reason),\n    answered_by = coalesce(\n      public.calls.answered_by,\n      case when excluded.answered_at is not null then v_profile else null end\n    ),\n    talk_seconds = coalesce(\n      excluded.talk_seconds,\n      case\n        when coalesce(excluded.ended_at, public.calls.ended_at) is not null\n         and coalesce(excluded.answered_at, public.calls.answered_at) is not null\n        then greatest(0, extract(epoch from (\n               coalesce(excluded.ended_at, public.calls.ended_at)\n               - coalesce(excluded.answered_at, public.calls.answered_at)\n             ))::int)\n        else public.calls.talk_seconds\n      end\n    )\n  where public.calls.agent_id = v_profile\n  returning public.calls.id into v_id;\n\n  if v_id is null then\n    raise exception 'chamada pertence a outro agente' using errcode = '42501';\n  end if;\n  return v_id;\nend;\n$function$\n",
+      "volatility": "v",
+      "security_definer": false
+    }
+  ],
+  "constraints": [
+    {
+      "name": "calls_agent_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "calls_answered_by_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (answered_by) REFERENCES profiles(id)"
+    },
+    {
+      "name": "calls_channel_check",
+      "type": "c",
+      "definition": "CHECK (((channel IS NULL) OR (channel = ANY (ARRAY['voip'::text, 'whatsapp'::text]))))"
+    },
+    {
+      "name": "calls_contact_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "calls_direction_check",
+      "type": "c",
+      "definition": "CHECK ((direction = ANY (ARRAY['inbound'::text, 'outbound'::text])))"
+    },
+    {
+      "name": "calls_end_reason_check",
+      "type": "c",
+      "definition": "CHECK (((end_reason IS NULL) OR (end_reason = ANY (ARRAY['completed'::text, 'hangup_local'::text, 'hangup_remote'::text, 'no_answer'::text, 'busy'::text, 'busy_here'::text, 'cancelled'::text, 'cancelled_remote'::text, 'declined'::text, 'failed'::text, 'timeout'::text]))))"
+    },
+    {
+      "name": "calls_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "calls_provider_event_id_length",
+      "type": "c",
+      "definition": "CHECK (((provider_event_id IS NULL) OR ((char_length(provider_event_id) >= 1) AND (char_length(provider_event_id) <= 200))))"
+    },
+    {
+      "name": "calls_recording_status_check",
+      "type": "c",
+      "definition": "CHECK ((recording_status = ANY (ARRAY['none'::text, 'pending'::text, 'available'::text, 'failed'::text])))"
+    },
+    {
+      "name": "calls_status_check",
+      "type": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['ringing'::text, 'answered'::text, 'ended'::text, 'missed'::text, 'busy'::text, 'failed'::text, 'cancelled'::text, 'declined'::text])))"
+    },
+    {
+      "name": "calls_whatsapp_connection_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL"
+    }
+  ],
+  "generated_at": "2026-09-29T14:38:14Z",
+  "format_version": 1,
+  "realtime_publication": [
+    "calls"
+  ]
+}

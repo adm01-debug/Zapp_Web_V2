@@ -1,0 +1,48 @@
+SEM	rls|inbound_message_effects
+explicada	columns|inbound_message_effects.applied_at
+explicada	columns|inbound_message_effects.attempts
+explicada	columns|inbound_message_effects.created_at
+explicada	columns|inbound_message_effects.effect
+explicada	columns|inbound_message_effects.external_id
+explicada	columns|inbound_message_effects.id
+explicada	columns|inbound_message_effects.last_error
+explicada	columns|inbound_message_effects.payload
+explicada	columns|inbound_message_effects.whatsapp_connection_id
+SEM	indexes|inbound_message_effects.idx_inbound_message_effects_pending
+SEM	indexes|inbound_message_effects.inbound_message_effects_pkey
+SEM	indexes|inbound_message_effects.ux_inbound_message_effects
+explicada	defaults|inbound_message_effects.attempts
+explicada	defaults|inbound_message_effects.created_at
+explicada	defaults|inbound_message_effects.id
+explicada	defaults|inbound_message_effects.payload
+explicada	functions|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)
+explicada	functions|f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)
+explicada	functions|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_decision text, p_opt_out_keyword text, p_quoted_external_id text)
+explicada	functions|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_keyword text, p_quoted_external_id text)
+explicada	constraints|relation:inbound_message_effects.inbound_message_effects_effect_check
+SEM	constraints|relation:inbound_message_effects.inbound_message_effects_pkey
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)|postgres|EXECUTE|grantor=postgres
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)|service_role|EXECUTE|grantor=postgres
+explicada	routine_grants|f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)|postgres|EXECUTE|grantor=postgres
+explicada	routine_grants|f:drain_inbound_message_effects(p_connection_id uuid, p_external_id text)|service_role|EXECUTE|grantor=postgres
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_decision text, p_opt_out_keyword text, p_quoted_external_id text)|postgres|EXECUTE|grantor=postgres
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_decision text, p_opt_out_keyword text, p_quoted_external_id text)|service_role|EXECUTE|grantor=postgres
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_keyword text, p_quoted_external_id text)|postgres|EXECUTE|grantor=postgres
+explicada	routine_grants|f:ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone, p_from_me boolean, p_opt_out_keyword text, p_quoted_external_id text)|service_role|EXECUTE|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|DELETE|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|INSERT|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|MAINTAIN|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|REFERENCES|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|SELECT|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|TRIGGER|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|TRUNCATE|grantor=postgres
+SEM	relation_grants|r:public.inbound_message_effects|postgres|UPDATE|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|DELETE|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|INSERT|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|MAINTAIN|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|REFERENCES|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|SELECT|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|TRIGGER|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|TRUNCATE|grantor=postgres
+explicada	relation_grants|r:public.inbound_message_effects|service_role|UPDATE|grantor=postgres
+total=47 explicadas=34 drift_canonico=0 SEM=13

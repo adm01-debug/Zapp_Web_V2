@@ -1,0 +1,230 @@
+/* ===== BASE STYLES — Resets, typography, body ===== */
+
+* {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Theme transition — smooth color changes */
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+
+  h1, h2, h3, .font-display {
+    letter-spacing: -0.02em;
+  }
+
+  /* Paridade com Promo_Gifts_V4 (src/index.css › Global Typography Consistency):
+     só peso e tracking no dark. Cor, line-height, links e escala de títulos não entram. */
+  /* Prefixo html. eleva a especificidade (0,2,1) pra nao perder empate de
+     especificidade (0,2,0) contra variants Tailwind tipo data-[state=active]:font-semibold,
+     que no CSS gerado saem depois deste bloco (base.css nao esta em @layer) e venceriam
+     por ordem em caso de empate. .dark sempre fica no <html>, entao o seletor e equivalente. */
+  html.dark body {
+    font-weight: 450;
+    letter-spacing: 0.01em;
+    background-image: var(--page-glow);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  html.dark p,
+  html.dark span,
+  html.dark label,
+  html.dark td,
+  html.dark th,
+  html.dark li,
+  html.dark .text-muted-foreground {
+    font-weight: 450;
+  }
+
+  html.dark .font-medium {
+    font-weight: 550;
+  }
+
+  html.dark .font-semibold {
+    font-weight: 650;
+  }
+
+  /* Sem letter-spacing aqui: colidia com tracking-* explicito (tracking-widest,
+     tracking-wider, tracking-tighter, tracking-[...]) em ~25 componentes que usam
+     font-bold + tracking custom — o peso 800 e o objetivo, o tracking do Promo nao. */
+  html.dark .font-bold {
+    font-weight: 800;
+  }
+
+  /* Promo rebaixa extrabold/black em span/p para 450 (especificidade); aqui não. */
+  html.dark .font-extrabold {
+    font-weight: 800;
+  }
+
+  html.dark .font-black {
+    font-weight: 800;
+  }
+
+  /* ===== TEXT SELECTION — branded ===== */
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  ::-moz-selection {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  /* ===== INPUT REFINEMENTS ===== */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  /* ===== TYPOGRAPHY — Fluid responsive with clamp() ===== */
+  /* Prefixo html. eleva especificidade pra (0,0,2): sem isso, o preflight do
+     Tailwind (h1..h6 { font-size: inherit }, tambem (0,0,1)) vence o empate
+     por vir depois no cascade (@tailwind base roda depois deste @import em
+     src/index.css) e o clamp() abaixo nunca é aplicado. Uma classe explicita
+     tipo text-2xl continua vencendo (especificidade de classe > 2 elementos). */
+  html h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 1.383rem + 3.7vw, 3.75rem);
+    @apply font-bold tracking-tight leading-tight;
+  }
+
+  html h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.875rem, 1.225rem + 2.77vw, 3rem);
+    @apply font-semibold tracking-tight leading-snug;
+  }
+
+  html h3 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 1.067rem + 1.85vw, 2.25rem);
+    @apply font-semibold leading-snug;
+  }
+
+  html h4 {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 0.889rem + 1.54vw, 1.875rem);
+    @apply font-medium leading-normal;
+  }
+
+  html h5 {
+    font-family: var(--font-display);
+    font-size: clamp(0.925rem, 0.85rem + 0.3vw, 1.1rem);
+    @apply font-medium leading-normal;
+  }
+
+  html h6 {
+    font-family: var(--font-display);
+    @apply text-sm md:text-base font-medium leading-normal uppercase tracking-wide;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
+    font-size: clamp(0.875rem, 0.825rem + 0.2vw, 1rem);
+  }
+
+  small {
+    @apply text-sm leading-normal;
+  }
+
+  label {
+    @apply text-sm font-medium leading-none;
+  }
+
+  code, pre {
+    font-family: var(--font-mono);
+    @apply text-sm;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) hsl(var(--muted) / 0.3);
+}
+
+/* ===== FOCUS STATES ===== */
+:focus-visible {
+  @apply outline-none;
+  box-shadow: 
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--ring));
+}
+
+button:focus-visible,
+[role="button"]:focus-visible {
+  @apply outline-none;
+  box-shadow: 
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--primary));
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply outline-none border-primary;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}

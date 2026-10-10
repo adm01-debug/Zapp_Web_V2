@@ -1,0 +1,1 @@
+{"nodes": [{"id": "pkg_github_com_adm01_debug_zapp_web_v2_preview_egress_proxy", "label": "github.com/adm01-debug/zapp-web-v2/preview-egress-proxy", "file_type": "code", "type": "package", "ecosystem": "go", "source_file": "infrastructure/preview-egress-proxy/go.mod", "source_location": "L1"}], "edges": []}

@@ -1,0 +1,482 @@
+{
+  "schema_version": 1,
+  "area": "infra_layout_onboarding",
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "mode": "READ_ONLY_SOURCE_AND_BOUNDED_OFFLINE_PROBES",
+  "findings": [
+    {
+      "id": "R2-INF-036",
+      "title": "Checklist marca tema como concluído quando a consulta não devolve configuração",
+      "severity": "P3",
+      "classification": "novo",
+      "area_extension": "finite_layout_onboarding_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "A condição de tema compara data?.theme com null e system. Quando data é null, o valor é undefined e ambas as comparações são verdadeiras. O error resolvido pelo SDK também é ignorado. O callback real do card incorpora esse true ao conjunto de etapas concluídas.",
+      "consumer_chain": [
+        "Index habilita checklist no dashboard",
+        "AppShell monta OnboardingChecklist",
+        "checkAllSteps executa CHECKLIST_STEPS",
+        "Condição theme recebe data ausente",
+        "Card mostra etapa concluída e aumenta progresso"
+      ],
+      "preconditions": [
+        "Usuário autenticado e card ainda visível no dashboard.",
+        "A consulta de user_settings resolve sem registro ou com error e data null."
+      ],
+      "effect": "A interface afirma que o usuário escolheu tema claro ou escuro sem evidência dessa configuração e remove a ação pendente dessa etapa. A prova mantém as outras cinco etapas falsas; não afirma que o onboarding inteiro é concluído nessa situação.",
+      "evidence": [
+        {
+          "path": "src/components/onboarding/checklistSteps.ts",
+          "line_start": 103,
+          "line_end": 119,
+          "sha256": "554a022f5172c80cfc1ddb9c6c4dafddf89d7d799c1f9b36ddf5ef0dfd219813",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Promessa da etapa e condição undefined diferente de null/system"
+        },
+        {
+          "path": "src/components/onboarding/OnboardingChecklist.tsx",
+          "line_start": 33,
+          "line_end": 47,
+          "sha256": "69a62b48b1d515ebf301e6538a1418dfb9075649a0933d56aeb7292e002bdb5b",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Callback inclui a etapa verdadeira e não vê error resolvido"
+        },
+        {
+          "path": "src/components/onboarding/OnboardingChecklist.tsx",
+          "line_start": 94,
+          "line_end": 123,
+          "sha256": "69a62b48b1d515ebf301e6538a1418dfb9075649a0933d56aeb7292e002bdb5b",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Contagem, estado visual e ação condicionados a completedSteps"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 87,
+          "line_end": 87,
+          "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Card limitado ao dashboard"
+        },
+        {
+          "path": "src/components/layout/AppShell.tsx",
+          "line_start": 141,
+          "line_end": 145,
+          "sha256": "30552c0b530b0b14122f4dc09e06c62bcf61e5a1e3ac28d536153e84f350185e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor atual monta card"
+        },
+        {
+          "path": "src/hooks/ui/useOnboardingChecklist.ts",
+          "line_start": 58,
+          "line_end": 68,
+          "sha256": "4c12ac595f89c390c24038f72552acea564c9f0e6f37db4f62a14b994741453d",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Hook vizinho exige settings existente; não compensa condição do card"
+        }
+      ],
+      "acceptance": [
+        "Validar presença e valor permitido de theme antes de concluir a etapa; ausência ou erro não deve virar conclusão.",
+        "Manter a regra do card coerente com o hook de estado de onboarding, preservando distinção entre pendente e falha de leitura.",
+        "Cobrir data null, error resolvido, theme system, theme dark/light e valor malformado no callback consumidor; a contagem deve refletir apenas estados comprovados."
+      ],
+      "affected_tasks": [],
+      "related_previous_findings": [],
+      "probe_ids": [
+        "INF-LO-P01"
+      ],
+      "novelty_basis": "Locus e mecanismo adicionais aos 104 registros anteriores; root confirmou não haver IDs desses contratos. Descoberta nova não implica regressão introduzida depois da auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado.",
+        "Nenhum arquivo de produto foi alterado.",
+        "P3 delimitado ao estado de orientação; não há concessão de permissão, perda de dados ou gravação no probe.",
+        "O card desmonta fora do dashboard e remonta ao voltar; a hipótese anterior de falta de atualização ao retornar foi rejeitada."
+      ]
+    },
+    {
+      "id": "R2-INF-037",
+      "title": "Controle de movimento reduzido e transições de rota usam preferências desconectadas",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_layout_onboarding_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "O controle global de acessibilidade grava reducedMotion=true/false e aplica a classe reduced-motion. O hook das transições lê zapp:reduce-motion=1/0 e o media query do sistema; ele não lê o contexto global, sua chave ou sua classe. Com a opção global ligada e o sistema sem redução, RouteTransition continua escolhendo slide/zoom/fade em vez de none.",
+      "consumer_chain": [
+        "Sidebar monta AccessibilitySettings",
+        "HighContrastProvider mantém a opção Reduzir Movimento",
+        "Efeito grava reducedMotion e aplica classe",
+        "PageTransitionProvider envolve AppRoutes",
+        "RouteTransition consulta useTransitionPreferences e escolhe variante animada"
+      ],
+      "preconditions": [
+        "Usuário liga Reduzir Movimento pela interface global.",
+        "Sistema operacional não pede redução e zapp:reduce-motion não está em 1.",
+        "Usuário navega entre rotas abrangidas pelo PageTransitionProvider."
+      ],
+      "effect": "A preferência anunciada como desativação das animações não chega à decisão de variante das rotas. O controle CSS global reduz duração de animações e transições CSS e continua válido; o probe comprova a divergência da configuração JavaScript, sem medir a duração visual do Framer Motion.",
+      "evidence": [
+        {
+          "path": "src/components/theme/HighContrastToggle.tsx",
+          "line_start": 49,
+          "line_end": 51,
+          "sha256": "7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Estado inicial usa reducedMotion"
+        },
+        {
+          "path": "src/components/theme/HighContrastToggle.tsx",
+          "line_start": 107,
+          "line_end": 114,
+          "sha256": "7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Efeito escreve chave/classe globais"
+        },
+        {
+          "path": "src/components/theme/HighContrastToggle.tsx",
+          "line_start": 240,
+          "line_end": 254,
+          "sha256": "7b52b8272d32b9d5538c285bd98cafb4c5c7f37970562eb6539a43f209a2f9a9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle e promessa apresentados ao usuário"
+        },
+        {
+          "path": "src/components/layout/Sidebar.tsx",
+          "line_start": 251,
+          "line_end": 252,
+          "sha256": "445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle acessível na Sidebar"
+        },
+        {
+          "path": "src/components/transitions/transitionConfig.ts",
+          "line_start": 29,
+          "line_end": 44,
+          "sha256": "856077f41ff388e078b4b67bfe1491045b808d2a0d1a212998e47c32e337cafc",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Chave e codificação diferentes nas rotas"
+        },
+        {
+          "path": "src/components/transitions/useTransitionPreferences.ts",
+          "line_start": 11,
+          "line_end": 30,
+          "sha256": "52c1d2762bdb214e6070424b05bf735386bdca313d32e36d593d673702660f10",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Preferências de sistema e chave privada, sem contexto global"
+        },
+        {
+          "path": "src/components/transitions/RouteTransition.tsx",
+          "line_start": 12,
+          "line_end": 30,
+          "sha256": "9a8a5b1dce73e8c1290f9ff71af7b73e00e9ae4cc7d4f1405d2d28145b0ba1d9",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Flag decide none versus transição animada"
+        },
+        {
+          "path": "src/routes/AppRoutes.tsx",
+          "line_start": 44,
+          "line_end": 84,
+          "sha256": "30c6f9981e0f9b86c37154eba2f87e24e2e2f7720259e95da1899c49fbf11da3",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Provider e rotas reais que usam slide/zoom"
+        },
+        {
+          "path": "src/styles/accessibility.css",
+          "line_start": 57,
+          "line_end": 70,
+          "sha256": "ab0c400cb831f529da67e359a0b7c7dd61b45cd78eab905206d09c09fd863c67",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controle CSS existe e não é negado pelo achado"
+        }
+      ],
+      "acceptance": [
+        "Usar uma fonte de preferência de usuário para a interface global e as transições, combinada com a preferência do sistema.",
+        "Garantir atualização da variante após ligar ou desligar a opção sem exigir outra chave escondida ou recarga.",
+        "Cobrir UI ligada/desligada e sistema ligado/desligado; verificar none no ramo esperado e depois validar em browser a animação efetiva."
+      ],
+      "affected_tasks": [],
+      "related_previous_findings": [],
+      "probe_ids": [
+        "INF-LO-P02"
+      ],
+      "novelty_basis": "Locus e mecanismo adicionais aos 104 registros anteriores; root confirmou não haver IDs desses contratos. Descoberta nova não implica regressão introduzida depois da auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado.",
+        "Nenhum arquivo de produto foi alterado.",
+        "O probe executa efeito, leitura e decisão de configuração de fonte com fronteiras inertes; não importa Framer Motion nem reimplementa seu motor.",
+        "Não se afirma que toda animação CSS continua ativa ou que houve sintomas observados em usuário. O efeito demonstrado é a escolha incorreta de variante."
+      ]
+    },
+    {
+      "id": "R2-INF-038",
+      "title": "Tour padrão aponta para dois alvos ausentes e avança até a conclusão sem mostrá-los",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_layout_onboarding_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "As duas últimas etapas padrão procuram data-tour=notifications e data-tour=theme. A produção de data-tour vem de SidebarNavItem com IDs de navegação; nenhum dos getters ativos fornece esses dois IDs. Os controles reais de notificações e tema da Sidebar não têm esses atributos. Após dez tentativas, TourOverlay chama nextStep; na última etapa isso chama endTour/onComplete.",
+      "consumer_chain": [
+        "Index inicia DEFAULT_ONBOARDING_STEPS",
+        "TourOverlay consulta o seletor de cada etapa",
+        "Sidebar renderiza atributos somente para IDs de itens de navegação",
+        "Notifications/theme não são encontrados",
+        "Retries avançam a última etapa e chamam conclusão"
+      ],
+      "preconditions": [
+        "Usuário inicia o tour padrão e chega às duas últimas etapas.",
+        "Layout usa os componentes da fonte atual; não há plugin externo inserindo os atributos ausentes."
+      ],
+      "effect": "As explicações de notificações e personalização não recebem alvo visível no fluxo atual e o callback de conclusão pode ser chamado mesmo sem essas etapas terem sido mostradas. O salto de uma etapa indisponível por permissão pode ser deliberado; aqui os dois seletores não são produzidos sequer para o layout desktop completo lido.",
+      "evidence": [
+        {
+          "path": "src/components/onboarding/defaultTourSteps.ts",
+          "line_start": 32,
+          "line_end": 45,
+          "sha256": "b7570face27ff498e26ea801e2bd09aaa3dfc752f03a94231258b51e825324c0",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Dois seletores ausentes do layout"
+        },
+        {
+          "path": "src/components/layout/SidebarNavItem.tsx",
+          "line_start": 33,
+          "line_end": 44,
+          "sha256": "be8efae696b82ddc7896f6601b536909e0d7a1f4570cf259afa576b12cd68776",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Único produtor dinâmico de data-tour em UI de produto"
+        },
+        {
+          "path": "src/services/navigation.service.ts",
+          "line_start": 1,
+          "line_end": 155,
+          "sha256": "8e128c5cc1aa208f96570c68295d6e4836ca1febed4d7d1e603f648d4c294d48",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Getters de navegação não fornecem os dois IDs"
+        },
+        {
+          "path": "src/components/layout/Sidebar.tsx",
+          "line_start": 92,
+          "line_end": 124,
+          "sha256": "445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controles de notificações não têm o atributo esperado"
+        },
+        {
+          "path": "src/components/layout/Sidebar.tsx",
+          "line_start": 236,
+          "line_end": 252,
+          "sha256": "445291acd74493e9ec82e7622176ad269f9b1d3f100ff8ee6eeb79b596a38e9e",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controles de tema/acessibilidade não têm data-tour=theme"
+        },
+        {
+          "path": "src/components/onboarding/TourOverlay.tsx",
+          "line_start": 16,
+          "line_end": 39,
+          "sha256": "e96f75433ceab7f93324a25573d89e614682935f8594e516d64a82f6096ef6f5",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Retries e salto automático por ausência/medida zero"
+        },
+        {
+          "path": "src/components/onboarding/OnboardingTour.tsx",
+          "line_start": 50,
+          "line_end": 63,
+          "sha256": "066e3caa337f58ae0f87adad74073c1e64c68466aa47f8e5f1a25f75b2c1649b",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Último nextStep chama endTour e onComplete"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 135,
+          "line_end": 142,
+          "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Início real do tour padrão"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 183,
+          "line_end": 192,
+          "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Callback de conclusão conectado ao estado de onboarding"
+        }
+      ],
+      "acceptance": [
+        "Conectar seletores aos controles reais ou corrigir as etapas para os alvos realmente renderizados, respeitando layout e permissões.",
+        "Validar os seletores no layout composto, não apenas sua sintaxe em um document vazio.",
+        "Distinguir salto deliberado de ausência inesperada e evitar registrar conclusão de etapa obrigatória que não foi apresentada.",
+        "Cobrir caminho desktop, mobile e usuário sem uma seção permitida, com política de passos disponíveis explícita."
+      ],
+      "affected_tasks": [],
+      "related_previous_findings": [],
+      "probe_ids": [
+        "INF-LO-P03"
+      ],
+      "novelty_basis": "Locus e mecanismo adicionais aos 104 registros anteriores; root confirmou não haver IDs desses contratos. Descoberta nova não implica regressão introduzida depois da auditoria anterior.",
+      "proof_type": "STATIC_AND_BOUNDED_SYNTHETIC_OFFLINE",
+      "limitations": [
+        "Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado.",
+        "Nenhum arquivo de produto foi alterado.",
+        "Três getters de navegação e callbacks reais foram analisados/executados em fronteiras sintéticas; nenhum DOM de aplicação foi montado.",
+        "O probe usa a ausência estática dos IDs e querySelector sintético null; não mede posicionamento, scroll ou visibilidade em browser.",
+        "O teste existente que só verifica seletor válido/consulta sem throw não prova que o alvo exista. Não foi reexecutado."
+      ]
+    },
+    {
+      "id": "R2-INF-039",
+      "title": "Modais próprios anunciam modalidade sem implementar o contrato de foco",
+      "severity": "P2",
+      "classification": "novo",
+      "area_extension": "finite_layout_onboarding_batch",
+      "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "description": "WelcomeModal e MobileDrawerMenu renderizam motion.div com role=dialog e aria-modal=true, mas não gerenciam foco inicial, contenção de Tab, inércia do conteúdo externo ou retorno do foco. Seus consumidores mantêm a aplicação e seus controles montados. WelcomeModal já implementa Escape corretamente; o drawer não possui handler de Escape no componente ou em MobileShell.",
+      "consumer_chain": [
+        "Index mantém AppShell montado ao abrir WelcomeModal",
+        "WelcomeModal anuncia aria-modal sem mecanismo de foco",
+        "No layout mobile, MobileShell abre MobileDrawerMenu sobre Header e navegação",
+        "Drawer também anuncia aria-modal sem mecanismo de foco"
+      ],
+      "preconditions": [
+        "Um dos dois overlays está aberto e há controles focáveis da aplicação ao fundo.",
+        "Usuário depende de teclado ou do contrato de modalidade comunicado à tecnologia assistiva."
+      ],
+      "effect": "A semântica declara que a interação está restrita ao diálogo, enquanto a implementação não estabelece essa restrição nem transfere/restaura o foco. Isso cria um caminho de interação incompatível com o contrato modal. O achado é de fonte e contrato primário; nenhuma sequência DOM/AT foi executada ou apresentada como observação de produção.",
+      "evidence": [
+        {
+          "path": "src/components/onboarding/WelcomeModal.tsx",
+          "line_start": 13,
+          "line_end": 47,
+          "sha256": "b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Comentário reconhece ausência de trap; único efeito trata Escape; modal sem primitive de foco"
+        },
+        {
+          "path": "src/components/onboarding/WelcomeModal.tsx",
+          "line_start": 56,
+          "line_end": 62,
+          "sha256": "b4b1d9fa2fb5a4ff1a7e736595eb9414f614b567df89632120ba95a1f8a5ef9c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Botão de fechar rotulado preservado"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "line_start": 110,
+          "line_end": 143,
+          "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "AppShell permanece montado como irmão do modal"
+        },
+        {
+          "path": "src/components/mobile/MobileDrawerMenu.tsx",
+          "line_start": 133,
+          "line_end": 164,
+          "sha256": "9df67cc307562d9464297b710086bb26602719a2abb44cd2a54348d1c88d556c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Drawer próprio com aria-modal, backdrop e drag, sem foco"
+        },
+        {
+          "path": "src/components/mobile/MobileDrawerMenu.tsx",
+          "line_start": 184,
+          "line_end": 220,
+          "sha256": "9df67cc307562d9464297b710086bb26602719a2abb44cd2a54348d1c88d556c",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Controles internos e busca sem autofoco/gerenciamento modal"
+        },
+        {
+          "path": "src/components/mobile/MobileShell.tsx",
+          "line_start": 33,
+          "line_end": 105,
+          "sha256": "bd36c452c890fae93dedb2e1da1a0f79568eca6fd3cff7036f146c342ae923d4",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Consumidor mantém Header/bottom navigation e não adiciona foco/Escape"
+        },
+        {
+          "path": "src/providers/AppProviders.tsx",
+          "line_start": 61,
+          "line_end": 90,
+          "sha256": "7105ef85cebbef40787859cfa9e50ec541efbe86cdd0ca0c2e6e8d230a218d1f",
+          "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "origin": "source",
+          "reason": "Providers globais não oferecem um escopo de foco para estes overlays"
+        }
+      ],
+      "acceptance": [
+        "Usar o Dialog/Sheet acessível já existente ou implementar integralmente foco inicial apropriado, contenção de Tab/Shift+Tab, conteúdo externo inerte e retorno ao acionador ou destino lógico.",
+        "Preservar Escape no WelcomeModal e fornecer fechamento por Escape no drawer sem quebrar botão, backdrop ou drag.",
+        "Testar cada modal com um controle focável externo: abertura, ciclo de Tab/Shift+Tab, Escape, fechamento e retorno. Complementar com tecnologia assistiva em browser.",
+        "Não considerar role/aria-modal ou uma regra isolada de axe como prova suficiente do ciclo de foco."
+      ],
+      "affected_tasks": [],
+      "related_previous_findings": [],
+      "probe_ids": [],
+      "novelty_basis": "Locus e mecanismo adicionais aos 104 registros anteriores; root confirmou não haver IDs desses contratos. Descoberta nova não implica regressão introduzida depois da auditoria anterior.",
+      "proof_type": "STATIC_SOURCE_AND_PRIMARY_CONTRACT",
+      "limitations": [
+        "Fonte fixa; nenhum endpoint, SDK real, SQL, envio, login, browser ou deploy executado.",
+        "Nenhum arquivo de produto foi alterado.",
+        "Dois loci foram agrupados em um único mecanismo; MobileDrawerMenu foi revisto também pelo root.",
+        "WelcomeModal já tem nome acessível, um único role de diálogo e Escape. Essas correções anteriores são preservadas.",
+        "Não há probe adicional para este registro. Foco nativo, ordem DOM e comportamento de tecnologia assistiva continuam pendentes de execução controlada."
+      ],
+      "external_references": [
+        {
+          "url": "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+          "retrieved_on": "2026-10-04",
+          "source_kind": "primary_documentation",
+          "supports": "Contrato de modal: foco entra, Tab permanece no diálogo, Escape fecha, foco retorna e conteúdo externo é inerte."
+        }
+      ]
+    }
+  ],
+  "previous_findings_compared": 104,
+  "task_adjudication": [
+    "Nenhuma tarefa DONE_VERIFIED foi reaberta por associação temática; os quatro achados especificam novos subcontratos de produto.",
+    "P055/090 já está PARTIAL e trata onboarding/ambiente local do projeto, não certifica este tour visual. O status é preservado.",
+    "P015/E97 está SUPERSEDED e trata onboarding do catálogo. Não é reativado pelo defeito no tour global.",
+    "Tarefas de movimento reduzido de Contatos, Tarefas e Telefonia mantêm seus estados próprios. O defeito 037 é a preferência global versus roteador, não rejeição genérica dos controles por módulo.",
+    "Root PLAT010/011 cobrem busca e notificações mobile; a navegação filtrada por permissões permanece um controle válido. Esses mecanismos não foram recontados."
+  ],
+  "unpromoted": [
+    "Atualização do checklist ao voltar ao dashboard: rejeitada, pois o card é desmontado fora da view e remonta no retorno.",
+    "PageTemplate/scroll: sem prova do DOM e dos estilos computados, não foi promovida a hipótese de dois donos de scroll.",
+    "Posicionamento do tour durante scroll e passos ocultos por permissão são limites adicionais; não recebem IDs sem cenário composto comprovado.",
+    "Heurísticas de perfil/conexão/notificações foram lidas. Um indicador de orientação simplificado não foi automaticamente tratado como requisito novo de negócio.",
+    "WelcomeModal Escape, nome acessível e diálogo único são correções presentes. O registro 039 cobre somente o contrato restante de foco e o drawer correspondente.",
+    "A redução CSS existente e o media query do sistema são controles reais; o achado 037 não os descreve como ausentes."
+  ],
+  "remaining_gaps": [
+    "Não houve browser, axe, tecnologia assistiva, medição visual ou chamada de produto. Leitura integral não é aceite de interação.",
+    "Três casos offline sustentam 036–038. O registro 039 é uma análise estática do contrato modal, sem quarto teste executado.",
+    "A cobertura primária fecha somente estes 25 arquivos e suas 2.136 linhas; a reauditoria global continua em andamento."
+  ]
+}

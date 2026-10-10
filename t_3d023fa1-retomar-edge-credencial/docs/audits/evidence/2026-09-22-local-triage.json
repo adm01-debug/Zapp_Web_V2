@@ -1,0 +1,2817 @@
+{
+  "schemaVersion": 1,
+  "main": "a11efb7d5c096a1f91e183fe44c0330c1bee0b07",
+  "physicalHead": "7d3682c8aedfa5f031192b3ef7ac3c4b1c611f6d",
+  "physicalBranch": "fix/inbox-resgate-logica-pr384",
+  "generatedAt": "2026-09-22T14:50:54.753Z",
+  "remoteHeadCount": 69,
+  "branches": [
+    {
+      "name": "audit/codex-sync-20260922",
+      "sha": "a11efb7d5c096a1f91e183fe44c0330c1bee0b07",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "audit/types-sync-312",
+      "sha": "e3a9df0794261d534a9eaeff76d14fdca6fc7a2c",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "chore/e50-f1-ci-gates",
+      "sha": "ce2690441b0ac39f15083a502e0f5a35b922a9f8",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f2-db-indices-autovacuum",
+      "sha": "3b91b053d092917e4d6e535f41918f53d3b75109",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f4-edges-pinning",
+      "sha": "f8c2a1e1b2bf42a566aceeb5d7d91be0020b4442",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f5-quality",
+      "sha": "9e2f89277779fd68e886bf97de29cd73501c4fe4",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "chore/label-facade-features-demo",
+      "sha": "b90fad77c98eae1bcc74e7fc5f7e529e43c9fd9b",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "codex/types-sync-final",
+      "sha": "9d5c5f0e4098ea5da6b4e383f80b4b22c19aae94",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 3
+    },
+    {
+      "name": "docs/e50-dossie-execucao",
+      "sha": "ab83f7be83174bb79e381d40e050957458e5c463",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "docs/plano-melhorias-50-etapas-2026-09-20",
+      "sha": "e6f85ea05a6f2474ad2aafff33e8b071b6c4d27a",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "feat/crm-integration-db-foundation",
+      "sha": "22d88667e951244efe729518ef3d09d0fd50445c",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 3
+    },
+    {
+      "name": "feat/crm-integration-gateway",
+      "sha": "7921208f1a62aa435a11331e6a03c18cf6a87011",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 8
+    },
+    {
+      "name": "fix/async-chat-send-contract",
+      "sha": "9e9989cb851c58744484725c269ee47c401c0060",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "fix/inbox-data-integrity-codex",
+      "sha": "951a27886ec79e8f92642a74da5fa2aee0003935",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "fix/inbox-file-upload-integrity",
+      "sha": "d49b6b3675771f396fd398768be71d35dee27344",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 15
+    },
+    {
+      "name": "fix/inbox-resgate-logica-pr384",
+      "sha": "7d3682c8aedfa5f031192b3ef7ac3c4b1c611f6d",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "fix/inbox-tabs-a11y-responsive",
+      "sha": "705885e3ac44fae8eca7c95e1d0e6aea866bff51",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "fix/talkx-scheduler-window-correctness",
+      "sha": "c0c67f9e2ef34683fe82c5d4b982dfa4c0119380",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 1
+    },
+    {
+      "name": "fix/talkx-template-history-contract",
+      "sha": "a63d824562a74ee6c5b4e39c4b9a2366f1285752",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 8
+    },
+    {
+      "name": "fix/types-sync-adapter-contract",
+      "sha": "315bd351af5afee9ccbc14cf066ef2bfe6304194",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 2
+    },
+    {
+      "name": "main",
+      "sha": "dd210916a23907a9d89ba49f52f888178de1bfc7",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-center-tabs-codex",
+      "sha": "5cac917b2f59b1f1806589b4c3a39b58f788a491",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 10
+    },
+    {
+      "name": "redesign/inbox-fidelidade-carvao-codex",
+      "sha": "a4ec1cda040304910a10814cabb63813fe674e39",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 15
+    },
+    {
+      "name": "redesign/inbox-files-history-codex",
+      "sha": "85f3565449e306143f02e2e0304afa378066b394",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 10
+    },
+    {
+      "name": "redesign/inbox-right-panel-codex",
+      "sha": "442a1a91326fc1247b4d640abfbe08ea69b3a6be",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 2
+    },
+    {
+      "name": "redesign/inbox-tasks-notes-codex",
+      "sha": "c1af013613008835acaf710e8213e4cd88ed3966",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 10
+    },
+    {
+      "name": "test/chat-central-contracts",
+      "sha": "9e0b9ec00fc3b09d59ea5ca2b546089134bf1a83",
+      "localOnlyCommits": [],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 10
+    },
+    {
+      "name": "tmp/integracao-e50",
+      "sha": "e772c599e4fb9d83546cf22be116a1721660c2d1",
+      "localOnlyCommits": [
+        "e772c599e4fb9d83546cf22be116a1721660c2d1",
+        "f25cbd07b1eda6e7eb4e5f7446a2e72e1b0ab637",
+        "477a1d9ec55ff54fd2ac409359be2be3fa226d53",
+        "e92754dc4ab624876bf7e570c548eec2adeea291"
+      ],
+      "migrationsAbsentFromMain": [],
+      "patchesNotEquivalentToMain": 0
+    }
+  ],
+  "localMerges": [
+    {
+      "sha": "e772c599e4fb9d83546cf22be116a1721660c2d1",
+      "parents": [
+        "f25cbd07b1eda6e7eb4e5f7446a2e72e1b0ab637",
+        "ab83f7be83174bb79e381d40e050957458e5c463"
+      ],
+      "uniqueBlobPaths": [],
+      "remergePaths": []
+    },
+    {
+      "sha": "f25cbd07b1eda6e7eb4e5f7446a2e72e1b0ab637",
+      "parents": [
+        "477a1d9ec55ff54fd2ac409359be2be3fa226d53",
+        "3b91b053d092917e4d6e535f41918f53d3b75109"
+      ],
+      "uniqueBlobPaths": [],
+      "remergePaths": []
+    },
+    {
+      "sha": "477a1d9ec55ff54fd2ac409359be2be3fa226d53",
+      "parents": [
+        "e92754dc4ab624876bf7e570c548eec2adeea291",
+        "9e2f89277779fd68e886bf97de29cd73501c4fe4"
+      ],
+      "uniqueBlobPaths": [],
+      "remergePaths": []
+    },
+    {
+      "sha": "e92754dc4ab624876bf7e570c548eec2adeea291",
+      "parents": [
+        "ce2690441b0ac39f15083a502e0f5a35b922a9f8",
+        "f8c2a1e1b2bf42a566aceeb5d7d91be0020b4442"
+      ],
+      "uniqueBlobPaths": [],
+      "remergePaths": []
+    }
+  ],
+  "committedDrafts": [
+    {
+      "blob": "ca223bf2eaf48b0ba1520bbe53f912137c9d1ebe",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 243326
+    },
+    {
+      "blob": "b37a94be9b97b8fc258923e5c4111d09f3968f55",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4338
+    },
+    {
+      "blob": "433c44bcb00f4a96d1c05d5f5b8d82300970ad65",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50445
+    },
+    {
+      "blob": "3da42054251b2750809aae281ff7180791d9626f",
+      "paths": [
+        "supabase/functions/talkx-send/index.ts"
+      ],
+      "bytes": 31298
+    },
+    {
+      "blob": "b89367fa15b42a391d905062b51347d6045415d3",
+      "paths": [
+        ".github/workflows/crm-sync-worker.yml"
+      ],
+      "bytes": 2825
+    },
+    {
+      "blob": "dce8554d9562ee1c85bd82c5fa206276909e3786",
+      "paths": [
+        "docs/runbooks/CRM_INTEGRATION_ROLLOUT.md"
+      ],
+      "bytes": 4217
+    },
+    {
+      "blob": "04c39f0b89eb937b7f115675b6e2d8bc9b08f1b7",
+      "paths": [
+        "scripts/ci/crm-integration-contract.unit.mjs"
+      ],
+      "bytes": 2225
+    },
+    {
+      "blob": "8db60b49cf5acdcc972c4d37437fad9a2b0eff31",
+      "paths": [
+        "src/lib/__tests__/crmIntegration.test.ts"
+      ],
+      "bytes": 1607
+    },
+    {
+      "blob": "b2208785e16c499325487cf43430fc29702abd42",
+      "paths": [
+        "src/lib/crmIntegration.ts"
+      ],
+      "bytes": 935
+    },
+    {
+      "blob": "a5d0968ce7b174c6c0870716eb111c55d50ac1e5",
+      "paths": [
+        "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts"
+      ],
+      "bytes": 3686
+    },
+    {
+      "blob": "a1cb46530958250e6966110df78dd43b263decb7",
+      "paths": [
+        "supabase/functions/_shared/crm-integration-contract.ts"
+      ],
+      "bytes": 6892
+    },
+    {
+      "blob": "dbebcfb90de0b58dbc4eeae05c6c26ea5f0e31d2",
+      "paths": [
+        "supabase/functions/crm-integration/index.ts"
+      ],
+      "bytes": 16162
+    },
+    {
+      "blob": "9a362f66902d7efedfabd62373a2aae7c8597996",
+      "paths": [
+        "docs/catalogo/CHANGELOG_CATALOGO.md"
+      ],
+      "bytes": 19575
+    },
+    {
+      "blob": "115c1366c642336865fc7847e6e017c8b476a441",
+      "paths": [
+        "src/components/catalog/ExternalProductManagement.tsx"
+      ],
+      "bytes": 11218
+    },
+    {
+      "blob": "b66d1c5b4efc239bccf69ad8ad48dde3961ba02e",
+      "paths": [
+        "src/components/catalog/catalogShared.tsx"
+      ],
+      "bytes": 22858
+    },
+    {
+      "blob": "4177ccb5e6d2b9c119e43f994a1f70542c028b00",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 49348
+    },
+    {
+      "blob": "9a4e45a008000bd97ffa621a8d918db808157376",
+      "paths": [
+        "supabase/functions/talkx-scheduler/index.ts"
+      ],
+      "bytes": 6562
+    },
+    {
+      "blob": "de73c6b4203de1720a6c98885325353b406a1f94",
+      "paths": [
+        "docs/catalogo/CHANGELOG_CATALOGO.md"
+      ],
+      "bytes": 21239
+    },
+    {
+      "blob": "669f934211f364e18b1914644f0ab48b4af34c3f",
+      "paths": [
+        "src/components/catalog/ExternalProductManagement.tsx"
+      ],
+      "bytes": 13070
+    },
+    {
+      "blob": "01a65c0cf5be34c349d795b4d8a39c87c72da1c7",
+      "paths": [
+        "src/components/catalog/__tests__/ExternalProductManagement.test.tsx"
+      ],
+      "bytes": 6274
+    },
+    {
+      "blob": "e0028787f0a53475ea954b722e3f43721ee3fa96",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 239526
+    },
+    {
+      "blob": "dcc292de09039b19ba3b1364b652e9cbd6b21102",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4338
+    },
+    {
+      "blob": "925aaba4ef3ef155b9256a6ba01ae6040bd07340",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50445
+    },
+    {
+      "blob": "c3bfde914bd491161a263c0622e5071bc1cf3247",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50447
+    },
+    {
+      "blob": "68902319702a801e017a9b2d49e28eec88eb53b5",
+      "paths": [
+        "supabase/functions/talkx-send/index.ts"
+      ],
+      "bytes": 32988
+    },
+    {
+      "blob": "ae09d73a967f98440b076417b3189f5092086e1d",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50445
+    },
+    {
+      "blob": "8afc111addbd61188702cf0772d4371f693db0f6",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 243326
+    },
+    {
+      "blob": "f27688c485017068f4a4f383dee63f3f1507d5c3",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4338
+    },
+    {
+      "blob": "e8dd351ec4ff5b307019dda435b7e376dd8119b2",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 243328
+    },
+    {
+      "blob": "ef215820663c1768d0901e10a5d1727e5e710de2",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4339
+    },
+    {
+      "blob": "c62da174d7767aeeb50e3b1d3fe0cea9c08dece9",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 248244
+    },
+    {
+      "blob": "5dc507d06ac87693aa66adc414ba1db7df4117e7",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4338
+    },
+    {
+      "blob": "a65078425b5829fb9e1de3b0091c96625b1c6edf",
+      "paths": [
+        ".claude/settings.json"
+      ],
+      "bytes": 564
+    },
+    {
+      "blob": "d4dec25c9bc6cdee489ed9658b5419e965e401f7",
+      "paths": [
+        ".env.example"
+      ],
+      "bytes": 4467
+    },
+    {
+      "blob": "7ffa313df93969f6e8f7c923d00f442222d50815",
+      "paths": [
+        "docs/CRM360_TECHNICAL_DOCS.md"
+      ],
+      "bytes": 5164
+    },
+    {
+      "blob": "cd66e3ded780a82288c5a22002faca8426ad61ea",
+      "paths": [
+        "docs/DEPLOYMENT.md"
+      ],
+      "bytes": 6921
+    },
+    {
+      "blob": "419f0a1c17cc5343fdfbe21c57a2bd7beecffef2",
+      "paths": [
+        "docs/security/secret-surface-inventory.md"
+      ],
+      "bytes": 13805
+    },
+    {
+      "blob": "556de2c4324c6de3abb1ecb90ec957124da960c5",
+      "paths": [
+        "src/components/admin/AdminCRMDashboard.tsx"
+      ],
+      "bytes": 12310
+    },
+    {
+      "blob": "98c731f2ed81a8183d508348ee9d525133234466",
+      "paths": [
+        "src/components/inbox/CRMAutoSync.tsx"
+      ],
+      "bytes": 8157
+    },
+    {
+      "blob": "c724822bdd34ccd13ab667ddea7774d81f02a7ef",
+      "paths": [
+        "src/components/inbox/useGlobalSearchData.ts"
+      ],
+      "bytes": 11228
+    },
+    {
+      "blob": "a985c97a0ce07dec726ab11c600f44d668367368",
+      "paths": [
+        "src/hooks/crm/useAdvancedContactSearch.ts"
+      ],
+      "bytes": 3925
+    },
+    {
+      "blob": "2a7a1494438fc57f305f55cdd3f60206158e9e47",
+      "paths": [
+        "src/hooks/integrations/useExternalDB.ts"
+      ],
+      "bytes": 5174
+    },
+    {
+      "blob": "9eebdc5e6946d2e666a93737028aeb3856e7131a",
+      "paths": [
+        "src/hooks/integrations/useSyncToCRM.ts"
+      ],
+      "bytes": 2463
+    },
+    {
+      "blob": "3b03c0df93d6553f13d01a0c728ad102d6bd8d25",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 47383
+    },
+    {
+      "blob": "9b377117a8608bf25bd70ab9a81fd257c2a932ef",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50447
+    },
+    {
+      "blob": "55037033c9899b64bac3371ff450eb7d565085b8",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 242633
+    },
+    {
+      "blob": "3cabb9fa0c53f225ad7206368d2fdf7ad175cfb2",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4339
+    },
+    {
+      "blob": "bd1b9b7be53f901161d71cb35b04b94816d4ae5e",
+      "paths": [
+        "supabase/deployment-manifest.json"
+      ],
+      "bytes": 50447
+    },
+    {
+      "blob": "dd39120c2495ee14bf57032323396905b39fdd6b",
+      "paths": [
+        "bun.lock"
+      ],
+      "bytes": 243326
+    },
+    {
+      "blob": "b1d572cd2891557ecf253058f9adf7697741e639",
+      "paths": [
+        "package.json"
+      ],
+      "bytes": 4338
+    },
+    {
+      "blob": "cce8e93cea862c45b9ca7c6ecaeeb6384d8100d9",
+      "paths": [
+        "supabase/schema-manifest.json"
+      ],
+      "bytes": 915450
+    }
+  ],
+  "additionalObjects": [
+    {
+      "blob": "aa02a2aab3e8e0d311c6f8775ee8be1347a75140",
+      "bytes": 12832,
+      "category": "code",
+      "path": "src/components/inbox/ContactDetails.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ContactDetails.tsx",
+        "score": 0.847,
+        "commonLines": 116
+      }
+    },
+    {
+      "blob": "00041c9282e35cd71b664c1f5181ab7459faaf0d",
+      "bytes": 49933,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+        "score": 0.667,
+        "commonLines": 462
+      }
+    },
+    {
+      "blob": "7204d6ccce0b66ebdc5705dd8da8071c4d7a0df3",
+      "bytes": 98364,
+      "category": "text",
+      "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+      "nearestMain": {
+        "path": "docs/talkx/PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md",
+        "score": 0.972,
+        "commonLines": 658
+      }
+    },
+    {
+      "blob": "da068436274cc0331042aedca455f17b6484c750",
+      "bytes": 52167,
+      "category": "code",
+      "path": "docs/audits/talkx-revalidation-2026-09-11/REVISAO_100_ETAPAS.md",
+      "nearestMain": {
+        "path": "docs/audits/talkx-revalidation-2026-09-11/REVISAO_100_ETAPAS.md",
+        "score": 0.985,
+        "commonLines": 332
+      }
+    },
+    {
+      "blob": "a20dcc5b379f1c5c31ec3ab6f06ecb3d3ebe3a55",
+      "bytes": 2184,
+      "category": "code",
+      "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+        "score": 0.623,
+        "commonLines": 24
+      }
+    },
+    {
+      "blob": "6b131c5824004fbc088f9c3bb462051e13c0e817",
+      "bytes": 3985,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/_shared/crm-integration-contract.ts",
+        "score": 0.57,
+        "commonLines": 51
+      }
+    },
+    {
+      "blob": "fe135c38244d681d4e0d5dc4ee21726213f5f84d",
+      "bytes": 320,
+      "category": "code",
+      "path": "src/components/inbox/TicketTabs.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/TicketTabs.tsx",
+        "score": 0.222,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "d014229e97b565486430d0f9c3893c0993be6039",
+      "bytes": 15219,
+      "category": "code",
+      "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+        "score": 0.826,
+        "commonLines": 152
+      }
+    },
+    {
+      "blob": "5615362e282dad373729f84b12efc56976f5e00f",
+      "bytes": 12529,
+      "category": "code",
+      "path": "src/components/inbox/tabs/AiTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/AiTab.tsx",
+        "score": 0.777,
+        "commonLines": 101
+      }
+    },
+    {
+      "blob": "44173e16f4740867d402f83cfb38c49af0af568f",
+      "bytes": 9050,
+      "category": "code",
+      "path": "docs/audits/talkx-revalidation-2026-09-11/runtime-probes.mjs",
+      "nearestMain": {
+        "path": "scripts/db-audit/diff.test.mjs",
+        "score": 0.027,
+        "commonLines": 2
+      }
+    },
+    {
+      "blob": "b417acead1775d997e787a5a6a8b724ecee5ad15",
+      "bytes": 1366,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/ci/crm-integration-contract.unit.mjs",
+        "score": 0.444,
+        "commonLines": 16
+      }
+    },
+    {
+      "blob": "2d19bc3c955215e9d061771b43d0cca1323702da",
+      "bytes": 14518,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+        "score": 0.936,
+        "commonLines": 132
+      }
+    },
+    {
+      "blob": "101ad0cae923cab2ef2060a05878da33dd3b58e2",
+      "bytes": 28264,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md",
+        "score": 0.993,
+        "commonLines": 272
+      }
+    },
+    {
+      "blob": "e11edc2514b87f7a44e1260d2c341a9cbf03cdea",
+      "bytes": 8160,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TasksTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TasksTab.tsx",
+        "score": 0.752,
+        "commonLines": 62
+      }
+    },
+    {
+      "blob": "3e2e4ef7034b8b7521a048ef680aa24eab2fdac4",
+      "bytes": 9324,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql",
+        "score": 0.954,
+        "commonLines": 136
+      }
+    },
+    {
+      "blob": "f92ec61de4a210b88b348a31bca2d3d07fb9f2b7",
+      "bytes": 19121,
+      "category": "code",
+      "path": "src/components/inbox/useFileUploadLogic.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/useFileUploadLogic.ts",
+        "score": 0.76,
+        "commonLines": 179
+      }
+    },
+    {
+      "blob": "fc312e0f122347535d3cd746687a9382b3c52115",
+      "bytes": 23214,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatInputArea.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatInputArea.tsx",
+        "score": 0.887,
+        "commonLines": 204
+      }
+    },
+    {
+      "blob": "603698e7da60a497d5978d5d01792aa5673efdeb",
+      "bytes": 13361,
+      "category": "code",
+      "path": "src/components/inbox/RealtimeInboxView.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/RealtimeInboxView.tsx",
+        "score": 0.955,
+        "commonLines": 147
+      }
+    },
+    {
+      "blob": "4738b09e7c84957fcc8c9c7c0afd49cccd776d56",
+      "bytes": 8129,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FileCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FileCard.tsx",
+        "score": 0.573,
+        "commonLines": 49
+      }
+    },
+    {
+      "blob": "803910385e37cd77a24f270d308c0a1b2920ace2",
+      "bytes": 51122,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.868,
+        "commonLines": 508
+      }
+    },
+    {
+      "blob": "993a202fce7fe0d0d23142d6a1dc194f19399968",
+      "bytes": 461,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/ci/deploy-functions-workflow.unit.mjs",
+        "score": 0.444,
+        "commonLines": 8
+      }
+    },
+    {
+      "blob": "ee3aaceb91ccd9895c0d2920c0499fad2bd95b10",
+      "bytes": 9672,
+      "category": "code",
+      "path": "src/hooks/integrations/useTalkX.ts",
+      "nearestMain": {
+        "path": "src/hooks/integrations/useTalkX.ts",
+        "score": 0.817,
+        "commonLines": 154
+      }
+    },
+    {
+      "blob": "a73b04f7fcd735e36a3c96c1f7cb89471f693ae9",
+      "bytes": 259096,
+      "category": "json_or_markdown",
+      "path": "bun.lock",
+      "nearestMain": {
+        "path": "bun.lock",
+        "score": 0.461,
+        "commonLines": 461
+      }
+    },
+    {
+      "blob": "083e58a3ac8e5a21a3c42532396eb6f631dc6e68",
+      "bytes": 6240,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/edge-deploy/smoke-functions.mjs",
+        "score": 0.914,
+        "commonLines": 106
+      }
+    },
+    {
+      "blob": "ea41f8574f18cba079e952a5c870036a8c8f8ac6",
+      "bytes": 4096,
+      "category": "sql_or_embedded_sql",
+      "path": "supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql",
+      "nearestMain": {
+        "path": "supabase/migrations/20260911200000_persist_talkx_schedule_timezone.sql",
+        "score": 0.873,
+        "commonLines": 55
+      }
+    },
+    {
+      "blob": "ad4468b523cb2ea412506d48e3be62e6d24a3bb0",
+      "bytes": 6733,
+      "category": "code",
+      "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+        "score": 0.705,
+        "commonLines": 55
+      }
+    },
+    {
+      "blob": "f246de45fae71432a0c378a8ff0ddf225a8ab941",
+      "bytes": 4784,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-e90-links-contract.test.mjs",
+        "score": 0.83,
+        "commonLines": 39
+      }
+    },
+    {
+      "blob": "3e4cee3703a51ae768a1b6e1f5ed5b99ecf6e837",
+      "bytes": 28898,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+        "score": 0.458,
+        "commonLines": 274
+      }
+    },
+    {
+      "blob": "8e4cd678bf626bac90e38f7dc59f44fbf21edf85",
+      "bytes": 7573,
+      "category": "code",
+      "path": "src/hooks/integrations/useTalkXTemplates.ts",
+      "nearestMain": {
+        "path": "src/hooks/integrations/useTalkXTemplates.ts",
+        "score": 0.741,
+        "commonLines": 106
+      }
+    },
+    {
+      "blob": "0f4d068159f7488b43cde8f075298473f34df5b9",
+      "bytes": 982,
+      "category": "json_or_markdown",
+      "path": "performance-budget.json",
+      "nearestMain": {
+        "path": "performance-budget.json",
+        "score": 0.512,
+        "commonLines": 11
+      }
+    },
+    {
+      "blob": "904e0058b2df1008e8af665350dec9aca7a1f15a",
+      "bytes": 3135,
+      "category": "code",
+      "path": "src/components/inbox/tabs/OrdersTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/OrdersTab.tsx",
+        "score": 0.727,
+        "commonLines": 24
+      }
+    },
+    {
+      "blob": "1e50ae36e5a2ab58f039754e2567f686b70dd827",
+      "bytes": 3372,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ComercialSummaryWidget.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ComercialSummaryWidget.tsx",
+        "score": 0.655,
+        "commonLines": 19
+      }
+    },
+    {
+      "blob": "42525c9f2be0ffc73b4a0181bef34ddb44e11cce",
+      "bytes": 34640,
+      "category": "code",
+      "path": "docs/audits/talkx-2026-09-11/DIAGNOSTICO_CAMPANHAS.md",
+      "nearestMain": {
+        "path": "docs/audits/talkx-2026-09-11/DIAGNOSTICO_CAMPANHAS.md",
+        "score": 0.985,
+        "commonLines": 230
+      }
+    },
+    {
+      "blob": "2d56b887bf6cd508fdeb084ae53d8b9db0c5bc6f",
+      "bytes": 627,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": ".agents/skills/zapp-web-v2/SKILL.md",
+        "score": 0,
+        "commonLines": 0
+      }
+    },
+    {
+      "blob": "56563a08e2abbf7b9be57129a06a18b3261a918a",
+      "bytes": 2046,
+      "category": "text",
+      "path": "\"M\\303\\263dulo Campanhas - Melhorias/LEIA-ME.txt\"",
+      "nearestMain": {
+        "path": "docs/talkx/references/README.md",
+        "score": 0.901,
+        "commonLines": 32
+      }
+    },
+    {
+      "blob": "6259ea2d7a8825d88bb763aa5d8c8d23bafa3ec1",
+      "bytes": 2352,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/__tests__/useResolvedStorageUrl.test.tsx",
+        "score": 0.81,
+        "commonLines": 34
+      }
+    },
+    {
+      "blob": "c75abe7d7b82c9975e3cc26386c6ce03d4b70712",
+      "bytes": 15576,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.602,
+        "commonLines": 149
+      }
+    },
+    {
+      "blob": "4b5b2e11faf12d80e99c46bbf498a9850ae091e9",
+      "bytes": 14070,
+      "category": "code",
+      "path": "src/components/inbox/ConversationListSidebar.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ConversationListSidebar.tsx",
+        "score": 0.895,
+        "commonLines": 149
+      }
+    },
+    {
+      "blob": "4a5c28273ca7a0ab9d12ae2d51435cfcb640e5a3",
+      "bytes": 13617,
+      "category": "code",
+      "path": "src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+        "score": 0.553,
+        "commonLines": 73
+      }
+    },
+    {
+      "blob": "ec5d94d7547c35b85c9f131b77ca240c22978f3f",
+      "bytes": 8734,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/communication/useAudioPlayer.ts",
+        "score": 0.598,
+        "commonLines": 93
+      }
+    },
+    {
+      "blob": "eb5f20cbd1086ef997f056f7af92378901e352f1",
+      "bytes": 1668,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/edge-deploy/generate-manifest.mjs",
+        "score": 0.773,
+        "commonLines": 29
+      }
+    },
+    {
+      "blob": "d8603622f1d74a5cd4d1954fb9090b710b271caa",
+      "bytes": 113,
+      "category": "binary",
+      "path": "\"M\\303\\263dulo Campanhas - Melhorias/02_Segmentos_Biblioteca_Detalhes.png:Zone.Identifier\"",
+      "nearestMain": {
+        "path": ".agents/skills/zapp-web-v2/SKILL.md",
+        "score": 0
+      }
+    },
+    {
+      "blob": "af647231733b0172269793c2a8dd9dbb1ef581a2",
+      "bytes": 286,
+      "category": "code",
+      "path": "src/components/inbox/TicketTabs.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/TicketTabs.tsx",
+        "score": 0.222,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "3b733087ae6eb6be27429131b61d96069c8ad055",
+      "bytes": 23972,
+      "category": "code",
+      "path": "supabase/functions/talkx-send/index.ts",
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.645,
+        "commonLines": 225
+      }
+    },
+    {
+      "blob": "a97bf46c492d2b324f67996916856adac67e0765",
+      "bytes": 15574,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.594,
+        "commonLines": 147
+      }
+    },
+    {
+      "blob": "067d42566bc88166bda5b7e2c85e5525217bf4aa",
+      "bytes": 3057,
+      "category": "sql_or_embedded_sql",
+      "path": "docs/audits/talkx-plan-review-2026-09-11/database-gaps.repro.sh",
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+        "score": 0.091,
+        "commonLines": 6
+      }
+    },
+    {
+      "blob": "8f7dee7e476d4383c55d3d921f14d5dfd02fd196",
+      "bytes": 20206,
+      "category": "code",
+      "path": "src/components/inbox/InboxFilters.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/InboxFilters.tsx",
+        "score": 0.927,
+        "commonLines": 236
+      }
+    },
+    {
+      "blob": "48804898b2a16f735c0fa45e93297e52005bbb61",
+      "bytes": 86231,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+        "score": 0.828,
+        "commonLines": 805
+      }
+    },
+    {
+      "blob": "da8526a284ac892345538a83acfd9df61b44d372",
+      "bytes": 924,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/lib/crmIntegration.ts",
+        "score": 0.711,
+        "commonLines": 16
+      }
+    },
+    {
+      "blob": "0e88a0954df40e5b05d02c467acf92da189158b9",
+      "bytes": 295378,
+      "category": "json_or_markdown",
+      "path": "bun.lock",
+      "nearestMain": {
+        "path": "bun.lock",
+        "score": 0.517,
+        "commonLines": 548
+      }
+    },
+    {
+      "blob": "9f88b44aedbafc8edf3055165d2bfac8e01287db",
+      "bytes": 5099,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        "score": 0.125,
+        "commonLines": 17
+      }
+    },
+    {
+      "blob": "d48c1e58811afb8b8cc4764659dd7a35c1647b3d",
+      "bytes": 20036,
+      "category": "code",
+      "path": "src/components/inbox/InboxFilters.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/InboxFilters.tsx",
+        "score": 0.927,
+        "commonLines": 236
+      }
+    },
+    {
+      "blob": "3b903e1f7cc5ac53e5fd8611f9990b7262f4324a",
+      "bytes": 23818,
+      "category": "code",
+      "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+      "nearestMain": {
+        "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+        "score": 0.985,
+        "commonLines": 165
+      }
+    },
+    {
+      "blob": "8f908cf4030c447cdfe6ca325fdbbb37cebe66de",
+      "bytes": 9896,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+        "score": 0.009,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "7993c88b00275f6ed5a21cf1a80db746f8109d95",
+      "bytes": 14386,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+        "score": 0.983,
+        "commonLines": 146
+      }
+    },
+    {
+      "blob": "649706acab9ca18c61c8e9e266d190cf5f5b8760",
+      "bytes": 16204,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.669,
+        "commonLines": 167
+      }
+    },
+    {
+      "blob": "629996256fb2d909d36f427556b5e4bdbb628a39",
+      "bytes": 2800,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
+        "score": 0.651,
+        "commonLines": 27
+      }
+    },
+    {
+      "blob": "c49dc8e9231fc221487b4f990efbedc3155ad02b",
+      "bytes": 8235,
+      "category": "code",
+      "path": "src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx",
+        "score": 0.673,
+        "commonLines": 72
+      }
+    },
+    {
+      "blob": "0fa04ccae9a420bf8562c1a09e3169cfc80db850",
+      "bytes": 19303,
+      "category": "code",
+      "path": "src/components/inbox/tabs/Crm360Tab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/Crm360Tab.tsx",
+        "score": 0.763,
+        "commonLines": 143
+      }
+    },
+    {
+      "blob": "97a038610d2b12b099d66cc52433f2eb2d57e715",
+      "bytes": 50852,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.865,
+        "commonLines": 506
+      }
+    },
+    {
+      "blob": "2ba4380fe77fd90705ff1f5e71238a3a57320aad",
+      "bytes": 5770,
+      "category": "code",
+      "path": "src/components/inbox/chat/ConversationTabs.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ConversationTabs.tsx",
+        "score": 0.785,
+        "commonLines": 62
+      }
+    },
+    {
+      "blob": "d6a4a469ef9f36069748f5e501d88d042ab651bb",
+      "bytes": 11668,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260912130000_harden_talkx_draft_save.sql",
+        "score": 0.958,
+        "commonLines": 183
+      }
+    },
+    {
+      "blob": "8ca54e282fae48c11853bd78862cf1ba5404d1d7",
+      "bytes": 6160,
+      "category": "code",
+      "path": "scripts/ci/bundle-budget.mjs",
+      "nearestMain": {
+        "path": "scripts/ci/bundle-budget.mjs",
+        "score": 0.968,
+        "commonLines": 90
+      }
+    },
+    {
+      "blob": "a9a77a111bdc85a8cae0b057743d8ebfb8ccb1cf",
+      "bytes": 2870,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+        "score": 0.092,
+        "commonLines": 6
+      }
+    },
+    {
+      "blob": "6ea9d0079d0ad61a2fcec98eb80582f71716c273",
+      "bytes": 9470,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql",
+        "score": 0.703,
+        "commonLines": 150
+      }
+    },
+    {
+      "blob": "72aed20697b1cf4eff237dc213a05ccb97c96964",
+      "bytes": 3515,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+        "score": 0.967,
+        "commonLines": 44
+      }
+    },
+    {
+      "blob": "89ae3a7c9aa32b6487c32fcc62f97e418308d878",
+      "bytes": 8641,
+      "category": "sql_or_embedded_sql",
+      "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+        "score": 0.831,
+        "commonLines": 74
+      }
+    },
+    {
+      "blob": "5db2240490f8ef681d382daa1198f66ec58b875e",
+      "bytes": 4599,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-e90-links-contract.test.mjs",
+        "score": 0.848,
+        "commonLines": 39
+      }
+    },
+    {
+      "blob": "c6b4b03d0cf1e602230bf3a05c3973d16309fdfa",
+      "bytes": 24274,
+      "category": "code",
+      "path": "src/components/inbox/ChatPanel.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ChatPanel.tsx",
+        "score": 0.772,
+        "commonLines": 210
+      }
+    },
+    {
+      "blob": "17b60482281f0286292e71470409caa1d758ee13",
+      "bytes": 1838,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/edge-deploy/verify-remote.mjs",
+        "score": 0.957,
+        "commonLines": 33
+      }
+    },
+    {
+      "blob": "43ba40b5117dc70296e65d1015797a1c51518298",
+      "bytes": 19291,
+      "category": "code",
+      "path": "src/components/inbox/useFileUploadLogic.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/useFileUploadLogic.ts",
+        "score": 0.76,
+        "commonLines": 179
+      }
+    },
+    {
+      "blob": "4cbc945795cb1b54c5dfe5de25f8030bbb9cb6b5",
+      "bytes": 20745,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+        "score": 0.682,
+        "commonLines": 145
+      }
+    },
+    {
+      "blob": "4cbd4275a85a8b8af68310848d2c6cb0845ea85d",
+      "bytes": 3087,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/realtime/useSupabaseRealtime.ts",
+        "score": 0.563,
+        "commonLines": 38
+      }
+    },
+    {
+      "blob": "36c0c02b8243fbb026b78d4924efcef8ae8c1028",
+      "bytes": 3437,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactTasksWidget.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactTasksWidget.tsx",
+        "score": 0.73,
+        "commonLines": 23
+      }
+    },
+    {
+      "blob": "6dc1ae346916b0d144229639de97588fdc999a32",
+      "bytes": 2453,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "tests/contracts/evolution-private-storage-url.test.ts",
+        "score": 0.914,
+        "commonLines": 32
+      }
+    },
+    {
+      "blob": "9dc268b8bb092fed6f40d08f51078868da1b136a",
+      "bytes": 47383,
+      "category": "json_or_markdown",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.794,
+        "commonLines": 446
+      }
+    },
+    {
+      "blob": "5ac40027a2a4b3505a55befee3cfd4be000ddc94",
+      "bytes": 337546,
+      "category": "json_or_markdown",
+      "path": "bun.lock",
+      "nearestMain": {
+        "path": "bun.lock",
+        "score": 0.493,
+        "commonLines": 544
+      }
+    },
+    {
+      "blob": "7bc4364db610a1830bddc584138624d157955cb8",
+      "bytes": 48268,
+      "category": "json_or_markdown",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.815,
+        "commonLines": 462
+      }
+    },
+    {
+      "blob": "e4c42c9da827cb38e8a49420c93e187465b5d7b0",
+      "bytes": 3270,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ComercialSummaryWidget.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ComercialSummaryWidget.tsx",
+        "score": 0.655,
+        "commonLines": 19
+      }
+    },
+    {
+      "blob": "5cc75a657ec9464e4653b7492f95a7b23acdd96c",
+      "bytes": 15026,
+      "category": "code",
+      "path": "src/components/inbox/tabs/HistoryTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/HistoryTab.tsx",
+        "score": 0.58,
+        "commonLines": 96
+      }
+    },
+    {
+      "blob": "72c810532aad841c3f4a3cc7fa8d8bb723bd23de",
+      "bytes": 28877,
+      "category": "code",
+      "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+        "score": 0.778,
+        "commonLines": 243
+      }
+    },
+    {
+      "blob": "7aca6c08b5dbb0018ce01397094dd81834f95c6d",
+      "bytes": 24478,
+      "category": "code",
+      "path": "src/components/inbox/ChatPanel.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ChatPanel.tsx",
+        "score": 0.772,
+        "commonLines": 210
+      }
+    },
+    {
+      "blob": "88ca1c75164322b9b6689446b8a23e123d6cd278",
+      "bytes": 207,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": ".agents/skills/zapp-web-v2/SKILL.md",
+        "score": 0
+      }
+    },
+    {
+      "blob": "19cd96b2826e9c0b635f11ba43bc26c7e8bba7d1",
+      "bytes": 48862,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.82,
+        "commonLines": 468
+      }
+    },
+    {
+      "blob": "54d072634aff010cfeba36ea2d85656315285fb6",
+      "bytes": 9758,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/_shared/evolution-api-proxy.ts",
+        "score": 0.868,
+        "commonLines": 138
+      }
+    },
+    {
+      "blob": "88d050b1908057b53d38b42702ebc659e3d7f696",
+      "bytes": 4,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": ".agents/skills/zapp-web-v2/SKILL.md",
+        "score": 0
+      }
+    },
+    {
+      "blob": "a2d308d773e03ad2d9f067a0342f945222ff3713",
+      "bytes": 23384,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatInputArea.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatInputArea.tsx",
+        "score": 0.887,
+        "commonLines": 204
+      }
+    },
+    {
+      "blob": "cdd6e6cfdbfbfb77ee3c0bd6efce9acf4d35f845",
+      "bytes": 25760,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.695,
+        "commonLines": 251
+      }
+    },
+    {
+      "blob": "11d7ce0ff944f8f28f587c28303c722a70fcf5b3",
+      "bytes": 50665,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.872,
+        "commonLines": 509
+      }
+    },
+    {
+      "blob": "e9d7c27251bec68a28b41dc442344a414fd89ac4",
+      "bytes": 3667,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/__tests__/useAudioPlayer.test.tsx",
+        "score": 0.846,
+        "commonLines": 52
+      }
+    },
+    {
+      "blob": "09da807af6d30f967c8e713a249796ef88fcf7ec",
+      "bytes": 9320,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+        "score": 0.886,
+        "commonLines": 93
+      }
+    },
+    {
+      "blob": "11df6882f8894bf78372ed244590b69bf3855f13",
+      "bytes": 9014,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+        "score": 0.886,
+        "commonLines": 93
+      }
+    },
+    {
+      "blob": "82e238460a25b7160c99c394fcc014a24de8a707",
+      "bytes": 14722,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+        "score": 0.936,
+        "commonLines": 132
+      }
+    },
+    {
+      "blob": "e0e27cc379d822e37e2e9b13e1ac213c25729e6b",
+      "bytes": 4661,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/edge-deploy/manifest.unit.mjs",
+        "score": 0.776,
+        "commonLines": 71
+      }
+    },
+    {
+      "blob": "2fe5e2ae2ccdcf9f3a57dbd79afe752c59d770d9",
+      "bytes": 2571,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TaskColumn.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TaskColumn.tsx",
+        "score": 0.54,
+        "commonLines": 17
+      }
+    },
+    {
+      "blob": "01e84238493a72ba8cb696604caddd3d3ca28ffa",
+      "bytes": 13282,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.488,
+        "commonLines": 114
+      }
+    },
+    {
+      "blob": "f7e80a0c292b37dca01dcb750b42f0a093359299",
+      "bytes": 7774,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-draft-save.test.sh",
+        "score": 0.807,
+        "commonLines": 94
+      }
+    },
+    {
+      "blob": "54ea82e355069881923080dd02c8c9294c1a558e",
+      "bytes": 23225,
+      "category": "code",
+      "path": "supabase/functions/talkx-send/index.ts",
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.634,
+        "commonLines": 216
+      }
+    },
+    {
+      "blob": "c4ec38695b4f6498e188c0dd3cdf4f72a7cd96ad",
+      "bytes": 5027,
+      "category": "text",
+      "path": ".github/workflows/db-guard.yml",
+      "nearestMain": {
+        "path": ".github/workflows/db-guard.yml",
+        "score": 0.671,
+        "commonLines": 56
+      }
+    },
+    {
+      "blob": "e3eeda3644092ec38e5bdb6f2aea36573cda4964",
+      "bytes": 5346,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FileDetailPanel.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FileDetailPanel.tsx",
+        "score": 0.667,
+        "commonLines": 43
+      }
+    },
+    {
+      "blob": "abf100923c3e875445075ad58d0cebdbc574b4a1",
+      "bytes": 2608,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/components/talkx/talkxWizardRoute.ts",
+        "score": 0.965,
+        "commonLines": 41
+      }
+    },
+    {
+      "blob": "cff18ac6b1f6d3b1380afdcd6636d721b665c1c2",
+      "bytes": 12424,
+      "category": "code",
+      "path": "src/components/inbox/ContactDetails.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ContactDetails.tsx",
+        "score": 0.847,
+        "commonLines": 116
+      }
+    },
+    {
+      "blob": "66f6ae5272485fac6a087d276470dc4eaba8beb6",
+      "bytes": 1057,
+      "category": "code",
+      "path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx",
+        "score": 0.69,
+        "commonLines": 10
+      }
+    },
+    {
+      "blob": "cff65eb7858a62b373a8ad294bef1394e0878ccd",
+      "bytes": 2593,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/__tests__/usePushNotifications.test.ts",
+        "score": 0.878,
+        "commonLines": 36
+      }
+    },
+    {
+      "blob": "0dfa983cdcc159b31baa9e09b7f16ca5c69aa25b",
+      "bytes": 2382,
+      "category": "code",
+      "path": "docs/audits/talkx-revalidation-2026-09-11/crud-probe.mjs",
+      "nearestMain": {
+        "path": "scripts/db-audit/diff.test.mjs",
+        "score": 0.086,
+        "commonLines": 3
+      }
+    },
+    {
+      "blob": "75fb3430edc7408e2c9010eb8849b8fc749a0954",
+      "bytes": 3371,
+      "category": "code",
+      "path": "src/components/inbox/tabs/SectionCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/SectionCard.tsx",
+        "score": 0.899,
+        "commonLines": 40
+      }
+    },
+    {
+      "blob": "05fd8450b547a27c602ebaf74ee1605d09ae90f3",
+      "bytes": 73969,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+        "score": 0.763,
+        "commonLines": 703
+      }
+    },
+    {
+      "blob": "1c0079d02cc0c4eefb732a844ce721f79a5137c1",
+      "bytes": 20396,
+      "category": "code",
+      "path": "src/components/inbox/tabs/NotesTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/NotesTab.tsx",
+        "score": 0.568,
+        "commonLines": 102
+      }
+    },
+    {
+      "blob": "8003571728fc36b2cf1dcc63ebc571011b60e5ed",
+      "bytes": 427,
+      "category": "code",
+      "path": "docs/audits/talkx-2026-09-11/vitest.config.ts",
+      "nearestMain": {
+        "path": "vitest.contracts.config.ts",
+        "score": 0.235,
+        "commonLines": 2
+      }
+    },
+    {
+      "blob": "6c112bcdaf6ceaa3d89a73c7de4e825b96758932",
+      "bytes": 19439,
+      "category": "code",
+      "path": "src/components/inbox/tabs/Crm360Tab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/Crm360Tab.tsx",
+        "score": 0.763,
+        "commonLines": 143
+      }
+    },
+    {
+      "blob": "f91441bfc3dbe7b1fd76aa53645db42690885f12",
+      "bytes": 2293,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/ci/crm-integration-contract.unit.mjs",
+        "score": 0.667,
+        "commonLines": 28
+      }
+    },
+    {
+      "blob": "801603a3ad109a4e19a867dd6e4888ee6fcf0773",
+      "bytes": 50765,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.872,
+        "commonLines": 509
+      }
+    },
+    {
+      "blob": "eb16693bf071805a612e33419bdff1affa00feec",
+      "bytes": 25494,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.682,
+        "commonLines": 246
+      }
+    },
+    {
+      "blob": "2c1769b229b4b7d26bb5a2af3a43cd31ced56858",
+      "bytes": 20668,
+      "category": "code",
+      "path": "src/components/inbox/tabs/NotesTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/NotesTab.tsx",
+        "score": 0.568,
+        "commonLines": 102
+      }
+    },
+    {
+      "blob": "da1ca9d674de792e1da39807b1b17ab0df86f4b0",
+      "bytes": 17579,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql",
+        "score": 0.995,
+        "commonLines": 275
+      }
+    },
+    {
+      "blob": "3721abd93da6b7be8123f340772e3552c7222554",
+      "bytes": 4872,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-e90-links-contract.test.mjs",
+        "score": 0.821,
+        "commonLines": 39
+      }
+    },
+    {
+      "blob": "7522c302b1a4a71e5403b425f6498433cafc9c93",
+      "bytes": 5492,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatDialogs.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatDialogs.tsx",
+        "score": 0.943,
+        "commonLines": 50
+      }
+    },
+    {
+      "blob": "ef29c94fa7e1e4424d0a65ef83ce7fd4fcaf998b",
+      "bytes": 6631,
+      "category": "code",
+      "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+        "score": 0.705,
+        "commonLines": 55
+      }
+    },
+    {
+      "blob": "c02a25cb48f1f636064d91047dff06d66e2b201d",
+      "bytes": 5804,
+      "category": "code",
+      "path": "src/components/inbox/chat/ConversationTabs.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ConversationTabs.tsx",
+        "score": 0.785,
+        "commonLines": 62
+      }
+    },
+    {
+      "blob": "73345171076bc5b5a6a06ceb09245960ed972fde",
+      "bytes": 3303,
+      "category": "code",
+      "path": "src/components/inbox/tabs/SectionCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/SectionCard.tsx",
+        "score": 0.899,
+        "commonLines": 40
+      }
+    },
+    {
+      "blob": "253515ea4bbfeaac2c2033af8b2ef7c0d708bb64",
+      "bytes": 25013,
+      "category": "code",
+      "path": "supabase/functions/talkx-send/index.ts",
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.677,
+        "commonLines": 242
+      }
+    },
+    {
+      "blob": "553c3f53348fcdd7723af717d66caa5f9462af78",
+      "bytes": 50914,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.875,
+        "commonLines": 511
+      }
+    },
+    {
+      "blob": "a33d154a0c0c938e1c3a99720b9df4c27b0ee342",
+      "bytes": 51082,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.894,
+        "commonLines": 523
+      }
+    },
+    {
+      "blob": "344173dedac4a043fffde4fefb1f540e83369146",
+      "bytes": 2155,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260830070000_fn_effective_role_and_sync_trigger.sql",
+        "score": 0.036,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "5241dd3e47de0fc883b29c12734dcf250c5b1f9e",
+      "bytes": 168,
+      "category": "code",
+      "path": "docs/audits/talkx-plan-review-2026-09-11/vitest.config.ts",
+      "nearestMain": {
+        "path": "postcss.config.js",
+        "score": 0.333,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "a6449de2a6047a7eb3af569c3baa6bbc81a646bf",
+      "bytes": 2033,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
+        "score": 0.526,
+        "commonLines": 20
+      }
+    },
+    {
+      "blob": "bd4871af04dfc5f2b925e6d2bbefbd6b3feb15e0",
+      "bytes": 10750,
+      "category": "code",
+      "path": "src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+      "nearestMain": {
+        "path": "src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+        "score": 0.987,
+        "commonLines": 118
+      }
+    },
+    {
+      "blob": "e548b7348fdd93d6b0fa31d91c7982f28b877499",
+      "bytes": 56003,
+      "category": "text",
+      "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+      "nearestMain": {
+        "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+        "score": 0.991,
+        "commonLines": 291
+      }
+    },
+    {
+      "blob": "4c4da7ba52a55d5276c64fc2adb986c633012751",
+      "bytes": 5119,
+      "category": "code",
+      "path": "docs/audits/talkx-plan-review-2026-09-11/editor-gaps.repro.tsx",
+      "nearestMain": {
+        "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        "score": 0.125,
+        "commonLines": 17
+      }
+    },
+    {
+      "blob": "094e53e4434d5c17b389dd13e00e7b9e64ab1914",
+      "bytes": 5380,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FileDetailPanel.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FileDetailPanel.tsx",
+        "score": 0.667,
+        "commonLines": 43
+      }
+    },
+    {
+      "blob": "5e5007154261ae3571b21da52fff34c2cd92d483",
+      "bytes": 8072,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.297,
+        "commonLines": 58
+      }
+    },
+    {
+      "blob": "c0516105ed9b54c943b09cc28260b88d379ea8ef",
+      "bytes": 13832,
+      "category": "code",
+      "path": "src/components/inbox/ConversationListSidebar.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/ConversationListSidebar.tsx",
+        "score": 0.895,
+        "commonLines": 149
+      }
+    },
+    {
+      "blob": "565247d5039a59a5992392990f87ad83515f7c7b",
+      "bytes": 33269,
+      "category": "code",
+      "path": "src/components/talkx/useCampaignEditor.ts",
+      "nearestMain": {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "score": 0.906,
+        "commonLines": 408
+      }
+    },
+    {
+      "blob": "48551bccb4bf6ceeb9a7af661a85b26f161a2535",
+      "bytes": 6027,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/hooks/system/usePushNotifications.ts",
+        "score": 0.996,
+        "commonLines": 115
+      }
+    },
+    {
+      "blob": "645f4fa0f70baefb4c20644c11711bc685dd20fc",
+      "bytes": 3301,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactTasksWidget.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactTasksWidget.tsx",
+        "score": 0.73,
+        "commonLines": 23
+      }
+    },
+    {
+      "blob": "30612d83f5f7c462bb4cfad1d44c2a34ac18e1b3",
+      "bytes": 10987,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql",
+        "score": 0.099,
+        "commonLines": 9
+      }
+    },
+    {
+      "blob": "21624f6fba95322d6b0132cd1fa98197a46cc7f3",
+      "bytes": 17534,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+        "score": 0.358,
+        "commonLines": 248
+      }
+    },
+    {
+      "blob": "36680b014dcef60cda0f437e4b290ea9c3666e95",
+      "bytes": 3067,
+      "category": "code",
+      "path": "src/components/inbox/tabs/OrdersTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/OrdersTab.tsx",
+        "score": 0.727,
+        "commonLines": 24
+      }
+    },
+    {
+      "blob": "886d7bfca37cce96461ea2ccf0bcf208d31ced71",
+      "bytes": 1091,
+      "category": "code",
+      "path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/conversation-list/ConversationGroupHeader.tsx",
+        "score": 0.69,
+        "commonLines": 10
+      }
+    },
+    {
+      "blob": "827727dd4df2f08ec11e1c7a3909f5a99a3722e8",
+      "bytes": 8570,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FilesTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FilesTab.tsx",
+        "score": 0.724,
+        "commonLines": 84
+      }
+    },
+    {
+      "blob": "997a35134cd5e8e0898c08c16bd9bca63c28a5ff",
+      "bytes": 14947,
+      "category": "code",
+      "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+        "score": 0.826,
+        "commonLines": 152
+      }
+    },
+    {
+      "blob": "e47be1f95b573422a60a39224e64577f74297f3b",
+      "bytes": 2348,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/db-audit/crm-sync-outbox-contract.test.mjs",
+        "score": 0.593,
+        "commonLines": 32
+      }
+    },
+    {
+      "blob": "fb7dfff3b55e3a5e473d018fa38322ee8abfe4ac",
+      "bytes": 22598,
+      "category": "code",
+      "path": "src/components/catalog/ExternalProductManagement.tsx",
+      "nearestMain": {
+        "path": "src/components/catalog/ExternalProductManagement.tsx",
+        "score": 0.768,
+        "commonLines": 271
+      }
+    },
+    {
+      "blob": "b8806950f97d977d62746199b8d7ee47cecf15db",
+      "bytes": 9974,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "scripts/edge-deploy/manifest-lib.mjs",
+        "score": 0.922,
+        "commonLines": 178
+      }
+    },
+    {
+      "blob": "42823df9e7d8a20ea31ed625f82526cb0a658404",
+      "bytes": 4879,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/_shared/crm-integration-contract.ts",
+        "score": 0.628,
+        "commonLines": 60
+      }
+    },
+    {
+      "blob": "8584cbb4cde25c460c25e5a6733150f259f3c0dd",
+      "bytes": 2080,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": ".github/workflows/crm-sync-worker.yml",
+        "score": 0.718,
+        "commonLines": 28
+      }
+    },
+    {
+      "blob": "8a8b2520627bdfe83bd19a433be8195e85eb73c2",
+      "bytes": 54290,
+      "category": "text",
+      "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+      "nearestMain": {
+        "path": "docs/audits/REVISAO_PLANO_100_ETAPAS_2026-09-10.md",
+        "score": 0.984,
+        "commonLines": 285
+      }
+    },
+    {
+      "blob": "23905f1bacb957afda93deb479d10c83ca03b099",
+      "bytes": 2605,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TaskColumn.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TaskColumn.tsx",
+        "score": 0.54,
+        "commonLines": 17
+      }
+    },
+    {
+      "blob": "c29101a28227badd21a04ef6909f8ddc16e6424f",
+      "bytes": 14420,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+        "score": 0.983,
+        "commonLines": 146
+      }
+    },
+    {
+      "blob": "e193971e30f138200a03f6bca9c598f7e6e5cf74",
+      "bytes": 50652,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.886,
+        "commonLines": 517
+      }
+    },
+    {
+      "blob": "6694072caf5d96b80b278c176c7e9c99e89faf40",
+      "bytes": 20575,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+        "score": 0.682,
+        "commonLines": 145
+      }
+    },
+    {
+      "blob": "719703a6202b2404fd1fa1708c8c0e54886c14a2",
+      "bytes": 7696,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql",
+        "score": 0.817,
+        "commonLines": 114
+      }
+    },
+    {
+      "blob": "c699e7075c187cf2f263d3058a3c8a713621f24d",
+      "bytes": 27592,
+      "category": "code",
+      "path": "supabase/functions/talkx-send/index.ts",
+      "nearestMain": {
+        "path": "supabase/functions/talkx-send/index.ts",
+        "score": 0.661,
+        "commonLines": 246
+      }
+    },
+    {
+      "blob": "a89c1d0c9dadf5069942b748ce93ae7d3e198d71",
+      "bytes": 25143,
+      "category": "text",
+      "path": "docs/design/INBOX_FIDELIDADE_STATUS.md",
+      "nearestMain": {
+        "path": "docs/design/INBOX_FIDELIDADE_STATUS.md",
+        "score": 0.948,
+        "commonLines": 118
+      }
+    },
+    {
+      "blob": "e89d51dde01241d5b89217d2ab7904a368ac8bdd",
+      "bytes": 1897,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "src/services/__tests__/chat.service.test.ts",
+        "score": 0.941,
+        "commonLines": 32
+      }
+    },
+    {
+      "blob": "69a0ed4d0a11b21c3754b7265a4a6da59780a9b7",
+      "bytes": 9440,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql",
+        "score": 0.929,
+        "commonLines": 144
+      }
+    },
+    {
+      "blob": "9ea27f656be4f9f11a3e36d398f11176ab30b0fe",
+      "bytes": 6468,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TaskCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TaskCard.tsx",
+        "score": 0.917,
+        "commonLines": 55
+      }
+    },
+    {
+      "blob": "c3a2e3c92fb582f53ba514c38e6999d2586fd39f",
+      "bytes": 4253,
+      "category": "json_or_markdown",
+      "path": "package.json",
+      "nearestMain": {
+        "path": "package.json",
+        "score": 0.528,
+        "commonLines": 65
+      }
+    },
+    {
+      "blob": "22a3af41fe9aba0c7b4d2f091e5ca0602c700427",
+      "bytes": 3989,
+      "category": "code",
+      "path": "docs/audits/talkx-revalidation-2026-09-11/main-webhook-probes.mjs",
+      "nearestMain": {
+        "path": "scripts/db-audit/talkx-scheduler-contract.test.mjs",
+        "score": 0.032,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "d9a5a5c4bd292fffbde6809c0820bb8de3176520",
+      "bytes": 8672,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FilesTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FilesTab.tsx",
+        "score": 0.724,
+        "commonLines": 84
+      }
+    },
+    {
+      "blob": "29a89f5dbbaa0fec9f151635aa76dc8532cf1a41",
+      "bytes": 13301,
+      "category": "code",
+      "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+      "nearestMain": {
+        "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        "score": 0.839,
+        "commonLines": 154
+      }
+    },
+    {
+      "blob": "9da9b16e8de18e47cc1e35c9473953d06c12ee7d",
+      "bytes": 30172,
+      "category": "code",
+      "path": "src/components/talkx/useCampaignEditor.ts",
+      "nearestMain": {
+        "path": "src/components/talkx/useCampaignEditor.ts",
+        "score": 0.781,
+        "commonLines": 333
+      }
+    },
+    {
+      "blob": "99aa6d7ec9d83ffdef363287bb2309c0c143a282",
+      "bytes": 3583,
+      "category": "code",
+      "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+        "score": 0.967,
+        "commonLines": 44
+      }
+    },
+    {
+      "blob": "98ad338dba2c468861cfd031898b7043567b4a1d",
+      "bytes": 5503,
+      "category": "code",
+      "path": "src/components/inbox/chat/ConversationTabContent.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ConversationTabContent.tsx",
+        "score": 0.671,
+        "commonLines": 55
+      }
+    },
+    {
+      "blob": "f5b01b0b417c39e30857a36c9958ba88b118c303",
+      "bytes": 11107,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260329175910_f55d2541-447c-40cb-b18c-1e03a02eeced.sql",
+        "score": 0.098,
+        "commonLines": 9
+      }
+    },
+    {
+      "blob": "90b14d35c9229d541f8fc3d7215ea5fd3eb39eeb",
+      "bytes": 8531,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+        "score": 0.989,
+        "commonLines": 132
+      }
+    },
+    {
+      "blob": "31b61d26b26dd960be720e1df0c7a70f15f5bac5",
+      "bytes": 909,
+      "category": "json_or_markdown",
+      "path": ".claude/settings.json",
+      "nearestMain": {
+        "path": ".claude/settings.json",
+        "score": 0.316,
+        "commonLines": 3
+      }
+    },
+    {
+      "blob": "15b72ffd2c52c56cb6d0b1ae529023afbfe2c6fc",
+      "bytes": 25075,
+      "category": "text",
+      "path": "docs/design/INBOX_FIDELIDADE_STATUS.md",
+      "nearestMain": {
+        "path": "docs/design/INBOX_FIDELIDADE_STATUS.md",
+        "score": 0.948,
+        "commonLines": 118
+      }
+    },
+    {
+      "blob": "aabc956d3e9c40b72cd0a84569b12b796cb9877b",
+      "bytes": 8303,
+      "category": "code",
+      "path": "src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/__tests__/ChatPanelHeader.test.tsx",
+        "score": 0.673,
+        "commonLines": 72
+      }
+    },
+    {
+      "blob": "b6c405bedf36d002791507e3bcec040e7a2a1403",
+      "bytes": 6881,
+      "category": "sql_or_embedded_sql",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql",
+        "score": 0.812,
+        "commonLines": 110
+      }
+    },
+    {
+      "blob": "19c6079e9ae3a96d3bee1a1d32fc65e04d2e1ece",
+      "bytes": 20993,
+      "category": "code",
+      "path": "src/components/inbox/useFileUploadLogic.ts",
+      "nearestMain": {
+        "path": "src/components/inbox/useFileUploadLogic.ts",
+        "score": 0.78,
+        "commonLines": 184
+      }
+    },
+    {
+      "blob": "b5c65f80af37f8ea1f0631c3ef31255e29790546",
+      "bytes": 50120,
+      "category": "code",
+      "path": "docs/audits/talkx-plan-review-2026-09-11/REVISAO_100_ETAPAS.md",
+      "nearestMain": {
+        "path": "docs/audits/talkx-plan-review-2026-09-11/REVISAO_100_ETAPAS.md",
+        "score": 0.98,
+        "commonLines": 298
+      }
+    },
+    {
+      "blob": "eec7f142578e3cce9883204dbdf0485f543c8585",
+      "bytes": 8163,
+      "category": "code",
+      "path": "src/components/inbox/tabs/FileCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/FileCard.tsx",
+        "score": 0.573,
+        "commonLines": 49
+      }
+    },
+    {
+      "blob": "f6c7455b3cfb3bb1f4b8c1bcee74b0279c447890",
+      "bytes": 14924,
+      "category": "code",
+      "path": "src/components/inbox/tabs/HistoryTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/HistoryTab.tsx",
+        "score": 0.58,
+        "commonLines": 96
+      }
+    },
+    {
+      "blob": "a7c9dbe740e8f2afe3c85693665bb3f24aff8924",
+      "bytes": 13481,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.499,
+        "commonLines": 117
+      }
+    },
+    {
+      "blob": "25ce0b68fe05915d6abc49601b289bad591341b8",
+      "bytes": 3566,
+      "category": "code",
+      "path": "scripts/ci/bundle-budget.unit.mjs",
+      "nearestMain": {
+        "path": "scripts/ci/bundle-budget.unit.mjs",
+        "score": 0.869,
+        "commonLines": 53
+      }
+    },
+    {
+      "blob": "51d145cfbcda1e180a825a43d6383fe061556f74",
+      "bytes": 12359,
+      "category": "code",
+      "path": "src/components/inbox/tabs/AiTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/AiTab.tsx",
+        "score": 0.777,
+        "commonLines": 101
+      }
+    },
+    {
+      "blob": "acd39b7ae200ef512e02b9a2d6d5b065e6e19887",
+      "bytes": 8497,
+      "category": "code",
+      "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/chat/ChatInputToolbars.tsx",
+        "score": 0.989,
+        "commonLines": 132
+      }
+    },
+    {
+      "blob": "67d5e7720eca787d6aadfd2bbff49783c1d49c2e",
+      "bytes": 5512,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/audits/TALKX_AUDIT_ARCHIVE_2026-09-11.md",
+        "score": 1,
+        "commonLines": 45
+      }
+    },
+    {
+      "blob": "e7d5456bb216ecad11816989fdb29fe07dd237ac",
+      "bytes": 24525,
+      "category": "code",
+      "path": "src/components/catalog/catalogShared.tsx",
+      "nearestMain": {
+        "path": "src/components/catalog/catalogShared.tsx",
+        "score": 0.944,
+        "commonLines": 357
+      }
+    },
+    {
+      "blob": "4cd9f33391ff366dde459c8d9508358053c0a654",
+      "bytes": 16708,
+      "category": "code",
+      "path": null,
+      "nearestMain": {
+        "path": "supabase/functions/crm-integration/index.ts",
+        "score": 0.692,
+        "commonLines": 175
+      }
+    },
+    {
+      "blob": "c2db6535276dcb864a31767b22e99d2ae058a5c2",
+      "bytes": 2308,
+      "category": "code",
+      "path": "src/components/inbox/tabs/KpiStrip.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/KpiStrip.tsx",
+        "score": 0.838,
+        "commonLines": 31
+      }
+    },
+    {
+      "blob": "a0df631caa6dc4d7af32d26c92eedb3c894fab71",
+      "bytes": 8,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": ".agents/skills/zapp-web-v2/SKILL.md",
+        "score": 0
+      }
+    },
+    {
+      "blob": "bee26f8bc0bce4584688932388c293ee2064df83",
+      "bytes": 20748,
+      "category": "text",
+      "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+      "nearestMain": {
+        "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+        "score": 0.815,
+        "commonLines": 174
+      }
+    },
+    {
+      "blob": "30e3dd8a510a1adfea48d45935c7207594f9d5c1",
+      "bytes": 33188,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/handoffs/handoff_cline_execucao_corretiva_exaustiva_2026_08_30.md",
+        "score": 0.494,
+        "commonLines": 374
+      }
+    },
+    {
+      "blob": "12e615bd5040e3fe76ae2d17ddbac7d81b9d5513",
+      "bytes": 8445,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/security/validation-report-2026-08-30.md",
+        "score": 0.441,
+        "commonLines": 50
+      }
+    },
+    {
+      "blob": "53e6e11ca5c44d917d61a083b41cc882a7d1337a",
+      "bytes": 7563,
+      "category": "code",
+      "path": "docs/audits/talkx-2026-09-11/observed-gaps.repro.tsx",
+      "nearestMain": {
+        "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        "score": 0.136,
+        "commonLines": 20
+      }
+    },
+    {
+      "blob": "aceba70547dffac1283c7c65641e3a7a9c6e79d3",
+      "bytes": 8058,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TasksTab.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TasksTab.tsx",
+        "score": 0.752,
+        "commonLines": 62
+      }
+    },
+    {
+      "blob": "5eec3df85ee98edf8e2f1382c0efd650255af834",
+      "bytes": 47528,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.792,
+        "commonLines": 446
+      }
+    },
+    {
+      "blob": "c8edc9a0766ff6ed09ffb5d0ec49c7eeee5352f0",
+      "bytes": 29217,
+      "category": "code",
+      "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+        "score": 0.778,
+        "commonLines": 243
+      }
+    },
+    {
+      "blob": "d9edd707b168323e811a9992426980e0729023b7",
+      "bytes": 48490,
+      "category": "json_or_markdown",
+      "path": "supabase/deployment-manifest.json",
+      "nearestMain": {
+        "path": "supabase/deployment-manifest.json",
+        "score": 0.813,
+        "commonLines": 462
+      }
+    },
+    {
+      "blob": "36f2fb76043d49ca2935491e2365b16eacd41834",
+      "bytes": 2274,
+      "category": "code",
+      "path": "src/components/inbox/tabs/KpiStrip.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/KpiStrip.tsx",
+        "score": 0.838,
+        "commonLines": 31
+      }
+    },
+    {
+      "blob": "98f7952a52c7f7d66a401a817e8d87892a661278",
+      "bytes": 1430,
+      "category": "text",
+      "path": null,
+      "nearestMain": {
+        "path": "docs/migration/source-ddl/table_contacts.sql",
+        "score": 0.02,
+        "commonLines": 1
+      }
+    },
+    {
+      "blob": "4ffb3fda563fe49155ba18370bfcd92d93307d60",
+      "bytes": 6434,
+      "category": "code",
+      "path": "src/components/inbox/tabs/TaskCard.tsx",
+      "nearestMain": {
+        "path": "src/components/inbox/tabs/TaskCard.tsx",
+        "score": 0.917,
+        "commonLines": 55
+      }
+    }
+  ],
+  "fsckCounts": {
+    "commit": 69,
+    "tree": 314,
+    "blob": 236
+  },
+  "physicalAhead": 0,
+  "physicalBehind": 128,
+  "physicalDiffPaths": 79,
+  "ignored": {
+    "total": 60144,
+    "dependencies": 58587,
+    "dist": 764,
+    "graphify": 712,
+    "coverage": 57,
+    "husky": 17,
+    "playwright": 1,
+    "testResults": 1,
+    "supabaseTemp": 1,
+    "typescriptCache": 2,
+    "candidates": [
+      {
+        "path": ".claude/settings.local.json",
+        "bytes": 555,
+        "decision": "keep-local"
+      },
+      {
+        "path": "deno.lock",
+        "bytes": 14901,
+        "decision": "separate-reproducibility-policy"
+      }
+    ]
+  },
+  "database": {
+    "project": "tnnnlkbymytvtqngbbqh",
+    "run": 35742672654,
+    "versions": 446,
+    "physicalVersions": 443,
+    "verifiedEvidence": 431,
+    "pinnedWithoutHistoricalContent": 11,
+    "warningsWithoutHistoricalContent": 4,
+    "catalogEqual": true,
+    "manifestEqual": true
+  },
+  "edge": {
+    "allRun": 35737945858,
+    "allCommit": "a126659e3710ad6c195117e1d42d04029a529ad6",
+    "latestRun": 35742846771,
+    "latestScope": "csp-report",
+    "sourceManifest": "cc85593e8d23a5260e50ff0840e26d1b37ec2dd48ce282dfbd038f0030bbcca2",
+    "functionCount": 67,
+    "sourceDifferences": 0,
+    "smokePass": 67,
+    "smokeFail": 0,
+    "digestChangesBetweenAttestations": [
+      "csp-report",
+      "gmail-webhook",
+      "message-delivery",
+      "promogifts-catalog",
+      "public-api",
+      "talkx-link",
+      "whatsapp-webhook"
+    ]
+  },
+  "validation": {
+    "testsPass": 158,
+    "testsFail": 0,
+    "testsSkip": 0,
+    "candidateBlobsScanned": 245,
+    "scanBytes": 7106638,
+    "scanExitCode": 0
+  },
+  "limits": [
+    "Similarity is a triage heuristic, not semantic acceptance.",
+    "No direct SQL or authenticated business smoke was executed by this audit.",
+    "Not all historical blobs were individually functionally reviewed.",
+    "No code, SQL, deployment, secrets, push or remote merge changed by this audit."
+  ]
+}

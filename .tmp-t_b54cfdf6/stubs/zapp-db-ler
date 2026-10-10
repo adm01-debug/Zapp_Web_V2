@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# DOBRE DE ENSAIO do `zapp-db-ler` (t_b54cfdf6). O real responde rc=77 ao agente (regra R1:
+# consulta o banco de PRODUCAO) e, sem registro, o passo `banco_local` nem chega ao explicador.
+# Este dobre devolve o registro de versoes da base canonica (fixture derivada de `dia/2026-10-06`)
+# no MESMO formato que o zapp-verify espera: {"rows":[{"v":"v1,v2,..."}]}.
+if [ "${LEDGER_BLOQ:-0}" = "1" ]; then
+  echo "PROIBIDO a agentes: zapp-db-ler consulta o banco de PRODUCAO (regra R1). Use o banco LOCAL do cartao (zapp-db-local / hermes-db-migrar)." >&2
+  exit 77
+fi
+printf '{"rows":[{"v":"%s"}]}\n' "$(paste -sd, "${LEDGER_VERSOES:?LEDGER_VERSOES nao apontada}")"

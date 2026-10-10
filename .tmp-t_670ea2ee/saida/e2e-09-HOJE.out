@@ -1,0 +1,10 @@
+CMD: bash /home/joaquim_ataides/.local/bin/zapp-verify /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/edge/arvore v2-26100617458c7f --rapido
+EXIT: 1
+--- stdout+stderr ---
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: indexes|r:public.tab_snap.ind_snap; indexes|r:public.tab_led.ind_ledger; indexes|r:public.tab_both.ind_both (+2)
+VERIFY: VERMELHO em banco_local (1s)

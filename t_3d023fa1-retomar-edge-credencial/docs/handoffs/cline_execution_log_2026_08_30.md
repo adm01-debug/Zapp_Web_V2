@@ -1,0 +1,297 @@
+# Diário de Execução — Programa de 100 Etapas (Cline)
+
+> **Branch de trabalho:** `chore/excellence-wave-01`
+> **Base:** `origin/main` @ `19b0f6448910bcb29ccd9ddd964f99a303a823b0`
+> **Data de início:** 2026-08-30 (America/Sao_Paulo)
+> **Executor:** Cline — Full Stack Sênior
+> **Handoff de origem:** `docs/handoffs/handoff_cline_100_etapas_2026_08_30.md`
+> **Estados:** NOT_STARTED | IN_PROGRESS | BLOCKED | VERIFIED | SKIPPED_WITH_EVIDENCE | ROLLED_BACK
+> **Auditoria corretiva:** Codex, 2026-08-30. O diário original divergia do handoff em 94/100 títulos; a tabela abaixo foi reconciliada diretamente com os headings canônicos do handoff.
+
+---
+
+## 1. Ambiente de ferramentas (Etapa 003)
+
+| Ferramenta | Observado | Esperado (CI/handoff) | Status |
+|---|---|---|---|
+| SO | Linux 6.18.33.2-microsoft-standard-WSL2 (WSL2) | Linux | MATCH |
+| Arquitetura | x86_64 | x86_64 | MATCH |
+| Node | v24.19.0 | 24 (ci.yml) | MATCH |
+| Bun | 1.4.0 | 1.4.0 (ci.yml) | MATCH |
+| git | 2.43.0 | — | registrado |
+| psql | ausente | — | registrado (não necessário nesta onda) |
+| `.nvmrc` | `20` | 24 | DIVERGENTE → tratar na etapa 014 |
+
+Instalação congelada: `bun install --frozen-lockfile` → exit 0, "Checked 903 installs across 987 packages (no changes)"; `git status --porcelain bun.lock` vazio → **bun.lock intacto**.
+
+## 2. Verificação de identidades (Etapa 005)
+
+| Alvo | Esperado | Observado | Status |
+|---|---|---|---|
+| GitHub repo | `adm01-debug/zapp-web-v2`, default `main` | `adm01-debug/Zapp_Web_V2` (match case-insensitive), `default_branch=main`, permissões admin/push, `pushed_at` 2026-08-30T16:05:54Z | **MATCH** |
+| Supabase oficial | project `tnnnlkbymytvtqngbbqh`, PostgreSQL 17.6, Supabase Cloud | (a) MCP self-hosted da sessão Cline → PG 15.8 (MISMATCH, proibido); (b) tentativa do MCP do Codex → `401 Unauthorized`; (c) MCP HTTP dedicado `supabase-zapp-web-v2-mcp` v1.1.2 (Cloudflare Workers; conector documentado em `docs/migration/HANDOFF.md`), fornecido pelo usuário em 2026-08-30 → PG **17.6**, db `postgres`, amostras de migrations correspondem ao repo, mas a paridade falha (§5.5.1) | **MATCH alegado pelo Cline via (c), não reproduzido pelo Codex** — leituras permitidas apenas após handshake da sessão; mutações = Classe D e exigem aprovação explícita |
+| Vercel | conta/projeto `juca1/zapp-web-v2`, project id `prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp` | GET público retornou 200 e o repo contém SPA rewrite; conta e project id não foram consultados na API | **PARTIAL** — superfície disponível, identidade do projeto não comprovada |
+| Evolution GO | host público, VPS Hostinger e projeto `evolution-go-rxj2` documentados no handoff | GET `/` retornou 404; não havia MCP Hostinger para confirmar VPS, projeto, containers ou portas | **PARTIAL** — host respondeu, identidade interna não comprovada |
+
+Evidência adicional Supabase: `scripts/db-audit/database-identity.json` exige `server_major=17` e `connection_provider=supabase-cloud` — o MCP self-hosted da sessão (15.8, IP privado) falha nos dois critérios; o MCP dedicado da §5.5.1 (PG 17.6, perfil Cloud) satisfaz ambos.
+
+## 3. Decisões pendentes
+
+- **[VERIFICADO PELO CLINE; NÃO REPRODUZIDO PELO CODEX EM 2026-08-30]** O Cline relatou identidade oficial via MCP HTTP dedicado `supabase-zapp-web-v2-mcp` (PG 17.6; §5.5.1). O MCP disponível ao Codex retornou 401, portanto a auditoria independente mantém esta evidência como parcial. Regras: leituras pelo conector só são Classe A após handshake da própria sessão; **mutações (DDL/DML, `db_apply_migration`, escritas em auth/storage/functions) são Classe D e exigem aprovação explícita**. O URL (com token) é segredo e não foi registrado neste repo (etapa 006). O MCP self-hosted da sessão (PG 15.8) e o endpoint que retornou `401` ao Codex permanecem proibidos. Porções remotas das etapas 010, 061–070, 084 e 095–099: **escrita bloqueada sem aprovação**.
+- **[DRIFT PRELIMINAR]** `db_migrations` remoto lista 17 versões `20260830010000`–`20260830161547`; o repo tem arquivo local apenas para `20260830153000` → **16 versões remotas sem arquivo local** (`_superseded/` e `_foreign/` não as contêm). Classificação formal (PARITY / EXPECTED_DIFFERENCE / DRIFT_BLOCKING) pertence à etapa 010 — nenhuma ação tomada.
+- **[BLOQUEIO PARCIAL]** MCP Hostinger ausente na sessão: verificação interna da Evolution GO (containers, portas) pendente; somente verificação de superfície (HTTP) foi feita.
+- **[BLOQUEIO PARCIAL]** Vercel respondeu publicamente, mas conta e project id não foram provados por API/CLI autenticada; nenhuma ação externa Vercel está autorizada.
+- **[DECISÃO PENDENTE — SEGURANÇA]** Uma credencial Vercel foi publicada em chat (flagrada pela auditoria Codex) e aguarda decisão independente do proprietário: rotação/revogação (Classe D) ou aceite formal de risco com prazo. Não foi copiada para este repositório. Enquanto pendente, a etapa 006 permanece IN_PROGRESS.
+- **[DIVERGÊNCIA]** `.nvmrc` declara Node 20 enquanto a CI fixa Node 24 e a máquina local roda 24.19.0 — alinhar na etapa 014, depois de reproduzir e revisar o impacto.
+- **[DOC]** `AGENTS.md` raiz não existe (apenas `.codex/AGENTS.md`, que o referencia como baseline); `graphify-out/` ausente apesar da seção graphify em `CLAUDE.md` — ambos previstos para tratamento nas etapas 039/040/094.
+- **[SEGURANÇA]** A etapa 006 canônica trata o URL autenticado do MCP como credencial exposta; ela não autoriza alteração de workflows nem rotação sem aprovação Classe D.
+- **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-01/F-02]** Valores com formato de segredo real da Evolution API (`apikey` em `docs/TROUBLESHOOTING.md` L72/L89; `x-webhook-secret` em `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` L75 e `tmp/`) estão versionados no HEAD. Aguardam: (1) rotação no painel Evolution/Hostinger (Classe D) e (2) sanitização dos docs (Classe B, executável após rotação aprovada). Valores não copiados para artefatos do handoff.
+- **[DECISÃO PENDENTE — SEGURANÇA · etapa 007, F-03]** Credenciais Lalamove versionadas entre 2026-03-23 e 2026-04-12 (histórico, fora do HEAD). Decisão: rotacionar/encerrar a conta se ainda ativa; rewrite de histórico não planejado (risco aceito documental, a confirmar).
+- **[VERIFICAÇÃO PENDENTE — SEGURANÇA · etapa 007, F-04]** `supabase/functions/migrate-helper/` foi removido em 2026-08-28 (`1f2e9120`) por expor `SERVICE_ROLE_KEY` via endpoint público. Confirmar se a `SUPABASE_SERVICE_ROLE_KEY` do projeto oficial foi rotacionada após essa data.
+- **[RESOLVIDO — etapa 007, F-06]** `secrets.TYPES_SYNC_PR_TOKEN` ausente dos 8 repo secrets, porém `types-sync.yml` degrada graciosamente para `GITHUB_TOKEN` (L74–76 e L306 `${{ secrets.TYPES_SYNC_PR_TOKEN || github.token }}`) e o repo permite PRs por Actions (`can_approve_pull_request_reviews=true`) → **não-bloqueante**; criar o token dedicado virou hardening opcional. Evidência: `docs/security/validation-report-2026-08-30.md` §2 e §4 (S-1).
+- **[RESOLVIDO — veredito R3, G-09 = Caso A]** DDL declarado como aplicado no PR #59, mas não representado corretamente no ledger devido à colisão de versão `20260829100000` (registrada: `fix_clear_login_operator_triple_arrow`). Estado efetivo verificado em runtime read-only (identidade provada: PG 17.6 + fingerprint + sem 401): função **contém o filtro** `is_active=true` (functiondef sha256 `0c0d1426...b332616`), `returned_inactive=0`, `inactive_profiles=0` → **drift de ledger, não vulnerabilidade ativa**. Canonização forward-only no commit `f8e28ceb` (versão única `20260830170000`; aplicação futura só pelo mecanismo oficial + comparação do corpo remoto).
+- **[ALTO — validação R2, G-10]** `db-guard` run #198 **FAILURE na main** (30/08 15:28, step "Validar migrations localmente", causa G-03) e **não é required check**. Correções `57b425bd`+`f8e28ceb` deixam o guard verde localmente; **pendente de push autorizado** para refletir na main. Virar required check só após o plano do relatório §9.6.
+- **[RESOLVIDO — veredito R3, G-11]** Causa raiz: migration `20260829060000_reconcile_ledger_drift.sql` (commit `7e42fc2b` substituiu o predicado evidence-gated por rename incondicional). Restaurado no commit `57b425bd`; teste **10/10 × 2 execuções consecutivas exit 0**; pin SHA comprovado contra a evidência do próprio teste.
+- **[NOVO — veredito R3, G-12]** 16 migrations remote-only = gap de reproducibilidade/fresh install: **15 placeholders** (`SELECT ... no-op`) em `origin/fix/identity-authz-improvements` e `20260830161547` **ausente do Git**. Plano de recuperação por versão no relatório §9.4; proibido merge de placeholders que mascaram paridade numérica.
+- Nenhuma ação Classe C ou D foi executada. As mudanças documentais locais são Classe B.
+
+## 4. Tabela de estados das 100 etapas
+
+| ID | Título | Estado | Evidência | Commit | Notas |
+|---|---|---|---|---|---|
+| 001 | Ler as regras e declarar entendimento | VERIFIED | log §5.1 + auditoria Codex | 1a47bb44 + correção Codex | Classes A–D reconciliadas com o handoff |
+| 002 | Sincronizar a base de trabalho sem destruir alterações | VERIFIED | log §5.2 + Git | 1a47bb44 | HEAD-base == origin/main 19b0f644; nenhuma mudança descartada |
+| 003 | Fixar e registrar o ambiente de ferramentas | VERIFIED | log §5.3 | 1a47bb44 | install frozen OK; bun.lock intacto; `.nvmrc` pendente na 014 |
+| 004 | Criar o diário de execução e a matriz de decisões | VERIFIED | log §5.4.1 + auditoria Codex | correção Codex | 100 IDs/títulos canônicos reconciliados |
+| 005 | Verificar identidades de todos os alvos sem mutação | BLOCKED | log §5.5 + §5.5.1 + auditoria Codex | 1a47bb44 + correção Codex | Supabase MATCH relatado pelo Cline, mas não reproduzido pelo Codex; Vercel/Evolution ainda parciais |
+| 006 | Tratar o URL autenticado do MCP como credencial exposta | IN_PROGRESS | log §5.6 + auditoria Codex | 6cab178a | MCP: ACCEPTED_TEMPORARY_RISK (adm01, até 2026-09-06); credencial Vercel: decisão independente pendente |
+| 007 | Inventariar superfícies de segredo e dados sensíveis | IN_PROGRESS | log §5.7 + `docs/security/secret-surface-inventory.md` | este commit | gitleaks 8.30.1 (dir + histórico); 8 GitHub secrets + 23 envs edge + VITE_* mapeados; F-01/F-02 (Evolution) e F-03/F-04 aguardam decisão do proprietário; F-06 resolvido na validação (§5.8) |
+| 008 | Capturar o baseline completo da revisão atual | NOT_STARTED | — | — |  |
+| 009 | Capturar baseline de UX, bundle e rede | NOT_STARTED | — | — |  |
+| 010 | Reconciliar migrations do repositório e do banco em modo leitura | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); drift preliminar: 16 versões remotas sem arquivo local |
+| 011 | Transformar o audit de dependências em backlog verificável | NOT_STARTED | — | — |  |
+| 012 | Corrigir vulnerabilidades diretas em lotes pequenos | NOT_STARTED | — | — |  |
+| 013 | Isolar ou substituir a cadeia de planilhas vulnerável | NOT_STARTED | — | — |  |
+| 014 | Fixar a toolchain de forma explícita | NOT_STARTED | — | — | inclui reconciliar `.nvmrc` 20 vs CI 24 |
+| 015 | Habilitar coverage de fato | NOT_STARTED | — | — |  |
+| 016 | Criar ratchet bloqueante para vulnerabilidades | NOT_STARTED | — | — |  |
+| 017 | Substituir o grep de secrets por scanner fail-closed | NOT_STARTED | — | — |  |
+| 018 | Tornar budgets de bundle executáveis | NOT_STARTED | — | — |  |
+| 019 | Otimizar a CI sem reduzir os gates | NOT_STARTED | — | — |  |
+| 020 | Formalizar checks obrigatórios e proteção da main | NOT_STARTED | — | — |  |
+| 021 | Definir a taxonomia e os contratos da suíte | NOT_STARTED | — | — |  |
+| 022 | Eliminar avisos React `act(...)` pela causa raiz | NOT_STARTED | — | — |  |
+| 023 | Padronizar mocks Supabase e contratos de erro | NOT_STARTED | — | — |  |
+| 024 | Medir coverage por risco, não apenas média global | NOT_STARTED | — | — |  |
+| 025 | Implantar coverage ratchet incremental | NOT_STARTED | — | — |  |
+| 026 | Cobrir autenticação, sessão, RBAC e troca de usuário | NOT_STARTED | — | — |  |
+| 027 | Expandir testes de contrato das Edge Functions | NOT_STARTED | — | — |  |
+| 028 | Criar testes locais de migrations, RLS e grants | NOT_STARTED | — | — |  |
+| 029 | Implantar Playwright nos fluxos críticos | NOT_STARTED | — | — |  |
+| 030 | Automatizar smoke de acessibilidade | NOT_STARTED | — | — |  |
+| 031 | Produzir mapa do débito TypeScript estrito | NOT_STARTED | — | — |  |
+| 032 | Criar ilhas estritas e ratchet de TypeScript | NOT_STARTED | — | — |  |
+| 033 | Sincronizar e confiar nos tipos gerados do Supabase | NOT_STARTED | — | — |  |
+| 034 | Remover `any` de fronteiras P0 | NOT_STARTED | — | — |  |
+| 035 | Endurecer nullability e acesso a coleções | NOT_STARTED | — | — |  |
+| 036 | Classificar a dívida ESLint e limpar configuração | NOT_STARTED | — | — |  |
+| 037 | Reduzir lint por ondas sem churn | NOT_STARTED | — | — |  |
+| 038 | Mapear ciclos, god modules e dependências cruzadas | NOT_STARTED | — | — |  |
+| 039 | Formalizar arquitetura modular orientada a features | NOT_STARTED | — | — |  |
+| 040 | Corrigir governança de ADRs e documentação conflitante | NOT_STARTED | — | — |  |
+| 041 | Gerar mapa de bundle por rota e dependência | NOT_STARTED | — | — |  |
+| 042 | Reduzir JavaScript realmente inicial | NOT_STARTED | — | — |  |
+| 043 | Reduzir CSS inicial e duplicação de estilos | NOT_STARTED | — | — |  |
+| 044 | Carregar Mapbox, PDF, charts e planilhas apenas sob demanda | NOT_STARTED | — | — |  |
+| 045 | Otimizar ícones, UI e renderização de listas | NOT_STARTED | — | — |  |
+| 046 | Resolver estratégia de source maps e Sentry | NOT_STARTED | — | — |  |
+| 047 | Substituir Web Vitals manual por telemetria correta | NOT_STARTED | — | — |  |
+| 048 | Auditar React Query, chamadas redundantes e cache | NOT_STARTED | — | — |  |
+| 049 | Executar auditoria manual WCAG 2.2 AA | NOT_STARTED | — | — |  |
+| 050 | Instituir gate Lighthouse e matriz responsiva | NOT_STARTED | — | — |  |
+| 051 | Inventariar APIs, consumidores e trust boundaries | NOT_STARTED | — | — |  |
+| 052 | Auditar toda exceção `verify_jwt = false` | NOT_STARTED | — | — |  |
+| 053 | Endurecer o webhook Evolution contra spoofing e replay | NOT_STARTED | — | — |  |
+| 054 | Endurecer Gmail, ElevenLabs, cron e public API | NOT_STARTED | — | — |  |
+| 055 | Implementar rate limiting distribuído | NOT_STARTED | — | — |  |
+| 056 | Validar payloads e normalizar erros em todas as fronteiras | NOT_STARTED | — | — |  |
+| 057 | Restringir CORS e métodos por endpoint | NOT_STARTED | — | — |  |
+| 058 | Fechar SSRF, redirects e processamento de URLs | NOT_STARTED | — | — |  |
+| 059 | Reduzir privilégios e sanitizar logs | NOT_STARTED | — | — |  |
+| 060 | Aplicar headers de segurança e CSP por etapas | NOT_STARTED | — | — |  |
+| 061 | Resolver qualquer drift de migrations | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); escrita exige aprovação |
+| 062 | Automatizar paridade de schema, catálogo e tipos | NOT_STARTED | — | — |  |
+| 063 | Construir matriz RLS multi-tenant com testes negativos | NOT_STARTED | — | — |  |
+| 064 | Auditar `SECURITY DEFINER`, grants e `search_path` | NOT_STARTED | — | — |  |
+| 065 | Medir queries reais com `pg_stat_statements` | NOT_STARTED | — | — | leitura remota liberada (§5.5.1); escrita exige aprovação |
+| 066 | Corrigir a tempestade em `whatsapp_connections` | NOT_STARTED | — | — |  |
+| 067 | Otimizar queries e índices com planos comprovados | NOT_STARTED | — | — |  |
+| 068 | Auditar Realtime, replica identity e lifecycle de subscriptions | NOT_STARTED | — | — |  |
+| 069 | Implementar retenção, minimização e limpeza LGPD | NOT_STARTED | — | — |  |
+| 070 | Provar backup, restore e RPO/RTO do banco | NOT_STARTED | — | — |  |
+| 071 | Definir arquitetura de observabilidade e taxonomia | NOT_STARTED | — | — |  |
+| 072 | Padronizar correlation e causation IDs | NOT_STARTED | — | — |  |
+| 073 | Instrumentar erros e releases do frontend | NOT_STARTED | — | — |  |
+| 074 | Instrumentar Edge Functions e dependências externas | NOT_STARTED | — | — |  |
+| 075 | Monitorar Evolution GO e a VPS Hostinger | NOT_STARTED | — | — |  |
+| 076 | Consolidar idempotência, DLQ e replay de webhooks | NOT_STARTED | — | — |  |
+| 077 | Definir SLOs, SLIs e alertas acionáveis | NOT_STARTED | — | — |  |
+| 078 | Atualizar runbooks por sintoma e decisão | NOT_STARTED | — | — |  |
+| 079 | Executar game days controlados | NOT_STARTED | — | — |  |
+| 080 | Instituir post-mortem sem culpa e métricas DORA | NOT_STARTED | — | — |  |
+| 081 | Formalizar ambientes e identity guards | NOT_STARTED | — | — |  |
+| 082 | Criar preview seguro e dados determinísticos | NOT_STARTED | — | — |  |
+| 083 | Endurecer deploy e rollback Vercel | NOT_STARTED | — | — |  |
+| 084 | Endurecer deploy de Edge Functions e migrations | NOT_STARTED | — | — |  |
+| 085 | Governar Evolution GO como serviço crítico | NOT_STARTED | — | — |  |
+| 086 | Instituir ciclo de vida de secrets | NOT_STARTED | — | — |  |
+| 087 | Criar orçamento e observabilidade de custos | NOT_STARTED | — | — |  |
+| 088 | Reconciliar documentação técnica com o sistema atual | NOT_STARTED | — | — |  |
+| 089 | Definir ownership, ADR/RFC e review baseado em risco | NOT_STARTED | — | — |  |
+| 090 | Tornar onboarding e ambiente local reproduzíveis | NOT_STARTED | — | — |  |
+| 091 | Decidir e concluir a estratégia PWA | NOT_STARTED | — | — |  |
+| 092 | Fechar matriz de browsers, dispositivos e conectividade | NOT_STARTED | — | — |  |
+| 093 | Ratificar modular monolith vs microsserviços | NOT_STARTED | — | — |  |
+| 094 | Definir versionamento e compatibilidade de contratos | NOT_STARTED | — | — |  |
+| 095 | Executar exercício completo de disaster recovery | NOT_STARTED | — | — |  |
+| 096 | Rodar auditoria da release candidata | NOT_STARTED | — | — |  |
+| 097 | Fechar P0/P1 e consolidar o registro de dívida | NOT_STARTED | — | — |  |
+| 098 | Congelar o candidato e obter aprovação de release | NOT_STARTED | — | — |  |
+| 099 | Fazer canary, promover e observar | NOT_STARTED | — | — | Classe D; depende de aprovação explícita |
+| 100 | Publicar relatório final e iniciar ciclo contínuo | NOT_STARTED | — | — |  |
+
+---
+
+## 5. Log detalhado por etapa
+
+### 5.1 — Etapa 001: Ler as regras e declarar entendimento
+
+- **Estado:** VERIFIED
+- **Fontes lidas integralmente:** `CLAUDE.md`; `.codex/AGENTS.md` (o `AGENTS.md` raiz referenciado não existe — registrado em Decisões pendentes); `.agents/skills/zapp-web-v2/SKILL.md` (skill `zapp-web-v2-conventions` também invocada); `docs/handoffs/handoff_cline_100_etapas_2026_08_30.md` (1292 linhas, 10 ondas, 100 etapas, gates e seções 6–8).
+- **Entendimento declarado:**
+  - **Alvos:** repo `adm01-debug/Zapp_Web_V2` @ `origin/main` (`19b0f644…`); Supabase Cloud `tnnnlkbymytvtqngbbqh` (PG 17.6) — único banco oficial; Vercel (front `zapp-web-v2.vercel.app`); Evolution GO na Hostinger `srv1481814` (projeto `evolution-go-rxj2`).
+  - **Classes de ação:** A = leitura; B = escrita reversível local; C = escrita remota reversível; D = produção/sensível. Ações C e D exigem a aprovação definida no handoff. Nenhuma classe adicional foi criada.
+  - **Método de prova:** comandos + outputs registrados neste diário; estado VERIFIED só com evidência completa; SKIPPED_WITH_EVIDENCE quando já resolvido.
+  - **Sequência:** 10 ondas de 10 etapas com gate ao final de cada onda; dependências respeitadas; nenhuma etapa pulada silenciosamente.
+  - **Restrições de segurança:** nunca expor segredos/URLs autenticadas; nunca usar outro projeto Supabase; preservar mudanças preexistentes (sem reset --hard, clean -fd, checkout destrutivo ou force push).
+
+### 5.2 — Etapa 002: Sincronizar a base de trabalho sem destruir alterações
+
+- **Estado:** VERIFIED
+- **Comandos:** `git status -sb` → `## main...origin/main [behind 1]` + 1 untracked (o próprio handoff, preservado); `git fetch origin --prune`; `git rev-parse origin/main` → `19b0f6448910bcb29ccd9ddd964f99a303a823b0` (idêntico à base declarada no handoff); `git switch -c chore/excellence-wave-01 origin/main`.
+- **Prova:** `HEAD == origin/main` → MATCH (`19b0f644…`); `git status -sb` final → `## chore/excellence-wave-01...origin/main` + handoff untracked intacto.
+- **Nota:** o arquivo `docs/handoffs/handoff_cline_100_etapas_2026_08_30.md` (untracked, mudança preexistente do usuário) foi preservado pelo Cline. O Codex o incluiu no commit corretivo para tornar a branch autocontida, sem alterar seu conteúdo.
+
+### 5.3 — Etapa 003: Fixar e registrar o ambiente de ferramentas
+
+- **Estado:** VERIFIED
+- **Comandos e outputs:** `uname -srmo` → Linux 6.18.33.2-microsoft-standard-WSL2 x86_64 GNU/Linux; `node --version` → v24.19.0; `bun --version` → 1.4.0; `git --version` → 2.43.0; `psql --version` → ausente; `.nvmrc` → 20 (divergente da CI=24, registrado).
+- **CI confere:** `ci.yml` usa `actions/setup-node` node-version 24 e `oven-sh/setup-bun` bun-version 1.4.0 em todos os jobs (5 ocorrências); `supabase-sync.yml` idem; `types-sync.yml` usa bun 1.4.0.
+- **Instalação congelada:** `bun install --frozen-lockfile` → exit 0, 903 installs/987 packages, no changes; `git status --porcelain bun.lock` → vazio.
+- **Rollback:** nenhuma alteração versionada; `node_modules/` apenas sincronizado. A divergência `.nvmrc` 20 vs CI 24 pertence à etapa 014.
+
+### 5.4 — Etapa 004: Criar o diário de execução e a matriz de decisões
+
+- **Estado:** IN_PROGRESS no artefato do Cline → VERIFIED após a reconciliação corretiva e a prova em §5.4.1.
+- **Artefato:** este arquivo, `docs/handoffs/cline_execution_log_2026_08_30.md`, com tabela de 100 etapas (seção 4), Decisões pendentes (seção 3) e log detalhado (seção 5).
+- **Causa raiz da correção:** o script temporário do Cline comprovou somente quantidade/ordem de IDs, mas o conteúdo salvo divergia do handoff em 94/100 títulos. O Codex reconciliou a tabela diretamente com os 100 headings canônicos do handoff e adicionou comparação exata de títulos ao gate.
+
+#### 5.4.1 — Prova da etapa 004
+
+Comandos executados em 2026-08-30 sobre o arquivo gerado:
+
+| Verificação | Resultado |
+|---|---|
+| Títulos esperados extraídos de `^### (\d{3}) — (.+)$` | **100** |
+| Linhas de etapa no diário | **100** |
+| IDs ausentes / duplicados / fora de ordem | **0 / 0 / 0** |
+| Divergências exatas de título handoff↔diário | **0** após correção; eram **94** no artefato do Cline |
+| Seção `## 3. Decisões pendentes` presente | **1** ocorrência |
+| Estados iniciais 001–005 | 001=VERIFIED, 002=VERIFIED, 003=VERIFIED, 004=VERIFIED, 005=BLOCKED |
+
+Critério de aceite da etapa 004 (100 linhas + IDs/títulos canônicos únicos e ordenados + Decisões pendentes) **cumprido após correção do Codex**.
+
+### 5.5 — Etapa 005: Verificar identidades de todos os alvos sem mutação
+
+- **Estado:** BLOCKED
+- **GitHub:** `github_get_repo(adm01-debug/zapp-web-v2)` → `adm01-debug/Zapp_Web_V2`, público, `default_branch=main`, permissões admin/push, secret scanning + push protection ativos. **MATCH.**
+- **Supabase:** `supabase/config.toml` → `project_id = tnnnlkbymytvtqngbbqh`; `database-identity.json` → supabase-cloud, PG 17. MCP da sessão → 10.0.1.132, PG 15.8 → **MISMATCH declarado**; nenhum SQL oficial será executado por este MCP. Nenhuma escrita foi feita.
+- **Vercel:** `homepage` do repo e GET público retornaram 200, mas conta e project id não foram consultados em fonte autenticada. **PARTIAL.**
+- **Evolution GO:** GET no host documentado retornou 404 sem credenciais, mas VPS/projeto/containers/portas não foram consultados. **PARTIAL.**
+- **Supabase — auditoria Codex:** a tentativa read-only pelo MCP disponível terminou em `401 Unauthorized` antes da query; ela não comprova o projeto oficial e não autoriza fallback para outro banco.
+- **Critério de aceite:** **não cumprido integralmente**. GitHub está confirmado; Supabase está bloqueado; Vercel e Evolution têm apenas evidência superficial. Toda ação externa relacionada continua proibida.
+
+### 5.5.1 — Re-verificação Supabase via MCP dedicado (2026-08-30, Cline)
+
+- **Fonte:** o usuário forneceu o URL do MCP HTTP dedicado `supabase-zapp-web-v2-mcp` **v1.1.2** (Cloudflare Workers; protocolo MCP 2024-11-05, JSON-RPC stateless). O URL contém token e **não é reproduzido neste repositório** (tratado na etapa 006). É o mesmo conector documentado em `docs/migration/HANDOFF.md` ("Worker MCP do destino", 77 tools).
+- **Handshake:** `initialize` OK (capabilities: `tools`); `tools/list` → **77 ferramentas** (`db_*`, `storage_*`, `auth_*`, `functions_*`).
+- **Identidade (somente leitura):** `db_health` → `PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit`, user `postgres`; `db_connection_info` → version `17.6`, db `postgres`, `max_connections=60` (perfil Supabase Cloud). Satisfaz `scripts/db-audit/database-identity.json` (`server_major=17`, `connection_provider=supabase-cloud`).
+- **Cross-check de migrations:** `db_migrations` lista `20260830153000 webhook_failures_dead_letter`, `20260829120000 revoke_anon_ai_providers`, `20260829110000 gmail_incremental_sync_cron` etc., conferindo com `supabase/migrations/` do repo → **confirmado: é o banco do projeto oficial `tnnnlkbymytvtqngbbqh`**.
+- **Drift preliminar:** 17 versões remotas `20260830010000`–`20260830161547`; arquivo local existe apenas para `20260830153000` → **16 versões remotas sem arquivo local**. Classificação formal = etapa 010.
+- **Estado:** **MATCH relatado pelo Cline** para Supabase e **não reproduzido pelo Codex**. A etapa 005 permanece BLOCKED por Vercel (conta/project id sem prova autenticada), Evolution GO (sem MCP Hostinger) e pela limitação de verificação independente. Leituras exigem handshake da sessão; mutações são Classe D com aprovação explícita.
+
+### 5.6 — Etapa 006: Tratar o URL autenticado do MCP como credencial exposta
+
+- **Estado:** IN_PROGRESS. URL do MCP: ausência comprovada e decisão **`ACCEPTED_TEMPORARY_RISK`** registrada abaixo (proprietário adm01, prazo 2026-09-06). Escopo ampliado pela auditoria Codex: uma credencial Vercel também foi publicada em conversa e **permanece pendente** de decisão independente (rotação/revogação ou aceite formal), sem ser copiada para este arquivo.
+- **Executar (concluído):** o URL não foi copiado para nenhum artefato. Busca de persistência por fragmento não secreto (8 chars) e pelo domínio:
+  - Working tree (exceto `.git`/`node_modules`): fragmento do token **ausente**; `workers.dev` ocorre apenas em `docs/migration/HANDOFF.md` (placeholder `<MCP_TOKEN>`), `docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` e `tmp/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` (host `evolution-mcp`, sem token) — nenhum segredo real.
+  - Histórico Git (todos os refs, 6.980 commits): `git log -S<fragmento> --all` → **0 ocorrências**; pickaxe do domínio mostra apenas commits documentais com placeholder.
+- **Verificar (concluído):** ausência comprovada no repositório e nos arquivos locais versionáveis, sem imprimir a credencial.
+- **Procedimento de rotação (preparado, NÃO executado — rotação é Classe D):**
+  1. Gerar novo token aleatório (≥ 32 hex) fora deste chat.
+  2. Atualizar o segredo/rota do Worker `supabase-zapp-web-v2-mcp` na Cloudflare e redeploy conforme `docs/migration/HANDOFF.md` (`cf_worker_deploy`).
+  3. Atualizar os conectores clientes (conector Claude "SUPABASE - ZAPP WEB V2 - MCP"; sessões Cline/Codex) com o novo URL.
+  4. Confirmar que o path antigo retorna 401/404 e revogá-lo.
+  5. Registrar aqui apenas data/executor — jamais valores antigo/novo.
+- **Decisão registrada:** **`ACCEPTED_TEMPORARY_RISK`** — proprietário: usuário (adm01), 2026-08-30. **Prazo:** até **2026-09-06** ou imediatamente antes de qualquer ação Classe C/D em banco — o que ocorrer primeiro. O procedimento de rotação acima permanece preparado; ao expirar o prazo ou antes de escrita em banco, a rotação (Classe D) será requisitada ao proprietário. O Cline **para antes de executar** qualquer rotação.
+
+### 5.7 — Etapa 007: Inventariar superfícies de segredo e dados sensíveis
+
+- **Estado:** IN_PROGRESS — inventário completo e política publicados em `docs/security/secret-surface-inventory.md`; critério "zero segredo real versionado no HEAD" falha por F-01/F-02 (aguardam rotação + sanitização, Classe D).
+- **Executar (concluído):**
+  - Enumeração por nomes: `.env.example`/`.env.production` (chaves apenas), `import.meta.env.*` em `src/`, `process.env.*` em `scripts/`+`supabase/`, 23× `Deno.env.get` nas edge functions, `secrets.*` nos workflows, `supabase/config.toml`, `.gitignore`, `lib/env.ts`.
+  - GitHub via API (nomes e datas apenas): **8 Actions secrets** (`CRON_SECRET`, `DESTINO_URL`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `VITE_CLIENTES_SUPABASE_ANON_KEY`, `VITE_CLIENTES_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_URL`), **0 variables**, 4 environments (`copilot`, `db-ledger-evidence`, `Preview`, `Production`) **todos com 0 environment secrets**, secret scanning com **0 alertas**.
+  - Scanner: gitleaks 8.30.1 em modo `dir` (working tree) e `git` (histórico completo, 6.980 commits), primeira passada com `--redact=100`; classificação posterior por prefixo/comprimento/claims JWT (`role`/`iss`/`ref`) via script local — nenhum valor integral lido ou registrado.
+  - Histórico dos arquivos sinalizados: `.env` (removido 2026-04-10, só anon públicas), credenciais Lalamove (2026-03-23 → 2026-04-12), `migrate-helper` (removido 2026-08-28, exposição de `SERVICE_ROLE_KEY`).
+- **Achados (detalhe em `secret-surface-inventory.md` §4):** F-01/F-02 **segredos Evolution suspeitos reais versionados no HEAD** (docs); F-03 Lalamove histórico; F-04 confirmar rotação da service_role pós-2026-08-28; F-06 `TYPES_SYNC_PR_TOKEN` ausente; F-05/F-07/F-11 públicas por design (anon); F-08/F-09/F-10 falsos positivos/mocks.
+- **Verificar (concluído):** artefato sanitizado sem valores; aceite parcial — 100% dos nomes com owner/escopo/rotação (exceto F-06 e `PROMOGIFTS_*`), mas "zero segredo real versionado" **não** atendido até resolver F-01/F-02.
+- **Decisões pendentes:** ver §3 (blocos F-01/F-02, F-03, F-04, F-06). Nenhuma rotação executada (Classe D); nenhum workflow alterado.
+
+### 5.8 — Validação exaustiva pós-onda (sessão da tarde; atividade de QA fora da tabela de 100 etapas)
+
+- **Estado:** ✅ CONCLUÍDO — relatório consolidado em `docs/security/validation-report-2026-08-30.md`.
+- **Escopo medido:** branch = 8 commits / +3.628 linhas, **100% docs, zero código** vs `origin/main` → a validação mirou os entregáveis da auditoria + baseline de saúde do repo (não havia código novo a testar).
+- **Frentes (ordem A5 → A2 → A1 → A4 → A3):**
+  - **A5 integridade:** 11/11 hashes citados existem; tabela com exatas 100 linhas de etapas; 5/5 docs de handoff presentes; linhas F-01/F-02 intactas (comprimentos conferidos). Re-contagem: **6.994 commits** (o "6.980" de §5.7 era exato às 13:12; diferença por merges posteriores — nota de precisão, sem correção retroativa).
+  - **A2 reprodução de segurança:** gitleaks 8.30.1, `--redact=100`, dir=515 / git=565 findings (5.504 commits alcançáveis do HEAD); **F-01..F-11 todos reproduzidos, 0 incidentes novos**; os 21 hits da regra `stripe-access-token` são os artefatos Lalamove (falso positivo de regra — mesmo incidente F-03).
+  - **A1 DBA estático:** 301 migrations íntegras; **1 versão duplicada (G-03: `20260829100000` ×2)**; 12 arquivos `SECURITY DEFINER` sem `search_path` literal (G-04 — verificação fina na etapa 010); RLS estático sem órfãs evidentes (126 tabelas criadas / 127 `ENABLE RLS`).
+  - **A4 CI/CD:** 9 secrets referenciados vs 8 presentes → **F-06 reclassificado: não-bloqueante**; branch protection `main` saudável (3 checks obrigatórios, strict, enforce_admins, conversation resolution); **Dependabot alerts desabilitado (G-01)** e **code scanning ausente (G-02)**; CI usa `lint-ratchet` (não lint cru).
+  - **A3 build/testes:** typecheck ✅ 0 erros; vitest **152 arquivos / 2.493 passed / 32 skipped / 0 falhas**; contratos 160/160 ✅; lint-ratchet ✅ (baseline=1123, novas=0); build ✅ 6,12s / dist 34 MB; bundle fresco sem `service_role`/segredos (simulação S-2).
+- **Gaps novos:** G-01..G-08 classificados no relatório (nenhum bloqueante); `tmp/EVOLUTION_WEBHOOKS_DOCUMENTATION.md` rastreado (G-05) entra no pacote de sanitização F-02.
+- **Não executado (aguarda aprovação humana):** `git rm --cached tmp/` + `.gitignore` (Classe B de gap), rotações F-01..F-04 (Classe D), ativação de Dependabot (config GitHub), criação opcional de `TYPES_SYNC_PR_TOKEN`.
+
+
+### 5.8.1 — Rodada 2 da validação (sistema real; completa a §5.8)
+
+- **Estado:** ✅ CONCLUÍDO — detalhe em `docs/security/validation-report-2026-08-30.md` §8.
+- **Gate local mínimo agora 100% executado:** CI unit tests 23/23 ✅ · pins por SHA (6 workflows) ✅ · usage-guard (124 tabelas/7 views/46 funções, 0 violações) ✅ · `git diff --check` ✅ · db-audit 110/110 ✅ · ACL guard 21 cenários ✅ · catalog-manifest ✅ · **check-migration-drift exit 1 (G-03)** e **reconcile-ledger-drift exit 1 (G-11)** ❌.
+- **Achado crítico G-09:** o fix de segurança do PR #59 (`get_team_profiles` filtrando `is_active=true`) **não foi aplicado ao banco oficial** — a versão `20260829100000` colidiu e o ledger registrou apenas o `fix_clear_login`; a exposição de ex-agentes provavelmente persiste em produção. HOTFIX preparado, aguarda Classe C/D.
+- **G-10:** `db-guard` **run #198 FAILURE na main** (30/08 15:28; step "Validar migrations localmente") e não é required check — merges seguem com guard quebrado.
+- **Drift formal (etapa 010 antecipada em modo leitura):** `DRIFT_BLOCKING` — REMOTO=316 vs LOCAL=301; 16 remote-only nomeadas; 0 local-only legítimas; 1 duplicata; nenhum SQL executado.
+- **Simulações S-6..S-9** (exit codes verdadeiros, PR #68 `action_required` provando o fallback vivo, cruzamento snapshot×arquivos, leitura das migrations colididas) — ver relatório §8.4.
+
+### 5.8.2 — Rodada 3: veredito da auditoria + runtime read-only + correções de origem
+
+- **Estado:** ✅ CONCLUÍDO conforme veredito — detalhe em `docs/security/validation-report-2026-08-30.md` §9.
+- **G-09 → Caso A:** identidade provada antes das consultas (MCP dedicado, PG 17.6, fingerprint do ledger, sem 401; self-hosted não usado); coleta estritamente estrutural/agregada; corpo da função registrado apenas como sha256. Resultado: filtro presente, `returned_inactive=0` → **drift de ledger**, sem exposição. Formulações corrigidas conforme veredito; evidência conflitante (PR #59 vs PR #58 vs ledger) registrada.
+- **G-11 corrigido na origem (commit `57b425bd`):** predicado evidence-gated do `45dd22e4` restaurado (5 gates); teste 10/10 × 2 consecutivas; consistência do pin SHA provada contra o fixture do teste.
+- **G-03 forward-only (commit `f8e28ceb`):** versão única `20260830170000`; `check-migration-drift` exit 0; sem INSERT manual; aplicação futura pelo mecanismo oficial após comparar corpo remoto.
+- **G-12 aberto:** 15 placeholders + `20260830161547` ausente do Git (verificado em `origin/fix/identity-authz-improvements`).
+- **Gates do veredito (item 8): 13/13 exit 0** (ci_units, pins, usage_guard, db_audit_units, catalog_manifest, mcp_exec_acl, ledger_reconcile, migration_drift, typecheck, test, build, git diff --check, git show --check HEAD).
+- **Nenhuma mutação externa** (banco/branch protection/Vercel); **nenhum push**; `.claude/settings.local.json` untracked registrado e intocado.
+
+### 5.8.3 — G-12 fase 1: recuperação das 16 remote-only (pós-veredito, "CONTINUE")
+
+- 16 arquivos gerados em `supabase/migrations/` a partir dos **statements exatos do ledger** (read-only, identidade provada) — DDL real (funções/triggers/policies/backfill/índice), substituindo os placeholders não-reproduzíveis; sanitizado; `check-migration-drift` **exit 0 (317 válidos)**. Fase 2 (replay PG17 + comparação catálogo/manifesto) pendente.
+
+<!-- Próxima etapa canônica: 008 — capturar o baseline completo da revisão atual. Etapa 007 IN_PROGRESS (F-01/F-02 dependem de rotação Classe D). Etapa 006: credencial Vercel ainda pendente; MCP ACCEPTED_TEMPORARY_RISK até 2026-09-06. Validação pós-onda: R1 concluída (§5.8 + validation-report §1–7; F-06 resolvido) e **R2 concluída (validation-report §8)**: gate local 100% verde exceto G-03/G-11; drift formal = DRIFT_BLOCKING (16 remote-only + 1 fix de segurança não-aplicado G-09); db-guard #198 FAILURE na main (G-10). HOTFIX G-09 aguarda aprovação Classe C/D. -->

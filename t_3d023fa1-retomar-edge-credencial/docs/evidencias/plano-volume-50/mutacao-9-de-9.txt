@@ -1,0 +1,32 @@
+=== 0) linha de base (tudo verde e sem mutação) ===
+  OK  MediaVolume: [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+  OK  contrato: [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+[1] PEGA E10a — contexto criado no mount (sem o gate do gesto de play)
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[2] PEGA E10b — libera o ganho mas nao fecha o contexto (vaza AudioContext)
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[3] PEGA E10c — fecha o contexto sem contar quantos players restam
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[2m |
+      arquivo restaurado: sim
+[4] PEGA E16a — atalho so no botao (sem listener no container do player)
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[5] PEGA E16b — sem dedup: o mesmo teclado conta duas vezes
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[6] PEGA E39 — cadeia do alerta nao termina no destination
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[7] PEGA E41 — ancora de separacao removida do toque da chamada
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[33m18 skipped[39m[90m (19)[3
+      arquivo restaurado: sim
+[8] PEGA E37a — isencao da biblioteca do admin sem a ancora textual
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m16 passed[39m[22m[90m
+      arquivo restaurado: sim
+[9] PEGA E37b — superficie isenta passa a usar o controle de midia
+      [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m | [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m16 passed[39m[22m[90m
+      arquivo restaurado: sim
+
+=== 9/9 mutações pegas ===

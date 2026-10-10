@@ -1,0 +1,55 @@
+
+== 1. veredito por cenario (rc do script inteiro) ==
+CENARIO            HOJE   NOVO   passo banco_local (NOVO)
+neg                1      1      FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; ind
+ctrl               1      0      AVISO   banco_local     0s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s
+misto              1      1      FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; ind
+neg-sem-pendente   1      1      FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo
+
+== 2. linhas de diferenca (comparador REAL, por cenario) ==
+-- neg (rc=1)
+columns|cartao_dinamico.coluna_gerada
+columns|cartao_novo.id
+columns|cartao_novo.payload
+indexes|cartao_novo.cartao_novo_pkey
+rls|cartao_novo
+relation_grants|r:public.cartao_novo|service_role|SELECT|grantor=postgres
+-- ctrl (rc=1)
+columns|clientes.antiga
+functions|f:fn_antiga()
+-- misto (rc=1)
+columns|clientes.antiga
+columns|cartao_dinamico.coluna_gerada
+columns|cartao_novo.id
+columns|cartao_novo.payload
+indexes|cartao_novo.cartao_novo_pkey
+rls|cartao_novo
+relation_grants|r:public.cartao_novo|service_role|SELECT|grantor=postgres
+functions|f:fn_antiga()
+
+== 3. mensagem do passo banco_local ==
+-- neg HOJE:
+     FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+     VERIFY: VERMELHO em banco_local (0s)
+-- neg NOVO:
+     FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+     VERIFY: VERMELHO em banco_local (0s)
+-- ctrl HOJE:
+     FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|clientes.antiga; functions|f:fn_antiga()
+     VERIFY: VERMELHO em banco_local (0s)
+-- ctrl NOVO:
+     AVISO   banco_local     0s  ESTRUTURA: 2 diferença(s) em relação ao retrato da produção — migration(s) pendente(s): 20261007095739_cartao_drift_novo.sql; 2
+     drift: functions|f:fn_antiga() diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: columns|clientes.antiga;functions|f:fn_antiga()) (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/ctrl-NOVO/.local/state/zapp-verify/807d6e50c211/banco_local.log)
+     VERIFY: VERDE (0s) — registros em /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/ctrl-NOVO/.local/state/zapp-verify/807d6e50c211
+-- misto HOJE:
+     FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|clientes.antiga; columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey (+3)
+     VERIFY: VERMELHO em banco_local (0s)
+-- misto NOVO:
+     FALHOU  banco_local     0s  diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+     VERIFY: VERMELHO em banco_local (0s)
+-- neg-sem-pendente HOJE:
+     FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/neg-sem-pendente-HOJE/.local/state/zapp-verify/807d6e50c211/banco_local.log)
+     VERIFY: VERMELHO em banco_local (1s)
+-- neg-sem-pendente NOVO:
+     FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/neg-sem-pendente-NOVO/.local/state/zapp-verify/807d6e50c211/banco_local.log)
+     VERIFY: VERMELHO em banco_local (1s)

@@ -1,0 +1,7 @@
+== corpo=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-novo.py
+total=3 explicadas=1 drift_canonico=1 SEM=1
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/negativo/arvore/supabase/schema-manifest.json
+-- classificacao por linha (classe<TAB>linha) --
+SEM	indexes|sonda_cartao.sonda_cartao_pkey
+explicada	columns|r:public.sonda_cartao.col_citada
+drift	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)

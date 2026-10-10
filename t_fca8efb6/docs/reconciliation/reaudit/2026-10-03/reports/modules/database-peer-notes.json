@@ -1,0 +1,262 @@
+{
+  "104": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Importa mapboxCostGuard real; verifica limiares 7/8/9/10 para teto 10, evento e payload, deduplicação e teto 20.",
+    "limits": "RPC e logAudit são mocks; não demonstra persistência no banco, faturamento Mapbox, virada do mês ou múltiplas abas."
+  },
+  "105": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Reseta o estado em memória preservando localStorage e exige um único log após refresh repetido.",
+    "limits": "Simula reload pelo helper de teste; não recarrega navegador nem confirma escrita de audit_logs. Não atravessa mês."
+  },
+  "106": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Estado inicial, abaixo/acima do teto, deduplicação e rejeição da RPC são observados no helper real.",
+    "limits": "A falha só parte do estado inicial true; não verifica preservação do estado degradado false. RPC/persistência são mocks."
+  },
+  "107": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Helper real respeita teto configurado, fallback inválido e releitura do valor após vi.stubEnv.",
+    "limits": "A alteração dinâmica do import.meta.env no teste não prova que uma aplicação Vite já compilada receba nova variável de implantação sem rebuild/reload; é limite da promessa nas linhas 67–77."
+  },
+  "108": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Helper real conta uma sessão por token, conta primeira suggest/retrieve e propaga source; abrir/fechar sem nota não registra.",
+    "limits": "Chama noteSuggestCall/noteRetrieveCall diretamente com fetch mockado; não prova que o consumidor as chama somente em requisições faturáveis nem preço/cobrança do provedor."
+  },
+  "109": {
+    "kind": "runtime_unit",
+    "positive": "Helper real testa TTL inclusive fronteira, identidades independentes, 300 eventos, TTL misto, limite 2000 e liberação após expiração.",
+    "limits": "Escopo é mapa em memória com relógio explícito; não testa deduplicação entre processos/abas ou escolha da identidade pelo consumidor."
+  },
+  "110": {
+    "kind": "local_replica_only",
+    "positive": "Exemplos exercitam as funções locais de normalização declaradas nas linhas 5–12.",
+    "limits": "Não importa evolution-webhook nem verifica seu código; mudanças reais passam despercebidas. Encaminhado à família GOV003/TC011."
+  },
+  "111": {
+    "kind": "runtime_unit",
+    "positive": "Importa escapeOrFilterValue real e compara escapes exatos de aspas, barra, vírgula, parênteses e vazio.",
+    "limits": "Não submete strings ao parser PostgREST real nem verifica cada chamador."
+  },
+  "112": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "withRetry real agenda 1250 ms, repete a operação e respeita máximo 1100 ms com fonte aleatória controlada.",
+    "limits": "Dois cenários recuperam na segunda tentativa; não demonstram limite de tentativas, predicado de retry ou distribuição do jitter."
+  },
+  "113": {
+    "kind": "local_replica_only",
+    "positive": "Matriz de papéis/autenticação/atribuição é calculada por funções locais das linhas 29–58.",
+    "limits": "Nenhum SQL, migration ou helper real é importado. A equivalência alegada com políticas RLS não é verificada; mistura user.id e atribuição sem mapear profiles. Família GOV003/TC011."
+  },
+  "114": {
+    "kind": "local_replica_only",
+    "positive": "Exemplos CRUD executam funções locais de papéis e autenticação.",
+    "limits": "A afirmação de correspondência com RLS não consulta políticas nem banco; mudanças reais não afetam esses testes. Família GOV003/TC011."
+  },
+  "115": {
+    "kind": "runtime_unit",
+    "positive": "Helpers reais verificam intervalos, parâmetros inválidos, alfabeto e chamada de crypto.getRandomValues.",
+    "limits": "Amostragem de unicidade não prova ausência de colisões; exigir 1000 floats distintos pode falhar por acaso. Não é certificação criptográfica."
+  },
+  "116": {
+    "kind": "runtime_unit",
+    "positive": "Dicionários e funções reais verificam rótulos, fallback cru/null, asa e ordem/limite de dois metaprogramas.",
+    "limits": "Não valida o modelo comportamental nem integração com dados remotos; testa apresentação local."
+  },
+  "117": {
+    "kind": "runtime_unit",
+    "positive": "Parser real verifica três tipos de URL Storage, retirada de credencial, allowlists de origem/bucket e paths inválidos.",
+    "limits": "Não executa Storage, RLS ou renovação de URL; um localizador público não prova que o objeto seja público."
+  },
+  "118": {
+    "kind": "runtime_unit",
+    "positive": "isSafeHttpUrl real aceita HTTP(S) absoluto e rejeita esquemas ativos, relativos, tipos inválidos e tamanho excessivo.",
+    "limits": "Escopo de protocolo/formato para links; não constitui proteção SSRF nem valida cada consumidor."
+  },
+  "119": {
+    "kind": "runtime_unit",
+    "positive": "cn real combina condicionais, arrays, objetos e conflitos Tailwind com valores esperados.",
+    "limits": "Strings de classes não comprovam CSS computado, layout ou acessibilidade."
+  },
+  "120": {
+    "kind": "runtime_unit",
+    "positive": "Schemas reais fazem safeParse/parse para defaults, status, UUID, coerção numérica e contato; templates/filtros reais são inspecionados.",
+    "limits": "Não verifica persistência nem consumidor do schema. Coerção de ativo testa só string true, não false."
+  },
+  "121": {
+    "kind": "runtime_hook",
+    "positive": "Helpers e hook reais verificam identidade, geração, troca de contato/período, invalidate, snapshot e preservação após render sem mudança de contexto.",
+    "limits": "Não prova que todo consumidor usa isCurrent antes de aplicar uma resposta; unicidade é amostra de 200 IDs."
+  },
+  "122": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "ChatService real exige path/contentType do upload, gera localizador sem token e propaga erro sem chamar getPublicUrl.",
+    "limits": "Storage é mock; retorno tem path de fixture diferente do pedido e só contém bucket. Não valida ACL ou acesso real."
+  },
+  "123": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Service real divide 205 contatos em lotes 100/100/5, preserva resultado parcial e falha total; sidebar verifica ação/payload e propaga erro.",
+    "limits": "CRM é mock; tamanho >=205 não confirma correspondência de todos os telefones originais. Não valida contrato externo/RLS."
+  },
+  "124": {
+    "kind": "test_support",
+    "positive": "FakeBroadcastChannel entrega a pares do mesmo nome sem eco e expõe reset.",
+    "limits": "Entrega síncrona sem structured clone; close é vi.fn sem remover peer. Suporta testes específicos, não reproduz ciclo de fechamento ou agendamento do navegador."
+  },
+  "125": {
+    "kind": "runtime_harness_guard",
+    "positive": "Testes chamam fetch e exigem rejeição identificável da guarda para domínio Supabase e passagem de destino local.",
+    "limits": "Não executado nesta revisão. Depende do setup; não prova bloqueio de todas as APIs de rede e não revalida as medições históricas citadas nos comentários."
+  },
+  "126": {
+    "kind": "test_support",
+    "positive": "Mock cria builder Promise, métodos rastreáveis e respostas configuráveis por tabela, auth e canal.",
+    "limits": "eq/order/limit/range/mutations não alteram resultado; consultas ignoram filtros salvo assertions explícitas do consumidor. Não emula banco/RLS/realtime."
+  },
+  "127": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Função real é chamada com AudioContext construtível; caso inválido quiet avança timers e exige criação de oscilador (107–116), controle positivo contra silêncio.",
+    "limits": "A maioria dos casos 49–104 verifica apenas not.toThrow, insuficiente quando catch engole erro. Sem áudio real, ganho/volume ou autoplay verificado."
+  },
+  "128": {
+    "kind": "runtime_unit",
+    "positive": "Helper real rejeita messageId ausente/inválido e Bearer ausente com status definidos.",
+    "limits": "O teste 41–49 compara duas strings UUID inválidas; não representa objeto inexistente versus objeto de outro usuário. RLS real e autorização de objeto ficam fora deste arquivo, como reconhecido no cabeçalho."
+  },
+  "129": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "Helper real normaliza telefone, usa path fixo/upsert e verifica que list/remove não são chamados; URL recebe versão.",
+    "limits": "Fetch e Storage são mocks com sucesso único; não simula uploads concorrentes, validação de bytes ou falha remota."
+  },
+  "130": {
+    "kind": "runtime_unit_with_mocks",
+    "positive": "evoFetch real e rota tradutora recebem token explícito/fallback; sem token exige 400 e nenhuma chamada ao fetcher.",
+    "limits": "Só rota de texto GO; não confirma todos os chamadores e associação correta entre conexão e token. withEnv não usa finally para exceção síncrona de fn, embora os casos atuais sejam async."
+  },
+  "131": {
+    "kind": "runtime_unit",
+    "positive": "Helper Edge real retorna escapes exatos para injeção de OR, aspas, barra e parênteses.",
+    "limits": "Não executa parser PostgREST nem endpoint consumidor."
+  },
+  "132": {
+    "kind": "runtime_unit",
+    "positive": "Primitivas reais classificam IPs especiais e validam origem/bucket/path em URLs Storage, incluindo sufixo malicioso e dupla codificação.",
+    "limits": "Não exercita resolução DNS, redirects, TOCTOU ou download efetivo; escopo explícito de primitivas."
+  },
+  "133": {
+    "kind": "runtime_unit",
+    "positive": "Funções reais verificam alteração de horário/dias, parse de JSON inválido e retomada de daily_limit apenas no dia seguinte.",
+    "limits": "Fixtures usam meio do dia e conexão sempre connected; não verificam fronteiras de meia-noite/DST, persistência ou worker."
+  },
+  "134": {
+    "kind": "runtime_unit",
+    "positive": "Parser real recusa chaves repetidas, aceita ordem/espaços e verificador devolve malformed_signature.",
+    "limits": "Não cria HMAC válido nem testa tolerância temporal/secret real; esse arquivo é dedicado à ambiguidade."
+  },
+  "135": {
+    "kind": "runtime_exports_smoke",
+    "positive": "Importa face pública real do kernel, confere tipos das funções, constantes e amostra de correlation IDs.",
+    "limits": "Smoke de exports não prova comportamento de envio/elegibilidade/mídia nem importação pelos dois consumidores em si; título e comentários delimitam parte do objetivo."
+  },
+  "136": {
+    "kind": "conditional_network_integration",
+    "positive": "Descreve dois POSTs contra endpoint configurado exigindo 401 por credencial ausente/inválida.",
+    "limits": "ignore: !BASE pula ambos sem SUPABASE_FUNCTIONS_URL; não executado. Status pode vir do gateway e não demonstra autorização por objeto ou caminho autenticado."
+  },
+  "137": {
+    "kind": "runtime_handler_and_unit",
+    "positive": "Handler real rejeita GET e POST sem auth; providerPayload real monta rota/número de poll, rejeita contato inválido e preserva quote sem caption de placeholder.",
+    "limits": "Não percorre caminho autenticado de claim/persistência/provedor; não espiona leitura de secrets apesar do título, nem confere todos os campos de poll."
+  },
+  "138": {
+    "kind": "source_contract",
+    "positive": "Lê arquivos de produção e exige enforceRateLimit, Retry-After por ocorrência textual de 429 e chave por conexão.",
+    "limits": "Todas as assertions são texto; inclusive audience/dispatch não montam resposta HTTP real. Janela de oito linhas pode aceitar token sem relação de fluxo; não prova quota efetiva."
+  },
+  "139": {
+    "kind": "runtime_handler",
+    "positive": "Handler real retorna tombstone 410/no-store para POST inválido com chave legada e preserva preflight permitido.",
+    "limits": "Só uma origem e uma credencial de fixture; não demonstra todas as origens/métodos nem espiona efeitos, embora fluxo seja estreito."
+  },
+  "140": {
+    "kind": "runtime_unit",
+    "positive": "Helpers reais testam janela ±90 s, match por últimos nove dígitos, ausência de candidato, campos fechados e gravação/duração.",
+    "limits": "Não executa reconciliador inteiro nem observa INSERT/UPDATE; frase nunca cria chamada é maior que prova dos helpers. Não simula múltiplos candidatos ambíguos."
+  },
+  "141": {
+    "kind": "source_contract",
+    "positive": "Contrato textual reconhece explicitamente que lê fonte; exige normalização, RPC transacional e tratamento de erro, e proíbe antigo delete/insert.",
+    "limits": "Regex/tokens não exercitam transação, autorização ou propagação real do erro; relações de fluxo não são validadas semanticamente pelo teste."
+  },
+  "142": {
+    "kind": "runtime_unit",
+    "positive": "Helpers reais verificam extração gulosa, cercas, aninhamento, conteúdo inválido/truncado e objeto dentro de array.",
+    "limits": "Contrato preserva deliberadamente extração gulosa; não valida schema do conteúdo ou todos os consumidores."
+  },
+  "143": {
+    "kind": "source_contract",
+    "positive": "Lê consumidores reais e exige acesso ao envelope, propagação textual de erro e ausência de defaults numéricos antigos.",
+    "limits": "Não renderiza UI nem injeta envelope; ocorrência de payload.error não demonstra que erro é exibido no ramo correto."
+  },
+  "144": {
+    "kind": "runtime_unit",
+    "positive": "Normalizadores reais distinguem ausência/zero/escala/faixa, agregam amostras válidas e verificam identidade exata dos exports frontend/Edge.",
+    "limits": "Não valida todos os consumidores ou persistência; contrato de escala é testado localmente e não certifica dados de origem."
+  },
+  "145": {
+    "kind": "source_contract",
+    "positive": "Remove comentários para parte das verificações; testa tokens de volume persistido, divisão por 100 e ausência de imports do volume de mídia.",
+    "limits": "Não toca áudio nem altera preferência no fluxo real; divisão textual não prova ganho aplicado. Regex de imports só cobre mesma linha."
+  },
+  "146": {
+    "kind": "source_contract",
+    "positive": "Verifica aria-label de três SelectTrigger no arquivo real de Multiplix e quantidade mínima.",
+    "limits": "Não executa axe nem monta DOM; medições históricas referidas no comentário não foram revalidadas. Arquivo já adjudicado no lote próprio de 73; leitura compartilhada não é cobertura adicional única."
+  },
+  "147": {
+    "kind": "source_contract",
+    "positive": "Confere roles, labels, id, um único token dialog e nav no fonte do shell.",
+    "limits": "Não executa axe/DOM. Linhas 54–56 só provam presença de componentes e não que sejam irmãos fora do AppShell, apesar do título."
+  },
+  "148": {
+    "kind": "source_contract",
+    "positive": "Inspeciona allowlist, padrões de origem e string canônica nas duas superfícies reais.",
+    "limits": "Não chama getCorsHeaders nem avalia regex contra origens adversariais; slice/token depende de forma do fonte, não fluxo HTTP."
+  },
+  "149": {
+    "kind": "runtime_unit",
+    "positive": "Schemas/helpers reais geram Response 422 com JSON, versão, paths e suporte a ZodError/FieldError; ausência é assertada antes de guards.",
+    "limits": "Não chama endpoints consumidores; não prova que cada handler usa o formato."
+  },
+  "150": {
+    "kind": "source_contract",
+    "positive": "Delimita ramo textual de stream e exige medidor, registrador, fatos de desfecho e null para uso desconhecido.",
+    "limits": "Contrato de ligação textual explicitamente separado de testes comportamentais; não transmite stream, verifica cancelamento nem observa gravação ou waitUntil real."
+  },
+  "151": {
+    "kind": "source_contract",
+    "positive": "Lê migration específica, hook e tela; exige vigência, moeda única, invoker, RPC e apresentação de custo com ausência.",
+    "limits": "Não executa SQL ou UI; não resolve redefinições posteriores da RPC. Evidência é sintaxe em migration fixa, não estado efetivo do banco ou custo calculado."
+  },
+  "152": {
+    "kind": "source_contract",
+    "positive": "Verifica fonte do painel quanto a ausência de amostra, denominadores, filtros e nomes de percentis com ordem textual do vazio.",
+    "limits": "Não calcula percentis com dados nem renderiza indicadores; tokens não provam efeito visual/consultas completas."
+  },
+  "153": {
+    "kind": "source_contract",
+    "positive": "Lista superfícies e isenções explícitas e verifica identificadores de controle de volume no código/documentação local.",
+    "limits": "Ocorrência de import/token pode satisfazer integração sem aplicar ganho; catálogo fixo não descobre novas superfícies automaticamente. Não toca players reais."
+  },
+  "154": {
+    "kind": "runtime_unit",
+    "positive": "Helpers reais normalizam estados/vídeo, recusam notificação fora de ringing/offer, constroem identidades e escapam rótulos.",
+    "limits": "Não verifica entrega/RLS, consumo de evento no overlay, roteamento WhatsApp/SIP ou desfecho remoto; não fecha CALL006–008."
+  },
+  "155": {
+    "kind": "runtime_unit",
+    "positive": "Tabela executa schemas reais com payloads válidos/inválidos e Responses 422; compara exports com tabela e testa SafeString.",
+    "limits": "Não invoca handlers nem APIs externas. Aceitar shape interno ElevenLabs não valida tradução ao provedor ou action da UI (MOD070); ausência de esquema na tabela é detectada, mas completude de cenários não."
+  }
+}

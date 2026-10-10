@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "reference_date": "2026-10-03",
+  "timezone": "America/Sao_Paulo",
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "reviewed_head_sha": "400cffa4c71081a68c224274bcf5aacb667c54b9",
+  "branch": "docs/reconciliation-checkpoint-20261003",
+  "pull_request": 1869,
+  "review_kind": "documentary_decision_review",
+  "external_skill": {
+    "repository": "RobMitt/grill-me-skill",
+    "commit_sha": "31d61d68fc406f8cc2a944b4b10e6f23877720f1",
+    "skill_path": "SKILL.md",
+    "skill_blob_sha": "d73468e6c55a0863aa3aec8a21cb0dbce56a7373",
+    "readme_blob_sha": "5a4ccf44f8e86e096bb0c241010ae0d7db81fd8d",
+    "canonical_url": "https://github.com/RobMitt/grill-me-skill/blob/31d61d68fc406f8cc2a944b4b10e6f23877720f1/SKILL.md",
+    "alternative_upstream_relationship": "not established by the examined README or SKILL",
+    "original_skill_installed_by_this_work": false,
+    "full_original_interview_performed": false
+  },
+  "inspected_project_sources": [
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "e6f6f6f47c251d07862c033a3c74952cea5de6ef"
+    },
+    {
+      "path": "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md",
+      "blob_sha": "c8ea2a5fea9b9f3871cc539e1c800e0764f50677"
+    },
+    {
+      "path": "docs/reconciliation/README.md",
+      "blob_sha": "77d16aa867126ec3f821ee826a37688851b4749f"
+    },
+    {
+      "path": "docs/reconciliation/EXECUTION_WAVES.md",
+      "blob_sha": "bdfcf9c96c241c1ca82ff0d737374e8b6f81d6da"
+    },
+    {
+      "path": "docs/reconciliation/SESSION_HANDOFF.md",
+      "blob_sha": "72db808d883769c3d6f7921c45258d56a2c218c1"
+    },
+    {
+      "path": ".agents/skills/zapp-web-v2/SKILL.md",
+      "blob_sha": "3a47de779382f119a69d3836bc89470dd5497166",
+      "same_blob_at": ".claude/skills/zapp-web-v2/SKILL.md"
+    }
+  ],
+  "bounded_installation_inventory": {
+    "examined_skill_trees": [
+      {
+        "path": ".claude/skills",
+        "tree_sha": "4887b9ed8bba678906ecdb26c5cc0746880666a5",
+        "truncated": false,
+        "grill_paths_found": []
+      },
+      {
+        "path": ".agents/skills",
+        "tree_sha": "1cb76ef506e1d4d79303396d743ed9eeb716bb9b",
+        "truncated": false,
+        "grill_paths_found": []
+      }
+    ],
+    "shared_skill_content_contains_grill": false,
+    "default_branch_search": {
+      "query": "grill",
+      "matches_returned": 0,
+      "search_index_limitation": true
+    },
+    "conclusion": "No grill-me declaration found in the inspected tracked skill directories, shared skill content or reviewed plan.",
+    "global_local_vps_installation_status": "not verified"
+  },
+  "documented_decisions": [
+    {
+      "id": "GQ-01",
+      "question": "Which grill-me was discussed?",
+      "status": "RESOLVED_FROM_EVIDENCE",
+      "conclusion": "Use the RobMitt reference pinned above; do not substitute a same-name skill.",
+      "evidence": [
+        "external_skill"
+      ]
+    },
+    {
+      "id": "GQ-02",
+      "question": "Was grill-me already incorporated in the reviewed plan or tracked skill directories?",
+      "status": "RESOLVED_WITH_BOUNDED_SCOPE",
+      "conclusion": "No occurrence found in examined surfaces at the reviewed head; machine-wide installs remain unknown.",
+      "evidence": [
+        "bounded_installation_inventory",
+        "inspected_project_sources"
+      ]
+    },
+    {
+      "id": "GQ-03",
+      "question": "Where does this fit in the project?",
+      "status": "DOCUMENTED_PROPOSAL",
+      "conclusion": "Review significant plans and architecture decisions before consolidation or material replanning; do not require it after every small change.",
+      "evidence": [
+        "GRILL_ME_PLAN_REVIEW_2026-10-03.md"
+      ]
+    },
+    {
+      "id": "GQ-04",
+      "question": "Should factual questions be sent to the user?",
+      "status": "RESOLVED_FROM_EVIDENCE",
+      "conclusion": "Investigate repository evidence first. Preserve answered decisions and ask only for missing choices that materially affect the next authorized step.",
+      "evidence": [
+        "external_skill",
+        "docs/reconciliation/SESSION_HANDOFF.md"
+      ]
+    },
+    {
+      "id": "GQ-05",
+      "question": "Does adding Cartographer imply replacing Graphify?",
+      "status": "RESOLVED_PLAN_INTENT_RUNTIME_PENDING",
+      "conclusion": "The plan evaluates additional value on the same revision; actual comparative benefit is pending AT-006.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md"
+      ],
+      "task_refs": [
+        "AT-006"
+      ]
+    },
+    {
+      "id": "GQ-06",
+      "question": "May a graph alone authorize deletion?",
+      "status": "RESOLVED_FROM_EVIDENCE",
+      "conclusion": "No. Preserve the existing removal evidence and authorization requirements.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md",
+        "docs/reconciliation/SAFE_CLEANUP_PLAN.md"
+      ],
+      "task_refs": [
+        "AT-006"
+      ]
+    },
+    {
+      "id": "GQ-07",
+      "question": "When should memory ownership be decided?",
+      "status": "DOCUMENTED_DEPENDENCY_CORRECTION",
+      "conclusion": "Resolve AT-003 and AT-016 before AT-008/AT-012 capture or inject persistent memory; preserve AT identifiers.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md"
+      ]
+    },
+    {
+      "id": "GQ-08",
+      "question": "Can recovered memory overrule current evidence or user decisions?",
+      "status": "RESOLVED_FROM_EVIDENCE",
+      "conclusion": "No. Require source/revision and correction or invalidation of outdated memories.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md"
+      ],
+      "task_refs": [
+        "AT-010"
+      ]
+    },
+    {
+      "id": "GQ-09",
+      "question": "What would prove Headroom helps?",
+      "status": "PENDING_RUNTIME_EVIDENCE",
+      "conclusion": "Run AT-013/AT-014 under controlled inputs, measuring total cost, latency, critical detail preservation and original retrieval; no result or savings claimed.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md",
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md"
+      ],
+      "task_refs": [
+        "AT-013",
+        "AT-014"
+      ]
+    },
+    {
+      "id": "GQ-10",
+      "question": "Does one successful agent integration prove all combinations?",
+      "status": "PENDING_RUNTIME_EVIDENCE",
+      "conclusion": "No. Keep a separate result for every tool and agent, including the future grill-me adapter.",
+      "evidence": [
+        "docs/reconciliation/AGENT_TOOLING_PLAN_2026-10-03.md"
+      ],
+      "task_refs": [
+        "AT-011"
+      ]
+    },
+    {
+      "id": "GQ-11",
+      "question": "Can AskUserQuestion be assumed to exist in every runner?",
+      "status": "DOCUMENTED_ADAPTATION_PENDING_RUNTIME",
+      "conclusion": "Use the actual question API and its restrictions in each runner; do not declare the skill portable based on markdown alone.",
+      "evidence": [
+        "external_skill",
+        "GRILL_ME_PLAN_REVIEW_2026-10-03.md"
+      ]
+    },
+    {
+      "id": "GQ-12",
+      "question": "What is complete in this work?",
+      "status": "RESOLVED_WITH_EXPLICIT_LIMITS",
+      "conclusion": "Source identification, documented review protocol and documentary application are complete. Installation, full original interview and runtime validation remain unperformed.",
+      "evidence": [
+        "GRILL_ME_PLAN_REVIEW_2026-10-03.md"
+      ]
+    }
+  ],
+  "task_status": {
+    "GM-001": "DOCUMENTATION_COMPLETE",
+    "GM-002": "DOCUMENTATION_COMPLETE",
+    "GM-003": "DOCUMENTARY_REVIEW_COMPLETE",
+    "GM-004": "PLANNED_NOT_EXECUTED",
+    "GM-005": "PLANNED_NOT_EXECUTED",
+    "GM-006": "PLANNED_NOT_EXECUTED"
+  },
+  "changes_scope": "docs/reconciliation/**",
+  "existing_at_tasks": 18,
+  "added_gm_tasks": 6,
+  "historical_reconciliation_counts_unchanged": true,
+  "execution": {
+    "installed_skill": false,
+    "configured_agent": false,
+    "invoked_native_grill_me": false,
+    "database_queries_or_writes": false,
+    "runtime_poc": false,
+    "paid_model_calls_for_poc": false,
+    "merged_pr": false
+  }
+}

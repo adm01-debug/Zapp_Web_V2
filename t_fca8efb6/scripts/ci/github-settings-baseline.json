@@ -1,0 +1,58 @@
+{
+  "_comentario": [
+    "Baseline do perimetro do GitHub (plano E95 / E13). Fonte: API do GitHub, medido em 2026-10-03.",
+    "O github-settings-guard.mjs confere a realidade contra este arquivo; divergencia = regressao.",
+    "Toda mudanca nestes campos atualiza ESTE arquivo E a tabela 'Perimetro do GitHub' no CLAUDE.md, no mesmo PR."
+  ],
+  "medido_em": "2026-10-03",
+  "branch_protection_main": {
+    "strict": true,
+    "enforce_admins": true,
+    "required_approving_review_count": 0,
+    "required_status_checks": [
+      "🔍 Lint & TypeCheck",
+      "🧪 Unit Tests",
+      "🏗️ Build",
+      "🔒 Security Audit",
+      "Contrato DB offline",
+      "🎭 E2E Tests (Playwright)"
+    ]
+  },
+  "merge": {
+    "allow_squash_merge": true,
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "allow_auto_merge": true,
+    "delete_branch_on_merge": true,
+    "squash_merge_commit_message": "PR_BODY",
+    "squash_merge_commit_title": "PR_TITLE"
+  },
+  "actions": {
+    "enabled": true,
+    "allowed_actions": "selected",
+    "sha_pinning_required": true
+  },
+  "environments": [
+    "copilot",
+    "db-ledger-evidence",
+    "legacy-import-destrutivo",
+    "Preview",
+    "producao-ddl",
+    "producao-edge-functions",
+    "Production"
+  ],
+  "environments_para_apagar": {
+    "_comentario": "E94 pendente: sem regra de protecao e sem uso por workflow. Ao apagar, remover da lista 'environments' acima no mesmo PR.",
+    "lista": ["copilot", "Preview", "Production"]
+  },
+  "nao_verificavel_automaticamente": {
+    "_comentario": [
+      "Campos que o GITHUB_TOKEN NAO consegue ler — a API exige escopo 'administration', que o token de",
+      "workflow nao possui (403 'Resource not accessible by integration'). Ficam declarados aqui para",
+      "nao passarem a impressao de cobertura: enquanto o guard nao tiver um PAT/App dedicado, estes",
+      "campos sao conferidos a mao (ver issue de decisao 20261003-110826-2ff5)."
+    ],
+    "branch_protection": "exige administration: read — o guard recebe 403",
+    "github_apps_instalados": "o token da sessao nao lista instalacoes (E89 decide)"
+  }
+}

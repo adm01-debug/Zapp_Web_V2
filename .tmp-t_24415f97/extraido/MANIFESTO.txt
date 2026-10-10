@@ -1,0 +1,11 @@
+arquivo vivo : /home/joaquim_ataides/arquitetura-v2/integrador/integrar.sh
+  md5=19d60d07a0a7f4cad38d3a6500896e09 linhas=510
+  cabecalho.sh   <- linhas 43-46     (log, campo)
+  reteste.sh     <- linhas 103-133   (reteste_isolado)
+  conferencia.sh <- linhas 144-171   (CONJUNTO_BASE/ponta_tem_migration/conferir_base)
+  pontoA.sh      <- linhas 289-306   (ponto A: base do dia a reverificar)
+  pontoB.sh      <- linhas 476-481   (ponto B: base após cartão vermelho)
+referencia (sem a correção): /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_24415f97/pristine.sh
+  md5=d48e0769b5f5eba96546d22ad74f551e linhas=470
+  pristino-pontoA.cmd <- linha 257 do pristine
+  pristino-pontoB.linha <- linha 439 do pristine

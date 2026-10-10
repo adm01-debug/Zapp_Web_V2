@@ -1,0 +1,5 @@
+comparador_sha256=77546fc4461befe263f183a436189b4b3fceac884f7a889154e936d608a101ff
+reproduzidas=47
+vivo=47
+iguais=True
+pendentes=20261007095739_indeterminate_optout_outbox.sql

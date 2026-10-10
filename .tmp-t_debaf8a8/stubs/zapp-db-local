@@ -1,0 +1,8 @@
+#!/bin/sh
+# dublê do banco local: 'travas' passa; 'check' REPETE a saida real do conjunto vivo
+# (check.txt capturado as 09:07) e devolve o MESMO codigo de saida (1 = diferencas nao aceitas).
+case "${1:-}" in
+  travas) exit 0 ;;
+  check)  cat "$FIXTURE_CHECK_TXT"; exit 1 ;;
+  *)      exit 0 ;;
+esac

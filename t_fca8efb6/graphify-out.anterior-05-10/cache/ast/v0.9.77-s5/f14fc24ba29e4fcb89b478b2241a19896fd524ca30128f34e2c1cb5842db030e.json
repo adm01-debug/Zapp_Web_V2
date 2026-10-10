@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260830100000_fix_contacts_select_for_special_agent_sql", "label": "20260830100000_fix_contacts_select_for_special_agent.sql", "file_type": "code", "source_file": "supabase/migrations/20260830100000_fix_contacts_select_for_special_agent.sql", "source_location": null}], "edges": []}

@@ -1,0 +1,25 @@
+linhas do check (retrato VELHO): 128
+linhas cuja chave EXISTE no retrato fresco : 119
+linhas cuja chave NAO existe no retrato fresco: 9
+
+=== combinacoes (retrato velho, retrato fresco) ===
+  velho=so-local     fresco=igual              : 110
+  velho=so-producao  fresco=ausente-nos-dois   : 9
+  velho=diferente    fresco=igual              : 7
+  velho=diferente    fresco=diferente          : 2
+
+=== as 9 linhas cuja chave NAO existe no retrato fresco ("as 9 residuais" do pai) ===
+  functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status te velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status te velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status te velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status te velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres                  velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres           velho=so-producao fresco=ausente-nos-dois   local=False
+  routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres            velho=so-producao fresco=ausente-nos-dois   local=False
+  relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres                         velho=so-producao fresco=ausente-nos-dois   local=False
+
+=== as linhas do diff com o retrato FRESCO (o que o check gera de verdade) ===
+  diferente   functions|f:complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text)
+  diferente   functions|f:sweep_multiplix_stuck_items(p_limit integer)
+total: 2

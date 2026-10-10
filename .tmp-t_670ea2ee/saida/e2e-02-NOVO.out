@@ -1,0 +1,12 @@
+CMD: bash /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/arvore-velho v2-26100617458c7f --rapido
+EXIT: 0
+--- stdout+stderr ---
+OK      db_guard        0s
+OK      tipos           1s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     2s  ESTRUTURA: banco local difere do retrato canonico da copia (9 linha(s)) [stub] — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; 2
+drift: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+drift: routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean);routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres) (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/home-c02/.local/state/zapp-verify/dc3f0f750c1e/banco_local.log)
+VERIFY: VERDE (3s) — registros em /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/home-c02/.local/state/zapp-verify/dc3f0f750c1e

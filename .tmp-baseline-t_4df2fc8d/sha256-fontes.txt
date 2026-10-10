@@ -1,0 +1,2 @@
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+5c8dc5178ed43ff5f186f210d7f7ebf22fa055bece180ca8e58c21a8f6709b70  /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline/bloco-banco_local.sh

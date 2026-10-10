@@ -1,0 +1,29 @@
+== (a) nomes no RETRATO canonico (/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/fixture/copia/supabase/schema-manifest.json) ==
+   cartao_novo       ocorrencias=0
+   cartao_dinamico   ocorrencias=0
+   coluna_gerada     ocorrencias=0
+   cartao_novo_pkey  ocorrencias=0
+   coluna_injetada   ocorrencias=0
+   service_role      ocorrencias=0
+
+== (b) nomes nas migrations JA APLICADAS (tudo menos a pendente) ==
+   arquivos: 20261001120000_base_clientes.sql 
+   cartao_novo       ocorrencias=0
+   cartao_dinamico   ocorrencias=0
+   coluna_gerada     ocorrencias=0
+   cartao_novo_pkey  ocorrencias=0
+   coluna_injetada   ocorrencias=0
+   service_role      ocorrencias=0
+
+== (c) nomes na migration PENDENTE (20261007095739_cartao_drift_novo.sql) ==
+   cartao_novo       ocorrencias=5
+   cartao_dinamico   ocorrencias=0
+   coluna_gerada     ocorrencias=0
+   cartao_novo_pkey  ocorrencias=0
+   coluna_injetada   ocorrencias=0
+   service_role      ocorrencias=0
+   (a tabela cartao_novo e literal; os outros nomes sao montados por concatenacao em runtime)
+
+== (d) ledger do fixture decide o que e pendente ==
+   20261001120000_base_clientes.sql               aplicada
+   20261007095739_cartao_drift_novo.sql           PENDENTE

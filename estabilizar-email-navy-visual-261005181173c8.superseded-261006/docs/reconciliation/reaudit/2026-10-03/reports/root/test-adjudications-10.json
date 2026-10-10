@@ -1,0 +1,16 @@
+[
+  {
+    "roster_index": 58,
+    "adjudication": [
+      "Importa módulos reais de estados no front e worker com cliente Supabase falso; verifica sete estados, quatro terminais, todos os 49 pares de transição, rótulos e partial não concluído com controle succeeded. O caso enqueue aciona o wrapper e exige rejeição após tentativa de acesso à infra simulada.",
+      "As seis funções SQL, UNIQUE, SKIP LOCKED, colunas e rollback são verificados apenas no texto de uma migration; isso não executa locks, leases, expiração nem durabilidade. O caso de enqueue tenta assinaturas plausíveis e não exige identidade do erro lançado. Preserva o mérito da máquina de estados sem estendê-lo à fila inteira."
+    ]
+  },
+  {
+    "roster_index": 59,
+    "adjudication": [
+      "Importa guards, budget e despacho reais com Supabase/Deno/fetch simulados. Verifica limite inclusivo, chave por janela, negação 429, falha aberta identificada, reserva permitida/negada/inválida, distinção [] versus null, argumentos settle/release/reconcile, estimativa/chave canônica e integração reserva→despacho→liquidação/liberação.",
+      "Os controles de chamada e ausência de envio com orçamento negado são concretos. A idempotência da reserva é implementada pelo Map do mock e comprova reenvio estável da chave, sem provar atomicidade SQL ou concorrência; tampouco valida custo faturado externamente ou recuperação de falhas reais do banco."
+    ]
+  }
+]

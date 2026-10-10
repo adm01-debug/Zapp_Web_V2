@@ -1,0 +1,1 @@
+diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)

@@ -1,0 +1,18 @@
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  (ver /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_2fd6ed9f/evidencias-negativo/home/neg-sem-pendente-NOVO/.local/state/zapp-verify/807d6e50c211/banco_local.log)
+[columns] só produção=0 só local=3 diferentes=0
+    só local: cartao_dinamico.coluna_gerada
+    só local: cartao_novo.id
+    só local: cartao_novo.payload
+[indexes] só produção=0 só local=1 diferentes=0
+    só local: cartao_novo.cartao_novo_pkey
+[rls] só produção=0 só local=1 diferentes=0
+    só local: cartao_novo
+[relation_grants] só produção=0 só local=1 diferentes=0
+    só local: r:public.cartao_novo|service_role|SELECT|grantor=postgres
+ESTRUTURA: 6 diferença(s) em relação ao retrato da produção
+VERIFY: VERMELHO em banco_local (1s)

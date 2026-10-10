@@ -1,0 +1,8 @@
+-- RM=0 MOTIVO=ok           (9 residuais: nenhuma sobrou)
+RAMO=AVISO  (todas citadas)                              MOTIVO=ok
+-- RM=0 MOTIVO=ok|drift=2   (as 2 residuais viraram drift nao debitado)
+RAMO=AVISO  (drift pre-existente NAO debitado, drift=2)   MOTIVO=ok|drift=2
+-- RM=1 MOTIVO=erro         (drift NOVO do cartao: 'sem' nao vazio)
+RAMO=FALHOU (nota vermelha)                                MOTIVO=diferença não explicada por migration pendente: indexes|sonda_cartao.s...
+
+ok: 3 ramos exercitados

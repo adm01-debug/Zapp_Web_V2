@@ -1,0 +1,15 @@
+### HARNESS ativo: provas mecanicas - PostgreSQL 17 descartavel
+### [M1] SECURITY DEFINER de dono NAO-superusuario x RLS
+PROBE|dono_da_tabela_sem_BYPASSRLS|exit=0|false/false
+PROBE|insert_direto_app_user_barrado_pela_POLICY|exit=1|ERROR:  new row violates row-level security policy for table "livre"
+PROBE|definer_sem_FORCE_atravessa_RLS|exit=0|1
+PROBE|definer_com_FORCE_e_barrado|exit=1|ERROR:  new row violates row-level security policy for table "forcada"~CONTEXT:  SQL function "insere_forcada" statement 1
+PROBE|confirmacao_de_leitura|exit=0|livre=1 forcada=0
+### [M2] CREATE OR REPLACE FUNCTION preserva a ACL
+PROBE|acl_antes_do_replace|exit=0|postgres=X/postgres|role_x=X/postgres
+PROBE|acl_depois_do_replace|exit=0|postgres=X/postgres|role_x=X/postgres
+PROBE|default_e_PUBLIC_EXECUTE|exit=0|<NULL=default> anon_tem=true
+### [M3] gate por GUC estilo auth.role() - falha fechada?
+PROBE|gate_guc_ausente|exit=1|ERROR:  service_role_required~CONTEXT:  PL/pgSQL function gate() line 3 at RAISE
+PROBE|gate_guc_forjavel_pelo_chamador|exit=0|passou
+HARNESS-END|mecanica

@@ -1,0 +1,44 @@
+[
+  {
+    "roster_index": 47,
+    "adjudication": [
+      "Harness de tarefas fornece spies compartilhados de auth, leitura, escrita, canal, toast/undo e QueryClient sem retry/cache persistente. Usa o createQueryBuilder compartilhado e expõe última leitura para que os consumidores verifiquem filtros; separa resultados de leitura/escrita e permite falhas de mutation.",
+      "makeTaskRow é fixture com campos e override, não consulta ao esquema. Este arquivo habilita observação nos consumidores, sem afirmar por si só que filtros, rollback ou autorização são efetivamente assertados em todos eles."
+    ]
+  },
+  {
+    "roster_index": 48,
+    "adjudication": [
+      "Setup registra matchers DOM/axe, matchMedia falso e observers vazios, e instala fetch que rejeita hosts supabase.co/in preservando o transporte original para outros destinos. A exceção explícita de WebSocket e os limites do regex/override são mantidos na leitura.",
+      "O histórico de requisições em comentário não foi reexecutado nem adotado como medição atual. O setup não contém reset global de fake timers; os arquivos com casos dependentes devem cuidar da restauração ou do isolamento configurado. Nenhuma suíte foi iniciada neste passe."
+    ]
+  },
+  {
+    "roster_index": 49,
+    "adjudication": [
+      "Ratchet lê recursivamente arquivos TS de Edge Functions e fixa contagem 213, três ocorrências e mapa de produtores legados. Outros casos leem fontes e exigem presença de dívida conhecida ou ausência de padrões já corrigidos, incluindo migração para parseJsonObject.",
+      "É uma medição textual deliberada de dívida, não teste de execução ou alegação de produto aprovado. O stripper por regex e os padrões finitos não constituem parsing semântico completo; passar as assertivas que preservam defeitos não demonstra correção desses defeitos."
+    ]
+  },
+  {
+    "roster_index": 50,
+    "adjudication": [
+      "Artefato adversarial explicitamente mede defeitos/gaps com padrões de fonte e SQL: compara mapas de vocabulário, defaults e consumidores fora do guard, distinguindo migrations históricas e função posterior, com ratchets inversos para correções.",
+      "A leitura confirma que estes testes foram concebidos como inventário de trabalho, não testes que certificam funcionalidades. As descrições precisam ser confrontadas com consumidores e estado SQL vigente; regex presente sozinho não prova execução ou alcance de todo caso listado."
+    ]
+  },
+  {
+    "roster_index": 51,
+    "adjudication": [
+      "Importa lazily ai-capabilities real e verifica cinco tipos, base desconhecida, estreitamento de features, ampliação declarada de modalidades e igualdade exata dos conjuntos permitidos. Cobre limites válidos/parciais/inválidos, configurações de forma errada, dados JSON com __proto__/chaves herdadas, e quatro códigos de erro com fronteiras de limites.",
+      "Os controles positivos e negativos são substanciais e vinculados ao módulo real. Os tipos e fixtures locais expressam o contrato esperado, não cópias da implementação. Declarar capacidade não é executar o adaptador/provedor, nem comprovar que todo chamador fornece necessidade e limites adequados."
+    ]
+  },
+  {
+    "roster_index": 52,
+    "adjudication": [
+      "Ratchet lê TS de produção, protege literais antes de remover comentários e verifica import/chamada textual de generateWithRouting, ausência de credenciais/modelo fixos e allowlist explícita de dívida de voz/áudio. Nos dois classificadores de visão exige modalidade e pelo menos duas ocorrências de categoria outros.",
+      "Os controles de fonte são úteis e preservam dívida declarada. chamadas/blocoParenteses são análise textual, não AST nem execução; contar ocorrências não prova que os catches ou todos os ramos usam a degradação correta. A exclusão de testes considera apenas o sufixo .test.ts."
+    ]
+  }
+]

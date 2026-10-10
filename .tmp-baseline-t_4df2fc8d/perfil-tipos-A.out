@@ -1,0 +1,20 @@
+=== linhas por tipo (total 128) ===
+  relation_grants     33   tratado por explicada()
+  routine_grants      31   tratado por explicada()
+  columns             17   tratado por explicada()
+  functions           16   tratado por explicada()
+  indexes              8   tratado por explicada()
+  defaults             7   tratado por explicada()
+  constraints          5   tratado por explicada()
+  column_grants        3   NAO TRATADO por explicada()
+  rls                  2   NAO TRATADO por explicada()
+  policies             2   tratado por explicada()
+  triggers             2   tratado por explicada()
+  default_grants       2   tratado por explicada()
+
+linhas de tipo NAO TRATADO por explicada() (nunca atribuiveis a migration pendente): 5
+  rls|gmail_oauth_states
+  rls|talkx_storage_purge_queue
+  column_grants|r:public.team_conversations.avatar_url|authenticated|UPDATE|grantor=postgres
+  column_grants|r:public.team_conversations.name|authenticated|UPDATE|grantor=postgres
+  column_grants|r:public.team_conversations.updated_at|authenticated|UPDATE|grantor=postgres

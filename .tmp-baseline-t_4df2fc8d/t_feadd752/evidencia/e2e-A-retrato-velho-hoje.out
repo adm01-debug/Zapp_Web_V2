@@ -1,0 +1,3 @@
+OK      travas          7s
+FALHOU  banco_local     1s  diferença não explicada por migration pendente: rls|gmail_oauth_states; rls|talkx_storage_purge_queue; columns|audit_logs.dedupe_key (+81)
+VERIFY: VERMELHO em banco_local (8s)

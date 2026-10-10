@@ -1,0 +1,3 @@
+#!/bin/sh
+# DOBRE DE ENSAIO: passo node (tipos/lint/migrations do codigo de aplicacao) ok
+exit 0

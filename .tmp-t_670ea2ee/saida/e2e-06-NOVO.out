@@ -1,0 +1,10 @@
+CMD: bash /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/arvore-fresco v2-26100617458c7f --rapido
+EXIT: 0
+--- stdout+stderr ---
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+AVISO   banco_local     3s  ESTRUTURA: banco local difere do retrato canonico da copia (2 linha(s)) [stub] — migration(s) pendente(s): 20261006204953_multiplix_cascata_bloco_terminal.sql; toda diferença é citada por elas (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/home-c06/.local/state/zapp-verify/cf4905a9e7ce/banco_local.log)
+VERIFY: VERDE (3s) — registros em /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/home-c06/.local/state/zapp-verify/cf4905a9e7ce

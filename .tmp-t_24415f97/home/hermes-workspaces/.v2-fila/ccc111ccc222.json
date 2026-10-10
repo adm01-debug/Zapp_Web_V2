@@ -1,0 +1,9 @@
+{
+ "id": "ccc111ccc222",
+ "branch": "v2/prova-sha-ruim-ccc111ccc222",
+ "base_dia": "dia/2026-10-04",
+ "sha": "cccccccccccccccccccccccccccccccccccccccc",
+ "titulo": "cartao com sha ruim",
+ "quando": "2026-10-07T06:00:00-03:00",
+ "estado": "pronto"
+}

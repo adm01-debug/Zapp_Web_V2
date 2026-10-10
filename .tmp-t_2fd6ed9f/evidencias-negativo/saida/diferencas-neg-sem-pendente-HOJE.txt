@@ -1,0 +1,6 @@
+columns|cartao_dinamico.coluna_gerada
+columns|cartao_novo.id
+columns|cartao_novo.payload
+indexes|cartao_novo.cartao_novo_pkey
+rls|cartao_novo
+relation_grants|r:public.cartao_novo|service_role|SELECT|grantor=postgres

@@ -1,0 +1,2025 @@
+[
+  {
+    "kind": "versioned_source",
+    "path": ".github/CODEOWNERS",
+    "absolute_path": ".github/CODEOWNERS",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "98ac125ba08479ff62db05cb7758e4fe1c0391630036a86a5c469011febb87d5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 11,
+        "line_end": 49
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/CODEOWNERS"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/ci.yml",
+    "absolute_path": ".github/workflows/ci.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1936bdbf1667de5460e9cf808abe3fe353ae9caa972df0eb0f88fe63d9f9153b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 167,
+        "line_end": 179
+      },
+      {
+        "line_start": 221,
+        "line_end": 242
+      },
+      {
+        "line_start": 275,
+        "line_end": 286
+      },
+      {
+        "line_start": 323,
+        "line_end": 337
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/ci.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/codeql.yml",
+    "absolute_path": ".github/workflows/codeql.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b123e7283377c3632df98c0d3ee342acaea89dcbd758abff046b24c705b3b501",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/codeql.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/crm-sync-worker.yml",
+    "absolute_path": ".github/workflows/crm-sync-worker.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9c5ed13cc2605931368fc54da1fe5d7a0545e977596cbc80e66192002db46523",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/crm-sync-worker.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/db-guard.yml",
+    "absolute_path": ".github/workflows/db-guard.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1fa7a5422f70db628d81722cba2dbcd4853afe238a0614caf4b65d92716ed137",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/db-guard.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/db-live-guard.yml",
+    "absolute_path": ".github/workflows/db-live-guard.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3a264e1c3b517515140f0e3ab6276e3a8787e0292035d51bd64790440531307e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/db-live-guard.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/db-migrate.yml",
+    "absolute_path": ".github/workflows/db-migrate.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "79cfd806819412dc1d0a83312a1cd2b2b944070078365c16f194aee8d19a41e5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/db-migrate.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/deploy-functions.yml",
+    "absolute_path": ".github/workflows/deploy-functions.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e863384f47250579a99fe17e880a533b0811ed2683497680f1ecde1b01e36686",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/deploy-functions.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/e2e-logado.yml",
+    "absolute_path": ".github/workflows/e2e-logado.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0d5a6471c8a0f358b770efab986c8a1418bba4ee1f806e9f76d82294cbb64e3f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/e2e-logado.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/e2e-talkx.yml",
+    "absolute_path": ".github/workflows/e2e-talkx.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0642c4c772552348306e426f163e040c976d7d446eaef64455badc255906ce04",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/e2e-talkx.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/settings-guard.yml",
+    "absolute_path": ".github/workflows/settings-guard.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "752cf2f157a8e65f2b5169231f5a5cc322fce640b076c3d70953da2cdc45d022",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/settings-guard.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".github/workflows/types-sync.yml",
+    "absolute_path": ".github/workflows/types-sync.yml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0884c62bb924531d58ba603a8adde54183c1b0e5bea5d2a8d9894bfef15e2565",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.github/workflows/types-sync.yml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".husky/pre-commit",
+    "absolute_path": ".husky/pre-commit",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "754454e98e295163fa10ce8ddfb2068b748ad8efa6ebcf4dacff23e230911299",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 5
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.husky/pre-commit"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".husky/pre-push",
+    "absolute_path": ".husky/pre-push",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ba69f16f206c705ccd7416920530df415a12833d5a8319d99c2f7a3b8d06ffbc",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 10
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.husky/pre-push"
+  },
+  {
+    "kind": "versioned_source",
+    "path": ".nvmrc",
+    "absolute_path": ".nvmrc",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "68ca3fba3b7e864770cb61aeb306d4bd4354b68ab4dd38450860c5d823e42a53",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/.nvmrc"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "AGENTS.md",
+    "absolute_path": "AGENTS.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "71e9417913c65e101ff316d3bfba75eac95783e297086af3c159f01cfa2b9dc8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/AGENTS.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "CLAUDE.md",
+    "absolute_path": "CLAUDE.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "33994f2f02cd865195a50921c9746006141c02e24c606cf0723c758bc60bcfc2",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/CLAUDE.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "bun.lock",
+    "absolute_path": "bun.lock",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "81a17a8b7cc56ef4a9aa584cc341de640c0fe8d59fca3fc7b399431db10a695f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/bun.lock"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/BACKUP-RECOVERY-STRATEGY.md",
+    "absolute_path": "docs/BACKUP-RECOVERY-STRATEGY.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "bf9cf9e67affc4d0427b1e2972cdaccff37a9d2d91278de8bc81875df0128449",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/BACKUP-RECOVERY-STRATEGY.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/INCIDENT-RUNBOOK.md",
+    "absolute_path": "docs/INCIDENT-RUNBOOK.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "278540ac31eee6db97f8aed8296c3ad2552a2da059c31b4cb6f063cb3c3d44f8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/INCIDENT-RUNBOOK.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/LGPD-RETENTION-POLICY.md",
+    "absolute_path": "docs/LGPD-RETENTION-POLICY.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "98675f38b206ca14f2006d17b603a519698da253cd253e7b6f6c7a7461429e12",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/LGPD-RETENTION-POLICY.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/SLA-ESCALATION-CRON.md",
+    "absolute_path": "docs/SLA-ESCALATION-CRON.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5e7e182091e6462b76ba6716c5b8f0ab07baed88da1e6ae9937433564fd8e144",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/SLA-ESCALATION-CRON.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/architecture/edge-functions.md",
+    "absolute_path": "docs/architecture/edge-functions.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b918795b3f6d575e74d0be385db41e722b06f47dafcd6dd362b0afab1d72444c",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/architecture/edge-functions.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md",
+    "absolute_path": "docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "af841669d741d756f89f66f9ead32cf1bc9eddcea852ff7b6b9ae5696188fdbc",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/DIVIDA_LINT_FATIAS_2026-09-29.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/audits/slow-queries-2026-09.md",
+    "absolute_path": "docs/audits/slow-queries-2026-09.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "7f7a845df4d33a237d5769ade7aba880de9d0b8ad098a30aafc62da665662be9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/slow-queries-2026-09.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/audits/web-vitals-e36-2026-10-03.md",
+    "absolute_path": "docs/audits/web-vitals-e36-2026-10-03.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "84a4ccda0b8e673506bf92522179c0c469dd78189677b1759a8308f1e8112098",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/audits/web-vitals-e36-2026-10-03.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/catalogo/PERF.md",
+    "absolute_path": "docs/catalogo/PERF.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "32174ac4d9d197204894c2b34b6329470bf28675280ce592f17728d91d289479",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/catalogo/PERF.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/ci/README.md",
+    "absolute_path": "docs/ci/README.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9b05fbd5b28e8a4d862d8ba7a38249a2d46df8cfc35bfb118c73a3342ffe5667",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/ci/README.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/decisions/ADR-001-react-query-server-state.md",
+    "absolute_path": "docs/decisions/ADR-001-react-query-server-state.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "414ac5bae19244601ea1661d4ea2de3fa71c8d4ab0b64cb2e1b0f041fce88414",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/decisions/ADR-001-react-query-server-state.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/decisions/ADR-003-css-modularization.md",
+    "absolute_path": "docs/decisions/ADR-003-css-modularization.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "04e95be67dde7549e377274a0b9982a585aa7c9b89f514e57a8a54d86690817d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/decisions/ADR-003-css-modularization.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/decisions/ADR-003-lazy-loading-architecture.md",
+    "absolute_path": "docs/decisions/ADR-003-lazy-loading-architecture.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ac645ba6b574023d536d3477b15c78d3e61c88d8112b79c9d18a588b3e9bad4a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/decisions/ADR-003-lazy-loading-architecture.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/decisions/ADR-006-whatsapp-connections-cache.md",
+    "absolute_path": "docs/decisions/ADR-006-whatsapp-connections-cache.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "7d34b8dec20531b083d9d093ebd2bf32eb0506a35902b6897f3ee850bffc8c3a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/decisions/ADR-006-whatsapp-connections-cache.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/design/PLANO_CORRECAO_LAYOUT_30_ETAPAS.md",
+    "absolute_path": "docs/design/PLANO_CORRECAO_LAYOUT_30_ETAPAS.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "99818c9769bc795e1cf6b69e2222a984f24badb205507bfbaf000bbdb662b4c2",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/design/PLANO_CORRECAO_LAYOUT_30_ETAPAS.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md",
+    "absolute_path": "docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9a6df8b9324f04a5835cf35b59e182e9c41af8731a337937494276148a83e787",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/auditoria_exaustiva_plano_100_etapas_2026_08_30.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "absolute_path": "docs/handoffs/cline_execution_log_2026_08_30.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "284ec58c0df35b4bedc3c29e6a0bf93474a512bbe8e325db6de94f3061831c20",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 58,
+        "line_end": 76
+      },
+      {
+        "line_start": 235,
+        "line_end": 235
+      },
+      {
+        "line_start": 246,
+        "line_end": 246
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/cline_execution_log_2026_08_30.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+    "absolute_path": "docs/handoffs/handoff_cline_100_etapas_2026_08_30.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ceadfc075e0f67c9beceb1cafbefce4b31ce4501d123de85cd959226ac580d24",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/handoffs/handoff_cline_100_etapas_2026_08_30.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/ia/README.md",
+    "absolute_path": "docs/ia/README.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "21594dab2080c0f905a80510f65dc8a26b54828a41ebdd373f7b00f3817b20a9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/ia/README.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/ops/runbook-pg-cron-capacidade.md",
+    "absolute_path": "docs/ops/runbook-pg-cron-capacidade.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "fe78b5540683601328bd1db2b313c9639fc792afab8380a3d8ed7fb2be0938a5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/ops/runbook-pg-cron-capacidade.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+    "absolute_path": "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d78df9eec70e10c43a06133ac84e2bc966989171317034606e1119eb33001995",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/runbooks/cron-secret-rotation.md",
+    "absolute_path": "docs/runbooks/cron-secret-rotation.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e72da0e76bd27677285f43008ab695a1870fb50338c9ee5c0473ca23b7e9afc9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/runbooks/cron-secret-rotation.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/runbooks/deploy.md",
+    "absolute_path": "docs/runbooks/deploy.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "508876751ab1457baebb6a317f39ee549e99b09b6ab4fbbe198b558d4385dfed",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/runbooks/deploy.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/runbooks/secret-rotation.md",
+    "absolute_path": "docs/runbooks/secret-rotation.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0a206a50b57253af10042f0890007abf374ba968aa763598fe2d6711203dc495",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/runbooks/secret-rotation.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/runbooks/slo.md",
+    "absolute_path": "docs/runbooks/slo.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "17444d2e0146059bd5d192380c499f628f4abd730625aba27780d6cb30ac30a7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/runbooks/slo.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "docs/security/secret-surface-inventory.md",
+    "absolute_path": "docs/security/secret-surface-inventory.md",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "773b1391815c8395131dd1acb789e0eef8bd9a5293b85d90b30f419062032bb0",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/docs/security/secret-surface-inventory.md"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/a11y-contraste.spec.ts",
+    "absolute_path": "e2e/a11y-contraste.spec.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b2a88dedd1d94a1f5461bc3bd238f639cbc27d1b95e167ab23b23ef193bbe597",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/a11y-contraste.spec.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/auth.setup.ts",
+    "absolute_path": "e2e/auth.setup.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "45201b73b0cefd673cf428e45aa6647c37418de09f2d7eaf428151b784e1cf3b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/auth.setup.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/auth.spec.ts",
+    "absolute_path": "e2e/auth.spec.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "85646106043812b10ba696389834ff77b27714b497989a0d2337c4e98e9dba8e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/auth.spec.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/contacts-crud.spec.ts",
+    "absolute_path": "e2e/contacts-crud.spec.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d158bbfdcd9285bde0b036b6d9ca6b89ebc40af6bece5f578437126b8864e971",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/contacts-crud.spec.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/fixtures/e2e-contact.ts",
+    "absolute_path": "e2e/fixtures/e2e-contact.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1fd8ce6091aee395a8e43fbb18ebd9b3b81d99eb99a76f5adb43ee78e9315b2a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/fixtures/e2e-contact.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/fixtures/supabase-env.ts",
+    "absolute_path": "e2e/fixtures/supabase-env.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "c916e7167b93ac83023cf2debaead4b8746e6898896866726695bedce9737083",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/fixtures/supabase-env.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/fixtures/talkx-demo.ts",
+    "absolute_path": "e2e/fixtures/talkx-demo.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "36290f9bda6cc75cd486bf8c49960c509f0f6bf667127907d2b6f7146ebaf353",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/fixtures/talkx-demo.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "e2e/inbox-contraste.spec.ts",
+    "absolute_path": "e2e/inbox-contraste.spec.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0786685fd85e75225d7cbd08b18229227e83e73aba48a4e3713d8fea7a54d13f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/e2e/inbox-contraste.spec.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "eslint.config.js",
+    "absolute_path": "eslint.config.js",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "fdd69806bc36c77a0902a9267f4d51288c9091be44a290e5273b580cc8e8d8d4",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/eslint.config.js"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "package.json",
+    "absolute_path": "package.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1f8a4113677be5d92b90ba65c6e98b7e807a3a9b499ada8ec35f6349220debcb",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 139
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/package.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "performance-budget.json",
+    "absolute_path": "performance-budget.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0a04d79668ca77ae8f7d522b91d526bc9375c84006801037d24effcc3802e9d5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/performance-budget.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "playwright.config.ts",
+    "absolute_path": "playwright.config.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3203e5e9f8bc5d897c6362ac0fa2d203dec7138c39b8d5459d2bb95932d383ac",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/playwright.config.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/audit-prod.mjs",
+    "absolute_path": "scripts/ci/audit-prod.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b0be826aa444e58e48f59db249ba17cede5fd68593ea5e789953373185fabb7b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/audit-prod.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/audit-prod.unit.mjs",
+    "absolute_path": "scripts/ci/audit-prod.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e18e8fc9bc9e7d22c55c1b697d7a3c660298cf8c1130e55552324ffa0daee0e6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/audit-prod.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/bundle-budget.mjs",
+    "absolute_path": "scripts/ci/bundle-budget.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1ffc344f9686fe10cb47d6858e6e61aad0e6f0f8c1bd787579cca9e893c2b850",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 52,
+        "line_end": 101
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/bundle-budget.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/bundle-budget.unit.mjs",
+    "absolute_path": "scripts/ci/bundle-budget.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "cf9fb243356fbdaacdc0a685e44eed01a77fa8a0ef1240849678df8ef20869d7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/bundle-budget.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/check-pr-workflow-secrets.mjs",
+    "absolute_path": "scripts/ci/check-pr-workflow-secrets.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "4a753f995a58e4f49628c593e74879dfbcddc4c0d769faa8fd76b7aa14f65e9b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/check-pr-workflow-secrets.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/check-test-inventory.mjs",
+    "absolute_path": "scripts/ci/check-test-inventory.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6fe5b41e63ccaeadde2f2acb4f45ca64fd5dc01f039a8fdc0887f557a8fc04e7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/check-test-inventory.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/check-workflow-pins.mjs",
+    "absolute_path": "scripts/ci/check-workflow-pins.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d05fb94fd3bfbb4e6b53c6b77d4e1f0de1950700dce687d12f920340a12c47c8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/check-workflow-pins.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/check-workflow-pins.unit.mjs",
+    "absolute_path": "scripts/ci/check-workflow-pins.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "720c3b0add8b8517196db86fe5baa591581c67fa0972c64a5c61b752bb128b62",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/check-workflow-pins.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/eslint-baseline.json",
+    "absolute_path": "scripts/ci/eslint-baseline.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6b9c115484bd49ae4eeb6db297f9e189f54765d6e3991b0d8d9e6afb984f5fcc",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/eslint-baseline.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/github-settings-baseline.json",
+    "absolute_path": "scripts/ci/github-settings-baseline.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d0d66d2bcdc95638ca4320214ab1572cdaa5d968732176fc89cd5de066685807",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/github-settings-baseline.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/implicit-any-baseline.json",
+    "absolute_path": "scripts/ci/implicit-any-baseline.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "49bc21d2cc841f2fbaca5448b53244fffc6e2bf5a4deebe42760747b6405143e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/implicit-any-baseline.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/implicit-any-ratchet.mjs",
+    "absolute_path": "scripts/ci/implicit-any-ratchet.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "24f5dabb3ba26c3a599badcd39466c531dd7d7f06145a973f0f410db57e8c345",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/implicit-any-ratchet.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/lint-ratchet.mjs",
+    "absolute_path": "scripts/ci/lint-ratchet.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3acf9d6c7d5877d61138c18b72f03c54fb7c2f60bbebb57f994368c254becaea",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/lint-ratchet.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/lint-ratchet.unit.mjs",
+    "absolute_path": "scripts/ci/lint-ratchet.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b03af1c6324e91fe5885bf3a91865b29ea28f6c7c925d30eb480a12d5c882cd1",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/lint-ratchet.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/security-workflow.unit.mjs",
+    "absolute_path": "scripts/ci/security-workflow.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "76921ebee5b9a530ff8802391739fa118f10e1bdb3200d6e2119b0676a6184d5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/security-workflow.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/typecheck-baseline.json",
+    "absolute_path": "scripts/ci/typecheck-baseline.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3db8149c403fe4f12cc6d8ec1305e3ae3ad5c0fc2400bee564d901048b45a65d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/typecheck-baseline.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/typecheck-ratchet.mjs",
+    "absolute_path": "scripts/ci/typecheck-ratchet.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e3f24788610a528b685ef4b350407e079f9eb21fcdb7545d2553b65fc790f537",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/typecheck-ratchet.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ci/typecheck-ratchet.unit.mjs",
+    "absolute_path": "scripts/ci/typecheck-ratchet.unit.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ff263fcb531700e9767807af0aa7419bf30031f30792d2783888024e614ca2f3",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ci/typecheck-ratchet.unit.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/db-audit/check-mcp-exec-acl.sql",
+    "absolute_path": "scripts/db-audit/check-mcp-exec-acl.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "bd96e65098a9fdbe420dcba2a734af37064a7fec5025e4cce2c8d75ec06ef02b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/db-audit/check-mcp-exec-acl.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/db-audit/check-migration-drift.mjs",
+    "absolute_path": "scripts/db-audit/check-migration-drift.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "76162db73bdf0fa407d98a49a7ce9523156bd85e097851bd9a7f0c7c73a14da6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/db-audit/check-migration-drift.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/db-audit/check-webhook-failures-acl.sql",
+    "absolute_path": "scripts/db-audit/check-webhook-failures-acl.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d5edb4857732763b12d0a0730342684e69b8ff24afb881c89d3dfa5f5c4f403c",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/db-audit/check-webhook-failures-acl.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/db-audit/multiplix-rls.test.sh",
+    "absolute_path": "scripts/db-audit/multiplix-rls.test.sh",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "27597f3afc987d7b2a2ea55c76485ceec2fa6bff3d950a3503edcedc8b781e68",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/db-audit/multiplix-rls.test.sh"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/db-audit/supabase-usage-guard.mjs",
+    "absolute_path": "scripts/db-audit/supabase-usage-guard.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "c4ffd9d278c9d7ee9010571a66a1d708dcfbad1ad3e76579d723499d0fd8156f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/db-audit/supabase-usage-guard.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/edge-deploy/deploy-plan.mjs",
+    "absolute_path": "scripts/edge-deploy/deploy-plan.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6cd8b5057433d40c8e94b5907de59518094eafdfa90bce89b322f0cfa83ab1e0",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/edge-deploy/deploy-plan.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/edge-deploy/generate-manifest.mjs",
+    "absolute_path": "scripts/edge-deploy/generate-manifest.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e53fb531c158779e1e91367231887667ea8fb60aa2b5cfb2e08c17b4febda05d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/edge-deploy/generate-manifest.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/edge-deploy/secrets-scope.mjs",
+    "absolute_path": "scripts/edge-deploy/secrets-scope.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3950de5c8efee1815be60e17bb8b46c7eaab6dd4121892c72525ed6ddcdef9a2",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/edge-deploy/secrets-scope.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/edge-deploy/smoke-functions.mjs",
+    "absolute_path": "scripts/edge-deploy/smoke-functions.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "10dc21cac963291f6bfef0defe311e5369870e667213ecc4dc819a5d827dab49",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/edge-deploy/smoke-functions.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/graphify/setup.sh",
+    "absolute_path": "scripts/graphify/setup.sh",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b8a6f14b7c3662d61df3a1d1aa267ea066617f918bc8ddbe2da420492657da9b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/graphify/setup.sh"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/qa/medir-tipografia.cjs",
+    "absolute_path": "scripts/qa/medir-tipografia.cjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f05c79c6452c33be826a112d4611e73e5cecf589cd21e5e4cdd6b34c381e187d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/qa/medir-tipografia.cjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/qa/tipografia-budget.json",
+    "absolute_path": "scripts/qa/tipografia-budget.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f09661a09317a4a975b2c916a8f2a4c2f8324f90799939e8c4f153d523a4a897",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/qa/tipografia-budget.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "scripts/ui-audit/layout-guard.mjs",
+    "absolute_path": "scripts/ui-audit/layout-guard.mjs",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "c8e3e6e3947ae53ae2b5a629b36239e1c1a80e5a80819744ade359bb9ea785f4",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/scripts/ui-audit/layout-guard.mjs"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/auth/ProtectedRoute.tsx",
+    "absolute_path": "src/components/auth/ProtectedRoute.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "fc515102a7a896c734fd47b909a2a6a3941a85bbc67c5536b8286a1b5fbda25f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/auth/ProtectedRoute.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/automations/AutomationsManager.tsx",
+    "absolute_path": "src/components/automations/AutomationsManager.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "29c98ef21250bd9d541822bb794eeb1203196783c978c80fa7e06eeaaaec0fe3",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/automations/AutomationsManager.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/automations/useAutomations.ts",
+    "absolute_path": "src/components/automations/useAutomations.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "10ef7bbb42ea375ff21eb5247d3dfc1b05c1843d15dc284c31f4b1ed487fc4b5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/automations/useAutomations.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/compliance/LGPDComplianceView.tsx",
+    "absolute_path": "src/components/compliance/LGPDComplianceView.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d6b22b0f7620df6ce31d379cffc7f6389dcdf4fc24f7130da373e7a45b850ec9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/compliance/LGPDComplianceView.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/contacts/ContactsView.tsx",
+    "absolute_path": "src/components/contacts/ContactsView.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6305b69c7488ebbb8880baa79b1868ed743b3abda6bcd9ce2274b37af83448c6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/contacts/ContactsView.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/CRMAutoSync.tsx",
+    "absolute_path": "src/components/inbox/CRMAutoSync.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f4ef97e91b6496640ba7d6bc4ccb39bf2d8e7bbcba070a4195e095e0702532ba",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/CRMAutoSync.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/FileUploader.tsx",
+    "absolute_path": "src/components/inbox/FileUploader.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b3dee842e813c8c8b8c192f945dd096e6daba2de41163208fb26ff7a65acb0f9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/FileUploader.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/InboxFilters.tsx",
+    "absolute_path": "src/components/inbox/InboxFilters.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ba32086fc2890cca241cc90050676d08f246ea300b4bb5758f91c7c7269eab38",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/InboxFilters.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/MessageStatus.tsx",
+    "absolute_path": "src/components/inbox/MessageStatus.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "57b788317387abfead039cbdf76355fe627e40c583792c73759f6b17b83dfa9c",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/MessageStatus.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/RealtimeInboxView.tsx",
+    "absolute_path": "src/components/inbox/RealtimeInboxView.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "61ddda89d946d02d0e5a0c811305df416d579c8c9d0f81867428000f76c72511",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/RealtimeInboxView.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/inbox/tabs/FilesTab.tsx",
+    "absolute_path": "src/components/inbox/tabs/FilesTab.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "45986a530fa77ac6fe62b75415e46853893354bee6dbdae6c275f052e8c4e4d5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/inbox/tabs/FilesTab.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/integrations/SentryIntegrationView.tsx",
+    "absolute_path": "src/components/integrations/SentryIntegrationView.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ce5ea90c11ed9cce41a6c5f7c22a5b8872353149ba3570c642e912ad035700f6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 30,
+        "line_end": 56
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/integrations/SentryIntegrationView.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/nps/NPSDashboard.tsx",
+    "absolute_path": "src/components/nps/NPSDashboard.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "17facc172ea3471730fadb7cd4de1ae5657e30f40432fc245d3b96f23808223a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/nps/NPSDashboard.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/reports/AutoExportManager.tsx",
+    "absolute_path": "src/components/reports/AutoExportManager.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "95af26837f7f9f1e9a480d0b9553ede913fe5cc038dd5c186799b7e2458d579f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/reports/AutoExportManager.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/security/QuarantinePanel.tsx",
+    "absolute_path": "src/components/security/QuarantinePanel.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9a21a1ef82f22a942e0d9dc31ea1800ac9422be00ee604d6c7123e8e1e078f2b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/security/QuarantinePanel.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/settings/AutomationSettings.tsx",
+    "absolute_path": "src/components/settings/AutomationSettings.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f40bdab7f11200ee83d9e65253fa5737cd62a721c2a806ba250492723627d668",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/settings/AutomationSettings.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/settings/CSATAutoConfig.tsx",
+    "absolute_path": "src/components/settings/CSATAutoConfig.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "873d4359585bee26c4953261097ba63f039bb60c46ab3e53be3743f9c536a7cb",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/settings/CSATAutoConfig.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/settings/FollowUpExecutionsHistory.tsx",
+    "absolute_path": "src/components/settings/FollowUpExecutionsHistory.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "01a293c6b518a4616c8183e092bd64d553c768fb873921e48aad3f8f2c460649",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/settings/FollowUpExecutionsHistory.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/settings/FollowUpSequences.tsx",
+    "absolute_path": "src/components/settings/FollowUpSequences.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "4343d21ddd29004882efc98c8b28193e351f1b776573e3f6450fc44019187148",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/settings/FollowUpSequences.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/settings/SkillBasedRoutingSettings.tsx",
+    "absolute_path": "src/components/settings/SkillBasedRoutingSettings.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5bf0dafdaf5e9069e1c4f7168daa22cd2e3b2be3571853aac348bb2dfd258f19",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/settings/SkillBasedRoutingSettings.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/team-chat/TeamChatPanel.tsx",
+    "absolute_path": "src/components/team-chat/TeamChatPanel.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1dff324240182f0f4d2f6e1c3cef455631097fde770dfaeff9a38133f013373f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/team-chat/TeamChatPanel.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/components/ui/offline-indicator.tsx",
+    "absolute_path": "src/components/ui/offline-indicator.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6a36323d9c73d69cde169ea2a7555f827c71311382c690191afc52b485619b31",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/components/ui/offline-indicator.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/config/service_worker.ts",
+    "absolute_path": "src/config/service_worker.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f18cfcea2d5c6ccf54be8b94e9810736b95b66cb354a7181e992058b2614d964",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 8
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/config/service_worker.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/__tests__/useServiceWorker.test.ts",
+    "absolute_path": "src/hooks/__tests__/useServiceWorker.test.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "c6e2cf17ab3b81737ee41c8fb216829383aa84bc9a6d72bd84243833fb0b7b56",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/__tests__/useServiceWorker.test.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/analytics/useRealtimeDashboard.ts",
+    "absolute_path": "src/hooks/analytics/useRealtimeDashboard.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5d0cbc351caa4f23b7ff8fb28a0bf48a2520a54d76588e85462427b6d6156177",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/analytics/useRealtimeDashboard.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/auth/useAuth.tsx",
+    "absolute_path": "src/hooks/auth/useAuth.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "285cd3336dceec5278b306cc67b1eddc7d23b346cb89cd1b2d30cc3f10a1ed26",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/auth/useAuth.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/auth/useAuthForm.ts",
+    "absolute_path": "src/hooks/auth/useAuthForm.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "657d107b5b09c3e7cdfaa19d7d05f2898bb30e90d9ec70e2d1291fa2f083f982",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/auth/useAuthForm.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/business/useCSAT.ts",
+    "absolute_path": "src/hooks/business/useCSAT.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e6b4759ce7d56fb7f24caec1ffd67a9ceae17c3ac98b889d99a9af4727625170",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/business/useCSAT.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/business/useNPSSurveys.ts",
+    "absolute_path": "src/hooks/business/useNPSSurveys.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5596e5562312c17cb7b44c1874d74a4a4bb802180b8dc97a02894ef8424c794a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/business/useNPSSurveys.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/chat/useContactMediaCounts.ts",
+    "absolute_path": "src/hooks/chat/useContactMediaCounts.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d00df6e01028db88a2c46aa7846a5456d4696a87ce256433c308d83389aafe4a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/chat/useContactMediaCounts.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/chat/useFilesActions.ts",
+    "absolute_path": "src/hooks/chat/useFilesActions.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "437179f65e969801f35cd3f5fed0430d5a0c8304a0d66894571763900ea90366",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/chat/useFilesActions.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/chat/useMessages.ts",
+    "absolute_path": "src/hooks/chat/useMessages.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f51f7b6ff9b1e930390056b7e444477ac69f97493969d95202c43e3850de1ad6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/chat/useMessages.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/crm/useAgentPresence.ts",
+    "absolute_path": "src/hooks/crm/useAgentPresence.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "602d182c19435a52c485246e247e7daf0a34dac43d229f5f1c5b8ea9d64372ea",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/crm/useAgentPresence.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/crm/useContactIntelligence.ts",
+    "absolute_path": "src/hooks/crm/useContactIntelligence.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f9e6b6cc17e0c42c77162a44fbe5a7be3fec163e1dbe95cc988e2a2f17f31722",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/crm/useContactIntelligence.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/dashboard/useScheduledReportConfigs.ts",
+    "absolute_path": "src/hooks/dashboard/useScheduledReportConfigs.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "34d569209b692e2b72907f0a900cd6ee570ddf9c893fc8f5bb923d07d008d7a9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/dashboard/useScheduledReportConfigs.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/gmail/gmailApi.ts",
+    "absolute_path": "src/hooks/gmail/gmailApi.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d91b95afeeb59b84df2a63e6e2324fac5475387c6e7537a5a2034533ce8e7bad",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/gmail/gmailApi.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/inbox/useInboxFilters.ts",
+    "absolute_path": "src/hooks/inbox/useInboxFilters.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "88a42be7925f0f6b7c719d022c1e8fef301acd9b39a8bedd594f0e996e9b9142",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/inbox/useInboxFilters.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/integrations/useGmail.ts",
+    "absolute_path": "src/hooks/integrations/useGmail.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/integrations/useGmail.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/realtime/useRealtimeNotifications.ts",
+    "absolute_path": "src/hooks/realtime/useRealtimeNotifications.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "275d1b9ecf7afc66cb664a482779576cbf4e676df9315e5ea9a2fd96d4db26ae",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/realtime/useRealtimeNotifications.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/realtime/useSupabaseRealtime.ts",
+    "absolute_path": "src/hooks/realtime/useSupabaseRealtime.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "23cdb344a425eba3f417909fe8d53ad3e966431644da533f0694ca33138c4ca6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/realtime/useSupabaseRealtime.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/system/useFeatureFlag.ts",
+    "absolute_path": "src/hooks/system/useFeatureFlag.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f8192de03e4e3e717aa137404c9471428c9a2922f0d4344329bf5635b2cd54b0",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 5,
+        "line_end": 32
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/useFeatureFlag.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/system/useOfflineCache.ts",
+    "absolute_path": "src/hooks/system/useOfflineCache.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9ce40c53aa61c13fa649d1a54a861ce63ecb17d6220a2c57a9336ba08e199dd6",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/useOfflineCache.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/system/usePermissions.ts",
+    "absolute_path": "src/hooks/system/usePermissions.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "53d6046b7b620830d44b6af537f29c1debddfeb4342d5376775106b85142afdc",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/usePermissions.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/system/useServiceWorker.ts",
+    "absolute_path": "src/hooks/system/useServiceWorker.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "03b9e972ff49c4ea43a36f034bd56fa92c6664b1262c15b025819e0e293ace33",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/useServiceWorker.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/system/useSkillBasedAssign.ts",
+    "absolute_path": "src/hooks/system/useSkillBasedAssign.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "dfffed7e165507f9f0ecab1e365e7e549c64381454c567c1c8ac90984c85a0c7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/system/useSkillBasedAssign.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/team-chat/useTeamMessages.ts",
+    "absolute_path": "src/hooks/team-chat/useTeamMessages.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "37295d5f431b3e68f9385eb20274bcca599e9c1ce5644593f04006cbd5c50584",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/team-chat/useTeamMessages.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/hooks/ui/useDeepLinks.ts",
+    "absolute_path": "src/hooks/ui/useDeepLinks.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "71bfa38b837addaf4d8071284a7fcad0bad739588f537db9be7058570a1285d4",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/hooks/ui/useDeepLinks.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/integrations/supabase/types.ts",
+    "absolute_path": "src/integrations/supabase/types.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e5cba648f3133d190e88d88fe7ed43efd9cb4f844d082f93f8ec1a43faaad9be",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/integrations/supabase/types.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/__tests__/deployment-update.test.ts",
+    "absolute_path": "src/lib/__tests__/deployment-update.test.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5b15a7e13d332f19cb1158e59698db131f69eb7f0840471774a454113338c8d5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/__tests__/deployment-update.test.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/__tests__/errorReporter.test.ts",
+    "absolute_path": "src/lib/__tests__/errorReporter.test.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "2f6fe1c7fee8922d911084daee53e335c9afb8ec194671ea1e6447692c1b5f52",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/__tests__/errorReporter.test.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/__tests__/web-vitals-budget.test.ts",
+    "absolute_path": "src/lib/__tests__/web-vitals-budget.test.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "3990316d15c353fbc44f021f7e0a3c273fb96e66c9e8b1bf408d231ce15c481e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/__tests__/web-vitals-budget.test.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/audit.ts",
+    "absolute_path": "src/lib/audit.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "02ea5fd2aef2011c2066ce9efb6f57ddebefbf13f2aeaa00e5c1b9a9db7b22f3",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/audit.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/deployment-update.ts",
+    "absolute_path": "src/lib/deployment-update.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "572a3d8162c697260ec1ebb5b4acf2ddd6b8234f1176fbed39d5cc8e57b511e8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/deployment-update.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/errorReporter.ts",
+    "absolute_path": "src/lib/errorReporter.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5c9f9a1d5ab0c1da0bdfb8f04a5abc825472c9b74c33a6c1526cb59b207c37e4",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 15
+      },
+      {
+        "line_start": 50,
+        "line_end": 82
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/errorReporter.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/logger.ts",
+    "absolute_path": "src/lib/logger.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f45d5ba0fed8fcd36784de3223c995206f9767e7c961d5dab5f4badca8e1666e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/logger.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/loginAttempts.ts",
+    "absolute_path": "src/lib/loginAttempts.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "2443d282cf81af0e9f6c4e2ffbcd6084187189a90ee98e5a900293a0e8d708d4",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/loginAttempts.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/queryClient.ts",
+    "absolute_path": "src/lib/queryClient.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5036c273782cf6aca3d756b2ac74710edbd0b5d8fe177a0991e5fdc2a390fac5",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/queryClient.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/retry.ts",
+    "absolute_path": "src/lib/retry.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "4db0c94f7f5ceac7e4368bca0af7d6a520497890e913c76e438bd28f60e42cbc",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/retry.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/speed-insights.ts",
+    "absolute_path": "src/lib/speed-insights.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5a7c1fc92a93f617d3b747df9b5e2f48a477d91d600983aa6346cce2ce735d57",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 40
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/speed-insights.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/lib/web-vitals.ts",
+    "absolute_path": "src/lib/web-vitals.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1ec1771de586802ede66a77abb32f033ad36607c934c42b65b8c2fa54acd562d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 23,
+        "line_end": 24
+      },
+      {
+        "line_start": 50,
+        "line_end": 64
+      },
+      {
+        "line_start": 92,
+        "line_end": 107
+      },
+      {
+        "line_start": 185,
+        "line_end": 187
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/lib/web-vitals.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/main.tsx",
+    "absolute_path": "src/main.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "df91ccf7d1d34c0321952a8ac9dcf9849a8b8092190912382d16c3aa9c742a1f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/main.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/pages/ForgotPassword.tsx",
+    "absolute_path": "src/pages/ForgotPassword.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/pages/ForgotPassword.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/pages/NotFound.tsx",
+    "absolute_path": "src/pages/NotFound.tsx",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "2e61dfa43d2fdb659e9eec529f4d2bec138969902d623d26a0363276d2728381",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/pages/NotFound.tsx"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/services/chat.service.ts",
+    "absolute_path": "src/services/chat.service.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "54f0ca34abcdd2cf016ee110cd825cccb9319292b7ac7c3219c134304fd4be6d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 57,
+        "line_end": 75
+      },
+      {
+        "line_start": 78,
+        "line_end": 97
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/services/chat.service.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/services/contact.service.ts",
+    "absolute_path": "src/services/contact.service.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "85b1225feace22e476986b8733b99753a05ae1dbd97db835a33337e3feb01e84",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/services/contact.service.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/services/crm/external-crm.service.ts",
+    "absolute_path": "src/services/crm/external-crm.service.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8ccd33313a089bbfa8d154e7809f95b7bbbf97431d796cfac21baf882f69a6fb",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/services/crm/external-crm.service.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/styles/components.css",
+    "absolute_path": "src/styles/components.css",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "294a52855b7098363f2c005c60aabbbba9604ba1ce1a0464daf2913f8d475b06",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/styles/components.css"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/styles/tokens.css",
+    "absolute_path": "src/styles/tokens.css",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ca19bfc1a5fd31d443e2763da0304e73bc25027cd894add5d0a32d015f805a28",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/styles/tokens.css"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "src/test/setup.ts",
+    "absolute_path": "src/test/setup.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "04c5e098ad0199f831cd92f598212356fffb24c62970321f9f9b41cf406693ea",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/src/test/setup.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/config.toml",
+    "absolute_path": "supabase/config.toml",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 8,
+        "line_end": 18
+      },
+      {
+        "line_start": 29,
+        "line_end": 40
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/config.toml"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/ai-generate.ts",
+    "absolute_path": "supabase/functions/_shared/ai-generate.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0e6d14a303fb023f7c482f2374287c3089dc7bb155b7870c046d3ad79f8d1f35",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/ai-generate.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/ai-providers.ts",
+    "absolute_path": "supabase/functions/_shared/ai-providers.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6d110b3e93f9a8c3b4b04c45a618cbfb4588fba986cb57326744749eb640a626",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/ai-providers.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/ai-usage.ts",
+    "absolute_path": "supabase/functions/_shared/ai-usage.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9056c49ae190dc60fd1fc34fee89fc3e4a21e14628fc9bf68d33a6576f3ab0d9",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/ai-usage.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/contracts.ts",
+    "absolute_path": "supabase/functions/_shared/contracts.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6b3f5665803c7a63412df191b83c4e9d7ae52e8b6e329dd225bfd723b31cd7d7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/contracts.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/evolution-go-adapter.ts",
+    "absolute_path": "supabase/functions/_shared/evolution-go-adapter.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "4dea8247fc8919af4182b2aa9634761df0bd600846bd40c1a4147a6e86ec77c8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/evolution-go-adapter.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/evolution-go-routes.ts",
+    "absolute_path": "supabase/functions/_shared/evolution-go-routes.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8da3c5c3c387949f5dc1143a1f1ca70412b9d4ff1d200754f09c0930f52f954d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/evolution-go-routes.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/evolution-send.ts",
+    "absolute_path": "supabase/functions/_shared/evolution-send.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "02c4039199552dd1576b361fb8ecafa601a23f01f9c3609b8a3e36285aeb24d8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/evolution-send.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/gmail-helpers.ts",
+    "absolute_path": "supabase/functions/_shared/gmail-helpers.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "5ce618f441d37a08a665bfb17fb5d97b51c5fa9123025dd025a012c082a82b60",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/gmail-helpers.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/hmac-validation.ts",
+    "absolute_path": "supabase/functions/_shared/hmac-validation.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "f6a785a3da09e2b11a9d074ac8827295f8d32c0eec535547c5a6c08d367434da",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/hmac-validation.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/ssrf.ts",
+    "absolute_path": "supabase/functions/_shared/ssrf.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9330ea91548aeea4fb241e9eae651e258169c2a2b7bb0a59b6715c75bc42f097",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/ssrf.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/validation.ts",
+    "absolute_path": "supabase/functions/_shared/validation.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "257890b6c2c20f463f6bb01b670306681b00bdc3685eda012c4296aad620d61e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 187,
+        "line_end": 219
+      },
+      {
+        "line_start": 240,
+        "line_end": 264
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/validation.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/_shared/webhook-signature.ts",
+    "absolute_path": "supabase/functions/_shared/webhook-signature.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "422287aa88bb95acb42cbd7e80bc6b014bdd754e30244a289b4fbfa9a5a87350",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/_shared/webhook-signature.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/ai-transcribe-audio/index.ts",
+    "absolute_path": "supabase/functions/ai-transcribe-audio/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "c73272af51caee03c03852dc1731199934414d75aea2d61df6b8938641883ee7",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/ai-transcribe-audio/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/auth-login/index.ts",
+    "absolute_path": "supabase/functions/auth-login/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9d4dc83e61efdf300e63cc3ea54515b2f11be91813eb0a42a0891440e336e49d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/auth-login/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    "absolute_path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "9ceed7013a9237cd19adb2b5b608478d2fc2d9f244141d7b658de7d9b45961ac",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/cleanup-rate-limit-logs/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/crm-integration/index.ts",
+    "absolute_path": "supabase/functions/crm-integration/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8dcb0b6fc2cc53046c90c86b868cddf7bc3297f56ba3f502f38993a49e53d402",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/crm-integration/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/csp-report/index.ts",
+    "absolute_path": "supabase/functions/csp-report/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "029925a360928bc6c4cc35934192a13ecd111f06903c1b2092f85127ac093040",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/csp-report/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/elevenlabs-scribe-token/index.ts",
+    "absolute_path": "supabase/functions/elevenlabs-scribe-token/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "fce296948a4010b3d97551474757a224f3e414087caf771c17d6f0e62029c254",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/elevenlabs-scribe-token/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/elevenlabs-webhook/index.ts",
+    "absolute_path": "supabase/functions/elevenlabs-webhook/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8a8aadf36362b34a5108e564b87c54a4e82865da296a803b71744130fe2dfb76",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/elevenlabs-webhook/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/evolution-webhook/index.ts",
+    "absolute_path": "supabase/functions/evolution-webhook/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "35675fb65e4645935a514f5aa5282c52b67e03914a6d555dc132f468652488df",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 30,
+        "line_end": 48
+      },
+      {
+        "line_start": 130,
+        "line_end": 149
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/evolution-webhook/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/fetch-link-preview/index.ts",
+    "absolute_path": "supabase/functions/fetch-link-preview/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8f4823a35cb1cb3ec54d0d7b9941033bc952cef9032a2d12ab9b6de74a3402ef",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/fetch-link-preview/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/gmail-cron-sync/index.ts",
+    "absolute_path": "supabase/functions/gmail-cron-sync/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "7471d0a32274d655ddbbd92479acfd6daf220e5492fd856d85cbf9329c69211a",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 7,
+        "line_end": 24
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/gmail-cron-sync/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/gmail-sync/index.ts",
+    "absolute_path": "supabase/functions/gmail-sync/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "85ee9e4b525e6bf15e101ac1455ff08ccdf4d623ad98d05c831e62079cb0f18b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/gmail-sync/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/gmail-webhook/index.ts",
+    "absolute_path": "supabase/functions/gmail-webhook/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ce7b56638d35522933152ce280c3034336d43caee024a40eb46d386c7211ff1e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 106,
+        "line_end": 145
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/gmail-webhook/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/message-delivery/index.ts",
+    "absolute_path": "supabase/functions/message-delivery/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "1f777336f5628c1bb7303707bb49186b2b732a6492f09c9183fdc49aae7f0474",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/message-delivery/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/public-api/index.ts",
+    "absolute_path": "supabase/functions/public-api/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "db0b93232b14432d92e609377e8536af241267450dbadd3c3ddb6c71f325555f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 12
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/public-api/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/send-rate-limit-alert/index.ts",
+    "absolute_path": "supabase/functions/send-rate-limit-alert/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "68fe29bf5e664ac4f5080a9b130f5d26fe9bd58f04e3d1c1045f5f8717712e63",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/send-rate-limit-alert/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/send-scheduled-report/index.ts",
+    "absolute_path": "supabase/functions/send-scheduled-report/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ec4926821b789b093dfe3088c8e6e44ca52b3d72078fffbf3b43b69b0d6cc330",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/send-scheduled-report/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/sentiment-alert/index.ts",
+    "absolute_path": "supabase/functions/sentiment-alert/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "75e637b94ec99ac0ce5994b2b6e40ce697e58e418ebd69b5490a2d87d1987e7b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/sentiment-alert/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/functions/whatsapp-webhook/index.ts",
+    "absolute_path": "supabase/functions/whatsapp-webhook/index.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "efba6dc0d7878ebe2d1ba0e559b62a75d84c82853355596137c614b8a6f0b0d1",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/functions/whatsapp-webhook/index.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260905020000_edge_rate_limits.sql",
+    "absolute_path": "supabase/migrations/20260905020000_edge_rate_limits.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "abf196045a9bc34bb488e183c08feb9c7b5301349f33384ea1a04d5d39d51678",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260905020000_edge_rate_limits.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260905060000_feature_flags.sql",
+    "absolute_path": "supabase/migrations/20260905060000_feature_flags.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0928b08ba74e7cc3efcf306f93e3b0e3f27cc06bad8ef372a2811feb58941ba8",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260905060000_feature_flags.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
+    "absolute_path": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "51aecdd2b1e21b7b391477c79e8a0d3448b1610e1d1e789dac75286c991548e3",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260930190000_enforce_send_messages_permission_on_enqueue.sql",
+    "absolute_path": "supabase/migrations/20260930190000_enforce_send_messages_permission_on_enqueue.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8160224ff270c445ddb809ceb34fd98c93660fe5e796d5fb59dedb990253d2fe",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260930190000_enforce_send_messages_permission_on_enqueue.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+    "absolute_path": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "2c8e33c7411cc851d1e9bc0d82729e8deaedbdb508c174a2ff2e99acc898a537",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260930260000_team_reaction_membership_guard.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+    "absolute_path": "supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "8b7665b249754829759ed870830c8d38efef81626e109e990ab2e9d20d4e5554",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260930280000_team_rpc_ambiguity_and_tcm_recursion.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260930300000_multiplix_guards_fail_closed.sql",
+    "absolute_path": "supabase/migrations/20260930300000_multiplix_guards_fail_closed.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "01874f5a82771d46630f7b951bf686e6b69d5f9c7dcbb840f3e6032ecfbe273b",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260930300000_multiplix_guards_fail_closed.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql",
+    "absolute_path": "supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "0cb8963e105f6e76971f3e406209b10519922456c42bfb08c06463848b896bea",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/schema-catalog.json",
+    "absolute_path": "supabase/schema-catalog.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "840f16399a589cf1f881bf62b331cb90b05c9cd151481581cfb9b311a8e6230e",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/schema-catalog.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "supabase/schema-manifest.json",
+    "absolute_path": "supabase/schema-manifest.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "633f139e8f4d6553864c341653c6dfc6f0e67a6b4fd84bcb400ba61f769228a1",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/supabase/schema-manifest.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "tsconfig.app.json",
+    "absolute_path": "tsconfig.app.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "6befd9cf62c7b3aadb65de434d9d133c9b688c684895b43253c45dd428306032",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/tsconfig.app.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "tsconfig.strict.json",
+    "absolute_path": "tsconfig.strict.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "7e18bab73d7f306cad8f6538a9db00a65d7b37b9ce454ae3d47a841dcd65db6f",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 1,
+        "line_end": 7
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/tsconfig.strict.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "vercel.json",
+    "absolute_path": "vercel.json",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "e314c4f3d196498fe8275be1cde13929ac5bd27dc0c6e51bd86d03aca69cdb1d",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 18,
+        "line_end": 42
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vercel.json"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "vite.config.ts",
+    "absolute_path": "vite.config.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "d8870439d5fda47734bcbbb7891ec0c4a51d1fcf49a6d4d1eb0992dd32c657f1",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 42,
+        "line_end": 49
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vite.config.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "vitest.config.ts",
+    "absolute_path": "vitest.config.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "2c603a221ece0847b0c3f4f965971d800810a1e48d2aafb58151b16d80100524",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "line_ranges": [
+      {
+        "line_start": 7,
+        "line_end": 37
+      }
+    ],
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vitest.config.ts"
+  },
+  {
+    "kind": "versioned_source",
+    "path": "vitest.contracts.config.ts",
+    "absolute_path": "vitest.contracts.config.ts",
+    "baseline_sha": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "sha256": "ca90b012704e227d9ab68dd47cca4a61d140ebc8689bc7ea5f2c5ba9edfba6a1",
+    "scope": "locator_context_not_automatic_semantic_proof",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6/vitest.contracts.config.ts"
+  }
+]

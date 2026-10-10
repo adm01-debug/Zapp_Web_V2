@@ -1,0 +1,42 @@
+== 0. alvos ==
+HOJE (instalado)  sha256 = 70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26
+NOVO (artefato)   sha256 = c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e
+explicador extraido: hoje=41 linhas  novo=85 linhas
+artefato tem drift_canonico()? True
+instalado tem drift_canonico()? False
+
+== 1. fixture A: 9 linhas (as 9 residuais) + pendente 20261006204953_multiplix_cascata_bloco_terminal.sql ==
+
+== 2. execucao crua (rc = veredito banco_local) ==
+HOJE rc=1
+  stdout: diferença não explicada por migration pendente: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean); routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boole
+  stderr: (vazio)
+NOVO rc=0
+  stdout: ok|drift=2
+  stderr: (vazio)
+
+== 3. classificacao das 9 (linha a linha) ==
+-- HOJE -- rc=0  total=9 explicadas=7 SEM=2
+-- NOVO -- rc=0  total=9 explicadas=7 drift_canonico=2 SEM=0
+
+DEBITADAS (SEM) HOJE=2  NOVO=0  de 9
+
+== 4. controle negativo (objeto novo do cartao tem de continuar SEM) ==
+-- negativo / HOJE -- rc=0
+   SEM	indexes|sonda_cartao.sonda_cartao_pkey
+   explicada	columns|r:public.sonda_cartao.col_citada
+   SEM	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+   SEM	routine_grants|f:funcao_antiga()|authenticated|EXECUTE|grantor=postgres
+   total=4 explicadas=1 SEM=3
+-- negativo / NOVO -- rc=0
+   SEM	indexes|sonda_cartao.sonda_cartao_pkey
+   explicada	columns|r:public.sonda_cartao.col_citada
+   drift	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+   drift	routine_grants|f:funcao_antiga()|authenticated|EXECUTE|grantor=postgres
+   total=4 explicadas=1 drift_canonico=2 SEM=1
+
+== 5. veredito ==
+as 9 residuais debitadas: HOJE=2 -> NOVO=0
+drift novo (indexes|sonda_cartao.sonda_cartao_pkey) continua SEM com o ajuste? True
+
+OK: repro concluida

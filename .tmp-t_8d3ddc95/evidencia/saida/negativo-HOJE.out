@@ -1,0 +1,5 @@
+SEM	indexes|sonda_cartao.sonda_cartao_pkey
+explicada	columns|r:public.sonda_cartao.col_citada
+SEM	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+SEM	routine_grants|f:funcao_antiga()|authenticated|EXECUTE|grantor=postgres
+total=4 explicadas=1 SEM=3

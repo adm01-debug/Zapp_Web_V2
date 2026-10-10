@@ -1,0 +1,41 @@
+{
+  "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "files": [
+    {
+      "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+      "git_blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040",
+      "bytes": 6335
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+      "git_blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+      "bytes": 10891
+    },
+    {
+      "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+      "git_blob_sha": "fb9d7000347808119e9c9a7b884885baef26c106",
+      "bytes": 2704
+    },
+    {
+      "path": "src/hooks/crm/useContactEnrichedData.ts",
+      "git_blob_sha": "02f7398107d5debbf70bbda0ce3a85bbcd2a4b5b",
+      "bytes": 4639
+    },
+    {
+      "path": "src/components/inbox/ContactDetails.tsx",
+      "git_blob_sha": "eeffb3e8f1a69c737171f4dfb107d2485beec79a",
+      "bytes": 6800
+    },
+    {
+      "path": "src/components/inbox/RealtimeInboxView.tsx",
+      "git_blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+      "bytes": 19040
+    },
+    {
+      "path": "src/components/security/RateLimitConfigPanel.tsx",
+      "git_blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+      "bytes": 9270
+    }
+  ]
+}

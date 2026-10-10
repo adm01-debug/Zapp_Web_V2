@@ -1,0 +1,33 @@
+== 0. entradas ==
+zapp-verify NOVO sha256 = c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e
+zapp-verify HOJE sha256 = 70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26
+explicador extraido: novo=85 linhas  hoje=41 linhas
+emb-novo.py == filtro-novo.py ? True
+
+== 1. fixture A: 9 linhas (as 9 residuais) + pendente 20261006204953_multiplix_cascata_bloco_terminal.sql ==
+
+-- fixture A / HOJE -- rc=0
+total=9 explicadas=7 SEM=2
+
+-- fixture A / NOVO -- rc=0
+total=9 explicadas=7 drift_canonico=2 SEM=0
+
+== 2. execucao crua do explicador (rc = veredito banco_local) ==
+HOJE rc=1 out=diferença não explicada por migration pendente: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean); routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+NOVO rc=0 out=ok|drift=2
+
+== 3. fixture NEGATIVO (tem de manter o objeto novo debitado) ==
+-- negativo / HOJE -- rc=0
+SEM	indexes|sonda_cartao.sonda_cartao_pkey
+explicada	columns|r:public.sonda_cartao.col_citada
+SEM	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+SEM	routine_grants|f:funcao_antiga()|authenticated|EXECUTE|grantor=postgres
+total=4 explicadas=1 SEM=3
+-- negativo / NOVO -- rc=0
+SEM	indexes|sonda_cartao.sonda_cartao_pkey
+explicada	columns|r:public.sonda_cartao.col_citada
+drift	functions|f:consume_gmail_oauth_state(p_user_id uuid, p_state text)
+drift	routine_grants|f:funcao_antiga()|authenticated|EXECUTE|grantor=postgres
+total=4 explicadas=1 drift_canonico=2 SEM=1
+
+OK: repro concluida

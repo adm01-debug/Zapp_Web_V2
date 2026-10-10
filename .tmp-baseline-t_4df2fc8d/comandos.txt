@@ -1,0 +1,56 @@
+# Comandos exatos desta evidência (t_4df2fc8d, 07/10/2026)
+
+EV="<workspace>/.tmp/evidencias-baseline"   # = /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline
+S=/home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100617458c7f/estado
+M=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/multiplix-fila-blocos-sucessores-294-26100617458c7f   # cópia do conjunto
+P=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/zapp-verify-drift-canonico-261006193749e2             # cartão pai
+
+## 0. Onde está o check real + integridade das fontes
+sha256sum /home/joaquim_ataides/.local/bin/zapp-db-local /home/joaquim_ataides/.local/bin/zapp-verify
+wc -l $S/check-diferencas.txt                      # 128
+sha256sum $S/check-diferencas.txt $M/supabase/schema-manifest.json $P/.tmp/retrato-fresco.json
+git -C ~/projetos/Zapp_Web_V2 show 99ff88bf2:supabase/schema-manifest.json | sha256sum   # confere com o retrato fresco
+
+## 1. Extração verbatim das duas peças do portão (nenhuma edição)
+sed -n '183,203p' /home/joaquim_ataides/.local/bin/zapp-db-local > $EV/check-compare.py   # corpo do bloco check do zapp-db-local
+sed -n '70,110p'  /home/joaquim_ataides/.local/bin/zapp-verify  > $EV/filtro-hoje.py      # corpo do explicador do zapp-verify (HOJE)
+sed -n '71,155p'  $P/.tmp/zapp-verify.novo                      > $EV/filtro-novo.py      # corpo do explicador do patch
+sed -n '8,29p' /home/joaquim_ataides/.local/bin/zapp-verify >  $EV/bloco-banco_local.sh   # preparo + passo()
+sed -n '35,124p' /home/joaquim_ataides/.local/bin/zapp-verify >> $EV/bloco-banco_local.sh # bloco banco_local inteiro
+bash -n $EV/bloco-banco_local.sh
+
+## 2. Cenário A/B offline (o MESMO python de zapp-db-local check)
+python3 $EV/check-compare.py $S/manifest-local.json $M/supabase/schema-manifest.json $EV/A-check-diferencas.txt ""   # rc=1, 128 linhas
+python3 $EV/check-compare.py $S/manifest-local.json $P/.tmp/retrato-fresco.json      $EV/B-check-diferencas.txt ""   # rc=1, 2 linhas
+diff $EV/A-check-diferencas.txt $S/check-diferencas.txt    # idêntico (sha256 cb31c19f…)
+
+## 3. Cenário A/B AO VIVO (banco local do conjunto, HOME de ensaio: o estado real não é tocado)
+# árvores mínimas: supabase/{config.toml,schema-manifest.json,migrations->$M} + scripts/db-audit/manifest.sql
+HOME=$EV/home-ensaio zapp-db-local check $EV/arvore-A v2-26100617458c7f    # 128 diferenças, rc=1
+HOME=$EV/home-ensaio zapp-db-local check $EV/arvore-B v2-26100617458c7f    #   2 diferenças, rc=1
+
+## 4. Explicador de HOJE e do patch sobre os dois checks
+NOVA=20261006204953_multiplix_cascata_bloco_terminal.sql
+NOVAS=$NOVA W=$M ST=$EV/st-A python3 $EV/filtro-hoje.py     # A: rc=1 (84 NÃO explicadas)
+NOVAS=$NOVA W=$M ST=$EV/st-B python3 $EV/filtro-hoje.py     # B: rc=0  ok
+NOVAS=$NOVA W=$EV/arvore-A ST=$EV/st-A python3 $EV/filtro-novo.py   # A: rc=1 (8 não explicadas, 76 drift canônico)
+NOVAS=$NOVA W=$EV/arvore-B ST=$EV/st-B python3 $EV/filtro-novo.py   # B: rc=0 ok|drift=0
+
+## 5. O passo banco_local REAL, ao vivo (bloco extraído do zapp-verify)
+HOME=$EV/home-ensaio bash $EV/bloco-banco_local.sh $EV/arvore-A v2-26100617458c7f          # rodada 1: registro bloqueado -> FALHOU
+HOME=$EV/home-ensaio bash $EV/bloco-banco_local.sh $EV/arvore-B v2-26100617458c7f          # rodada 2: registro bloqueado -> FALHOU (só 2 diferenças!)
+echo "$EV/arvore-A" > $EV/home-ensaio/.local/share/zapp-local/stacks/v2-26100617458c7f/estado/copia.txt
+HOME=$EV/home-ensaio PATH=$EV/fixture-zapp-db-ler:$PATH bash $EV/bloco-banco_local.sh $EV/arvore-A v2-26100617458c7f  # rodada 3: FALHOU (84)
+echo "$EV/arvore-B" > $EV/home-ensaio/.local/share/zapp-local/stacks/v2-26100617458c7f/estado/copia.txt
+HOME=$EV/home-ensaio PATH=$EV/fixture-zapp-db-ler:$PATH bash $EV/bloco-banco_local.sh $EV/arvore-B v2-26100617458c7f  # rodada 4: AVISO ok (rc=0)
+
+## 6. As 9 residuais e a decomposição das 128
+python3 $EV/analisa-residuais.py $S/manifest-local.json $M/supabase/schema-manifest.json $P/.tmp/retrato-fresco.json $EV/A-check-diferencas.txt
+python3 $EV/perfil-por-tipo.py $EV/A-check-diferencas.txt
+
+## 7. Prova de que o registro da produção é bloqueado ao agente
+zapp-db-ler "select string_agg(version, ',') as v from supabase_migrations.schema_migrations"   # rc=77 (guard, regra R1)
+
+## 8. Conferência final de que nada foi alterado
+sha256sum /home/joaquim_ataides/.local/bin/zapp-verify    # 70c0b223… (inalterado)
+ls -l --time-style=full-iso $S/check-diferencas.txt $S/manifest-local.json   # mtime 2026-10-06 18:55:49 (intacto)

@@ -1,0 +1,571 @@
+{
+  "schema_version": 1,
+  "repository": "adm01-debug/Zapp_Web_V2",
+  "created_at": "2026-10-03T23:19:26.256628+00:00",
+  "baseline_commit": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "cutoff_commit": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+  "cutoff_commit_time": "2026-10-03T22:50:32Z",
+  "main_ref_observed": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+  "docs_branch_ref_observed": "a2d9f62d5a67cfd6956a66fff30b9e97af36a88f",
+  "scope": "READ_ONLY_ADDITIVE_DELTA_ONLY; baseline ledgers and full inventories unchanged",
+  "compare": {
+    "status": "ahead",
+    "ahead_by": 1,
+    "behind_by": 0,
+    "total_commits": 1,
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/compare/2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6...4e73c7767858f00c577c29efd8cc86f5bea117a9"
+  },
+  "baseline_inventory": {
+    "preserved": true,
+    "number_range": "1–1869",
+    "pull_requests": 1828,
+    "issues": 41
+  },
+  "additional_inventory": {
+    "new_main_commits": 1,
+    "new_pull_requests": 1,
+    "new_pull_request_numbers": [
+      1870
+    ],
+    "new_issues_observed": 0,
+    "number_range": "1870 only",
+    "recent_collections_page_size": 30,
+    "qualification": "Coleções recentes por created desc já cruzam o limite 1869. Não se atualizou a população histórica de PRs/issues nem seus estados."
+  },
+  "pull_request": {
+    "number": 1870,
+    "title": "feat(talkx): liga o webhook aos recibos de leitura e à atribuição de resposta (X028)",
+    "state": "closed",
+    "draft": false,
+    "created_at": "2026-10-03T22:16:34Z",
+    "merged_at": "2026-10-03T22:50:32Z",
+    "merge_commit_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+    "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1870",
+    "commits": 2,
+    "changed_files": 9,
+    "comments": 12,
+    "review_comments": 4
+  },
+  "pull_request_head": "329254721f73e184421f9a141f517728a9d50d66",
+  "pull_request_branch": "hermes/talkx-webhook-recibos-resposta-26100318422bc3",
+  "branch_commits": [
+    {
+      "sha": "823e591c782c9db2799e0761170aa52a8196badd",
+      "title": "feat(talkx): X028 liga o webhook aos recibos de leitura e à atribuição de resposta",
+      "date": "2026-10-03T22:16:09Z"
+    },
+    {
+      "sha": "329254721f73e184421f9a141f517728a9d50d66",
+      "title": "test(talkx): X028 sobe o ratchet de produtores legados 210 -> 212",
+      "date": "2026-10-03T22:37:54Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "docs/talkx/v4/STATUS.md",
+      "status": "modified",
+      "sha": "831e80366b1bd6fe75571c96f2e1fc1f1a50f05c",
+      "additions": 2,
+      "deletions": 2,
+      "changes": 4,
+      "category": "DOCUMENTATION",
+      "effect": "Placar 35→36; ainda falta um marcador em relação ao cutoff.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/docs/talkx/v4/STATUS.md"
+    },
+    {
+      "filename": "supabase/deployment-manifest.json",
+      "status": "modified",
+      "sha": "27c44fb4c5d1aa13c8abc9712216d9a406909f89",
+      "additions": 8,
+      "deletions": 8,
+      "changes": 16,
+      "category": "DERIVED_DEPLOYMENT_METADATA",
+      "effect": "Hashes dos três shared files e da evolution-webhook atualizados; mantém 73 funções, configuração e allowlists.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/deployment-manifest.json"
+    },
+    {
+      "filename": "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
+      "status": "modified",
+      "sha": "003af675d225c7aaacf4efe435c52b18f1cc5664",
+      "additions": 38,
+      "deletions": 63,
+      "changes": 101,
+      "category": "TEST",
+      "effect": "Remove cache/consulta client-side do contrato e cobre chamada RPC Talk X; testes Multiplix preservados.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/__tests__/talkx-reply-window.test.ts"
+    },
+    {
+      "filename": "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts",
+      "status": "added",
+      "sha": "6a98889637e41908e6d593d1e5f5f84f536df37c",
+      "additions": 146,
+      "deletions": 0,
+      "changes": 146,
+      "category": "TEST_ADDED",
+      "effect": "Cinco contratos Deno do handler; não substituem SQL ou tráfego real.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts"
+    },
+    {
+      "filename": "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts",
+      "status": "added",
+      "sha": "1ec18f51c81e64702135872df6ffd9826e13a1a0",
+      "additions": 168,
+      "deletions": 0,
+      "changes": 168,
+      "category": "TEST_ADDED",
+      "effect": "Três contratos Deno: await, opt-out e retorno sem destinatário.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts"
+    },
+    {
+      "filename": "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "status": "modified",
+      "sha": "caa7a475e68e4ed5e824dfb5c58c68017d35da88",
+      "additions": 6,
+      "deletions": 2,
+      "changes": 8,
+      "category": "EDGE_LOGIC",
+      "effect": "Aguarda attributeTalkXReply e passa phone; atribuição Multiplix continua void.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-messages.ts"
+    },
+    {
+      "filename": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+      "status": "modified",
+      "sha": "f50d966cbffc0603eaff9283a634b1a5ffa6ee84",
+      "additions": 29,
+      "deletions": 28,
+      "changes": 57,
+      "category": "EDGE_LOGIC",
+      "effect": "Recibos Talk X delivered/read passam pela RPC canônica sem fromMe; gates Multiplix permanecem.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-msg-handlers.ts"
+    },
+    {
+      "filename": "supabase/functions/_shared/talkx-reply.ts",
+      "status": "modified",
+      "sha": "46a6c1958494755f5f07f69ca0092df3364cff96",
+      "additions": 31,
+      "deletions": 71,
+      "changes": 102,
+      "category": "EDGE_LOGIC",
+      "effect": "Consulta/update client-side e cache são removidos em favor de attribute_talkx_reply.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/talkx-reply.ts"
+    },
+    {
+      "filename": "tests/contracts/_adv_edge_legacy_producers.test.ts",
+      "status": "modified",
+      "sha": "15e002fab881f1d7a2b2352dded7806db4e7477e",
+      "additions": 7,
+      "deletions": 2,
+      "changes": 9,
+      "category": "TEST",
+      "effect": "Ratchet de arquivos 210→212 por dois testes; mapa de produtores legados e três ocorrências não mudam.",
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/tests/contracts/_adv_edge_legacy_producers.test.ts"
+    }
+  ],
+  "file_totals": {
+    "files": 9,
+    "added": 2,
+    "modified": 7,
+    "additions": 435,
+    "deletions": 176
+  },
+  "manifest": {
+    "functions_before": 73,
+    "functions_after": 73,
+    "changed_function_source_digests": [
+      "evolution-webhook"
+    ],
+    "changed_shared_files": [
+      "supabase/functions/_shared/evolution-webhook-messages.ts",
+      "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+      "supabase/functions/_shared/talkx-reply.ts"
+    ],
+    "migration_delta": 0,
+    "config_delta": false,
+    "source_git_blob_hashes_verified": "9/9"
+  },
+  "task_adjudication": [
+    {
+      "task_id": "X028",
+      "baseline_status": "PARTIAL",
+      "cutoff_status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+      "scope": "O Fazer literal de X028 foi implementado; risco residual de atribuição/Inbox/log permanece documentado, sem declaração de aceite integral.",
+      "documentation": {
+        "state": "UPDATED_WITH_STALE_SCOREBOARD",
+        "assessment": "PR descreve X028 e STATUS incrementa; placar ainda diverge por um marcador."
+      },
+      "implementation": {
+        "state": "IMPLEMENTED_WITH_RESIDUAL_FINDINGS",
+        "assessment": "RPC receipt sem gate fromMe; await da RPC reply com telefone; erros da RPC são logados e absorvidos, portanto await não garante gravação bem-sucedida."
+      },
+      "testing": {
+        "state": "TEST_SOURCE_AND_REMOTE_CI_OBSERVED",
+        "assessment": "Dois arquivos novos contêm 8 testes Deno e o contrato reply-window foi ajustado. PR alega 796 testes Deno aprovados; essa saída não foi relida. CI principal passou e o passo X027 no DB offline passou; mocks não cobrem as ambiguidades identificadas."
+      },
+      "runtime": {
+        "state": "DEPLOYMENT_OBSERVED_BEHAVIOR_UNVERIFIED",
+        "assessment": "Run37159794805 mostra deploy de evolution-webhook e validação do manifesto remoto pós-deploy com sucesso no cutoff. Não houve evento de cliente/celular, DB vivo manual ou novo ensaio."
+      },
+      "acceptance": {
+        "state": "NOT_COMPLETED",
+        "assessment": "Aceite do plano pede envio/abertura no celular no ensaio X035. Não demonstrado; CAP-016/017/018 não recebem DONE automático."
+      },
+      "source_url": "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/docs/talkx/v4/etapas/F03-integridade-observabilidade-e-ensaio-real.md#L84-L93",
+      "related_findings": [
+        "DELTA-TX-ATTRIBUTION",
+        "DELTA-TX-INBOX",
+        "DELTA-TX-LOG"
+      ]
+    },
+    {
+      "task_id": "X002",
+      "baseline_status": "VALIDATED_FAIL",
+      "cutoff_status": "VALIDATED_FAIL",
+      "baseline_finding": "TX01",
+      "assessment": "Arquivo36 / marcadores37; preservar ressalva semântica de contagem por títulos."
+    }
+  ],
+  "capability_effects": [
+    {
+      "ids": [
+        "CAP-016",
+        "CAP-017",
+        "CAP-018"
+      ],
+      "effect": "Ligação da edge acrescentada; aceite funcional real e riscos residuais impedem fechar automaticamente capacidades."
+    }
+  ],
+  "findings": [
+    {
+      "id": "DELTA-TX-ATTRIBUTION",
+      "severity": "HIGH",
+      "status": "STATIC_RISK_CONFIRMED",
+      "title": "A ligação da RPC amplia a atribuição para candidatos ambíguos por sufixo de telefone",
+      "delta_relationship": "SQL já existia em X027; X028 passa a chamá-lo com p_phone no fluxo real da edge. O caminho antigo selecionava somente contact_id.",
+      "assessment": "A assinatura não recebe conexão; a seleção reúne contato exato OU os últimos oito dígitos, ordena apenas sent_at/id e não prioriza o contato exato nem restringe a campanha à conexão de entrada. Um candidato mais recente com sufixo coincidente pode receber a resposta de outro contato ou conexão.",
+      "scenario": "A responde na conexão A, com destinatário exato enviado às 10h. B, com outro contact_id e o mesmo sufixo8, foi enviado às 11h na conexão B. A consulta considera ambos e escolhe B.",
+      "qualification": "É risco de atribuição incorreta demonstrável por leitura da seleção, sem incidente de produção observado. X027 especifica mais recente por contato OU telefone: a ausência de prioridade não é, por si só, descumprimento literal do plano. A RPC mantém service_role-only; não se afirma bypass de RLS de agente.",
+      "review_comments": [
+        4175099161,
+        4175108296
+      ],
+      "evidence": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/talkx-reply.ts#L77-L100",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-messages.ts#L332-L350",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/migrations/20261003212707_talkx_receipts_replies.sql#L335-L429"
+      ],
+      "acceptance_gap": "O harness cobre outro contact_id com mesmo número, mas não disputa entre contato exato e sufixo coincidente nem duas conexões. Exige decisão/correção de escopo e ensaios direcionados antes de aceitar atribuição sem ressalvas."
+    },
+    {
+      "id": "DELTA-TX-INBOX",
+      "severity": "MEDIUM",
+      "status": "PREEXISTING_GAP_NOT_FIXED",
+      "title": "O recibo corrigido para a campanha ainda pode deixar a mensagem enviada no Inbox sem atualização",
+      "delta_relationship": "O filtro de messages e o fallback já existiam e não são corrigidos no delta; o novo caminho permite a campanha avançar mesmo com fromMe=false.",
+      "assessment": "A consulta de messages usa sender=contact quando fromMe=false. A RPC canônica pode confirmar o destinatário outbound, mas o handler não volta para atualizar a mensagem agent. A cadeia final ainda chega ao fallback que tenta upsert de uma mensagem contact quando resolve o contato.",
+      "qualification": "Confirma-se o caminho de código; a inserção efetiva do placeholder depende de contato resolvível e constraints do banco. Não se afirma duplicação observada. Os novos mocks retornam null para messages/contatos e não provam o estado do Inbox.",
+      "review_comments": [
+        4175099198
+      ],
+      "evidence": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-msg-handlers.ts#L94-L138",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-msg-handlers.ts#L186-L218",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts#L24-L46"
+      ],
+      "acceptance_gap": "Exercitar recibo GO com fromMe=false, destinatário Talk X e mensagem agent reais; confirmar status monotônico e ausência de placeholder contact."
+    },
+    {
+      "id": "DELTA-TX-LOG",
+      "severity": "LOW",
+      "status": "NEW_STATIC_DEFECT",
+      "title": "O novo aviso de não-casamento também é emitido para recibos duplicados válidos",
+      "delta_relationship": "O ramo de warn para todo retorno false é novo; a semântica booleana da RPC já existia.",
+      "assessment": "A RPC retorna false tanto quando não encontra destinatário como quando delivered_at/read_at já está preenchido. O handler traduz todos esses resultados como did not match a recipient. A idempotência dos contadores permanece, mas o diagnóstico é inexato.",
+      "qualification": "O teste de repetição fixa o mock em true nas duas chamadas; por isso não cobre o false real da segunda chamada. Não se afirma aumento duplicado de contadores.",
+      "review_comments": [
+        4175099264
+      ],
+      "evidence": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/evolution-webhook-msg-handlers.ts#L125-L136",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/migrations/20261003212707_talkx_receipts_replies.sql#L248-L282",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts#L100-L109"
+      ],
+      "acceptance_gap": "Distinguir already_recorded de no_match na resposta ou no diagnóstico, preservando idempotência."
+    },
+    {
+      "id": "DELTA-TX-STATUS",
+      "severity": "MEDIUM",
+      "status": "BASELINE_FINDING_PERSISTS",
+      "baseline_finding": "TX01",
+      "baseline_tasks": [
+        "X002",
+        "X197",
+        "X200"
+      ],
+      "title": "STATUS continua um marcador atrás: 36 registrados e 37 detectáveis",
+      "delta_relationship": "O arquivo passa de 35 para 36; o conjunto de títulos cresce de 36 para 37 ao acrescentar X028.",
+      "assessment": "O avanço do placar não encerra TX01/X002. A contagem foi recomposta a partir do histórico baseline mais o único commit do delta, sem checkout novo ou execução do produto.",
+      "qualification": "Marcador de commit não é comprovação de aceite. Não foi executado --check no cutoff; o descompasso aritmético e a regra do gerador foram conferidos.",
+      "review_comments": [],
+      "evidence": [
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/docs/talkx/v4/STATUS.md#L1-L20",
+        "https://github.com/adm01-debug/Zapp_Web_V2/blob/4e73c7767858f00c577c29efd8cc86f5bea117a9/scripts/talkx/v4-status.mjs#L120-L151"
+      ],
+      "acceptance_gap": "Regenerar o placar no fluxo próprio e conservar a distinção entre marcador Git e tarefa aceita."
+    }
+  ],
+  "ci": {
+    "checks_total": 14,
+    "check_conclusions": {
+      "success": 9,
+      "failure": 3,
+      "skipped": 1,
+      "cancelled": 1
+    },
+    "checks": [
+      {
+        "id": 111312538735,
+        "name": "🏗️ Build",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T23:02:02Z",
+        "completed_at": "2026-10-03T23:02:27Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111312538735"
+      },
+      {
+        "id": 111311262314,
+        "name": "🔒 Security Audit",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:54:17Z",
+        "completed_at": "2026-10-03T22:54:32Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111311262314"
+      },
+      {
+        "id": 111311262311,
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:54:17Z",
+        "completed_at": "2026-10-03T22:55:11Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111311262311"
+      },
+      {
+        "id": 111311262310,
+        "name": "🎭 E2E Tests (Playwright)",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:54:16Z",
+        "completed_at": "2026-10-03T23:03:30Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111311262310"
+      },
+      {
+        "id": 111311262287,
+        "name": "🧪 Unit Tests",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:54:17Z",
+        "completed_at": "2026-10-03T23:01:57Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111311262287"
+      },
+      {
+        "id": 111311247699,
+        "name": "SonarCloud Code Analysis",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-10-03T22:50:51Z",
+        "completed_at": "2026-10-03T22:54:08Z",
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&branch=main"
+      },
+      {
+        "id": 111310716706,
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "started_at": "2026-10-03T22:50:34Z",
+        "completed_at": "2026-10-03T22:50:34Z",
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches"
+      },
+      {
+        "id": 111310707341,
+        "name": "Deploy Edge Functions",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:50:52Z",
+        "completed_at": "2026-10-03T22:52:38Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159794805/job/111310707341"
+      },
+      {
+        "id": 111310673034,
+        "name": "Contrato DB offline",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-10-03T22:50:39Z",
+        "completed_at": "2026-10-03T22:58:58Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790891/job/111310673034"
+      },
+      {
+        "id": 111310672730,
+        "name": "regen",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:50:38Z",
+        "completed_at": "2026-10-03T22:51:00Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790924/job/111310672730"
+      },
+      {
+        "id": 111310672723,
+        "name": "Contrato DB vivo",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-10-03T22:50:38Z",
+        "completed_at": "2026-10-03T22:51:36Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790900/job/111310672723"
+      },
+      {
+        "id": 111310672701,
+        "name": "🔍 Lint & TypeCheck",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:50:38Z",
+        "completed_at": "2026-10-03T22:54:14Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909/job/111310672701"
+      },
+      {
+        "id": 111310672606,
+        "name": "🎭 E2E logado (Playwright)",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "started_at": "2026-10-03T22:50:38Z",
+        "completed_at": "2026-10-03T23:05:54Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790899/job/111310672606"
+      },
+      {
+        "id": 111310672522,
+        "name": "update-behind-branches",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-03T22:50:38Z",
+        "completed_at": "2026-10-03T22:50:42Z",
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790883/job/111310672522"
+      }
+    ],
+    "combined_status": "success",
+    "statuses": [
+      {
+        "context": "Vercel – zapp_web_v2",
+        "state": "success",
+        "target_url": "https://vercel.com/juca1/zapp_web_v2/BMvC4RNUyTvGuDPWiispxCpKFtLT",
+        "description": "Deployment has completed"
+      },
+      {
+        "context": "Vercel – zapp-web-v2-main",
+        "state": "success",
+        "target_url": "https://vercel.com/juca1/zapp-web-v2-main/DECRU4Vr2wcZ3ymFGwYeoztp24H6",
+        "description": "Deployment has completed"
+      }
+    ],
+    "workflow_runs": [
+      {
+        "id": 37159794805,
+        "name": "Deploy Edge Functions (evolution-webhook)",
+        "event": "workflow_dispatch",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-03T22:50:39Z",
+        "updated_at": "2026-10-03T22:52:39Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159794805"
+      },
+      {
+        "id": 37159790924,
+        "name": "Talk X V4 placar regen (push)",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T22:51:01Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790924"
+      },
+      {
+        "id": 37159790883,
+        "name": "Auto Update PR Branches",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T22:50:43Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790883"
+      },
+      {
+        "id": 37159790900,
+        "name": "DB Live Guard",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "failure",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T22:51:37Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790900"
+      },
+      {
+        "id": 37159790891,
+        "name": "DB Guard (offline)",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "failure",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T22:58:59Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790891"
+      },
+      {
+        "id": 37159790909,
+        "name": "CI/CD Pipeline",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T23:03:30Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790909"
+      },
+      {
+        "id": 37159790899,
+        "name": "E2E logado",
+        "event": "push",
+        "head_sha": "4e73c7767858f00c577c29efd8cc86f5bea117a9",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "created_at": "2026-10-03T22:50:35Z",
+        "updated_at": "2026-10-03T23:05:54Z",
+        "html_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37159790899"
+      }
+    ],
+    "qualification": "Combined status success abrange dois estados Vercel; não anula falhas dos check runs. Nenhum workflow foi disparado nesta auditoria."
+  },
+  "remote_failure_scope": {
+    "db_live": "Run37159790900 falha em Consolidar veredito do contrato vivo. Sem logs novos, não se recertificam causas detalhadas nem contagens de drift no cutoff. Achado estrutural baseline permanece.",
+    "db_offline": "Run37159790891 falha no passo87, Provar RLS de escrita em talkx_settings (V06); o passo74 X027 passa. A causa exata do passo87 não foi lida em log e não é reclassificada como violação RLS. Não transportar automaticamente a causa de bootstrap do run baseline.",
+    "sonar": "Reliability D e Security C, exigido A, conforme output do check no cutoff; sem enumeração de issues Sonar."
+  },
+  "read_limitations": {
+    "job_logs": "Não lidos. URLs /actions/jobs/{id}/logs e check-run annotations foram rejeitadas como endpoint não suportado por github_fetch. Após instrução de root, adendo encerra com checks e job steps; não significa ausência de logs nem inexistência de outro conector.",
+    "new_product_executions": 0,
+    "new_test_suite_executions": 0,
+    "new_deployments_triggered": 0,
+    "new_database_queries": 0,
+    "remote_mutations": 0,
+    "open_pr_historical_states_refreshed": false
+  },
+  "unaffected_scope": "Nenhum SQL, front-end, workflow YAML, política de banco ou outro módulo foi alterado neste delta. Não encerra achados Dashboard, Telefonia, Arquivos, Gmail/IA, TeamChat ou fila/worker Multiplix. Gates de recibo Multiplix e atribuição void permanecem.",
+  "preservation": {
+    "checkout_before": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "checkout_after": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+    "worktree_clean": true,
+    "docs_branch_expected": "a2d9f62d5a67cfd6956a66fff30b9e97af36a88f",
+    "docs_branch_unchanged": true,
+    "baseline_ledger_files_written": false
+  }
+}

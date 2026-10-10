@@ -1,0 +1,5 @@
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/zapp-verify.original
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/zapp-verify.novo
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+5c56eaa4ff19cbfaf5dc3d36385da03041831e4a32f823fcbd5dc6cdba25261c  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-hoje.py
+f6828357521bfb7d05abf869cf867d8ec763fa2eb7c84945f0a164e0e3f50d5f  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-novo.py

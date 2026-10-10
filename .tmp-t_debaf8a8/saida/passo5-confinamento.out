@@ -1,0 +1,31 @@
+== hashes ==
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.original
+c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  /home/joaquim_ataides/.local/bin/zapp-verify
+
+== semantica (bash -n) ==
+bash -n OK  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.original
+bash -n OK  /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+
+== hunks do diff ==
+linhas do diff: 105
+hunks: 2
+@@ -65,23 +65,24 @@
+@@ -101,18 +102,66 @@
+
+== cabecalho (1-64) identico? ==
+IDEM linhas 1-64
+tamanho: original=130 novo=179 linhas
+
+== a mudanca toca quais passos do portao? ==
+49:> def drift_canonico(l):
+53:>     # objeto nem o seu dono: o que a pendente cita continua provado pelo explicada(); o que só existe
+68:<     if not explicada(l): sem.append(l)
+70:>     if explicada(l): continue
+71:>     if drift_canonico(l): pre.append(l); continue
+79:<       if [ $RM = 0 ] && [ "$MOTIVO" = ok ]; then
+81:>       DRIFT_N="${MOTIVO#*drift=}"; [ "$DRIFT_N" = "$MOTIVO" ] && DRIFT_N=0
+82:>       if [ $RM = 0 ] && [ "${MOTIVO%%|*}" = ok ] && [ "$DRIFT_N" = 0 ]; then
+84:>       elif [ $RM = 0 ] && [ "${MOTIVO%%|*}" = ok ]; then
+85:>         printf 'AVISO   %-12s %4ss  %s — migration(s) pendente(s): %s; %s diferença(s) NÃO debitada(s) ao cartão (já no retrato canônico e não citadas por nenhuma pendente: %s) (ver %s)\n' banco_local "$(( $(date +%s)-t0 ))" \
+86:>           "$(grep -m1 '^ESTRUTURA:' "$LOG/banco_local.log")" "$(printf '%s' "$NOVAS_MIG" | tr '\n' ' ')" "$DRIFT_N" "$(printf '%s' "$MOTIVO" | sed -n 's/^drift: //p' | head -2 | tr '\n' ';')" "$LOG/banco_local.log" | tee -a "$RES"

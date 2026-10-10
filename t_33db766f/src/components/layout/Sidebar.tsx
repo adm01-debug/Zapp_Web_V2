@@ -1,0 +1,258 @@
+import React, { useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { Moon, Sun, PanelLeftClose, PanelLeftOpen, Star, Search } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTheme } from '@/hooks/ui/useTheme';
+import { useSidebarCollapse } from '@/hooks/ui/useSidebarCollapse';
+import { useSidebarFavorites } from '@/hooks/ui/useSidebarFavorites';
+import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
+import { ScreenProtectionToggle } from '@/components/notifications/ScreenProtectionToggle';
+import { SoundVolumeControl } from '@/components/notifications/SoundVolumeControl';
+import { MediaVolumeToggle } from './MediaVolumeToggle';
+import { AccessibilitySettings } from '@/components/theme/HighContrastToggle';
+import { SidebarNavItem } from './SidebarNavItem';
+import { SidebarNavGroup } from './SidebarNavGroup';
+import { SidebarUserPill } from './SidebarUserPill';
+import { SidebarBackButton } from './SidebarBackButton';
+import { primaryNav, sidebarGroups, advancedNav } from './sidebarNavConfig';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { NavigationService } from '@/services/navigation.service';
+import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
+import { useMyWorkItemsBadgeInfo } from '@/hooks/tasks/useMyWorkItems';
+
+interface SidebarProps {
+  currentView: string;
+  onViewChange: (view: string) => void;
+  inboxBadge?: number;
+  profile?: { name?: string | null; avatar_url?: string | null } | null;
+  userEmail?: string;
+  signOut?: () => void;
+  canGoBack?: boolean;
+  onGoBack?: () => void;
+}
+
+export const Sidebar = React.memo(function Sidebar({
+  currentView,
+  onViewChange,
+  inboxBadge,
+  profile,
+  userEmail,
+  signOut,
+  canGoBack,
+  onGoBack,
+}: SidebarProps) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+  const { collapsed, toggle } = useSidebarCollapse();
+  const { favorites, toggleFavorite, isFavorite } = useSidebarFavorites();
+  const { roles, permissions } = useUserRole();
+
+  // Fase F (etapa 62): badge do item Tarefas = atrasadas + avisos já disparados
+  // e ainda não tratados. A COR diz o estado: vermelho quando ha tarefa atrasada,
+  // amarelo quando o badge e so de avisos disparados.
+  const tasksBadgeInfo = useMyWorkItemsBadgeInfo();
+
+  const filteredPrimaryNav = useMemo(() =>
+    NavigationService.filterNavItems(primaryNav, roles, permissions),
+    [roles, permissions]
+  );
+
+  const filteredGroups = useMemo(() =>
+    sidebarGroups.map(group => ({
+      ...group,
+      items: NavigationService.filterNavItems(group.items, roles, permissions)
+    })).filter(group => group.items.length > 0),
+    [roles, permissions]
+  );
+
+  const allNavItems = useMemo(() =>
+    [...primaryNav, ...sidebarGroups.flatMap(g => g.items), ...advancedNav],
+    []
+  );
+
+  // Itens da nav primária ficam sempre visíveis por conta própria — não
+  // precisam de atalho em Favoritos (evita duplicar o mesmo item nos dois
+  // lugares quando alguém favoritou algo que depois passou a viver na nav
+  // primária, caso do Multiplix).
+  const primaryNavIds = useMemo(() => new Set(primaryNav.map(item => item.id)), []);
+
+  const favoriteItems = useMemo(() =>
+    favorites
+      .map(id => allNavItems.find(item => item.id === id))
+      .filter(Boolean)
+      .filter(item => !primaryNavIds.has(item!.id) && NavigationService.canAccess(item!.id, roles, permissions)) as typeof allNavItems,
+    [favorites, allNavItems, primaryNavIds, roles, permissions]
+  );
+
+  return (
+    <nav id="main-navigation" aria-label="Menu de navegação principal"
+      className={cn('flex flex-col h-screen supports-[height:100dvh]:h-[100dvh] border-r border-border bg-sidebar shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden', collapsed ? 'w-[var(--sidebar-w-collapsed)]' : 'w-[var(--sidebar-w)]')}>
+
+      {/* Logo + Toggle */}
+      <div className={cn('flex items-center h-[64px] shrink-0 px-3', collapsed ? 'justify-center' : 'justify-between')}>
+        <button onClick={() => onViewChange('inbox')} className="sidebar-logo-tile w-11 h-11 rounded-xl flex items-center justify-center bg-primary hover:bg-primary/90 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="ZAPP — Ir para Inbox">
+          <span className="text-primary-foreground font-bold text-sm tracking-tight">Z</span>
+        </button>
+        {!collapsed && <span className="font-display text-xl font-bold leading-none tracking-[-0.01em] text-foreground ml-2 mr-auto">ZAPP</span>}
+        {!collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed={false} />}
+        {!collapsed && <NotificationsPopover />}
+        {!collapsed && (
+          <Tooltip delayDuration={200}><TooltipTrigger asChild>
+            <button onClick={toggle} className="w-[28px] h-[28px] rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Recolher menu">
+              <PanelLeftClose className="w-[15px] h-[15px]" />
+            </button>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Recolher <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
+        )}
+      </div>
+
+      {collapsed && (
+        <div className="flex justify-center my-1">
+          <Tooltip delayDuration={200}><TooltipTrigger asChild>
+            <button onClick={toggle} className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-border/40 hover:border-border focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none" aria-label="Expandir menu">
+              <PanelLeftOpen className="w-[16px] h-[16px]" />
+            </button>
+          </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">Expandir <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-3xs font-mono">⌘B</kbd></TooltipContent></Tooltip>
+        </div>
+      )}
+
+      {collapsed && <SidebarBackButton canGoBack={canGoBack} onGoBack={onGoBack} collapsed />}
+
+      {collapsed && <NotificationsPopover collapsed />}
+
+      {/* Área única de rolagem: nav primária + busca + favoritos + grupos.
+          Antes só os grupos rolavam e a nav primária ficava fixa no topo —
+          cada item novo ali (ex.: Multiplix) encolhia permanentemente o
+          espaço visível dos grupos em telas baixas. Agora tudo rola junto,
+          só o cabeçalho (logo) e os controles do rodapé ficam fixos. */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scroll-smooth [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border hover:[&::-webkit-scrollbar-thumb]:bg-primary/50">
+        <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Menu principal">
+          <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
+            {filteredPrimaryNav.map((item) => (
+              <li key={item.id}>
+                <SidebarNavItem
+                  item={item}
+                  currentView={currentView}
+                  onViewChange={onViewChange}
+                  badge={item.id === 'inbox' ? inboxBadge : item.id === 'tasks' ? tasksBadgeInfo.count : undefined}
+                  badgeVariant={
+                    item.id === 'tasks' && !tasksBadgeInfo.hasOverdue ? 'warning' : 'destructive'
+                  }
+                  collapsed={collapsed}
+                />
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Busca global */}
+        <div className={cn('px-2', collapsed && 'flex justify-center px-[11px]')}>
+          {collapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+                  className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] transition-all duration-200"
+                  aria-label="Busca global (⌘K)"
+                >
+                  <Search className="w-[18px] h-[18px] text-primary" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="bg-popover border-border text-xs font-medium flex items-center gap-2">
+                <span>Buscar</span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-3xs font-mono text-muted-foreground">⌘K</kbd>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={() => document.dispatchEvent(new CustomEvent('open-global-search'))}
+              className="w-full flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-medium min-h-[44px] text-sidebar-foreground hover:bg-muted/60 hover:text-foreground active:scale-[0.97] hover:translate-x-1 transition-all duration-200"
+              aria-label="Busca global (⌘K)"
+            >
+              <Search className="w-[18px] h-[18px] shrink-0 text-primary" />
+              <span className="truncate">Buscar...</span>
+              <kbd className="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-muted/70 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
+            </button>
+          )}
+        </div>
+
+        {/* Favorites */}
+        {favoriteItems.length > 0 && (
+          <>
+            <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
+            {!collapsed && <div className="px-3 flex items-center gap-1.5"><Star className="w-[10px] h-[10px] text-warning fill-warning" /><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Favoritos</span></div>}
+            <nav className={cn('flex flex-col gap-0.5', collapsed ? 'items-center px-[11px]' : 'px-2')} aria-label="Favoritos">
+              <ul role="list" className={cn('flex flex-col gap-0.5 w-full list-none p-0 m-0', collapsed && 'items-center')}>
+                {favoriteItems.map((item) => (
+                  <li key={item.id}>
+                    <SidebarNavItem
+                      item={item}
+                      currentView={currentView}
+                      onViewChange={onViewChange}
+                      collapsed={collapsed}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={isFavorite(item.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </>
+        )}
+
+        <div className={cn('mx-3 h-px bg-border', collapsed ? 'my-1' : 'my-1.5')} />
+
+        <div className={cn('flex flex-col gap-1.5 py-1', collapsed ? 'items-center px-[11px]' : 'px-2')}>
+          {filteredGroups.map((group) => (
+            <SidebarNavGroup
+              key={group.label}
+              label={group.label}
+              icon={group.icon}
+              items={group.items}
+              currentView={currentView}
+              onViewChange={onViewChange}
+              collapsed={collapsed}
+              onToggleFavorite={toggleFavorite}
+              isFavorite={isFavorite}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Controls */}
+      <div className="flex flex-col items-center gap-1.5 pt-1.5 pb-3 shrink-0">
+        <div className="mx-3 h-px bg-border self-stretch" />
+        {!collapsed && <div className="px-3 self-stretch flex items-center gap-1.5 pb-0.5"><span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Controles rápidos</span></div>}
+        <div className={cn('flex flex-col gap-1 rounded-xl border border-border bg-muted/50 px-1.5 py-1.5 shadow-sm', collapsed ? 'items-center' : 'self-stretch mx-2')}>
+          {signOut && (
+            <>
+              <SidebarUserPill profile={profile ?? null} userEmail={userEmail ?? ''} signOut={signOut} onViewChange={onViewChange} collapsed={collapsed} />
+              <div className="h-px bg-border/60 self-stretch mx-1" />
+            </>
+          )}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <ScreenProtectionToggle className="w-[36px] h-[36px]" />
+            <PushNotificationToggle className="w-[36px] h-[36px]" />
+            <SoundVolumeControl className="w-[36px] h-[36px]" />
+            {/* E28 — volume das mídias de conversa, logo depois do volume dos ALERTAS.
+                5 × 36px + 4 gaps = 196px, dentro dos 228px úteis da sidebar (256px). */}
+            <MediaVolumeToggle className="w-[36px] h-[36px]" />
+            <Tooltip delayDuration={200}><TooltipTrigger asChild>
+              <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className={cn("w-[36px] h-[36px] rounded-lg flex items-center justify-center transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none", isDark && "text-primary")} aria-label={isDark ? 'Modo claro' : 'Modo escuro'}>
+                {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
+              </button>
+            </TooltipTrigger><TooltipContent side="right" sideOffset={8} className="text-xs">{isDark ? 'Modo claro' : 'Modo escuro'}</TooltipContent></Tooltip>
+          </div>
+          {/* Acessibilidade (alto contraste, nivel de contraste, movimento reduzido, texto grande)
+              em LINHA PROPRIA: o `AccessibilitySettings` e um botao de 36px, e um sexto controle
+              na linha de cima daria 6 × 36px + 5 gaps = 236px — estoura os 228px uteis da sidebar
+              (a conta dos 5 controles atuais esta no comentario do E28 acima). Antes desta
+              correcao o componente existia mas nao era renderizado em tela nenhuma: o usuario so
+              conseguia ligar o alto contraste por localStorage. */}
+          <div className={cn('flex items-center gap-1', collapsed ? 'flex-col' : 'flex-row')}>
+            <AccessibilitySettings />
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+});

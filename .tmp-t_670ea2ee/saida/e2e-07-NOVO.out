@@ -1,0 +1,12 @@
+CMD: bash /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/arvore-velho v2-26100617458c7f --rapido
+EXIT: 1
+--- stdout+stderr ---
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          1s
+AVISO   banco_local  não consegui ler o registro da produção: vale a regra estrita
+FALHOU  banco_local     0s  (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/t_670ea2ee/home-c07/.local/state/zapp-verify/dc3f0f750c1e/banco_local.log)
+ESTRUTURA: banco local difere do retrato canonico da copia (9 linha(s)) [stub]
+VERIFY: VERMELHO em banco_local (1s)

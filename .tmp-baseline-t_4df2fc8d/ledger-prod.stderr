@@ -1,0 +1,1 @@
+PROIBIDO a agentes: zapp-db-ler consulta o banco de PRODUÇÃO (regra R1). Use o banco LOCAL do cartão (zapp-db-local / hermes-db-migrar).

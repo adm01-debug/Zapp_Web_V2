@@ -1,0 +1,102 @@
+{
+  "_comment": "X020 — fixture COMPARTILHADO do teste de paridade front/edge. Lido por (a) o teste Deno supabase/functions/_shared/messaging/__tests__/personalize.test.ts, (b) o teste front src/components/talkx/__tests__/talkxSharedPersonalizePreview.test.ts e (c) o script scripts/db-audit/talkx-personalize-parity.test.mjs. 'expect' é o texto esperado (ambos os lados têm de produzir). Casos com data ({{data_atual}}/{{data}}) são cobertos por asserções próprias nos testes Deno/front (o texto depende do dia).",
+  "cases": [
+    {
+      "id": "builtin-nome",
+      "template": "Ola {{nome}}, tudo bem?",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Ola João, tudo bem?"
+    },
+    {
+      "id": "builtin-nome-completo",
+      "template": "{{nome_completo}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "João Silva"
+    },
+    {
+      "id": "builtin-apelido",
+      "template": "Oi {{apelido}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Oi João"
+    },
+    {
+      "id": "builtin-empresa",
+      "template": "da {{empresa}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "da Loja Central"
+    },
+    {
+      "id": "fallback-padrao-nome",
+      "template": "Ola {{nome|cliente}}",
+      "contact": { "name": null, "nickname": null, "company": "Loja Central", "phone": "11988887777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Ola cliente"
+    },
+    {
+      "id": "empresa-sem-valor",
+      "template": "da {{empresa}}",
+      "contact": { "name": "Ana Paula", "nickname": "Ana", "company": null, "phone": "11977776666", "vendedor": null },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "da "
+    },
+    {
+      "id": "custom-com-valor",
+      "template": "Cargo: {{cargo}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": { "cargo": "Diretor de Vendas" },
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Cargo: Diretor de Vendas"
+    },
+    {
+      "id": "custom-sem-valor",
+      "template": "Cargo: {{cargo}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Cargo: [cargo]"
+    },
+    {
+      "id": "custom-padrao",
+      "template": "Cargo: {{cargo|Não informado}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Cargo: Não informado"
+    },
+    {
+      "id": "builtin-vendedor",
+      "template": "Falar com {{vendedor}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Falar com Maria Souza"
+    },
+    {
+      "id": "builtin-telefone",
+      "template": "Tel: {{telefone}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "expect": "Tel: +55 11 98888-7777"
+    },
+    {
+      "id": "builtin-link",
+      "template": "Veja {{link}}",
+      "contact": { "name": "João Silva", "nickname": "João", "company": "Loja Central", "phone": "+55 11 98888-7777", "vendedor": "Maria Souza" },
+      "customValues": {},
+      "timeZone": "America/Sao_Paulo",
+      "trackingUrl": "https://zap.example/l/abc123",
+      "expect": "Veja https://zap.example/l/abc123"
+    }
+  ]
+}

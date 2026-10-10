@@ -1,0 +1,72 @@
+== 0. fontes sob teste (nada foi editado) ==
+HOJE (instalado)     70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  7507 B  130 linhas
+NOVO (artefato)      c95e371a054ea1d671893978bd8648c6971639cc978a39218ac502f881e3456e  10876 B  179 linhas
+original (rollback)  70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26  7507 B  130 linhas
+alvo ~/.local/bin/zapp-verify segue INTACTO (nao instalado): 70c0b223d5a63a17bbe8cc2f1a3e2d9ec320034be64056c95b9f9e1ba3789a26
+artefato tem drift_canonico()? True / instalado tem? False
+explicador extraido verbatim: HOJE 41 linhas sha=5c56eaa4ff19cbfa | NOVO 85 linhas sha=f6828357521bfb7d
+
+== 1. ambiente limpo construido das ENTRADAS CRUAS da tarefa 0 ==
+arvore-velho  retrato sha=d242c0e63c88b82f  migrations=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/multiplix-fila-blocos-sucessores-294-26100617458c7f/supabase/migrations
+arvore-fresco retrato sha=27eb021f7924dbd9
+check9=9 linhas | checkA=128 linhas | checkB=2 linhas
+ledger fixture: 793 versoes | arquivos .sql: 794 | PENDENTES derivadas: ['20261006204953_multiplix_cascata_bloco_terminal.sql']
+
+== 2. logica da guarda (lida no artefato, nao no relato do pai) ==
+(a) retrato canonico consultado?  True
+(b) ledger consultado?            %s (linha 43 zapp-db-ler -> NOVAS_MIG/pendentes; a prova (b) usa o texto das
+                                     migrations da copia que NAO estao nas pendentes -> $W/supabase/migrations)
+corte "migration pendente cita o objeto -> continua do cartao"? True
+caminhos fail-closed intactos?   SEM->raise SystemExit(1)=True ; LEDGER_OK=0->regra estrita=True
+cabeca (linhas 1-64) identica ao instalado? IDENTICA
+
+== 3. EXECUCAO CRUA do explicador real (rc + stdout) + veredito do bloco banco_local ==
+   (o veredito espelha as linhas 157-168 do script: RM/MOTIVO -> AVISO x FALHOU + exit code)
+   9-as-residuais         HOJE  rc=1  veredito=FALHOU                                        exit=1
+        stdout: diferença não explicada por migration pendente: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text
+   9-as-residuais         NOVO  rc=0  veredito=AVISO (2 nao debitada(s) ao cartao)           exit=0
+        stdout: ok|drift=2 | drift: functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_prov
+   A-128(retrato velho)   HOJE  rc=1  veredito=FALHOU                                        exit=1
+        stdout: diferença não explicada por migration pendente: rls|gmail_oauth_states; rls|talkx_storage_purge_queue; columns|audit_logs.dedupe_key (+81)
+   A-128(retrato velho)   NOVO  rc=1  veredito=FALHOU                                        exit=1
+        stdout: diferença não explicada por migration pendente: indexes|gmail_oauth_states.gmail_oauth_states_pkey; indexes|talkx_storage_purge_queue.talkx_storage_pu
+   B-2(retrato fresco)    HOJE  rc=0  veredito=AVISO (toda diferenca citada)                 exit=0
+        stdout: ok
+   B-2(retrato fresco)    NOVO  rc=0  veredito=AVISO (toda diferenca citada)                 exit=0
+        stdout: ok|drift=0
+
+== 3b. classificacao LINHA A LINHA das 9 residuais (o que cada versao DEBITA) ==
+   HOJE  DEBITADA	functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+   HOJE  DEBITADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|service_role|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|PUBLIC|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|authenticated|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+   HOJE  EXPLICADA	relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+   HOJE  TOTAL=9 EXPLICADAS=7 DRIFT=0 DEBITADAS=2
+   NOVO  DRIFT	functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)
+   NOVO  DRIFT	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|postgres|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)|service_role|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|PUBLIC|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)|authenticated|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|PUBLIC|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|authenticated|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	routine_grants|f:record_talkx_campaign_lifecycle_event()|service_role|EXECUTE|grantor=postgres
+   NOVO  EXPLICADA	relation_grants|r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+   NOVO  TOTAL=9 EXPLICADAS=7 DRIFT=2 DEBITADAS=0
+
+== 3c. atribuicao do drift no A-128: prova (a) retrato x prova (b) migrations ja aplicadas ==
+   DRIFT por prova: (a) retrato canonico=9  (b) migrations ja aplicadas=67
+
+== 4. CAMINHOS DE BORDA (fixture SINTETICO isolando cada prova) ==
+   fixture: {"indexes": {"r:public.tab_snap.ind_snap": {"tabela": "tab_snap"}, "r:public.tab_both.ind_both": {"tabela": "tab_both"}}, "functions": {}, "routine_grants": {}}
+   ja-aplicada 0001_old.sql | pendente 9001_pend.sql (o cartao cria sonda_cartao + ind_cartao)
+   linha (borda)                    HOJE         NOVO        
+   E1 so no retrato canonico        DEBITADA     DRIFT (nao debitada)  <- indexes|r:public.tab_snap.ind_snap
+   E2 so nas ja-aplicadas           DEBITADA     DRIFT (nao debitada)  <- indexes|r:public.tab_led.ind_ledger
+   E3 nos DOIS                      DEBITADA     DRIFT (nao debitada)  <- indexes|r:public.tab_both.ind_both
+   E4 em NENHUM (controle neg.)     DEBITADA     DEBITADA      <- indexes|r:public.tab_none.ind_none
+   E5 objeto NOVO do cartao         EXPLICADA    EXPLICADA     <- indexes|r:public.tab_cartao.ind_cartao
+   E6 tabela do cartao, filho novo  DEBITADA     DEBITADA      <- indexes|r:public.sonda_cartao.sonda_cartao_pkey

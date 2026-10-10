@@ -1,0 +1,11 @@
+{
+  "features": [
+    {
+      "geometry": { "coordinates": [-46.6565, -23.5613] },
+      "properties": {
+        "name": "Avenida Paulista, 1000",
+        "full_address": "Av. Paulista, 1000 - Bela Vista, São Paulo"
+      }
+    }
+  ]
+}

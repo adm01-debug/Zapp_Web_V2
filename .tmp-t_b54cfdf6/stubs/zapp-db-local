@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# DOBRE DE ENSAIO do `zapp-db-local` (t_b54cfdf6). Nao fala com banco nenhum.
+# Por que existe: o conjunto local `v2-26100617458c7f` esta DESTRUIDO hoje (o banco local daquele
+# cartao nao existe mais), entao `zapp-db-local check` nao roda ao vivo. Este dobre repete o
+# comportamento OBSERVAVEL do comando real no que interessa ao passo `banco_local`:
+#   travas <copia> [nome]  -> confere as travas (aqui: ok) e sai 0
+#   check  <copia> [nome]  -> grava <estado>/check-diferencas.txt (a FIXTURE apontada, que e o
+#                             check real reproduzido pelo comparador REAL) + <estado>/copia.txt,
+#                             imprime a linha "ESTRUTURA: ..." e sai com FIXTURE_RC.
+# A fixture de cada cenario vem de check-compare.py (o comparador python extraido VERBATIM do
+# zapp-db-local) rodando sobre o manifest-local.json REAL de 06/10 18:55 -- ver out/.
+set -u
+cmd="${1:-}"; W="${2:-}"; NOME="${3:-}"
+ST="$HOME/.local/share/zapp-local/stacks/$NOME/estado"
+mkdir -p "$ST"
+case "$cmd" in
+  travas) echo "TRAVAS: conferidas (DOBRE de ensaio — sem banco)"; exit 0;;
+  check)
+    cp "${FIXTURE:?FIXTURE nao apontada}" "$ST/check-diferencas.txt" || exit 2
+    printf '%s\n' "$W" > "$ST/copia.txt"
+    n=$(wc -l < "$ST/check-diferencas.txt")
+    if [ "$n" -eq 0 ]; then
+      echo "ESTRUTURA: IDÊNTICA ao retrato da produção"
+    else
+      echo "ESTRUTURA: $n diferença(s) em relação ao retrato da produção"
+    fi
+    exit "${FIXTURE_RC:-1}";;
+  *) exit 0;;
+esac

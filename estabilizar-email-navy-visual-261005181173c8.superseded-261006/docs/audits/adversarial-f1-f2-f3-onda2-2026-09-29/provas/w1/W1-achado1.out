@@ -1,0 +1,18 @@
+### 1) estado inicial: search_contacts nao existe
+0
+### 2) aplicando 20260929140000_search_contacts_returns_address.sql (a migration irma da F1)
+NOTICE:  function public.search_contacts(text,text,text,text,text,pg_catalog.timestamptz,text,text,pg_catalog.int4,pg_catalog.int4) does not exist, skipping
+resultado: TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, address text, address_number text, neighborhood text, city text, state text, postal_code text, total_count bigint)
+### 3) replay em ordem: aplicando 20260929370000_contacts_soft_delete_and_search_filters.sql
+exit_code=3
+ERROR:  42P13: cannot change return type of existing function
+DETAIL:  Row type defined by OUT parameters is different.
+HINT:  Use DROP FUNCTION search_contacts(text,text,text,text,text,timestamp with time zone,text,text,integer,integer) first.
+LOCATION:  ProcedureCreate, pg_proc.c:441
+### 4) assinatura depois da tentativa (a antiga continua de pe?)
+TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, latitude double precision, longitude double precision, address text, address_number text, neighborhood text, city text, state text, postal_code text, total_count bigint)
+### 5) colunas de saida declaradas POR search_contacts em cada arquivo
+20260929370000: 17
+20260929140000: 23
+### 6) a 20260929370000 cita as 6 colunas de endereco em algum lugar?
+0

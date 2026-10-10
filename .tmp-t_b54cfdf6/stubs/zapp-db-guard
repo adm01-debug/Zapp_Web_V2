@@ -1,0 +1,3 @@
+#!/bin/sh
+# DOBRE DE ENSAIO: db_guard ok (a trava contra producao nao e o objeto desta verificacao)
+exit 0

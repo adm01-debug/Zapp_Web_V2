@@ -1,0 +1,2458 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "meaning": "Lacunas desta coverage individual, não da união dos agentes; caminhos já assumidos por outros revisores podem estar completos na consolidação.",
+  "closed_finite_directories": [
+    {
+      "directory": "src/components/talkx/",
+      "status": "SOURCE_BODIES_AND_TESTS_READ",
+      "files": 59,
+      "test_files": 21,
+      "lines": 11914,
+      "remaining_unread_ranges": [],
+      "limit": "Leitura dos corpos e dos testes; a suíte não foi executada e os contratos externos permanecem sujeitos aos limites de prova."
+    },
+    {
+      "directory": "src/hooks/analytics/",
+      "status": "SOURCE_BODIES_AND_TESTS_READ",
+      "files": 15,
+      "test_files": 2,
+      "lines": 2066,
+      "remaining_unread_ranges": [],
+      "limit": "Leitura dos corpos e dos testes; a suíte não foi executada e os contratos externos permanecem sujeitos aos limites de prova."
+    },
+    {
+      "directory": "src/components/dashboard/",
+      "status": "SOURCE_BODIES_AND_TESTS_READ",
+      "files": 91,
+      "test_files": 18,
+      "lines": 10331,
+      "remaining_unread_ranges": [],
+      "limit": "Leitura dos corpos e dos testes; a suíte não foi executada e os contratos externos permanecem sujeitos aos limites de prova."
+    }
+  ],
+  "remaining_production_in_individual_inventory": [
+    {
+      "path": "src/components/calls/ActiveCallBar.tsx",
+      "git_blob_sha": "784e01956ea0f856e3557292f48da076d94a7174",
+      "review_level": "structural",
+      "total_lines": 77,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallChannelBadge.tsx",
+      "git_blob_sha": "43be3af5ca114d4f97da0c3cf54058b648ef49a8",
+      "review_level": "structural",
+      "total_lines": 47,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallContactCell.tsx",
+      "git_blob_sha": "1dc1c2aea02600397f5329ed36c92b2c3cb18255",
+      "review_level": "structural",
+      "total_lines": 45,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          45
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallDialog.tsx",
+      "git_blob_sha": "abcc1e9db5f8ed07eb5edfda3ac4787cb5f24102",
+      "review_level": "structural",
+      "total_lines": 282,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          282
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallDirectionCell.tsx",
+      "git_blob_sha": "29ad0f9a78244e8b3639497f0b9ad168d81e3b83",
+      "review_level": "structural",
+      "total_lines": 23,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallHistoryCard.tsx",
+      "git_blob_sha": "98b28f239d1ac44de5a71c7d2182d6886a96f4bd",
+      "review_level": "structural",
+      "total_lines": 54,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallHistoryStates.tsx",
+      "git_blob_sha": "652cf8e4a8198cc4c68c78407dc1bcec77518af5",
+      "review_level": "structural",
+      "total_lines": 58,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallHistoryTable.tsx",
+      "git_blob_sha": "95875db4d53ed37a3434193556f810127e0afedb",
+      "review_level": "structural",
+      "total_lines": 109,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          109
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallHistoryTabs.tsx",
+      "git_blob_sha": "2467495d4aa3da57d7ef8f5db07dbd52b7f46c26",
+      "review_level": "structural",
+      "total_lines": 37,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallHistoryToolbar.tsx",
+      "git_blob_sha": "412f12216633c91b190433a632179937bcf3e269",
+      "review_level": "structural",
+      "total_lines": 100,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          100
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallKpiCard.tsx",
+      "git_blob_sha": "f03ca6b0459e87d3c47ecc113a14346bc1735e60",
+      "review_level": "structural",
+      "total_lines": 36,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallResultCell.tsx",
+      "git_blob_sha": "da2986b6413fb39298e1efb6c6efee305e134675",
+      "review_level": "structural",
+      "total_lines": 35,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallStatusBadge.tsx",
+      "git_blob_sha": "0fc9bc6062d313824817644eaebdc8a4746e7e96",
+      "review_level": "structural",
+      "total_lines": 20,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallsKpiGrid.tsx",
+      "git_blob_sha": "f280e0a5bbdde78b84b839b593d825598269a692",
+      "review_level": "structural",
+      "total_lines": 61,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          61
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/CallsPagination.tsx",
+      "git_blob_sha": "41e4b5307e4f49b346dd7bae219ddf61c7a7ffc1",
+      "review_level": "structural",
+      "total_lines": 54,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/DialPad.tsx",
+      "git_blob_sha": "3e0068f01c2d181220172d858607cfb35c554ca0",
+      "review_level": "structural",
+      "total_lines": 233,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          233
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/IncomingCallAlert.tsx",
+      "git_blob_sha": "ae3a1d5827a86f49d939a4d0ae3575fae23db516",
+      "review_level": "structural",
+      "total_lines": 230,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          230
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/Keypad.tsx",
+      "git_blob_sha": "177f09645b21e63ab59555049c6b629513a5f835",
+      "review_level": "structural",
+      "total_lines": 89,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/PeriodSelect.tsx",
+      "git_blob_sha": "7394e78dff5e3be7b352281a121a1369f5e402b7",
+      "review_level": "structural",
+      "total_lines": 30,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/PostCallSummary.tsx",
+      "git_blob_sha": "b05c6fa19f749fb071fd67d5b6a9994331d21ea1",
+      "review_level": "structural",
+      "total_lines": 97,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          97
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/RecordingPlayer.tsx",
+      "git_blob_sha": "e6009283f682ca12f1e4f4854692b800be87f98a",
+      "review_level": "structural",
+      "total_lines": 33,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "TEL-RECORDING-001",
+        "VOL-02"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/VoIPPanel.tsx",
+      "git_blob_sha": "7d4644a95b1c1880dba44db245ee8f1536f78c34",
+      "review_level": "structural",
+      "total_lines": 8,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "LT-LAYOUT-02",
+        "VOL-02"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/paginas.ts",
+      "git_blob_sha": "62a08293788a6eb75f7964782de4325c2c5ce3ed",
+      "review_level": "structural",
+      "total_lines": 26,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/calls/periodos.ts",
+      "git_blob_sha": "94f9803f410a7b2fd9056d952d0f4692fc890197",
+      "review_level": "structural",
+      "total_lines": 17,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/CatalogAdvancedFilters.tsx",
+      "git_blob_sha": "e30bbad74babefdf6cdc643a629c31a5628a721e",
+      "review_level": "structural",
+      "total_lines": 162,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          162
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/CatalogBulkBar.tsx",
+      "git_blob_sha": "867766f15e205496498e5cfe720256716a683ca8",
+      "review_level": "structural",
+      "total_lines": 117,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          117
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+      "git_blob_sha": "985e5f71e34a73625958a768be043a686ebf085a",
+      "review_level": "structural",
+      "total_lines": 217,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          217
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/catalogCategoryIcons.ts",
+      "git_blob_sha": "9884ec747427195e6650a4070e1df2c9901c577d",
+      "review_level": "structural",
+      "total_lines": 100,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          100
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/catalogCategoryRoute.ts",
+      "git_blob_sha": "773de7b8836ccd54f354f0d1eae2a9a9c4fe59b7",
+      "review_level": "structural",
+      "total_lines": 51,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/catalog/catalogShared.tsx",
+      "git_blob_sha": "c716f9ab2bb47a59cd2a1836b92acb308d959a38",
+      "review_level": "targeted",
+      "total_lines": 988,
+      "ranges_read": [
+        [
+          780,
+          988
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 209,
+      "symbols_or_ranges_read": [
+        {
+          "line": 793,
+          "declaration": "export const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {"
+        },
+        {
+          "line": 801,
+          "declaration": "export function countAdvancedFilters(f: AdvancedFilters): number {"
+        },
+        {
+          "line": 812,
+          "declaration": "export function AdvancedFilterChips({"
+        },
+        {
+          "line": 819,
+          "declaration": "const chips: Array<{ label: string; key: string; onRemove: () => void }> = [];"
+        },
+        {
+          "line": 874,
+          "declaration": "function normalizeTagLabel(entry: unknown): string | null {"
+        },
+        {
+          "line": 877,
+          "declaration": "const nome = (entry as { nome?: unknown }).nome;"
+        },
+        {
+          "line": 893,
+          "declaration": "export function matchesAnySelected(raw: unknown, selected: string[]): boolean {"
+        },
+        {
+          "line": 896,
+          "declaration": "const wanted = new Set(selected.map((s) => s.toLowerCase()));"
+        },
+        {
+          "line": 898,
+          "declaration": "const label = normalizeTagLabel(entry);"
+        },
+        {
+          "line": 917,
+          "declaration": "export function TagMultiSelectChips({ options, selected, onChange }: TagMultiSelectChipsProps) {"
+        },
+        {
+          "line": 919,
+          "declaration": "const isSelected = (label: string) => selected.some((s) => s.toLowerCase() === label.toLowerCase());"
+        },
+        {
+          "line": 920,
+          "declaration": "const toggle = (label: string) => {"
+        },
+        {
+          "line": 955,
+          "declaration": "export function favoriteToProduct(fav: CatalogFavorite): ExternalProduct {"
+        }
+      ],
+      "review_purposes": [
+        "segunda passagem; mapeamento snapshot favorito e helpers",
+        "segunda passagem; matchesAnySelected e snapshot favorito"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          779
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-048"
+      ],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+      "git_blob_sha": "85b234c418f538b1d568c290ee0f7aa6af1de3e2",
+      "review_level": "structural",
+      "total_lines": 184,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          184
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/chatbot/ChatbotFlowEditor.tsx",
+      "git_blob_sha": "0c7cc838b418d4a1ac79edeab14a132d7735cc83",
+      "review_level": "structural",
+      "total_lines": 140,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/chatbot/ChatbotFlowsView.tsx",
+      "git_blob_sha": "ca4f94a6562741dc68ee477bbccc46465d264e8b",
+      "review_level": "structural",
+      "total_lines": 325,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          325
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
+      "git_blob_sha": "b5847daf7656be2fc2946746794e2c03fcc3ab1b",
+      "review_level": "structural",
+      "total_lines": 99,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          99
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ChatPanel.tsx",
+      "git_blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+      "review_level": "targeted",
+      "total_lines": 320,
+      "ranges_read": [
+        [
+          85,
+          175
+        ],
+        [
+          285,
+          320
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 127,
+      "symbols_or_ranges_read": [
+        {
+          "line": 85,
+          "declaration": "const next = { ...state };"
+        },
+        {
+          "line": 96,
+          "declaration": "export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pendingDraft, onDraftConsumed, isF"
+        },
+        {
+          "line": 98,
+          "declaration": "const openDialog = useCallback((key: DialogKey) => dispatch({ type: 'OPEN', key }), []);"
+        },
+        {
+          "line": 99,
+          "declaration": "const closeDialog = useCallback((key: DialogKey) => dispatch({ type: 'CLOSE', key }), []);"
+        },
+        {
+          "line": 102,
+          "declaration": "const handleSetActiveTool = useCallback((tool: ActiveTool) => {"
+        },
+        {
+          "line": 111,
+          "declaration": "const fileUploaderRef = useRef<FileUploaderRef>(null);"
+        },
+        {
+          "line": 112,
+          "declaration": "const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);"
+        },
+        {
+          "line": 113,
+          "declaration": "const dragCounterRef = useRef(0);"
+        },
+        {
+          "line": 125,
+          "declaration": "const handleVoiceChange = useCallback((v: string) => { updateSettings({ tts_voice_id: v }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);"
+        },
+        {
+          "line": 126,
+          "declaration": "const handleSpeedChange = useCallback((s: number) => { updateSettings({ tts_speed: s }); setTimeout(() => saveSettings(), 100); }, [updateSettings, saveSettings]);"
+        },
+        {
+          "line": 131,
+          "declaration": "const handlers = useChatPanelHandlers({"
+        },
+        {
+          "line": 154,
+          "declaration": "const canGenerateSummary = messages.length >= 10;"
+        },
+        {
+          "line": 157,
+          "declaration": "const lastContactMessages = useMemo("
+        },
+        {
+          "line": 161,
+          "declaration": "const allMessagesForHeader = useMemo("
+        },
+        {
+          "line": 165,
+          "declaration": "const filteredQuickReplies = useMemo("
+        },
+        {
+          "line": 171,
+          "declaration": "const h = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); handleSetActiveTool('chatSearch'); } };"
+        }
+      ],
+      "review_purposes": [
+        "tool request and suggestion callback owner",
+        "Estado das ferramentas ao trocar contato"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          84
+        ],
+        [
+          176,
+          284
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/RealtimeInboxView.tsx",
+      "git_blob_sha": "3d6dacf92511e917426345a7f390dbe408d1ce1b",
+      "review_level": "targeted",
+      "total_lines": 376,
+      "ranges_read": [
+        [
+          285,
+          325
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 41,
+      "symbols_or_ranges_read": [
+        {
+          "line": 318,
+          "declaration": "const id = inbox.legacyConversation.contact.id;"
+        }
+      ],
+      "review_purposes": [
+        "Montagem ChatPanel e identidade de contato"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          284
+        ],
+        [
+          326,
+          376
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-012"
+      ],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ai-tools/KeyPointsTab.tsx",
+      "git_blob_sha": "2d510b0a57d0903a8f01dbbae9f9c1bc29e687df",
+      "review_level": "structural",
+      "total_lines": 75,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ai-tools/SentimentTab.tsx",
+      "git_blob_sha": "0c5487a72f861d2dcc1425259cd9a9c7b8a6d3aa",
+      "review_level": "structural",
+      "total_lines": 140,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ai-tools/SummaryTab.tsx",
+      "git_blob_sha": "c6168f6d840a6f734bf32aaefb2dc970caab41aa",
+      "review_level": "structural",
+      "total_lines": 106,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          106
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ai-tools/ToneSelector.tsx",
+      "git_blob_sha": "51b4ba3bc70d55e66d48f74f611417eca5b09aa8",
+      "review_level": "structural",
+      "total_lines": 52,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/ai-tools/VisionIcon.tsx",
+      "git_blob_sha": "e7ebb8599d297965af7d3fc04bbe9550c3e20f06",
+      "review_level": "structural",
+      "total_lines": 36,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/inbox/chat/useChatInputLogic.ts",
+      "git_blob_sha": "bfc4b3d4c6be9c2763f6ed6bc7673f12bbcd649d",
+      "review_level": "targeted",
+      "total_lines": 124,
+      "ranges_read": [
+        [
+          50,
+          124
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 75,
+      "symbols_or_ranges_read": [
+        {
+          "line": 66,
+          "declaration": "const handlePaste = useCallback((e: React.ClipboardEvent) => {"
+        },
+        {
+          "line": 67,
+          "declaration": "const items = e.clipboardData?.items;"
+        },
+        {
+          "line": 69,
+          "declaration": "const files: File[] = [];"
+        },
+        {
+          "line": 72,
+          "declaration": "const file = items[i].getAsFile();"
+        },
+        {
+          "line": 84,
+          "declaration": "const handleVoiceDictation = useCallback((text: string) => {"
+        },
+        {
+          "line": 85,
+          "declaration": "const el = inputRef.current;"
+        },
+        {
+          "line": 87,
+          "declaration": "const current = el.value;"
+        },
+        {
+          "line": 93,
+          "declaration": "const handleSendWithAnimation = useCallback(() => {"
+        },
+        {
+          "line": 113,
+          "declaration": "export function setNativeValue("
+        },
+        {
+          "line": 117,
+          "declaration": "const el = inputRef.current;"
+        },
+        {
+          "line": 119,
+          "declaration": "const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;"
+        }
+      ],
+      "review_purposes": [
+        "suggestion input setter"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/layout/Sidebar.tsx",
+      "git_blob_sha": "8781121425b6ee0267d079decb32959035ad6146",
+      "review_level": "targeted",
+      "total_lines": 258,
+      "ranges_read": [
+        [
+          116,
+          145
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 30,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [
+        "Uso visual de badge de atraso como fronteira"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          115
+        ],
+        [
+          146,
+          258
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-058"
+      ],
+      "prior_findings_with_same_evidence_path": [
+        "SV-004"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/reports/ConversationHeatmap.tsx",
+      "git_blob_sha": "454ec67a134445dc5a45295fdf52773e9b68552a",
+      "review_level": "structural",
+      "total_lines": 157,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/reports/DemandForecast.tsx",
+      "git_blob_sha": "fbe3b569223a491fd3cada132a95ba41d9daa99c",
+      "review_level": "structural",
+      "total_lines": 141,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/reports/PeriodComparison.tsx",
+      "git_blob_sha": "e8410e5a6fbef2db192e4075e7e993fdcde28a68",
+      "review_level": "structural",
+      "total_lines": 142,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          142
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/settings/MediaLibraryAdmin.tsx",
+      "git_blob_sha": "0f7f892e86413211f34e27fd13ffc151eb44a2cd",
+      "review_level": "targeted",
+      "total_lines": 155,
+      "ranges_read": [
+        [
+          45,
+          64
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 20,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [
+        "diálogo IA montado por tipo da biblioteca"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          44
+        ],
+        [
+          65,
+          155
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-040"
+      ],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/settings/media-library/StatsCards.tsx",
+      "git_blob_sha": "829865403d565869ac5194bee0e4604f625c7368",
+      "review_level": "structural",
+      "total_lines": 24,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/settings/media-library/useMediaLibrary.ts",
+      "git_blob_sha": "9665b58a6d449dbac5a665f71daa6e1285a0bea0",
+      "review_level": "structural",
+      "total_lines": 255,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          255
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/settings/media-library/useMediaUpload.ts",
+      "git_blob_sha": "6f0c0a01a34ad1b563655720d30c743955399e40",
+      "review_level": "structural",
+      "total_lines": 92,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          92
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/TasksEmptyState.tsx",
+      "git_blob_sha": "7efbbce1db39ca7e5f08eed1424d0423f6cf7494",
+      "review_level": "structural",
+      "total_lines": 47,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/board/BoardColumn.tsx",
+      "git_blob_sha": "fc0498d557424dd9f55e7af8f3ab4ecbbc6a1b50",
+      "review_level": "structural",
+      "total_lines": 144,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          144
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/AgingDot.tsx",
+      "git_blob_sha": "cd637b78aafc3195b74bd70c10cd7deace2712e4",
+      "review_level": "structural",
+      "total_lines": 14,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/BoardColumnSkeleton.tsx",
+      "git_blob_sha": "73006eb0a51d29583271bb84b1901fe9ee17cf98",
+      "review_level": "structural",
+      "total_lines": 13,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          13
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/ContactChip.tsx",
+      "git_blob_sha": "c3a85f52f8b9d1a3ad4e869e67c65aa19bc4e8a3",
+      "review_level": "structural",
+      "total_lines": 40,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/ModeSwitcher.tsx",
+      "git_blob_sha": "7a520324673603cbb00c7db280a56dc66632faaa",
+      "review_level": "structural",
+      "total_lines": 53,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          53
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/PriorityChip.tsx",
+      "git_blob_sha": "8c16ada3ecaf1a9416ef87bef6b4429fdf93c29c",
+      "review_level": "structural",
+      "total_lines": 29,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          29
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/RemindChip.tsx",
+      "git_blob_sha": "9b263947684f31f70ba42ba491a2cc5ce8303f03",
+      "review_level": "structural",
+      "total_lines": 83,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/WorkItemCardSkeleton.tsx",
+      "git_blob_sha": "58a90bd8ca661f061c90ecbabf0279eee8c7015e",
+      "review_level": "structural",
+      "total_lines": 5,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/tasks/shared/pointerMedia.ts",
+      "git_blob_sha": "287e38c4e61a03809caac19c69997e597b0fdc19",
+      "review_level": "structural",
+      "total_lines": 41,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/AudioFrequencyVisualizer.tsx",
+      "git_blob_sha": "f2bf36948b11c84ff9f76b4800bd13a145c3da80",
+      "review_level": "structural",
+      "total_lines": 170,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          170
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/ElevenLabsDialogue.tsx",
+      "git_blob_sha": "f5a304bbdcb21dab8866ddf3a24506cc7fc3a86d",
+      "review_level": "targeted",
+      "total_lines": 165,
+      "ranges_read": [
+        [
+          1,
+          110
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 110,
+      "symbols_or_ranges_read": [
+        {
+          "line": 13,
+          "declaration": "const VOICES = ["
+        },
+        {
+          "line": 31,
+          "declaration": "export function ElevenLabsDialogue() {"
+        },
+        {
+          "line": 38,
+          "declaration": "const audioRef = useRef<HTMLAudioElement | null>(null);"
+        },
+        {
+          "line": 40,
+          "declaration": "const addLine = () => {"
+        },
+        {
+          "line": 44,
+          "declaration": "const removeLine = (id: string) => {"
+        },
+        {
+          "line": 48,
+          "declaration": "const updateLine = (id: string, field: 'voice_id' | 'text', value: string) => {"
+        },
+        {
+          "line": 52,
+          "declaration": "const generateDialogue = async () => {"
+        },
+        {
+          "line": 53,
+          "declaration": "const validLines = lines.filter(l => l.text.trim());"
+        },
+        {
+          "line": 62,
+          "declaration": "const response = await fetch("
+        },
+        {
+          "line": 79,
+          "declaration": "const errData = await response.json().catch(() => ({}));"
+        },
+        {
+          "line": 83,
+          "declaration": "const blob = await response.blob();"
+        },
+        {
+          "line": 85,
+          "declaration": "const url = URL.createObjectURL(blob);"
+        }
+      ],
+      "review_purposes": [
+        "reachability generate diálogo para fronteira API"
+      ],
+      "remaining_unread_ranges": [
+        [
+          111,
+          165
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/ElevenLabsVoiceDesign.tsx",
+      "git_blob_sha": "4c8aac7245a2e710673295ffc144fecb9f159bd6",
+      "review_level": "structural",
+      "total_lines": 159,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          159
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/FloatingParticles.tsx",
+      "git_blob_sha": "39b0c7c0ce797c808ad9d5393a0d5b084f24bbbb",
+      "review_level": "structural",
+      "total_lines": 157,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          157
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/VoiceOrb.tsx",
+      "git_blob_sha": "3735d1e4332f486722f0ee859b04a170866d2a71",
+      "review_level": "structural",
+      "total_lines": 184,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          184
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/VoiceSearchOverlay.tsx",
+      "git_blob_sha": "9366e486b3fdfdfdbfd2532e6a2e3cff50b94eea",
+      "review_level": "structural",
+      "total_lines": 143,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          143
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/VoiceSearchOverlayConnected.tsx",
+      "git_blob_sha": "197ef774316c418747a4cf6668ff2aa008f25334",
+      "review_level": "structural",
+      "total_lines": 30,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/VoiceSuggestions.tsx",
+      "git_blob_sha": "881b7ae06e648ed04f0c3717a2e5605e093c92f3",
+      "review_level": "structural",
+      "total_lines": 47,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/VoiceTranscriptArea.tsx",
+      "git_blob_sha": "4fa5c43642f2719a062edb1baa90dc70640523f6",
+      "review_level": "structural",
+      "total_lines": 114,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          114
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/components/voice/usePhaseColors.ts",
+      "git_blob_sha": "bf260a6136371b8e76d9d20a2ae45c3fa1c9dcb8",
+      "review_level": "structural",
+      "total_lines": 84,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          84
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/features/talk-me/talk-me-layout.css",
+      "git_blob_sha": "a23997291bc4b282eaa9a6517cc94d2dbba3d38e",
+      "review_level": "structural",
+      "total_lines": 88,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/features/talk-me/types.ts",
+      "git_blob_sha": "f82fba201e3de571980350e558804bd30a2c63d2",
+      "review_level": "structural",
+      "total_lines": 43,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "TM-01"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/calls/useCallRecording.ts",
+      "git_blob_sha": "c79701b28e7b26682d6b592303dd706e9758999e",
+      "review_level": "structural",
+      "total_lines": 49,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "TEL-RECORDING-001",
+        "VOL-02"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/calls/useCallsKpi.ts",
+      "git_blob_sha": "98046a57fb819e92c751377e13951b951eb4d982",
+      "review_level": "structural",
+      "total_lines": 123,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          123
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "TEL-PERIOD-001"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/calls/useTerminoRemoto.ts",
+      "git_blob_sha": "2f245a7cfcfd5097d2fbe72de74c3b8d6f0e382b",
+      "review_level": "structural",
+      "total_lines": 46,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/communication/useCalls.ts",
+      "git_blob_sha": "7d6c82a89cfdbdb57432af6c0ab1eabe9fec78d3",
+      "review_level": "targeted",
+      "total_lines": 241,
+      "ranges_read": [
+        [
+          65,
+          210
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 146,
+      "symbols_or_ranges_read": [
+        {
+          "line": 66,
+          "declaration": "const startCall = useCallback(async (params: StartCallParams): Promise<string | null> => {"
+        },
+        {
+          "line": 69,
+          "declaration": "const profileId = await getProfileId();"
+        },
+        {
+          "line": 108,
+          "declaration": "const answerCall = useCallback(async (callId: string): Promise<boolean> => {"
+        },
+        {
+          "line": 132,
+          "declaration": "const endCall = useCallback(async (callId: string, durationSeconds: number): Promise<boolean> => {"
+        },
+        {
+          "line": 164,
+          "declaration": "const missCall = useCallback(async (callId: string): Promise<boolean> => {"
+        },
+        {
+          "line": 194,
+          "declaration": "const addCallNotes = useCallback(async (callId: string, notes: string): Promise<boolean> => {"
+        }
+      ],
+      "review_purposes": [
+        "startCall e addCallNotes retornos"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          64
+        ],
+        [
+          211,
+          241
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-013"
+      ],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/dashboard/index.ts",
+      "git_blob_sha": "302062f75382e557c7f1f7cc221173ead94833db",
+      "review_level": "structural",
+      "total_lines": 2,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/dashboard/useDashboardUrlFilters.ts",
+      "git_blob_sha": "3fd3df0971a8fbf132caa26fd324bbb928ff2a6b",
+      "review_level": "structural",
+      "total_lines": 108,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          108
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/dashboard/useQueueHealth.ts",
+      "git_blob_sha": "c0e8eea5ac0c8844a787fc8cc564e08edac1a734",
+      "review_level": "structural",
+      "total_lines": 46,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/dashboard/useRecentConversationEvents.ts",
+      "git_blob_sha": "a7b43b2f40aebd1e6d10ec0a59840d48391b7674",
+      "review_level": "structural",
+      "total_lines": 102,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          102
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/dashboard/useTodayHourlyVolume.ts",
+      "git_blob_sha": "9c92c3024435ee5ac37efa08a502918a272ed776",
+      "review_level": "structural",
+      "total_lines": 77,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          77
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/integrations/useCatalogQuickSearch.ts",
+      "git_blob_sha": "556a1d294f1c797ace389382bf7900617a8c5da2",
+      "review_level": "structural",
+      "total_lines": 34,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          34
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/integrations/useChatbotFlows.ts",
+      "git_blob_sha": "56134d13f6c76050f1e6548228adfa4997e6b134",
+      "review_level": "structural",
+      "total_lines": 152,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          152
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXCommandItems.ts",
+      "git_blob_sha": "a2537e00c14a990f4d95b81dc378b9de03206c2c",
+      "review_level": "structural",
+      "total_lines": 63,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXConnectionStatus.ts",
+      "git_blob_sha": "eb1e5f1563ad4941da1f148172a59d149f2dbdd6",
+      "review_level": "structural",
+      "total_lines": 39,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/integrations/useTalkXInsights.ts",
+      "git_blob_sha": "ac88e32e0413fc3010187bb2bda566feba9288fb",
+      "review_level": "structural",
+      "total_lines": 148,
+      "ranges_read": [],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          148
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "IA-TALKX-001"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/tasks/useMyTasks.ts",
+      "git_blob_sha": "1249b10b0d7754795993e7e093734b6ab7346576",
+      "review_level": "structural",
+      "total_lines": 2,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/hooks/tasks/workItemLabels.ts",
+      "git_blob_sha": "432738308a3f1aa32c1f393b374e6e16f9981ac9",
+      "review_level": "structural",
+      "total_lines": 10,
+      "ranges_read": [],
+      "added_after_initial_inventory": true,
+      "inventory_addition_reason": "Diretório incorporado explicitamente ao inventário finito na segunda passagem. Dependências individuais podiam ter leitura anterior; a inclusão não supõe revisão implícita de outros arquivos.",
+      "lines_read": 0,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [],
+      "remaining_unread_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "remaining_gaps": "Nenhuma leitura semântica nesta rodada; arquivo apenas inventariado por caminho/hash.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/pages/Index.tsx",
+      "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+      "review_level": "targeted",
+      "total_lines": 196,
+      "ranges_read": [
+        [
+          104,
+          149
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 46,
+      "symbols_or_ranges_read": [],
+      "review_purposes": [
+        "Alcance do provider de notificações de metas"
+      ],
+      "remaining_unread_ranges": [
+        [
+          1,
+          103
+        ],
+        [
+          150,
+          196
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [
+        "R2-MOD-063"
+      ],
+      "prior_findings_with_same_evidence_path": [],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    },
+    {
+      "path": "src/pages/ViewRouter.tsx",
+      "git_blob_sha": "9964a4ea364a29ff6a59c5e49e199c2eeab22ec9",
+      "review_level": "targeted",
+      "total_lines": 258,
+      "ranges_read": [
+        [
+          1,
+          210
+        ]
+      ],
+      "added_after_initial_inventory": false,
+      "inventory_addition_reason": null,
+      "lines_read": 210,
+      "symbols_or_ranges_read": [
+        {
+          "line": 31,
+          "declaration": "const OWN_SCROLL_VIEWS = new Set(['settings']);"
+        },
+        {
+          "line": 34,
+          "declaration": "const COMPACT_GUTTER_VIEWS = new Set(['dashboard', 'talkx', 'catalog', 'voip']);"
+        },
+        {
+          "line": 36,
+          "declaration": "const FULL_SCREEN_VIEWS = new Set("
+        },
+        {
+          "line": 45,
+          "declaration": "const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Record<string, never>>>> = {"
+        },
+        {
+          "line": 103,
+          "declaration": "const SPECIAL_VIEWS: Record<string, (props: ViewRouterProps) => React.ReactNode> = {"
+        },
+        {
+          "line": 116,
+          "declaration": "export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoBack, onGoForward, breadcrumbTrail, onNavigateTo }: ViewRouterProps) {"
+        },
+        {
+          "line": 117,
+          "declaration": "const mod = useCurrentModule(currentView);"
+        },
+        {
+          "line": 120,
+          "declaration": "const prefersReduced = useReducedMotion();"
+        },
+        {
+          "line": 122,
+          "declaration": "const accessLoading = rolesLoading || permissionsLoading;"
+        },
+        {
+          "line": 132,
+          "declaration": "const authorized = !accessLoading && NavigationService.canAccess(currentView, roles, permissions);"
+        },
+        {
+          "line": 134,
+          "declaration": "const content = useMemo(() => {"
+        },
+        {
+          "line": 146,
+          "declaration": "const ViewComponent = VIEW_MAP[currentView];"
+        },
+        {
+          "line": 185,
+          "declaration": "function ErrorBoundaryView({ viewId, children }: { viewId: string; children: React.ReactNode }) {"
+        },
+        {
+          "line": 186,
+          "declaration": "const mod = useCurrentModule(viewId);"
+        },
+        {
+          "line": 200,
+          "declaration": "function FallbackView({ currentView }: { currentView: string }) {"
+        },
+        {
+          "line": 201,
+          "declaration": "const mod = useCurrentModule(currentView);"
+        },
+        {
+          "line": 202,
+          "declaration": "const Icon = mod.icon || Construction;"
+        }
+      ],
+      "review_purposes": [
+        "active view mapping and permission wrappers"
+      ],
+      "remaining_unread_ranges": [
+        [
+          211,
+          258
+        ]
+      ],
+      "remaining_gaps": "Trechos fora das faixas acima não foram revisados semanticamente.",
+      "findings": [],
+      "prior_findings_with_same_evidence_path": [
+        "LT-LAYOUT-01",
+        "TRA-010"
+      ],
+      "prior_review_limit": "Ausência do caminho em FINDINGS anterior não prova que o arquivo nunca foi lido; o registro de 104 achados não é um mapa completo de cobertura."
+    }
+  ]
+}

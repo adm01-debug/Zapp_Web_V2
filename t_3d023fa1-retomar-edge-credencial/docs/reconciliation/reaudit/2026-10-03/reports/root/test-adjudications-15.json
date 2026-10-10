@@ -1,0 +1,30 @@
+[
+  {
+    "roster_index": 73,
+    "adjudication": [
+      "Lê generate, ai-proxy, dois classificadores visuais e usage para preservar campos da rota efetiva, modalidade e fallback. Conta ocorrências e fatia blocos por marcadores; verifica que a declaração de rota antecede registrador, que dois logs awaited do proxy escolhem o provedor efetivo e que os três logs awaited de cada classificador indicam visão.",
+      "São guardas de origem, sem execução do registrador, persistência ou prova de todos os caminhos. O contador do proxy considera especificamente chamadas awaited e não certifica o fluxo de streaming. Os testes comportamentais reais do roteador fornecem evidência complementar dentro de seus mocks, sem transformar este contrato textual em execução de produção."
+    ]
+  },
+  {
+    "roster_index": 74,
+    "adjudication": [
+      "Lê hook, tabela, painel e uma migration para preservar paginação com range/count, totais vindos do resumo, rótulos de cobertura e agregação SQL com janela semiaberta. Exige grants/revokes específicos e ausência textual de SECURITY DEFINER e de um limite numérico no fim da linha.",
+      "As assertivas detectam regressões nas construções nomeadas; não consultam uma base com mais de mil linhas, não executam RLS, agregação ou navegação entre páginas. A presença do contrato textual não demonstra todos os limites possíveis da consulta nem durabilidade do dado, e a revisão não inventa defeito apenas por essa fronteira de prova."
+    ]
+  },
+  {
+    "roster_index": 75,
+    "adjudication": [
+      "Exercita o adapter send e os classificadores/planos reais com fetch controlado: presença antes do envio, endpoint, identificador retornado, 429/503, códigos permanentes, backoff e tetos de tentativas. Cobre respostas GO de destinatário inexistente, sinal de abort encaminhado à chamada e propagação de AbortError.",
+      "Os casos de política de retentativa incluem resultados calculados diretamente, sem executar agendador, fila durável ou dead letter. O helper devolve a última Response quando esgota as respostas previstas; o contexto é uma fronteira de IO simulada, sem envio real, compatibilidade universal do provedor ou relógio operacional."
+    ]
+  },
+  {
+    "roster_index": 76,
+    "adjudication": [
+      "Lê fontes reais para preservar a remoção de soundType legado, leitura/gravação das cinco colunas de tipo, tipo correto para SLA/meta e preview do painel. Confere a remoção da util sem volume e os imports/chamadas com tipo persistido e soundVolume em uma lista explícita de consumidores.",
+      "São guardas textuais e de existência, sem renderização, gravação no banco, reload ou reprodução de áudio. A última assertiva percorre linhas de seis arquivos conhecidos; o título todos os caminhos não é inventário dinâmico de qualquer consumidor futuro, e não cobre por si só persistência dos três booleanos de categorias identificados em PLAT003."
+    ]
+  }
+]

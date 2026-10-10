@@ -1,0 +1,57 @@
+# Índice dos artefatos — basline do zapp-verify (t_4df2fc8d)
+
+Pasta: `/mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline`
+(no WSL: `/mnt/c/...`; no Windows: `C:\Users\Joaquim Ataides\AppData\Local\hermes\kanban\boards\zapp-web-v2\workspaces\t_c5a96aba\.tmp\evidencias-baseline`)
+
+## Leia primeiro
+- `resumo-baseline.md` — o resumo: contagens, caminhos, as 9 linhas, vereditos, achados extra e limites.
+- `comandos.txt` — os comandos exatos, na ordem em que rodaram.
+
+## Entradas (cópias + sha256)
+- `entradas-e-sha256.txt` — sha256 de tudo + procedência de cada arquivo.
+- `entradas/manifest-local-20h55.json` — manifesto do banco local gravado pelo check real de 06/10 18:55 (1.118.147 B).
+- `entradas/retrato-velho-copia-294.json` — `supabase/schema-manifest.json` da cópia da branch `dia/2026-10-06` (1.107.147 B).
+- `entradas/retrato-fresco-99ff88bf2.json` — retrato canônico fresco (`git show 99ff88bf2:...`), sha256 `27eb021f…`.
+- `entradas/check-diferencas-real-18h55.txt` — **o `check-diferencas.txt` real** do cartão pai (128 linhas, `cb31c19f…`).
+- `entradas/falhas.tsv` — falhas esperadas do conjunto (21 linhas).
+- `entradas/migration-pendente-20261006204953.sql` — a migration pendente do conjunto (cita as 2 funções).
+- `entradas/manifest.sql`, `entradas/config.toml` — peças usadas pelas árvores de ensaio.
+
+## Peças extraídas verbatim do portão (nenhuma edição)
+- `sha256-fontes.txt` — sha256 de `~/.local/bin/zapp-db-local` (`9a1cd599…`) e `~/.local/bin/zapp-verify` (`70c0b223…`).
+- `check-compare.py` — linhas 183–203 de `zapp-db-local` (o python do `check`, compara banco local x retrato).
+- `filtro-hoje.py` — linhas 70–110 de `zapp-verify` (o explicador de HOJE).
+- `filtro-novo.py` + `sha256-zapp-verify.novo.txt` — linhas 71–155 do patch `.tmp/zapp-verify.novo` (`c95e371a…`).
+- `bloco-banco_local.sh` — linhas 8–29 + 35–124 de `zapp-verify`: o passo `banco_local` inteiro, pronto para rodar.
+
+## Cenário A (retrato velho) e B (retrato fresco)
+- `A-stdout.txt` / `A-stderr.txt` / `A-rc.txt` — comparação offline com o retrato velho (128 diferenças, rc=1).
+- `B-stdout.txt` / `B-stderr.txt` / `B-rc.txt` — comparação offline com o retrato fresco (2 diferenças, rc=1).
+- `A-check-diferencas.txt` / `B-check-diferencas.txt` — as linhas geradas (A idêntico ao check real: `cb31c19f…`).
+- `A-check-live.txt` / `B-check-live.txt` (+ `.err`, `.rc`) — `zapp-db-local check` **ao vivo** contra o banco do conjunto, com HOME de ensaio.
+- `A-check-live-diferencas.txt` / `B-check-live-diferencas.txt` — as linhas geradas ao vivo (A = `cb31c19f…`, igual ao real).
+- `A-manifest-local-live.json` / `B-manifest-local-live.json` — manifestos extraídos ao vivo.
+- `manifest-1855-x-agora.out` — o que mudou entre o manifesto de 18:55 e o de agora: **só** o campo `generated_at`.
+
+## Explicador e o passo real
+- `A-filtro-hoje.out` (84 não explicadas), `B-filtro-hoje.out` (`ok`).
+- `A-filtro-novo.out` (8 não explicadas), `B-filtro-novo.out` (`ok|drift=0`).
+- `nao-explicadas-A.out` (lista das 84 + por tipo), `nao-explicadas-A-filtro-novo.out` (8 + 76 drift canônico).
+- `st-A/`, `st-B/` — estados de ensaio com o `check-diferencas.txt` de cada cenário para o filtro.
+- `run1-A-ledger-bloqueado.out` (128 dif. → FALHOU/VERMELHO), `run2-B-ledger-bloqueado.out` (2 dif. → FALHOU/VERMELHO).
+- `run3b-A-ledger-fixture.out` (FALHOU, 84 não explicadas), `run4b-B-ledger-fixture.out` (**AVISO**, rc=0).
+- `run3-A-ledger-fixture.out` / `run4-B-ledger-fixture.out` — rodadas anteriores, mantidas: mostram que o `copia.txt`
+  do conjunto tinha de apontar para a árvore, senão o passo cai no ramo estrito.
+
+## Análise
+- `analisa-residuais.out` — decomposição das 128 (110 / 9 / 7 / 2) e as 2 linhas do retrato fresco.
+- `nove-residuais.txt` — **as 9 linhas** do cartão pai, texto integral, com presença em cada retrato.
+- `perfil-tipos-A.out` — 128 por tipo + os 5 de tipo que `explicada()` não trata (`rls`, `column_grants`).
+- `novas-derivacao.txt` — derivação local da migration pendente (sem tocar em produção).
+- `citacao-pendente.out` — a pendente cita as 2 funções (linhas 52 e 140) e não está em `falhas.tsv`.
+- `ledger-prod.stderr` — prova de que `zapp-db-ler` é bloqueado ao agente (rc=77, regra R1).
+- `ledger-fixture*`, `fixture-zapp-db-ler/` — a fixture do registro (só para as rodadas 3b/4b), com README no script.
+
+## Árvores de ensaio
+- `arvore-A/`, `arvore-B/` — árvores mínimas: `supabase/{config.toml, schema-manifest.json, migrations -> cópia 294}` +
+  `scripts/db-audit/manifest.sql`. `home-ensaio/` é o HOME isolado que impede escrever no estado real do conjunto.

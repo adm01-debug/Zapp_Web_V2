@@ -1,0 +1,157 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "counted_as_new_findings": false,
+  "notes": [
+    {
+      "id": "PASS5-HANDOFF-VARIANT",
+      "kind": "evidência complementar de família existente",
+      "related_finding_ids": [
+        "R2-INB-009"
+      ],
+      "assessment": "Adicionar participante → RealtimeCollaboration → HandoffDialog ignora error do UPDATE no pai; a promessa resolve e o diálogo anuncia transferência. A família R2-INB-009 e todos os 53 achados do checkpoint pass4 ficam literalmente preservados, sem novo ID para esta variante.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/contact-details/ContactActionButtons.tsx",
+          "line_start": 173,
+          "line_end": 179,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "851aa7e03c6010ebbdd240bfdc5c52ddba94f55d",
+          "claim": "Popover Adicionar participante monta a colaboração."
+        },
+        {
+          "path": "src/components/inbox/RealtimeCollaboration.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/RealtimeCollaboration.tsx",
+          "line_start": 18,
+          "line_end": 31,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "262bb4854ae43d599315a1a7d52bc5b2d97f4eae",
+          "claim": "Handoff ignora error de update e da nota opcional."
+        },
+        {
+          "path": "src/components/inbox/collaboration/HandoffDialog.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/collaboration/HandoffDialog.tsx",
+          "line_start": 35,
+          "line_end": 48,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "2db38c55befcfd0d5da5c773f86cd8d780bfdc76",
+          "claim": "Diálogo aceita promessa resolvida e confirma sucesso."
+        }
+      ],
+      "offline_probe_ids": [
+        "collaboration_handoff_error_variant"
+      ],
+      "acceptance": "Propagar falha/zero efeito da transferência e da nota conforme contrato; não fechar nem anunciar sucesso antes do resultado aceito.",
+      "limits": "Probe usa comentário vazio e nenhuma operação de Auth/banco real. Não afirma atomicidade ou permissões vivas."
+    },
+    {
+      "id": "PASS5-WHISPER-REACHABILITY",
+      "kind": "contrato condicional e limite de integração",
+      "related_finding_ids": [],
+      "assessment": "Se WhisperMode for montado com as props da condição de ChatPanel, falta targetAgentId e sendWhisper retorna sem INSERT. Contudo, o estado inicial whisper é false e os comandos/ações lidos não estabelecem abertura desse estado. Não há finding confirmado de jornada ativa, nem declaração de dead code.",
+      "evidence": [
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 72,
+          "line_end": 98,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Estado inicial e controlador dos diálogos."
+        },
+        {
+          "path": "src/components/inbox/ChatPanel.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/ChatPanel.tsx",
+          "line_start": 282,
+          "line_end": 286,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "f2561bc99f053782ac17f2769ea34fe262d9d8f8",
+          "claim": "Montagem condicional não fornece targetAgentId."
+        },
+        {
+          "path": "src/components/inbox/WhisperMode.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/WhisperMode.tsx",
+          "line_start": 90,
+          "line_end": 114,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "fc38f7f87df8affe0df641292ca8ba2fb2a99eac",
+          "claim": "Handler exige alvo antes de persistir."
+        }
+      ],
+      "offline_probe_ids": [
+        "whisper_conditional_consumer_omits_target"
+      ],
+      "acceptance": "Antes de homologar Sussurro, definir rota de abertura e seleção do alvo; só então provar a jornada e sua autorização.",
+      "limits": "A prova monta o componente artificialmente. Não substitui evidência de uma ação do produto que o torne acessível."
+    },
+    {
+      "id": "PASS5-TAGS-EXISTING",
+      "kind": "extensão de cobertura anterior",
+      "related_finding_ids": [
+        "TRA-011"
+      ],
+      "assessment": "useInboxFilterTags continua sem paginação, como já documentado em TRA-011. A leitura integral também observou que error é ignorado e data ausente vira lista vazia de sucesso; InboxFilters só apresenta a seção quando tags.length>0. Não criado novo ID.",
+      "evidence": [
+        {
+          "path": "src/hooks/inbox/useInboxFilterTags.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/inbox/useInboxFilterTags.ts",
+          "line_start": 6,
+          "line_end": 16,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "d261b35b8b0956f7964fd3236e7e3c4141ff74ad",
+          "claim": "Consulta única, distinct em memória e resultado de error não examinado."
+        },
+        {
+          "path": "src/components/inbox/InboxFilters.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/InboxFilters.tsx",
+          "line_start": 74,
+          "line_end": 79,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8518c3824fd2754d2c5517d7206669adababb359",
+          "claim": "Consumidor usa apenas data."
+        },
+        {
+          "path": "src/components/inbox/InboxFilters.tsx",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/InboxFilters.tsx",
+          "line_start": 225,
+          "line_end": 229,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "8518c3824fd2754d2c5517d7206669adababb359",
+          "claim": "Seção depende de resultado não vazio."
+        }
+      ],
+      "offline_probe_ids": [],
+      "acceptance": "A revisão de TRA-011 deve considerar paginação/agregado e erro recuperável de consulta sem apagar o último catálogo válido.",
+      "limits": "Não consulta cardinalidade/RLS produtiva; a observação de erro é estática."
+    },
+    {
+      "id": "PASS5-VOICE-LOG-LIMIT",
+      "kind": "limite de telemetria",
+      "related_finding_ids": [],
+      "assessment": "logVoiceCommand é explicitamente fire-and-forget e não lê response.ok do POST; erro HTTP pode perder log sem feedback. Na ausência de contrato durável de entrega não se promove uma nova falha de ação nem se exige bloquear o usuário.",
+      "evidence": [
+        {
+          "path": "src/hooks/voice/logVoiceCommand.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/voice/logVoiceCommand.ts",
+          "line_start": 15,
+          "line_end": 46,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "c17df2a3c29989b0639abcb95fa07d01cea67c26",
+          "claim": "Fluxo assíncrono não bloqueante e fetch sem inspeção do status."
+        },
+        {
+          "path": "src/hooks/communication/useVoiceAgent.ts",
+          "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/hooks/communication/useVoiceAgent.ts",
+          "line_start": 110,
+          "line_end": 119,
+          "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+          "blob_sha": "b6a6e63f162fd1562774c2bfea968ea5b93a55fa",
+          "claim": "Consumidor registra sucesso antes de entregar ação ao callback."
+        }
+      ],
+      "offline_probe_ids": [],
+      "acceptance": "Se logs forem requisito durável, definir sinalização/retenção/retry e separar resultado de interpretação do resultado da ação; conservar UI não bloqueante.",
+      "limits": "Nenhum log ou credencial real foi enviado; não se afirma taxa de perda no serviço."
+    }
+  ]
+}

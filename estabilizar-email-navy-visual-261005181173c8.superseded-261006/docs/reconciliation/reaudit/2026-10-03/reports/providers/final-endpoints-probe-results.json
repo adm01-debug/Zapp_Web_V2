@@ -1,0 +1,93 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "additional_sql_pin": {
+    "path": "supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql",
+    "git_blob_sha": "d63e98a7a27b027ebbcf49c298887824c879620a"
+  },
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Complete handlers after type/import wiring. Real HMAC helper and WebCrypto; manually controlled clock. Provider/JWT/DB/Resend are in-memory boundaries. P26 models a pinned SQL whitelist; it does not execute PostgreSQL.",
+  "source_hashes": {
+    "supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql": "f596a472c0d68e9e8d3926d5107a205a3f08585988931113d45938c98042300c",
+    "supabase/functions/talkx-link/index.ts": "a59b1b67a392b3e347f1ddc975f32de2d5a0b3bd5618d580eb665fca7d048c15",
+    "supabase/functions/webhook-diagnostic/index.ts": "df91c8ad62c862151ce56cb1282d0aef775dddf36055dd4573ffad41b5e4d9b6",
+    "supabase/functions/talkx-report/index.ts": "8b2c6399dd8749d1db15d6527e310b87a49191ec51169840723e6030a6f812e7"
+  },
+  "results": [
+    {
+      "id": "P25",
+      "original": 200,
+      "stale": 401,
+      "retimestampedReplay": 200,
+      "changedBody": 401,
+      "rpcCalls": 2,
+      "externalRef": null,
+      "outcome": "Same captured body/signature is accepted after 24h when only unsigned timestamp changes. SQL duplicate handling itself was not executed."
+    },
+    {
+      "id": "P26",
+      "httpStatus": 422,
+      "mappedFields": {
+        "source": "webhook",
+        "currency": null,
+        "occurredAt": null
+      },
+      "outcome": "Complete Edge handler maps omitted source to a value rejected by pinned SQL whitelist and passes explicit NULL for both NOT NULL columns. Only source rejection was simulated, without executing SQL."
+    },
+    {
+      "id": "P27",
+      "actualFixtureInboundByConnection": {
+        "a": 1,
+        "b": 0
+      },
+      "returnedFlows": [
+        {
+          "instance": "instance-a",
+          "lastHour": {
+            "incoming": 1,
+            "outgoing": 0,
+            "total": 1
+          },
+          "incomingOk": true,
+          "flowHealth": "healthy"
+        },
+        {
+          "instance": "instance-b",
+          "lastHour": {
+            "incoming": 1,
+            "outgoing": 0,
+            "total": 1
+          },
+          "incomingOk": true,
+          "flowHealth": "healthy"
+        }
+      ],
+      "outcome": "Two connections receive identical global inbound count; the one with no messages is reported healthy. Provider status/configuration are explicit valid fixtures."
+    },
+    {
+      "id": "P28",
+      "httpStatus": 200,
+      "recipientTotal": 2500,
+      "returnedRecipients": 2000,
+      "actualPending": 0,
+      "reportedPending": 500,
+      "outcome": "A completed campaign with 2500 skipped recipients is emailed with 500 pending because the handler loads only 2000 rows. No email was sent."
+    }
+  ]
+}

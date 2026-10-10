@@ -1,0 +1,2 @@
+indexes|sonda_cartao.sonda_cartao_pkey
+functions|f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean)

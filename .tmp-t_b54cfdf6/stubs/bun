@@ -1,0 +1,3 @@
+#!/bin/sh
+# DOBRE DE ENSAIO: bun install (nao usado: a arvore traz node_modules vazio)
+exit 0

@@ -1,0 +1,274 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "count": 11,
+  "findings": [
+    {
+      "id": "ADV-DASH-01",
+      "module": "Dashboard",
+      "title": "Regressão na última dashboard_contact_counts",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "static_final_sql_and_relational_counterexample",
+      "sourceIds": [
+        "DASH_LATEST",
+        "DASH_PRIOR",
+        "DASH_INDEX",
+        "DASH_CONSUMER"
+      ],
+      "claims": [
+        "myActive compara auth UID, não profile UUID",
+        "Dois SLAs respondidos podem multiplicar per_queue count",
+        "p_since/p_until e America/Sao_Paulo foram removidos do recorte SLA",
+        "Restrição funcional adicional para não staff foi removida"
+      ],
+      "qualifications": [
+        "SECURITY INVOKER não demonstra bypass de RLS",
+        "CREATE OR REPLACE preserva ACL/owner; não demonstrado novo acesso anon",
+        "Fuso da sessão e corpo atual em produção não foram medidos",
+        "Índice único é parcial first_response_at IS NULL"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-MULT-01",
+      "module": "Multiplix",
+      "title": "Composer inicia draft sem criar fila por item",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "reachable_call_chain_and_latest_sql",
+      "sourceIds": [
+        "MULT_COMPOSER",
+        "MULT_CREATE_HOOK",
+        "MULT_CREATE_SQL",
+        "MULT_CONFIRM_SQL",
+        "MULT_TRANSITION_SQL",
+        "MULT_LIST_SQL",
+        "MULT_WORKER_LIST"
+      ],
+      "claims": [
+        "create_draft insere dispatch e recipients",
+        "start não chama confirm nem materializa blocos/items",
+        "worker lista apenas items ligados a blocos"
+      ],
+      "qualifications": [
+        "Probes do worker fabricam items a partir de recipients; não provam materialização SQL",
+        "Outros consumidores que chamem confirm corretamente têm alcance diferente",
+        "F59 atual corrige casts e cancelamento de items; não reportar versões anteriores"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-MULT-02",
+      "module": "Multiplix",
+      "title": "Conclusão usa recipients enquanto processamento atual usa items",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "latest_sql_and_worker_call",
+      "sourceIds": [
+        "MULT_SENT_SQL",
+        "MULT_DRAIN_NEW",
+        "MULT_DRAIN_OLD",
+        "MULT_WORKER_END",
+        "MULT_MOCK_RETURN"
+      ],
+      "claims": [
+        "record_multiplix_item_sent não termina recipient",
+        "worker chama complete_multiplix_dispatch_if_drained",
+        "novo RPC por items existe mas não é chamado"
+      ],
+      "qualifications": [
+        "completed:true do mock é default data:true, não prova de SQL",
+        "Não identificado trigger de propagação de item sent para recipient terminal",
+        "Não testada conclusão no banco vivo"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-MULT-03",
+      "module": "Multiplix",
+      "title": "Worker usa payload global em vez do conteúdo por bloco",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "real_worker_mocked_dependencies_reviewed",
+      "sourceIds": [
+        "MULT_WORKER_PAYLOAD",
+        "MULT_WORKER_MEDIA"
+      ],
+      "claims": [
+        "block.content.text distinto ignorado",
+        "dispatch.message_template personaliza conteúdo",
+        "mídia global, conteúdo do bloco só participa no nome de arquivo",
+        "missing de personalize não bloqueia exemplo com empresa ausente"
+      ],
+      "qualifications": [
+        "Probes cobrem texto; mídia verificada estaticamente",
+        "Auth/provider/database são injetados",
+        "Não concluído contrato inteiro de variáveis"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-MULT-04",
+      "module": "Multiplix",
+      "title": "429 termina como failed sem agendamento de retry",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "real_worker_mocked_dependencies_and_latest_sql",
+      "sourceIds": [
+        "MULT_WORKER_ERROR",
+        "MULT_FAILED_SQL",
+        "MULT_LIST_SQL"
+      ],
+      "claims": [
+        "Resposta429 entra p_status failed",
+        "Nenhuma chamada reschedule nesse ramo",
+        "listagem aceita pending/failed_transient, não failed"
+      ],
+      "qualifications": [
+        "HTTP>=500 segue outcome_unknown, não mesmo caminho",
+        "Não observada resposta429 de provedor real"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-FILES-01",
+      "module": "Arquivos",
+      "title": "Rótulo de encaminhamento e coleção divergem após filtro",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "actual_filter_and_exact_expression",
+      "sourceIds": [
+        "FILES_FORWARD",
+        "FILES_BAR_ARGS",
+        "FILES_BAR_LABEL",
+        "FILES_SELECTION"
+      ],
+      "claims": [
+        "Dois selecionados: encaminha dois sem filtro, um com filtro imagem e zero com filtro vídeo",
+        "Todos fora do filtro: botão anuncia dois e openForward retorna sem abrir"
+      ],
+      "qualifications": [
+        "Seleção sobreviver ao filtro é intencional",
+        "Probe não monta React nem dispara envio real"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-FILES-02",
+      "module": "Arquivos",
+      "title": "Exclusão não invalida contagens dos chips",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "mutation_realtime_and_cache_contract",
+      "sourceIds": [
+        "FILES_DELETE",
+        "FILES_COUNTS",
+        "FILES_REALTIME",
+        "QUERY_DEFAULTS"
+      ],
+      "claims": [
+        "delete invalida media-gallery e conversationTabCounts",
+        "media-gallery-counts não invalidada",
+        "UPDATE/DELETERealtime não revalidam essa chave",
+        "staleTime não dispara refetch sozinho"
+      ],
+      "qualifications": [
+        "Pode corrigir por outro evento, refetch ou reconexão",
+        "Não afirmar atualização em 30 segundos nem persistência infinita"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-TEL-01",
+      "module": "Telefonia",
+      "title": "Defaults all enviados literalmente zeram filtros SQL",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "actual_hook_args_and_exact_sql_predicate_model",
+      "sourceIds": [
+        "TEL_DEFAULTS",
+        "TEL_CALLER",
+        "TEL_HOOK",
+        "TEL_SQL"
+      ],
+      "claims": [
+        "all em canal, direção e resultado é transmitido sem normalização",
+        "SQL só trata NULL como ausência de filtro",
+        "Chamada voip/inbound válida é rejeitada pelo literal all"
+      ],
+      "qualifications": [
+        "Reprodução SQL é modelo de predicado, não execução de PostgreSQL",
+        "Não é afirmação sobre existência de histórico real ou sobre acesso permitido por RLS"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-TEL-02",
+      "module": "Telefonia",
+      "title": "Período do histórico não é transmitido à RPC",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "actual_hook_executed_with_two_periods",
+      "sourceIds": [
+        "TEL_HOOK",
+        "TEL_SQL"
+      ],
+      "claims": [
+        "7d e 30d têm chaves de cache diferentes e argumentos de RPC idênticos",
+        "p_from/p_to omitidos, embora a SQL aplique ambos"
+      ],
+      "qualifications": [
+        "Achado sobre histórico; não generalizar para KPIs",
+        "Não há sessão de navegador"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-TEL-03",
+      "module": "Telefonia",
+      "title": "Resposta áudio incompatível com hook esperando URL",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "actual_hook_and_official_sdk_v2_117_2",
+      "sourceIds": [
+        "TEL_RECORDING_HOOK",
+        "TEL_RECORDING_EDGE",
+        "TEL_RECORDING_VIEW"
+      ],
+      "claims": [
+        "Edge devolve o corpo de áudio do upstream em resposta 200",
+        "SDK decodifica audio/mpeg como string, com error:null",
+        "hook espera data.url; URL nula faz o player ficar oculto"
+      ],
+      "qualifications": [
+        "Cenário depende de gravação available",
+        "Fonte do provedor não consultada",
+        "Transporte do SDK injetado em memória"
+      ],
+      "productionVerified": false
+    },
+    {
+      "id": "ADV-EMAIL-01",
+      "module": "Email",
+      "title": "Sync parcial 207 gera toast de sucesso sem reportar falhas",
+      "verdict": "CONFIRMED_IN_REPOSITORY_WITH_STATED_LIMITS",
+      "confidence": "high",
+      "evidenceMethod": "actual_wrapper_callback_and_official_sdk_v2_117_2",
+      "sourceIds": [
+        "EMAIL_WRAPPER",
+        "EMAIL_HOOK",
+        "EMAIL_EDGE"
+      ],
+      "claims": [
+        "JSON HTTP 207 com success:false retorna error:null no SDK",
+        "Wrapper não lança erro para esse resultado",
+        "Dois emails sincronizados e uma falha geram toast: 2 emails sincronizados"
+      ],
+      "qualifications": [
+        "Há sucesso parcial; não afirmar que nenhum email foi sincronizado",
+        "Não foi testada uma sessão Gmail real"
+      ],
+      "productionVerified": false
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "columns": {
+    "clientes.id": "c-id",
+    "clientes.nome": "c-nome"
+  },
+  "indexes": {
+    "clientes.clientes_pkey": "i-pkey"
+  },
+  "rls": {
+    "clientes": "rls-clientes"
+  },
+  "relation_grants": {
+    "r:public.clientes|authenticated|SELECT|grantor=postgres": "g-sel"
+  },
+  "functions": {
+    "f:fn_antiga()": "f-MUDOU"
+  }
+}

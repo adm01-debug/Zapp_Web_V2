@@ -1,0 +1,18 @@
+OK      travas         13s
+FALHOU  banco_local     2s  (ver /mnt/c/Users/Joaquim Ataides/AppData/Local/hermes/kanban/boards/zapp-web-v2/workspaces/t_c5a96aba/.tmp/evidencias-baseline/home-ensaio/.local/state/zapp-verify/079f207a5c08/banco_local.log)
+    só local: f:create_team_group_conversation(p_name text, p_member_ids uuid[], p_department_id uuid)|service_role|EXECUTE|
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|authenticated|EXECUTE|grantor=postg
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|postgres|EXECUTE|grantor=postgres
+    só local: f:is_last_team_conversation_owner(_conversation_id uuid, _profile_id uuid)|service_role|EXECUTE|grantor=postgr
+[relation_grants] só produção=1 só local=32 diferentes=0
+    só produção: r:public.team_conversations|authenticated|UPDATE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|DELETE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|INSERT|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|MAINTAIN|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|REFERENCES|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|SELECT|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|TRIGGER|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|TRUNCATE|grantor=postgres
+    só local: r:public.gmail_oauth_states|postgres|UPDATE|grantor=postgres
+ESTRUTURA: 128 diferença(s) em relação ao retrato da produção
+VERIFY: VERMELHO em banco_local (17s)

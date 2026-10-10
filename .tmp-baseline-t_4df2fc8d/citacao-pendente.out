@@ -1,0 +1,34 @@
+=== a migration pendente cita os 2 objetos do diff fresco? ===
+3:-- Rollback: reaplicar o corpo anterior das duas funções, que está em supabase/migrations/20261001231230_f32b_multiplix_item_queue_rpcs.sql (§5 complete_multiplix_item e §8 sweep_multiplix_stuck_items). Não há tabela, coluna, índice nem enum novo para desfazer.
+28:--   1) `complete_multiplix_item` (§1): depois de fechar o item como skipped/failed/
+34:--   2) `sweep_multiplix_stuck_items` (§2): (a) ao fechar um item preso como `outcome_unknown`,
+50:-- §1 · complete_multiplix_item — fecha o item e cancela a cadeia do destinatário
+52:CREATE OR REPLACE FUNCTION public.complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text DEFAULT NULL::text)
+134:REVOKE ALL ON FUNCTION public.complete_multiplix_item(uuid, uuid, text, text) FROM PUBLIC, anon, authenticated;
+135:GRANT EXECUTE ON FUNCTION public.complete_multiplix_item(uuid, uuid, text, text) TO service_role;
+138:-- §2 · sweep_multiplix_stuck_items — fecha o preso E reconcilia a cadeia inalcançável
+140:CREATE OR REPLACE FUNCTION public.sweep_multiplix_stuck_items(p_limit integer DEFAULT 500)
+261:REVOKE ALL ON FUNCTION public.sweep_multiplix_stuck_items(integer) FROM PUBLIC, anon, authenticated;
+
+=== falhas.tsv do conjunto cita a pendente? ===
+20260902000200_fix_cron_avatars_refresh_key.sql	ERROR:  permission denied for function alter_job
+20260906000001_e31_contacts_is_lid_legacy.sql	ERROR:  E31: contagem inesperada de LIDs marcados: 0. Esperado 400-700.
+20260910100000_restrict_talkx_blacklist_update_policy.sql	ERROR:  policy "talkx_blacklist_update" for table "talkx_blacklist" does not exist
+20260916230000_talkx_e93_settings.sql	ERROR:  syntax error at or near "NOT"
+20260925153000_revoke_anon_execute_notify_due_reminders.sql	ERROR:  function public.notify_due_reminders() does not exist
+20260925153100_add_idx_reminders_due_pending.sql	ERROR:  column "notified_at" does not exist
+20260925170000_add_reminders_pending_to_tab_counts.sql	ERROR:  cannot change return type of existing function
+20260926410000_add_fk_support_indexes.sql	ERROR:  relation "idx_gmail_accounts_user_id" already exists
+20260927450000_fix_indexes_checks_cleanup.sql	ERROR:  syntax error at or near "VAFIDD"
+20260927460000_revoke_sync_contact_status_closure_anon.sql	ERROR:  function public.sync_contact_status_on_closure() does not exist
+20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql	ERROR:  relation "public.conversations" does not exist
+20260927570000_talkx_e27_realtime_campaign_events.sql	ERROR:  relation "talkx_campaign_events" is already member of publication "supabase_realtime"
+20260928140200_tab_counts_tasks_own.sql	ERROR:  cannot change return type of existing function
+20260928200000_conversation_tasks_realtime_drift.sql	ERROR:  relation "conversation_tasks" is already member of publication "supabase_realtime"
+20260928210000_reconcile_conversation_tasks_realtime_publication.sql	ERROR:  relation "conversation_tasks" is already member of publication "supabase_realtime"
+20260928430000_team_chat_fix_policies_to_authenticated.sql	ERROR:  column "conversation_id" does not exist
+20260929370000_contacts_soft_delete_and_search_filters.sql	ERROR:  cannot change return type of existing function
+20260930390000_endurece_l5_contrato_e_jobs.sql	ERROR:  permission denied for table job
+20260930430000_cron_sem_dml_direto_v2.sql	ERROR:  permission denied for function alter_job
+20261001351230_f51a_multiplix_confirm_dispatch_fn.sql	ERROR:  function "multiplix_confirm_dispatch" already exists with same argument types
+20261002541230_pg_cron_escalonar_jobs.sql	ERROR:  permission denied for function alter_job

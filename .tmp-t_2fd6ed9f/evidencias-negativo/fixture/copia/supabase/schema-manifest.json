@@ -1,0 +1,19 @@
+{
+  "columns": {
+    "clientes.id": "c-id",
+    "clientes.nome": "c-nome",
+    "clientes.antiga": "c-antiga"
+  },
+  "indexes": {
+    "clientes.clientes_pkey": "i-pkey"
+  },
+  "rls": {
+    "clientes": "rls-clientes"
+  },
+  "relation_grants": {
+    "r:public.clientes|authenticated|SELECT|grantor=postgres": "g-sel"
+  },
+  "functions": {
+    "f:fn_antiga()": "f-h5"
+  }
+}

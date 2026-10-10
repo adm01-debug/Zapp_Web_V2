@@ -1,0 +1,195 @@
+{
+  "created_at": "2026-10-04T01:13:07.607Z",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "network_calls": 0,
+  "database_calls": 0,
+  "source_modified": false,
+  "method": "TypeScript transpilation / extracted actual source closures with explicit synthetic boundaries",
+  "results": [
+    {
+      "id": "P-AUTH-01",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "supabase/functions/webauthn/index.ts",
+          "blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340"
+        },
+        {
+          "file": "supabase/functions/_shared/schemas.ts",
+          "blob_sha": "57b706d77864be9c2c24f0eb57f0728335b0b2d0"
+        }
+      ],
+      "observed": {
+        "http_status": 200,
+        "success": true,
+        "missing": [
+          "signature",
+          "authenticatorData",
+          "userHandle",
+          "Authorization"
+        ],
+        "wrong_origin_accepted": true,
+        "expired_challenge_supplied": true,
+        "counter_incremented": true,
+        "challenge_delete_attempted": true,
+        "session_token_returned": false
+      },
+      "limitation": "Actual handler transpiled; DB/claims/CORS/schema boundary mocked with valid schema-shape input and synthetic records. Proves verifier path, not live RLS, Internet access or authenticated session takeover."
+    },
+    {
+      "id": "P-AUTH-02",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/hooks/auth/useAuth.tsx",
+          "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4"
+        }
+      ],
+      "observed": {
+        "new_user_B_profile_overwritten_by_A": true,
+        "pending_fetch_repopulates_profile_after_clear": true
+      },
+      "limitation": "Executes actual fetchProfile closure with deferred AuthService. Event/reset cutpoints from source are simulated, not a mounted React provider or browser."
+    },
+    {
+      "id": "P-AUTH-03",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/hooks/system/usePermissions.ts",
+          "blob_sha": "c8242e4421b19780f72aa36765883db807309f60"
+        },
+        {
+          "file": "src/components/permissions/PermissionMatrix.tsx",
+          "blob_sha": "9528e77ae5a584e286e70c2fb38a6a5f218e4d62"
+        }
+      ],
+      "observed": {
+        "backend_returned_error": "42501",
+        "hook_returned": false,
+        "toast": [
+          "success",
+          "Permissão removida"
+        ],
+        "refetches": 0
+      },
+      "limitation": "Actual extracted hook and UI closures with an explicit SDK error object; no DB operation."
+    },
+    {
+      "id": "P-AUTH-04",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/hooks/chat/useTeamChatDraft.ts",
+          "blob_sha": "586bbd32e45e818ee4fac64e38a6e82df4d849dd"
+        },
+        {
+          "file": "src/components/team-chat/useTeamChatPanel.ts",
+          "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3"
+        },
+        {
+          "file": "src/components/team-chat/TeamChatView.tsx",
+          "blob_sha": "8454231c59f5d39daef659d66756ecbe66ed4d2b"
+        }
+      ],
+      "observed": {
+        "switch_A_to_B_restores_B": false,
+        "draft_B_overwritten_with_A": true,
+        "different_profile_restores_A_draft": true
+      },
+      "limitation": "Actual hook with a minimal effect/dependency scheduler and fake storage/timers. Parent panel state retention and absence of key verified statically; this is not browser E2E."
+    },
+    {
+      "id": "P-AUTH-05",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/components/admin/useAdminData.ts",
+          "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d"
+        }
+      ],
+      "observed": {
+        "initial_roles": [
+          "admin"
+        ],
+        "insert_failure": true,
+        "remaining_roles": [],
+        "error_toast": "Erro ao atualizar role"
+      },
+      "limitation": "Actual closure; synthetic storage models delete commit followed by failed insert. No live race or database transaction executed."
+    },
+    {
+      "id": "P-AUTH-06",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "src/components/contacts/ContactBulkTagDialog.tsx",
+          "blob_sha": "386521b4886c48e6ea533072c2522255fca0206c"
+        }
+      ],
+      "observed": {
+        "selected_contacts": 2,
+        "readable_contacts": 1,
+        "attempted_updates": 1,
+        "update_result": "42501",
+        "toast": [
+          "success",
+          "1 tag(s) adicionada(s) a 2 contatos"
+        ]
+      },
+      "limitation": "Actual handleApply closure with SDK-shaped resolved errors; no update executed."
+    },
+    {
+      "id": "P-AUTH-07",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "supabase/functions/crm-integration/index.ts",
+          "blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b"
+        },
+        {
+          "file": "supabase/functions/_shared/crm-integration-contract.ts",
+          "blob_sha": "cfbc3a02deeee3685973ee5e87eea47de4f643ae"
+        },
+        {
+          "file": "src/hooks/crm/useContactIntelligence.ts",
+          "blob_sha": "18ab915b7c991b6358fcd9d58a8c7e3ef95c4d11"
+        }
+      ],
+      "observed": {
+        "canonical_link": "external-A",
+        "external_result": "external-B",
+        "unchanged_phone": true,
+        "lookup360_http": 409,
+        "intelligence_http": 200,
+        "intelligence_returns_mismatched_id": true,
+        "external_rpc_names": [
+          "get_contact_360_by_phone",
+          "get_contact_intelligence_by_phone"
+        ]
+      },
+      "limitation": "Actual full request handler and actual contract; Deno bootstrap omitted. Canonical Auth/DB, external CRM transport and unused sentiment boundary mocked; synthetic key used only for config validation. No network or external records accessed."
+    },
+    {
+      "id": "P-AUTH-08",
+      "status": "PASS_REPRODUCED",
+      "source": [
+        {
+          "file": "supabase/functions/auth-login/index.ts",
+          "blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99"
+        },
+        {
+          "file": "src/lib/serverLogin.ts",
+          "blob_sha": "dd7d79a775127bbb18ee7a64b6e5f730032609aa"
+        }
+      ],
+      "observed": {
+        "upstream_auth_status": 503,
+        "edge_http_status": 401,
+        "record_failed_login_called": true,
+        "client_message": "Invalid login credentials"
+      },
+      "limitation": "Actual handler with synthetic Auth error object. Demonstrates wrong failure categorization; no real lockout or request."
+    }
+  ]
+}

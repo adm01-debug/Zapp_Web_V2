@@ -1,0 +1,6 @@
+== corpo=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/t_feadd752/evidencia/emb-hoje.py
+total=2 explicadas=2 drift_canonico=0 SEM=0
+retrato=/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-baseline-t_4df2fc8d/arvore-B/supabase/schema-manifest.json
+-- classificacao por linha (classe<TAB>linha) --
+explicada	functions|f:complete_multiplix_item(p_item_id uuid, p_claim_token uuid, p_status text, p_error_message text)
+explicada	functions|f:sweep_multiplix_stuck_items(p_limit integer)

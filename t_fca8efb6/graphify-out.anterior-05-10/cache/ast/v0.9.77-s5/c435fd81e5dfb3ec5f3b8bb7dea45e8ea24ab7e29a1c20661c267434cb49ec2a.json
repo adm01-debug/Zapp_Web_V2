@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260929380000_disable_sicoob_bridge_trigger_sql", "label": "20260929380000_disable_sicoob_bridge_trigger.sql", "file_type": "code", "source_file": "supabase/migrations/20260929380000_disable_sicoob_bridge_trigger.sql", "source_location": null}], "edges": []}

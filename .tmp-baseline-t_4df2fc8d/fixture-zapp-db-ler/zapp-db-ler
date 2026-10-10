@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# FIXTURE desta evidencia (NAO e a producao). A regra R1 proibe o agente de ler o banco de producao
+# (zapp-db-ler sai com rc=77), e sem esse registro o passo banco_local do zapp-verify nao chega ao
+# explicador. Para exercitar o caminho "registro legivel" sem tocar em producao, este stub devolve a
+# lista de versoes das migrations da base canonica local dia/2026-10-06 -- a mesma lista que a producao
+# tem, ja que o retrato canonico (99ff88bf2) veio dela.
+# Formato: o mesmo que zapp-verify espera do zapp-db-ler -> {"rows":[{"v":"v1,v2,..."}]}
+dir="$(cd "$(dirname "$0")" && pwd)"
+printf '{"rows":[{"v":"%s"}]}\n' "$(paste -sd, "$dir/ledger-fixture-versoes.txt")"

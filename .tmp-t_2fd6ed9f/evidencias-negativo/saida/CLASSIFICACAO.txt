@@ -1,0 +1,37 @@
+== cenario neg (local-neg.json) ==================================================================
+   linha de diferenca                                             HOJE                     NOVO
+   columns|cartao_dinamico.coluna_gerada                          SEM (debitada ao cartao) SEM (debitada ao cartao)
+   columns|cartao_novo.id                                         explicada pela pendente  explicada pela pendente
+   columns|cartao_novo.payload                                    explicada pela pendente  explicada pela pendente
+   indexes|cartao_novo.cartao_novo_pkey                           SEM (debitada ao cartao) SEM (debitada ao cartao)
+   relation_grants|r:public.cartao_novo|service_role|SELECT|grant SEM (debitada ao cartao) SEM (debitada ao cartao)
+   rls|cartao_novo                                                SEM (debitada ao cartao) SEM (debitada ao cartao)
+   -> debitadas ao cartao: HOJE 4 de 6 | NOVO 4 de 6
+   -> rc do explicador (= veredito do passo banco_local): HOJE 1 | NOVO 1
+   -> stdout HOJE : diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+   -> stdout NOVO : diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+
+== cenario ctrl (local-ctrl.json) ==================================================================
+   linha de diferenca                                             HOJE                     NOVO
+   columns|clientes.antiga                                        SEM (debitada ao cartao) drift (NAO debitada)
+   functions|f:fn_antiga()                                        SEM (debitada ao cartao) drift (NAO debitada)
+   -> debitadas ao cartao: HOJE 2 de 2 | NOVO 0 de 2
+   -> rc do explicador (= veredito do passo banco_local): HOJE 1 | NOVO 0
+   -> stdout HOJE : diferença não explicada por migration pendente: columns|clientes.antiga; functions|f:fn_antiga()
+   -> stdout NOVO : ok|drift=2 | drift: columns|clientes.antiga | drift: functions|f:fn_antiga()
+
+== cenario misto (local-misto.json) ==================================================================
+   linha de diferenca                                             HOJE                     NOVO
+   columns|cartao_dinamico.coluna_gerada                          SEM (debitada ao cartao) SEM (debitada ao cartao)
+   columns|cartao_novo.id                                         explicada pela pendente  explicada pela pendente
+   columns|cartao_novo.payload                                    explicada pela pendente  explicada pela pendente
+   columns|clientes.antiga                                        SEM (debitada ao cartao) drift (NAO debitada)
+   functions|f:fn_antiga()                                        SEM (debitada ao cartao) drift (NAO debitada)
+   indexes|cartao_novo.cartao_novo_pkey                           SEM (debitada ao cartao) SEM (debitada ao cartao)
+   relation_grants|r:public.cartao_novo|service_role|SELECT|grant SEM (debitada ao cartao) SEM (debitada ao cartao)
+   rls|cartao_novo                                                SEM (debitada ao cartao) SEM (debitada ao cartao)
+   -> debitadas ao cartao: HOJE 6 de 8 | NOVO 4 de 8
+   -> rc do explicador (= veredito do passo banco_local): HOJE 1 | NOVO 1
+   -> stdout HOJE : diferença não explicada por migration pendente: columns|clientes.antiga; columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey (+3)
+   -> stdout NOVO : diferença não explicada por migration pendente: columns|cartao_dinamico.coluna_gerada; indexes|cartao_novo.cartao_novo_pkey; rls|cartao_novo (+1)
+

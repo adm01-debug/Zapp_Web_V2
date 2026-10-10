@@ -1,0 +1,44 @@
+[
+  {
+    "roster_index": 24,
+    "adjudication": [
+      "Monta useSavedFilters real sob React Query e mocks de autenticação/consulta: exige duas entradas, identifica o filtro default, retorna vazio sem usuário e verifica estado inicial e funções expostas.",
+      "Salvar, atualizar, apagar e trocar default nunca são acionados; o cenário de erro apenas aguarda fim do loading. Portanto o arquivo não demonstra persistência, isolamento de usuário nas mutações nem recuperação de falhas desses comandos."
+    ]
+  },
+  {
+    "roster_index": 25,
+    "adjudication": [
+      "Monta useSearchHistory real e verifica adição, tamanho mínimo, deduplicação sem distinguir maiúsculas, limite de dez itens, remoção, limpeza, persistência/restauração, JSON inválido, recência e trim.",
+      "As assertivas exercitam estado e localStorage de fato, com controles positivos e negativos. Não montam a pesquisa remota ou seu vínculo com resultados nem demonstram isolamento entre contas e tratamento de quota; esses limites não geram achado por si sós."
+    ]
+  },
+  {
+    "roster_index": 26,
+    "adjudication": [
+      "Monta useSentimentAlerts real, usa notificationDedupe real e simula Edge Function, preferências, som e consultas. Cobre delegação à política do destinatário mesmo com preferência local desativada, retorno de erro, alerta, deduplicação com Realtime, notifyCaller=false, leitura recente e som condicionado à preferência de menção.",
+      "Os controles de decisão local são concretos; resposta alerted/emailSent do mock não comprova envio/persistência no servidor. Não aciona a navegação do toast, portanto não afasta INB064."
+    ]
+  },
+  {
+    "roster_index": 27,
+    "adjudication": [
+      "Importa o hook ativo de chat e usa grafo WebAudio falso, canal cujo callback é capturado e consulta de membership simulada. Exige os ganhos para volumes 60/100 e ausência de som para autor, não membro, conversa muda, preferência desligada, quiet hours e conversa atual.",
+      "É evidência vinculada ao caminho produtivo de som, com vários controles negativos; preserva a distinção expressa em comentário sobre o antigo hook sem consumidor. Não demonstra áudio físico, permissão de notificações push ou transporte Realtime real."
+    ]
+  },
+  {
+    "roster_index": 28,
+    "adjudication": [
+      "Monta useUserRole real com QueryClient e auth/Supabase simulados. Verifica usuário ausente, composição de papéis, hasRole e a permissão multiplix.dispatch.create por RPC user_has_permission com argumentos exatos, tanto concedida a agente quanto negada a supervisor.",
+      "Os controles de permissão nominal são substanciais. A resposta da RPC é simulada, sem executar SECURITY DEFINER/RLS ou a navegação ProtectedRoute; não constitui prova de autorização no banco."
+    ]
+  },
+  {
+    "roster_index": 29,
+    "adjudication": [
+      "Monta useVisiblePolling real com timers, visibilidade e conectividade controlados. Cobre leitura inicial, intervalo após conclusão, pausa oculta/offline, retomada, coalescência de refresh, rejeição, abort/cleanup, StrictMode, substituição de callback e remoção de autorização.",
+      "Os casos verificam chamadas, sinais AbortSignal e ausência de timers, com fronteiras positivas e negativas. Isso demonstra o contrato do agendador sob simulação; a tarefa fornecida e os servidores reais permanecem fora do teste."
+    ]
+  }
+]

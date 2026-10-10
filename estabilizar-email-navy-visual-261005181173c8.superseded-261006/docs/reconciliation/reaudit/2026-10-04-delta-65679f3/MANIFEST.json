@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "docs/reconciliation/reaudit/2026-10-04-delta-65679f3/**",
+  "code_pin": "65679f38d400f7edc6a071f68554dd3b0372f03f",
+  "audit_baseline_pin": "dc2d19ee5bd018e1aebaf6c66211657218bc6b51",
+  "historical_manifest": {
+    "path": "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
+    "git_blob_sha": "5c58c0fca1690c70bd06c8bbd91d3dae17c00100",
+    "file_count": 759
+  },
+  "excluded": [
+    "MANIFEST.json"
+  ],
+  "exclusion_reason": "The Git tree pins the manifest; the verifier permits no other unlisted file.",
+  "file_count": 9,
+  "bytes_of_hashed_files": 101279,
+  "files": [
+    {
+      "path": "COVERAGE.json",
+      "bytes": 6086,
+      "sha256": "83b90c1e2084c308dcb25537c740b9db5b62c7e88348491ba4aab5e02e4a8f62",
+      "git_blob_sha": "b0b002126837974a57e510fafc20c501e5409dcd"
+    },
+    {
+      "path": "FINDINGS.json",
+      "bytes": 20263,
+      "sha256": "1da0c5ed74feba1066d34f3eba186467c797912ce7db13dd6785f491f6160159",
+      "git_blob_sha": "c8f756cb8fde580625e2204b1496cb7a971c12b5"
+    },
+    {
+      "path": "README.md",
+      "bytes": 34273,
+      "sha256": "de96ed28dbee80f511ce6e503b68cac14c1d62bf726f8bf76b60d0bffa899a9f",
+      "git_blob_sha": "aa596bdd67dbeb0e37067e52371441aa1026da72"
+    },
+    {
+      "path": "RESULTS.json",
+      "bytes": 7108,
+      "sha256": "e0281695b5e837b309a987ca9c1dfae9d4a41ac15b37c86d557827f3836c6537",
+      "git_blob_sha": "1fde921798268b8efc7f3d05b2c36b7818055943"
+    },
+    {
+      "path": "SOURCES.json",
+      "bytes": 10509,
+      "sha256": "4930aa88a4c753cc1b007f1651d87b53a6f11afc5049d2431e82afbb98c5f15e",
+      "git_blob_sha": "6f16efcd62a6ee6c80a0933cbcd86d9ddef0cb90"
+    },
+    {
+      "path": "reproduce_manifest_gap.py",
+      "bytes": 7083,
+      "sha256": "bb4feed1c33c38ce7f445575bbcd977613227195ef1fcf9c07f49c2b8b3b5743",
+      "git_blob_sha": "99373a4366e9befb01f1e10de58c353874b28500"
+    },
+    {
+      "path": "run_probes.py",
+      "bytes": 6008,
+      "sha256": "f1d9933416defa82dcb79635be9d566a589e05a527b2a733919a8056cd036576",
+      "git_blob_sha": "acda5e3e1d605b3b163e61aeb1ef4fe0fbc9e650"
+    },
+    {
+      "path": "test_verify_bundle.py",
+      "bytes": 4144,
+      "sha256": "e31b5817f99f97757b81f14c9a242c8caa18f23eeb7b325df4dff6222a75e11b",
+      "git_blob_sha": "579b3206bddb959ce6d08626d2df5825e8134b3d"
+    },
+    {
+      "path": "verify_bundle.py",
+      "bytes": 5805,
+      "sha256": "fe40f377bfa68be156faf957d8882e988f3dd7c8c5aeef2b6e783c2a45f18ef1",
+      "git_blob_sha": "21b62cd16710ed60df36ca02c40884d7ef695dcd"
+    }
+  ]
+}

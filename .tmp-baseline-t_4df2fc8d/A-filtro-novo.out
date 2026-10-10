@@ -1,0 +1,1 @@
+diferença não explicada por migration pendente: indexes|gmail_oauth_states.gmail_oauth_states_pkey; indexes|talkx_storage_purge_queue.talkx_storage_purge_queue_pkey; constraints|relation:gmail_oauth_states.gmail_oauth_states_pkey (+5)

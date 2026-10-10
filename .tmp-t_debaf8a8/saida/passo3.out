@@ -1,0 +1,24 @@
+================ HOJE : /home/joaquim_ataides/.local/bin/zapp-verify
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1   (gravado em saida/shell-HOJE.rc)
+================ NOVO : /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.tmp-t_8d3ddc95/ENTREGA/zapp-verify.novo
+OK      db_guard        0s
+OK      tipos           0s
+OK      lint            0s
+OK      migrations      0s
+OK      travas          0s
+FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+VERIFY: VERMELHO em banco_local (0s)
+exit code = 1   (gravado em saida/shell-NOVO.rc)
+
+=== veredito (passo banco_local) ===
+[HOJE] FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+[HOJE] VERIFY: VERMELHO em banco_local (0s)
+[NOVO] FALHOU  banco_local     0s  diferença não explicada por migration pendente: rls|inbound_message_effects; indexes|inbound_message_effects.idx_inbound_message_effects_pending; indexes|inbound_message_effects.inbound_message_effects_pkey (+10)
+[NOVO] VERIFY: VERMELHO em banco_local (0s)

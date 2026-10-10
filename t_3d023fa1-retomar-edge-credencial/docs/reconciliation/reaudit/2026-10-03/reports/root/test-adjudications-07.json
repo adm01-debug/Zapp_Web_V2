@@ -1,0 +1,37 @@
+[
+  {
+    "roster_index": 42,
+    "adjudication": [
+      "O único import é Vitest. RateLimiter, limites e todas as operações são definidos dentro do teste; os casos de 300/301, janelas, isolamento e cleanup exercitam exclusivamente essa classe local.",
+      "As fronteiras documentam intenção mas não importam nem verificam o rate limiter produtivo do webhook. Trata-se de outro locus de teste desconectado na família TC-011; não é prova de limitação em Edge Functions distribuídas."
+    ]
+  },
+  {
+    "roster_index": 43,
+    "adjudication": [
+      "Importa createRunGuard real e usa promises controladas e seeds determinísticas. Verifica última execução, invalidate, sequência equivalente a double invoke e IDs crescentes, com controles negativos sem guarda e sem gate de chave ativa.",
+      "O objeto sob teste é real, mas state, loader, activeKey e o gate da segunda família são um modelo local. Os muitos cenários finitos não montam painéis consumidores nem provam que cada painel usa essas proteções; portanto não afastam corridas como QUE010 em outro hook."
+    ]
+  },
+  {
+    "roster_index": 44,
+    "adjudication": [
+      "Importa funções produtivas de churn, classificação de tickets, thresholds, formatação WhatsApp e cn, exercitando amostras determinísticas e fronteiras explícitas. Preserva controles úteis de faixa/monotonicidade, formas inválidas, confidence null/zero e percentual, além de escape de payloads e formatação positiva.",
+      "O vínculo é real: em especial confidence=0 deve permanecer zero, ao contrário da cópia local em AutoTicketClassifier.test.tsx. Os checks de XSS inspecionam strings e um conjunto finito de payloads; não demonstram execução de DOM em navegador nem segurança universal de todos os renderizadores."
+    ]
+  },
+  {
+    "roster_index": 45,
+    "adjudication": [
+      "Importa serverLogin real e verifica URL/região, headers e body, tokens, locks 401/423, respostas indisponíveis e timeout com sinal de abort. O teto de 60 segundos é uma expectativa independente da constante produtiva, e o controle de sucesso verifica limpeza do timer.",
+      "Esses controles são mais fortes que apenas avançar a própria constante. Auth-login, GoTrue e banco são simulados; os números de latência em comentário são históricos e não medidos neste passe. O fallback do chamador não é executado aqui."
+    ]
+  },
+  {
+    "roster_index": 46,
+    "adjudication": [
+      "Importa NavigationService real e verifica grupos de maturidade, IDs únicos, layout full, lista primária, recusa de IDs desconhecidos, papéis e permissão nominal de Multiplix com controles positivos e negativos.",
+      "O teste valida metadados e funções de decisão, sem montar Sidebar/ViewRouter/rotas. Não demonstra a navegação efetiva nas páginas SLA de PLAT012; a ausência de integrações incompletas nos grupos maduros não certifica todos os itens como implementados."
+    ]
+  }
+]

@@ -1,0 +1,420 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "auth",
+  "reviewer": "auth",
+  "status": "COMPLETE",
+  "updated_at": "2026-10-04T06:28:00.799322+00:00",
+  "method": "Manual integral source review of assertions, fixtures, mocks and consumer contracts. Allocation alone confers no review coverage. Shell bodies, embedded SQL, assertions, fixtures and cleanup reviewed. No script, suite, browser, service or database executed.",
+  "allocation_file": "shell-review-roster.json",
+  "counts": {
+    "SEMANTIC_REVIEW_COMPLETE": 12
+  },
+  "allocated_files": 12,
+  "allocated_lines": 3546,
+  "actual_lines_read": 3546,
+  "files": [
+    {
+      "index": 1,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "66be0a61f0debef3267b6630222d4fc83062b1d5",
+      "source_sha256": "74bf98d2454488e9bdd2ee8e0a18dc515b838ec5dd3f26df2ee847cafc19fc4f",
+      "line_count": 754,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          754
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Harness PostgreSQL17 descartável aplica nove migrations reais da F1 e verifica RED/GREEN dos CHECK/FSM, soft-delete individual/lote, ocultação em busca/contagem, remoção Sicoob, ACLs/helpers e reaplicação selecionada.",
+        "Inclui SELECT real sob papel authenticated (519–524), update permitido/negado e erro de guard por mensagem; compara claims completos versus apenas sub e assinaturas2/5args."
+      ],
+      "mocks_and_fixtures": [
+        "Esquema anterior criado manualmente115–357 com helpers de visibilidade/admin simplificados, cinco contatos/perfis/filas e guards copiados; search_contacts é substituída manualmente398–446 por retorno23colunas antes das migrations finais."
+      ],
+      "positive_controls": [
+        "expect_failure exige erro nãozero e regex esperada67–86; casos positivos usam igualdade do valor. Claims completos ativam triggers e contraprovas comportamentais complementam consultas textuais de pg_get_functiondef."
+      ],
+      "limits": [
+        "Revisão fonte apenas: Docker/psql não executados. Não é replay integral779migrations nem prova do schema implantado; helpers/copias e ajuste manual do search são fronteiras explícitas.",
+        "ACL PUBLIC/search_contacts e reaplicação soft-delete excluídas deliberadamente504–506/735–740. Asserts CRUD658–661 usam lista em has_table_privilege, que não discrimina cada privilégio; string de texto do helper não prova plano/custo. Estado final antecede migrations posteriores da cadeia."
+      ],
+      "related_findings": [],
+      "observations": [
+        "set -Eeuo pipefail, psql ON_ERROR_STOP, ready check duplo; trap remove container só com nome esperado e tempdir com prefixo validado44–52. Se executado, altera apenas fixtures/container especificado; nenhum comando executado nesta revisão. Limites de CRUD enviados ao revisor DB, sem novo ID."
+      ]
+    },
+    {
+      "index": 2,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/gen-types.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "d18aa236314e4b372720879947499e3a2add0c24",
+      "source_sha256": "2b6f372479590453f2f73f7b92352877cd6bfe495590a0c574f176ad92fbf0bc",
+      "line_count": 102,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          102
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Script invoca gen-types.sh real com CLI supabase stub, compara bytes do output/EOF, exige3tentativas em2timeouts+sucesso e falha persistente com3tentativas, e aviso de retry."
+      ],
+      "mocks_and_fixtures": [
+        "Executáveis shell fake no PATH; DSN fixture.invalid, CI vazio, retry delay0; contador em tempdir."
+      ],
+      "positive_controls": [
+        "cmp verifica linhas internas/EOF; falha persistente não aceita sucesso e contador evita passar só pelo exitcode."
+      ],
+      "limits": [
+        "Leitura sem executar; não usa CLI real/banco, outros tipos de erro ou saída inválida. Não verifica preservação de output anterior em falha nem argumentos enviados ao stub; depende cwd raiz por paths relativos."
+      ],
+      "related_findings": [],
+      "observations": [
+        "set-euo; mktemp único e trap EXIT remove pasta criada. Se executado, código real gen-types.sh continua fronteira de efeitos não analisada por este único script; não o executamos."
+      ]
+    },
+    {
+      "index": 3,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/generic-migration-runtime.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "53af2ab1dda15942931ab34bdd485182589d7c22",
+      "source_sha256": "bd10682b59e0c3b4461e5851b755a6a91e61035a9978bf78eb217fb883d459c6",
+      "line_count": 167,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          167
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Harness PG17 sem rede usa generic-migration-runtime.sql real, exige JSON não vazio com18campos, hashes formato64hex, invariância de duas leituras, mudanças por DDL/ACL/ledger e invariância de DML/ANALYZE/outroschema."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo t1/t2/f1 e ledger sintético; Docker postgres:17-alpine ou override;12snapshots de SQL real."
+      ],
+      "positive_controls": [
+        "Validação JSON evita falso positivo de dois arquivos vazios; corpo-only f1 alterado e ACL exercitados; conta12arquivos efetivos."
+      ],
+      "limits": [
+        "Não executado. Comparações diff verificam JSON completo, não cada hash isoladamente: mudança em contador pode satisfazer desigualdade sem provar sensibilidade do hash alegado. Policy+index mudam juntos119–123, portanto não isolam ambos; não cobre qualquer forma DDL nem TOCTOU inteiro do workflow. Comentário reconhece que contrato não prova semântica de migration."
+      ],
+      "related_findings": [],
+      "observations": [
+        "--network none, psql ON_ERROR_STOP, readiness consulta+logs; cleanup valida prefixo do container e remove test_dir de mktemp. Leitura inclui SQL/Node embutidos sem executá-los."
+      ]
+    },
+    {
+      "index": 4,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/multiplix-scope.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f585bd05aa49853759d79c6402a742fe7caea80f",
+      "source_sha256": "ace7d02f85a578694cc9a836e04f8fb0a09b92bf730fd18c5eb38d2d6b0f045c",
+      "line_count": 328,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          328
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Bloco estático procura shape de schemas e origem textual de scopePermissions; bloco vivo, quando habilitado, autentica contas agent/supervisor e compara count/search da Edge com RPC Singu assinada, incluindo campos scope forjados."
+      ],
+      "mocks_and_fixtures": [
+        "Sem stubs no bloco vivo: contas prévias de arquivo externo, JWT senha, service-role externo e HMAC via env ou leitura vault pela Management API; matriz esperada de papéis codificada242–250. Só fonte foi lida; nenhum arquivo de segredo/serviço acessado."
+      ],
+      "positive_controls": [
+        "Contagem comparada por caminhos Edge/RPC e há casos sem acesso a fornecedores para agente; erro HTTP conta diferente é detectado, retry restrito a5xx."
+      ],
+      "limits": [
+        "Ausência de credenciais/python/contas suficientes encerra0 como PULADO107–112/238–240; sucesso do comando sozinho não prova bloco vivo. Exige≥1agent+≥1supervisor, não exatamente3, mas imprime3perfis325.",
+        "Grep/awk não provam fluxo de dados semântico. Search amostra5linhas, sem conteúdo ou carteira de cada linha. Para supervisor, contraprova forjada compara com0 (303), embora o payload forjado peça admin e referências sup/admin sejam iguais: esse ramo não discrimina escopo admin honrado.",
+        "Não testa nav/rota/RLS e não é prova exaustiva de segmentos. Auth password cria sessão: comentário nenhuma escrita deve ser entendido sem mutation de dados de negócio, não ausência de efeito Auth; script não faz logout."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Revisado integralmente inclusive Python embutido/consulta vault; não executado. Sem cleanup de sessão criada por login. Nenhum achado novo semântica produto contado; limites de evidência enviados ao root."
+      ]
+    },
+    {
+      "index": 5,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-audience-rpc.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "94d7473872c4f8e570f4690b907de7aaa881faaf",
+      "source_sha256": "01e3dc9dff88048eb35c46155c951d788363ecabae80e2dc08fc7816cf2adbd8",
+      "line_count": 413,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          413
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Harness aplica/reaplica migration real X016 e verifica counts12/6/2/1/3, paginação keyset4+2 com IDs exatos/disjuntos, operadores e tipos, ACL público/interno, gate agente e união de segmentos/supressão."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo de Auth/perfis/contatos/segmentos/blacklist manual; helper visibilidade usa boolean visible em vez da cadeia canônica;12contatos com casos deleted/LID/inválido/expiração/remoção."
+      ],
+      "positive_controls": [
+        "expect_error verifica status+mensagem+SQLSTATE; paginação exige next_after e conjuntos exatos; supressão true/false altera6para8; RPC invocada sob papéis reais do container."
+      ],
+      "limits": [
+        "Não executado; contrato de migration isolada, sem RLS canônica de contatos/implantação. Operadores gt+gte/lt+lte agrupados deixam parte das condições redundantes para fixture; datas longe das fronteiras não validam recorte de meia-noite/DST. Não testa race/paginação sob alterações ou regra injetada fora dos poucos inválidos."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Container PID-nome com trap EXIT; retry somente bootstrap e duas sondas; psql ON_ERROR_STOP. Nenhum processo iniciado nesta revisão."
+      ]
+    },
+    {
+      "index": 6,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-audience-snapshot.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "97fcb8cb9c5c660f3daad47f639def0c49f7a5bf",
+      "source_sha256": "a4c9ff880bdddac58f429efa1051c7f60e73714ab6fe8ce364c095c42831af09",
+      "line_count": 346,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          346
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "X016+X017 reais sobre fixture verificam snapshot de segmento com6recipients exatos,2supressos/1inválido, total e timestamp, reexecução supervisor sem duplicar, mismatch revision40001, flag supressão false22023 e agente42501/anonsemEXECUTE."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo manual com9contatos Acme e2rascunhos; visibility helper simplificado; timezone helper aceita somente America/Sao_Paulo; nenhum SDK/UI."
+      ],
+      "positive_controls": [
+        "Inspeciona linhas persistidas e IDs, não apenas JSON de retorno; negativos exigem código e mensagem; aplica X017duasvezes."
+      ],
+      "limits": [
+        "Não executado; revisão antiga do título usa99 contraatual1 (mismatch futuro), não alteração concorrente real. supervisor substitui snapshot sequencialmente; sem concorrência, usuário inativo, estado não draft, origem contacts/CRM ou quantidade grande. Cabeçalho banco+front/hook não monta frontend."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Trap EXIT limpa container do PID; bootstrap retry/double-ready e psql ON_ERROR_STOP; nenhum SQL executado nesta auditoria."
+      ]
+    },
+    {
+      "index": 7,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-campaign-segments.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "519f57d4306a4761456bc9cccf3ee95fb2af0f5a",
+      "source_sha256": "21af7585ff1145eefbab6532f9a237f79906e7f19b9c4f6cb50beae625861af5",
+      "line_count": 366,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          366
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "X057 real aplicada uma vez: catálogo da tabela/colunas/PK/unique/checks, RLS+nomes/comandos de5policies, coluna recipient nullable/índice ordenado, backfill4estados e publicação de2tabelas; inserts válidos e violações SQLSTATE confirmam constraints."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo manual de perfis/roles/campaigns/segments/recipients;5campanhas3segmentos; PG17 wal_level logical e publicação prévia."
+      ],
+      "positive_controls": [
+        "CASE_SEEN exige7casos, valores backfill exatos e casos0/11posição, duplicata PK/position e status inválido distinguem checks reais de texto."
+      ],
+      "limits": [
+        "Não executado. Explicitamente estrutural/aditivo: não prova RPC save/snapshot, ordenação de audiência ou fluxo realtime. RLS só ligada+catálogo de nomes/comandos, sem acesso sob authenticated/anon; não promove existência de policy a autorização. Replay é deliberadamente excluído24–27."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Trap EXIT limpa container, bootstrap retenta somente início com dupla sonda, psql ON_ERROR_STOP; nenhum SQL executado nesta revisão."
+      ]
+    },
+    {
+      "index": 8,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-draft-save.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "3aa4bf86a5d6109ea614f3fb7d0d32f344ac1a64",
+      "source_sha256": "58156c1e08635839518fb9e937e6591fdef9aa691233d75a88024c491eff327e",
+      "line_count": 291,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          291
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Aplica8migrations reais de draft/flags/step/owner/role; testa create idempotente por ator, conflito de payload, revisão stale sem alterar nome, gate agente/inativo, conexão viva/offline/instância vazia, mensagem vazia/4097, owner e responsible legado ignorado, agendamento bloqueado/liberado."
+      ],
+      "mocks_and_fixtures": [
+        "Schema manual mínimo, Auth helpers,4perfis/3connections, timezone limitadoSP. SQL sob SET ROLE authenticated com claims; conexão é linha sintética, não provedor vivo."
+      ],
+      "positive_controls": [
+        "Persistência de nome/revision/owner consultada após RPC; mesma chave em outro ator cria ID diferente; stale preserva dado e agendamento sem mensagem continua draft antes de contraparte válida."
+      ],
+      "limits": [
+        "Não executado nem replay integral; migrations posteriores não aplicadas. Maioria de negativos captura output com ||true e confere marcador, sem status/SQLSTATE separado (4097 inclui22023). Não testa requests concorrentes simultâneos, RLS/claims real da implantação ou entrega de agendamento. Desativação246 fica no mesmo comando que erro e não equivale a sessão revogada."
+      ],
+      "related_findings": [
+        "R2-AUTH-004"
+      ],
+      "observations": [
+        "Controle positivo dos gates is_active em TalkX restringe alcance de AUTH004. Trap EXIT/containerPID e ON_ERROR_STOP; sem executar comandos."
+      ]
+    },
+    {
+      "index": 9,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-metrics-view-invoker.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "a7e46fd33e866363b0aefee7d64f90f863c916dc",
+      "source_sha256": "28cce04b85e972c06f426a9d3df26c983e7630efa821a0768f21baeb0e5ede58",
+      "line_count": 253,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          253
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Harness fixture da view vulnerável exige guard real falhar e authenticated A/B lerem2campanhas; aplica/reaplica migration invoker e exige1porator, guardverde; mutações RESET/recreate/revoke/drop voltamguardvermelho."
+      ],
+      "mocks_and_fixtures": [
+        "View simplificada e policy de dono criadas manualmente;2perfis/2campanhas; guard SQL/migration reais carregados, schema mínimo sem demais policies vigentes."
+      ],
+      "positive_controls": [
+        "Authenticated de fato via SET LOCAL ROLE41–49, counts2→1 e guardstatus+mensagem; mutações adversárias dão controle de sensibilidade do guard."
+      ],
+      "limits": [
+        "Não executado. Caso service_role230–231 chama psql_query como postgres37 sem SET ROLE: não comprova acesso de service_role. Counts não medem métricas reais nem consumidor useTalkXInsights; fixture anterior declarada não comprova estado vivo e cadeia SQL completa não reproduzida."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Cleanup valida prefixo container e trapsEXIT/INT/TERM; readinesstwo-logmarkers+SELECT; SQL ON_ERROR_STOP. Locus de papel incorreto enviado ao root para limite GOV003, sem novo finding Auth."
+      ]
+    },
+    {
+      "index": 10,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-send-interval-teto-24h.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "df4a279b05a9029de6309b45eb0974b5b95f503f",
+      "source_sha256": "16a395dc61aef8d129dc9f3b8703fbb7d3f0e7d9e6760fe1d701fd6c02d3a8d9",
+      "line_count": 193,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          193
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "A2 real aplicada/reaplicada: UPDATE direto extremo é recusado com nome da constraint,24h aceito; RPC acima24h devolve marcador invalid_talkx_limits_values, limites86400000 e5000 persistem."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo, perfil agent+helper admin via profiles.role (não user_roles), campanha única; Auth funções de claims e eventos manuais."
+      ],
+      "positive_controls": [
+        "Fronteira exata e24h+1 distinguidas; RPC sob SET LOCAL ROLE authenticated; valores salvos consultados após chamadas."
+      ],
+      "limits": [
+        "Não executado. Negativos não conferem status/SQLSTATE: psql sem VERBOSITYverbose; nome de constraint/erro não prova códigos23514/22023 anunciados. grep -qv na160 prova existir uma linha sem constraint, não ausência da constraint no output. Schema/migration isolados, sem gates posteriores, RLS completa ou consumo worker."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Trap prefixo validado EXIT/INT/TERM, ON_ERROR_STOP e readiness; limite grep e promessa SQLSTATE comunicados ao root para evidência de testes."
+      ]
+    },
+    {
+      "index": 11,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-v12-lifecycle-events.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "28cfea1062d87f62a68124149ccb1300be2e1783",
+      "source_sha256": "64714b8ef6f28fe0c101ff69d73b130373a3fa7351d8d792822a341f3c549f03",
+      "line_count": 209,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          209
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "V12 real troca fixture transição sem evento por4eventos started/paused/resumed/cancelled e completed; confere motivo pausa,5recipientscancelled, cancelado não completa e start emsending não duplica evento."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo manual, transição antiga copiada/simplificada, uma campanha5recipients; sequência rodando como postgres com claim role service_role."
+      ],
+      "positive_controls": [
+        "RED0/GREEN4 distingue persistência de evento; controle no-op e estado cancelado conferem retorno e contagem."
+      ],
+      "limits": [
+        "Não executado. Cabeçalho ator correto11 não é coberto: nenhum assert actor_id. claim service_role não troca role SQL, então não prova ACL/grants de service_role. Não reproduz cadeia atual, atores autenticados, worker concorrente ou ordem determinística de timestamps empatados; ORDER BY created_at168 sem desempate."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Cleanup valida prefixo container, trapsEXIT/INT/TERM, ON_ERROR_STOP/readiness. Apenas leitura do SQL embutido."
+      ]
+    },
+    {
+      "index": 12,
+      "reviewer": "auth",
+      "path": "scripts/db-audit/talkx-v17-read-at.test.sh",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "14d66a1aa014f580d2304933b06aec4b8d2c5f13",
+      "source_sha256": "92897cdd7ef1c42136bb0c661b4d95ff7dc4640ee1103a9c2be89f461b8d6dce",
+      "line_count": 124,
+      "review_status": "SEMANTIC_REVIEW_COMPLETE",
+      "reviewed_ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "script_execution": "NOT_EXECUTED",
+      "proves": [
+        "Harness V17 aplica migration real após fixture RPC2args, chama delivered/read e exige retorno true, read_at preenchido, read_count1 mantido após segunda chamada."
+      ],
+      "mocks_and_fixtures": [
+        "Schema mínimo campanha/recipient/template_variants; função antiga copiada no heredoc; uma campanha/um recipient externo; postgres com claim service_role."
+      ],
+      "positive_controls": [
+        "Verifica dado persistido e contador, não apenas ausência de erro; segunda chamada testa não duplicar contador."
+      ],
+      "limits": [
+        "Não executado. psql wrapper9 usa ON_ERROR_STOP=0 inclusive setup/migration: erro SQL intermediário pode não interromper, embora asserts posteriores detectem parte das falhas. RED95 aceita substring genérica function, sem SQLSTATE/assinatura exata. Sem SET ROLE service_role, ACL real não é exercida; não testa erro/resultado da segunda chamada, read antes delivered, conexão errada, concorrência ou múltiplos recipients."
+      ],
+      "related_findings": [],
+      "observations": [
+        "Cleanup valida prefixo do container e trapsEXIT/INT/TERM; readinessconsulta+logs. Nenhum Docker/SQL executado nesta revisão; não conclui que suíte passa."
+      ]
+    }
+  ]
+}

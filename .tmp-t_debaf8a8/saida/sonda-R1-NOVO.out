@@ -1,0 +1,4 @@
+rc=0
+ok|drift=1
+drift: columns|clientes.telefone
+

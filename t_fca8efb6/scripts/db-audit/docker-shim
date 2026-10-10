@@ -1,0 +1,164 @@
+#!/bin/bash
+# docker-shim (E47): routes postgres test containers to the job-level
+# PostgreSQL service, eliminating ~48 per-step container startups.
+#
+# Intercepted:
+#   run --name N ...   -> CREATE DATABASE shim_N; snapshot roles; return fake ID
+#   logs N             -> fake "PostgreSQL ready" output (wait_for_postgres)
+#   exec N psql ...    -> psql directly against the service's isolated DB
+#   rm [-f] N          -> DROP DB + DROP new roles since snapshot
+#   pull               -> no-op (service image is already running)
+#   tag                -> no-op
+#   image inspect      -> exit 0 (pretend image local; bypasses pre_pull_images)
+# All other commands pass through to $DOCKER_REAL.
+#
+# Set SKIP_DOCKER_SHIM=1 to bypass (needed for tests that start PostgREST).
+
+DOCKER_REAL="${DOCKER_REAL:-/usr/bin/docker}"
+PG_HOST="${POSTGRES_SERVICE_HOST:-localhost}"
+PG_PORT="${POSTGRES_SERVICE_PORT:-5432}"
+PG_PASS="${POSTGRES_SERVICE_PASS:-shim_test_password}"
+PG_USER="${POSTGRES_SERVICE_USER:-postgres}"
+STATE="${DOCKER_SHIM_STATE_DIR:-/tmp/docker-shim-state}"
+
+if [[ "${SKIP_DOCKER_SHIM:-}" == "1" ]]; then
+  exec "$DOCKER_REAL" "$@"
+fi
+
+_svc() {
+  PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" "$@"
+}
+
+_sanitize() {
+  local n="shim_${1//[^a-zA-Z0-9_]/_}"
+  printf '%s' "${n:0:63}"
+}
+
+_has_state() { [[ -f "$STATE/$1.db" ]]; }
+
+case "${1:-}" in
+
+  run)
+    shift
+    cname="" prev=""
+    for arg in "$@"; do
+      [[ "$prev" == "--name" ]] && { cname="$arg"; break; }
+      [[ "$arg" == --name=* ]] && { cname="${arg#--name=}"; break; }
+      prev="$arg"
+    done
+    if [[ -z "$cname" ]]; then
+      exec "$DOCKER_REAL" run "$@"
+    fi
+    db="$(_sanitize "$cname")"
+    mkdir -p "$STATE"
+    printf '%s' "$db" > "$STATE/$cname.db"
+    _svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" \
+      > "$STATE/$cname.roles" 2>/dev/null || true
+    # Two separate calls: psql wraps multi-statement -c in a transaction,
+    # and CREATE DATABASE cannot run inside a transaction block.
+    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
+    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null
+    printf 'shimid_%s\n' "$cname"
+    ;;
+
+  logs)
+    shift
+    cname="${1:-}"
+    if _has_state "$cname"; then
+      # Emit the postgres startup sequence twice — once for the temporary initdb
+      # instance and once for the real server — so test scripts that wait for
+      # count("database system is ready to accept connections") >= 2 (e.g.
+      # public-api-disable.test.sh) see the expected output immediately.
+      printf 'PostgreSQL init process complete; ready for start up.\n'
+      printf 'database system is ready to accept connections\n'
+      printf 'PostgreSQL init process complete; ready for start up.\n'
+      printf 'database system is ready to accept connections\n'
+    else
+      exec "$DOCKER_REAL" logs "$@"
+    fi
+    ;;
+
+  exec)
+    shift
+    orig=("$@")
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -i|--interactive|-t|--tty|-d|--detach) shift ;;
+        -e|--env|-u|--user|-w|--workdir|--env-file) shift; shift ;;
+        -e=*|--env=*|--user=*|--workdir=*|--env-file=*) shift ;;
+        --privileged) shift ;;
+        --) shift; break ;;
+        -*) shift ;;
+        *) break ;;
+      esac
+    done
+    cname="${1:-}"
+    shift 2>/dev/null || true
+    if ! _has_state "$cname"; then
+      exec "$DOCKER_REAL" exec "${orig[@]}"
+    fi
+    db="$(< "$STATE/$cname.db")"
+    exec_cmd="${1:-}"
+    shift 2>/dev/null || true
+    if [[ "$exec_cmd" != "psql" ]]; then
+      printf 'docker-shim: exec "%s" unsupported on shim container\n' "$exec_cmd" >&2
+      exit 1
+    fi
+    psql_args=() has_d=0
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -d)     psql_args+=("-d" "$db"); has_d=1; shift; shift ;;
+        -d*)    psql_args+=("-d" "$db"); has_d=1; shift ;;
+        -h|-p)  shift; shift ;;
+        -h*|-p[0-9]*) shift ;;
+        -U)     shift; shift ;;  # always added explicitly below
+        -U*)    shift ;;         # always added explicitly below
+        *)      psql_args+=("$1"); shift ;;
+      esac
+    done
+    [[ "$has_d" -eq 0 ]] && psql_args+=("-d" "$db")
+    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" "${psql_args[@]}"
+    ;;
+
+  rm)
+    shift
+    orig=("$@")
+    cname=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -f|--force|-v|--volumes|-l|--link) shift ;;
+        --*=*|-*) shift ;;
+        *) cname="$1"; shift ;;
+      esac
+    done
+    if [[ -z "$cname" ]] || ! _has_state "$cname"; then
+      exec "$DOCKER_REAL" rm "${orig[@]}"
+    fi
+    db="$(< "$STATE/$cname.db")"
+    old="$(< "$STATE/$cname.roles" 2>/dev/null || true)"
+    # Drop database FIRST so its objects (ALTER DEFAULT PRIVILEGES grants) are
+    # removed before we try to drop roles that depend on them.  If roles are
+    # dropped first, service_role fails silently and leaks into the next test.
+    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
+    cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null || true)"
+    while IFS= read -r role; do
+      [[ -z "$role" ]] && continue
+      _svc -d postgres -c "DROP ROLE IF EXISTS \"$role\";" > /dev/null 2>&1 || true
+    done < <(comm -23 <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$old" | sort))
+    rm -f "$STATE/$cname.db" "$STATE/$cname.roles"
+    ;;
+
+  pull|tag)
+    exit 0
+    ;;
+
+  image)
+    shift
+    [[ "${1:-}" == "inspect" ]] && exit 0
+    exec "$DOCKER_REAL" image "$@"
+    ;;
+
+  *)
+    exec "$DOCKER_REAL" "$@"
+    ;;
+esac

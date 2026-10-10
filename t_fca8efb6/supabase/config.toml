@@ -1,0 +1,78 @@
+project_id = "tnnnlkbymytvtqngbbqh"
+
+# Excecoes de verify_jwt. Regra: so entra aqui quem NAO tem como enviar um JWT
+# do Supabase — servicos externos (webhooks) ou APIs com autenticacao propria.
+# Ferramenta administrativa NUNCA entra: o front chama via
+# supabase.functions.invoke, que ja manda o JWT da sessao.
+
+[functions.evolution-webhook]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.gmail-webhook]
+verify_jwt = false
+
+[functions.gmail-cron-sync]
+verify_jwt = false
+
+# L5 (matriz IA-004): o cron do pg_cron destas duas manda x-cron-secret (segredo
+# dedicado no Vault), nao um JWT. A guarda interna da funcao recusa a anon key e o
+# smoke exige 401 anonimo (scripts/edge-deploy/smoke-functions.mjs).
+[functions.connection-health-check]
+verify_jwt = false
+
+[functions.batch-fetch-avatars]
+verify_jwt = false
+
+[functions.elevenlabs-webhook]
+verify_jwt = false
+
+# Kill switch: endpoint legado preservado somente para responder 410 sem tocar
+# em banco, Evolution ou credenciais. Nao reativar sem ADR, credenciais hashadas,
+# escopo por tenant e rate limit distribuido.
+[functions.public-api]
+verify_jwt = false
+
+# Login server-side (ADR-006): decide lockout antes/depois do GoTrue; nao existe sessao ainda.
+[functions.auth-login]
+verify_jwt = false
+
+# Catálogo de produtos — edge-only; endpoint e service role via Supabase Secrets.
+# verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
+[functions.promogifts-catalog]
+verify_jwt = true
+
+# Entrega de mensagens sai do navegador apenas pela fila/RPC atomica. A funcao
+# valida novamente o JWT e deriva o agente da sessao antes de obter um lease.
+[functions.message-delivery]
+verify_jwt = true
+
+# Gateway com autenticacao interna obrigatoria: JWT de usuario/service_role ou
+# x-cron-secret para o worker. verify_jwt=false permite o cron externo; a funcao
+# rejeita qualquer requisicao antes de consultar o CRM quando nenhum deles existe.
+[functions.crm-integration]
+verify_jwt = false
+
+[functions.csp-report]
+verify_jwt = false
+
+# Redirect publico de links rastreaveis (E90), clicado direto do WhatsApp do
+# destinatario -- sem sessao Supabase, sem como enviar JWT. Confirmado ao vivo
+# em producao (auditoria 2026-09-16): sem esta excecao, o gateway rejeitava
+# com 401 antes do codigo da funcao rodar, quebrando 100% dos cliques reais.
+[functions.talkx-link]
+verify_jwt = false
+# E91: chamada 1x/dia pelo pg_cron (net.http_post) com x-cron-secret, sem JWT de sessao.
+[functions.searchbox-budget-alert]
+verify_jwt = false
+
+# T72: quem chama e o N8N, com a service_role no Authorization. A funcao confere o token
+# por conta propria, entao o gate de JWT do gateway fica desligado aqui de proposito.
+[functions.sync-call-records]
+verify_jwt = false
+
+# T73: entrega audio de cliente. Exige JWT (padrao) e a RLS decide quem enxerga a chamada.
+[functions.get-call-recording]
+verify_jwt = true

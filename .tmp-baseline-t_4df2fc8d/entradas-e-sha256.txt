@@ -1,0 +1,17 @@
+=== sha256 das entradas ===
+cb31c19f51fa6fb9312644e1616df6ab66e247f51979c0634f72038229419cbe  entradas/check-diferencas-real-18h55.txt
+872b4f055b24411929c0a8f0af1a72a220bd4326acd813b44aeb47bc6cd113af  entradas/config.toml
+16a06b0796e447d19ed9b2473b6c1bebdcef1a45df19d1b4ac7a8c194421daae  entradas/falhas.tsv
+9c7377e5c704b8afc8e63ee0ccc3d6d52d2612e80c1a10d4a3ab87d80b04cf9b  entradas/manifest-local-20h55.json
+efd529f78e974c22fe4888219582c3acd5979a7b9cb27738bdc53ca8f41e38ad  entradas/manifest.sql
+8de34507fa94e9a1bb37b0df256fdf6f180a0255dfc2a77813909f27619d2f1b  entradas/migration-pendente-20261006204953.sql
+27eb021f7924dbd9d4200914edfd4aed9ea29fcc2ec5b184b9215a8458bdedce  entradas/retrato-fresco-99ff88bf2.json
+d242c0e63c88b82f652ebcd1314cf85da8a4232fc1e80f7e041af43cd6c7f659  entradas/retrato-velho-copia-294.json
+=== procedencia ===
+manifest-local-20h55.json            <- /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100617458c7f/estado/manifest-local.json (gravado pelo zapp-db-local check de 06/10 18:55)
+retrato-velho-copia-294.json        <- /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/multiplix-fila-blocos-sucessores-294-26100617458c7f/supabase/schema-manifest.json (retrato da branch dia/2026-10-06)
+retrato-fresco-99ff88bf2.json       <- git show 99ff88bf2:supabase/schema-manifest.json  (sha256 confere com ~/projetos/Zapp_Web_V2)
+check-diferencas-real-18h55.txt     <- /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100617458c7f/estado/check-diferencas.txt (o "check-diferencas.txt real" do cartao pai)
+falhas.tsv                          <- /home/joaquim_ataides/.local/share/zapp-local/stacks/v2-26100617458c7f/estado/falhas.tsv
+migration-pendente-20261006204953.sql <- /home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/multiplix-fila-blocos-sucessores-294-26100617458c7f/supabase/migrations/
+manifest.sql / config.toml          <- copia 294 (scripts/db-audit/manifest.sql, supabase/config.toml) -- usados pelas arvores de ensaio

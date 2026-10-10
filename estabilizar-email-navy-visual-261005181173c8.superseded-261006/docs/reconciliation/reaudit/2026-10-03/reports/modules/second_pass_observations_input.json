@@ -1,0 +1,669 @@
+[
+  {
+    "id": "MOD-OBS-001",
+    "classification": "PRIOR_FAMILY_RECONFIRMED",
+    "title": "Metas de atendimento continuam apoiadas em proxies e desafios fixos",
+    "prior_finding_ids": [
+      "DASH-METRICS-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-063",
+      "R2-MOD-064"
+    ],
+    "observation": "DailyGoalsCard usa totalConversations para o rótulo Responder 10 mensagens e não avalia a hora no desafio das 18h. DashboardWidgetRenderer repete proxies de desafios e exibe progresso fixo. Isso reforça a família anterior; os novos IDs 063 e 064 tratam causas distintas de notificação e persistência de configuração.",
+    "evidence": [
+      [
+        "src/components/dashboard/overview/DailyGoalsCard.tsx",
+        16,
+        40
+      ],
+      [
+        "src/components/dashboard/DashboardWidgetRenderer.tsx",
+        155,
+        181
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-002",
+    "classification": "CROSS_AGENT_EXTENSION_NO_NEW_ID",
+    "title": "Formulário SLA não expõe o prazo e os históricos usam janelas diferentes",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-SLA-003"
+    ],
+    "observation": "SLAConfigTable oferece nome, prioridade e padrão, sem input para first_response_minutes. SLAMetricsDashboard usa o período selecionado no resumo e 30 dias no histórico. AgentPerformancePanel fixa SLA em week enquanto o ranking recebe outro período. A ausência do prazo foi incorporada por root em R2-SLA-003; as janelas são observações de apresentação, sem aumentar o total de achados.",
+    "evidence": [
+      [
+        "src/components/dashboard/sla/SLAConfigTable.tsx",
+        101,
+        130
+      ],
+      [
+        "src/components/dashboard/SLAMetricsDashboard.tsx",
+        30,
+        56
+      ],
+      [
+        "src/components/dashboard/AgentPerformancePanel.tsx",
+        43,
+        56
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-003",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "TalkX.test inclui implementações locais que não exercitam a produção",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-062"
+    ],
+    "observation": "A primeira parte testa useTalkX real com backend simulado, inclusive rejeição lógica. Já os blocos de personalização, duração e filtro declaram funções locais e testam essas cópias. Alterar a função de produção não necessariamente faz esses testes falharem; isso não invalida os testes reais do hook nem os testes separados que importam os helpers de produção.",
+    "evidence": [
+      [
+        "src/components/talkx/__tests__/TalkX.test.tsx",
+        1,
+        127
+      ],
+      [
+        "src/components/talkx/__tests__/TalkX.test.tsx",
+        131,
+        305
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-004",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Fixtures do editor não cobrem a audiência maior que a página nem a saída antes do debounce",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-024",
+      "R2-MOD-025",
+      "R2-MOD-027"
+    ],
+    "observation": "useCampaignEditor.test substitui useQuery pela lista persistida do fixture, portanto não exercita paginação real. A hidratação de público usa um contato; o roundtrip espera 3.100 ms antes de desmontar. Esses cenários não cobrem truncação do público nem saída antes do autosave. A serialização de saves e a reutilização de chave de criação de TalkX possuem testes úteis e não devem ser confundidas com o defeito distinto de Multiplix.",
+    "evidence": [
+      [
+        "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        65,
+        99
+      ],
+      [
+        "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        240,
+        295
+      ],
+      [
+        "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+        441,
+        522
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-005",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Testes de rota não executam o ciclo do wizard",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-027"
+    ],
+    "observation": "TalkXView.route substitui TalkXCampaignWizard por um componente de teste. Ele valida navegação e callbacks da rota, mas não o salvamento automático, cancelamento ou recuperação de erro do wizard real.",
+    "evidence": [
+      [
+        "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+        23,
+        28
+      ],
+      [
+        "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+        95,
+        114
+      ],
+      [
+        "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+        152,
+        243
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-006",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Kit de estado e filtro testado isoladamente não comprova adoção pelos consumidores",
+    "prior_finding_ids": [
+      "TX03"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-036",
+      "R2-MOD-059",
+      "R2-MOD-060"
+    ],
+    "observation": "A matriz do QueryBoundary e os testes de FilterBar/Table são úteis para seus componentes controlados. Eles não asseguram que cada tela entregue error/retry, onPeriodChange ou onPageSizeChange. Os defeitos registrados permanecem nos consumidores. TalkXAnalytics.hooks declara explicitamente que verifica ordem dos hooks e simula os dados, sem validar a correção das métricas.",
+    "evidence": [
+      [
+        "src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx",
+        1,
+        40
+      ],
+      [
+        "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx",
+        1,
+        35
+      ],
+      [
+        "src/components/talkx/__tests__/TalkXAnalytics.hooks.test.tsx",
+        1,
+        45
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-007",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Teste de fuso do Dashboard não cobre selecionar Personalizada",
+    "prior_finding_ids": [
+      "DASH-CONTROLS-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-065"
+    ],
+    "observation": "DashboardFilters.fuso testa getDefaultFilters, sem interação no seletor custom. DashboardView.test simula filtros e painéis: valida permissões e roteamento para o consumidor, mas não o seletor real. Por isso não contradiz o caminho sem ação de Personalizada encontrado em 065.",
+    "evidence": [
+      [
+        "src/components/dashboard/__tests__/DashboardFilters.fuso.test.ts",
+        1,
+        36
+      ],
+      [
+        "src/components/dashboard/__tests__/DashboardView.test.tsx",
+        11,
+        69
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-008",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Resumo de IA com 1.500 declarados é teste de contrato de consumo, não de completude da consulta",
+    "prior_finding_ids": [
+      "DASH-METRICS-001"
+    ],
+    "related_finding_ids": [],
+    "observation": "useAIUsageDashboard.agregacao simula um resumo RPC com 1.500 análises e uma página de 50 linhas. Isso demonstra a separação correta entre resumo e página no hook, sem demonstrar que 1.500 registros reais atravessam o SQL, a política ou a janela temporal. useDashboardData.presence também usa respostas simuladas e não comprova a identidade profile_id versus auth.uid no banco.",
+    "evidence": [
+      [
+        "src/hooks/analytics/__tests__/useAIUsageDashboard.agregacao.test.tsx",
+        32,
+        91
+      ],
+      [
+        "src/hooks/analytics/__tests__/useDashboardData.presence.test.tsx",
+        1,
+        42
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-009",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "Teste offline da fila verifica texto, não todos os sinais visuais nomeados",
+    "prior_finding_ids": [
+      "DASH-REALTIME-001"
+    ],
+    "related_finding_ids": [],
+    "observation": "O caso offline de QueueHealthTable verifica a presença de Tempo real. Apesar do nome mencionar tom e pulso, o trecho não faz asserções desses atributos. O limite é específico a esse teste; a revisão não realizou renderização visual nem conclui, por esse teste, defeito adicional de presença.",
+    "evidence": [
+      [
+        "src/components/dashboard/__tests__/QueueHealthTable.test.tsx",
+        34,
+        44
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-010",
+    "classification": "RELATED_CAUSE_ADDITIONAL_CONSUMER",
+    "title": "Chatbot também fecha o editor antes de a mutation salvar",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-003",
+      "R2-MOD-051"
+    ],
+    "observation": "ChatbotFlowsView chama updateFlow.mutate e imediatamente desmonta o editor. Uma rejeição posterior só gera toast no hook e o draft local é perdido. Mesmo padrão de fechamento prematuro já registrado nos consumidores de automações e Tasks; esta ocorrência adicional é preservada sem outro ID.",
+    "evidence": [
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        83,
+        92
+      ],
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        90,
+        110
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-011",
+    "classification": "PRIOR_FAMILY_ADDITIONAL_CONSUMER",
+    "title": "Chatbot usa amostra limitada como Total e oculta error das consultas",
+    "prior_finding_ids": [
+      "DASH-METRICS-001",
+      "TX03"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-036"
+    ],
+    "observation": "ChatbotExecutionsDashboard limita os registros mais recentes a 200, calcula Total/Concluídos/Falhas sobre essa amostra e não oferece paginação. O filtro de status muda também os denominadores dos cards. O erro de useQuery não é consumido: a view cai em zero/Nenhuma execução encontrada. A listagem de fluxos também não devolve error ao consumidor e é uma consulta sem paginação. São extensões de completude e estado vazio já presentes nas famílias anteriores; não afirmam falha de uma execução externa.",
+    "evidence": [
+      [
+        "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+        25,
+        49
+      ],
+      [
+        "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+        64,
+        108
+      ],
+      [
+        "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+        129,
+        135
+      ],
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        53,
+        62
+      ],
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        143,
+        151
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        149,
+        159
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-012",
+    "classification": "CROSS_MODULE_DOMAIN_MISMATCH",
+    "title": "Dashboard de execuções Chatbot troca estados válidos por Aguardando",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-006"
+    ],
+    "observation": "O CHECK versionado permite running/completed/failed/paused/cancelled. A UI oferece waiting e não mapeia paused/cancelled; ambos caem no fallback STATUS_CONFIG.waiting, portanto podem ser apresentados como Aguardando e não há filtro para eles. Database confirmou que não há redefinição posterior do CHECK. Registrado como variante adicional de divergência de domínio de status, sem outro ID de finding.",
+    "evidence": [
+      [
+        "supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql",
+        60,
+        71
+      ],
+      [
+        "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+        15,
+        20
+      ],
+      [
+        "src/components/chatbot/ChatbotExecutionsDashboard.tsx",
+        120,
+        139
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-013",
+    "classification": "PRIOR_FAMILY_ADDITIONAL_CONSUMER",
+    "title": "Previsão de relatórios injeta ruído aleatório e usa até 1.000 mensagens",
+    "prior_finding_ids": [
+      "DASH-CONTROLS-001",
+      "DASH-METRICS-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-018",
+      "R2-MOD-019"
+    ],
+    "observation": "DemandForecast calcula a média por dia da semana dividindo contagens limitadas a 1.000 por quatro, e adiciona ruído de até cerca de 15% aos dias futuros. secureRandomFloat usa uma nova amostra de crypto, portanto o mesmo histórico pode produzir previsões diferentes ao remontar, sem que o gráfico exponha esse ruído como simulação. O heatmap de relatórios também limita 1.000 sem paginação. Essas variantes reforçam as famílias anteriores de previsões/contagens e não geram novos IDs.",
+    "evidence": [
+      [
+        "src/components/reports/DemandForecast.tsx",
+        19,
+        69
+      ],
+      [
+        "src/components/reports/DemandForecast.tsx",
+        89,
+        121
+      ],
+      [
+        "src/lib/secureRandom.ts",
+        14,
+        17
+      ],
+      [
+        "src/components/reports/ConversationHeatmap.tsx",
+        44,
+        73
+      ],
+      [
+        "src/components/reports/AdvancedReportsView.tsx",
+        173,
+        185
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-014",
+    "classification": "TEST_SCOPE_LIMIT",
+    "title": "QuickAdd cobre submissão imediata, sem troca de dia enquanto a criação está pendente",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-056"
+    ],
+    "observation": "QuickAdd.test usa onAdd resolvido imediatamente ou função async vazia. Testa presets e o payload de hora, mas não muda defaultDueDate enquanto um create aguarda. QuickAddCompacto cobre somente abertura dos chips por atalhos. Os testes não contradizem a corrida reproduzida por MOD056.",
+    "evidence": [
+      [
+        "src/components/tasks/__tests__/QuickAdd.test.tsx",
+        27,
+        46
+      ],
+      [
+        "src/components/tasks/__tests__/QuickAdd.test.tsx",
+        138,
+        175
+      ],
+      [
+        "src/components/tasks/__tests__/QuickAddCompacto.test.tsx",
+        41,
+        70
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-015",
+    "classification": "DORMANT_HELPER_AND_TEST_SCOPE_LIMIT",
+    "title": "Opacidade de gráfico altera o fechamento de var; teste só procura o número",
+    "prior_finding_ids": [],
+    "related_finding_ids": [],
+    "observation": "getChartColorWithOpacity troca o primeiro parêntese de fechamento em hsl(var(--chart-1)), produzindo hsl(var(--chart-1 / 0.5)) para opacidade 0.5, dentro de var em vez de depois de var. O teste verifica somente que a string contém 0.5 e que índices 0/10 coincidem; não valida a expressão CSS resultante. A busca em src não encontrou consumidor de produção desse helper, apenas sua definição e testes, portanto não se conta tela quebrada nem novo finding. getChartColor com índice negativo também não foi promovido sem chamador correspondente.",
+    "evidence": [
+      [
+        "src/lib/chartColors.ts",
+        115,
+        149
+      ],
+      [
+        "src/lib/__tests__/chartColors.test.ts",
+        100,
+        110
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-016",
+    "classification": "REJECTED_GENERALIZATION_AND_TEST_SCOPE_LIMIT",
+    "title": "Compressão: MIME original não é repassado ao envio; teste não importa o compressor",
+    "prior_finding_ids": [],
+    "related_finding_ids": [],
+    "observation": "A hipótese inicial de que toda conversão JPEG para WebP enviaria o MIME antigo foi rejeitada ao ler sendFileViaApi: o payload fornece categoria e URL, sem repassar file.type nem o nome antigo para imagens. A construção do File usa outputType e não blob.type; uma hipótese de encoder do canvas retornar tipo diferente permanece dependente de uma precondição de navegador não verificada. imageCompression.test não importa nenhuma função de produção: testa startsWith, números e constantes locais, logo não demonstra qualidade, limite final, fallback ou metadata da compressão.",
+    "evidence": [
+      [
+        "src/components/inbox/useFileUploadLogic.ts",
+        119,
+        136
+      ],
+      [
+        "src/utils/imageCompression.ts",
+        115,
+        142
+      ],
+      [
+        "src/utils/__tests__/imageCompression.test.ts",
+        1,
+        37
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-017",
+    "classification": "UNPROVEN_INPUT_OR_REACHABILITY_PRECONDITIONS",
+    "title": "URLs e formatadores: hipóteses condicionais mantidas sem impacto inventado",
+    "prior_finding_ids": [],
+    "related_finding_ids": [],
+    "observation": "normalizeMediaUrl aplica substituição de barras à URL inteira, mas não foi encontrado um URL efetivamente produzido no fluxo com componente opaco cuja alteração prove falha. cfImagesSrcSet reconstrói origem/caminho sem query; os consumidores existem, porém a precondição de imagens privadas assinadas do Cloudflare não foi comprovada neste repositório. Testes do helper usam somente URL pública sem query. labelOrRaw usa lookup em objeto comum e formatDuration pode arredondar o resto para 60 segundos; as buscas não localizaram consumidor ativo dos helpers específicos suficiente para atribuir uma falha de interface. Esses limites não são certificados de correção dos utilitários.",
+    "evidence": [
+      [
+        "src/utils/normalizeMediaUrl.ts",
+        1,
+        9
+      ],
+      [
+        "src/lib/cfImages.ts",
+        33,
+        48
+      ],
+      [
+        "src/lib/__tests__/cfImages.test.ts",
+        11,
+        44
+      ],
+      [
+        "src/lib/singuLabels.ts",
+        131,
+        140
+      ],
+      [
+        "src/lib/formatters.ts",
+        118,
+        125
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-018",
+    "classification": "FINITE_REVIEW_BOUNDARY",
+    "title": "Mapbox e helpers transversais: corpos lidos, contratos externos delimitados",
+    "prior_finding_ids": [],
+    "related_finding_ids": [
+      "R2-MOD-071",
+      "R2-MOD-072"
+    ],
+    "observation": "O recorte finito de 40 caminhos de src/lib e src/utils foi lido integralmente. Inclui token/cache Mapbox, sessão/contagem, guarda de orçamento, loader, normalização de filtros, deduplicação, retry, helpers de autenticação, paletas e áudio. Os 40 caminhos e exclusões estão em lib-utils-scope.json. Não se infere preço vigente, limite financeiro rígido ou validade do codec a partir de comentários. O consumidor useAddressAutocomplete e mapboxGeocode pertencem a Inbox; o endpoint de alerta de orçamento pertence a Providers. Os arquivos de chamadas e helpers de email permanecem sob root. Leitura integral de um helper não prova adoção correta por todos os consumidores.",
+    "evidence": [
+      [
+        "src/lib/mapboxToken.ts",
+        1,
+        136
+      ],
+      [
+        "src/lib/mapboxSession.ts",
+        1,
+        128
+      ],
+      [
+        "src/lib/mapboxCostGuard.ts",
+        1,
+        152
+      ],
+      [
+        "src/lib/mapboxLoader.ts",
+        1,
+        21
+      ],
+      [
+        "src/lib/aiJobs/status.ts",
+        1,
+        116
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-019",
+    "title": "Previsão do VolumeChart mistura população filtrada com média geral e perde a data futura",
+    "classification": "EXTENSION_WITHOUT_NEW_FINDING_ID",
+    "prior_finding_ids": [
+      "DASH-METRICS-001",
+      "DASH-CONTROLS-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-076"
+    ],
+    "observation": "VolumeChart passa queueId/agentId apenas a useTodayHourlyVolume; useDemandPrediction consulta mensagens de sete dias sem esses filtros e sem paginação. A linha Média7dias compara população geral disponível com a série filtrada. O mapa de previsões usa apenas a hora de p.time: previsões após a meia-noite podem ocupar horas do começo do próprio dia exibido. A conversão para média simples e a heurística95% já tinham família anterior; estas fronteiras do consumidor são registradas sem multiplicar IDs. Não se afirmou cobertura SQL da consulta de mensagens ou incidência em dados reais.",
+    "evidence": [
+      [
+        "src/components/dashboard/overview/VolumeChart.tsx",
+        46,
+        68,
+        "Filtro somente para volume e previsão indexada por hora"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        39,
+        47,
+        "Previsão pode atravessar meia-noite sem identidade de data"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        53,
+        74,
+        "Histórico sem filtros do topo nem paginação"
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-020",
+    "title": "Meta CAPI declara demonstração, mas totais e preferências continuam limitados ao contrato local",
+    "classification": "HONEST_UNAVAILABLE_STATE_WITH_DATA_LIMITS",
+    "prior_finding_ids": [],
+    "related_finding_ids": [],
+    "observation": "A view declara explicitamente que não envia para graph.facebook.com e desabilita Configurar/testes. Isso é um estado indisponível honesto, não prova de integração concluída. O hook, lido como fronteira e já integral no relatório Providers, limita eventos a100; Total Eventos usa esse comprimento e os tipos usam a mesma amostra. O erro de settingsResult não é verificado pelo hook, podendo apresentar Não configurado/Inativo sem distinguir falha de leitura. A view mostra alerta para isError dos eventos, mas também pode renderizar vazio/zeros. A recomendação de apresentação é delimitar últimos100 e separar preferências indisponíveis; sem novo ID de ausência de integração.",
+    "evidence": [
+      [
+        "src/components/meta-capi/MetaCAPIView.tsx",
+        23,
+        60,
+        "Contagem local e aviso/ações desabilitadas"
+      ],
+      [
+        "src/components/meta-capi/MetaCAPIView.tsx",
+        65,
+        108,
+        "Erro e cards"
+      ],
+      [
+        "src/hooks/integrations/useMetaCAPIData.ts",
+        17,
+        44,
+        "Limit100 e omissão do erro de settings"
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-021",
+    "title": "Testes dos auxiliares cobrem formato e som sem fechar os novos contratos de fronteira",
+    "classification": "SPECIFIC_TEST_LIMITS",
+    "prior_finding_ids": [
+      "DASH-ACCEPTANCE-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-074",
+      "R2-MOD-075"
+    ],
+    "observation": "useTodayHourlyVolume.test chama o agregador real, mas monta relógio e day do fixture no mesmo fuso local; não simula buckets SQL de São Paulo com navegador em UTC. useRecentConversationEvents.test testa somente eventText, não o fallback/lookup/query. Os testes WarRoomAlerts usam violações vazias ou mocks sem coleção de violações e verificam existência/array/volume; o teste de mute entrega um INSERT manual e verifica play. Têm valor nesses contratos estreitos, sem verificar idempotência com >50 violações e republicação de página. useDashboardUrlFilters.test simula useSearchParams diretamente e testa callbacks/roundtrip; não monta MemoryRouter nem comprova um calendário de dias inválidos. Nenhuma suíte foi executada.",
+    "evidence": [
+      [
+        "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+        4,
+        56,
+        "Relógio/fixture no mesmo fuso e assertions da transformação"
+      ],
+      [
+        "src/hooks/dashboard/__tests__/useRecentConversationEvents.test.ts",
+        1,
+        29,
+        "Só eventText"
+      ],
+      [
+        "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+        55,
+        115,
+        "Fixtures e assertions"
+      ],
+      [
+        "src/hooks/__tests__/useWarRoomAlertsMute.behavior.test.tsx",
+        71,
+        113,
+        "INSERT manual e gates de som"
+      ],
+      [
+        "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+        4,
+        18,
+        "Router simulado"
+      ],
+      [
+        "src/hooks/dashboard/__tests__/useDashboardUrlFilters.test.tsx",
+        73,
+        110,
+        "Callbacks do setter/serialização"
+      ]
+    ]
+  },
+  {
+    "id": "MOD-OBS-022",
+    "title": "Auxiliares finais: erros secundários e limites que não foram promovidos",
+    "classification": "LIMITED_CONTRACT_OBSERVATIONS",
+    "prior_finding_ids": [
+      "DASH-METRICS-001"
+    ],
+    "related_finding_ids": [
+      "R2-MOD-077"
+    ],
+    "observation": "Eventos recentes têm janela24h e fallback para consulta sem embed; falha da consulta principal é lançada. Já os erros nos lookups de contatos/perfis/filas são ignorados e o ator pode cair em Sistema apesar de performed_by preenchido. QueueHealth preserva null para SLA ausente em vez de afirmar100. URL filters usa calendário do aplicativo, mas parse de data aceita normalização de Date e não impõe from<=to; não foi mostrado um formulário atual que produza datas inválidas. TranscriptionAudio ignora error da assinatura e pode manter Pausar sem áudio disponível; o helper de volume usa layout effect em cada commit, portanto a hipótese de volume não aplicado por montagem após loading foi rejeitada. Os helpers de URL/volume estão integralmente no relatório Inbox; não se duplica uma análise de seu kernel.",
+    "evidence": [
+      [
+        "src/hooks/dashboard/useRecentConversationEvents.ts",
+        45,
+        95,
+        "Consulta principal e lookups secundários"
+      ],
+      [
+        "src/hooks/dashboard/useQueueHealth.ts",
+        26,
+        45,
+        "Ausência de SLA continua null"
+      ],
+      [
+        "src/hooks/dashboard/useDashboardUrlFilters.ts",
+        55,
+        81,
+        "Parse e validação de datas"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionContactGroup.tsx",
+        34,
+        42,
+        "URL/erro e reprodução"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionContactGroup.tsx",
+        110,
+        118,
+        "Estado de botão por playingAudio"
+      ],
+      [
+        "src/hooks/communication/useMediaElementVolume.ts",
+        40,
+        60,
+        "Layout effect em cada commit"
+      ]
+    ]
+  }
+]

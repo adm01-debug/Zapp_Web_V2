@@ -1,0 +1,44 @@
+{
+  "opcoesNaLista": 3,
+  "toastDestrutivoVisivel": true,
+  "toastHtml": {
+    "found": true,
+    "destructiveClass": true,
+    "className": "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full destructive group border-destructive bg-destructive text-destructive-foreground",
+    "backgroundColor": "rgb(239, 67, 67)",
+    "borderColor": "rgb(239, 67, 67)",
+    "role": null,
+    "text": "Não consegui obter a coordenadaTente outra sugestão ou busque pelo endereço completo.",
+    "titleEl": "",
+    "descEl": ""
+  },
+  "localizacaoAplicadaDepois": true,
+  "cliquesIntencionais": 1,
+  "retrieveRequests": 2,
+  "retrieveRequestsAntesDoClique": 0,
+  "retrieveRequestsExtras": 1,
+  "sessionTokensNosRetrieve": [
+    "a5ceb1bb-6961-48bd-be72-1147f6f53847",
+    "4c493aa0-196d-44aa-bd32-52eb4db5988d"
+  ],
+  "sessionTokensDistintos": 2,
+  "suggestRequests": 1,
+  "sessionTokensNosSuggest": [
+    "a5ceb1bb-6961-48bd-be72-1147f6f53847"
+  ],
+  "retrieveUrls": [
+    "/search/searchbox/v1/retrieve/w5-sug-1",
+    "/search/searchbox/v1/retrieve/w5-sug-1"
+  ],
+  "appliedText": "Avenida Paulista",
+  "timeline": [
+    "+-2139ms conversa aberta no inbox",
+    "+-2042ms menu \"Mais\" do composer aberto",
+    "+-958ms LocationPicker aberto",
+    "+-839ms aba \"Escolher no Mapa\" ativa; combobox visivel",
+    "+0ms lista de sugestoes visivel (opcoes=3) status=ok",
+    "+0ms CLIQUE DUPLO na 1a sugestao (clickCount=2)",
+    "+1827ms TOAST DESTRUTIVO visivel (t+1826ms)",
+    "+2138ms LOCALIZACAO APLICADA depois do toast (t+2138ms)"
+  ]
+}

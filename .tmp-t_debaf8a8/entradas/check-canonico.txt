@@ -1,0 +1,1 @@
+functions|f:accept_department_invite(p_code text)

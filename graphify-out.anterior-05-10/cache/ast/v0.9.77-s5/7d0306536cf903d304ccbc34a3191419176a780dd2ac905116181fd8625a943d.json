@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927200000_restrict_contacts_update_policy_role_sql", "label": "20260927200000_restrict_contacts_update_policy_role.sql", "file_type": "code", "source_file": "supabase/migrations/20260927200000_restrict_contacts_update_policy_role.sql", "source_location": null}], "edges": []}
