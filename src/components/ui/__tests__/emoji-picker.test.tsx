@@ -13,7 +13,7 @@ vi.mock('framer-motion', () => ({
           const { children, ...rest } = props;
           // Preserva a tag real para o item continuar sendo um botão de verdade
           const Tag = prop === 'div' ? 'div' : 'button';
-          return <Tag {...rest}>{children}</Tag>;
+          return <Tag {...rest}>{children as React.ReactNode}</Tag>;
         };
       },
     },
