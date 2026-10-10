@@ -386,6 +386,11 @@ jobs:
           DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
 
+      - name: Simular índices de tarefas concluídas do kanban (N-083)
+        env:
+          CONVERSATION_TASKS_COMPLETED_INDEX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-tasks-completed-indexes.test.sh
+
       - name: Simular fila, autorização e aceite concorrente do TALK ME
         env:
           TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
