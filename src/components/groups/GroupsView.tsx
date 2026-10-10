@@ -299,7 +299,7 @@ export function GroupsView() {
               <Label>Mensagem</Label>
               <Textarea placeholder="Digite a mensagem para enviar a todos os grupos selecionados..." value={broadcastMessage} onChange={(e) => setBroadcastMessage(e.target.value)} rows={5} />
             </div>
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-warning">
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-sm text-[hsl(var(--warning-text))]">
               ⚠️ Intervalo de 2 segundos entre envios para evitar bloqueios.
             </div>
             <div className="flex justify-end gap-2">
