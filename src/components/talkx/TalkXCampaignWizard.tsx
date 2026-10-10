@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
-  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw,
+  Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, ChevronDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,11 +18,11 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, VARIABLES, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useCampaignEditor, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
-import { TalkXMessageEditor } from './TalkXMessageEditor';
+import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessageEditor';
 import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
@@ -466,6 +466,9 @@ function StepAudience({ ed }: { ed: WizardState }) {
 
 function StepMessage({ ed }: { ed: WizardState }) {
   const approved = ed.templates.filter((t) => t.status === 'approved');
+  // X128 — os chips de variável inserem NA POSIÇÃO DO CURSOR pelo handle do
+  // editor único; antes o chip anexava no fim do texto.
+  const editorRef = React.useRef<TalkXMessageEditorHandle>(null);
   return (
     <>
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
@@ -501,11 +504,12 @@ function StepMessage({ ed }: { ed: WizardState }) {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-3">
           <TalkXMessageEditor
+            ref={editorRef}
             value={ed.messageTemplate}
             onChange={ed.setMessageTemplate}
             placeholder="{{saudacao}}, {{nome}}! Temos uma novidade especial para a sua empresa…"
             rows={7}
-            limit={4096}
+            limit={MESSAGE_LIMIT}
             knownVariables={VARIABLE_KEYS}
             footer={(
               <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
@@ -519,11 +523,26 @@ function StepMessage({ ed }: { ed: WizardState }) {
               {VARIABLES.map((v) => (
                 <Tooltip key={v.key}>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => ed.insertVariable(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
+                    <button type="button" onClick={() => editorRef.current?.insertAtCursor(v.key)} className="h-7 px-2 rounded-md text-2xs font-mono font-medium border border-primary/30 bg-primary/10 text-primary-glow hover:bg-primary/20">{v.key}</button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[200px]"><p className="text-xs">{v.desc}</p></TooltipContent>
                 </Tooltip>
               ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="h-7 px-2 rounded-md text-2xs font-medium border border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50 flex items-center gap-1">
+                    Mais variáveis <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {MORE_VARIABLES.map((v) => (
+                    <DropdownMenuItem key={v.key} onClick={() => editorRef.current?.insertAtCursor(v.key)} className="flex flex-col items-start gap-0.5">
+                      <span className="text-xs font-mono">{v.key}</span>
+                      <span className="text-3xs text-muted-foreground">{v.desc}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
