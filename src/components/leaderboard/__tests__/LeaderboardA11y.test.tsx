@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/hooks/gamification/useLeaderboard', () => ({
@@ -26,5 +27,19 @@ describe('Acessibilidade — Ranking', () => {
     renderizarComQueryClient(<Leaderboard />);
 
     expect(screen.getByRole('button', { name: 'Atualizar ranking' })).toBeInTheDocument();
+  });
+
+  it('axe: nome do botão de ícone zerado (button-name / aria-progressbar-name / color-contrast)', async () => {
+    const { container } = renderizarComQueryClient(<Leaderboard />);
+
+    const resultados = await axe(container, {
+      runOnly: { type: 'rule', values: ['aria-progressbar-name', 'button-name', 'color-contrast'] },
+    });
+    const cobertas = new Set(
+      [...resultados.passes, ...resultados.incomplete, ...resultados.inapplicable].map((r) => r.id),
+    );
+    expect(cobertas.has('button-name')).toBe(true);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
   });
 });

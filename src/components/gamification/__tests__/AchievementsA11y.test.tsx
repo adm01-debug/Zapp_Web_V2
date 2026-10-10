@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import fs from 'node:fs';
 import path from 'node:path';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -152,23 +153,79 @@ function variaveis(css: string, cabecalho: string): Record<string, string> {
 }
 
 describe('Acessibilidade — selo de XP', () => {
-  it('selo usa o par de texto do XP (nao text-xp puro nem primary-text)', () => {
+  // Um único caso: prova que o selo RENDERIZADO usa o par `--primary-text` (classe real,
+  // não a string do token) E que o par fecha AA nos dois temas. Sem a correção a classe
+  // é `text-xp`, então o caso fica vermelho — a leitura de `tokens.css` só mede o par
+  // que a classe do selo realmente referencia.
+  it('selo de XP: classe --primary-text sobre bg-xp/10 fecha AA (4,5:1) no claro e no escuro', () => {
     const { container } = renderizarComQueryClient(
       <AchievementsHeaderBadges stats={{ level: 3, xp: 300 }} />,
     );
     const selo = container.querySelector('.bg-xp\\/10');
     expect(selo).not.toBeNull();
-    expect(selo!.className).toContain('text-[hsl(var(--xp-text))]');
+    expect(selo!.className).toContain('text-[hsl(var(--primary-text))]');
     expect(selo!.className).not.toMatch(/(^|\s)text-xp(\s|$)/);
-  });
 
-  it('par --xp-text sobre bg-xp/10 fecha AA (4,5:1) no claro e no escuro', () => {
     const tokens = fs.readFileSync(path.resolve(__dirname, '../../../styles/tokens.css'), 'utf8');
     const claro = variaveis(tokens, ':root {');
     const escuro = { ...claro, ...variaveis(tokens, '.dark {') };
-    expect(claro['xp-text']).toBeTruthy();
-    expect(escuro['xp-text']).toBeTruthy();
-    expect(razaoNaTinta(claro['xp-text'], claro.xp, 0.1, claro.card)).toBeGreaterThanOrEqual(4.5);
-    expect(razaoNaTinta(escuro['xp-text'], escuro.xp, 0.1, escuro.card)).toBeGreaterThanOrEqual(4.5);
+    expect(claro['primary-text']).toBeTruthy();
+    expect(escuro['primary-text']).toBeTruthy();
+    expect(razaoNaTinta(claro['primary-text'], claro.xp, 0.1, claro.card)).toBeGreaterThanOrEqual(4.5);
+    expect(razaoNaTinta(escuro['primary-text'], escuro.xp, 0.1, escuro.card)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// Regras do aceite: nome da barra de progresso, nome do botão de ícone e contraste.
+const REGRAS_AXE = {
+  runOnly: { type: 'rule' as const, values: ['aria-progressbar-name', 'button-name', 'color-contrast'] },
+};
+
+describe('Acessibilidade — axe (aria-progressbar-name / button-name / color-contrast zerados)', () => {
+  it('AchievementsStatsHeader', async () => {
+    const { container } = renderizarComQueryClient(
+      <AchievementsStatsHeader achievements={conquistasMock} stats={{ level: 3, xp: 300 }} />,
+    );
+    const resultados = await axe(container, REGRAS_AXE);
+    const cobertas = new Set(
+      [...resultados.passes, ...resultados.incomplete, ...resultados.inapplicable].map((r) => r.id),
+    );
+    expect(cobertas.has('aria-progressbar-name')).toBe(true);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
+  });
+
+  it('AchievementsHeaderBadges', async () => {
+    const { container } = renderizarComQueryClient(
+      <AchievementsHeaderBadges stats={{ level: 3, xp: 300 }} />,
+    );
+    const resultados = await axe(container, REGRAS_AXE);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
+  });
+
+  it('AchievementsSystem no modo compacto', async () => {
+    const { container } = renderizarComQueryClient(<AchievementsSystem showCompact />);
+    const resultados = await axe(container, REGRAS_AXE);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
+  });
+
+  it('SpeedTypingGame', async () => {
+    const { container } = renderizarComQueryClient(
+      <SpeedTypingGame isOpen onClose={() => {}} onComplete={() => {}} />,
+    );
+    const resultados = await axe(container, REGRAS_AXE);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
+  });
+
+  it('QuizGame', async () => {
+    const { container } = renderizarComQueryClient(
+      <QuizGame isOpen onClose={() => {}} onComplete={() => {}} />,
+    );
+    const resultados = await axe(container, REGRAS_AXE);
+    expect(resultados.violations).toHaveLength(0);
+    expect(resultados).toHaveNoViolations();
   });
 });
