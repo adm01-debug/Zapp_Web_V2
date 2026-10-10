@@ -452,14 +452,14 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
                   disabled={coolingDown}
                 />
                 {search && (
-                  <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearch('')}>
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca" onClick={() => setSearch('')}>
                     <X className="w-4 h-4" />
                   </Button>
                 )}
               </div>
 
               <Select value={categoryId} onValueChange={setCategoryId} disabled={coolingDown}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px]" aria-label="Categoria">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -483,7 +483,7 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
               </Select>
 
               <Select value={supplierId} onValueChange={setSupplierId} disabled={coolingDown}>
-                <SelectTrigger className="w-[170px]">
+                <SelectTrigger className="w-[170px]" aria-label="Fornecedor">
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
                 <SelectContent>
