@@ -72,6 +72,7 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
 
 import { AnalyticsPerformanceChart } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
 import type { PerformancePoint } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
@@ -264,15 +265,21 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
 
     // O seletor do gráfico nasce no filtro da tela (30 dias) e, tocado, refaz a consulta.
     await waitFor(() => expect(rpcMock).toHaveBeenCalled());
-    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
+    // A primeira chamada é a RPC principal (talkx_overview_stats com 30 dias).
     expect(rpcMock.mock.calls[0][0]).toBe('talkx_overview_stats');
+    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
     expect((new Date(firstArgs.p_to).getTime() - new Date(firstArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(30, 1);
 
     fireEvent.click(screen.getByRole('button', { name: '90 dias' }));
 
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(2));
-    const secondArgs = rpcMock.mock.calls[1][1] as { p_from: string; p_to: string };
-    expect((new Date(secondArgs.p_to).getTime() - new Date(secondArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
+    // O seletor do gráfico refaz a consulta de performance (3ª chamada:
+    // main + comparativo + performance diária refetch).
+    await waitFor(() => {
+      expect(rpcMock).toHaveBeenCalledTimes(3);
+    });
+    const lastArgs = rpcMock.mock.calls[2][1] as { p_from: string; p_to: string };
+    expect(rpcMock.mock.calls[2][0]).toBe('talkx_overview_stats');
+    expect((new Date(lastArgs.p_to).getTime() - new Date(lastArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
   });
 
   it('erro da RPC na tela real vira estado de erro, não "Sem envios registrados"', async () => {
