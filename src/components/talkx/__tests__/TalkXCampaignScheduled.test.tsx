@@ -316,6 +316,11 @@ describe('Tela 10 — cabeçalho, selo e estado pronta para envio (TL-151)', () 
     expect(screen.queryByText(/pendência antes do envio/)).toBeNull();
   });
 
+  it('mostra "pronta para ser enviada" com campanha saudavel (cobertura original do titulo reescrito)', () => {
+    render(view());
+    expect(screen.getByText(/Campanha pronta para ser enviada/)).toBeTruthy();
+  });
+
   it('X120 com bloqueio (linha desconectada): mostra o aviso e esconde "pronta"', () => {
     h.connection = { status: 'disconnected', label: 'Desconectada', loading: false };
     render(view());
