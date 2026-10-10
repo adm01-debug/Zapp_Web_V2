@@ -191,7 +191,7 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
     expect(milestone('start').textContent).toContain('20/10/2026');
 
     // editando a hora, o marco segue o estado em edição — não o scheduled_at salvo
-    fireEvent.change(document.getElementById('talkx-schedule-time'), { target: { value: '09:15' } });
+    fireEvent.change(document.getElementById('talkx-schedule-time') as HTMLInputElement, { target: { value: '09:15' } });
     expect(milestone('start').textContent).toContain('• 09:15');
     expect(milestone('start').textContent).toContain('alteração não salva');
   });
