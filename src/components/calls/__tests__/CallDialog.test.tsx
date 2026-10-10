@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * T21 — o `CallDialog` parou de inserir na tabela `calls` e passou a CONSUMIR
@@ -25,8 +25,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  *   discagem por abertura, o telefone seria discado em laço;
  * - o botão Mudo era estado local (não silenciava nada): agora tem de chamar
  *   `toggleMute()` do motor;
- * - o botão Alto-falante só existiria com `setSinkId` disponível — que não
- *   existe em `src/`: o botão sai e o teste impede que volte "cosmético".
+ * - o botão Alto-falante só existe onde o navegador tem `setSinkId` (SL-246): sem
+ *   a função não há troca de saída, e o botão cosmético não volta.
  */
 
 const {
@@ -122,6 +122,7 @@ vi.mock('framer-motion', () => ({
 }));
 
 import { CallDialog } from '../CallDialog';
+import { REMOTE_AUDIO_ID } from '@/lib/calls/adapters/SipCallAdapter';
 
 const CONTATO = { id: 'contato-1', name: 'Fulano de Tal', phone: '5511999999999' };
 
@@ -314,12 +315,13 @@ describe('CallDialog — comandos vão para a máquina de sessão', () => {
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it('não existe botão de Alto-falante (sem `setSinkId` em src/ o botão era só um ícone)', () => {
+  it('sem `setSinkId` no navegador não existe controle de saída (nada de botão cosmético)', () => {
     mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
     const { container } = montar();
 
     expect(container.querySelector('svg.lucide-volume-2')).toBeNull();
     expect(container.querySelector('svg.lucide-volume-x')).toBeNull();
+    expect(screen.queryByTestId('call-output-device-trigger')).toBeNull();
     // Os únicos controles da chamada atendida são Mudo e Encerrar.
     expect(container.querySelectorAll('button')).toHaveLength(2);
   });
@@ -353,5 +355,171 @@ describe('CallDialog — comandos vão para a máquina de sessão', () => {
     expect(mockMissCall).not.toHaveBeenCalled();
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockInsert).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * SL-246 — seleção de dispositivo de saída (`setSinkId`) / alto-falante.
+ *
+ * A evidência do cartão (`CallDialog.tsx:240`) dizia que a troca de saída não
+ * existia em lugar nenhum de `src/`. Estes testes provam o que passou a valer:
+ * o controle só existe onde o NAVEGADOR tem `setSinkId`, a lista vem de
+ * `enumerateDevices()` (só `audiooutput`) e a escolha vai para o elemento de
+ * áudio remoto do SIP (`REMOTE_AUDIO_ID`) — quem realmente toca o áudio.
+ */
+const SAIDAS_DE_AUDIO = [
+  { deviceId: 'alto-falante-1', kind: 'audiooutput', label: 'Alto-falante (Realtek)' },
+  { deviceId: 'headset-2', kind: 'audiooutput', label: 'Headset USB' },
+];
+
+describe('CallDialog — SL-246: saída de áudio (setSinkId)', () => {
+  const enumerateDevices = vi.fn();
+
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, 'mediaDevices', {
+      configurable: true,
+      value: { enumerateDevices },
+    });
+  });
+
+  afterEach(() => {
+    // O `setSinkId` do jsdom não existe nativamente: o que cada teste instala
+    // sai daqui, para o próximo arquivo/teste ver o navegador sem suporte.
+    delete (HTMLMediaElement.prototype as Partial<HTMLMediaElement>).setSinkId;
+    delete (window.navigator as { mediaDevices?: unknown }).mediaDevices;
+    document.querySelectorAll('audio').forEach((audio) => audio.remove());
+  });
+
+  /**
+   * Navegador COM suporte (Chrome/Edge) + o elemento de áudio remoto que o
+   * adapter SIP põe na página, com espião próprio no `setSinkId`.
+   */
+  function comTrocaDeSaida() {
+    Object.defineProperty(HTMLMediaElement.prototype, 'setSinkId', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockResolvedValue(undefined),
+    });
+    const audio = document.createElement('audio');
+    audio.id = REMOTE_AUDIO_ID;
+    const setSinkId = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(audio, 'setSinkId', { configurable: true, value: setSinkId });
+    document.body.appendChild(audio);
+    return setSinkId;
+  }
+
+  async function abrirSeletor() {
+    fireEvent.click(screen.getByTestId('call-output-device-trigger'));
+    return screen.findByTestId('call-output-device-panel');
+  }
+
+  it('com `setSinkId` o botão existe e a lista traz só saídas de áudio', async () => {
+    comTrocaDeSaida();
+    enumerateDevices.mockResolvedValue([
+      ...SAIDAS_DE_AUDIO,
+      { deviceId: 'webcam-1', kind: 'videoinput', label: 'Webcam' },
+    ]);
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    const { container } = montar();
+
+    expect(container.querySelector('svg.lucide-volume-2')).not.toBeNull();
+    const botao = screen.getByTestId('call-output-device-trigger');
+    expect(botao).toHaveAttribute('aria-expanded', 'false');
+    // Antes do clique a lista NÃO existe: nada de teste que já nasce aberto.
+    expect(screen.queryByTestId('call-output-device-panel')).toBeNull();
+
+    await abrirSeletor();
+
+    expect(await screen.findByText('Alto-falante (Realtek)')).toBeInTheDocument();
+    expect(screen.getByText('Headset USB')).toBeInTheDocument();
+    // O microfone/câmera não entram na lista de saída.
+    expect(screen.queryByText('Webcam')).toBeNull();
+    expect(botao).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('enquanto o navegador lista as saídas, a tela diz que está carregando', async () => {
+    comTrocaDeSaida();
+    let liberar: ((valor: unknown) => void) | undefined;
+    enumerateDevices.mockReturnValue(
+      new Promise((resolve) => {
+        liberar = resolve;
+      }),
+    );
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    montar();
+
+    fireEvent.click(screen.getByTestId('call-output-device-trigger'));
+
+    expect(await screen.findByText('Carregando saídas de áudio…')).toBeInTheDocument();
+
+    liberar?.(SAIDAS_DE_AUDIO);
+
+    expect(await screen.findByText('Headset USB')).toBeInTheDocument();
+    expect(screen.queryByText('Carregando saídas de áudio…')).toBeNull();
+  });
+
+  it('sem nenhuma saída de áudio o painel avisa o vazio — e vazio não é erro', async () => {
+    comTrocaDeSaida();
+    enumerateDevices.mockResolvedValue([]);
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    montar();
+
+    await abrirSeletor();
+
+    expect(await screen.findByText('Nenhuma saída de áudio encontrada.')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('escolher a saída troca o sink do áudio remoto e só marca depois de confirmar', async () => {
+    const setSinkId = comTrocaDeSaida();
+    enumerateDevices.mockResolvedValue(SAIDAS_DE_AUDIO);
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    montar();
+    await abrirSeletor();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Headset USB' }));
+
+    await waitFor(() => expect(setSinkId).toHaveBeenCalledWith('headset-2'));
+    // A lista fecha DEPOIS da confirmação do navegador, e sem erro na tela.
+    await waitFor(() => expect(screen.queryByTestId('call-output-device-panel')).toBeNull());
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    // Reabrir mostra a saída escolhida como a atual (o estado veio do resultado).
+    await abrirSeletor();
+    expect(screen.getByRole('option', { name: 'Headset USB' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('option', { name: 'Alto-falante (Realtek)' })).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('quando o navegador recusa a troca, o motivo aparece e a saída NÃO muda', async () => {
+    const setSinkId = comTrocaDeSaida();
+    setSinkId.mockRejectedValue(new Error('NotFoundError'));
+    enumerateDevices.mockResolvedValue(SAIDAS_DE_AUDIO);
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    montar();
+    await abrirSeletor();
+
+    fireEvent.click(screen.getByRole('option', { name: 'Headset USB' }));
+
+    const alerta = await screen.findByRole('alert');
+    expect(alerta).toHaveTextContent('Não foi possível trocar a saída de áudio.');
+    // A lista fica aberta, onde o usuário está olhando, e nada ficou marcado.
+    expect(screen.getByTestId('call-output-device-panel')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Headset USB' })).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('encerrar a chamada fecha o seletor (a próxima abertura não traz a lista antiga)', async () => {
+    const setSinkId = comTrocaDeSaida();
+    enumerateDevices.mockResolvedValue(SAIDAS_DE_AUDIO);
+    mockUseCallSession.mockReturnValue(providerValue({ status: 'active' }));
+    const { container } = montar();
+    await abrirSeletor();
+    expect(screen.getByTestId('call-output-device-panel')).toBeInTheDocument();
+
+    fireEvent.click(botaoDoIcone(container, 'phone-off') as HTMLButtonElement);
+
+    expect(mockHangup).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('call-output-device-panel')).toBeNull();
+    // Encerrar não troca a saída de áudio de quem ficou na página.
+    expect(setSinkId).not.toHaveBeenCalled();
   });
 });
