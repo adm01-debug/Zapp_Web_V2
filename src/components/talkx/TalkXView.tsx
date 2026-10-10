@@ -26,6 +26,7 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { TalkXCampaignReport } from './report/TalkXCampaignReport';
 import {
   goTab,
   parseTalkXRoute,
@@ -37,7 +38,7 @@ import {
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'report';
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -57,6 +58,7 @@ export default function TalkXView() {
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
+  const [reportCampaignId, setReportCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
@@ -166,9 +168,10 @@ export default function TalkXView() {
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
   const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); }, []);
+  const openReport = useCallback((c: TalkXCampaign) => { setReportCampaignId(c.id); setTopView('report'); }, []);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
-    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
+    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setReportCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
   }, [writeWizardRoute]);
 
@@ -226,8 +229,10 @@ export default function TalkXView() {
   const onView = useCallback((c: TalkXCampaign) => {
     if (c.status === 'scheduled') { openScheduled(c); return; }
     if (c.status === 'sending' || c.status === 'paused') { openRunning(c); return; }
+    // X164: campanha CONCLUÍDA abre o Relatório (tela 14); os demais estados seguem no Monitor.
+    if (c.status === 'completed') { openReport(c); return; }
     openMonitor(c);
-  }, [openMonitor, openScheduled, openRunning]);
+  }, [openMonitor, openReport, openScheduled, openRunning]);
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
@@ -257,6 +262,20 @@ export default function TalkXView() {
         onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
       />
     );
+  }
+
+  if (topView === 'report' && reportCampaignId) {
+    const reportCampaign = campaigns.find((candidate) => candidate.id === reportCampaignId) ?? null;
+    if (reportCampaign) {
+      return (
+        <TalkXCampaignReport
+          campaign={reportCampaign}
+          creators={creators}
+          onBack={backToList}
+          onViewMonitor={(id) => { setReportCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        />
+      );
+    }
   }
 
   if (topView === 'wizard') {
