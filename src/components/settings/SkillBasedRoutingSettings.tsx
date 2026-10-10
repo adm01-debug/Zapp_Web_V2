@@ -207,7 +207,7 @@ export function SkillBasedRoutingSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Select value={selectedProfile} onValueChange={setSelectedProfile}>
-            <SelectTrigger>
+            <SelectTrigger aria-label="Selecionar agente">
               <SelectValue placeholder="Selecione um agente" />
             </SelectTrigger>
             <SelectContent>
@@ -246,7 +246,7 @@ export function SkillBasedRoutingSettings() {
                   {SKILL_SUGGESTIONS.map(s => <option key={s} value={s} />)}
                 </datalist>
                 <Select value={String(newSkillLevel)} onValueChange={v => setNewSkillLevel(Number(v))}>
-                  <SelectTrigger className="w-24">
+                  <SelectTrigger className="w-24" aria-label="Nível de proficiência">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,7 +283,7 @@ export function SkillBasedRoutingSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Select value={selectedQueue} onValueChange={setSelectedQueue}>
-            <SelectTrigger>
+            <SelectTrigger aria-label="Selecionar fila">
               <SelectValue placeholder="Selecione uma fila" />
             </SelectTrigger>
             <SelectContent>
@@ -319,7 +319,7 @@ export function SkillBasedRoutingSettings() {
                   list="skill-suggestions"
                 />
                 <Select defaultValue="1" onValueChange={v => setNewQueueMinLevel(Number(v))}>
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="w-28" aria-label="Nível mínimo da fila">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

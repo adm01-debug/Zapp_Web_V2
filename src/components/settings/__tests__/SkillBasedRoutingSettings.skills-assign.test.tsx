@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
 // SL-192 / item 077-078 (skill_based_assign alcançável) —
@@ -61,17 +61,34 @@ vi.mock('@/components/ui/select', () => ({
     defaultValue,
     onValueChange,
     children,
+    ...rest
   }: {
     value?: string;
     defaultValue?: string;
     onValueChange?: (v: string) => void;
     children?: ReactNode;
-  }) => (
-    <select value={value ?? defaultValue ?? ''} onChange={e => onValueChange?.(e.target.value)}>
-      {children}
-    </select>
+    [key: string]: unknown;
+  }) => {
+    let ariaLabel: string | undefined;
+    React.Children.forEach(children, child => {
+      if (React.isValidElement(child) && child.props['aria-label']) {
+        ariaLabel = child.props['aria-label'];
+      }
+    });
+    return (
+      <select
+        aria-label={ariaLabel}
+        value={value ?? defaultValue ?? ''}
+        onChange={e => onValueChange?.(e.target.value)}
+        {...rest}
+      >
+        {children}
+      </select>
+    );
+  },
+  SelectTrigger: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => (
+    <span {...props}>{children}</span>
   ),
-  SelectTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
   SelectItem: ({ value, children }: { value: string; children?: ReactNode }) => (
