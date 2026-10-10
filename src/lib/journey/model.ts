@@ -82,6 +82,8 @@ export interface JourneyTarget {
   type: 'message' | 'email' | 'call' | 'note' | 'task' | 'file' | 'deal' | 'detail';
   id: string;
   threadId?: string;
+  /** Para rajadas de mensagens: todos os ids do grupo, não só o da primeira. */
+  messageIds?: string[];
 }
 
 /** Um episódio da timeline. */
