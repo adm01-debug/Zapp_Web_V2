@@ -7,7 +7,9 @@ import {
   Logger,
   getClientIP,
   internalErrorResponse,
+  enforceRateLimit,
 } from "../_shared/validation.ts";
+import { escapeHtml } from "../_shared/notification-events.ts";
 import { DetectNewDeviceSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
 
@@ -117,6 +119,12 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
     const { device_fingerprint, browser, os, device_name } = parsed.data;
     const clientIp = getClientIP(req);
 
+    // Rate limit no topo: antes de qualquer escrita (dispositivo/alerta/sessao).
+    const rate = await enforceRateLimit(`detect-new-device:${user.id}:${clientIp}`, 5, 60_000);
+    if (!rate.allowed) {
+      return errorResponse("Rate limit exceeded", 429, req);
+    }
+
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if device exists
@@ -170,10 +178,10 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
                 <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #667eea;">Detalhes do Dispositivo:</h3>
                   <table style="width: 100%; font-size: 14px;">
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${device_name}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${browser}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${os}</td></tr>
-                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${clientIp}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Dispositivo:</strong></td><td>${escapeHtml(device_name)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Navegador:</strong></td><td>${escapeHtml(browser)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>Sistema:</strong></td><td>${escapeHtml(os)}</td></tr>
+                    <tr><td style="padding: 8px 0; color: #666;"><strong>IP:</strong></td><td>${escapeHtml(clientIp)}</td></tr>
                     <tr><td style="padding: 8px 0; color: #666;"><strong>Data/Hora:</strong></td><td>${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
                   </table>
                 </div>
@@ -184,7 +192,7 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
             </body>
             </html>`;
 
-          await fetch("https://api.resend.com/emails", {
+          const resendResp = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${RESEND_API_KEY}` },
             body: JSON.stringify({
@@ -194,7 +202,11 @@ export async function handleDetectNewDevice(req: Request): Promise<Response> {
               html: emailHtml,
             }),
           });
-          log.info("Security email sent");
+          if (!resendResp.ok) {
+            log.error("Error sending email", { status: resendResp.status });
+          } else {
+            log.info("Security email sent");
+          }
         } catch (emailError) {
           log.error("Error sending email", { error: emailError instanceof Error ? emailError.message : String(emailError) });
         }
