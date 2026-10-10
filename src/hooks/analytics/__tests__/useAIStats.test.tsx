@@ -28,6 +28,7 @@ const h = vi.hoisted(() => ({
   tables: {} as Record<string, TableState>,
   calls: {} as Record<string, number>,
   queries: [] as Array<{ table: string; filters: Array<{ op: string; col: string; val: unknown }> }>,
+  selectCols: {} as Record<string, unknown>,
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -72,7 +73,8 @@ vi.mock('@/integrations/supabase/client', () => {
     };
 
     const b: Construtor = {
-      select: (_cols: unknown, opts?: { count?: string; head?: boolean }) => {
+      select: (cols: unknown, opts?: { count?: string; head?: boolean }) => {
+        h.selectCols[table] = cols;
         if (opts?.count) modoContagem = true;
         return b;
       },
@@ -407,7 +409,10 @@ describe('useAIStats — série por dia', () => {
 });
 
 describe('useAIStats — transcrições e alertas', () => {
-  beforeEach(() => tabelas());
+  beforeEach(() => {
+    tabelas();
+    h.selectCols = {};
+  });
 
   it('conta transcrições só do período, na janela atual e na anterior', async () => {
     tabelas({
@@ -480,5 +485,22 @@ describe('useAIStats — transcrições e alertas', () => {
 
     const { result } = await esperarStats(7);
     expect(result.current.data?.activeAlerts).toHaveLength(0);
+  });
+
+  it('audit_logs usa lista explícita de colunas em vez de *', async () => {
+    tabelas({
+      audit_logs: [
+        { id: 'log-1', action: 'sentiment_alert', entity_id: 'contato-1', created_at: instante(0, 9), details: { score: 10 } },
+      ],
+    });
+
+    await esperarStats(7);
+    const cols = h.selectCols['audit_logs'];
+    expect(cols).not.toBe('*');
+    expect(typeof cols).toBe('string');
+    expect(cols).toContain('id');
+    expect(cols).toContain('entity_id');
+    expect(cols).toContain('created_at');
+    expect(cols).toContain('details');
   });
 });

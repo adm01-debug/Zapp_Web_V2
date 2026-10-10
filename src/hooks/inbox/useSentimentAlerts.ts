@@ -109,7 +109,7 @@ export function useSentimentAlerts() {
     try {
       const { data, error } = await supabase
         .from('audit_logs')
-        .select('*')
+        .select('id, entity_id, created_at, details')
         .eq('action', 'sentiment_alert')
         .order('created_at', { ascending: false })
         .limit(limit);
