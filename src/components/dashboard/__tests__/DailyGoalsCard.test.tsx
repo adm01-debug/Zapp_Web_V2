@@ -53,4 +53,18 @@ describe('DailyGoalsCard', () => {
     expect(screen.getByText('Configurar metas')).toBeInTheDocument();
     expect(screen.queryByTestId('goals-donut')).not.toBeInTheDocument();
   });
+
+  it('donut e check de meta usam o token success (não a paleta dash-*)', () => {
+    mockUseGoalsDashboard.mockReturnValue(baseHook({
+      goals: [{ id: '1', label: 'Responder 10 mensagens', description: '', target: 10, current: 10, unit: '', icon: () => null, color: '', priority: 'high' }],
+      overallProgress: 100,
+      completedGoals: 1,
+    }));
+    const { container } = render(<DailyGoalsCard onSeeAll={vi.fn()} stats={{ totalConversations: 0, resolvedToday: 0, avgResponseTime: null, pendingConversations: 0 }} />);
+    const strokes = Array.from(container.querySelectorAll('circle')).map((c) => c.getAttribute('stroke')).join(' ');
+    expect(strokes).toContain('hsl(var(--success))');
+    expect(strokes).not.toContain('--dash-green');
+    expect(container.querySelector('.bg-success')).not.toBeNull();
+    expect(container.querySelector('.bg-dash-green')).toBeNull();
+  });
 });

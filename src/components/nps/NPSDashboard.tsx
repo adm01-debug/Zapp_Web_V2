@@ -122,9 +122,9 @@ export function NPSDashboard() {
               )}
             </div>
             <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-              <span>🟢 Promotores</span>
-              <span>🟡 Passivos</span>
-              <span>🔴 Detratores</span>
+              <span className="flex items-center gap-1 text-success"><ThumbsUp className="w-3 h-3" /> Promotores</span>
+              <span className="flex items-center gap-1 text-warning"><Meh className="w-3 h-3" /> Passivos</span>
+              <span className="flex items-center gap-1 text-destructive"><ThumbsDown className="w-3 h-3" /> Detratores</span>
             </div>
           </CardContent>
         </Card>

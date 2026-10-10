@@ -76,7 +76,7 @@ export function GreetingBanner({ personal = false }: { personal?: boolean } = {}
               <Star className="w-3.5 h-3.5" />
               {stats.achievements_count}
             </span>
-            <span data-testid="gami-chip" title="Dias seguidos" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[hsl(354_48%_23%)] text-dash-red">
+            <span data-testid="gami-chip" title="Dias seguidos" className="h-[30px] px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-streak text-streak-foreground">
               <Flame className="w-3.5 h-3.5" />
               {stats.current_streak}
             </span>

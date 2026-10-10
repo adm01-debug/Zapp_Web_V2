@@ -10,11 +10,11 @@ interface CsatCardProps {
 }
 
 const BAR_COLOR: Record<number, string> = {
-  5: 'bg-dash-green',
-  4: 'bg-dash-green',
-  3: 'bg-dash-yellow',
-  2: 'bg-dash-red',
-  1: 'bg-dash-red',
+  5: 'bg-success',
+  4: 'bg-success',
+  3: 'bg-warning',
+  2: 'bg-destructive',
+  1: 'bg-destructive',
 };
 
 export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
@@ -51,10 +51,10 @@ export function CsatCard({ period, onPeriodChange }: CsatCardProps) {
             <p className="text-3xl font-bold tabular-nums text-foreground leading-none">{average.toFixed(1)}</p>
             <div className="flex gap-0.5 mt-1.5">
               {[1, 2, 3, 4, 5].map((n) => (
-                <Star key={n} className={cn('w-3 h-3', n <= Math.round(average) ? 'fill-dash-amber text-dash-amber' : 'fill-muted-foreground/40 text-muted-foreground/40')} />
+                <Star key={n} className={cn('w-3 h-3', n <= Math.round(average) ? 'fill-warning text-warning' : 'fill-muted-foreground/40 text-muted-foreground/40')} />
               ))}
             </div>
-            <p className={cn('text-2xs font-semibold mt-1.5', trend >= 0 ? 'text-dash-green' : 'text-dash-red')}>
+            <p className={cn('text-2xs font-semibold mt-1.5', trend >= 0 ? 'text-success' : 'text-destructive')}>
               {trend > 0 ? '+' : ''}{trend}%
             </p>
             <p className="text-2xs text-foreground-secondary">vs. período anterior</p>

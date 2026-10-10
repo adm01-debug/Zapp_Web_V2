@@ -34,4 +34,17 @@ describe('TeamHighlightCard', () => {
     render(<TeamHighlightCard agents={[agent()]} timeRange="week" onTimeRangeChange={vi.fn()} slaRateByAgent={new Map()} />);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
+
+  it('medalhas usam os tokens rank-gold/rank-silver/rank-bronze (sem HSL cravado)', () => {
+    const agents = [
+      agent({ id: '1', profile_id: 'p1', name: 'Primeiro' }),
+      agent({ id: '2', profile_id: 'p2', name: 'Segundo' }),
+      agent({ id: '3', profile_id: 'p3', name: 'Terceiro' }),
+    ];
+    const { container } = render(<TeamHighlightCard agents={agents} timeRange="week" onTimeRangeChange={vi.fn()} slaRateByAgent={new Map()} />);
+    expect(container.querySelector('.text-rank-gold')).not.toBeNull();
+    expect(container.querySelector('.text-rank-silver')).not.toBeNull();
+    expect(container.querySelector('.text-rank-bronze')).not.toBeNull();
+    expect(container.innerHTML).not.toContain('18_38');
+  });
 });

@@ -25,4 +25,16 @@ describe('SentimentTrendCard', () => {
     expect(screen.getByText('Neutro')).toBeInTheDocument();
     expect(screen.getByText('Negativo')).toBeInTheDocument();
   });
+
+  it('legenda usa os tokens semânticos de sentimento (success/warning/destructive)', () => {
+    mockUseRealSentimentData.mockReturnValue([
+      { date: '01/06', positive: 60, neutral: 30, negative: 10, avg_score: 50, alerts_count: 0 },
+    ]);
+    const { container } = render(<SentimentTrendCard />);
+    expect(container.querySelector('.bg-success')).not.toBeNull();
+    expect(container.querySelector('.bg-warning')).not.toBeNull();
+    expect(container.querySelector('.bg-destructive')).not.toBeNull();
+    expect(container.querySelector('.bg-dash-green')).toBeNull();
+    expect(container.querySelector('.bg-dash-red')).toBeNull();
+  });
 });

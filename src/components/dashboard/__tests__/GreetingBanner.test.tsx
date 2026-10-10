@@ -59,4 +59,13 @@ describe('GreetingBanner', () => {
     render(<GreetingBanner />);
     expect(screen.getByText(/Ana!|Ana,/)).toBeInTheDocument();
   });
+
+  it('chip de dias seguidos usa o token --streak (sem HSL cravado)', () => {
+    mockUseAuth.mockReturnValue({ profile: { name: 'Ana Silva', avatar_url: null } });
+    mockUseAgentGamification.mockReturnValue({ stats: baseStats() });
+    const { container } = render(<GreetingBanner />);
+    const html = screen.getAllByTestId('gami-chip').map((c) => c.outerHTML).join(' ');
+    expect(html).not.toMatch(/hsl\(/);
+    expect(container.querySelector('.bg-streak')).not.toBeNull();
+  });
 });

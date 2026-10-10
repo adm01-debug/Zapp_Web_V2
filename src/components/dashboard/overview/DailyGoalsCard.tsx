@@ -77,7 +77,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
               <svg width="100" height="100" viewBox="0 0 100 100" className="-rotate-90">
                 <circle cx="50" cy="50" r={RADIUS} fill="none" stroke="hsl(var(--muted) / .4)" strokeWidth="8" />
                 <motion.circle
-                  cx="50" cy="50" r={RADIUS} fill="none" stroke="hsl(var(--dash-green))" strokeWidth="8" strokeLinecap="round"
+                  cx="50" cy="50" r={RADIUS} fill="none" stroke="hsl(var(--success))" strokeWidth="8" strokeLinecap="round"
                   strokeDasharray={CIRCUMFERENCE}
                   initial={{ strokeDashoffset: CIRCUMFERENCE }}
                   animate={{ strokeDashoffset: CIRCUMFERENCE * (1 - pct / 100) }}
@@ -95,7 +95,7 @@ export function DailyGoalsCard({ onSeeAll, stats }: DailyGoalsCardProps) {
           <div className="space-y-1.5">
             {items.map((item, i) => (
               <div key={i} className="h-[30px] rounded-lg bg-muted/40 px-2.5 flex items-center gap-2">
-                <span className={cn('w-4 h-4 rounded shrink-0 flex items-center justify-center', item.done ? 'bg-dash-green' : 'border border-border')}>
+                <span className={cn('w-4 h-4 rounded shrink-0 flex items-center justify-center', item.done ? 'bg-success' : 'border border-border')}>
                   {item.done && <Check className="w-3 h-3 text-white" />}
                 </span>
                 <span className={cn('text-2xs font-medium truncate', item.done ? 'text-foreground' : 'text-foreground-secondary')}>{item.label}</span>

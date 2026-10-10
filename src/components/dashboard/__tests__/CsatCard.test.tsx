@@ -39,4 +39,17 @@ describe('CsatCard', () => {
     render(<CsatCard period="today" onPeriodChange={vi.fn()} />);
     expect(screen.getByText('-8%')).toBeInTheDocument();
   });
+
+  it('barras, estrelas e tendência usam tokens semânticos (não a paleta dash-*)', () => {
+    mockUseCSAT.mockReturnValue({
+      stats: { average: 4.8, total: 50, distribution: { 5: 36, 4: 10, 3: 2, 2: 1, 1: 1 }, trend: 12 },
+    });
+    const { container } = render(<CsatCard period="month" onPeriodChange={vi.fn()} />);
+    for (const c of ['bg-success', 'bg-warning', 'bg-destructive', 'fill-warning', 'text-success']) {
+      expect(container.querySelector(`.${c}`)).not.toBeNull();
+    }
+    for (const c of ['bg-dash-green', 'bg-dash-yellow', 'bg-dash-red', 'fill-dash-amber', 'text-dash-green']) {
+      expect(container.querySelector(`.${c}`)).toBeNull();
+    }
+  });
 });

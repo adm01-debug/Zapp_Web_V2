@@ -50,4 +50,12 @@ describe('NowPanel', () => {
     render(<NowPanel realtime={baseRealtime()} pendingConversations={0} slaBreachedToday={0} busiestQueue={null} />);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
+
+  it('SLA violado usa o token destructive (não a paleta dash-*)', () => {
+    const { container } = render(
+      <NowPanel realtime={baseRealtime()} pendingConversations={0} slaBreachedToday={3} busiestQueue={null} />,
+    );
+    expect(container.querySelector('.text-destructive')).not.toBeNull();
+    expect(container.querySelector('.text-dash-red')).toBeNull();
+  });
 });

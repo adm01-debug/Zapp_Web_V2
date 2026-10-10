@@ -6,9 +6,9 @@ import { DashboardCard, SectionHeader, CardSelect } from './DashboardCard';
 import { useRealSentimentData } from '../SentimentHelpers';
 
 const LEGEND = [
-  { key: 'positive', label: 'Positivo', dot: 'bg-dash-green', stroke: 'hsl(var(--dash-green))' },
-  { key: 'neutral', label: 'Neutro', dot: 'bg-primary', stroke: 'hsl(var(--primary))' },
-  { key: 'negative', label: 'Negativo', dot: 'bg-dash-red', stroke: 'hsl(var(--dash-red))' },
+  { key: 'positive', label: 'Positivo', dot: 'bg-success', stroke: 'hsl(var(--success))' },
+  { key: 'neutral', label: 'Neutro', dot: 'bg-warning', stroke: 'hsl(var(--warning))' },
+  { key: 'negative', label: 'Negativo', dot: 'bg-destructive', stroke: 'hsl(var(--destructive))' },
 ] as const;
 
 export function SentimentTrendCard() {

@@ -42,4 +42,22 @@ describe('QueueHealthTable', () => {
     render(<QueueHealthTable rows={[]} isConnected={false} onSeeAll={vi.fn()} />);
     expect(screen.getByText('Tempo real')).toBeInTheDocument();
   });
+
+  it('badge de status usa os tokens warning/success (não a paleta dash-tile-*)', () => {
+    render(
+      <QueueHealthTable
+        isConnected
+        onSeeAll={vi.fn()}
+        rows={[
+          { queueId: '1', name: 'Comercial', color: null, waiting: 8, inService: 12, avgResponse: 135, slaRate: 92, status: 'bom' },
+          { queueId: '3', name: 'Financeiro', color: null, waiting: 5, inService: 1, avgResponse: 300, slaRate: 60, status: 'atencao' },
+        ]}
+      />,
+    );
+    const classes = screen.getAllByTestId('queue-status').map((b) => b.className).join(' ');
+    expect(classes).toContain('bg-warning');
+    expect(classes).toContain('bg-success');
+    expect(classes).not.toContain('dash-tile-amber');
+    expect(classes).not.toContain('dash-tile-green');
+  });
 });

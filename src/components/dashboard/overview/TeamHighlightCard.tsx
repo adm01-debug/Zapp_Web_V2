@@ -12,7 +12,7 @@ interface TeamHighlightCardProps {
   slaRateByAgent: Map<string, number>;
 }
 
-const MEDAL_CLASS = ['text-dash-amber', 'text-muted-foreground', 'text-[hsl(18_38%_40%)]'];
+const MEDAL_CLASS = ['text-rank-gold', 'text-rank-silver', 'text-rank-bronze'];
 
 function RankIndicator({ index }: { index: number }) {
   if (index < 3) {

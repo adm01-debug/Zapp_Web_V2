@@ -16,11 +16,11 @@ export function NowPanel({ realtime, pendingConversations, slaBreachedToday, bus
     { testid: 'now-row', tile: 'bg-dash-tile-green', icon: Clock, value: String(pendingConversations), label: 'Aguardando atendimento' },
     {
       testid: 'now-row',
-      tile: 'bg-dash-tile-red',
+      tile: 'bg-destructive',
       icon: AlertTriangle,
       value: String(slaBreachedToday ?? 0),
       label: 'SLA violado hoje',
-      tone: 'text-dash-red' as const,
+      tone: 'text-destructive' as const,
     },
     {
       testid: 'now-row',

@@ -23,7 +23,7 @@ function StatusBadge({ status }: { status: QueueHealthRow['status'] }) {
       data-testid="queue-status"
       className={cn(
         'h-[22px] px-2 rounded-md text-2xs font-semibold inline-flex items-center',
-        status === 'atencao' ? 'bg-dash-tile-amber text-dash-amber' : 'bg-dash-tile-green text-dash-green',
+        status === 'atencao' ? 'bg-warning/15 text-[hsl(var(--warning-text))]' : 'bg-success/15 text-success',
       )}
     >
       {STATUS_LABEL[status]}
