@@ -55,7 +55,7 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
     mockSelectAposUpdate.mockResolvedValue({ data: [], error: null });
 
     render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {
@@ -66,7 +66,7 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
 
   it('anuncia sucesso somente quando a escrita é aceita', async () => {
     render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {

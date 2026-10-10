@@ -91,6 +91,7 @@ export function GlobalSettingsSection() {
               </div>
             </div>
             <Switch
+              aria-label={label}
               checked={getSetting(key) === 'enabled'}
               onCheckedChange={() => handleToggle(key, getSetting(key))}
             />

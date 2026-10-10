@@ -169,7 +169,7 @@ export function ChatbotL1Config() {
               <Label className="font-medium">Ativar Chatbot IA L1</Label>
               <p className="text-xs text-muted-foreground">Responder automaticamente novas mensagens</p>
             </div>
-            <Switch checked={isActive} onCheckedChange={setIsActive} />
+            <Switch aria-label="Ativar Chatbot IA L1" checked={isActive} onCheckedChange={setIsActive} />
           </div>
 
           <div className="space-y-2">
