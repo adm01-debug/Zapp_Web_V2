@@ -144,3 +144,18 @@ export function pushTalkXOpenRoute(target: TalkXOpenTarget): void {
 export function replaceTalkXOpenRoute(target: TalkXOpenTarget): void {
   window.history.replaceState(null, '', formatTalkXOpenRoute(new URL(window.location.href), target));
 }
+
+/** Remove only malformed open-target params (duplicated or empty id) from the URL,
+ *  leaving valid ones intact. Returns the URL string if changed, or null if nothing was removed. */
+export function normalizeTalkXOpenRoute(current: URL): string | null {
+  const url = new URL(current.href);
+  let changed = false;
+  for (const kind of OPEN_TARGETS) {
+    const result = readOpenTarget(url.searchParams, kind);
+    if (result.malformed) {
+      url.searchParams.delete(kind);
+      changed = true;
+    }
+  }
+  return changed ? `${url.pathname}${url.search}${url.hash}` : null;
+}
