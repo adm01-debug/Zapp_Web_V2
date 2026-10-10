@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,29 @@ export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
   const feedback = useActionFeedback();
   const [uploading, setUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Gera URL assinada temporária a partir do caminho armazenado
+  useEffect(() => {
+    const filePath = profile?.avatar_url;
+    if (!filePath || !user) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .createSignedUrl(filePath, 3600);
+      const signedUrl = data?.signedUrl ?? null;
+      if (!cancelled && !error && signedUrl) {
+        setAvatarUrl(signedUrl);
+      } else if (!cancelled) {
+        setAvatarUrl(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [profile?.avatar_url, user]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,21 +59,13 @@ export function AvatarUpload() {
           .upload(filePath, file, { upsert: true });
         if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        const urlWithCache = `${publicUrl}?t=${Date.now()}`;
-
-        // Update profile
+        // Guarda o caminho do arquivo (não a URL assinada, que expira)
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: urlWithCache })
+          .update({ avatar_url: filePath })
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
-        setAvatarUrl(urlWithCache);
         await refreshProfile();
       },
       {
@@ -66,7 +79,7 @@ export function AvatarUpload() {
 
   const handleRemove = async () => {
     if (!user) return;
-    
+
     await feedback.withFeedback(
       async () => {
         const { error } = await supabase
