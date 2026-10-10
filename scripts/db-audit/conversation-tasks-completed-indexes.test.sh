@@ -109,6 +109,12 @@ echo '-- BLOCO A: ANTES das migrations -----------------------------------------
 expect_index_exists 'A1 idx_conversation_tasks_owner_status_completed ainda nao existe' idx_conversation_tasks_owner_status_completed 0
 expect_index_exists 'A2 idx_conversation_tasks_owner_status_position ainda nao existe' idx_conversation_tasks_owner_status_position 0
 expect_value 'A3 as 9 linhas de partida estao la' '9' 'SELECT count(*) FROM public.conversation_tasks'
+# Estado pós-migration 20260928140000_tasks_unify_reminders_kanban.sql: a coluna
+# position é integer NOT NULL DEFAULT 0. A unify real não é aplicada aqui porque
+# exige o schema completo (profiles, reminders, auth, policies, triggers); o
+# pre.sql acima reproduz fielmente as colunas que a query do hook lê.
+expect_value 'A4 a coluna position esta no estado pos-unify (integer, NOT NULL, default 0)' 'integer|NO|0' \
+  "SELECT data_type || '|' || is_nullable || '|' || column_default FROM information_schema.columns WHERE table_schema='public' AND table_name='conversation_tasks' AND column_name='position'"
 
 echo
 echo '-- Aplicando as 2 migrations ----------------------------------------------------'
