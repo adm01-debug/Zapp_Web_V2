@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { EmailThreadView } from '../EmailThreadView';
 import { toast } from 'sonner';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -254,24 +255,26 @@ describe('EmailThreadView', () => {
     });
   });
 
-  it('botão Voltar chama onBack', () => {
+  it('botão Voltar chama onBack', async () => {
     const onBack = vi.fn();
     render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
     const btn = screen.getByRole('button', { name: 'Voltar' });
     // Nome acessível vem do conteúdo (sr-only), não de atributo oculto.
     expect(btn).not.toHaveAttribute('aria-label');
     expect(btn.querySelector('.sr-only')).toHaveTextContent('Voltar');
+    expect((await axe(btn, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([]);
     fireEvent.click(btn);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', () => {
+  it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', async () => {
     config.threadMessages = [makeMessage({ gmail_message_id: 'gm-trash' })];
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
     const btn = screen.getByRole('button', { name: 'Excluir' });
     // Nome acessível vem do conteúdo (sr-only), não de atributo oculto.
     expect(btn).not.toHaveAttribute('aria-label');
     expect(btn.querySelector('.sr-only')).toHaveTextContent('Excluir');
+    expect((await axe(btn, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([]);
     fireEvent.click(btn);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
   });
