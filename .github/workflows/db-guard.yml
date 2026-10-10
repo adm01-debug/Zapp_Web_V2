@@ -904,6 +904,16 @@ jobs:
           TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
 
+      # N-071: a RPC request_department_access cria notificacoes para admins/supervisores
+      # do departamento e registra access_requested na auditoria; anon e barrado no GRANT
+      # (permission denied, sem oraculo). Bloco A prova o defeito no mesmo container
+      # (funcao inexistente), o bloco B prova a correcao com os papeis reais
+      # (SET LOCAL ROLE + claims) e o bloco C executa o rollback real.
+      - name: Simular pedido de acesso a departamento (N-071)
+        env:
+          REQUEST_DEPT_ACCESS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/request-department-access.test.sh
+
       # TC-009 / R2-DB-011 (item 164, P2): recibos e reacoes nao forcavam `conversation_id`
       # derivado da mensagem — um cid nao nulo e errado, mandado pelo PostgREST, era gravado
       # como veio (recibos) ou aceito sem guarda nenhuma (reacoes), e o UPDATE que troca
