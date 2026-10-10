@@ -130,22 +130,23 @@ describe('SLAConfigurationManager', () => {
     });
   });
 
-  it('botões e switches nomeados com aria-label', async () => {
+  it('botões e switches nomeados com aria-label por regra', async () => {
     render(<SLAConfigurationManager />, { wrapper: createWrapper() });
     await waitFor(() => {
-      expect(screen.getAllByLabelText('Editar SLA').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByLabelText('Excluir SLA').length).toBeGreaterThanOrEqual(1);
-      const switches = screen.getAllByRole('switch');
-      expect(switches[0]).toHaveAttribute('aria-label', 'Ativar SLA');
+      expect(screen.getByRole('button', { name: 'Editar SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Editar SLA SLA Padrão' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Ativar SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Ativar SLA SLA Padrão' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Excluir SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Excluir SLA SLA Padrão' })).toBeInTheDocument();
     });
   });
 
-  it('seletor de prioridade tem rótulo ligado via aria-label', async () => {
+  it('seletor de prioridade tem rótulo ligado via combobox nomeado', async () => {
     render(<SLAConfigurationManager />, { wrapper: createWrapper() });
     await waitFor(() => {
       fireEvent.click(screen.getByText('Novo SLA'));
-      const comboboxes = screen.getAllByRole('combobox');
-      expect(comboboxes.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole('combobox', { name: 'Prioridade' })).toBeInTheDocument();
       expect(screen.getByRole('switch', { name: 'SLA padrão' })).toBeInTheDocument();
     });
   });

@@ -68,7 +68,7 @@ export function SLAConfigurationManager() {
                       <motion.div key={cfg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05, duration: 0.2 }}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all duration-200">
-                        <Switch checked={cfg.is_active} onCheckedChange={(checked) => toggleMutation.mutate({ id: cfg.id, is_active: checked })} aria-label="Ativar SLA" />
+                        <Switch checked={cfg.is_active} onCheckedChange={(checked) => toggleMutation.mutate({ id: cfg.id, is_active: checked })} aria-label={`Ativar SLA ${cfg.name}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-foreground truncate">{cfg.name}</span>
@@ -79,10 +79,10 @@ export function SLAConfigurationManager() {
                             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 1ª Resp: <span className="font-medium text-foreground/80">{formatSLAMinutes(cfg.first_response_minutes)}</span></span>
                           </div>
                         </div>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl hover:bg-primary/10" aria-label="Editar SLA" onClick={() => openEdit(cfg)}><Edit2 className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl hover:bg-primary/10" aria-label={`Editar SLA ${cfg.name}`} onClick={() => openEdit(cfg)}><Edit2 className="w-3.5 h-3.5" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10" aria-label="Excluir SLA"><Trash2 className="w-3.5 h-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10" aria-label={`Excluir SLA ${cfg.name}`}><Trash2 className="w-3.5 h-3.5" /></Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

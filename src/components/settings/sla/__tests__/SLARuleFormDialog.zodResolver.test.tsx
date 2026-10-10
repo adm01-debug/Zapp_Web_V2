@@ -132,11 +132,15 @@ describe('SLARuleFormDialog — validação por schema (zodResolver)', () => {
     );
   });
 
-  it('seletor de escopo tem rótulo ligado via aria-label', () => {
+  it('seletor de escopo tem rótulo ligado via combobox nomeado', () => {
+    // Usa scope='contact_type' (e não 'contact') porque com 'contact' o
+    // componente renderiza um campo de busca e uma lista, não um Select/combobox;
+    // o combobox com aria-label 'Escopo da regra' só existe quando o escopo
+    // é um seletor (contact_type, company, job_title, queue, agent).
     render(
       <SLARuleFormDialog open onOpenChange={() => {}} scope="contact_type" editingRule={null} />
     );
-    expect(screen.getByLabelText('Escopo da regra')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Escopo da regra' })).toBeInTheDocument();
   });
 
   it('axe zerado no SLARuleFormDialog', async () => {
