@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import type { ReactElement } from 'react';
 
 const reduzido = vi.hoisted(() => ({ value: false }));
 
@@ -160,7 +161,7 @@ describe('InboxEmptyChat — sem movimento contínuo', () => {
 
 // ── Telas com fundo decorativo: aurora/partículas só entram sem a preferência ─
 describe('telas decoradas — aurora e partículas somem com a preferência ligada', () => {
-  const casos: Array<[string, () => JSX.Element]> = [
+  const casos: Array<[string, () => ReactElement]> = [
     ['Grupos', () => <GroupsView />],
     ['Filas', () => <QueuesView />],
     ['Carteira de Clientes', () => <ClientWalletView />],
