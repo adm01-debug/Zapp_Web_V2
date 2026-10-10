@@ -8,6 +8,7 @@ import {
   type EvolutionFlavor,
   type SessionAction,
 } from "../_shared/evolution-session-routes.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -99,7 +100,7 @@ function makeServiceClient(writes: Write[]): any {
     };
     return q;
   };
-  return { from: (table: string) => query(table), rpc: () => Promise.resolve({ data: null, error: null }) };
+  return { from: (table: string) => query(table), rpc: (fn: string) => fn === "get_instance_token" ? Promise.resolve({ data: INSTANCE_TOKEN, error: null }) : Promise.resolve({ data: null, error: null }) };
 }
 
 function makeCallerClient(): any {
@@ -137,6 +138,7 @@ async function runAction(
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+  resetInstanceTokenCache();
   try {
     const res = await handleEvolutionApi(sessionRequest(action), {
       callerClient: makeCallerClient(),
