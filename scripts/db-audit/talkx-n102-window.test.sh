@@ -296,7 +296,15 @@ ok "dnd_hours de outro dono preservado (ON CONFLICT DO NOTHING)"
 # SQL executavel, nao texto de apoio.
 head -5 "$fix_mig" | grep -qE '^-- Rollback: [^[:space:]]' \
   || fail 'a migration perdeu a linha "-- Rollback:" executavel no cabecalho'
-run_rollback() { sed -n 's/^-- Rollback: //p' "$fix_mig" | head -1 | psql_test >/dev/null || fail "rollback falhou ao executar"; }
+run_rollback() {
+  # O SQL de rollback e o bloco contiguo de comentarios logo apos a linha
+  # "-- Rollback (SQL executavel, na ordem):" (convencao do repo). Flatten e executa.
+  awk '
+    /^-- Rollback \(SQL execut/ { grab=1; next }
+    grab && /^--   / { l=$0; sub(/^--   /, "", l); printf "%s ", l; next }
+    grab { exit }
+  ' "$fix_mig" | psql_test >/dev/null || fail "rollback falhou ao executar"
+}
 run_rollback
 # o rollback recoloca os corpos de 20261009203548: o weekday volta a ser lido no fuso
 # da sessão (UTC) — exatamente o defeito que a correção remove
