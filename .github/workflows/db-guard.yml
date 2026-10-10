@@ -433,6 +433,11 @@ jobs:
           TALKX_UPDATE_LIMITS_CASTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-update-limits-casts.test.sh
 
+      - name: Simular cast de send_weekdays nas RPCs Talk X (N-102b)
+        env:
+          TALKX_N102B_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102b-cast.test.sh
+
       - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
         env:
           TALKX_UPDATE_LIMITS_22009_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
