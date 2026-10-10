@@ -10,13 +10,20 @@ interface OpenDealsListProps {
   /** Corta a lista (usado no resumo do CRM 360°); omitido = lista completa (aba SalesView). */
   limit?: number;
   emptyMessage?: string;
+  /**
+   * Conversa aberta que escopa a lista (seção "Vinculados a esta conversa" da
+   * aba SalesView — N-042). Quando informada, o elemento raiz grava o id em
+   * `data-conversation-id` para rastreio e teste; a lista em si já chega
+   * filtrada pelo chamador. Omitida = lista da seção "Propostas em aberto".
+   */
+  conversationId?: string | null;
 }
 
 /**
  * Lista de "Propostas em aberto" — compartilhada entre a aba SalesView e a
  * aba CRM 360° (2.5 item 5) para não duplicar a mesma leitura de sales_deals.
  */
-export function OpenDealsList({ deals, limit, emptyMessage = 'Nenhuma proposta em aberto' }: OpenDealsListProps) {
+export function OpenDealsList({ deals, limit, emptyMessage = 'Nenhuma proposta em aberto', conversationId }: OpenDealsListProps) {
   const items = limit ? deals.slice(0, limit) : deals;
 
   if (items.length === 0) {
@@ -31,7 +38,7 @@ export function OpenDealsList({ deals, limit, emptyMessage = 'Nenhuma proposta e
   }
 
   return (
-    <ul className="space-y-2" data-testid="open-deals-list">
+    <ul className="space-y-2" data-testid="open-deals-list" data-conversation-id={conversationId ?? undefined}>
       {items.map((deal) => (
         <li
           key={deal.id}
