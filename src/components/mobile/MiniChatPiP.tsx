@@ -109,6 +109,7 @@ export function MiniChatPiP({
                   variant="ghost"
                   size="icon"
                   className="w-6 h-6"
+                  aria-label="Recolher"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsExpanded(false);
@@ -121,6 +122,7 @@ export function MiniChatPiP({
                 variant="ghost"
                 size="icon"
                 className="w-6 h-6 text-muted-foreground hover:text-foreground"
+                aria-label="Fechar"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDismiss();
@@ -163,6 +165,7 @@ export function MiniChatPiP({
                       variant="ghost"
                       size="icon"
                       className="w-8 h-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
+                      aria-label="Enviar"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSendReply();
@@ -176,6 +179,7 @@ export function MiniChatPiP({
 
                 {/* Open full chat */}
                 <button
+                  aria-label="Abrir conversa"
                   onClick={(e) => {
                     e.stopPropagation();
                     onExpand();
