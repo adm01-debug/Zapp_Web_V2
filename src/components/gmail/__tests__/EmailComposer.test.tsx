@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createElement } from 'react';
+import { createElement, useRef } from 'react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EmailComposer } from '../EmailComposer';
 import type { EmailAttachment, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -331,5 +331,46 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     await act(async () => { resolveFirst({ draft_id: 'draft-1' }); await Promise.resolve(); await Promise.resolve(); });
     expect(saveDraftMutateAsync).toHaveBeenCalledTimes(2);
     expect(saveDraftMutateAsync).toHaveBeenNthCalledWith(2, expect.objectContaining({ draft_id: 'draft-1', subject: 'Versão 2' }));
+  });
+});
+
+describe('EmailComposer — acessibilidade do diálogo flutuante', () => {
+  it('tem role="dialog" e aria-labelledby apontando para o título', () => {
+    render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).toBeInTheDocument();
+    const titleId = dialog?.getAttribute('aria-labelledby');
+    expect(titleId).toBe('email-composer-title');
+    expect(document.getElementById(titleId!)).toBeInTheDocument();
+  });
+
+  it('foca o campo Para quando o compositor abre', () => {
+    vi.useFakeTimers();
+    render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    const toInput = screen.getByLabelText('Destinatários') as HTMLInputElement;
+    vi.advanceTimersByTime(0);
+    expect(document.activeElement).toBe(toInput);
+    vi.useRealTimers();
+  });
+
+  it('devolve o foco ao elemento trigger ao fechar', () => {
+    let triggerElement: HTMLButtonElement | null = null;
+    function Trigger() {
+      return <button ref={(el) => { triggerElement = el; }} onClick={() => {}}>Abrir compositor</button>;
+    }
+
+    // Renderiza o trigger e foca antes de montar o compositor
+    const { unmount: unmountTrigger } = render(<Trigger />);
+    triggerElement?.focus();
+    expect(document.activeElement).toBe(triggerElement);
+
+    // Monta o compositor (salva o foco atual = trigger)
+    const { unmount: unmountComposer } = render(<EmailComposer mode="new" onClose={() => unmountComposer()} />);
+
+    // Desmonta o compositor — foco deve voltar ao trigger
+    unmountComposer();
+    expect(document.activeElement).toBe(triggerElement);
+
+    unmountTrigger();
   });
 });

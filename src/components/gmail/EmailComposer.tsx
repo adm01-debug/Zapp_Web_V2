@@ -340,8 +340,20 @@ export function EmailComposer({
     forward: 'Encaminhar',
   };
 
+  const composerTitleId = "email-composer-title";
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const toInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const timer = window.setTimeout(() => { toInputRef.current?.focus(); }, 0);
+    return () => { window.clearTimeout(timer); previousFocusRef.current?.focus(); };
+  }, []);
+
   return createPortal((
     <motion.div
+      role="dialog"
+      aria-labelledby={composerTitleId}
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -352,7 +364,7 @@ export function EmailComposer({
         <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-inbox-panel p-3">
           <div className="flex items-center gap-2">
             <Send className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium">{modeLabels[mode]}</span>
+            <span id="email-composer-title" className="text-sm font-medium">{modeLabels[mode]}</span>
             {activeAccount && (
               <Badge variant="outline" className="text-3xs px-1">
                 {activeAccount.email_address}
@@ -382,6 +394,7 @@ export function EmailComposer({
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-muted-foreground w-12 shrink-0">Para:</Label>
                   <Input
+                    ref={toInputRef}
                     value={to}
                     aria-label="Destinatários"
                     onChange={(e) => { setTo(e.target.value); markDraftDirty(); }}
