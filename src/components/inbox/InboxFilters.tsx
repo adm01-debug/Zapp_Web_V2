@@ -207,7 +207,7 @@ export function InboxFilters({
                     value={selectedQueueId ?? 'all'}
                     onValueChange={v => onQueueChange(v === 'all' ? null : v)}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs" aria-label="Fila">
                       <SelectValue placeholder="Todas as filas" />
                     </SelectTrigger>
                     <SelectContent>
@@ -258,7 +258,7 @@ export function InboxFilters({
                     value={filters.agentId ?? 'all'}
                     onValueChange={v => onFiltersChange({ ...filters, agentId: v === 'all' ? null : v })}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs" aria-label="Agente">
                       <SelectValue placeholder="Todos os agentes" />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,6 +277,7 @@ export function InboxFilters({
                     checked={showAll}
                     onCheckedChange={onShowAllChange}
                     className="scale-75"
+                    aria-label="Mostrar todos"
                   />
                 </div>
                 <Separator />
