@@ -120,7 +120,15 @@ export const TalkXContactSelector: React.FC<Props> = ({
           <CardTitle className="text-sm flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
             Contatos
-            <Badge variant="secondary" className="text-3xs">
+            {/* TL-175D-a — o par `secondary` (`bg-secondary text-secondary-foreground`)
+                é feito para superfície escura: no tema CLARO `--secondary` é o azul de
+                preenchimento (215 70% 55%) e o `--secondary-foreground` (210 40% 92%)
+                sobre ele mede 3,30:1, abaixo dos 4,5:1 que o texto de 10px exige. O par
+                de texto AA equivalente que já existe no sistema é o do `subtle`
+                (`bg-muted` × `text-muted-foreground`): 5,04:1 no claro, 7,32:1 no escuro,
+                10,08:1 no alto contraste claro e 9,39:1 no alto contraste escuro —
+                sem token novo. */}
+            <Badge variant="subtle" className="text-3xs">
               {selectedContacts.length}/{contacts.length}
             </Badge>
           </CardTitle>
