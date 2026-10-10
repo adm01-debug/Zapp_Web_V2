@@ -80,6 +80,7 @@ export function VolumeChart({ queueId, agentId }: VolumeChartProps = {}) {
         right={(
           <CardSelect
             testid="volume-select"
+            ariaLabel="Período do volume de mensagens"
             value={mode}
             onValueChange={(v) => setMode(v as Mode)}
             options={[{ value: 'hoje', label: 'Hoje (por hora)' }, { value: '7dias', label: 'Últimos 7 dias (por dia)' }]}

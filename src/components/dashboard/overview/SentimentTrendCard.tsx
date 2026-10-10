@@ -24,6 +24,7 @@ export function SentimentTrendCard() {
         right={(
           <CardSelect
             testid="sentiment-select"
+            ariaLabel="Período da tendência de sentimento"
             value={period}
             onValueChange={(v) => setPeriod(v as '7' | '14' | '30')}
             options={[{ value: '7', label: '7 dias' }, { value: '14', label: '14 dias' }, { value: '30', label: '30 dias' }]}
