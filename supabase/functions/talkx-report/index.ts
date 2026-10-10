@@ -78,7 +78,7 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     const { data: { user: caller }, error: authErr } = await supabase.auth.getUser(callerJwt);
     if (authErr || !caller) return jsonErr(req, { ok: false, reason: 'unauthorized' }, 401);
 
-    const { campaignId } = await req.json() as { campaignId: string };
+    const { campaignId, from, to } = await req.json() as { campaignId: string; from?: string; to?: string };
     if (!campaignId) return jsonErr(req, { ok: false, reason: 'missing_campaignId' }, 400);
 
     // ── 1. Campanha ─────────────────────────────────────────────────────────────────
@@ -140,6 +140,31 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     } catch (err) {
       log.error('Recipients count failed', { campaignId, error: err instanceof Error ? err.message : String(err) });
       return jsonErr(req, { ok: false, reason: 'recipients_query_failed' }, 502);
+    }
+
+    // ── 3b. Detalhamentos via RPC talkx_campaign_report_breakdowns (N-134) ──────
+    // Enriquecimento opcional: se a RPC falhar, o relatório segue sem os
+    // detalhamentos (o e-mail existente é preservado).
+    let breakdowns: unknown = null;
+    // N-134: sem janela (sem from/to no corpo e sem started_at/completed_at na campanha)
+    // nao ha periodo para detalhar: nao chama a RPC e devolve breakdowns null.
+    const pFrom = from ?? campaign.started_at ?? null;
+    const pTo = to ?? campaign.completed_at ?? null;
+    const semJanela = !pFrom || !pTo;
+    try {
+      if (semJanela) {
+        breakdowns = null;
+      } else {
+        const { data, error: breakdownsErr } = await supabase.rpc('talkx_campaign_report_breakdowns', {
+          p_campaign: campaignId,
+          p_from: pFrom,
+          p_to: pTo,
+        });
+        if (breakdownsErr) throw new Error(breakdownsErr.message);
+        breakdowns = data;
+      }
+    } catch (e) {
+      log.warn('talkx_campaign_report_breakdowns indisponivel; segue sem detalhamentos', { campaignId, error: String(e) });
     }
 
     // ── 4. KPIs ────────────────────────────────────────────────────────────────────────
@@ -219,7 +244,7 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
 
     log.info('Report sent', { campaignId, to: recipientEmail });
     return new Response(
-      JSON.stringify({ ok: true, to: recipientEmail }),
+      JSON.stringify({ ok: true, to: recipientEmail, breakdowns }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) } }
     );
 
