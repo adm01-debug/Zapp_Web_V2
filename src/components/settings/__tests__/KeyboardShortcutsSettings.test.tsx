@@ -76,7 +76,7 @@ function mockHook(shortcuts: typeof SHORTCUTS_DEFAULT, isRecording: string | nul
     stopRecording: vi.fn(),
     cancelRecording: vi.fn(),
     resetShortcut: vi.fn(),
-    checkConflict: vi.fn(() => null),
+    checkConflict: vi.fn(() => undefined),
     formatShortcut: vi.fn((s: ShortcutBinding) => {
       const parts: string[] = [];
       if (s.defaultModifiers?.ctrlKey) parts.push('Ctrl');
