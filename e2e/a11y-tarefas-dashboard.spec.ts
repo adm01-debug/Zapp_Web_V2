@@ -70,6 +70,7 @@ async function mockDashboardVazio(page: Page): Promise<void> {
 test.describe('N-079 — a11y button-name e aria-progressbar-name', () => {
   test.beforeEach(async ({ page }) => {
     await bloquearRedeReal(page, { redeBarrada: [] } as unknown as Registro);
+    await page.routeWebSocket(/supabase\.co/, (ws) => ws.close());
     await mockAppShell(page, { redeBarrada: [] } as unknown as Registro);
     await installFakeSession(page);
   });
