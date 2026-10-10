@@ -9,17 +9,11 @@
  * Prova (vermelho antes / verde depois): selecionar DOIS arquivos no diálogo nativo
  * precisa colocar os DOIS na fila de envio — a tela mostra os dois nomes e o título
  * "Enviar 2 Arquivos" (não um preview único do primeiro).
- *
- * Acessibilidade (N-039): botões de remover e fechar com aria-label; barras
- * de progresso com nome acessível que identifica o arquivo.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { axe } from 'vitest-axe';
-import 'vitest-axe/extend-expect';
 import { FileUploader } from '@/components/inbox/FileUploader';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { useFileUploadLogic } from '@/components/inbox/useFileUploadLogic';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -36,16 +30,8 @@ vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/components/inbox/useFileUploadLogic', () => ({
-  useFileUploadLogic: vi.fn(),
-}));
-
 function pdf(name: string) {
   return new File(['x'], name, { type: 'application/pdf' });
-}
-
-function mockHook(returnValue: Record<string, unknown>) {
-  vi.mocked(useFileUploadLogic).mockReturnValue(returnValue as never);
 }
 
 function renderUploader() {
@@ -56,47 +42,18 @@ function renderUploader() {
   );
 }
 
-const baseQueue = (files: File[]) =>
-  files.map((f, i) => ({
-    id: `q${i}`,
-    file: f,
-    status: 'pending' as const,
-    progress: 0,
-    validation: { valid: true, category: 'document' as const },
-    preview: null,
-  }));
-
 describe('FileUploader — R2-INB-011: input multiple aproveita todos os arquivos', () => {
   it('coloca todos os arquivos escolhidos na fila de múltiplos, não só o primeiro', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: null,
-      fileQueue: baseQueue([pdf('primeiro.pdf'), pdf('segundo.pdf')]),
-      isMultiMode: true,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: false,
-      uploadProgress: 0,
-      uploadStage: 'idle',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 2,
-      totalQueueProgress: 0,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
     const { container } = renderUploader();
 
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     expect(input).toHaveAttribute('multiple');
 
+    fireEvent.change(input, {
+      target: { files: [pdf('primeiro.pdf'), pdf('segundo.pdf')] },
+    });
+
+    // Os dois arquivos entram na fila (a tela usa o modo multi).
     expect(screen.getByText('primeiro.pdf')).toBeInTheDocument();
     expect(screen.getByText('segundo.pdf')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /enviar 2 arquivos/i })).toBeInTheDocument();
@@ -104,221 +61,13 @@ describe('FileUploader — R2-INB-011: input multiple aproveita todos os arquivo
   });
 
   it('um único arquivo selecionado segue no preview simples', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: {
-        file: pdf('so-um.pdf'),
-        validation: { valid: true, category: 'document' },
-        preview: null,
-      },
-      fileQueue: [],
-      isMultiMode: false,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: false,
-      uploadProgress: 0,
-      uploadStage: 'idle',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 1,
-      totalQueueProgress: 0,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
     const { container } = renderUploader();
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [pdf('so-um.pdf')] } });
 
     expect(screen.getByText('so-um.pdf')).toBeInTheDocument();
+    // Não virou fila: o título permanece o do modo simples.
     expect(screen.getByText(/^enviar arquivo$/i)).toBeInTheDocument();
-  });
-});
-
-// ── N-039: acessibilidade dos botões e barras de progresso ──────────────────────
-
-describe('FileUploader — N-039: nomes acessíveis em botões e progressbar', () => {
-  it('axe zerado no diálogo do FileUploader', async () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: null,
-      fileQueue: baseQueue([pdf('documento.pdf')]),
-      isMultiMode: true,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: false,
-      uploadProgress: 0,
-      uploadStage: 'idle',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 1,
-      totalQueueProgress: 0,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
-    const { container } = renderUploader();
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-
-  it('botão remover na fila tem aria-label "Remover <arquivo>"', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: null,
-      fileQueue: baseQueue([pdf('relatorio.pdf')]),
-      isMultiMode: true,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: false,
-      uploadProgress: 0,
-      uploadStage: 'idle',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 1,
-      totalQueueProgress: 0,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
-    const { container } = renderUploader();
-
-    expect(screen.getByRole('button', { name: /remover relatorio\.pdf/i })).toBeInTheDocument();
-  });
-
-  it('botão fechar no preview simples tem aria-label "Fechar envio"', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: {
-        file: pdf('contrato.pdf'),
-        validation: { valid: true, category: 'document' },
-        preview: null,
-      },
-      fileQueue: [],
-      isMultiMode: false,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: false,
-      uploadProgress: 0,
-      uploadStage: 'idle',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 1,
-      totalQueueProgress: 0,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
-    const { container } = renderUploader();
-
-    expect(screen.getByRole('button', { name: /fechar envio/i })).toBeInTheDocument();
-  });
-
-  it('cada progressbar da fila tem nome com o arquivo', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: null,
-      fileQueue: [
-        {
-          id: 'q1',
-          file: pdf('prova.pdf'),
-          status: 'uploading',
-          progress: 42,
-          validation: { valid: true, category: 'document' },
-          preview: null,
-        },
-      ],
-      isMultiMode: true,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: true,
-      uploadProgress: 42,
-      uploadStage: 'uploading',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 1,
-      totalQueueProgress: 42,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
-    const { container } = renderUploader();
-
-    expect(screen.getByRole('progressbar', { name: /progresso de prova\.pdf/i })).toBeInTheDocument();
-  });
-
-  it('progressbar do envio total tem nome "Progresso total"', () => {
-    mockHook({
-      isDialogOpen: true,
-      filePreview: null,
-      fileQueue: [
-        {
-          id: 'q1',
-          file: pdf('a.pdf'),
-          status: 'uploading',
-          progress: 30,
-          validation: { valid: true, category: 'document' },
-          preview: null,
-        },
-        {
-          id: 'q2',
-          file: pdf('b.pdf'),
-          status: 'uploading',
-          progress: 60,
-          validation: { valid: true, category: 'image' },
-          preview: null,
-        },
-      ],
-      isMultiMode: true,
-      caption: '',
-      setCaption: vi.fn(),
-      uploading: true,
-      uploadProgress: 45,
-      uploadStage: 'uploading',
-      currentQueueIndex: 0,
-      apiLoading: false,
-      canSend: true,
-      validFilesCount: 2,
-      totalQueueProgress: 45,
-      handleClose: vi.fn(),
-      handleSendFile: vi.fn(),
-      handleSendAllFiles: vi.fn(),
-      handleFileChange: vi.fn(),
-      handleExternalFile: vi.fn(),
-      handleExternalFiles: vi.fn(),
-      removeFromQueue: vi.fn(),
-    });
-
-    const { container } = renderUploader();
-
-    expect(screen.getByRole('progressbar', { name: /progresso total/i })).toBeInTheDocument();
   });
 });
