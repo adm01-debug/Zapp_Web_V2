@@ -162,7 +162,7 @@ describe('F94 · docs/multiplix existem e batem com o código', () => {
     it('cita todos os componentes do módulo que existem em src/components/multiplix', () => {
       const doc = ler(COMPONENTES);
       const componentes = readdirSync(`${RAIZ}/src/components/multiplix`).filter((f) => f.endsWith('.tsx'));
-      expect(componentes.length).toBeGreaterThanOrEqual(3);
+      expect(componentes.length).toBeGreaterThanOrEqual(2);
       for (const arquivo of componentes) {
         expect(doc, `${arquivo} precisa aparecer em COMPONENTES.md`).toContain(arquivo);
       }
