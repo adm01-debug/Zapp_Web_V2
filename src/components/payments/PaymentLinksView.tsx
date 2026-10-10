@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-  Plus, DollarSign, Link2, Copy, Trash2, CheckCircle, Clock, XCircle,
+  Plus, DollarSign, Link2, Trash2, CheckCircle, Clock, XCircle,
   CreditCard, QrCode, ExternalLink, Send, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,19 +56,6 @@ export function PaymentLinksView() {
     toast({ title: 'Link de pagamento criado!' });
     setShowDialog(false);
     setFormTitle(''); setFormDescription(''); setFormAmount(''); setFormMethod('pix');
-  };
-
-  const copyLink = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'Link copiado!' });
-    } catch {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível copiar o link.',
-        variant: 'destructive',
-      });
-    }
   };
 
   const handleDeleteLink = async (id: string) => {
@@ -187,12 +174,7 @@ export function PaymentLinksView() {
                       </p>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {link.payment_url && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void copyLink(link.payment_url!)}>
-                          <Copy className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => void handleDeleteLink(link.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => void handleDeleteLink(link.id)} aria-label="Excluir link de pagamento">
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
