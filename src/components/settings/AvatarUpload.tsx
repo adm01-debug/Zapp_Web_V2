@@ -28,14 +28,14 @@ export function AvatarUpload() {
 
     setUploading(true);
     const ext = file.name.split('.').pop();
-    const filePath = `${user.id}/avatar.${ext}`;
+    const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
 
     await feedback.withFeedback(
       async () => {
         // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file, { upsert: true });
+          .upload(filePath, file);
         if (uploadError) throw uploadError;
 
         // Get public URL

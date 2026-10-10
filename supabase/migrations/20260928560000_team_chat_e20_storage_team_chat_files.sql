@@ -3,6 +3,11 @@
 -- o SQL abaixo e identico ao registrado no ledger. Ver DB Live Guard:
 -- scripts/db-audit/check-migration-drift.mjs
 
+-- Rollback:
+-- DROP POLICY IF EXISTS team_chat_files_insert ON storage.objects;
+-- GRANT UPDATE ON storage.objects TO authenticated;
+-- CREATE POLICY "Team chat files readable by owner admin or conversation member" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text);
+
 DROP POLICY IF EXISTS "Team chat files readable by owner admin or conversation member" ON storage.objects;
 
 REVOKE UPDATE ON storage.objects FROM authenticated;
