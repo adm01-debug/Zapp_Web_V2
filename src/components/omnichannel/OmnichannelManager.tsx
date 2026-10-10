@@ -179,7 +179,7 @@ export function OmnichannelManager() {
                       value={newChannel.channel_type}
                       onValueChange={(v) => setNewChannel(prev => ({ ...prev, channel_type: v as ChannelType }))}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger aria-label="Tipo de canal"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(channelConfig).filter(([k]) => k !== 'whatsapp').map(([key, cfg]) => (
                           <SelectItem key={key} value={key}>
