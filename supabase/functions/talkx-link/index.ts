@@ -8,7 +8,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
-import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import { verifyHmacSignature, hmacTokenForRecipient } from "../_shared/hmac-validation.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -88,6 +88,37 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
+    }
+
+    // Validação HMAC do destinatário (opacidade do ID): quando
+    // TALKX_CONVERT_SECRET está configurado, o parâmetro r contém o
+    // token HMAC em vez do recipient_id bruto. O token é verificado
+    // consultando todos os destinatários da campanha ativa e comparando
+    // o HMAC esperado com o token recebido.
+    const convertSecret = Deno.env.get("TALKX_CONVERT_SECRET");
+    if (convertSecret && recipient) {
+      const { data: campaignRow, error: campaignErr } = await supabase
+        .from("talkx_links")
+        .select("campaign_id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (campaignErr || !campaignRow?.campaign_id) {
+        return new Response("Not found", { status: 404 });
+      }
+      const { data: recipients, error: recErr } = await supabase
+        .from("talkx_recipients")
+        .select("id")
+        .eq("campaign_id", campaignRow.campaign_id);
+      if (recErr || !recipients?.length) {
+        return new Response("Not found", { status: 404 });
+      }
+      const tokens = await Promise.all(
+        recipients.map((r) => hmacTokenForRecipient(r.id as string, convertSecret)),
+      );
+      const valid = tokens.includes(recipient);
+      if (!valid) {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada

@@ -656,3 +656,27 @@ export async function verifyGmailOidcRequest(
   if (!token) return { ok: false, reason: 'missing_signature' };
   return verifyGoogleOidcToken(token, options);
 }
+
+/**
+ * Gera um token HMAC-SHA256 (hex minúsculo) a partir do ID do destinatário
+ * e o segredo compartilhado. Usado para tornar o recipient_id opaco nos
+ * links rastreáveis (talkx-link).
+ */
+export async function hmacTokenForRecipient(
+  recipientId: string,
+  secret: string,
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(recipientId));
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}

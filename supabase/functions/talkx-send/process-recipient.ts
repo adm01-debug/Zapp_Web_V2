@@ -215,8 +215,8 @@ export interface ProcessRecipientDeps {
   evolutionKey: string;
   supabaseUrl: string;
   workerId: string;
-  trackingUrlFor: (recipientId: string) => string | undefined;
-  linksByLabelFor: (recipientId: string) => Record<string, string>;
+  trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+  linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
   customFieldsByContact: Map<string, Record<string, string>>;
   log: Logger;
   correlationId: string;
@@ -397,8 +397,8 @@ export async function processRecipient(
           contact as { name?: string; nickname?: string; company?: string; phone?: string; vendedor?: string },
           customValues,
           typeof campaign.schedule_timezone === "string" ? campaign.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-          trackingUrlFor(recipient.id as string),
-          linksByLabelFor(recipient.id as string),
+          await trackingUrlFor(recipient.id as string),
+          await linksByLabelFor(recipient.id as string),
         );
         calculatedMessage = personalized.text;
         recipientMissing = personalized.missing;
