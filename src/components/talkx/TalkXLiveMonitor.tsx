@@ -19,7 +19,6 @@ import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { TalkXOperationalTimeline } from './tracking/TalkXOperationalTimeline';
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
-import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
@@ -158,29 +157,6 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           {campaign.completed_at && <span>Concluída em {fmtDateTime(campaign.completed_at)}</span>}
         </div>
       </div>
-
-      {/* X146: faixa de KPIs ao vivo — o mesmo componente da tela 12 (Em andamento).
-          A fonte de opt-out por campanha (CAP-026) ainda não existe no front: sem o
-          número, o cartão Opt-outs não entra na faixa. */}
-      <TalkXLiveKpiRow
-        variant="tela11"
-        panel={{
-          sent: campaign.sent_count,
-          delivered: campaign.delivered_count,
-          replied: campaign.replied_count ?? 0,
-          failed: campaign.failed_count,
-          outcome_unknown: outcomeUnknown,
-          audience: campaign.total_recipients,
-          opt_outs: null,
-          forecast: null,
-          vs_yesterday: null,
-          spark: {
-            sent: chartData.map((point) => point.Enviadas),
-            delivered: chartData.map((point) => point.Entregues),
-          },
-        }}
-        onFilterOutcomeUnknown={() => { setStatusFilter('outcome_unknown'); setTab('recipients'); }}
-      />
 
       <div className="flex items-center gap-1 border-b border-border/60">
         {([['overview','Visão Geral'],['recipients','Destinatários'],['timeline','Linha do Tempo']] as [MonitorTab,string][]).map(([t,l]) => (
