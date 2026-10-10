@@ -126,6 +126,17 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
       return jsonErr(req, { ok: false, reason: 'report_rpc_failed', detail: reportErr?.message }, 502);
     }
 
+    // ── 3b. Detalhamentos do relatório via RPC talkx_campaign_report_breakdowns ──
+    const { data: breakdowns, error: breakdownsErr } = await supabase.rpc('talkx_campaign_report_breakdowns', {
+      p_campaign: campaignId,
+      p_from: from,
+      p_to: to,
+    });
+    if (breakdownsErr || !breakdowns) {
+      log.error('talkx_campaign_report_breakdowns RPC failed', { campaignId, error: breakdownsErr?.message });
+      return jsonErr(req, { ok: false, reason: 'breakdowns_rpc_failed', detail: breakdownsErr?.message }, 502);
+    }
+
     // ── 4. KPIs a partir do resultado da RPC ──────────────────────────────────
     const kpis = report.kpis ?? {};
     const total = kpis.total_recipients ?? 0;
