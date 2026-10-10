@@ -1,40 +1,91 @@
-import { useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
+  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Copy, Shield,
+  Check, RefreshCw, ChevronDown, ChevronUp, Database, Search, Sliders,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
+import { PrimaryButton, GhostButton, Pill, ProgressBar, VerTodasButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay } from './talkxShared';
+import { useTalkXSegments, emptyRules, newRule, RULE_FIELDS, RULE_OPS, type TalkXSegment, type SegmentRules, type SegmentRule, type SegmentRuleGroup, useAudienceEstimate, countAudience, splitRules, isRuleComplete } from '@/hooks/integrations/useTalkXSegments';
+import { IconTile, RailCard, MetaRow, StatusPill, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCard, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
-import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
-import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
-import { validateSegmentRules } from './segments/segmentValidation';
+import { parseTalkXSegmentsRoute, pushTalkXSegmentsRoute, replaceTalkXSegmentsRoute, type TalkXSegmentsRoute } from './segments/talkxSegmentsRoute';
 import { toast } from 'sonner';
 
 interface Props {
   onUseCampaign: (segmentId: string) => void;
 }
 
-type ViewMode = 'list' | 'edit';
-
-/** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
-interface EditingSeed extends SegmentBuilderContent { id: string | null }
+/** Cópia em edição no construtor; `segmentId` nulo = segmento novo. */
+type BuilderDraft = { segmentId: string | null; name: string; description: string; rules: SegmentRules };
 
 export function TalkXSegments({ onUseCampaign }: Props) {
-  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment } = useTalkXSegments();
+  const { segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates } = useTalkXSegments();
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
-  const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
-  const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
+  // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
+  // `route` é o que o endereço pede; `draft` é a cópia que o usuário está editando na tela.
+  const [route, setRoute] = useState<TalkXSegmentsRoute | null>(
+    () => parseTalkXSegmentsRoute(window.location.search).route,
+  );
+  const [draft, setDraft] = useState<BuilderDraft | null>(null);
+
+  const routedSegment = useMemo(
+    () => (route?.segmentId ? segments.find((s) => s.id === route.segmentId) ?? null : null),
+    [route, segments],
+  );
+
+  // O que o endereço pede para o construtor. Enquanto o segmento do endereço não
+  // chegou da consulta não há cópia para abrir (a tela mostra o esqueleto abaixo).
+  const routedDraft = useMemo<BuilderDraft | null>(() => {
+    if (!route) return null;
+    if (route.mode === 'new') return { segmentId: null, name: '', description: '', rules: emptyRules() };
+    return routedSegment
+      ? { segmentId: routedSegment.id, name: routedSegment.name, description: routedSegment.description ?? '', rules: routedSegment.rules }
+      : null;
+  }, [route, routedSegment]);
+
+  // A cópia local ganha do endereço: é ela que tem o que o usuário acabou de digitar.
+  const activeDraft = draft ?? routedDraft;
+
+  const syncFromBrowserHistory = useCallback(() => {
+    const routed = parseTalkXSegmentsRoute(window.location.search);
+    if (routed.needsNormalization) replaceTalkXSegmentsRoute(routed.route);
+    // O histórico é a fonte de verdade do que está aberto; a cópia da tela anterior
+    // não sobrevive à navegação.
+    setDraft(null);
+    setRoute(routed.route);
+  }, []);
+
+  useEffect(() => {
+    const initial = parseTalkXSegmentsRoute(window.location.search);
+    if (initial.needsNormalization) replaceTalkXSegmentsRoute(initial.route);
+    window.addEventListener('popstate', syncFromBrowserHistory);
+    return () => window.removeEventListener('popstate', syncFromBrowserHistory);
+  }, [syncFromBrowserHistory]);
+
+  // Id que a lista não devolve (apagado, de outra conta ou digitado à mão): a tela
+  // cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no histórico.
+  useEffect(() => {
+    if (!route?.segmentId || isLoading || routedSegment) return;
+    replaceTalkXSegmentsRoute(null);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
+  }, [isError, isLoading, route, routedSegment]);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -54,37 +105,57 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     bars: barsByDay(segments.map((s) => s.created_at)),
   }), [segments]);
 
-  /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
-  const existingNames = useMemo(
-    () => segments.filter((s) => s.id !== editing?.id).map((s) => s.name),
-    [segments, editing?.id],
-  );
+  const openBuilder = (target: BuilderDraft, nextRoute: TalkXSegmentsRoute) => {
+    setDraft(target);
+    setRoute(nextRoute);
+    pushTalkXSegmentsRoute(nextRoute);
+  };
+  const openNew = () => {
+    setSelected(null);
+    openBuilder({ segmentId: null, name: '', description: '', rules: emptyRules() }, { segmentId: null, mode: 'new' });
+  };
+  const openEdit = (s: TalkXSegment) => {
+    setSelected(s);
+    openBuilder({ segmentId: s.id, name: s.name, description: s.description ?? '', rules: s.rules }, { segmentId: s.id, mode: 'edit' });
+  };
+  // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
+  const closeBuilder = () => {
+    setDraft(null);
+    setRoute(null);
+    replaceTalkXSegmentsRoute(null);
+  };
+  // O primeiro toque do usuário materializa a cópia que o endereço pediu: o que estava
+  // em tela vira rascunho local antes de receber a alteração.
+  const patchDraft = (patch: Partial<BuilderDraft>) => {
+    setDraft((current) => {
+      const base = current ?? routedDraft;
+      if (!base) return current;
+      return { ...base, ...patch };
+    });
+  };
 
-  const openNew = () => { setSelected(null); setEditing({ id: null, name: '', description: '', rules: emptyRules() }); setMode('edit'); };
-  const openEdit = (s: TalkXSegment) => { setEditing({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }); setSelected(s); setMode('edit'); };
-  const closeBuilder = () => { setMode('list'); setEditing(null); };
-
-  const save = async (draft: SegmentBuilderContent) => {
-    if (saving) return;
-    if (!draft.name.trim()) return;
+  const save = async () => {
+    if (saving || !activeDraft) return;
+    const target = activeDraft;
+    if (!target.name.trim()) return;
     // Uma condição em branco não pode ir para o banco: recusa com o número exato
     // do que falta em vez de deixar o botão sem efeito e sem aviso.
-    const rulesError = validateSegmentRules(draft.rules);
-    if (rulesError) {
-      toast.error(rulesError);
+    const { incompleteCount } = splitRules(target.rules);
+    if (incompleteCount > 0) {
+      toast.error(`Complete ou remova ${incompleteCount} condição(ões) antes de publicar.`);
       return;
     }
     setSaving(true);
     try {
-      const count = await countAudience(draft.rules);
-      if (editing?.id) {
+      const count = await countAudience(target.rules);
+      if (target.segmentId) {
         // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
         // antes de salvar.
-        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        const saved = await updateSegment.mutateAsync({ id: target.segmentId, name: target.name, description: target.description || null, rules: target.rules, estimated_count: count });
         setSelected(saved);
       } else {
-        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        await createSegment.mutateAsync({ name: target.name, description: target.description || null, rules: target.rules, estimated_count: count });
       }
       closeBuilder();
     } catch (e) {
@@ -95,15 +166,36 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
-  if (mode === 'edit' && editing) {
-    return <TalkXSegmentBuilder
-      initial={editing}
-      isNew={!editing.id}
-      saving={saving}
-      existingNames={existingNames}
-      onSave={(draft) => void save(draft)}
-      onCancel={closeBuilder}
-    />;
+  if (activeDraft) {
+    return (
+      <div className="w-full min-w-0 space-y-4">
+        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Segmentos</span>
+        </nav>
+        <SegmentBuilder
+          name={activeDraft.name} setName={(v) => patchDraft({ name: v })}
+          desc={activeDraft.description} setDesc={(v) => patchDraft({ description: v })}
+          rules={activeDraft.rules} setRules={(r) => patchDraft({ rules: r })}
+          onSave={save} onCancel={closeBuilder} saving={saving} isNew={!activeDraft.segmentId}
+        />
+      </div>
+    );
+  }
+
+  if (route?.segmentId) {
+    // O endereço pede um segmento que a consulta ainda não devolveu: esqueleto no
+    // lugar da biblioteca, para o F5 do link direto não piscar a lista primeiro.
+    return (
+      <div className="min-h-full w-full min-w-0" role="status" aria-live="polite" aria-busy={isLoading} data-talkx-query="loading">
+        <span className="sr-only">Carregando conteúdo…</span>
+        <TalkXSkeletonRows rows={4} />
+      </div>
+    );
   }
 
   return (
@@ -254,5 +346,193 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
         <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
       </div>
     </RailCard>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Builder de segmento                                                */
+/* ------------------------------------------------------------------ */
+
+function SegmentBuilder({ name, setName, desc, setDesc, rules, setRules, onSave, onCancel, saving, isNew }: {
+  name: string; setName: (v: string) => void; desc: string; setDesc: (v: string) => void;
+  rules: SegmentRules; setRules: (r: SegmentRules) => void;
+  onSave: () => void; onCancel: () => void; saving: boolean; isNew: boolean;
+}) {
+  const { data: est, isFetching: estFetching } = useAudienceEstimate(rules, true);
+  // Condições em branco ficam fora da estimativa; a tela precisa dizer quantas
+  // antes de o usuário tentar publicar. O valor do hook cobre o mesmo cálculo,
+  // a derivação local mostra o aviso imediatamente (antes do fetch resolver).
+  const incompleteCount = est?.incompleteCount ?? splitRules(rules).incompleteCount;
+  // id do grupo ativo para o catálogo (last by default, atualizado a cada interação de grupo)
+  const [activeGroupId, setActiveGroupId] = React.useState<string | null>(null);
+  const [dragOverGroupId, setDragOverGroupId] = React.useState<string | null>(null);
+  const [draggingField, setDraggingField] = React.useState<string | null>(null);
+  const resolveGroupId = () => {
+    if (activeGroupId && rules.groups.some((g) => g.id === activeGroupId)) return activeGroupId;
+    return rules.groups[rules.groups.length - 1]?.id ?? null;
+  };
+
+  const addGroup = (match: 'and' | 'or') => {
+    const id = crypto.randomUUID();
+    setRules({ groups: [...rules.groups, { id, match, rules: [] }] });
+    setActiveGroupId(id);
+  };
+  const removeGroup = (gid: string) => {
+    setRules({ groups: rules.groups.filter((g) => g.id !== gid) });
+    if (activeGroupId === gid) setActiveGroupId(null);
+  };
+  const addRule = (gid: string, preset?: SegmentRule) => {
+    setActiveGroupId(gid);
+    setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: [...g.rules, preset ?? newRule()] }) });
+  };
+  const addFieldToGroup = (f: typeof RULE_FIELDS[number]) => {
+    const gid = resolveGroupId();
+    if (!gid) return;
+    const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp;
+    addRule(gid, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' });
+  };
+  const removeRule = (gid: string, rid: string) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.filter((r) => r.id !== rid) }) });
+  const updateRule = (gid: string, rid: string, patch: Partial<SegmentRule>) => setRules({ groups: rules.groups.map((g) => g.id !== gid ? g : { ...g, rules: g.rules.map((r) => r.id !== rid ? r : { ...r, ...patch }) }) });
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
+      <div className="min-w-0 space-y-4">
+        {/* Header */}
+        <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
+          <button type="button" onClick={onCancel} aria-label="Cancelar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><X className="w-4 h-4" /></button>
+          <IconTile icon={Bookmark} color="violet" size={48} />
+          <div className="min-w-0 flex-1">
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do segmento…" className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
+            <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Adicione uma descrição para este segmento…" className="text-[13px] border-0 bg-transparent p-0 h-auto mt-0.5 focus-visible:ring-0 text-foreground-secondary placeholder:text-muted-foreground/40" />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <GhostButton onClick={onCancel}>Cancelar</GhostButton>
+            <PrimaryButton icon={saving ? RefreshCw : Check} onClick={onSave} disabled={saving || !name.trim()}>{isNew ? 'Publicar segmento' : 'Salvar'}</PrimaryButton>
+          </div>
+        </div>
+
+        {/* Construtor de regras */}
+        <section className="rounded-2xl bg-card border border-border/70 p-4 md:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div><p className="text-[15px] font-bold text-foreground">Regras do segmento</p><p className="text-xs text-foreground-secondary">Defina os filtros e condições para o seu segmento</p></div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setRules(emptyRules())} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Limpar tudo</button>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {rules.groups.map((g, gi) => (
+              <div
+                key={g.id}
+                className={cn('rounded-xl border overflow-hidden transition-colors', dragOverGroupId === g.id ? 'border-primary/60 bg-primary/10' : 'border-border/60 bg-input/20')}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOverGroupId(g.id); }}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
+                onDrop={(e) => { e.preventDefault(); const fieldVal = e.dataTransfer.getData('text/plain'); const f = RULE_FIELDS.find((x) => x.value === fieldVal); if (f) { setActiveGroupId(g.id); const op = (RULE_OPS[f.kind]?.[0]?.value ?? 'eq') as import('@/hooks/integrations/useTalkXSegments').RuleOp; addRule(g.id, { id: crypto.randomUUID(), field: f.value, op, value: f.options?.[0] ?? '' }); } setDragOverGroupId(null); setDraggingField(null); }}
+              >
+                <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-muted/20">
+                  <span className="w-7 h-7 rounded-lg bg-primary/20 text-primary-glow text-xs font-bold flex items-center justify-center">{['E','O','G'][Math.min(gi,2)]}</span>
+                  <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
+                  <Select value={g.match} onValueChange={(v) => setRules({ groups: rules.groups.map((x) => x.id !== g.id ? x : { ...x, match: v as 'and' | 'or' }) })}>
+                    <SelectTrigger className="h-7 w-[60px] bg-input/40 border-border/60 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="and">AND</SelectItem><SelectItem value="or">OR</SelectItem></SelectContent>
+                  </Select>
+                  {rules.groups.length > 1 && <button type="button" onClick={() => removeGroup(g.id)} aria-label="Remover grupo" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red"><X className="w-3.5 h-3.5" /></button>}
+                </div>
+                <div className="p-4 space-y-2.5">
+                  {g.rules.map((r) => <RuleRow key={r.id} rule={r} onChange={(p) => updateRule(g.id, r.id, p)} onRemove={() => removeRule(g.id, r.id)} />)}
+                  {g.rules.length === 0 && <p className="text-xs text-muted-foreground italic py-2 text-center">Nenhuma condição adicionada. Clique em + Adicionar condição.</p>}
+                  <button type="button" onClick={() => addRule(g.id)} className="h-8 px-3 rounded-lg border border-dashed border-primary/40 text-primary-glow text-xs font-medium hover:bg-primary/10 flex items-center gap-1.5 w-full justify-center">+ Adicionar condição</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 mt-4">
+            <button type="button" onClick={() => addGroup('and')} className="h-9 px-4 rounded-xl border border-primary/30 bg-primary/10 text-primary-glow text-xs font-semibold hover:bg-primary/15 flex items-center gap-1.5">+ Adicionar grupo (AND)</button>
+            <button type="button" onClick={() => addGroup('or')} className="h-9 px-4 rounded-xl border border-border/70 bg-input/30 text-foreground-secondary text-xs font-medium hover:bg-muted/50 flex items-center gap-1.5">◎ Adicionar grupo (OR)</button>
+          </div>
+        </section>
+
+      </div>
+
+      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
+      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+        <p className="text-[13px] font-bold text-foreground">Filtros</p>
+        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+        {(['basico','comportamento','comercial','lgpd'] as const).map((cat) => (
+          <div key={cat}>
+            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+            <div className="flex flex-col gap-1">
+              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  draggable
+                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
+                  onClick={() => addFieldToGroup(f)}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                >
+                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </aside>
+
+      {/* Resumo do segmento */}
+      <div className="space-y-4 min-w-0">
+        <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
+          <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
+          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
+          <p className="text-xs text-foreground-secondary">contatos</p>
+          {incompleteCount > 0 && (
+            <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
+          )}
+          {est?.sample && est.sample.length > 0 && (
+            <div className="mt-3">
+              <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos (5)</p>
+              {est.sample.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 py-1">
+                  <InitialsAvatar name={c.name || '?'} size={28} />
+                  <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.phone}</p></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </RailCard>
+      </div>
+    </div>
+  );
+}
+
+function RuleRow({ rule, onChange, onRemove }: { rule: SegmentRule; onChange: (p: Partial<SegmentRule>) => void; onRemove: () => void }) {
+  const fieldDef = RULE_FIELDS.find((f) => f.value === rule.field);
+  const ops = RULE_OPS[fieldDef?.kind ?? 'text'] ?? RULE_OPS.text;
+  const needsValue = !['is_set', 'is_empty'].includes(rule.op);
+  // Condição ainda em branco não entra na estimativa: a borda de aviso mostra
+  // qual linha precisa ser completada (ou removida) antes de publicar.
+  const incomplete = !isRuleComplete(rule);
+  return (
+    <div className={cn('flex items-center gap-2 flex-wrap rounded-lg', incomplete && 'border border-dash-amber p-2')}>
+      <Select value={rule.field} onValueChange={(v) => onChange({ field: v as never, op: (RULE_OPS[RULE_FIELDS.find((f) => f.value === v)?.kind ?? 'text']?.[0]?.value ?? 'eq') as never, value: '' })}>
+        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
+        <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={rule.op} onValueChange={(v) => onChange({ op: v as never })}>
+        <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
+        <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+      </Select>
+      {needsValue && (
+        fieldDef?.options ? (
+          <Select value={rule.value} onValueChange={(v) => onChange({ value: v })}>
+            <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[130px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
+            <SelectContent>{fieldDef.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+          </Select>
+        ) : (
+          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-xs w-[130px]" />
+        )
+      )}
+      <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
+    </div>
   );
 }
