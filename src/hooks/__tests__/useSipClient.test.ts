@@ -321,7 +321,7 @@ describe('useSipClient', () => {
     expect(mockMakeURI).not.toHaveBeenCalled();
   });
 
-  it('shows SIP_PASSWORD config toast when invoke returns 503', async () => {
+  it('shows admin toast when invoke returns 503', async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({
       data: null,
       error: { context: { status: 503, code: 'SIP_NOT_CONFIGURED' } },
@@ -330,7 +330,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('administrador'));
     expect(result.current.sipStatus).toBe('idle');
   });
 
@@ -347,13 +347,13 @@ describe('useSipClient', () => {
     expect(result.current.sipStatus).toBe('idle');
   });
 
-  it('shows SIP_PASSWORD config toast when invoke returns no error but no password', async () => {
+  it('shows admin toast when invoke returns no error but no password', async () => {
     mockFunctionsInvoke.mockResolvedValueOnce({ data: null, error: null });
     const { result } = renderHook(() => useSipClient());
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('administrador'));
     expect(result.current.sipStatus).toBe('idle');
   });
 
