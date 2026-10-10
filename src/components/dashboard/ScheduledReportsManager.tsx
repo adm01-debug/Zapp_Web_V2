@@ -101,7 +101,7 @@ export function ScheduledReportsManager() {
               <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar relatórios..." className="h-10 pl-9 rounded-lg bg-input/40 border-border/70 text-[13px]" />
             </div>
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-              <SelectTrigger className="h-10 w-[170px] text-[13px] rounded-lg bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Filtrar por status" className="h-10 w-[170px] text-[13px] rounded-lg bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="active">Ativos</SelectItem>
@@ -109,14 +109,14 @@ export function ScheduledReportsManager() {
               </SelectContent>
             </Select>
             <Select value={freqFilter} onValueChange={setFreqFilter}>
-              <SelectTrigger className="h-10 w-[190px] text-[13px] rounded-lg bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Filtrar por frequência" className="h-10 w-[190px] text-[13px] rounded-lg bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as frequências</SelectItem>
                 {Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-              <SelectTrigger className="h-10 w-[160px] text-[13px] rounded-lg bg-input/40 border-border/70 ml-auto gap-2"><ArrowUpDown className="w-4 h-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Ordenar relatórios" className="h-10 w-[160px] text-[13px] rounded-lg bg-input/40 border-border/70 ml-auto gap-2"><ArrowUpDown className="w-4 h-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Mais recentes</SelectItem>
                 <SelectItem value="name">Nome (A-Z)</SelectItem>
@@ -159,7 +159,7 @@ export function ScheduledReportsManager() {
                         <span>·</span><span>{cfg.recipients?.length ?? 0} destinatário(s)</span>
                       </div>
                     </div>
-                    <Switch checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
+                    <Switch aria-label={`Ativar relatório ${cfg.name}`} checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
                     <button onClick={() => deleteConfig.mutate(cfg.id)} title="Excluir" className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </button>
@@ -226,7 +226,7 @@ export function ScheduledReportsManager() {
                   <p className="text-sm font-bold text-foreground">Dica</p>
                   <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">Comece com o relatório semanal de Resumo Executivo para receber os principais indicadores da sua operação.</p>
                 </div>
-                <button onClick={() => setTipDismissed(true)} className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-muted/60">
+                <button onClick={() => setTipDismissed(true)} aria-label="Dispensar dica" className="shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-muted/60">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
@@ -243,13 +243,13 @@ export function ScheduledReportsManager() {
             <div><label className="text-[13px] font-medium mb-1 block">Nome do relatório</label><Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ex: Relatório semanal de performance" className="bg-input border-border" /></div>
             <div><label className="text-[13px] font-medium mb-1 block">Tipo</label>
               <Select value={formType} onValueChange={setFormType}>
-                <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Tipo" className="bg-input border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(REPORT_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div><label className="text-[13px] font-medium mb-1 block">Frequência</label>
               <Select value={formFrequency} onValueChange={setFormFrequency}>
-                <SelectTrigger className="bg-input border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Frequência" className="bg-input border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
