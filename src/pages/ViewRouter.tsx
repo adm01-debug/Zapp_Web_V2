@@ -12,7 +12,6 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
 
 import * as Views from './lazyViews';
-import { TASKS_ROUTE_PROPS } from './viewRouteProps';
 import { TALKX_KIT_VIEW_ID, isTalkXKitEnabled } from '@/components/talkx/kit/forcedState';
 
 /**
