@@ -86,12 +86,33 @@ for col in channel icon interactive media_file_name media_size_bytes media_width
 done
 printf '[PASS] BLOCO A — sem a migration alvo as 8 colunas nao existem\n'
 
+# PRE-MIGRATION (criterio 1, leitura igual): semeia 2+ linhas DEPOIS
+# da base 20260908120000 e ANTES da migration alvo, e guarda a leitura.
+psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, media_type, status) VALUES ('pre-migration-a', 'conteudo-a', 'image', 'approved'), ('pre-migration-b', 'conteudo-b', 'video', 'draft')" >/dev/null || fail "PRE: seed antes da migration alvo deveria ter sucedido"
+before_pre="$(psql_test -Atqc "SELECT id::text || '|' || name || '|' || content || '|' || COALESCE(media_type,'') || '|' || status FROM public.talkx_templates ORDER BY id")"
+[[ -n "$before_pre" ]] || fail "PRE: leitura pre-migration vazia"
+printf '[PASS] PRE - 2 linhas semeadas antes da migration alvo (leitura guardada)
+'
+
 # Migration alvo (arquivo REAL).
 [[ -f "$migration" ]] || fail "Arquivo de migration nao encontrado: $migration"
 psql_test < "$migration" >/dev/null || fail "Falha ao aplicar a migration alvo"
 
 # Em producao o GRANT vem das migrations de papeis da base; aqui o minimo para a prova de papel real.
 psql_test -Atqc "GRANT SELECT ON public.talkx_templates TO authenticated" >/dev/null || fail "Falha ao conceder SELECT a authenticated"
+
+# LEITURA IGUAL: as linhas que ja existiam antes da migration sao lidas com
+# os mesmos valores depois - como postgres e como authenticated
+# (BEGIN + SET LOCAL + ROLLBACK).
+after_pre="$(psql_test -Atqc "SELECT id::text || '|' || name || '|' || content || '|' || COALESCE(media_type,'') || '|' || status FROM public.talkx_templates ORDER BY id")"
+[[ "$after_pre" == "$before_pre" ]] || fail "PRE: leitura como postgres difere da pre-migration"
+jwt_pre='22222222-2222-2222-2222-222222222222'
+as_auth_pre="$(psql_test -Atqc "BEGIN; SET LOCAL ROLE authenticated; SET LOCAL \"request.jwt.claim.sub\" = '${jwt_pre}'; SELECT id::text || '|' || name || '|' || content || '|' || COALESCE(media_type,'') || '|' || status FROM public.talkx_templates ORDER BY id; ROLLBACK;")"
+[[ "$as_auth_pre" == "$before_pre" ]] || fail "PRE: leitura como authenticated difere da pre-migration"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.talkx_templates WHERE name IN ('pre-migration-a','pre-migration-b') AND channel='whatsapp' AND archived_at IS NULL")" == "2" ]] || fail "PRE: linhas antigas sem channel whatsapp e archived_at nulo"
+printf '[PASS] PRE - leitura pre-migration identica como postgres e authenticated
+'
+
 
 # BLOCO B — correcao: colunas existem, defaults/checks valem, leitura igual, aditiva.
 for col in channel icon interactive media_file_name media_size_bytes media_width media_height archived_at; do

@@ -10,7 +10,7 @@
 --   ALTER TABLE public.talkx_templates DROP COLUMN IF EXISTS interactive;
 --   ALTER TABLE public.talkx_templates DROP COLUMN IF EXISTS icon;
 --   ALTER TABLE public.talkx_templates DROP COLUMN IF EXISTS channel;
--- Item N-018 (P2 · banco): templates Talk X sem canal, ícone, metadados de mídia e
+-- Item N-126 (P3 · banco): templates Talk X sem canal, ícone, metadados de mídia e
 -- arquivamento — colunas ausentes que o app precisa para suportar canais, ícones,
 -- mídia rica e arquivamento de templates.
 

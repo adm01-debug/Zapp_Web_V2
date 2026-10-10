@@ -933,7 +933,7 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
-      - name: Provar colunas channel, icon, interactive e mídia em talkx_templates (N-018)
+      - name: Provar colunas channel, icon, interactive e mídia em talkx_templates (N-126)
         env:
           TALKX_TEMPLATE_COLUMNS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
