@@ -70,6 +70,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     },
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => {},
+    rpc: (nome: string, args?: Record<string, unknown>) => {
+      f.arestas.push({ table: `rpc:${nome}`, op: 'rpc', payload: args });
+      return Promise.resolve({ data: { ok: true, invite_id: 'inv-1', code: 'SRV000000001' }, error: null });
+    },
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
   },
 }));
@@ -136,16 +140,28 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
     expect(chaves.filter((chave) => !colunasReais('team_messages').includes(chave))).toEqual([]);
   });
 
-  it('useCreateDepartmentInvite grava so colunas que existem em department_invites', async () => {
+  // SL-069/F76: o convite deixou de ser INSERT direto em `department_invites` (tabela
+  // aposentada) e passou a ser a RPC `create_department_invite`. O esperado continua
+  // vindo do snapshot do banco: a funcao tem de existir la e a chamada do hook so pode
+  // levar os parametros que a assinatura declara.
+  it('useCreateDepartmentInvite chama so a RPC que existe no banco, com os parametros declarados e sem INSERT direto', async () => {
     const { result } = renderHook(() => useCreateDepartmentInvite('dep-1'), { wrapper: TestQueryWrapper });
 
     await act(async () => {
       await result.current.mutateAsync('Ana');
     });
 
-    const chaves = chavesDe(ultimaAresta('department_invites', 'insert').payload);
-    expect(chaves.length).toBeGreaterThan(0);
-    expect(chaves.filter((chave) => !colunasReais('department_invites').includes(chave))).toEqual([]);
+    const assinatura = Object.keys(manifesto.functions).find((chave) => chave.startsWith('f:create_department_invite('));
+    expect(assinatura).toBeDefined();
+    const parametrosReais = String(assinatura)
+      .slice(String(assinatura).indexOf('(') + 1, -1)
+      .split(',')
+      .map((parametro) => parametro.trim().split(' ')[0])
+      .sort();
+
+    const chamada = ultimaAresta('rpc:create_department_invite', 'rpc');
+    expect(chavesDe(chamada.payload)).toEqual(parametrosReais);
+    expect(f.arestas.some((a) => a.op === 'insert' && a.table.startsWith('department_invit'))).toBe(false);
   });
 
   it('a leitura de mensagens passa por RPC que existe no snapshot do banco', async () => {
