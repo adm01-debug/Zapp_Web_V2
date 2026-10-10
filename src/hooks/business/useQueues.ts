@@ -25,6 +25,9 @@ export interface QueueMember {
 export interface QueueWithMembers extends Queue {
   members: QueueMember[];
   waiting_count: number;
+  pendingMessageCount: number;
+  oldestWaitingAt: string | null;
+  waitMinutes: number | null;
 }
 
 export function useQueues() {

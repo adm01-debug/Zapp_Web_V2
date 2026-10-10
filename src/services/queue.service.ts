@@ -41,31 +41,41 @@ export class QueueService {
   /**
    * Métricas por fila para cálculo de alertas: mensagens pendentes e
    * timestamp do contato mais antigo aguardando.
+   *
+   * Usa as funções RPC existentes (talk_me_list_queues e talk_me_list_waiting)
+   * que já computam waiting_since e pending_message_count a partir da tabela
+   * messages — não é possível consultar essas colunas diretamente em
+   * contacts pois são valores derivados, não colunas armazenadas.
    */
   static async fetchQueueMetrics(queueIds: string[]): Promise<Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>> {
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('queue_id, pending_message_count, waiting_since')
-      .in('queue_id', queueIds)
-      .is('assigned_to', null)
-      .is('deleted_at', null)
-      .not('conversation_status', 'in', '(resolved,archived)');
-    if (error) throw error;
-
     const metrics = new Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>();
     queueIds.forEach(id => metrics.set(id, { pendingMessageCount: 0, oldestWaitingAt: null }));
 
-    (data ?? []).forEach(contact => {
-      const existing = metrics.get(contact.queue_id);
-      if (!existing) return;
-      existing.pendingMessageCount += (contact.pending_message_count ?? 0);
-      if (contact.waiting_since) {
-        const contactDate = new Date(contact.waiting_since);
-        if (!existing.oldestWaitingAt || contactDate < new Date(existing.oldestWaitingAt)) {
-          existing.oldestWaitingAt = contact.waiting_since;
-        }
+    // oldest_waiting_at por fila
+    const { data: queuesData, error: queuesError } = await supabase
+      .rpc('talk_me_list_queues');
+    if (queuesError) throw queuesError;
+
+    for (const q of (queuesData ?? [])) {
+      const existing = metrics.get(q.queue_id);
+      if (existing) {
+        existing.oldestWaitingAt = q.oldest_waiting_at ?? null;
       }
-    });
+    }
+
+    // pending_message_count por fila — soma de pending_message_count de
+    // cada contato aguardando na fila (via talk_me_list_waiting).
+    for (const queueId of queueIds) {
+      const { data: waitingData, error: waitingError } = await supabase
+        .rpc('talk_me_list_waiting', { p_queue_id: queueId, p_limit: 1000 });
+      if (waitingError) throw waitingError;
+
+      const existing = metrics.get(queueId);
+      if (!existing) continue;
+      for (const contact of (waitingData ?? [])) {
+        existing.pendingMessageCount += (contact.pending_message_count ?? 0);
+      }
+    }
 
     return metrics;
   }

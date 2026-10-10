@@ -26,38 +26,16 @@ const mockGoals = [
 
 const mockWaitingCounts: Record<string, number> = { q1: 15, q2: 0 };
 
-// Métricas por fila para cálculo de alertas de wait_time e messages_pending.
-// Cada entrada representa um contato na tabela contacts (como o fetchQueueMetrics espera).
 const mockContactsMetrics = [
   { queue_id: 'q1', pending_message_count: 60, waiting_since: new Date(Date.now() - 40 * 60000).toISOString() },
   { queue_id: 'q2', pending_message_count: 5, waiting_since: null },
 ];
 
-function contactsCountBuilder(queueIdRef: { id: string }) {
-  return {
-    eq: vi.fn((column: string, value: unknown) => {
-      if (column === 'queue_id') queueIdRef.id = String(value);
-      return contactsCountBuilder(queueIdRef);
-    }),
-    is: vi.fn(() => contactsCountBuilder(queueIdRef)),
-    not: vi.fn(() =>
-      Promise.resolve({ count: mockWaitingCounts[queueIdRef.id] ?? 0, error: null }),
-    ),
-  };
-}
-
-function contactsMetricsBuilder(queueIdRef: { id: string }) {
-  return {
-    in: vi.fn((column: string, values: unknown[]) => {
-      if (column === 'queue_id') queueIdRef.id = String(values[0]);
-      return contactsMetricsBuilder(queueIdRef);
-    }),
-    is: vi.fn(() => contactsMetricsBuilder(queueIdRef)),
-    not: vi.fn(() =>
-      Promise.resolve({ data: mockContactsMetrics, error: null }),
-    ),
-  };
-}
+// Métricas agregadas por fila vindas de talk_me_list_queues (oldest_waiting_at).
+const mockQueuesMetrics = [
+  { queue_id: 'q1', queue_name: 'Suporte', queue_color: '#3B82F6', waiting_count: 15, oldest_waiting_at: new Date(Date.now() - 40 * 60000).toISOString() },
+  { queue_id: 'q2', queue_name: 'Vendas', queue_color: '#10B981', waiting_count: 0, oldest_waiting_at: null },
+];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -86,18 +64,54 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'contacts') {
         return {
-          select: vi.fn((columns?: string | object) => {
-            // Se select chamado com colunas específicas (não 'id' com count), é fetchQueueMetrics
-            if (typeof columns === 'string' && columns !== 'id') {
-              return contactsMetricsBuilder({ id: '' });
+          select: vi.fn((columns?: string | object, options?: object) => {
+            // fetchWaitingCounts usa { count: 'exact', head: true }
+            if (options && (options as { count?: string }).count === 'exact') {
+              return {
+                eq: vi.fn((col: string, val: unknown) => {
+                  if (col === 'queue_id') {
+                    const qid = String(val);
+                    return {
+                      is: vi.fn(() => ({
+                        is: vi.fn(() => ({
+                          not: vi.fn(() =>
+                            Promise.resolve({ count: mockWaitingCounts[qid] ?? 0, error: null }),
+                          ),
+                        })),
+                      })),
+                    };
+                  }
+                  return {};
+                }),
+              };
             }
-            return contactsCountBuilder({ id: '' });
+            // fetchQueueMetrics — retorna métricas por contato (pending_message_count, waiting_since)
+            return {
+              in: vi.fn(() => ({
+                is: vi.fn(() => ({
+                  not: vi.fn(() =>
+                    Promise.resolve({ data: mockContactsMetrics, error: null }),
+                  ),
+                })),
+              })),
+            };
           }),
         };
       }
       return {
         select: vi.fn().mockResolvedValue({ data: [], error: null }),
       };
+    }),
+    rpc: vi.fn().mockImplementation((fn: string, params?: object) => {
+      if (fn === 'talk_me_list_queues') {
+        return Promise.resolve({ data: mockQueuesMetrics, error: null });
+      }
+      if (fn === 'talk_me_list_waiting') {
+        const queueId = (params as { p_queue_id?: string })?.p_queue_id;
+        const contacts = mockContactsMetrics.filter((m: { queue_id: string }) => m.queue_id === queueId);
+        return Promise.resolve({ data: contacts, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
     }),
   },
 }));
