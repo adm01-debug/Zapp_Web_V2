@@ -1,10 +1,11 @@
 -- talkx_blacklist_realtime_column_scope
--- Rollback: do $$ begin if exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'talkx_blacklist') then alter publication supabase_realtime drop table public.talkx_blacklist; end if; end $$;
+-- Rollback: alter publication supabase_realtime drop table public.talkx_blacklist;
 --
 -- Nota de rollback: retira public.talkx_blacklist da publicacao supabase_realtime, devolvendo o
 -- estado anterior (tabela NAO publicada). Nenhuma outra mudanca e desfeita porque
 -- a migration nao altera tabela, policy, GRANT nem dado.
--- `alter publication ... drop table` nao aceita IF EXISTS; por isso a forma guardada acima.
+-- `alter publication ... drop table` nao aceita IF EXISTS: o rollback pressupoe
+-- a tabela publicada (estado pos-migration, o mesmo em que o caso (6) o executa).
 --
 -- X069p1 / Realtime: a lista de supressao (public.talkx_blacklist) precisa atualizar as
 -- telas abertas quando um telefone entra ou sai da lista. Para isso ela passa a integrar a
