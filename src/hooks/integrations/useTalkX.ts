@@ -472,6 +472,15 @@ export function useTalkX() {
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
+  const sendTest = useCallback(async (connectionId: string, templateContent: string, phone: string, mediaUrl?: string | null, mediaType?: string | null, idempotencyKey?: string | null) => {
+    const { data, error } = await supabase.functions.invoke('talkx-send', {
+      body: { action: 'test', connectionId, templateContent, phone, mediaUrl, mediaType, idempotencyKey },
+    });
+    if (error) throw error;
+    assertTalkXActionAccepted(data);
+    return data as { success: boolean; provider_message_id?: string };
+  }, []);
+
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
@@ -495,6 +504,7 @@ export function useTalkX() {
     startCampaign,
     pauseCampaign,
     cancelCampaign,
+    sendTest,
     refetchCampaigns: campaignsQuery.refetch,
   };
 }
