@@ -96,7 +96,7 @@ export function ContactCard({
       <div className="flex items-start gap-3">
         <Avatar data-testid="contact-avatar" className="w-16 h-16 shrink-0 ring-2 ring-border/70">
           <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-          <AvatarFallback className={cn('font-bold text-lg', avatarColors.bg, avatarColors.text)}>
+          <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
             {getInitials(contact.name)}
           </AvatarFallback>
         </Avatar>
@@ -120,7 +120,7 @@ export function ContactCard({
             )}
           </div>
           {company && (
-            <p className="text-sm text-muted-foreground truncate mt-1">{company}</p>
+            <p className="text-xs text-muted-foreground truncate mt-1">{company}</p>
           )}
         </div>
       </div>
@@ -128,7 +128,7 @@ export function ContactCard({
       {/* Contact info — space-y-1.5 per Navy plan spec */}
       <div className="mt-3 space-y-1.5">
         {contact.phone && (
-          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 text-2xs" onClick={(e) => e.stopPropagation()}>
             <Phone className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
             <a
               href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
@@ -141,7 +141,7 @@ export function ContactCard({
           </div>
         )}
         {contact.email && (
-          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 text-2xs" onClick={(e) => e.stopPropagation()}>
             <Mail className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
             <a
               href={`mailto:${contact.email}`}
