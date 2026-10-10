@@ -315,3 +315,109 @@ Deno.test("item 62: metodo fora de GET/POST responde 405 sem tocar a origem", as
   assertEquals(registro.origens, []);
   assertEquals(registro.tokens, []);
 });
+
+Deno.test("T73: origem permitida na resposta de sucesso usa o origin validado, nunca '*'", async () => {
+  const registro = novoRegistro();
+  const url = new URL(URL_FUNCAO);
+  url.searchParams.set("callId", "c1");
+
+  const res = await handleGetCallRecording(
+    new Request(url.toString(), {
+      method: "GET",
+      headers: {
+        "x-forwarded-for": "203.0.113.9",
+        Authorization: TOKEN,
+        Origin: "https://zapp-web-v2.vercel.app",
+      },
+    }),
+    deps({}, registro),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(registro.origens.length, 1);
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "https://zapp-web-v2.vercel.app");
+  assert(res.headers.get("Access-Control-Allow-Origin") !== "*");
+});
+
+Deno.test("T73: origem fora da allowlist nao recebe Access-Control-Allow-Origin", async () => {
+  const registro = novoRegistro();
+  const urlFora = new URL(URL_FUNCAO);
+  urlFora.searchParams.set("callId", "c1");
+  const pedidoFora = new Request(urlFora.toString(), {
+    method: "GET",
+    headers: {
+      "x-forwarded-for": "203.0.113.1",
+      Origin: "https://evil-site.com",
+      Authorization: TOKEN,
+    },
+  });
+
+  const res = await handleGetCallRecording(pedidoFora, deps({}, registro));
+
+  assertEquals(res.status, 200);
+  assert(res.headers.get("Access-Control-Allow-Origin") === null, "origin fora da allowlist nao recebe o header CORS");
+});
+
+Deno.test("T73: cabeçalhos de Range são preservados na resposta", async () => {
+  const registro = novoRegistro();
+  const url = new URL(URL_FUNCAO);
+  url.searchParams.set("callId", "c1");
+
+  const res = await handleGetCallRecording(
+    new Request(url.toString(), {
+      method: "GET",
+      headers: {
+        "x-forwarded-for": "203.0.113.1",
+        Authorization: TOKEN,
+        Origin: "https://zapp-web-v2.vercel.app",
+        Range: "bytes=0-4",
+      },
+    }),
+    deps({}, registro),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "https://zapp-web-v2.vercel.app");
+  assertEquals(res.headers.get("Accept-Ranges"), "bytes");
+  assertEquals(res.headers.get("Content-Range"), "bytes 0-4/5");
+  assertFalse(JSON.stringify(Array.from(res.headers.entries())).includes(URL_GRAVACAO));
+});
+
+Deno.test("T73: OPTIONS de origem permitida devolve o origin validado e Allow-Headers com range", async () => {
+  const res = await handleGetCallRecording(
+    new Request(URL_FUNCAO, {
+      method: "OPTIONS",
+      headers: {
+        "x-forwarded-for": "203.0.113.20",
+        Origin: "https://zapp-web-v2.vercel.app",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "range",
+      },
+    }),
+    deps({}, novoRegistro()),
+  );
+
+  assertEquals(res.status, 200);
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "https://zapp-web-v2.vercel.app");
+  assert(res.headers.get("Access-Control-Allow-Origin") !== "*");
+  assert(
+    (res.headers.get("Access-Control-Allow-Headers") ?? "").toLowerCase().includes("range"),
+    "o preflight precisa liberar o header Range",
+  );
+});
+
+Deno.test("T73: OPTIONS de origem fora da allowlist nao recebe Access-Control-Allow-Origin", async () => {
+  const res = await handleGetCallRecording(
+    new Request(URL_FUNCAO, {
+      method: "OPTIONS",
+      headers: {
+        "x-forwarded-for": "203.0.113.21",
+        Origin: "https://evil-site.com",
+        "Access-Control-Request-Method": "GET",
+      },
+    }),
+    deps({}, novoRegistro()),
+  );
+
+  assert(res.headers.get("Access-Control-Allow-Origin") === null, "origin fora da allowlist nao recebe o header CORS no preflight");
+});
