@@ -132,7 +132,7 @@ export function LoginBlockedLogPanel() {
         {loading ? (
           <div className="space-y-2" aria-busy="true">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
+              <div key={i} className="h-16 bg-muted/50 motion-safe:animate-pulse rounded-lg" />
             ))}
           </div>
         ) : erro ? (
