@@ -36,10 +36,11 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     MESSAGE_TEMPLATES: [],
     MEDIA_TYPES: [],
     DEFAULT_SCHEDULE_TIMEZONE: 'America/Sao_Paulo',
-    // X124 — limite do nome usado pelo passo 1 (`StepAudience`): o mock do
-    // módulo precisa dos mesmos valores que o hook real exporta.
     CAMPAIGN_NAME_MIN_LENGTH: 3,
     CAMPAIGN_NAME_MAX_LENGTH: 200,
+    // X131 — o wizard agora lê `completedRules` do hook para decidir se o
+    // resumo está habilitado; o mock do layout precisa exportar a função.
+    completedRules: (rules: { groups: unknown[] }) => rules,
   };
 });
 
