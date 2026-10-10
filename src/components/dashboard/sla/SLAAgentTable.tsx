@@ -60,7 +60,7 @@ export function SLAAgentTable({ agents }: SLAAgentTableProps) {
                 className="w-[200px] h-9 pl-9 pr-3 rounded-lg bg-input/40 border border-border/70 text-[13px] placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
             </div>
-            <CardSelect value={sort} onValueChange={(v) => { setSort(v); setPage(0); }} options={SORT_OPTIONS} testid="sla-sort-select" />
+            <CardSelect name="Ordenar SLA" value={sort} onValueChange={(v) => { setSort(v); setPage(0); }} options={SORT_OPTIONS} testid="sla-sort-select" />
           </div>
         )}
       />

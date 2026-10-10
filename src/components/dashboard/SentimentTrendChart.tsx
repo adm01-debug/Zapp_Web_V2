@@ -146,7 +146,7 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
             right={(
               <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-[13px] text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <CardSelect value={days} onValueChange={(v) => setDays(v as typeof days)} options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} />
+                <CardSelect value={days} onValueChange={(v) => setDays(v as typeof days)} options={PERIOD_OPTIONS.map((o) => ({ value: o.value, label: o.label }))} name="Período" />
               </div>
             )}
           />

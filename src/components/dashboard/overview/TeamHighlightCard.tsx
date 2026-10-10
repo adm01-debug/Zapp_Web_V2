@@ -34,6 +34,7 @@ export function TeamHighlightCard({ agents, timeRange, onTimeRangeChange, slaRat
         right={(
           <CardSelect
             testid="team-select"
+            name="Período equipe"
             value={timeRange}
             onValueChange={(v) => onTimeRangeChange(v as 'today' | 'week' | 'month')}
             options={[{ value: 'today', label: 'Hoje' }, { value: 'week', label: 'Semana' }, { value: 'month', label: 'Mês' }]}

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { render, screen, fireEvent, within, cleanup } from '@testing-library/react';
 import { Target } from 'lucide-react';
-import { DashboardCard, SectionHeader, VerTodasButton, StatusChip, Pill } from '../overview/DashboardCard';
+import { DashboardCard, SectionHeader, VerTodasButton, StatusChip, Pill, CardSelect } from '../overview/DashboardCard';
 
 describe('DashboardCard', () => {
   it('renderiza os filhos dentro do card', () => {
@@ -32,6 +32,31 @@ describe('VerTodasButton', () => {
     render(<VerTodasButton onClick={onClick} />);
     fireEvent.click(screen.getByTestId('ver-todas'));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CardSelect', () => {
+  it('aplica aria-label quando name é fornecido', () => {
+    render(
+      <CardSelect
+        value="week"
+        onValueChange={vi.fn()}
+        options={[{ value: 'week', label: 'Esta semana' }]}
+        name="Período CSAT"
+      />
+    );
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-label', 'Período CSAT');
+  });
+
+  it('não aplica aria-label quando name não é fornecido', () => {
+    render(
+      <CardSelect
+        value="week"
+        onValueChange={vi.fn()}
+        options={[{ value: 'week', label: 'Esta semana' }]}
+      />
+    );
+    expect(screen.getByRole('combobox')).not.toHaveAttribute('aria-label');
   });
 });
 

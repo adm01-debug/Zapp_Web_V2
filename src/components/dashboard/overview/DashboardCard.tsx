@@ -154,12 +154,13 @@ interface CardSelectProps {
   onValueChange: (value: string) => void;
   options: CardSelectOption[];
   testid?: string;
+  name?: string;
 }
 
-export function CardSelect({ value, onValueChange, options, testid }: CardSelectProps) {
+export function CardSelect({ value, onValueChange, options, testid, name }: CardSelectProps) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger data-testid={testid} className="h-7 rounded-lg bg-input/60 border-border/60 text-2xs font-medium w-auto gap-1.5">
+      <SelectTrigger data-testid={testid} aria-label={name} className="h-7 rounded-lg bg-input/60 border-border/60 text-2xs font-medium w-auto gap-1.5">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
