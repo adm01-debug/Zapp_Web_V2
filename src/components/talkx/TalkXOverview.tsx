@@ -384,7 +384,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           icon={Zap} title="Talk X"
           subtitle="Campanhas que geram conversas e resultados."
           metrics={[
-            { label: 'Mensagens enviadas', value: cur?.sent == null ? '—' : fmtInt(cur.sent) },
+            { label: 'Mensagens enviadas', value: cur?.contactsReached == null ? '—' : fmtInt(cur.contactsReached) },
             { label: 'Taxa de sucesso', value: rateLabel ?? '—' },
             { label: 'Segmentos salvos', value: fmtInt(segments.length) },
           ]}

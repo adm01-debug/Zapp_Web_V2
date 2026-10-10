@@ -136,6 +136,61 @@ describe('X077 · comparativo dos KPIs da Visão geral', () => {
     expect(comparativo('Concluídas')!.className).toContain('text-success');
     // O número da taxa segue com o "%" colado, agora vindo de valor numérico.
     expect(kpiCard('Taxa de sucesso').textContent).toContain('90%');
+
+    // X077 · o rail repete os números da RPC: "Mensagens enviadas" é os contatos
+    // alcançados (200), não o `sent` cru (100); a taxa repete os 90%.
+    const hero = screen.getByText('Mensagens enviadas').closest('.talkx-card--hero')!;
+    expect(hero.textContent).toContain('200');
+    expect(hero.textContent).not.toContain('100');
+    expect(hero.textContent).toContain('90%');
+  });
+
+  it('Base mínima para o comparativo: sem 50 enviados no anterior, a taxa não mostra variação', async () => {
+    // A RPC traz previous, mas com só 30 enviados: a taxa recebe previous null
+    // (base mínima) enquanto Concluídas e Contatos seguem com variação.
+    rpc.mockResolvedValue(rpcPayload({ ...ANTERIOR, sent: 30 }));
+
+    withClient(<TalkXOverview {...baseProps} />);
+
+    await waitFor(() => expect(comparativo('Concluídas')).toBeTruthy());
+    expect(comparativo('Concluídas')!.textContent).toContain('+100%');
+    expect(comparativo('Contatos alcançados')!.textContent).toContain('+100%');
+    expect(comparativo('Taxa de sucesso')).toBeNull();
+    // Sem base o número continua na tela, só a variação some.
+    expect(kpiCard('Taxa de sucesso').textContent).toContain('90%');
+  });
+
+  it("'7 dias' entrega previous null mesmo com a RPC trazendo previous", async () => {
+    // Verificado no código: '7 dias' entrega range ao hook (comparable: true), então a
+    // RPC traz previous — mas o previous da TAXA é null pela base mínima (30 < 50
+    // enviados). Os demais cards seguem com variação.
+    rpc.mockResolvedValue(rpcPayload({ ...ANTERIOR, sent: 30 }));
+
+    withClient(<TalkXOverview {...baseProps} />);
+    await waitFor(() => expect(comparativo('Concluídas')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Período' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '7 dias' }));
+
+    await waitFor(() => expect(comparativo('Concluídas')).toBeTruthy());
+    expect(comparativo('Concluídas')!.textContent).toContain('+100%');
+    expect(comparativo('Contatos alcançados')!.textContent).toContain('+100%');
+    expect(comparativo('Taxa de sucesso')).toBeNull();
+  });
+
+  it('previous sem delivery_rate_pct não mostra variação na taxa', async () => {
+    // Campo ausente = null, nunca zero: sem taxa no anterior não há base para
+    // pontos percentuais; os demais comparativos seguem normais.
+    const { delivery_rate_pct: _fora, ...anteriorSemTaxa } = ANTERIOR;
+    rpc.mockResolvedValue(rpcPayload(anteriorSemTaxa));
+
+    withClient(<TalkXOverview {...baseProps} />);
+
+    await waitFor(() => expect(comparativo('Concluídas')).toBeTruthy());
+    expect(comparativo('Concluídas')!.textContent).toContain('+100%');
+    expect(comparativo('Contatos alcançados')!.textContent).toContain('+100%');
+    expect(comparativo('Taxa de sucesso')).toBeNull();
+    expect(kpiCard('Taxa de sucesso').textContent).toContain('90%');
   });
 
   it('"Todo o período" não tem comparativo: a variação some mesmo com a RPC trazendo previous', async () => {
