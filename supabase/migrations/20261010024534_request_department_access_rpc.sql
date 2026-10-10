@@ -1,5 +1,11 @@
 -- N-071: request_department_access — pedido de acesso a departamento.
 -- Rollback: delete from public.department_audit_logs where action = 'access_requested'; drop function if exists public.request_department_access(uuid); alter table public.department_audit_logs drop constraint if exists department_audit_logs_action_check; alter table public.department_audit_logs add constraint department_audit_logs_action_check check (action in ('accept_invite','create_invite','join_department','leave_department','remove_member','update_settings','delete_department','create_department','update_role','kick_member','create_group','delete_group','whatsapp_updated'));
+-- Rollback (SQL executavel, na ordem — mesmo conteudo da linha acima, um por linha):
+--   delete from public.department_audit_logs where action = 'access_requested';
+--   drop function if exists public.request_department_access(uuid);
+--   alter table public.department_audit_logs drop constraint if exists department_audit_logs_action_check;
+--   alter table public.department_audit_logs add constraint department_audit_logs_action_check check (action in ('accept_invite','create_invite','join_department','leave_department','remove_member','update_settings','delete_department','create_department','update_role','kick_member','create_group','delete_group','whatsapp_updated'));
+--   (sem corpo anterior: a funcao e nova — nenhuma migration a criava; sem GRANT: no estado anterior ninguem tinha EXECUTE nela.)
 -- Cartao N-071: RPC que cria notificacoes para admins/supervisores do departamento e linha access_requested na auditoria.
 -- Estado anterior (meio de prova, arquivos reais do repositorio):
 --   * a funcao NAO existia: nenhuma migration do repositorio cria public.request_department_access
