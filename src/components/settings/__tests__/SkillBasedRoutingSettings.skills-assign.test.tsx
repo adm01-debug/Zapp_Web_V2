@@ -71,8 +71,11 @@ vi.mock('@/components/ui/select', () => ({
   }) => {
     let ariaLabel: string | undefined;
     React.Children.forEach(children, child => {
-      if (React.isValidElement(child) && child.props['aria-label']) {
-        ariaLabel = child.props['aria-label'];
+      if (React.isValidElement(child)) {
+        const props = child.props as Record<string, unknown>;
+        if (props['aria-label']) {
+          ariaLabel = props['aria-label'] as string;
+        }
       }
     });
     return (
