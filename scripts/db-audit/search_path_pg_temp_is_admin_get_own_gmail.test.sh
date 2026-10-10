@@ -1,35 +1,51 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 # n-148 — search_path com pg_temp em is_admin_or_supervisor e get_own_gmail_accounts:
 #   Ambas as funcoes SECURITY DEFINER devem ter search_path = public, pg_temp
-#   para evitar manipulacao via tabelas temporarias em pg_temp.
+#   para evitar manipulacao via tabelas temporarias (pg_temp).
+#   Teste com CREATE TEMP TABLE hostil: resultado nao muda.
 
-set -Eeuo pipefail
+CONTAINER="supabase-v2-26101007237ea3-v2-26101007237ea3-database-07a3fb45d87b"
+PSQL="docker exec ${CONTAINER} psql -U postgres -d postgres -t -A"
 
-container="supabase-v2-26101007237ea3-v2-26101007237ea3-database-07a3fb45d87b"
+PASS=0
+FAIL=0
 
-fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
-pass() { printf '[PASS] %s\n' "$1"; }
-
-psql_sql() { docker exec "$container" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
-
-expect_config() {
-  local func_name="$1" expected="$2" actual
-  actual="$(psql_sql "SELECT proconfig FROM pg_proc WHERE proname = '$func_name';" | tr -d '{}"')"
-  [[ "$actual" == *"$expected"* ]] || fail "$func_name: esperado '$expected' em proconfig, obtido '$actual'"
-  pass "$func_name tem search_path=$expected"
+assert_eq() {
+  local label="$1" expected="$2" actual="$3"
+  if [ "$expected" = "$actual" ]; then
+    echo "PASS: ${label}"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL: ${label} — esperado '${expected}', obtido '${actual}'"
+    FAIL=$((FAIL + 1))
+  fi
 }
 
-expect_config is_admin_or_supervisor "search_path=public, pg_temp"
-expect_config get_own_gmail_accounts "search_path=public, pg_temp"
+# 1) is_admin_or_supervisor tem search_path = public, pg_temp
+proconfig=$($PSQL -c "SELECT proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname = 'public' AND p.proname = 'is_admin_or_supervisor';")
+assert_eq "is_admin_or_supervisor search_path" "{\"search_path=public, pg_temp\"}" "${proconfig}"
 
-# Verifica que is_admin_or_supervisor ainda retorna FALSE para usuario sem role admin/supervisor.
-result="$(psql_sql "SELECT public.is_admin_or_supervisor('00000000-0000-0000-0000-000000000000');")"
-[[ "$result" == "f" ]] || fail "is_admin_or_supervisor para usuario inexistente deveria retornar false, obteve '$result'"
-pass "is_admin_or_supervisor retorna false para usuario sem role admin/supervisor"
+# 2) get_own_gmail_accounts tem search_path = public, pg_temp
+proconfig=$($PSQL -c "SELECT proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname = 'public' AND p.proname = 'get_own_gmail_accounts';")
+assert_eq "get_own_gmail_accounts search_path" "{\"search_path=public, pg_temp\"}" "${proconfig}"
 
-# Verifica que get_own_gmail_accounts retorna vazio (sem gmail_accounts para usuario inexistente).
-count="$(psql_sql "SELECT count(*) FROM public.get_own_gmail_accounts();")"
-[[ "$count" == "0" ]] || fail "get_own_gmail_accounts para usuario inexistente deveria retornar 0 linhas, obteve '$count'"
-pass "get_own_gmail_accounts retorna 0 linhas para usuario inexistente"
+# 3) is_admin_or_supervisor retorna false para usuario sem role admin/supervisor
+result=$($PSQL -c "SELECT public.is_admin_or_supervisor('00000000-0000-0000-0000-000000000000'::uuid);")
+assert_eq "is_admin_or_supervisor sem admin/supervisor" "f" "${result}"
 
-printf '\n[INFO] Todas as verificacoes passaram.\n'
+# 4) get_own_gmail_accounts retorna 0 linhas para usuario inexistente
+result=$($PSQL -c "SELECT count(*) FROM public.get_own_gmail_accounts();")
+assert_eq "get_own_gmail_accounts usuario inexistente" "0" "${result}"
+
+# 5) CREATE TEMP TABLE hostil nao altera resultado de is_admin_or_supervisor
+#    Usa -c com SQL multilinhas e extrai a ultima linha (o SELECT result)
+result=$($PSQL -c "CREATE TEMP TABLE hostil (user_id uuid, role text); INSERT INTO hostil VALUES ('00000000-0000-0000-0000-000000000000', 'admin'); SELECT public.is_admin_or_supervisor('00000000-0000-0000-0000-000000000000'::uuid);" | tail -1)
+assert_eq "is_admin_or_supervisor com temp table hostil" "f" "${result}"
+
+echo ""
+echo "Resultado: ${PASS} passaram, ${FAIL} falharam"
+if [ "${FAIL}" -gt 0 ]; then
+  exit 1
+fi

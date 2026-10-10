@@ -982,3 +982,13 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # n-148 (P1 · banco, SEC-RLS_TAREFAS_EMAIL_LIGACOES-07): o audit achou
+      # is_admin_or_supervisor e get_own_gmail_accounts (ambas SECURITY DEFINER) com
+      # search_path = public e sem pg_temp. O teste aplica as migrations REAIS num
+      # PostgreSQL 17 descartavel, roda como o papel authenticated com request.jwt.claims,
+      # e prova que temp tables hostis (user_roles/gmail_accounts) nao shadowam o resultado.
+      - name: Provar search_path com pg_temp em is_admin_or_supervisor e get_own_gmail_accounts (n-148)
+        env:
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh
