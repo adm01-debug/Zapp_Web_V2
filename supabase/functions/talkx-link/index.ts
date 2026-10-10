@@ -81,13 +81,26 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   const method = req.method.toUpperCase();
   const clientIp = getClientIP(req);
 
-  // ── GET: clique + redirect ──────────────────────────────────────────────────
+  // ── GET: clique + redirect ──────────────────────────────────────────
   if (method === "GET") {
     const slug      = url.searchParams.get("s");
     const recipient = url.searchParams.get("r") ?? undefined;
+    const token     = url.searchParams.get("t") ?? undefined;
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
+    }
+
+    // X022: gate HMAC — quando o TALKX_CONVERT_SECRET está configurado,
+    // o token `t` (HMAC-SHA256 de `r` com o secret) é obrigatório.
+    // Se o secret não está configurado, o fluxo continua como antes
+    // (compatibilidade com ambientes sem secret).
+    const convertSecret = env.get("TALKX_CONVERT_SECRET");
+    if (convertSecret && recipient) {
+      const ok = await verifyHmacSignature(recipient, token ?? "", convertSecret);
+      if (!ok) {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada

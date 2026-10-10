@@ -131,7 +131,9 @@ Deno.test("GET registra clique e redireciona com UTM do link", async () => {
     linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
     linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo", utm_content: null, utm_term: null },
   });
-  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const recipientId = "rec-1";
+  const token = await hmacHex(CONVERT_SECRET, recipientId);
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${encodeURIComponent(recipientId)}&t=${encodeURIComponent(token)}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 302, `status ${res.status} != 302`);
   const location = res.headers.get("location") ?? "";
@@ -146,6 +148,58 @@ Deno.test("GET slug inexistente devolve 404 neutro (sem redirecionar)", async ()
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 404, `status ${res.status} != 404`);
   assert(res.headers.get("location") === null, "não deveria redirecionar");
+});
+
+// ── handleTalkxLink: GET com HMAC token (X022) ──────────────────
+Deno.test("GET sem token com TALKX_CONVERT_SECRET configurado devolve 401", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
+  assert(rpcCalls.length === 0, `não deveria gravar clique sem token válido (chamadas=${rpcCalls.length})`);
+});
+
+Deno.test("GET com token inválido devolve 401", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1&t=invalid-token", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
+  assert(rpcCalls.length === 0, `não deveria gravar clique com token inválido (chamadas=${rpcCalls.length})`);
+});
+
+Deno.test("GET com token HMAC válido devolve 302 e grava o clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const recipientId = "rec-1";
+  const token = await hmacHex(CONVERT_SECRET, recipientId);
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=${encodeURIComponent(recipientId)}&t=${encodeURIComponent(token)}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 302, `status ${res.status} != 302`);
+  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
+  assert(rpcCalls.length === 1, `deveria gravar clique com token válido (chamadas=${rpcCalls.length})`);
+  assert(rpcCalls[0].args.p_recipient === recipientId, `recipient errado: ${JSON.stringify(rpcCalls[0].args)}`);
+});
+
+Deno.test("GET sem TALKX_CONVERT_SECRET funciona como antes (sem token)", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: "" }) });
+  assert(res.status === 302, `status ${res.status} != 302`);
+  const rpcCalls = supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click");
+  assert(rpcCalls.length === 1, `deveria gravar clique sem secret configurado (chamadas=${rpcCalls.length})`);
 });
 
 // ── handleTalkxLink: POST (autenticação + valor + dedupe) ────────────────────

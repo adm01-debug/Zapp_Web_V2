@@ -1,4 +1,4 @@
-import { handleTalkxSend, personalize, randomBetween } from './index.ts';
+import { handleTalkxSend, personalize, randomBetween, hmacTokenForRecipient } from './index.ts';
 import {
   TEST_SERVICE_KEY, CAMPAIGN_ID, makePost,
   makeCampaign, makeConnection,
@@ -1344,5 +1344,29 @@ Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o 
   } finally {
     provider.restore();
     clock.restore();
+  }
+});
+
+Deno.test('hmacTokenForRecipient produces a deterministic hex token for a recipient', async () => {
+  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
+  try {
+    const token1 = await hmacTokenForRecipient('recipient-abc-123');
+    const token2 = await hmacTokenForRecipient('recipient-abc-123');
+    assert(token1 !== undefined, 'token should not be undefined');
+    assert(token1 === token2, 'same recipient_id must produce the same token');
+    assert(/^[0-9a-f]+$/.test(token1), `token must be hex, got: ${token1}`);
+  } finally {
+    Deno.env.delete("TALKX_CONVERT_SECRET");
+  }
+});
+
+Deno.test('hmacTokenForRecipient produces different tokens for different recipients', async () => {
+  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
+  try {
+    const token1 = await hmacTokenForRecipient('recipient-aaa');
+    const token2 = await hmacTokenForRecipient('recipient-bbb');
+    assert(token1 !== token2, 'different recipient_ids must produce different tokens');
+  } finally {
+    Deno.env.delete("TALKX_CONVERT_SECRET");
   }
 });
