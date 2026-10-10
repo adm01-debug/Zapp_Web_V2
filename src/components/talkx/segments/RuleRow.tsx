@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RULE_FIELDS, RULE_OPS, isRuleComplete, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { cn } from '@/lib/utils';
+import { RuleValueInput } from './RuleValueInput';
 
 /**
  * X099 — a linha de condição saiu de dentro de `TalkXSegments.tsx`. O desenho é o
@@ -42,13 +43,17 @@ export function RuleRow({ rule, onChange, onRemove }: {
         <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
       </Select>
       {needsValue && (
-        fieldDef?.options ? (
+        fieldDef?.kind === 'date' || fieldDef?.kind === 'number' ? (
+          // TL-131 — data/período e número têm controle próprio (dias inteiros > 0
+          // e número sem máscara); os demais tipos seguem o input solto de antes.
+          <RuleValueInput field={rule.field} op={rule.op} value={rule.value} onChange={(v) => onChange({ value: v })} />
+        ) : fieldDef?.options ? (
           <Select value={rule.value} onValueChange={(v) => onChange({ value: v })}>
             <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[130px]"><SelectValue placeholder="Selecione…" /></SelectTrigger>
             <SelectContent>{fieldDef.options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
           </Select>
         ) : (
-          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder={fieldDef?.kind === 'number' ? '0' : fieldDef?.kind === 'date' ? '30 (dias)' : 'Valor…'} className="h-9 bg-input/40 border-border/70 text-xs w-[130px]" />
+          <Input value={rule.value} onChange={(e) => onChange({ value: e.target.value })} placeholder="Valor…" className="h-9 bg-input/40 border-border/70 text-xs w-[130px]" />
         )
       )}
       <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
