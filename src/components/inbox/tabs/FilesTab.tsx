@@ -201,17 +201,16 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     pages: 0,
     lastId: null,
   });
-  // Refazer 1: espelho do ref acima para o RENDER. O contador da varredura vive no ref (leitura
-  // sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e
-  // atualizado quando cada pagina CHEGA (`then`), que e quando o teto passa a valer de verdade.
-  const [scannedPages, setScannedPages] = useState<{ key: string; pages: number }>({ key: '', pages: 0 });
+  // O contador da varredura vive no ref (leitura sincrona dentro do efeito). Para o RENDER so
+  // interessa UM marco: "bateu o teto". Antes havia um estado espelho atualizado no `.then` de CADA
+  // pagina — com o teto de 500 paginas isso dobrava os re-renders da varredura (um por pagina) e
+  // estourava o timeout do teste que prova o teto (a maquina nao aguenta 500 paginas x 2 renders).
+  // Um booleano acionado UMA unica vez (quando a ultima pagina permitida CHEGA) basta para sair do
+  // skeleton.
+  const [periodCapReached, setPeriodCapReached] = useState<string | null>(null);
   const periodLoadKey = `${contactId}|${periodRange?.from ?? ''}|${periodRange?.to ?? ''}`;
   const oldestLoadedTime = items.length === 0 ? null : new Date(items[items.length - 1].created_at).getTime();
-  const periodScannedPages = scannedPages.key === periodLoadKey ? scannedPages.pages : 0;
-
-  const registrarPaginaVarrida = useCallback((key: string) => {
-    setScannedPages((current) => ({ key, pages: (current.key === key ? current.pages : 0) + 1 }));
-  }, []);
+  const periodScannedCapReached = periodCapReached === periodLoadKey;
 
   useEffect(() => {
     if (!periodRange) return;
@@ -232,12 +231,16 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
     if (load.pages >= MAX_PAGES_TO_LOAD_ALL) return;
     load.lastId = oldest.id;
     load.pages += 1;
-    const pageKey = periodLoadKey;
+    const reachingCap = load.pages >= MAX_PAGES_TO_LOAD_ALL;
     void fetchNextPage().then(
-      () => registrarPaginaVarrida(pageKey),
-      () => registrarPaginaVarrida(pageKey),
+      // O teto so passa a valer quando a ULTIMA pagina permitida CHEGA (nao quando e pedida): o
+      // skeleton continua ate os itens dela entrarem, sem piscar "nenhum arquivo neste periodo". E o
+      // UNICO render que a varredura dispara por conta propria (o contador fica no ref, sem re-render
+      // por pagina). No erro tambem marca: sem isso a tela ficaria em skeleton para sempre.
+      () => { if (reachingCap) setPeriodCapReached(periodLoadKey); },
+      () => { if (reachingCap) setPeriodCapReached(periodLoadKey); },
     );
-  }, [periodRange, periodLoadKey, hasMore, isFetchingNextPage, items, fetchNextPage, registrarPaginaVarrida]);
+  }, [periodRange, periodLoadKey, hasMore, isFetchingNextPage, items, fetchNextPage]);
 
   // A varredura terminou quando: nao ha mais paginas; o item mais antigo carregado ja cruzou o
   // limite do periodo; ou o teto de paginas foi atingido. So entao da para afirmar "nenhum arquivo
@@ -245,7 +248,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
   const periodFullyLoaded = periodRange === null
     || !hasMore
     || periodScanReachedBoundary(periodRange, oldestLoadedTime)
-    || periodScannedPages >= MAX_PAGES_TO_LOAD_ALL;
+    || periodScannedCapReached;
   const periodScanning = periodRange !== null && !periodFullyLoaded;
 
   // F05: com período ativo o cabeçalho "N arquivos" e os chips saem do recorte CARREGADO (a RPC
