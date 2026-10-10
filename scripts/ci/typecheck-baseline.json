@@ -1,5 +1,33 @@
 {
   "schemaVersion": 2,
   "command": "tsc -b --force",
-  "issues": []
+  "issues": [
+    {
+      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts",
+      "line": 114,
+      "column": 33,
+      "severity": "error",
+      "code": "TS2339",
+      "message": "Property 'fetchTalkXSuppressionActivity' does not exist on type 'typeof import(\"/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-165-talkx-supressao-2610091952cad0/src/hooks/integrations/useTalkXSuppression\")'.",
+      "contextHash": "127cf3e5b3af1f269ff40e90e1419aad537955598aaeaadd35144a808782ad15"
+    },
+    {
+      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts",
+      "line": 120,
+      "column": 69,
+      "severity": "error",
+      "code": "TS2339",
+      "message": "Property 'SUPPRESSION_ACTIVITY_EVENT_TYPES' does not exist on type 'typeof import(\"/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-165-talkx-supressao-2610091952cad0/src/hooks/integrations/useTalkXSuppression\")'.",
+      "contextHash": "dacc693e33e113c8e9e5be4e0196c85c54689752a400c47a262136798de99a3f"
+    },
+    {
+      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts",
+      "line": 127,
+      "column": 30,
+      "severity": "error",
+      "code": "TS7006",
+      "message": "Parameter 'item' implicitly has an 'any' type.",
+      "contextHash": "c9a0cbf45c58406dd8552eafaeb9b6bd3cca0e8a428858ab450c204c922f1b7e"
+    }
+  ]
 }
