@@ -7,10 +7,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseHelpers';
-import type { TalkXRecipient } from '@/hooks/integrations/useTalkX';
 
 interface TalkXRecipientRowActionsProps {
-  recipient: TalkXRecipient;
+  recipient: {
+    id: string;
+    campaign_id: string;
+    contact_id: string;
+    status: string;
+    contacts?: { name?: string | null; phone?: string | null } | null;
+    manual_retry_count: number | null;
+  };
   onActionDone?: () => void;
 }
 
@@ -18,7 +24,7 @@ interface TalkXRecipientRowActionsProps {
  * Retorna true quando o destinatário pode ser reenviado manualmente:
  * status 'failed' ou 'skipped' e menos de 3 retries manuais.
  */
-function canRetry(recipient: TalkXRecipient): boolean {
+function canRetry(recipient: { status: string; manual_retry_count: number | null }): boolean {
   return (recipient.status === 'failed' || recipient.status === 'skipped')
     && ((recipient as { manual_retry_count?: number }).manual_retry_count ?? 0) < 3;
 }
@@ -115,7 +121,7 @@ function BlockButton({
   onBlocked,
   onActionDone,
 }: {
-  recipient: TalkXRecipient;
+  recipient: { id: string; campaign_id: string; contact_id: string; status: string; contacts?: { name?: string | null; phone?: string | null } | null; manual_retry_count: number | null };
   blocking: boolean;
   setBlocking: (v: boolean) => void;
   onBlocked: () => Promise<void>;
