@@ -3,6 +3,9 @@
 Fonte de verdade do módulo Telefonia (`?view=voip`) do ZAPP WEB V2.
 Deriva da seção 2.7 do plano `docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md`, com as
 divergências medidas no banco oficial em 26/09/2026 (registradas em `docs/design/TELEFONIA_STATUS.md`).
+**Revisado em 10/10/2026** contra o código da ponta do dia (`dia/2026-10-10`, commit `e859c7ff5`) — etapa T92 (reaplicada no commit local do SL-242):
+as medições de banco seguem datadas de 26/09 (nenhum agente acessa o banco de produção); o resto do
+documento casa com o código citado.
 
 ## 1. Canal (`calls.channel`)
 
@@ -82,13 +85,18 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 |---|---|---|
 | D1 | Ramal SIP compartilhado (`phone1`) | **(a)** manter e sinalizar conflito de registro; ramal por agente fica como P2 |
 | D2 | Ligação de saída por WhatsApp | **(a)** só receber eventos; opção visível e desabilitada, com motivo honesto |
-| D3 | Gravações | **aberto** — nenhuma fonte comprovada (sem bucket de Storage, sem webhook REST do Bitrix). `recording_status` fica `none` e nenhum botão é renderizado |
+| D3 | Gravações | **reconciliar com o Bitrix24** (`voximplant.statistic.get`) — decidido por Joaquim em 29/09 e entregue em T71–T74 (Edges `sync-call-records` e `get-call-recording`). Sem fonte, `recording_status` fica `none` e o player não renderiza (`src/hooks/calls/useCallRecording.ts:58`) |
 | D4 | Escopo "Todas as ligações" | **(a)** seletor só para admin/supervisor |
 | D5 | Linhas por página | **8** |
 | D6 | KPIs respondem a busca/filtros? | **não** (escopo + período + canal, com rótulo explícito) |
-| D7 | Recusar chamada WhatsApp | **aberto** — endpoint de rejeição da Evolution GO não comprovado; rótulo honesto ("Ignorar") até prova |
+| D7 | Recusar chamada WhatsApp | **(b) "Ignorar"** — endpoint de rejeição da Evolution GO não comprovado; o botão é "Ignorar" e grava `declined` local (`src/lib/calls/WhatsAppCallAdapter.ts:56`) |
 
-## 8. RPCs do contrato (migration `20260926800000_calls_telefonia_v2.sql`)
+## 8. RPCs do contrato
+
+Base: migration `20260926800000_calls_telefonia_v2.sql`. Depois dela, o contrato recebeu
+`20260926900000_fix_set_call_agent_notes_null_profile.sql` e `20260927100000_fix_set_call_agent_notes_null_owner.sql`
+(as 2 correções de segurança de anotação), `20261002531230_t26_record_incoming_call_event_direction.sql` (T26, `p_direction`)
+e `20261004172554_fecha_record_incoming_call_event.sql` (fecha o `EXECUTE` anônimo — M-DB-02).
 
 | RPC | Papel |
 |---|---|
@@ -96,6 +104,7 @@ ringing | answered | ended | missed | busy | failed | cancelled | declined
 | `my_calls_kpi(p_scope, p_channel, p_from, p_to)` | total, realizadas, recebidas, perdidas recebidas, atendidas, média de conversa |
 | `upsert_my_call(...)` | persistência idempotente da chamada VoIP do próprio agente; `agent_id` imutável |
 | `set_call_agent_notes(p_call_id, p_notes)` | anotação humana; dono ou admin/supervisor |
+| `record_incoming_call_event(p_contact_id, p_whatsapp_connection_id, p_status, p_is_video, p_provider_event_id, p_should_notify, p_direction)` | persistência do evento de chamada do WhatsApp; `direction` vem do payload (`p_direction`, T26); `agent_id`/`notes` preservados por `COALESCE` |
 
 Prova comportamental: `scripts/db-audit/calls-telefonia-contract.test.sh` (PostgreSQL 17 descartável,
 prova de RLS por ator, IDOR, teto de 50, idempotência e ACL de `anon`; asserções cresceram para cobrir
