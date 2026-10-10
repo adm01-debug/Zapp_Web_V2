@@ -28,6 +28,7 @@ const EXPORTED_NAMES = [
   'TALKX_CHANNELS',
   'TEMPLATE_CATEGORIES',
   'TEMPLATE_STATUS',
+  'descricaoTemplate',
   'VARIABLE_KEYS',
   'fmtInt',
   'fmtPct',

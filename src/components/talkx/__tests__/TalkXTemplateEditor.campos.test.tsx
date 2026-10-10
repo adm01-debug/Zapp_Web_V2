@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 
 /**
  * X094 — "Cabeçalho do editor dentro do shell … e campos".
@@ -95,5 +95,7 @@ describe('X094 — campos do editor (descrição) e trilha dentro do shell', () 
     expect(trilha).toHaveTextContent('Talk X');
     expect(trilha).toHaveTextContent('Campanhas');
     expect(trilha).toHaveTextContent('Templates');
+    // Trilha no Breadcrumb pronto do sistema (`ui/breadcrumb`), não em nav manual.
+    expect(within(trilha).getByRole('list')).toBeInTheDocument();
   });
 });

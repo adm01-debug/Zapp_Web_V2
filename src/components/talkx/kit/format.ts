@@ -1,3 +1,5 @@
+import type { TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
+
 import { format, formatDistanceToNowStrict, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -42,6 +44,14 @@ export const fmtRelativeDay = (d: string | null | undefined) => {
  * primeiro `|` separa chave de padrão e a chave aceita dígito/underscore — então
  * `Oi {{nome|cliente}}` conta como `{{nome}}` e `{{custom_1}}` não desaparece.
  */
+/** Descrição do template na lista e no cartão: a descrição gravada; sem ela, o
+ * começo do conteúdo. UMA fonte só — card e lista não calculam cada um o seu. */
+export function descricaoTemplate(t: Pick<TalkXTemplate, 'description' | 'content'>): string {
+  const gravada = t.description?.trim();
+  if (gravada) return gravada;
+  return `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
+}
+
 export function extractVariables(template: string): string[] {
   const found = new Set<string>();
   for (const { key } of parsePlaceholders(template)) {

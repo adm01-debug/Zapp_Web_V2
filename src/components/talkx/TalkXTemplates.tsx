@@ -12,7 +12,7 @@ import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCa
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
-import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
+import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, descricaoTemplate, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
 import { parseTalkXTemplateRoute, pushTalkXTemplateRoute, replaceTalkXTemplateRoute, type TalkXTemplateRoute } from './talkxTemplateRoute';
@@ -26,8 +26,6 @@ interface Props {
 }
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
-
-type ViewMode = 'list' | 'edit';
 
 /** X089 — página do mock 04: 12 por linha, com 24 e 48 como alternativas. */
 const PAGE_SIZES = [12, 24, 48];
@@ -68,8 +66,6 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
-  const [mode, setMode] = useState<ViewMode>('list');
-  const [editing, setEditing] = useState<TalkXTemplate | null>(null);
   const [deleting, setDeleting] = useState<TalkXTemplate | null>(null);
   const [selected, setSelected] = useState<TalkXTemplate | null>(null);
   const [galleryMode, setGalleryMode] = useState<GalleryMode>(lerModoGaleria);
@@ -97,12 +93,15 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
     pushTalkXTemplateRoute(nextRoute);
   }, []);
 
-  // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
-  // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
-  // (R2-MOD-024 decide que só a biblioteca troca o template ativo).
+  // X094 — a troca feita DENTRO do editor (biblioteca lateral) atualiza o `route`
+  // JUNTO com o endereço, na mesma decisão: o `route` é a fonte de verdade do
+  // template aberto, então ele acompanha a troca em vez de travar no rascunho
+  // (`template=new` não prende mais o editor no vazio depois da troca).
   const mirrorEditorTemplate = useCallback((templateId: string) => {
     const current = parseTalkXTemplateRoute(window.location.search).route;
-    replaceTalkXTemplateRoute({ templateId, ttab: current?.ttab ?? 'conteudo' });
+    const next: TalkXTemplateRoute = { templateId, ttab: current?.ttab ?? 'conteudo' };
+    setRoute(next);
+    replaceTalkXTemplateRoute(next);
   }, []);
 
   // Fechar o editor (salvar, duplicar ou Voltar) devolve a biblioteca e o endereço.
@@ -112,16 +111,29 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
     onStartNewHandled?.();
   }, [onStartNewHandled]);
 
-  const openNew = () => { setEditing(null); setMode('edit'); openEditorAt({ templateId: 'new', ttab: 'conteudo' }); };
-  const openEdit = (t: TalkXTemplate) => { setEditing(t); setMode('edit'); openEditorAt({ templateId: t.id, ttab: 'conteudo' }); };
+  const openNew = () => { openEditorAt({ templateId: 'new', ttab: 'conteudo' }); };
+  const openEdit = (t: TalkXTemplate) => { openEditorAt({ templateId: t.id, ttab: 'conteudo' }); };
 
+  // Compara rotas por valor: o parse cria um objeto novo a cada leitura, e
+  // devolver a mesma referência quando nada mudou evita render em cascata.
+  // ÚNICA via de sincronização estado <- endereço (o histórico é a fonte de
+  // verdade do que está aberto: o editor da visita anterior não sobrevive).
   const syncFromBrowserHistory = useCallback(() => {
     const parsed = parseTalkXTemplateRoute(window.location.search);
     if (parsed.needsNormalization) replaceTalkXTemplateRoute(parsed.route);
-    // O histórico é a fonte de verdade do que está aberto: o editor da visita
-    // anterior não sobrevive à navegação.
-    setRoute(parsed.route);
+    setRoute((atual) => {
+      if (atual === parsed.route) return atual;
+      if (!atual || !parsed.route) return parsed.route;
+      if (atual.templateId === parsed.route.templateId && atual.ttab === parsed.route.ttab) return atual;
+      return parsed.route;
+    });
   }, []);
+
+  // Escreve o endereço e sincroniza o estado pela via única, na mesma decisão.
+  const aplicarRota = useCallback((route: TalkXTemplateRoute | null, escrita: (r: TalkXTemplateRoute | null) => void) => {
+    escrita(route);
+    syncFromBrowserHistory();
+  }, [syncFromBrowserHistory]);
 
   useEffect(() => {
     const initial = parseTalkXTemplateRoute(window.location.search);
@@ -135,25 +147,22 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
     };
   }, [syncFromBrowserHistory]);
 
-  // Id que a consulta não devolve (apagado, de outra conta ou digitado à mão): a
-  // tela cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no
-  // histórico — o mesmo desenho do wizard quando a campanha do endereço não existe.
+  // X094 — reconciliação do `route` num ÚNICO efeito, decidida junto: o pedido do
+  // menu do topo (R2-MOD-039: "Templates ▾ → Novo template" abre o editor VAZIO) e
+  // o id que a consulta não devolve (apagado, de outra conta ou digitado à mão —
+  // a tela cai na biblioteca com o endereço limpo, como o wizard sem a campanha).
+  // O efeito escreve o endereço e sincroniza o estado juntos (`aplicarRota`) —
+  // sem `dispatchEvent(popstate)` artificial: só o navegador dispara popstate (E1).
   useEffect(() => {
-    if (!route || route.templateId === 'new' || isLoading || routedTemplate) return;
-    replaceTalkXTemplateRoute(null);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    if (!isError) toast.error('Template não encontrado ou sem acesso.');
-  }, [isError, isLoading, route, routedTemplate]);
-
-  // R2-MOD-039: o menu do topo ("Templates ▾ → Novo template") abre o editor VAZIO.
-  // X094: o pedido vira endereço e é o endereço que dirige o editor — o popstate
-  // disparado aqui (mesma mecânica do goTab) é quem atualiza o estado da tela.
-  useEffect(() => {
-    if (!startNew) return;
-    pushTalkXTemplateRoute({ templateId: 'new', ttab: 'conteudo' });
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    onStartNewHandled?.();
-  }, [onStartNewHandled, startNew]);
+    // Idempotente: com o pedido ainda pendente e o `route` mudando, o efeito
+    // roda de novo — só empilha endereço quando ainda não está no novo.
+    if (startNew && route?.templateId === 'new') { onStartNewHandled?.(); return; }
+    if (!startNew && (!route || route.templateId === 'new' || isLoading || routedTemplate)) return;
+    if (startNew) onStartNewHandled?.();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciliação endereço→estado (X094) decidida junto: o sync compara por valor e não re-renderiza quando nada mudou.
+    aplicarRota(startNew ? { templateId: 'new', ttab: 'conteudo' } : null, startNew ? pushTalkXTemplateRoute : replaceTalkXTemplateRoute);
+    if (!startNew && !isError) toast.error('Template não encontrado ou sem acesso.');
+  }, [aplicarRota, isError, isLoading, onStartNewHandled, route, routedTemplate, startNew]);
 
   const filtered = useMemo(() => {
     let r = templates;
@@ -360,7 +369,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
 export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   const aprovado = t.status === 'approved';
-  const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
+  const descricao = descricaoTemplate(t);
   return (
     <div
       onClick={onClick}

@@ -17,7 +17,7 @@ import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-libra
 
 const mocks = vi.hoisted(() => {
   const base = {
-    description: null, category: 'geral', media_url: null, media_type: null,
+    description: null as string | null, category: 'geral', media_url: null, media_type: null,
     tags: [] as string[], status: 'approved' as const, created_by: null, custom_variables: [] as string[],
     created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
   };
@@ -57,6 +57,7 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
 }));
 
 import { TalkXTemplates } from '../TalkXTemplates';
+import { descricaoTemplate } from '../talkxShared';
 
 const search = () => new URLSearchParams(window.location.search);
 
@@ -177,6 +178,78 @@ describe('TalkXTemplates — o editor de template vive no endereço (X094)', () 
     await waitFor(() => expect(editorAberto()).toBe(false));
     expect(search().has('template')).toBe(false);
     expect(search().has('ttab')).toBe(false);
+  });
+
+  it('trocar de template na lateral partindo do novo acompanha o route (não trava no rascunho)', async () => {
+    abrirEditorNoEndereco('new');
+    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    await waitFor(() => expect(editorAberto()).toBe(true));
+    expect(screen.getByText('Novo template')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByText('Boas-vindas')[0].closest('button') as HTMLElement);
+
+    // O endereço E o route acompanham a troca: o cabeçalho vira "Editar template".
+    await waitFor(() => expect(search().get('template')).toBe('tpl_2'));
+    expect(screen.getByText('Editar template')).toBeInTheDocument();
+    expect(screen.getAllByDisplayValue('Boas-vindas').length).toBeGreaterThan(0);
+  });
+
+  it('pedido do menu (startNew) abre o editor vazio sem popstate sintético', async () => {
+    const disparos: Event[] = [];
+    const espiao = (e: Event) => { disparos.push(e); };
+    const handled = vi.fn();
+    window.addEventListener('popstate', espiao);
+    try {
+      abrirBiblioteca();
+      const tela = render(<TalkXTemplates onUseTemplate={vi.fn()} startNew={false} onStartNewHandled={handled} />);
+      tela.rerender(<TalkXTemplates onUseTemplate={vi.fn()} startNew onStartNewHandled={handled} />);
+
+      await waitFor(() => expect(editorAberto()).toBe(true));
+      expect(search().get('template')).toBe('new');
+      expect(search().get('ttab')).toBe('conteudo');
+      expect(handled).toHaveBeenCalled();
+      expect(disparos).toHaveLength(0);
+    } finally {
+      window.removeEventListener('popstate', espiao);
+    }
+  });
+
+  it('id desconhecido reconcilia sem disparar popstate sintético', async () => {
+    const disparos: Event[] = [];
+    const espiao = (e: Event) => { disparos.push(e); };
+    window.addEventListener('popstate', espiao);
+    try {
+      abrirEditorNoEndereco('tpl_apagado');
+      render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+      await waitFor(() => expect(search().has('template')).toBe(false));
+      expect(editorAberto()).toBe(false);
+      // Só o navegador dispara popstate (voltar/avançar); a reconciliação escreve
+      // estado + endereço direto, na mesma decisão.
+      expect(disparos).toHaveLength(0);
+    } finally {
+      window.removeEventListener('popstate', espiao);
+    }
+  });
+
+  it('descrição da lista: um helper só — gravada vence, sem ela o começo do conteúdo', () => {
+    const base = mocks.templates[0];
+    expect(descricaoTemplate({ ...base, description: 'Oferta de outubro' })).toBe('Oferta de outubro');
+    expect(descricaoTemplate({ ...base, description: '   ' })).toBe(base.content);
+  });
+
+  it('a lista mostra a descrição gravada em vez do começo do conteúdo', async () => {
+    window.localStorage.setItem('talkx.templates.view', 'list');
+    mocks.templates[0].description = 'Oferta de outubro — só no app';
+    try {
+      abrirBiblioteca();
+      render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+      await waitFor(() => expect(screen.getByText('Oferta de outubro — só no app')).toBeInTheDocument());
+    } finally {
+      mocks.templates[0].description = null;
+      window.localStorage.removeItem('talkx.templates.view');
+    }
   });
 
   it('id que a consulta não devolve cai na biblioteca com o endereço limpo', async () => {

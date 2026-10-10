@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overview/DashboardCard';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTalkXTemplates, type TalkXTemplate, type TemplateInput, type TemplateVariant } from '@/hooks/integrations/useTalkXTemplates';
@@ -369,15 +370,17 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, in
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
-        {/* X094 — trilha da tela 05: o editor é uma tela interna do módulo, no mesmo
-            desenho do breadcrumb do wizard. */}
-        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-          <span>Talk X</span>
-          <span className="text-border">›</span>
-          <span>Campanhas</span>
-          <span className="text-border">›</span>
-          <span className="text-foreground font-medium">Templates</span>
-        </nav>
+        {/* X094 — trilha da tela 05 no Breadcrumb pronto do sistema (o mesmo
+            `ui/breadcrumb` das outras telas), em vez de nav manual. */}
+        <Breadcrumb aria-label="Trilha de navegação" className="px-0.5">
+          <BreadcrumbList className="gap-1.5 text-2xs text-muted-foreground">
+            <BreadcrumbItem><span>Talk X</span></BreadcrumbItem>
+            <BreadcrumbSeparator className="text-border">›</BreadcrumbSeparator>
+            <BreadcrumbItem><span>Campanhas</span></BreadcrumbItem>
+            <BreadcrumbSeparator className="text-border">›</BreadcrumbSeparator>
+            <BreadcrumbItem><BreadcrumbPage className="text-2xs font-medium">Templates</BreadcrumbPage></BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button
