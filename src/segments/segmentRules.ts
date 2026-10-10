@@ -1,16 +1,25 @@
 /**
  * X104 — Regras de segmento v2 (tipos, normalização, descrição legível).
  *
- * O formato v2 usa `field: string` (nome do campo) em vez do objeto
- * `RuleField` completo do v1, e `value` aceita texto, número, lista,
- * intervalo `{from,to}` ou booleano.
+ * O formato v2 generaliza o v1 (`SegmentRule` em
+ * `@/hooks/integrations/useTalkXSegments`, com `field: RuleField` e
+ * `value: string`): `field` continua sendo o nome do campo e `value`
+ * aceita texto, número, lista, intervalo `{from,to}` ou booleano.
+ * Rótulos e completude vêm da fonte canônica do hook (`RULE_FIELDS` e
+ * `isRuleComplete`); a normalização também tolera `field` em formato
+ * objeto (`{value,...}`) e converte texto numérico em número nos campos
+ * de número/data, que o hook valida numericamente.
  *
  * Regras antigas (sem `version`) são lidas como `join='or'` e
  * `updated_at` vira "última interação".
  */
 
-import { type SegmentRules, type SegmentRuleGroup } from '@/hooks/integrations/useTalkXSegments';
-import { SEGMENT_FIELD_CATALOG } from './segmentFieldCatalog';
+import {
+  isRuleComplete as isV1RuleComplete,
+  RULE_FIELDS,
+  type SegmentRule,
+  type SegmentRules,
+} from '@/hooks/integrations/useTalkXSegments';
 
 /* ------------------------------------------------------------------ */
 /* Tipos v2                                                           */
@@ -39,8 +48,33 @@ export interface SegmentRuleV2 {
 /* Normalização v1 → v2                                               */
 /* ------------------------------------------------------------------ */
 
+/** Nome do campo: string passa direto; objeto `{value,...}` é desenrolado. */
+function fieldName(field: unknown): string {
+  if (typeof field === 'string') return field;
+  if (typeof field === 'object' && field !== null && 'value' in field) {
+    const v = (field as { value: unknown }).value;
+    return typeof v === 'string' ? v : String(v ?? '');
+  }
+  return String(field ?? '');
+}
+
 /**
- * Converte regras v1 (campo como objeto `RuleField`, `value` sempre
+ * Converte texto numérico em número nos campos de número/data (o
+ * `isRuleComplete` do hook exige valor numérico nesses tipos);
+ * nos demais campos o texto continua texto.
+ */
+function coerceValue(field: string, value: unknown): SegmentRuleV2['value'] {
+  if (typeof value !== 'string') return value as SegmentRuleV2['value'];
+  const def = RULE_FIELDS.find((f) => f.value === field);
+  if (def?.kind !== 'number' && def?.kind !== 'date') return value;
+  const trimmed = value.trim();
+  if (trimmed === '') return value;
+  const num = Number(trimmed);
+  return Number.isFinite(num) ? num : value;
+}
+
+/**
+ * Converte regras v1 (`field` como nome do campo, `value` sempre
  * string) para o formato v2 (`field` é string, `value` mantém o
  * tipo original quando possível).
  */
@@ -53,12 +87,15 @@ export function normalizeRules(rules: SegmentRules | null | undefined): SegmentR
     groups: rules.groups.map((g) => ({
       id: g.id,
       match: g.match,
-      rules: g.rules.map((r) => ({
-      id: r.id,
-      field: r.field,
-      op: r.op,
-      value: r.value,
-    })),
+      rules: g.rules.map((r) => {
+        const field = fieldName(r.field);
+        return {
+          id: r.id,
+          field,
+          op: r.op,
+          value: coerceValue(field, r.value),
+        };
+      }),
     })),
   };
 }
@@ -67,16 +104,29 @@ export function normalizeRules(rules: SegmentRules | null | undefined): SegmentR
 /* Completude                                                         */
 /* ------------------------------------------------------------------ */
 
+/** `between` só vale com `from` E `to` preenchidos. */
+function hasBetweenBounds(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const from = (value as { from?: unknown }).from;
+  const to = (value as { to?: unknown }).to;
+  return String(from ?? '').trim() !== '' && String(to ?? '').trim() !== '';
+}
+
 /**
  * Retorna `true` quando a regra tem campo, operador e valor definidos
  * (condições incompletas ficam de fora da contagem de audiência).
+ * A decisão é a canônica do hook (`isRuleComplete`): campo conhecido,
+ * texto/data numéricos, `is_set`/`is_empty` sem valor. Valor fora de
+ * texto (número, booleano, lista) é convertido para texto antes de
+ * delegar, então a mesma regra vale para todos os tipos do v2.
  */
 export function isRuleComplete(rule: SegmentRuleV2): boolean {
   if (!rule.field || !rule.op) return false;
-  if (rule.value === undefined || rule.value === null) return false;
-  if (typeof rule.value === 'string' && rule.value.trim() === '') return false;
-  if (Array.isArray(rule.value) && rule.value.length === 0) return false;
-  return true;
+  if (rule.op === 'between') return hasBetweenBounds(rule.value);
+  const v = rule.value;
+  if (v === undefined || v === null) return false;
+  const asText = typeof v === 'string' ? v : Array.isArray(v) ? v.join(',') : String(v);
+  return isV1RuleComplete({ ...rule, value: asText } as unknown as SegmentRule);
 }
 
 /* ------------------------------------------------------------------ */
@@ -111,38 +161,38 @@ const OP_LABELS: Record<string, string> = {
   is_empty: 'vazio',
 };
 
+/** Rótulo canônico do campo (`RULE_FIELDS`); desconhecido mostra a chave. */
 function fieldLabel(fieldValue: string): string {
-  const entry = SEGMENT_FIELD_CATALOG.find((f) => f.value === fieldValue);
+  const entry = RULE_FIELDS.find((f) => f.value === fieldValue);
   return entry?.label ?? fieldValue;
 }
 
-function formatValue(value: string | number | string[] | { from: string; to: string } | boolean, kind?: string): string {
+function formatValue(value: SegmentRuleV2['value']): string {
   if (typeof value === 'boolean') return value ? 'sim' : 'não';
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'object' && value !== null && 'from' in value && 'to' in value) {
-    return `${value.from} – ${value.to}`;
-  }
-  if (kind === 'currency' && typeof value === 'number') {
-    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (kind === 'currency' && typeof value === 'string') {
-    const num = parseFloat(value);
-    if (!isNaN(num)) return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const from = (value as { from: unknown }).from;
+    const to = (value as { to: unknown }).to;
+    return `${String(from ?? '')} – ${String(to ?? '')}`;
   }
   return String(value);
 }
 
+/** Texto exibido no lugar de condição incompleta. */
+export const INCOMPLETE_RULE_LABEL = 'Condição incompleta';
+
 /**
  * Descreve uma regra individual em português claro, ex.:
- * "Ticket médio > R$ 1.000" ou "Gênero contém Feminino".
+ * "Empresa igual a Acme" ou "Lead score ≥ 30".
+ * Condição incompleta (campo/operador/valor que o motor rejeitaria)
+ * vira "Condição incompleta".
  */
 export function describeRule(rule: SegmentRuleV2): string {
-  const fieldDef = SEGMENT_FIELD_CATALOG.find((f) => f.value === rule.field);
+  if (!isRuleComplete(rule)) return INCOMPLETE_RULE_LABEL;
   const label = fieldLabel(rule.field);
   const opLabel = OP_LABELS[rule.op] ?? rule.op;
-  const kind = fieldDef?.kind ?? 'text';
-  const valueLabel = formatValue(rule.value, kind);
-  return `${label} ${opLabel} ${valueLabel}`;
+  const valueLabel = formatValue(rule.value);
+  return [label, opLabel, valueLabel].filter((p) => p !== '').join(' ');
 }
 
 /**
