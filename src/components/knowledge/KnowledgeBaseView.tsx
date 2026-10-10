@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, BookOpen, FileText, Search, Upload, Trash2, Edit, Brain, CheckCircle, AlertCircle, Clock, File } from 'lucide-react';
 import { useKnowledgeBase, CATEGORIES, CATEGORY_LABELS } from '@/hooks/integrations/useKnowledgeBase';
 
@@ -31,6 +32,9 @@ export function KnowledgeBaseView() {
   const [formCategory, setFormCategory] = useState('general');
   const [formTags, setFormTags] = useState('');
   const [formPublished, setFormPublished] = useState(true);
+  // Exclusão de artigo é irreversível: o clique abre a confirmação e só o
+  // "Excluir" do diálogo chama `deleteArticle` (cancelar não apaga nada).
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -86,7 +90,7 @@ export function KnowledgeBaseView() {
                     <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-3xs">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label="Excluir artigo" onClick={() => setPendingDelete({ id: article.id, title: article.title })}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
                   <h3 className="font-semibold text-sm text-foreground mb-1">{article.title}</h3>
@@ -128,6 +132,25 @@ export function KnowledgeBaseView() {
           <DialogFooter><Button variant="outline" onClick={() => setShowEditor(false)}>Cancelar</Button><Button onClick={save}>{editingId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir artigo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? <>O artigo <span className="font-semibold text-foreground">&quot;{pendingDelete.title}&quot;</span> será removido da base de conhecimento. </> : null}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) deleteArticle(pendingDelete.id); setPendingDelete(null); }}
+            >Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -58,6 +59,9 @@ export function WhatsAppFlowsBuilder() {
   const [previewMode, setPreviewMode] = useState(false);
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  // Exclusão de flow é irreversível: o clique na lixeira abre a confirmação e
+  // só o "Excluir" do diálogo chama `deleteFlow` (cancelar não apaga nada).
+  const [pendingDelete, setPendingDelete] = useState<WhatsAppFlow | null>(null);
 
   const fetchFlows = useCallback(async () => {
     setLoading(true);
@@ -169,7 +173,7 @@ export function WhatsAppFlowsBuilder() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center"><Workflow className="w-5 h-5 text-primary" /></div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); void deleteFlow(flow.id); }} aria-label="Excluir flow"><Trash2 className="w-3 h-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); setPendingDelete(flow); }} aria-label="Excluir flow"><Trash2 className="w-3 h-3" /></Button>
                       </div>
                     </div>
                     <h3 className="font-semibold text-sm mb-1">{flow.name}</h3>
@@ -204,6 +208,25 @@ export function WhatsAppFlowsBuilder() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir flow?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingDelete ? <>O flow <span className="font-semibold text-foreground">&quot;{pendingDelete.name}&quot;</span> será removido. </> : null}
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => { if (pendingDelete) void deleteFlow(pendingDelete.id); setPendingDelete(null); }}
+              >Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
