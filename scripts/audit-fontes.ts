@@ -3,11 +3,13 @@ import { join, extname } from "path";
 
 const SYSTEM_STACK = new Set([
   "system-ui",
-  "-apple-system",
-  "segoe ui",
   "sans-serif",
+  "plus jakarta sans",
+  "outfit",
   "ui-monospace",
   "monospace",
+  "jetbrains mono",
+  "fira code",
 ]);
 
 export interface FontFinding {
@@ -23,7 +25,7 @@ export function extractFontFamiliesFromCSS(
   filePath: string
 ): FontFinding[] {
   const findings: FontFinding[] = [];
-  const regex = /font-family\s*:\s*([^;"'>]+)/g;
+  const regex = /font-family\s*:\s*((?:"[^"]*"|'[^']*'|[^;"'}])+)/g;
   let match;
   while ((match = regex.exec(content)) !== null) {
     const fontFamily = match[1].trim();
@@ -108,4 +110,48 @@ export function auditFonts(rootDir: string): FontFinding[] {
   return findings;
 }
 
-// Self-execution removed: tests import functions directly
+// CLI entry point: run with `bun run scripts/audit-fontes.ts <rootDir>`
+const isRunningDirectly =
+  process.argv[1] && process.argv[1].endsWith("audit-fontes.ts");
+if (isRunningDirectly) {
+  const rootDir = process.argv[2] || ".";
+  const findings = auditFonts(rootDir);
+
+  // eslint-disable-next-line no-console
+  console.log("=== Auditoria de Fontes ===");
+  // eslint-disable-next-line no-console
+  console.log(`Root: ${rootDir}`);
+  // eslint-disable-next-line no-console
+  console.log(`Total font-family encontradas: ${findings.length}`);
+  // eslint-disable-next-line no-console
+  console.log("");
+
+  // eslint-disable-next-line no-console
+  console.log("--- Todas as font-family encontradas ---");
+  for (const f of findings) {
+    for (const font of f.fontFamily.split(",").map((s) => s.trim().replace(/['"]/g, "").toLowerCase())) {
+      const isDev = !SYSTEM_STACK.has(font);
+      // eslint-disable-next-line no-console
+      console.log(
+        `  [${isDev ? "DESVIO" : "OK"}] ${f.file}:${f.line} font-family: ${font}`
+      );
+    }
+  }
+
+  const deviations = findings.filter((f) => f.status === "deviation");
+  // eslint-disable-next-line no-console
+  console.log("");
+  // eslint-disable-next-line no-console
+  console.log(`Resumo: ${findings.length} declaração(ões), ${deviations.length} com desvio(s)`);
+
+  // eslint-disable-next-line no-console
+  console.log("");
+  // eslint-disable-next-line no-console
+  console.log("Stack de referência (tokens.css):");
+  // eslint-disable-next-line no-console
+  console.log("  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif");
+  // eslint-disable-next-line no-console
+  console.log("  --font-display: 'Outfit', system-ui, sans-serif");
+  // eslint-disable-next-line no-console
+  console.log("  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace");
+}

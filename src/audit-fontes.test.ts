@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { auditFonts, extractFontFamiliesFromCSS, extractFontFamiliesFromJS } from "./audit-fontes.js";
+import { auditFonts, extractFontFamiliesFromCSS, extractFontFamiliesFromJS } from "../scripts/audit-fontes.js";
 
 describe("audit-fontes", () => {
   describe("extractFontFamiliesFromCSS", () => {
