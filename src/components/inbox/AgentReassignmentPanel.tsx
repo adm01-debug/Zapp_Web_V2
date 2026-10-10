@@ -26,7 +26,7 @@ export function AgentReassignmentPanel({ className }: AgentReassignmentPanelProp
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 text-xs gap-1.5"
+              className="flex-1 text-xs gap-1.5 whitespace-normal min-w-0"
               disabled={isLoading}
               onClick={() => reassignAbsent.mutate(30)}
             >
@@ -44,7 +44,7 @@ export function AgentReassignmentPanel({ className }: AgentReassignmentPanelProp
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 text-xs gap-1.5"
+              className="flex-1 text-xs gap-1.5 whitespace-normal min-w-0"
               disabled={isLoading}
               onClick={() => reassignOverloaded.mutate()}
             >

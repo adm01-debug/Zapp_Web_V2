@@ -125,7 +125,7 @@ export const SLADashboard = () => {
           <Button
             variant="outline" 
             onClick={() => navigate('/sla/history')}
-            className="gap-2"
+            className="gap-2 whitespace-normal min-w-0"
           >
             <History className="h-4 w-4" />
             Histórico
