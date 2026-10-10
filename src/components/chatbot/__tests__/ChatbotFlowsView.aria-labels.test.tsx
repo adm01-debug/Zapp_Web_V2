@@ -61,8 +61,8 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/components/ui/switch', () => ({
-  Switch: ({ checked, onCheckedChange, ariaLabel, ...props }: { checked: boolean; onCheckedChange: (v: boolean) => void; 'aria-label'?: string }) => (
-    <button role="switch" aria-checked={checked} aria-label={ariaLabel} onClick={() => onCheckedChange(!checked)} {...props} />
+  Switch: ({ checked, onCheckedChange, ...props }: { checked: boolean; onCheckedChange: (v: boolean) => void; [key: string]: unknown }) => (
+    <button role="switch" aria-checked={checked} onClick={() => onCheckedChange(!checked)} {...props} />
   ),
 }));
 
