@@ -65,7 +65,7 @@ export function OverviewTab({ dailyData, alerts, onViewAllAlerts }: {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-lg">Evolução Diária</CardTitle>
+          <h2 className="text-lg font-semibold leading-none tracking-tight">Evolução Diária</h2>
           <CardDescription>Sentimento por dia no período</CardDescription>
         </CardHeader>
         <CardContent>
