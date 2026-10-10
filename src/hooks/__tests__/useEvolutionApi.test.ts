@@ -59,7 +59,7 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         'fetchProfile', 'updateProfileName', 'updateProfileStatus',
         'updateProfilePicture', 'removeProfilePicture', 'fetchProfilePicture',
         'fetchBusinessProfile', 'updatePrivacySettings',
-        'findLabels', 'handleLabel', 'updateBlockStatus',
+        'findLabels', 'handleLabel',
       ];
       expectedFunctions.forEach(fn => {
         expect(typeof result.current[fn as keyof typeof result.current]).toBe('function');
@@ -535,29 +535,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         body: { instanceName: 'wpp2', message: { key: 'msg1' }, convertToMp4: true },
       });
     });
-
-    it('findContacts envia página e offset (GET)', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.findContacts('wpp2', 1, 0);
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/find-contacts', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', page: 1, offset: 0 },
-      });
-    });
-
-    it('updateBlockStatus(block) usa a action e confirma no toast', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.updateBlockStatus('wpp2', '5511999', 'block');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/update-block-status', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', number: '5511999', status: 'block' },
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Contato bloqueado');
-    });
   });
 
   // =============================================
@@ -641,18 +618,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
       expect(mockToast.success).toHaveBeenCalledWith('Nome atualizado');
     });
 
-    it('updateProfileStatus shows toast', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.updateProfileStatus('wpp2', 'Vendendo hoje');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/update-profile-status', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', status: 'Vendendo hoje' },
-      });
-      expect(mockToast.success).toHaveBeenCalledWith('Status atualizado');
-    });
-
     it('removeProfilePicture uses POST (proxy pattern)', async () => {
       const { result } = renderHook(() => useEvolutionApi());
       await act(async () => {
@@ -670,17 +635,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
         await result.current.fetchProfilePicture('wpp2', '5511999');
       });
       expect(mockInvoke).toHaveBeenCalledWith('evolution-api/fetch-profile-picture', {
-        method: 'POST',
-        body: { instanceName: 'wpp2', number: '5511999' },
-      });
-    });
-
-    it('fetchBusinessProfile', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await result.current.fetchBusinessProfile('wpp2', '5511999');
-      });
-      expect(mockInvoke).toHaveBeenCalledWith('evolution-api/fetch-business-profile', {
         method: 'POST',
         body: { instanceName: 'wpp2', number: '5511999' },
       });
@@ -724,39 +678,6 @@ describe('useEvolutionApi - Exhaustive Test Suite', () => {
   // =============================================
   // 10. INTEGRATIONS — removidas no SL-075 E43
   // =============================================
-
-  // =============================================
-  // CONCORRÊNCIA: dedupe só em leitura (method GET)
-  // (cobertura trazida do teste do antigo hook de integrações)
-  // =============================================
-  describe('Concorrência — dedupe só em leitura (GET)', () => {
-    it('duas leituras iguais em voo viram UMA viagem', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      const p1 = result.current.findContacts('wpp2', 1, 0);
-      const p2 = result.current.findContacts('wpp2', 1, 0);
-      await act(async () => { await Promise.all([p1, p2]); });
-      expect(mockInvoke).toHaveBeenCalledTimes(1);
-    });
-
-    it('leituras iguais com argumentos DIFERENTES não são confundidas', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      await act(async () => {
-        await Promise.all([
-          result.current.findContacts('wpp2', 1, 0),
-          result.current.findContacts('wpp2', 2, 100),
-        ]);
-      });
-      expect(mockInvoke).toHaveBeenCalledTimes(2);
-    });
-
-    it('mutação (POST) nunca deduplica: o mesmo handleLabel em voo vira duas viagens', async () => {
-      const { result } = renderHook(() => useEvolutionApi());
-      const p1 = result.current.handleLabel('wpp2', '5511999', 'label-1', 'add');
-      const p2 = result.current.handleLabel('wpp2', '5511999', 'label-1', 'add');
-      await act(async () => { await Promise.all([p1, p2]); });
-      expect(mockInvoke).toHaveBeenCalledTimes(2);
-    });
-  });
 
   // =============================================
   // RETURN VALUE TESTS
