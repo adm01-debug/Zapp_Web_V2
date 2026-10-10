@@ -99,13 +99,18 @@ export function AvatarUpload() {
         // O caminho é fixo (`<user.id>/avatar.<ext>`), então profile.avatar_url pode
         // não mudar e o useEffect não roda de novo: reassina e atualiza a prévia aqui.
         try {
-          const { data: signed } = await supabase.storage
+          const { data: signed, error: signError } = await supabase.storage
             .from(AVATAR_BUCKET)
             .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
-          if (signed?.signedUrl) setAvatarUrl(signed.signedUrl);
-        } catch (signError) {
+          if (!signError && signed?.signedUrl) {
+            setAvatarUrl(signed.signedUrl);
+          } else {
+            // Mantém a prévia via refreshProfile; a próxima renderização reassina.
+            log.warn('avatar_resign_after_upload_error', { error: signError?.message ?? 'sem URL assinada' });
+          }
+        } catch (thrown) {
           // Mantém a prévia via refreshProfile; a próxima renderização reassina.
-          log.warn('avatar_resign_after_upload_error', { error: signError instanceof Error ? signError.message : 'desconhecido' });
+          log.warn('avatar_resign_after_upload_error', { error: thrown instanceof Error ? thrown.message : 'desconhecido' });
         }
       },
       {
