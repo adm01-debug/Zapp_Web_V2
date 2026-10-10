@@ -232,7 +232,9 @@ export function useDiagnosticsData() {
     const storageLatency = storageError ? null : Math.round(performance.now() - storageStart);
 
     const { count: messagesCount } = await supabase.from('messages').select('*', { count: 'exact', head: true });
-    const { count: connectionsCount } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
+    const { count: connectionsCount, error: connectionsError } = await supabase.from('whatsapp_connections').select('id', { count: 'exact', head: true });
+    // A contagem não pode virar "0 conexões" em silêncio: falha de coleta é erro de banco.
+    if (!dbError && connectionsError) dbError = connectionsError as ProbeError;
 
     const realtime = await probeRealtime();
 
