@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { isAuthorizedCronOrUser, unauthorizedResponse, timingSafeStringEqual } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleBatchFetchAvatars(
@@ -31,14 +31,44 @@ export async function handleBatchFetchAvatars(
     // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
     // o literal da RPC fica AQUI de proposito, para o guard de catalogo
     // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+    // Capture o valor que o guard confere no Vault: o cron so vale se o header bater
+    // com o segredo lido. A simples presenca do header `x-cron-secret` nao pode ser
+    // tratada como "veio do cron" (ver N-165 logo abaixo).
+    let cronSecretChecked: string | null = null;
     const authorized = await isAuthorizedCronOrUser(req, supabase, {
       serviceKey,
       readVaultSecret: async () => {
         const { data, error } = await supabase.rpc('get_avatars_refresh_cron_secret');
-        return !error && typeof data === 'string' ? data : null;
+        const value = !error && typeof data === 'string' ? data : null;
+        cronSecretChecked = value;
+        return value;
       },
     });
     if (!authorized) return unauthorizedResponse(headers);
+
+    // N-165: user calls exigem admin/supervisor; cron e service-key estão isentos.
+    // O cron e reconhecido pelo valor CONFERIDO em tempo constante, nao pela mera
+    // presenca do header: senao um usuario logado mandava um x-cron-secret qualquer e
+    // pulava a checagem de papel.
+    const cronHeader = req.headers.get('x-cron-secret');
+    const authHeader = req.headers.get('Authorization');
+    const isCron = cronHeader !== null
+      && cronSecretChecked !== null
+      && timingSafeStringEqual(cronHeader, cronSecretChecked);
+    const isServiceKey = authHeader?.startsWith('Bearer ')
+      && timingSafeStringEqual(authHeader.slice(7), serviceKey);
+    if (!isCron && !isServiceKey) {
+      if (!authHeader?.startsWith('Bearer ')) return unauthorizedResponse(headers);
+      const token = authHeader.slice(7);
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !user) return unauthorizedResponse(headers);
+      const { data: isStaff, error: roleError } = await supabase.rpc('is_admin_or_supervisor', {
+        _user_id: user.id,
+      });
+      if (roleError || isStaff !== true) {
+        return errorResponse('Only admins or supervisors can batch-fetch avatars', 403, req);
+      }
+    }
 
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);
