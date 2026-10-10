@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NavigationService } from '@/services/navigation.service';
 
-const DEVELOPMENT_IDS = ['payments', 'meta-capi', 'google-calendar'];
+const DEVELOPMENT_IDS = ['meta-capi', 'google-calendar'];
 
 describe('NavigationService integration maturity', () => {
   it('keeps incomplete integrations out of production-ready groups', () => {
