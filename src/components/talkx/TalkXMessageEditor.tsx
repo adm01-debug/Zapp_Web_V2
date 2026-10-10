@@ -56,11 +56,15 @@ export interface TalkXMessageEditorProps {
   footer?: React.ReactNode;
   onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>;
   className?: string;
+  /** Canal do template (default `whatsapp`, CHECK restrito a `whatsapp`). */
+  channel?: string;
+  /** Ícone do template (emoji, até 16 caracteres). */
+  icon?: string;
 }
 
 export const TalkXMessageEditor = React.forwardRef<TalkXMessageEditorHandle, TalkXMessageEditorProps>(
   function TalkXMessageEditor(
-    { value, onChange, placeholder, rows = 7, disabled = false, limit, knownVariables, footer, onKeyDown, className },
+    { value, onChange, placeholder, rows = 7, disabled = false, limit, knownVariables, footer, onKeyDown, className, channel, icon },
     ref,
   ) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
