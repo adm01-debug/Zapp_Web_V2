@@ -10,7 +10,7 @@
 -- Refazer 2: cursor p_after, RLS no DDD. Nada disto pré-existia. Sem BEGIN/COMMIT.
 
 -- 1. DDD -> UF/região (X037).
--- Tabela de referência pública por desenho: só leitura para authenticated.
+-- Tabela de referência: só leitura p/ authenticated.
 CREATE TABLE IF NOT EXISTS public.talkx_ddd_regions (
   ddd smallint PRIMARY KEY,
   state char(2) NOT NULL,
