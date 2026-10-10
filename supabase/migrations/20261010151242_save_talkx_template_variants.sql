@@ -5,7 +5,9 @@
 -- input precisam ser uuid valido e pertencer ao template; ids existentes sao preservados
 -- (UPDATE por id, INSERT so para novas); remover variante com destinatario e recusado.
 --
--- Rollback: DROP FUNCTION IF EXISTS public.save_talkx_template_variants(uuid, timestamptz, jsonb);
+-- Rollback: a funcao e nova (nao substitui corpo anterior); basta remove-la.
+-- Rollback (SQL executavel, na ordem):
+--   drop function if exists public.save_talkx_template_variants(uuid, timestamptz, jsonb);
 
 CREATE OR REPLACE FUNCTION public.save_talkx_template_variants(
   p_template_id uuid,
