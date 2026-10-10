@@ -489,7 +489,7 @@ export async function processRecipient(
       .select("status, send_window_start, send_window_end, business_hours_only, schedule_timezone")
       .eq("id", campaignId).single();
     if (beforeSendError) throw new Error(`talkx_campaign_state_lookup_failed: ${beforeSendError.message}`);
-    const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend, undefined, businessHours) : { allowed: false as const, reason: "campaign_not_found" };
+    const beforeSendWindowStatus = beforeSend ? deliveryWindowStatus(beforeSend, new Date(), businessHours) : { allowed: false as const, reason: "campaign_not_found" };
     const { data: beforeSendConnection, error: beforeSendConnectionError } = await supabase
       .from("whatsapp_connections")
       .select("status, instance_id")

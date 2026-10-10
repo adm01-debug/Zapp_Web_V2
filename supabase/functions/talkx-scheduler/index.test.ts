@@ -137,6 +137,7 @@ function makeDeps(o: {
   fetch?: typeof fetch;
   cronSecretValue?: string | null;
   timeoutMs?: number;
+  now?: Date;
 }): {
   supabase: unknown;
   serviceKey: string;
@@ -150,7 +151,7 @@ function makeDeps(o: {
     supabase: o.client,
     serviceKey: TEST_SERVICE_KEY,
     env: (key: string) => (key === "SUPABASE_URL" ? "https://supabase-test.example" : undefined),
-    now: NOW,
+    now: o.now ?? NOW,
     fetch: o.fetch,
     getCronSecret: () => Promise.resolve(o.cronSecretValue ?? null),
     timeoutMs: o.timeoutMs,
@@ -371,6 +372,116 @@ Deno.test("[#121A] retomada respeita o business_hours salvo (não usa o default 
   );
   assert(resDentro.status === 200, `esperado 200, recebido ${resDentro.status}`);
   assert(fetchDentro.posts.length === 1, `dentro do horário salvo deve retomar (${fetchDentro.posts.length} POST)`);
+});
+
+// ── N-118: DND e send_weekdays na retomada automática ──────────────────────
+
+Deno.test("[N-118] retomada respeita DND — bloqueia dentro e retoma fora do horário de não perturbe", async () => {
+  // Campanha pausada por dnd, fuso UTC. DND 10:00–14:00 todos os dias.
+  const paused = [
+    pausedRow("c-dnd", {
+      pause_reason: "dnd",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      respect_dnd: true,
+    }),
+  ];
+  const settings = [{ key: "dnd_hours", value: { start: "10:00", end: "14:00", sundays: false, holidays: [] } }];
+
+  // Tick 1: sexta 12:00 UTC = DENTRO do DND → não retoma.
+  const dentro = makeClient({ paused, settings });
+  const fetchDentro = makeFetch();
+  const resDentro = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: dentro.client, fetch: fetchDentro.impl, cronSecretValue: TEST_CRON_SECRET, now: new Date("2026-10-02T12:00:00.000Z") }),
+  );
+  assert(resDentro.status === 200, `esperado 200, recebido ${resDentro.status}`);
+  assert(fetchDentro.posts.length === 0, `dentro do DND não pode retomar (houve ${fetchDentro.posts.length} POST)`);
+
+  // Tick 2: sexta 08:00 UTC = FORA do DND → retoma.
+  const fora = makeClient({ paused, settings });
+  const fetchFora = makeFetch();
+  const resFora = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: fora.client, fetch: fetchFora.impl, cronSecretValue: TEST_CRON_SECRET, now: new Date("2026-10-02T08:00:00.000Z") }),
+  );
+  assert(resFora.status === 200, `esperado 200, recebido ${resFora.status}`);
+  assert(fetchFora.posts.length === 1, `fora do DND deve retomar (${fetchFora.posts.length} POST)`);
+});
+
+Deno.test("[N-118] retomada respeita send_weekdays — campanha pausada por outside_weekdays não retoma no dia bloqueado", async () => {
+  // NOW = sexta 2026-10-02 12:00 UTC; send_weekdays = [1,2,3,4,5] (seg–sex).
+  // Sexta é dia 5 → permitido. Mas se send_weekdays = [1,2,3,4] (sem sexta), não retoma.
+  const paused = [
+    pausedRow("c-sw", {
+      pause_reason: "outside_weekdays",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      send_weekdays: [1, 2, 3, 4], // sem sexta (5)
+    }),
+  ];
+
+  const cliente = makeClient({ paused });
+  const fetchCliente = makeFetch();
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: cliente.client, fetch: fetchCliente.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    fetchCliente.posts.length === 0,
+    `fora de send_weekdays não deve retomar (houve ${fetchCliente.posts.length} POST)`,
+  );
+
+  // Tick 2: sábado 2026-10-03 12:00 UTC com send_weekdays = [1,2,3,4,5,6] (inclui sábado) → retoma.
+  const pausedSab = [
+    pausedRow("c-sw-sab", {
+      pause_reason: "outside_weekdays",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      send_weekdays: [1, 2, 3, 4, 5, 6],
+    }),
+  ];
+  const clienteSab = makeClient({ paused: pausedSab });
+  const fetchSab = makeFetch();
+  const resSab = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: clienteSab.client, fetch: fetchSab.impl, cronSecretValue: TEST_CRON_SECRET, now: new Date("2026-10-03T12:00:00.000Z") }),
+  );
+  assert(resSab.status === 200, `esperado 200, recebido ${resSab.status}`);
+  assert(fetchSab.posts.length === 1, `em dia permitido deve retomar (${fetchSab.posts.length} POST)`);
+});
+
+Deno.test("[N-118/refazer] DND fora do contrato mantém a campanha pausada (falha fechada)", async () => {
+  // NOW = sexta 2026-10-02 12:00 UTC. dnd_hours existe mas está fora do
+  // contrato (start não é HH:MM) → a janela fecha em vez de sumir.
+  const paused = [
+    pausedRow("c-dnd-invalido", {
+      pause_reason: "dnd",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      respect_dnd: true,
+    }),
+  ];
+
+  const cliente = makeClient({
+    paused,
+    settings: [{ key: "dnd_hours", value: { start: "xx", end: "14:00", sundays: false, holidays: [] } }],
+  });
+  const fetchCliente = makeFetch();
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: cliente.client, fetch: fetchCliente.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    fetchCliente.posts.length === 0,
+    `DND inválido não deve retomar (houve ${fetchCliente.posts.length} POST)`,
+  );
 });
 
 // --------------------------------------------------------------------------- R2-INF-016

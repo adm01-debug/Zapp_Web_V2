@@ -22,7 +22,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
-import { parseBusinessHours, type BusinessHours } from "../_shared/talkx-window.ts";
+import { parseBusinessHours, parseDndHours, type BusinessHours, type DndSetting } from "../_shared/talkx-window.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 // ─── Limites do tick (X015) ──────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export async function handleTalkxScheduler(
     // a query não deixa passar motivo manual, e a decisão revalida linha a linha.
     const { data: pausedCampaigns, error: pauseErr } = await supabase
       .from("talkx_campaigns")
-      .select("id, name, pause_reason, whatsapp_connection_id, schedule_timezone, send_window_start, send_window_end, business_hours_only, paused_at")
+      .select("id, name, pause_reason, whatsapp_connection_id, schedule_timezone, send_window_start, send_window_end, business_hours_only, paused_at, send_weekdays, respect_dnd")
       .eq("status", "paused")
       .not("paused_at", "is", null) // pausadas com timestamp (não rascunhos)
       .in("pause_reason", [...AUTO_RESUME_REASONS]);
@@ -194,23 +194,29 @@ export async function handleTalkxScheduler(
       }
     }
 
-    // ── 2b. Horário comercial configurado (#121A) ─────────────────────────────
+    // ── 2b. Horário comercial e DND configurados (#121A + N-118) ──
     // A retomada usa a MESMA `talkx_settings.business_hours` que o talkx-send lê
     // (JSONB `{start,end,tz,days}`) e a passa EXPLICITAMENTE para a política.
     // Antes o scheduler não lia a configuração e reavaliava a janela com o
     // default, retomando campanha fora do horário salvo (ex.: 15:00–17:00 às 14:00).
+    // DND (N-118): `dnd_hours` = {start, end, sundays, holidays[]} em talkx_settings.
     let businessHours: BusinessHours | null = null;
+    let dndSetting: DndSetting | null = null;
     if ((pausedCampaigns ?? []).length > 0) {
       const { data: settingsRows, error: settingsErr } = await supabase
-        .from("talkx_settings").select("key, value").eq("key", "business_hours");
+        .from("talkx_settings").select("key, value").in("key", ["business_hours", "dnd_hours"]);
       if (settingsErr) {
         // Mesma postura do talkx-send: falha de leitura não derruba o tick — o
-        // helper aplica o default 08:00–18:00, seg–sex.
-        log.error("Error fetching business_hours for auto-resume", { error: settingsErr.message });
+        // helper aplica o default 08:00–18:00, seg–sex. DND fica como null (sem restrição).
+        log.error("Error fetching talkx_settings for auto-resume", { error: settingsErr.message });
       } else {
-        // `value` é JSONB: objeto canônico, valor ausente (null) ou presente e
-        // inválido (marcado — a política fecha a janela nesse caso).
-        businessHours = parseBusinessHours((settingsRows ?? [])[0]?.value);
+        for (const row of settingsRows ?? []) {
+          if (row.key === "business_hours") {
+            businessHours = parseBusinessHours(row.value);
+          } else if (row.key === "dnd_hours") {
+            dndSetting = parseDndHours(row.value);
+          }
+        }
       }
     }
 
@@ -219,6 +225,7 @@ export async function handleTalkxScheduler(
       connectionStatusResolver(connectionStatusById),
       now,
       businessHours,
+      dndSetting,
     );
 
     // X015: no máximo 1 retomada por conexão. selectResumableCampaigns devolve só a
