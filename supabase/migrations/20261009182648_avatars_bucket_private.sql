@@ -1,11 +1,15 @@
 -- avatars_bucket_private — torna o bucket `avatars` privado e restringe a escrita ao dono.
 --
--- Rollback: devolve o bucket `avatars` para público e recria a leitura anônima.
+-- Rollback: devolve o bucket `avatars` para público e recria as policies anteriores
+-- (versões do bloco BLOCK12, últimas conhecidas antes desta migration).
 -- Rollback (SQL executável, na ordem):
 --   DROP POLICY IF EXISTS "avatars owner insert" ON storage.objects;
 --   DROP POLICY IF EXISTS "avatars owner update" ON storage.objects;
 --   DROP POLICY IF EXISTS "avatars authenticated read" ON storage.objects;
---   CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO public USING (bucket_id = 'avatars');
+--   CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+--   CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
+--   CREATE POLICY "Users can upload their own avatar" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+--   CREATE POLICY "Users can update their own avatar" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 --   UPDATE storage.buckets SET public = true WHERE id = 'avatars';
 
 -- 1. Bucket privado: cria se não existir e garante public = false (idempotente).
@@ -13,8 +17,17 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('avatars', 'avatars', false)
 ON CONFLICT (id) DO UPDATE SET public = false;
 
--- 2. Idempotência: remove a leitura pública antiga e eventuais versões anteriores destas policies.
+-- 2. Idempotência: remove as policies antigas do bucket `avatars` com outros nomes
+--    (leituras públicas e escritas amplas ou redundantes) e eventuais versões
+--    anteriores destas policies. Mantém o DELETE do próprio dono
+--    ("Users can delete their own avatar"/"avatars"), sem brecha e sem mudar comportamento.
 DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "avatars authenticated read" ON storage.objects;
 DROP POLICY IF EXISTS "avatars owner insert" ON storage.objects;
 DROP POLICY IF EXISTS "avatars owner update" ON storage.objects;
