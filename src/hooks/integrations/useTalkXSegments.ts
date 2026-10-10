@@ -499,10 +499,17 @@ function escreverParam(params: URLSearchParams, chave: string, valor: string, pa
   else params.delete(chave);
 }
 
-/** Escreve o recorte na URL sem entrada de histórico: filtrar não é navegar. */
+/**
+ * Escreve o recorte na URL sem entrada de histórico: filtrar não é navegar.
+ *
+ * O estado é PRESERVADO e apenas marcado com `seglib`: passar `null` (ou um
+ * objeto novo do zero) apagaria o `idx`/`key` que o roteador gravou em
+ * `history.state` e quebraria o voltar/avançar do navegador.
+ */
 export function syncSegmentLibraryUrl(filters: SegmentLibraryFilters, pageSize: number | null): void {
   if (typeof window === 'undefined' || !window.history?.replaceState) return;
-  window.history.replaceState(null, '', formatSegmentLibraryUrl(new URL(window.location.href), filters, pageSize));
+  const estado = { ...(window.history.state ?? {}), seglib: true };
+  window.history.replaceState(estado, '', formatSegmentLibraryUrl(new URL(window.location.href), filters, pageSize));
 }
 
 export function segmentLibraryPageSizeKey(userId: string | null | undefined): string {

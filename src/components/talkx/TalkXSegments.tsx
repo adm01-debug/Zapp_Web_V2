@@ -1,20 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, newRule, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, parseSegmentLibraryFilters, readSegmentLibraryPageSize, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
@@ -40,7 +33,12 @@ export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
   } = useTalkXSegments();
-  const [pageSize, setPageSize] = useState(() => readSegmentLibraryPageSize(userId));
+  const [pageSize, setPageSize] = useState(() =>
+    // O tamanho de página pode chegar por um endereço compartilhado (`segporpagina`);
+    // sem ele, vale a preferência do operador (localStorage, por usuário).
+    (typeof window !== 'undefined' ? readSegmentLibraryPageSizeFromUrl(window.location.search) : null)
+      ?? readSegmentLibraryPageSize(userId),
+  );
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [mode, setMode] = useState<ViewMode>('list');
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
@@ -72,7 +70,8 @@ export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
     if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
     if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
     if (filterTag !== 'all') r = r.filter((s) => (s.tags ?? []).includes(filterTag));
-    if (filterOwner !== 'all') r = r.filter((s) => s.created_by === filterOwner);
+    if (filterOwner === SEGMENT_LIBRARY_OWNER_NONE) r = r.filter((s) => !s.created_by);
+    else if (filterOwner !== 'all') r = r.filter((s) => s.created_by === filterOwner);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
   }, [segments, filterOrigin, filterStatus, filterTag, filterOwner, search]);
@@ -97,7 +96,10 @@ export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
   };
   const setSearch = (v: string) => setFilterValue('search', v);
   const setPage = (p: number) => setFilterValue('page', p);
-  const clearFilters = () => { setFilters(DEFAULT_SEGMENT_LIBRARY_FILTERS); setPageSize(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT); };
+  // "Limpar filtros" também devolve o tamanho de página ao padrão e grava a
+  // escolha: sem persistir, a preferência antiga voltaria na próxima visita e o
+  // rodapé contradiria a tela que acabou de ser limpa.
+  const clearFilters = () => { setFilters(DEFAULT_SEGMENT_LIBRARY_FILTERS); saveSegmentLibraryPageSize(userId, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT); setPageSize(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT); };
   const choosePageSize = (size: number) => { saveSegmentLibraryPageSize(userId, size); setPageSize(size); setPage(1); };
   const hasActiveFilters = filters.search.trim() !== '' || filters.origin !== 'all' || filters.status !== 'all' || filters.tag !== 'all' || filters.owner !== 'all';
 
@@ -169,7 +171,10 @@ export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
             { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
             { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
             { key: 'tag', label: 'Tag', allLabel: 'Todas as tags', options: tagOptions.map((t) => ({ value: t, label: t })) },
-            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: ownerOptions.map(([id, name]) => ({ value: id, label: name })) },
+            // A opção "Sem proprietário" cobre o segmento sem `created_by`
+            // (SEGMENT_LIBRARY_OWNER_NONE): sem ela esses segmentos não teriam
+            // como ser recortados, porque não entram na lista de criadores.
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: [...ownerOptions.map(([id, name]) => ({ value: id, label: name })), { value: SEGMENT_LIBRARY_OWNER_NONE, label: 'Sem proprietário' }] },
           ]}
           values={{ origin: filterOrigin, status: filterStatus, tag: filterTag, owner: filterOwner }}
           onFilter={(k, v) => { setFilterValue(k as keyof SegmentLibraryFilters, v); }}

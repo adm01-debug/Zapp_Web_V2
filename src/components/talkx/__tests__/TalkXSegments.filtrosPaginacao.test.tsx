@@ -169,7 +169,9 @@ function params(): URLSearchParams {
 }
 
 beforeEach(() => {
-  window.history.replaceState({}, '', '/');
+  // Estado do roteador de mentira: filtrar NÃO pode apagá-lo (regressão do
+  // `replaceState(null)` — o voltar/avançar perdia `idx` e `key`).
+  window.history.replaceState({ idx: 2, key: 'rota-base' }, '', '/');
   window.localStorage.clear();
   dados.segments = cartelaDeFiltros();
   dados.usuario = 'user-1';
@@ -281,5 +283,83 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
     wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
     await screen.findByText('Segmento 1');
     expect(rodape()).toBe('Mostrando 1 a 10 de 12 segmentos');
+  });
+
+  it('oferece a opção "Sem proprietário" no filtro de proprietário e recorta só os sem dono', async () => {
+    dados.segments = [
+      ...cartelaDeFiltros(),
+      segmento(9, { name: 'Órfão da base', created_by: null, creator: null }),
+    ];
+    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
+    await screen.findByText('Órfão da base');
+
+    // A opção existe mesmo para o segmento que não aparece na lista de criadores.
+    escolherNoSelect('Proprietário', 'Sem proprietário');
+    expect(screen.getByText('Órfão da base')).toBeTruthy();
+    expect(screen.queryByText('Clientes VIP')).toBeNull();
+    expect(screen.queryByText('Clientes recorrentes')).toBeNull();
+    expect(params().get('segproprietario')).toBe('sem-proprietario');
+
+    // E a opção "Todos os proprietários" devolve a lista inteira.
+    escolherNoSelect('Proprietário', 'Todos os proprietários');
+    expect(screen.getByText('Clientes VIP')).toBeTruthy();
+    expect(screen.getByText('Órfão da base')).toBeTruthy();
+    expect(params().get('segproprietario')).toBeNull();
+  });
+
+  it('segporpagina chega pela URL e os filtros continuam na URL ao paginar', async () => {
+    dados.segments = cartelaDe12();
+    window.history.replaceState({}, '', '/?segorigem=zapp&segporpagina=8');
+    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
+    await screen.findByText('Segmento 1');
+
+    // O tamanho de página pedido pelo endereço vale na tela e fica na URL.
+    expect(rodape()).toBe('Mostrando 1 a 8 de 12 segmentos');
+    expect(params().get('segporpagina')).toBe('8');
+    expect(params().get('segorigem')).toBe('zapp');
+
+    // Paginar mantém os filtros na URL (não é o recorte que se perde na página).
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
+    expect(rodape()).toBe('Mostrando 9 a 12 de 12 segmentos');
+    expect(params().get('segpagina')).toBe('2');
+    expect(params().get('segorigem')).toBe('zapp');
+    expect(params().get('segporpagina')).toBe('8');
+
+    // Trocar o tamanho de página sincroniza `segporpagina` sem largar os filtros.
+    abrirSeletorDeTamanho();
+    fireEvent.click(screen.getByRole('option', { name: '20 por página' }));
+    expect(params().get('segporpagina')).toBe('20');
+    expect(params().get('segorigem')).toBe('zapp');
+  });
+
+  it('"Limpar filtros" devolve o tamanho de página ao padrão e grava a escolha', async () => {
+    dados.segments = cartelaDe12();
+    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
+    await screen.findByText('Segmento 1');
+
+    abrirSeletorDeTamanho();
+    fireEvent.click(screen.getByRole('option', { name: '20 por página' }));
+    expect(rodape()).toBe('Mostrando 1 a 12 de 12 segmentos');
+    expect(window.localStorage.getItem(segmentLibraryPageSizeKey('user-1'))).toBe('20');
+
+    // Ativa um filtro para o botão "Limpar filtros" aparecer e então limpa.
+    escolherNoSelect('Status', 'Ativo');
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(rodape()).toBe('Mostrando 1 a 10 de 12 segmentos');
+    expect(window.localStorage.getItem(segmentLibraryPageSizeKey('user-1'))).toBe('10');
+    expect(params().get('segporpagina')).toBeNull();
+  });
+
+  it('filtrar preserva o estado do roteador em vez de apagá-lo (replaceState sem null)', async () => {
+    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
+    await screen.findByText('Clientes VIP');
+
+    escolherNoSelect('Tag', 'VIP');
+
+    const estado = window.history.state as { idx?: number; key?: string; seglib?: boolean };
+    expect(estado.idx).toBe(2);
+    expect(estado.key).toBe('rota-base');
+    expect(estado.seglib).toBe(true);
   });
 });
