@@ -76,7 +76,7 @@ export function AutomationsManager() {
           </div>
           <div className="flex items-center gap-2">
             <Select value={filter} onValueChange={(v) => setFilter(v as 'all' | 'active' | 'inactive')}>
-              <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-28" aria-label="Filtrar automações"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="active">Ativas</SelectItem>

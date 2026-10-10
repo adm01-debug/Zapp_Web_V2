@@ -22,7 +22,7 @@ function buildAutomation(overrides: Partial<AutomationRow> = {}): AutomationRow 
   } as AutomationRow;
 }
 
-describe('AutomationCard — N-184 nomes acessíveis e gatilho desconhecido', () => {
+describe('AutomationCard — N-184 nomes acessíveis', () => {
   it('o interruptor tem nome acessível com o nome da automação e aria-checked reflete o estado', () => {
     const { rerender } = render(
       <AutomationCard
@@ -33,7 +33,7 @@ describe('AutomationCard — N-184 nomes acessíveis e gatilho desconhecido', ()
         onDuplicate={vi.fn()}
       />,
     );
-    const sw = screen.getByRole('switch', { name: /Boas-vindas/ });
+    const sw = screen.getByRole('switch', { name: 'Ativar automação Boas-vindas' });
     expect(sw).toBeInTheDocument();
     expect(sw).toHaveAttribute('aria-checked', 'true');
 
@@ -46,7 +46,7 @@ describe('AutomationCard — N-184 nomes acessíveis e gatilho desconhecido', ()
         onDuplicate={vi.fn()}
       />,
     );
-    expect(screen.getByRole('switch', { name: /Boas-vindas/ })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: 'Ativar automação Boas-vindas' })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('o card mostra o nome da automação e há botão com nome acessível incluindo o nome', () => {
@@ -63,19 +63,6 @@ describe('AutomationCard — N-184 nomes acessíveis e gatilho desconhecido', ()
     expect(screen.getByRole('button', { name: 'Editar automação Boas-vindas' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicar automação Boas-vindas' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Excluir automação Boas-vindas' })).toBeInTheDocument();
-  });
-
-  it('tipo de gatilho desconhecido mostra aviso sem lançar erro', () => {
-    render(
-      <AutomationCard
-        automation={buildAutomation({ trigger_type: 'gatilho_que_nao_existe' })}
-        onToggle={vi.fn()}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-        onDuplicate={vi.fn()}
-      />,
-    );
-    expect(screen.getByText(/desconhecido/i)).toBeInTheDocument();
   });
 
   it('o card não tem violações de acessibilidade (axe)', async () => {
@@ -102,7 +89,7 @@ describe('AutomationCard — N-184 nomes acessíveis e gatilho desconhecido', ()
         onDuplicate={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole('switch', { name: /Boas-vindas/ }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Ativar automação Boas-vindas' }));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 });

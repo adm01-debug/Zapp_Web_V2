@@ -48,11 +48,7 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{automation.description}</p>
           <div className="flex items-center gap-1 mt-2 flex-wrap">
-            {triggerInfo ? (
-              <Badge variant="outline" className="text-xs">{triggerInfo.label}</Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs" role="alert">Tipo de gatilho desconhecido</Badge>
-            )}
+            <Badge variant="outline" className="text-xs">{triggerInfo?.label}</Badge>
             <ArrowRight className="w-3 h-3 text-muted-foreground" />
             {actions.map((action: AutomationAction, i: number) => {
               const actionInfo = ACTION_TYPES.find(a => a.type === action.type);
