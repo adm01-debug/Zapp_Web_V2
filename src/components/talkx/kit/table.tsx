@@ -8,7 +8,7 @@ import { fmtInt } from './format';
 
 /** Paginação estilo mockup: "Mostrando 1 a 8 de 24" + botões + tamanho da página.
  *  `pageSizes` permite à tela escolher os tamanhos oferecidos (padrão: 8/10/20/50). */
-export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, noun, pageSizes = [8, 10, 20, 50] }: { page: number; pageSize: number; total: number; onPage: (p: number) => void; onPageSize: (n: number) => void; noun: string; pageSizes?: number[] }) {
+export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, noun, pageSizes = [8, 10, 20, 50], hasActiveFilters, onClearFilters }: { page: number; pageSize: number; total: number; onPage: (p: number) => void; onPageSize: (n: number) => void; noun: string; pageSizes?: number[]; hasActiveFilters?: boolean; onClearFilters?: () => void }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -17,6 +17,9 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
       <p className="text-xs text-foreground-secondary">Mostrando {from} a {to} de {fmtInt(total)} {noun}</p>
       <div className="flex items-center gap-1.5">
+        {hasActiveFilters && onClearFilters && (
+          <button type="button" onClick={onClearFilters} className="h-8 px-2.5 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 transition-colors">Limpar filtros</button>
+        )}
         <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Página anterior" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronLeft className="w-4 h-4" /></button>
         {visible.map((p, i) => (
           <span key={p} className="flex items-center gap-1.5">
