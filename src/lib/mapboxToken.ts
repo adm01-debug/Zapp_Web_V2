@@ -131,6 +131,16 @@ export function resetMapboxTokenForTests(): void {
 
 /** Log local + linha em audit_logs (client_error), com dedupe/limite do errorReporter. */
 export function reportMapboxFailure(kind: MapboxFailureKind, where: 'picker' | 'bubble' | 'suggest' | 'retrieve', detail?: unknown): void {
-  log.error(`Mapbox falhou (${where}/${kind})`, detail);
+  const safeDetail = sanitizeLogDetail(detail);
+  log.error(`Mapbox falhou (${where}/${kind})`, safeDetail);
   reportClientError(new Error(`mapbox_${kind}`), { source: `mapbox_${where}`, kind });
+}
+
+/** Remove campos que podem vazar segredos (ex.: access_token) antes de logar. */
+function sanitizeLogDetail(detail: unknown): unknown {
+  if (detail && typeof detail === 'object') {
+    const { access_token, ...rest } = detail as Record<string, unknown>;
+    return rest;
+  }
+  return detail;
 }

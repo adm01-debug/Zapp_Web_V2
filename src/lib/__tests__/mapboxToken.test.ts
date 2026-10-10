@@ -129,4 +129,16 @@ describe('classificação e telemetria', () => {
       { source: 'mapbox_picker', kind: 'timeout' },
     );
   });
+
+  it('log.error não recebe access_token no detail', () => {
+    reportMapboxFailure('timeout', 'picker', { access_token: 'pk.secret', status: 401 });
+    const args = h.logError.mock.calls[0];
+    for (const arg of args) {
+      if (typeof arg === 'string') {
+        expect(arg).not.toContain('access_token=');
+      } else if (arg && typeof arg === 'object') {
+        expect(arg as Record<string, unknown>).not.toHaveProperty('access_token');
+      }
+    }
+  });
 });
