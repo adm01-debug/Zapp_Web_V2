@@ -2,7 +2,10 @@ Especialista: Edgar (area-edge-api)
 
 ## FATOS MEDIDOS PELO FECHAR
 - `zapp-verify . --rapido`: VERDE (dependencias 2s, db_guard 0s, tipos 94s, lint 0s, migrations 0s)
-- `git diff --stat`: sem diff (workspace limpo, base do dia)
+- `git diff --stat` do commit do pai (0d3bec3ef): 3 arquivos, 74 inserções, 10 remoções, 6.987 bytes (dentro do limite de 25k)
+  - `supabase/functions/talkx-link/index.test.ts` (11 linhas)
+  - `supabase/functions/talkx-send/index.test.ts` (45 linhas)
+  - `supabase/functions/talkx-send/index.ts` (28 linhas)
 - `git grep -n 'recipient_id' supabase/functions/talkx-link/ supabase/functions/talkx-send/`: 47 ocorrências listadas abaixo
 
 ## O que mudou e por quê
@@ -10,8 +13,12 @@ Nenhuma mudança de código neste workspace. O cartão é de verificação pós-
 
 ## Prova
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (96s)`
-- `git diff --stat` → (vazio, sem diff)
+- `git diff --stat 0d3bec3ef~1 0d3bec3ef` → 3 arquivos, 74 inserções, 10 remoções, 6.987 bytes (dentro do limite de 25k)
+  - `supabase/functions/talkx-link/index.test.ts` (11 linhas)
+  - `supabase/functions/talkx-send/index.test.ts` (45 linhas)
+  - `supabase/functions/talkx-send/index.ts` (28 linhas)
 - `git grep -n 'recipient_id'` → 47 caminhos listados no relato
+- `jev-juiz pronto .tmp/relato.md` → indisponível (402), segue sem ele
 
 ## Caminhos com `recipient_id` (mesmo defeito do padrão antigo)
 
