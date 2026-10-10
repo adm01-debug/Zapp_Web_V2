@@ -57,7 +57,8 @@ CREATE INDEX IF NOT EXISTS idx_talkx_campaigns_ab_pending
 
 -- Calcula o vencedor E GRAVA na campanha na mesma transacao (bloco 9: "vence e
 -- grava"). Retorna o variant_id vencedor ou NULL (AB desligado, sem metrica ou
--- amostra insuficiente: nada a decidir, nada e gravado).
+-- amostra insuficiente: nada a decidir, nada e gravado). Campanha ja decidida
+-- retorna o gravado SEM recalcular nem reescrever (vencedor gravado uma vez).
 -- p_min_sample opcional: NULL usa o ab_min_sample da campanha.
 CREATE OR REPLACE FUNCTION public.talkx_determine_winner(p_campaign_id uuid, p_min_sample integer DEFAULT NULL, p_decided_by text DEFAULT 'talkx-scheduler')
 RETURNS uuid
@@ -90,6 +91,13 @@ BEGIN
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Campaign % not found', p_campaign_id USING ERRCODE = 'P0001';
+  END IF;
+
+  -- Vencedor gravado uma unica vez (bloco 9): campanha ja decidida nao e
+  -- recalculada nem reescrita — retorna o gravado. Reabrir um teste decidido e
+  -- ato manual fora desta funcao.
+  IF v_current_winner IS NOT NULL THEN
+    RETURN v_current_winner;
   END IF;
 
   IF NOT COALESCE(v_enabled, false) THEN
@@ -130,10 +138,12 @@ BEGIN
   IF v_winner_variant_id IS NULL THEN
     RETURN NULL;
   END IF;
-  IF v_current_winner IS NOT DISTINCT FROM v_winner_variant_id THEN
-    RETURN v_winner_variant_id;
-  END IF;
 
+  -- UNICA escrita, na mesma transacao que calcula: grava variante, data e autor.
+  -- O UPDATE dispara o BEFORE UPDATE canonico update_talkx_campaigns_updated_at
+  -- (20260409000457): updated_at avanca — e o correto, porque a linha FOI
+  -- modificada (o worker faz o mesmo em toda escrita). status e contadores nao
+  -- sao tocados (o AFTER UPDATE OF status e o mutability nao disparam por isso).
   UPDATE public.talkx_campaigns
   SET ab_winner_variant_id = v_winner_variant_id,
       ab_winner_decided_at = now(),
@@ -210,7 +220,9 @@ LANGUAGE plpgsql
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_template uuid := COALESCE(NEW.template_id, OLD.template_id);
+  -- Em DELETE, NEW nao existe (e NULL): o template vem de OLD. Explicito por
+  -- TG_OP para nao depender de COALESCE sobre registro inexistente.
+  v_template uuid := CASE WHEN TG_OP = 'DELETE' THEN OLD.template_id ELSE NEW.template_id END;
   v_count integer;
   v_sum integer;
 BEGIN

@@ -119,8 +119,23 @@ CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text,
   status text NOT NULL DEFAULT 'draft',
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+-- Fatia fiel do canonico (20260409000457): o UPDATE da decisao dispara este
+-- BEFORE UPDATE — updated_at avanca (a linha FOI modificada), status e demais
+-- colunas nao sao tocados pelo trigger.
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+CREATE TRIGGER update_talkx_campaigns_updated_at
+  BEFORE UPDATE ON public.talkx_campaigns
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
 -- Metricas canonicas: delivered_at (base), reply_message_id (E88), clicked_at (E90).
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -218,6 +233,34 @@ expect_value_svc 'P1: click_rate vence A e grava' 'a0000000-0000-0000-0000-00000
   "SELECT public.talkx_determine_winner('c4000000-0000-0000-0000-000000000001');"
 expect_value_svc 'P1: delivered_rate vence A e grava' 'a0000000-0000-0000-0000-000000000001' \
   "SELECT public.talkx_determine_winner('c5000000-0000-0000-0000-000000000001');"
+
+# Juiz #3: vencedor gravado UMA vez — campanha ja decidida NAO e recalculada
+# nem reescrita, mesmo com dados novos favorecendo outra variante (C13: B
+# gravado por 'humano', amostra atual favorece A).
+psql_sql "INSERT INTO public.talkx_campaigns (id, name, status, ab_enabled, ab_metric, ab_min_sample, ab_winner_variant_id, ab_winner_decided_at, ab_winner_decided_by)
+  VALUES ('c1300000-0000-0000-0000-000000000001', 'C13-preenchida', 'sent', true, 'reply_rate', 1, 'b0000000-0000-0000-0000-000000000001', '2026-01-02T00:00:00+00', 'humano');
+  INSERT INTO public.talkx_recipients (campaign_id, variant_id, delivered_at, reply_message_id) VALUES
+  ('c1300000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', now(), 'r-c13-a1'),
+  ('c1300000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', now(), 'r-c13-a2'),
+  ('c1300000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', now(), NULL),
+  ('c1300000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', now(), NULL);" >/dev/null
+expect_value_svc 'P1: decidida retorna o gravado sem recalcular' 'b0000000-0000-0000-0000-000000000001' \
+  "SELECT public.talkx_determine_winner('c1300000-0000-0000-0000-000000000001');"
+expect_value_svc 'P1: decidida nao e reescrita' 'true' \
+  "SELECT (ab_winner_variant_id = 'b0000000-0000-0000-0000-000000000001' AND ab_winner_decided_at = '2026-01-02T00:00:00+00'::timestamptz AND ab_winner_decided_by = 'humano')::text FROM public.talkx_campaigns WHERE id='c1300000-0000-0000-0000-000000000001';"
+
+# Juiz *: o UPDATE da decisao dispara o BEFORE UPDATE canonico — updated_at
+# AVANCA (a linha foi modificada, como em toda escrita do worker) e status e
+# demais colunas seguem intactos (antes/depois na mesma linha).
+psql_sql "INSERT INTO public.talkx_campaigns (id, name, status, ab_enabled, ab_metric, ab_min_sample)
+  VALUES ('c1400000-0000-0000-0000-000000000001', 'C14-bump', 'sent', true, 'reply_rate', 1);
+  INSERT INTO public.talkx_recipients (campaign_id, variant_id, delivered_at, reply_message_id) VALUES
+  ('c1400000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', now(), 'r-c14-a1'),
+  ('c1400000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', now(), NULL);" >/dev/null
+before_c14=$(as_role service_role "SELECT updated_at FROM public.talkx_campaigns WHERE id='c1400000-0000-0000-0000-000000000001';" | tail -n1)
+as_role service_role "SELECT public.talkx_determine_winner('c1400000-0000-0000-0000-000000000001');" >/dev/null
+expect_value_svc 'P1: decisao bump updated_at e preserva status' 'true' \
+  "SELECT (ab_winner_variant_id = 'a0000000-0000-0000-0000-000000000001' AND status = 'sent' AND updated_at > '$before_c14'::timestamptz)::text FROM public.talkx_campaigns WHERE id='c1400000-0000-0000-0000-000000000001';"
 
 # Ponto 2: lote — C6 pronta, C7 sem amostra, C8 ja decidida, C9 desligada.
 psql_sql "INSERT INTO public.talkx_campaigns (id, name, status, ab_enabled, ab_metric, ab_min_sample)
