@@ -29,8 +29,8 @@ vi.mock('@/components/ui/tabs', async () => {
   const { createElement: ce } = await import('react');
   return {
     Tabs: ({ children }: { children: ReactNode }) => ce('div', {}, children),
-    TabsList: ({ children }: { children: ReactNode }) => ce('div', { role: 'tablist' }, children),
-    TabsTrigger: ({ children }: { children: ReactNode }) => ce('button', { role: 'tab' }, children),
+    TabsList: ({ children, className }: { children: ReactNode; className?: string }) => ce('div', { role: 'tablist', className }, children),
+    TabsTrigger: ({ className, children }: { className?: string; children: ReactNode }) => ce('button', { role: 'tab', className }, children),
     TabsContent: ({ children }: { children: ReactNode }) => ce('div', {}, children),
   };
 });
@@ -106,6 +106,18 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
     render(<SettingsView />);
     for (const testId of STAFF_ONLY_TEST_IDS) {
       expect(screen.getByTestId(testId)).toBeInTheDocument();
+    }
+  });
+
+  it('abas têm min-h-[44px] no celular (max-sm) para toque acessível', () => {
+    render(<SettingsView />);
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.className).toContain('max-sm:h-auto');
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBeGreaterThan(0);
+    for (const tab of tabs) {
+      expect(tab.className).toContain('max-sm:min-h-[44px]');
+      expect(tab.className).not.toContain('max-[390px]');
     }
   });
 });
