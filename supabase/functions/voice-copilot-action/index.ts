@@ -1,12 +1,94 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, markDegraded } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
-Deno.serve(async (req) => {
+/**
+ * Busca de produtos por voz: reusa a MESMA edge que o CmdK já chama
+ * (`useCatalogQuickSearch` -> promogifts-catalog), em vez de ler o catálogo
+ * externo de dentro daqui. Assim RLS, limite por ação e cota continuam num
+ * único lugar (lá), o serviço de voz só repassa o JWT do chamador.
+ */
+const CATALOG_FUNCTION_NAME = "promogifts-catalog";
+/** Mesmo tamanho de página do CmdK (useCatalogQuickSearch: limit 8). */
+const CATALOG_SEARCH_LIMIT = 8;
+const CATALOG_SEARCH_MAX_QUERY = 200;
+
+export interface CatalogSearchOptions {
+  supabaseUrl: string;
+  /** service_role key — vai só como `apikey`, nunca como Authorization. */
+  apikey: string;
+  /** JWT do chamador já validado por requireAuth. */
+  authHeader: string;
+  fetchImpl?: typeof fetch;
+}
+
+export interface CatalogSearchResult {
+  products: unknown[];
+  total: number;
+  /** true quando o catálogo respondeu erro — o consumidor distingue
+   * "sem resultado" de "catálogo indisponível" (nada de fail-open silencioso). */
+  failed?: boolean;
+}
+
+/**
+ * POST para a edge de catálogo com os MESMOS parâmetros que o CmdK envia.
+ * A resposta de promogifts-catalog é `{ data: products[], meta: { total } }`.
+ */
+export async function searchCatalogProducts(
+  query: unknown,
+  options: CatalogSearchOptions,
+): Promise<CatalogSearchResult> {
+  const search = String(query ?? "").trim().slice(0, CATALOG_SEARCH_MAX_QUERY);
+  if (!search) return { products: [], total: 0 };
+
+  const fetcher = options.fetchImpl ?? fetch;
+  const response = await fetcher(`${options.supabaseUrl}/functions/v1/${CATALOG_FUNCTION_NAME}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // O JWT do chamador é repassado (não a service key): a authz real do
+      // catálogo continua sendo dele.
+      Authorization: options.authHeader,
+      apikey: options.apikey,
+    },
+    body: JSON.stringify({
+      action: "list_products",
+      search,
+      limit: CATALOG_SEARCH_LIMIT,
+      compact: true,
+    }),
+  });
+
+  if (!response.ok) {
+    markDegraded("catalog_search_unavailable");
+    return { products: [], total: 0, failed: true };
+  }
+
+  const payload = await response.json().catch(() => null) as
+    | { data?: unknown; meta?: { total?: unknown } }
+    | null;
+  const products = Array.isArray(payload?.data) ? payload.data as unknown[] : [];
+  const total = typeof payload?.meta?.total === "number" ? payload.meta.total : products.length;
+  return { products, total };
+}
+
+export interface VoiceCopilotActionDeps {
+  /** Substitui o POST para a edge de catálogo (testes). */
+  catalogFetch?: typeof fetch;
+  /** Substitui requireAuth (testes); produção usa o helper real. */
+  requireAuth?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Substitui createAuthedClient (testes); produção usa o helper real. */
+  createAuthedClient?: (req: Request) => Promise<SupabaseClient>;
+}
+
+export async function voiceCopilotActionHandler(
+  req: Request,
+  deps: VoiceCopilotActionDeps = {},
+) {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+  const authCheck = await (deps.requireAuth ?? requireAuth)(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
 
@@ -22,7 +104,7 @@ Deno.serve(async (req) => {
     // RLS real de `contacts`/`profiles` filtre por auth.uid(), em vez do
     // client service_role (que bypassa RLS e vazaria PII/dashboard para
     // qualquer usuário autenticado do app, não só agentes).
-    const authedClient = await createAuthedClient(req);
+    const authedClient = await (deps.createAuthedClient ?? createAuthedClient)(req);
 
     log.info("Processing voice action", { action });
 
@@ -45,6 +127,19 @@ Deno.serve(async (req) => {
           .limit(5);
         if (error) throw error;
         result = data;
+        break;
+      }
+
+      case 'search_catalog_products': {
+        const { query } = params;
+        // Mesma edge e mesmos parâmetros do CmdK; a resposta tem o conteúdo
+        // de produto (id, nome, sku, preço, imagem principal) que a voz lê.
+        result = await searchCatalogProducts(query, {
+          supabaseUrl,
+          apikey: supabaseKey,
+          authHeader: req.headers.get('Authorization') ?? req.headers.get('authorization') ?? '',
+          fetchImpl: deps.catalogFetch,
+        });
         break;
       }
 
@@ -235,4 +330,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+// O wrapper explícito evita que Deno.serve passe ServeHandlerInfo no lugar de
+// `deps` (mesmo padrão de promogifts-catalog).
+if (import.meta.main) Deno.serve((req) => voiceCopilotActionHandler(req));
