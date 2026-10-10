@@ -77,13 +77,19 @@ export interface AiUsageSummary {
 /** Quantas linhas cruas por pagina. A paginacao e do servidor (ver `range`). */
 export const LOGS_PER_PAGE = 50;
 
+/**
+ * Cores das funções de IA no gráfico de área, na pizza e na legenda. Usa a
+ * paleta de gráficos do sistema (`--chart-*`, com par claro/escuro em
+ * `src/styles/tokens.css:295-304` e `510-519`) em vez de hex fixos: o hex não
+ * acompanhava dark mode, alto contraste nem os presets de tema.
+ */
 export const FUNCTION_COLORS: Record<string, string> = {
-  'ai-suggest-reply': '#3b82f6',
-  'ai-enhance-message': '#8b5cf6',
-  'ai-conversation-analysis': '#f59e0b',
-  'ai-conversation-summary': '#10b981',
-  'ai-auto-tag': '#ef4444',
-  'chatbot-l1': '#06b6d4',
+  'ai-suggest-reply': 'hsl(var(--chart-1))',
+  'ai-enhance-message': 'hsl(var(--chart-9))',
+  'ai-conversation-analysis': 'hsl(var(--chart-4))',
+  'ai-conversation-summary': 'hsl(var(--chart-3))',
+  'ai-auto-tag': 'hsl(var(--chart-8))',
+  'chatbot-l1': 'hsl(var(--chart-6))',
 };
 
 export const FUNCTION_LABELS: Record<string, string> = {

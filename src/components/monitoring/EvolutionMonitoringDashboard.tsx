@@ -31,7 +31,7 @@ const PERIODS: { value: TimePeriod; label: string }[] = [
 function StatusSemaphore({ connections }: { connections: { status: string }[] }) {
   const all = connections.length;
   const active = connections.filter(c => c.status === 'connected').length;
-  const color = active === all && all > 0 ? 'bg-emerald-500' : active > 0 ? 'bg-amber-500' : 'bg-destructive';
+  const color = active === all && all > 0 ? 'bg-success' : active > 0 ? 'bg-warning' : 'bg-destructive';
   const label = active === all && all > 0 ? 'Todas conectadas' : active > 0 ? 'Parcialmente conectado' : 'Sem conexões';
 
   return (
@@ -176,7 +176,7 @@ export function EvolutionMonitoringDashboard() {
                 aria-label={notificationsEnabled ? 'Notificações ativadas' : 'Ativar notificações'}
               >
                 {notificationsEnabled
-                  ? <Bell className="w-4 h-4 text-emerald-500" />
+                  ? <Bell className="w-4 h-4 text-success" />
                   : <BellOff className="w-4 h-4 text-muted-foreground" />
                 }
               </Button>
@@ -241,7 +241,7 @@ export function EvolutionMonitoringDashboard() {
               className={cn(
                 'h-5 min-w-5 px-1 text-3xs rounded-full',
                 uptime.percentage === null ? 'text-muted-foreground border-muted-foreground/30' :
-                uptime.percentage >= 99 ? 'text-emerald-500 border-emerald-500/30' : 'text-amber-500 border-amber-500/30'
+                uptime.percentage >= 99 ? 'text-success border-success/30' : 'text-warning border-warning/30'
               )}
             >
               {uptime.percentage === null ? '—' : `${uptime.percentage}%`}

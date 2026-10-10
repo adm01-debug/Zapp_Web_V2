@@ -129,7 +129,7 @@ export function PerformanceMonitor() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'good': return <Badge className="bg-primary/10 text-primary border-primary/30 text-3xs">Bom</Badge>;
+      case 'good': return <Badge className="bg-success/10 text-success border-success/30 text-3xs">Bom</Badge>;
       case 'warning': return <Badge className="bg-warning/10 text-warning border-warning/30 text-3xs">Atenção</Badge>;
       case 'critical': return <Badge variant="destructive" className="text-3xs">Crítico</Badge>;
       case 'unknown': return <Badge variant="secondary" className="text-3xs">N/D</Badge>;
@@ -139,7 +139,7 @@ export function PerformanceMonitor() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'good': return 'text-primary';
+      case 'good': return 'text-success';
       case 'warning': return 'text-warning';
       case 'critical': return 'text-destructive';
       default: return 'text-muted-foreground';
@@ -199,7 +199,7 @@ export function PerformanceMonitor() {
             <div className="relative">
               <svg className="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={overallScore >= 80 ? 'hsl(var(--primary))' : overallScore >= 50 ? 'hsl(40, 100%, 50%)' : 'hsl(var(--destructive))'} strokeWidth="3" strokeDasharray={`${overallScore}, 100`} />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={overallScore >= 80 ? 'hsl(var(--success))' : overallScore >= 50 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))'} strokeWidth="3" strokeDasharray={`${overallScore}, 100`} />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-2xl font-bold" data-testid="overall-score">{overallScore}</span>

@@ -158,7 +158,7 @@ export function TranscriptionsHistoryView() {
       </motion.div>
 
       {incomplete && (
-        <div className="relative z-10 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <div className="relative z-10 flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-warning">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           Exibindo um recorte das transcrições — a leitura não cobriu todo o período.
           {loadError ? ` (${loadError})` : ''}
