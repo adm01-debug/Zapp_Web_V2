@@ -69,14 +69,14 @@ export function SLAConfigTable() {
                   </td>
                   <td className="pr-2 text-foreground-secondary">{formatSLAMinutes(cfg.first_response_minutes)}</td>
                   <td className="pr-2">
-                    <Switch checked={cfg.is_active} onCheckedChange={(checked) => toggleMutation.mutate({ id: cfg.id, is_active: checked })} />
+                    <Switch checked={cfg.is_active} onCheckedChange={(checked) => toggleMutation.mutate({ id: cfg.id, is_active: checked })} aria-label={`Ativar ${cfg.name}`} />
                   </td>
                   <td>
                     <div className="flex items-center gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(cfg)}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(cfg)} aria-label={`Editar SLA ${cfg.name}`}><Pencil className="w-3.5 h-3.5" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" aria-label={`Excluir SLA ${cfg.name}`}><Trash2 className="w-3.5 h-3.5" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -112,14 +112,14 @@ export function SLAConfigTable() {
             <div>
               <Label className="text-xs font-medium">Prioridade</Label>
               <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1" aria-label="Prioridade"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(PRIORITY_CONFIG).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={form.is_default} onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))} />
+              <Switch checked={form.is_default} onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))} aria-label="SLA padrão" />
               <Label className="text-xs">SLA padrão (fallback global)</Label>
             </div>
           </div>
