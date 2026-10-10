@@ -1035,6 +1035,21 @@ jobs:
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
 
+      # N-142 (P3 · seguranca): message_reactions.user_id guarda profiles.id, mas a
+      # policy message_reactions_select_policy comparava com auth.uid() (auth user
+      # uuid) — o autor nunca via a propria reacao. O teste aplica a migration real
+      # num PostgreSQL 17 descartavel e prova com papel authenticated real: o autor
+      # ve a propria reacao, estranho sem vinculo nao ve, admin ve tudo e o ramo
+      # contact_id continua intacto; o -- Rollback: executa e restaura o corpo
+      # anterior. Inicia container proprio e roda CREATE ROLE
+      # anon/authenticated/service_role — as roles sao globais ao cluster, entao o
+      # docker-shim do E47 colidiria com as do shim.
+      - name: Provar leitura de reacoes pelo id certo do usuario (N-142)
+        env:
+          N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
+
   # Gate do replay COMPLETO das migrations (cartao t_b6f4e82d). O replay-local.sh
   # existia e era provado so por harness offline; nenhum workflow o chamava, entao
   # nenhuma PR provava que o conjunto das migrations ainda aplica do zero. Aqui ele
