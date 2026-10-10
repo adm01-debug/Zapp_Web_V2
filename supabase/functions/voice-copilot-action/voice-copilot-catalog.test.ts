@@ -90,10 +90,15 @@ function requestVoz(body: unknown): Request {
   });
 }
 
+type AuthedClientOpt = NonNullable<VoiceCopilotActionDeps["createAuthedClient"]>;
+
+/** Client autenticado falso: a ação de catálogo não usa o authedClient. */
+const authedClientFalso: AuthedClientOpt = () =>
+  Promise.resolve({} as Awaited<ReturnType<AuthedClientOpt>>);
+
 const depsBase = (fetchImpl: VoiceCopilotActionDeps["catalogFetch"]): VoiceCopilotActionDeps => ({
   requireAuth: () => Promise.resolve({ userId: "usuario-1" }),
-  // deno-lint-ignore no-explicit-any
-  createAuthedClient: (() => Promise.resolve({} as any)) as VoiceCopilotActionDeps["createAuthedClient"],
+  createAuthedClient: authedClientFalso,
   catalogFetch: fetchImpl,
 });
 
