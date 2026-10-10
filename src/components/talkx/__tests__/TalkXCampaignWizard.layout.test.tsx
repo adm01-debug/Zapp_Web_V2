@@ -40,6 +40,8 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     // módulo precisa dos mesmos valores que o hook real exporta.
     CAMPAIGN_NAME_MIN_LENGTH: 3,
     CAMPAIGN_NAME_MAX_LENGTH: 200,
+    MESSAGE_LIMIT: 4096,
+    MORE_VARIABLES: [],
   };
 });
 

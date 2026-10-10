@@ -9,13 +9,33 @@ import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
+/**
+ * X128 — chips de variável do passo 2 na ORDEM DO MOCK 08 (`{{nome}}`,
+ * `{{empresa}}`, `{{saudacao}}`, `{{vendedor}}`, `{{data_atual}}`, `{{link}}`).
+ * Todas resolvem em `personalizePreview` (prévia) e no envio real: as chaves
+ * novas já estão no conjunto reservado do kernel de personalização.
+ */
 export const VARIABLES = [
   { key: '{{nome}}', label: 'Primeiro Nome', desc: 'Insere o primeiro nome do contato' },
-  { key: '{{nome_completo}}', label: 'Nome Completo', desc: 'Insere o nome completo do contato' },
-  { key: '{{apelido}}', label: 'Apelido', desc: 'Usa apelido se disponível, senão primeiro nome' },
   { key: '{{empresa}}', label: 'Empresa', desc: 'Nome da empresa do contato' },
   { key: '{{saudacao}}', label: 'Saudação', desc: 'Automático: Bom dia / Boa tarde / Boa noite' },
+  { key: '{{vendedor}}', label: 'Vendedor', desc: 'Nome do vendedor do contato' },
+  { key: '{{data_atual}}', label: 'Data atual', desc: 'Data do envio em dd/mm/aaaa' },
+  { key: '{{link}}', label: 'Link', desc: 'Link rastreável da campanha' },
 ];
+
+/** X128 — as demais variáveis do passo 2 ficam em "Mais variáveis" (mock 08). */
+export const MORE_VARIABLES = [
+  { key: '{{nome_completo}}', label: 'Nome Completo', desc: 'Insere o nome completo do contato' },
+  { key: '{{apelido}}', label: 'Apelido', desc: 'Usa apelido se disponível, senão primeiro nome' },
+];
+
+/**
+ * X128 — limite do corpo da mensagem. É o mesmo teto que a RPC de rascunho/
+ * lançamento aplica (`length(v_message_template) > 4096` recusa): passar daqui
+ * só produziria um erro no fim do wizard.
+ */
+export const MESSAGE_LIMIT = 4096;
 
 export const MESSAGE_TEMPLATES = [
   { name: 'Saudação simples', template: '{{saudacao}}, {{nome}}! Tudo bem? 😊' },
@@ -665,7 +685,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     if (prof) setSendInterval([prof.interval[0], prof.interval[1]]);
   }, []);
 
-  const insertVariable = useCallback((v: string) => setMessageTemplate((prev) => prev + v), []);
+  // X128 — a inserção de variável passou a ser do editor único (handle
+  // `insertAtCursor`, na posição do cursor). O helper que anexava no FIM do
+  // texto saiu: com ele vivo, o chip voltaria a inserir fora do cursor.
   const applyTemplate = useCallback((id: string) => {
     const t = templates.find((x) => x.id === id);
     setTemplateId(id);
@@ -742,7 +764,10 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
     // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
-    2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
+    // X128 — o teto do provedor bloqueia o passo: acima de MESSAGE_LIMIT a própria
+    // RPC recusa o rascunho/lançamento, então o "Continuar" tem de travar aqui.
+    2: messageTemplate.length <= MESSAGE_LIMIT
+      && (messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0)),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
   }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
@@ -1015,7 +1040,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, tags, filteredContacts,
     previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
-    insertVariable, toggleContact, selectAll, handleSave,
+    toggleContact, selectAll, handleSave,
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };
 }
