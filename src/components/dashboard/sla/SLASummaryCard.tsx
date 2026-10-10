@@ -53,7 +53,7 @@ export function SLASummaryCard({ periodFilter, onPeriodChange, overallRate, onTi
         subtitle="Visão consolidada das métricas de SLA do período."
         tileSize={44}
         size="lg"
-        right={<CardSelect value={periodFilter} onValueChange={(v) => onPeriodChange(v as PeriodFilter)} options={PERIOD_OPTIONS} testid="sla-summary-period" />}
+        right={<CardSelect name="Período SLA" value={periodFilter} onValueChange={(v) => onPeriodChange(v as PeriodFilter)} options={PERIOD_OPTIONS} testid="sla-summary-period" />}
       />
       <div className="p-4 rounded-xl bg-muted/20 border border-border/50">
         <div className="flex items-center justify-between mb-3">

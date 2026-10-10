@@ -199,7 +199,7 @@ export function AIQuickAccess({ onNavigateTab }: { onNavigateTab?: (tab: string)
         </DashboardCard>
         <DashboardCard testid="ai-insights-card" variant="comfortable">
           <SectionHeader icon={Lightbulb} title="Insights de IA" subtitle="Principais insights do período" tileSize={44} size="lg"
-            right={<CardSelect value={insightPeriod} onValueChange={(v) => setInsightPeriod(v as InsightPeriod)} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
+            right={<CardSelect name="Período insights" value={insightPeriod} onValueChange={(v) => setInsightPeriod(v as InsightPeriod)} options={INSIGHT_PERIODS} testid="ai-insights-period" />}
           />
           {!insights || insights.total === 0 ? (
             <div className="py-10 flex flex-col items-center text-muted-foreground gap-2">

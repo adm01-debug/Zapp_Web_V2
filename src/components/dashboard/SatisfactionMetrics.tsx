@@ -128,8 +128,8 @@ export function SatisfactionMetrics() {
             <SectionHeader icon={TrendingUp} title="Evolução da Satisfação" subtitle="CSAT e NPS ao longo do tempo" tileSize={44} size="lg"
               right={(
                 <div className="flex items-center gap-2">
-                  <CardSelect value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
-                  <CardSelect value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
+                  <CardSelect name="Modo gráfico" value={chartMode} onValueChange={setChartMode} options={[{ value: 'both', label: 'CSAT e NPS' }, { value: 'csat', label: 'Somente CSAT' }]} testid="sat-chart-mode" />
+                  <CardSelect name="Período da evolução da satisfação" value={String(periodDays)} onValueChange={(v) => setPeriodDays(Number.parseInt(v))} options={PERIOD_OPTIONS.map(o => ({ value: o.value, label: o.label }))} testid="sat-period" />
                 </div>
               )}
             />
@@ -198,7 +198,7 @@ export function SatisfactionMetrics() {
         <div className="space-y-4">
           <DashboardCard testid="sat-queue-card" variant="comfortable">
             <SectionHeader icon={Layers} title="Satisfação por fila" subtitle="CSAT médio e volume de respostas por fila" tileSize={44} size="lg"
-              right={<CardSelect value={queueMode} onValueChange={setQueueMode} options={[{ value: 'csat', label: 'CSAT' }, { value: 'volume', label: 'Volume' }]} testid="sat-queue-mode" />}
+              right={<CardSelect name="Modo fila" value={queueMode} onValueChange={setQueueMode} options={[{ value: 'csat', label: 'CSAT' }, { value: 'volume', label: 'Volume' }]} testid="sat-queue-mode" />}
             />
             <div className="rounded-xl border border-border/50 bg-muted/10 min-h-[150px] flex items-center justify-center">
               {!hasQueue ? (
@@ -220,8 +220,8 @@ export function SatisfactionMetrics() {
             <SectionHeader icon={Users} title="Top agentes por satisfação" subtitle="Agentes com maior CSAT no período" tileSize={44} size="lg"
               right={(
                 <div className="flex items-center gap-2">
-                  <CardSelect value="csat" onValueChange={() => undefined} options={[{ value: 'csat', label: 'CSAT' }]} testid="sat-agents-mode" />
-                  <CardSelect value={topN} onValueChange={setTopN} options={[{ value: '3', label: 'Top 3' }, { value: '5', label: 'Top 5' }, { value: '10', label: 'Top 10' }]} testid="sat-agents-top" />
+                  <CardSelect name="Modo agentes" value="csat" onValueChange={() => undefined} options={[{ value: 'csat', label: 'CSAT' }]} testid="sat-agents-mode" />
+                  <CardSelect name="Top N agentes por satisfação" value={topN} onValueChange={setTopN} options={[{ value: '3', label: 'Top 3' }, { value: '5', label: 'Top 5' }, { value: '10', label: 'Top 10' }]} testid="sat-agents-top" />
                 </div>
               )}
             />

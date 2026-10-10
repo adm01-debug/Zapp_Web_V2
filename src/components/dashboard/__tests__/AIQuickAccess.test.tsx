@@ -31,11 +31,11 @@ vi.mock('../overview/DashboardCard', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../overview/DashboardCard')>();
   return {
     ...mod,
-    CardSelect: ({ value, onValueChange, options, testid }: {
+    CardSelect: ({ value, onValueChange, options, testid, name }: {
       value: string; onValueChange: (v: string) => void;
-      options: { value: string; label: string }[]; testid?: string;
+      options: { value: string; label: string }[]; testid?: string; name: string;
     }) => createElement('select', {
-      'data-testid': testid, value,
+      'data-testid': testid, 'aria-label': name, value,
       onChange: (e: React.ChangeEvent<HTMLSelectElement>) => onValueChange(e.target.value),
     }, options.map(o => createElement('option', { key: o.value, value: o.value }, o.label))),
   };
