@@ -1,6 +1,6 @@
 // N-056: o gráfico de volume tem role="img" + aria-label com total e período.
 // Sem a correção, o container do gráfico NÃO tem role nem aria-label.
-// Os 4 testes originais foram preservados; os 3 de a11y usam todayByHour com 24 posições.
+// Os 4 testes originais foram preservados; os 2 de a11y usam todayByHour com 24 posições.
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VolumeChart } from '../overview/VolumeChart';
