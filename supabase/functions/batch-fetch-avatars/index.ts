@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { evoFetch, extractAvatarUrl } from '../_shared/evolution-send.ts';
 import { avatarObjectPath } from '../_shared/evolution-helpers.ts';
 import { errorResponse, jsonResponse, requireEnv, checkRateLimit, getClientIP } from "../_shared/validation.ts";
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { authorizeCronOrUser, forbiddenResponse, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleBatchFetchAvatars(
@@ -23,22 +23,27 @@ export async function handleBatchFetchAvatars(
 
   try {
 
-    // L5 da matriz IA-004: credencial de maquina do cron (x-cron-secret, segredo
-    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU JWT de usuario autenticado.
-    // A ANON KEY deixa de entrar: ela e publica (vai no bundle do front) e o gateway a
-    // aceitava como "um JWT valido". O caminho de Bearer e o consumidor legitimo do front
-    // (useNewConversation e useInboxBulkActions chamam via functions.invoke com o JWT da
-    // sessao). O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo);
-    // o literal da RPC fica AQUI de proposito, para o guard de catalogo
-    // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
-    const authorized = await isAuthorizedCronOrUser(req, supabase, {
+    // L5 da matriz IA-004 + PAPEL: credencial de maquina do cron (x-cron-secret, segredo
+    // DEDICADO no Vault, lido por RPC SECURITY DEFINER) OU usuario autenticado COM papel
+    // admin/supervisor. A ANON KEY deixa de entrar: ela e publica (vai no bundle do front)
+    // e o gateway a aceitava como "um JWT valido". Um usuario autenticado sem papel (ex.:
+    // agent) dispara a varredura administrativa de avatares de TODOS os contatos — por isso
+    // esse caminho exige `is_admin_or_supervisor` (403 sem ele). O cron e a service key
+    // seguem inalterados. O guard vive em _shared/cron-secret-auth.ts; os literais das RPCs
+    // ficam AQUI de proposito, para o guard de catalogo
+    // (scripts/db-audit/supabase-usage-guard.mjs) validar os alvos.
+    const authz = await authorizeCronOrUser(req, supabase, {
       serviceKey,
       readVaultSecret: async () => {
         const { data, error } = await supabase.rpc('get_avatars_refresh_cron_secret');
         return !error && typeof data === 'string' ? data : null;
       },
+      isUserPrivileged: async (userId) => {
+        const { data, error } = await supabase.rpc('is_admin_or_supervisor', { _user_id: userId });
+        return !error && data === true;
+      },
     });
-    if (!authorized) return unauthorizedResponse(headers);
+    if (!authz.ok) return authz.status === 403 ? forbiddenResponse(headers) : unauthorizedResponse(headers);
 
     const ip = getClientIP(req);
     const rl = checkRateLimit(`batch-avatars:${ip}`, 5, 60_000);

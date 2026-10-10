@@ -109,6 +109,8 @@ interface MockOpts {
   vaultError?: boolean;
   authUser?: { id: string } | null;
   authUserError?: boolean;
+  /** resposta da RPC `is_admin_or_supervisor` para o usuário autenticado */
+  isAdmin?: boolean;
   /** linhas devolvidas pela tabela do handler (vazio = fecha 200 sem rede) */
   rows?: unknown[];
   serviceKey?: string;
@@ -152,6 +154,9 @@ function mockDeps(spec: EdgeSpec, opts: MockOpts, ctx: MockCtx): any {
         if (name === spec.rpc) {
           if (opts.vaultError) return Promise.resolve({ data: null, error: new Error('vault rpc failed') });
           return Promise.resolve({ data: opts.vaultSecret ?? null, error: null });
+        }
+        if (name === 'is_admin_or_supervisor') {
+          return Promise.resolve({ data: opts.isAdmin === true, error: null });
         }
         return Promise.resolve({ data: null, error: null });
       },
@@ -243,5 +248,31 @@ for (const spec of EDGES) {
     assert(res.status === 200, `esperado 200 no preflight, recebido ${res.status}`);
     assert(Boolean(res.headers.get('access-control-allow-origin')), 'preflight sem Access-Control-Allow-Origin');
     assert(ctx.rpcCalls.length === 0, 'o preflight nao deve consultar a RPC do Vault');
+  });
+
+  // PAPEL: o caminho de Bearer de USUARIO (nao-cron, nao-service-key) agora exige
+  // admin/supervisor. B6 = autenticado SEM o papel → 403 (nao 401, nao 200). B7 =
+  // autenticado COM o papel → segue no handler (o cron e a service key nao mudam).
+  Deno.test(`${spec.name} B6 (defeito): usuario autenticado SEM admin/supervisor → 403`, async () => {
+    const ctx = newCtx();
+    const res = await spec.handler(
+      makeRequest(spec, { bearer: 'eyJuser.jwt.agent' }),
+      mockDeps(spec, { authUser: { id: 'user-agent' }, isAdmin: false }, ctx),
+    );
+    assert(ctx.rpcCalls.includes('is_admin_or_supervisor'), 'o guard deve consultar o papel do usuario');
+    assert(res.status === 403, `esperado 403 (autenticado sem papel), recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.error === 'Forbidden', `body inesperado: ${JSON.stringify(body)}`);
+  });
+
+  Deno.test(`${spec.name} B7: usuario autenticado COM admin/supervisor → segue no handler (200)`, async () => {
+    const ctx = newCtx();
+    const res = await spec.handler(
+      makeRequest(spec, { bearer: 'eyJuser.jwt.admin' }),
+      mockDeps(spec, { authUser: { id: 'user-admin' }, isAdmin: true, rows: [] }, ctx),
+    );
+    assert(ctx.rpcCalls.includes('is_admin_or_supervisor'), 'o guard deve consultar o papel do usuario');
+    assert(res.status === 200, `com papel a chamada segue e fecha 200, recebido ${res.status}`);
+    spec.assertOkBody(await res.json());
   });
 }
