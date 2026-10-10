@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import {
   LoginBlockedLogPanel,
-  LOGIN_BLOCKED_LOG_COLUMNS,
   LOGIN_BLOCK_ACTION,
   motivoLabel,
 } from '../LoginBlockedLogPanel';
@@ -55,8 +54,11 @@ describe('LoginBlockedLogPanel — log de bloqueio de login', () => {
 
     const audit = h.select.find((s) => s.table === 'audit_logs');
     expect(audit).toBeTruthy();
-    expect(audit?.cols).toBe(LOGIN_BLOCKED_LOG_COLUMNS);
+    // Colunas literais que o painel realmente usa — nunca '*'.
     expect(audit?.cols).not.toBe('*');
+    for (const col of ['id', 'details', 'ip_address', 'user_agent', 'created_at']) {
+      expect(audit?.cols).toContain(col);
+    }
     // Nenhuma coluna sensível entra na consulta de leitura.
     expect(audit?.cols).not.toContain('password');
     expect(audit?.cols).not.toContain('token');
