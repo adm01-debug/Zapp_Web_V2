@@ -22,18 +22,20 @@ const MODE_CARDS: { mode: Mode; label: string; description: string }[] = [
 
 export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin }: Props) {
   const [mode, setMode] = useState<Mode>('none');
-  const [evolutionUrl, setEvolutionUrl] = useState('');
+  const [instanceId, setInstanceId] = useState('');
   const [evolutionApiKey, setEvolutionApiKey] = useState('');
   const [officialToken, setOfficialToken] = useState('');
 
-  const { data: credentials } = useDepartmentWhatsAppCredentials(departmentId);
+  const { data: credentials, isError } = useDepartmentWhatsAppCredentials(departmentId, { enabled: isAdmin });
   const saveMutation = useSaveDepartmentWhatsApp(departmentId);
 
   useEffect(() => {
     if (!credentials) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(credentials.mode);
-    setEvolutionUrl(credentials.evolution_url ?? '');
+    // Contrato atual (`get_department_whatsapp_config`): o que o banco guarda é
+    // `departments.whatsapp_instance_id` — não existe coluna de URL.
+    setInstanceId(credentials.instance_id ?? '');
     // NEVER prefill API keys or tokens — blank = keep existing
   }, [credentials]);
 
@@ -41,13 +43,24 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
     saveMutation.mutate({
       mode,
       config: {
-        evolution_url: evolutionUrl || undefined,
-        evolution_api_key: evolutionApiKey || undefined,
-        official_token: officialToken || undefined,
+        instance_id: instanceId.trim() || undefined,
+        api_key: mode === 'none' ? undefined : (mode === 'official' ? officialToken : evolutionApiKey).trim() || undefined,
       },
       actorName: currentUserName,
     });
   };
+
+  // Falha na leitura da config não pode virar formulário em "Nenhum": salvar
+  // assim desligaria a integração que já existe no departamento.
+  if (isAdmin && isError) {
+    return (
+      <div className="p-4">
+        <p role="alert" className="text-sm text-destructive">
+          Não foi possível carregar a configuração de WhatsApp deste departamento.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-5">
@@ -80,12 +93,12 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
       {mode === 'evolution' && (
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="evo-url">URL da Evolution API</Label>
+            <Label htmlFor="evo-instance">Instance ID da Evolution API</Label>
             <Input
-              id="evo-url"
-              placeholder="https://evolution.exemplo.com"
-              value={evolutionUrl}
-              onChange={e => setEvolutionUrl(e.target.value)}
+              id="evo-instance"
+              placeholder="ex.: zapp-departamento"
+              value={instanceId}
+              onChange={e => setInstanceId(e.target.value)}
               disabled={!isAdmin}
             />
           </div>
