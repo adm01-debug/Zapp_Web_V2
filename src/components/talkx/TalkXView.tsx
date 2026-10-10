@@ -58,7 +58,9 @@ export default function TalkXView() {
     const wizard = parseTalkXRoute(window.location.search).wizard.route;
     if (wizard) return 'wizard';
     const screenRoute = parseTalkXScreenRoute(window.location.search).route;
-    if (screenRoute?.screen) return screenRoute.screen;
+    if (screenRoute?.screen) {
+      return screenRoute.screen === 'report' ? 'monitor' : screenRoute.screen;
+    }
     return 'tabs';
   });
   const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
