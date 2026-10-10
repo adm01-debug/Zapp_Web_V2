@@ -210,9 +210,11 @@ const NAV_PARAM_SANITIZERS: Record<string, (value: string) => string | null> = {
  * any stale non-reserved hash is cleaned via replaceState without adding a history entry.
  *
  * `params` (opcional) é saneado por NAV_PARAM_SANITIZERS e gravado na MESMA entrada.
- * Uma intenção de e-mail de contato também limpa `emailThread` remanescente — a
- * conversa de outro contexto não pode barrar o pedido novo (`?emailThread`
- * explícito em deep link continua valendo porque não passa por aqui).
+ * Uma intenção de e-mail de contato válida também limpa `emailThread` remanescente
+ * e o outro parâmetro de intenção remanescente (`emailContact`/`emailTo` não
+ * reenviado sai da URL) — a conversa ou o destinatário de outro contexto não pode
+ * barrar nem contaminar o pedido novo (`?emailThread` explícito em deep link
+ * continua valendo porque não passa por aqui; params só com lixo não limpam nada).
  */
 export function navigateToView(view: string, params?: Record<string, string>): void {
   const currentView = new URLSearchParams(window.location.search).get('view');
@@ -227,7 +229,14 @@ export function navigateToView(view: string, params?: Record<string, string>): v
       const sanitized = NAV_PARAM_SANITIZERS[key]?.(value);
       if (sanitized !== null && sanitized !== undefined) extraParams[key] = sanitized;
     }
-    if (Object.keys(extraParams).length > 0) extraParams.emailThread = null;
+    if (Object.keys(extraParams).length > 0) {
+      // Intenção válida nova substitui a anterior: o outro parâmetro de intenção
+      // remanescente sai da URL em vez de vazar para o pedido novo.
+      for (const known of Object.keys(NAV_PARAM_SANITIZERS)) {
+        if (!(known in extraParams)) extraParams[known] = null;
+      }
+      extraParams.emailThread = null;
+    }
   }
   setViewParam(view, replace, entryId, extraParams);
   window.dispatchEvent(new CustomEvent('zapp:navigate', { detail: { view, entryId } }));
