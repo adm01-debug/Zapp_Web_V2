@@ -8,7 +8,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
-import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import { verifyHmacSignature, timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -84,7 +84,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   // ── GET: clique + redirect ──────────────────────────────────────────────────
   if (method === "GET") {
     const slug      = url.searchParams.get("s");
-    const recipient = url.searchParams.get("r") ?? undefined;
+    const recipientParam = url.searchParams.get("r") ?? undefined;
 
     if (!slug) {
       return new Response("Bad request: missing slug", { status: 400 });
@@ -103,9 +103,21 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     // Hash trivial (não persiste IP raw)
     const ipHash = clientIp === "unknown" ? undefined : await hashIp(clientIp, ipSalt);
 
+    // `r` com formato UUID: link legado (id cru ja enviado) vai direto.
+    // Outro valor e o token opaco do talkx-send: resolve para o recipient_id
+    // da campanha do link. Sem resolucao (forjado, outra campanha, sem
+    // segredo) segue anonimo (null): redirect e clique nunca quebram, mas
+    // nada e atribuido — mesma doutrina do IDOR guard da RPC.
+    let recipient: string | null = null;
+    if (recipientParam) {
+      recipient = isTalkxRecipientUuid(recipientParam)
+        ? recipientParam
+        : await resolveTalkxLinkToken({ slug, token: recipientParam, supabase, env });
+    }
+
     const { data, error } = await supabase.rpc("record_talkx_link_click", {
       p_slug:      slug,
-      p_recipient: recipient ?? null,
+      p_recipient: recipient,
       p_ua:        ua ?? null,
       p_ip_hash:   ipHash ?? null,
     });
@@ -276,6 +288,68 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   }
 
   return new Response("Method not allowed", { status: 405 });
+}
+
+const TALX_RECIPIENT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** UUID = link legado com id cru (vai direto para a RPC, sem resolucao). */
+function isTalkxRecipientUuid(value: string): boolean {
+  return TALX_RECIPIENT_UUID_RE.test(value);
+}
+
+/**
+ * Resolve o token opaco de rastreamento (?r=<token>) para o recipient_id.
+ * Compara em tempo constante contra os destinatarios da campanha do link;
+ * token forjado, de outra campanha ou sem TALKX_CONVERT_SECRET resulta em
+ * null (clique anonimo, nunca atribuicao indevida).
+ */
+async function resolveTalkxLinkToken(params: {
+  slug: string;
+  token: string;
+  supabase: SupabaseClient;
+  env: TalkxLinkDeps["env"];
+}): Promise<string | null> {
+  const secret = params.env.get("TALKX_CONVERT_SECRET");
+  if (!secret) return null;
+  const { data: link } = await params.supabase
+    .from("talkx_links")
+    .select("id,campaign_id")
+    .eq("slug", params.slug)
+    .maybeSingle();
+  const campaignId = (link as { campaign_id?: unknown } | null)?.campaign_id;
+  if (typeof campaignId !== "string" || campaignId.length === 0) return null;
+  const { data: recipients, error } = await params.supabase
+    .from("talkx_recipients")
+    .select("id")
+    .eq("campaign_id", campaignId);
+  if (error || !Array.isArray(recipients)) return null;
+  for (const row of recipients as Array<{ id?: unknown }>) {
+    if (typeof row?.id !== "string") continue;
+    const expected = await talkxTrackingToken(row.id, secret);
+    if (timingSafeEqual(expected, params.token)) return row.id;
+  }
+  return null;
+}
+
+/**
+ * O MESMO token do talkx-send: HMAC-SHA256(secret, recipientId), 16
+ * primeiros bytes, base64url (22 chars). Duplicado aqui de proposito —
+ * talkx-send e talkx-link rodam em isolates separados e nao se importam;
+ * o contrato entre eles e provado pelo teste ponta a ponta (token valido
+ * resolve, adulterado nao atribui).
+ */
+async function talkxTrackingToken(recipientId: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(recipientId));
+  const bytes = new Uint8Array(digest).slice(0, 16);
+  const binary = String.fromCharCode(...bytes);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 async function hashIp(ip: string, salt: string): Promise<string> {

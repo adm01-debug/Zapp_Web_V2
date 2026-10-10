@@ -405,3 +405,134 @@ Deno.test("POST com value acima do teto (erro da RPC) devolve 422 sem vazar text
   const body = await res.json();
   assert(!JSON.stringify(body).includes("exceeds_max"), `vazou texto do banco: ${JSON.stringify(body)}`);
 });
+
+// ── [refazer 1] GET com token opaco (?r=<token>) ─────────────────────────────
+// O token é montado literalmente aqui (o teste NÃO importa função do handler):
+// HMAC-SHA256(secret, recipientId), 16 primeiros bytes, base64url. Se o
+// talkx-send assinar outro payload, o teste de token válido falha — é isso que
+// prova o contrato entre as duas funções.
+const TRACKING_SECRET = "test-convert-secret";
+const TOKEN_UUID_A = "11111111-1111-4111-8111-111111111111";
+const TOKEN_UUID_B = "22222222-2222-4222-8222-222222222222";
+
+async function trackingTokenForTest(secret: string, recipientId: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(recipientId));
+  const bytes = new Uint8Array(digest).slice(0, 16);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function makeTokenFake(opts: {
+  link?: Record<string, unknown> | null;
+  recipientIds?: string[];
+  clickResult?: unknown;
+  seen?: Array<{ fn: string; args: Record<string, unknown> }>;
+}) {
+  const seen = opts.seen ?? [];
+  const supabase = {
+    rpc: async (fn: string, args: Record<string, unknown>) => {
+      seen.push({ fn, args });
+      if (fn === "record_talkx_link_click") return { data: opts.clickResult, error: null };
+      return { data: null, error: { message: `rpc inesperada: ${fn}` } };
+    },
+    from: (table: string) => ({
+      select: (_cols: string) => ({
+        eq: (_col: string, _val: unknown) => ({
+          maybeSingle: async () => {
+            if (table === "talkx_links") return { data: opts.link ?? null, error: null };
+            return { data: null, error: { message: `maybeSingle inesperado: ${table}` } };
+          },
+          then: (onF: (v: unknown) => void, onR?: (e: unknown) => void) => {
+            try {
+              if (table === "talkx_recipients") {
+                onF({ data: (opts.recipientIds ?? []).map((id) => ({ id })), error: null });
+              } else {
+                onF({ data: null, error: { message: `lista inesperada: ${table}` } });
+              }
+            } catch (e) {
+              if (onR) onR(e);
+            }
+          },
+        }),
+      }),
+    }),
+  };
+  return { supabase: supabase as unknown as SupabaseClient, seen };
+}
+
+function tokenLinkRow() {
+  return {
+    id: "link-1",
+    campaign_id: "camp-1",
+    utm_source: "whatsapp",
+    utm_medium: "talkx",
+    utm_campaign: "promo",
+    utm_content: null,
+    utm_term: null,
+  };
+}
+
+Deno.test("GET com token válido resolve o destinatário e registra o clique atribuído", async () => {
+  const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_A);
+  const { supabase, seen } = makeTokenFake({
+    link: tokenLinkRow(),
+    recipientIds: [TOKEN_UUID_A, TOKEN_UUID_B],
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `token válido deve redirecionar, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === TOKEN_UUID_A, `clique deve ser atribuído ao dono do token, recebido: ${JSON.stringify(click.args)}`);
+  assert(click.args.p_slug === "promo", "o slug deve seguir para a RPC");
+});
+
+Deno.test("GET com token adulterado NÃO atribui a ninguém (segue anônimo, sem quebrar)", async () => {
+  const valid = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_A);
+  const tampered = valid.slice(0, -1) + (valid.endsWith("A") ? "B" : "A");
+  const { supabase, seen } = makeTokenFake({
+    link: tokenLinkRow(),
+    recipientIds: [TOKEN_UUID_A, TOKEN_UUID_B],
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${tampered}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `redirect não pode quebrar por token forjado, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === null, `token forjado não pode atribuir clique a ninguém, recebido: ${JSON.stringify(click.args)}`);
+});
+
+Deno.test("GET com r=UUID legado continua atribuindo direto (links já enviados)", async () => {
+  const { supabase, seen } = makeTokenFake({
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${TOKEN_UUID_A}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `UUID legado deve redirecionar, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === TOKEN_UUID_A, `UUID legado deve ir direto para a RPC, recebido: ${JSON.stringify(click.args)}`);
+});
+
+Deno.test("GET com token mas sem segredo configurado NÃO atribui (anônimo)", async () => {
+  const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_A);
+  const { supabase, seen } = makeTokenFake({
+    link: tokenLinkRow(),
+    recipientIds: [TOKEN_UUID_A],
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: "" }) });
+  assert(res.status === 302, `sem segredo o redirect não pode quebrar, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === null, `sem segredo nenhum token pode atribuir, recebido: ${JSON.stringify(click.args)}`);
+});
