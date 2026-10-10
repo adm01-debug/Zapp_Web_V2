@@ -21,6 +21,7 @@ import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectio
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
+import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
@@ -252,6 +253,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                     </div>
                     <Pill label={sm.label} tone={sm.tone}/>
                     {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtAgo(r.sent_at)}</span>}
+                    <TalkXRecipientRowActions recipient={r} />
                   </motion.div>
                 );
               })}

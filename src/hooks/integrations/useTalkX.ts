@@ -81,6 +81,7 @@ export interface TalkXRecipient {
   sent_at: string | null;
   delivered_at: string | null;
   error_message: string | null;
+  manual_retry_count: number | null;
   created_at: string;
   contacts?: {
     name: string;
