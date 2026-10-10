@@ -30,7 +30,7 @@ vi.mock('@/components/ui/tabs', async () => {
   return {
     Tabs: ({ children }: { children: ReactNode }) => ce('div', {}, children),
     TabsList: ({ children }: { children: ReactNode }) => ce('div', { role: 'tablist' }, children),
-    TabsTrigger: ({ children }: { children: ReactNode }) => ce('button', { role: 'tab' }, children),
+    TabsTrigger: ({ className, children }: { className?: string; children: ReactNode }) => ce('button', { role: 'tab', className }, children),
     TabsContent: ({ children }: { children: ReactNode }) => ce('div', {}, children),
   };
 });
@@ -106,6 +106,15 @@ describe('SettingsView — guard das abas staff-only (RBAC)', () => {
     render(<SettingsView />);
     for (const testId of STAFF_ONLY_TEST_IDS) {
       expect(screen.getByTestId(testId)).toBeInTheDocument();
+    }
+  });
+
+  it('abas têm min-h-[44px] no celular (max-[390px]) para toque acessível', () => {
+    render(<SettingsView />);
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBeGreaterThan(0);
+    for (const tab of tabs) {
+      expect(tab.className).toContain('max-[390px]:min-h-[44px]');
     }
   });
 });

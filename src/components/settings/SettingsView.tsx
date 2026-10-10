@@ -101,23 +101,23 @@ export function SettingsView() {
         {/* Scrollable tabs with fade edges and scroll indicators */}
         <div className="relative group">
           <div className="overflow-x-auto scrollbar-none -mx-1 px-1 scroll-smooth" id="settings-tabs-scroll">
-            <TabsList className="bg-muted/50 inline-flex w-max gap-1 p-1">
-              {isStaff && <TabsTrigger value="schedule" className="gap-2 whitespace-nowrap"><Clock className="w-4 h-4" />Horário</TabsTrigger>}
-              {isStaff && <TabsTrigger value="messages" className="gap-2 whitespace-nowrap"><MessageSquare className="w-4 h-4" />Mensagens</TabsTrigger>}
-              {isStaff && <TabsTrigger value="automation" className="gap-2 whitespace-nowrap"><RefreshCw className="w-4 h-4" />Automação</TabsTrigger>}
-              <TabsTrigger value="notifications" className="gap-2 whitespace-nowrap"><Bell className="w-4 h-4" />Notificações</TabsTrigger>
-              <TabsTrigger value="appearance" className="gap-2 whitespace-nowrap"><Palette className="w-4 h-4" />Aparência</TabsTrigger>
-              <TabsTrigger value="shortcuts" className="gap-2 whitespace-nowrap"><Keyboard className="w-4 h-4" />Atalhos</TabsTrigger>
-              <TabsTrigger value="sounds" className="gap-2 whitespace-nowrap"><Volume2 className="w-4 h-4" />Sons</TabsTrigger>
-              {isStaff && <TabsTrigger value="global" className="gap-2 whitespace-nowrap"><Globe className="w-4 h-4" />Global</TabsTrigger>}
-              {isStaff && <TabsTrigger value="followup" className="gap-2 whitespace-nowrap"><ArrowRight className="w-4 h-4" />Follow-up</TabsTrigger>}
-              {isStaff && <TabsTrigger value="media" className="gap-2 whitespace-nowrap"><Package className="w-4 h-4" />Mídia</TabsTrigger>}
-              {isStaff && <TabsTrigger value="nps" className="gap-2 whitespace-nowrap"><TrendingUp className="w-4 h-4" />NPS</TabsTrigger>}
-              {isStaff && <TabsTrigger value="ai-tags" className="gap-2 whitespace-nowrap"><Tags className="w-4 h-4" />Tags IA</TabsTrigger>}
-              {isStaff && <TabsTrigger value="csat" className="gap-2 whitespace-nowrap"><MessageSquareHeart className="w-4 h-4" />CSAT</TabsTrigger>}
-              {isStaff && <TabsTrigger value="chatbot-l1" className="gap-2 whitespace-nowrap"><Bot className="w-4 h-4" />Chatbot L1</TabsTrigger>}
-              {isStaff && <TabsTrigger value="routing" className="gap-2 whitespace-nowrap"><Users className="w-4 h-4" />Roteamento</TabsTrigger>}
-              {isStaff && <TabsTrigger value="ai-providers" className="gap-2 whitespace-nowrap"><Brain className="w-4 h-4" />Gestão IA</TabsTrigger>}
+            <TabsList className="bg-muted/50 inline-flex w-max gap-1 p-1 max-[390px]:h-auto">
+              {isStaff && <TabsTrigger value="schedule" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Clock className="w-4 h-4" />Horário</TabsTrigger>}
+              {isStaff && <TabsTrigger value="messages" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><MessageSquare className="w-4 h-4" />Mensagens</TabsTrigger>}
+              {isStaff && <TabsTrigger value="automation" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><RefreshCw className="w-4 h-4" />Automação</TabsTrigger>}
+              <TabsTrigger value="notifications" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Bell className="w-4 h-4" />Notificações</TabsTrigger>
+              <TabsTrigger value="appearance" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Palette className="w-4 h-4" />Aparência</TabsTrigger>
+              <TabsTrigger value="shortcuts" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Keyboard className="w-4 h-4" />Atalhos</TabsTrigger>
+              <TabsTrigger value="sounds" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Volume2 className="w-4 h-4" />Sons</TabsTrigger>
+              {isStaff && <TabsTrigger value="global" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Globe className="w-4 h-4" />Global</TabsTrigger>}
+              {isStaff && <TabsTrigger value="followup" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><ArrowRight className="w-4 h-4" />Follow-up</TabsTrigger>}
+              {isStaff && <TabsTrigger value="media" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Package className="w-4 h-4" />Mídia</TabsTrigger>}
+              {isStaff && <TabsTrigger value="nps" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><TrendingUp className="w-4 h-4" />NPS</TabsTrigger>}
+              {isStaff && <TabsTrigger value="ai-tags" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Tags className="w-4 h-4" />Tags IA</TabsTrigger>}
+              {isStaff && <TabsTrigger value="csat" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><MessageSquareHeart className="w-4 h-4" />CSAT</TabsTrigger>}
+              {isStaff && <TabsTrigger value="chatbot-l1" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Bot className="w-4 h-4" />Chatbot L1</TabsTrigger>}
+              {isStaff && <TabsTrigger value="routing" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Users className="w-4 h-4" />Roteamento</TabsTrigger>}
+              {isStaff && <TabsTrigger value="ai-providers" className="gap-2 whitespace-nowrap max-[390px]:min-h-[44px]"><Brain className="w-4 h-4" />Gestão IA</TabsTrigger>}
             </TabsList>
           </div>
           {/* Fade edges — left and right */}
