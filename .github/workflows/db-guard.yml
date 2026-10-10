@@ -975,3 +975,10 @@ jobs:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+
+      # N-136 (P2 · banco, roteiro de recriacao): o runbook docs/runbooks/recriar-banco-local.md
+      # documenta o comando para recriar o banco local do zero. O teste prova que o arquivo
+      # existe, cita os caminhos corretos (replay-local.sh, supabase/migrations), nao menciona
+      # o banco de producao e confere que os arquivos citados existem no repo.
+      - name: Provar o runbook de recriacao do banco local (N-136)
+        run: bash scripts/db-audit/recriar-banco-local.test.sh
