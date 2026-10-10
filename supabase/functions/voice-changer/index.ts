@@ -1,4 +1,5 @@
-import { handleCors, errorResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, getCorsHeaders, Logger, requireEnv, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   // Masculinas
@@ -30,7 +31,7 @@ const VOICE_PRESETS: Record<string, { voiceId: string; label: string }> = {
   'reindeer':   { voiceId: 'h6u4tPKmcPlxUdZOaVpH', label: 'Rena' },
 };
 
-Deno.serve(async (req) => {
+export async function handleVoiceChanger(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -64,6 +65,22 @@ Deno.serve(async (req) => {
     }
 
     log.info('Processing voice change', { preset: voicePreset, size: audioFile.size });
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "voice-changer",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
 
     const apiFormData = new FormData();
     apiFormData.append('audio', audioFile);
@@ -108,4 +125,8 @@ Deno.serve(async (req) => {
     log.error("Voice changer error", { error: err instanceof Error ? err.message : String(err) });
     return errorResponse('Internal error processing voice change', 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleVoiceChanger);
+}

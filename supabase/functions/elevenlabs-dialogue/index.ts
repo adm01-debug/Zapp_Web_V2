@@ -1,5 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsDialogueSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 /**
  * R2-API-024 (P2) — Diálogo ElevenLabs envia `script` e omite `inputs`.
@@ -61,10 +63,27 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
     const limitError = dialogueLimitError(script);
     if (limitError) return errorResponse(limitError, 400, req);
 
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-dialogue",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     log.info(`Generating dialogue with ${script.length} lines`);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       'https://api.elevenlabs.io/v1/text-to-dialogue?output_format=mp3_44100_128',
       {
@@ -82,6 +101,28 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
         }),
       }
     );
+
+    // SL-013 / IA-003 B6 — a geração PAGA de diálogo tem de deixar linha em
+    // `ai_usage_logs`: sem ela o relatório de custo (IA-058) não enxerga este
+    // consumo. Unidade cobrada = CARACTERE somado do roteiro (não token): a
+    // medição vai em `metadata`; as colunas de token ficam NULL com
+    // `usage_unknown: true` (IA-053 — "não medi" nunca vira zero medido).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-dialogue",
+      userId: auth.userId,
+      model: "eleven_v3",
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/text-to-dialogue",
+        billing_unit: "character",
+        billing_quantity: script.reduce((acc, line) => acc + line.text.length, 0),
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -1,7 +1,9 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
-Deno.serve(async (req) => {
+export async function handleElevenLabsTtsStream(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -19,6 +21,23 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { text, voiceId, modelId, languageCode, applyTextNormalization } = parsed.data;
+
+    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-tts-stream",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const selectedVoiceId = voiceId || 'TY3h8ANhQUsJaa0Bga5F';
@@ -28,6 +47,7 @@ Deno.serve(async (req) => {
     // do usuario — apenas metadados.
     log.info(`Streaming TTS: ${text.length} caracteres, voice: ${selectedVoiceId}`);
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream?output_format=mp3_44100_128`,
       {
@@ -51,6 +71,27 @@ Deno.serve(async (req) => {
       }
     );
 
+    // SL-013 / IA-003 B6 — consumo PAGO (streaming) também entra no ledger:
+    // antes, a geração paga saía sem nenhuma linha em `ai_usage_logs`.
+    // Unidade cobrada = CARACTERE: a medição vai em `metadata`, com as colunas
+    // de token NULL e `usage_unknown: true` (IA-053).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-tts-stream",
+      userId: auth.userId,
+      model: selectedModel,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/text-to-speech/stream",
+        billing_unit: "character",
+        billing_quantity: text.length,
+        http_status: response.status,
+      },
+    });
+
     if (!response.ok) {
       const errorText = await response.text();
       log.error("Streaming API error", { status: response.status, detail: errorText.substring(0, 300) });
@@ -72,4 +113,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsTtsStream);
+}

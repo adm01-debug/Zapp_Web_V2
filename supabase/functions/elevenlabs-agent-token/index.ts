@@ -1,6 +1,8 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
-Deno.serve(async (req) => {
+export async function handleElevenLabsAgentToken(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -14,17 +16,56 @@ Deno.serve(async (req) => {
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
   try {
+    // IA-009 — kill switch lido NO SERVIDOR antes de emitir o token: desligar
+    // aqui é o que impede a sessão de voz começar.
+    const killSwitch = await evaluateAiKillSwitch({
+      functionName: "elevenlabs-agent-token",
+      providerType: "elevenlabs",
+    });
+    if (!killSwitch.allowed) {
+      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
+      // corpo por "Internal server error" e o consumidor perderia o código.
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
     const ELEVENLABS_AGENT_ID = requireEnv('ELEVENLABS_AGENT_ID');
 
     log.info("Requesting ElevenLabs conversation token", { agentId: ELEVENLABS_AGENT_ID });
 
+    const iniciadoEm = Date.now();
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${ELEVENLABS_AGENT_ID}`,
       {
         headers: { 'xi-api-key': ELEVENLABS_API_KEY },
       }
     );
+
+    // SL-013 / IA-003 B6 — toda chamada ao provedor PAGO deixa rastro no ledger.
+    // Esta emite a credencial da sessão de conversa: não há unidade de cobrança
+    // AQUI (o consumo da conversa é cobrado no uso), então a linha declara
+    // `usage_unknown: true` e `billing_unit: "none"` — nem zero, nem invenção.
+    await logAiUsageDetached({
+      functionName: "elevenlabs-agent-token",
+      userId: auth.userId,
+      model: null,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/convai/conversation/token",
+        billing_unit: "none",
+        billing_quantity: null,
+        http_status: response.status,
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -42,4 +83,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsAgentToken);
+}

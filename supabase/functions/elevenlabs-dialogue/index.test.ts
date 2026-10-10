@@ -14,11 +14,14 @@
 // `/auth/v1/user` (requireAuth), `/rest/v1/rpc/consume_rate_limit`
 // (enforceRateLimit) e `api.elevenlabs.io` — este último é o alvo do achado e o
 // corpo enviado é capturado e conferido.
+// SL-008 (achado B4) — as vozes do diálogo vêm da lista fechada de
+// `_shared/schemas.ts`; os casos usam ids do catálogo da interface.
 import {
   handleElevenLabsDialogue,
   MAX_DIALOGUE_CHARS,
   MAX_DIALOGUE_VOICES,
 } from "./index.ts";
+import { ELEVENLABS_VOICE_IDS } from "../_shared/schemas.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -47,6 +50,14 @@ function withFetch(routes: Route[]) {
       ? input.toString()
       : (input as Request).url;
     calls.push({ url, init });
+    // R2-AUTH-022: `requireAuth` passa a consultar a política de rede (RPC
+    // service_role) antes de liberar o handler. O stub responde "allow" para o
+    // caminho feliz destes casos, como já faz para `consume_rate_limit`.
+    if (url.includes("/rest/v1/rpc/resolve_network_policy")) {
+      return Promise.resolve(jsonResp([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]));
+    }
     const route = routes.find((r) => url.includes(r.match));
     if (!route) return Promise.resolve(new Response("nao stubado", { status: 599 }));
     return Promise.resolve(route.make());
@@ -102,7 +113,29 @@ const ROTA_AUDIO: Route = {
       headers: { "content-type": "audio/mpeg" },
     }),
 };
-const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_AUDIO];
+// SL-013 / IA-003 B6 — o ledger de consumo. A chamada PAGA tem de gravar linha
+// em `ai_usage_logs`; o PostgREST do supabase-js passa pelo mesmo `fetch`
+// stubado (a função cria o cliente com a service role e faz o insert).
+const ROTA_LEDGER: Route = {
+  match: "/rest/v1/ai_usage_logs",
+  make: () => jsonResp(null, 201),
+};
+const ROTA_PROFILES: Route = {
+  match: "/rest/v1/profiles",
+  make: () => jsonResp([{ id: "30000000-0000-0000-0000-00000000000c" }]),
+};
+// IA-009 (SL-010b): o handler passou a ler `feature_flags` no servidor antes de
+// tocar a ElevenLabs; sem esta rota o stub respondia 599 e a leitura falhada
+// negava (503) — a trava fechada por padrão derrubaria o caminho de sempre.
+const ROTA_FLAGS: Route = {
+  match: "/rest/v1/feature_flags",
+  make: () =>
+    jsonResp([
+      { key: "ai.capability.voice", enabled: true },
+      { key: "ai.provider.elevenlabs", enabled: true },
+    ]),
+};
+const ROTAS_OK = [ROTA_AUTH, ROTA_RATE_LIMIT, ROTA_FLAGS, ROTA_AUDIO, ROTA_LEDGER, ROTA_PROFILES];
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -126,9 +159,10 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
+      const [vozA, vozB] = ELEVENLABS_VOICE_IDS;
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: "voz-a", text: "Bom dia" },
-        { voice_id: "voz-b", text: "Boa tarde" },
+        { voice_id: vozA, text: "Bom dia" },
+        { voice_id: vozB, text: "Boa tarde" },
       ])));
 
       assert(res.status === 200, `esperado 200, veio ${res.status}`);
@@ -142,8 +176,8 @@ Deno.test("R2-API-024: corpo externo leva `inputs` (text/voice_id) e NÃO leva `
       const payload = JSON.parse(String(externas[0].init?.body)) as Record<string, unknown>;
       assert(
         JSON.stringify(payload.inputs) === JSON.stringify([
-          { text: "Bom dia", voice_id: "voz-a" },
-          { text: "Boa tarde", voice_id: "voz-b" },
+          { text: "Bom dia", voice_id: vozA },
+          { text: "Boa tarde", voice_id: vozB },
         ]),
         `inputs (obrigatório do provedor) inesperado: ${JSON.stringify(payload)}`,
       );
@@ -172,7 +206,7 @@ Deno.test(`R2-API-024: mais de ${MAX_DIALOGUE_VOICES} vozes distintas -> 400 ant
     const stub = withFetch(ROTAS_OK);
     try {
       const script = Array.from({ length: MAX_DIALOGUE_VOICES + 1 }, (_, i) => ({
-        voice_id: `voz-${i}`,
+        voice_id: ELEVENLABS_VOICE_IDS[i],
         text: `fala ${i}`,
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -199,8 +233,8 @@ Deno.test(`R2-API-024: texto somado acima de ${MAX_DIALOGUE_CHARS} caracteres ->
     try {
       const metade = "a".repeat(Math.ceil((MAX_DIALOGUE_CHARS + 1) / 2));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
-        { voice_id: "voz-a", text: metade },
-        { voice_id: "voz-b", text: metade },
+        { voice_id: ELEVENLABS_VOICE_IDS[0], text: metade },
+        { voice_id: ELEVENLABS_VOICE_IDS[1], text: metade },
       ])));
 
       assert(res.status === 400, `esperado 400, veio ${res.status}`);
@@ -225,7 +259,7 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
     try {
       const porFala = Math.floor(MAX_DIALOGUE_CHARS / MAX_DIALOGUE_VOICES);
       const script = Array.from({ length: MAX_DIALOGUE_VOICES }, (_, i) => ({
-        voice_id: `voz-${i}`,
+        voice_id: ELEVENLABS_VOICE_IDS[i],
         text: "b".repeat(porFala),
       }));
       const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
@@ -245,18 +279,128 @@ Deno.test("R2-API-024: no limite exato do contrato o diálogo segue para o prove
   });
 });
 
+Deno.test("SL-008 (B4): voz fora da lista fechada -> 422 antes do POST ao provedor", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const res = await handleElevenLabsDialogue(makeRequest(dialogueBody([
+        { voice_id: "voz-clonada-fora-da-lista", text: "oi" },
+      ])));
+
+      assert(res.status === 422, `esperado 422, veio ${res.status}`);
+      assert(
+        callsTo(stub.calls, "api.elevenlabs.io").length === 0,
+        "voz recusada pela lista fechada não pode tocar o provedor",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
 Deno.test("R2-API-024: sem bearer continua 401 e não toca o provedor", async () => {
   await withEnv(ENV_OK, async () => {
     const stub = withFetch(ROTAS_OK);
     try {
       const res = await handleElevenLabsDialogue(
-        makeRequest(dialogueBody([{ voice_id: "voz-a", text: "oi" }]), false),
+        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "oi" }]), false),
       );
       assert(res.status === 401, `esperado 401, veio ${res.status}`);
       assert(
         callsTo(stub.calls, "api.elevenlabs.io").length === 0,
         "sem autenticação não se chama o provedor",
       );
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// SL-013 / IA-003 B6 — toda chamada PAGA gera linha no ledger (ai_usage_logs).
+//
+// Defeito: a geração paga ia ao provedor e NÃO registrava consumo em lugar
+// nenhum — o relatório de custo (IA-058) ficava cego para o gasto do ElevenLabs.
+// O teste abaixo roda o handler REAL com o `fetch` stubado e prova que a
+// chamada ao provedor deixa exatamente UMA linha no ledger, com a unidade
+// cobrada do provedor (caractere) e as colunas de token em NULL (IA-053).
+// ───────────────────────────────────────────────────────────────────────────
+
+/** A linha que o PostgREST recebeu (o supabase-js manda objeto ou [objeto]). */
+function linhaDoLedger(calls: Call[]): Record<string, unknown> | null {
+  const post = callsTo(calls, "/rest/v1/ai_usage_logs").find((c) => c.init?.method === "POST");
+  if (!post || post.init?.body === undefined || post.init?.body === null) return null;
+  const corpo = JSON.parse(String(post.init.body)) as
+    | Record<string, unknown>
+    | Record<string, unknown>[];
+  return (Array.isArray(corpo) ? corpo[0] : corpo) ?? null;
+}
+
+Deno.test("SL-013: diálogo pago deixa UMA linha em ai_usage_logs (unidade caractere, tokens NULL)", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch(ROTAS_OK);
+    try {
+      const script = [
+        { voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }, // 7 caracteres
+        { voice_id: ELEVENLABS_VOICE_IDS[1], text: "Boa tarde" }, // 9 caracteres
+      ];
+      const res = await handleElevenLabsDialogue(makeRequest(dialogueBody(script)));
+      assert(res.status === 200, `esperado 200, veio ${res.status}`);
+
+      const inserts = callsTo(stub.calls, "/rest/v1/ai_usage_logs")
+        .filter((c) => c.init?.method === "POST");
+      assert(inserts.length === 1, `esperado 1 insert no ledger, veio ${inserts.length}`);
+
+      const linha = linhaDoLedger(stub.calls);
+      assert(linha !== null, "o insert no ledger chegou sem corpo");
+      assert(
+        linha!.function_name === "elevenlabs-dialogue",
+        `function_name inesperado: ${String(linha!.function_name)}`,
+      );
+      assert(linha!.status === "success", `status inesperado: ${String(linha!.status)}`);
+      assert(linha!.user_id === USER_ID, `user_id inesperado: ${String(linha!.user_id)}`);
+      assert(linha!.model === "eleven_v3", `model inesperado: ${String(linha!.model)}`);
+      // IA-053: a unidade cobrada do provedor NÃO é token — "não medido" nunca
+      // pode virar zero medido nas colunas de token.
+      assert(
+        linha!.input_tokens === null && linha!.output_tokens === null,
+        `tokens devem ser NULL quando não medidos: ${JSON.stringify(linha)}`,
+      );
+      const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
+      assert(metadata.provider === "elevenlabs", `provider inesperado: ${JSON.stringify(metadata)}`);
+      assert(metadata.billing_unit === "character", `unidade inesperada: ${JSON.stringify(metadata)}`);
+      assert(
+        metadata.billing_quantity === 16,
+        `caracteres somados do roteiro (7+9) inesperados: ${String(metadata.billing_quantity)}`,
+      );
+      assert(metadata.usage_unknown === true, "consumo sem medição tem de ser DECLARADO no metadata");
+    } finally {
+      stub.restore();
+    }
+  });
+});
+
+Deno.test("SL-013: falha do provedor também deixa linha (status error) e a unidade é medida igual", async () => {
+  await withEnv(ENV_OK, async () => {
+    const stub = withFetch([
+      ROTA_AUTH,
+      ROTA_RATE_LIMIT,
+      ROTA_PROFILES,
+      ROTA_LEDGER,
+      { match: "api.elevenlabs.io", make: () => jsonResp({ detail: "boom" }, 500) },
+    ]);
+    try {
+      const res = await handleElevenLabsDialogue(
+        makeRequest(dialogueBody([{ voice_id: ELEVENLABS_VOICE_IDS[0], text: "Bom dia" }])),
+      );
+      assert(res.status === 500, `esperado 500 do provedor, veio ${res.status}`);
+
+      const linha = linhaDoLedger(stub.calls);
+      assert(linha !== null, "chamada paga que falhou continua sendo consumo: falta a linha no ledger");
+      assert(linha!.status === "error", `status inesperado: ${String(linha!.status)}`);
+      const metadata = (linha!.metadata ?? {}) as Record<string, unknown>;
+      assert(metadata.http_status === 500, `http_status inesperado: ${JSON.stringify(metadata)}`);
+      assert(metadata.billing_quantity === 7, `caracteres do roteiro inesperados: ${String(metadata.billing_quantity)}`);
     } finally {
       stub.restore();
     }
