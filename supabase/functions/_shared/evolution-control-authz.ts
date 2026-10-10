@@ -49,8 +49,6 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'delete-instance',
   'restart-instance',
   'disconnect',
-  'set-presence',
-  'set-settings',
   'set-webhook',
   // perfil da conta
   'update-profile-name',
@@ -68,29 +66,16 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'accept-invite',
   'leave-group',
   'update-group-picture',
-  'toggle-ephemeral',
-  // etiquetas / templates / bloqueio
+  // etiquetas / bloqueio
   'handle-label',
   'update-block-status',
-  'create-template',
-  'delete-template',
   // mensagens — editar/apagar conteúdo (inclusive "para todos") destrói ou
   // reescreve a trilha de mensagens: restrito a admin/supervisor.
   'delete-message',
   'update-message',
   'edit-message',
   'delete-for-everyone',
-  // integrações (set/delete configuram o provedor) e gatilhos de automação
-  'set-chatwoot', 'delete-chatwoot',
-  'set-typebot', 'delete-typebot', 'typebot-change-status', 'start-typebot',
-  'set-openai', 'delete-openai',
-  'set-dify', 'delete-dify',
-  'set-flowise', 'delete-flowise',
-  'set-evolution-bot', 'delete-evolution-bot',
-  'set-rabbitmq', 'set-sqs', 'set-proxy',
-  'set-evoai', 'delete-evoai',
-  'set-n8n', 'delete-n8n',
-  'set-kafka', 'set-nats', 'set-pusher',
+  // SL-075 E43: as ações sem equivalente na GO foram removidas do handler.
 ]);
 
 /**
@@ -112,16 +97,13 @@ export const SEND_ACTIONS: ReadonlySet<string> = new Set([
   'send-poll',
   'send-list',
   'send-buttons',
-  'send-template',
   'send-ptv',
   'send-status',
   'send-reaction',
-  'offer-call',
   'send-chat-presence',
   // mutações de estado da conversa no provedor (não entregam conteúdo, mas
   // seguem o mesmo escopo: o contato da conversa)
   'mark-read',
-  'mark-unread',
   'archive-chat',
 ]);
 
@@ -137,13 +119,7 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   'list-instances',
   'status',
   'instance-info',
-  // settings / webhook
-  'get-settings',
-  'get-webhook',
   // chat / mensagens (consultas)
-  'find-chats',
-  'find-messages',
-  'find-status-messages',
   'find-contacts',
   'check-numbers',
   'get-media-base64',
@@ -152,33 +128,12 @@ export const READ_ACTIONS: ReadonlySet<string> = new Set([
   'group-info',
   'group-participants',
   'group-invite-code',
-  'invite-info',
   // perfil
   'fetch-profile',
   'fetch-profile-picture',
   'fetch-business-profile',
-  // labels / templates
+  // labels
   'find-labels',
-  'find-templates',
-  // integrações (leitura)
-  'get-chatwoot',
-  'get-typebot',
-  'typebot-sessions',
-  'get-openai',
-  'get-dify',
-  'get-flowise',
-  'get-evolution-bot',
-  'get-rabbitmq',
-  'get-sqs',
-  'get-proxy',
-  'get-evoai',
-  'get-n8n',
-  'get-kafka',
-  'get-nats',
-  'get-pusher',
-  // catálogo de loja (consultas)
-  'get-catalog',
-  'get-collections',
 ]);
 
 /**
