@@ -418,7 +418,7 @@ assert_eq 'N-114 service_role tem EXECUTE' 'true' \
   "$(psql_query "SELECT has_function_privilege('service_role', 'public.talkx_campaign_timeline_page(uuid, text, integer)', 'EXECUTE')::text")"
 
 # ── Rollback da migration roda e devolve o estado anterior ────────────────
-TL_ROLLBACK="$(sed -n 's/^-- Rollback: //p' "$migration_timeline")"
+TL_ROLLBACK="$(awk '/^-- Rollback \(SQL executavel, na ordem\):/{f=1;next} f&&/^--   /{sub(/^--   /,"");print;next} f{exit}' "$migration_timeline")"
 [[ -n "$TL_ROLLBACK" ]] || fail 'N-114: linha -- Rollback: ausente na migration'
 psql_query "$TL_ROLLBACK" >/dev/null || fail 'N-114: rollback não executou'
 pass 'N-114 rollback executa'

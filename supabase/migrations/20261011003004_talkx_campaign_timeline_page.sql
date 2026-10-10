@@ -1,5 +1,8 @@
 -- N-114: linha do tempo paginada (keyset) dos eventos de uma campanha Talk X.
--- Rollback: REVOKE ALL ON FUNCTION public.talkx_campaign_timeline_page(uuid, text, integer) FROM PUBLIC, anon, authenticated, service_role; DROP FUNCTION IF EXISTS public.talkx_campaign_timeline_page(uuid, text, integer);
+-- Rollback: remove a funcao nova e seus grants (a funcao nao existia antes).
+-- Rollback (SQL executavel, na ordem):
+--   REVOKE ALL ON FUNCTION public.talkx_campaign_timeline_page(uuid, text, integer) FROM PUBLIC, anon, authenticated, service_role;
+--   DROP FUNCTION IF EXISTS public.talkx_campaign_timeline_page(uuid, text, integer);
 -- Retorna rows/next_cursor/total. Leitura: dono da campanha
 -- (talkx_campaigns.created_by), admin/supervisor ou service_role. Conta anon ou
 -- sem vínculo recebe linha vazia ('[]', NULL, 0), nunca 42501. A permissão é
