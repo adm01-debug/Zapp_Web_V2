@@ -28,7 +28,29 @@ import {
 // removidas — vêm do kernel compartilhado. `personalize` (F37) segue reexportado,
 // junto com `randomBetween`, para não quebrar os importadores deste módulo
 // (index.test.ts importa ambos daqui).
-export { personalize, randomBetween };
+export { personalize, randomBetween, hmacTokenForRecipient };
+
+/**
+ * Constrói a URL de rastreamento de um link talkx-link para um destinatário.
+ *
+ * Quando TALKX_CONVERT_SECRET está configurado, o parâmetro `r` contém o
+ * token HMAC-SHA256 do recipient_id — nunca o recipient_id em si.
+ * Quando o secret não está configurado, o comportamento é o anterior:
+ * o recipient_id codificado aparece no URL.
+ */
+export async function buildTalkxLinkUrl(
+  slug: string,
+  recipientId: string,
+  secret: string | undefined,
+  configuredBase: string,
+  supabaseUrl: string,
+): Promise<string> {
+  const token = secret ? await hmacTokenForRecipient(recipientId, secret) : undefined;
+  const rParam = token ?? encodeURIComponent(recipientId);
+  return configuredBase.length > 0
+    ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${rParam}`
+    : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${rParam}`;
+}
 
 /**
  * IA-047 — chave estável (SHA-256 em hex) do pedido de envio de TESTE, derivada
@@ -38,6 +60,29 @@ export { personalize, randomBetween };
 async function deriveTestSendKey(parts: Array<string | null | undefined>): Promise<string> {
   const data = new TextEncoder().encode(parts.map((p) => p ?? "").join("\u0000"));
   const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Gera um token HMAC-SHA256 em hex a partir do recipient_id.
+ * O secret vem por parâmetro (o urlFor de produção repassa o
+ * TALKX_CONVERT_SECRET lido no escopo do handler; testes o injetam
+ * direto, sem Deno.env). Sem secret, recusa-se a gerar (undefined).
+ */
+async function hmacTokenForRecipient(recipientId: string, secret: string | undefined): Promise<string | undefined> {
+  if (!secret) return undefined;
+  const keyData = new TextEncoder().encode(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const payload = new TextEncoder().encode(recipientId);
+  const digest = await crypto.subtle.sign("HMAC", cryptoKey, payload);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -427,8 +472,8 @@ export async function handleTalkxSend(
     // Com o domínio próprio, a URL é /l/:slug (rewrite no vercel.json); sem ele,
     // cai no caminho direto da edge (?s=...&r=...).
     const loadTrackingLinks = async (): Promise<{
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
     }> => {
       const { data: links } = await supabase
         .from("talkx_links")
@@ -436,10 +481,10 @@ export async function handleTalkxSend(
         .eq("campaign_id", campaignId)
         .order("created_at", { ascending: true });
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
-      const urlFor = (slug: string, recipientId: string) =>
-        configuredBase.length > 0
-          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${encodeURIComponent(recipientId)}`
-          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${encodeURIComponent(recipientId)}`;
+      const secret = Deno.env.get("TALKX_CONVERT_SECRET");
+      const urlFor = async (slug: string, recipientId: string): Promise<string> => {
+        return buildTalkxLinkUrl(slug, recipientId, secret, configuredBase, supabaseUrl);
+      };
       const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
       const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
       const slugByLabel = new Map<string, string>();
@@ -448,11 +493,11 @@ export async function handleTalkxSend(
           slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
         }
       }
-      const trackingUrlFor = (recipientId: string) =>
-        oldestSlug ? urlFor(oldestSlug, recipientId) : undefined;
-      const linksByLabelFor = (recipientId: string) => {
+      const trackingUrlFor = async (recipientId: string) =>
+        oldestSlug ? await urlFor(oldestSlug, recipientId) : undefined;
+      const linksByLabelFor = async (recipientId: string) => {
         const out: Record<string, string> = {};
-        for (const [label, slug] of slugByLabel) out[label] = urlFor(slug, recipientId);
+        for (const [label, slug] of slugByLabel) out[label] = await urlFor(slug, recipientId);
         return out;
       };
       return { trackingUrlFor, linksByLabelFor };
@@ -640,8 +685,8 @@ export async function handleTalkxSend(
       evolutionUrl: string;
       evolutionKey: string;
       supabaseUrl: string;
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
       mediaForSend: () => Promise<string>;
       deliveryLogs: DeliveryLogEntry[];
     }
@@ -903,8 +948,8 @@ export async function handleTalkxSend(
       minuteRemaining: number,
       dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
-      trackingUrlFor: (recipientId: string) => string | undefined,
-      linksByLabelFor: (recipientId: string) => Record<string, string>,
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>,
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>,
     ): Promise<EngineState> => {
       // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
       // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
