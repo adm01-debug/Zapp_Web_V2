@@ -333,11 +333,14 @@ Deno.test("T73: resposta com origem permitida nao usa '*', usa o origin validado
 
 Deno.test("T73: origem fora da allowlist nao recebe Access-Control-Allow-Origin", async () => {
   const registro = novoRegistro();
-  const pedidoFora = new Request(URL_FUNCAO, {
+  const urlFora = new URL(URL_FUNCAO);
+  urlFora.searchParams.set("callId", "c1");
+  const pedidoFora = new Request(urlFora.toString(), {
     method: "GET",
     headers: {
       "x-forwarded-for": "203.0.113.1",
       Origin: "https://evil-site.com",
+      Authorization: TOKEN,
     },
   });
 
