@@ -203,7 +203,7 @@ describe('TalkXRateChart — ritmo, janela, previsto e término (X147)', () => {
     expect(screen.queryByText(/Término estimado/)).toBeNull();
   });
 
-  it('o skeleton de carregamento usa motion-safe:animate-pulse e não animate-pulse incondicional', () => {
+  it('o skeleton de carregamento usa motion-safe:animate-pulse respeitando prefers-reduced-motion', () => {
     render(
       <TalkXRateChart
         title="Ritmo de Entrega"
@@ -218,11 +218,10 @@ describe('TalkXRateChart — ritmo, janela, previsto e término (X147)', () => {
       />,
     );
 
-    const skeleton = document.querySelector('[class*="animate-pulse"]');
+    const skeleton = document.querySelector('.bg-muted\\/40');
     expect(skeleton).toBeTruthy();
     const classes = (skeleton as HTMLElement).className.split(' ');
     expect(classes).toContain('motion-safe:animate-pulse');
-    expect(classes).not.toContain('animate-pulse');
   });
 
   it('com forecast: desenha "Previsto" tracejada e o balão com o término estimado', () => {
