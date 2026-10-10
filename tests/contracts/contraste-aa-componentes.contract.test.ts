@@ -310,6 +310,50 @@ describe('E62 — contraste do combobox de endereços nos temas', () => {
  *                   5,24:1 sobre --muted, 5,37:1 sobre --input
  *   escuro — sem regressão: continua 215 30% 78% (10,88:1 sobre --background)
  */
+/**
+ * TL-N029 — selos de SLA (Inbox): texto dos indicadores 'atenção' e 'violado'
+ * precisa de contraste ≥ 4,5:1 contra o fundo do badge nos dois temas.
+ *
+ * O defeito original usava `text-warning` e `text-destructive` — as mesmas
+ * cores de preenchimento — o que dava 2,1:1 (âmbar claro) e 2,8:1 (vermelho
+ * claro) sobre o fundo /10. A correção troca para os tokens de texto
+ * dedicados (`--warning-text`, `--destructive-text`) que já existiam no
+ * tokens.css para este propósito.
+ *
+ * Números deste arquivo (token lido de `src/styles/tokens.css`, fórmula WCAG
+ * 2.1):
+ *   antes — claro: warning-text sobre bg-warning/10 ≈ 2,1:1; destructive-text
+ *           sobre bg-destructive/10 ≈ 2,8:1
+ *   depois — claro: warning-text sobre bg-warning/10 ≥ 4,5:1; destructive-text
+ *            sobre bg-destructive/10 ≥ 4,5:1
+ *   escuro — sem regressão: os tokens de texto já fechavam AA no tema escuro
+ */
+describe('TL-N029 — contraste dos selos SLA no Inbox', () => {
+  const FUNDO = parede(CLARO, 'card');
+  const FUNDO_ESCURO = parede(ESCURO, 'card');
+
+  for (const [nome, tokens, fundo] of [
+    ['claro', CLARO, FUNDO],
+    ['escuro', ESCURO, FUNDO_ESCURO],
+  ] as const) {
+    it(`${nome}: selo 'atenção' (warning) fecha 4,5:1 sobre bg-warning/10`, () => {
+      const bg = compor(parede(tokens, 'warning'), 0.1, fundo);
+      const texto = parede(tokens, 'warning-text');
+      expect(razao(texto, bg), `${nome}: warning-text sobre bg-warning/10`).toBeGreaterThanOrEqual(
+        LIMIAR_TEXTO,
+      );
+    });
+
+    it(`${nome}: selo 'violado' (destructive) fecha 4,5:1 sobre bg-destructive/10`, () => {
+      const bg = compor(parede(tokens, 'destructive'), 0.1, fundo);
+      const texto = parede(tokens, 'destructive-text');
+      expect(razao(texto, bg), `${nome}: destructive-text sobre bg-destructive/10`).toBeGreaterThanOrEqual(
+        LIMIAR_TEXTO,
+      );
+    });
+  }
+});
+
 describe('TL-175B — foreground-secondary legível no tema claro', () => {
   /** Fundos claros sobre os quais o Talk X pinta `text-foreground-secondary`. */
   const FUNDOS_CLAROS = ['background', 'card', 'popover', 'muted', 'input'] as const;

@@ -19,8 +19,8 @@ interface SLAIndicatorProps {
 
 const statusStyles: Record<SLAStatus, { bg: string; text: string; border: string; ring: string }> = {
   ok: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30', ring: 'stroke-success' },
-  warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30', ring: 'stroke-warning' },
-  breached: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30', ring: 'stroke-destructive' },
+  warning: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning-text))]', border: 'border-warning/30', ring: 'stroke-warning' },
+  breached: { bg: 'bg-destructive/10', text: 'text-[hsl(var(--destructive-text))]', border: 'border-destructive/30', ring: 'stroke-destructive' },
 };
 
 function SLAProgressRing({ status, percent, size = 28 }: { status: SLAStatus; percent: number; size?: number }) {
@@ -101,7 +101,7 @@ export function SLAIndicator({
                 <Timer className="w-3 h-3" />
                 <span className="font-medium">Primeira Resposta:</span>
                 {firstResponseAt ? (
-                  <span className={sla.firstResponse.breached ? 'text-destructive' : 'text-success'}>
+                  <span className={sla.firstResponse.breached ? 'text-[hsl(var(--destructive-text))]' : 'text-success'}>
                     {sla.firstResponse.breached ? 'Violado' : 'OK'}
                   </span>
                 ) : (
