@@ -26,7 +26,12 @@ beforeAll(() => {
  *    inclusive uma página fora do intervalo, que cai na última existente;
  * 4. paginação: 10 por página é o padrão, a escolha muda lista e URL e fica
  *    guardada POR USUÁRIO (outro operador continua no padrão);
- * 5. o status "Rascunho" (X101) filtra de verdade.
+ * 5. o status "Rascunho" (X101) filtra de verdade;
+ * 6. o filtro de Proprietário oferece "Sem proprietário" (segmentos sem `created_by`)
+ *    e o item "Todos", e o filtro não apaga o estado do roteador (`history.state`);
+ * 7. paginar (e trocar o tamanho de página) preserva TODO o recorte na URL
+ *    (`segq`, `segstatus`, `segorigem`, `segporpagina`);
+ * 8. "Limpar filtros" devolve o tamanho de página ao padrão e grava a escolha.
  *
  * Sem a implementação deste cartão todos os casos falham: a tela não lê a URL,
  * não guarda preferência e não tem filtro de tag/proprietário/rascunho.
@@ -294,7 +299,11 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
     await screen.findByText('Órfão da base');
 
     // A opção existe mesmo para o segmento que não aparece na lista de criadores.
-    escolherNoSelect('Proprietário', 'Sem proprietário');
+    // Abrir o select prova as duas opções: o "Todos" (sentinela `all`) e o "Sem proprietário".
+    abrirSelect('Proprietário');
+    expect(screen.getByRole('option', { name: 'Todos' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Sem proprietário' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('option', { name: 'Sem proprietário' }));
     expect(screen.getByText('Órfão da base')).toBeTruthy();
     expect(screen.queryByText('Clientes VIP')).toBeNull();
     expect(screen.queryByText('Clientes recorrentes')).toBeNull();
@@ -309,7 +318,10 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
 
   it('segporpagina chega pela URL e os filtros continuam na URL ao paginar', async () => {
     dados.segments = cartelaDe12();
-    window.history.replaceState({}, '', '/?segorigem=zapp&segporpagina=8');
+    // O recorte chega pronto: busca (`segq`), status (`segstatus`), origem (`segorigem`)
+    // e tamanho (`segporpagina`). Não há `segbusca`/`segfavoritos`/`segminhas` neste
+    // módulo — a busca é `segq` e a biblioteca não tem favoritos/meus (ver relato).
+    window.history.replaceState({}, '', '/?segq=Segmento&segstatus=active&segorigem=zapp&segporpagina=8');
     wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
     await screen.findByText('Segmento 1');
 
@@ -317,11 +329,15 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
     expect(rodape()).toBe('Mostrando 1 a 8 de 12 segmentos');
     expect(params().get('segporpagina')).toBe('8');
     expect(params().get('segorigem')).toBe('zapp');
+    expect(params().get('segq')).toBe('Segmento');
+    expect(params().get('segstatus')).toBe('active');
 
-    // Paginar mantém os filtros na URL (não é o recorte que se perde na página).
+    // Paginar preserva TODO o recorte na URL (não é o recorte que se perde na página).
     fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(rodape()).toBe('Mostrando 9 a 12 de 12 segmentos');
     expect(params().get('segpagina')).toBe('2');
+    expect(params().get('segq')).toBe('Segmento');
+    expect(params().get('segstatus')).toBe('active');
     expect(params().get('segorigem')).toBe('zapp');
     expect(params().get('segporpagina')).toBe('8');
 
@@ -329,6 +345,7 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
     abrirSeletorDeTamanho();
     fireEvent.click(screen.getByRole('option', { name: '20 por página' }));
     expect(params().get('segporpagina')).toBe('20');
+    expect(params().get('segq')).toBe('Segmento');
     expect(params().get('segorigem')).toBe('zapp');
   });
 
