@@ -139,7 +139,7 @@ describe('ChannelRoutingRules — a11y: nomes nos seletores e no interruptor', (
 
     const results = await axe(container, {
       rules: {
-        'heading-order': { enabled: false, description: 'AlertTitle usa h5 sem h4 precedente; defeito pré-existente fora do escopo deste cartão' },
+        'heading-order': { enabled: false },
       },
     });
     expect(results).toHaveNoViolations();
