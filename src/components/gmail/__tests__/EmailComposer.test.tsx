@@ -356,7 +356,7 @@ describe('EmailComposer — acessibilidade do diálogo flutuante', () => {
   it('devolve o foco ao elemento trigger ao fechar', () => {
     let triggerElement: HTMLButtonElement | null = null;
     function Trigger() {
-      return <button ref={(el) => { triggerElement = el; }} onClick={() => {}}>Abrir compositor</button>;
+      return <button ref={(el: HTMLButtonElement | null) => { triggerElement = el; }} onClick={() => {}}>Abrir compositor</button>;
     }
 
     // Renderiza o trigger e foca antes de montar o compositor
