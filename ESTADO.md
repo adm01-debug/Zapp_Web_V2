@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-09`. 80 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-10`. 80 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
