@@ -159,6 +159,7 @@ Deno.test("GET sem token devolve 401 quando secret está configurado", async () 
   const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 401, `status ${res.status} != 401`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "nenhum clique deve ser registrado quando o token é ausente");
 });
 
 Deno.test("GET com token inválido devolve 401 quando secret está configurado", async () => {
@@ -169,6 +170,7 @@ Deno.test("GET com token inválido devolve 401 quando secret está configurado",
   const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1&t=wrongtoken", { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 401, `status ${res.status} != 401`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "nenhum clique deve ser registrado quando o token é inválido");
 });
 
 Deno.test("GET com token válido devolve 302 e registra clique", async () => {
