@@ -150,4 +150,21 @@ describe('ScheduleCalendarView — R2-MOD-029', () => {
     expect(await screen.findByText('Não foi possível carregar os agendamentos')).toBeInTheDocument();
     expect(screen.queryByText('0 pendentes')).toBeNull();
   });
+
+  it('filtro de agente tem nome acessível e botão cancelar tem nome', async () => {
+    renderAgenda();
+
+    expect(await screen.findByText('2 pendentes')).toBeInTheDocument();
+
+    // O SelectTrigger do filtro de agente tem aria-label
+    expect(screen.getByLabelText('Filtrar agente')).toBeInTheDocument();
+
+    // Abre o diálogo do dia clicando no dia 10 (tem mensagem pendente)
+    const botaoDia = screen.getByText('10').closest('button');
+    expect(botaoDia).toBeTruthy();
+    fireEvent.click(botaoDia!);
+
+    // O botão de cancelar tem aria-label
+    expect(screen.getByRole('button', { name: 'Cancelar envio' })).toBeInTheDocument();
+  });
 });

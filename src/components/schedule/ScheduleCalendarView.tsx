@@ -154,7 +154,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
             <div className="flex items-center gap-2">
               {/* Agent filter */}
               <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filtrar agente">
                   <User className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Todos os agentes" />
                 </SelectTrigger>
@@ -306,6 +306,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
                         variant="ghost"
                         size="icon"
                         className="shrink-0 text-destructive hover:text-destructive"
+                        aria-label="Cancelar envio"
                         onClick={() => cancelMessage(msg.id)}
                       >
                         <X className="w-4 h-4" />
