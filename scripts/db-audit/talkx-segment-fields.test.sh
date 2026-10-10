@@ -34,6 +34,9 @@
 #   (r) expr adulterada na tabela e recusada com 22023
 #       invalid_talkx_segment_field_expr (tabela volta ao original).
 #   (s) profundidade > 10 e recusada com 22023.
+#   (t) borda in_last_days: ' 30' (espaco) e '3.5' recusados com 22023;
+#       '-5' (negativo) compila (inteiro valido, sem injecao).
+#   (u) EXECUTE negado a anon/authenticated e permitido a service_role.
 
 set -euo pipefail
 
@@ -214,5 +217,20 @@ pass "expr adulterada recusada com 22023 e tabela intacta"
 expect_error "profundidade acima do limite e recusada" "segment_rules_depth_exceeded" "22023" \
   "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"tags\",\"op\":\"contains\",\"value\":\"vip\"}]}]}'::jsonb, 11)"
 
+
+# (t) Borda in_last_days: espaco e decimal recusados; negativo compila.
+# Decisao: a validacao aceita ^-?[0-9]+$ (inteiro, com sinal opcional).
+# ' 30' tem espaco -> 22023; '3.5' tem ponto -> 22023; '-5' e inteiro -> compila.
+expect_error "in_last_days com espaco e recusado com 22023" "invalid_talkx_segment_rule_value" "22023" "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\" 30\"}]}]}'::jsonb)"
+expect_error "in_last_days com decimal e recusado com 22023" "invalid_talkx_segment_rule_value" "22023" "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\"3.5\"}]}]}'::jsonb)"
+result_neg=$(psql_q "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\"-5\"}]}]}'::jsonb)")
+[[ "$result_neg" == *">="* ]] || fail "in_last_days com '-5' deveria compilar um predicado com '>='"
+pass "borda in_last_days: espaco/decimal recusados, negativo compila"
+
+# (u) EXECUTE negado a anon/authenticated, permitido a service_role (papel real).
+[[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_compile_segment_rules(jsonb, integer)', 'EXECUTE')")" == "f" ]] || fail "anon nao deveria ter EXECUTE em talkx_compile_segment_rules"
+[[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_compile_segment_rules(jsonb, integer)', 'EXECUTE')")" == "f" ]] || fail "authenticated nao deveria ter EXECUTE em talkx_compile_segment_rules"
+[[ "$(psql_q "SELECT has_function_privilege('service_role', 'public.talkx_compile_segment_rules(jsonb, integer)', 'EXECUTE')")" == "t" ]] || fail "service_role deveria ter EXECUTE em talkx_compile_segment_rules"
+pass "EXECUTE negado a anon/authenticated e permitido a service_role"
 
 printf '\n=== TODOS OS TESTES PASSARAM ===\n'

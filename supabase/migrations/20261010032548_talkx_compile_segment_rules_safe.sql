@@ -1,3 +1,4 @@
+-- Rollback: DROP FUNCTION IF EXISTS public.talkx_compile_segment_rules(jsonb, integer); -- rollback completo: reaplicar 20261009202021_talkx_segment_fields.sql (provado: com N-112 pg_get_functiondef LIKE '%invalid_talkx_segment_field_expr%' = t; apos reaplicar N-111 = f)
 -- talkx_compile_segment_rules_safe: corrige injecao SQL via expr e via valor (N-112).
 -- O v_expr vinha da coluna talkx_segment_fields.expr e era interpolado com %s,
 -- permitindo que uma linha gravada na tabela virasse SQL arbitrario.
