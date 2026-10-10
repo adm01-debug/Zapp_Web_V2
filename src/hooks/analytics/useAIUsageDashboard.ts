@@ -80,16 +80,22 @@ export const LOGS_PER_PAGE = 50;
 /**
  * Cores das funções de IA no gráfico de área, na pizza e na legenda. Usa a
  * paleta de gráficos do sistema (`--chart-*`, com par claro/escuro em
- * `src/styles/tokens.css:295-304` e `510-519`) em vez de hex fixos: o hex não
+ * `src/styles/tokens.css:305-314` e `508-517`) em vez de hex fixos: o hex não
  * acompanhava dark mode, alto contraste nem os presets de tema.
+ * Matizes escolhidos para não colidir entre si: `ai-enhance-message` usa
+ * `--chart-5` (rosa, 340 75% 55%) em vez de `--chart-9` (230), que ficava a
+ * 9 graus do azul de `ai-suggest-reply` (`--chart-1`, 221); `chatbot-l1` usa
+ * `--chart-10` (ciano, 190 70% 45%), a 30 graus do verde de
+ * `ai-conversation-summary` (`--chart-3`, 160). A paleta `--chart-*` não tem
+ * violeta (~260-280), então o rosa é o matiz livre mais afastado do conjunto.
  */
 export const FUNCTION_COLORS: Record<string, string> = {
   'ai-suggest-reply': 'hsl(var(--chart-1))',
-  'ai-enhance-message': 'hsl(var(--chart-9))',
+  'ai-enhance-message': 'hsl(var(--chart-5))',
   'ai-conversation-analysis': 'hsl(var(--chart-4))',
   'ai-conversation-summary': 'hsl(var(--chart-3))',
   'ai-auto-tag': 'hsl(var(--chart-8))',
-  'chatbot-l1': 'hsl(var(--chart-6))',
+  'chatbot-l1': 'hsl(var(--chart-10))',
 };
 
 export const FUNCTION_LABELS: Record<string, string> = {
