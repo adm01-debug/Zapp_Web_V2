@@ -252,3 +252,99 @@ describe('Tela 10 — configurações de agendamento (X137)', () => {
     expect(h.updateAsync.mock.calls[0][0].confirm_consent).toBe(false);
   });
 });
+
+describe('Repetição (diária/semanal)', () => {
+  function escolherRepeticao(rotulo: string) {
+    fireEvent.pointerDown(document.getElementById('talkx-repeat') as HTMLElement, {
+      button: 0, ctrlKey: false, pointerType: 'mouse',
+    });
+    fireEvent.click(screen.getByRole('option', { name: rotulo }));
+  }
+
+  it('sem repetição, o salvamento não envia colunas de recorrência', async () => {
+    render(view());
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+
+    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
+    const payload = h.updateAsync.mock.calls[0][0];
+    expect(Object.keys(payload).some((k) => k.startsWith('recurrence_'))).toBe(false);
+  });
+
+  it('"Personalizado" aparece desabilitado com "em breve", sem sumir', () => {
+    render(view());
+    fireEvent.pointerDown(document.getElementById('talkx-repeat') as HTMLElement, {
+      button: 0, ctrlKey: false, pointerType: 'mouse',
+    });
+    const custom = screen.getByRole('option', { name: /Personalizado \(em breve\)/ });
+    expect(custom.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByRole('option', { name: 'Diariamente' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Semanalmente' })).toBeTruthy();
+  });
+
+  it('diariamente grava frequência daily, sem dias da semana', async () => {
+    render(view());
+    escolherRepeticao('Diariamente');
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+
+    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
+    const payload = h.updateAsync.mock.calls[0][0];
+    expect(payload.recurrence_frequency).toBe('daily');
+    expect(payload.recurrence_weekdays).toBeNull();
+    expect(payload.recurrence_end_at).toBeNull();
+  });
+
+  it('semanalmente parte do dia da semana da data de início e grava os dias escolhidos, ordenados', async () => {
+    render(view());
+    escolherRepeticao('Semanalmente');
+    // 09/06/2030 é domingo (0): vem marcado por padrão.
+    expect(screen.getByRole('button', { name: 'Domingo' }).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Quarta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Segunda' }));
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+
+    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
+    const payload = h.updateAsync.mock.calls[0][0];
+    expect(payload.recurrence_frequency).toBe('weekly');
+    expect(payload.recurrence_weekdays).toEqual([0, 1, 3]);
+  });
+
+  it('semanal sem nenhum dia marcado não salva', async () => {
+    render(view());
+    escolherRepeticao('Semanalmente');
+    fireEvent.click(screen.getByRole('button', { name: 'Domingo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+
+    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith('Escolha ao menos um dia da semana para repetir.'));
+    expect(h.updateAsync).not.toHaveBeenCalled();
+  });
+
+  it('data de término vira o fim desse dia no fuso da campanha; término antes do início não salva', async () => {
+    render(view());
+    escolherRepeticao('Diariamente');
+    const fim = document.getElementById('talkx-repeat-end') as HTMLInputElement;
+
+    fireEvent.change(fim, { target: { value: '2030-06-08' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+    await waitFor(() => expect(h.toastError).toHaveBeenCalled());
+    expect(h.updateAsync).not.toHaveBeenCalled();
+
+    fireEvent.change(fim, { target: { value: '2030-06-20' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
+    // 20/06/2030 23:59 em Manaus (UTC-4) = 21/06/2030 03:59 UTC.
+    expect(h.updateAsync.mock.calls[0][0].recurrence_end_at).toBe('2030-06-21T03:59:00.000Z');
+  });
+
+  it('voltar para "Não repetir" numa campanha recorrente limpa a recorrência', async () => {
+    h.campaigns = [{ ...CAMPAIGN, recurrence_frequency: 'daily', recurrence_weekdays: null, recurrence_end_at: null }];
+    render(view());
+    escolherRepeticao('Não repetir');
+    fireEvent.click(screen.getByRole('button', { name: /Salvar agendamento/i }));
+
+    await waitFor(() => expect(h.updateAsync).toHaveBeenCalledTimes(1));
+    const payload = h.updateAsync.mock.calls[0][0];
+    expect(payload.recurrence_frequency).toBeNull();
+    expect(payload.recurrence_weekdays).toBeNull();
+    expect(payload.recurrence_end_at).toBeNull();
+  });
+});
