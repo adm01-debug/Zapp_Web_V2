@@ -1,3 +1,6 @@
+// Como rodar: node --test scripts/verify-crm-integration-doc.test.mjs
+// (teste node:test; nao esta ligado a workflow do CI — o cartao nao cita
+// config/workflow, entao o comando acima e a forma de executa-lo).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,20 +53,22 @@ test('documento FLAG_CHANGES.md contem todos os usos de useCRMIntegrationEnabled
   const conteudo = fs.readFileSync(DOC, 'utf8');
   const usagens = findUsages();
 
-  for (const arquivo of usagens) {
-    // Normaliza o caminho para comparacao no documento
-    const nomeArquivo = path.basename(arquivo);
-    const caminhoRelativo = arquivo.replace('src/', '');
+  assert.ok(usagens.length > 0, 'nenhum uso em producao encontrado; o grep pode estar quebrado');
 
-    const encontrado =
-      conteudo.includes(arquivo) ||
-      conteudo.includes(nomeArquivo) ||
-      conteudo.includes(caminhoRelativo);
+  for (const arquivo of usagens) {
+    // Exige o caminho completo `src/...` dentro de backticks numa linha de
+    // tabela (| ... | `src/...` | ... |). Basename solto em qualquer lugar do
+    // doc nao vale: ele pode vir da coluna de nome do hook e mascarar um uso
+    // faltando.
+    const linhaTabela = new RegExp(
+      '^\\|[^\\n]*`' + arquivo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^`]*`[^\\n]*\\|',
+      'm',
+    );
 
     assert.equal(
-      encontrado,
+      linhaTabela.test(conteudo),
       true,
-      `uso de useCRMIntegrationEnabled em ${arquivo} nao encontrado no documento FLAG_CHANGES.md`,
+      `uso de useCRMIntegrationEnabled em ${arquivo} nao encontrado como caminho completo src/... em linha de tabela no documento FLAG_CHANGES.md`,
     );
   }
 });
