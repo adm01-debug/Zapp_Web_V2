@@ -62,12 +62,11 @@ type TileProps = React.ComponentPropsWithoutRef<'button'> & {
 };
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
-  // `_title` é descartado de propósito (nunca vai para o DOM): o `title` nativo
-  // do browser e o TooltipContent abaixo mostravam textos diferentes ao mesmo
-  // tempo (achado na auditoria de 5 agentes, 2026-09-26, rodada 4).
-  // `_` prefix: evita no-unused-vars do ESLint (achado na auditoria de 27/09).
-  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: _title, disabled, ...rest }, ref,
+  // `title` é consumido pelo Radix Tooltip e nunca vai para o DOM: evita o tooltip
+  // nativo duplicado e mantém o texto contextual (ex.: “Sem e-mail” quando disabled).
+  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: tooltipLabel, disabled, ...rest }, ref,
 ) {
+  const tooltipText = tooltipLabel ?? label;
   const button = (
     <button
       ref={ref}
@@ -100,7 +99,7 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
             <span tabIndex={0} role="button" aria-disabled="true" aria-label={label} className="inline-flex cursor-not-allowed">{button}</span>
           ) : button}
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

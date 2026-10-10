@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { ContactActionButtons } from '../ContactActionButtons';
 
 vi.mock('sonner', () => ({
@@ -13,6 +14,12 @@ const navigateToView = vi.fn();
 let videoCallFlag = false;
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: (key: string, fallback = false) => (key === 'video_call' ? videoCallFlag : fallback) }));
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: (...args: unknown[]) => navigateToView(...args) }));
+vi.mock('@/components/ui/tooltip', () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <span data-testid="contact-action-tooltip">{children}</span>,
+}));
 
 const baseContact = { id: 'c1', name: 'Maria Silva', phone: '+5511999999999', email: 'maria@test.com' };
 const baseContactComAvatar = { ...baseContact, avatar: 'https://cdn.exemplo/maria.png' };
@@ -59,6 +66,27 @@ describe('ContactActionButtons', () => {
     expect(emailTile).toBeDisabled();
     fireEvent.click(emailTile!);
     expect(navigateToView).not.toHaveBeenCalled();
+  });
+
+  it('usa tooltip contextual no e-mail: Sem e-mail quando desabilitado e Abrir e-mail quando habilitado', () => {
+    const { rerender } = render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
+    expect(screen.getByText('Sem e-mail')).toBeInTheDocument();
+
+    rerender(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.getByText('Abrir e-mail')).toBeInTheDocument();
+    expect(screen.queryByText('Abrir email')).not.toBeInTheDocument();
+  });
+
+  it('e-mail vazio ("") conta como sem e-mail, e os outros Tiles mostram o próprio texto de tooltip', () => {
+    render(<ContactActionButtons contact={{ ...baseContact, email: '' }} onStartCall={onStartCall} />);
+    const emailTile = screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-mail'))!;
+    expect(emailTile).toBeDisabled();
+    const tooltips = screen.getAllByTestId('contact-action-tooltip').map((t) => t.textContent);
+    expect(tooltips).toContain('Sem e-mail');
+    // Cada Tile declara o texto do tooltip em `title`; o rótulo curto fica só no aria-label.
+    expect(tooltips).toContain('Opções de chamada');
+    expect(tooltips).toContain('Mais ações');
+    expect(tooltips).not.toContain('E-mail');
   });
 
   it('clicar no e-mail abre o módulo de E-mail levando o contato (id + e-mail)', () => {
