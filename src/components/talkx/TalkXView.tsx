@@ -28,8 +28,11 @@ import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
 import {
   goTab,
+  normalizeTalkXOpenRoute,
   parseTalkXRoute,
+  pushTalkXOpenRoute,
   pushTalkXWizardRoute,
+  replaceTalkXOpenRoute,
   replaceTalkXTabRoute,
   replaceTalkXWizardRoute,
   type TalkXTab,
@@ -111,16 +114,36 @@ export default function TalkXView() {
     // desconhecida cai na Visão geral e o endereço é reescrito (replace, sem
     // entrada nova no histórico) em vez de mostrar área vazia.
     const initialTab = parseTalkXRoute(window.location.search);
-    if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
+    if (initialTab.needsNormalization) {
+      replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
+      const normalized = normalizeTalkXOpenRoute(new URL(window.location.href));
+      if (normalized) window.history.replaceState(null, '', normalized);
+    }
+    // Lê o item aberto da URL na carga inicial (campaign, segment ou template).
+    if (!isLoading && campaigns.length > 0) {
+      const { campaign, segment, template } = parseTalkXRoute(window.location.search);
+      if (campaign) {
+        const found = campaigns.find((c) => c.id === campaign.id);
+        if (found) openMonitor(found);
+      } else if (segment) {
+        setActiveTab('segments');
+      } else if (template) {
+        setActiveTab('templates');
+      }
+    }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [syncFromBrowserHistory]);
+  }, [syncFromBrowserHistory, campaigns, isLoading]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
     const syncTab = () => {
       const parsed = parseTalkXRoute(window.location.search);
-      if (parsed.needsNormalization) replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
+      if (parsed.needsNormalization) {
+        replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
+        const normalized = normalizeTalkXOpenRoute(new URL(window.location.href));
+        if (normalized) window.history.replaceState(null, '', normalized);
+      }
       setActiveTab(parsed.tab);
       setActiveSub(parsed.sub);
       setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
@@ -162,14 +185,25 @@ export default function TalkXView() {
       ? (savedStep as WizardStep)
       : 1;
     writeWizardRoute({ campaignId: c.id, step });
+    pushTalkXOpenRoute({ kind: 'campaign', id: c.id });
   }, [writeWizardRoute]);
-  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
-  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
-  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); }, []);
+  const openMonitor = useCallback((c: TalkXCampaign) => {
+    setMonitorId(c.id); setTopView('monitor');
+    pushTalkXOpenRoute({ kind: 'campaign', id: c.id });
+  }, []);
+  const openScheduled = useCallback((c: TalkXCampaign) => {
+    setScheduledCampaignId(c.id); setTopView('scheduled');
+    pushTalkXOpenRoute({ kind: 'campaign', id: c.id });
+  }, []);
+  const openRunning = useCallback((c: TalkXCampaign) => {
+    setRunningCampaignId(c.id); setTopView('running');
+    pushTalkXOpenRoute({ kind: 'campaign', id: c.id });
+  }, []);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
     setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
+    replaceTalkXOpenRoute(null);
   }, [writeWizardRoute]);
 
   // X189: a Ajuda é uma tela do módulo com rota própria; o endereço vive na URL
@@ -254,7 +288,10 @@ export default function TalkXView() {
       <TalkXCampaignRunning
         initialCampaignId={runningCampaignId}
         onBack={backToList}
-        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        onViewMonitor={(id) => {
+          setRunningCampaignId(null); setMonitorId(id); setTopView('monitor');
+          pushTalkXOpenRoute({ kind: 'campaign', id });
+        }}
       />
     );
   }
