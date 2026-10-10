@@ -120,9 +120,9 @@ Deno.test("negação por IP (403) responde ANTES de body/credenciais/efeitos", a
   const body = await res.json();
   assertEquals(body.error, "Access denied"); // genérico: não revela IP/país/regra
 
-  // Só a RPC de política foi chamada — nada de consultar usuário, gravar tentativa
-  // ou consumir rate limit.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  // Só as RPCs de política e de registro do bloqueio foram chamadas — nada de
+  // consultar usuário, gravar tentativa de senha ou consumir rate limit.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
   assertEquals(anon.calls.length, 0);
   assertEquals(rl.calls.length, 0);
 });
@@ -141,8 +141,9 @@ Deno.test("negação por país (403) não chama autenticação nem grava tentati
   assertEquals(res.status, 403);
   assertEquals((await res.json()).error, "Access denied");
 
-  // record_failed_login e signInWithPassword NUNCA foram chamados.
-  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
+  // record_failed_login e signInWithPassword NUNCA foram chamados; o bloqueio é
+  // registrado (log_login_block) para o painel de auditoria.
+  assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy", "log_login_block"]);
   assertEquals(admin.calls.some((c) => c.fn === "record_failed_login"), false);
   assertEquals(anon.calls.length, 0);
   assertEquals(rl.calls.length, 0);
@@ -166,6 +167,31 @@ Deno.test("erro de decisão responde 503 (indecidível, sem vazar regras)", asyn
   assertEquals(admin.calls.map((c) => c.fn), ["resolve_network_policy"]);
   assertEquals(anon.calls.length, 0);
   assertEquals(rl.calls.length, 0);
+});
+
+Deno.test("bloqueio por país registra log_login_block com IP, país, motivo e user-agent", async () => {
+  const admin = fakeAdmin(POLICY_DENY_COUNTRY, { log_login_block: { data: null, error: null } });
+  const anon = fakeAnon();
+  const rl = fakeRateLimit();
+
+  const res = await handleLogin(
+    post(
+      { "x-forwarded-for": IP, "cf-ipcountry": "ru", "user-agent": "Mozilla/5.0 teste" },
+      JSON.stringify({ email: "a@b.com", password: "x" }),
+    ),
+    { admin, anon, enforceRateLimit: rl.enforceRateLimit },
+  );
+
+  assertEquals(res.status, 403);
+  const call = admin.calls.find((c) => c.fn === "log_login_block");
+  // E-mail é null por design: o bloqueio acontece antes de ler o body.
+  assertEquals(call?.args, {
+    p_email: null,
+    p_ip: IP,
+    p_country_code: "RU",
+    p_reason: "country_blocked",
+    p_user_agent: "Mozilla/5.0 teste",
+  });
 });
 
 Deno.test("método não-POST responde 405 antes da política", async () => {

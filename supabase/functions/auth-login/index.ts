@@ -12,6 +12,7 @@ import {
 import {
   resolveNetworkPolicy,
   networkPolicyDenialResponse,
+  extractCountryCode,
   type NetworkPolicyRpcClient,
 } from "../_shared/request-policy.ts";
 
@@ -119,6 +120,21 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     });
     if (!policy.allowed) {
       log.done(policy.status, policy.status === 403 ? { reason: policy.reason } : {});
+      // Log visível do bloqueio (cartão log-bloqueio-login): a RPC de política nega
+      // mas não grava nada. Gravamos em audit_logs (action='login_blocked') para o
+      // painel "Bloqueios de login". Só a negação por política (403) loga; o 503 de
+      // decisão não. Best-effort: falha de log não muda a resposta ao cliente.
+      if (policy.status === 403) {
+        const blockIp = getClientIP(req);
+        const { error: logBlockError } = await deps.admin.rpc("log_login_block", {
+          p_email: null,
+          p_ip: blockIp === "unknown" ? null : blockIp,
+          p_country_code: extractCountryCode(req),
+          p_reason: policy.reason,
+          p_user_agent: sanitizeString(req.headers.get("user-agent"), 512) ?? null,
+        });
+        if (logBlockError) log.error("log_login_block failed", { code: rpcErrorCode(logBlockError) });
+      }
       return networkPolicyDenialResponse(policy, req);
     }
 
