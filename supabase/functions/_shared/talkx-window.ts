@@ -31,6 +31,16 @@ export type ScheduleGuardCampaign = {
   send_window_start?: string | null;
   send_window_end?: string | null;
   business_hours_only?: boolean | null;
+  send_weekdays?: number[] | null;
+  respect_dnd?: boolean | null;
+};
+
+/** Configuração de "não perturbe" — vem de `talkx_settings.dnd_hours`. */
+export type DndSetting = {
+  start: string;
+  end: string;
+  sundays: boolean;
+  holidays: string[];
 };
 
 export type LocalClock = { hour: number; minute: number; weekday: number };
@@ -131,6 +141,39 @@ export function parseBusinessHours(value: unknown): BusinessHours | null {
   return normalizeBusinessHours(value);
 }
 
+/**
+ * Lê `talkx_settings.dnd_hours`. Devolve:
+ *   - `null` → NÃO há configuração (ausente/vazia) → sem restrição DND;
+ *   - objeto normalizado → `{ start, end, sundays, holidays }`.
+ */
+export function parseDndHours(value: unknown): DndSetting | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (text === "") return null;
+    try {
+      return normalizeDndHours(JSON.parse(text));
+    } catch {
+      return null;
+    }
+  }
+  return normalizeDndHours(value);
+}
+
+function normalizeDndHours(value: unknown): DndSetting | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.start !== "string" || typeof raw.end !== "string") return null;
+  if (minutesOfDay(raw.start) === null || minutesOfDay(raw.end) === null) return null;
+  return {
+    start: raw.start.trim(),
+    end: raw.end.trim(),
+    sundays: raw.sundays === true,
+    holidays: Array.isArray(raw.holidays) ? raw.holidays.filter((h): h is string => typeof h === "string") : [],
+  };
+}
+
 export function localClockInTimezone(timeZone: string, now = new Date()): LocalClock | null {
   try {
     const values = Object.fromEntries(
@@ -168,12 +211,42 @@ export function deliveryWindowStatus(
   campaign: ScheduleGuardCampaign,
   now = new Date(),
   businessHours?: BusinessHours | null,
+  dndSetting?: DndSetting | null,
 ): { allowed: true } | { allowed: false; reason: string; next_window?: string } {
   const timeZone = typeof campaign.schedule_timezone === "string"
     ? campaign.schedule_timezone
     : DEFAULT_SCHEDULE_TIMEZONE;
   const clock = localClockInTimezone(timeZone, now);
   if (!clock) return { allowed: false, reason: "invalid_schedule_timezone" };
+
+  // 1) send_weekdays (null = todos os dias permitidos).
+  if (Array.isArray(campaign.send_weekdays) && campaign.send_weekdays.length > 0) {
+    if (!campaign.send_weekdays.includes(clock.weekday)) {
+      return { allowed: false, reason: "outside_weekdays" };
+    }
+  }
+
+  // 2) DND (respeitar configuração de não perturbe).
+  if (campaign.respect_dnd !== false && dndSetting) {
+    // Domingo bloqueado?
+    if (dndSetting.sundays && clock.weekday === 0) {
+      return { allowed: false, reason: "dnd" };
+    }
+    // Feriado bloqueado?
+    const todayIso = now.toISOString().slice(0, 10);
+    if (Array.isArray(dndSetting.holidays) && dndSetting.holidays.includes(todayIso)) {
+      return { allowed: false, reason: "dnd" };
+    }
+    // Horário DND bloqueado?
+    const dndStartMin = minutesOfDay(dndSetting.start);
+    const dndEndMin = minutesOfDay(dndSetting.end);
+    if (dndStartMin !== null && dndEndMin !== null) {
+      const currentMinutes = clock.hour * 60 + clock.minute;
+      if (currentMinutes >= dndStartMin && currentMinutes < dndEndMin) {
+        return { allowed: false, reason: "dnd" };
+      }
+    }
+  }
 
   const currentMinutes = clock.hour * 60 + clock.minute;
   if (campaign.send_window_start && campaign.send_window_end) {

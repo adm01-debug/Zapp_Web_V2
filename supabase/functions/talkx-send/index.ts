@@ -6,7 +6,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
-import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
+import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours, parseDndHours, type DndSetting } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
@@ -352,29 +352,34 @@ export async function handleTalkxSend(
 
     const loadBusinessHoursAndDailyLimit = async (): Promise<{
       businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dndSetting: DndSetting | null;
       dailyLimit: number;
     }> => {
       let businessHours: { start?: string; end?: string; days?: number[] } | null = null;
+      let dndSetting: DndSetting | null = null;
       let dailyLimit = 0;
       const { data: settingsRows, error: settingsErr } = await supabase
         .from("talkx_settings").select("key, value")
-        .in("key", ["business_hours", "daily_limit_per_connection"]);
+        .in("key", ["business_hours", "dnd_hours", "daily_limit_per_connection"]);
       if (!settingsErr) {
         // #121A: `talkx_settings.value` é JSONB — `business_hours` chega como
         // OBJETO `{start,end,tz,days}` (string JSON só por compatibilidade).
         // Valor presente e inválido entra marcado e FECHA a janela, em vez de
         // cair silenciosamente no default.
+        // N-118: `dnd_hours` = {start, end, sundays, holidays[]}.
         for (const row of (settingsRows ?? []) as { key: string; value: unknown }[]) {
           if (row.key === "business_hours") {
             const parsed = parseBusinessHours(row.value);
             if (parsed) businessHours = parsed;
+          } else if (row.key === "dnd_hours") {
+            dndSetting = parseDndHours(row.value);
           } else if (row.key === "daily_limit_per_connection") {
             const n = Number(row.value);
             if (Number.isFinite(n) && n > 0) dailyLimit = n;
           }
         }
       }
-      return { businessHours, dailyLimit };
+      return { businessHours, dndSetting, dailyLimit };
     };
 
     const countSentTodayForConnection = async (whatsappConnectionId: string): Promise<number> => {
@@ -620,6 +625,7 @@ export async function handleTalkxSend(
     interface EngineState {
       campaign: Record<string, unknown>;
       businessHours: { start?: string; end?: string; days?: number[] } | null;
+      dndSetting: DndSetting | null;
       dailyLimit: number;
       sentTodayTotal: number;
       minuteLimit: number;
@@ -769,7 +775,7 @@ export async function handleTalkxSend(
       if (currentCampaignError) throw new Error(`talkx_campaign_state_lookup_failed: ${currentCampaignError.message}`);
       if (currentCampaign?.status !== "sending") return "stop";
       state.campaign = { ...state.campaign, ...currentCampaign };
-      const currentWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
+      const currentWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours, state.dndSetting);
       if (!currentWindowStatus.allowed) {
         // V03: grava POR QUE pausou — sem isso a retomada automática não tinha
         // como distinguir pausa da janela de pausa do operador.
@@ -876,7 +882,7 @@ export async function handleTalkxSend(
           state.campaign = { ...state.campaign, ...fresh };
           // Recheck the campaign's own IANA window after configuration reload.
           // The locked transition preserves a concurrent manual pause/cancel.
-          const refreshedWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours);
+          const refreshedWindowStatus = deliveryWindowStatus(state.campaign, undefined, state.businessHours, state.dndSetting);
           if (!refreshedWindowStatus.allowed) {
             log.warn('Campanha pausada automaticamente: fora da janela de envio', { correlationId, campaignId });
             await pauseCampaign(pauseReasonForWindow(refreshedWindowStatus));
@@ -903,6 +909,7 @@ export async function handleTalkxSend(
       minuteRemaining: number,
       dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
+      dndSetting: DndSetting | null,
       trackingUrlFor: (recipientId: string) => string | undefined,
       linksByLabelFor: (recipientId: string) => Record<string, string>,
     ): Promise<EngineState> => {
@@ -922,6 +929,7 @@ export async function handleTalkxSend(
       return {
         campaign,
         businessHours,
+        dndSetting,
         dailyLimit,
         sentTodayTotal,
         minuteLimit,
@@ -985,7 +993,7 @@ export async function handleTalkxSend(
       let engineStateParaSaida: EngineState | null = null;
 
       try {
-        const { businessHours } = await loadBusinessHoursAndDailyLimit();
+        const { businessHours, dndSetting } = await loadBusinessHoursAndDailyLimit();
 
         // Get WhatsApp connection instance
         const { data: connection } = await supabase
@@ -1043,7 +1051,7 @@ export async function handleTalkxSend(
         const { trackingUrlFor, linksByLabelFor } = await loadTrackingLinks();
         const state = await buildEngineState(
           campaignRow, workerId, initialInstanceId, instanceToken,
-          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, trackingUrlFor, linksByLabelFor,
+          dailyLimit, sentTodayTotal, minuteLimit, minuteRemaining, dayRemaining, businessHours, dndSetting, trackingUrlFor, linksByLabelFor,
         );
         engineStateParaSaida = state;
 
@@ -1218,7 +1226,7 @@ export async function handleTalkxSend(
       }
     }
     // V20: horário comercial + limite diário por conexão (talkx_settings)
-    const { businessHours, dailyLimit } = await loadBusinessHoursAndDailyLimit();
+    const { businessHours, dndSetting, dailyLimit } = await loadBusinessHoursAndDailyLimit();
     const sentTodayTotal = dailyLimit > 0
       ? await countSentTodayForConnection(campaign.whatsapp_connection_id)
       : 0;
@@ -1252,7 +1260,7 @@ export async function handleTalkxSend(
     // Enforce delivery limits in the selected IANA timezone before the locked
     // transition. An invalid legacy timezone fails closed instead of falling
     // back to Brasília and sending at an unintended local hour.
-    const windowStatus = deliveryWindowStatus(campaign, undefined, businessHours);
+    const windowStatus = deliveryWindowStatus(campaign, undefined, businessHours, dndSetting);
     if (!windowStatus.allowed) {
       return new Response(JSON.stringify({ ok: false, reason: windowStatus.reason, next_window: windowStatus.next_window }), { headers });
     }

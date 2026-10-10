@@ -28,11 +28,12 @@ import { deliveryWindowStatus, type ScheduleGuardCampaign } from "./talkx-window
  * scripts/db-audit/talkx-schedule-timezone-contract.test.mjs.
  */
 export type BusinessHoursSetting = Parameters<typeof deliveryWindowStatus>[2];
+export type DndSettingSetting = Parameters<typeof deliveryWindowStatus>[3];
 
 /** Motivos que autorizam retomada automática. Qualquer outro valor (texto livre
  *  do usuário, nulo, motivo desconhecido) significa pausa manual/diagnóstica e
  *  NUNCA é retomado por robô. */
-export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit"] as const;
+export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit", "outside_weekdays", "dnd"] as const;
 export type AutoResumeReason = (typeof AUTO_RESUME_REASONS)[number];
 
 /**
@@ -45,6 +46,8 @@ export function pauseReasonForWindow(status: { allowed: boolean; reason?: string
   if (status.allowed) return null;
   if (status.reason === "outside_send_window") return "send_window";
   if (status.reason === "outside_business_hours") return "business_hours";
+  if (status.reason === "outside_weekdays") return "outside_weekdays";
+  if (status.reason === "dnd") return "dnd";
   return status.reason ?? "unknown";
 }
 
@@ -54,6 +57,8 @@ export type PausedCampaignRow = ScheduleGuardCampaign & {
   pause_reason?: string | null;
   whatsapp_connection_id?: string | null;
   paused_at?: string | null;
+  send_weekdays?: number[] | null;
+  respect_dnd?: boolean | null;
 };
 
 export type ResumeDecision = {
@@ -98,6 +103,7 @@ export function selectResumableCampaigns(
   connectionStatus: (campaign: PausedCampaignRow) => string | null,
   now = new Date(),
   businessHours: BusinessHoursSetting = null,
+  dndSetting: DndSettingSetting = null,
 ): ResumeDecision[] {
   return rows.map((campaign) => {
     const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason : "";
@@ -140,8 +146,9 @@ export function selectResumableCampaigns(
     // #121A: a janela é reavaliada com a configuração REAL de horário comercial,
     // quando ela existe (o scheduler lê `talkx_settings.business_hours` e passa
     // aqui). Sem configuração, o helper aplica o default 08:00–18:00.
-    const windowAllowed = businessHours
-      ? deliveryWindowStatus(campaign, now, businessHours).allowed
+    // DND e send_weekdays também são reavaliados aqui.
+    const windowAllowed = businessHours || dndSetting
+      ? deliveryWindowStatus(campaign, now, businessHours ?? null, dndSetting ?? null).allowed
       : deliveryWindowStatus(campaign, now).allowed;
     if (!windowAllowed) {
       return { ...base, resume: false, because: "ainda fora da janela de envio" };

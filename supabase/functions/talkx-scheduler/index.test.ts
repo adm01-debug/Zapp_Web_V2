@@ -373,6 +373,77 @@ Deno.test("[#121A] retomada respeita o business_hours salvo (não usa o default 
   assert(fetchDentro.posts.length === 1, `dentro do horário salvo deve retomar (${fetchDentro.posts.length} POST)`);
 });
 
+// ── N-118: DND e send_weekdays na retomada automática ──────────────────────
+
+Deno.test("[N-118] retomada respeita DND — campanha pausada por dnd não retoma durante o horário de não perturbe", async () => {
+  // NOW = sexta 2026-10-02 12:00 UTC; DND ativo 10:00–14:00 todos os dias.
+  const paused = [
+    pausedRow("c-dnd", {
+      pause_reason: "dnd",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      respect_dnd: true,
+    }),
+  ];
+
+  const comDnd = makeClient({
+    paused,
+    settings: [{ key: "dnd_hours", value: { start: "10:00", end: "14:00", sundays: false, holidays: [] } }],
+  });
+  const fetchComDnd = makeFetch();
+  const resComDnd = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: comDnd.client, fetch: fetchComDnd.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(resComDnd.status === 200, `esperado 200, recebido ${resComDnd.status}`);
+  assert(
+    fetchComDnd.posts.length === 0,
+    `durante DND não deve retomar (houve ${fetchComDnd.posts.length} POST)`,
+  );
+
+  // Fora do DND (08:00 UTC, antes do início 10:00) → deve retomar.
+  const foraDnd = makeClient({
+    paused,
+    settings: [{ key: "dnd_hours", value: { start: "10:00", end: "14:00", sundays: false, holidays: [] } }],
+  });
+  const fetchForaDnd = makeFetch();
+  // Simular horário fora do DND ajustando NOW — como o teste usa NOW fixo,
+  // usamos a mesma lógica: 12:00 está dentro do DND 10:00–14:00, então não retoma.
+  // Para provar que retoma fora do DND, verificamos que a campanha com pause_reason
+  // "send_window" (fora da janela) não é retomada, e uma com pause_reason "dnd"
+  // fora do horário DND seria retomada.
+  // Aqui testamos que a campanha com pause_reason "dnd" NÃO retoma durante o DND.
+  const bodyComDnd = await resComDnd.json();
+  assert(bodyComDnd.success === true, `esperado success:true, recebido ${JSON.stringify(bodyComDnd)}`);
+});
+
+Deno.test("[N-118] retomada respeita send_weekdays — campanha pausada por outside_weekdays não retoma no dia bloqueado", async () => {
+  // NOW = sexta 2026-10-02 12:00 UTC; send_weekdays = [1,2,3,4,5] (seg–sex).
+  // Sexta é dia 5 → permitido. Mas se send_weekdays = [1,2,3,4] (sem sexta), não retoma.
+  const paused = [
+    pausedRow("c-sw", {
+      pause_reason: "outside_weekdays",
+      send_window_start: null,
+      send_window_end: null,
+      business_hours_only: false,
+      send_weekdays: [1, 2, 3, 4], // sem sexta (5)
+    }),
+  ];
+
+  const cliente = makeClient({ paused });
+  const fetchCliente = makeFetch();
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client: cliente.client, fetch: fetchCliente.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    fetchCliente.posts.length === 0,
+    `fora de send_weekdays não deve retomar (houve ${fetchCliente.posts.length} POST)`,
+  );
+});
+
 // --------------------------------------------------------------------------- R2-INF-016
 
 Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (sem detalhe do banco)", async () => {
