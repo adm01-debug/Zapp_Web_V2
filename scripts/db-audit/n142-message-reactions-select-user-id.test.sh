@@ -232,10 +232,21 @@ roles="$(psql_sql "SELECT coalesce(array_to_string(roles, ','), '') FROM pg_poli
 [[ "$roles" == *'authenticated'* ]] || fail "A5: rollback mudou os roles (roles=$roles)"
 printf '[PASS] A5 rollback executa e restaura o corpo anterior (TO/roles intactos)\n'
 
+# A5b: o bloco '-- Rollback (SQL executável, na ordem):' (--   ...) também executa
+# e restaura o corpo anterior. Reaplica a migration antes para partir do estado fix.
+psql_file "$migration" >/dev/null || fail 'A5b: reaplicacao antes do bloco falhou'
+rollback_block="$(sed -n 's/^--   //p' "$migration" | tr '\n' ' ')"
+[[ -n "$rollback_block" ]] || fail 'A5b: bloco -- Rollback (SQL executável) ausente na migration'
+psql_sql "$rollback_block" >/dev/null || fail 'A5b: bloco -- Rollback (SQL executável) nao executou'
+pred_block="$(psql_sql "SELECT regexp_replace(qual, '\s+', ' ', 'g') FROM pg_policies WHERE schemaname='public' AND tablename='message_reactions' AND policyname='message_reactions_select_policy'" | tail -n1)"
+[[ "$pred_block" == *'user_id = auth.uid()'* ]] || fail "A5b: bloco de rollback nao restaurou o predicado antigo (qual=$pred_block)"
+[[ "$pred_block" != *'get_profile_id_for_user'* ]] || fail "A5b: bloco de rollback manteve a correcao (qual=$pred_block)"
+printf '[PASS] A5b bloco -- Rollback (SQL executável) executa e restaura o corpo anterior\n'
+
 # A6: sem a migration (pós-rollback) o autor volta a NÃO ver — o teste é sensível à correção.
 expect_value_as 'A6 pos-rollback autor nao ve (bug de volta)' '0' "$JWT_AUTHOR" "$SEL_OWN"
 
 # A7: reaplicação idempotente — migration de novo, verde de novo.
 psql_file "$migration" >/dev/null
 expect_value_as 'A7 reaplicada: autor ve de novo' '1' "$JWT_AUTHOR" "$SEL_OWN"
-printf 'N142: TODOS OS TESTES PASSARAM (A1-A7)\n'
+printf 'N142: TODOS OS TESTES PASSARAM (A1-A7+A5b)\n'
