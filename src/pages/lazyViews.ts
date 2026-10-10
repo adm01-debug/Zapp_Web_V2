@@ -19,7 +19,6 @@ export const AdvancedReportsView = lazyWithRetry(() => import('@/components/repo
 export const SecurityView = lazyWithRetry(() => import('@/components/security/SecurityView').then(m => ({ default: m.SecurityView })));
 export const TasksModule = lazyWithRetry(() => import('@/components/tasks/TasksModule').then(m => ({ default: m.TasksModule })));
 export const SystemFeaturesView = lazyWithRetry(() => import('@/components/docs/SystemFeaturesView').then(m => ({ default: m.SystemFeaturesView })));
-export const CampaignsView = lazyWithRetry(() => import('@/components/campaigns/CampaignsView').then(m => ({ default: m.CampaignsView })));
 export const ChatbotFlowsView = lazyWithRetry(() => import('@/components/chatbot/ChatbotFlowsView').then(m => ({ default: m.ChatbotFlowsView })));
 export const AutomationsManager = lazyWithRetry(() => import('@/components/automations/AutomationsManager').then(m => ({ default: m.AutomationsManager })));
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
