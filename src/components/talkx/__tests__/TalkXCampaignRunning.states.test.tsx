@@ -64,7 +64,15 @@ const { state, refetchCampaigns, mockCampaign } = vi.hoisted(() => {
       campaignList: [campaign] as unknown[],
       campaignsLoading: false,
       campaignsIsError: false,
-      abStats: null,
+      abStats: null as {
+        recipients: Array<{
+          variant_id: string;
+          status: string;
+          replied_at: string | null;
+          clicked_at: string | null;
+          delivered_at: string | null;
+        }>;
+      } | null,
       abStatsLoading: false,
       // Resposta por `limit(n)`: 200 = destinatários, 100 = mensagens, 50 = logs, 2000 = histórico.
       rows: {} as Record<number, { data: unknown; error: { message: string } | null }>,
@@ -85,7 +93,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     pauseCampaign: vi.fn(),
     cancelCampaign: vi.fn(),
     startCampaign: vi.fn(),
-    abStats: { data: state.abStats ?? null },
+    abStats: state.abStats ?? null,
     abStatsLoading: state.abStatsLoading ?? false,
   }),
 }));
@@ -323,7 +331,7 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
       for (let i = 0; i < 6; i++) {
         recipients.push({ variant_id: 'variant-b', status: 'delivered', replied_at: i < 3 ? `2026-10-05T12:0${i + 2}:00.000Z` : null, clicked_at: null, delivered_at: '2026-10-05T12:00:00.000Z' });
       }
-      state.abStats = { winner: { variant_id: 'variant-b', reply_rate: 50 }, recipients };
+      state.abStats = { recipients };
 
       renderView();
 
@@ -339,7 +347,7 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
     it('não mostra o bloco A/B quando a amostra ainda não atingiu ab_min_sample', async () => {
       const smallCampaign = { ...abCampaign, ab_min_sample: 100 };
       state.campaignList = [smallCampaign];
-      state.abStats = { winner: null, recipients: [] };
+      state.abStats = { recipients: [] };
 
       renderView();
 

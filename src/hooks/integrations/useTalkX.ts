@@ -150,6 +150,15 @@ function parseDraftSaveResult(data: unknown): TalkXDraftSaveResult {
   };
 }
 
+/** V27 (N-120) — linha de `talkx_recipients` usada nas barras de resultado do A/B. */
+export interface TalkXAbRecipient {
+  variant_id: string;
+  status: string;
+  replied_at: string | null;
+  clicked_at: string | null;
+  delivered_at: string | null;
+}
+
 export function useTalkX() {
   const queryClient = useQueryClient();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -237,24 +246,21 @@ export function useTalkX() {
     enabled: !!selectedCampaignId,
   });
 
-  // V27 — AB testing: per-variant stats for the winner badge and variant bars.
+  // V27 (N-120) — AB testing: amostra por variante para as barras do resultado.
+  // O vencedor NÃO vem daqui: a tela lê `talkx_campaigns.ab_winner_variant_id`,
+  // gravado pelo talkx-scheduler. O front não chama `talkx_determine_winner`
+  // porque essa RPC é restrita ao service_role (ver a migration do A/B).
   const abStatsQuery = useQuery({
     queryKey: ['talkx-ab-stats', selectedCampaignId],
     queryFn: async () => {
       if (!selectedCampaignId) return null;
-      const { data, error } = await supabase.rpc('talkx_determine_winner', {
-        p_campaign_id: selectedCampaignId,
-        p_min_sample: 0,
-      });
-      if (error) throw error;
-      // Also fetch per-variant sample sizes and metric values directly.
-      const { data: recipients, error: recErr } = await supabase
+      const { data, error } = await supabase
         .from('talkx_recipients')
         .select('variant_id, status, replied_at, clicked_at, delivered_at')
         .eq('campaign_id', selectedCampaignId)
         .not('variant_id', 'is', null);
-      if (recErr) throw recErr;
-      return { winner: data, recipients: (recipients ?? []) as unknown[] };
+      if (error) throw error;
+      return { recipients: (data ?? []) as TalkXAbRecipient[] };
     },
     enabled: !!selectedCampaignId,
   });

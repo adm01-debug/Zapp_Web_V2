@@ -264,40 +264,6 @@ export async function handleTalkxScheduler(
 
     const results: Array<Record<string, unknown>> = [];
 
-    // ── 2.5 AB winner selection ──────────────────────────────────────────────
-    // Para campanhas com AB habilitado, determina o vencedor quando a amostra
-    // mínima foi atingida e grava o resultado (variante, autor e data).
-    const allCampaignsForAb = [
-      ...(dueCampaigns ?? []).map((c) => ({ id: c.id as string, name: (c.name ?? null) as string | null })),
-      ...resumeCandidates.map((c) => ({ id: c.id, name: c.name })),
-    ];
-    for (const campaign of allCampaignsForAb) {
-      try {
-        const { data: campaignData, error: campaignErr } = await supabase
-          .from("talkx_campaigns")
-          .select("id, ab_enabled, ab_metric, ab_min_sample, ab_winner_variant_id")
-          .eq("id", campaign.id)
-          .single();
-        if (campaignErr || !campaignData?.ab_enabled) continue;
-        const minSample = campaignData.ab_min_sample ?? 50;
-        const { data: winner, error: winnerErr } = await supabase.rpc("talkx_determine_winner", {
-          p_campaign_id: campaign.id as string,
-          p_min_sample: minSample,
-        });
-        if (winnerErr || !winner) continue;
-        if (campaignData.ab_winner_variant_id === winner) continue;
-        await supabase.from("talkx_campaigns").update({
-          ab_winner_variant_id: winner,
-          ab_winner_decided_at: new Date().toISOString(),
-          ab_winner_decided_by: "talkx-scheduler",
-        }).eq("id", campaign.id);
-        log.info(`AB winner selected for campaign ${campaign.name} (${campaign.id}): variant ${winner}`);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log.error(`AB winner selection failed for campaign ${campaign.id}`, { error: message });
-      }
-    }
-
     // ── 3. Invocar talkx-send para cada campanha ─────────────────────────────────────
     // Agendadas vencidas vêm antes das retomadas (prioridade por tempo) e a lista
     // combinada é truncada no teto do tick.

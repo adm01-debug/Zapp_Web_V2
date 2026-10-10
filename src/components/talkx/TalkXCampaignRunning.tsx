@@ -12,7 +12,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkX, type TalkXCampaign, type TalkXAbRecipient } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
@@ -485,7 +485,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
 // ─── A/B Test Results (N-120) ──────────────────────────────────────────────
 function AbTestResults({ campaign, abStats }: {
   campaign: TalkXCampaign;
-  abStats?: { winner: unknown; recipients: unknown[] } | null;
+  abStats?: { recipients: TalkXAbRecipient[] } | null;
 }) {
   if (!campaign.ab_enabled || !abStats) return null;
 
@@ -493,14 +493,8 @@ function AbTestResults({ campaign, abStats }: {
   const minSample = campaign.ab_min_sample ?? 0;
   const winnerId = campaign.ab_winner_variant_id;
 
-  // Compute per-variant stats from recipients
-  const recipients = (abStats.recipients ?? []) as Array<{
-    variant_id: string;
-    status: string;
-    replied_at: string | null;
-    clicked_at: string | null;
-    delivered_at: string | null;
-  }>;
+  // Amostra por variante, calculada a partir dos destinatários atribuídos.
+  const recipients = abStats.recipients ?? [];
 
   const variantMap = new Map<string, { total: number; replies: number; clicks: number; deliveries: number }>();
   for (const r of recipients) {
@@ -547,13 +541,13 @@ function AbTestResults({ campaign, abStats }: {
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${maxRate > 0 ? (v.rate / maxRate) * 100 : 0}%`,
-                  backgroundColor: v.id === winnerId ? 'hsl(var(--dash-green))' : 'hsl(var(--primary))',
+                  backgroundColor: v.id === winnerId ? 'hsl(var(--success))' : 'hsl(var(--primary))',
                 }}
               />
             </div>
             <span className="text-2xs font-bold text-foreground w-12 text-right">{v.rate.toFixed(1)}%</span>
             {v.id === winnerId && (
-              <span className="text-2xs font-bold text-dash-green shrink-0">Vencedora</span>
+              <span className="text-2xs font-bold text-success shrink-0">Vencedora</span>
             )}
           </div>
         ))}
@@ -568,7 +562,7 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory, abStats }: {
   sentHistory: { time: string; Enviadas: number; Entregues: number }[];
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
-  abStats?: { winner: unknown; recipients: unknown[] } | null;
+  abStats?: { recipients: TalkXAbRecipient[] } | null;
 }) {
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
@@ -916,7 +910,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} abStats={abStats?.data} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} abStats={abStats} />}
               {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
             </div>
 
