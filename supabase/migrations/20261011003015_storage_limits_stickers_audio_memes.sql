@@ -1,5 +1,7 @@
 -- N-009 (SEC-DEFINER_GRANTS_STORAGE-06): buckets publicos de figurinhas e audios-meme sem limite de tamanho nem restricao de MIME.
 -- Rollback: UPDATE storage.buckets SET file_size_limit = NULL, allowed_mime_types = NULL WHERE id = 'stickers'; UPDATE storage.buckets SET file_size_limit = NULL, allowed_mime_types = NULL WHERE id = 'audio-memes';
+--   UPDATE storage.buckets SET file_size_limit = NULL, allowed_mime_types = NULL WHERE id = 'stickers';
+--   UPDATE storage.buckets SET file_size_limit = NULL, allowed_mime_types = NULL WHERE id = 'audio-memes';
 -- Bucket com allowed_mime_types NULL permite upload de qualquer tipo,
 -- incluindo text/html (vetor de pagina hospedada servida pelo dominio do storage).
 -- stickers recebe figurinhas (imagens); audio-memes recebe audios curtos (memes).
