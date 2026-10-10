@@ -131,7 +131,8 @@ Deno.test("GET registra clique e redireciona com UTM do link", async () => {
     linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
     linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo", utm_content: null, utm_term: null },
   });
-  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 302, `status ${res.status} != 302`);
   const location = res.headers.get("location") ?? "";
@@ -142,10 +143,90 @@ Deno.test("GET registra clique e redireciona com UTM do link", async () => {
 
 Deno.test("GET slug inexistente devolve 404 neutro (sem redirecionar)", async () => {
   const supabase = makeFakeSupabase({ linkClickResult: { error: "link_not_found" } });
-  const req = new Request("https://example.com/talkx-link?s=inexistente", { method: "GET" });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=inexistente&r=rec-1&t=${token}`, { method: "GET" });
   const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
   assert(res.status === 404, `status ${res.status} != 404`);
   assert(res.headers.get("location") === null, "não deveria redirecionar");
+});
+
+// ── handleTalkxLink: GET — HMAC token validation ──────────────────
+Deno.test("GET sem token devolve 401 quando secret está configurado", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "nenhum clique deve ser registrado quando o token é ausente");
+});
+
+Deno.test("GET com token inválido devolve 401 quando secret está configurado", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const req = new Request("https://example.com/talkx-link?s=abc123&r=rec-1&t=wrongtoken", { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "nenhum clique deve ser registrado quando o token é inválido");
+});
+
+Deno.test("GET com token válido devolve 302 e registra clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 302, `status ${res.status} != 302`);
+  const location = res.headers.get("location") ?? "";
+  const u = new URL(location);
+  assert(u.searchParams.get("utm_source") === "whatsapp", `utm_source ausente em Location: ${location}`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 1, "token válido deve registrar exatamente 1 clique");
+});
+
+Deno.test("GET sem recipient devolve 401 e não registra clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const env = makeEnv();
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  for (const url of [
+    "https://example.com/talkx-link?s=abc123",
+    `https://example.com/talkx-link?s=abc123&t=${token}`,
+  ]) {
+    const res = await handleTalkxLink(new Request(url, { method: "GET" }), { supabase, env });
+    assert(res.status === 401, `GET ${url}: status ${res.status} != 401`);
+  }
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "sem recipient nenhum clique pode ser registrado");
+});
+
+Deno.test("GET com token assinado por outro secret devolve 401 e não registra clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const token = await hmacHex("outro-secret", "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `status ${res.status} != 401`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "token de outro secret não pode registrar clique");
+});
+
+Deno.test("GET sem secret configurado devolve 503 e não registra clique", async () => {
+  const supabase = makeFakeSupabase({
+    linkClickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+    linkRow: { utm_source: "whatsapp", utm_medium: "talkx", utm_campaign: "promo" },
+  });
+  const token = await hmacHex(CONVERT_SECRET, "rec-1");
+  const req = new Request(`https://example.com/talkx-link?s=abc123&r=rec-1&t=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: "" }) });
+  assert(res.status === 503, `status ${res.status} != 503`);
+  assert(supabase.rpcCalls.filter((c) => c.fn === "record_talkx_link_click").length === 0, "sem secret nenhum clique pode ser registrado");
 });
 
 // ── handleTalkxLink: POST (autenticação + valor + dedupe) ────────────────────
