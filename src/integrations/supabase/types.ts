@@ -10798,6 +10798,15 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: boolean
       }
+      confirm_talkx_campaign_launch: {
+        Args: {
+          p_campaign_id: string
+          p_expected_revision: number
+          p_confirmations: { consent: boolean; content: boolean; suppression: boolean }
+          p_mode: string
+        }
+        Returns: { ok: boolean; applied: boolean; error: string | null }
+      }
       complete_talkx_recipient: {
         Args: {
           p_claim_token: string
