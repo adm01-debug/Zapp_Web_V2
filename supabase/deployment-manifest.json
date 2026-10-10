@@ -126,8 +126,8 @@
     },
     {
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
-      "bytes": 3553,
-      "sha256": "dd33ad23427bbea78803b40d0cf4523fffcca9140cf5b60d9778299bd3210053"
+      "bytes": 5497,
+      "sha256": "321fff7bca46941938d6b64158aab12ab8508bfc82a53ffc887b7a903563dd9a"
     },
     {
       "path": "supabase/functions/_shared/edge-boot.ts",
@@ -446,8 +446,8 @@
     },
     {
       "path": "supabase/functions/batch-fetch-avatars/index.ts",
-      "bytes": 7120,
-      "sha256": "d1695f0698b4a2ce1a4c4402d959b00f1342dd64e0e04b10d4d7a8b0949821a0"
+      "bytes": 7456,
+      "sha256": "29b6bae4aa7cf5358f73c1c70888776de8b35b43c5f66978d639cfa2d134d408"
     },
     {
       "path": "supabase/functions/bitrix-api/index.ts",
@@ -801,8 +801,8 @@
     },
     {
       "path": "supabase/functions/webauthn/index.ts",
-      "bytes": 11048,
-      "sha256": "8c31019dd1707d906b962ded1aa4228cb14a463cd4a7c557d581541efcd1ab51"
+      "bytes": 13186,
+      "sha256": "92cbc3e8f6f95c1cbc0078a7fab6b7c5188fe0904a838fc221e9d739891e1207"
     },
     {
       "path": "supabase/functions/webauthn/verify.ts",
@@ -975,7 +975,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "91c502f30bd00bfd40c2c33439d35cc59c2401e15dbac476c46376bd5b5a8704",
+      "source_sha256": "d7029bf710db3343a71f95ea5bb22cd7eb548620b0e5e6c066827505d78144db",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1122,7 +1122,7 @@
       "name": "batch-fetch-avatars",
       "entrypoint": "supabase/functions/batch-fetch-avatars/index.ts",
       "verify_jwt": false,
-      "source_sha256": "3170ae895c1ac389f62cdd761ddae302b73789abe5b6d142824f98057e19f498",
+      "source_sha256": "1df68a8a852d3969f2d10d2cafd9a442c14c663d28d384bafbf468c6b1915f93",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1274,7 +1274,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "a77afc4383c9f5575ed1b3abb3ccd085ddd15e368e1d0162a033f02f498222ab",
+      "source_sha256": "deeed9bf600409c8733f3a54e4d40088502489410cf37278e3196c57bd21a8f7",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -1936,7 +1936,7 @@
       "name": "searchbox-budget-alert",
       "entrypoint": "supabase/functions/searchbox-budget-alert/index.ts",
       "verify_jwt": false,
-      "source_sha256": "627558b32d43beec832b91ae12f55e9c455c186646c40006e64679bfbe67c0b6",
+      "source_sha256": "82290d3396adc88f418f51ace2bdc27947ab768acf2039d1c83f2ff43d033985",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2185,7 +2185,7 @@
       "name": "webauthn",
       "entrypoint": "supabase/functions/webauthn/index.ts",
       "verify_jwt": true,
-      "source_sha256": "61775649ed853bedfb1e1371c314a6716c21f9ae8d04c41abdc219c4a71efbd5",
+      "source_sha256": "a40df563357edca3928dfd9a468c3f0f73f434126dade5b7be1edf1c6e593c67",
       "source_files": [
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2230,5 +2230,5 @@
       ]
     }
   ],
-  "manifest_sha256": "eb0db458eb81075d252a8a1bcb116b770941f2520ae2ab020d1494447bcff8f3"
+  "manifest_sha256": "37fe9215541c9d05457385807e123866953853115d0df01baccfe12c6a0fd6c2"
 }
