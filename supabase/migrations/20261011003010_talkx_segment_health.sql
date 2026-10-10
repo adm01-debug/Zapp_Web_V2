@@ -1,5 +1,7 @@
 -- talkx_segment_health
--- Rollback: drop function if exists public.talkx_segment_health(jsonb, uuid);
+-- Rollback: remove a funcao nova (classe ADITIVA: nada existente foi criado ou alterado antes dela).
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_segment_health(jsonb, uuid);
 --
 -- N-116 / X102 (Fase 9 · Tela 03/02 · banco). Saude do segmento: risco de entrega,
 -- sinais e composicao, so com agregados (nunca nome/telefone).
