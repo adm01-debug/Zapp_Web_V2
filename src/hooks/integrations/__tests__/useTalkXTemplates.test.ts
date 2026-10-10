@@ -120,6 +120,20 @@ function wrapper() {
 const calls = (fn: unknown) => (fn as Mock).mock.calls as unknown[][];
 const tableBuilder = (i: number) => tableBuilders[i];
 
+/**
+ * Builder do cliente Supabase da chamada `from(<table>)`.
+ *
+ * O hook dispara consultas proprias no mount (o ranking de conversao le
+ * `talkx_campaign_metrics`), entao o indice 0 de `supabaseFrom` deixou de ser
+ * a tabela do caso. Localizar pelo nome da tabela e mais forte: alem de achar o
+ * builder certo, falha explicitamente se o hook consultar outra tabela.
+ */
+function builderForTable(table: string): Record<string, unknown> {
+  const i = supabaseFrom.mock.calls.findIndex((c) => c[0] === table);
+  expect(i, `supabase.from(${table}) nao foi chamada`).toBeGreaterThanOrEqual(0);
+  return (supabaseFrom.mock.results[i]?.value ?? {}) as Record<string, unknown>;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   listResult = { data: [], error: null };
@@ -486,9 +500,7 @@ describe('useTalkXTemplates — fetchVersionHistory', () => {
     const versoes = await result.current.fetchVersionHistory('tpl-1');
 
     expect(versoes).toEqual([{ id: 'ver-2', version_number: 2 }]);
-    const table = calls(supabaseFrom)[0][0];
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
-    expect(table).toBe('talkx_template_versions');
+    const b = builderForTable('talkx_template_versions');
     expect(calls(b.eq)[0]).toEqual(['template_id', 'tpl-1']);
     expect(calls(b.order)[0]).toEqual(['version_number', { ascending: false }]);
     expect(calls(b.limit)[0]).toEqual([10]);
@@ -520,8 +532,7 @@ describe('useTalkXTemplates — variantes A/B', () => {
     const variantes = await result.current.fetchVariants('tpl-1');
 
     expect(variantes).toEqual([{ id: 'v1', label: 'A' }]);
-    expect(calls(supabaseFrom)[0][0]).toBe('talkx_template_variants');
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
+    const b = builderForTable('talkx_template_variants');
     expect(calls(b.eq)[0]).toEqual(['template_id', 'tpl-1']);
     expect(calls(b.order)[0]).toEqual(['label', { ascending: true }]);
   });
@@ -544,7 +555,7 @@ describe('useTalkXTemplates — variantes A/B', () => {
       media_url: null, media_type: null, weight: 50,
     });
 
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
+    const b = builderForTable('talkx_template_variants');
     expect(calls(b.eq)[0]).toEqual(['id', 'v1']);
     expect(calls(b.update)[0][0]).toEqual({
       template_id: 'tpl-1', label: 'A', content: 'novo', media_url: null, media_type: null, weight: 50,
@@ -561,7 +572,7 @@ describe('useTalkXTemplates — variantes A/B', () => {
       media_url: null, media_type: null, weight: 50,
     });
 
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
+    const b = builderForTable('talkx_template_variants');
     expect(calls(b.insert)[0][0]).toEqual({
       template_id: 'tpl-1', label: 'B', content: 'b', media_url: null, media_type: null, weight: 50,
     });
@@ -585,7 +596,7 @@ describe('useTalkXTemplates — variantes A/B', () => {
 
     await result.current.deleteVariant('v1');
 
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
+    const b = builderForTable('talkx_template_variants');
     expect(calls(b.eq)[0]).toEqual(['id', 'v1']);
   });
 
@@ -603,8 +614,7 @@ describe('useTalkXTemplates — variantes A/B', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(await result.current.countVariantRecipients('v1')).toBe(42);
-    expect(calls(supabaseFrom)[0][0]).toBe('talkx_recipients');
-    const b = (supabaseFrom.mock.results.find((r) => r.type === 'return')?.value ?? {}) as Record<string, unknown>;
+    const b = builderForTable('talkx_recipients');
     expect(calls(b.select)[0]).toEqual(['id', { count: 'exact', head: true }]);
     expect(calls(b.eq)[0]).toEqual(['variant_id', 'v1']);
   });
