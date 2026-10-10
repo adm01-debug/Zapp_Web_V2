@@ -44,18 +44,16 @@ export function AvatarUpload() {
   // Gera URL assinada temporária a partir do caminho armazenado
   useEffect(() => {
     const raw = profile?.avatar_url;
-    if (!raw || !user) {
-      setAvatarUrl(null);
-      return;
-    }
     // Legado: avatar_url pode ser a URL pública completa; normaliza para caminho.
-    const filePath = avatarObjectPath(raw);
-    if (!filePath || isStorageUrl(filePath)) {
-      setAvatarUrl(null);
-      return;
-    }
+    // A limpeza (setAvatarUrl(null)) acontece dentro do callback assíncrono para
+    // não chamar setState de forma síncrona dentro do efeito.
+    const filePath = raw && user ? avatarObjectPath(raw) : null;
     let cancelled = false;
     (async () => {
+      if (!filePath || isStorageUrl(filePath)) {
+        if (!cancelled) setAvatarUrl(null);
+        return;
+      }
       const { data, error } = await supabase.storage
         .from('avatars')
         .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
