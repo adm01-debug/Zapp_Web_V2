@@ -103,6 +103,8 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 import { AUDIENCE_PREVIEW_LIMIT, localToUTCInTimezone, useCampaignEditor } from '@/components/talkx/useCampaignEditor';
+import { MORE_VARIABLES as MORE_VARIABLES_DO_HOOK, MESSAGE_LIMIT as MESSAGE_LIMIT_DO_HOOK } from '@/components/talkx/useCampaignEditor';
+import { MORE_VARIABLES, MESSAGE_LIMIT } from '@/components/talkx/kit/constants';
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import { TalkXTemplateEditor } from '@/components/talkx/TalkXTemplateEditor';
 import { OBJECTIVES, personalizePreview } from '@/components/talkx/talkxShared';
@@ -1288,5 +1290,16 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     const dirty = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(dirty);
     expect(dirty.defaultPrevented).toBe(true);
+  });
+});
+
+describe('useCampaignEditor — X128 (fonte única das constantes do passo 2)', () => {
+  it('MORE_VARIABLES e MESSAGE_LIMIT do hook são os mesmos de kit/constants', () => {
+    // O wizard importa do módulo de constantes (sem mock nos testes de tela);
+    // o hook reexporta para compatibilidade. Se divergirem, o limite exibido
+    // e o aplicado deixam de ser o mesmo teto da RPC (4096).
+    expect(MORE_VARIABLES_DO_HOOK).toBe(MORE_VARIABLES);
+    expect(MESSAGE_LIMIT_DO_HOOK).toBe(MESSAGE_LIMIT);
+    expect(MESSAGE_LIMIT).toBe(4096);
   });
 });

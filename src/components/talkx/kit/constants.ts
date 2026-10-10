@@ -73,6 +73,23 @@ export const TEMPLATE_STATUS: Record<string, { label: string; tone: PillTone }> 
 export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{{empresa}}', '{{saudacao}}', '{{vendedor}}', '{{data_atual}}', '{{link}}'] as const;
 
 /**
+ * X128 — as demais variáveis do passo 2 ficam em "Mais variáveis" (mock 08).
+ * Moram aqui (módulo de constantes, sem mock nos testes de tela) para o
+ * wizard importar sem passar pelo módulo do hook.
+ */
+export const MORE_VARIABLES = [
+  { key: '{{nome_completo}}', label: 'Nome Completo', desc: 'Insere o nome completo do contato' },
+  { key: '{{apelido}}', label: 'Apelido', desc: 'Usa apelido se disponível, senão primeiro nome' },
+];
+
+/**
+ * X128 — limite do corpo da mensagem. É o mesmo teto que a RPC de rascunho/
+ * lançamento aplica (`length(v_message_template) > 4096` recusa): passar daqui
+ * só produziria um erro no fim do wizard.
+ */
+export const MESSAGE_LIMIT = 4096;
+
+/**
  * A15 — Canal. O motor do Talk X envia só por WhatsApp, então o canal real é um
  * só: a coluna e o filtro existem com esse valor (campanha por e-mail não faz
  * parte do plano). Fonte das opções do select "Todos os canais" da Visão geral.

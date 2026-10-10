@@ -8,6 +8,11 @@ import { fromTable } from '@/lib/supabaseHelpers';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
+import { MORE_VARIABLES, MESSAGE_LIMIT } from './kit/constants';
+
+// X128 — reexportadas do módulo de constantes (fonte única): o wizard importa
+// de lá para não depender do módulo do hook (dublado nos testes de tela).
+export { MORE_VARIABLES, MESSAGE_LIMIT };
 
 /**
  * X128 — chips de variável do passo 2 na ORDEM DO MOCK 08 (`{{nome}}`,
@@ -23,19 +28,6 @@ export const VARIABLES = [
   { key: '{{data_atual}}', label: 'Data atual', desc: 'Data do envio em dd/mm/aaaa' },
   { key: '{{link}}', label: 'Link', desc: 'Link rastreável da campanha' },
 ];
-
-/** X128 — as demais variáveis do passo 2 ficam em "Mais variáveis" (mock 08). */
-export const MORE_VARIABLES = [
-  { key: '{{nome_completo}}', label: 'Nome Completo', desc: 'Insere o nome completo do contato' },
-  { key: '{{apelido}}', label: 'Apelido', desc: 'Usa apelido se disponível, senão primeiro nome' },
-];
-
-/**
- * X128 — limite do corpo da mensagem. É o mesmo teto que a RPC de rascunho/
- * lançamento aplica (`length(v_message_template) > 4096` recusa): passar daqui
- * só produziria um erro no fim do wizard.
- */
-export const MESSAGE_LIMIT = 4096;
 
 export const MESSAGE_TEMPLATES = [
   { name: 'Saudação simples', template: '{{saudacao}}, {{nome}}! Tudo bem? 😊' },
