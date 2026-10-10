@@ -933,6 +933,12 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
+      - name: Provar colunas channel, icon, interactive e mídia em talkx_templates (N-018)
+        env:
+          TALKX_TEMPLATE_COLUMNS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-columns.test.sh
+
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
