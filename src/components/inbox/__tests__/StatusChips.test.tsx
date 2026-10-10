@@ -72,8 +72,18 @@ describe('StatusChips', () => {
     expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('1');
   });
 
-  it('maps "Resolvidas" to conversations with no messages', () => {
-    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+  it('maps "Resolvidas" to conversations with contact.conversation_status === "resolved" (não por ausência de mensagens)', () => {
+    // O defeito: o código antigo filtrava por messages.length === 0, o que
+    // ignorava conversas COM mensagens cujo status era 'resolved'.
+    // Este teste tem UMA conversa com mensagens e conversation_status === 'resolved'
+    // (deve ser contada) e nenhuma conversa sem mensagens sem status.
+    // Código antigo conta 0 (tem mensagens, não entra em messages.length === 0).
+    // Código novo conta 1 (conversation_status === 'resolved').
+    const conversationsWithResolved: ConversationWithMessages[] = [
+      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID }),
+      makeConversation({ id: 'c2', conversation_status: 'resolved' as const }),
+    ];
+    render(<StatusChips conversations={conversationsWithResolved} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-resolved')).toHaveTextContent('1');
   });
 

@@ -38,7 +38,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
       return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
     });
-    const resolved = conversations.filter(c => c.messages.length === 0);
+    const resolved = conversations.filter(c => c.contact.conversation_status === 'resolved');
 
     return {
       all: openConversations.length,
