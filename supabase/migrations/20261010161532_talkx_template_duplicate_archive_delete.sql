@@ -1,10 +1,13 @@
 -- talkx_template_duplicate_archive_delete
+-- marcador: talkx_n127_duplicate_archive_delete
 -- Rollback: recria public.guard_talkx_template_update com o corpo anterior (linha executavel abaixo, copiada inteira) e dropa as 3 RPCs novas. A coluna archived_at NAO e removida pelo rollback: ela e adicionada aqui so de forma idempotente (ADD COLUMN IF NOT EXISTS), para o cartao nao depender da ordem em que o N-126a entra na branch do dia; remove-la apagaria a coluna e os dados daquele cartao. O GRANT/REVOKE some junto com o DROP FUNCTION; a funcao do guard, recriada no rollback, volta ao ACL ja revogado (re-REVOKE explicito).
 -- Rollback (SQL executável, na ordem):
 --   create or replace function public.guard_talkx_template_update() returns trigger language plpgsql security invoker set search_path = public, pg_temp as $function$ BEGIN IF current_user = 'service_role'::name THEN RETURN NEW; END IF; IF NEW.id IS NOT DISTINCT FROM OLD.id AND NEW.name IS NOT DISTINCT FROM OLD.name AND NEW.description IS NOT DISTINCT FROM OLD.description AND NEW.category IS NOT DISTINCT FROM OLD.category AND NEW.content IS NOT DISTINCT FROM OLD.content AND NEW.media_url IS NOT DISTINCT FROM OLD.media_url AND NEW.media_type IS NOT DISTINCT FROM OLD.media_type AND NEW.tags IS NOT DISTINCT FROM OLD.tags AND NEW.status IS NOT DISTINCT FROM OLD.status AND NEW.custom_variables IS NOT DISTINCT FROM OLD.custom_variables AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at AND NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at AND NEW.use_count = OLD.use_count + 1 THEN RETURN NEW; END IF; IF NEW.id IS NOT DISTINCT FROM OLD.id AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at AND NEW.use_count IS NOT DISTINCT FROM OLD.use_count AND EXISTS (SELECT 1 FROM public.talkx_template_versions AS history WHERE history.template_id = OLD.id AND history.created_at = statement_timestamp() AND history.saved_by = public.get_profile_id_for_user(auth.uid()) AND history.name IS NOT DISTINCT FROM OLD.name AND history.description IS NOT DISTINCT FROM OLD.description AND history.category IS NOT DISTINCT FROM OLD.category AND history.content IS NOT DISTINCT FROM OLD.content AND history.media_url IS NOT DISTINCT FROM OLD.media_url AND history.media_type IS NOT DISTINCT FROM OLD.media_type AND history.tags IS NOT DISTINCT FROM OLD.tags AND history.status IS NOT DISTINCT FROM OLD.status AND history.custom_variables IS NOT DISTINCT FROM OLD.custom_variables) THEN RETURN NEW; END IF; RAISE EXCEPTION 'talkx_template_update_requires_authorized_rpc' USING ERRCODE = '42501'; END; $function$;
 --   revoke all on function public.guard_talkx_template_update() from public, anon, authenticated;
 --   create or replace function public.set_talkx_template_updated_at() returns trigger language plpgsql security invoker set search_path = public, pg_temp as $function$ BEGIN IF NEW.id IS NOT DISTINCT FROM OLD.id AND NEW.name IS NOT DISTINCT FROM OLD.name AND NEW.description IS NOT DISTINCT FROM OLD.description AND NEW.category IS NOT DISTINCT FROM OLD.category AND NEW.content IS NOT DISTINCT FROM OLD.content AND NEW.media_url IS NOT DISTINCT FROM OLD.media_url AND NEW.media_type IS NOT DISTINCT FROM OLD.media_type AND NEW.tags IS NOT DISTINCT FROM OLD.tags AND NEW.status IS NOT DISTINCT FROM OLD.status AND NEW.custom_variables IS NOT DISTINCT FROM OLD.custom_variables AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at AND NEW.use_count = OLD.use_count + 1 THEN NEW.updated_at := OLD.updated_at; ELSE NEW.updated_at := transaction_timestamp(); END IF; RETURN NEW; END; $function$;
 --   revoke all on function public.set_talkx_template_updated_at() from public, anon, authenticated;
+--   drop trigger if exists trg_guard_talkx_template_delete on public.talkx_templates;
+--   drop function if exists public.guard_talkx_template_delete();
 --   drop function if exists public.delete_talkx_template(uuid);
 --   drop function if exists public.archive_talkx_template(uuid, boolean);
 --   drop function if exists public.duplicate_talkx_template(uuid);
@@ -14,8 +17,10 @@
 -- Problema: nao existia caminho de banco para (a) duplicar um template levando o
 -- conteudo e as variantes A/B, (b) arquivar um template (some da lista ativa sem
 -- apagar) e (c) impedir apagar um template que ja esta em campanha. A tabela
--- talkx_templates tem RLS de DELETE livre, entao o template usado em campanha era
--- apagavel (as campanhas ficavam com template_id NULL via ON DELETE SET NULL).
+-- talkx_templates aceitava DELETE direto pela tabela: a policy de DELETE e por
+-- dono/staff e o template_id das campanhas e ON DELETE SET NULL, entao o proprio
+-- dono (ou staff) apagava um template usado em campanha sem passar pela RPC, e as
+-- campanhas ficavam com template_id NULL. So a RPC nao bastava.
 --
 -- Correcao, so no banco, 3 RPCs SECURITY DEFINER (search_path fixo, checagem
 -- explicita de quem chama, negar por padrao, EXECUTE so para authenticated):
@@ -26,6 +31,17 @@
 -- perder historico/variantes.
 -- 3. public.delete_talkx_template(p_template_id) — recusa com 'talkx_template_in_use'
 -- quando existe campanha apontando para o template.
+--
+-- Para fechar tambem o DELETE DIRETO na tabela (que nao passa pela RPC), um trigger
+-- BEFORE DELETE (public.guard_talkx_template_delete, SECURITY INVOKER) recusa com
+-- 'talkx_template_in_use' quando ha campanha apontando para o template; service_role
+-- segue livre (mesma porta do guard de UPDATE). A RPC continua conferindo antes de
+-- chegar no DELETE — defesa em profundidade.
+--
+-- duplicate_talkx_template e SECURITY DEFINER: como a RLS de SELECT do
+-- talkx_templates e "qualquer sessao", a RPC confere explicitamente que quem chama e o
+-- dono do template de origem ou admin/supervisor; caso contrario devolve
+-- 'not_authorized' e nao copia conteudo alheio.
 --
 -- O guard public.guard_talkx_template_update bloqueava QUALQUER UPDATE sem snapshot
 -- autorizado, inclusive gravar archived_at — sem tocar nele o arquivamento era
@@ -208,6 +224,12 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'template_not_found');
   END IF;
 
+  -- N-127b: a RPC e SECURITY DEFINER e nao herda a RLS. So o dono do template de
+  -- origem ou admin/supervisor pode duplicar; os demais nao copiam conteudo alheio.
+  IF NOT (v_src.created_by = v_profile_id OR public.is_admin_or_supervisor(v_caller)) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not_authorized');
+  END IF;
+
   -- ' (cópia)' tem 8 caracteres; o CHECK da tabela limita name a 200.
   v_new_name := left(v_src.name, 192) || ' (cópia)';
 
@@ -324,6 +346,42 @@ BEGIN
   RETURN jsonb_build_object('ok', true);
 END;
 $function$;
+
+-- ============================================================================
+-- 5b. guard_talkx_template_delete — fecha o DELETE direto na tabela
+-- (a RPC delete_talkx_template ja confere, mas o cliente pode apagar a linha
+--  direto: policy de DELETE por dono/staff + FK ON DELETE SET NULL)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.guard_talkx_template_delete()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF current_user = 'service_role'::name THEN
+    RETURN OLD;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.talkx_campaigns WHERE template_id = OLD.id
+  ) THEN
+    RAISE EXCEPTION 'talkx_template_in_use'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN OLD;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_guard_talkx_template_delete
+  ON public.talkx_templates;
+CREATE TRIGGER trg_guard_talkx_template_delete
+BEFORE DELETE ON public.talkx_templates
+FOR EACH ROW EXECUTE FUNCTION public.guard_talkx_template_delete();
+
+REVOKE ALL ON FUNCTION public.guard_talkx_template_delete()
+  FROM PUBLIC, anon, authenticated;
 
 -- ============================================================================
 -- 6. ACL — negar por padrao; EXECUTE so para authenticated
