@@ -1,6 +1,7 @@
--- talkx_compile_segment_rules_safe: corrige injecao SQL no caso in_last_days/not_in_last_days
+-- talkx_compile_segment_rules_safe: corrige injecao SQL no caso in_last_days/not_in_last_days.
 -- O v_value era interpolado diretamente com %s (sem quote_literal), permitindo injecao SQL.
--- O fix usa %L (quote_literal) e faz cast a int, impedindo qualquer injecao via valor.
+-- O fix valida que v_value e um inteiro valido antes de usalo no predicado; caso contrario,
+-- rejeita com erro 22023 (invalid_talkx_segment_rule_value), nunca virando predicado.
 -- Rollback: reverter para a versao anterior da funcao talkx_compile_segment_rules (sem a correcao de injecao)
 -- Rollback (SQL executavel, na ordem):
 --   CREATE OR REPLACE FUNCTION public.talkx_compile_segment_rules(jsonb, integer)
@@ -173,7 +174,6 @@ DECLARE
   v_groups_sql text[] := ARRAY[]::text[];
   v_field_row record;
 BEGIN
-  -- Protecao contra recursao profunda (defesa em profundidade).
   IF p_depth > 10 THEN
     RAISE EXCEPTION 'segment_rules_depth_exceeded' USING ERRCODE = '22023';
   END IF;
@@ -220,7 +220,6 @@ BEGIN
       v_op    := v_rule ->> 'op';
       v_value := v_rule ->> 'value';
 
-      -- Validar campo contra a tabela oficial.
       SELECT sf.kind, sf.ops, sf.expr
         INTO v_field_row
         FROM public.talkx_segment_fields sf
@@ -235,66 +234,68 @@ BEGIN
       v_ops  := v_field_row.ops;
       v_expr := v_field_row.expr;
 
-      -- Validar operador contra a lista oficial do campo.
       IF v_op IS NULL OR NOT (v_op = ANY(v_ops)) THEN
         RAISE EXCEPTION 'invalid_talkx_segment_operator' USING ERRCODE = '22023';
       END IF;
 
-      -- Validar valor obrigatorio para operadores que nao sao is_set/is_empty.
       IF v_op <> 'is_set' AND v_op <> 'is_empty'
          AND (v_value IS NULL OR btrim(v_value) = '') THEN
         RAISE EXCEPTION 'invalid_talkx_segment_rule_value' USING ERRCODE = '22023';
       END IF;
 
-      -- Construir o predicado SQL com format('%I') para identificadores e quote_literal (%L) para valores.
-      -- O v_expr vem da tabela oficial talkx_segment_fields (whitelist), portanto e seguro.
-      -- O v_value e sempre quote_literal via %L, impedindo injecao SQL.
       IF v_op = 'is_set' THEN
-        v_rule_sql := format('%I IS NOT NULL', split_part(v_expr, '.', 2));
+        v_rule_sql := format('%s IS NOT NULL', v_expr);
       ELSIF v_op = 'is_empty' THEN
         IF v_kind = 'array' THEN
-          v_rule_sql := format('(%I IS NULL OR %I = %L::text[])', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), '{}');
+          v_rule_sql := format('(%s IS NULL OR %s = %L::text[])', v_expr, v_expr, '{}');
         ELSIF v_kind = 'uuid' THEN
-          v_rule_sql := format('%I IS NULL', split_part(v_expr, '.', 2));
+          v_rule_sql := format('%s IS NULL', v_expr);
         ELSE
-          v_rule_sql := format('(%I IS NULL OR %I = %L)', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), '');
+          v_rule_sql := format('(%s IS NULL OR %s = %L)', v_expr, v_expr, '');
         END IF;
       ELSIF v_op = 'contains' THEN
         IF v_kind = 'array' THEN
-          v_rule_sql := format('%I @> ARRAY[%L]::text[]', split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('%s @> ARRAY[%L]::text[]', v_expr, v_value);
         ELSE
-          v_rule_sql := format('%I ILIKE %L', split_part(v_expr, '.', 2), '%' || v_value || '%');
+          v_rule_sql := format('%s ILIKE %L', v_expr, '%' || v_value || '%');
         END IF;
       ELSIF v_op = 'not_contains' THEN
         IF v_kind = 'array' THEN
-          v_rule_sql := format('(%I IS NULL OR NOT (%I @> ARRAY[%L]::text[]))', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('(%s IS NULL OR NOT (%s @> ARRAY[%L]::text[]))', v_expr, v_expr, v_value);
         ELSE
-          v_rule_sql := format('(%I IS NULL OR %I NOT ILIKE %L)', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), '%' || v_value || '%');
+          v_rule_sql := format('(%s IS NULL OR %s NOT ILIKE %L)', v_expr, v_expr, '%' || v_value || '%');
         END IF;
       ELSIF v_op = 'eq' THEN
         IF v_kind = 'number' THEN
-          v_rule_sql := format('%I = %L::numeric', split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('%s = %L::numeric', v_expr, v_value);
         ELSIF v_kind = 'uuid' THEN
-          v_rule_sql := format('%I = %L::uuid', split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('%s = %L::uuid', v_expr, v_value);
         ELSE
-          v_rule_sql := format('%I = %L', split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('%s = %L', v_expr, v_value);
         END IF;
       ELSIF v_op = 'neq' THEN
         IF v_kind = 'number' THEN
-          v_rule_sql := format('(%I IS NULL OR %I <> %L::numeric)', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('(%s IS NULL OR %s <> %L::numeric)', v_expr, v_expr, v_value);
         ELSIF v_kind = 'uuid' THEN
-          v_rule_sql := format('(%I IS NULL OR %I <> %L::uuid)', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('(%s IS NULL OR %s <> %L::uuid)', v_expr, v_expr, v_value);
         ELSE
-          v_rule_sql := format('(%I IS NULL OR %I <> %L)', split_part(v_expr, '.', 2), split_part(v_expr, '.', 2), v_value);
+          v_rule_sql := format('(%s IS NULL OR %s <> %L)', v_expr, v_expr, v_value);
         END IF;
       ELSIF v_op IN ('gt', 'gte', 'lt', 'lte') THEN
-        v_rule_sql := format('%I %s %L::numeric', split_part(v_expr, '.', 2),
+        v_rule_sql := format('%s %s %L::numeric', v_expr,
           CASE v_op WHEN 'gt' THEN '>' WHEN 'gte' THEN '>=' WHEN 'lt' THEN '<' ELSE '<=' END,
           v_value);
       ELSIF v_op IN ('in_last_days', 'not_in_last_days') THEN
+        -- Valida que o valor e um inteiro valido; caso contrario, rejeita com erro 22023.
+        -- Isso impede injecao SQL via valores como "30) OR 1=1 --" que seriam
+        -- interpolados diretamente no SQL com %s.
+        IF v_value !~ '^-?[0-9]+$' THEN
+          RAISE EXCEPTION 'invalid_talkx_segment_rule_value: % nao e um inteiro valido para %', v_value, v_op
+            USING ERRCODE = '22023';
+        END IF;
         v_rule_sql := format(
-          '%I %s (date_trunc(''day'', statement_timestamp() AT TIME ZONE ''America/Sao_Paulo'') - ((%L::int - 1) || '' days'')::interval AT TIME ZONE ''America/Sao_Paulo'')::timestamptz',
-          split_part(v_expr, '.', 2),
+          '%s %s (date_trunc(''day'', statement_timestamp() AT TIME ZONE ''America/Sao_Paulo'') - ((%s - 1) || '' days'')::interval AT TIME ZONE ''America/Sao_Paulo'')::timestamptz',
+          v_expr,
           CASE v_op WHEN 'in_last_days' THEN '>=' ELSE '<' END,
           v_value
         );

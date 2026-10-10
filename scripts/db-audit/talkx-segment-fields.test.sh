@@ -7,12 +7,12 @@
 # irmaos (scripts/db-audit/talkx-audience-rpc.test.sh,
 # scripts/db-audit/talkx-campaign-segments.test.sh).
 #
-# Prova, contra a MIGRATION REAL do repo (20261009202021), sobre um
+# Prova, contra as MIGRATIONS REAIS do repo (20261009202021 + 20261010032548), sobre um
 # schema minimo com as colunas que a tabela e a funcao tocam e uma
-# fixture de 19 linhas seedadas:
+# fixture de 18 linhas seedadas:
 #   (a) tabela existe com as colunas corretas (field PK, category,
 #       source, expr, kind, ops, enabled);
-#   (b) as 19 linhas seedadas estao presentes e enabled=true;
+#   (b) as 18 linhas seedadas estao presentes e enabled=true;
 #   (c) RLS esta habilitado;
 #   (d) policy SELECT permite authenticated (USING true);
 #   (e) policy ALL permite service_role (USING/WITH CHECK true);
@@ -30,7 +30,8 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-migration="$repo_root/supabase/migrations/20261009202021_talkx_segment_fields.sql"
+migration_n111="$repo_root/supabase/migrations/20261009202021_talkx_segment_fields.sql"
+migration_n112="$repo_root/supabase/migrations/20261010032548_talkx_compile_segment_rules_safe.sql"
 postgres_image="${TALKX_SEGMENT_FIELDS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-segment-fields-test-$$"
 test_password="talkx_segment_fields_test_only"
@@ -83,8 +84,9 @@ skip_migration="${TALKX_SKIP_MIGRATION:-0}"
 if [[ "$skip_migration" != "1" ]]; then
   # Cria os roles que a migration espera (anon, authenticated, service_role).
   psql_test -v ON_ERROR_STOP=1 -c "CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;" 2>/dev/null || true
-  # Aplica a migration real do repo (via pipe para dentro do container).
-  cat "$migration" | psql_test -v ON_ERROR_STOP=1 || fail 'Falha ao aplicar a migration real'
+  # Aplica as migrations reais do repo em ordem (N-111 depois N-112).
+  cat "$migration_n111" | psql_test -v ON_ERROR_STOP=1 || fail 'Falha ao aplicar a migration N-111'
+  cat "$migration_n112" | psql_test -v ON_ERROR_STOP=1 || fail 'Falha ao aplicar a migration N-112'
 fi
 
 # (a) Tabela existe com as colunas corretas.
@@ -169,12 +171,28 @@ result_injection=$(psql_q "SELECT public.talkx_compile_segment_rules('{\"groups\
 [[ "$result_injection" == *"'test'' OR 1=1 --'"* ]] || fail "o valor deveria ser escapado com quote_literal, nao causando injecao"
 pass "format('%I') e quote_literal impedem injecao SQL"
 
-# (o) in_last_days/not_in_last_days com valor malicioso nao causa injecao SQL.
-# O valor e quote_literal via %L e cast a int, impedindo injecao.
-# Um valor invalido (nao numerico) e tratado com segurança (erro de cast),
-# nao executa o SQL malicioso.
-result_injection_days=$(psql_q "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\"30\"}]}]}'::jsonb)")
-[[ "$result_injection_days" == *">="* ]] || fail "in_last_days deveria gerar um predicado com '>='"
-pass "in_last_days gera predicado valido com quote_literal"
+# (o) in_last_days/not_in_last_days com valor malicioso deve ser recusado
+# (erro de cast), nunca virar predicado SQL injetado.
+# Com %L::int, o valor "30) OR 1=1 --" e cotado como literal e depois
+# cast a int, o que falha com erro de cast (SQLSTATE 22018).
+set +e
+out_malicious="$(psql_test -v VERBOSITY=verbose -c "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\"30) OR 1=1 --\"}]}]}'::jsonb)" 2>&1)"
+status_malicious=$?
+set -e
+(( status_malicious != 0 )) || { printf '%s\n' "$out_malicious" >&2; fail "in_last_days com valor malicioso deveria falhar, mas passou"; }
+pass "in_last_days com valor malicioso e recusado (erro de cast, nao injecao SQL)"
+
+# (p) not_in_last_days com valor malicioso tambem deve ser recusado.
+set +e
+out_malicious2="$(psql_test -v VERBOSITY=verbose -c "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"not_in_last_days\",\"value\":\"30) OR 1=1 --\"}]}]}'::jsonb)" 2>&1)"
+status_malicious2=$?
+set -e
+(( status_malicious2 != 0 )) || { printf '%s\n' "$out_malicious2" >&2; fail "not_in_last_days com valor malicioso deveria falhar, mas passou"; }
+pass "not_in_last_days com valor malicioso e recusado (erro de cast, nao injecao SQL)"
+
+# (q) in_last_days com valor valido devolve predicado correto (prova que a correcao nao quebra o caso valido).
+result_valid_days=$(psql_q "SELECT public.talkx_compile_segment_rules('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"created_at\",\"op\":\"in_last_days\",\"value\":\"30\"}]}]}'::jsonb)")
+[[ "$result_valid_days" == *">="* ]] || fail "in_last_days valido deveria gerar um predicado com '>='"
+pass "in_last_days com valor valido devolve predicado correto"
 
 printf '\n=== TODOS OS TESTES PASSARAM ===\n'
