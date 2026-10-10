@@ -24,7 +24,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * `TalkXCampaignRunning.limits.test.tsx` já usa esse padrão).
  */
 
-const { state, refetchCampaigns, mockCampaign } = vi.hoisted(() => {
+const { state, refetchCampaigns, mockCampaign, rpcMock } = vi.hoisted(() => {
   const campaign = {
     id: 'c1',
     name: 'Campanha Teste',
@@ -57,16 +57,31 @@ const { state, refetchCampaigns, mockCampaign } = vi.hoisted(() => {
     business_hours_only: false,
     revision: 1,
   };
+  const st = {
+    campaignList: [campaign] as unknown[],
+    campaignsLoading: false,
+    campaignsIsError: false,
+    // Resposta por `limit(n)`: 200 = destinatários, 100 = mensagens, 50 = logs, 2000 = histórico.
+    rows: {} as Record<number, { data: unknown; error: { message: string } | null }>,
+    // Páginas da RPC talkx_campaign_recipients_page por cursor ('' = primeira página).
+    rpcPages: null as Record<string, { rows: unknown[]; next_cursor: string | null; total: number }> | null,
+  };
+  // Imita o contrato real da função: RETURNS TABLE(rows, next_cursor, total) -> array de 1 linha.
+  const rpc = vi.fn().mockImplementation((_fn: string, params: Record<string, unknown>) => {
+    if (st.rpcPages) {
+      const page = st.rpcPages[(params.p_cursor as string | undefined) ?? ''];
+      return Promise.resolve({ data: page ? [page] : [], error: null });
+    }
+    const msgRow = st.rows[100] ?? { data: [], error: null };
+    if (msgRow.data === null) return Promise.resolve({ data: null, error: msgRow.error });
+    const list = msgRow.data as unknown[];
+    return Promise.resolve({ data: [{ rows: list, next_cursor: null, total: list.length }], error: null });
+  });
   return {
     mockCampaign: campaign,
     refetchCampaigns: vi.fn(),
-    state: {
-      campaignList: [campaign] as unknown[],
-      campaignsLoading: false,
-      campaignsIsError: false,
-      // Resposta por `limit(n)`: 200 = destinatários, 100 = mensagens, 50 = logs, 2000 = histórico.
-      rows: {} as Record<number, { data: unknown; error: { message: string } | null }>,
-    },
+    rpcMock: rpc,
+    state: st,
   };
 });
 
@@ -126,7 +141,7 @@ vi.mock('@/lib/supabaseHelpers', () => {
     fromTable: () => chain(-1),
     supabase: {
       from: () => chain(-1),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+      rpc: rpcMock,
       channel: realtimeChannel,
       removeChannel: vi.fn(),
     },
@@ -187,7 +202,48 @@ describe('matriz de estados — TalkXCampaignRunning / Em andamento (X047)', () 
       100: { data: [], error: null },
       50: { data: [], error: null },
     };
+    state.rpcPages = null;
     refetchCampaigns.mockClear();
+    rpcMock.mockClear();
+  });
+
+  it('mensagens: lê a RPC paginada com os parâmetros do contrato e acumula a página seguinte pelo cursor', async () => {
+    state.rpcPages = {
+      '': { rows: [{ ...MESSAGE_ROW, id: 'a', personalized_message: 'Primeira página X155' }], next_cursor: 'cur-1', total: 2 },
+      'cur-1': { rows: [{ ...MESSAGE_ROW, id: 'b', personalized_message: 'Segunda página X155' }], next_cursor: null, total: 2 },
+    };
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Mensagens' }));
+
+    expect(await screen.findByText('Primeira página X155')).toBeTruthy();
+    const first = rpcMock.mock.calls[0];
+    expect(first[0]).toBe('talkx_campaign_recipients_page');
+    expect(first[1]).toMatchObject({ p_campaign_id: 'c1', p_page_size: 50 });
+    expect(first[1]).not.toHaveProperty('p_limit');
+
+    fireEvent.click(screen.getByRole('button', { name: /Carregar mais \(1 de 2\)/ }));
+
+    expect(await screen.findByText('Segunda página X155')).toBeTruthy();
+    // A primeira página continua na tela: a paginação acumula, não substitui.
+    expect(screen.getByText('Primeira página X155')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Carregar mais/ })).toBeNull();
+  });
+
+  it('mensagens: busca sem resultado mantém o campo de busca na tela', async () => {
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Mensagens' }));
+
+    expect(await screen.findByText('Nenhum destinatário nesta campanha.')).toBeTruthy();
+    expect(screen.getByLabelText('Buscar mensagens por nome ou telefone')).toBeTruthy();
+  });
+
+  it('resultados: mostra Lidas e Respondidas do painel da campanha', () => {
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+
+    expect(screen.getByText('Lidas')).toBeTruthy();
+    expect(screen.getByText('Respondidas')).toBeTruthy();
   });
 
   it('erro na consulta de campanhas: mostra o erro, NÃO o vazio e permite refetch', () => {

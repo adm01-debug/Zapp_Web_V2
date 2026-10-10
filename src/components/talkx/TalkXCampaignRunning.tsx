@@ -1,21 +1,22 @@
 // TalkXCampaignRunning.tsx — E77: Tela "Campanha em Andamento"
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Users, ChevronLeft, RefreshCw, Activity, Send,
+  Users, ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { IconTile, RailCard, MetaRow, StatusPill, RECIPIENT_STATUS, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -283,25 +284,41 @@ type MessageRow = {
   contacts: { name: string; phone: string } | null;
 };
 
+// A função ainda não consta nos tipos gerados (types-sync a inclui depois do apply em produção).
+type TalkXRpcClient = {
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+};
+
 function TabMessages({ campaignId }: { campaignId: string }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
-  const { data: messages, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['talkx-running-messages', campaignId],
-    queryFn: async () => {
-      const { data, error } = await fromTable('talkx_recipients')
-        .select('id, status, personalized_message, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
-        .eq('campaign_id', campaignId)
-        .order('updated_at', { ascending: false })
-        .limit(100);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
-      if (error) throw error;
-      return (data ?? []) as MessageRow[];
+  const { data, isLoading, isFetching, isError, error, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['talkx-running-messages-page', campaignId, statusFilter, search],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) => {
+      const { data: rpcData, error: rpcError } = await (supabase as unknown as TalkXRpcClient).rpc('talkx_campaign_recipients_page', {
+        p_campaign_id: campaignId,
+        p_page_size: 50,
+        p_cursor: pageParam ?? undefined,
+        p_status: statusFilter === 'all' ? undefined : statusFilter,
+        p_search: search.trim() || undefined,
+      });
+      if (rpcError) throw rpcError;
+      // A função devolve uma linha { rows, next_cursor, total }.
+      const page = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as { rows: MessageRow[]; next_cursor: string | null; total: number } | undefined;
+      return page ?? { rows: [], next_cursor: null, total: 0 };
     },
+    getNextPageParam: (last) => last.next_cursor,
     refetchInterval: 15_000,
     staleTime: 10_000,
   });
 
-  const snapshotCount = messages?.filter((message) => Boolean(message.personalized_message?.trim())).length ?? 0;
+  const pageRows = useMemo(() => data?.pages.flatMap((page) => page.rows) ?? [], [data]);
+  const total = data?.pages[0]?.total ?? 0;
+
+  const snapshotCount = pageRows.filter((message) => Boolean(message.personalized_message?.trim())).length;
   const toggleExpanded = (id: string) => {
     setExpandedIds((current) => {
       const next = new Set(current);
@@ -313,13 +330,35 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-      {/* X047: carregando -> erro -> vazio -> conteúdo (cabeçalho e lista juntos) */}
+      {/* Filtros fora do estado vazio/erro: busca sem resultado não pode esconder o campo */}
+      <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-[180px] relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            aria-label="Buscar mensagens por nome ou telefone"
+            placeholder="Buscar por nome ou telefone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-input/40 border border-border/70 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger aria-label="Filtrar mensagens por status" className="h-8 w-auto bg-input/40 border-border/70 text-xs min-w-[130px]"><SelectValue placeholder="Todos" /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(RECIPIENT_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
+        </Select>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
+          <Send className="h-3.5 w-3.5 text-primary" />
+          {`${snapshotCount} com conteúdo`}
+        </span>
+      </div>
+      {/* X047: carregando -> erro -> vazio -> conteúdo */}
       <TalkXQueryBoundary
         query={{ isLoading, isFetching, isError, error }}
         entity="mensagens"
         onRetry={() => { void refetch(); }}
         skeleton={<div className="space-y-3 p-4">{Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-24 bg-muted/40 rounded-xl animate-pulse" />)}</div>}
-        isEmpty={(messages?.length ?? 0) === 0}
+        isEmpty={pageRows.length === 0}
         empty={(
           <div className="p-8 text-center">
             <Send className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
@@ -327,18 +366,8 @@ function TabMessages({ campaignId }: { campaignId: string }) {
           </div>
         )}
       >
-        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-[13px] font-bold text-foreground">Mensagens por destinatário</p>
-            <p className="text-2xs text-foreground-secondary mt-0.5">Snapshots personalizados e imutáveis gravados antes do disparo.</p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-2xs font-semibold text-foreground-secondary">
-            <Send className="h-3.5 w-3.5 text-primary" />
-            {`${snapshotCount} com conteúdo`}
-          </span>
-        </div>
         <div className="divide-y divide-border/40">
-          {messages?.map((message) => {
+          {pageRows.map((message) => {
             const materialized = message.personalized_message?.trim() ?? '';
             const canExpand = materialized.length > 360;
             const isExpanded = expandedIds.has(message.id);
@@ -369,7 +398,11 @@ function TabMessages({ campaignId }: { campaignId: string }) {
             );
           })}
         </div>
-        {(messages?.length ?? 0) >= 100 && <p className="border-t border-border/40 p-3 text-center text-2xs text-muted-foreground">Mostrando as 100 mensagens mais recentes.</p>}
+        {hasNextPage && (
+          <div className="p-3 text-center">
+            <button type="button" disabled={isFetchingNextPage} onClick={() => { void fetchNextPage(); }} className="text-xs font-semibold text-primary hover:underline disabled:opacity-60">{`Carregar mais (${pageRows.length} de ${total})`}</button>
+          </div>
+        )}
       </TalkXQueryBoundary>
     </div>
   );
@@ -511,6 +544,8 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
     { label: 'Total de destinatários', value: fmtInt(c.total_recipients) },
     { label: 'Enviadas', value: fmtInt(c.sent_count), sub: c.total_recipients > 0 ? `${Math.round((c.sent_count / c.total_recipients) * 100)}% do total` : undefined },
     { label: 'Entregues', value: fmtInt(c.delivered_count), sub: deliveryRate !== null ? `${deliveryRate.toString().replace('.', ',')}% das enviadas` : undefined },
+    { label: 'Lidas', value: fmtInt(c.read_count ?? 0), sub: c.delivered_count > 0 ? `${Math.round(((c.read_count ?? 0) / c.delivered_count) * 100)}% das entregues` : undefined },
+    { label: 'Respondidas', value: fmtInt(c.replied_count ?? 0), sub: c.delivered_count > 0 ? `${Math.round(((c.replied_count ?? 0) / c.delivered_count) * 100)}% das entregues` : undefined },
     { label: 'Falhas', value: fmtInt(c.failed_count), sub: failRate !== null ? `${failRate.toString().replace('.', ',')}% do total processado` : undefined },
     { label: 'A confirmar', value: fmtInt(outcomeUnknown), sub: outcomeUnknown > 0 ? 'Sem reenvio automático' : undefined },
     { label: 'Pendentes', value: fmtInt(pending) },
