@@ -17,7 +17,7 @@
 #     reaplicar a migration volta a funcionar.
 #
 # O schema vem das MIGRATIONS REAIS de talkx_blacklist (falha dura se algum
-# arquivo sumir — sem `[[ -f ]] &&` silencioso). Harness sintetico existe SO
+# arquivo sumir — sem pulo condicional silencioso). Harness sintetico existe SO
 # para dependencias de outras tabelas (auth mock, papeis, stubs profiles/
 # contacts/messages com as PKs referenciadas) e para blocos canonicos que nao
 # sao aplicaveis standalone (cada um rotulado HARNESS com a fonte canonica).
@@ -39,7 +39,7 @@ F_NEW="$MIG_DIR/20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
 fail() { echo "[FAIL] $*" >&2; exit 1; }
 ok()   { echo "[OK] $*"; }
 
-# Sem pulo silencioso: cada arquivo real precisa existir.
+# Sem pulo silencioso: cada arquivo real precisa existir (falha dura).
 for f in "$F_CREATE" "$F_AUDIT" "$F_V2" "$F_UPDATE_POL" "$F_V05" "$F_V07" "$F_PHONE_AXIS" "$F_NEW"; do
   [[ -f "$f" ]] || fail "migration real ausente: $f"
 done
