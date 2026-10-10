@@ -159,7 +159,11 @@ export async function handleTalkxSend(
       // X067: limite de envios de teste — 5 por janela de 10 minutos.
       const { data: limitRow } = await supabase
         .from("talkx_settings").select("value").eq("key", "test_send_limit").maybeSingle();
-      const limit = limitRow ? parseInt(limitRow.value as string, 10) : 5;
+      // X067: valor inválido em talkx_settings (texto não numérico, zero ou
+      // negativo) não pode desligar o limite — cai no padrão 5. Antes,
+      // `count >= NaN` era sempre falso e liberava envios sem teto.
+      const configuredLimit = Number((limitRow as { value?: unknown } | null)?.value);
+      const limit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 5;
       const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { count, error: countError } = await supabase
         .from("talkx_test_sends")
@@ -238,6 +242,30 @@ export async function handleTalkxSend(
         return internalErrorResponse(claimError, req);
       }
 
+      // X067: trilha de auditoria do envio de teste. Grava sucesso E falha (a
+      // coluna `error` guarda o motivo) e CHECA o resultado do insert — antes o
+      // retorno era ignorado e uma linha recusada pelo banco sumia em silêncio.
+      const recordTestSendAudit = async (
+        status: "sent" | "failed",
+        providerMessageId: string | null,
+        errorText: string | null = null,
+      ): Promise<void> => {
+        const { error: auditError } = await supabase.from("talkx_test_sends").insert({
+          template_id: null,
+          campaign_id: null,
+          connection_id: connectionId,
+          to_phone: cleanPhone,
+          status,
+          provider_message_id: providerMessageId,
+          error: errorText,
+          created_by: actorId,
+        });
+        if (auditError) {
+          log.error("test_send_audit_failed", { correlationId, error: auditError.message });
+        }
+      };
+      let audited = false;
+
       try {
         let sendRes: Response;
         if (mediaUrl && mediaType) {
@@ -270,11 +298,15 @@ export async function handleTalkxSend(
           // Resposta DEFINITIVA de falha: o provedor não entregou — libera o claim
           // para permitir um retry deliberado (não houve efeito externo).
           await supabase.from("talkx_test_send_claims").delete().eq("request_key", requestKey);
+          await recordTestSendAudit("failed", null, `Evolution retornou ${sendRes.status}: ${errBody}`.slice(0, 500));
+          audited = true;
           return new Response(JSON.stringify({ error: `Evolution retornou ${sendRes.status}: ${errBody}` }), { status: 502, headers });
         }
         const providerResult = await sendRes.json().catch(() => null);
         const providerMessageId = extractMessageId(providerResult);
         if (!providerMessageId || providerMessageId.length > 512) {
+          await recordTestSendAudit("failed", null, "Evolution não confirmou um identificador de entrega");
+          audited = true;
           return new Response(JSON.stringify({ error: "Evolution não confirmou um identificador de entrega" }), { status: 502, headers });
         }
         // Confirma no claim: a próxima repetição devolve este id SEM novo POST.
@@ -283,15 +315,8 @@ export async function handleTalkxSend(
           .update({ provider_message_id: providerMessageId, sent_at: new Date().toISOString() })
           .eq("request_key", requestKey);
         // Auditoria do envio de teste.
-        await supabase.from("talkx_test_sends").insert({
-          template_id: null,
-          campaign_id: null,
-          connection_id: connectionId,
-          to_phone: cleanPhone,
-          status: "sent",
-          provider_message_id: providerMessageId,
-          created_by: actorId,
-        });
+        await recordTestSendAudit("sent", providerMessageId);
+        audited = true;
         return new Response(JSON.stringify({ success: true, provider_message_id: providerMessageId }), { headers });
       } catch (e) {
         // Exceção (rede/timeout): o efeito externo ficou INDETERMINADO, então o
@@ -299,6 +324,12 @@ export async function handleTalkxSend(
         // presume exactly-once externo).
         // R2-INF-016: o 500 montado a mao devolvia `e.message` cru ao chamador.
         log.error("Falha ao enviar apos o claim", { correlationId, error: e instanceof Error ? e.message : String(e) });
+        // Efeito externo INDETERMINADO (rede/timeout): registra a tentativa como
+        // falha na auditoria, mas o claim é mantido — repetir não pode virar um
+        // segundo POST sem confirmação.
+        if (!audited) {
+          await recordTestSendAudit("failed", null, `indeterminado: ${e instanceof Error ? e.message : String(e)}`.slice(0, 500));
+        }
         return internalErrorResponse(e, req);
       }
     }
