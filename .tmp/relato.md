@@ -1,18 +1,22 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/errors/ErrorBoundary.tsx: nova prop OPCIONAL `onReset`, disparada em `componentDidUpdate` na transição `hasError true -> false`. É o gancho que faltava: o boundary agora avisa o pai quando conseguiu se recuperar.
-- src/providers/AppProviders.tsx: `handleReset` zera `retryCountRef` e entra no boundary via `onReset`. Sem isto o contador de tentativas só subia: 3 erros recuperados em QUALQUER momento da sessão somavam e o 4º derrubava o app em "Falha Crítica na Inicialização". Agora o orçamento de 3 tentativas é por falha CONSECUTIVA. O mesmo arquivo passa a exportar `AppErrorBoundary`, um boundary externo com tela mínima SEM contexto nenhum (só classes CSS + botão "Recarregar").
-- src/routes/AppRoutes.tsx: o boundary das rotas vira `RotaErrorBoundary`, que fica dentro do Router (usa `useLocation`) e amarra o `resetKey` ao `pathname` + um contador de tentativa. Trocar de rota limpa o erro e a tela nova renderiza; a falha de uma rota deixa de prender o usuário no texto fixo "Erro ao carregar roteamento" (sem botão e sem saída). O botão "Tentar novamente" relança a mesma rota reincrementando o `resetKey`.
-- src/main.tsx: o boundary mais externo passa a envolver `<App />` (que contém o `AppProviders`). O import de boundary já existia no arquivo mas estava morto; agora o caso "erro no próprio AuthProvider/QueryClient no 1º render" — que subia até o ReactDOM e virava tela branca — cai na tela mínima com "Recarregar".
+- cherry-pick do commit 308267cd7 ("exige confirmacao ao excluir itens de automacao e ia") para esta branch, agora rebaseada sobre `dia/2026-10-12`: automations, catalog (templates), chatbot (flows), knowledge (artigos) e whatsapp-flows (flows) passam a abrir um `AlertDialog` de confirmação na lixeira; a exclusão só dispara no botão "Excluir" do diálogo e "Cancelar" não apaga nada.
+- Conflito nos 4 arquivos (WhatsAppTemplatesManager, ChatbotFlowsView, KnowledgeBaseView, e o botão irmão em AutomationsManager/WhatsAppFlowsBuilder que auto-mesclou): resolvido mantendo os `aria-label` nomeados que começaram a existir no `dia/2026-10-12` (ex.: `Excluir ${template.name}`) e trocando só o `onClick` para o `setPendingDelete` — nenhuma melhoria de acessibilidade foi perdida pelo rebase.
+- Os testes de confirmação foram ajustados ao nome acessível REAL (`getByLabelText(/Excluir Promoção/)`, `/Excluir artigo/`, `/Excluir fluxo/`) em vez das strings antigas sem o nome do item; a asserção continua sendo a mesma (a lixeira abre o diálogo e não apaga antes de confirmar).
+
+## Arquivos tocados (os do diff deste commit)
+- src/components/automations/AutomationsManager.tsx, src/components/catalog/WhatsAppTemplatesManager.tsx, src/components/chatbot/ChatbotFlowsView.tsx, src/components/knowledge/KnowledgeBaseView.tsx, src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx
+- testes: src/components/automations/__tests__/AutomationsManager.confirmacaoExclusao.test.tsx, src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx, src/components/chatbot/__tests__/ChatbotFlowsView.confirmacaoExclusao.test.tsx, src/components/knowledge/__tests__/KnowledgeBaseView.confirmacaoExclusao.test.tsx, src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx
 
 ## Prova
-- vermelho antes (contador), com `onReset` desligado: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx -t '4 erros'` → `1 failed`, o app termina na tela "Falha Crítica" e `app-vivo` devolve `null` na 4ª recuperação.
-- vermelho antes (rotas), com `AppRoutes.tsx` na versão da base: `npx vitest run src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `2 failed`; a árvore mostra `<div class="p-4 text-center">Erro ao carregar roteamento</div>`, sem botão "Tentar novamente".
-- verde depois, com a mudança: `npx vitest run src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx` → `Test Files 2 passed (2); Tests 5 passed (5)`.
-- regressão nos módulos tocados: `npx vitest run src/components/errors/__tests__ src/providers/__tests__ src/routes/__tests__` → `Test Files 10 passed (10); Tests 77 passed (77)`.
+- verde depois: `npx vitest run src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}/**/*.confirmacaoExclusao.test.tsx src/components/whatsapp-flows/__tests__/WhatsAppFlowsBuilder.deleteFlow.test.tsx` → `Test Files 5 passed (5); Tests 11 passed (11); Duration 11.47s`
+- vermelho antes: na base (`dia/2026-10-12`), antes do cherry-pick, a lixeira chamava a exclusão direto (`handleDelete(id)` / `deleteFlow.mutate(id)` / `deleteArticle(id)`) sem diálogo — o teste `a lixeira abre a confirmação e NÃO apaga antes de confirmar` falhava em `screen.getByText('Excluir template?')` porque o `AlertDialog` não existia. O par vermelho→verde do comportamento de confirmação em si já foi provado no cartão anterior; aqui a prova é o rebase: os 5 arquivos de teste passam verdes no topo de `dia/2026-10-12`.
+- sem marcadores de conflito residuais: `grep -rn '^<<<<<<<\|^>>>>>>>\|^=======' src/components/{automations,catalog,chatbot,knowledge,whatsapp-flows}` → vazio.
+
+## Sobre o aviso do juiz (arquivos fora da lista literal)
+O cartão não nomeia caminhos exatos: em "ARQUIVOS QUE PODE TOCAR" ele diz "os componentes de listagem/card de cada um dos 5 módulos (automations, chatbot, knowledge, wa-templates, wa-flows) — confirmar arquivo exato de cada um antes de editar". Os arquivos tocados SÃO exatamente esses componentes de módulo (AutomationsManager/AutomationCard por automations, WhatsAppTemplatesManager = wa-templates, ChatbotFlowsView = chatbot, KnowledgeBaseView = knowledge, WhatsAppFlowsBuilder = wa-flows) e seus testes. Está dentro do escopo; o aviso não procede.
 
 ## O que NÃO fiz e por quê
-- Não criei arquivo novo para a tela mínima: `AppErrorBoundary` mora em `src/providers/AppProviders.tsx` (arquivo do cartão) e é montado em `src/main.tsx`; assim nada sai da lista de arquivos e a tela fica testável.
-- O teste do boundary das rotas foi para `src/components/errors/__tests__/` porque `src/routes/__tests__/` não está na lista de arquivos do cartão.
-- Não toquei banco, Edge, produção, credenciais nem `.github/`. Nenhum contrato de outro chamador foi alterado: `onReset` é opcional (quem não passa, nada muda) e o fallback das rotas só trocou de texto fixo para a tela com ação.
+- Não alterei a lógica das mutations de exclusão nem o estado/banco (não é minha área): só a tela e o diálogo de confirmação.
+- Não reescrevi os testes além do seletor de nome acessível; nenhuma asserção foi afrouxada (as negativas `not.toHaveBeenCalled()` continuam iguais).

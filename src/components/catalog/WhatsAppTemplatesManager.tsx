@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit2, Trash2, Copy, Eye, Search, FileText, Send, CheckCircle2, Clock, XCircle, Loader2, Variable } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -31,6 +33,10 @@ export function WhatsAppTemplatesManager() {
 
   // CT-70 — com "reduzir movimento" ligado, as linhas aparecem sem fade.
   const prefersReducedMotion = useReducedMotion();
+
+  // Exclusão de template é irreversível: o clique abre a confirmação e só o
+  // "Excluir" do diálogo chama `handleDelete` (cancelar não apaga nada).
+  const [pendingDelete, setPendingDelete] = useState<WhatsAppTemplate | null>(null);
 
   return (
     <div className="space-y-4 md:space-y-6 w-full min-w-0">
@@ -112,7 +118,7 @@ export function WhatsAppTemplatesManager() {
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => handleDelete(template.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </motion.tr>
@@ -216,6 +222,25 @@ export function WhatsAppTemplatesManager() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? <>O template <span className="font-semibold text-foreground">&quot;{pendingDelete.name}&quot;</span> será removido. </> : null}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) handleDelete(pendingDelete.id); setPendingDelete(null); }}
+            >Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

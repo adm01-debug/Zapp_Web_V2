@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Bot, Plus, Edit2, Trash2, Play, Pause, Copy, Zap, MessageSquare,
   GitBranch, Clock, ArrowRight, Loader2, Settings, BarChart3,
@@ -44,6 +45,9 @@ export function ChatbotFlowsView() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingFlow, setEditingFlow] = useState<ChatbotFlow | null>(null);
   const [search, setSearch] = useState('');
+  // Exclusão de fluxo é irreversível: o clique abre a confirmação e só o
+  // "Excluir" do diálogo dispara a mutation (cancelar não apaga nada).
+  const [pendingDelete, setPendingDelete] = useState<ChatbotFlow | null>(null);
 
   type TriggerType = 'keyword' | 'first_message' | 'menu' | 'webhook' | 'schedule';
   const [form, setForm] = useState({
@@ -252,7 +256,7 @@ export function ChatbotFlowsView() {
                             </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
                               aria-label={`Excluir fluxo ${flow.name}`}
-                              onClick={() => deleteFlow.mutate(flow.id)}>
+                              onClick={() => setPendingDelete(flow)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -329,6 +333,25 @@ export function ChatbotFlowsView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir fluxo de chatbot?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? <>O fluxo <span className="font-semibold text-foreground">&quot;{pendingDelete.name}&quot;</span> será removido. </> : null}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) deleteFlow.mutate(pendingDelete.id); setPendingDelete(null); }}
+            >Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

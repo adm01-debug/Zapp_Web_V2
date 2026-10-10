@@ -5,6 +5,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
  * R2-API-053 (#226) — `deleteFlow` descartava o resultado do DELETE e anunciava
  * "Flow removido" mesmo com `error` do PostgREST. O teste prova o contrato da tela:
  * erro vira toast destrutivo (sem mensagem de sucesso) e o sucesso continua igual.
+ *
+ * Exclusão com confirmação: a lixeira NÃO apaga direto — abre o AlertDialog e só
+ * o botão "Excluir" do diálogo dispara o DELETE; "Cancelar" não apaga nada.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -56,6 +59,7 @@ describe('WhatsAppFlowsBuilder.deleteFlow — confirma só depois da persistênc
 
     const botao = await screen.findByLabelText('Excluir flow');
     fireEvent.click(botao);
+    fireEvent.click(await screen.findByRole('button', { name: 'Excluir' }));
 
     await waitFor(() => expect(mocks.deleteEq).toHaveBeenCalledWith('id', 'flow-1'));
     await waitFor(() =>
@@ -69,10 +73,25 @@ describe('WhatsAppFlowsBuilder.deleteFlow — confirma só depois da persistênc
 
     const botao = await screen.findByLabelText('Excluir flow');
     fireEvent.click(botao);
+    fireEvent.click(await screen.findByRole('button', { name: 'Excluir' }));
 
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Flow removido' }))
     );
     expect(mocks.toast).not.toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+  });
+
+  it('a lixeira abre a confirmação e NÃO apaga antes de confirmar; cancelar mantém o flow', async () => {
+    render(<WhatsAppFlowsBuilder />);
+
+    fireEvent.click(await screen.findByLabelText('Excluir flow'));
+    // Diálogo aberto: o DELETE ainda não foi disparado.
+    expect(mocks.deleteEq).not.toHaveBeenCalled();
+    expect(await screen.findByText('Excluir flow?')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(mocks.deleteEq).not.toHaveBeenCalled();
+    expect(mocks.toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Flow removido' }));
   });
 });
