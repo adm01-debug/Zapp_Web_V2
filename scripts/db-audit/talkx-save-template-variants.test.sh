@@ -173,9 +173,9 @@ SQL
 # O RED e implicito: se a migration falhou, o teste ja teria parado.
 
 # ---- aplicar a migration da funcao ----
-[[ -f "$repo_root/supabase/migrations/20261010074955_save_talkx_template_variants.sql" ]] \
-  || fail "migration ausente: $repo_root/supabase/migrations/20261010074955_save_talkx_template_variants.sql"
-psql_test < "$repo_root/supabase/migrations/20261010074955_save_talkx_template_variants.sql" >/dev/null \
+[[ -f "$repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql" ]] \
+  || fail "migration ausente: $repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql"
+psql_test < "$repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql" >/dev/null \
   || fail 'GREEN: a migration save_talkx_template_variants falhou ao aplicar'
 
 # ---- GREEN: provas ----
