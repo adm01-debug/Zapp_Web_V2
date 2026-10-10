@@ -31,12 +31,19 @@ interface ClientOpts {
   connections?: Array<{ id: string; status: string | null }>;
   /** #121A: linha(s) de `talkx_settings` — `business_hours` chega como JSONB (objeto). */
   settings?: Array<{ key: string; value: unknown }>;
+  /** N-119: linha de AB devolvida por `.eq("id", ...).single()` em talkx_campaigns. */
+  ab?: CampaignRow;
+  /** N-119: retorno (ou erro) do RPC talkx_determine_winner. */
+  rpcWinner?: string | null;
+  rpcError?: string;
 }
 
 interface ClientCtx {
   dueQueries: number;
   pausedQueries: number;
   events: Array<Record<string, unknown>>;
+  rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
+  updates: Array<Record<string, unknown>>;
 }
 
 /**
@@ -45,10 +52,11 @@ interface ClientCtx {
  * (thenable), sem tocar banco nenhum.
  */
 function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
-  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [] };
+  const ctx: ClientCtx = { dueQueries: 0, pausedQueries: 0, events: [], rpcCalls: [], updates: [] };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function from(table: string): any {
     let status: string | null = null;
+    let byId = false;
     const resolveRows = () => {
       if (table === "talkx_campaigns") {
         if (status === "scheduled") {
@@ -74,6 +82,15 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.in = chain; b.limit = chain; b.order = chain;
     b.eq = (col: string, val: unknown) => {
       if (col === "status") status = String(val);
+      if (col === "id") byId = true;
+      return b;
+    };
+    b.single = () => Promise.resolve({
+      data: table === "talkx_campaigns" && byId ? (opts.ab ?? null) : null,
+      error: null,
+    });
+    b.update = (row: Record<string, unknown>) => {
+      ctx.updates.push(row);
       return b;
     };
     b.insert = (row: Record<string, unknown>) => {
@@ -85,7 +102,16 @@ function makeClient(opts: ClientOpts): { client: unknown; ctx: ClientCtx } {
     b.catch = (rej: (e: unknown) => unknown) => Promise.resolve(resolveRows()).catch(rej);
     return b;
   }
-  return { client: { rpc: () => Promise.resolve({ data: null, error: null }), from }, ctx };
+  const rpc = (fn: string, args: Record<string, unknown>) => {
+    ctx.rpcCalls.push({ fn, args });
+    if (fn === "talkx_determine_winner") {
+      return Promise.resolve(
+        opts.rpcError ? { data: null, error: { message: opts.rpcError } } : { data: opts.rpcWinner ?? null, error: null },
+      );
+    }
+    return Promise.resolve({ data: null, error: null });
+  };
+  return { client: { rpc, from }, ctx };
 }
 
 interface FetchOpts {
@@ -397,4 +423,48 @@ Deno.test("R2-INF-016: falha ao ler as campanhas agendadas → 500 sanitizado (s
   } finally {
     console.error = originalError;
   }
+});
+
+// --------------------------------------------------------------------------- N-119 (AB)
+
+const AB_ROW = { id: "c-ab", ab_enabled: true, ab_metric: "reply_rate", ab_min_sample: 30, ab_winner_variant_id: null };
+
+async function runAb(opts: ClientOpts): Promise<ClientCtx> {
+  const { client, ctx } = makeClient({ due: [dueRow("c-ab")], ...opts });
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, fetch: makeFetch().impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  return ctx;
+}
+
+Deno.test("N-119: AB habilitado → chama talkx_determine_winner com p_campaign_id e p_min_sample da campanha", async () => {
+  const ctx = await runAb({ ab: AB_ROW, rpcWinner: "variant-b" });
+  const call = ctx.rpcCalls.find((c) => c.fn === "talkx_determine_winner");
+  assert(call, "o RPC talkx_determine_winner nao foi chamado");
+  assert(call.args.p_campaign_id === "c-ab", `p_campaign_id errado: ${JSON.stringify(call.args)}`);
+  assert(call.args.p_min_sample === 30, `p_min_sample deve vir de ab_min_sample: ${JSON.stringify(call.args)}`);
+});
+
+Deno.test("N-119: vencedor retornado é gravado com autor e data", async () => {
+  const ctx = await runAb({ ab: AB_ROW, rpcWinner: "variant-b" });
+  const upd = ctx.updates.find((u) => u.ab_winner_variant_id === "variant-b");
+  assert(upd, `update do vencedor ausente: ${JSON.stringify(ctx.updates)}`);
+  assert(upd.ab_winner_decided_by === "talkx-scheduler", "autor da decisao deve ser talkx-scheduler");
+  assert(typeof upd.ab_winner_decided_at === "string", "ab_winner_decided_at deve ser gravado");
+});
+
+Deno.test("N-119: sem vencedor ou vencedor já gravado → nada é atualizado", async () => {
+  const semAmostra = await runAb({ ab: AB_ROW, rpcWinner: null });
+  assert(semAmostra.updates.length === 0, "sem vencedor nao pode gravar nada");
+  const jaGravado = await runAb({ ab: { ...AB_ROW, ab_winner_variant_id: "variant-b" }, rpcWinner: "variant-b" });
+  assert(jaGravado.updates.length === 0, "mesmo vencedor ja gravado nao pode regravar");
+});
+
+Deno.test("N-119: AB desabilitado ou erro no RPC → não grava e não derruba o tick", async () => {
+  const off = await runAb({ ab: { ...AB_ROW, ab_enabled: false }, rpcWinner: "variant-b" });
+  assert(!off.rpcCalls.some((c) => c.fn === "talkx_determine_winner"), "AB desligado nao deve chamar o RPC");
+  const erro = await runAb({ ab: AB_ROW, rpcError: "boom" });
+  assert(erro.updates.length === 0, "erro no RPC nao pode gravar vencedor");
 });

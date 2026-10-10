@@ -70,6 +70,15 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
+  // V27 — A/B testing: habilita teste de variante, métrica de sucesso,
+  // amostra mínima e registro do vencedor (colunas adicionadas pela
+  // migration 20261010_talkx_campaigns_ab_testing).
+  ab_enabled?: boolean;
+  ab_metric?: 'reply_rate' | 'click_rate' | 'delivery_rate' | null;
+  ab_min_sample?: number | null;
+  ab_winner_variant_id?: string | null;
+  ab_winner_decided_at?: string | null;
+  ab_winner_decided_by?: string | null;
 }
 
 export interface TalkXRecipient {
