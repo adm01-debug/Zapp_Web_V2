@@ -3,7 +3,90 @@ import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
-Deno.serve(async (req) => {
+/**
+ * Superfície mínima do client autenticado (supabase-js) usada por
+ * `searchEmailThreads`. Duck-typed de propósito: o teste unitário injeta um
+ * fake que emula a RLS real que o `authedClient` (anon key + JWT do caller)
+ * aplica nas tabelas de e-mail.
+ */
+export interface EmailSearchQueryBuilder {
+  select(columns: string): EmailSearchQueryBuilder;
+  or(filter: string): EmailSearchQueryBuilder;
+  order(column: string, options?: { ascending?: boolean }): EmailSearchQueryBuilder;
+  limit(count: number): PromiseLike<{ data: unknown; error: unknown }>;
+}
+
+export interface EmailSearchDb {
+  from(table: string): EmailSearchQueryBuilder;
+}
+
+export interface EmailThreadSummary {
+  id: string;
+  subject: string;
+  snippet: string;
+  is_unread: boolean;
+  last_message_at: string;
+  contact_id: string | null;
+}
+
+/**
+ * Mesma sanitização de `search_contacts`: remove curingas do PostgREST (% _ \)
+ * e apara espaços, para que o termo do usuário não quebre/escale o filtro.
+ */
+export function sanitizeEmailSearchTerm(value: unknown): string {
+  return String(value ?? '').replace(/[%_\\]/g, '').trim();
+}
+
+/**
+ * Ação `search_emails` (Voz/Co-piloto): busca threads por contato (nome/e-mail)
+ * e/ou por texto do assunto. Parte SEMPRE do `authedClient` — as RLS de
+ * `email_threads`/`email_messages`/`contacts` (mig 20260403105341) filtram por
+ * `auth.uid()`, então um contato/conta alheia nunca aparece. O client
+ * service_role NÃO é usado aqui. Sem termo útil, devolve [] e não consulta.
+ */
+export async function searchEmailThreads(
+  authedClient: EmailSearchDb,
+  params: { query?: unknown; subjectQuery?: unknown; contactQuery?: unknown },
+): Promise<EmailThreadSummary[]> {
+  const subjectTerm = sanitizeEmailSearchTerm(params.subjectQuery ?? params.query);
+  const contactTerm = sanitizeEmailSearchTerm(params.contactQuery);
+  if (!subjectTerm && !contactTerm) return [];
+
+  const orParts: string[] = [];
+  if (subjectTerm) {
+    const q = escapeOrFilterValue(`%${subjectTerm}%`);
+    orParts.push(`subject.ilike.${q}`, `snippet.ilike.${q}`);
+  }
+
+  if (contactTerm) {
+    const cq = escapeOrFilterValue(`%${contactTerm}%`);
+    const { data, error } = await authedClient
+      .from('contacts')
+      .select('id')
+      .or(`name.ilike.${cq},email.ilike.${cq}`)
+      .limit(25);
+    if (error) throw error;
+    const rows = (data ?? []) as Array<{ id: string }>;
+    const ids = rows.map((row) => row.id);
+    if (ids.length === 0) {
+      // Nenhum contato visível casou. Só segue se houver termo de assunto.
+      if (!subjectTerm) return [];
+    } else {
+      orParts.push(`contact_id.in.(${ids.join(',')})`);
+    }
+  }
+
+  const { data, error } = await authedClient
+    .from('email_threads')
+    .select('id, subject, snippet, is_unread, last_message_at, contact_id')
+    .or(orParts.join(','))
+    .order('last_message_at', { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data ?? []) as EmailThreadSummary[];
+}
+
+export async function handleVoiceCopilotActionRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   const authCheck = await requireAuth(req);
@@ -45,6 +128,12 @@ Deno.serve(async (req) => {
           .limit(5);
         if (error) throw error;
         result = data;
+        break;
+      }
+
+      case 'search_emails': {
+        // Leitura via authedClient (RLS): nunca service_role.
+        result = await searchEmailThreads(authedClient as unknown as EmailSearchDb, params);
         break;
       }
 
@@ -235,4 +324,6 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) Deno.serve(handleVoiceCopilotActionRequest);
