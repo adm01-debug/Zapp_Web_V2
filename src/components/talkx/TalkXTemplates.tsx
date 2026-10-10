@@ -1,19 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
-  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight,
+  Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
+import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
 import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
+import { KpiCard } from './kit/kpi';
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -21,6 +22,8 @@ interface Props {
   startNew?: boolean;
   /** Chamado quando esse editor é fechado (inclusive ao salvar), para o topo limpar o pedido. */
   onStartNewHandled?: () => void;
+  /** X091 — repassado ao editor: clique do widget "Em andamento" abre o monitor. */
+  onOpenMonitor?: (campaignId: string) => void;
 }
 
 const MEDIA_ICONS = { image: Image, video: Video, document: FileText, audio: Music } as const;
@@ -61,8 +64,22 @@ function resumoVariaveis(content: string): string | null {
   return `${variaveis.length} ${rotulo}: ${inicio}${variaveis.length > 2 ? ', …' : ''}`;
 }
 
-export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: Props) {
+export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onOpenMonitor }: Props) {
   const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate } = useTalkXTemplates();
+  // X091 — os 4 KPIs da tela 04 saem da RPC de métricas da biblioteca (X086),
+  // não de contagem no navegador: total, aprovações do período (com variação),
+  // mais usado por mensagens enviadas e taxa média de resposta. Sem resposta da
+  // RPC o valor vai nulo e o card do kit mostra "Sem dados ainda".
+  const { stats: libStats } = useTalkXTemplateLibraryStats(30, 3);
+  const avgReplyDelta = pointsDelta(
+    libStats?.avg_reply_rate_pct,
+    libStats?.avg_reply_rate_previous_pct,
+    libStats?.reply_base_current,
+    libStats?.reply_base_previous,
+  );
+  const avgReplyComparison = avgReplyDelta == null
+    ? undefined
+    : { previous: libStats?.avg_reply_rate_previous_pct ?? null, kind: 'points' as const };
   const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -104,13 +121,6 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
   const most = useMemo(() => [...templates].sort((a, b) => b.use_count - a.use_count).slice(0, 3), [templates]);
 
-  const totals = useMemo(() => ({
-    total: templates.length,
-    approved: templates.filter((t) => t.status === 'approved').length,
-    withMedia: templates.filter((t) => t.media_url).length,
-    bestRate: most[0]?.name,
-  }), [templates, most]);
-
   const limparFiltros = () => { clearFilters(); setPage(1); };
 
   if (viewMode === 'edit') {
@@ -121,6 +131,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
         isLoading={isLoading}
         editing={startNew ? null : editing}
         onClose={() => { setMode('list'); onStartNewHandled?.(); }}
+        onOpenMonitor={onOpenMonitor}
       />
     );
   }
@@ -129,10 +140,10 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <DashboardKpiCard size="hero" index={0} label="Total de templates" value={String(totals.total)} delta={null} tile="blue" icon={FileText} bars={null} barsColor="blue" chart="none" />
-          <DashboardKpiCard size="hero" index={1} label="Aprovados" value={String(totals.approved)} delta={totals.total > 0 ? { pct: Math.round((totals.approved / totals.total) * 100), label: 'do total' } : null} tile="green" icon={Check} bars={null} barsColor="green" chart="none" />
-          <DashboardKpiCard size="hero" index={2} label="Mais usado" value={totals.bestRate ? most[0].use_count.toString() : '—'} delta={totals.bestRate ? { text: totals.bestRate, tone: 'success' } : null} tile="amber" icon={Star} bars={null} barsColor="amber" chart="none" />
-          <DashboardKpiCard size="hero" index={3} label="Templates com mídia" value={String(totals.withMedia)} delta={null} tile="violet" icon={Image} bars={null} barsColor="violet" chart="none" />
+          <KpiCard icon={FileText} color="blue" index={0} label="Total de templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} hint="Templates criados (série do período)" />
+          <KpiCard icon={Check} color="green" index={1} label="Aprovados" value={libStats?.approved_period ?? null} bars={libStats?.approved_series ?? null} comparison={{ previous: libStats?.approved_previous_period ?? null, kind: 'relative' }} hint="Aprovações no período vs. o período anterior" />
+          <KpiCard icon={Star} color="amber" index={2} label="Mais usados" value={libStats?.most_used?.name ?? null} bars={libStats?.most_used?.series ?? null} hint={libStats?.most_used?.messages != null ? `${fmtInt(libStats.most_used.messages)} mensagens enviadas` : 'Template com mais mensagens enviadas'} />
+          <KpiCard icon={BarChart3} color="violet" index={3} label="Taxa média de resposta" value={libStats?.avg_reply_rate_pct ?? null} suffix="%" comparison={avgReplyComparison} hint="Respostas ÷ enviados no período; a variação é em pontos percentuais" />
         </div>
 
         <FilterBarV2

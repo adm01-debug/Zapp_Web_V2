@@ -14,6 +14,14 @@ export type KpiComparisonKind = 'relative' | 'points';
 export interface KpiComparison {
   /** Valor do período anterior. Sem ele (ou <= 0) não há variação. */
   previous?: number | null;
+  /**
+   * Valor do período atual usado no cálculo da variação.
+   * Quando o campo não é passado (`undefined`), o cálculo usa o `value` exibido.
+   * Quando vem `null` explícito, não há variação.
+   * Use quando a grandeza comparada difere do número mostrado no card — ex.: "Total de
+   * Templates" exibe o total acumulado, mas compara criados no mês atual vs. o anterior.
+   */
+  current?: number | null;
   /** 'relative' = % de variação; 'points' = diferença em pontos percentuais. */
   kind: KpiComparisonKind;
   /** Base mínima para exibir a variação (evita ruído em bases pequenas). */
@@ -34,8 +42,10 @@ interface KpiCardProps {
   /** Variação vs. período anterior — o card decide sozinho se mostra. */
   comparison?: KpiComparison;
   visual?: KpiVisual;
-  bars?: number[];
+  bars?: number[] | null;
   hint?: string;
+  /** Sufixo fixo do valor numérico (ex.: '%'). Não muda a variação. */
+  suffix?: string;
   index?: number;
   compact?: boolean;
 }
@@ -56,15 +66,17 @@ function computeVariation(
   value: number | string | null | undefined,
   comparison?: KpiComparison,
 ): Variation | null {
-  if (!comparison || typeof value !== 'number') return null;
+  if (!comparison) return null;
+  const cur = comparison.current !== undefined ? comparison.current : value;
+  if (typeof cur !== 'number') return null;
   const prev = comparison.previous;
   if (prev == null || prev <= 0) return null;
   const base = comparison.baseValue ?? prev;
   if (base < (comparison.minBase ?? 0)) return null;
 
   const raw = comparison.kind === 'points'
-    ? value - prev
-    : ((value - prev) / base) * 100;
+    ? cur - prev
+    : ((cur - prev) / base) * 100;
   const up = raw >= 0;
   const good = comparison.goodWhen === 'down' ? !up : up;
   const magnitude = comparison.kind === 'points'
@@ -99,7 +111,7 @@ function Ring({ value }: { value: number }) {
 }
 
 export function KpiCard({
-  icon, color = 'blue', label, value, comparison, visual, bars, hint, index = 0, compact = false,
+  icon, color = 'blue', label, value, comparison, visual, bars, hint, suffix, index = 0, compact = false,
 }: KpiCardProps) {
   const reduceMotion = useReducedMotion() ?? false;
 
@@ -108,7 +120,7 @@ export function KpiCard({
   }
 
   const variation = computeVariation(value, comparison);
-  const display = typeof value === 'number' ? value.toLocaleString('pt-BR') : value;
+  const display = typeof value === 'number' ? `${value.toLocaleString('pt-BR')}${suffix ?? ''}` : value;
   const barData = bars && bars.length >= 2 ? bars : null;
   const showBars = !!barData && visual !== 'ring' && visual !== 'none';
   const showRing = visual === 'ring' && typeof value === 'number';

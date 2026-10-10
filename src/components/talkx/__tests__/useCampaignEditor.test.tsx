@@ -29,6 +29,8 @@ const f = vi.hoisted(() => ({
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
+    // X091 — o editor de template lê as campanhas para o widget "Em andamento".
+    campaigns: [],
     createCampaign: { mutateAsync: f.create },
     updateCampaign: { mutateAsync: f.update },
     saveDraftCampaign: {
