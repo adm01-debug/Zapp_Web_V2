@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 
 /**
  * X138: o mock 10 escreve mês e dias da semana em português com inicial
- * maiúscula ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex Sáb"); o locale do
+ * maiúscula ("Novembro de 2026", "Dom Seg Ter Qua Qui Sex Sab"); o locale do
  * date-fns devolve "novembro 2026" e "dom".
  */
 const comInicialMaiuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);

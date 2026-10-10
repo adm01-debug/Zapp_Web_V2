@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
@@ -40,6 +40,14 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
+
+// O gatilho do Select (Radix) chama `hasPointerCapture` no pointerdown que o abre
+// (o jsdom não implementa captura de ponteiro).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+});
 
 const BASE_CAMPAIGN = {
   id: 'camp-agendada-x138',
@@ -95,6 +103,16 @@ function milestone(key: string): HTMLElement {
   const el = document.querySelector(`[data-talkx-milestone="${key}"]`) as HTMLElement | null;
   if (!el) throw new Error(`marco ${key} ausente na linha do tempo`);
   return el;
+}
+
+/** Troca o fuso no Select do Radix pelo evento do usuário (sem salvar). */
+function escolherFuso(opcao: string) {
+  const trigger = screen
+    .getAllByRole('combobox')
+    .find((c) => /São Paulo|Sao Paulo/.test(c.textContent ?? ''));
+  if (!trigger) throw new Error('select de fuso ausente');
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'mouse' });
+  fireEvent.click(screen.getByRole('option', { name: opcao }));
 }
 
 describe('X138 — calendário em português e resumo em linha do tempo (tela 10)', () => {
@@ -156,6 +174,25 @@ describe('X138 — calendário em português e resumo em linha do tempo (tela 10
     fireEvent.change(timeInput, { target: { value: '14:45' } });
 
     expect(milestone('start').textContent).toContain('20/10/2026 • 14:45');
+    expect(milestone('start').textContent).toContain('alteração não salva');
+  });
+
+  it('A11: trocar o fuso sem salvar não desloca o marco em relação ao editor', () => {
+    render(view());
+
+    const timeInput = () => (document.getElementById('talkx-schedule-time') as HTMLInputElement).value;
+    // gravado: 20/10 09:00 em São Paulo
+    expect(milestone('start').textContent).toContain(`• ${timeInput()}`);
+
+    escolherFuso('America/Manaus');
+    // o editor preserva o instante (09:00 SP = 08:00 Manaus) e o marco acompanha o editor
+    expect(timeInput()).toBe('08:00');
+    expect(milestone('start').textContent).toContain('• 08:00');
+    expect(milestone('start').textContent).toContain('20/10/2026');
+
+    // editando a hora, o marco segue o estado em edição — não o scheduled_at salvo
+    fireEvent.change(document.getElementById('talkx-schedule-time'), { target: { value: '09:15' } });
+    expect(milestone('start').textContent).toContain('• 09:15');
     expect(milestone('start').textContent).toContain('alteração não salva');
   });
 
