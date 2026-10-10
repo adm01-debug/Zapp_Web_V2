@@ -1014,6 +1014,7 @@ Deno.test("IA-047 test action: repetir o mesmo idempotencyKey faz UM único POST
   try {
     const body = {
       action: "test",
+      connectionId: "conn-1",
       templateContent: "Ola {{nome}}, tudo bem?",
       phone: "+551****0007",
       idempotencyKey: "teste-clique-1",
@@ -1042,7 +1043,7 @@ Deno.test("IA-047 test action: sem idempotencyKey, o mesmo pedido deriva a MESMA
   const provider = mockProviderRecording();
   const deps = makeIdempotentTestDeps(makeConnection());
   try {
-    const body = { action: "test", templateContent: "Ola {{nome}}", phone: "+551****0008" };
+    const body = { action: "test", connectionId: "conn-1", templateContent: "Ola {{nome}}", phone: "+551****0008" };
     await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
     await handleTalkxSend(makePost({ bearer: TEST_SERVICE_KEY, body }), deps);
 
@@ -1351,6 +1352,7 @@ Deno.test('X062 action=test: documento vai com a URL ASSINADA e o nome do arquiv
       bearer: TEST_SERVICE_KEY,
       body: {
         action: 'test',
+        connectionId: 'conn-1',
         templateContent: 'Segue o contrato, {{nome}}',
         phone: '+5511999990099',
         mediaUrl: 'talkx-media/campanhas/contrato.pdf',
@@ -1382,6 +1384,7 @@ Deno.test('X062 action=test: falha ao assinar a mídia → 502 e NENHUM POST ao 
       bearer: TEST_SERVICE_KEY,
       body: {
         action: 'test',
+        connectionId: 'conn-1',
         templateContent: 'Segue o contrato, {{nome}}',
         phone: '+5511999990098',
         mediaUrl: 'talkx-media/campanhas/contrato.pdf',
