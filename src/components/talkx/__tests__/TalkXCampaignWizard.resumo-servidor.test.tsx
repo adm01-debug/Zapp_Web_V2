@@ -107,7 +107,7 @@ describe('WizardRail — resumo da campanha calculado no servidor (X131)', () =>
         campaign={{
           audience_source: 'contacts',
           audience_filters: { groups: [{ id: 'g1', match: 'and', rules: [{ field: 'tags', op: 'contains', value: 'test' }] }] },
-        } as TalkXCampaign}
+        } as unknown as TalkXCampaign}
         onClose={vi.fn()}
       />,
       { wrapper },
@@ -132,7 +132,7 @@ describe('WizardRail — resumo da campanha calculado no servidor (X131)', () =>
         campaign={{
           audience_source: 'contacts',
           audience_filters: { groups: [{ id: 'g1', match: 'and', rules: [{ field: 'tags', op: 'contains', value: 'test' }] }] },
-        } as TalkXCampaign}
+        } as unknown as TalkXCampaign}
         onClose={vi.fn()}
       />,
       { wrapper },
