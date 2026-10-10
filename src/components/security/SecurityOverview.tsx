@@ -209,7 +209,7 @@ export function SecurityOverview() {
           <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold mb-1">Pontuação de Segurança</h3>
+                <h2 className="text-lg font-semibold mb-1">Pontuação de Segurança</h2>
                 <p className="text-sm text-muted-foreground">
                   {totalScore === null
                     ? 'Só entra na conta o que esta tela consegue medir'

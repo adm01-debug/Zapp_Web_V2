@@ -100,7 +100,7 @@ export function SecurityNotificationsPanel() {
               )}
             </div>
             <div>
-              <h4 className="font-medium">Status das Notificações</h4>
+              <h4 id="security-notif-status-title" className="font-medium">Status das Notificações</h4>
               <div className="flex items-center gap-2 mt-1">
                 <Badge 
                   variant="outline" 
@@ -127,6 +127,7 @@ export function SecurityNotificationsPanel() {
             checked={isSubscribed}
             onCheckedChange={handleToggle}
             disabled={isLoading || permission === 'denied'}
+            aria-labelledby="security-notif-status-title"
           />
         </div>
 
