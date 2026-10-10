@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
   AlertDialogFooter, AlertDialogAction, AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 import { MultiplixOverLimitError } from '@/hooks/integrations/useMultiplixAudience';
 import { useCreateMultiplixDispatch } from '@/hooks/integrations/useMultiplixDispatches';
 
@@ -18,6 +19,28 @@ const PLACEHOLDER_CHIPS = [
   { token: '{{empresa}}', label: 'Empresa' },
   { token: '{{saudacao}}', label: 'Saudação' },
 ];
+
+// F76 (TL-008): o teto do servidor é capabilities().max_chars — hoje
+// 65.536 caracteres. O contador exibe o progresso contra esse teto e
+// bloqueia o envio quando o texto o excede.
+const LIMITE_TEXTO = 65_536;
+
+/** Autosize: altura máxima do bloco de texto antes de rolar. */
+const ALTURA_MAX_TEXTO = 320;
+
+const VARIAVEIS_CONHECIDAS = new Set(PLACEHOLDER_CHIPS.map((chip) => chip.token.slice(2, -2)));
+
+function chavesDeVariaveis(texto: string): string[] {
+  const encontradas = new Set<string>();
+  let idx = texto.indexOf('{{');
+  while (idx !== -1) {
+    const fim = texto.indexOf('}}', idx + 2);
+    if (fim === -1) break;
+    encontradas.add(texto.slice(idx + 2, fim));
+    idx = texto.indexOf('{{', fim + 2);
+  }
+  return [...encontradas];
+}
 
 interface MultiplixComposerDialogProps {
   open: boolean;
@@ -34,6 +57,23 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
   const createDispatch = useCreateMultiplixDispatch();
 
   const busy = createDispatch.isPending;
+
+  // F76 (TL-008): ref para o textarea do bloco de texto — usado pelo
+  // autosize (useLayoutEffect) e pela inserção no cursor.
+  const blocoTextoRef = useRef<HTMLTextAreaElement>(null);
+
+  // F76 (TL-008): o contador exibe o progresso contra o teto do
+  // servidor (capabilities().max_chars). Acima do limite o envio
+  // fica bloqueado e o aviso fica visível.
+  const excedeLimiteTexto = messageTemplate.length > LIMITE_TEXTO;
+
+  // F76 (TL-008): variáveis desconhecidas são aquelas que não estão
+  // no conjunto de chips de placeholder conhecidos. Aparecem como
+  // aviso vermelho no bloco de texto.
+  const variaveisDesconhecidas = useMemo(
+    () => chavesDeVariaveis(messageTemplate).filter((chave) => !VARIAVEIS_CONHECIDAS.has(chave)),
+    [messageTemplate],
+  );
 
   // F78 (TL-010): a conta do disparo tem de ficar SEMPRE visivel —
   // "N contatos x M blocos = N x M mensagens". N e a selecao da tela (cada
@@ -76,6 +116,7 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
     // O bloco de texto continua obrigatorio (unico bloco que existe) e o titulo
     // efetivo nunca e vazio — o contrato do composer nao afrouxou.
     if (!messageTemplate.trim() || !tituloEfetivo || selectedCompanyIds.length === 0) return;
+    if (excedeLimiteTexto) return;
     try {
       const result = await createDispatch.mutateAsync({
         name: tituloEfetivo,
@@ -103,7 +144,34 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
     }
   };
 
-  const insertPlaceholder = (token: string) => setMessageTemplate((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${token}`);
+  // F76 (TL-008): insere a variável na posição atual do cursor,
+  // sem espaço separador — "{{empresa}}{{saudacao}}", não "{{empresa}} {{saudacao}}".
+  const inserirNoCursor = (token: string) => {
+    const el = blocoTextoRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const before = messageTemplate.slice(0, start);
+    const after = messageTemplate.slice(end);
+    const inserted = before + token + after;
+    setMessageTemplate(inserted);
+    requestAnimationFrame(() => {
+      el.selectionStart = el.selectionEnd = start + token.length;
+      el.focus();
+    });
+  };
+
+  // F76 (TL-008): autosize — acompanha o conteúdo até ALTURA_MAX_TEXTO
+  // e depois rola.
+  const ajustarAlturaDoTexto = (el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, ALTURA_MAX_TEXTO)}px`;
+  };
+
+  useLayoutEffect(() => {
+    const el = blocoTextoRef.current;
+    if (el) ajustarAlturaDoTexto(el);
+  }, [messageTemplate]);
 
   return (
     <>
@@ -140,17 +208,40 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
             <div className="flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">Mensagem</span>
               <Textarea
+                ref={blocoTextoRef}
                 value={messageTemplate}
                 onChange={(e) => setMessageTemplate(e.target.value)}
                 placeholder="Olá {{empresa}}, {{saudacao}}!"
                 rows={5}
+                aria-invalid={variaveisDesconhecidas.length > 0 || excedeLimiteTexto}
+                className="resize-none"
               />
               <div className="flex gap-2 pt-1">
                 {PLACEHOLDER_CHIPS.map((chip) => (
-                  <Button key={chip.token} type="button" variant="outline" size="sm" onClick={() => insertPlaceholder(chip.token)}>
+                  <Button key={chip.token} type="button" variant="outline" size="sm" onClick={() => inserirNoCursor(chip.token)}>
                     + {chip.label}
                   </Button>
                 ))}
+              </div>
+              <div className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    'shrink-0 text-2xs tabular-nums',
+                    excedeLimiteTexto ? 'font-semibold text-dash-red' : 'text-muted-foreground',
+                  )}
+                >
+                  {messageTemplate.length}/{LIMITE_TEXTO} caracteres
+                </span>
+                {variaveisDesconhecidas.length > 0 && (
+                  <span role="alert" className="text-2xs text-dash-red">
+                    Variáveis desconhecidas: {variaveisDesconhecidas.map((chave) => `{{${chave}}}`).join(', ')}
+                  </span>
+                )}
+                {excedeLimiteTexto && (
+                  <span role="alert" className="text-2xs text-dash-red">
+                    Acima do limite de {LIMITE_TEXTO} caracteres — a revisão fica bloqueada até o texto caber no limite.
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -158,14 +249,14 @@ export function MultiplixComposerDialog({ open, onOpenChange, selectedCompanyIds
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
-              disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
+              disabled={busy || !tituloEfetivo || !messageTemplate.trim() || excedeLimiteTexto}
               onClick={() => submit(false)}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Salvar rascunho
             </Button>
             <Button
-              disabled={busy || !tituloEfetivo || !messageTemplate.trim()}
+              disabled={busy || !tituloEfetivo || !messageTemplate.trim() || excedeLimiteTexto}
               onClick={() => setConfirmStartOpen(true)}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
