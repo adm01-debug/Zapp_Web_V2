@@ -20,15 +20,6 @@ export default {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       fontSize: {
-        // Fluid responsive sizes (CSS custom properties)
-        "fluid-xs": "var(--text-xs)",
-        "fluid-sm": "var(--text-sm)",
-        "fluid-base": "var(--text-base)",
-        "fluid-lg": "var(--text-lg)",
-        "fluid-xl": "var(--text-xl)",
-        "fluid-2xl": "var(--text-2xl)",
-        "fluid-3xl": "var(--text-3xl)",
-        "fluid-4xl": "var(--text-4xl)",
         // Abaixo da escala modular — faixa de badge/rotulo/atalho (F3 do
         // PLANO_AUDITORIA_FONTES_100_ETAPAS_2026-09-24, achado A5/E37).
         // text-[10px]/text-[11px] eram os 2 arbitrarios mais usados do repo
