@@ -89,6 +89,7 @@ export function TalkXCampaignScheduled({ campaignId, onBack, onEdit, onStatusCha
           campaign={campaign}
           onBack={onBack}
           onEdit={onEdit}
+          confirmCampaignLaunch={confirmCampaignLaunch}
         />
       )}
     </TalkXQueryBoundary>
@@ -99,6 +100,7 @@ interface ScheduledEditorProps {
   campaign: TalkXCampaign;
   onBack: () => void;
   onEdit: (campaign: TalkXCampaign) => void;
+  confirmCampaignLaunch: (campaignId: string, expectedRevision: number, confirmations: { consent: boolean; content: boolean; suppression: boolean }) => Promise<{ ok: boolean; applied: boolean }>;
 }
 
 /**
@@ -120,7 +122,7 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
   return `${Math.round(intervalMs[0] / 1000)}–${Math.round(intervalMs[1] / 1000)}s`;
 }
 
-function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
+function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit, confirmCampaignLaunch }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
   // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
   // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
