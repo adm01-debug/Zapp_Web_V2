@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
  * `talkx_overview_stats` (o `supabase.rpc`). A prova é de ponta:
  * - a barra entrega o período ao hook e os números saem da RPC, sem conta na tela;
  * - com `previous`, o card mostra a variação (com os tokens de cor de sempre);
+ * - com movimento reduzido a variação é texto estático (sem animation-delay);
  * - em "Todo o período" a RPC não tem período anterior e o hook devolve
  *   `previous: null` — mesmo a RPC trazendo `previous`, nenhuma variação aparece.
  */
@@ -17,6 +18,10 @@ import type { ReactNode } from 'react';
 const rpc = vi.hoisted(() => vi.fn());
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc, from: vi.fn() } }));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => true };
+});
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
@@ -176,6 +181,14 @@ describe('X077 · comparativo dos KPIs da Visão geral', () => {
     expect(comparativo('Concluídas')!.textContent).toContain('+100%');
     expect(comparativo('Contatos alcançados')!.textContent).toContain('+100%');
     expect(comparativo('Taxa de sucesso')).toBeNull();
+  });
+
+  it('respeita movimento reduzido: variacao estatica sem animation-delay', async () => {
+    rpc.mockResolvedValue(rpcPayload(ANTERIOR));
+    withClient(<TalkXOverview {...baseProps} />);
+    await waitFor(() => expect(comparativo('Concluídas')).toBeTruthy());
+    expect(comparativo('Concluídas')!.textContent).toContain('+100%');
+    expect(kpiCard('Concluídas').style.animationDelay).toBe('');
   });
 
   it('previous sem delivery_rate_pct não mostra variação na taxa', async () => {
