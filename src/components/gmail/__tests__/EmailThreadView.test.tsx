@@ -257,14 +257,14 @@ describe('EmailThreadView', () => {
   it('botão Voltar chama onBack', () => {
     const onBack = vi.fn();
     render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
-    fireEvent.click(screen.getByTestId('icon-arrow-left').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', () => {
     config.threadMessages = [makeMessage({ gmail_message_id: 'gm-trash' })];
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
-    fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
   });
 

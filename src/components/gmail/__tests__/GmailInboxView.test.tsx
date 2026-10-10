@@ -25,7 +25,7 @@ vi.mock('@/components/ui/select', () => ({
       {children}
     </div>
   ),
-  SelectTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
   SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
   SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children, onClick }: { children: ReactNode; value?: string; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
@@ -306,5 +306,10 @@ describe('GmailInboxView', () => {
     render(<GmailInboxView />);
     expect(screen.getByText('Verificando conta Gmail...')).toBeInTheDocument();
     expect(screen.queryByText('Gmail não conectado')).not.toBeInTheDocument();
+  });
+
+  it('filtro de status tem aria-label acessível', () => {
+    render(<GmailInboxView />);
+    expect(screen.getByLabelText('Filtro de status')).toBeInTheDocument();
   });
 });
