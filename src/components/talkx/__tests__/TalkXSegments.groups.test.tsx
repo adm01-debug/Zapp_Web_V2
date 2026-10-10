@@ -76,6 +76,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 });
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
+import { TalkXSegmentBuilder } from '@/components/talkx/segments/TalkXSegmentBuilder';
 import { rulesJoin, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 
 function renderView() {
@@ -263,5 +264,45 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     // Linha vertical com um nó por condição.
     expect(container.querySelector('[data-talkx-line]')).not.toBeNull();
     expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(5);
+  });
+
+  it('regra já salva de lead_score renderiza com o ícone number (hash) e só ela segue selecionável', async () => {
+    const regras: SegmentRules = {
+      groups: [{
+        id: 'g1', match: 'and',
+        rules: [
+          { id: 'r1', field: 'lead_score', op: 'gte', value: '50' },
+          { id: 'r2', field: 'tags', op: 'contains', value: 'VIP' },
+        ],
+      }],
+    };
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <TalkXSegmentBuilder
+          initial={{ name: 'Salvo', description: '', rules: regras }}
+          isNew={false}
+          saving={false}
+          onSave={() => {}}
+          onCancel={() => {}}
+        />
+      </QueryClientProvider>,
+    );
+
+    // A regra antiga não quebra: renderiza com o valor salvo e o ícone do tipo number.
+    expect(await screen.findByDisplayValue('50')).toBeTruthy();
+    expect(container.querySelector('svg.lucide-hash')).not.toBeNull();
+
+    // No seletor de campo: o filtro "em breve" que NÃO é o da regra fica desabilitado,
+    // e o da própria regra continua selecionável (não derruba o que já foi salvo).
+    // O Radix Select usa APIs de ponteiro/rolagem que o jsdom não implementa.
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+    window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+    const gatilhos = screen.getAllByRole('combobox');
+    fireEvent.pointerDown(gatilhos[0], { button: 0, ctrlKey: false });
+    fireEvent.click(gatilhos[0]);
+    const risco = await screen.findByRole('option', { name: /Risco de churn/ });
+    expect(risco).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('option', { name: /Lead score/ })).not.toHaveAttribute('aria-disabled', 'true');
   });
 });
