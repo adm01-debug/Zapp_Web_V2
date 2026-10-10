@@ -88,9 +88,14 @@ test('Talk X não afirma multiplicador de conversão sem baseline (3× / 2,3×)'
   assert.doesNotMatch(segments, /2,3× mais conversões/);
 });
 
-test('Talk X não rotula tamanho de audiência como "Desempenho"', () => {
+test('Talk X separa "Desempenho (última campanha)" do tamanho da audiência', () => {
+  // X115 — a coluna do mock é lida da última campanha do segmento (RPC da
+  // biblioteca, X103); sem campanha ela mostra "Sem dados ainda", nunca a barra
+  // derivada de `estimated_count` da antiga coluna "Público relativo".
   assert.doesNotMatch(segments, /<Th>Desempenho<\/Th>/);
-  assert.match(segments, /<Th>Público relativo<\/Th>/);
+  assert.doesNotMatch(segments, /<Th>Público relativo<\/Th>/);
+  assert.doesNotMatch(segments, /estimated_count\s*\/\s*Math\.max/);
+  assert.match(segments, /<Th>Desempenho \(última campanha\)<\/Th>/);
 });
 
 test('Talk X não rotula uso de template como "Mais convertidos"', () => {

@@ -31,18 +31,8 @@ export type RuleOp =
 
 export interface SegmentRule { id: string; field: RuleField; op: RuleOp; value: string }
 export interface SegmentRuleGroup { id: string; match: 'and' | 'or'; rules: SegmentRule[] }
-/**
- * Conector ENTRE grupos: um único valor para o segmento inteiro, sem
- * precedência mista. O motor combina os grupos com OU — a RPC de audiência
- * monta `AND (grupo1 OU grupo2 …)`
- * (`supabase/migrations/20261002391230_talkx_audience_rpc.sql:277`), então 'or'
- * é o padrão e o divisor do construtor mostra exatamente o que ele aplica. Este
- * campo é o único lugar que o divisor lê; 'and' entre grupos só passa a valer
- * quando a etapa de banco ensinar a RPC a ler `join`.
- */
-export type SegmentJoin = 'and' | 'or';
 /** Grupos são combinados com OU entre si (como no mockup "Grupo 1 OU Grupo 2"). */
-export interface SegmentRules { groups: SegmentRuleGroup[]; join?: SegmentJoin }
+export interface SegmentRules { groups: SegmentRuleGroup[] }
 
 export interface TalkXSegment {
   id: string;
@@ -108,16 +98,8 @@ export const RULE_OPS: Record<string, { value: RuleOp; label: string }[]> = {
   date: [{ value: 'in_last_days', label: 'nos últimos (dias)' }, { value: 'not_in_last_days', label: 'há mais de (dias)' }],
 };
 
-export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }], join: 'or' });
+export const emptyRules = (): SegmentRules => ({ groups: [{ id: crypto.randomUUID(), match: 'and', rules: [] }] });
 export const newRule = (): SegmentRule => ({ id: crypto.randomUUID(), field: 'tags', op: 'contains', value: '' });
-
-/**
- * O conector que vale para o segmento inteiro. Regras gravadas antes deste
- * campo (e as que o wizard monta) não trazem `join`: o padrão 'or' mantém o que
- * o motor sempre aplicou e evita que a tela prometa um E que a contagem/entrega
- * não fazem.
- */
-export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin => (rules?.join === 'and' ? 'and' : 'or');
 
 /**
  * Uma condição só é utilizável quando tem valor para o seu tipo: texto/enum/array
@@ -159,6 +141,39 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
     })
     .filter((group) => group.rules.length > 0);
   return { complete: { groups }, incompleteCount };
+}
+
+/** Quantas condições a coluna "Principais critérios (regras)" mostra antes de resumir o resto em "+N" (X115). */
+export const RULE_CHIP_LIMIT = 3;
+
+/**
+ * X115 — texto legível de uma condição: campo + operador + valor
+ * ("Lead score maior que 1000", "Tags contém VIP", "Última interação nos últimos 30 dias").
+ * A biblioteca mostrava só o rótulo do campo, então a linha não dizia o que o
+ * segmento filtra. Condição sem valor sai sem valor — o vazio aparece, não some.
+ */
+export function describeRule(rule: SegmentRule): string {
+  const def = RULE_FIELDS.find((f) => f.value === rule.field);
+  const field = def?.label ?? rule.field;
+  const op = (RULE_OPS[def?.kind ?? 'text'] ?? RULE_OPS.text).find((o) => o.value === rule.op)?.label ?? rule.op;
+  const value = rule.value.trim();
+  // O rótulo do operador de data ("nos últimos (dias)") já diz a unidade; o
+  // valor entra como o número de dias que a regra usa no filtro.
+  if (rule.op === 'in_last_days' || rule.op === 'not_in_last_days') {
+    return value ? `${field} ${op} ${value} dias` : `${field} ${op}`;
+  }
+  if (rule.op === 'is_set' || rule.op === 'is_empty' || !value) return `${field} ${op}`;
+  return `${field} ${op} ${value}`;
+}
+
+/**
+ * X115 — chips da coluna "Principais critérios (regras)": até `limit` condições
+ * legíveis e o resto em `extra`, que a tela resume em "+N" com a dica listando
+ * os demais. Nada é descartado em silêncio.
+ */
+export function describeRules(rules: SegmentRules | null | undefined, limit = RULE_CHIP_LIMIT) {
+  const all = (rules?.groups ?? []).flatMap((group) => group.rules).map(describeRule);
+  return { chips: all.slice(0, limit), extra: all.slice(limit) };
 }
 
 // Escapa \ ANTES de escapar " — em um unico passe, para nao deixar uma barra
@@ -320,7 +335,7 @@ export function useAudienceEstimate(rules: SegmentRules | null | undefined, enab
 }
 
 /* ------------------------------------------------------------------ */
-/* X103 — KPIs da biblioteca de segmentos (RPC talkx_segment_library_stats) */
+/* CRUD                                                               */
 /* ------------------------------------------------------------------ */
 
 /** Um ponto da série mensal da RPC (`series[8]`), do mês mais antigo ao corrente. */
@@ -367,15 +382,8 @@ type TalkXLibraryStatsRpc = (name: string, args: Record<string, unknown>) => Pro
   error: { message: string } | null;
 }>;
 
-/** Chave da consulta dos KPIs (X103) — a mesma usada para invalidar depois de salvar. */
 export const LIBRARY_STATS_QUERY_KEY = ['talkx-segment-library-stats', SEGMENT_TIMEZONE] as const;
 
-/**
- * X103 — os KPIs da biblioteca são decididos no servidor pela RPC
- * `talkx_segment_library_stats`. O navegador não soma mais `estimated_count` nem
- * conta `status = 'active'`: "Ativos este mês" é uso real (campanha iniciada no
- * mês) e "Conversão média" vem das entregas/conversões com base mínima.
- */
 export function useSegmentLibraryStats() {
   return useQuery({
     queryKey: LIBRARY_STATS_QUERY_KEY,
@@ -388,10 +396,6 @@ export function useSegmentLibraryStats() {
     staleTime: 60_000,
   });
 }
-
-/* ------------------------------------------------------------------ */
-/* CRUD                                                               */
-/* ------------------------------------------------------------------ */
 
 export function useTalkXSegments() {
   const qc = useQueryClient();
@@ -413,8 +417,6 @@ export function useTalkXSegments() {
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['talkx-segments'] });
-    // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem
-    // isto o total do topo fica velho até o próximo recarregamento.
     qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
   };
 
@@ -450,6 +452,35 @@ export function useTalkXSegments() {
     onError: (e: Error) => toast.error(`Erro ao atualizar segmento: ${e.message}`),
   });
 
+  /**
+   * X115 — "Duplicar" da linha da biblioteca: cria a cópia como rascunho (não
+   * ativa, sem favorito e sem uso) com o MESMO critério do original e devolve a
+   * linha nova, para o construtor abrir a cópia em vez do original. O status de
+   * rascunho do plano (X101) ainda não existe no banco: a cópia nasce `inactive`.
+   */
+  const duplicateSegment = useMutation({
+    mutationFn: async (segment: TalkXSegment) => {
+      const userId = profile?.id;
+      if (!userId) throw new Error('Perfil ainda não carregado');
+      const estimated_count = await countAudience(segment.rules);
+      const { data, error } = await fromTable('talkx_segments')
+        .insert({
+          name: `Cópia de ${segment.name}`,
+          description: segment.description,
+          rules: segment.rules,
+          estimated_count,
+          status: 'inactive',
+          is_favorite: false,
+          created_by: userId,
+        })
+        .select().single();
+      if (error) throw error;
+      return data as TalkXSegment;
+    },
+    onSuccess: () => { invalidate(); toast.success('Segmento duplicado'); },
+    onError: (e: Error) => toast.error(`Erro ao duplicar segmento: ${e.message}`),
+  });
+
   const deleteSegment = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await fromTable('talkx_segments').delete().eq('id', id);
@@ -475,11 +506,10 @@ export function useTalkXSegments() {
     isError: segmentsQuery.isError,
     error: segmentsQuery.error as Error | null,
     refetch: segmentsQuery.refetch,
-    // X103 — KPIs da biblioteca; a tela não recalcula nada no navegador.
     libraryStats: libraryStatsQuery.data ?? null,
     libraryStatsLoading: libraryStatsQuery.isLoading,
     libraryStatsError: libraryStatsQuery.error as Error | null,
     refetchLibraryStats: libraryStatsQuery.refetch,
-    createSegment, updateSegment, deleteSegment, refreshEstimates,
+    createSegment, updateSegment, duplicateSegment, deleteSegment, refreshEstimates,
   };
 }

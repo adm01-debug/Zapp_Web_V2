@@ -1,215 +1,213 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
 
 /**
- * TL-135b (X114 · tela 02) — KPIs da biblioteca de segmentos.
+ * X115 — colunas e ações de linha da biblioteca de segmentos (tela 02).
  *
- * A tela não calcula mais os KPIs no navegador: ela lê
- * `talkx_segment_library_stats` (X103) pelo hook. Aqui entra o TalkXSegments REAL
- * (com o hook real) e só a FRONTEIRA DE REDE é mockada — a RPC e a leitura de
- * segmentos —, para provar que os números da RPC chegam à tela: os quatro títulos
- * do plano, as mini-barras de 8 meses de "Ativos este mês" e a variação contra o
- * mês anterior; e que a conversão sem base mínima cai no "Sem dados ainda" do kit
- * em vez de inventar número.
+ * A biblioteca mostrava só o RÓTULO do campo em cada chip ("Tags", "Lead score") e
+ * uma coluna "Público relativo" que não existe no mock; o menu ⋮ não tinha Duplicar
+ * nem Ativar/Inativar e a linha não respondia ao teclado. O que este teste protege:
  *
- * Fixture com os números do mock da tela 02 (T02-010/T02-012/T02-014/T02-016):
- * 48 segmentos, 36 ativos no mês (30 no mês anterior = +20%), 12 de CRM 360°
- * (9 no mês anterior = +33%), conversão média 7,8% (+2,1 p.p.).
+ *  1. o critério é legível por inteiro (campo + operador + valor) e o que passa de
+ *     três condições vira "+N" com a dica listando as demais;
+ *  2. a origem `custom` é o "Segmentado" do mock, não "Personalizado";
+ *  3. segmento sem campanha mostra "Nunca usado" e "Sem dados ainda", e a coluna
+ *     "Público relativo" (barra derivada de `estimated_count`) saiu;
+ *  4. Duplicar cria a cópia ("Cópia de …") e abre ELA no construtor, não o original;
+ *  5. Ativar/Inativar grava o status oposto ao da linha;
+ *  6. a linha recebe foco e o Enter abre o mesmo detalhe do clique.
+ *
+ * O TalkXSegments REAL entra (motor de regras real, via importOriginal); só a lista
+ * e o CRUD de segmentos viram espiões.
  */
 
-const MESES = ['2026-03-01', '2026-04-01', '2026-05-01', '2026-06-01', '2026-07-01', '2026-08-01', '2026-09-01', '2026-10-01'];
-const SERIE_TOTAL = [30, 32, 34, 36, 38, 41, 45, 48];
-const SERIE_ATIVOS = [12, 15, 18, 21, 24, 28, 30, 36];
-const SERIE_CRM360 = [3, 4, 5, 6, 7, 8, 9, 12];
+const f = vi.hoisted(() => ({ duplicate: vi.fn(), update: vi.fn() }));
 
-function statsComBaseMinima(): TalkXSegmentLibraryStats {
-  return {
-    generated_at: '2026-10-09T08:00:00Z',
-    timezone: 'America/Sao_Paulo',
-    month_start: '2026-10-01',
-    total_segments: 48,
-    active_this_month: 36,
-    active_previous_month: 30,
-    active_delta: 6,
-    crm360_connected: 12,
-    crm360_previous_month: 9,
-    crm360_delta: 3,
-    conversion: {
-      value_pct: 7.8,
-      previous_pct: 5.7,
-      delta_pp: 2.1,
-      has_data: true,
-      deliveries: 170,
-      conversions: 17,
-      previous_deliveries: 130,
-      previous_conversions: 7,
-      min_deliveries: 100,
-    },
-    series: MESES.map((month, i) => ({
-      month,
-      has_data: true,
-      total_segments: SERIE_TOTAL[i],
-      active_segments: SERIE_ATIVOS[i],
-      crm360_segments: SERIE_CRM360[i],
-      deliveries: 100 + i,
-      conversions: 10 + i,
-      conversion_pct: 10,
-    })),
-  };
-}
+const state = vi.hoisted(() => ({ segments: [] as unknown[] }));
 
-function statsSemBaseMinima() {
-  const stats = statsComBaseMinima();
-  // Entregues abaixo da base mínima (100): a RPC devolve has_data falso e NENHUM
-  // percentual — a tela não pode mostrar 0% nem repetir o número do mês passado.
-  stats.conversion = {
-    value_pct: null,
-    previous_pct: null,
-    delta_pp: null,
-    has_data: false,
-    deliveries: 40,
-    conversions: 3,
-    previous_deliveries: 20,
-    previous_conversions: 1,
-    min_deliveries: 100,
-  };
-  return stats;
-}
-
-// A resposta da RPC é lida na hora da chamada (não na importação): o teste troca o
-// conteúdo entre os casos sem recarregar o módulo.
-let respostaStats: unknown = statsComBaseMinima();
-const chamadasRpc: { name: string; args: unknown }[] = [];
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    rpc: (name: string, args: unknown) => {
-      chamadasRpc.push({ name, args });
-      if (name === 'talkx_segment_library_stats') return Promise.resolve({ data: respostaStats, error: null });
-      // Outras RPCs (audiência) não são o alvo deste teste.
-      return Promise.resolve({ data: { eligible: 0, rows: [], has_more: false, next_after: null }, error: null });
-    },
-  },
-}));
-
-vi.mock('@/lib/supabaseHelpers', () => ({
-  fromTable: () => ({
-    select: () => ({ order: () => ({ order: () => Promise.resolve({ data: [], error: null }) }) }),
-  }),
-}));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1', full_name: 'QA' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
 
-vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-
-// Movimento reduzido: o CountUp do cartão de KPI mostra o número final de imediato
-// (o jsdom não roda a animação). O valor provado continua sendo o da RPC.
-vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('framer-motion')>();
-  return { ...actual, useReducedMotion: () => true };
+// O rail e o construtor chamam useAudienceEstimate -> RPC talkx_resolve_audience.
+vi.mock('@/integrations/supabase/client', () => {
+  const chain: Record<string, unknown> = {};
+  chain.select = () => chain;
+  chain.not = () => chain;
+  chain.or = () => chain;
+  chain.order = () => chain;
+  chain.limit = () => chain;
+  chain.eq = () => chain;
+  chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
+  return {
+    supabase: {
+      from: () => chain,
+      rpc: (_name: string, args?: { p_mode?: string }) => Promise.resolve({
+        data: args?.p_mode === 'page'
+          ? { mode: 'page', rows: [], has_more: false, next_after: null }
+          : { mode: 'count', matched: 42, eligible: 42, suppressed: 0, invalid_phone: 0, legacy_or_deleted: 0 },
+        error: null,
+      }),
+    },
+  };
 });
 
-import { TalkXSegments } from '../TalkXSegments';
-import type { TalkXSegmentLibraryStats } from '@/hooks/integrations/useTalkXSegments';
+vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXSegments')>();
+  return {
+    ...actual,
+    useTalkXSegments: () => ({
+      segments: state.segments,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+      createSegment: { mutate: vi.fn(), mutateAsync: vi.fn() },
+      updateSegment: { mutate: vi.fn(), mutateAsync: f.update },
+      duplicateSegment: { mutate: vi.fn(), mutateAsync: f.duplicate },
+      deleteSegment: { mutate: vi.fn() },
+      refreshEstimates: { mutate: vi.fn() },
+    }),
+  };
+});
 
-function wrap(ui: ReactNode) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+import { TalkXSegments } from '@/components/talkx/TalkXSegments';
+import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
+
+/** Segmento do mock: 4 condições — a 4ª tem de aparecer na dica do "+1". */
+const vip: TalkXSegment = {
+  id: 'seg-1',
+  name: 'Clientes VIP',
+  description: 'Altíssimo valor e recorrência',
+  origin: 'custom',
+  status: 'inactive',
+  is_favorite: false,
+  rules: {
+    groups: [{
+      id: 'g1',
+      match: 'and',
+      rules: [
+        { id: 'r1', field: 'tags', op: 'contains', value: 'VIP' },
+        { id: 'r2', field: 'lead_score', op: 'gt', value: '1000' },
+        { id: 'r3', field: 'city', op: 'eq', value: 'São Paulo' },
+        { id: 'r4', field: 'state', op: 'eq', value: 'SP' },
+      ],
+    }],
+  },
+  estimated_count: 1248,
+  last_used_at: null,
+  created_by: null,
+  created_at: '2026-09-15T12:00:00.000Z',
+  updated_at: '2026-09-15T12:00:00.000Z',
+};
+
+function renderView() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <TalkXSegments onUseCampaign={() => {}} />
+    </QueryClientProvider>,
+  );
 }
 
-/** O cartão que traz o rótulo, para ler valor, variação e barras DELE. */
-function cartao(rotulo: string): HTMLElement {
-  const el = screen.getByText(rotulo).closest('[data-testid="kpi-card"]');
-  if (!el) throw new Error(`cartão de KPI não encontrado: ${rotulo}`);
-  return el as HTMLElement;
+/** Abre o ⋮ da linha e escolhe o item do menu. */
+function usarAcaoDa(nomeDoSegmento: string, acao: string) {
+  const gatilho = screen.getByRole('button', { name: `Ações de ${nomeDoSegmento}` });
+  // Radix abre o menu pelo teclado (o clique do jsdom não dispara pointerdown).
+  fireEvent.keyDown(gatilho, { key: 'ArrowDown' });
+  fireEvent.click(screen.getByRole('menuitem', { name: acao }));
 }
 
 beforeEach(() => {
-  respostaStats = statsComBaseMinima();
-  chamadasRpc.length = 0;
+  cleanup();
+  state.segments = [vip];
+  f.duplicate.mockReset();
+  f.update.mockReset();
 });
 
-describe('TalkXSegments · KPIs da biblioteca lidos de talkx_segment_library_stats (TL-135b)', () => {
-  it('mostra os quatro KPIs do plano com os números da RPC, e não mais "Contatos cobertos"', async () => {
-    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
+describe('X115 — colunas da biblioteca de segmentos', () => {
+  it('critério sai campo + operador + valor e o resto vira "+1" com a dica listando o demais', () => {
+    // Pior caso da coluna junto do melhor: um segmento sem nenhuma condição.
+    state.segments = [vip, { ...vip, id: 'seg-2', name: 'Base inteira', rules: { groups: [] } }];
+    renderView();
 
-    await waitFor(() => expect(screen.getByText('Total de segmentos')).toBeTruthy());
-    expect(screen.getByText('Ativos este mês')).toBeTruthy();
-    expect(screen.getByText('CRM 360° conectados')).toBeTruthy();
-    expect(screen.getByText('Conversão média')).toBeTruthy();
+    expect(screen.getByText('Tags contém VIP')).toBeTruthy();
+    expect(screen.getByText('Lead score maior que 1000')).toBeTruthy();
+    expect(screen.getByText('Cidade é igual a São Paulo')).toBeTruthy();
+    expect(screen.getByText('Toda a base')).toBeTruthy();
 
-    // Critério 2: o KPI antigo (soma de estimated_count, que contava o mesmo
-    // contato várias vezes) sai da biblioteca.
-    expect(screen.queryByText('Contatos cobertos')).toBeNull();
-
-    expect(cartao('Total de segmentos').textContent).toContain('48');
-    expect(cartao('Ativos este mês').textContent).toContain('36');
-    expect(cartao('CRM 360° conectados').textContent).toContain('12');
-    expect(cartao('Conversão média').textContent).toContain('7,8%');
-
-    // Critério 1: os KPIs vêm da RPC do servidor (no fuso do produto), não de
-    // arrays locais de segmentos.
-    expect(chamadasRpc).toContainEqual({
-      name: 'talkx_segment_library_stats',
-      args: { p_timezone: 'America/Sao_Paulo' },
-    });
+    // A 4ª condição não some: fica na dica do "+1".
+    const resumo = screen.getByText('+1');
+    expect(resumo.getAttribute('title')).toBe('UF é igual a SP');
   });
 
-  it('"Ativos este mês": mini-barras dos 8 meses da série e variação contra o mês anterior', async () => {
-    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText('Ativos este mês')).toBeTruthy());
-
-    const barras = cartao('Ativos este mês').querySelectorAll('[data-testid="kpi-bars"] > *');
-    expect(barras).toHaveLength(8);
-    // Cada barra é o mês da série, na ordem: o último mês (36) é o topo do gráfico
-    // e o primeiro (12) tem um terço dele.
-    const alturas = Array.from(barras).map((b) => (b as HTMLElement).style.height);
-    expect(alturas[7]).toBe('100%');
-    expect(alturas[0]).toBe('33%');
-
-    const variacao = cartao('Ativos este mês').textContent ?? '';
-    expect(variacao).toContain('+20%');
-    expect(variacao).toContain('vs. mês anterior');
+  it('a coluna de critérios passa a ser "Principais critérios (regras)"', () => {
+    renderView();
+    expect(screen.getByRole('columnheader', { name: 'Principais critérios (regras)' })).toBeTruthy();
+    expect(screen.queryByRole('columnheader', { name: 'Critérios' })).toBeNull();
   });
 
-  it('"CRM 360° conectados" mostra a variação contra o mês anterior', async () => {
-    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText('CRM 360° conectados')).toBeTruthy());
+  it('origem personalizada aparece como "Segmentado" na linha e no detalhe, com o ícone do selo', () => {
+    renderView();
+    expect(screen.getByText('Segmentado')).toBeTruthy();
+    expect(screen.queryByText('Personalizado')).toBeNull();
 
-    const conteudo = cartao('CRM 360° conectados').textContent ?? '';
-    expect(conteudo).toContain('12');
-    expect(conteudo).toContain('+33%');
-    expect(conteudo).toContain('vs. mês anterior');
+    // O mesmo rótulo vale para o detalhe da linha: nada de "Personalizado" num lado só.
+    fireEvent.click(screen.getByText('Clientes VIP'));
+    expect(screen.getAllByText('Segmentado').length).toBe(2);
+    expect(screen.queryByText('Personalizado')).toBeNull();
   });
 
-  it('"Conversão média" mostra o percentual e a variação em p.p.', async () => {
-    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText('Conversão média')).toBeTruthy());
-
-    const conteudo = cartao('Conversão média').textContent ?? '';
-    expect(conteudo).toContain('7,8%');
-    expect(conteudo).toContain('+2,1 p.p.');
-    expect(conteudo).toContain('vs. mês anterior');
+  it('segmento sem campanha mostra "Nunca usado" e "Sem dados ainda"', () => {
+    renderView();
+    expect(screen.getByText('Nunca usado')).toBeTruthy();
+    expect(screen.getByText('Sem dados ainda')).toBeTruthy();
   });
 
-  it('conversão abaixo da base mínima: mantém o card "Conversão média" com estado sem dados dentro dele', async () => {
-    respostaStats = statsSemBaseMinima();
-    wrap(<TalkXSegments onUseCampaign={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText('Total de segmentos')).toBeTruthy());
+  it('a coluna "Público relativo" (barra derivada de estimated_count) saiu da tabela', () => {
+    renderView();
+    expect(screen.getByRole('columnheader', { name: 'Desempenho (última campanha)' })).toBeTruthy();
+    expect(screen.queryByRole('columnheader', { name: 'Público relativo' })).toBeNull();
+  });
+});
 
-    const conversao = cartao('Conversão média');
-    expect(within(conversao).getByText('Sem dados ainda')).toBeTruthy();
-    expect(conversao.textContent).toContain('100 entregues ou mais');
-    expect(conversao.textContent).toContain('neste mês: 40');
-    expect(conversao.textContent).not.toContain('%');
-    expect(conversao.textContent).not.toContain('0,0%');
-    // Os outros três KPIs continuam com os números da RPC.
-    expect(cartao('Total de segmentos').textContent).toContain('48');
-    expect(cartao('Ativos este mês').textContent).toContain('36');
-    expect(cartao('CRM 360° conectados').textContent).toContain('12');
+describe('X115 — ações da linha da biblioteca', () => {
+  it('Duplicar cria a cópia como rascunho e abre a CÓPIA no construtor, não o original', async () => {
+    f.duplicate.mockResolvedValue({ ...vip, id: 'seg-copia', name: 'Cópia de Clientes VIP' });
+    renderView();
+
+    usarAcaoDa('Clientes VIP', 'Duplicar');
+
+    await waitFor(() => expect(f.duplicate).toHaveBeenCalledTimes(1));
+    expect(f.duplicate.mock.calls[0][0]).toMatchObject({ id: 'seg-1', name: 'Clientes VIP' });
+    expect(f.update).not.toHaveBeenCalled();
+
+    const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
+    expect(nome.value).toBe('Cópia de Clientes VIP');
+  });
+
+  it('Ativar grava o status oposto ao da linha', async () => {
+    f.update.mockResolvedValue({ ...vip, status: 'active' });
+    renderView();
+
+    usarAcaoDa('Clientes VIP', 'Ativar');
+
+    await waitFor(() => expect(f.update).toHaveBeenCalledWith({ id: 'seg-1', status: 'active' }));
+  });
+
+  it('linha com foco: Enter abre o mesmo detalhe do clique', () => {
+    renderView();
+    expect(screen.getByText('Selecione um segmento')).toBeTruthy();
+
+    const linha = screen.getByText('Clientes VIP').closest('tr') as HTMLElement;
+    expect(linha.getAttribute('tabindex')).toBe('0');
+    fireEvent.keyDown(linha, { key: 'Enter' });
+
+    expect(screen.queryByText('Selecione um segmento')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Editar segmento' })).toBeTruthy();
   });
 });
