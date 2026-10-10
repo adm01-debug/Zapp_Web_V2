@@ -960,8 +960,13 @@ jobs:
       # sync interno (user_roles -> profiles, auth.uid() nulo) preservado. Inicia
       # container proprio e roda CREATE ROLE anon/authenticated/service_role — as roles
       # sao globais ao cluster, entao o docker-shim do E47 colidiria com as do shim.
-      - name: Provar a trava de escalada de privilegio em profiles (N-002)
+      - name: Provar a trava de escalacao de privilegio em profiles (N-002)
         env:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+
+      - name: Provar que a migration dropa a policy duplicada de avatar DELETE (N-011)
+        env:
+          N011_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/n011-drop-duplicate-avatar-delete-policy.test.sh
