@@ -127,12 +127,6 @@ export function connectionCapabilityDenial(
   return null;
 }
 
-// MX05: UMA tabela de backoff para o worker inteiro — a mesma do kernel
-// (errors.ts): 30 s, 2 min, 10 min. O primeiro degrau e o piso deterministico
-// quando o planRetry nao devolve retryAfter (decisao dead_letter): retry
-// imediato e proibido; quem decide o teto continua sendo a RPC.
-const RETRY_BACKOFF_MS: readonly number[] = [30_000, 120_000, 600_000];
-
 // F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
 // Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
 // `multiplix.audience.customers.own` + `multiplix.dispatch.create`; sem aceitar
