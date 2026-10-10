@@ -179,9 +179,9 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nível de Acesso</Label>
+                  <Label htmlFor="access_level">Nível de Acesso</Label>
                   <Select value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="access_level"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(accessLevelConfig).map(([key, config]) => (
                         <SelectItem key={key} value={key}>
@@ -231,9 +231,9 @@ export function AdminView() {
             <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
             <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label htmlFor="role">Role</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="role"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(roleIconMap) as AppRole[]).map((key) => {
                     const RIcon = roleIconMap[key];
