@@ -189,7 +189,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `talkx_alerts` | Alertas do motor TalkX (tipo, campanha e payload) | parcial | `scripts/db-audit/talkx-engine-health.test.sh`, `scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh`, `scripts/db-audit/talkx-tick-expurgo.test.sh` |
 | `talkx_blacklist` | Lista de supressão do TalkX (contato, motivo e origem) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXSuppression.authoring.test.tsx`, `src/components/talkx/__tests__/useCampaignEditor.test.tsx` … |
 | `talkx_campaign_events` | Eventos de campanha TalkX (tipo, mensagem e ator) | ativo | `src/hooks/integrations/useTalkXEvents.ts`, `supabase/functions/talkx-scheduler/index.test.ts`, `supabase/functions/talkx-send/_test-utils.ts` … |
-| `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | parcial | `scripts/db-audit/talkx-campaign-segments.test.sh` |
+| `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | ativo | `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx`, `src/hooks/integrations/useTalkXResumeChecklist.ts`, `scripts/db-audit/talkx-campaign-segments.test.sh` … |
 | `talkx_campaigns` | Campanhas TalkX (modelo, variáveis, ritmo de digitação e estado) | ativo | `src/components/talkx/TalkXLiveMonitor.tsx`, `src/components/talkx/__tests__/TalkXLiveMonitor.states.test.tsx`, `src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx` … |
 | `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | parcial | `scripts/db-audit/talkx-e90-links-contract.test.mjs`, `scripts/db-audit/talkx-links-conversions.test.sh` |
 | `talkx_delivery_log` | Log de entrega das campanhas TalkX (tentativa, etapa e desfecho) | ativo | `supabase/functions/talkx-send/_test-utils.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/r3-delta-011-excecao-nao-perde-log.test.ts` … |
@@ -218,7 +218,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `warroom_alerts` | Alertas do war-room (tipo, origem e leitura) | ativo | `src/hooks/__tests__/useWarRoomAlerts.test.tsx`, `src/hooks/business/useWarRoomAlerts.ts`, `supabase/functions/_shared/__tests__/evolution-connection-state.test.ts` … |
 | `webauthn_challenges` | Desafios WebAuthn pendentes, com validade | ativo | `supabase/functions/webauthn/index.ts` |
 | `webhook_failures` | Falhas de webhook registradas (endpoint, evento e payload truncado) | parcial | `.github/workflows/db-migrate.yml`, `scripts/db-audit/check-webhook-failures-acl.sql`, `scripts/db-audit/check-webhook-failures-acl.test.sh` … |
-| `webhook_rate_limits` | Contador de webhooks por instância e tipo de evento, em janela | roadmap | — |
+| `webhook_rate_limits` | Contador de webhooks por instância e tipo de evento, em janela | ativo | `supabase/functions/metrics/index.test.ts`, `supabase/functions/metrics/index.ts` |
 | `whatsapp_connection_queues` | Vínculo entre conexão de WhatsApp e fila de atendimento | ativo | `src/hooks/__tests__/useConnectionQueues.test.tsx`, `src/hooks/inbox/useConnectionQueues.ts`, `scripts/db-audit/enqueue-connection-scope.test.sh` … |
 | `whatsapp_connections` | Conexões de WhatsApp (instância, telefone, estado e QR) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/alerts/EvolutionDisconnectBanner.tsx`, `src/components/connections/NumberReputationMonitor.tsx` … |
 | `whatsapp_flows` | Fluxos do WhatsApp (JSON de telas e publicação) | ativo | `src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
@@ -231,14 +231,16 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 A auditoria de 28/08/2026 (§8) mediu o mesmo tipo de acoplamento. Cruzando com o que este
 inventário apura hoje:
 
-- `crisis_room_alerts` e `webhook_rate_limits` (§8.1, "sem NENHUMA referência de código") estão
-  aqui como `roadmap`. A consolidação das duas continua pendente (etapas 71–72 da auditoria).
-- `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
-  mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
-  auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
+- `crisis_room_alerts` e `webhook_rate_limits` (§8.1, "sem NENHUMA referência de código") não estão
+  na mesma situação hoje: `crisis_room_alerts` continua `roadmap` e as decisões das etapas 71–72 da
+  auditoria seguem abertas (`docs/audits/INVENTARIO_MELHORIAS_2026-10-07.tsv:73`); já
+  `webhook_rate_limits` passou a `ativo` — a Edge `metrics` a consulta
+  (`supabase/functions/metrics/index.ts:67`) e o teste dela a inclui no mock
+  (`supabase/functions/metrics/index.test.ts:53`).
 - `ai_budget_reservations`, `department_invitations`, `multiplix_audience_members`,
-  `multiplix_audiences`, `talkx_alerts`, `talkx_campaign_segments`, `talkx_conversions` e
-  `webhook_failures` são `parcial`: só o ferramental (`scripts/db-audit/`, `scripts/qa/`,
-  `.github/workflows/`) as cita.
+  `multiplix_audiences`, `talkx_alerts`, `talkx_conversions` e `webhook_failures` são `parcial`:
+  só o ferramental (`scripts/db-audit/`, `scripts/qa/`, `.github/workflows/`) as cita. Já
+  `talkx_campaign_segments` saiu dessa lista: `src/hooks/integrations/useTalkXResumeChecklist.ts`
+  passou a consultá-la (checklist de retomada pausada) e a tabela virou `ativo`.
 
 As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 166.
