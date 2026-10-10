@@ -178,3 +178,29 @@ Deno.test("N-165: token inv\u00e1lido (getUser rejeita) recebe 401", async () =>
     }
   });
 });
+
+Deno.test("N-165: Bearer de usuario comum com x-cron-secret invalido NAO escapa do papel (403)", async () => {
+  await withEnv(ENV_OK, async () => {
+    // Regressao: o x-cron-secret era tratado como "veio do cron" so por estar presente,
+    // entao qualquer usuario logado mandava um valor qualquer e pulava a checagem de
+    // admin/supervisor. O Vault e consultado (ROTA_CRON) e o valor conferido em tempo
+    // constante; com valor invalido o caminho de usuario deve continuar exigindo o papel.
+    const stub = withFetch([ROTA_CRON, ROTA_AUTH, ROTA_NAO_STAFF, ROTA_CONTATOS, ROTA_CONEXOES]);
+    try {
+      const req = new Request("http://localhost/functions/v1/batch-fetch-avatars", {
+        headers: {
+          Authorization: "Bearer user-jwt-agent",
+          "x-cron-secret": "lixo-que-nao-e-o-segredo",
+        },
+      });
+      const resp = await handleBatchFetchAvatars(req);
+      assertEquals(
+        resp.status,
+        403,
+        "x-cron-secret invalido nao pode isentar usuario comum do papel de gestao",
+      );
+    } finally {
+      stub.restore();
+    }
+  });
+});
