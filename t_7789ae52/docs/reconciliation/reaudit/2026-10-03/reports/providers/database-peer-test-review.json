@@ -1,0 +1,665 @@
+{
+  "schema_version": 1,
+  "status": "COMPLETE",
+  "owner": "/root/reaudit_providers",
+  "delegated_by": "/root",
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_root": "/workspace/scratch/f8f9b9cbce53/reaudit/source",
+  "roster": "/workspace/scratch/f8f9b9cbce53/reaudit/reports/database/test-review-roster.json",
+  "roster_sha256": "ab29fb2773c7ce8bf521092c22ad33d83a102885a204ba5bf2cc7fe660690b16",
+  "slice_zero_based": [
+    32,
+    52
+  ],
+  "total_files": 20,
+  "total_lines": 1419,
+  "tests_executed": 0,
+  "source_changes": 0,
+  "findings_added": 0,
+  "files": [
+    {
+      "path": "src/components/__tests__/ThemeInitializer.test.tsx",
+      "roster_index_zero_based": 32,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "07c4871bc416bd962a75f1020c7e10acdee40010",
+      "source_sha256": "d891188971a53534d5f24ae24d98e3e76493991a6ef7236c9151624e36c3ecf9",
+      "total_lines": 71,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 71,
+          "symbols": [
+            "Tema padrão v6, migração v5/forest, storage de outra aba sem regravar e dark→light"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Tema padrão v6, migração v5/forest, storage de outra aba sem regravar e dark→light"
+      ],
+      "mocks_and_fixtures": [
+        "Hook useTheme simulado; componente/presets reais, DOM/localStorage observados"
+      ],
+      "adjudication": "Controles úteis de aplicação de tokens e persistência. Sem novo achado.",
+      "limits": [
+        "Não verifica CSS/layout de navegador nem eventos reais entre duas abas."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx",
+      "roster_index_zero_based": 33,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "73309b9c0d984f6f617bc0b82301494843333eed",
+      "source_sha256": "c47826dfc4846b35885b57de1e925b103365ffd67c62c48934ec7f8b16710f89",
+      "total_lines": 60,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 60,
+          "symbols": [
+            "Banner com region nomeada, texto contido, axe region e ausência sem conexões"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Banner com region nomeada, texto contido, axe region e ausência sem conexões"
+      ],
+      "mocks_and_fixtures": [
+        "Supabase devolve linhas e subscription fixa; componente real"
+      ],
+      "adjudication": "Aceite de landmark bem delimitado, sem ação de reconectar. Não refuta R2-API-042.",
+      "limits": [
+        "Contraste explicitamente desligado no axe; não há clique, erro invoke ou credencial real."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/diagnostics/__tests__/ConnectionHealthPanel.test.tsx",
+      "roster_index_zero_based": 34,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "6087f606ea5f6b3e5d6f5644d8937db4ea58f353",
+      "source_sha256": "4d9e08f80ff51caefaf2ea8edb438742d8fa2b65aa9220f4749a2e8c3fd60169",
+      "total_lines": 93,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 93,
+          "symbols": [
+            "Resumo/estado vazio; clique healthcheck e erro; polling de 30 s e unmount sem novas queries"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Resumo/estado vazio; clique healthcheck e erro; polling de 30 s e unmount sem novas queries"
+      ],
+      "mocks_and_fixtures": [
+        "Supabase e toast simulados; relógio falso e componente real"
+      ],
+      "adjudication": "Teste de encerramento avança relógio depois de unmount e verifica chamadas, controle substantivo. Sem novo achado.",
+      "limits": [
+        "Dados sempre vazios; não valida resumo de conexões reais ou resposta lógica HTTP 200 com erro."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/effects/__tests__/Confetti.random.test.tsx",
+      "roster_index_zero_based": 35,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "e6c5851a52fec548bfb1c668fa2b981bcd9c1942",
+      "source_sha256": "d2e4152d56c3fa8d9039243c0d0dda4c9cb6bca35b219df0c2175296e04eaa12",
+      "total_lines": 56,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 56,
+          "symbols": [
+            "Confetti recebe 0.99/0.01 e escolhe última/primeira cor e tipo no DOM"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Confetti recebe 0.99/0.01 e escolhe última/primeira cor e tipo no DOM"
+      ],
+      "mocks_and_fixtures": [
+        "secureRandomFloat fixado; normalização de cor pelo DOM"
+      ],
+      "adjudication": "Testa consumidor real do índice sorteado, sem cópia local da função produtiva. Sem novo achado.",
+      "limits": [
+        "Não comprova qualidade criptográfica, animação/layout visual ou ciclo de vida completo."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/email/__tests__/AuditHardening.test.ts",
+      "roster_index_zero_based": 36,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "77923bb4045e536cba3e15e24ff1559b6fad1a8e",
+      "source_sha256": "d3ea9bde02eb8579e91a4698a6ab46f4d1b503b4ba30cfe248861791f4840ac9",
+      "total_lines": 64,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "Sanitizer: comentários CSS, url em várias propriedades, hooks isolados, dataURL limite, idempotência e preview"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Sanitizer: comentários CSS, url em várias propriedades, hooks isolados, dataURL limite, idempotência e preview"
+      ],
+      "mocks_and_fixtures": [
+        "sanitizeEmailHtml/buildBodyPreview reais; removeAllHooks na instância default"
+      ],
+      "adjudication": "Controles positivos de preservação de cor e remoção hostil são relevantes. Não refuta R2-COM-011, que trata src protocol-relative.",
+      "limits": [
+        "Caso height gigante só exige cor preservada; preview devolve string literal HTML e depende de render seguro no consumidor. DataURL aceita não é imagem decodificada."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/email/__tests__/CrlfBypass.test.ts",
+      "roster_index_zero_based": 37,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "8080c5dddc2624ec483c206db329944d12cb710b",
+      "source_sha256": "2958a7e15eceff726b13939e46b00b38e3fed8932d846d8b7d4202dd2acfb772",
+      "total_lines": 39,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 39,
+          "symbols": [
+            "Sanitizer CSS: CRLF após hex, url tracker, line-continuation puro, espaço/tab"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Sanitizer CSS: CRLF após hex, url tracker, line-continuation puro, espaço/tab"
+      ],
+      "mocks_and_fixtures": [
+        "Helper real com payloads locais e controles de cor preservada"
+      ],
+      "adjudication": "Casos negativos focados nos escapes; sem cópia de parser. Sem novo achado.",
+      "limits": [
+        "Não testa execução/render de CSS em navegador real ou imagens remotas fora de style."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/email/__tests__/EmailFullViewDialog.test.tsx",
+      "roster_index_zero_based": 38,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "fa5095ab8c6162b50f9ee73786d222015219885c",
+      "source_sha256": "ad3e7016db70a2b0b431c8d377f95da9de734b10c4ad212032c516e1a52292e9",
+      "total_lines": 75,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 75,
+          "symbols": [
+            "Dialog: open, título/remetente, sandbox sem scripts/same-origin, popups, srcdoc e download"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Dialog: open, título/remetente, sandbox sem scripts/same-origin, popups, srcdoc e download"
+      ],
+      "mocks_and_fixtures": [
+        "Primitivas Dialog substituídas; HTML recebido já sanitizado"
+      ],
+      "adjudication": "Confere atributos do componente real, sem alegar que realiza sanitização. Sem novo achado.",
+      "limits": [
+        "Não executa iframe, download ou navegador; não verifica foco/fechamento Radix nem sanitização upstream."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/email/__tests__/EmailSystemPalette.test.ts",
+      "roster_index_zero_based": 39,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "f8f6a35a5ca2e1cdc76a3b13fdb427b8c3a4490c",
+      "source_sha256": "769d6b5a758a5b5432b4cc18c0110d30afd7848ef19b65094da24e043f77cf3a",
+      "total_lines": 28,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 28,
+          "symbols": [
+            "Nove componentes Email não contêm cores hex/rgb ou classes Tailwind fixas"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Nove componentes Email não contêm cores hex/rgb ou classes Tailwind fixas"
+      ],
+      "mocks_and_fixtures": [
+        "Scanner textual de arquivos de produto"
+      ],
+      "adjudication": "Guarda de convenção de paleta, sem prova visual de contraste ou propagação de tokens. Sem novo achado.",
+      "limits": [
+        "Regex inclui comentários/textos; pode omitir outras notações de cor e estilos herdados."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/email/__tests__/EscapeBypass.test.ts",
+      "roster_index_zero_based": 40,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "b5a087a2cc1b49b67375925f67edc3f88620853f",
+      "source_sha256": "3de7c931fcfb314fe2cf54f213b8914815250eba7a824f49ade8338b5a3f7785",
+      "total_lines": 64,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "Sanitizer: hex em URL/propriedade, transforms, máscaras e continuação de linhas"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Sanitizer: hex em URL/propriedade, transforms, máscaras e continuação de linhas"
+      ],
+      "mocks_and_fixtures": [
+        "Helper real com strings hostis e cor preservada"
+      ],
+      "adjudication": "Negativos exercitam produtor, preservando propriedade segura. Sem novo achado.",
+      "limits": [
+        "Caso cursor sem URL só verifica ausência de t.exemplo, que o input não possui; não comprova remoção dessa propriedade. Não refuta src protocol-relative COM011."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/gamification/__tests__/MiniGameDialogs.random.test.tsx",
+      "roster_index_zero_based": 41,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "429eaeaa952834c349b1d0e61075c29896e0145d",
+      "source_sha256": "c75b5c28f642667aa4cf6dc751537bd4fb2b7b91f14ef35003eb4e0a8c628426",
+      "total_lines": 56,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 56,
+          "symbols": [
+            "SpeedTyping usa fonte simulada e escolhe primeira/última frase renderizada"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "SpeedTyping usa fonte simulada e escolhe primeira/última frase renderizada"
+      ],
+      "mocks_and_fixtures": [
+        "secureRandomFloat fixado; componente e TYPING_PHRASES reais"
+      ],
+      "adjudication": "Vincula sorteio ao DOM; não é teste de cópia da lógica. Sem novo achado.",
+      "limits": [
+        "Não testa pontuação, persistência, timer de jogo ou entropia real."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/keyboard/__tests__/KeyboardShortcutsDialog.test.tsx",
+      "roster_index_zero_based": 42,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "70bc69a9da1c76f568c2e9e6144eed1195f74996",
+      "source_sha256": "71052147a4bc89ff670820bbc3a90300ddcae75e435882962d47dbd1102d3d0b",
+      "total_lines": 80,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 80,
+          "symbols": [
+            "Ajuda mostra seis nomes de tarefas mais Ajuda, teclas e atalhos globais"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Ajuda mostra seis nomes de tarefas mais Ajuda, teclas e atalhos globais"
+      ],
+      "mocks_and_fixtures": [
+        "Dialog/ScrollArea passthroughs e toast mockado; componente real"
+      ],
+      "adjudication": "Contrato de apresentação dos nomes e teclas, explicitamente sem primitivas Radix. Sem novo achado.",
+      "limits": [
+        "Não dispara atalhos nem prova lazy loading/chunks ou conflito de teclas."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/leaderboard/__tests__/LeaderboardHelpers.random.test.tsx",
+      "roster_index_zero_based": 43,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "69309fcc12b1a212a6b84b9ecdc714e0e56fcd50",
+      "source_sha256": "441054b2e679de5388083c31ac584d0957d6aa52b05802d2ec081f02a6f8ffdb",
+      "total_lines": 64,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 64,
+          "symbols": [
+            "CelebrationParticles faz 120 chamadas para 20 partículas, tamanho 8px e invisibilidade"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "CelebrationParticles faz 120 chamadas para 20 partículas, tamanho 8px e invisibilidade"
+      ],
+      "mocks_and_fixtures": [
+        "Fonte aleatória fixada e componente real"
+      ],
+      "adjudication": "Contagem e estilo calculado observados, controles positivos de consumidor. Sem novo achado.",
+      "limits": [
+        "Iteração de tamanho isolada pode ser vazia, mas caso separado exige 20 partículas; não mede animação real ou entropia."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/mfa/__tests__/MFABackupCodes.crypto.test.tsx",
+      "roster_index_zero_based": 44,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "e4cea6fd9335bcba6baeeb9e6e2b316f9a3a1e28",
+      "source_sha256": "6eac96eb1e633202919430353df98ac56e8ba4b53997418a45a6ed0fc279f18b",
+      "total_lines": 67,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 67,
+          "symbols": [
+            "MFABackupCodes chama crypto, gera 10 códigos formato 4+4 e amostras sem repetição"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "MFABackupCodes chama crypto, gera 10 códigos formato 4+4 e amostras sem repetição"
+      ],
+      "mocks_and_fixtures": [
+        "Spy preserva crypto real; componente renderizado/desmontado"
+      ],
+      "adjudication": "Demonstra origem e formato do sorteio local. Não prova emissão/validação de credenciais pelo servidor, como reconhece o comentário. Sem novo achado.",
+      "limits": [
+        "Unicidade é amostral, não garantia universal; nenhum cadastro, recuperação, consumo único ou integração Auth."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/mobile/__tests__/MiniChatPiP.test.tsx",
+      "roster_index_zero_based": 45,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "c55132f86e528b4e3c423b71c98e8eb080095184",
+      "source_sha256": "f4bdaf5e77f8f716b55e64b7e0b27a1418a78b6a6db6c5b97213e3d63bd2ac77",
+      "total_lines": 107,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 107,
+          "symbols": [
+            "MiniChatPiP visível/oculto, iniciais, expandir, reply Enter/vazio e callback ausente"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "MiniChatPiP visível/oculto, iniciais, expandir, reply Enter/vazio e callback ausente"
+      ],
+      "mocks_and_fixtures": [
+        "Framer Motion substituído; callbacks vi.fn e componente real"
+      ],
+      "adjudication": "Maioria verifica DOM e chamadas locais. Caso dismiss 48–57 tem asserção dentro de if(dismissBtn) e passa se botão sumir; informado à família TC011/GOV003, sem novo ID produtivo.",
+      "limits": [
+        "Não testa callback assíncrono falhando, identidade entre contatos ou gesto/drag; onDismiss usa mock compartilhado."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/monitoring/__tests__/useMonitoringNotifications.behavior.test.ts",
+      "roster_index_zero_based": 46,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "807d18e15243c46ba8911152b2172c9d391f2464",
+      "source_sha256": "c6181c45815c4749a76759c0e41e57eb5df2dfb532e7e222974d9383d595cbc6",
+      "total_lines": 102,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 102,
+          "symbols": [
+            "MonitoringNotifications ganho 0.12, mudo, horário silencioso e updateSettings"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "MonitoringNotifications ganho 0.12, mudo, horário silencioso e updateSettings"
+      ],
+      "mocks_and_fixtures": [
+        "AudioContext fake registra ganho; settings/quiet injetados; hook real"
+      ],
+      "adjudication": "Controles positivos e negativos do volume e mudo. Sem novo achado.",
+      "limits": [
+        "Não prova áudio físico, encerramento de AudioContext ou persistência do hook de settings; caso localStorage não espiona ausência de escrita."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/notifications/__tests__/NotificationItem.test.tsx",
+      "roster_index_zero_based": 47,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "41f15cb63bac830f7a0f8baca2f921b9d85be393",
+      "source_sha256": "fae9451ff34fb97d19f7a3a92fadeddb894cbf37086b6afdde3a226de8c572b6",
+      "total_lines": 92,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 92,
+          "symbols": [
+            "NotificationItem ações reminder_due, openTask/complete; info sem ações e onMarkRead ID"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "NotificationItem ações reminder_due, openTask/complete; info sem ações e onMarkRead ID"
+      ],
+      "mocks_and_fixtures": [
+        "Hook de tarefas completamente mockado com metadata fixa"
+      ],
+      "adjudication": "Confere vínculo dos botões ao hook e diferença de tipos. Sem novo achado.",
+      "limits": [
+        "Adiar só tem presença verificada; não há execução de snooze, erro assíncrono ou navegação/persistência reais."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/theme/__tests__/HighContrastTokens.test.tsx",
+      "roster_index_zero_based": 48,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "5244c331823ab5bd32d9121247bb73aa69be0c23",
+      "source_sha256": "b99a691a8c087fdafa9b119187113982b4d0bc1d889597cf20dd707a6bb7041d",
+      "total_lines": 88,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 88,
+          "symbols": [
+            "HighContrast limpa tokens inline ao aplicar/alternar e restaura ao desligar"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "HighContrast limpa tokens inline ao aplicar/alternar e restaura ao desligar"
+      ],
+      "mocks_and_fixtures": [
+        "Provider/presets reais e DOM/localStorage"
+      ],
+      "adjudication": "Prova origem e prioridade das variáveis, limite visual explicitamente separado. Sem novo achado.",
+      "limits": [
+        "Só quatro tokens no primeiro caso e primary nos demais; não mede contraste renderizado ou todas as cores."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/theme/__tests__/contrasteDoSistema.test.tsx",
+      "roster_index_zero_based": 49,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "dd02840c1787b6283fa571b87bf5f3fc518a5999",
+      "source_sha256": "6e40e8e74fd6c46ca3d805b6117baa0dc4b611795bfd1cde7c558082d9c56117",
+      "total_lines": 98,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 98,
+          "symbols": [
+            "Contraste do sistema aplica classe e reage a matchMedia; toggle sem preferência funciona"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Contraste do sistema aplica classe e reage a matchMedia; toggle sem preferência funciona"
+      ],
+      "mocks_and_fixtures": [
+        "matchMedia controlado; presets mockados"
+      ],
+      "adjudication": "Controles de estado úteis. Caso 77–86 intitulado usuário desliga começa storage null, clica uma vez e exige true: exercita ligar. Limite enviado para TC011/GOV003.",
+      "limits": [
+        "Não aplica CSS real, nem prova token/contraste visual. Comentário de medição em produção não foi verificado nesta auditoria."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/ui/__tests__/button.test.tsx",
+      "roster_index_zero_based": 50,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "e6a67ccafecd9d88f012f3e2d811dde493c9a773",
+      "source_sha256": "403cf716bc56e8c61366befb0fd350a78d84d1cfa93c3f0aace3e6b95de5e8d7",
+      "total_lines": 44,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 44,
+          "symbols": [
+            "Button default/variantes/loading/disabled e clique único"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "Button default/variantes/loading/disabled e clique único"
+      ],
+      "mocks_and_fixtures": [
+        "Componente real em DOM; handler vi.fn"
+      ],
+      "adjudication": "Verifica props e classes locais. Sem novo achado.",
+      "limits": [
+        "Não testa teclado, asChild, foco ou estilo visual; uso vi global depende de configuração do runner e não foi presumido erro."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    },
+    {
+      "path": "src/components/ui/__tests__/liquid-metal-button.test.tsx",
+      "roster_index_zero_based": 51,
+      "reviewer": "/root/reaudit_providers",
+      "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+      "git_blob_sha": "5dd50807baf0ab1abac91aa4cbb18991f872f0e2",
+      "source_sha256": "805a1a171d6f45080967b576c03acec9645239fc7a88b33b0a6a982ea87759be",
+      "total_lines": 71,
+      "review_status": "SEMANTIC_FULL_FILE",
+      "level": "semantic_full_file",
+      "reviewed_ranges": [
+        {
+          "line_start": 1,
+          "line_end": 71,
+          "symbols": [
+            "LiquidMetalButton nome/count/click, badge 99+, foco acelera, unmount dispose, loading bloqueia e label contextual"
+          ]
+        }
+      ],
+      "assertions_reviewed": [
+        "LiquidMetalButton nome/count/click, badge 99+, foco acelera, unmount dispose, loading bloqueia e label contextual"
+      ],
+      "mocks_and_fixtures": [
+        "ShaderMount fake cria canvas e spies; WebGL2 capability simulada"
+      ],
+      "adjudication": "Controles de interação e liberação são substantivos, preservando limite gráfico. Sem novo achado.",
+      "limits": [
+        "Não executa GPU/shader real ou preferência reduzida de movimento; garantia antes do shader usa import mockado sem atraso controlado."
+      ],
+      "tests_executed": 0,
+      "source_hash_rechecked_before_record": true
+    }
+  ],
+  "limits": [
+    "Static reading of assertions, mocks and fixtures only; no test suite, browser, database or provider executed.",
+    "These 20 files are peer assistance for database roster and are not added to the completed providers roster count of76."
+  ]
+}

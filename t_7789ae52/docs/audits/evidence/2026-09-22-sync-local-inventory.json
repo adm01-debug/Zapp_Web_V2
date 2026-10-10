@@ -1,0 +1,641 @@
+{
+  "capturedAt": "2026-09-22T11:46:42.170Z",
+  "root": "/home/joaquim_ataides/projetos/Zapp_Web_V2/Zapp_Web_V2",
+  "physicalHead": "7d3682c8aedfa5f031192b3ef7ac3c4b1c611f6d",
+  "physicalBranch": "fix/inbox-resgate-logica-pr384",
+  "remoteMain": "36a5b4fabae5f9e5d6c64828e23946fff13c53ad",
+  "remoteHeads": [
+    {
+      "sha": "e3a9df0794261d534a9eaeff76d14fdca6fc7a2c",
+      "ref": "refs/heads/audit/types-sync-312"
+    },
+    {
+      "sha": "dbd5358e70fa30c371a38633e396d1b451121670",
+      "ref": "refs/heads/automation/types-sync"
+    },
+    {
+      "sha": "2497e0b1d67c6491b2f09dc581c793a1e0182a1a",
+      "ref": "refs/heads/chore/bun-lock-sync"
+    },
+    {
+      "sha": "8a48e569d31d91556678be5a41fa3d47fb61b8e6",
+      "ref": "refs/heads/chore/consolidate-external-clients"
+    },
+    {
+      "sha": "b90fad77c98eae1bcc74e7fc5f7e529e43c9fd9b",
+      "ref": "refs/heads/chore/label-facade-features-demo"
+    },
+    {
+      "sha": "5e33dddb27cad6fa1335c9c20d63e54dcbeea32f",
+      "ref": "refs/heads/claude/audit-database-references-m1xp3p"
+    },
+    {
+      "sha": "67f1c6cc6110ef56ce46af4207e925cb755778ff",
+      "ref": "refs/heads/claude/nice-pasteur-3h1emj"
+    },
+    {
+      "sha": "9d5c5f0e4098ea5da6b4e383f80b4b22c19aae94",
+      "ref": "refs/heads/codex/types-sync-final"
+    },
+    {
+      "sha": "af6b71dec502624b947668d2606a23322d771436",
+      "ref": "refs/heads/dependabot/bun/supabase/supabase-js-2.116.0"
+    },
+    {
+      "sha": "5a6aff5bfee750601d7ffe9219e4f089950c145a",
+      "ref": "refs/heads/design/bordas-discretas-bg-glow"
+    },
+    {
+      "sha": "6c6198d0432b622ecafafc5b425e2620c959c22e",
+      "ref": "refs/heads/design/royal-vibrant"
+    },
+    {
+      "sha": "b324f0bdca89c5881873774393742fffc571ead0",
+      "ref": "refs/heads/docs/evolution-webhook-project-ref"
+    },
+    {
+      "sha": "ac3558f48ee0654c4dd383800f50d7b2065fe5ac",
+      "ref": "refs/heads/docs/handoff-estado-real-2026-08-30"
+    },
+    {
+      "sha": "0c701d611e095e17fb5362830e495a2ecce900ec",
+      "ref": "refs/heads/feat/atomic-outbound-callers"
+    },
+    {
+      "sha": "78644455062c0be8d215cd252375df51b8983514",
+      "ref": "refs/heads/feat/catalog-f3-screens-chat"
+    },
+    {
+      "sha": "0125d6d06c2c1c123ae8f1673fdedeacf9e15d61",
+      "ref": "refs/heads/feat/contract-tests"
+    },
+    {
+      "sha": "7921208f1a62aa435a11331e6a03c18cf6a87011",
+      "ref": "refs/heads/feat/crm-integration-gateway"
+    },
+    {
+      "sha": "845c869d6db1d55f5825775301e8ea6019094ed9",
+      "ref": "refs/heads/feat/e35-dead-letter"
+    },
+    {
+      "sha": "9a50814b42b9f60629e4dfc0a8e16b34e934b1b9",
+      "ref": "refs/heads/feat/fresh-install-hostinger"
+    },
+    {
+      "sha": "fa3bffc44eee649804edb708e9ca115a2f862a4f",
+      "ref": "refs/heads/feat/message-delivery-phase1"
+    },
+    {
+      "sha": "8376bc8111bfe82e972567edd35ee8b9040d7bbc",
+      "ref": "refs/heads/feat/talkx-campaign-scheduled"
+    },
+    {
+      "sha": "6e638abb0c2831364c6b8c7b6b3cd2993853b027",
+      "ref": "refs/heads/feat/talkx-e71-e72"
+    },
+    {
+      "sha": "9f76d9a61d53248755a85ee9f942b3d715145aea",
+      "ref": "refs/heads/feat/talkx-f1-design"
+    },
+    {
+      "sha": "db840e0e764e4002c3ba66d4f55252c168a1b488",
+      "ref": "refs/heads/feat/talkx-f4-e49-ab-variants"
+    },
+    {
+      "sha": "51c6cd5b82ef63f54bd5bd81ffbbfc5ecc5d9254",
+      "ref": "refs/heads/feat/talkx-f5-e51-blacklist-v2"
+    },
+    {
+      "sha": "fb55fa134eb44b4790f4a3b43956b061a345df32",
+      "ref": "refs/heads/feat/talkx-f5-e56-e57-optout"
+    },
+    {
+      "sha": "3f745222a0f038e47a222e818968918e0a0e42db",
+      "ref": "refs/heads/feat/tipografia-promo-gifts"
+    },
+    {
+      "sha": "9e9989cb851c58744484725c269ee47c401c0060",
+      "ref": "refs/heads/fix/async-chat-send-contract"
+    },
+    {
+      "sha": "a946d4dfa966c4e24a917f0eee20c17b63629318",
+      "ref": "refs/heads/fix/auth-login-fail-closed"
+    },
+    {
+      "sha": "d0f7aeb222e36436cd5afe2e9b6439bd92ef3278",
+      "ref": "refs/heads/fix/catalog-favorito-kit"
+    },
+    {
+      "sha": "8d883a50c16ecb6a9e1270bd021f0016a848c1d0",
+      "ref": "refs/heads/fix/cron-migration-email-delete-policy"
+    },
+    {
+      "sha": "0e34e1bd27403b9bc6faed2da62292eec0ffd9ca",
+      "ref": "refs/heads/fix/db-guard-postmerge-hotfix-20260829"
+    },
+    {
+      "sha": "3720bbcb17bd1ab7500989e50bee793a2f6dea87",
+      "ref": "refs/heads/fix/db-live-drift-postmerge-20260829"
+    },
+    {
+      "sha": "b860dfd74af872c70ea6521e906577bd4d22f97c",
+      "ref": "refs/heads/fix/db-live-guard-step7-evidence"
+    },
+    {
+      "sha": "aae5d85f3065554b6baa293ce9bd4f216f19520e",
+      "ref": "refs/heads/fix/db-live-guard-step7-v2"
+    },
+    {
+      "sha": "d379d8841e6f2b7e954f1bfbf94dcdf320742318",
+      "ref": "refs/heads/fix/deployment-manifest-stale-2"
+    },
+    {
+      "sha": "6fe904a78aa941bcc32f705ffa53d03593cf7faf",
+      "ref": "refs/heads/fix/deps-react19-ci-bun"
+    },
+    {
+      "sha": "647867ebe07534375cd5ab1acadff714cde71128",
+      "ref": "refs/heads/fix/destino-oficial-main"
+    },
+    {
+      "sha": "d949c228f365b832e37546536cc293bbdd95d5d0",
+      "ref": "refs/heads/fix/destino-oficial-tnnn"
+    },
+    {
+      "sha": "4e435ca7f0eae273f2dd5692b08792411a385dd2",
+      "ref": "refs/heads/fix/e08-e09-upsert-idempotente"
+    },
+    {
+      "sha": "8539af1263ab615951d2644653eaba6d93935a31",
+      "ref": "refs/heads/fix/email-chat-design-bugs"
+    },
+    {
+      "sha": "dd30085461047c594b014c173443053c9eef8ea9",
+      "ref": "refs/heads/fix/get-team-profiles-active-filter"
+    },
+    {
+      "sha": "c9a35b08cfd592c13f94ca959b0a0d436e02e962",
+      "ref": "refs/heads/fix/gmail-oauth-disconnect-bug"
+    },
+    {
+      "sha": "3ada4738ab3fd41ffb614ced9efd099f9f93f19b",
+      "ref": "refs/heads/fix/identity-authz-improvements"
+    },
+    {
+      "sha": "951a27886ec79e8f92642a74da5fa2aee0003935",
+      "ref": "refs/heads/fix/inbox-data-integrity-codex"
+    },
+    {
+      "sha": "d49b6b3675771f396fd398768be71d35dee27344",
+      "ref": "refs/heads/fix/inbox-file-upload-integrity"
+    },
+    {
+      "sha": "705885e3ac44fae8eca7c95e1d0e6aea866bff51",
+      "ref": "refs/heads/fix/inbox-tabs-a11y-responsive"
+    },
+    {
+      "sha": "d91d79057b3e976c0b4e228893d2e33f11380941",
+      "ref": "refs/heads/fix/ledger-drift-reconcile-20260829"
+    },
+    {
+      "sha": "ad16005d2b91966d21bd1567bc8990c8f567bdf0",
+      "ref": "refs/heads/fix/ledger-extra-diagnostics-20260829"
+    },
+    {
+      "sha": "afac17687fb5321efec70a9791c58b7208b3bf59",
+      "ref": "refs/heads/fix/migration-20260901100001"
+    },
+    {
+      "sha": "40afa7e890e9f8015f56bb853dab0b409e0c3358",
+      "ref": "refs/heads/fix/migration-ledger-evidence-20260829"
+    },
+    {
+      "sha": "e937354db2a92bd6a272bc228c95ec8c1409c195",
+      "ref": "refs/heads/fix/migration-name-drift-20260827130000"
+    },
+    {
+      "sha": "4be50ee2e83531873b2b3c53ec827bd4f6fb04bc",
+      "ref": "refs/heads/fix/revoke-anon-ai-providers"
+    },
+    {
+      "sha": "3d24c83e754b134a179eab91855bbfad611b0823",
+      "ref": "refs/heads/fix/revoke-service-enqueue"
+    },
+    {
+      "sha": "748733252bb53ace6143ce17638f8938d76d11ac",
+      "ref": "refs/heads/fix/runtime-integration-recovery"
+    },
+    {
+      "sha": "8e483381c48552b146197e72750b7942e13fd0a7",
+      "ref": "refs/heads/fix/satisfaction-metrics-real-data"
+    },
+    {
+      "sha": "98be976ece6945d490b4c3448c3eae36af36e75e",
+      "ref": "refs/heads/fix/stop-orphan-messages-harden-handlers"
+    },
+    {
+      "sha": "61cc17aeabd13f448b3e8d95c6e0966d7cc8d41c",
+      "ref": "refs/heads/fix/talkx-history-fk-canonicalization"
+    },
+    {
+      "sha": "f02300e83472fc0b5b4d5636b72eeba7acc75638",
+      "ref": "refs/heads/fix/talkx-ledger-recovery"
+    },
+    {
+      "sha": "c0c67f9e2ef34683fe82c5d4b982dfa4c0119380",
+      "ref": "refs/heads/fix/talkx-scheduler-window-correctness"
+    },
+    {
+      "sha": "626c61052adc4b00f59fc16fad488f90644b08e9",
+      "ref": "refs/heads/fix/talkx-template-history-contract"
+    },
+    {
+      "sha": "315bd351af5afee9ccbc14cf066ef2bfe6304194",
+      "ref": "refs/heads/fix/types-sync-adapter-contract"
+    },
+    {
+      "sha": "36a5b4fabae5f9e5d6c64828e23946fff13c53ad",
+      "ref": "refs/heads/main"
+    },
+    {
+      "sha": "7baff6c29eb4321586ebf7b1d2a19d4ffefe76f6",
+      "ref": "refs/heads/preview/navy-fase1"
+    },
+    {
+      "sha": "5cac917b2f59b1f1806589b4c3a39b58f788a491",
+      "ref": "refs/heads/redesign/inbox-center-tabs-codex"
+    },
+    {
+      "sha": "a4ec1cda040304910a10814cabb63813fe674e39",
+      "ref": "refs/heads/redesign/inbox-fidelidade-carvao-codex"
+    },
+    {
+      "sha": "85f3565449e306143f02e2e0304afa378066b394",
+      "ref": "refs/heads/redesign/inbox-files-history-codex"
+    },
+    {
+      "sha": "442a1a91326fc1247b4d640abfbe08ea69b3a6be",
+      "ref": "refs/heads/redesign/inbox-right-panel-codex"
+    },
+    {
+      "sha": "c1af013613008835acaf710e8213e4cd88ed3966",
+      "ref": "refs/heads/redesign/inbox-tasks-notes-codex"
+    },
+    {
+      "sha": "9e0b9ec00fc3b09d59ea5ca2b546089134bf1a83",
+      "ref": "refs/heads/test/chat-central-contracts"
+    }
+  ],
+  "status": "",
+  "trackedFileCount": 2361,
+  "untracked": [],
+  "ignoredPaths": [
+    ".claude/settings.local.json",
+    ".husky/_/",
+    ".husky/_/.gitignore",
+    ".husky/_/applypatch-msg",
+    ".husky/_/commit-msg",
+    ".husky/_/h",
+    ".husky/_/husky.sh",
+    ".husky/_/post-applypatch",
+    ".husky/_/post-checkout",
+    ".husky/_/post-commit",
+    ".husky/_/post-merge",
+    ".husky/_/post-rewrite",
+    ".husky/_/pre-applypatch",
+    ".husky/_/pre-auto-gc",
+    ".husky/_/pre-commit",
+    ".husky/_/pre-merge-commit",
+    ".husky/_/pre-push",
+    ".husky/_/pre-rebase",
+    ".husky/_/prepare-commit-msg",
+    "coverage/",
+    "deno.lock",
+    "dist/",
+    "graphify-out/",
+    "node_modules/",
+    "playwright-report/",
+    "src/components/contacts/graphify-out/",
+    "src/components/inbox/graphify-out/",
+    "src/graphify-out/",
+    "src/hooks/chat/graphify-out/",
+    "src/hooks/crm/graphify-out/",
+    "src/hooks/integrations/graphify-out/",
+    "supabase/.temp/",
+    "test-results/",
+    "tsconfig.app.tsbuildinfo",
+    "tsconfig.node.tsbuildinfo"
+  ],
+  "stashes": [],
+  "mainFileDiff": [
+    "M\t.github/workflows/codeql.yml",
+    "M\t.github/workflows/crm-sync-worker.yml",
+    "M\t.github/workflows/db-live-guard.yml",
+    "M\tCLAUDE.md",
+    "M\tbun.lock",
+    "A\tdocs/audits/DOSSIE_EXECUCAO_PLANO_50_2026-09-20.md",
+    "M\tdocs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md",
+    "A\tdocs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+    "A\tdocs/catalogo/QA_E40_F3.md",
+    "M\tpackage.json",
+    "M\tperformance-budget.json",
+    "M\tscripts/ci/eslint-baseline.json",
+    "A\tscripts/db-audit/check-triple-parity.mjs",
+    "A\tscripts/db-audit/check-triple-parity.test.mjs",
+    "M\tscripts/db-audit/grants-baseline.json",
+    "M\tscripts/db-audit/grants-baseline.sql",
+    "M\tscripts/db-audit/register-migration.mjs",
+    "M\tscripts/db-audit/register-migration.test.mjs",
+    "A\tsrc/components/catalog/CatalogProductCard.tsx",
+    "M\tsrc/components/catalog/ExternalProductCard.tsx",
+    "M\tsrc/components/catalog/ExternalProductManagement.tsx",
+    "M\tsrc/components/catalog/ProductDetailDialog.tsx",
+    "M\tsrc/components/inbox/MessagePreview.tsx",
+    "M\tsrc/components/inbox/chat/MarkdownPreview.tsx",
+    "M\tsrc/components/inbox/chat/useChatPanelHandlers.ts",
+    "M\tsrc/components/security/SecurityOverview.tsx",
+    "M\tsrc/components/talkx/TalkXAnalytics.tsx",
+    "M\tsrc/components/talkx/TalkXOverview.tsx",
+    "A\tsrc/hooks/integrations/useCatalogFavorites.ts",
+    "M\tsrc/hooks/integrations/useExternalEvolution.ts",
+    "M\tsrc/hooks/integrations/useWhatsAppStatus.ts",
+    "M\tsupabase/deployment-manifest.json",
+    "M\tsupabase/functions/ai-auto-tag/index.ts",
+    "M\tsupabase/functions/ai-churn-analysis/index.ts",
+    "M\tsupabase/functions/ai-classify-tickets/index.ts",
+    "M\tsupabase/functions/approve-password-reset/index.ts",
+    "M\tsupabase/functions/auth-login/index.ts",
+    "M\tsupabase/functions/batch-fetch-avatars/index.ts",
+    "M\tsupabase/functions/bitrix-api/index.ts",
+    "M\tsupabase/functions/cleanup-rate-limit-logs/index.ts",
+    "M\tsupabase/functions/create-user/index.ts",
+    "M\tsupabase/functions/fetch-link-preview/index.ts",
+    "M\tsupabase/functions/get-sip-password/index.ts",
+    "M\tsupabase/functions/migrate-media-storage/index.ts",
+    "M\tsupabase/functions/send-rate-limit-alert/index.ts",
+    "M\tsupabase/functions/send-scheduled-report/index.ts",
+    "M\tsupabase/functions/sentiment-alert/index.ts",
+    "M\tsupabase/functions/sicoob-bridge-reply/index.ts",
+    "M\tsupabase/functions/sicoob-bridge/index.ts",
+    "M\tsupabase/functions/webauthn/index.ts",
+    "M\tsupabase/functions/webhook-diagnostic/diagnostic.test.ts",
+    "A\tsupabase/migrations/20260920120000_talkx_e90_fk_indexes.sql",
+    "A\tsupabase/migrations/20260920120100_autovacuum_hot_tables.sql",
+    "A\tsupabase/migrations/20260920120200_drop_idx_email_threads_gmail_account_redundante.sql",
+    "M\tsupabase/schema-manifest.json"
+  ],
+  "branches": [
+    {
+      "name": "audit/codex-sync-20260922",
+      "sha": "c35b3c250f2fd325217ca53cfec0766470c174d8",
+      "ahead": 0,
+      "behind": 2,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "audit/types-sync-312",
+      "sha": "e3a9df0794261d534a9eaeff76d14fdca6fc7a2c",
+      "ahead": 1,
+      "behind": 317,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f1-ci-gates",
+      "sha": "ce2690441b0ac39f15083a502e0f5a35b922a9f8",
+      "ahead": 0,
+      "behind": 67,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f2-db-indices-autovacuum",
+      "sha": "3b91b053d092917e4d6e535f41918f53d3b75109",
+      "ahead": 0,
+      "behind": 69,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f4-edges-pinning",
+      "sha": "f8c2a1e1b2bf42a566aceeb5d7d91be0020b4442",
+      "ahead": 0,
+      "behind": 68,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "chore/e50-f5-quality",
+      "sha": "9e2f89277779fd68e886bf97de29cd73501c4fe4",
+      "ahead": 0,
+      "behind": 69,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "chore/label-facade-features-demo",
+      "sha": "b90fad77c98eae1bcc74e7fc5f7e529e43c9fd9b",
+      "ahead": 1,
+      "behind": 506,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "codex/types-sync-final",
+      "sha": "9d5c5f0e4098ea5da6b4e383f80b4b22c19aae94",
+      "ahead": 3,
+      "behind": 308,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 3,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "docs/e50-dossie-execucao",
+      "sha": "ab83f7be83174bb79e381d40e050957458e5c463",
+      "ahead": 0,
+      "behind": 66,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "docs/plano-melhorias-50-etapas-2026-09-20",
+      "sha": "e6f85ea05a6f2474ad2aafff33e8b071b6c4d27a",
+      "ahead": 0,
+      "behind": 69,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "feat/crm-integration-db-foundation",
+      "sha": "22d88667e951244efe729518ef3d09d0fd50445c",
+      "ahead": 3,
+      "behind": 336,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 3,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "feat/crm-integration-gateway",
+      "sha": "7921208f1a62aa435a11331e6a03c18cf6a87011",
+      "ahead": 8,
+      "behind": 336,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 8,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/async-chat-send-contract",
+      "sha": "9e9989cb851c58744484725c269ee47c401c0060",
+      "ahead": 1,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/inbox-data-integrity-codex",
+      "sha": "951a27886ec79e8f92642a74da5fa2aee0003935",
+      "ahead": 1,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/inbox-file-upload-integrity",
+      "sha": "d49b6b3675771f396fd398768be71d35dee27344",
+      "ahead": 15,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 15,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/inbox-resgate-logica-pr384",
+      "sha": "7d3682c8aedfa5f031192b3ef7ac3c4b1c611f6d",
+      "ahead": 0,
+      "behind": 69,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/inbox-tabs-a11y-responsive",
+      "sha": "705885e3ac44fae8eca7c95e1d0e6aea866bff51",
+      "ahead": 1,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/talkx-scheduler-window-correctness",
+      "sha": "c0c67f9e2ef34683fe82c5d4b982dfa4c0119380",
+      "ahead": 1,
+      "behind": 157,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 1,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/talkx-template-history-contract",
+      "sha": "a63d824562a74ee6c5b4e39c4b9a2366f1285752",
+      "ahead": 8,
+      "behind": 312,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 8,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "fix/types-sync-adapter-contract",
+      "sha": "315bd351af5afee9ccbc14cf066ef2bfe6304194",
+      "ahead": 2,
+      "behind": 304,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 2,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "main",
+      "sha": "dd210916a23907a9d89ba49f52f888178de1bfc7",
+      "ahead": 0,
+      "behind": 70,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-center-tabs-codex",
+      "sha": "5cac917b2f59b1f1806589b4c3a39b58f788a491",
+      "ahead": 10,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 10,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-fidelidade-carvao-codex",
+      "sha": "a4ec1cda040304910a10814cabb63813fe674e39",
+      "ahead": 15,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 15,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-files-history-codex",
+      "sha": "85f3565449e306143f02e2e0304afa378066b394",
+      "ahead": 10,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 10,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-right-panel-codex",
+      "sha": "442a1a91326fc1247b4d640abfbe08ea69b3a6be",
+      "ahead": 2,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 2,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "redesign/inbox-tasks-notes-codex",
+      "sha": "c1af013613008835acaf710e8213e4cd88ed3966",
+      "ahead": 10,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 10,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "test/chat-central-contracts",
+      "sha": "9e0b9ec00fc3b09d59ea5ca2b546089134bf1a83",
+      "ahead": 10,
+      "behind": 329,
+      "commitsNotReachableFromCurrentRemoteHeads": 0,
+      "patchesNotEquivalentToMain": 10,
+      "patchEquivalentToMain": 0
+    },
+    {
+      "name": "tmp/integracao-e50",
+      "sha": "e772c599e4fb9d83546cf22be116a1721660c2d1",
+      "ahead": 4,
+      "behind": 59,
+      "commitsNotReachableFromCurrentRemoteHeads": 4,
+      "patchesNotEquivalentToMain": 0,
+      "patchEquivalentToMain": 0
+    }
+  ]
+}

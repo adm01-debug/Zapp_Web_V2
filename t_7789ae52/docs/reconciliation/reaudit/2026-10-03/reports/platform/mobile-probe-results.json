@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_integrity_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+  "source_files": [
+    {
+      "path": "src/components/mobile/MobileShell.tsx",
+      "git_blob_sha": "d488734dc1796bccb51629b3a985f5f27d93f231",
+      "sha256": "bd36c452c890fae93dedb2e1da1a0f79568eca6fd3cff7036f146c342ae923d4"
+    },
+    {
+      "path": "src/components/mobile/MobileHeader.tsx",
+      "git_blob_sha": "44288d685a2bc346314f6ab0614e004427661135",
+      "sha256": "effa0c8295dc273267335e0d30aef193a4b2fcad665bd0b134708e15c6cb6400"
+    },
+    {
+      "path": "src/components/mobile/NotificationsPanel.tsx",
+      "git_blob_sha": "b44648781fcbf6a94779defc124516efb85791d0",
+      "sha256": "9709224fdefc79dc7b84f6400e9b9057ded42f8bbf6b9b423da40bfd1f070461"
+    },
+    {
+      "path": "src/pages/Index.tsx",
+      "git_blob_sha": "9317b83b809bbb745fd6d5adfe5de3c1e420d16d",
+      "sha256": "971796f4112ea03b82db11b40592e340314767f4dd1a8d0df6ac5b80335e2268"
+    },
+    {
+      "path": "src/components/layout/AppShell.tsx",
+      "git_blob_sha": "e38b6cb6b8ba9d1fa755c81125d99ea2d2a0eead",
+      "sha256": "30552c0b530b0b14122f4dc09e06c62bcf61e5a1e3ac28d536153e84f350185e"
+    }
+  ],
+  "script_sha256": "fdd8f0e0201d7ff639493dd7a0b1935893ea09dfbbc5fa6c6ad6a2202b2ab7b8",
+  "typescript_version": "5.9.3",
+  "probes": [
+    {
+      "id": "PLAT-P09",
+      "status": "PASS",
+      "title": "Mobile search changes an unused flag without rendering a search surface",
+      "observed": {
+        "search_state": true,
+        "rendered_child_types": [
+          "MobileHeader",
+          "NotificationsPanel",
+          "MobileDrawerMenu",
+          "MobileFAB",
+          "BottomNavigation"
+        ],
+        "drawer_open": false,
+        "notifications_open": false
+      },
+      "limitations": "Whole MobileShell with captured JSX and synthetic hook state. The header button wiring is source-verified; no ReactDOM, actual click, CSS or browser rendering."
+    },
+    {
+      "id": "PLAT-P10",
+      "status": "PASS",
+      "title": "Mobile notification panel opens with the disconnected empty state and the actual hardcoded zero badge",
+      "observed": {
+        "panel_open": true,
+        "notifications": 0,
+        "header_unread": 0,
+        "index_prop_literal": 0,
+        "notification_data_dependencies": 0
+      },
+      "limitations": "Whole shell, JSX and literal prop from Index. Existing real notifications are a conditional precondition for the user-facing mismatch, not data read from a live account. The parent has no query/subscription to populate its private notification array; desktop hooks are separate."
+    }
+  ],
+  "network_calls": 0,
+  "product_writes": 0,
+  "method": "All HEAD/blob checks before TypeScript/evaluation. Full shell with captured JSX; explicit React and component boundaries. No browser or product write."
+}

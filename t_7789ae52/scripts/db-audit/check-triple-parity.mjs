@@ -1,0 +1,182 @@
+#!/usr/bin/env node
+/**
+ * Gate de paridade tripla (E10 do plano 2026-09-20): consolida em um comando
+ * as tres conferencias que a auditoria de 2026-09-16/17 fazia a mao.
+ *
+ *  A) migrations: count + sha256 das versoes de supabase/migrations/*.sql
+ *     contra supabase_migrations.schema_migrations (requer DESTINO_URL);
+ *  B) edges: nomes em deployment-manifest.json .functions[] contra os
+ *     diretorios reais de supabase/functions/ (sempre roda, local);
+ *  C) grants: regenera o baseline via grants-baseline.sql no banco e compara
+ *     com o grants-baseline.json commitado (requer DESTINO_URL).
+ *
+ * Sem DESTINO_URL as pernas A e C sao puladas com aviso (mesma semantica do
+ * check-migration-drift.mjs), com resultado PARCIAL, nunca sucesso global.
+ * --require-live exige as tres pernas (CI viva). Qualquer divergencia => exit 1.
+ *
+ * Variaveis para testes offline:
+ *   MIGRATIONS_DIR, FUNCTIONS_DIR, MANIFEST_PATH, GRANTS_SQL_PATH,
+ *   GRANTS_BASELINE_PATH, PSQL_BIN (nunca passa por shell)
+ */
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { withPsqlEnvironment } from './psql-environment.mjs';
+
+const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR || 'supabase/migrations';
+const FUNCTIONS_DIR = process.env.FUNCTIONS_DIR || 'supabase/functions';
+const MANIFEST_PATH = process.env.MANIFEST_PATH || 'supabase/deployment-manifest.json';
+const GRANTS_SQL_PATH = process.env.GRANTS_SQL_PATH || 'scripts/db-audit/grants-baseline.sql';
+const GRANTS_BASELINE_PATH = process.env.GRANTS_BASELINE_PATH || 'scripts/db-audit/grants-baseline.json';
+const PSQL_BIN = process.env.PSQL_BIN || 'psql';
+const url = process.env.DESTINO_URL?.trim();
+const args = process.argv.slice(2);
+const requireLive = args.includes('--require-live');
+
+const FILE_NAME_RE = /^(\d{14})_[a-z0-9][a-z0-9_-]*\.sql$/;
+let failures = 0;
+let skipped = 0;
+
+function fail(msg) {
+  failures += 1;
+  console.error(`FALHA: ${msg}`);
+}
+
+// Fingerprint de integridade da paridade -- nao e hash de credencial nem de
+// senha. Os dois lados precisam do MESMO algoritmo: o lado local usa
+// crypto.createHash('sha256') e o lado do banco usa sha256() (built-in do
+// Postgres, PG11+) sobre os mesmos bytes UTF-8. Trocar so um dos lados faz a
+// paridade divergir sempre.
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function execPsqlSanitizado(args) {
+  try {
+    return withPsqlEnvironment(url, env => execFileSync(PSQL_BIN, args, {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60_000, env,
+    }));
+  } catch (err) {
+    // Nem stderr e seguro: libpq, proxies ou wrappers podem repetir credenciais.
+    const safe = new Error(`psql falhou (exit ${Number.isInteger(err.status) ? err.status : '?'})`);
+    safe.safeDiagnostic = true;
+    throw safe;
+  }
+}
+
+function psql(sql) {
+  return execPsqlSanitizado(['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', sql]);
+}
+
+function psqlFile(file) {
+  return execPsqlSanitizado(['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-f', file]);
+}
+
+// Ordena chaves recursivamente: a igualdade nao pode depender da ordem de
+// serializacao (hoje ambos os lados saem de jsonb, que canonicaliza — este
+// canon() imuniza contra edicao manual do baseline e mudanca futura de json).
+function canon(valor) {
+  if (Array.isArray(valor)) return valor.map(canon);
+  if (valor && typeof valor === 'object') {
+    return Object.fromEntries(Object.keys(valor).sort((a, b) => a.localeCompare(b)).map((k) => [k, canon(valor[k])]));
+  }
+  return valor;
+}
+
+// ── A) migrations ↔ ledger ─────────────────────────────────────────────
+function localVersions() {
+  const files = fs.readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.sql')).map((entry) => entry.name);
+  for (const file of files) if (!FILE_NAME_RE.test(file)) fail('migration com nome invalido');
+  const versions = files.filter((file) => FILE_NAME_RE.test(file)).map((file) => file.slice(0, 14)).sort((a, b) => a.localeCompare(b));
+  if (!versions.length) fail('nenhuma migration local');
+  if (new Set(versions).size !== versions.length) fail('versao de migration duplicada');
+  return versions;
+}
+
+function checkMigrations() {
+  const locais = localVersions();
+  if (!url) {
+    skipped += 1;
+    console.log('[migrations] pulado: DESTINO_URL ausente');
+    return;
+  }
+  const sha256Local = sha256(`${locais.join('\n')}\n`);
+  const out = psql(
+    "SELECT count(*) || '|' || encode(sha256(convert_to(string_agg(version, E'\\n' ORDER BY version) || E'\\n', 'UTF8')), 'hex') FROM supabase_migrations.schema_migrations",
+  ).trim();
+  if (!/^\d+\|[a-f0-9]{64}$/.test(out)) throw new Error('invalid ledger aggregate');
+  const [countLedger, sha256Ledger] = out.split('|');
+  console.log(`[migrations] arquivos=${locais.length} ledger=${countLedger} sha256_local=${sha256Local} sha256_ledger=${sha256Ledger}`);
+  if (String(locais.length) !== countLedger) {
+    fail(`count divergente: ${locais.length} arquivos vs ${countLedger} no ledger`);
+  }
+  if (sha256Local !== sha256Ledger) {
+    fail('sha256 das versoes divergente entre arquivos e ledger');
+  }
+}
+
+// ── B) edges: manifesto ↔ diretorios ───────────────────────────────────
+function checkEdges() {
+  const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  if (!Array.isArray(manifest.functions) || !manifest.functions.length
+    || manifest.functions.some((fn) => !/^[a-z0-9][a-z0-9-]*$/.test(fn?.name ?? ''))) {
+    fail('manifesto de edges invalido ou vazio');
+    return;
+  }
+  const nomesManifesto = new Set((manifest.functions || []).map((f) => f.name));
+  if (nomesManifesto.size !== manifest.functions.length) fail('nomes de edges duplicados no manifesto');
+  const dirs = new Set(
+    fs.readdirSync(FUNCTIONS_DIR, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith('_'))
+      .map((e) => e.name),
+  );
+  const soManifesto = [...nomesManifesto].filter((n) => !dirs.has(n)).sort((a, b) => a.localeCompare(b));
+  const soDisco = [...dirs].filter((n) => !nomesManifesto.has(n)).sort((a, b) => a.localeCompare(b));
+  console.log(`[edges] manifesto=${nomesManifesto.size} diretorios=${dirs.size}`);
+  if (soManifesto.length) fail(`edges so no manifesto: ${soManifesto.join(', ')}`);
+  if (soDisco.length) fail(`edges so em disco (fora do manifesto): ${soDisco.join(', ')}`);
+}
+
+// ── C) grants baseline ─────────────────────────────────────────────────
+function checkGrants() {
+  if (!url) {
+    skipped += 1;
+    console.log('[grants] pulado: DESTINO_URL ausente');
+    return;
+  }
+  const fresco = JSON.parse(psqlFile(GRANTS_SQL_PATH));
+  const commitado = JSON.parse(fs.readFileSync(GRANTS_BASELINE_PATH, 'utf8'));
+  // generated_at embute a data da regeneracao (to_char(now(),...)) e mudaria
+  // todo dia — o baseline compara apenas o conteudo de ACL.
+  // note/how_to_regenerate sao texto livre: divergencia neles derrubou a main em
+  // 2026-09-22 sem nenhuma mudanca de ACL. Qualquer outra chave continua comparada.
+  const METADADOS = new Set(['generated_at', 'note', 'how_to_regenerate']);
+  const soAcl = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !METADADOS.has(k)));
+  const a = JSON.stringify(canon(soAcl(fresco)));
+  const b = JSON.stringify(canon(soAcl(commitado)));
+  console.log(`[grants] fresco=${sha256(a)} commitado=${sha256(b)}`);
+  if (a !== b) {
+    fail(`grants-baseline desatualizado. Regenere: ${PSQL_BIN} "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -f ${GRANTS_SQL_PATH} > ${GRANTS_BASELINE_PATH}`);
+  }
+}
+
+// Erros inesperados (psql, JSON invalido) viram falha CONTROLADA da perna —
+// o gate continua fail-closed, sem stack trace nem credencial no output.
+if (args.some((arg) => arg !== '--require-live')) fail('argumento desconhecido');
+if (requireLive && !url) fail('--require-live exige DESTINO_URL; verificacao viva indisponivel');
+for (const [nome, fn] of [['migrations', checkMigrations], ['edges', checkEdges], ['grants', checkGrants]]) {
+  try {
+    fn();
+  } catch (err) {
+    fail(`[${nome}] erro inesperado: ${err.safeDiagnostic ? err.message : 'falha de leitura ou resposta invalida (detalhes omitidos)'}`);
+  }
+}
+
+if (failures > 0) {
+  console.error(`Paridade tripla: ${failures} falha(s).`);
+  process.exit(1);
+}
+if (skipped > 0) console.log(`PARCIAL: ${3 - skipped}/3 verificacoes executadas; banco NAO verificado. Use --require-live para exigir evidencia completa.`);
+else console.log('OK: paridade tripla verificada.');

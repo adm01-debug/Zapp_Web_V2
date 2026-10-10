@@ -1,0 +1,210 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "integrity": {
+    "head_verified": true,
+    "source_blobs_verified": 12,
+    "pins_sha256": "a01f19d51fdcf22cbfb90227053645491025207241d562f1ab53dc350cbbdf6f",
+    "derived_from_manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "runner_sha256": "a804a1bb478a256c7cc1780d65b43be4c39f495acbec52672732e0d9e937b7d6"
+  },
+  "engine": "v24.19.0",
+  "no_network": true,
+  "method": "Segunda passagem: TypeScript real e callbacks extraídos, fronteiras simuladas; sem React DOM.",
+  "source_blob_hashes": {
+    "src/hooks/system/useDownloadPermission.ts": "0c1c6a36db0f658dedad8376aed764addc961134",
+    "src/components/inbox/ImagePreview.tsx": "76de00c8dede81c06fa8ff859c2f2cef06dc7a4c",
+    "src/components/inbox/MediaPreview.tsx": "6c4d6e70322b59ce25752a552f19fa5d4197a8b8",
+    "src/hooks/reactions/useReactionMutations.ts": "68ea31a3ddeb91ad12c44b7b43787e6121d28379",
+    "src/lib/storage_object_reference.ts": "7edf9e17f861b96f90f2d346132b1e1557a0f97c",
+    "src/hooks/storage/useResolvedStorageUrl.ts": "fa8a58242a22ce01eecb47bd3e6736d859e98c3f",
+    "src/lib/localDay.ts": "6bb3e363d6004707db4be23e5c24c0b1cd9f5343",
+    "src/hooks/chat/useConversationHistoryTimeline.ts": "4d790869c2237aa1ee99d482f95405a3a064c161",
+    "src/hooks/tasks/workItemMachine.ts": "266de050ae37b87f7a1b63a0698d87dd6314d2e7",
+    "src/components/inbox/location-picker/useLocationPicker.ts": "33b12ea9d573a36442e404ea8220f494d38036a3",
+    "src/components/inbox/location-picker/useAddressAutocomplete.ts": "71a4e7d5928b2cf7a9b3038cf99309975a946183",
+    "src/components/inbox/LocationPicker.tsx": "17cf9e4cf47cd28618d98a6ba6b586c488459ab8"
+  },
+  "results": [
+    {
+      "id": "document_download_permission",
+      "description": "Documento inicia download mesmo com can_download=false; imagem bloqueia a mesma ação",
+      "observed": {
+        "profilePermission": false,
+        "imageBlockedBeforeFetch": true,
+        "documentEvents": [
+          "fetch",
+          "anchor-click"
+        ]
+      },
+      "limitations": "Query de permissão e handlers reais; URL autorizada para leitura e fetch/anchor simulados. Não prova barreira de segurança do Storage nem render DOM; o problema é a ausência de controle na ação de download versionada."
+    },
+    {
+      "id": "reaction_remote_failure_accepted",
+      "description": "Adicionar/remover reação resolve e invalida cache apesar da rejeição do transporte",
+      "observed": {
+        "addMutationFulfilled": true,
+        "localRowAddedDespiteProviderFailure": true,
+        "removeMutationFulfilled": true,
+        "localRowRemovedDespiteProviderFailure": true,
+        "providerRejections": 2,
+        "errorToasts": 0,
+        "successInvalidations": 2
+      },
+      "limitations": "Corpo real de useReactionMutations; contrato mutateAsync/onSuccess modelado, banco e envio simulados. Não afirma entrega nem convergência posterior de webhook real."
+    },
+    {
+      "id": "signed_url_refresh_cross_source",
+      "description": "Refresh de A termina depois de B e devolve B para loading sem URL ou nova requisição",
+      "observed": {
+        "beforeOldRefreshCompletes": {
+          "source": "https://fixture.invalid/storage/v1/object/public/whatsapp-media/b.jpg",
+          "url": "https://fixture.invalid/signed/b.jpg",
+          "isLoading": false
+        },
+        "after": {
+          "source": "https://fixture.invalid/storage/v1/object/public/whatsapp-media/b.jpg",
+          "url": "",
+          "isLoading": true,
+          "error": null
+        },
+        "signCalls": [
+          {
+            "bucket": "whatsapp-media",
+            "objectPath": "a.jpg",
+            "ttl": 3600
+          },
+          {
+            "bucket": "whatsapp-media",
+            "objectPath": "a.jpg",
+            "ttl": 3600
+          },
+          {
+            "bucket": "whatsapp-media",
+            "objectPath": "b.jpg",
+            "ttl": 3600
+          }
+        ]
+      },
+      "limitations": "Hook e parser reais; scheduler/hook harness e Storage simulados. activeState impede exibir A como B, mas fica em loading; navegação in-place da galeria confirmada estaticamente."
+    },
+    {
+      "id": "timeline_fixed_query_caps",
+      "description": "Carregar mais só amplia o slice; 201 transferências ou 501 mensagens terminam com dados omitidos",
+      "observed": {
+        "fixtureEvents": 201,
+        "visibleEvents": 200,
+        "canLoadOlderEvents": false,
+        "fixtureMessages": 501,
+        "messageSteps": [
+          {
+            "uiLimit": 200,
+            "rendered": 200,
+            "hasMore": true,
+            "total": 500
+          },
+          {
+            "uiLimit": 400,
+            "rendered": 400,
+            "hasMore": true,
+            "total": 500
+          },
+          {
+            "uiLimit": 600,
+            "rendered": 500,
+            "hasMore": false,
+            "total": 500
+          }
+        ],
+        "queryCaps": [
+          {
+            "table": "messages",
+            "cap": 500
+          },
+          {
+            "table": "conversation_events",
+            "cap": 200
+          },
+          {
+            "table": "messages",
+            "cap": 500
+          },
+          {
+            "table": "conversation_events",
+            "cap": 200
+          },
+          {
+            "table": "messages",
+            "cap": 500
+          },
+          {
+            "table": "conversation_events",
+            "cap": 200
+          },
+          {
+            "table": "messages",
+            "cap": 500
+          },
+          {
+            "table": "conversation_events",
+            "cap": 200
+          }
+        ]
+      },
+      "limitations": "QueryFn e buildTimeline reais, PostgREST modelado com os limits solicitados. Volume real não consultado; não é o cap de useMessages nem a amostra superior de ContactStatsStrip (SV-002)."
+    },
+    {
+      "id": "timeline_done_shown_pending",
+      "description": "Tarefa concluída pela máquina atual aparece Pendente na Jornada",
+      "observed": {
+        "persistedStatus": "done",
+        "completedAt": "2026-09-01T01:00:00.000Z",
+        "renderedPill": "Pendente"
+      },
+      "limitations": "applyTransition e buildTimeline reais; escrita persistida com status=done confirmada estaticamente no useMyWorkItems. Sem banco real."
+    },
+    {
+      "id": "gps_overwrites_newer_choice",
+      "description": "GPS pedido antes substitui depois o ponto manual escolhido mais recentemente",
+      "observed": {
+        "beforeGpsCallback": {
+          "lat": 1,
+          "lng": 2,
+          "name": "Escolha mais nova",
+          "address": "fixture",
+          "origin": "suggest"
+        },
+        "afterGpsCallback": {
+          "lat": 3,
+          "lng": 4,
+          "name": "GPS antigo",
+          "address": "fixture",
+          "origin": "gps"
+        }
+      },
+      "limitations": "Hook real, navegador/GPS/geocoding simulados. Picker permanece montado/aberto; não se alega reaparecimento após fechar, pois ChatDialogs desmonta o picker."
+    },
+    {
+      "id": "retrieve_survives_query_change",
+      "description": "Digite B durante retrieve de A: o consumidor ainda aplica a seleção antiga A",
+      "observed": {
+        "queryAtCompletion": "Lugar B",
+        "appliedPlace": "Lugar A",
+        "retrieveStillAccepted": true
+      },
+      "limitations": "Hook com reducer e callback do consumidor reais, requests e hooks simulados. Não invalida os guards já presentes para clear, disabled ou outra seleção; demonstra especificamente setQuery durante retrieve."
+    },
+    {
+      "id": "manual_forward_candidates_unrendered",
+      "description": "Forward com vários candidatos não seleciona ponto e o componente não consome a lista",
+      "observed": {
+        "multiple": {
+          "candidatesInHook": 2,
+          "selectedLocation": null,
+          "consumerReadsSearchResults": false
+        },
+        "singleResultSelectsAutomatically": "Lugar 1"
+      },
+      "limitations": "Hook real executado e ligação do componente conferida no TSX inteiro previamente fixado. Não monta DOM; a ausência da lista é evidência estática de consumidor, não inferência de dead code do hook."
+    }
+  ]
+}

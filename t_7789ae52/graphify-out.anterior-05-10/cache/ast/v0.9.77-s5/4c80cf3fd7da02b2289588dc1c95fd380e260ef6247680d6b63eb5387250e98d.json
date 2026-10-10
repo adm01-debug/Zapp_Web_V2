@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927460000_revoke_sync_contact_status_closure_anon_sql", "label": "20260927460000_revoke_sync_contact_status_closure_anon.sql", "file_type": "code", "source_file": "supabase/migrations/20260927460000_revoke_sync_contact_status_closure_anon.sql", "source_location": null}], "edges": []}

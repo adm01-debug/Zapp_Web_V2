@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "finding_total": 41,
+  "finding_counts": {
+    "P1": 8,
+    "P2": 29,
+    "P3": 4
+  },
+  "coverage_counts": {
+    "total": 749,
+    "targeted": 57,
+    "semantic": 370,
+    "structural": 322
+  },
+  "evidence_refs": 207,
+  "source_evidence_refs": 203,
+  "source_hashes_checked": 749,
+  "added_ids": [
+    "R2-INF-040",
+    "R2-INF-041"
+  ],
+  "primary_files": 7,
+  "primary_lines": 685,
+  "primary_remaining": 0,
+  "preserved_prior_findings_sha256": "d05f69c2b0cd5a79af10651471091f9b68f2b71114eb2a765cbab8fe476fd26c",
+  "artifact_hashes": {
+    "findings.json": "af1c12f263d74c19e64632f4706d78f3e3a8cae1893474e834610149b89bcfee",
+    "coverage.json": "3ae941688e03f21f5c62b70f814419d00edcc48726233ded74b4a2c2aabe55fe",
+    "report.md": "4781e5b0838957fd62065a17872233f07bc2c9fe0c59796b0e2a5fe0b87cb96c",
+    "telemetry-error-findings.json": "08333ef527383dc20a2054bee28a252328742ab129c5644f249928f3a921e86f",
+    "telemetry-error-coverage.json": "e1f85ab45c26485cb2c1b5f97d7563777c8cae0e188a9b074e71ee88f2f31696",
+    "telemetry-error-report.md": "b98a99f3fe8e4deb6b3b761f73c7491939dc4e8e3799e940ae04922e42a67f93",
+    "merge_finite_batch.py": "7434bfaf4187797e06d18f5221707aee4e661a6f3fa522c6aed9fbd2d4f02d0c",
+    "telemetry-error-probes.json": "3fd51cee9e14d1f2f4b6e3ef3ff498aba9a5e7a5ea4eecfa9bc83c2bdc5e1360",
+    "telemetry-error-probe-pins.json": "31a3ba77dc72d4d79b97f1eb44b8ee69d6b679d76dfef98565c87d4eda1c1c93",
+    "probe-telemetry-error.mjs": "dc05bf1106a6daa107c49c94cc6fe4439795f9e097a39f6d07b83a83d0ac9a4c",
+    "finalize_telemetry_error_review.py": "72389f765fb41f298df5621b5ae7b02148fbf469405604754b568d77043e618d",
+    "extend_inf019.py": "d8915947ff5c68c39476a1602f28c67d29b4ded520633612e0db5b93494a0fed",
+    "append_second_pass.py": "37f0da78f740c5379799dea7c9f009a981f4faef72fb91d10974c3e28c5f9b28",
+    "findings-second-pass.json": "508983ec8cf387a308c096dfdbd06e07cebdbe28e4ed52fdb1bd3265b208aaf8"
+  }
+}

@@ -1,0 +1,254 @@
+cartao	perfil	prioridade	status	modulo	titulo	id_inventario
+SL-001	worker	P0	NAO_VERIFICAVEL	CI/DevOps	Mergear a PR #1343 de types-sync	E03
+SL-002	hugo	P0	NAO_IMPLEMENTADA	Telefonia	it.todo: enforcement de SRTP explicito nas opcoes do SessionDescriptionHandler	
+SL-003	worker	P1	NAO_IMPLEMENTADA	CI/DevOps	Monitor de uptime externo em /version.json com alerta	passo 2
+SL-004	iris	P1	NAO_IMPLEMENTADA	CRM360	format(new Date('yyyy-MM-dd')) mostra data de nascimento/fundação um dia antes	R3-04
+SL-005	workertestes	P1	NAO_VERIFICAVEL	Catálogo	Envio real com falha induzida (foto inválida) resultando em partial	CT-11
+SL-006	hugo	P1	PARCIAL	Catálogo	e2e/catalog.spec.ts verde atravessando login até o envio	CT-82
+SL-007	hugo	P1	NAO_IMPLEMENTADA	IA	elevenlabs-voice-design exige papel e audita criação de voz	B3
+SL-008	hugo	P1	NAO_IMPLEMENTADA	IA	Lista fechada de vozes/modelos TTS aceitos (voice_id livre)	B4
+SL-009	worker	P1	NAO_IMPLEMENTADA	IA	feature_flags lidas no servidor para desligar capacidade de IA	B8
+SL-010	worker	P1	NAO_IMPLEMENTADA	IA	Kill switch por capacidade/bot/provedor operável no servidor	IA-009
+SL-011	worker	P1	NAO_IMPLEMENTADA	IA	Alertas de consumo anômalo (apenas projeto DESIGN_ONLY)	IA-058
+SL-012	worker	P1	NAO_VERIFICAVEL	IA	Aplicar resultado do backend em churn/classificação; campos do histórico; fontes gerenciais	A3/A4/A5
+SL-013	hugo	P1	PARCIAL	IA	Toda chamada paga gera linha no ledger (elevenlabs-*, voice-agent, classify-*)	B6
+SL-014	hugo	P1	PARCIAL	IA	ai-proxy não aceita provider_id/model do cliente	B5
+SL-015	hugo	P1	PARCIAL	IA	voice-copilot-action:assign_conversation checa papel	L4
+SL-016	hugo	P1	NAO_IMPLEMENTADA	Inbox/Chat	Hooks passam a usar get_team_inbox / get_team_messages_page / mark_team_conversation_read / toggle_team_reaction / set_team_member_pref	F53-F63
+SL-017	vera	P1	PARCIAL	Inbox/Chat	Janela do bloqueio da Meta: banner honesto, retomada controlada, runbook	F0 E01-E07
+SL-018	hugo	P1	NAO_IMPLEMENTADA	Telefonia	it.todo: espera (hold), transferencia e conferencia de chamada	
+SL-019	worker	P1	NAO_VERIFICAVEL	Telefonia	Homologação de áudio com agente real e reconciliação de chamadas presas em ringing	T96/T97
+SL-020	iris	P2	PARCIAL	Acessibilidade	Contraste >=4,5:1 do player/slider nos 3 temas (slider trilha 1,30-2,88)	E18
+SL-021	iris	P2	PARCIAL	Acessibilidade	Print do teclado virtual aberto (4o print obrigatorio)	E65
+SL-022	iris	P2	PARCIAL	Acessibilidade	WCAG 2.1 AA, leitor de tela, teclado 100%	a11y
+SL-023	worker	P2	NAO_IMPLEMENTADA	CI/DevOps	Dedupe de 'Registrar falha dos gates' por causa (marcador + 6h)	E20
+SL-024	worker	P2	NAO_IMPLEMENTADA	CI/DevOps	Filtrar workflow_runs por head_branch automation/types-sync além do head_sha	E21
+SL-025	worker	P2	NAO_IMPLEMENTADA	CI/DevOps	peter-evans/create-pull-request com labels automerge-ok e auto-merge	E22
+SL-026	worker	P2	NAO_IMPLEMENTADA	CI/DevOps	Separar job '🦕 Edge contracts'	E70
+SL-027	edgar	P2	NAO_IMPLEMENTADA	CI/DevOps	Política explícita de Deno/runtime/lock em PR própria	§8 item 6
+SL-028	workertestes	P2	NAO_VERIFICAVEL	CI/DevOps	Contagem da suite (4153 do autor / 4244 do auditor) incorreta; correto 4217 (305 arquivos)	W1-5
+SL-029	workertestes	P2	NAO_VERIFICAVEL	CI/DevOps	Teste de restore de backup com evidência	S2-8
+SL-030	vera	P2	PARCIAL	CI/DevOps	Corrigir CLAUDE.md nos 5 pontos divergentes (contagem de workflows, strict, revisor, cadência, auto-merge)	E11
+SL-031	hugo	P2	PARCIAL	CI/DevOps	retries 2 só em logados, trace retain-on-failure, video off	E81
+SL-032	worker	P2	PARCIAL	CI/DevOps	approvals=1, bun audit --prod bloqueante, husky, Node 24	P10/S1-4
+SL-033	iris	P2	PARCIAL	CI/DevOps	Gate AST de Realtime aceita 10 regressões como aprovadas	P2-01
+SL-034	vera	P2	PARCIAL	CI/DevOps	PR documental, proveniência Edge, ledger (15 limitações), config runtime	§8 itens 1,5,7,8
+SL-035	hugo	P2	PARCIAL	CI/DevOps	Hooks de commit: husky + lint-staged + commitlint	001
+SL-036	iris	P2	NAO_VERIFICAVEL	CRM360	Ativar CRM_SYNC_WORKER_ENABLED=true apos lote 1 manual e VITE_CRM_INTEGRATION_ENABLED=true	Fase 2-3
+SL-037	iris	P2	NAO_IMPLEMENTADA	Catálogo	Breadcrumbs Sentry catalog.* e alerta CATALOG_UPSTREAM_ERROR >5/min	CT-93
+SL-038	iris	P2	NAO_IMPLEMENTADA	Catálogo	Trocar badges emerald/orange/rose por tokens que sigam os 4 temas	DEC-2
+SL-039	hugo	P2	NAO_IMPLEMENTADA	Catálogo	Spec de envio de produto skipado ate E2E_CATALOG_PRODUCT_SKU_VERIFIED=true (SKU PO-13153 nao confirmado no PromoGifts) — pendencia CT-81	
+SL-040	iris	P2	PARCIAL	Catálogo	Select de categoria em árvore (raiz semibold, filhos indentados) com contagem	CT-60
+SL-041	iris	P2	PARCIAL	Catálogo	alt descritivo (nome+cor) e contraste dos badges >=4,5:1	CT-69
+SL-042	worker	P2	PARCIAL	Catálogo	Payload list_products compact < 30 KB por página	CT-73
+SL-043	hugo	P2	PARCIAL	Configurações/Notificações	Badge Teams via useTeamUnreadTotal, listener global, digitando, menções, push→conversa, realtime hardening	F83-F88
+SL-044	worker	P2	NAO_IMPLEMENTADA	Dashboard/Analytics	Contagem aproximada/cacheada ou visibilidade materializada para listas com >30k contatos (piso de ~500 ms em 100k)	W4-5
+SL-045	worker	P2	NAO_IMPLEMENTADA	Dashboard/Analytics	View slo_inbound_latency_daily (p50/p95)	passo 4
+SL-046	iris	P2	NAO_VERIFICAVEL	Design System/UI	Revisao visual das telas densas apos 193 trocas de meia-medida (quebra de linha em tabelas)	F3 item 12
+SL-047	workertestes	P2	NAO_IMPLEMENTADA	E-mail	Playwright responsivo/acessível e matriz de permissões com atendente real	ES-45/ES-04
+SL-048	worker	P2	NAO_VERIFICAVEL	E-mail	Reexecutar advisors Supabase (policies/grants) do backend de e-mail	ADV-1
+SL-049	iris	P2	NAO_VERIFICAVEL	E-mail	Aceite do contrato empresarial contra o Singu vivo	ES-03
+SL-050	edgar	P2	NAO_IMPLEMENTADA	Edge Functions	Schema Zod para o corpo de evolution-api	E45
+SL-051	edgar	P2	NAO_IMPLEMENTADA	Edge Functions	Correlation ID, edges health/status/metrics, db-health-monitor	034-036
+SL-052	edgar	P2	NAO_VERIFICAVEL	Edge Functions	disconnect engole erro de store_gmail_tokens; thread_id null em gmail-send	M5
+SL-053	edgar	P2	PARCIAL	Edge Functions	QR/connect/logout/status e health-check por instância	F3 E23-E29
+SL-054	edgar	P2	PARCIAL	Edge Functions	DLQ operável, página admin de mensagens falhas e backoff compartilhado	021-023
+SL-055	edgar	P2	PARCIAL	Edge Functions	Circuit breaker e pausa por instância Evolution	027-028
+SL-056	edgar	P2	PARCIAL	Edge Functions	Sentry no front e nas edges	031-032
+SL-057	edgar	P2	PARCIAL	Edge Functions	contract-kit (422 único), versionamento, invokeEdge/runtimeGuards, gates de paridade front-edge	041-045
+SL-058	worker	P2	NAO_IMPLEMENTADA	IA	Perfil somente-leitura inexistente no modelo de papéis	B10
+SL-059	worker	P2	NAO_IMPLEMENTADA	IA	Provisionar dados sintéticos e 4 perfis de ensaio	IA-010
+SL-060	worker	P2	NAO_IMPLEMENTADA	IA	12 metas de qualidade (ex.: M4 >=95% factual com 200 casos)	M1-M12
+SL-061	edgar	P2	NAO_IMPLEMENTADA	IA	Evolution webhook sem assinatura aceito por padrão (strictMode=false)	L6
+SL-062	worker	P2	NAO_IMPLEMENTADA	IA	departments.whatsapp_api_key em texto puro (Vault)	L11
+SL-063	iris	P2	NAO_IMPLEMENTADA	IA	4 chips de tom (Mais formal/casual/curta/detalhada) que regeneram a sugestão	ETAPA-40a
+SL-064	iris	P2	NAO_IMPLEMENTADA	IA	Badge de contagem e chip de severidade no card de objeções	ETAPA-40b
+SL-065	worker	P2	NAO_VERIFICAVEL	IA	Escolha de conexão no envio sem distinção de fila/departamento	L7
+SL-066	hugo	P2	PARCIAL	IA	Classificação de áudio pelo conteúdo sonoro, não pelo nome	A8
+SL-067	hugo	P2	PARCIAL	IA	get_conversation_tab_counts p/ service_role; bypass service key; validação de posse no áudio	L10/L12/L13
+SL-068	hugo	P2	PARCIAL	IA	2 Deno.test com ignore: !BASE (so rodam com URL base do ambiente)	
+SL-069	worker	P2	NAO_IMPLEMENTADA	Inbox/Chat	DepartmentInvitesView, WhatsAppView, DROP department_invites, Entrar via Código, set_profile_department	F76-F82
+SL-070	worker	P2	NAO_IMPLEMENTADA	Inbox/Chat	Fila offline IndexedDB e throttle de envio com dedupe entre abas	025-026
+SL-071	iris	P2	NAO_IMPLEMENTADA	Inbox/Chat	Remover derivacao por messages.length, corrigir useBulkActions/CRMAutoSync, ligar flag por padrao e apagar codigo antigo	passo 3
+SL-072	iris	P2	NAO_IMPLEMENTADA	Inbox/Chat	Gravacao de audio do chat interno usa webm (nao toca no Safari); sugere fallback mp4/m4a	
+SL-073	iris	P2	NAO_IMPLEMENTADA	Inbox/Chat	it.todo: persistencia/invalidacao das mutations e renderizacao de midia/lista/acessibilidade	
+SL-074	hugo	P2	NAO_IMPLEMENTADA	Inbox/Chat	test.fixme: volume escolhido em <audio> nao e provado porque o fixture nao tem mensagem de audio	
+SL-075	worker	P2	NAO_VERIFICAVEL	Inbox/Chat	Trava de Nova conexão até F1-F3; remover actions que a GO não tem; grants de whatsapp_connections	F6 E42-E44
+SL-076	worker	P2	NAO_VERIFICAVEL	Inbox/Chat	Banner de conexão WhatsApp (z-index 90, 44px) cobre 83% da barra de abas	BUG-2
+SL-077	worker	P2	NAO_VERIFICAVEL	Inbox/Chat	QA das 8 abas (geometria, cores carvão, 18 checks funcionais, mobile, light, reduced-motion)	CP8
+SL-078	iris	P2	NAO_VERIFICAVEL	Inbox/Chat	Confirmacao visual do envio real de localizacao no WhatsApp	E94
+SL-079	worker	P2	NAO_VERIFICAVEL	Inbox/Chat	Reabertura automatica resolved|archived -> open via ingest_inbound_message	reabertura
+SL-080	iris	P2	PARCIAL	Inbox/Chat	Pausa de 429 sem acao: botao Tentar novamente sumia e contador ficava em 0 s	A3-04
+SL-081	hugo	P2	PARCIAL	Inbox/Chat	README de canais realtime, teamChatTypes derivado, queryKeys.ts	F49-F52
+SL-082	iris	P2	PARCIAL	Inbox/Chat	TeamChatPanel compõe TeamMessageItem, header ligado, busca server-side, paginação, GroupManagementDialog, presença real, TTS, estatísticas	F64-F75
+SL-083	iris	P2	PARCIAL	Inbox/Chat	Encaminhar stub, apagadas voltando, copiar link com URL assinada, assinatura por card	G1-G5
+SL-084	iris	P2	PARCIAL	Inbox/Chat	32 it.todo com corpo e titulos corrompidos (\"imagesmages\", \"uploadpload\"): rascunho, paste de imagem, gravacao de audio, resposta, TTS, busca, men	
+SL-085	worker	P2	NAO_IMPLEMENTADA	Outros	Zod schemas + zodResolver + maxLength nos formulários	S2-1
+SL-086	edgar	P2	NAO_IMPLEMENTADA	Outros	Classificação automática, filas e chatbot L1	Bloco 11 (101-110)
+SL-087	worker	P2	NAO_IMPLEMENTADA	Outros	Voz, transcrição, TTS e comandos	Bloco 13 (121-130)
+SL-088	hugo	P2	NAO_IMPLEMENTADA	Outros	Testes integrados, avaliações e critérios de qualidade	Bloco 19 (181-190)
+SL-089	workertestes	P2	NAO_VERIFICAVEL	Outros	Contas e dados de homologação para E2E positivo de envio, CRM e campanhas	§6 homologação
+SL-090	worker	P2	PARCIAL	Outros	noImplicitAny: true via ratchet	S2-2
+SL-091	hugo	P2	PARCIAL	Outros	Reduzir dívida de lint (955 problemas em 29/09) em 6 fatias	fatias F1-F6
+SL-092	worker	P2	PARCIAL	Outros	Reduzir baseline de lint (1115 na época)	E39
+SL-093	worker	P2	PARCIAL	Outros	Observabilidade, custos e resultados de negócio	Bloco 06 (051-060)
+SL-094	edgar	P2	PARCIAL	Outros	Visão, resumo e contexto verificável	Bloco 07 (061-070)
+SL-095	worker	P2	NAO_IMPLEMENTADA	Performance	Cache do Bun nos jobs	E67
+SL-096	workertestes	P2	NAO_IMPLEMENTADA	Performance	Cache dos browsers Playwright	E68
+SL-097	workertestes	P2	NAO_IMPLEMENTADA	Performance	Paralelizar jobs do ci.yml (test/security/e2e sem needs de lint)	E69
+SL-098	worker	P2	NAO_IMPLEMENTADA	Performance	Pular jobs pesados em PR draft	E71
+SL-099	hugo	P2	NAO_VERIFICAVEL	Performance	GET messages limit=1000 dá 500 (statement timeout 57014)	§8b
+SL-100	workertestes	P2	PARCIAL	Performance	Artifacts: dist só em dispatch, coverage só na main, playwright-report só em falha	E72
+SL-101	iris	P2	PARCIAL	Performance	Cancelar/limpar o timer de useSendProduct (teste/unmount) para evitar falha latente da suíte	C-06/#5a
+SL-102	vera	P2	PARCIAL	Performance	Uptime externo + SLO mínimo + x-request-id ponta a ponta	S2-4
+SL-103	iris	P2	PARCIAL	Performance	Initial JS <= 300 KB (337,8 KB hoje; margem de 3,2 KB no teto de 341 KB)	meta 300 KB
+SL-104	worker	P2	PARCIAL	Performance	UPDATE de marcar como lido em 551 ms por REPLICA IDENTITY FULL + realtime	#2 mark read
+SL-105	worker	P2	PARCIAL	Performance	Targets FCP<1,5s, TTI<3s, Lighthouse>90	metricas web
+SL-106	iris	P2	NAO_IMPLEMENTADA	Telefonia	Painel vira Sheet <1280, CallRowMobile em 390	T77
+SL-107	hugo	P2	NAO_IMPLEMENTADA	Telefonia	e2e/telefonia.spec.ts no e2e-logado.yml	T86
+SL-108	workertestes	P2	NAO_IMPLEMENTADA	Telefonia	Nenhum teste renderiza AppProviders/App (risco de regressão sem E2E de VoIP)	ACH-3
+SL-109	worker	P2	NAO_VERIFICAVEL	Telefonia	Split-brain de discagem: VoIPPanel/ActiveCallBar usam métodos crus do useSipClient	ACH-1
+SL-110	iris	P2	PARCIAL	Telefonia	aria-label em ícone-botão, caption sr-only, linhas tabIndex+setas, aria-live, contraste	T76
+SL-111	hugo	P2	PARCIAL	Telefonia	Testes de código do motor SIP (486/480/603, reconexão, DTMF)	T85
+SL-112	iris	P3	NAO_IMPLEMENTADA	Acessibilidade	App Shortcuts no manifest PWA	P2-3.14
+SL-113	iris	P3	NAO_VERIFICAVEL	Acessibilidade	Checklist de navegadores incl. Edge	E46
+SL-114	iris	P3	NAO_VERIFICAVEL	Acessibilidade	Zoom 200% nas 5 telas, alvo de toque dos rotulos 9-10px, axe nas 5 telas e decisao de piso 11px	E73-E76
+SL-115	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Medir pendencias declaradas (concorrencia 30k/100k, sort updated_at, CREATE INDEX concorrente, cenarios extras em 30k/100k)	W4-7
+SL-116	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Fonte única de versões .github/toolchain.json	E75
+SL-117	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Dependabot docker/toolchain bump semanal	E77
+SL-118	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	concurrency por SHA na main se cancelamento >20%	E80
+SL-119	workertestes	P3	NAO_IMPLEMENTADA	CI/DevOps	Mover firefox-auth/webkit-auth para e2e-logado	E88
+SL-120	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Adicionar '🦕 Edge contracts' aos required checks após 7 dias verde	E100
+SL-121	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Branch Protection Sentinel, PR Size Gate e Notify CI Failure	007-008
+SL-122	vera	P3	NAO_IMPLEMENTADA	CI/DevOps	ESTADO.md, FEATURE_REGISTRY.md e TESTING_CONVENTION.md	009-010
+SL-123	hugo	P3	NAO_IMPLEMENTADA	CI/DevOps	Ligar piso de cobertura por arquivo (perFile:true) - ContactForm 58% branches e mapboxLoader 0%	perFile
+SL-124	worker	P3	NAO_IMPLEMENTADA	CI/DevOps	Tornar DB Live Guard check obrigatorio apos 7 dias verdes	DB Live Guard
+SL-125	hugo	P3	NAO_IMPLEMENTADA	CI/DevOps	Baseline ESLint: 522 achados em 291 arquivos (265 erros, 257 avisos); regras: no-restricted-imports 132, react-refresh/only-export-components 96, reac	
+SL-126	vera	P3	NAO_VERIFICAVEL	CI/DevOps	Corrigir no PR #1314 as contagens (17→15 funções; ~63→44 ocorrências/5 fail-open)	A6
+SL-127	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Auditores não devem extrair cópias do repo dentro de .tmp do workspace (contamina ratchet de lint)	A8
+SL-128	workertestes	P3	NAO_VERIFICAVEL	CI/DevOps	Avaliar supabase start + seed mínimo para suíte logada	E86
+SL-129	iris	P3	NAO_VERIFICAVEL	CI/DevOps	Inventariar e podar os 9 GitHub Apps (Greptile, etc.)	E89
+SL-130	worker	P3	NAO_VERIFICAVEL	CI/DevOps	--update-baseline em commit próprio (16 entradas fantasma)	#8
+SL-131	workertestes	P3	NAO_VERIFICAVEL	CI/DevOps	Pinar contratos visíveis não cobertos (um PR de teste por módulo)	T1-T6
+SL-132	workertestes	P3	NAO_VERIFICAVEL	CI/DevOps	useSendProduct/useTheme timers vazando e waitFor de 1 s do TasksModule B13	Flaky
+SL-133	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Build local sem SHA de commit (local-...)	A-07
+SL-134	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Coordenar checkout local com outro agente e preservar objetos recuperáveis	§8 itens 2-3
+SL-135	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Total de remotos <= 25 (31 na época)	E04
+SL-136	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Aposentar o dispatcher N8N de Graph Sync	E45
+SL-137	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Prettier com plugin Tailwind e ESLint Tailwind	002
+SL-138	worker	P3	NAO_VERIFICAVEL	CI/DevOps	scripts/ci/typecheck-ratchet.mjs quebrado com exit 2 do tsc	DIV-1
+SL-139	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Gates 6/8 + 2 com dívida pré-existente (lint e typecheck-ratchet)	CP12
+SL-140	hugo	P3	NAO_VERIFICAVEL	CI/DevOps	Dívida pré-existente de typecheck/implicit-any (ThemeCustomizer, PresetCard, presets.ts, contact.service.ts)	RES-gates
+SL-141	edgar	P3	NAO_VERIFICAVEL	CI/DevOps	Revisao de 7 dias (logs, cron, webhooks, custo)	100
+SL-142	worker	P3	NAO_VERIFICAVEL	CI/DevOps	Subir required_approving_review_count para 1 quando houver 2o colaborador	revisao
+SL-143	vera	P3	PARCIAL	CI/DevOps	Seção 'Perímetro do GitHub' no CLAUDE.md com tabela canônica	E95
+SL-144	hugo	P3	PARCIAL	CI/DevOps	Entrada from:department_whatsapp_configs continua no baseline	baseline
+SL-145	worker	P3	PARCIAL	CI/DevOps	Seção Perímetro do GitHub com tabela canônica	E95
+SL-146	worker	P3	PARCIAL	CI/DevOps	CODEOWNERS por área e ownership-gate	004
+SL-147	worker	P3	PARCIAL	CI/DevOps	Trocar .nvmrc para 20.19.0 e npm ci por bun install --frozen-lockfile	72
+SL-148	worker	P3	PARCIAL	CI/DevOps	Merge em main e tag v2.0.0-hostinger com release notes	77-78
+SL-149	edgar	P3	PARCIAL	CI/DevOps	E2E de fluxo de mensagens, teste por webhook event, runbook de troubleshooting	Sprint 4
+SL-150	worker	P3	NAO_IMPLEMENTADA	CRM360	Link "Ver no CRM" no Resumo Comercial	DIF-2
+SL-151	iris	P3	NAO_VERIFICAVEL	CRM360	Campos sem fonte (segmento/porte/CNPJ/última visualização/ligações) omitidos e tabelas comerciais vazias	RES-2
+SL-152	iris	P3	PARCIAL	CRM360	Galeria de mídia por contato, segmentos, CRM plugável, automações, follow-up	072-076
+SL-153	vera	P3	NAO_IMPLEMENTADA	Catálogo	Marcar checkboxes do plano de 11/09 conforme estado real	CT-99
+SL-154	iris	P3	NAO_IMPLEMENTADA	Catálogo	Incluir src/components/catalog/** no coverage.include e gate de 80%	DEC-1
+SL-155	hugo	P3	NAO_IMPLEMENTADA	Catálogo	Adicionar seção "Catálogo" ao CLAUDE.md	REL-1
+SL-156	hugo	P3	NAO_VERIFICAVEL	Catálogo	Testes Deno das 6 ações da edge promogifts-catalog	E30
+SL-157	hugo	P3	NAO_VERIFICAVEL	Catálogo	Anon key JWT literal versionada em client.ts/.env.production/e2e (CT-92 informativo)	SEC-1
+SL-158	vera	P3	PARCIAL	Catálogo	Tag catalog-v1.0.0, notas e HANDOFF_v1	CT-100
+SL-159	edgar	P3	NAO_IMPLEMENTADA	Configurações/Notificações	Notificação de falha da main via WhatsApp (N8N + Evolution)	E90
+SL-160	iris	P3	NAO_IMPLEMENTADA	Configurações/Notificações	Integracao com Google Calendar	P2-3.4
+SL-161	hugo	P3	NAO_IMPLEMENTADA	Configurações/Notificações	Divida ESLint por modulo: settings 27, admin 17, dashboard 14, contacts 11, security 10, performance 9, gamification 8 (componentes) + hooks: chat 13,	
+SL-162	worker	P3	NAO_VERIFICAVEL	Configurações/Notificações	Dispatcher de notificações, auto-export em bucket privado, limpeza de órfãos no Storage, sync de grupos/templates	084-087
+SL-163	hugo	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Chave de conquista por dia UTC (latente a leste de UTC)	R3-07
+SL-164	worker	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Capacidade máxima e deltas de Conversas Abertas/Não Lidas omitidos (sem fonte)	RES-capacidade
+SL-165	worker	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Chip de provedor "Ativo" e estrelas/CSAT sem dado real	RES-ia
+SL-166	worker	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Ritmo vertical +10-12px, row3 246 vs 220, tabActiveWidth 116 vs 139 e sidebar 234 vs 193px	RES-geom
+SL-167	worker	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Coluna "SLA" no ranking de Equipe (cruzar useSLAMetrics por agentId)	RES-sla-equipe
+SL-168	iris	P3	NAO_IMPLEMENTADA	Dashboard/Analytics	Tile "Personalizada" mapeado para biweekly por falta de valor custom	RES-personalizada
+SL-169	worker	P3	NAO_VERIFICAVEL	Dashboard/Analytics	Rótulo SLA violado hoje (fallback) e barra SLA da Equipe sem fonte	RES-sla
+SL-170	iris	P3	PARCIAL	Dashboard/Analytics	Arquivos sem uso: RealtimeMetricsPanel, FloatingParticles, WidgetConfigSheet, DraggableWidgetContainer	RES-limpeza
+SL-171	iris	P3	NAO_IMPLEMENTADA	Design System/UI	BreadcrumbBar com botão Teletransporte e LayoutContext.hasBreadcrumbBar	CP3
+SL-172	iris	P3	NAO_IMPLEMENTADA	Design System/UI	StarBackground (60 pontos, lazy, só dark)	CP6
+SL-173	iris	P3	NAO_IMPLEMENTADA	Design System/UI	Fidelidade visual Playwright e 14 checks funcionais E2E (login QA bloqueado)	CP8/CP9
+SL-174	iris	P3	NAO_IMPLEMENTADA	Design System/UI	Trava de regressão do layout (teste de contrato do shell)	Fase D
+SL-175	iris	P3	NAO_IMPLEMENTADA	Design System/UI	Eliminar 7 componentes duplicados (FloatingParticles, ConversationHeatmap, ScheduledReportsManager, BulkActionsBar, MiniSparkline, TrendIndicator, Met	frontend 5
+SL-176	worker	P3	NAO_IMPLEMENTADA	Design System/UI	Absorver 13px/15px em text-sm/text-base e substituir text-[7px] (3) e text-[8px] (11) por 10px + tooltip	E33-E34,E39-E40
+SL-177	hugo	P3	NAO_IMPLEMENTADA	Design System/UI	Remover fontSize.fluid-* do Tailwind e tokens --text-* nao consumidos	E43-E44
+SL-178	vera	P3	NAO_IMPLEMENTADA	Design System/UI	Registrar excecoes conscientes em docs/tipografia/EXCECOES.md (120px NotFound, system-ui do boot)	E66
+SL-179	iris	P3	NAO_IMPLEMENTADA	Design System/UI	Divida ESLint em src/components/ui: 44 achados em 23 arquivos (principalmente react-refresh/only-export-components)	
+SL-180	vera	P3	NAO_VERIFICAVEL	Design System/UI	Corrigir docs/design (TAREFAS_QUADRO_STATUS, PLANO_INBOX_360, PLANO_INBOX_FIDELIDADE_CARVAO) com ordem antiga das abas	§8d
+SL-181	worker	P3	NAO_VERIFICAVEL	Design System/UI	Medições ΔE page/card/sidebar, fonts, light e skin do CP1	CP1/CP11
+SL-182	worker	P3	NAO_VERIFICAVEL	Design System/UI	PR/CI/merge da branch design/promo-gifts-system	CP12
+SL-183	iris	P3	PARCIAL	Design System/UI	Prompt de continuação do design system Promo Gifts (AppHeader, Breadcrumb, Sidebar, StarBackground, UI primitives, motion)	FASES 2-12
+SL-184	vera	P3	NAO_IMPLEMENTADA	Documentação	Criar docs/DB-INVENTORY.md	Bloco K 11
+SL-185	worker	P3	NAO_IMPLEMENTADA	E-mail	Outlook/Microsoft Graph, tracking pixel, Resend + IMAP	081-083
+SL-186	iris	P3	NAO_VERIFICAVEL	E-mail	Comparação pixel a pixel contra referencias/01_EMAIL_DIRECAO_VISUAL.png	AC-002/AC-010
+SL-187	worker	P3	PARCIAL	E-mail	Medição de volume/memória/consultas/iframes/listeners (jsdom)	EN-088
+SL-188	edgar	P3	NAO_IMPLEMENTADA	Edge Functions	Registry de provedores, provider fake, WhatsApp Cloud API como 2º provedor, switchover	046-050
+SL-189	edgar	P3	NAO_IMPLEMENTADA	Edge Functions	Consolidar webhooks (Evolution, Gmail, Sicoob) e ampliar E2E do chatbot L1	consolidar webhooks
+SL-190	edgar	P3	NAO_IMPLEMENTADA	Edge Functions	Eventos TYPEBOT_* marcados NAO IMPLEMENTADO	TYPEBOT
+SL-191	worker	P3	NAO_VERIFICAVEL	Filas/SLA	Agendador de cron administrável e dispatcher de CSAT/NPS	079-080
+SL-192	worker	P3	PARCIAL	Filas/SLA	Roteador sticky + round-robin + skills; rebalanceamento e escalonamento de SLA	077-078
+SL-193	worker	P3	NAO_VERIFICAVEL	IA	ai-churn-analysis e ai-classify-tickets não devem consumir cota de IA real	B9
+SL-194	hugo	P3	NAO_VERIFICAVEL	IA	auth_test.ts de ai-auto-tag fora do CI	B13
+SL-195	edgar	P3	PARCIAL	IA	Transcrição v7/STT unificado, ai-router e elevenlabs-voice, stats HMAC e outbox	088-090
+SL-196	iris	P3	PARCIAL	IA	Builder visual de automacoes	P2-3.11
+SL-197	worker	P3	NAO_IMPLEMENTADA	Inbox/Chat	Métricas de retry e tentativas por mensagem (message_attempts)	029
+SL-198	worker	P3	NAO_IMPLEMENTADA	Inbox/Chat	Timeline de envio por mensagem; barra de falhas e progresso de fila	061-062
+SL-199	worker	P3	NAO_IMPLEMENTADA	Inbox/Chat	Presença "Online" por contato na lista de conversas	RES-presenca
+SL-200	worker	P3	NAO_IMPLEMENTADA	Inbox/Chat	Card de produto na mensagem do chat (etapa 45)	RES-card-produto
+SL-201	hugo	P3	NAO_IMPLEMENTADA	Inbox/Chat	Actions para recursos exclusivos da GO: /chat/mute|pin, /send/carousel, /send/link, markplayed, /community, /newsletter, polls results	exclusivos GO
+SL-202	iris	P3	NAO_IMPLEMENTADA	Inbox/Chat	Divida ESLint concentrada em src/components/inbox: 152 achados (75 react-hooks/refs, 38 no-restricted-imports, 18 react-refresh, 9 set-state-in-effect	
+SL-203	worker	P3	NAO_VERIFICAVEL	Inbox/Chat	Janela de 7 dias (168 h) vs 7 dias de calendário — decisão de produto	§3
+SL-204	worker	P3	NAO_VERIFICAVEL	Inbox/Chat	Rótulo 'Últimos 7 dias' sobre janela rolante de 168 h	R3-06
+SL-205	hugo	P3	NAO_VERIFICAVEL	Inbox/Chat	Helper de dedupe sem TTL por entrada	P3-01
+SL-206	worker	P3	NAO_VERIFICAVEL	Inbox/Chat	Presets/persistência de filtros da inbox; deep links ?contact=/?message=	063-064
+SL-207	worker	P3	NAO_VERIFICAVEL	Inbox/Chat	Composer só aparece na aba Chat (referência mostra em outras abas)	RES-1
+SL-208	worker	P3	NAO_VERIFICAVEL	Inbox/Chat	Screenshots fid-*.png, mobile e light reais (login de QA bloqueado)	RES-QA
+SL-209	vera	P3	NAO_VERIFICAVEL	Inbox/Chat	Bug conhecido: warroom_alerts de desconexao gravado em duplicata (E26 do plano multi-conexao)	dedup
+SL-210	hugo	P3	PARCIAL	Inbox/Chat	Presença, atalhos com posse única, pins/favoritos, scroller v2, stickers V1, monitoramento	065-070
+SL-211	iris	P3	PARCIAL	Inbox/Chat	Editor de mensagem rico (chat)	P2-3.1
+SL-212	worker	P3	NAO_IMPLEMENTADA	Outros	public/version.json aponta evolution.atomicabr.com.br enquanto .env usa Hostinger	Rec 3
+SL-213	worker	P3	NAO_IMPLEMENTADA	Outros	Sessão nova com 0 MCPs falhando (CLOUDFLARE-WORKERS 410, VS-CODE-VPS 404)	E44
+SL-214	edgar	P3	NAO_IMPLEMENTADA	Outros	Churn, classificação, supervisor e inteligência externa	Bloco 12 (111-120)
+SL-215	iris	P3	NAO_IMPLEMENTADA	Outros	Mídias, documentos e compreensão multimodal	Bloco 14 (131-140)
+SL-216	iris	P3	NAO_IMPLEMENTADA	Outros	Experiência de uso e acessibilidade	Bloco 15 (141-150)
+SL-217	worker	P3	NAO_IMPLEMENTADA	Outros	Copilotos operacionais para a Promo Brindes	Bloco 16 (151-160)
+SL-218	worker	P3	NAO_IMPLEMENTADA	Outros	Agentes especializados e ações supervisionadas	Bloco 18 (171-180)
+SL-219	worker	P3	NAO_IMPLEMENTADA	Outros	Homologação, implantação controlada e entrega	Bloco 20 (191-200)
+SL-220	worker	P3	NAO_IMPLEMENTADA	Outros	rpc_app_bootstrap/feature flags e feature-first com src/domain	097-098
+SL-221	worker	P3	NAO_IMPLEMENTADA	Outros	MCP server real read-only e grafo de conhecimento/docs canônicos	099-100
+SL-222	hugo	P3	NAO_IMPLEMENTADA	Outros	Remover duplicata src/hooks/system/useDebounce.test.ts	backlog
+SL-223	edgar	P3	NAO_VERIFICAVEL	Outros	Documentar 14 modulos e 5 edge functions em COMPLETE_SYSTEM_FEATURES.md	14 modulos
+SL-224	worker	P3	NAO_VERIFICAVEL	Outros	Regra no CLAUDE.md: tamanho e familia so por token; guard cobre CSS, JSX e pesos	E100
+SL-225	hugo	P3	PARCIAL	Outros	Expandir camada de servicos (hooks chamando Supabase direto)	frontend 6
+SL-226	worker	P3	NAO_IMPLEMENTADA	Performance	Religar Service Worker com banner de atualização	093
+SL-227	worker	P3	NAO_VERIFICAVEL	Performance	Preconnect do index.html para Google Fonts gera requests externos (4 requests saidas)	W5-8
+SL-228	worker	P3	NAO_VERIFICAVEL	Performance	Aviso flushSync em todo o inbox (vem de dependência)	NOTA-1
+SL-229	vera	P3	PARCIAL	Performance	Comparar Vercel Analytics com os alvos e ajustar	E34
+SL-230	hugo	P3	PARCIAL	Performance	Coleta real de Web Vitals ligada e budget como fonte única	E36
+SL-231	worker	P3	PARCIAL	Performance	Web Vitals para edge client-observability	033
+SL-232	worker	P3	PARCIAL	Performance	Budget de performance, ratchets de TS/@ts-nocheck e fronteiras de domínio	094-096
+SL-233	vera	P3	PARCIAL	Performance	Backlog: chunks >500 kB (vendor-maps 1,67 MB)	99b
+SL-234	iris	P3	NAO_IMPLEMENTADA	Tarefas/Quadro	Modo zen validado no módulo de Tarefas	CP-H
+SL-235	worker	P3	NAO_VERIFICAVEL	Tarefas/Quadro	QuickAdd com Data, Lembrar com hora, @ Contato e ! Prioridade	Fase 3 E49
+SL-236	iris	P3	PARCIAL	Tarefas/Quadro	Date-only em NotesTab/isTaskDueSoon/bucketByDue (latente)	R3-05
+SL-237	iris	P3	PARCIAL	Tarefas/Quadro	Atalhos E, X, Delete, /, ? no módulo	Fase 9 E125
+SL-238	iris	P3	NAO_IMPLEMENTADA	Telefonia	Auditoria de contraste WCAG nos 3 temas (contraste.md)	T78
+SL-239	workertestes	P3	NAO_IMPLEMENTADA	Telefonia	Fechamentos de fase 8 e 9 (screenshots, axe, PR de testes)	T80/T88
+SL-240	worker	P3	NAO_IMPLEMENTADA	Telefonia	Scripts measure/colors/func/axe (E.2-E.5)	T81-T84
+SL-241	iris	P3	NAO_IMPLEMENTADA	Telefonia	Remover alias VoIPPanel	T90
+SL-242	vera	P3	NAO_IMPLEMENTADA	Telefonia	Revisão final de CAPACIDADES/CONTRATO e snapshot final.json	T92/T93
+SL-243	vera	P3	NAO_IMPLEMENTADA	Telefonia	Decisões D1-D7 finais com data e autor na seção 10	T98
+SL-244	vera	P3	NAO_IMPLEMENTADA	Telefonia	Seção "Telefonia" no CLAUDE.md	T99
+SL-245	vera	P3	NAO_IMPLEMENTADA	Telefonia	Encerramento: TELEFONIA_STATUS marcado como superado	T100
+SL-246	iris	P3	NAO_IMPLEMENTADA	Telefonia	Seleção de dispositivo de saída (setSinkId) / alto-falante	ACH-2
+SL-247	hugo	P3	NAO_IMPLEMENTADA	Telefonia	Campo channel \"habilita a selecao por canal numa etapa futura\"	
+SL-248	worker	P3	NAO_VERIFICAVEL	Telefonia	Zerar violações de eslint-baseline em calls/communication/sip	T79
+SL-249	worker	P3	NAO_VERIFICAVEL	Telefonia	Gates completos e bundle-budget do chunk calls	T89
+SL-250	iris	P3	PARCIAL	Telefonia	Motion: KPI fade 150ms, troca de painel 120ms, whileTap; remover stagger por linha	T75
+SL-251	hugo	P3	PARCIAL	Telefonia	Remover useCalls.startCall/answerCall e useCallHistory	T91
+SL-252	workertestes		NAO_VERIFICAVEL	CI/DevOps	Registrar testes/tsc pre-existentes, graphify update, PR unico com checklist	74-76
+SL-253	worker		NAO_VERIFICAVEL	Outros	Atualizar claude-cerebro com mapa de refs, dominios, MCPs e segredos	95

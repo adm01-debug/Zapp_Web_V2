@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260904360000_revoke_is_account_locked_from_anon_sql", "label": "20260904360000_revoke_is_account_locked_from_anon.sql", "file_type": "code", "source_file": "supabase/migrations/20260904360000_revoke_is_account_locked_from_anon.sql", "source_location": null}], "edges": []}

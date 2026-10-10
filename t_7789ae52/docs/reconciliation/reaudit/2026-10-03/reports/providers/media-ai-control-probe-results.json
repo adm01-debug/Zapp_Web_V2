@@ -1,0 +1,65 @@
+{
+  "head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "source_verification": {
+    "gate": "passed_before_application_imports",
+    "expected_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "actual_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+    "manifest": "/workspace/scratch/f8f9b9cbce53/reaudit/source-integrity.json",
+    "manifest_sha256": "b1a772a2698b193cb0abb3d7c445d4e35ca1b259618d0cebcb6f302f69d30fc4",
+    "verified_files": 218,
+    "verified_scope": [
+      "supabase/functions/**",
+      "supabase/config.toml"
+    ],
+    "comparison": "Git blob SHA-1 and exact byte length against root verified manifest",
+    "application_transitive_imports": "All local backend modules are within the verified prefix; only the explicitly described remote dependency stubs are outside it."
+  },
+  "actual_network_requests": 0,
+  "actual_database_requests": 0,
+  "actual_environment_reads": 0,
+  "source_changes": 0,
+  "method": "Actual messaging adapter with manually released presence and aborted caller signal; complete ai-proxy handler after type/import wiring with real routing/capability/provider adapters. Zod, auth, DB, quota and usage are explicit fixture boundaries. No real JWT, quota, RLS, network or environment.",
+  "source_hashes": {
+    "supabase/functions/_shared/messaging/evolution-go.ts": "3af95dfe703c6666e5aa344936a1620564fe56e5b6627aaf3fe24fbe1a30b3a3",
+    "supabase/functions/ai-proxy/index.ts": "bf53a35219fda2e5e7459fbad5171d72d03bf5c780fdc7a428ad6b4622386a0f"
+  },
+  "results": [
+    {
+      "id": "P22",
+      "beforeRelease": [
+        {
+          "path": "/message/presence",
+          "hasSignal": false,
+          "aborted": false
+        }
+      ],
+      "settledAfterAbort": false,
+      "outcome": "Caller signal is aborted, but awaited presence has no signal and keeps send unresolved until manually released."
+    },
+    {
+      "id": "P23",
+      "httpStatus": 200,
+      "counters": {
+        "auth": 1,
+        "guard": 0,
+        "usage": 0,
+        "provider": 1,
+        "permissions": 0
+      },
+      "detail": "fixture generated result",
+      "outcome": "test:true executes the provider adapter for a regular valid identity while skipping denied quota and usage logging."
+    },
+    {
+      "id": "P24",
+      "httpStatus": 429,
+      "counters": {
+        "auth": 2,
+        "guard": 1,
+        "usage": 0,
+        "provider": 1,
+        "permissions": 0
+      },
+      "outcome": "Positive control: same identity and request in normal mode is stopped by the quota before provider I/O."
+    }
+  ]
+}

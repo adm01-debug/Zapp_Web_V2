@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20261002511230_cron_ai_jobs_tick_fora_do_minuto_zero_sql", "label": "20261002511230_cron_ai_jobs_tick_fora_do_minuto_zero.sql", "file_type": "code", "source_file": "supabase/migrations/20261002511230_cron_ai_jobs_tick_fora_do_minuto_zero.sql", "source_location": null}], "edges": []}

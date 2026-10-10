@@ -1,0 +1,28 @@
+{
+  "typescript_version": "5.9.3",
+  "parsed_files": 2394,
+  "parse_error_files": 0,
+  "import_edges": 12261,
+  "resolved_internal_edges": 7454,
+  "unresolved_internal_edges": 0,
+  "explicit_any": 221,
+  "type_assertions": 3260,
+  "marker_counts": {
+    "TEST_SKIP": 14,
+    "TEST_FIXME": 1,
+    "TODO": 13,
+    "TEST_TODO": 38,
+    "@deprecated": 16,
+    "eslint-disable-next-line": 184,
+    "eslint-disable": 7,
+    "eslint-disable-line": 15,
+    "@ts-expect-error": 1
+  },
+  "db_event_call_candidates": 1801,
+  "no_static_importer_candidates": 84,
+  "limitations": [
+    "AST is TypeScript parse, not typecheck or runtime verification.",
+    "Zero static importers is a candidate filter, not permission to remove a file.",
+    "All references pin baseline 2e7cf81c; generated Graphify is a separate evidence source."
+  ]
+}

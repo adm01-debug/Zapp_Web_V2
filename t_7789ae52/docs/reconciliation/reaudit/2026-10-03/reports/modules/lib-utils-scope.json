@@ -1,0 +1,80 @@
+{
+  "head_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "assigned_from": "consolidated/remaining-production-review.json",
+  "classification": "FINITE_AUTHORED_HELPER_RECUT",
+  "assigned_files": 40,
+  "assigned_lines": 2888,
+  "paths": [
+    "src/lib/formatters.ts",
+    "src/utils/audioToMp3.ts",
+    "src/utils/imageCompression.ts",
+    "src/lib/mapboxToken.ts",
+    "src/lib/singuLabels.ts",
+    "src/lib/quarantineStore.ts",
+    "src/utils/whatsappFileTypes.ts",
+    "src/lib/errorReporter.ts",
+    "src/lib/webauthnUtils.ts",
+    "src/lib/mapboxSession.ts",
+    "src/lib/deployment-update.ts",
+    "src/lib/mapboxCostGuard.ts",
+    "src/lib/popupManager.ts",
+    "src/lib/debounce.ts",
+    "src/lib/loginAttempts.ts",
+    "src/lib/forward-limits.ts",
+    "src/lib/notificationDedupe.ts",
+    "src/lib/tags.ts",
+    "src/lib/retry.ts",
+    "src/lib/audit.ts",
+    "src/lib/externalProxy.ts",
+    "src/lib/a11y.ts",
+    "src/lib/cfImages.ts",
+    "src/lib/speed-insights.ts",
+    "src/utils/fileExtensions.ts",
+    "src/lib/supabaseHelpers.ts",
+    "src/lib/aiJobs/status.ts",
+    "src/lib/avatar-colors.ts",
+    "src/lib/lazyWithRetry.ts",
+    "src/lib/mapboxLoader.ts",
+    "src/lib/urlSafety.ts",
+    "src/utils/normalizeMediaUrl.ts",
+    "src/lib/edgeAuthHeaders.ts",
+    "src/lib/chartColors.ts",
+    "src/lib/postgrestFilters.ts",
+    "src/lib/realtimeTopic.ts",
+    "src/lib/runGuard.ts",
+    "src/lib/utils.ts",
+    "src/utils/securityAlertSound.ts",
+    "src/utils/soundConfigs.ts"
+  ],
+  "excluded_already_read_by_others": [
+    {
+      "path": "src/lib/web-vitals.ts",
+      "owner": "infra",
+      "lines": [
+        1,
+        187
+      ]
+    },
+    {
+      "path": "src/lib/logger.ts",
+      "owner": "infra",
+      "lines": [
+        1,
+        131
+      ]
+    },
+    {
+      "path": "src/lib/mapboxGeocode.ts",
+      "owner": "inbox",
+      "lines": [
+        1,
+        408
+      ]
+    }
+  ],
+  "other_excluded_scopes": [
+    "src/lib/calls/**: root",
+    "Dez helpers de email identificados no relatório communication: root"
+  ],
+  "limit": "Snapshot do recorte atribuído, sem alegar que esses 40 arquivos são todos os helpers do repositório. Não inclui os testes desses diretórios nem public/vendor/lamejs-1.2.1.min.js."
+}

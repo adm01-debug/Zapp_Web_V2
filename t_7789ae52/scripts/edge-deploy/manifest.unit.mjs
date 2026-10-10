@@ -1,0 +1,290 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+import {
+  buildDeploymentAttestation,
+  buildDeploymentManifest,
+  serializeManifest,
+  verifyManifestDigest,
+} from './manifest-lib.mjs';
+
+async function createFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'zapp-edge-manifest-'));
+  await mkdir(path.join(root, 'supabase', 'functions', '_shared'), { recursive: true });
+  await mkdir(path.join(root, 'supabase', 'functions', 'alpha'), { recursive: true });
+  await mkdir(path.join(root, 'supabase', 'functions', 'beta'), { recursive: true });
+  await writeFile(
+    path.join(root, 'supabase', 'config.toml'),
+    'project_id = "abcdefghijklmnopqrst"\n\n[functions.alpha]\nverify_jwt = false\n',
+  );
+  await writeFile(
+    path.join(root, 'supabase', 'functions', '_shared', 'common.ts'),
+    'export const common = "v1";\n',
+  );
+  await writeFile(
+    path.join(root, 'supabase', 'functions', 'alpha', 'index.ts'),
+    'import { common } from "../_shared/common.ts";\nconsole.log(common);\n',
+  );
+  await writeFile(
+    path.join(root, 'supabase', 'functions', 'beta', 'index.ts'),
+    'import "https://deno.land/std/example.ts";\nconsole.log("beta");\n',
+  );
+  return root;
+}
+
+test('buildDeploymentManifest is deterministic and follows shared imports', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+
+  const first = await buildDeploymentManifest({ repoRoot: root });
+  const second = await buildDeploymentManifest({ repoRoot: root });
+  assert.equal(serializeManifest(first), serializeManifest(second));
+  assert.equal(first.summary.function_count, 2);
+  assert.equal(first.summary.verify_jwt_false, 1);
+  assert.equal(first.summary.verify_jwt_true, 1);
+  assert.equal(first.functions[0].name, 'alpha');
+  assert.equal(first.functions[0].verify_jwt, false);
+  assert.deepEqual(first.functions[0].source_files, [
+    'supabase/functions/_shared/common.ts',
+    'supabase/functions/alpha/index.ts',
+  ]);
+  assert.deepEqual(first.functions[1].source_files, ['supabase/functions/beta/index.ts']);
+  assert.equal(verifyManifestDigest(first), true);
+
+  await writeFile(
+    path.join(root, 'supabase', 'functions', '_shared', 'common.ts'),
+    'export const common = "v2";\n',
+  );
+  const changed = await buildDeploymentManifest({ repoRoot: root });
+  assert.notEqual(changed.functions[0].source_sha256, first.functions[0].source_sha256);
+  assert.equal(changed.functions[1].source_sha256, first.functions[1].source_sha256);
+  assert.throws(() => verifyManifestDigest({ ...first, project_ref: 'tampered' }), /digest mismatch/);
+});
+
+test('serializeManifest keeps the orphan allowlist Prettier-compatible', () => {
+  const serialized = serializeManifest({ orphan_allowlist: ['sicoob-bridge', 'sicoob-bridge-reply'] });
+  assert.match(serialized, /"orphan_allowlist": \["sicoob-bridge", "sicoob-bridge-reply"\]/);
+});
+
+test('buildDeploymentManifest rejects config for a missing function', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(
+    path.join(root, 'supabase', 'config.toml'),
+    'project_id = "abcdefghijklmnopqrst"\n\n[functions.missing]\nverify_jwt = false\n',
+  );
+  await assert.rejects(
+    buildDeploymentManifest({ repoRoot: root }),
+    /Function configured but missing entrypoint: missing/,
+  );
+});
+
+test('buildDeploymentManifest accepts config for a legacy unmanaged function', async (t) => {
+  // Fixture de uma funcao legada: roda em producao com verify_jwt=false sem fonte na arvore.
+  // Declarar a excecao antes de trazer o fonte e o unico jeito de o proximo deploy nao
+  // reverter a funcao para verify_jwt=true; a entrada continua fora de functions[].
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(
+    path.join(root, 'supabase', 'config.toml'),
+    'project_id = "abcdefghijklmnopqrst"\n\n[functions.zombie]\nverify_jwt = false\n',
+  );
+  const manifest = await buildDeploymentManifest({ repoRoot: root, legacyUnmanaged: ['zombie'] });
+  assert.deepEqual(manifest.legacy_unmanaged_functions, ['zombie']);
+  assert.ok(
+    !manifest.functions.some((fn) => fn.name === 'zombie'),
+    'orfas legadas nao entram na lista de funcoes gerenciadas',
+  );
+  // a mesma config continua sendo recusada quando o nome nao esta na lista de legadas
+  await assert.rejects(
+    buildDeploymentManifest({ repoRoot: root }),
+    /Function configured but missing entrypoint: zombie/,
+  );
+});
+
+test('buildDeploymentManifest rejects a function directory without index.ts', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'supabase', 'functions', 'incomplete'));
+  await assert.rejects(
+    buildDeploymentManifest({ repoRoot: root }),
+    /Function directory missing index\.ts: incomplete/,
+  );
+});
+
+test('buildDeploymentAttestation accepts extra functions listed in legacy_unmanaged_functions', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifest = await buildDeploymentManifest({ repoRoot: root, legacyUnmanaged: ['zombie'] });
+  assert.deepEqual(manifest.legacy_unmanaged_functions, ['zombie']);
+  assert.equal(verifyManifestDigest(manifest), true);
+
+  const base = {
+    manifest,
+    gitSha: 'a'.repeat(40),
+    runId: '123',
+    deploymentScope: 'all',
+    createdAt: '2026-08-31T00:00:00.000Z',
+  };
+  const remote = [
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
+    { id: '3', slug: 'zombie', version: 1, status: 'ACTIVE', verify_jwt: true },
+  ];
+
+  const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
+  assert.equal(attestation.function_count, 2);
+
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: [...remote, { slug: 'intruder', verify_jwt: true }],
+    }),
+    /extra=\[intruder]/,
+  );
+});
+
+test('buildDeploymentAttestation rejects missing, extra, and JWT-drifted functions', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifest = await buildDeploymentManifest({ repoRoot: root });
+  const base = {
+    manifest,
+    gitSha: 'a'.repeat(40),
+    runId: '123',
+    deploymentScope: 'all',
+    createdAt: '2026-08-31T00:00:00.000Z',
+  };
+  const remote = [
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
+  ];
+
+  const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
+  assert.equal(attestation.function_count, 2);
+  assert.equal(attestation.functions[0].remote_version, 3);
+  assert.equal(attestation.functions[0].local_source_sha256, manifest.functions[0].source_sha256);
+  assert.equal(attestation.functions[0].remote_bundle_sha256, 'a'.repeat(64));
+  assert.equal('source_sha256' in attestation.functions[0], false);
+  assert.equal(attestation.source_manifest_sha256, manifest.manifest_sha256);
+  assert.equal(attestation.functions[0].remote_updated_at, null);
+
+  const withTimes = buildDeploymentAttestation({
+    ...base,
+    remoteResponse: [
+      { ...remote[0], created_at: 1757000000000, updated_at: 1758549600000 },
+      { ...remote[1], created_at: '2026-09-01T00:00:00.000Z', updated_at: 8.7e15 },
+    ],
+  });
+  assert.equal(withTimes.functions[0].remote_created_at, '2025-09-04T15:33:20.000Z');
+  assert.equal(withTimes.functions[0].remote_updated_at, '2025-09-22T14:00:00.000Z');
+  assert.equal(withTimes.functions[1].remote_created_at, '2026-09-01T00:00:00.000Z');
+  assert.equal(withTimes.functions[1].remote_updated_at, null);
+
+  assert.throws(
+    () => buildDeploymentAttestation({ ...base, remoteResponse: remote.slice(0, 1) }),
+    /missing=\[beta]/,
+  );
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: [...remote, { slug: 'zombie', verify_jwt: true }],
+    }),
+    /extra=\[zombie]/,
+  );
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: remote.map((row) => row.slug === 'alpha' ? { ...row, verify_jwt: true } : row),
+    }),
+    /verify_jwt mismatch/,
+  );
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: remote.map((row) => row.slug === 'alpha' ? { ...row, ezbr_sha256: undefined } : row),
+    }),
+    /remote bundle digest is missing/,
+  );
+});
+
+test('buildDeploymentAttestation accepts known orphans via orphan_allowlist', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifestBase = await buildDeploymentManifest({ repoRoot: root, orphanAllowlist: ['legacy-fn'] });
+  assert.deepEqual(manifestBase.orphan_allowlist, ['legacy-fn']);
+  assert.equal(verifyManifestDigest(manifestBase), true);
+
+  const base = {
+    manifest: manifestBase,
+    gitSha: 'b'.repeat(40),
+    runId: '456',
+    deploymentScope: 'all',
+    createdAt: '2026-09-06T00:00:00.000Z',
+  };
+  const remote = [
+    { id: '1', slug: 'alpha', version: 3, status: 'ACTIVE', verify_jwt: false, ezbr_sha256: 'a'.repeat(64) },
+    { id: '2', slug: 'beta', version: 4, status: 'ACTIVE', verify_jwt: true, ezbr_sha256: 'b'.repeat(64) },
+    { id: '3', slug: 'legacy-fn', version: 1, status: 'ACTIVE', verify_jwt: true },
+  ];
+
+  // Known orphan must NOT throw
+  const attestation = buildDeploymentAttestation({ ...base, remoteResponse: remote });
+  assert.equal(attestation.function_count, 2);
+
+  // Unknown extra still throws
+  assert.throws(
+    () => buildDeploymentAttestation({
+      ...base,
+      remoteResponse: [...remote, { slug: 'unknown-orphan', verify_jwt: true }],
+    }),
+    /extra=\[unknown-orphan]/,
+  );
+});
+
+test('buildDeploymentManifest without orphanAllowlist produces no orphan_allowlist field', async (t) => {
+  const root = await createFixture();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifest = await buildDeploymentManifest({ repoRoot: root });
+  assert.equal(manifest.orphan_allowlist, undefined);
+  assert.equal(verifyManifestDigest(manifest), true);
+});
+
+test('manifesto commitado tolera as orfas reais: sicoob-bridge/-reply SEGUEM NO AR', async () => {
+  // CORRECAO de 2026-10-01: a premissa anterior (de que as duas funcoes haviam
+  // saido do ar) veio de uma medicao MAL ATRIBUIDA -- o numero das 08h37 era das
+  // funcoes de lockout, nao das sicoob. O inventario remoto prova o contrario:
+  // o job "Deploy Edge Functions" passou a reprovar na main (run 36906530462)
+  // com  "Remote function set mismatch; missing=[], extra=[sicoob-bridge,
+  // sicoob-bridge-reply]" -- ou seja, elas existem no remoto e nao tem fonte
+  // versionada. Esvaziar a tolerancia derruba TODO deploy de Edge da main, entao
+  // as duas voltaram para a orphan_allowlist.
+  // Lista fixada de proposito: mudar quem e orfao tem de ser decisao consciente,
+  // nao efeito colateral.
+  const committed = JSON.parse(await readFile(
+    new URL('../../supabase/deployment-manifest.json', import.meta.url),
+    'utf8',
+  ));
+  assert.deepEqual(
+    [...(committed.orphan_allowlist ?? [])].sort((a, b) => a.localeCompare(b)),
+    ['sicoob-bridge', 'sicoob-bridge-reply'],
+    'a orphan_allowlist tem de conter exatamente as duas orfas reais do remoto',
+  );
+
+  // As duas tambem nao podem reaparecer como funcao gerenciada (elas nao tem
+  // fonte versionada): se o diretorio voltar, este teste cai antes do deploy.
+  const managed = new Set(committed.functions.map((fn) => fn.name));
+  assert.ok(!managed.has('sicoob-bridge'), 'sicoob-bridge nao tem fonte e nao pode voltar ao manifesto');
+  assert.ok(!managed.has('sicoob-bridge-reply'), 'sicoob-bridge-reply nao tem fonte e nao pode voltar ao manifesto');
+
+  // As listas de tolerancia nunca podem sobrepor functions[]: funcao com
+  // fonte versionada e gerenciada, nao orfa (dupla classificacao esconderia a
+  // funcao do deploy, do hash de closure e da atestacao).
+  const allowlisted = [...(committed.orphan_allowlist ?? []), ...(committed.legacy_unmanaged_functions ?? [])];
+  for (const name of allowlisted) {
+    assert.ok(!managed.has(name), `${name} nao pode estar em functions[] e numa allowlist ao mesmo tempo`);
+  }
+  assert.equal(verifyManifestDigest(committed), true);
+});

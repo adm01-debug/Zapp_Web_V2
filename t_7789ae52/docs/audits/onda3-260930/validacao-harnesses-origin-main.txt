@@ -1,0 +1,10 @@
+══════ multiplix-rls ══════
+EXIT=0
+  passes: 0
+PASS: Multiplix hardening — anon sem acesso, FORCE RLS, policies TO authenticated no replay limpo, guarda de mutabilidade (fail-closed por papel real desde #1267), criacao transacional idempotente com teto, fila (retry_after/sweeper/cancel/parcial) e scheduler por janela e por conexao
+══════ team-reaction-membership ══════
+EXIT=0
+  passes: 14
+══════ team-chat-rpc-ambiguity ══════
+EXIT=0
+  passes: 17

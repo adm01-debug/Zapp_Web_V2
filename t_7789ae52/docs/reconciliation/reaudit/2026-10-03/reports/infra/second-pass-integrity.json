@@ -1,0 +1,32 @@
+{
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "validation": "Hashes de todas as 517 fontes no inventário, 73 evidências (faixas e SHA), 93 leituras da segunda passagem e HEAD/status limpo verificados offline antes desta gravação. Nenhum job real executado.",
+  "findings": 21,
+  "severity_counts": {
+    "P1": 7,
+    "P2": 14
+  },
+  "coverage": {
+    "total": 517,
+    "semantic": 182,
+    "targeted": 10,
+    "structural": 325
+  },
+  "second_pass": {
+    "files": 93,
+    "full_file_semantic": 91,
+    "names_only_targeted_environment": 2
+  },
+  "artifacts": {
+    "findings.json": "ed11827935427796768b450bcbe09f9db870d0e664ecda510b454a1cc0a6254d",
+    "findings-second-pass.json": "f42b126ec1cab6317c4655a198a19464e04d6688e224a7f7f3fe39f51b4cc4df",
+    "coverage.json": "3b884e870b976ce9f3153d31dce08d0cd99cc0b5abcd416b69078a7b366041c8",
+    "report.md": "ed09900012e54faf77903c6d810c81283cc37fddc5a73962bda2e07e2da43fb3",
+    "second-pass-review.json": "136f35e4b05c82a3fe2d5ccbc403dca0792af0caaabca4b13ed17cb17127defe",
+    "second-pass-offline-probes.json": "2b7d675f258855a695fd4056c5fdc2fff78435e7a398aec35caeadf60c2e0eae",
+    "second-pass-probe-pins.json": "e2e45c3d831410204acbd82a94a6da95ea47aa38ad01047e3d59a2d66fd3c16d",
+    "probe-second-pass.mjs": "1c4fa6fd4ee35f12aff42e93d26432eb561089da0994bbc8423b1913969f7d4f",
+    "append_second_pass.py": "cd4cab80ecc988b2e588bd56981fd99d174de0951f456aeda4905c371840ffd7"
+  },
+  "limits": "Integridade dos artefatos e fonte local; não é reexecução de teste nem consulta de implantação."
+}

@@ -1,0 +1,1881 @@
+[
+  {
+    "number": 1869,
+    "status": "AUDIT_CHECKPOINT_DRAFT",
+    "priority": "P2",
+    "decision": "Manter checkpoint; atualizar somente documentação quando autorizado, sem merge automático.",
+    "evidence": "25 arquivos exclusivamente docs/reconciliation; 25 commits; todos os checks executados concluíram sem falha; draft e mergeable_state=blocked.",
+    "risks": [
+      "Não é código de produto nem prova de que backlog esteja concluído.",
+      "Metadados anteriores da auditoria (12 PRs/14 issues) precisam ser reconciliados com este snapshot."
+    ],
+    "head_sha": "a2d9f62d5a67cfd6956a66fff30b9e97af36a88f",
+    "head_ref": "docs/reconciliation-checkpoint-20261003",
+    "base_ref": "main",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "blocked",
+    "changed_files": 25,
+    "commits": 25,
+    "comments_collected": 67,
+    "reviews_collected": 16,
+    "inline_comments_collected": 0,
+    "review_threads": 0,
+    "unresolved_threads": 0,
+    "unresolved_not_outdated": 0,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111303292881,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111303292881",
+        "completed_at": "2026-10-03T22:07:10Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301910713,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111301910713",
+        "completed_at": "2026-10-03T22:06:57Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301910711,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111301910711",
+        "completed_at": "2026-10-03T21:58:47Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301910699,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111301910699",
+        "completed_at": "2026-10-03T21:59:12Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301910677,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111301910677",
+        "completed_at": "2026-10-03T22:06:45Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301494726,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:56:00Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301418754,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687064/job/111301418754",
+        "completed_at": "2026-10-03T21:58:28Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301414309,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156687057/job/111301414309",
+        "completed_at": "2026-10-03T22:01:53Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111301405707,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:55:29Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111301404905,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-03T21:55:26Z"
+      }
+    ]
+  },
+  {
+    "number": 1863,
+    "status": "ACTIVE_DERIVED_ARTIFACT_SYNC_BLOCKED",
+    "priority": "P1",
+    "decision": "Revisar diffs gerados e ACL de trigger; resolver gates de infraestrutura e só então considerar adoção com nova verificação de frescor.",
+    "evidence": "Origem main2e7cf81; 4 artefatos types/catalog/manifest/grants; Security falhou por obtenção de usuário indisponível seguida de gitleaks license missing, e DB offline por bootstrap Postgres exit2, não por secret/contrato demonstrados.",
+    "risks": [
+      "Uma thread aberta sobre EXECUTE PUBLIC em record_talkx_campaign_lifecycle_event; função trigger interna (não equivale a RPC explorável demonstrada).",
+      "Atualizar artefatos não reconcilia automaticamente as 2 migrations extras no ledger vivo.",
+      "Combined status success não inclui as falhas check-runs."
+    ],
+    "head_sha": "a5e0c8070e24873fc54052d46bd1a1dea2512312",
+    "head_ref": "automation/types-sync",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": true,
+    "mergeable_state": "blocked",
+    "changed_files": 4,
+    "commits": 1,
+    "comments_collected": 32,
+    "reviews_collected": 1,
+    "inline_comments_collected": 1,
+    "review_threads": 1,
+    "unresolved_threads": 1,
+    "unresolved_not_outdated": 1,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111301458696,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111301458696",
+        "completed_at": "2026-10-03T21:56:13Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111300247241,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111300247241",
+        "completed_at": "2026-10-03T21:55:47Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 111300247239,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111300247239",
+        "completed_at": "2026-10-03T21:48:48Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111300247234,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111300247234",
+        "completed_at": "2026-10-03T21:56:03Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111300247202,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111300247202",
+        "completed_at": "2026-10-03T21:47:54Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299801391,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/111299801391",
+        "completed_at": "2026-10-03T21:44:15Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299754297,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105026/job/111299754297",
+        "completed_at": "2026-10-03T21:47:41Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299752749,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:43:54Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 111299721625,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105011/job/111299721625",
+        "completed_at": "2026-10-03T21:51:25Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299711665,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105032/job/111299711665",
+        "completed_at": "2026-10-03T21:45:33Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299711579,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37156105032/job/111299711579",
+        "completed_at": "2026-10-03T21:44:21Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111299681695,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:43:27Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111299681184,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1863",
+        "completed_at": "2026-10-03T21:43:27Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111299678648,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-03T21:43:28Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111299672366,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-03T21:43:24Z"
+      }
+    ]
+  },
+  {
+    "number": 1713,
+    "status": "ACTIVE_STATUS_AUTOMATION",
+    "priority": "P2",
+    "decision": "Revisar placar gerado contra evidencia da main e preservar branch reutilizada.",
+    "evidence": "1 arquivo docs/talkx/v4/STATUS.md; origem main2e7cf81; checks verdes; 624 comentários paginados em 7 páginas.",
+    "risks": [
+      "Alta atividade de bots pode mascarar última evidência útil.",
+      "Placar de tarefas não atesta execução/runtime."
+    ],
+    "head_sha": "92e6f5844988b7aa6f2fc2f2934ffaf5497a98a5",
+    "head_ref": "automation/talkx-status",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "changed_files": 1,
+    "commits": 1,
+    "comments_collected": 624,
+    "reviews_collected": 1,
+    "inline_comments_collected": 0,
+    "review_threads": 0,
+    "unresolved_threads": 0,
+    "unresolved_not_outdated": 0,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111300321832,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111300321832",
+        "completed_at": "2026-10-03T21:48:45Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299110162,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111299110162",
+        "completed_at": "2026-10-03T21:40:53Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299109874,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111299109874",
+        "completed_at": "2026-10-03T21:47:27Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299109869,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111299109869",
+        "completed_at": "2026-10-03T21:40:23Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111299109861,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111299109861",
+        "completed_at": "2026-10-03T21:48:20Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111298608186,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1713",
+        "completed_at": "2026-10-03T21:37:06Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111298561404,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:36:49Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111298511087,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686822/job/111298511087",
+        "completed_at": "2026-10-03T21:41:20Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111298509710,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37155686821/job/111298509710",
+        "completed_at": "2026-10-03T21:40:07Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111298480809,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1713",
+        "completed_at": "2026-10-03T21:36:21Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111298478953,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T21:36:21Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111298476384,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-03T21:36:22Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111298474011,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-03T21:36:18Z"
+      }
+    ]
+  },
+  {
+    "number": 1699,
+    "status": "SUPERSEDED_WITH_INHERITED_DEFECT",
+    "priority": "P1",
+    "decision": "Candidata a encerrar como duplicada de #1715; carregar a dívida real a11y para backlog separado.",
+    "evidence": "main src/main.tsx:68 contém exatamente o guard querySelector('main') proposto; gitlog prova merge#1715 c1640eac. 3 threads não resolvidas criticam supressão de auditoria. DB offline do head é bootstrap exit2.",
+    "risks": [
+      "ForgotPassword e NotFound sem main perdem todos os resultados axe no baseline atual.",
+      "A existência do landmark não prova que descendants/rota terminaram de carregar.",
+      "Branch conflita com main; incorporar não acrescenta a correção pretendida."
+    ],
+    "head_sha": "139811c3e550aa5c573b6b85bd96cf58e549bce7",
+    "head_ref": "hermes/a11y-aria-hidden-focus-2610021746e07a",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": false,
+    "mergeable_state": "dirty",
+    "changed_files": 1,
+    "commits": 1,
+    "comments_collected": 9,
+    "reviews_collected": 3,
+    "inline_comments_collected": 3,
+    "review_threads": 3,
+    "unresolved_threads": 3,
+    "unresolved_not_outdated": 3,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111032338152,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111032338152",
+        "completed_at": "2026-10-02T21:14:35Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 111031421115,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633610/job/111031421115",
+        "completed_at": "2026-10-02T21:16:25Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111030502417,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111030502417",
+        "completed_at": "2026-10-02T21:08:30Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111030502345,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111030502345",
+        "completed_at": "2026-10-02T21:08:17Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111030502332,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111030502332",
+        "completed_at": "2026-10-02T21:13:34Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111030502326,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111030502326",
+        "completed_at": "2026-10-02T21:21:24Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029676066,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1699",
+        "completed_at": "2026-10-02T21:05:52Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029408570,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T21:05:12Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029387646,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/111029387646",
+        "completed_at": "2026-10-02T21:05:11Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111029267973,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1699",
+        "completed_at": "2026-10-02T21:04:50Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111029260196,
+        "details_url": "https://vercel.com/api/marketplace/sso?product_id=supabase&integrationConfigurationId=icfg_ljrwZ7dvf5ItsrP0HGRAyo48&resource_id=tnnnlkbymytvtqngbbqh&integration_settings=true",
+        "completed_at": "2026-10-02T21:04:45Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111029254807,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T21:04:46Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029247520,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633563/job/111029247520",
+        "completed_at": "2026-10-02T21:07:05Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029247198,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633563/job/111029247198",
+        "completed_at": "2026-10-02T21:05:17Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111029246967,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37064633527/job/111029246967",
+        "completed_at": "2026-10-02T21:08:07Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111029246204,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-02T21:04:46Z"
+      }
+    ]
+  },
+  {
+    "number": 1654,
+    "status": "ACTIVE_UI_DRAFT_DEPENDENT_ROLLOUT",
+    "priority": "P1",
+    "decision": "Revisar interface e integração da UI, manter separação entre merge UI com flag off e habilitação Singu/CRM.",
+    "evidence": "30 arquivos, 11 commits; camada C#1642 já merged; frontend novo não está em main; checks verdes. Quatro threads ainda abertas; três outdated e todas têm respostas de correção, normalizeE164BR confirmado no head.",
+    "risks": [
+      "RPC do Singu e edgeB#1636 dependentes para caminho flag on.",
+      "Testes E2E usam rotas CRM mockadas; não comprovam RPC e produção.",
+      "Remove 3 arquivos antigos (SHA de arquivo removido ser igual ao main significa remoção ainda pendente).",
+      "13 componentes descritos como órfãos futuros; não excluir antes da troca e verificação de imports."
+    ],
+    "head_sha": "82c5fd6c703080422bf2e597827c1e8a7515fe65",
+    "head_ref": "devin/1764000200-sidebar-3-secoes",
+    "base_ref": "main",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "changed_files": 30,
+    "commits": 11,
+    "comments_collected": 40,
+    "reviews_collected": 14,
+    "inline_comments_collected": 8,
+    "review_threads": 4,
+    "unresolved_threads": 4,
+    "unresolved_not_outdated": 1,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111234825945,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111234825945",
+        "completed_at": "2026-10-03T15:40:43Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111233372493,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111233372493",
+        "completed_at": "2026-10-03T15:35:00Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111233372438,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111233372438",
+        "completed_at": "2026-10-03T15:40:11Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111233372433,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111233372433",
+        "completed_at": "2026-10-03T15:32:08Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111233372420,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111233372420",
+        "completed_at": "2026-10-03T15:32:06Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232913969,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1654",
+        "completed_at": "2026-10-03T15:29:19Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232822075,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/111232822075",
+        "completed_at": "2026-10-03T15:28:49Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232810831,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T15:28:42Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232728065,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133347013/job/111232728065",
+        "completed_at": "2026-10-03T15:30:59Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232728055,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346960/job/111232728055",
+        "completed_at": "2026-10-03T15:34:04Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232727895,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133347013/job/111232727895",
+        "completed_at": "2026-10-03T15:28:55Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232727664,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133346932/job/111232727664",
+        "completed_at": "2026-10-03T15:31:54Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232726787,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1654",
+        "completed_at": "2026-10-03T15:28:12Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111232722299,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T15:28:10Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232716405,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-03T15:28:07Z"
+      }
+    ]
+  },
+  {
+    "number": 1636,
+    "status": "ACTIVE_EDGE_WITH_CONFIRMED_REGRESSION",
+    "priority": "P1",
+    "decision": "Reconciliar com main, manter allowlist de funções remotas e validar contrato sidebar antes de qualquer merge/deploy.",
+    "evidence": "5 arquivos e 6 commits; remove orphan_allowlist de sicoob-bridge/sicoob-bridge-reply; log lint actual[] expected[sicoob-bridge,sicoob-bridge-reply]; conflito de merge.",
+    "risks": [
+      "Sem allowlist, pós-deploy pode classificar as duas edges remotas como extras permanentes e bloquear toda atestação.",
+      "Contrato get_contact_sidebar_by_phone externo e flag não são comprovados por esta PR.",
+      "Alterar contrato shared recalcula hashes de multiplix-audience/dispatch, além de crm-integration."
+    ],
+    "head_sha": "e7917922b859ce90d3f0e84f4c216ae3d20ce023",
+    "head_ref": "devin/1764000000-crm-sidebar-lookup",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": false,
+    "mergeable_state": "dirty",
+    "changed_files": 5,
+    "commits": 6,
+    "comments_collected": 25,
+    "reviews_collected": 8,
+    "inline_comments_collected": 1,
+    "review_threads": 1,
+    "unresolved_threads": 1,
+    "unresolved_not_outdated": 1,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232605698,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232605698",
+        "completed_at": "2026-10-03T15:27:30Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232605596,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232605596",
+        "completed_at": "2026-10-03T15:27:30Z"
+      },
+      {
+        "name": "🏗️ Build",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232605531,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232605531",
+        "completed_at": "2026-10-03T15:27:30Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232605480,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232605480",
+        "completed_at": "2026-10-03T15:27:30Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232605357,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232605357",
+        "completed_at": "2026-10-03T15:27:30Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232535605,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1636",
+        "completed_at": "2026-10-03T15:27:05Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 111232485467,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256803/job/111232485467",
+        "completed_at": "2026-10-03T15:27:29Z"
+      },
+      {
+        "name": "🏗️ Build",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232485199,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232485199",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232484994,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232484994",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232484943,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232484943",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232484930,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232484930",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232484600,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232484600",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232469901,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133256871/job/111232469901",
+        "completed_at": "2026-10-03T15:31:26Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232457495,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-03T15:26:40Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232419580,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/111232419580",
+        "completed_at": "2026-10-03T15:26:28Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232400898,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T15:26:19Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232323019,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1636",
+        "completed_at": "2026-10-03T15:25:52Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232321789,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210185/job/111232321789",
+        "completed_at": "2026-10-03T15:26:43Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 111232321698,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210175/job/111232321698",
+        "completed_at": "2026-10-03T15:26:48Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232321645,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210180/job/111232321645",
+        "completed_at": "2026-10-03T15:26:35Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 111232321590,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37133210180/job/111232321590",
+        "completed_at": "2026-10-03T15:27:38Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 111232319705,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-03T15:25:50Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 111232311495,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-03T15:25:47Z"
+      }
+    ]
+  },
+  {
+    "number": 1621,
+    "status": "UNMERGED_PLAN_DRAFT",
+    "priority": "P2",
+    "decision": "Reconciliar decisões D1-D7 e execução posterior no plano, preservar como origem documental.",
+    "evidence": "1 arquivo PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md ausente em main; checks verdes; PRbody ainda afirma nenhuma etapa executada, embora#1642 merged e#1654/#1636 existam.",
+    "risks": [
+      "Não transformar todas as 100 etapas em pendência nova: o texto está historicamente desatualizado.",
+      "Alegações sobre flag e linhas em banco são medições declaradas de02/10, não atestado vivo03/10."
+    ],
+    "head_sha": "74783271e82c2e6ff9c095a4af2f3e5f7086d0cf",
+    "head_ref": "claude/feat-sidebar-contato-3-secoes-261002-1510",
+    "base_ref": "main",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "changed_files": 1,
+    "commits": 1,
+    "comments_collected": 7,
+    "reviews_collected": 1,
+    "inline_comments_collected": 0,
+    "review_threads": 0,
+    "unresolved_threads": 0,
+    "unresolved_not_outdated": 0,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110900363402,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110900363402",
+        "completed_at": "2026-10-02T15:17:58Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110897688135,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110897688135",
+        "completed_at": "2026-10-02T15:17:24Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110897687910,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110897687910",
+        "completed_at": "2026-10-02T15:11:01Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110897687833,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110897687833",
+        "completed_at": "2026-10-02T15:19:34Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110897687780,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110897687780",
+        "completed_at": "2026-10-02T15:10:59Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896603262,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1621",
+        "completed_at": "2026-10-02T15:08:05Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896555945,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110896555945",
+        "completed_at": "2026-10-02T15:08:01Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896329905,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T15:07:25Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110896312030,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T15:07:23Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896310641,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721110/job/110896310641",
+        "completed_at": "2026-10-02T15:10:46Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896309388,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024721054/job/110896309388",
+        "completed_at": "2026-10-02T15:12:52Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896308871,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024720995/job/110896308871",
+        "completed_at": "2026-10-02T15:09:41Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110896308462,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37024720995/job/110896308462",
+        "completed_at": "2026-10-02T15:08:09Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110896306931,
+        "details_url": "https://vercel.com/api/marketplace/sso?product_id=supabase&integrationConfigurationId=icfg_ljrwZ7dvf5ItsrP0HGRAyo48&resource_id=tnnnlkbymytvtqngbbqh&integration_settings=true",
+        "completed_at": "2026-10-02T15:07:22Z"
+      }
+    ]
+  },
+  {
+    "number": 1610,
+    "status": "POLICY_MOTIVATED_DRAFT_NEEDS_CURRENT_REQUIREMENT",
+    "priority": "P2",
+    "decision": "Validar requisito atual da política de Actions e avaliar custo de manter instaladores shell antes de priorizar.",
+    "evidence": "2 arquivos; troca setup-bun/setup-deno por downloads com SHA256 fixo. Falha histórica#1439 em01/10 prova política restritiva naquele momento; main03/10 usa as actions e CI passa.",
+    "risks": [
+      "Não é demonstrado um bloqueio atual de toda CI pela política histórica.",
+      "Instaladores copiados por seis jobs ampliam manutenção; não cobrem automaticamente outros workflows."
+    ],
+    "head_sha": "e4143de7d040dd28d63857969e3348e1bb45b644",
+    "head_ref": "claude/fix-ci-banned-actions-261002-1430",
+    "base_ref": "main",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "changed_files": 2,
+    "commits": 4,
+    "comments_collected": 27,
+    "reviews_collected": 4,
+    "inline_comments_collected": 0,
+    "review_threads": 0,
+    "unresolved_threads": 0,
+    "unresolved_not_outdated": 0,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110895547426,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110895547426",
+        "completed_at": "2026-10-02T15:06:00Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110893011872,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110893011872",
+        "completed_at": "2026-10-02T14:59:26Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110893011804,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110893011804",
+        "completed_at": "2026-10-02T14:59:39Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110893011693,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110893011693",
+        "completed_at": "2026-10-02T15:02:03Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110893011661,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110893011661",
+        "completed_at": "2026-10-02T15:05:29Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110892252425,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1610",
+        "completed_at": "2026-10-02T14:57:20Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891868216,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110891868216",
+        "completed_at": "2026-10-02T14:56:28Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891759493,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T14:56:07Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891580227,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023312802/job/110891580227",
+        "completed_at": "2026-10-02T14:58:16Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891579586,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023312802/job/110891579586",
+        "completed_at": "2026-10-02T14:56:34Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891576811,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311844/job/110891576811",
+        "completed_at": "2026-10-02T14:59:16Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110891575840,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37023311518/job/110891575840",
+        "completed_at": "2026-10-02T15:01:39Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110891573086,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T14:55:39Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110891559264,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-02T14:55:36Z"
+      }
+    ]
+  },
+  {
+    "number": 1584,
+    "status": "SUPERSEDED_BY_COMPLETE_SYNC",
+    "priority": "P2",
+    "decision": "Candidata a encerrar como superada por#1587, preservando referência histórica.",
+    "evidence": "main known-violations não contém kick_talkx_campaign; gitlog#1587 bed17931. Head antigo remove baseline sem atualizar catálogo, gerando nova violação em lint e DB offline.",
+    "risks": [
+      "Não reaplicar patch antigo de comments/base sobre catálogo atual.",
+      "Não confundir falha histórica do guard com inexistência atual da RPC."
+    ],
+    "head_sha": "33f0426820541254d697219a44aa0d61e35f1bf0",
+    "head_ref": "claude/fix-known-violations-kick-261002-1240",
+    "base_ref": "main",
+    "draft": true,
+    "mergeable": false,
+    "mergeable_state": "dirty",
+    "changed_files": 1,
+    "commits": 1,
+    "comments_collected": 7,
+    "reviews_collected": 1,
+    "inline_comments_collected": 0,
+    "review_threads": 0,
+    "unresolved_threads": 0,
+    "unresolved_not_outdated": 0,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110836407992,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110836407992",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110836407010,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110836407010",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "🧬 Mutação do mapa (não bloqueante)",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110836406759,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110836406759",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110836406664,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110836406664",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110836406624,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110836406624",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110835574574,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110835574574",
+        "completed_at": "2026-10-02T12:23:33Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110835484558,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1584",
+        "completed_at": "2026-10-02T12:23:12Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110835358849,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T12:22:49Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110835275355,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300833/job/110835275355",
+        "completed_at": "2026-10-02T12:23:40Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110835275131,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-02T12:22:33Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 110835274851,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300759/job/110835274851",
+        "completed_at": "2026-10-02T12:26:09Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 110835274493,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300741/job/110835274493",
+        "completed_at": "2026-10-02T12:23:25Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110835274467,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/37006300833/job/110835274467",
+        "completed_at": "2026-10-02T12:24:54Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110835270402,
+        "details_url": "https://vercel.com/api/marketplace/sso?product_id=supabase&integrationConfigurationId=icfg_ljrwZ7dvf5ItsrP0HGRAyo48&resource_id=tnnnlkbymytvtqngbbqh&integration_settings=true",
+        "completed_at": "2026-10-02T12:22:32Z"
+      }
+    ]
+  },
+  {
+    "number": 1439,
+    "status": "UNMERGED_DEBOUNCE_DESIGN_DEFECT",
+    "priority": "P1",
+    "decision": "Reprojetar debounce com execução tardia garantida e timestamp do commit antes de incorporar.",
+    "evidence": "49 adições em types-sync; skip por20min com PR.updated_at, sem requeue; busca só20 PRs por label. 5 threads abertas. Falha CI capturada é política Actions01/10, além dos defeitos estáticos da proposta.",
+    "risks": [
+      "Push de migration pode ser descartado até próximo schedule semanal/manual.",
+      "Comentários e reviews renovam updated_at sem mudar head.",
+      "Busca não paginada pode não encontrar sync PR com>20 abertas."
+    ],
+    "head_sha": "3323533e8cb60352d48c5c1135b33acd21709cb5",
+    "head_ref": "claude/fix-e27-e17-e18-261001-1805",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": true,
+    "mergeable_state": "blocked",
+    "changed_files": 1,
+    "commits": 1,
+    "comments_collected": 10,
+    "reviews_collected": 4,
+    "inline_comments_collected": 5,
+    "review_threads": 5,
+    "unresolved_threads": 5,
+    "unresolved_not_outdated": 5,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110516989057,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599202/job/110516989057",
+        "completed_at": "2026-10-01T18:20:43Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110516988529,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599202/job/110516988529",
+        "completed_at": "2026-10-01T18:20:43Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110516988166,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599202/job/110516988166",
+        "completed_at": "2026-10-01T18:20:43Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110516987431,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599202/job/110516987431",
+        "completed_at": "2026-10-01T18:20:43Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110516047387,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110516047387",
+        "completed_at": "2026-10-01T18:18:29Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110515323618,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1439",
+        "completed_at": "2026-10-01T18:22:53Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110515263473,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1439",
+        "completed_at": "2026-10-01T18:16:31Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 110515230058,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599202/job/110515230058",
+        "completed_at": "2026-10-01T18:20:43Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110515229207,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905599209/job/110515229207",
+        "completed_at": "2026-10-01T18:23:16Z"
+      },
+      {
+        "name": "🏗️ Build",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110515228245,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486882/job/110515228245",
+        "completed_at": "2026-10-01T18:16:27Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110515227266,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486882/job/110515227266",
+        "completed_at": "2026-10-01T18:16:27Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110515226953,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486882/job/110515226953",
+        "completed_at": "2026-10-01T18:16:27Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110515226902,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486882/job/110515226902",
+        "completed_at": "2026-10-01T18:16:27Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110515219986,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-01T18:16:28Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110514880845,
+        "details_url": "https://vercel.com/api/marketplace/sso?product_id=supabase&integrationConfigurationId=icfg_ljrwZ7dvf5ItsrP0HGRAyo48&resource_id=tnnnlkbymytvtqngbbqh&integration_settings=true",
+        "completed_at": "2026-10-01T18:15:32Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110514861425,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T18:15:35Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110514847139,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T18:15:33Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110514842386,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905487017/job/110514842386",
+        "completed_at": "2026-10-01T18:20:07Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110514841872,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905487017/job/110514841872",
+        "completed_at": "2026-10-01T18:18:35Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110514840981,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486882/job/110514840981",
+        "completed_at": "2026-10-01T18:16:26Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110514840888,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36905486886/job/110514840888",
+        "completed_at": "2026-10-01T18:16:27Z"
+      }
+    ]
+  },
+  {
+    "number": 1430,
+    "status": "OBSOLETE_TEST_SUPPRESSION_PROPOSAL",
+    "priority": "P1",
+    "decision": "Candidata a encerrar/superar após mapear correções posteriores; preservar testes úteis.",
+    "evidence": "Introduz fixme incondicional em volume/reactions e condicional WebKit; baseline já usa Enter para volume, última mensagem+perfil pronto nas reações e combobox nomeado no TalkX. 4 threads abertas; E2E check mais recente cancelled, outro anterior success.",
+    "risks": [
+      "Silencia cobertura sem tratar causa atual; o próprio teste volume não usa long press.",
+      "Outro teste de toggle compartilha interação suspeita e continuaria rodando."
+    ],
+    "head_sha": "82a9cc5efeaa4cb605b37c11439548580e425cb5",
+    "head_ref": "claude/fix-e09-e2e-fixme-261001-1740",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": true,
+    "mergeable_state": "blocked",
+    "changed_files": 3,
+    "commits": 1,
+    "comments_collected": 8,
+    "reviews_collected": 4,
+    "inline_comments_collected": 4,
+    "review_threads": 4,
+    "unresolved_threads": 4,
+    "unresolved_not_outdated": 4,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110511660442,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095246/job/110511660442",
+        "completed_at": "2026-10-01T18:10:39Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110509106723,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095246/job/110509106723",
+        "completed_at": "2026-10-01T18:07:58Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110509106721,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095246/job/110509106721",
+        "completed_at": "2026-10-01T18:04:46Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "cancelled",
+        "status": "completed",
+        "id": 110509106708,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095246/job/110509106708",
+        "completed_at": "2026-10-01T18:23:51Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110506815369,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1430",
+        "completed_at": "2026-10-01T18:06:59Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110506800888,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095246/job/110506800888",
+        "completed_at": "2026-10-01T18:01:52Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110506797937,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36903095238/job/110506797937",
+        "completed_at": "2026-10-01T18:09:38Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110506794955,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-01T17:56:22Z"
+      },
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110504830311,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105372/job/110504830311",
+        "completed_at": "2026-10-01T17:52:18Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110501529879,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105372/job/110501529879",
+        "completed_at": "2026-10-01T17:51:35Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110501529594,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105372/job/110501529594",
+        "completed_at": "2026-10-01T17:46:36Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110501529507,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105372/job/110501529507",
+        "completed_at": "2026-10-01T17:46:51Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500873824,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1430",
+        "completed_at": "2026-10-01T17:42:03Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500523070,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110500523070",
+        "completed_at": "2026-10-01T17:41:16Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500251563,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T17:40:34Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110500210744,
+        "details_url": "https://vercel.com/api/marketplace/sso?product_id=supabase&integrationConfigurationId=icfg_ljrwZ7dvf5ItsrP0HGRAyo48&resource_id=tnnnlkbymytvtqngbbqh&integration_settings=true",
+        "completed_at": "2026-10-01T17:40:26Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110500200480,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T17:40:27Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500199497,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105331/job/110500199497",
+        "completed_at": "2026-10-01T17:46:17Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500199242,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105372/job/110500199242",
+        "completed_at": "2026-10-01T17:43:40Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500199138,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105331/job/110500199138",
+        "completed_at": "2026-10-01T17:41:22Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500198227,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901105246/job/110500198227",
+        "completed_at": "2026-10-01T17:48:08Z"
+      },
+      {
+        "name": "🎭 E2E Talk X (PR, 3 browsers)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110500088482,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36901072462/job/110500088482",
+        "completed_at": "2026-10-01T17:47:30Z"
+      }
+    ]
+  },
+  {
+    "number": 1206,
+    "status": "SUPERSEDED_ATTESTATION_POLICY_WITH_REGRESSIONS",
+    "priority": "P1",
+    "decision": "Candidata a encerrar como substituída pela linhagem#1376/#1671/#1757; não reaplicar fallback temporal sem prova.",
+    "evidence": "main preserva baseline version=null, aceita digest idêntico e falha contradição CLI/digest; PR remove bypass null e aceita updated_at. 2 threads abertas. CIhead DB offline falhou versão de migration duplicada20260930390000 em01/10.",
+    "risks": [
+      "Versão null+knownUnchanged torna condições impossíveis e consome todas tentativas.",
+      "Timestamp posterior pode aceitar versão regressiva e atribuir deploy antigo ao SHA atual.",
+      "Conflito com main e política de atestação evoluída."
+    ],
+    "head_sha": "ea107e527cb778149f52d101d2a60144051f60d2",
+    "head_ref": "claude/fix-attestation-e09-stable-inv-291029-1520",
+    "base_ref": "main",
+    "draft": false,
+    "mergeable": false,
+    "mergeable_state": "dirty",
+    "changed_files": 1,
+    "commits": 7,
+    "comments_collected": 32,
+    "reviews_collected": 10,
+    "inline_comments_collected": 2,
+    "review_threads": 2,
+    "unresolved_threads": 2,
+    "unresolved_not_outdated": 2,
+    "combined_status": "success",
+    "checks": [
+      {
+        "name": "🏗️ Build",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110352874701,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537409/job/110352874701",
+        "completed_at": "2026-10-01T11:45:40Z"
+      },
+      {
+        "name": "🎭 E2E Tests (Playwright)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110351272494,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537409/job/110351272494",
+        "completed_at": "2026-10-01T11:42:26Z"
+      },
+      {
+        "name": "🔒 Security Audit",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110351272476,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537409/job/110351272476",
+        "completed_at": "2026-10-01T11:40:55Z"
+      },
+      {
+        "name": "🧪 Unit Tests",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110351272474,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537409/job/110351272474",
+        "completed_at": "2026-10-01T11:45:15Z"
+      },
+      {
+        "name": "SonarCloud Code Analysis",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350753986,
+        "details_url": "https://sonarcloud.io/dashboard?id=adm01-debug_Zapp_Web_V2&pullRequest=1206",
+        "completed_at": "2026-10-01T11:39:03Z"
+      },
+      {
+        "name": "CodeQL",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350480986,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/runs/110350480986",
+        "completed_at": "2026-10-01T11:38:19Z"
+      },
+      {
+        "name": "Vercel Preview Comments",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350373860,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T11:37:57Z"
+      },
+      {
+        "name": "🔍 Lint & TypeCheck",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350241122,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537409/job/110350241122",
+        "completed_at": "2026-10-01T11:40:34Z"
+      },
+      {
+        "name": "🔬 CodeQL (actions)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350241107,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537471/job/110350241107",
+        "completed_at": "2026-10-01T11:38:24Z"
+      },
+      {
+        "name": "🔬 CodeQL (javascript-typescript)",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350240988,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537471/job/110350240988",
+        "completed_at": "2026-10-01T11:39:16Z"
+      },
+      {
+        "name": "Contrato DB offline",
+        "conclusion": "failure",
+        "status": "completed",
+        "id": 110350240815,
+        "details_url": "https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36856537353/job/110350240815",
+        "completed_at": "2026-10-01T11:38:17Z"
+      },
+      {
+        "name": "cubic · AI code reviewer",
+        "conclusion": "success",
+        "status": "completed",
+        "id": 110350240260,
+        "details_url": "https://www.cubic.dev/pr/adm01-debug/Zapp_Web_V2/pull/1206",
+        "completed_at": "2026-10-01T11:37:34Z"
+      },
+      {
+        "name": "Vercel Agent Review",
+        "conclusion": "neutral",
+        "status": "completed",
+        "id": 110350231843,
+        "details_url": "https://vercel.com/github",
+        "completed_at": "2026-10-01T11:37:32Z"
+      },
+      {
+        "name": "Mermaid Diagram Sync Assistant",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110350224328,
+        "details_url": "https://www.mermaid.ai",
+        "completed_at": "2026-10-01T11:37:34Z"
+      },
+      {
+        "name": "Supabase Preview",
+        "conclusion": "skipped",
+        "status": "completed",
+        "id": 110350220302,
+        "details_url": "https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/branches",
+        "completed_at": "2026-10-01T11:37:29Z"
+      }
+    ]
+  }
+]

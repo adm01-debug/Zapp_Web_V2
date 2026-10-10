@@ -1,0 +1,30 @@
+{
+  "source_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "verified_at": "2026-10-04T03:34:43.813643+00:00",
+  "all_tracked_files_checked": 4068,
+  "source_blob_mismatches": [],
+  "source_git_status_clean": true,
+  "findings": 64,
+  "evidence_ranges_covered": true,
+  "compared_to_baseline": 307,
+  "all_identical_to_baseline": true,
+  "offline_probes": 64,
+  "original_20_probe_artifacts_unchanged": true,
+  "previous_28_probe_artifacts_unchanged": true,
+  "previous_41_probe_artifacts_unchanged": true,
+  "previous_49_probe_artifacts_unchanged": true,
+  "previous_53_findings_unchanged": true,
+  "previous_39_findings_unchanged": true,
+  "pass3_findings_only_extensions": [
+    "R2-INB-042",
+    "R2-INB-043"
+  ],
+  "communication_batch_full_semantic_files": 8,
+  "media_batch_full_semantic_files": 5,
+  "pass5_full_semantic_files": 140,
+  "coverage_counts": {
+    "targeted": 62,
+    "semantic": 244,
+    "structural": 125
+  }
+}

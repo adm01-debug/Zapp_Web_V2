@@ -1,0 +1,58 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "records": 130,
+  "counts": {
+    "DONE_VERIFIED": 48,
+    "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 16,
+    "PARTIAL": 31,
+    "NOT_IMPLEMENTED": 11,
+    "SUPERSEDED": 3,
+    "VALIDATED_FAIL": 1,
+    "NEEDS_REVALIDATION": 14,
+    "PRODUCT_DECISION_REQUIRED": 3,
+    "NO_LONGER_APPLICABLE": 3
+  },
+  "modules": {
+    "tipografia": {
+      "records": 100,
+      "statuses": {
+        "DONE_VERIFIED": 45,
+        "PARTIAL": 23,
+        "SUPERSEDED": 1,
+        "NEEDS_REVALIDATION": 13,
+        "NOT_IMPLEMENTED": 10,
+        "PRODUCT_DECISION_REQUIRED": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 2,
+        "NO_LONGER_APPLICABLE": 3
+      }
+    },
+    "layout": {
+      "records": 30,
+      "statuses": {
+        "DONE_VERIFIED": 3,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 14,
+        "PARTIAL": 8,
+        "NOT_IMPLEMENTED": 1,
+        "SUPERSEDED": 2,
+        "VALIDATED_FAIL": 1,
+        "NEEDS_REVALIDATION": 1
+      }
+    }
+  },
+  "guards": {
+    "typography": {
+      "exit_code": 0,
+      "tests_passed": 10,
+      "source_files": 1917,
+      "named_uses": 4578,
+      "arbitrary_uses": 311
+    },
+    "layout": {
+      "exit_code": 1,
+      "reported_findings": 5,
+      "checked_view_files": 51,
+      "adjudication": "2 scanner limits; missing root width class is not visual proof;2 duplicated padding sources"
+    }
+  },
+  "findings_count": 8
+}

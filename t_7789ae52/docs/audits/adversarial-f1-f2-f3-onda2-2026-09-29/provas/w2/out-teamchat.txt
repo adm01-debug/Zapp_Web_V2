@@ -1,0 +1,85 @@
+### HARNESS ativo: cluster TEAM CHAT (E26..E51) - PostgreSQL 17 descartavel
+WARNING:  "wal_level" is insufficient to publish logical changes
+HINT:  Set "wal_level" to "logical" before creating subscriptions.
+APPLY|OK|20260929160000_team_chat_e26_message_type_media_constraint
+APPLY|OK|20260929170000_team_chat_e27_reply_to_self_ref_check
+APPLY|OK|20260929180000_team_chat_e28_edit_guard_trigger
+APPLY|OK|20260929190000_team_chat_e29_conversations_constraints
+APPLY|OK|20260929200000_team_chat_e30_dept_conversation_constraints
+APPLY|OK|20260929210000_team_chat_e31_conversation_members_constraints
+APPLY|OK|20260929220000_team_chat_e32_reactions_hardening
+APPLY|OK|20260929230000_team_chat_e33_receipts_consistency_check
+APPLY|OK|20260929240000_team_chat_e34_drift_mirror_metadata_realtime
+APPLY|OK|20260929250000_team_chat_e35_comment_on_tables
+APPLY|OK|20260929260000_team_chat_e37_get_team_inbox_rpc
+APPLY|OK|20260929270000_team_chat_e38_get_team_messages_page_rpc
+APPLY|OK|20260929280000_team_chat_e39_mark_team_conversation_read_rpc
+APPLY|OK|20260929290000_team_chat_e40_search_team_messages_rpc
+APPLY|OK|20260929300000_team_chat_e41_toggle_team_reaction_rpc
+APPLY|OK|20260929310000_team_chat_e42_set_team_member_pref_rpc
+APPLY|OK|20260929320000_team_chat_e43_leave_team_group_rpc
+APPLY|OK|20260929330000_team_chat_e44_remove_team_member_rpc
+APPLY|OK|20260929400000_team_chat_e45_transfer_conversation_department_rpc
+APPLY|OK|20260929410000_team_chat_e47_e48_e49_replica_identity_deprecated_comments_drop_dup_indexes
+APPLY|OK|20260929430000_team_chat_e46_leave_remove_last_owner_promotion
+APPLY|OK|20260929440000_team_chat_e51_receipts_conversation_id_not_null_trigger
+### [T1] INVENTARIO: SECURITY DEFINER / search_path / ACL das funcoes do dia
+PROBE|acl_team_dia|exit=0|find_or_create_direct_conversation(other_profile_id uuid) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~get_team_inbox() definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~get_team_messages_page(p_conversation_id uuid, p_before_id uuid, p_limit integer) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~leave_team_group(p_conversation_id uuid) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~mark_team_conversation_read(p_conversation_id uuid) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~remove_team_member(p_conversation_id uuid, p_profile_id uuid) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~search_team_messages(p_conversation_id uuid, p_query text, p_limit integer) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~set_team_member_pref(p_conversation_id uuid, p_is_muted boolean) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~team_messages_edit_guard() definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~team_messages_validate_reply_to() definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~team_reactions_dedup_guard() definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~team_receipts_fill_conversation_id() definer=true cfg=search_path=public acl=<NULL=default: PUBLIC EXECUTE> anon=true auth=true~team_receipts_no_own_sender() definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~toggle_team_reaction(p_message_id uuid, p_emoji text) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true~transfer_team_conversation_department(p_conversation_id uuid, p_to_department_id uuid) definer=true cfg=search_path=public acl=postgres=X/postgres|authenticated=X/postgres anon=false auth=true
+PROBE|acl_team_dia_resumo|exit=0|15 funcoes do dia; com anon=1; com proacl NULL=1; sem EXECUTE p/ anon e sem proacl NULL: nomes=find_or_create_direct_conversation,get_team_inbox,get_team_messages_page,leave_team_group,mark_team_conversation_read,remove_team_member,search_team_messages,set_team_member_pref,team_messages_edit_guard,team_messages_validate_reply_to,team_reactions_dedup_guard,team_receipts_no_own_sender,toggle_team_reaction,transfer_team_conversation_department
+PROBE|search_path_de_cada_funcao_do_dia|exit=0|current_profile_id=>search_path=public ; find_or_create_direct_conversation=>search_path=public ; get_team_inbox=>search_path=public ; get_team_messages_page=>search_path=public ; leave_team_group=>search_path=public ; mark_team_conversation_read=>search_path=public ; remove_team_member=>search_path=public ; search_team_messages=>search_path=public ; set_team_member_pref=>search_path=public ; team_messages_edit_guard=>search_path=public ; team_messages_validate_reply_to=>search_path=public ; team_reactions_dedup_guard=>search_path=public ; team_receipts_fill_conversation_id=>search_path=public ; team_receipts_no_own_sender=>search_path=public ; toggle_team_reaction=>search_path=public ; transfer_team_conversation_department=>search_path=public
+### [T2] Baseline RLS: o que B1 (fora do grupo A) consegue ler direto
+PROBE|b1_le_mensagens_grupo_a_direto|exit=0|0
+PROBE|b1_le_conversa_a_direto|exit=0|0
+PROBE|b1_le_membros_a_direto|exit=1|ERROR:  infinite recursion detected in policy for relation "team_conversation_members"
+### [T3] RPCs com guard de vinculo (deveriam recusar)
+PROBE|get_team_messages_page_alheia|exit=1|ERROR:  column reference "conversation_id" is ambiguous~LINE 1: ...ECT 1 FROM public.team_conversation_members WHERE conversati...~                                                             ^~DETAIL:  It could refer to either a PL/pgSQL variable or a table column.~QUERY:  NOT EXISTS (SELECT 1 FROM public.team_conversation_members WHERE conversation_id = p_conversation_id AND profile_id = v_profile_id)~CONTEXT:  PL/pgSQL function get_team_messages_page(uuid,uuid,integer) line 1 at IF
+PROBE|search_team_messages_alheia|exit=1|ERROR:  not_member~CONTEXT:  PL/pgSQL function search_team_messages(uuid,text,integer) line 1 at RAISE
+PROBE|set_team_member_pref_alheia|exit=1|ERROR:  not_member~CONTEXT:  PL/pgSQL function set_team_member_pref(uuid,boolean) line 1 at RAISE
+PROBE|leave_team_group_alheia|exit=1|ERROR:  not_a_member~CONTEXT:  PL/pgSQL function leave_team_group(uuid) line 1 at RAISE
+PROBE|remove_team_member_alheia|exit=1|ERROR:  actor_not_a_member~CONTEXT:  PL/pgSQL function remove_team_member(uuid,uuid) line 1 at RAISE
+PROBE|get_team_inbox_propria|exit=0|40000000-0000-0000-0000-00000000000b/Grupo B/membros=1
+PROBE|get_team_inbox_nao_vaza_A|exit=0|0
+### [T4] toggle_team_reaction: SEM guard de vinculo (IDOR de escrita)
+PROBE|toggle_reaction_msg_alheia_B1|exit=0|{"emoji": "x", "action": "added"}
+PROBE|reaction_gravada_por_B1|exit=0|1 reacao(es) em 50000000-0000-0000-0000-00000000000a
+PROBE|reaction_visivel_para_A1|exit=1|ERROR:  infinite recursion detected in policy for relation "team_conversation_members"
+### [T5] toggle_team_reaction com message_id inexistente (oraculo de existencia)
+PROBE|toggle_reaction_uuid_inexistente|exit=1|ERROR:  insert or update on table "team_message_reactions" violates foreign key constraint "team_message_reactions_message_id_fkey"~DETAIL:  Key (message_id)=(50000000-0000-0000-0000-0000000000ff) is not present in table "team_messages".~CONTEXT:  SQL statement "INSERT INTO public.team_message_reactions(message_id, profile_id, emoji) VALUES (p_message_id, v_profile_id, p_emoji) ON CONFLICT DO NOTHING"~PL/pgSQL function toggle_team_reaction(uuid,text) line 1 at SQL statement
+### [T6] mark_team_conversation_read: SEM guard de vinculo (roda por ultimo: cria receipts em massa)
+### [T7] escrita DIRETA em tabela (RLS como authenticated) - simetria
+PROBE|insert_receipt_direto_msg_alheio|exit=0|
+PROBE|conferir_receipt_landed|exit=0|1 receipt(s) de B1 na conversa A (lido como postgres)
+PROBE|insert_reaction_direto_msg_alheia|exit=0|
+PROBE|insert_msg_direto_conversa_alheia|exit=1|ERROR:  new row violates row-level security policy for table "team_messages"
+### [T8] find_or_create_direct_conversation: cria DM sem consentimento
+PROBE|fcdc_com_B1|exit=0|1c913102-ffd7-42e6-a71c-72e786f5df6d
+PROBE|fcdc_perfil_inexistente|exit=1|ERROR:  insert or update on table "team_conversation_members" violates foreign key constraint "team_conversation_members_profile_id_fkey"~DETAIL:  Key (profile_id)=(10000000-0000-0000-0000-0000000000ff) is not present in table "profiles".~CONTEXT:  SQL statement "INSERT INTO public.team_conversation_members(conversation_id, profile_id) VALUES (v_conv_id, v_my_profile_id), (v_conv_id, other_profile_id)"~PL/pgSQL function find_or_create_direct_conversation(uuid) line 1 at SQL statement
+PROBE|fcdc_consigo_mesmo|exit=1|ERROR:  cannot_create_direct_with_self~CONTEXT:  PL/pgSQL function find_or_create_direct_conversation(uuid) line 1 at RAISE
+### [T9] transfer_team_conversation_department: papel
+PROBE|transfer_como_agent|exit=1|ERROR:  not_authorized~CONTEXT:  PL/pgSQL function transfer_team_conversation_department(uuid,uuid) line 1 at RAISE
+PROBE|transfer_como_admin_canal_depto|exit=0|{"ok": true, "conversation_id": "40000000-0000-0000-0000-00000000000c", "to_department_id": "90000000-0000-0000-0000-00000000000b", "from_department_id": "90000000-0000-0000-0000-00000000000a"}
+### [T10] anon e EXECUTE das RPCs do dia
+PROBE|anon_rpcs|exit=0|false|false|false|false|false|false
+PROBE|anon_chama_toggle_reaction|exit=1|ERROR:  permission denied for function toggle_team_reaction
+PROBE|anon_chama_get_team_inbox|exit=1|ERROR:  permission denied for function get_team_inbox
+PROBE|auth_chama_guard_direto|exit=1|ERROR:  trigger functions can only be called as triggers~CONTEXT:  compilation of PL/pgSQL function "team_reactions_dedup_guard" near line 1
+PROBE|auth_chama_fill_conv_id_direto|exit=1|ERROR:  trigger functions can only be called as triggers~CONTEXT:  compilation of PL/pgSQL function "team_receipts_fill_conversation_id" near line 1
+### [T10b] residuo de ACL: funcoes do dia SEM REVOKE (proacl NULL = PUBLIC tem EXECUTE)
+PROBE|acl_residuo_public|exit=0|team_receipts_fill_conversation_id rettype=trigger? true anon=true auth=true
+PROBE|anon_exec_trigger_fns|exit=1|ERROR:  trigger functions can only be called as triggers~CONTEXT:  compilation of PL/pgSQL function "team_receipts_fill_conversation_id" near line 1
+### [T11] edit_guard e RLS de UPDATE: alcance real
+PROBE|b1_edita_msg_DE_A1|exit=0|
+PROBE|a1_edita_msg_de_B1|exit=0|
+PROBE|a1_edita_msg_propria_via_rpc_direto|exit=0|true/updated_at!=created_at=true
+### [T12] trigger de receipt preenche conversation_id sem checar vinculo
+PROBE|receipt_novo_sem_conversation_id|exit=0|
+PROBE|receipt_A3_conversation_id|exit=0|40000000-0000-0000-0000-00000000000a <- preenchido pelo trigger em read
+### [T6] mark_team_conversation_read: SEM guard de vinculo
+PROBE|mark_read_conversa_alheia|exit=0|
+PROBE|receipts_criados_por_B1_em_A|exit=0|4 receipt(s) de B1 em mensagens da conversa A
+### [T13] defectuosidade independente de vinculo (nao e questao de permissao)
+PROBE|get_team_messages_page_MEMBRO|exit=1|ERROR:  column reference "conversation_id" is ambiguous~LINE 1: ...ECT 1 FROM public.team_conversation_members WHERE conversati...~                                                             ^~DETAIL:  It could refer to either a PL/pgSQL variable or a table column.~QUERY:  NOT EXISTS (SELECT 1 FROM public.team_conversation_members WHERE conversation_id = p_conversation_id AND profile_id = v_profile_id)~CONTEXT:  PL/pgSQL function get_team_messages_page(uuid,uuid,integer) line 1 at IF
+PROBE|search_team_messages_MEMBRO|exit=0|3
+PROBE|select_direto_membros_MEMBRO|exit=1|ERROR:  infinite recursion detected in policy for relation "team_conversation_members"
+PROBE|get_team_inbox_MEMBRO|exit=0|40000000-0000-0000-0000-00000000000a/Grupo A
+HARNESS-END|cluster=teamchat

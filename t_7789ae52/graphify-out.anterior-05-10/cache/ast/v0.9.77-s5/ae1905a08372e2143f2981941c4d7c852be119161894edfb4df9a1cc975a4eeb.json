@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_scripts_db_audit_inbox_contact_authorization_runtime_sql", "label": "inbox-contact-authorization-runtime.sql", "file_type": "code", "source_file": "scripts/db-audit/inbox-contact-authorization-runtime.sql", "source_location": null}], "edges": []}

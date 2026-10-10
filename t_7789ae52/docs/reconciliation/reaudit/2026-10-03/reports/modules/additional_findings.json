@@ -1,0 +1,2650 @@
+[
+  {
+    "id": "R2-MOD-028",
+    "severity": "P2",
+    "title": "Estatísticas CSAT podem continuar no snapshot anterior após atualizar as avaliações",
+    "preconditions": "Avaliações já carregadas; ocorre nova submissão ou refetch e a consulta das avaliações demora mais que a derivação de stats.",
+    "cause": "stats é outra query com key estável por período, cujo queryFn lê surveysQuery.data. O sucesso invalida as duas queries simultaneamente e a key de stats não contém a identidade/revisão dos dados de surveys.",
+    "observed_behavior": "Stats pode recalcular sobre o array antigo enquanto surveys refaz a leitura. A chegada do novo array muda a lista de feedbacks sem necessariamente invalidar/refazer a query de stats já habilitada.",
+    "impact": "Quantidade, média e distribuição podem discordar das avaliações mostradas na mesma tela.",
+    "recommendation": "Derivar stats diretamente do resultado atual de surveys ou usar um contrato único de agregação e atualização.",
+    "acceptance": [
+      "Com refetch atrasado, ao chegar uma quarta avaliação média, total e distribuição mudam junto com a lista.",
+      "O teste verifica valores e transição após submissão, não somente surveys definido/isLoading=false."
+    ],
+    "limitations": [
+      "Confirmado por leitura do contrato de dependência entre queries; não houve execução do React Query real no navegador."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useCSAT.ts",
+        44,
+        81,
+        "stats depende de closure de surveys sem identidade na queryKey"
+      ],
+      [
+        "src/hooks/business/useCSAT.ts",
+        83,
+        108,
+        "invalidação simultânea e retorno ao consumidor"
+      ],
+      [
+        "src/components/csat/CSATDashboard.tsx",
+        20,
+        36,
+        "consome stats separado de surveys"
+      ],
+      [
+        "src/components/csat/CSATDashboard.tsx",
+        74,
+        104,
+        "total/distribuição e feedbacks coexistem"
+      ],
+      [
+        "src/hooks/__tests__/useCSAT.test.tsx",
+        55,
+        97,
+        "asserts atuais não verificam stats ou atualização"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-029",
+    "severity": "P2",
+    "title": "Agenda filtra pendentes depois de uma consulta global que pode ser ocupada pelo histórico",
+    "preconditions": "scheduled_messages contém histórico suficiente para atingir o cap de linhas antes dos agendamentos futuros.",
+    "cause": "O hook global busca todos os status em scheduled_at crescente sem intervalo/paginação. O calendário filtra pending e o mês somente no cliente.",
+    "observed_behavior": "Mensagens antigas enviadas/canceladas entram primeiro. Uma página só de histórico vira zero pendentes, e navegar pelos meses não muda a consulta. Falha de leitura também não é exposta ao calendário.",
+    "impact": "Agendamentos futuros existentes podem desaparecer da Agenda e dos contadores, impedindo revisão/cancelamento por esse fluxo.",
+    "recommendation": "Consultar pendentes pelo intervalo visível com ordenação/paginação estável, manter totais autorizados separados e propagar error.",
+    "acceptance": [
+      "Histórico acima do cap não esconde pendentes no mês atual/futuro.",
+      "Mudar o mês carrega a faixa necessária; erro não equivale a agenda vazia.",
+      "Teste usa o calendário com histórico e pendentes além do primeiro lote."
+    ],
+    "limitations": [
+      "Este achado é a leitura da Agenda. O sucesso prematuro de ScheduleMessageDialog e a disponibilidade do executor são cobertos por Inbox/Providers.",
+      "O cap remoto exato e as execuções de cron não foram consultados."
+    ],
+    "evidence": [
+      [
+        "src/hooks/chat/useScheduledMessages.ts",
+        22,
+        42,
+        "query global sem status/faixa/páginas"
+      ],
+      [
+        "src/components/schedule/ScheduleCalendarView.tsx",
+        43,
+        82,
+        "filtro local e navegação por mês"
+      ],
+      [
+        "src/components/schedule/ScheduleCalendarView.tsx",
+        232,
+        277,
+        "ações dependem dos eventos encontrados"
+      ],
+      [
+        "src/hooks/__tests__/useScheduledMessages.test.tsx",
+        42,
+        105,
+        "fixture de dois registros; não prova completude"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-030",
+    "severity": "P2",
+    "title": "War Room apresenta habilitação e contatos atribuídos como presença e atendimento ativo",
+    "preconditions": "Há perfis habilitados mas desconectados, contatos resolvidos ainda atribuídos ou filas com diferentes episódios históricos.",
+    "cause": "O hook deriva online/busy de profiles.is_active e da contagem de todos os contacts.assigned_to, sem presença nem status de conversa. Filas também contam todo contato associado e retornam avgWaitTime/slaWarnings fixos em zero.",
+    "observed_behavior": "Todo perfil is_active consultado vira online/busy. Contatos resolvidos contam como activeChats/inProgress. A UI publica Agentes Online, Na Fila e Em Risco com esses valores.",
+    "impact": "Supervisão pode interpretar cadastro habilitado como disponibilidade real e zero risco como medição efetiva.",
+    "recommendation": "Usar presença e episódios ativos como fontes dos indicadores; distinguir métrica indisponível de zero e ligar espera/risco a medidas reais.",
+    "acceptance": [
+      "Perfil habilitado offline não conta online; conversa resolvida não ocupa capacidade ativa.",
+      "Espera e risco não são anunciados como zero quando não foram calculados."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "A auditoria anterior tratava presença/proxies no ranking e outros cards; aqui há a cadeia específica do War Room. Filas/SLA fora desse componente ficam com root.",
+    "limitations": [
+      "Não foi promovida a hipótese de conversations_resolved ser acumulado histórico, pois a semântica da tabela agent_stats não foi comprovada neste escopo."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useWarRoomData.ts",
+        38,
+        78,
+        "habilitação e todos os contatos viram presença/capacidade"
+      ],
+      [
+        "src/hooks/business/useWarRoomData.ts",
+        90,
+        110,
+        "filas sem estado do episódio; espera e risco fixos"
+      ],
+      [
+        "src/hooks/business/useWarRoomData.ts",
+        120,
+        128,
+        "agregados publicados"
+      ],
+      [
+        "src/components/dashboard/WarRoomDashboard.tsx",
+        82,
+        95,
+        "rótulos operacionais"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-031",
+    "severity": "P2",
+    "title": "Auto-atualização do War Room controla apenas o relógio exibido",
+    "preconditions": "Usar o botão Auto-atualização ou ocorrer falha nas consultas periódicas do War Room.",
+    "cause": "autoRefresh só habilita um setInterval que muda lastUpdate; o hook mantém refetchInterval=30000 independente do botão e sem devolver o instante/erro de confirmação.",
+    "observed_behavior": "Desligar o controle não interrompe as consultas. Enquanto ativo, Atualizado avança a cada 30 s mesmo sem confirmação de novos dados; Ao vivo é incondicional.",
+    "impact": "O estado e a atualidade anunciados não correspondem ao comportamento de dados, comprometendo a interpretação operacional da tela.",
+    "recommendation": "Controlar o refetch real pelo botão e derivar horário/estado da consulta confirmada, com erro e dados desatualizados explícitos.",
+    "acceptance": [
+      "Desligar interrompe o refetch governado pelo controle.",
+      "Consulta falhada não avança a hora de dados confirmados nem mantém alegação incondicional de atualidade."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-CONTROLS-001",
+      "DASH-REALTIME-001"
+    ],
+    "prior_note": "Novo consumidor e mecanismo concreto (relógio local versus polling), dentro das famílias de controles/realtime já abertas.",
+    "evidence": [
+      [
+        "src/components/dashboard/WarRoomDashboard.tsx",
+        38,
+        58,
+        "autoRefresh atua somente em lastUpdate"
+      ],
+      [
+        "src/components/dashboard/WarRoomDashboard.tsx",
+        69,
+        78,
+        "indicadores e botão"
+      ],
+      [
+        "src/hooks/business/useWarRoomData.ts",
+        77,
+        79,
+        "poll de agentes sempre 30s"
+      ],
+      [
+        "src/hooks/business/useWarRoomData.ts",
+        113,
+        117,
+        "poll de filas e retorno sem estado da query"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-032",
+    "severity": "P2",
+    "title": "Conclusão remota da campanha não limpa seleção e modais em andamento",
+    "preconditions": "Campanha selecionada sending/paused conclui ou é cancelada remotamente, com um modal de ação aberto.",
+    "cause": "O primeiro useEffect escreve campaign=null em prevCampaignRef antes de o efeito seguinte testar se havia campanha anterior. A condição prevCampaignRef.current!==null fica falsa.",
+    "observed_behavior": "O probe executou os dois efeitos originais na ordem: nenhum setter de limpeza foi chamado após a campanha sair de sending/paused. Modais permanecem renderizados fora do bloco campaign e handlers retornam sem ação quando campaign=null.",
+    "impact": "Ações obsoletas permanecem abertas e sua confirmação pode não fazer nada. A correção descrita pelo comentário não cobre a transição real.",
+    "recommendation": "Comparar o estado anterior antes de atualizar a referência, ou modelar seleção/modal em um efeito de transição único.",
+    "acceptance": [
+      "Com Pausar, Cancelar ou Limites aberto, mudar status para completed limpa seleção/modal e informa a conclusão.",
+      "Teste varia o resultado do hook entre renders; fixture sending fixa não encerra esse caso."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        498,
+        517,
+        "ordem dos efeitos da transição"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        557,
+        563,
+        "save limites retorna sem campanha"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        589,
+        611,
+        "pausar/cancelar retornam sem campanha"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        736,
+        837,
+        "modais independentes da presença da campanha"
+      ],
+      [
+        "src/components/talkx/__tests__/TalkXCampaignRunning.limits.test.tsx",
+        16,
+        62,
+        "fixture permanente sending"
+      ],
+      [
+        "src/components/talkx/__tests__/TalkXCampaignRunning.limits.test.tsx",
+        116,
+        139,
+        "teste prova conversão de unidade, não transição de estado"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-033",
+    "severity": "P2",
+    "title": "Ritmo e prazo da campanha usam os primeiros envios e minutos não consecutivos",
+    "preconditions": "Campanha com mais de 2000 envios ou pausas/minutos sem envio; abrir Resultados em Campanha em Andamento.",
+    "cause": "A query lê sent_at crescente com limit(2000), agrupa somente minutos que tiveram eventos e corta os vinte últimos grupos dessa amostra. A média divide os últimos dez grupos por sua quantidade e os chama de últimos dez minutos.",
+    "observed_behavior": "Depois de atingir o cap, envios novos não entram na série. Pausas são omitidas do denominador e minutos antigos podem sustentar um ritmo positivo usado para calcular conclusão prevista.",
+    "impact": "Velocidade, gráfico e prazo estimado podem continuar refletindo uma fase anterior e superestimar o ritmo atual.",
+    "recommendation": "Consultar a janela temporal recente no servidor, agregar todos os eventos com buckets consecutivos incluindo zeros e computar o prazo dessa mesma janela.",
+    "acceptance": [
+      "Envio 2001 e posteriores alteram a série recente.",
+      "Dez minutos sem envio resultam em ritmo zero/indisponível, sem previsão otimista baseada nos dez últimos minutos não vazios."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "IA-TALKX-001"
+    ],
+    "prior_note": "Amostra/semântica temporal reaparece em consumidor diferente dos insights: Running usa ordenação crescente e ainda deriva ETA dos grupos esparsos.",
+    "evidence": [
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        419,
+        439,
+        "média por grupos com rótulo últimos 10 min"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        453,
+        457,
+        "ETA usa essa média"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignRunning.tsx",
+        519,
+        544,
+        "primeiros 2000 e buckets esparsos"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-034",
+    "severity": "P2",
+    "title": "Lista de supressão não identifica nem encontra bloqueios cadastrados somente por telefone",
+    "preconditions": "Existe talkx_blacklist com phone preenchido e contact_id null, formato aceito pelo contrato do módulo.",
+    "cause": "O componente define/consome a identidade exclusivamente pelo join contacts. Não usa o phone próprio da entrada na pesquisa ou na linha.",
+    "observed_behavior": "O bloqueio aparece sem nome/telefone útil; pesquisar o número não o encontra. A confirmação de remoção também não identifica esse destino.",
+    "impact": "O operador não consegue localizar e conferir de forma confiável um bloqueio válido por número antes de gerenciá-lo.",
+    "recommendation": "Representar explicitamente bloqueios por contato e por telefone, com fallback normalizado na busca, linha e confirmação.",
+    "acceptance": [
+      "Entrada phone-only aparece com seu número, é encontrada pela busca e a confirmação de remoção identifica exatamente o destino."
+    ],
+    "limitations": [
+      "Não se afirma que a efetividade da supressão falha no motor: o agente de banco confirmou filtragem vigente por removed_at e expires_at."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useTalkXSuppression.ts",
+        13,
+        35,
+        "contrato admite contato nulo e phone"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        24,
+        35,
+        "UI só tipa identidade do contato"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        82,
+        88,
+        "busca ignora phone da entrada"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        160,
+        178,
+        "linha usa somente join"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        250,
+        254,
+        "confirmação sem fallback por telefone"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-035",
+    "severity": "P2",
+    "title": "Cadastro de supressão busca contato somente no primeiro lote carregado",
+    "preconditions": "O contato procurado existe além do cap da consulta contacts ordenada por name.",
+    "cause": "A abertura carrega uma única consulta sem paginação e o texto de pesquisa apenas filtra esse array em memória, cortando os resultados em cinquenta.",
+    "observed_behavior": "Buscar pelo nome/telefone exato de um contato fora da primeira página devolve Nenhum contato encontrado, sem nova consulta ao servidor.",
+    "impact": "O operador não consegue cadastrar bloqueio manual para parte da base usando esse formulário.",
+    "recommendation": "Aplicar busca paginada no servidor por nome/telefone com estado pendente/erro e exclusão correta dos já bloqueados.",
+    "acceptance": [
+      "Contato além do primeiro lote é encontrado por nome e telefone e pode ser bloqueado.",
+      "Teste verifica que mudar a busca emite a consulta correspondente."
+    ],
+    "limitations": [
+      "Não se presume o cap remoto exato; o limite explícito de cinquenta é apenas o corte da lista local exibida."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        65,
+        80,
+        "fetch único e filtro local"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        215,
+        226,
+        "busca e vazio do formulário"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-036",
+    "severity": "P2",
+    "title": "Consumidores Talk X ainda convertem erro de leitura em vazio ou carregamento indefinido",
+    "preconditions": "Falhar a consulta de campanhas, segmentos, supressão ou campanha individual sem dados prévios válidos.",
+    "cause": "A query/hook conserva ou lança error, mas os componentes não o usam. Overview não recebe isError, Segments e Suppression seguem pelo array vazio, Scheduled retorna null e LiveMonitor aguarda campaign indefinidamente.",
+    "observed_behavior": "Uma falha pode aparecer como Nenhum segmento/Nenhum contato, nenhum conteúdo de agendamento ou skeleton contínuo no monitor, sem retry específico.",
+    "impact": "Falha de acesso/rede é confundida com inexistência de dados e impede recuperação orientada pelo operador.",
+    "recommendation": "Aplicar estados de carregamento, erro, vazio confirmado e dados desatualizados em cada consumidor real.",
+    "acceptance": [
+      "Injetar erro em cada uma das consultas mostra mensagem recuperável e preserva saída/navegação.",
+      "Nenhum erro sem cache é apresentado como zero entidades ou loading perpétuo."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "TX03"
+    ],
+    "prior_note": "TX03 já mostrava adoção incompleta dos estados como gap do plano; esta extensão localiza ramos concretos de consumidores além do kit e inclui supressão/segmentos/agendamento/monitor.",
+    "evidence": [
+      [
+        "src/components/talkx/TalkXView.tsx",
+        335,
+        344,
+        "Overview recebe loading mas não isError"
+      ],
+      [
+        "src/components/talkx/TalkXOverview.tsx",
+        196,
+        205,
+        "erro vira emptyCampaigns"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        26,
+        39,
+        "isError extraído"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        117,
+        121,
+        "render ignora erro"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        52,
+        63,
+        "erro lançado sem expor no consumidor"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        149,
+        152,
+        "fallback vazio"
+      ],
+      [
+        "src/components/talkx/TalkXCampaignScheduled.tsx",
+        49,
+        63,
+        "sem registro retorna null"
+      ],
+      [
+        "src/components/talkx/TalkXLiveMonitor.tsx",
+        43,
+        51,
+        "query campanha lança erro"
+      ],
+      [
+        "src/components/talkx/TalkXLiveMonitor.tsx",
+        97,
+        100,
+        "ausência equivale a skeleton"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-037",
+    "severity": "P2",
+    "title": "Analytics Talk X rotula taxa de envio como entrega e usa volume para recomendar abertura",
+    "preconditions": "Campanhas têm sent_count diferente de delivered_count, ou horas de maior volume não têm maior taxa de abertura.",
+    "cause": "compareData calcula sent_count/total_recipients, mas a legenda chama a série de Taxa de entrega. bestHour usa contagem de sent_at, sem denominador nem read_at, e o texto promete maior abertura.",
+    "observed_behavior": "O comparativo pode exibir envio de 100% sob legenda de entrega mesmo com entregues abaixo de 100%. O melhor horário é simplesmente o maior volume da amostra enviada.",
+    "impact": "O operador interpreta sucesso de entrega e recomendações de horário com uma semântica que os dados consultados não medem.",
+    "recommendation": "Alinhar rótulos às fórmulas; para afirmar entrega/abertura usar ocorrências e denominadores apropriados, período e fuso explícitos.",
+    "acceptance": [
+      "Caso sent=100/delivered=20 distingue taxa de envio de taxa de entrega em todas as legendas.",
+      "Horário com volume alto e abertura baixa não é anunciado como melhor para abertura sem cálculo correspondente."
+    ],
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "IA-TALKX-001"
+    ],
+    "prior_note": "Evidência adicional no Analytics principal, distinta da implementação useTalkXInsights anteriormente apontada.",
+    "evidence": [
+      [
+        "src/components/talkx/TalkXAnalytics.tsx",
+        42,
+        57,
+        "origem é sent_at e volume"
+      ],
+      [
+        "src/components/talkx/TalkXAnalytics.tsx",
+        118,
+        133,
+        "fórmula envio no comparativo"
+      ],
+      [
+        "src/components/talkx/TalkXAnalytics.tsx",
+        150,
+        158,
+        "pico por contagem"
+      ],
+      [
+        "src/components/talkx/TalkXAnalytics.tsx",
+        265,
+        275,
+        "texto de entrega e abertura"
+      ],
+      [
+        "src/components/talkx/TalkXAnalytics.tsx",
+        337,
+        364,
+        "legenda de entrega para série de envio"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-038",
+    "severity": "P2",
+    "title": "Detalhe de segmento conserva cópia antiga depois de salvar e pode reabrir campos obsoletos",
+    "preconditions": "Editar um segmento selecionado, salvar, aguardar a query atualizada e usar Editar segmento no painel lateral ainda selecionado.",
+    "cause": "selected guarda o objeto inteiro. A mutation invalida a lista, mas save apenas muda mode para list; não substitui selected pelo retorno nem o deriva da lista por ID.",
+    "observed_behavior": "O painel continua recebendo o objeto anterior. Sua ação onEdit chama openEdit(selected), restaurando as regras/nome antigos no formulário.",
+    "impact": "A tela contradiz a persistência recém-concluída e salvar outra pequena edição pode reverter inadvertidamente a alteração anterior.",
+    "recommendation": "Guardar selectedId e derivar da query atual, ou atualizar selected com a entidade confirmada após cada mutation.",
+    "acceptance": [
+      "Editar regras, salvar e reabrir pelo painel lateral mantém as regras salvas.",
+      "Nome, favorito, status e audiência do painel acompanham o objeto atual da query."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        33,
+        39,
+        "selected armazena snapshot inteiro"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        59,
+        81,
+        "save não atualiza selected"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        176,
+        180,
+        "rail reabre objeto antigo"
+      ],
+      [
+        "src/hooks/integrations/useTalkXSegments.ts",
+        344,
+        355,
+        "update retorna entidade mas só invalida a query"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-039",
+    "severity": "P3",
+    "title": "Ação Novo template abre o wizard de campanha",
+    "preconditions": "Usar o menu Templates → Novo template no topo do módulo.",
+    "cause": "O handler chama openNew, que limpa editingCampaign e escreve wizard=new; não abre TalkXTemplateEditor.",
+    "observed_behavior": "A ação nomeada Novo template leva à criação de campanha com passos de público/mensagem/entrega.",
+    "impact": "O atalho não executa o objetivo anunciado e pode induzir criação de um rascunho de campanha desnecessário.",
+    "recommendation": "Encaminhar para criação de template ou ajustar o rótulo para o destino verdadeiro.",
+    "acceptance": [
+      "Clicar Novo template abre editor de template vazio e salvar cria somente um template."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/TalkXView.tsx",
+        118,
+        122,
+        "openNew abre wizard de campanha"
+      ],
+      [
+        "src/components/talkx/TalkXView.tsx",
+        322,
+        331,
+        "menu Novo template chama openNew"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-040",
+    "severity": "P2",
+    "title": "Resposta tardia de geração de áudio pode iniciar reprodução após fechar o diálogo",
+    "preconditions": "Iniciar Gerar Preview de efeito/música na biblioteca de mídia e fechar o diálogo antes da resposta.",
+    "cause": "Fechar apenas pausa o audioRef atual e limpa preview. O callback pendente não tem cancelamento/geração vinculada à abertura e, quando termina, cria novo Audio e chama play.",
+    "observed_behavior": "A resposta pode repor genPreviewUrl e iniciar reprodução depois do fechamento. O componente permanece montado no administrador de áudio.",
+    "impact": "Áudio começa sem diálogo visível para controlar a reprodução; reabertura também pode recuperar um resultado antigo como preview atual.",
+    "recommendation": "Invalidar a geração no fechamento/desmontagem e validar identidade antes de aplicar preview ou iniciar reprodução.",
+    "acceptance": [
+      "Fechar enquanto a requisição está pendente e resolver depois não chama Audio.play nem repõe preview.",
+      "Reabrir e gerar B descarta resposta tardia de A."
+    ],
+    "limitations": [
+      "Contratos externos ElevenLabs e disponibilidade da geração ficam com Providers. Este achado trata o desfecho assíncrono do consumidor."
+    ],
+    "evidence": [
+      [
+        "src/components/settings/media-library/AIGenerateDialog.tsx",
+        14,
+        36,
+        "requisição seguida de preview e play incondicional"
+      ],
+      [
+        "src/components/settings/media-library/AIGenerateDialog.tsx",
+        57,
+        70,
+        "fechar só limpa estado e pausa áudio existente"
+      ],
+      [
+        "src/components/settings/MediaLibraryAdmin.tsx",
+        57,
+        64,
+        "diálogo permanece montado para audio_memes"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-041",
+    "severity": "P2",
+    "title": "Exportar catálogo perde quase todos os filtros da listagem",
+    "preconditions": "Aplicar busca, categoria, fornecedor, estoque baixo, filtros avançados ou duas flags simultâneas e usar Exportar catálogo no rail da gestão.",
+    "cause": "A consulta de produtos recebe o objeto completo de filtros, mas a propriedade exportFilter reduz esse estado a uma única chave com precedência in_stock, featured, new_30d. O rail reconstrói somente essa flag e não recebe os demais filtros.",
+    "observed_behavior": "O atalho anuncia CSV do filtro atual; o fetch de exportação consulta um conjunto maior, possivelmente o catálogo inteiro quando só existe busca/categoria/fornecedor/avançados.",
+    "impact": "O arquivo contém produtos fora da seleção de negócio exibida na tela, mesmo com menos de 1.000 resultados e sem empates de ordenação.",
+    "recommendation": "Passar os mesmos filtros normalizados da listagem para o export, retirando apenas offset/limit e aplicando a paginação própria da exportação.",
+    "acceptance": [
+      "Busca + categoria + fornecedor + cor/preço geram consultas de exportação com os mesmos predicados da listagem.",
+      "Duas flags ligadas são preservadas simultaneamente e o CSV não contém produtos que falhem em qualquer filtro."
+    ],
+    "prior_ids": [
+      "OTH-004"
+    ],
+    "prior_note": "OTH-004 trata ordenação empatada e paginação por offset. Esta causa ocorre antes da paginação, na perda do objeto de filtros; é descoberta nova, não correção daquele achado.",
+    "evidence": [
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        470,
+        497,
+        "filtros completos da listagem"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        596,
+        601,
+        "redução a uma flag"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        1128,
+        1137,
+        "único filtro passado ao rail"
+      ],
+      [
+        "src/components/catalog/CatalogRail.tsx",
+        350,
+        358,
+        "promessa CSV do filtro atual"
+      ],
+      [
+        "src/components/catalog/CatalogRail.tsx",
+        449,
+        457,
+        "callback constrói filtros a partir da flag"
+      ],
+      [
+        "src/components/catalog/catalogExport.ts",
+        152,
+        158,
+        "mapeamento admite uma flag apenas"
+      ],
+      [
+        "src/components/catalog/catalogExport.ts",
+        204,
+        209,
+        "filtros seguem para a edge"
+      ],
+      [
+        "src/components/catalog/__tests__/CatalogRail.test.tsx",
+        206,
+        219,
+        "teste isolado cobre apenas ausência ou uma flag"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-042",
+    "severity": "P2",
+    "title": "Histórico de envios do catálogo esconde registros além dos 500 mais recentes",
+    "preconditions": "O usuário possui visibilidade para mais de 500 eventos catalog_send_events, ou procura um envio/status que só exista além desse corte.",
+    "cause": "useCatalogSendHistory aplica limit(500) sem total/continuação. A aba aplica busca/status, total de paginação e exportação ao array já truncado.",
+    "observed_behavior": "A busca pode declarar Nenhum envio com esses filtros para um registro existente; paginação termina em 500 e CSV contém só o lote carregado. A UI não informa o corte nem oferece período/continuação.",
+    "impact": "Histórico operacional e reconciliação de envios ficam incompletos; filtros de falha podem ocultar falhas antigas mesmo quando o resultado filtrado teria poucas linhas.",
+    "recommendation": "Levar filtros e paginação ao servidor e obter total/hasMore; permitir exportar o recorte completo ou declarar explicitamente o limite enquanto houver contrato parcial.",
+    "acceptance": [
+      "Com 501 eventos, o evento mais antigo é localizável por busca e status sem depender de estar entre os 500 recentes.",
+      "Total, páginas e CSV representam o mesmo recorte de negócio, com indicador explícito de limite se a exportação for parcial."
+    ],
+    "limitations": [
+      "O limite está documentado em comentário interno do hook como v1; o achado é a omissão no fluxo do usuário e a falta de continuação, não uma ausência de intenção no código."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useCatalogSendHistory.ts",
+        44,
+        50,
+        "teto interno explícito"
+      ],
+      [
+        "src/hooks/integrations/useCatalogSendHistory.ts",
+        71,
+        90,
+        "consulta limitada sem contagem"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        353,
+        387,
+        "filtros e exportação locais"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        1186,
+        1208,
+        "vazio e paginação com tamanho do lote"
+      ],
+      [
+        "src/components/catalog/CatalogHelpSheet.tsx",
+        88,
+        114,
+        "orienta acompanhar cada envio na aba sem informar corte"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-043",
+    "severity": "P2",
+    "title": "Favoritar em lote anuncia sucesso antes da escrita e oculta falhas de persistência",
+    "preconditions": "Selecionar produtos ainda não favoritos e usar Favoritar N; uma ou mais escritas falham ou permanecem pendentes.",
+    "cause": "Os dois consumidores executam toggle com void em forEach e imediatamente anunciam a quantidade inteira. O hook reverte cache e registra log, mas não lança nem retorna falha ao chamador.",
+    "observed_behavior": "A mensagem produto(s) adicionado(s) aos favoritos aparece antes de qualquer resposta e permanece como confirmação mesmo se todos os inserts falharem.",
+    "impact": "O usuário acredita ter salvo uma seleção reutilizável que não está persistida e não recebe uma relação dos itens que precisa tentar novamente.",
+    "recommendation": "Fazer a operação retornar resultado por item, aguardar o lote e anunciar apenas o número confirmado; conservar falhas para retentativa.",
+    "acceptance": [
+      "Nenhuma confirmação final aparece enquanto o lote está pendente.",
+      "Falha total gera erro e zero adicionados; falha parcial discrimina adicionados e falhos.",
+      "Teste integra o callback com promessas resolvidas/rejeitadas em vez de verificar somente a chamada de um spy síncrono."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        433,
+        441,
+        "toast imediato após void toggle"
+      ],
+      [
+        "src/components/catalog/ExternalProductCatalog.tsx",
+        350,
+        356,
+        "mesmo comportamento no catálogo do chat"
+      ],
+      [
+        "src/hooks/integrations/useExternalCatalog.ts",
+        483,
+        525,
+        "escrita async, rollback e erro somente em log"
+      ],
+      [
+        "src/components/catalog/__tests__/ExternalProductManagement.test.tsx",
+        581,
+        594,
+        "teste usa vi.fn e só verifica invocação"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-044",
+    "severity": "P2",
+    "title": "Ranking Mais enviados do catálogo conta tentativas que falharam totalmente",
+    "preconditions": "Há eventos catalog_send_events com status failed na janela de 30 dias; a falha pode ocorrer em envio individual normal, sem depender do erro do envio em lote R2-MOD-007.",
+    "cause": "O envio individual classifica falha total e registra seu status. A consulta do ranking seleciona apenas product_id/product_name, não filtra status e incrementa o contador para cada evento.",
+    "observed_behavior": "Um produto com várias falhas e nenhuma mensagem enviada pode liderar Mais enviados, pois cada tentativa falha acrescenta uma unidade ao ranking.",
+    "impact": "O indicador orienta o agente com uma medida de tentativas apresentada como sucesso de envio.",
+    "recommendation": "Definir explicitamente a medida: filtrar eventos com envio bem-sucedido, ou nomear o ranking como tentativas e separar falhas/entregas.",
+    "acceptance": [
+      "Um produto com zero envios bem-sucedidos e dez falhas não supera outro com um envio confirmado em um ranking chamado Mais enviados.",
+      "O tratamento de partial é definido e testado separadamente de failed."
+    ],
+    "limitations": [
+      "Este achado não depende do corte de 20 páginas do mesmo hook; ele se reproduz conceitualmente com apenas poucos eventos."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/useSendProduct.ts",
+        209,
+        239,
+        "falha total recebe failed e é registrada"
+      ],
+      [
+        "src/hooks/integrations/useCatalogContactSearch.ts",
+        83,
+        101,
+        "logger preserva o status recebido"
+      ],
+      [
+        "src/hooks/integrations/useCatalogRecentSends.ts",
+        84,
+        106,
+        "ranking soma eventos sem filtro ou leitura de status"
+      ],
+      [
+        "src/components/catalog/CatalogRail.tsx",
+        320,
+        327,
+        "indicador é apresentado como Mais enviados nos últimos 30 dias"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-045",
+    "severity": "P2",
+    "title": "Enviar variação perde a cor escolhida no catálogo de gestão",
+    "preconditions": "Abrir o detalhe de um produto com variantes na gestão, selecionar uma cor e clicar Enviar variação.",
+    "cause": "O detalhe entrega onSend(produto, cor), mas ExternalProductCard declara callback de um argumento e a gestão handleSendProduct só salva o produto. initialVariantColor do diálogo vem exclusivamente do deep link.",
+    "observed_behavior": "O diálogo de envio abre no modo Produto Completo, apesar do CTA indicar a variação escolhida; cor e fotos específicas não são preservadas.",
+    "impact": "O agente precisa refazer a escolha ou pode enviar a apresentação de todas as variantes sem perceber a perda de intenção.",
+    "recommendation": "Preservar a cor no contrato do wrapper e no estado da gestão, associada ao produto, e passá-la a initialVariantColor.",
+    "acceptance": [
+      "Na gestão, selecionar Azul no detalhe e clicar Enviar variação abre o diálogo em Variação Específica / Azul.",
+      "Fechar e abrir outro produto não reutiliza a cor anterior."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        618,
+        625,
+        "CTA entrega produto e cor"
+      ],
+      [
+        "src/components/catalog/CatalogProductCard.tsx",
+        489,
+        492,
+        "callback repassado ao detalhe"
+      ],
+      [
+        "src/components/catalog/ExternalProductCard.tsx",
+        9,
+        12,
+        "wrapper só declara produto"
+      ],
+      [
+        "src/components/catalog/ExternalProductCard.tsx",
+        36,
+        40,
+        "mesmo callback chega ao card"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        600,
+        604,
+        "handler ignora segundo argumento"
+      ],
+      [
+        "src/components/catalog/ExternalProductManagement.tsx",
+        1097,
+        1106,
+        "preset de variante exclusivo do deep link"
+      ],
+      [
+        "src/components/catalog/SendProductDialog.tsx",
+        178,
+        190,
+        "preset é o caminho que seleciona a variante ao abrir"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-046",
+    "severity": "P2",
+    "title": "Reabrir detalhe do cartão A pode continuar exibindo o produto B navegado anteriormente",
+    "preconditions": "No catálogo do chat com dois produtos, abrir A, navegar para B pelo botão Próximo produto, fechar o painel e clicar Ver novamente no cartão A sem desmontar a listagem.",
+    "cause": "ProductDetailDialog permanece montado em cada cartão. nav só se invalida se product.id mudar, mas esse id é sempre A na instância; a transição open false/true não reinicia nav.",
+    "observed_behavior": "Ao reabrir o cartão A, activeIdx continua apontando para B e shown/ações usam B.",
+    "impact": "Detalhe e possível envio correspondem a outro produto que o cartão acionado; há quebra de identidade da seleção.",
+    "recommendation": "Reiniciar o índice na abertura a partir do produto do cartão ou tornar a seleção do produto controlada pelo pai.",
+    "acceptance": [
+      "A→Próximo B→Fechar→Ver A reabre A e suas ações recebem o ID de A.",
+      "Navegar enquanto aberto continua funcionando e preserva somente a seleção dessa abertura."
+    ],
+    "limitations": [
+      "A navegação entre produtos só é disponibilizada quando products é passado, como no catálogo do chat; o wrapper da gestão não passa essa lista."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/ExternalProductCatalog.tsx",
+        541,
+        552,
+        "lista repassada ao card no chat"
+      ],
+      [
+        "src/components/catalog/CatalogProductCard.tsx",
+        228,
+        232,
+        "abrir só altera booleano"
+      ],
+      [
+        "src/components/catalog/CatalogProductCard.tsx",
+        489,
+        492,
+        "detalhe montado mesmo fechado"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        229,
+        244,
+        "nav não depende de open"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        293,
+        304,
+        "navegação altera índice interno"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        618,
+        625,
+        "ação usa produto efetivamente mostrado"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-047",
+    "severity": "P3",
+    "title": "Galeria mantém índice fora do intervalo ao navegar para produto com menos imagens",
+    "preconditions": "No detalhe com navegação entre produtos, visualizar uma imagem de índice alto de A e avançar para B, que possui menos imagens.",
+    "cause": "ImageGallery mantém idx em useState, não recebe key do produto e não ajusta o índice quando product/images mudam. O ajuste de focusToken só altera idx se houver uma URL correspondente.",
+    "observed_behavior": "current cai para a imagem principal, mas o contador pode exibir 5 / 1 e Imagem anterior continua habilitada para índices sem imagem.",
+    "impact": "Contador e navegação da galeria ficam incoerentes até o usuário voltar manualmente a um índice válido.",
+    "recommendation": "Reiniciar ou limitar idx ao mudar a identidade do produto/conjunto de imagens, com estado associado ao produto.",
+    "acceptance": [
+      "Da quinta imagem de A para B com uma imagem, o contador é 1 / 1 e nenhuma seta aponta para um índice inexistente."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        89,
+        103,
+        "índice persistente e fallback de current"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        120,
+        125,
+        "focus sem URL não reinicia índice"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        162,
+        180,
+        "contador e seta derivam do índice antigo"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        324,
+        328,
+        "galeria sem key ao mudar dp"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-048",
+    "severity": "P2",
+    "title": "Favoritos convertem preço e estoque desconhecidos em zero real na interface e no envio",
+    "preconditions": "Abrir Meus favoritos no catálogo do chat; para a consequência de envio, usar a aba Favoritos da gestão quando a consulta do produto completo demora ou falha.",
+    "cause": "favoriteToProduct fabrica sale_price=0 e stock_quantity=0 para uma snapshot que não guarda esses campos. O card trata zero como esgotado. O diálogo usa a snapshot como fallback e seus bloqueios não aguardam a hidratação nem tratam erro do produto.",
+    "observed_behavior": "No chat, todos os favoritos mostram preço zero/esgotado e têm Enviar desabilitado mesmo para produtos com estoque. Pela aba Favoritos da gestão, pode-se avançar/enviar o texto com R$ 0,00 e Em estoque: 0 un. antes de obter dados reais, desde que os demais requisitos de envio estejam satisfeitos.",
+    "impact": "O atalho de favoritos fica inutilizável para envio direto no chat e pode anunciar informação comercial inventada no outro consumidor.",
+    "recommendation": "Representar campos ausentes como desconhecidos, hidratar o produto antes de habilitar ação que depende de preço/estoque e apresentar erro/retentativa da consulta.",
+    "acceptance": [
+      "Favorito cujo produto tem estoque real não é rotulado Esgotado apenas por não ter snapshot de estoque.",
+      "Enquanto preço/estoque completos estiverem pendentes ou indisponíveis, o fluxo não monta nem envia valores zero como se fossem dados reais."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/catalogShared.tsx",
+        945,
+        977,
+        "snapshot com zeros e variantes null"
+      ],
+      [
+        "src/components/catalog/ExternalProductCatalog.tsx",
+        533,
+        552,
+        "favoritos viram cards comuns"
+      ],
+      [
+        "src/components/catalog/CatalogProductCard.tsx",
+        228,
+        244,
+        "stockout derivado de zero bloqueia envio"
+      ],
+      [
+        "src/components/catalog/CatalogProductCard.tsx",
+        455,
+        479,
+        "preço zero e bloqueio visíveis"
+      ],
+      [
+        "src/components/catalog/CatalogFavoritesTab.tsx",
+        57,
+        63,
+        "aba da gestão abre envio sem consulta anterior"
+      ],
+      [
+        "src/components/catalog/CatalogFavoritesTab.tsx",
+        124,
+        130,
+        "snapshot enviada ao diálogo"
+      ],
+      [
+        "src/components/catalog/SendProductDialog.tsx",
+        104,
+        108,
+        "fallback mantém snapshot pendente ou com erro"
+      ],
+      [
+        "src/components/catalog/SendProductDialog.tsx",
+        603,
+        609,
+        "bloqueios não incluem carga/erro do produto"
+      ],
+      [
+        "src/components/catalog/SendProductDialog.tsx",
+        634,
+        652,
+        "passo de contato recebe apenas readiness do envio"
+      ],
+      [
+        "src/components/catalog/sendProductUtils.ts",
+        55,
+        95,
+        "mensagem materializa zeros como preço e estoque"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-049",
+    "severity": "P2",
+    "title": "Editar contato da tarefa não persiste o vínculo escolhido",
+    "preconditions": "No Sheet de uma tarefa, trocar o Contato ou escolher Sem contato e salvar.",
+    "cause": "O formulário emite patch.contactId, mas toDbPatch e toItemPatch não mapeiam contactId/contact_id. A chamada update recebe um objeto sem essa alteração.",
+    "observed_behavior": "O Sheet fecha; após recarregar, a tarefa permanece vinculada ao contato antigo. Se só o vínculo mudou, o DTO de update fica vazio.",
+    "impact": "O controle aparente de vínculo não funciona e a tarefa continua aparecendo sob o contato anterior.",
+    "recommendation": "Mapear contactId para contact_id na persistência e no cache, atualizar/invalidar os embeds e escopos por contato de forma coerente.",
+    "acceptance": [
+      "Trocar A por B persiste contact_id=B, remove a tarefa do recorte A e mostra no recorte B.",
+      "Escolher Sem contato persiste null e não preserva o embed antigo."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        282,
+        297,
+        "controle de contato editável"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        193,
+        203,
+        "patch de contato enviado antes de fechar"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        365,
+        374,
+        "onSave encaminha ao hook"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        149,
+        170,
+        "mapeadores ignoram contactId"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        358,
+        371,
+        "update e cache usam os mapeadores"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-050",
+    "severity": "P2",
+    "title": "Salvar tarefa reconstrói datas locais sem offset e pode deslocar prazo e alarme",
+    "preconditions": "Editar uma tarefa com prazo/alarme em navegador cujo fuso difere do fuso da sessão PostgreSQL; por exemplo navegador America/Sao_Paulo e sessão UTC. Basta editar outro campo, pois as strings reconstruídas diferem do ISO original.",
+    "cause": "WorkItemSheet compõe data+hora como string sem Z/offset. Salvar compara esse formato local com o ISO retornado e envia dueDate/remindAt ao banco sem normalizar. QuickAdd usa a conversão correta para ISO, portanto criação e edição têm contratos diferentes.",
+    "observed_behavior": "Uma hora local 09:00 vira payload 09:00 sem offset no Sheet, enquanto o QuickAdd envia 12:00Z no cenário -03. Se o servidor interpreta sem offset como UTC, o horário é antecipado em três horas. Datas intocadas também aparecem como alteradas por diferença de formato.",
+    "impact": "Prazos e lembretes mudam de instante ao salvar a tarefa, inclusive após editar somente título/descrição.",
+    "recommendation": "Reusar um único conversor de data/hora local para ISO com offset explícito e comparar instantes normalizados, mantendo a convenção de dia inteiro.",
+    "acceptance": [
+      "Criar e editar o mesmo 09:00 em UTC-03 produz o mesmo instante ISO.",
+      "Editar somente título não altera due_date nem remind_at e não habilita Salvar por diferença de representação."
+    ],
+    "limitations": [
+      "O probe compara as duas funções reais sob TZ explícito. A interpretação da sessão UTC é precondição declarada; não foi medida no banco remoto."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        40,
+        55,
+        "data local vira string sem offset"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        137,
+        168,
+        "inicialização e comparação textual com ISO original"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        186,
+        203,
+        "envio das datas reconstruídas"
+      ],
+      [
+        "src/components/tasks/shared/QuickAdd.tsx",
+        23,
+        37,
+        "conversor de criação envia ISO correto"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        150,
+        158,
+        "DTO preserva string sem normalização"
+      ],
+      [
+        "supabase/migrations/20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql",
+        42,
+        54,
+        "declaração original de due_date timestamptz; não evidência de RLS vigente"
+      ],
+      [
+        "supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql",
+        19,
+        26,
+        "remind_at timestamptz"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-051",
+    "severity": "P2",
+    "title": "Salvar tarefa fecha com escritas pendentes e divide a edição em operações concorrentes",
+    "preconditions": "Editar campos no WorkItemSheet e salvar com escrita lenta/falha; para aplicação parcial, alterar estado e outro campo simultaneamente.",
+    "cause": "As props de escrita são tipadas como void e o pai descarta as promessas. salvar chama onMove e onSave sem await e fecha imediatamente, sem estado pending ou manutenção do rascunho.",
+    "observed_behavior": "O fechamento ocorre antes de ambas as respostas; estado e campos são gravados em chamadas independentes. Uma pode falhar enquanto a outra persiste, e o rascunho do formulário desmontado se perde.",
+    "impact": "Falha exige reconstruir a edição; o usuário pode obter uma tarefa parcialmente modificada apesar de ter usado um único Salvar.",
+    "recommendation": "Retornar/aguardar promessas, manter formulário e erro visíveis até conclusão e definir uma operação consistente para estado+campos.",
+    "acceptance": [
+      "Com save pendente, o formulário permanece aberto e bloqueia novo submit.",
+      "Falha preserva todos os campos digitados para retentativa.",
+      "Mudança de estado e campos não gera confirmação/fechamento de sucesso parcial."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        71,
+        80,
+        "contrato de callbacks void"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        179,
+        204,
+        "move e save concorrentes antes de fechar"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        365,
+        373,
+        "pai descarta promessas"
+      ],
+      [
+        "src/components/tasks/__tests__/WorkItemSheet.test.tsx",
+        58,
+        67,
+        "spies síncronos"
+      ],
+      [
+        "src/components/tasks/__tests__/WorkItemSheet.test.tsx",
+        103,
+        128,
+        "teste valida chamada e fechamento, sem persistência pendente/erro"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-052",
+    "severity": "P2",
+    "title": "Reagendar alarme pelo Salvar não rearma uma tarefa que já foi notificada",
+    "preconditions": "A tarefa ativa tem notified_at preenchido. Abrir o Sheet, escolher uma nova data/hora de alarme no futuro e Salvar.",
+    "cause": "O Sheet envia patch.remindAt pelo update genérico; toDbPatch não limpa notified_at. O trigger vigente só executa em mudança de status e o scheduler exige notified_at IS NULL.",
+    "observed_behavior": "O novo remind_at é persistido, mas o scheduler exclui a tarefa quando esse horário vence. O caminho dedicado setReminder/snooze zera o campo, mas Salvar não o utiliza.",
+    "impact": "O usuário agenda um novo aviso que não será disparado pelo contrato vigente.",
+    "recommendation": "Rearmar notified_at atomicamente sempre que remind_at for alterado no caminho de edição, centralizando a regra para todos os consumidores.",
+    "acceptance": [
+      "Editar via Salvar o alarme de tarefa já notificada grava o novo horário e notified_at=null.",
+      "No vencimento, a tarefa volta a ser elegível exatamente uma vez segundo a regra do scheduler."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/shared/WorkItemSheet.tsx",
+        186,
+        203,
+        "alarme segue pelo patch genérico"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        149,
+        158,
+        "DTO só modifica remind_at"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        554,
+        566,
+        "caminho dedicado correto não é usado pelo Salvar"
+      ],
+      [
+        "supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql",
+        75,
+        104,
+        "trigger atua só quando status muda"
+      ],
+      [
+        "supabase/migrations/20260930141000_harden_notify_due_tasks_rpc_authorization.sql",
+        29,
+        39,
+        "notificação depende de notified_at nulo"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-053",
+    "severity": "P2",
+    "title": "Desfazer cancelamento/conclusão não restaura todo o estado e anuncia sucesso antes da gravação",
+    "preconditions": "Cancelar uma tarefa que possui alarme e usar Desfazer; para a segunda consequência, fazer a atualização de reversão falhar ou permanecer pendente.",
+    "cause": "Cancelar limpa remind_at/notified_at pelo trigger. O callback de undo só restaura status/completed_at, não restaura o alarme e ignora error da atualização. undoToast também anuncia sucesso sem aguardar onUndo. Na conclusão, o undo força todo em vez do status anterior e também não restaura o lembrete removido pelo trigger.",
+    "observed_behavior": "Mesmo com reversão bem-sucedida, a tarefa retorna sem o alarme que possuía antes do cancelamento. Com erro, pode continuar cancelada enquanto o toast já diz Ação desfeita. Concluir uma tarefa doing/waiting e desfazer a devolve a todo, não ao estado anterior; o alarme anterior também se perde.",
+    "impact": "Desfazer não restaura o estado anterior e pode ocultar falha de recuperação da tarefa.",
+    "recommendation": "Restaurar de modo consistente os campos alterados pelo cancelamento, verificar a escrita e só confirmar Desfazer após conclusão.",
+    "acceptance": [
+      "Cancelar→Desfazer preserva o alarme anterior quando a reversão é válida.",
+      "Erro de reversão não exibe Ação desfeita e oferece nova tentativa com contexto preservado.",
+      "Desfazer conclusão restaura o estado e alarme anteriores, incluindo doing/waiting, ou comunica uma reabertura diferente de undo."
+    ],
+    "evidence": [
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        489,
+        521,
+        "cancel e undo com patch incompleto e sem ler erro"
+      ],
+      [
+        "supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql",
+        88,
+        93,
+        "cancelamento apaga alarme e carimbo"
+      ],
+      [
+        "src/lib/undoToast.ts",
+        27,
+        39,
+        "sucesso antecipado de onUndo"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        525,
+        531,
+        "Undo de conclusão sempre força todo"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-054",
+    "severity": "P2",
+    "title": "Tarefas e filtros consultam somente a primeira resposta da API sem continuação",
+    "preconditions": "O conjunto elegível de tarefas pessoais excede o teto de linhas configurado no PostgREST. O corte inclui tarefas ativas e concluídas da janela, ordenadas por posição e criação.",
+    "cause": "useMyWorkItems faz um único select sem range/cursor/total/continuação. Todos os modos, busca, filtros, KPIs e resolução de deep link operam no array retornado; o badge repete uma consulta não paginada.",
+    "observed_behavior": "Tarefas além da resposta inicial não podem ser encontradas por busca/contato/prioridade, não entram nos contadores e um ?task fora do lote não abre o Sheet. A interface não informa que falta continuação.",
+    "impact": "O módulo pode omitir tarefas e subestimar carga pessoal e atrasos em contas com volume acima do teto.",
+    "recommendation": "Paginar a fonte inteira de modo explícito ou levar filtros/contagens ao servidor, com continuação observável e resolução por ID independente do lote.",
+    "acceptance": [
+      "Fixtures com mais de uma página de API mantêm uma tarefa da última página acessível em busca, filtros e deep link.",
+      "KPIs e badge não usam o tamanho de uma resposta parcial como total completo."
+    ],
+    "limitations": [
+      "O teto efetivo do PostgREST remoto não foi medido. A condição é exceder o teto configurado, sem inventar um limite numérico do ambiente."
+    ],
+    "evidence": [
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        195,
+        222,
+        "select único da fonte"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        58,
+        92,
+        "filtros e números reais derivados do lote"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        226,
+        231,
+        "deep link resolve apenas hook.items"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        624,
+        654,
+        "badge também deriva array sem continuação"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-055",
+    "severity": "P2",
+    "title": "Arrastar tarefa entre colunas filtradas persiste índice em relação à lista não filtrada",
+    "preconditions": "Há filtro ativo que esconde pelo menos um item antes do destino. Arrastar uma tarefa de outra coluna para entre dois cartões visíveis.",
+    "cause": "TasksModule fornece byStatus filtrado ao quadro. resolveDragEnd entrega destination.index relativo a essa lista; persistPositions usa o mesmo índice em bucketByStatus(items) da fonte completa do hook.",
+    "observed_behavior": "Com destino completo [oculto,A,B] e visível [A,B], soltar X entre A e B passa índice 1, mas grava [oculto,X,A,B]. Após recomputar/refetch, a lista visível é [X,A,B], diferente do destino escolhido.",
+    "impact": "A ordem persistida não corresponde ao gesto e tarefas mudam de posição após o drop.",
+    "recommendation": "Traduzir a posição por IDs de vizinhos visíveis para uma posição na sequência completa ou definir uma regra de reordenação que preserve itens ocultos de forma explícita.",
+    "acceptance": [
+      "O cenário oculto,A,B + X solto entre A/B termina com ordem visível A,X,B antes e depois do refetch.",
+      "Testes integram resolver do DnD com o payload de persistência e incluem filtros ativos."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/TasksModule.tsx",
+        63,
+        78,
+        "byStatus é filtrado e hook.items é completo"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        320,
+        328,
+        "quadro recebe colunas filtradas"
+      ],
+      [
+        "src/components/tasks/board/TasksBoardMode.tsx",
+        83,
+        107,
+        "resolver e callback de mover"
+      ],
+      [
+        "src/components/tasks/board/resolveDragEnd.ts",
+        91,
+        100,
+        "índice vem do destino visível"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        382,
+        400,
+        "persistência reinsere em array não filtrado"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        424,
+        428,
+        "movimento invoca persistência com mesmo índice"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-056",
+    "severity": "P2",
+    "title": "Agenda restaura o prazo do dia anterior se o dia for trocado durante a criação",
+    "preconditions": "Iniciar criação no dia A; antes de onCreate resolver, selecionar dia B na Agenda. A criação A termina com sucesso e o usuário cria outra tarefa no campo que anuncia B.",
+    "cause": "QuickAdd sincroniza defaultDueDate com um marcador diaAplicado durante render, mas handleSubmit chama a closure limpar do render A depois de await. Essa closure restaura dueDate=A sem atualizar diaAplicado, já igual a B; o próximo render não corrige o prazo.",
+    "observed_behavior": "O probe executando o callback real mantém o placeholder/padrão B e o marcador B, mas o segundo payload de criação contém o prazo A. A Agenda permite trocar o dia enquanto a primeira criação está pendente.",
+    "impact": "Uma nova tarefa aparece no dia anterior ao selecionado, podendo sumir da lista do dia em que o usuário acredita tê-la criado.",
+    "recommendation": "Ao concluir o submit, restaurar o padrão atual através de uma referência/atualização consistente, ou impedir troca de contexto durante a operação; manter o rascunho associado à identidade de dia.",
+    "acceptance": [
+      "Criar em A com resposta pendente, mudar para B, resolver A e criar novamente resulta em prazo B.",
+      "O teste cobre a troca durante a promise; criar duas vezes no mesmo dia continua correto."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/agenda/TasksAgendaMode.tsx",
+        109,
+        150,
+        "Botões de dia permanecem habilitados e QuickAdd recebe padrão/placeholder do dia atual"
+      ],
+      [
+        "src/components/tasks/shared/QuickAdd.tsx",
+        68,
+        76,
+        "Sincronização por marcador diaAplicado"
+      ],
+      [
+        "src/components/tasks/shared/QuickAdd.tsx",
+        123,
+        146,
+        "limpar fecha sobre defaultDueDate antigo depois de await"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-057",
+    "severity": "P2",
+    "title": "Cartão de tarefa concluída oferece lembrete que o executor exclui por estado",
+    "preconditions": "Uma tarefa concluída está visível na seção/coluna de concluídas; escolher Lembrar-me → 15 min, 1 h ou amanhã sem reabrir a tarefa.",
+    "cause": "O menu de lembretes é renderizado também quando isDone; o callback snooze grava apenas remind_at/notified_at e anuncia sucesso. A função vigente notify_due_tasks exclui status done/cancelled.",
+    "observed_behavior": "O prazo do alarme pode ser persistido e o toast anuncia Aviso adiado, mas o estado continua done e a tarefa nunca entra no SELECT do executor enquanto permanecer concluída. O próprio cartão esconde o RemindChip nesse estado.",
+    "impact": "O usuário recebe confirmação de um lembrete que não será entregue.",
+    "recommendation": "Desabilitar a ação para estados terminais com motivo claro ou implementar explicitamente a reabertura/contrato de lembrete independente de tarefa; não confirmar uma ação inelegível.",
+    "acceptance": [
+      "Tarefa done não oferece sucesso de snooze sem que haja um caminho elegível para disparar o alarme.",
+      "Teste cobre menu de concluída, payload emitido e regra de seleção do executor, não apenas o toast."
+    ],
+    "evidence": [
+      [
+        "src/components/tasks/shared/WorkItemCard.tsx",
+        54,
+        55,
+        "isDone deriva do estado"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemCard.tsx",
+        98,
+        106,
+        "Alarme oculto em estado terminal"
+      ],
+      [
+        "src/components/tasks/shared/WorkItemCard.tsx",
+        126,
+        142,
+        "Submenu Lembrar-me incondicional"
+      ],
+      [
+        "src/components/tasks/TasksModule.tsx",
+        178,
+        187,
+        "Ligação do menu à mutação snooze"
+      ],
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        540,
+        552,
+        "Snooze mantém status e anuncia sucesso"
+      ],
+      [
+        "supabase/migrations/20260930141000_harden_notify_due_tasks_rpc_authorization.sql",
+        29,
+        39,
+        "Executor vigente exclui done/cancelled"
+      ]
+    ],
+    "limitations": [
+      "Leitura estática; não se executou cron, banco ou notificação. A permanência no estado concluído é precondição explícita."
+    ]
+  },
+  {
+    "id": "R2-MOD-058",
+    "severity": "P3",
+    "title": "Prazo vencido hoje aparece como atraso no menu e como não atrasado no módulo",
+    "preconditions": "Uma tarefa ativa tem due_date com horário anterior ao instante atual, mas no mesmo dia local, sem outro alarme/atraso.",
+    "cause": "O badge compara due_date com Date.now(), enquanto bucketByDue e dueLabel só consideram atrasadas datas anteriores ao início do dia.",
+    "observed_behavior": "A mesma tarefa gera badge de atraso vermelho na navegação, mas KPI Atrasadas=0 e seção Hoje no módulo; não é preciso haver falha de rede ou paginação.",
+    "impact": "A contagem e a prioridade visual divergem entre a chamada de atenção e a lista que deveria explicá-la; prazos com horário não possuem uma semântica única de atraso.",
+    "recommendation": "Definir uma única regra para prazo com hora versus prazo apenas de dia e usá-la no badge, KPI, grupos e chip, preservando a distinção visual se houver duas semânticas intencionais.",
+    "acceptance": [
+      "Com relógio fixo às 15h e prazo de hoje às 9h, badge, KPI e agrupamento concordam sobre atraso ou explicitam suas regras diferentes.",
+      "Inclui-se prazo sem hora/fim do dia e limites de fuso no teste da regra compartilhada."
+    ],
+    "evidence": [
+      [
+        "src/hooks/tasks/useMyWorkItems.ts",
+        629,
+        649,
+        "Badge usa instante de agora"
+      ],
+      [
+        "src/hooks/tasks/workItemAggregates.ts",
+        29,
+        66,
+        "Agrupamento usa início do dia"
+      ],
+      [
+        "src/hooks/tasks/workItemAggregates.ts",
+        169,
+        205,
+        "KPI e chip reaproveitam semântica por dia"
+      ],
+      [
+        "src/components/tasks/shared/TasksKpiStrip.tsx",
+        55,
+        63,
+        "Exibição Atrasadas/Para hoje"
+      ],
+      [
+        "src/components/layout/Sidebar.tsx",
+        130,
+        139,
+        "Cor do badge depende de hasOverdue"
+      ],
+      [
+        "src/components/tasks/list/TasksListMode.tsx",
+        183,
+        187,
+        "Grupos Atrasadas/Hoje"
+      ]
+    ],
+    "limitations": [
+      "A divergência é demonstrada por regras estáticas; a escolha de produto entre atraso por instante ou por dia permanece uma decisão de correção."
+    ]
+  },
+  {
+    "id": "R2-MOD-059",
+    "severity": "P2",
+    "title": "Filtro de período do Talk X aparece nas quatro telas sem consumidor",
+    "preconditions": "Abrir Visão geral, Templates, Segmentos ou Supressão e escolher Hoje, 7 dias, 30 dias, Este mês ou Personalizado no menu Período.",
+    "cause": "TalkXFilterBar renderiza o menu incondicionalmente e depende da prop opcional onPeriodChange. Nenhuma das quatro instâncias atuais passa period ou onPeriodChange. O clique apenas fecha o popover; os filtros e dados das telas não recebem intervalo.",
+    "observed_behavior": "Escolher um período deixa o rótulo Todo o período e mantém os dados. Personalizado também não abre um seletor de datas nesse fluxo.",
+    "impact": "Um controle que aparenta recortar dados não altera a consulta nem a amostra; o usuário não consegue efetuar o recorte por data por esse menu.",
+    "recommendation": "Integrar período/intervalo e reset de paginação em cada consumidor, ou ocultar/desabilitar o menu quando não suportado. Testar a tela completa com dados em datas distintas.",
+    "acceptance": [
+      "Nas quatro telas, escolher 7 dias altera rótulo e conjunto apresentado conforme contrato explícito.",
+      "Personalizado oferece seleção de intervalo válida ou não é oferecido.",
+      "Os testes incluem as instâncias de produção; passar vi.fn ao kit isolado não encerra integração."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/kit/filters.tsx",
+        116,
+        135,
+        "Menu existe sem callback obrigatório"
+      ],
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        115,
+        121,
+        "Instância sem period/onPeriodChange"
+      ],
+      [
+        "src/components/talkx/TalkXOverview.tsx",
+        130,
+        136,
+        "Instância sem period/onPeriodChange"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        104,
+        115,
+        "Instância sem period/onPeriodChange"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        142,
+        147,
+        "Instância sem period/onPeriodChange"
+      ],
+      [
+        "src/components/talkx/kit/__tests__/TalkXFilterBar.test.tsx",
+        24,
+        43,
+        "Teste injeta callback não ligado nas telas"
+      ]
+    ],
+    "prior_ids": [
+      "TX03"
+    ],
+    "prior_note": "TX03 trata estados de consulta/erro e adoção de boundary. Este é outro controle e outra cadeia: menu de período sem callback nas quatro telas; novo achado, não duplicação dos estados."
+  },
+  {
+    "id": "R2-MOD-060",
+    "severity": "P3",
+    "title": "Tamanho de página em Templates, Segmentos e Supressão é um controle sem efeito",
+    "preconditions": "Usar o seletor 8/10/20/50 por página em qualquer das três telas com resultados.",
+    "cause": "TalkXPagination é controlado por pageSize, mas as telas criam estado sem setter e fornecem onPageSize vazio.",
+    "observed_behavior": "Escolher outro tamanho mantém 8 templates/segmentos ou 10 itens de supressão. O controle comum funciona na Visão geral, que fornece setter, mas não nessas três instâncias.",
+    "impact": "A preferência de densidade/paginação oferecida não é aplicada e força navegação desnecessária.",
+    "recommendation": "Conectar setter e voltar à página 1 ao mudar o tamanho, ou remover esse seletor das instâncias com tamanho fixo.",
+    "acceptance": [
+      "Em cada tela, escolher 20 muda pageSize e o slice, com página válida após a mudança."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/kit/table.tsx",
+        10,
+        30,
+        "Seletor controlado repassa valor"
+      ],
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        31,
+        34,
+        "pageSize sem setter"
+      ],
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        142,
+        142,
+        "onPageSize vazio"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        31,
+        32,
+        "pageSize sem setter"
+      ],
+      [
+        "src/components/talkx/TalkXSegments.tsx",
+        172,
+        172,
+        "onPageSize vazio"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        41,
+        43,
+        "pageSize sem setter"
+      ],
+      [
+        "src/components/talkx/TalkXSuppression.tsx",
+        188,
+        188,
+        "onPageSize vazio"
+      ]
+    ]
+  },
+  {
+    "id": "R2-MOD-061",
+    "severity": "P2",
+    "title": "Atalho Duplicar template abre o editor do original",
+    "preconditions": "Selecionar um template e usar Duplicar template em Ações rápidas (rail).",
+    "cause": "O atalho chama openEdit(selected), preservando id/updated_at do original, em vez da mutation duplicateTemplate usada nos botões das linhas/cartões.",
+    "observed_behavior": "O editor abre com activeTemplateId do original; salvar dispara updateTemplate.mutateAsync com esse id. Não se cria uma cópia por esse atalho. Se não houver selecionado, o atalho abre criação vazia.",
+    "impact": "Uma pessoa que pretende criar uma variação pode editar o original e afetar outros usos, se a atualização for aceita pelo RPC.",
+    "recommendation": "Ligar o atalho à duplicação real e abrir a nova identidade, ou renomeá-lo para Editar template quando esse for o comportamento pretendido.",
+    "acceptance": [
+      "Atalho Duplicar template produz novo id e não altera o original após editar/salvar a cópia.",
+      "Caso sem seleção pede seleção ou apresenta corretamente um fluxo novo, sem alegar duplicação."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        55,
+        56,
+        "openEdit mantém objeto/id original"
+      ],
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        94,
+        101,
+        "Original é passado ao editor"
+      ],
+      [
+        "src/components/talkx/TalkXTemplates.tsx",
+        156,
+        160,
+        "Atalho Duplicar chama openEdit"
+      ],
+      [
+        "src/components/talkx/TalkXTemplateEditor.tsx",
+        49,
+        51,
+        "activeTemplateId recebe editing.id"
+      ],
+      [
+        "src/components/talkx/TalkXTemplateEditor.tsx",
+        97,
+        103,
+        "Salvar atualiza esse id"
+      ]
+    ],
+    "limitations": [
+      "Banco não executado. O possível bloqueio transacional de snapshot estudado pelo agente de SQL é independente; a conclusão comprovada aqui é o roteamento de identidade incorreto."
+    ]
+  },
+  {
+    "id": "R2-MOD-062",
+    "severity": "P3",
+    "title": "Gramática de variáveis do editor/Resumo diverge da personalização com fallback",
+    "preconditions": "Usar placeholder suportado pela personalização, como {{nome|cliente}} ou uma chave customizada com dígito, no wizard/template.",
+    "cause": "personalizePreview separa o nome antes do primeiro | e aceita a chave normalizada; o editor normaliza todo o conteúdo sem remover fallback, enquanto extractVariables aceita somente letras e underscore sem fallback.",
+    "observed_behavior": "{{nome|cliente}} produz nome/fallback na prévia, mas o editor marca nome|cliente como desconhecida; o resumo que usa extractVariables pode indicar Nenhuma variável. Chaves com dígitos também desaparecem da extração.",
+    "impact": "Avisos e revisão de variáveis contradizem o texto que será personalizado, dificultando a verificação do conteúdo.",
+    "recommendation": "Compartilhar o parser de placeholders entre validação, contagem e prévia, distinguindo nome e fallback; não classificar a sintaxe válida como variável desconhecida.",
+    "acceptance": [
+      "{{nome|cliente}}, custom_1 e variantes com espaços são interpretados de forma coerente no editor, resumo e prévia."
+    ],
+    "evidence": [
+      [
+        "src/components/talkx/kit/personalize.ts",
+        93,
+        118,
+        "Parser separa fallback e normaliza chave"
+      ],
+      [
+        "src/components/talkx/TalkXMessageEditor.tsx",
+        27,
+        34,
+        "Normalizer não remove fallback"
+      ],
+      [
+        "src/components/talkx/TalkXMessageEditor.tsx",
+        91,
+        106,
+        "UnknownVariables usa token completo"
+      ],
+      [
+        "src/components/talkx/TalkXMessageEditor.tsx",
+        210,
+        215,
+        "Aviso ao usuário"
+      ],
+      [
+        "src/components/talkx/kit/format.ts",
+        37,
+        41,
+        "Extração aceita só a-z e underscore"
+      ],
+      [
+        "src/components/talkx/TalkXWizardDelivery.tsx",
+        185,
+        185,
+        "Resumo usa extração"
+      ],
+      [
+        "src/components/talkx/TalkXWizardDelivery.tsx",
+        217,
+        217,
+        "Exibe Nenhuma quando extração vazia"
+      ]
+    ],
+    "limitations": [
+      "Não é alegado bloqueio de envio: os avisos são visuais e a prévia já resolve o fallback."
+    ]
+  },
+  {
+    "id": "R2-MOD-063",
+    "severity": "P2",
+    "title": "Duas metas configuráveis nunca entram no cálculo das notificações de conquista",
+    "preconditions": "Meta ativa de contacts_handled ou resolution_rate com alvo positivo, configurada pelo diálogo atual; estatística real atinge a meta.",
+    "cause": "O diálogo oferece messages_sent, contacts_handled e resolution_rate, mas o switch do notificador só trata messages_sent, conversations_resolved, response_time e satisfaction. Os dois tipos atuais restantes conservam current = 0.",
+    "observed_behavior": "O provider ativo executa o verificador; para contatos atendidos e taxa de resolução ele nunca satisfaz current >= target positivo, mesmo quando o painel de metas calcula progresso desses tipos.",
+    "impact": "Conquistas diárias, semanais e mensais de dois dos três tipos padrão não geram o aviso esperado.",
+    "recommendation": "Compartilhar o catálogo e cálculo de tipos de meta entre configuração, painel e notificação, com semântica explícita de período e alvo.",
+    "acceptance": [
+      "Ao atingir meta positiva de contatos atendidos ou taxa de resolução, uma notificação é produzida para o mesmo período exibido no painel.",
+      "Tipos configuráveis e tipos calculados são coerentes; tipo desconhecido não é silenciosamente tratado como progresso zero."
+    ],
+    "evidence": [
+      [
+        "src/components/dashboard/GoalsConfigDialog.tsx",
+        44,
+        53,
+        "Três tipos padrão apresentados ao usuário"
+      ],
+      [
+        "src/hooks/analytics/useGoalNotifications.ts",
+        85,
+        90,
+        "Configurações ativas são carregadas"
+      ],
+      [
+        "src/hooks/analytics/useGoalNotifications.ts",
+        105,
+        148,
+        "Inicializa zero e não trata contacts_handled/resolution_rate"
+      ],
+      [
+        "src/hooks/analytics/useGoalsDashboard.ts",
+        149,
+        180,
+        "Painel calcula os tipos atuais"
+      ],
+      [
+        "src/components/notifications/GoalNotificationProvider.tsx",
+        1,
+        10,
+        "Provider chama verificador"
+      ],
+      [
+        "src/pages/Index.tsx",
+        104,
+        149,
+        "Provider envolve aplicação atual"
+      ]
+    ],
+    "limitations": [
+      "Comparação estática entre consumidores e tipos; não foram consultados dados ou enviadas notificações. Ramos legados de response_time/satisfaction não são alegados como configuráveis pela UI atual."
+    ]
+  },
+  {
+    "id": "R2-MOD-064",
+    "severity": "P2",
+    "title": "Restaurar padrões das metas perde IDs e Salvar tenta reinserir configurações existentes",
+    "preconditions": "Perfil já possui ao menos uma goals_configuration do tipo padrão; abrir configuração, clicar Restaurar padrões e Salvar.",
+    "cause": "A hidratação preserva o id existente, mas handleReset substitui todos os objetos por DEFAULT_GOALS sem id. A mutation usa INSERT quando id falta, embora exista UNIQUE(profile_id, goal_type).",
+    "observed_behavior": "Salvar os padrões tenta criar novamente o mesmo par perfil/tipo, falha pela unicidade e cai no toast de erro. A ação de restaurar não atualiza os registros que acabou de carregar.",
+    "impact": "Restaurar padrões não persiste para configurações já existentes; em conjuntos parcialmente criados pode gravar alguns tipos antes de falhar em outro, pois o loop não é transacional.",
+    "recommendation": "Restaurar apenas valores preservando a identidade de cada tipo, ou usar upsert autorizado sobre a chave natural com gravação atômica.",
+    "acceptance": [
+      "Restaurar padrões e salvar em perfil com os três tipos existentes mantém os mesmos IDs e atualiza todos os valores.",
+      "Falha em qualquer tipo não deixa uma mistura não informada de valores antigos e novos."
+    ],
+    "evidence": [
+      [
+        "src/components/dashboard/GoalsConfigDialog.tsx",
+        92,
+        113,
+        "Hidratação mantém IDs por tipo"
+      ],
+      [
+        "src/components/dashboard/GoalsConfigDialog.tsx",
+        120,
+        147,
+        "Decisão UPDATE/INSERT depende apenas de id"
+      ],
+      [
+        "src/components/dashboard/GoalsConfigDialog.tsx",
+        166,
+        172,
+        "Reset remove IDs e Save envia esses objetos"
+      ],
+      [
+        "src/components/dashboard/GoalsConfigDialog.tsx",
+        274,
+        280,
+        "Ações alcançáveis no rodapé"
+      ],
+      [
+        "supabase/migrations/20251224024453_84e90b51-3f9f-47f9-a4be-44831f2f5bd8.sql",
+        2,
+        18,
+        "Unicidade de perfil e tipo; revisor SQL confirmou preservação na cadeia"
+      ]
+    ],
+    "limitations": [
+      "Banco não executado. A permanência da constraint foi cruzada com o agente SQL e seu manifesto de schema; o efeito 23505 é a consequência estática da chave única vigente."
+    ]
+  },
+  {
+    "id": "R2-MOD-065",
+    "severity": "P2",
+    "title": "Escolher período Personalizado não abre o calendário do Dashboard",
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-CONTROLS-001"
+    ],
+    "preconditions": "Dashboard com período today/yesterday/week/month; abrir o seletor e escolher Personalizado.",
+    "cause": "handlePeriodChange retorna imediatamente em custom, antes de onFiltersChange. A única renderização do calendário exige que filters.period já seja custom.",
+    "observed_behavior": "O popover permanece aberto na lista; o estado continua no período anterior e o calendário nunca aparece por essa interação. Um URL previamente inicializado em custom é uma precondição diferente e não corrige o seletor normal.",
+    "impact": "Não é possível iniciar a seleção de intervalo personalizado pela opção visível do filtro.",
+    "recommendation": "Separar o estado de abertura do calendário da aplicação do intervalo, ou ativar custom preservando inicialmente as datas para permitir a seleção.",
+    "acceptance": [
+      "Partindo de today, clicar Personalizado exibe calendário e permite aplicar início/fim.",
+      "Selecionar um preset depois fecha o calendário e atualiza a consulta com o período anunciado."
+    ],
+    "evidence": [
+      [
+        "src/components/dashboard/DashboardFilters.tsx",
+        68,
+        102,
+        "Ramo custom retorna sem atualizar filtros"
+      ],
+      [
+        "src/components/dashboard/DashboardFilters.tsx",
+        172,
+        202,
+        "Clique e condição circular de renderização"
+      ],
+      [
+        "src/components/dashboard/DashboardView.tsx",
+        68,
+        77,
+        "Filtros reais alimentam consultas"
+      ],
+      [
+        "src/components/dashboard/DashboardView.tsx",
+        144,
+        149,
+        "Consumidor passa setter atual"
+      ]
+    ],
+    "limitations": [
+      "Fluxo validado estaticamente, sem browser. Extensão da família anterior de controles cosméticos; causa e callback específicos não constavam dos 104 achados."
+    ]
+  },
+  {
+    "id": "R2-MOD-066",
+    "severity": "P2",
+    "title": "Fallback de imagem volta à URL quebrada e o erro persiste ao trocar de foto",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Abrir uma galeria com URL principal indisponível e fallback válido; ou falhar ambas as URLs e selecionar outra imagem válida sem desmontar a galeria.",
+    "cause": "ProductThumb usa um único stage para decidir tanto a origem da imagem quanto o carregamento. onLoad troca error-src por loaded, fazendo effectiveSrc voltar a src; o estado também não acompanha mudanças de src/fallbackSrc.",
+    "observed_behavior": "Após o erro principal, a seleção muda para fallbackSrc. Quando o fallback carrega, onLoad seleciona outra vez a URL principal quebrada, permitindo repetir o ciclo erro/carregamento. Depois de error-fallback, o componente retorna somente o ícone mesmo que a galeria altere src para uma foto válida. ProductDetailDialog reutiliza ProductThumb sem key entre as fotos.",
+    "impact": "O fallback não se estabiliza e uma falha de mídia pode deixar outras fotos válidas da galeria invisíveis. Não foi medido tráfego de rede ou custo externo.",
+    "recommendation": "Separar a origem selecionada do estado de carregamento, manter o fallback após seu load e reiniciar o ciclo quando a identidade da imagem mudar. Considerar eventos atrasados de URLs anteriores.",
+    "acceptance": [
+      "Falhar a principal e carregar o fallback mantém o fallback visível sem selecionar de novo a principal.",
+      "Falhar as duas origens e navegar para outra foto válida faz o novo src ser carregado.",
+      "Trocar src durante carregamento não permite que evento da imagem antiga determine o estado da nova."
+    ],
+    "evidence": [
+      [
+        "src/components/catalog/catalogShared.tsx",
+        261,
+        294,
+        "State machine e origem derivados do mesmo stage"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        149,
+        160,
+        "ProductThumb reutilizado sem key"
+      ],
+      [
+        "src/components/catalog/ProductDetailDialog.tsx",
+        174,
+        214,
+        "Navegação e miniaturas alteram a imagem atual"
+      ],
+      [
+        "src/components/catalog/__tests__/catalogShared.test.tsx",
+        136,
+        170,
+        "Testes não disparam load no fallback ou rerender com outro src"
+      ]
+    ],
+    "limitations": [
+      "Probe isolado de callbacks/JSX em objeto, sem DOM nem decoder de imagens. A falha de URL é precondição sintética.",
+      "Distinto de R2-MOD-047, que trata índice fora do novo conjunto de imagens. Aqui até um índice válido pode deixar de exibir mídia."
+    ]
+  },
+  {
+    "id": "R2-MOD-067",
+    "severity": "P2",
+    "title": "Templates WhatsApp são apresentados como oficiais com aprovação escolhida localmente",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Usuário alcança wa-templates e tem uma operação de criação/edição local aceita pelas permissões e constraints vigentes.",
+    "cause": "WhatsAppTemplatesManager promete templates oficiais aprovados, mas o seletor permite escolher approved/rejected/pending e o hook persiste esse texto diretamente em whatsapp_templates. Não existe verificação de aprovação na cadeia acionada pelo botão Criar/Atualizar.",
+    "observed_behavior": "Escolher Aprovado e salvar envia status=approved no INSERT/UPDATE local. A consulta lê esse mesmo registro e STATUS_BADGES converte o valor em Aprovado. A ação não consulta nem submete a um provedor; o estado visual deriva exclusivamente da escolha do usuário.",
+    "impact": "O catálogo transmite uma certificação externa que esse fluxo não comprova. Isso pode orientar indevidamente preparação e seleção de mensagens; não se afirma que esse template seja usado por um sender externo no repositório.",
+    "recommendation": "Distinguir templates locais de templates oficiais e tratar a aprovação externa como dado sincronizado, sem edição livre. Se não houver integração disponível, informar a limitação no fluxo e manter o cadastro como rascunho local.",
+    "acceptance": [
+      "Uma edição manual não pode transformar um rascunho local em aprovação oficial.",
+      "Cada estado oficial exibido tem origem e identidade do provedor verificáveis ou é rotulado explicitamente como estado local.",
+      "O botão e o feedback descrevem com precisão se salvam localmente ou submetem para aprovação."
+    ],
+    "evidence": [
+      [
+        "src/pages/ViewRouter.tsx",
+        75,
+        79,
+        "Rota atual para o manager"
+      ],
+      [
+        "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        35,
+        42,
+        "Promessa de templates oficiais aprovados"
+      ],
+      [
+        "src/components/catalog/WhatsAppTemplatesManager.tsx",
+        157,
+        181,
+        "Status externo livre no formulário"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        37,
+        41,
+        "Badge Aprovado derivado do texto local"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        63,
+        74,
+        "Leitura da tabela local"
+      ],
+      [
+        "src/hooks/integrations/useWhatsAppTemplates.ts",
+        87,
+        120,
+        "INSERT/UPDATE e toast sem submissão externa"
+      ]
+    ],
+    "limitations": [
+      "Não foi consultada conta Meta nem realizada submissão. Não se afirma ausência de sistemas externos fora do repositório.",
+      "Providers revisou o mesmo hook e delegou a este achado a divergência de produto/estado; o contrato de created_by é tratado separadamente pelo revisor responsável."
+    ]
+  },
+  {
+    "id": "R2-MOD-068",
+    "severity": "P1",
+    "title": "Roundtrip de Chatbot grava JSON como string e reabre o grafo vazio",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "INSERT/UPDATE de um fluxo de chatbot é aceito; posteriormente ele é consultado e aberto no editor. Salvar novamente o editor vazio concretiza a substituição persistente.",
+    "cause": "useChatbotFlows aplica JSON.stringify a nodes/edges/variables apesar de as colunas serem JSONB. A query apenas faz cast de tipo. ChatbotFlowEditor aceita somente arrays e substitui strings por []; não existe normalizador de JSON na cadeia SQL vigente revisada.",
+    "observed_behavior": "A criação padrão envia a string JSON que contém o nó inicial. A consulta devolve o escalar string, o card conta zero nós e o editor exibe Fluxo vazio. O botão Salvar repassa [] ao update, que grava a string \"[]\", substituindo o conteúdo antes codificado. Um fluxo salvo com vários nós sofre o mesmo roundtrip; duplicar uma string também pode acrescentar outra camada de codificação.",
+    "impact": "Nós e conexões desaparecem da representação ao reabrir e podem ser apagados persistentemente quando o usuário salva o editor. A falha independe de haver executor externo do grafo.",
+    "recommendation": "Enviar arrays/objetos nativos para JSONB; validar o shape na leitura; migrar cuidadosamente strings existentes e impedir sobrescrita silenciosa quando o conteúdo não puder ser interpretado.",
+    "acceptance": [
+      "Criar um fluxo e reabri-lo preserva seu nó inicial e o tipo JSON de nodes/edges.",
+      "Salvar e reabrir um grafo com condições e várias conexões preserva integralmente a estrutura e os valores.",
+      "Registros legados codificados como string são recuperados sem sobrescrita e erros de shape mantêm o conteúdo original recuperável."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        53,
+        81,
+        "Leitura sem parse e criação com stringify"
+      ],
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        90,
+        104,
+        "Atualização com stringify"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        21,
+        32,
+        "Strings viram arrays vazios"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        65,
+        67,
+        "Salvar o estado do editor"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        72,
+        92,
+        "Duplicação e entrega dos arrays ao update"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowsView.tsx",
+        164,
+        168,
+        "Contagem como zero para string"
+      ],
+      [
+        "supabase/migrations/20260315151618_8e3fca18-74ac-4877-84f4-d2a02cfaf24f.sql",
+        40,
+        56,
+        "Colunas JSONB nativas"
+      ],
+      [
+        "supabase/migrations/20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql",
+        82,
+        82,
+        "Trigger efetivo somente timestamp"
+      ],
+      [
+        "src/hooks/__tests__/useChatbotFlows.test.tsx",
+        21,
+        41,
+        "Fixtures devolvem arrays, sem roundtrip do payload real"
+      ],
+      [
+        "src/hooks/__tests__/useChatbotFlows.test.tsx",
+        64,
+        87,
+        "Teste de criação só confere tabela; listas locais de tipos não exercitam contrato"
+      ]
+    ],
+    "limitations": [
+      "Descoberta do stringify comunicada por Providers, consumidor examinado por modules, tipos/trigger vencedores confirmados por Database.",
+      "Probe preserva escalares no mock de transporte e executa callbacks originais. Não executa PostgreSQL, RLS, React real nem um fluxo de produção.",
+      "IA-CHATBOT-001 anterior trata seleção de conexão/histórico no endpoint L1; não cobre este roundtrip do editor de grafos."
+    ]
+  },
+  {
+    "id": "R2-MOD-069",
+    "severity": "P2",
+    "title": "Editor de Chatbot oferece condição, ação e transferência sem configuração correspondente",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Criar ou editar um grafo no editor de Chatbot e adicionar um nó Condição, Ação ou Transferir. O contrato de persistência é independente do problema de codificação de R2-MOD-068.",
+    "cause": "AddNodeDialog oferece todos os tipos declarados; addNode inicializa só label/content/options/delaySeconds. EditNodeDialog expõe label para todos, conteúdo/opções apenas para mensagem/pergunta e segundos apenas para delay. Não há campos nem callbacks para condition, action, transferTo ou a condição do edge.",
+    "observed_behavior": "Um nó Condição, Ação ou Transferir criado pela interface fica sem sua regra, ação ou destino. Editar permite apenas trocar o nome e Salvar não valida esse conteúdo obrigatório para representar a operação. O indicador de etapas considera somente a existência de start, quantidade de nós e conexões, podendo alcançar Salvar com esses nós incompletos.",
+    "impact": "O usuário consegue desenhar e salvar símbolos dessas operações, mas não consegue definir o que elas devem fazer através dos controles disponíveis. O efeito sobre execução externa não foi afirmado nem testado.",
+    "recommendation": "Implementar os editores específicos e validação coerente para cada tipo suportado; enquanto a operação não estiver implementada, apresentá-la como indisponível em vez de aceitar uma configuração vazia.",
+    "acceptance": [
+      "Cada tipo disponibilizado pode receber todos os seus dados através da UI, incluindo regra de condição, ação e destino de transferência.",
+      "Salvar rejeita nós incompletos com indicação do campo e mantém o draft para correção.",
+      "A configuração continua igual após salvar/reabrir e a ligação condicional mantém a regra selecionada."
+    ],
+    "evidence": [
+      [
+        "src/hooks/integrations/useChatbotFlows.ts",
+        9,
+        30,
+        "Campos declarados de nó e condição de aresta"
+      ],
+      [
+        "src/components/chatbot/ChatbotNodeDialogs.tsx",
+        14,
+        46,
+        "Tipos ofertados para adicionar"
+      ],
+      [
+        "src/components/chatbot/ChatbotNodeDialogs.tsx",
+        61,
+        94,
+        "Editor só implementa nome, mensagem/pergunta e atraso"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        28,
+        47,
+        "Progresso e criação dos tipos com dados genéricos"
+      ],
+      [
+        "src/components/chatbot/ChatbotFlowEditor.tsx",
+        65,
+        67,
+        "Salvar sem validação da configuração"
+      ]
+    ],
+    "limitations": [
+      "Não se afirma que haja um executor genérico do grafo neste repositório; a falha comprovada é o contrato de autoria da interface.",
+      "IA-CHATBOT-001 anterior é sobre o endpoint L1. Esse endpoint e seu trigger ai_l1 não provam execução dos grafos montados nesta interface."
+    ]
+  },
+  {
+    "id": "R2-MOD-070",
+    "severity": "P2",
+    "title": "Gerar Voz chama a listagem de vozes e anuncia geração sem áudio",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Abrir o laboratório de voz em Configurações; enviar um nome não vazio; JWT/cota/configuração aceitos e listagem de vozes do provedor retorna 2xx.",
+    "cause": "ElevenLabsVoiceDesign envia action=generate. O endpoint só diferencia preview e create; qualquer outra ação cai na listagem GET /v1/voices. O frontend não exige audioContent nem uma identidade de voz antes de anunciar sucesso.",
+    "observed_behavior": "O clique Gerar Voz não entra em create-previews nem create-voice-from-preview. Recebe a lista de vozes, não atualiza audioUrl e dispara Voz gerada com sucesso. A descrição, nome e texto são ignorados pelo ramo escolhido.",
+    "impact": "O usuário recebe confirmação de uma geração que não foi solicitada ao provedor. O fluxo atual não cria nem produz a prévia solicitada, mesmo com credenciais e rede válidas.",
+    "recommendation": "Alinhar o fluxo de UI com preview e create, interpretar o schema de retorno e guardar generated_voice_id quando necessário. O endpoint deve rejeitar action desconhecida; o frontend deve exigir resultado compatível antes de mostrar sucesso.",
+    "acceptance": [
+      "Gerar prévia alcança a ação preview e renderiza áudio retornado no schema aceito.",
+      "Criar voz usa a identidade de prévia selecionada e só confirma após resposta de criação.",
+      "action desconhecida retorna erro explícito; uma lista de vozes não é aceita como resultado de geração."
+    ],
+    "evidence": [
+      [
+        "src/components/settings/SettingsView.tsx",
+        160,
+        172,
+        "Montagem no laboratório de voz"
+      ],
+      [
+        "src/components/voice/ElevenLabsVoiceDesign.tsx",
+        22,
+        63,
+        "Payload generate e toast sem audioContent"
+      ],
+      [
+        "supabase/functions/elevenlabs-voice-design/index.ts",
+        20,
+        45,
+        "Ramo preview"
+      ],
+      [
+        "supabase/functions/elevenlabs-voice-design/index.ts",
+        48,
+        83,
+        "Ramo create e default de listagem"
+      ]
+    ],
+    "limitations": [
+      "Providers confirmou o endpoint e delegou este contrato à revisão frontend, evitando duplicação de ID API.",
+      "Probe executa o callback da UI e o dispatch original da Edge com mocks de auth/cota e fetch, sem chamadas externas ou validação de credenciais reais."
+    ]
+  },
+  {
+    "id": "R2-MOD-071",
+    "severity": "P2",
+    "title": "Repetir conversão de áudio após erro do codificador fica aguardando o script que já falhou",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Na mesma sessão, o primeiro carregamento de /vendor/lamejs-1.2.1.min.js dispara error (ou load sem disponibilizar window.lamejs); o usuário ou o próximo arquivo tenta converter novamente. Não ocorre outro evento espontâneo no elemento já encerrado.",
+    "cause": "loadLamejs limpa apenas lamejsLoadPromise no catch. O script com data-lamejs=1 continua no documento. A segunda chamada o encontra sem o global e só acrescenta listeners load/error, sem substituir/recarregar o elemento nem limitar a espera.",
+    "observed_behavior": "A primeira conversão devolve encoder-unavailable e permite o fallback do consumidor. A próxima não dispara outro carregamento nem alcança o fallback, pois o await de loadLamejs fica pendente. useMediaUpload mantém bulkUploading até sair do laço e useAudioMemes só limpa uploading no finally posterior ao await.",
+    "impact": "Uma falha transitória inicial impede as conversões seguintes na mesma página. Um lote com mais de um áudio pode ficar preso a partir do próximo item; o upload individual posterior também pode permanecer ocupado até recarregar a página ou algum código externo emitir outro evento.",
+    "recommendation": "Remover ou substituir o elemento que falhou ao limpar a promessa, limpar seus listeners e iniciar uma nova tentativa efetiva. Limitar a espera e garantir que todos os caminhos retornem um resultado discriminado para o consumidor encerrar o estado ocupado.",
+    "acceptance": [
+      "Após um error controlado, a segunda tentativa cria ou reinicia um carregamento e pode resolver com o codificador disponível.",
+      "Um lote não fica preso no segundo áudio depois do fallback do primeiro; erro definitivo retorna encoder-unavailable e encerra o estado ocupado.",
+      "load sem window.lamejs, falha repetida e chamadas concorrentes encerram de forma determinada sem listeners acumulados em elementos já terminados."
+    ],
+    "evidence": [
+      [
+        "src/utils/audioToMp3.ts",
+        38,
+        74,
+        "Elemento existente, listeners e limpeza exclusiva da promessa"
+      ],
+      [
+        "src/utils/audioToMp3.ts",
+        115,
+        121,
+        "Await do loader antes do resultado discriminado"
+      ],
+      [
+        "src/components/settings/media-library/useMediaUpload.ts",
+        41,
+        55,
+        "Lote aguardando conversão por item"
+      ],
+      [
+        "src/components/settings/media-library/useMediaUpload.ts",
+        80,
+        88,
+        "Fim do estado ocupado apenas depois do laço"
+      ],
+      [
+        "src/hooks/communication/useAudioMemes.ts",
+        98,
+        109,
+        "Upload individual aguarda conversão"
+      ],
+      [
+        "src/hooks/communication/useAudioMemes.ts",
+        152,
+        156,
+        "Finally só é alcançado após encerramento do await"
+      ]
+    ],
+    "limitations": [
+      "Probe executa o loader original com listeners simulados e um único evento error. Verifica que a repetição não cria outro carregamento nem timeout e fica pendente sem novo evento; não mede espera infinita num navegador.",
+      "Não pressupõe erro permanente do arquivo estático nem problema no conteúdo do fornecedor. A precondição é falha pontual de carregamento ou ausência do global; O probe deste achado não executa public/vendor; a avaliação separada do codec está em vendor/report.md.",
+      "Inbox confirmou a fronteira useMediaUpload sem finding duplicado. Busca literal em FINDINGS.json anterior não encontrou loadLamejs, audioToMp3, lamejs ou mp3; a distinção também foi conferida no catálogo anterior."
+    ]
+  },
+  {
+    "id": "R2-MOD-072",
+    "severity": "P2",
+    "title": "Atualização automática recarrega ao ocultar a aba sem preservar edição ou sessão ativa",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O monitor ativo em main recebe um buildId diferente enquanto há edição ainda não salva (por exemplo no editor de automações) ou uma chamada SIP em curso. A aba já está hidden ou passa a hidden após o aviso.",
+    "cause": "A decisão do monitor usa somente document.visibilityState. O ramo hidden chama location.reload e o ramo visible arma a mesma recarga no primeiro visibilitychange hidden. Não consulta estado de edição, operação em andamento ou sessão de chamada, nem persiste/aguarda os consumidores antes de recarregar.",
+    "observed_behavior": "A aplicação pode recarregar automaticamente ao usuário apenas alternar de aba. O editor de automações guarda os campos em useState e só invoca persistência em Salvar; essas alterações em memória não são recuperadas pelo fluxo mostrado. CallSessionProvider inicia seu reducer do estado inicial, e useSipClient cria CallEngine/SipCallAdapter em memória; o monitor não condiciona a recarga ao término da sessão.",
+    "impact": "Perda de uma edição ainda não salva no consumidor demonstrado. A interrupção de uma ligação ativa é uma inferência da destruição da página e do transporte mantido em memória, confirmada na revisão do kernel pelo root; não foi feita ligação real. Ocultar a aba não demonstra que não há trabalho ativo.",
+    "recommendation": "Coordenar a atualização com operações e rascunhos ativos. Adiar recarga automática enquanto houver chamada/edição não preservada; oferecer atualização explícita ou salvar e restaurar estado verificável antes de recarregar. Não usar visibilidade como única evidência de inatividade.",
+    "acceptance": [
+      "Com edição não salva no editor de automações, detectar build novo e ocultar a aba não descarta os campos.",
+      "Uma chamada ativa não é encerrada por alternar a aba após detectar atualização; a atualização ocorre quando a sessão estiver liberada ou por ação explícita informada.",
+      "Sem operação ou edição pendente, o monitor mantém o comportamento de recuperação previsto.",
+      "O teste de atualização combina o monitor com o estado de um consumidor; apenas contar reloads na mudança de visibilidade não prova preservação de trabalho."
+    ],
+    "evidence": [
+      [
+        "src/main.tsx",
+        9,
+        17,
+        "Ativação incondicional do monitor"
+      ],
+      [
+        "src/lib/deployment-update.ts",
+        27,
+        36,
+        "Decisão por visibilidade e handler de recarga"
+      ],
+      [
+        "src/lib/deployment-update.ts",
+        49,
+        70,
+        "Build novo arma recarga automática ou recarrega imediatamente"
+      ],
+      [
+        "src/components/automations/AutomationEditorDialog.tsx",
+        20,
+        34,
+        "Draft em memória e persistência somente em Salvar"
+      ],
+      [
+        "src/components/automations/AutomationEditorDialog.tsx",
+        48,
+        54,
+        "Alteração dos campos escreve somente estado local"
+      ],
+      [
+        "src/components/automations/AutomationsManager.tsx",
+        33,
+        38,
+        "Mutation invocada pelo save explícito"
+      ],
+      [
+        "src/providers/CallSessionProvider.tsx",
+        235,
+        253,
+        "Sessão inicial do provider"
+      ],
+      [
+        "src/hooks/communication/useSipClient.ts",
+        26,
+        65,
+        "CallEngine/SipCallAdapter criados no ciclo React"
+      ],
+      [
+        "src/lib/__tests__/deployment-update.test.ts",
+        59,
+        92,
+        "Testes exigem reload em hidden sem consumidor com trabalho pendente"
+      ]
+    ],
+    "limitations": [
+      "Fonte estática e testes existentes lidos, sem executar reload do navegador ou chamada SIP. O efeito no transporte é inferido, não medido.",
+      "Não se generaliza perda a todo rascunho: email e outros consumidores podem ter persistência específica. O editor de automações é o contraexemplo concreto usado aqui.",
+      "MOD027 trata saída SPA do wizard e debounce; o wizard possui beforeunload próprio. Este achado trata a ação global automática do monitor e não supõe que esse guard específico seja inexistente.",
+      "Root revisou o kernel de chamadas e confirmou ausência de reidratação de transporte SIP vivo após reload; persistência de histórico não equivale a restabelecer a ligação."
+    ]
+  },
+  {
+    "id": "R2-MOD-073",
+    "severity": "P2",
+    "code_origin": "third_party_vendored",
+    "title": "Detector de ataques do codec ignora oito posições de análise por índices fracionários",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O caminho CBR/psymodel da integração atual avalia um vetor de ataques com pico acima do limiar em uma das posições 1, 2, 4, 5, 7, 8, 10 ou 11. A prova isola esse vetor interno; não pressupõe que todo áudio dispare o caso nem quantifica sua frequência.",
+    "cause": "L3psycho_anal_ns inicializa ta e ya com quatro posições inteiras, mas usa F/3 diretamente como índice nos laços que agrupam doze ataques e nove energias. Para F não múltiplo de três, ta[F/3] é undefined e o guard 0 == ta[F/3] falha; ya[1+F/3] += Ga escreve uma propriedade fracionária NaN, sem acumular no grupo inteiro.",
+    "observed_behavior": "Nos doze vetores sintéticos de pico único, o trecho original marca somente posições 0, 3, 6 e 9. No trecho original de energia, F=1 cria a propriedade 1.3333333333333333 com NaN e mantém os quatro acumuladores inteiros em zero. Os quatro flags inteiros alimentam S e a seleção posterior de blocos. O consumidor converte para mono/44100 e cria Mp3Encoder(1,44100,128); quality=3 ativa psymodel e o CBR padrão seleciona essa rotina.",
+    "impact": "A análise interna de transientes e agrupamento de energia não considera todos os subintervalos que seus laços percorrem, podendo escolher blocos com informação incompleta. A divergência numérica e o alcance do ramo são confirmados; perda audível, corrupção final do arquivo e magnitude da diferença de qualidade não foram demonstradas.",
+    "recommendation": "Corrigir os índices de grupo para inteiros na cópia vendorizada ou substituir por uma versão verificada que corrija esse contrato. Antes da troca, comparar com a fonte upstream fixada e validar vetores de transiente, decodificação e propriedades do MP3; não tratar uma simples emissão de bytes como certificação de fidelidade.",
+    "acceptance": [
+      "Todas as doze posições de pico único são atribuídas ao grupo inteiro correto e ao ordinal esperado, preservando a regra de primeiro ataque por grupo.",
+      "Os nove subintervalos de energia alimentam somente três índices inteiros de grupo; nenhum acumulador NaN ou chave fracionária é criado.",
+      "O teste usa trechos ou API da versão real distribuída, com hash fixado, e cobre o caminho mono/44100/128 usado pelo produto.",
+      "Uma validação independente decodifica o MP3 de vetores conhecidos e compara decisões de bloco/qualidade com uma referência antes de declarar impacto audível resolvido."
+    ],
+    "evidence": [
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        204,
+        204,
+        "Índices fracionários dos laços de ataque e energia no código original"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        201,
+        216,
+        "Estado e consumo dos quatro flags pela decisão de blocos em L3psycho_anal_ns"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        169,
+        177,
+        "Frame escolhe rotina NS no caminho CBR e consome o tipo de bloco"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        247,
+        272,
+        "CBR padrão e quality=3 com psymodel ativo"
+      ],
+      [
+        "public/vendor/lamejs-1.2.1.min.js",
+        305,
+        307,
+        "Wrapper público fixa quality=3 e recebe argumentos da aplicação"
+      ],
+      [
+        "src/utils/audioToMp3.ts",
+        157,
+        192,
+        "Downmix, reamostragem e API mono/44100/128 ativa"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "vendor/proofs.json",
+        "probe_id": "VENDOR-P01",
+        "script": "vendor_probes.cjs"
+      },
+      {
+        "artifact": "vendor/proofs.json",
+        "probe_id": "VENDOR-P02",
+        "script": "vendor_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Código de terceiro vendorizado: um achado de contrato numérico, separado das microfuncionalidades autorais e dos 208 corpos lidos.",
+      "Probes executam exatamente os dois fragmentos extraídos do AST original, com vetores sintéticos; não são uma simulação completa da análise psicoacústica.",
+      "VENDOR-P03 apenas comprova emissão não vazia pela API real para silêncio/seno curtos e término do segundo flush. Nenhum MP3 foi decodificado ou ouvido, nem avaliado em navegador, com áudio longo, por benchmark ou fuzzing.",
+      "O ramo VBR contém a mesma forma de indexação, mas não ganha outro ID e não é necessário para o caminho CBR demonstrado.",
+      "A comparação com os 104 achados anteriores não localizou este contrato nem referências a lamejs/psicoacústica/Mp3Encoder; isso não prova ausência de leitura prévia do fornecedor."
+    ]
+  },
+  {
+    "id": "R2-MOD-074",
+    "severity": "P2",
+    "title": "Monitor do War Room recria alertas continuamente quando violações superam a página de 50",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "Um admin/supervisor mantém o War Room montado, a consulta retorna mais de 50 violações SLA, e SELECT/INSERT/realtime ou refetch de alertas funcionam. Cada nova gravação entra entre os 50 alertas unread mais recentes.",
+    "cause": "O monitor compara breaches.length com o número de alertas source=sla-monitor de uma consulta limitada a 50. A tabela não tem UNIQUE por source/incidente e o insert não recebe chave de idempotência. O efeito depende de alerts e executa a checagem imediatamente sempre que essa página muda.",
+    "observed_behavior": "Cada INSERT em warroom_alerts invalida a query pelo callback realtime; a página mais recente muda, mas continua com no máximo 50 itens. Para breaches.length>50, a condição de nova inserção continua verdadeira. A republicação da página rearma a checagem, criando outro alerta para as mesmas violações. Mesmo sem entrega realtime imediata, o refetch de 30 segundos pode continuar o ciclo enquanto as precondições persistirem.",
+    "impact": "Acúmulo de alertas críticos redundantes, consultas/gravações repetidas e som/notificações a cada nova linha. A quantidade de inserts depende da latência/revalidação; não foi medido um volume de produção. Dispensa de alertas não resolve a causa de comparação de contagens.",
+    "recommendation": "Modelar a identidade de uma violação/incidente e deduplicar no banco, consultando o conjunto de violações ainda relevante. Separar o monitor da quantidade de linhas de uma página de apresentação; usar produtor único ou operação idempotente e respeitar encerramento/dispensa do incidente.",
+    "acceptance": [
+      "Com 60 violações e pelo menos 50 alertas existentes, repetir refetch e eventos INSERT não cria novos alertas para incidentes já representados.",
+      "Dois clientes admin abertos simultaneamente produzem no máximo um alerta por incidente/chave de janela definida.",
+      "Erro de inserção e de leitura é exposto/recuperável sem transformar página parcial em sinal de necessidade de alertar.",
+      "O teste cruza o limite de 50 e republica a página após insert; não basta usar lista de violações vazia."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        48,
+        60,
+        "Página unread limitada a 50 e refetch de 30 segundos"
+      ],
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        63,
+        95,
+        "INSERT invalida query e emite som/push"
+      ],
+      [
+        "src/hooks/business/useWarRoomAlerts.ts",
+        103,
+        129,
+        "Comparação de contagens, insert sem chave e efeito dependente de alerts"
+      ],
+      [
+        "src/components/dashboard/WarRoomDashboard.tsx",
+        34,
+        47,
+        "Consumidor monta o monitor e exibe seus alertas"
+      ],
+      [
+        "supabase/migrations/20260317212204_a83746c2-5108-4b79-b3b3-6b4d15df28e8.sql",
+        62,
+        86,
+        "PK aleatória, ausência de unique de source e publicação realtime"
+      ],
+      [
+        "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql",
+        62,
+        66,
+        "Política vigente permite INSERT de admin/supervisor"
+      ],
+      [
+        "src/hooks/__tests__/useWarRoomAlerts.test.tsx",
+        58,
+        83,
+        "Fixture de SLA vazia não exercita criação/deduplicação"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-074",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe executa o hook original em três ciclos finitos de efeitos com SELECT/INSERT/cache/realtime simulados, 60 violações e página de 50. Não executa React, banco, som ou notificações reais e não alega uma execução infinita medida.",
+      "Database confirmou o estado vencedor: somente PK(id) e FK dismissed_by, sem trigger de deduplicação, e grant/policy de INSERT para authenticated admin/supervisor. Disponibilidade de ambiente não foi testada.",
+      "Root confirmou que seus achados de filas/SLA não cobrem este monitor. MOD030/031 tratam indicadores e controle visual de atualização, sem a cadeia de criação de alertas."
+    ]
+  },
+  {
+    "id": "R2-MOD-075",
+    "severity": "P2",
+    "title": "Volume por hora combina buckets de São Paulo com dia e hora do navegador",
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "Estende a família de métricas do Dashboard com um contrato temporal específico não descrito: RPC hourly correta em São Paulo versus agregador cliente em outro fuso. Não é a regressão SQL de dashboard_contact_counts.",
+    "preconditions": "O navegador está em fuso diferente de America/Sao_Paulo e o instante pertence a outro dia ou hora local. A RPC dashboard_hourly_volume devolve os buckets em São Paulo conforme a definição vencedora.",
+    "cause": "aggregateHourlyVolume usa startOfDay/format/getHours locais para hoje, hora atual e os sete dias. Os buckets day/hour não incluem offset e já foram derivados por SQL em America/Sao_Paulo. O cliente compara identidades temporais incompatíveis.",
+    "observed_behavior": "Às 2026-10-04T01:30Z, o bucket corrente de São Paulo é 2026-10-03/22. Em UTC, o agregador chama hoje de 2026-10-04 e hora atual de 1: coloca a contagem no dia anterior da série de sete dias e deixa a hora corrente em zero. VolumeChart usa esses dados em Hoje, Conversas reais e no gráfico por dia.",
+    "impact": "A mesma atividade pode aparecer como dia anterior, em hora deslocada ou sem volume atual conforme o fuso do dispositivo. Filtros do topo já usam o fuso do aplicativo, portanto a mesma tela pode apresentar recortes temporais incompatíveis.",
+    "recommendation": "Usar explicitamente o fuso do aplicativo tanto na identificação de hoje/hora quanto na criação das chaves de dias, ou receber do servidor o relógio/identidade do bucket corrente. Preservar a distinção entre data de calendário e timestamp.",
+    "acceptance": [
+      "O mesmo instante e conjunto de buckets produz resultado idêntico em navegador UTC, America/Sao_Paulo e outro fuso.",
+      "O bucket 2026-10-03/22 às 2026-10-04T01:30Z é reconhecido como corrente de São Paulo; não migra para ontem por configuração do dispositivo.",
+      "Testes incluem virada do dia e não geram tanto fixture quanto expectativa com o mesmo relógio local incorreto."
+    ],
+    "evidence": [
+      [
+        "src/hooks/dashboard/useTodayHourlyVolume.ts",
+        18,
+        50,
+        "Chaves locais, getHours e comparação de buckets"
+      ],
+      [
+        "src/hooks/dashboard/useTodayHourlyVolume.ts",
+        63,
+        74,
+        "RPC ativa e transformação no retorno"
+      ],
+      [
+        "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql",
+        92,
+        120,
+        "Definição hourly vencedora: day/hour e janela em São Paulo"
+      ],
+      [
+        "src/components/dashboard/overview/VolumeChart.tsx",
+        46,
+        68,
+        "Consumo das séries por hora/dia"
+      ],
+      [
+        "src/hooks/dashboard/useDashboardUrlFilters.ts",
+        32,
+        44,
+        "Períodos do topo usam helpers do dia do aplicativo"
+      ],
+      [
+        "src/hooks/dashboard/__tests__/useTodayHourlyVolume.test.ts",
+        4,
+        21,
+        "Fixture e relógio no mesmo fuso local"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-075",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe executa o agregador original com Date UTC e stubs transparentes dos três helpers date-fns; não executa pacote date-fns, SQL nem navegador. A divergência é também direta no uso de getHours e nas chaves de data.",
+      "Database confirmou que a definição 20260925221406 é vencedora para esta assinatura e que a janela SQL também usa São Paulo. Não se acusa a RPC de um fuso incorreto.",
+      "Não generaliza o defeito a todos os filtros de data: useDashboardUrlFilters usa os helpers de calendário do aplicativo."
+    ]
+  },
+  {
+    "id": "R2-MOD-076",
+    "severity": "P2",
+    "title": "Previsão de demanda usa o ponto de quatro horas atrás como valor atual e chama média histórica de dado real",
+    "prior_relation": "EXTENSION_OF_PRIOR",
+    "prior_ids": [
+      "DASH-CONTROLS-001",
+      "DASH-METRICS-001"
+    ],
+    "prior_note": "Mantém a família anterior de rótulos/proxies do Dashboard, acrescentando seleção do ponto -4h e apresentação de médias como actual. A heurística de confiança95%/capacidade35 já era conhecida e não é contada novamente.",
+    "preconditions": "Dashboard monta DemandPrediction sem externalData, seu uso ativo. As médias históricas da hora atual e de quatro horas antes diferem; o ponto final previsto fica entre elas no contraexemplo.",
+    "cause": "O gerador preenche actual com a mesma média por hora dos sete dias, sem consulta dos valores reais do dia. A lista começa em -4h. O cálculo de currentActual usa find do primeiro ponto não preditivo, em vez do ponto da hora corrente, e a tendência compara o último previsto contra essa base antiga.",
+    "observed_behavior": "Com média de 30 às 08h, 10 às 12h atuais e 20 às 16h futuras, o hook informa currentActual=30 e tendência down. A própria série tem 10 no ponto das 12h, para o qual 20 seria crescimento. O consumidor apresenta esses pontos como Atual/Dados Reais e a tendência no card.",
+    "impact": "O operador pode receber tendência invertida e interpretar a média da semana como volume observado hoje. A prévia depende da população histórica e não demonstra variação real de atividade.",
+    "recommendation": "Separar séries observadas por data/hora da média histórica e identificar explicitamente o ponto corrente. Calcular a tendência contra a base temporal e estatística declarada no produto, com ausência de dados distinta de zero; se a intenção for somente média histórica, ajustar nomes e rótulos.",
+    "acceptance": [
+      "No contraexemplo 30/10/20, a comparação com o ponto corrente usa 10 e retorna crescimento.",
+      "actual contém observação do período atual ou é renomeado de modo que a UI não o apresente como Dados Reais.",
+      "Consulta vazia, erro e histórico insuficiente não afirmam tendência válida ou capacidade sem dados.",
+      "Confiança estatística só é apresentada se corresponder a um método validado; essa exigência já constava no achado anterior."
+    ],
+    "evidence": [
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        23,
+        47,
+        "Série -4h..0 preenchida por média histórica e futuro"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        53,
+        74,
+        "Agregação da contagem dos sete dias por hora"
+      ],
+      [
+        "src/hooks/business/useDemandPrediction.ts",
+        78,
+        86,
+        "find escolhe primeiro ponto e define tendência"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        30,
+        40,
+        "Tooltip Atual para a média"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        82,
+        92,
+        "Consumidor da tendência"
+      ],
+      [
+        "src/components/dashboard/DemandPrediction.tsx",
+        129,
+        133,
+        "Legenda Dados Reais"
+      ],
+      [
+        "src/components/dashboard/DashboardView.tsx",
+        218,
+        224,
+        "Consumidor atual sem externalData"
+      ]
+    ],
+    "external_probes": [
+      {
+        "artifact": "final-frontend-proofs.json",
+        "probe_id": "R2-MOD-076",
+        "script": "final_frontend_probes.cjs"
+      }
+    ],
+    "limitations": [
+      "Probe usa buckets históricos sintéticos, executando o gerador e o cálculo de insights reais. Não avalia qualidade preditiva, estatística, SQL ou visualização em navegador.",
+      "A chamada atual não fornece externalData; a hipótese de crash com externalData sem previsões permanece contrato dirigido, sem impacto ativo afirmado.",
+      "Outros limites do mesmo pipeline — query sem paginação, previsão sem filtros do topo e perda de data em VolumeChart — são preservados como observação relacionada, sem multiplicar IDs."
+    ]
+  },
+  {
+    "id": "R2-MOD-077",
+    "severity": "P2",
+    "title": "Histórico de transcrições oferece Todo período e busca sobre uma única página implícita",
+    "prior_relation": "NEW_DISCOVERY",
+    "prior_ids": [],
+    "preconditions": "O usuário tem mais transcrições de áudio visíveis do que o teto efetivo de uma resposta PostgREST. O registro procurado está fora da primeira página ordenada por created_at descendente.",
+    "cause": "fetchTranscriptions faz uma única consulta sem range/paginação e sem obter total. Todo período, busca por transcrição/nome/telefone e agrupamento são aplicados somente ao array devolvido; a tela não tem próxima página nem sinal de truncação.",
+    "observed_behavior": "O histórico mostra a quantidade da primeira resposta como número de transcrições/contatos. A busca de um áudio antigo ou um contato cuja primeira transcrição está fora dela retorna Nenhum resultado encontrado, embora existam registros elegíveis. Atualizar repete a mesma consulta inicial.",
+    "impact": "Histórico e busca incompletos sem mecanismo para acessar registros omitidos. O usuário pode concluir que uma transcrição antiga não existe ou que um contato não tem áudios transcritos.",
+    "recommendation": "Implementar paginação estável e filtragem no servidor, com contagem/indicação explícita do conjunto exibido; ou carregar todas as páginas de forma controlada antes de afirmar busca global. Tratar erro separadamente de conjunto vazio.",
+    "acceptance": [
+      "Uma fixture acima do teto de resposta permite localizar uma transcrição da página posterior por texto, nome e telefone.",
+      "Todo período e os contadores deixam claro se mostram um recorte; a próxima página é acessível sem perder filtros/agrupamento.",
+      "Ordenação inclui desempate estável e não duplica/omite registros na transição de páginas.",
+      "Uma falha de consulta não é apresentada como inexistência de transcrições."
+    ],
+    "evidence": [
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        30,
+        47,
+        "Consulta única sem range e catch apenas no log"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        51,
+        76,
+        "Filtro/busca/agrupamento locais"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        104,
+        128,
+        "Contadores, Todo período e Atualizar"
+      ],
+      [
+        "src/components/transcriptions/TranscriptionsHistoryView.tsx",
+        132,
+        145,
+        "Vazio ou grupos sem navegação de páginas"
+      ]
+    ],
+    "limitations": [
+      "Contrato estático; o teto numérico de produção não foi lido nem aplicado. O achado é condicionado à população exceder o teto efetivo, sem afirmar que uma conta real já o excede.",
+      "Não acusa a geração da transcrição nem as permissões do endpoint ai-transcribe-audio, cobertas pelo agente de provedores. A causa está no consumidor de histórico.",
+      "Erro inicial convertido em Nenhuma transcrição é uma observação adicional da mesma tela, não um novo ID de falha genérica de loading/error."
+    ]
+  }
+]

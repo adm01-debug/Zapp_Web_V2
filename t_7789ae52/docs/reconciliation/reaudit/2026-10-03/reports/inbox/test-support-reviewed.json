@@ -1,0 +1,75 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "files": [
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-avenida-paulista-1000.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "64cbdecdef8b0b2a08812c2ed26ccd9cdda3850c",
+      "source_sha256": "539f2c5202f33716d568401ec5af595e81ed34182ddfdf238570dfbfbd86be3f",
+      "line_count": 10,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-xbz.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "1b6e9af54a3a21a430344de742f16f00ac2ec8f4",
+      "source_sha256": "0158c27a1a5951ddc61ebdd18323cc863794002ada2b2474035ea56bd92610d6",
+      "line_count": 10,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/retrieve-xbz-brindes.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "b1b23e35d6b9c374f55217816bb71ddce706246a",
+      "source_sha256": "4cddaa44ad0198fe33cc9699da7cfd10191bcc33149d4d7e271019eb317cd74d",
+      "line_count": 19,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "24d91a145d031ef1101c59964ab4cea706b50776",
+      "source_sha256": "00ccb69ea32e13bd7bd2dfd80aacee9b8f2fce350739ca07c85fe8c212e120fc",
+      "line_count": 11,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/suggest-asdkjh.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "ba8b0ffc01ba18694b47b4cc0b3275813f2516d7",
+      "source_sha256": "72be445dcd4ed6bb226a8f91e2cf25332bbb4b9116114fe689ff005cb105b897",
+      "line_count": 3,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/lib/__fixtures__/mapbox/rate-limit-429.json",
+      "reviewer": "inbox",
+      "review_level": "targeted",
+      "git_blob_sha": "16b742c8c300fc6c5aa611297b414a1ce26af983",
+      "source_sha256": "44f2410e7980fe921338abe513598cfeda597e5629f36df5511dc1f22a3f48b0",
+      "line_count": 3,
+      "reviewed_contract": "Fixture JSON integral: shape de suggest/retrieve/forward ou resposta vazia/429 consumida nos testes de integração Mapbox.",
+      "limits": "Leitura do shape versionado, sem proveniência de captura viva ou chamada ao fornecedor. Não conta como revisão de função de produção."
+    },
+    {
+      "path": "src/test/volumeControlMocks.ts",
+      "reviewer": "inbox",
+      "review_level": "semantic",
+      "git_blob_sha": "bd166575aa2de4e93ead72ecc69bb3e1e3b9be28",
+      "source_sha256": "17281b5b2edd627cdeb8245bf1c09157a770b21b24ae2e322f055ff95289efa2",
+      "line_count": 35,
+      "reviewed_contract": "Registro compartilhado de mocks: toast/logger; motion.div filtrando props; AnimatePresence; ResizeObserver no-op condicional.",
+      "limits": "Helper de teste, não código de mídia real; stubs não medem layout ou callbacks de ResizeObserver. Não executado."
+    }
+  ]
+}

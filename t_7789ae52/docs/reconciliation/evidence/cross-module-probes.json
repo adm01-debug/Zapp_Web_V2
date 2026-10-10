@@ -1,0 +1,192 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "method": "Actual TypeScript hooks/helpers and exact source expressions with injected dependencies; Dashboard SQL modeled only",
+  "limitations": [
+    "No React renderer",
+    "No browser/E2E session",
+    "No SQL engine",
+    "No external network",
+    "No live database or provider action",
+    "Official SDK v2.117.2 invoke code runs with injected transport/helper/error dependencies"
+  ],
+  "filesSelection": {
+    "exactExpression": "filtered.filter((item) => selection.selectedIds.has(item.id))",
+    "cases": [
+      {
+        "filter": "all",
+        "labelCount": 2,
+        "forwardedIds": [
+          "image-1",
+          "pdf-1"
+        ],
+        "forwardedCount": 2,
+        "openForwardReturnsImmediately": false
+      },
+      {
+        "filter": "image",
+        "labelCount": 2,
+        "forwardedIds": [
+          "image-1"
+        ],
+        "forwardedCount": 1,
+        "openForwardReturnsImmediately": false
+      },
+      {
+        "filter": "video",
+        "labelCount": 2,
+        "forwardedIds": [],
+        "forwardedCount": 0,
+        "openForwardReturnsImmediately": true
+      }
+    ]
+  },
+  "filesCounts": {
+    "invalidatedKeys": [
+      "contactMediaKey",
+      "conversationTabCountsKey"
+    ],
+    "missingKey": "contactMediaCountsKey"
+  },
+  "telefonia": {
+    "periodCases": [
+      {
+        "period": "7d",
+        "queryKey": [
+          "calls",
+          1,
+          "7d",
+          "all",
+          "all",
+          "all",
+          "",
+          "mine"
+        ],
+        "rpc": {
+          "name": "search_my_calls",
+          "args": {
+            "p_limit": 8,
+            "p_offset": 0,
+            "p_channel": "all",
+            "p_direction": "all",
+            "p_result": "all",
+            "p_q": "",
+            "p_scope": "mine"
+          }
+        }
+      },
+      {
+        "period": "30d",
+        "queryKey": [
+          "calls",
+          1,
+          "30d",
+          "all",
+          "all",
+          "all",
+          "",
+          "mine"
+        ],
+        "rpc": {
+          "name": "search_my_calls",
+          "args": {
+            "p_limit": 8,
+            "p_offset": 0,
+            "p_channel": "all",
+            "p_direction": "all",
+            "p_result": "all",
+            "p_q": "",
+            "p_scope": "mine"
+          }
+        }
+      }
+    ],
+    "defaultAllPredicateModelPasses": false,
+    "recordingCases": [
+      {
+        "inputKind": "audio_as_text",
+        "enabled": true,
+        "result": {
+          "disponivel": false,
+          "url": null
+        }
+      },
+      {
+        "inputKind": "audio_as_blob",
+        "enabled": true,
+        "result": {
+          "disponivel": false,
+          "url": null
+        }
+      },
+      {
+        "inputKind": "expected_json_contract",
+        "enabled": true,
+        "result": {
+          "disponivel": true,
+          "url": "blob:synthetic"
+        }
+      }
+    ]
+  },
+  "gmail": {
+    "returnedSuccessFalseWithoutThrow": true,
+    "onSuccessToasts": [
+      "2 emails sincronizados"
+    ]
+  },
+  "sdk": {
+    "version": "2.117.2",
+    "sourceUrl": "https://github.com/supabase/supabase-js/blob/v2.117.2/packages/core/functions-js/src/FunctionsClient.ts",
+    "sha256": "383646bfc6327ff6274e7c15b3b3d73f50cbea5a2636ee95914197a759949246",
+    "cases": [
+      {
+        "contentType": "audio/mpeg",
+        "httpStatus": 200,
+        "error": null,
+        "decodedType": "string",
+        "decodedData": "ID3 synthetic"
+      },
+      {
+        "contentType": "application/json",
+        "httpStatus": 207,
+        "error": null,
+        "decodedType": "object",
+        "decodedData": {
+          "success": false,
+          "synced": 2,
+          "failed": 1,
+          "errors": [
+            "synthetic partial failure"
+          ]
+        }
+      }
+    ]
+  },
+  "dashboard": {
+    "method": "Relational/identity counterexample model, not PostgreSQL execution",
+    "fixturePermittedByPartialUniqueIndex": true,
+    "contacts": 1,
+    "slaRows": 2,
+    "latestInService": 2,
+    "priorDeduplicatedInService": 1,
+    "myActiveWithAuthUuid": 0,
+    "myActiveWithProfileUuid": 1,
+    "timezoneCondition": "If the session TimeZone is UTC, on 2026-10-03 the latest boundary is 00:00Z and the prior explicit America/Sao_Paulo boundary is 03:00Z; this is not a claim about the live session setting."
+  },
+  "sourceSha256": {
+    "src/components/inbox/tabs/filesSort.ts": "cbd36a9af9a3c25a8f69b8c15e388d79c992d9823d849138570c3e3d597cf29a",
+    "src/components/inbox/tabs/FilesTab.tsx": "45986a530fa77ac6fe62b75415e46853893354bee6dbdae6c275f052e8c4e4d5",
+    "src/hooks/chat/useFilesActions.ts": "437179f65e969801f35cd3f5fed0430d5a0c8304a0d66894571763900ea90366",
+    "src/hooks/chat/useContactMediaCounts.ts": "d00df6e01028db88a2c46aa7846a5456d4696a87ce256433c308d83389aafe4a",
+    "src/hooks/calls/useMyCalls.ts": "b0562059d4b6da9b639545b4c55ca8afb7f94769e746647ddf85d7be9b7860cd",
+    "supabase/migrations/20260926800000_calls_telefonia_v2.sql": "f7d1204cabcc9ed87b2a56048a68ca89be1ea1cef9dc719246175b0fb79e8dc0",
+    "src/hooks/calls/useCallRecording.ts": "6ee90a5527bad6344f7d29832210b022e776fcd92cf2e1d9b0cc132bc3dcc162",
+    "supabase/functions/get-call-recording/index.ts": "5ba90705954488851434e3e4787431d85a64ad907c8f8b63956fa18831aa156d",
+    "src/lib/emailErrorState.ts": "4a5649dda9b1d7def401258ec346630049ad8a4f2f2b1eb83c8f9a947bd4829e",
+    "src/hooks/gmail/gmailApi.ts": "d91b95afeeb59b84df2a63e6e2324fac5475387c6e7537a5a2034533ce8e7bad",
+    "src/hooks/integrations/useGmail.ts": "b10234263d58ee6e657c0f873997a968bc5e9a56ced63bac65fe4273222ecdf2",
+    "supabase/migrations/20260930400000_dashboard_contact_counts_filter_deleted_at.sql": "0cb8963e105f6e76971f3e406209b10519922456c42bfb08c06463848b896bea",
+    "supabase/migrations/20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql": "02d6435b586ba4098052a105540e40f8152c5ec85be56d0f0f4859cce252a7fa",
+    "supabase/migrations/20260903225000_sla_first_response_v2.sql": "f433b18474ea7b4a2ff7a3743f7f06c9942ac8dd5502cfed799936a87b62cf18"
+  }
+}

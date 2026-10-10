@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "scope": "implementation of eight recommendations from local/GitHub/database triage",
+  "functional_commit": "cdfd7b30023ff74d32887702cefba6447b59086c",
+  "deno_commit": "0ea9c42a65c87eb4fa4df86afb884cc81daa0c38",
+  "pull_requests": {
+    "documentation": 494,
+    "deno_policy": 496,
+    "hardening": 497,
+    "concurrent_database_change_not_owned": 495
+  },
+  "local_validation": {
+    "node_audit_tests": { "passed": 317, "failed": 0, "skipped": 0 },
+    "application_tests": { "files": 238, "passed": 3148, "failed": 0, "todo": 35 },
+    "contract_tests": { "files": 4, "passed": 167, "failed": 0 },
+    "deno_tests": { "passed": 22, "failed": 0, "frozen_repetition": true },
+    "deno_tampered_checksum_rejected": true,
+    "deno_branch_node_tests_passed": 88,
+    "postgres17_disposable_integration": "PASS",
+    "typecheck": "PASS",
+    "lint_new_debt": 0,
+    "build": "PASS",
+    "bundle_budget": "PASS",
+    "action_pins": "PASS",
+    "pr_privileged_secret_boundary": "PASS",
+    "new_files_and_diff_secret_scan": "PASS",
+    "edge_source_manifest_sha256": "cc85593e8d23a5260e50ff0840e26d1b37ec2dd48ce282dfbd038f0030bbcca2"
+  },
+  "remote_validation": {
+    "ci_run": 35748798233,
+    "db_offline_run": 35748798304,
+    "codeql_run": 35748798222,
+    "tested_functional_commit": "cdfd7b30023ff74d32887702cefba6447b59086c",
+    "conclusion": "SUCCESS",
+    "latest_observed_db_live_run": 35748033864,
+    "latest_observed_db_live_conclusion": "FAILURE",
+    "latest_observed_db_live_counts": { "local": 446, "remote": 447 },
+    "concurrent_remote_only_version": "20260922130000"
+  },
+  "historical_recovery": {
+    "private_local_copy_created": true,
+    "unreachable_objects_preserved": 612,
+    "git_bundle_and_pack_verified": true,
+    "off_host_backup": false,
+    "source_objects_deleted": false
+  },
+  "limitations": [
+    "No new production deployment or database mutation was performed by this executor.",
+    "New runtime collector was tested on fixtures and disposable PostgreSQL, not yet on canonical production.",
+    "15 historical ledger limitations remain; no retrospective SQL hashes were fabricated.",
+    "Stable metadata does not prove source-to-bundle binary equivalence.",
+    "Cron, Realtime and Storage desired-state baselines still require review.",
+    "Backup restoration and 35 pre-existing application TODO tests are not validated.",
+    "Original worktree and another agent's branch were preserved."
+  ]
+}
