@@ -376,6 +376,11 @@ jobs:
           GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
+      - name: Simular INSERT de evento de conversa com autor e contato visivel (N-143)
+        env:
+          CONVEVENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/conversation-events-insert-autor-visivel.test.sh
+
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
