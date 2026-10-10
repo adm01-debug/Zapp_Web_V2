@@ -31,6 +31,8 @@ interface KpiCardProps {
   color?: TileColor;
   label: string;
   value?: number | string | null;
+  /** Unidade colada ao número (ex.: '%'). O valor segue NUMÉRICO para a variação. */
+  suffix?: string;
   /** Variação vs. período anterior — o card decide sozinho se mostra. */
   comparison?: KpiComparison;
   visual?: KpiVisual;
@@ -99,7 +101,7 @@ function Ring({ value }: { value: number }) {
 }
 
 export function KpiCard({
-  icon, color = 'blue', label, value, comparison, visual, bars, hint, index = 0, compact = false,
+  icon, color = 'blue', label, value, suffix = '', comparison, visual, bars, hint, index = 0, compact = false,
 }: KpiCardProps) {
   const reduceMotion = useReducedMotion() ?? false;
 
@@ -108,7 +110,7 @@ export function KpiCard({
   }
 
   const variation = computeVariation(value, comparison);
-  const display = typeof value === 'number' ? value.toLocaleString('pt-BR') : value;
+  const display = typeof value === 'number' ? `${value.toLocaleString('pt-BR')}${suffix}` : value;
   const barData = bars && bars.length >= 2 ? bars : null;
   const showBars = !!barData && visual !== 'ring' && visual !== 'none';
   const showRing = visual === 'ring' && typeof value === 'number';
