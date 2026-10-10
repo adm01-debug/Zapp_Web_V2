@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 /**
  * SL-085 — o formulário de regra de SLA é o primeiro do app validado por schema
@@ -129,5 +130,21 @@ describe('SLARuleFormDialog — validação por schema (zodResolver)', () => {
         priority: 10,
       })
     );
+  });
+
+  it('seletor de escopo tem rótulo ligado via aria-label', () => {
+    render(
+      <SLARuleFormDialog open onOpenChange={() => {}} scope="contact_type" editingRule={null} />
+    );
+    expect(screen.getByLabelText('Escopo da regra')).toBeInTheDocument();
+  });
+
+  it('axe zerado no SLARuleFormDialog', async () => {
+    const { container } = renderDialog();
+    await waitFor(() => {
+      expect(screen.getByText('Nova Regra de SLA')).toBeInTheDocument();
+    });
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(results).toHaveNoViolations();
   });
 });

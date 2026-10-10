@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -127,5 +128,34 @@ describe('SLAConfigurationManager', () => {
       const switches = screen.getAllByRole('switch');
       expect(switches.length).toBeGreaterThanOrEqual(2);
     });
+  });
+
+  it('botões e switches nomeados com aria-label', async () => {
+    render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Editar SLA').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByLabelText('Excluir SLA').length).toBeGreaterThanOrEqual(1);
+      const switches = screen.getAllByRole('switch');
+      expect(switches[0]).toHaveAttribute('aria-label', 'Ativar SLA');
+    });
+  });
+
+  it('seletor de prioridade tem rótulo ligado via aria-label', async () => {
+    render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Novo SLA'));
+      const comboboxes = screen.getAllByRole('combobox');
+      expect(comboboxes.length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole('switch', { name: 'SLA padrão' })).toBeInTheDocument();
+    });
+  });
+
+  it('axe zerado no SLAConfigurationManager', async () => {
+    const { container } = render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    await waitFor(() => {
+      expect(screen.getByText('Configurações Globais de SLA')).toBeInTheDocument();
+    });
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(results).toHaveNoViolations();
   });
 });
