@@ -25,6 +25,9 @@ export interface QueueMember {
 export interface QueueWithMembers extends Queue {
   members: QueueMember[];
   waiting_count: number;
+  pendingMessageCount: number;
+  oldestWaitingAt: string | null;
+  waitMinutes: number | null;
 }
 
 export function useQueues() {
@@ -56,12 +59,33 @@ export function useQueues() {
        // R2-QUE-002: a contagem de espera tem que ser real; zerada aqui, os alertas
        // configurados de fila (QueuesView) nunca disparam.
        const waitingCounts = await QueueService.fetchWaitingCounts(queueList.map(queue => queue.id));
+       // fetchQueueMetrics é best-effort: se as RPCs falharem, as filas ainda
+       // carregam com waiting_count real; só os alertas de wait_time e
+       // messages_pending ficam zerados/apagados.
+       let queueMetrics = new Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>(
+         queueList.map(queue => [queue.id, { pendingMessageCount: 0, oldestWaitingAt: null }])
+       );
+       try {
+         queueMetrics = await QueueService.fetchQueueMetrics(queueList.map(queue => queue.id));
+       } catch (metricsError) {
+         log.warn('fetchQueueMetrics falhou; alertas de wait_time/messages_pending desativados:', metricsError);
+       }
 
-       const queuesWithMembers: QueueWithMembers[] = queueList.map(queue => ({
-         ...queue,
-         members: (membersData || []).filter(m => m.queue_id === queue.id) as QueueMember[],
-         waiting_count: waitingCounts.get(queue.id) ?? 0
-       }));
+       const queuesWithMembers: QueueWithMembers[] = queueList.map(queue => {
+         const metrics = queueMetrics.get(queue.id);
+         const oldestWaitingAt = metrics?.oldestWaitingAt ?? null;
+         const waitMinutes = oldestWaitingAt
+           ? Math.round((Date.now() - new Date(oldestWaitingAt).getTime()) / 60000)
+           : null;
+         return {
+           ...queue,
+           members: (membersData || []).filter(m => m.queue_id === queue.id) as QueueMember[],
+           waiting_count: waitingCounts.get(queue.id) ?? 0,
+           pendingMessageCount: metrics?.pendingMessageCount ?? 0,
+           oldestWaitingAt,
+           waitMinutes,
+         };
+       });
 
        if (isMountedRef.current) {
          setQueues(queuesWithMembers);

@@ -45,6 +45,17 @@ export function QueuesView() {
         const alertKey = `${queue.id}-assignment_rate`;
         if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'assignment_rate', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: 'Taxa de atribuição abaixo do esperado', severity: assignmentRate < queueGoal.min_assignment_rate * 0.5 ? 'critical' : 'warning', currentValue: assignmentRate, threshold: queueGoal.min_assignment_rate });
       }
+      if (queue.max_wait_time_minutes != null && queue.waitMinutes != null) {
+        const waitMinutes = queue.waitMinutes;
+        if (waitMinutes > queue.max_wait_time_minutes) {
+          const alertKey = `${queue.id}-wait_time`;
+          if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'wait_time', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: `${waitMinutes} min de espera (limite: ${queue.max_wait_time_minutes} min)`, severity: waitMinutes > queue.max_wait_time_minutes * 1.5 ? 'critical' : 'warning', currentValue: waitMinutes, threshold: queue.max_wait_time_minutes });
+        }
+      }
+      if (queue.pendingMessageCount > queueGoal.max_messages_pending) {
+        const alertKey = `${queue.id}-messages_pending`;
+        if (!dismissedAlerts.has(alertKey)) allAlerts.push({ type: 'messages_pending', queueId: queue.id, queueName: queue.name, queueColor: queue.color, message: `${queue.pendingMessageCount} mensagens pendentes`, severity: queue.pendingMessageCount > queueGoal.max_messages_pending * 1.5 ? 'critical' : 'warning', currentValue: queue.pendingMessageCount, threshold: queueGoal.max_messages_pending });
+      }
     });
     return allAlerts;
   }, [queues, goals, dismissedAlerts]);
