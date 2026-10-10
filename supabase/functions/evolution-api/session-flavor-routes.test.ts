@@ -8,6 +8,7 @@ import {
   type EvolutionFlavor,
   type SessionAction,
 } from "../_shared/evolution-session-routes.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -133,10 +134,17 @@ async function runAction(
   const previousUrl = Deno.env.get("EVOLUTION_API_URL");
   const previousKey = Deno.env.get("EVOLUTION_API_KEY");
   const previousToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+  const previousName = Deno.env.get("EVOLUTION_INSTANCE_NAME");
   Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
   Deno.env.set("EVOLUTION_API_URL", fake.url);
   Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
   Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+  // TRA-002/#18: `EVOLUTION_INSTANCE_TOKEN` é a credencial da instância PADRÃO;
+  // declaramos a fixture como padrão para que o ciclo de sessão GO use o token
+  // de instância (e não a key global). Sem esta declaração a rota GO falha
+  // fechada, como manda o contrato (prova: o caso negativo abaixo).
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", INSTANCE);
+  resetInstanceTokenCache();
   try {
     const res = await handleEvolutionApi(sessionRequest(action), {
       callerClient: makeCallerClient(),
@@ -155,6 +163,7 @@ async function runAction(
     restore("EVOLUTION_API_URL", previousUrl);
     restore("EVOLUTION_API_KEY", previousKey);
     restore("EVOLUTION_INSTANCE_TOKEN", previousToken);
+    restore("EVOLUTION_INSTANCE_NAME", previousName);
     await fake.stop();
   }
 }
@@ -361,4 +370,46 @@ Deno.test("R2-API-015 disconnect v2: DELETE /instance/logout/{instância} com a 
   assertEquals(calls[0].apikey, GLOBAL_KEY, "disconnect v2 autentica com a chave global");
   assertEquals(body.error, undefined);
   assertEquals(writes.find((w) => w.table === "whatsapp_connections")?.patch, { status: "disconnected" });
+});
+
+// ─── TRA-002/#18: a matriz GO não reabre a credencial global da padrão ───
+
+Deno.test("R2-API-015/TRA-002 status GO: conexão que NÃO é a padrão e sem token no Vault nega sem tocar o provedor", async () => {
+  const fake = startFakeProvider(() => json({ status: "connected" }));
+  const previousFlavor = Deno.env.get("EVOLUTION_API_FLAVOR");
+  const previousUrl = Deno.env.get("EVOLUTION_API_URL");
+  const previousKey = Deno.env.get("EVOLUTION_API_KEY");
+  const previousToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+  const previousName = Deno.env.get("EVOLUTION_INSTANCE_NAME");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "go");
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
+  Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+  // A padrão declarada é a fixture; a conexão consultada é OUTRA (CONN_B).
+  Deno.env.set("EVOLUTION_INSTANCE_NAME", INSTANCE);
+  resetInstanceTokenCache();
+  try {
+    const res = await handleEvolutionApi(
+      sessionRequest("status", { instanceName: "CONN_B" }),
+      { callerClient: makeCallerClient(), supabase: makeServiceClient([]) },
+    );
+    const body = await res.json();
+    assertEquals(
+      fake.calls.length,
+      0,
+      "conexão sem token no Vault não pode autenticar com a credencial da padrão",
+    );
+    assertEquals(body.error, true);
+  } finally {
+    const restore = (key: string, value: string | undefined) => {
+      if (value === undefined) Deno.env.delete(key);
+      else Deno.env.set(key, value);
+    };
+    restore("EVOLUTION_API_FLAVOR", previousFlavor);
+    restore("EVOLUTION_API_URL", previousUrl);
+    restore("EVOLUTION_API_KEY", previousKey);
+    restore("EVOLUTION_INSTANCE_TOKEN", previousToken);
+    restore("EVOLUTION_INSTANCE_NAME", previousName);
+    await fake.stop();
+  }
 });
