@@ -19,6 +19,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 const f = vi.hoisted(() => ({
   insights: undefined as unknown,
+  statsArgs: [] as unknown[][],
 }));
 
 // O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
@@ -31,6 +32,21 @@ beforeAll(() => {
 
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: f.insights, isLoading: false, isError: false, error: null }),
+}));
+
+// X077 — os KPIs vêm da RPC: o teste só confere o período que a barra entrega ao hook.
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: (...args: unknown[]) => {
+    f.statsArgs.push(args);
+    return {
+      data: {
+        current: { campaignsSent: 7, completed: null, contactsReached: null, sent: null, deliveryRatePct: null },
+        previous: null,
+        active: null,
+        dailySent: [],
+      },
+    };
+  },
 }));
 
 import { TalkXOverview } from '../TalkXOverview';
@@ -168,16 +184,20 @@ describe('X081 · filtros da Visão geral', () => {
     expect(screen.queryByRole('table')).toBeNull();
   });
 
-  it('período: "7 dias" corta a lista E os KPIs', () => {
+  it('período: "7 dias" corta a lista e entrega o mesmo recorte ao hook dos KPIs (RPC)', () => {
     render(<TalkXOverview {...baseProps} />);
-    expect(kpi('Total de campanhas')).toContain('2');
+    expect(f.statsArgs[f.statsArgs.length - 1]).toEqual([null, null]);
+    expect(kpi('Total de campanhas')).toContain('7');
 
     fireEvent.click(screen.getByRole('button', { name: 'Período' }));
     fireEvent.click(screen.getByRole('menuitem', { name: '7 dias' }));
 
     expect(screen.getAllByText('Campanha recente').length).toBeGreaterThan(0);
     expect(screen.queryAllByText('Campanha antiga')).toHaveLength(0);
-    expect(kpi('Total de campanhas')).toContain('1');
+    const [period, range] = f.statsArgs[f.statsArgs.length - 1] as [string, { from: Date; to: Date }];
+    expect(period).toBe('7d');
+    expect(range.from).toBeInstanceOf(Date);
+    expect(range.to).toBeInstanceOf(Date);
   });
 
   it('⟳ refaz a consulta e gira enquanto ela não volta (e solta o giro no fim)', async () => {
