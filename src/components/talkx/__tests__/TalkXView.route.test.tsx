@@ -260,3 +260,38 @@ describe('TalkXWizardReview — "Editar" respeita a rota (V22)', () => {
     expect(onEditStep).toHaveBeenCalledWith(2);
   });
 });
+
+// TL-152 (refazer): ?screen=report não tem tela — a URL é normalizada
+// (parâmetro removido) em vez de reescrever para o monitor.
+describe('TalkXView ?screen=report sem tela própria (TL-152)', () => {
+  beforeEach(() => {
+    f.campaigns = [{
+      id: 'cmp_done', name: 'Finalizada', status: 'completed',
+      sent_count: 10, failed_count: 0, delivered_count: 10, total_recipients: 10,
+    }];
+    f.isLoading = false;
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('normaliza ?screen=report sem abrir outra tela no lugar (fica na lista)', async () => {
+    render(<TalkXView />);
+
+    await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+  });
+
+  it('voltar no navegador com ?screen=report também normaliza sem abrir tela', async () => {
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+  });
+});
