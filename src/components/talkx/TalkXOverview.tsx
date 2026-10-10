@@ -216,7 +216,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
             <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} />
             <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} bars={stats?.dailySent} />
             <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={cur?.completed} comparison={{ previous: prev?.completed, kind: 'relative' }} />
-            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rateLabel} comparison={{ previous: prevRate, kind: 'points' }} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rate} suffix="%" comparison={{ previous: prevRate, kind: 'points' }} />
             <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} />
           </div>
 
