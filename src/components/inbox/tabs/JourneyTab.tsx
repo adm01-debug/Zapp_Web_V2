@@ -20,20 +20,22 @@ interface JourneyTabProps {
   contactId: string;
 }
 
-const KIND_META: Record<TimelineEventKind, { icon: LucideIcon; className: string }> = {
+// eslint-disable-next-line react-refresh/only-export-components -- KIND_META é exportado para o teste de cor por tipo (t_62365cff)
+export const KIND_META: Record<TimelineEventKind, { icon: LucideIcon; className: string }> = {
   message_in: { icon: MessageSquare, className: 'bg-primary/15 text-primary' },
   message_out: { icon: MessageSquare, className: 'bg-primary/15 text-primary' },
-  note: { icon: FileText, className: 'bg-primary/15 text-primary' },
-  transfer: { icon: ArrowLeftRight, className: 'bg-success/15 text-success' },
-  assign: { icon: UserPlus, className: 'bg-success/15 text-success' },
+  note: { icon: FileText, className: 'bg-violeta/15 text-violeta' },
+  transfer: { icon: ArrowLeftRight, className: 'bg-teal/15 text-teal' },
+  assign: { icon: UserPlus, className: 'bg-rosa/15 text-rosa' },
   file: { icon: Paperclip, className: 'bg-muted/60 text-muted-foreground' },
   task: { icon: CheckSquare, className: 'bg-warning/15 text-warning' },
   deal: { icon: DollarSign, className: 'bg-success/15 text-success' },
-  close: { icon: XCircle, className: 'bg-muted/60 text-muted-foreground' },
-  reopen: { icon: RotateCcw, className: 'bg-success/15 text-success' },
-  // R2-J06: ligação entra na jornada como evento próprio; o par token/ícone é o mesmo
-  // já fixado em src/lib/journey/model.ts (CATEGORY_META.call), para as duas trilhas não divergirem.
-  call: { icon: Phone, className: 'bg-success/15 text-success' },
+  close: { icon: XCircle, className: 'bg-destructive/15 text-destructive' },
+  reopen: { icon: RotateCcw, className: 'bg-destructive/15 text-destructive' },
+  // R2-J06/J07: ligação é evento próprio e cada tipo tem cor própria com os tokens de
+  // categoria (violeta/teal/rosa). O token/ícone por categoria acompanha
+  // src/lib/journey/model.ts (CATEGORY_META) para as duas trilhas usarem a MESMA paleta.
+  call: { icon: Phone, className: 'bg-info/15 text-info' },
 };
 
 const PILL_CLASS: Record<string, string> = {

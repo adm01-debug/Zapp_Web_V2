@@ -122,14 +122,15 @@ export interface JourneyCategoryMeta {
 
 /**
  * Categoria -> rótulo, ícone e classes. As três classes usam SÓ tokens do sistema
- * (`primary`, `info`, `success`, `warning`, `muted`/`muted-foreground`, `border`).
+ * (`primary`, `info`, `success`, `warning`, `destructive`, `muted`/`muted-foreground`,
+ * `violeta`, `teal`, `rosa` e `border`).
  *
- * Notas usam `primary`: o violeta do sistema não serve como texto/ícone nos dois temas.
- * `--dash-violet` (282 95% 66%, `src/styles/tokens.css`) dá 3,38:1 como texto sobre o card claro
- * e 2,85:1 como ícone sobre a própria tinta `/15` — abaixo dos 4,5:1 de texto e dos 3:1 de ícone;
- * `--dash-tile-violet` (260 69% 37%) só funciona no claro e cai para 1,65:1 no card escuro.
- * O cartão autoriza cair no `primary` nesse caso (o par `bg-primary/15 text-primary` é o que o
- * `KIND_META` da aba já usa hoje); a medição está no relato do cartão.
+ * Desde a expansão da paleta (cartão t_f3f17002) cada categoria tem cor PRÓPRIA: os tokens
+ * `--violeta`/`--teal`/`--rosa` (contraste WCAG AA medido em
+ * `tests/contracts/contraste-cores-categoria.contract.test.ts`) entraram no lugar do `primary`
+ * que Notas dividia com Mensagens e do `success`/`muted` que Transferências, Propostas e
+ * Atendimento dividiam. O mapa acompanha o `KIND_META` de
+ * `src/components/inbox/tabs/JourneyTab.tsx` para as duas trilhas não divergirem.
  */
 export const CATEGORY_META: Record<JourneyCategory, JourneyCategoryMeta> = {
   message: {
@@ -142,23 +143,23 @@ export const CATEGORY_META: Record<JourneyCategory, JourneyCategoryMeta> = {
   email: {
     label: 'E-mail',
     icon: Mail,
-    iconClass: 'bg-info/15 text-info',
-    railClass: 'bg-info',
-    badgeClass: 'bg-info/15 text-info border-info/30',
+    iconClass: 'bg-rosa/15 text-rosa',
+    railClass: 'bg-rosa',
+    badgeClass: 'bg-rosa/15 text-rosa border-rosa/30',
   },
   call: {
     label: 'Telefone',
     icon: Phone,
-    iconClass: 'bg-success/15 text-success',
-    railClass: 'bg-success',
-    badgeClass: 'bg-success/15 text-success border-success/30',
+    iconClass: 'bg-info/15 text-info',
+    railClass: 'bg-info',
+    badgeClass: 'bg-info/15 text-info border-info/30',
   },
   note: {
     label: 'Notas',
     icon: FileText,
-    iconClass: 'bg-primary/15 text-primary',
-    railClass: 'bg-primary',
-    badgeClass: 'bg-primary/15 text-primary border-primary/30',
+    iconClass: 'bg-violeta/15 text-violeta',
+    railClass: 'bg-violeta',
+    badgeClass: 'bg-violeta/15 text-violeta border-violeta/30',
   },
   task: {
     label: 'Tarefas',
@@ -170,9 +171,9 @@ export const CATEGORY_META: Record<JourneyCategory, JourneyCategoryMeta> = {
   transfer: {
     label: 'Transferências',
     icon: ArrowLeftRight,
-    iconClass: 'bg-success/15 text-success',
-    railClass: 'bg-success',
-    badgeClass: 'bg-success/15 text-success border-success/30',
+    iconClass: 'bg-teal/15 text-teal',
+    railClass: 'bg-teal',
+    badgeClass: 'bg-teal/15 text-teal border-teal/30',
   },
   file: {
     label: 'Arquivos',
@@ -194,9 +195,9 @@ export const CATEGORY_META: Record<JourneyCategory, JourneyCategoryMeta> = {
   case: {
     label: 'Atendimento',
     icon: RotateCcw,
-    iconClass: 'bg-muted/60 text-muted-foreground',
-    railClass: 'bg-muted-foreground',
-    badgeClass: 'bg-muted text-muted-foreground border-border',
+    iconClass: 'bg-destructive/15 text-destructive',
+    railClass: 'bg-destructive',
+    badgeClass: 'bg-destructive/15 text-destructive border-destructive/30',
   },
 };
 

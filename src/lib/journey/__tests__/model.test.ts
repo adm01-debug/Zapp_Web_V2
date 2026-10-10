@@ -32,12 +32,16 @@ const ALL_KINDS: JourneyKind[] = [
 /** Tokens de cor que o sistema já tem (tailwind.config.ts + src/styles/tokens.css). */
 const SYSTEM_TOKENS = [
   'primary', 'success', 'warning', 'info', 'destructive',
+  'violeta', 'teal', 'rosa',
   'muted', 'muted-foreground', 'background', 'foreground', 'border', 'card',
 ];
 
-/** Cores literais do Tailwind — decisão do dono (D02): nenhuma cor nova entra aqui. */
+/** Cores literais do Tailwind — decisão do dono (D02): nenhuma cor nova entra aqui.
+ *  `teal`/`rosa`/`violeta` NÃO estão nesta lista de propósito: viraram tokens do sistema
+ *  (`theme.extend.colors`, cartão t_f3f17002). O controle negativo segue pegando a paleta
+ *  literal — `bg-sky-500` casa como `sky-500`, que não é token do sistema. */
 const TAILWIND_LITERAL_COLORS = [
-  'sky', 'orange', 'pink', 'teal', 'rose', 'violet', 'purple', 'red', 'green',
+  'sky', 'orange', 'pink', 'rose', 'violet', 'purple', 'red', 'green',
   'blue', 'amber', 'yellow', 'indigo', 'fuchsia', 'cyan', 'lime', 'emerald',
   'slate', 'gray', 'grey', 'zinc', 'neutral', 'stone',
 ];
@@ -80,7 +84,7 @@ describe('CATEGORY_META', () => {
     }
   });
 
-  it('cada categoria tem rótulo e ícone ÚNICOS (a cor é compartilhada, o rótulo e o ícone não)', () => {
+  it('cada categoria tem rótulo e ícone ÚNICOS (a cor agora também é própria, ver teste abaixo)', () => {
     const rotulos = ALL_CATEGORIES.map((c) => CATEGORY_META[c].label);
     expect(new Set(rotulos).size).toBe(rotulos.length);
 
@@ -107,19 +111,20 @@ describe('CATEGORY_META', () => {
 
   it('segue o mapa de cores decidido pelo dono (D02) com os tokens que já existem', () => {
     // Mensagens, Notas, E-mail, Telefone, Tarefas, Transferências, Arquivos, Propostas, Atendimento.
-    // Notas: nenhum violeta do sistema fecha contraste como texto/ícone nos DOIS temas
-    // (`--dash-violet` 3,38:1 sobre o card claro e 2,85:1 sobre a própria tinta /15;
-    // `--dash-tile-violet` 1,65:1 sobre o card escuro) — o cartão autoriza o `primary`, que é o
-    // par que o `KIND_META` da aba já usa; a medição está no relato do cartão.
+    // A expansão da paleta (t_f3f17002) tirou o compartilhamento: cada categoria tem token próprio,
+    // dentro da paleta do sistema. Notas saem do `primary` (que dividia com Mensagens) para o
+    // `violeta`; E-mail para o `rosa`; Transferências para o `teal`; Telefone para o `info`;
+    // Atendimento para o `destructive`. O par `bg-{token}/15 text-{token}` é o mesmo do `KIND_META`
+    // da aba, para as duas trilhas não divergirem.
     expect(CATEGORY_META.message.iconClass).toBe('bg-primary/15 text-primary');
-    expect(CATEGORY_META.note.iconClass).toBe('bg-primary/15 text-primary');
-    expect(CATEGORY_META.email.iconClass).toBe('bg-info/15 text-info');
-    expect(CATEGORY_META.call.iconClass).toBe('bg-success/15 text-success');
+    expect(CATEGORY_META.note.iconClass).toBe('bg-violeta/15 text-violeta');
+    expect(CATEGORY_META.email.iconClass).toBe('bg-rosa/15 text-rosa');
+    expect(CATEGORY_META.call.iconClass).toBe('bg-info/15 text-info');
     expect(CATEGORY_META.task.iconClass).toBe('bg-warning/15 text-warning');
-    expect(CATEGORY_META.transfer.iconClass).toBe('bg-success/15 text-success');
+    expect(CATEGORY_META.transfer.iconClass).toBe('bg-teal/15 text-teal');
     expect(CATEGORY_META.file.iconClass).toBe('bg-muted/60 text-muted-foreground');
     expect(CATEGORY_META.deal.iconClass).toBe('bg-success/15 text-success');
-    expect(CATEGORY_META.case.iconClass).toBe('bg-muted/60 text-muted-foreground');
+    expect(CATEGORY_META.case.iconClass).toBe('bg-destructive/15 text-destructive');
 
     // Trilho e selo usam o MESMO token do texto do ícone: nenhuma categoria muda de cor entre o
     // tile, o ponto do trilho e o selo, e nenhuma classe sai desse mapa.
@@ -135,6 +140,13 @@ describe('CATEGORY_META', () => {
         expect(meta.badgeClass, category).toBe(`bg-${token}/15 text-${token} border-${token}/30`);
       }
     }
+  });
+
+  it('nenhuma categoria divide o token de cor com outra (cor própria por categoria)', () => {
+    const tokenDaCategoria = (c: JourneyCategory) =>
+      /text-([a-z-]+)$/.exec(CATEGORY_META[c].iconClass)?.[1] ?? CATEGORY_META[c].iconClass;
+    const tokens = ALL_CATEGORIES.map(tokenDaCategoria);
+    expect(new Set(tokens).size).toBe(tokens.length);
   });
 });
 
