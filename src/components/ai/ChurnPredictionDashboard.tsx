@@ -299,9 +299,10 @@ export function ChurnPredictionDashboard() {
                       <p className="text-xs text-muted-foreground">{risk.phone}</p>
                     </div>
                     <div className="w-24 hidden md:block">
-                      <Progress 
-                        value={risk.riskScore} 
+                      <Progress
+                        value={risk.riskScore}
                         className="h-2"
+                        aria-label={`Risco de churn de ${risk.contactName}: ${risk.riskScore}%`}
                       />
                     </div>
                     <div className="text-right shrink-0">

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { ChurnPredictionDashboard } from '../ChurnPredictionDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -75,6 +76,31 @@ describe('ChurnPredictionDashboard', () => {
       await waitFor(() => {
         expect(screen.getByText(/Contatos em Risco/)).toBeInTheDocument();
       });
+    });
+
+    it('barra de risco nomeada com o contato do mock e o score da linha', async () => {
+      render(<ChurnPredictionDashboard />);
+      await waitFor(() => {
+        expect(screen.getByText(/Contatos em Risco/)).toBeInTheDocument();
+      });
+      // Maria Silva (c1): sentimento negativo e sem interacao ha mais de 30 dias
+      // -> risco 80% no calculo local. O nome acessivel da barra traz contato E score.
+      const barra = screen.getByRole('progressbar', {
+        name: /Risco de churn de Maria Silva: 80%/,
+      });
+      expect(barra).toHaveAttribute('aria-valuenow', '80');
+      // O MESMO score do contato aparece no texto visivel da linha (Badge da linha).
+      expect(screen.getByText('80%')).toBeInTheDocument();
+    });
+
+    it('axe nao acusa nenhuma violacao (barra sem nome inclusive)', async () => {
+      const { container } = render(<ChurnPredictionDashboard />);
+      await screen.findAllByRole('progressbar');
+      const results = await axe(container, {
+        rules: { 'color-contrast': { enabled: false } },
+      });
+      // axe ZERADO: qualquer violacao (inclusive aria-progressbar-name) reprova.
+      expect(results.violations).toEqual([]);
     });
 
     it('shows loading skeletons while fetching', () => {
