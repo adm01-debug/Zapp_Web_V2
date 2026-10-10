@@ -314,7 +314,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
+export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
@@ -343,8 +343,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const autosaveFieldsRef = useRef('');
   const pendingChangesRef = useRef(false);
   const autosaveNameRef = useRef(name);
-  const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentId ? 'segment' : 'contacts'));
-  const [segmentId, setSegmentId] = useState(campaign?.segment_id || initial?.segmentId || '');
+  const [audienceSource, setAudienceSource] = useState<AudienceSource>(campaign?.audience_source || (initial?.segmentIds && initial.segmentIds.length > 0 ? 'segment' : 'contacts'));
+  const [segmentIds, setSegmentIds] = useState<string[]>(campaign?.segment_ids || initial?.segmentIds || []);
+  const [segmentSearch, setSegmentSearch] = useState('');
+
+  const toggleSegmentId = useCallback((id: string) => {
+    setSegmentIds((prev) => prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]);
+  }, []);
   const [templateId, setTemplateId] = useState(campaign?.template_id || initial?.templateId || '');
   // V26 — versão do template que originou a mensagem (talkx_template_versions.id).
   // Resolvida a partir de `talkx_templates.current_version_id`, o ponteiro para a
@@ -554,13 +559,21 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // O servidor aplica o critério de elegível/suprimido no snapshot; nada aqui
   // filtra ids antes de salvar (era a origem de divergência entre tela e disparo).
 
-  const selectedSegment = useMemo(() => segments.find((s) => s.id === segmentId) ?? null, [segments, segmentId]);
+  const selectedSegments = useMemo(() => segments.filter((s) => segmentIds.includes(s.id)), [segments, segmentIds]);
   const selectedTemplate = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
 
-  const { data: segmentEstimate } = useQuery({
-    queryKey: ['talkx-wizard-segment-count', segmentId, JSON.stringify(selectedSegment?.rules ?? null)],
-    queryFn: () => countAudience(selectedSegment?.rules as SegmentRules),
-    enabled: audienceSource === 'segment' && !!selectedSegment,
+  const { data: segmentEstimates } = useQuery({
+    queryKey: ['talkx-wizard-segment-counts', segmentIds, JSON.stringify(selectedSegments.map((s) => s.rules))],
+    queryFn: async () => {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        selectedSegments.map(async (s) => {
+          counts[s.id] = await countAudience(s.rules as SegmentRules);
+        })
+      );
+      return counts;
+    },
+    enabled: audienceSource === 'segment' && selectedSegments.length > 0,
   });
 
   const { companies, tags } = useMemo(() => {
@@ -630,8 +643,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     }));
   }, []);
 
-  /** Público total antes da supressão. */
-  const audienceTotal = audienceSource === 'segment' ? (segmentEstimate ?? selectedSegment?.estimated_count ?? 0) : selectedContacts.length;
+  /** Público total antes da supressão — soma dos contados por segmento (união sem duplicar). */
+  const audienceTotal = audienceSource === 'segment' ? (Object.values(segmentEstimates ?? {}).reduce((a, b) => a + b, 0) || (selectedSegments[0]?.estimated_count ?? 0)) : selectedContacts.length;
   /** Bloqueados por supressão dentro do público (calculado no servidor — X017). */
   const suppressedCount = useMemo(() => {
     if (audienceSource !== 'contacts') return 0;
@@ -739,13 +752,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? !!segmentId : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? segmentIds.length > 0 : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
     // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
     2: messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentId, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionId, audienceSource, segmentIds, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -757,7 +770,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audience_filters: audienceSource === 'contacts'
       ? { ...completedRules(audienceRules), search: contactSearch, contact_ids: selectedContacts }
       : {},
-    segment_id: audienceSource === 'segment' ? segmentId || null : null,
+    segment_ids: audienceSource === 'segment' ? segmentIds : null,
     template_id: templateId || null,
     // V26 — versão do template usada (auditoria do que a campanha enviou).
     template_version_id: templateVersionId || null,
@@ -777,13 +790,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentId, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentIds, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
 
   // E68/E73: snapshot dos campos que o autosave acompanha. Fica declarado antes
   // de `persistSave` porque um save confirmado passa a ser o novo baseline.
   const autosaveFields = JSON.stringify({
     name, description, objective, messageTemplate, mediaUrl, hasMedia, mediaType,
-    audienceSource, segmentId, templateId, connectionId, owner, speedProfile,
+    audienceSource, segmentIds, templateId, connectionId, owner, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
     audienceRules, contactSearch,
@@ -840,8 +853,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         expectedRevision: draftRevisionRef.current,
       });
       setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
-      if (audienceSource === 'segment' && selectedSegment) {
-        await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).eq('id', selectedSegment.id);
+      if (audienceSource === 'segment' && selectedSegments.length > 0) {
+        const ids = selectedSegments.map((s) => s.id);
+        await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).in('id', ids);
       }
 
       if (mode === 'schedule' && payload.scheduled_at) {
@@ -857,7 +871,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegments, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -990,7 +1004,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   return {
     step, setStep, canProceed, draftCampaignId, draftRevision,
     name, setName, description, setDescription, objective, setObjective,
-    audienceSource, setAudienceSource, segmentId, setSegmentId, segments, selectedSegment, segmentEstimate,
+    audienceSource, setAudienceSource, segmentIds, setSegmentIds, segmentSearch, setSegmentSearch, toggleSegmentId, segments, selectedSegments, segmentEstimates,
     templateId, applyTemplate, templates, selectedTemplate,
     // V26 — versão do template aplicada (talkx_template_versions.id do conteúdo
     // vivo, via current_version_id); nula quando o template não tem versão corrente.

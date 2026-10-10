@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
-  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
+  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge, Bookmark,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -458,7 +458,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
                 <MetaRow icon={Timer} label="Fuso" value={localTz} />
                 {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
-                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
+                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} sub={campaign.audience_source === 'segment' && campaign.segment_ids ? `${campaign.segment_ids.length} segmento(s) selecionado(s)` : undefined} />
               </div>
             </div>
           </div>
@@ -484,7 +484,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             )}
             <div className="space-y-1.5">
               <MetaRow icon={Zap} label="Campanha" value={campaign.name} />
-              <MetaRow icon={Users} label="Público" value={`${fmtInt(campaign.total_recipients)} contatos`} />
+              <MetaRow icon={Users} label="Público" value={campaign.audience_source === 'segment' && campaign.segment_ids ? `${campaign.segment_ids.length} segmento(s)` : `${fmtInt(campaign.total_recipients)} contatos`} />
               <MetaRow icon={Send} label="Canal" value={campaign.whatsapp_connection_id ? 'Linha WhatsApp conectada' : 'Sem linha'} />
               <MetaRow icon={Timer} label="Velocidade" value={{ slow: 'Lenta', moderate: 'Moderada', fast: 'Rápida' }[speedProfile]} />
             </div>

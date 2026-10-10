@@ -20,7 +20,7 @@ import type { WizardState } from '@/components/talkx/TalkXCampaignWizard';
 function reviewEd(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Campanha X136', description: '', objective: 'sales',
-    audienceSource: 'contacts', selectedSegment: null,
+    audienceSource: 'contacts', selectedSegments: [],
     selectedContacts: [], eligibleCount: 10, audienceTotal: 12,
     respectSuppression: true, suppressedCount: 2,
     selectedTemplate: null, messageTemplate: 'Oi {{nome}}',

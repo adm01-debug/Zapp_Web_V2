@@ -49,6 +49,7 @@ export interface TalkXCampaign {
   audience_source?: 'contacts' | 'segment' | 'crm360';
   audience_filters?: Record<string, unknown>;
   segment_id?: string | null;
+  segment_ids?: string[] | null;
   template_id?: string | null;
   // V26 — versão do template (talkx_template_versions.id) que originou a
   // mensagem. Opcional até o types-sync canônico após a migration da coluna.

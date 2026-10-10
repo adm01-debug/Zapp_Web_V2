@@ -16,7 +16,7 @@ import { validateSegmentRules } from './segments/segmentValidation';
 import { toast } from 'sonner';
 
 interface Props {
-  onUseCampaign: (segmentId: string) => void;
+  onUseCampaign: (segmentIds: string[]) => void;
 }
 
 type ViewMode = 'list' | 'edit';
@@ -177,7 +177,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className="w-4 h-4 mr-2" />Ver detalhes</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => onUseCampaign(s.id)}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onUseCampaign([s.id])}><Zap className="w-4 h-4 mr-2" />Usar em campanha</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openEdit(s)}><Pencil className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleFav(s)}>{s.is_favorite ? <StarOff className="w-4 h-4 mr-2" /> : <Star className="w-4 h-4 mr-2" />}{s.is_favorite ? 'Remover favorito' : 'Favoritar'}</DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -200,7 +200,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
       {/* Detail rail */}
       <div className="space-y-4 min-w-0">
         {selected ? (
-          <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign(selected.id)} onClose={() => setSelected(null)} />
+          <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign([selected.id])} onClose={() => setSelected(null)} />
         ) : (
           <RailCard icon={Bookmark} title="Selecione um segmento" subtitle="Clique em um segmento para ver os detalhes e ações disponíveis.">
             <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
