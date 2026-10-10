@@ -52,6 +52,27 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
 }));
 
+// X118 (TL-072) — o passo "Mensagem" passou a montar o gerenciador de links
+// rastreáveis: ele lê a permissão (`useCRMAdminAccess`, que exige `AuthProvider`)
+// e a lista de links (`useTalkXLinks`, que exige `QueryClient`). Este teste prova
+// o encaixe do wizard no shell e não monta o provider de autenticação — as duas
+// consultas ficam dubladas, como já se faz com `useContactCustomFields` acima.
+// `importOriginal` mantém os helpers puros do módulo (`buildTalkxLinkPlaceholder`),
+// que o wizard usa para montar as variáveis conhecidas do editor.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/integrations/useTalkXLinks', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXLinks')>();
+  return {
+    ...actual,
+    useTalkXLinks: () => ({
+      links: [], clicks: {}, isLoading: false, isError: false, error: null,
+      refetch: vi.fn(),
+      upsertLink: { mutate: vi.fn(), isPending: false },
+      deleteLink: { mutate: vi.fn(), isPending: false },
+    }),
+  };
+});
+
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
