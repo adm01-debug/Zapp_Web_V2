@@ -115,7 +115,7 @@ export function ContactPurchasesPanel({ contactId, profileId }: ContactPurchases
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título" />
             <Input value={amount} onChange={e => setAmount(e.target.value)} placeholder="Valor (R$)" type="number" step="0.01" />
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Período das compras"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="purchase">Compra</SelectItem>
                 <SelectItem value="proposal">Proposta</SelectItem>
