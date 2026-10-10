@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import {
   ESTADOS,
   ESTADOS_FORCADOS,
+  FORCED_STATE_SRC,
   SAIDA,
   coberturaEstadoForcado,
   lerEstadoForcadoDoCodigo,
@@ -106,17 +107,16 @@ test('o estado forçado do doc é lido do código (forcedState.ts real)', () => 
 test('se ?talkxState for renomeado, o doc regenerado muda junto (--check quebra)', () => {
   const dir = dirComTelas({ 'TalkXAlfa.tsx': 'const x = 1;' });
   const linhas = matriz(dir);
+  const real = readFileSync(FORCED_STATE_SRC, 'utf8');
+  const renomeado = real.split("talkxState").join("novoParam");
   const fake = join(dir, 'forcedState.ts');
-  const q = String.fromCharCode(39);
-  const conteudo = 'export const TALKX_FORCED_STATES = [' + q + 'a' + q + ', ' + q + 'b' + q + '];'
-    + ' const p = new URLSearchParams(s).get(' + q + 'novoParam' + q + ');'
-    + ' const v = new URLSearchParams(s).get(' + q + 'view' + q + ');';
-  writeFileSync(fake, conteudo);
+  writeFileSync(fake, renomeado);
   const forcado = lerEstadoForcadoDoCodigo(fake);
-  assert.equal(forcado.param, 'novoParam');
-  assert.deepEqual(forcado.valores, ['a', 'b']);
+  assert.equal(forcado.param, "novoParam");
+  assert.deepEqual(forcado.valores, ESTADOS_FORCADOS);
+  assert.deepEqual(forcado.valores, ESTADOS_FORCADOS);
   const markdown = renderMarkdown(linhas, ESTADOS, dir, forcado);
-  assert.match(markdown, new RegExp('[?]novoParam=a'));
+  assert.ok(markdown.includes('?novoParam='), 'o doc renomeado tem de citar o parametro novo');
   const atual = renderMarkdown(linhas, ESTADOS, dir);
   assert.ok(!atual.includes('?novoParam='), 'o doc atual nao pode conter o parametro renomeado');
 });
