@@ -5,18 +5,33 @@
 // banner de pausa nem confirmação para retomar/encerrar.
 import React, { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, Pause, Play, RefreshCw, Square } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { fromTable, supabase } from '@/lib/supabaseHelpers';
 import {
   AlertCard, IconTile, TalkXConfirmDialog, TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows,
   fmtDateTime,
 } from './talkxShared';
+import { TalkXSentSummaryChart } from './tracking/TalkXSentSummaryChart';
+import { TalkXKeyMetricsCard } from './tracking/TalkXKeyMetricsCard';
+import {
+  SUMMARY_WINDOWS,
+  buildSentSummaryPoints,
+  type TalkXReportHourBucket,
+  type TalkXSummaryWindow,
+} from './tracking/talkxSentSummary';
+import {
+  KEY_METRICS_NO_BASELINE,
+  benchmarksFromJson,
+  keyMetricsFromCampaign,
+} from './tracking/talkxKeyMetrics';
 
 interface Props {
   campaignId: string;
   onBack: () => void;
   /** Avisa o contêiner pai que a campanha saiu de "pausada" (retomada/encerrada por fora). */
-  onStatusChange?: (campaign: TalkXCampaign) => void;
+  onStatusChange: (campaign: TalkXCampaign) => void;
 }
 
 export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Props) {
@@ -31,25 +46,96 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
   // agendador dentro da janela de envio, ou encerrada em outra aba). Quem
   // decide o destino é o contêiner pai — aqui só avisamos a mudança.
   useEffect(() => {
-    if (campaign && campaign.status !== 'paused') onStatusChange?.(campaign);
+    if (campaign && campaign.status !== 'paused') onStatusChange(campaign);
   }, [campaign, onStatusChange]);
 
   const [resumeOpen, setResumeOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [ending, setEnding] = useState(false);
+  // Recusa da retomada explicada no modal (o toast da recusa já vem do hook).
+  const [resumeError, setResumeError] = useState<string | null>(null);
+
+  // Painéis X160 — dados do painel + RPC de benchmarks (T13-050…T13-066).
+  // Best-effort por fonte: o painel nunca apaga o cabeçalho nem as ações; fonte
+  // indisponível vira série vazia / métricas da linha / valores sem comparativo.
+  const [summaryWindow, setSummaryWindow] = useState<TalkXSummaryWindow>('24h');
+  const panelsQuery = useQuery({
+    queryKey: ['talkx-paused-panels', campaign?.id ?? null, summaryWindow],
+    queryFn: async () => {
+      const fallback = {
+        points: [],
+        metrics: keyMetricsFromCampaign(campaign ?? {}, null),
+        benchmarks: { ...KEY_METRICS_NO_BASELINE },
+      };
+      if (!campaign) return fallback;
+      const minutes = SUMMARY_WINDOWS.find((w) => w.id === summaryWindow)?.minutes ?? 1440;
+
+      let hourly: TalkXReportHourBucket[] = [];
+      let avgReplySeconds: unknown = null;
+      try {
+        const { data, error } = await supabase.rpc('talkx_campaign_report', { p_campaign: campaign.id });
+        if (error) throw error;
+        const report = (data ?? {}) as { hourly_series?: unknown; kpis?: { avg_reply_secs?: unknown } };
+        if (Array.isArray(report.hourly_series)) hourly = report.hourly_series as TalkXReportHourBucket[];
+        avgReplySeconds = report.kpis?.avg_reply_secs ?? null;
+      } catch {
+        // painel indisponível: série vazia, métricas vêm da linha da campanha.
+      }
+
+      // Respostas por hora — o canal que o painel não devolve por balde.
+      let replies: string[] = [];
+      try {
+        const { data, error } = await fromTable('talkx_recipients')
+          .select('replied_at')
+          .eq('campaign_id', campaign.id)
+          .not('replied_at', 'is', null)
+          .order('replied_at', { ascending: false })
+          .limit(2000);
+        if (error) throw error;
+        replies = ((data ?? []) as Array<{ replied_at: unknown }>)
+          .map((r) => r.replied_at)
+          .filter((t): t is string => typeof t === 'string' && t.length > 0);
+      } catch {
+        // sem respostas por hora: a série mostra só enviados/entregues.
+      }
+
+      let benchmarks = { ...KEY_METRICS_NO_BASELINE };
+      try {
+        const { data, error } = await supabase.rpc('talkx_benchmarks');
+        if (error) throw error;
+        benchmarks = benchmarksFromJson(data);
+      } catch {
+        // sem base histórica: valores sem comparativo.
+      }
+
+      return {
+        points: buildSentSummaryPoints(hourly, replies, minutes),
+        metrics: keyMetricsFromCampaign(campaign, avgReplySeconds),
+        benchmarks,
+      };
+    },
+    enabled: !!campaign,
+  });
+  const panelsLoading = panelsQuery.isLoading;
+  const panels = panelsQuery.data;
 
   const handleResume = useCallback(async () => {
     if (!campaign || resuming) return;
     setResuming(true);
+    setResumeError(null);
     try {
       // `startCampaign` valida o corpo da resposta (a recusa por janela de envio
-      // volta 200 com ok:false) e mostra o toast do erro. Devolve false quando o
-      // servidor recusou.
+      // volta 200 com ok:false), mostra o toast do erro e devolve false quando o
+      // servidor recusou — por isso aqui não há segundo toast (não duplicar).
       const started = await startCampaign(campaign.id);
       // Fecha o modal só com o aceite do servidor: na recusa o operador continua
-      // no modal para tentar de novo.
-      if (started) setResumeOpen(false);
+      // no modal, com o motivo à vista, para tentar de novo. Sem onStatusChange.
+      if (started) {
+        setResumeOpen(false);
+      } else {
+        setResumeError('O servidor não aceitou a retomada. Confira a janela de envio e tente de novo.');
+      }
     } catch {
       // O hook trata o próprio erro, mas se a chamada lançar o operador precisa
       // ver: o modal continua aberto para tentar de novo.
@@ -129,13 +215,26 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
             </p>
           </AlertCard>
 
+          {/* Painéis de acompanhamento (X160): série real do painel + benchmarks */}
+          <TalkXSentSummaryChart
+            points={panels?.points ?? []}
+            windowId={summaryWindow}
+            onWindowChange={setSummaryWindow}
+            pausedAt={campaign.paused_at ?? null}
+            loading={panelsLoading}
+          />
+          <TalkXKeyMetricsCard
+            metrics={panels?.metrics ?? keyMetricsFromCampaign(campaign, null)}
+            benchmarks={panels?.benchmarks ?? { ...KEY_METRICS_NO_BASELINE }}
+          />
+
           {/* Ações */}
           <div className="rounded-2xl bg-card border border-border/70 p-4">
             <p className="text-[13px] font-bold text-foreground mb-3">Ações da Campanha</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setResumeOpen(true)}
+                onClick={() => { setResumeError(null); setResumeOpen(true); }}
                 className="h-9 px-4 rounded-lg border border-primary/40 bg-primary/10 text-primary text-xs font-semibold flex items-center gap-2 hover:bg-primary/20"
               >
                 <Play className="w-4 h-4" />Retomar campanha
@@ -153,13 +252,13 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
           {/* Modal: Retomar */}
           <TalkXConfirmDialog
             open={resumeOpen}
-            onClose={() => setResumeOpen(false)}
+            onClose={() => { setResumeOpen(false); setResumeError(null); }}
             onConfirm={() => { void handleResume(); }}
             icon={Play}
             iconColor="blue"
             title="Retomar campanha?"
             entityName={campaign.name}
-            description="Os envios serão continuados a partir de onde pararam. Contatos já processados não são reenviados."
+            description={resumeError ?? 'Os envios serão continuados a partir de onde pararam. Contatos já processados não são reenviados.'}
             confirmLabel="Retomar"
             loading={resuming}
           />
