@@ -71,6 +71,7 @@ vi.mock('@/hooks/crm/useExternalContact360Batch', () => ({
 }));
 
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
+import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -101,7 +102,16 @@ describe('WizardRail — resumo da campanha calculado no servidor (X131)', () =>
       error: null,
     });
 
-    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />, { wrapper });
+    render(
+      <TalkXCampaignWizard
+        campaign={{
+          audience_source: 'contacts',
+          audience_filters: { groups: [{ id: 'g1', match: 'and', rules: [{ field: 'tags', op: 'contains', value: 'test' }] }] },
+        } as TalkXCampaign}
+        onClose={vi.fn()}
+      />,
+      { wrapper },
+    );
 
     await waitFor(() => expect(tileText('Público total (estimado)')).toContain('1.248'));
     // Elegíveis + bloqueados = total, com os percentuais do mock da tela 08.
@@ -117,9 +127,62 @@ describe('WizardRail — resumo da campanha calculado no servidor (X131)', () =>
   it('deixa claro que o público está sendo consultado antes de o servidor responder', () => {
     rpcMock.mockReturnValue(new Promise(() => { /* consulta pendente */ }));
 
-    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />, { wrapper });
+    render(
+      <TalkXCampaignWizard
+        campaign={{
+          audience_source: 'contacts',
+          audience_filters: { groups: [{ id: 'g1', match: 'and', rules: [{ field: 'tags', op: 'contains', value: 'test' }] }] },
+        } as TalkXCampaign}
+        onClose={vi.fn()}
+      />,
+      { wrapper },
+    );
 
     expect(tileText('Público total (estimado)')).toContain('…');
     expect(tileText('Bloqueados por supressão')).toContain('…');
+  });
+
+  it('origem crm360: resumo indisponível, RPC de audiência nunca chamada', () => {
+    rpcMock.mockResolvedValue({ data: { mode: 'count', matched: 100, eligible: 80, suppressed: 20 }, error: null });
+
+    render(
+      <TalkXCampaignWizard campaign={{ audience_source: 'crm360' } as TalkXCampaign} onClose={vi.fn()} />,
+      { wrapper },
+    );
+
+    // Os tiles mostram '—' em vez de 0 (que seria um número real enganoso).
+    expect(tileText('Público total (estimado)')).toContain('—');
+    expect(tileText('Elegíveis para envio')).toContain('—');
+    expect(tileText('Bloqueados por supressão')).toContain('—');
+    // A RPC de audiência não é chamada porque a origem não tem filtro.
+    expect(rpcMock).not.toHaveBeenCalledWith('talkx_resolve_audience', expect.anything());
+  });
+
+  it('segmento sem segmentId escolhido: resumo indisponível, RPC nunca chamada', () => {
+    rpcMock.mockResolvedValue({ data: { mode: 'count', matched: 100, eligible: 80, suppressed: 20 }, error: null });
+
+    render(
+      <TalkXCampaignWizard campaign={{ audience_source: 'segment' } as TalkXCampaign} onClose={vi.fn()} />,
+      { wrapper },
+    );
+
+    expect(tileText('Público total (estimado)')).toContain('—');
+    expect(tileText('Elegíveis para envio')).toContain('—');
+    expect(tileText('Bloqueados por supressão')).toContain('—');
+    expect(rpcMock).not.toHaveBeenCalledWith('talkx_resolve_audience', expect.anything());
+  });
+
+  it('contacts sem regras completas: resumo indisponível, RPC nunca chamada', () => {
+    rpcMock.mockResolvedValue({ data: { mode: 'count', matched: 100, eligible: 80, suppressed: 20 }, error: null });
+
+    render(
+      <TalkXCampaignWizard campaign={{ audience_source: 'contacts', audience_filters: {} } as TalkXCampaign} onClose={vi.fn()} />,
+      { wrapper },
+    );
+
+    expect(tileText('Público total (estimado)')).toContain('—');
+    expect(tileText('Elegíveis para envio')).toContain('—');
+    expect(tileText('Bloqueados por supressão')).toContain('—');
+    expect(rpcMock).not.toHaveBeenCalledWith('talkx_resolve_audience', expect.anything());
   });
 });

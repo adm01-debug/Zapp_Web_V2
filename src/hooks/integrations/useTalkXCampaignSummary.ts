@@ -47,6 +47,8 @@ export interface TalkXCampaignSummaryInput {
 }
 
 export interface TalkXCampaignSummary extends TalkXCampaignSummaryCounts {
+  /** Quando true, o resumo não está disponível (origem sem filtro ou desabilitada). */
+  isUnavailable: boolean;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -103,6 +105,7 @@ export function useTalkXCampaignSummary({
 
   return {
     ...counts,
+    isUnavailable: !enabled,
     isLoading: query.isLoading,
     isError: query.isError,
     error: (query.error as Error | null) ?? null,
