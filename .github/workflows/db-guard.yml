@@ -3,7 +3,7 @@
 #   prova: guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR)
 #   falha: PR fica vermelho; nenhum codigo de PR alcanca o banco de producao
 #   avisa: autor do PR e revisor
-# ===========================================================
+# ==================================================================
 # ZAPP-WEB · Guardas de banco OFFLINE
 # ==================================================================
 # Este workflow nunca recebe DESTINO_URL e pode executar codigo de PRs.
@@ -1026,7 +1026,7 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
-=======
+
       # N-011 (P2 · banco, inventario A4): dedup de policies de leitura e exclusao
       # em storage.objects para avatar, figurinha, meme e emoji. A origem
       # (20260511233306) cria dois pares com USING identico em avatars e uma
