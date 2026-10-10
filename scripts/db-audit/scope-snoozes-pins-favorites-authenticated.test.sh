@@ -10,7 +10,7 @@
 # BLOCO B (depois): aplica a migration nova e prova: 0 {public}, as 9 nomeadas
 #   como {authenticated}, anon forjado ve 0 e o dono continua lendo e gravando
 #   (inclusive SELECT em snoozes, pela policy de apoio TO authenticated).
-# BLOCO C (rollback): extrai o bloco `-- Rollback:` do proprio arquivo da
+# BLOCO C (rollback): extrai as linhas `--   ` do proprio arquivo da
 #   migration (mecanico, sem reescrever), executa, prova que voltou a {public}
 #   com a falha reaberta, e reaplica a migration (idempotencia).
 #
@@ -191,7 +191,7 @@ fi
 
 echo
 echo '── BLOCO C: ROLLBACK (extraido do proprio arquivo da migration) ───────'
-grep '^-- Rollback:   ' "$migration" | sed 's/^-- Rollback:   //' > "$tmp_dir/rollback.sql"
+grep '^--   ' "$migration" | sed 's/^--   //' > "$tmp_dir/rollback.sql"
 [[ -s "$tmp_dir/rollback.sql" ]] || fail 'bloco de rollback vazio ou ausente na migration'
 psql_file "$tmp_dir/rollback.sql"
 expect_lista 'C1 rollback devolve as 9 policies a {public}' "$LISTA9_ESPERADA" '{public}'

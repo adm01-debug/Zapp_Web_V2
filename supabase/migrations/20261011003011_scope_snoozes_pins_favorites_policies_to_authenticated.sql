@@ -1,23 +1,24 @@
 -- scope_snoozes_pins_favorites_policies_to_authenticated
--- Rollback: volta as 9 policies ao corpo da 20260924230500 (sem TO = public). Extracao mecanica no teste: grep '^-- Rollback:   ' + sed.
--- Rollback:   DROP POLICY IF EXISTS "Users can create own snoozes" ON public.conversation_snoozes;
--- Rollback:   CREATE POLICY "Users can create own snoozes" ON public.conversation_snoozes FOR INSERT WITH CHECK (snoozed_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = conversation_snoozes.contact_id));
--- Rollback:   DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorite_contacts;
--- Rollback:   CREATE POLICY "Users can view own favorites" ON public.favorite_contacts FOR SELECT USING (user_id = auth.uid());
--- Rollback:   DROP POLICY IF EXISTS "Users can create own favorites" ON public.favorite_contacts;
--- Rollback:   CREATE POLICY "Users can create own favorites" ON public.favorite_contacts FOR INSERT WITH CHECK (user_id = auth.uid() AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = favorite_contacts.contact_id));
--- Rollback:   DROP POLICY IF EXISTS "Users can update own favorites" ON public.favorite_contacts;
--- Rollback:   CREATE POLICY "Users can update own favorites" ON public.favorite_contacts FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
--- Rollback:   DROP POLICY IF EXISTS "Users can delete own favorites" ON public.favorite_contacts;
--- Rollback:   CREATE POLICY "Users can delete own favorites" ON public.favorite_contacts FOR DELETE USING (user_id = auth.uid());
--- Rollback:   DROP POLICY IF EXISTS "Users can view own pins" ON public.pinned_conversations;
--- Rollback:   CREATE POLICY "Users can view own pins" ON public.pinned_conversations FOR SELECT USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
--- Rollback:   DROP POLICY IF EXISTS "Users can create own pins" ON public.pinned_conversations;
--- Rollback:   CREATE POLICY "Users can create own pins" ON public.pinned_conversations FOR INSERT WITH CHECK (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = pinned_conversations.contact_id));
--- Rollback:   DROP POLICY IF EXISTS "Users can update own pins" ON public.pinned_conversations;
--- Rollback:   CREATE POLICY "Users can update own pins" ON public.pinned_conversations FOR UPDATE USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid())) WITH CHECK (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
--- Rollback:   DROP POLICY IF EXISTS "Users can delete own pins" ON public.pinned_conversations;
--- Rollback:   CREATE POLICY "Users can delete own pins" ON public.pinned_conversations FOR DELETE USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
+-- Rollback: volta as 9 policies ao corpo da 20260924230500 (sem TO = public).
+-- Rollback (SQL executável, na ordem):
+--   DROP POLICY IF EXISTS "Users can create own snoozes" ON public.conversation_snoozes;
+--   CREATE POLICY "Users can create own snoozes" ON public.conversation_snoozes FOR INSERT WITH CHECK (snoozed_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = conversation_snoozes.contact_id));
+--   DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorite_contacts;
+--   CREATE POLICY "Users can view own favorites" ON public.favorite_contacts FOR SELECT USING (user_id = auth.uid());
+--   DROP POLICY IF EXISTS "Users can create own favorites" ON public.favorite_contacts;
+--   CREATE POLICY "Users can create own favorites" ON public.favorite_contacts FOR INSERT WITH CHECK (user_id = auth.uid() AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = favorite_contacts.contact_id));
+--   DROP POLICY IF EXISTS "Users can update own favorites" ON public.favorite_contacts;
+--   CREATE POLICY "Users can update own favorites" ON public.favorite_contacts FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+--   DROP POLICY IF EXISTS "Users can delete own favorites" ON public.favorite_contacts;
+--   CREATE POLICY "Users can delete own favorites" ON public.favorite_contacts FOR DELETE USING (user_id = auth.uid());
+--   DROP POLICY IF EXISTS "Users can view own pins" ON public.pinned_conversations;
+--   CREATE POLICY "Users can view own pins" ON public.pinned_conversations FOR SELECT USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
+--   DROP POLICY IF EXISTS "Users can create own pins" ON public.pinned_conversations;
+--   CREATE POLICY "Users can create own pins" ON public.pinned_conversations FOR INSERT WITH CHECK (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts c WHERE c.id = pinned_conversations.contact_id));
+--   DROP POLICY IF EXISTS "Users can update own pins" ON public.pinned_conversations;
+--   CREATE POLICY "Users can update own pins" ON public.pinned_conversations FOR UPDATE USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid())) WITH CHECK (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
+--   DROP POLICY IF EXISTS "Users can delete own pins" ON public.pinned_conversations;
+--   CREATE POLICY "Users can delete own pins" ON public.pinned_conversations FOR DELETE USING (pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()));
 --
 -- N-141 (P3; SEC-RLS_CONTATOS_MENSAGENS-07): as 9 policies criadas pela
 -- 20260924230500_fix_contact_id_idor_snoozes_pins_favorites.sql nao tem
