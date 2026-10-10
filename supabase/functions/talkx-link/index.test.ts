@@ -569,7 +569,6 @@ Deno.test("POST com value acima do teto (erro da RPC) devolve 422 sem vazar text
   assert(!JSON.stringify(body).includes("exceeds_max"), `vazou texto do banco: ${JSON.stringify(body)}`);
 });
 
-
 // ── 2ª recusa, ponto 3: formato do token é função pura (sem DB, sem mock) ────
 Deno.test("isWellFormedClickToken aceita só hex de 64 chars (puro, sem mock)", () => {
   assert(isWellFormedClickToken("0".repeat(64)) === true, "64 hex deveria aceitar");
@@ -645,4 +644,22 @@ Deno.test("GET limita a varredura ao teto de páginas e nega sem clicar", async 
   assert(res.status === 401, `além do teto deveria negar, veio ${res.status}`);
   assert(rangeCalls === CLICK_TOKEN_SCAN_MAX_PAGES, `varredura deveria parar no teto (páginas=${rangeCalls})`);
   assert(clickRpcCalls(supabase).length === 0, "negação não grava clique");
+});
+
+// ── Juiz barato: o rate limit por IP vem ANTES da resolução — rajada de
+// tokens inválidos do mesmo IP acaba em 429 (a varredura paginada nunca é
+// forçada de graça). IP dedicado para não dividir o balde com outros testes.
+Deno.test("GET rajada de tokens inválidos do mesmo IP acaba em 429", async () => {
+  const supabase = clickSupabase([]);
+  const seen: number[] = [];
+  for (let i = 0; i < 70; i++) {
+    const req = new Request("https://example.com/talkx-link?s=abc123&r=lixo", {
+      method: "GET",
+      headers: { "x-forwarded-for": "10.9.9.9" },
+    });
+    const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+    seen.push(res.status);
+  }
+  assert(seen[0] === 401, `primeira deveria ser 401, veio ${seen[0]}`);
+  assert(seen.includes(429), `rajada deveria acabar em 429, veio [${seen.join(",")}]`);
 });

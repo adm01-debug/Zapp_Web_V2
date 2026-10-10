@@ -105,6 +105,15 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("Bad request: missing slug", { status: 400 });
     }
 
+    // Rate limit por IP ANTES do gate HMAC: sem token válido e com slug
+    // válido, cada GET forçaria a varredura paginada da campanha — o limite
+    // conta primeiro para essa varredura nunca sair de graça. Falha aberta
+    // com o fallback em memória se o limiter persistente cair.
+    const rate = await enforceRateLimit(`talkx-link:click:${clientIp}`, 60, 60_000);
+    if (!rate.allowed) {
+      return new Response("Too many requests", { status: 429 });
+    }
+
     // X022: gate HMAC — quando o TALKX_CONVERT_SECRET está configurado, o
     // `r` é o token opaco (HMAC-SHA256 do recipient_id) gerado pelo
     // talkx-send via buildTalkxLinkUrl; o recipient_id cru nunca viaja na
@@ -132,15 +141,6 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       // "passthrough" (slug inexistente): o token nunca chega ao RPC (a
       // coluna é uuid e o token não faz cast) — p_recipient vai NULL e o
       // RPC devolve o 404 neutro sem gravar clique.
-    }
-
-    // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
-    // destinatário (sem sessão), então o limite é por-IP, não por-usuário.
-    // Falha aberta com o fallback em memória se o limiter persistente cair —
-    // nunca derruba o redirect real por causa disso.
-    const rate = await enforceRateLimit(`talkx-link:click:${clientIp}`, 60, 60_000);
-    if (!rate.allowed) {
-      return new Response("Too many requests", { status: 429 });
     }
 
     const ua     = req.headers.get("user-agent") ?? undefined;
