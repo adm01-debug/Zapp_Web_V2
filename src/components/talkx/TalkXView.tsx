@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
   LayoutDashboard, HelpCircle,
@@ -37,7 +37,6 @@ import {
   replaceTalkXRoute,
   type TalkXTab,
   type TalkXWizardRoute,
-  type TalkXRoute,
 } from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
 
@@ -69,6 +68,10 @@ export default function TalkXView() {
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
+  // TL-152: a rota de tela resolve os ids quando as campanhas chegam
+  // (primeira pintura); uma vez só, para não puxar a View de volta a
+  // cada recarregamento das campanhas.
+  const didInitialScreenSync = useRef(false);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
@@ -104,23 +107,30 @@ export default function TalkXView() {
     setWizardInitial(undefined);
 
     // TL-152: screen routing takes priority over wizard routing when
-    // ?screen= is present in the URL.
-    if (parsedScreen.route?.screen) {
+    // ?campaign= is present in the URL. Sem screen, a situação decide
+    // (screenForStatus); campanha inexistente cai na lista, como hoje.
+    if (parsedScreen.route) {
       const campaignId = parsedScreen.route.campaignId;
       const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
-      setEditingCampaign(null);
-      setMonitorId(null);
-      setScheduledCampaignId(null);
-      setRunningCampaignId(null);
-      switch (parsedScreen.route.screen) {
-        case 'scheduled': setScheduledCampaignId(campaignId); break;
-        case 'running': setRunningCampaignId(campaignId); break;
-        default: setMonitorId(campaignId); break;
+      const screen = parsedScreen.route.screen ?? (campaign ? screenForStatus(campaign.status) : undefined);
+      if (screen === 'wizard') {
+        setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+        setTopView('wizard');
+        return;
       }
-      setTopView(parsedScreen.route.screen === 'scheduled' || parsedScreen.route.screen === 'running'
-        ? parsedScreen.route.screen
-        : 'monitor');
-      return;
+      if (screen) {
+        setEditingCampaign(null);
+        setMonitorId(null);
+        setScheduledCampaignId(null);
+        setRunningCampaignId(null);
+        switch (screen) {
+          case 'scheduled': setScheduledCampaignId(campaignId); break;
+          case 'running': setRunningCampaignId(campaignId); break;
+          default: setMonitorId(campaignId); break;
+        }
+        setTopView(screen === 'scheduled' || screen === 'running' ? screen : 'monitor');
+        return;
+      }
     }
 
     if (!parsedWizard.route) {
@@ -151,9 +161,15 @@ export default function TalkXView() {
     // entrar no histórico, para não criar entradas inúteis).
     const initialScreen = parseTalkXScreenRoute(window.location.search);
     if (initialScreen.needsNormalization) replaceTalkXRoute(null);
+    // TL-152: o init só define o topView — os ids da tela roteada resolvem
+    // aqui, quando as campanhas chegam (primeira pintura, uma vez só).
+    if (!didInitialScreenSync.current && !isLoading) {
+      didInitialScreenSync.current = true;
+      syncFromBrowserHistory();
+    }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [syncFromBrowserHistory]);
+  }, [isLoading, syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
