@@ -372,9 +372,7 @@ export default function MultiplixView() {
   const messageCount = contactCount * blockCount;
   const messageCountLabel = messageCount === 1 ? '1 mensagem' : `${messageCount} mensagens`;
 
-  // F78 (TL-010): titulo sugerido (publico + assunto), EDITAVEL e OPCIONAL —
-  // sem nome digitado o disparo sai com a sugestao, entao da para enviar sem
-  // nomear. O assunto e a primeira linha da mensagem; o publico, a selecao.
+  // F78 (TL-010): titulo sugerido (publico + assunto), editavel e opcional.
   const suggestedName = useMemo(() => {
     const assunto = messageTemplate.trim().split(/\r?\n/)[0]?.trim().slice(0, 60) ?? '';
     return ['Multiplix', `${contactCount} contato${contactCount === 1 ? '' : 's'}`, assunto]
@@ -382,15 +380,12 @@ export default function MultiplixView() {
       .join(' · ');
   }, [contactCount, messageTemplate]);
 
-  // F78 (TL-010): a exigencia de titulo NAO foi dispensada — ela continua de pe,
-  // agora sobre o titulo EFETIVO (o digitado ou a sugestao). Sem digitacao o
-  // disparo sai com a sugestao, entao "da para enviar sem nomear" sem furar o
-  // contrato da edge (name = z.string().trim().min(1)).
+  // F78 (TL-010): a exigencia de titulo continua sobre o titulo EFETIVO
+  // (digitado ou sugestao) — a edge exige `name` nao vazio.
   const tituloEfetivo = name.trim() || suggestedName;
   const canSubmit = messageTemplate.trim().length > 0 && selected.size > 0 && tituloEfetivo.length > 0;
 
-  // F08: o composer nao resolve o publico nem insere destinatarios — manda os
-  // company_ids e a edge re-resolve com o escopo do JWT e cria na transacao.
+  // F08: manda os company_ids; a edge re-resolve sob o JWT e cria na transacao.
   const submit = async (startNow: boolean, confirmOverLimit = false) => {
     if (!canSubmit) return;
     try {
@@ -412,8 +407,7 @@ export default function MultiplixView() {
       dispatches.refetch();
       setMonitorId(result.id);
     } catch (e) {
-      // F17: acima do teto de destinatarios o servidor recusa e devolve o
-      // numero real; a confirmacao explicita reenvia com confirm_over_limit.
+      // F17: acima do teto, o servidor recusa e devolve o numero real.
       if (e instanceof MultiplixOverLimitError) {
         setOverLimit({ count: e.count, limit: e.limit, startNow });
         return;
@@ -424,9 +418,7 @@ export default function MultiplixView() {
 
   const insertPlaceholder = (token: string) => setMessageTemplate((prev) => `${prev}${prev && !prev.endsWith(' ') ? ' ' : ''}${token}`);
 
-  // Regiao 03: previa do que o destinatario escolhido recebe. Derivada da
-  // selecao (sem efeito de sincronizacao); 'previewCompanyId' e so a escolha
-  // explicita do operador dentro da previa.
+  // Regiao 03: previa derivada da selecao (sem efeito de sincronizacao).
   const selectedRows = useMemo(() => rows.filter((r) => selected.has(r.company_id)), [rows, selected]);
   const previewRow = selectedRows.find((r) => r.company_id === previewCompanyId) ?? selectedRows[0] ?? null;
   const previewText = messageTemplate.replace(/\{\{\s*empresa\s*\}\}/gi, previewRow?.company_name ?? '{{empresa}}');
