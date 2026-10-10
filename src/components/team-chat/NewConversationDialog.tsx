@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Search, User, Users, Loader2, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
@@ -110,28 +110,40 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
           <DialogTitle>Nova Conversa</DialogTitle>
         </DialogHeader>
 
-        <Tabs
+        <ToggleGroup
+          type="single"
           value={tab}
-          onValueChange={v => {
+          onValueChange={(v) => {
+            if (!v) return;
             setTab(v as 'direct' | 'group' | 'department');
             setSelectedIds([]);
             setSelectedDeptId(null);
             setSearch('');
           }}
+          aria-label="Tipo de conversa"
+          className="w-full justify-start gap-1 rounded-xl bg-muted/40 border border-border/40 p-1"
         >
-          <TabsList className="w-full">
-            <TabsTrigger value="direct" className="flex-1 gap-1.5">
-              <User className="w-3.5 h-3.5" /> Direto
-            </TabsTrigger>
-            <TabsTrigger value="group" className="flex-1 gap-1.5">
-              <Users className="w-3.5 h-3.5" /> Grupo
-            </TabsTrigger>
-            <TabsTrigger value="department" className="flex-1 gap-1.5">
-              <Building2 className="w-3.5 h-3.5" /> Depto
-            </TabsTrigger>
-          </TabsList>
+          <ToggleGroupItem
+            value="direct"
+            className="flex-1 gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm"
+          >
+            <User className="w-3.5 h-3.5" /> Direto
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="group"
+            className="flex-1 gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm"
+          >
+            <Users className="w-3.5 h-3.5" /> Grupo
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="department"
+            className="flex-1 gap-1.5 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm"
+          >
+            <Building2 className="w-3.5 h-3.5" /> Depto
+          </ToggleGroupItem>
+        </ToggleGroup>
 
-          <div className="mt-3 space-y-3">
+        <div className="mt-3 space-y-3">
             {tab === 'group' && (
               <Input
                 placeholder="Nome do grupo (ex: Marketing, Suporte...)"
@@ -234,8 +246,7 @@ export function NewConversationDialog({ open, onOpenChange, onCreated }: Props) 
                 })
               )}
             </div>
-          </div>
-        </Tabs>
+        </div>
 
         <Button
           type="button"
