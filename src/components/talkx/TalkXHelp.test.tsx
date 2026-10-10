@@ -8,10 +8,18 @@ const h = vi.hoisted(() => ({
   insert: vi.fn(),
 }));
 
-vi.mock('@/lib/supabaseHelpers', () => ({
-  fromTable: () => ({ insert: h.insert }),
-  supabase: { rpc: (...args: unknown[]) => h.rpc(...args) },
-}));
+vi.mock('@/lib/supabaseHelpers', () => {
+  const supabaseMock = {
+    rpc(this: unknown, ...args: unknown[]) {
+      if (this !== supabaseMock) throw new Error('supabase.rpc perdeu o receptor (this)');
+      return h.rpc(...args);
+    },
+  };
+  return {
+    fromTable: () => ({ insert: h.insert }),
+    supabase: supabaseMock,
+  };
+});
 
 vi.mock('./help/talkxHelpIndex', () => ({
   loadTalkXHelpDocs: () => Promise.resolve([]),

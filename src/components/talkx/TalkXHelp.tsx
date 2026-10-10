@@ -19,11 +19,16 @@ export interface TalkXHelpTopTopic {
 }
 
 async function fetchTopTopics(days: number): Promise<TalkXHelpTopTopic[]> {
-  const rpc = supabase.rpc as unknown as (
-    name: string,
-    args: Record<string, unknown>,
+  // N-135 r2: chamar como método (supabase.rpc(...)) para preservar o `this`;
+  // extrair para `const rpc = supabase.rpc` perde o receptor e quebra em produção.
+  type TopTopicsRpc = (
+    name: 'talkx_help_top_topics',
+    args: { p_days: number },
   ) => Promise<{ data: TalkXHelpTopTopic[] | null; error: { message: string } | null }>;
-  const { data, error } = await rpc('talkx_help_top_topics', { p_days: days });
+  const { data, error } = await (supabase as unknown as { rpc: TopTopicsRpc }).rpc(
+    'talkx_help_top_topics',
+    { p_days: days },
+  );
   if (error) throw new Error(error.message);
   return data ?? [];
 }
