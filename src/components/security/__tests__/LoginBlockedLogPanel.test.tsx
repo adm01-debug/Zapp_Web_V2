@@ -1,14 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import {
-  LoginBlockedLogPanel,
-  LOGIN_BLOCK_ACTION,
-  motivoLabel,
-} from '../LoginBlockedLogPanel';
+import { LoginBlockedLogPanel } from '../LoginBlockedLogPanel';
+import { LOGIN_BLOCK_ACTION } from '@/hooks/system/useLoginBlockedLog';
 
-// Mock do client Supabase: registra as tabelas/colunas/filtros e devolve dados
-// scriptados. audit_logs usa a cadeia select->eq->order->limit; geo_blocking_settings
-// usa select->limit->maybeSingle.
+// Mock do client Supabase: registra tabelas/colunas/filtros e devolve dados
+// scriptados. audit_logs usa select->eq->order->limit->abortSignal;
+// geo_blocking_settings usa select->limit->maybeSingle.
 const h = vi.hoisted(() => ({
   select: [] as Array<{ table: string; cols: string }>,
   eq: [] as Array<[string, unknown]>,
@@ -30,8 +27,8 @@ vi.mock('@/integrations/supabase/client', () => ({
         return b;
       };
       b.order = () => b;
-      b.limit = () =>
-        table === 'audit_logs' ? Promise.resolve({ data: h.rows, error: h.error }) : b;
+      b.limit = () => b;
+      b.abortSignal = () => Promise.resolve({ data: h.rows, error: h.error });
       b.maybeSingle = () => Promise.resolve({ data: h.geo, error: null });
       return b;
     },
@@ -84,6 +81,30 @@ describe('LoginBlockedLogPanel — log de bloqueio de login', () => {
     expect(screen.getByText('Mozilla/5.0 teste')).toBeTruthy();
   });
 
+  it('motivo desconhecido aparece cru e motivo ausente é neutro', async () => {
+    h.rows = [
+      {
+        id: 'r2',
+        details: { reason: 'motivo_novo' },
+        ip_address: null,
+        user_agent: null,
+        created_at: '2026-10-10T12:34:56.000Z',
+      },
+      {
+        id: 'r3',
+        details: {},
+        ip_address: null,
+        user_agent: null,
+        created_at: '2026-10-10T12:34:56.000Z',
+      },
+    ];
+    render(<LoginBlockedLogPanel />);
+
+    expect(await screen.findByText('motivo_novo')).toBeTruthy();
+    expect(screen.getByText('Motivo não informado')).toBeTruthy();
+    expect(screen.getAllByText('E-mail não informado').length).toBe(2);
+  });
+
   it('estado vazio é honesto: diz que nada foi registrado', async () => {
     render(<LoginBlockedLogPanel />);
 
@@ -97,12 +118,5 @@ describe('LoginBlockedLogPanel — log de bloqueio de login', () => {
     expect(
       await screen.findByText('Não foi possível carregar os bloqueios de login'),
     ).toBeTruthy();
-  });
-
-  it('motivo conhecido vira rótulo pt-BR; desconhecido aparece cru; vazio é neutro', () => {
-    expect(motivoLabel('country_blocked')).toBe('País bloqueado');
-    expect(motivoLabel('ip_blocked')).toBe('IP bloqueado');
-    expect(motivoLabel('motivo_novo')).toBe('motivo_novo');
-    expect(motivoLabel(null)).toBe('Motivo não informado');
   });
 });
