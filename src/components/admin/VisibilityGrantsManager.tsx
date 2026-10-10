@@ -178,7 +178,7 @@ export function VisibilityGrantsManager() {
             <div className="space-y-2 min-w-[200px] flex-1">
               <label className="text-sm font-medium">Agente Especial</label>
               <Select value={selectedSpecialAgent} onValueChange={setSelectedSpecialAgent}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Selecione o agente especial">
                   <SelectValue placeholder="Selecione o agente especial" />
                 </SelectTrigger>
                 <SelectContent>
@@ -198,7 +198,7 @@ export function VisibilityGrantsManager() {
             <div className="space-y-2 min-w-[200px] flex-1">
               <label className="text-sm font-medium">Pode ver contatos de</label>
               <Select value={selectedTargetAgent} onValueChange={setSelectedTargetAgent}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Selecione o agente alvo">
                   <SelectValue placeholder="Selecione o agente alvo" />
                 </SelectTrigger>
                 <SelectContent>
