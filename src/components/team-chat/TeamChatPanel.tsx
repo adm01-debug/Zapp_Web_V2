@@ -113,7 +113,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
                 onKeyDown={e => { if (e.key === 'Escape') { s.setShowSearch(false); s.setSearchQuery(''); } }}
                 placeholder="Buscar nas mensagens..." className="h-8 text-sm" />
               {s.searchQuery && <span className="text-xs text-muted-foreground whitespace-nowrap">{s.filteredMessages.length} resultado{s.filteredMessages.length !== 1 ? 's' : ''}</span>}
-              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }}><X className="w-3.5 h-3.5" /></Button>
+              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { s.setShowSearch(false); s.setSearchQuery(''); }} aria-label="Fechar busca"><X className="w-3.5 h-3.5" /></Button>
             </div>
           </motion.div>
         )}
@@ -171,7 +171,7 @@ export function TeamChatPanel({ conversation, onBack, onToggleDetails, showDetai
         )}
       </div>
 
-      {s.showScrollDown && <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10"><Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom}><ArrowDown className="w-4 h-4" /></Button></div>}
+      {s.showScrollDown && <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10"><Button size="icon" variant="secondary" className="rounded-full shadow-lg h-8 w-8" onClick={s.scrollToBottom} aria-label="Voltar ao final"><ArrowDown className="w-4 h-4" /></Button></div>}
 
       <TeamChatInputArea conversationId={conversation.id} text={s.text} setText={s.setText} replyTo={s.replyTo}
         isRecordingAudio={s.isRecordingAudio} isPending={s.sendMutation.isPending} onSend={s.handleSend}

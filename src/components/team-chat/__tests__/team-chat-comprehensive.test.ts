@@ -385,13 +385,13 @@ describe('Team Chat — lista de conversas', () => {
       conversations: conversas, selectedId: 'conv-a', onSelect: vi.fn(),
     }));
 
-    expect(screen.getByRole('listbox', { name: 'Conversas' })).toBeInTheDocument();
-    const opcoes = screen.getAllByRole('option');
-    expect(opcoes).toHaveLength(2);
-    expect(opcoes[0]).toHaveAttribute('aria-selected', 'true');
-    expect(opcoes[1]).toHaveAttribute('aria-selected', 'false');
-    expect(opcoes[0]).toHaveTextContent('Comercial');
-    expect(opcoes[0]).toHaveTextContent('3');
+    expect(screen.getByRole('list', { name: 'Conversas' })).toBeInTheDocument();
+    const itens = screen.getAllByRole('listitem');
+    expect(itens).toHaveLength(2);
+    expect(itens[0]).toHaveAttribute('aria-current', 'true');
+    expect(itens[1]).not.toHaveAttribute('aria-current');
+    expect(itens[0]).toHaveTextContent('Comercial');
+    expect(itens[0]).toHaveTextContent('3');
   });
 
   it('seleciona a conversa pelo clique e pelo teclado', () => {
@@ -399,15 +399,15 @@ describe('Team Chat — lista de conversas', () => {
     render(createElement(TeamConversationList, {
       conversations: conversas, selectedId: null, onSelect: selecionar,
     }));
-    const opcoes = screen.getAllByRole('option');
+    const itens = screen.getAllByRole('listitem');
 
-    fireEvent.click(opcoes[0]);
+    fireEvent.click(itens[0]);
     expect(selecionar).toHaveBeenCalledWith('conv-a');
 
-    opcoes[0].focus();
-    fireEvent.keyDown(opcoes[0], { key: 'ArrowDown' });
-    expect(document.activeElement).toBe(opcoes[1]);
-    fireEvent.keyDown(opcoes[1], { key: 'Enter' });
+    itens[0].focus();
+    fireEvent.keyDown(itens[0], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(itens[1]);
+    fireEvent.keyDown(itens[1], { key: 'Enter' });
     expect(selecionar).toHaveBeenCalledWith('conv-b');
   });
 
@@ -417,11 +417,13 @@ describe('Team Chat — lista de conversas', () => {
     }));
 
     fireEvent.change(screen.getByPlaceholderText('Buscar...'), { target: { value: 'ana' } });
-    expect(screen.getAllByRole('option')).toHaveLength(1);
-    expect(screen.getByRole('option')).toHaveTextContent('Ana');
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByRole('listitem')).toHaveTextContent('Ana');
 
     fireEvent.click(screen.getByRole('tab', { name: 'Grupos' }));
-    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    expect(screen.queryByRole('list', { name: 'Conversas' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(screen.getByText('Nenhuma conversa')).toBeInTheDocument();
   });
 });

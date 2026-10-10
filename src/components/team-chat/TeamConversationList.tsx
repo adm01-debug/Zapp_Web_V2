@@ -89,6 +89,7 @@ export function TeamConversationList({
               variant="ghost"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
               onClick={() => setSearch('')}
+              aria-label="Limpar busca"
             >
               <X className="w-3 h-3" />
             </Button>
@@ -120,14 +121,16 @@ export function TeamConversationList({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas">
-        {filtered.length === 0 ? (
+      {filtered.length === 0 ? (
+        <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
             <span>Nenhuma conversa</span>
           </div>
-        ) : (
-          filtered.map((conv, idx) => {
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto" role="list" aria-label="Conversas">
+          {filtered.map((conv, idx) => {
             const isSelected = conv.id === selectedId;
             const dept = conv.department_id
               ? departments.find(d => d.id === conv.department_id)
@@ -137,8 +140,8 @@ export function TeamConversationList({
               <div
                 key={conv.id}
                 ref={el => { itemRefs.current[idx] = el; }}
-                role="option"
-                aria-selected={isSelected}
+                role="listitem"
+                aria-current={isSelected ? 'true' : undefined}
                 tabIndex={0}
                 onClick={() => onSelect(conv.id)}
                 onKeyDown={e => handleKeyDown(e, idx)}
@@ -203,9 +206,9 @@ export function TeamConversationList({
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {managingDept && (
         <DepartmentManagementDialog
