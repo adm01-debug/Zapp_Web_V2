@@ -1,4 +1,5 @@
 import { handleTalkxSend, personalize, randomBetween } from './index.ts';
+import { hmacTokenForRecipient } from '../_shared/hmac-validation.ts';
 import {
   TEST_SERVICE_KEY, CAMPAIGN_ID, makePost,
   makeCampaign, makeConnection,
@@ -1344,5 +1345,39 @@ Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o 
   } finally {
     provider.restore();
     clock.restore();
+  }
+});
+
+Deno.test("talkx opaco (refazer 2): link gerado usa o token HMAC no lugar do recipient_id", async () => {
+  setDispatchEnv();
+  const SECRET = "segredo-opaco-x032-teste";
+  Deno.env.set("TALKX_CONVERT_SECRET", SECRET);
+  const clock = installFakeClock(1_700_000_000_000);
+  const campaign = makeCampaign({ message_template: "Ola {{nome}}, veja: {{link}}" });
+  const { deps } = makeContinueDeps({
+    recipients: makeContinueRecipients(1),
+    clock,
+    cronSecret: TEST_CRON_SECRET,
+    campaign,
+    links: [{ slug: "promo-1", label: "Promo" }],
+    snapshotEcho: true,
+  });
+  const provider = mockProviderRecording();
+  try {
+    const res = await handleTalkxSend(
+      makePost({ cronSecret: TEST_CRON_SECRET, body: { action: "continue", campaignId: CAMPAIGN_ID } }),
+      deps,
+    );
+    assert(res.status === 200, `status ${res.status} != 200`);
+    const posts = messagePosts(provider.posts);
+    assert(posts.length === 1, `esperado 1 envio, recebido ${posts.length}`);
+    const expected = await hmacTokenForRecipient("recipient-000", SECRET);
+    const sent = posts.map((p) => JSON.stringify(p.body)).join("\n");
+    assert(sent.includes(`r=${expected}`), `link gerado sem o token HMAC: ${sent}`);
+    assert(!sent.includes("recipient-000"), `ID cru vazou no link gerado: ${sent}`);
+  } finally {
+    provider.restore();
+    clock.restore();
+    Deno.env.delete("TALKX_CONVERT_SECRET");
   }
 });

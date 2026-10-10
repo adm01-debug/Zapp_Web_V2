@@ -656,3 +656,48 @@ export async function verifyGmailOidcRequest(
   if (!token) return { ok: false, reason: 'missing_signature' };
   return verifyGoogleOidcToken(token, options);
 }
+
+/**
+ * Gera um token HMAC-SHA256 (hex minúsculo) a partir do ID do destinatário
+ * e o segredo compartilhado. Usado para tornar o recipient_id opaco nos
+ * links rastreáveis (talkx-link).
+ */
+export async function hmacTokenForRecipient(
+  recipientId: string,
+  secret: string,
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(recipientId));
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Fabrica de token opaco por recipient com cache (1 HMAC por recipient).
+ * O talkx-send gera 1 token por destinatario e o reutiliza em todos os
+ * links da mensagem — sem o cache, o custo seria O(links) por disparo.
+ * O `hashFn` injetavel existe para teste (contagem de chamadas); em
+ * producao usa o HMAC real.
+ */
+export function createRecipientTokenCache(
+  secret: string,
+  hashFn: (recipientId: string, secret: string) => Promise<string> = hmacTokenForRecipient,
+): (recipientId: string) => Promise<string> {
+  const cache = new Map<string, string>();
+  return async (recipientId: string): Promise<string> => {
+    const hit = cache.get(recipientId);
+    if (hit !== undefined) return hit;
+    const token = await hashFn(recipientId, secret);
+    cache.set(recipientId, token);
+    return token;
+  };
+}

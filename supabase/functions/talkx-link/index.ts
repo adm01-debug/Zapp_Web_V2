@@ -8,7 +8,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
-import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import { verifyHmacSignature, hmacTokenForRecipient, timingSafeEqual } from "../_shared/hmac-validation.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -90,6 +90,64 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
       return new Response("Bad request: missing slug", { status: 400 });
     }
 
+    // Validação HMAC do destinatário (opacidade do ID): quando
+    // TALKX_CONVERT_SECRET está configurado, o parâmetro r contém o
+    // token HMAC em vez do recipient_id bruto. O token é resolvido para o
+    // ID real com scan paginado dos destinatários da campanha (página de
+    // 500 — nunca um select sem limite, que o limite padrão do PostgREST
+    // cortaria em campanhas grandes) e comparação em tempo constante.
+    // O ID resolvido segue para a RPC de clique (que espera uuid).
+    // Lê o secret do env injetado (em produção é o Deno.env; ver o
+    // Deno.serve no fim do arquivo) para o caminho ser testável.
+    const convertSecret = env.get("TALKX_CONVERT_SECRET");
+    let clickRecipient: string | null = recipient ?? null;
+    if (convertSecret && recipient) {
+      const { data: campaignRow, error: campaignErr } = await supabase
+        .from("talkx_links")
+        .select("campaign_id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (campaignErr || !campaignRow?.campaign_id) {
+        return new Response("Not found", { status: 404 });
+      }
+      const PAGE_SIZE = 500;
+      let resolvedId: string | null = null;
+      let offset = 0;
+      let empty = false;
+      for (;;) {
+        const { data: recipients, error: recErr } = await supabase
+          .from("talkx_recipients")
+          .select("id")
+          .eq("campaign_id", campaignRow.campaign_id)
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (recErr) {
+          return new Response("Not found", { status: 404 });
+        }
+        const page = (recipients ?? []) as { id?: unknown }[];
+        if (offset === 0 && page.length === 0) {
+          empty = true;
+          break;
+        }
+        for (const row of page) {
+          if (typeof row.id !== "string") continue;
+          const expected = await hmacTokenForRecipient(row.id, convertSecret);
+          if (timingSafeEqual(expected, recipient)) {
+            resolvedId = row.id;
+            break;
+          }
+        }
+        if (resolvedId !== null || page.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
+      if (empty) {
+        return new Response("Not found", { status: 404 });
+      }
+      if (resolvedId === null) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      clickRecipient = resolvedId;
+    }
+
     // Rate limit por IP: o link é clicado a partir do WhatsApp de cada
     // destinatário (sem sessão), então o limite é por-IP, não por-usuário.
     // Falha aberta com o fallback em memória se o limiter persistente cair —
@@ -105,7 +163,7 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     const { data, error } = await supabase.rpc("record_talkx_link_click", {
       p_slug:      slug,
-      p_recipient: recipient ?? null,
+      p_recipient: clickRecipient,
       p_ua:        ua ?? null,
       p_ip_hash:   ipHash ?? null,
     });

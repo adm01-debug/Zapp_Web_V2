@@ -117,12 +117,15 @@ export function makeDispatchDeps(opts: {
   connection?: Record<string, unknown> | null;
   recipients?: Record<string, unknown>[];
   suppressAll?: boolean;
+  /** X032 (refazer 2): linhas de `talkx_links` para exercitar o tracking (padrão: sem links). */
+  links?: Array<Record<string, unknown>> | null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } = {}): any {
   const campaign = opts.campaign === undefined ? makeCampaign() : opts.campaign;
   const connection = opts.connection === undefined ? makeConnection() : opts.connection;
   const recipients = opts.recipients ?? [makeRecipient()];
   const suppress = opts.suppressAll ?? false;
+  const links = opts.links ?? null;
   return {
     serviceKey: TEST_SERVICE_KEY,
     supabase: {
@@ -155,7 +158,7 @@ export function makeDispatchDeps(opts: {
         if (table === "talkx_campaigns") return thenableQB({ data: campaign, error: campaign ? null : { message: "not found" } });
         if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
         if (table === "talkx_recipients") return thenableQB({ data: recipients, error: null });
-        if (table === "talkx_links") return thenableQB({ data: null, error: null });
+        if (table === "talkx_links") return thenableQB({ data: links, error: null });
         if (table === "contact_custom_fields") return thenableQB({ data: [], error: null });
         return thenableQB({ data: null, error: null });
       },
@@ -364,6 +367,10 @@ export function makeContinueDeps(opts: {
   drainedResult?: boolean;
   instanceToken?: string;
   budget?: (sentCount: number) => Record<string, unknown>;
+  /** Refazer 2 (X032): linhas de `talkx_links` para exercitar o tracking (padrão: sem links). */
+  links?: Array<Record<string, unknown>> | null;
+  /** Refazer 2 (X032): quando true, o snapshot devolve p_personalized_message (como a RPC real). */
+  snapshotEcho?: boolean;
   /** X062: linha que a RPC de snapshot devolve (midia do destinatario). */
   snapshot?: {
     media_url_snapshot?: string | null;
@@ -376,6 +383,7 @@ export function makeContinueDeps(opts: {
 }): { deps: any; ctx: ContinueMockCtx } {
   const campaign = opts.campaign ?? makeCampaign({ send_interval_min: 1000, send_interval_max: 1000, typing_delay_min: 0, typing_delay_max: 0 });
   const connection = opts.connection === undefined ? makeConnection() : opts.connection;
+  const links = opts.links ?? null;
   const ctx: ContinueMockCtx = {
     providerPosts: [],
     rpcCalls: [],
@@ -424,7 +432,9 @@ export function makeContinueDeps(opts: {
             case "persist_talkx_recipient_message_snapshot":
               return Promise.resolve({
                 data: [{
-                  personalized_message: "Ola Contato, tudo bem?",
+                  personalized_message: opts.snapshotEcho === true
+                    ? (args.p_personalized_message as string)
+                    : "Ola Contato, tudo bem?",
                   media_url_snapshot: opts.snapshot?.media_url_snapshot ?? null,
                   media_type_snapshot: opts.snapshot?.media_type_snapshot ?? null,
                   ...(opts.snapshot?.media_file_name_snapshot !== undefined
@@ -473,7 +483,7 @@ export function makeContinueDeps(opts: {
           if (table === "talkx_campaigns") return thenableQB({ data: campaign, error: null });
           if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
           if (table === "talkx_settings") return thenableQB({ data: [], error: null });
-          if (table === "talkx_links") return thenableQB({ data: null, error: null });
+          if (table === "talkx_links") return thenableQB({ data: links, error: null });
           if (table === "contact_custom_fields") return thenableQB({ data: [], error: null });
           if (table === "talkx_campaign_events") return makeEventRecordingQB(ctx.events);
           if (table === "talkx_delivery_log") return makeInsertRecordingQB(ctx.deliveryLogs);
