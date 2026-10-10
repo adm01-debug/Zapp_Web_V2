@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
+  RefreshCw, MessageCircle,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -8,7 +9,7 @@ import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
-import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
+import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo, ModuleHeader } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -23,10 +24,21 @@ interface Props {
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
+/** Abas superiores da tela 03 (T03-007 a T03-011). Só "Segmentos" tem conteúdo hoje; as demais
+ *  chegam em X113 (Regras Avançadas, Audiências, Modelos) e X117 (Insights com IA). */
+const SEGMENT_TOP_TABS: { label: string; ready: boolean }[] = [
+  { label: 'Segmentos', ready: true },
+  { label: 'Regras Avançadas', ready: false },
+  { label: 'Audiências', ready: false },
+  { label: 'Modelos', ready: false },
+  { label: 'Insights com IA', ready: false },
+];
+
 export function TalkXSegments({ onUseCampaign }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
+    refreshEstimates,
   } = useTalkXSegments();
   const [search, setSearch] = useState('');
   const [filterOrigin, setFilterOrigin] = useState('all');
@@ -155,6 +167,13 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
   const toggleFav = async (s: TalkXSegment) => { await updateSegment.mutateAsync({ id: s.id, is_favorite: !s.is_favorite }); };
 
+  // T03-005 — o ↻ do cabeçalho da tela 03 refaz a lista e a estimativa do público.
+  const refreshAll = () => {
+    void refetch();
+    refetchLibraryStats();
+    refreshEstimates.mutate(segments);
+  };
+
   if (activeEditing) {
     return (
       <div className="w-full min-w-0 space-y-4">
@@ -165,6 +184,41 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <span>Campanhas</span>
           <span className="text-border">›</span>
           <span className="text-foreground font-medium">Segmentos</span>
+        </nav>
+        {/* X111/T03-002 — cabeçalho próprio da tela 03 (o construtor deixa de ficar sob o
+            cabeçalho "Campanhas" da tela 02) + T03-005, o ↻ que refaz lista e estimativa. */}
+        <ModuleHeader
+          icon={MessageCircle}
+          color="green"
+          title="Segmentos"
+          subtitle="Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X."
+          right={
+            <GhostButton icon={RefreshCw} onClick={refreshAll} title="Atualizar lista e estimativa">
+              Atualizar
+            </GhostButton>
+          }
+        />
+        {/* X111/T03-007 a T03-011 — barra de abas superiores da tela 03. O mock desenha só a
+            barra: o conteúdo de "Regras Avançadas", "Audiências" e "Modelos" entra em X113 e o de
+            "Insights com IA" em X117, por isso as abas ainda sem conteúdo ficam desabilitadas
+            (a barra inteira é a mesma do mock, sem prometer navegação que não existe). */}
+        <nav aria-label="Abas superiores de segmentos" className="flex items-center gap-1 overflow-x-auto border-b border-border/60">
+          {SEGMENT_TOP_TABS.map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              disabled={!tab.ready}
+              aria-current={tab.ready ? 'page' : undefined}
+              className={cn(
+                'h-9 px-3 text-xs font-medium whitespace-nowrap rounded-t-lg border-b-2 -mb-px transition-colors',
+                tab.ready
+                  ? 'text-foreground border-primary'
+                  : 'text-muted-foreground border-transparent opacity-60 cursor-not-allowed',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </nav>
         <TalkXSegmentBuilder
           initial={activeEditing}
