@@ -206,10 +206,10 @@ describe('SkillBasedRoutingSettings — acessibilidade dos seletores (N-157)', (
     expect(screen.getByRole('combobox', { name: 'Nível mínimo da fila' })).toBeInTheDocument();
 
     // Axe zerado — roda sobre o container completo do componente (inclui CardContent
-    // onde os selects vivem) e desliga regras de ruído page-level (region) e de
-    // botões desabilitados preexistentes (button-name) que não pertencem a esta correção.
+    // onde os selects vivem) e desliga só a regra page-level (region), que exige
+    // landmarks de página e não pertence a este componente.
     const results = await axe(container, {
-      rules: { region: { enabled: false }, 'button-name': { enabled: false } },
+      rules: { region: { enabled: false } },
     });
     expect(results).toHaveNoViolations();
   });

@@ -257,6 +257,7 @@ export function SkillBasedRoutingSettings() {
                 </Select>
                 <Button
                   size="sm"
+                  aria-label="Adicionar skill"
                   onClick={() => {
                     if (newSkill.trim()) {
                       addSkill.mutate({ profileId: selectedProfile, skillName: newSkill.trim(), level: newSkillLevel });
@@ -330,6 +331,7 @@ export function SkillBasedRoutingSettings() {
                 </Select>
                 <Button
                   size="sm"
+                  aria-label="Adicionar requisito"
                   onClick={() => {
                     if (newQueueSkill.trim()) {
                       addQueueRequirement.mutate({ queueId: selectedQueue, skillName: newQueueSkill.trim(), minLevel: newQueueMinLevel });
