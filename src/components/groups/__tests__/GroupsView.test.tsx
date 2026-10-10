@@ -31,6 +31,10 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: v
 vi.mock('framer-motion', () => ({
   motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
   AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+  // Grupos passou a usar o movimento reduzido do sistema (MotionConfig + useReducedMotion);
+  // sem a preferência nada muda na tela sob teste.
+  MotionConfig: ({ children }: { children?: import("react").ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));

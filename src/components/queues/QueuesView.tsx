@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
@@ -51,9 +52,13 @@ export function QueuesView() {
 
   const getQueueAlertCount = (queueId: string) => alerts.filter(a => a.queueId === queueId).length;
 
+  // Movimento reduzido: os fundos decorativos (aurora e partículas) têm laço infinito de
+  // opacidade — só entram sem a preferência do sistema (o `reducedMotion` não corta opacidade).
+  const reduzido = useReducedMotion() ?? false;
+
   if (loading) {
     return (
-      <div className="space-y-6 relative bg-background w-full min-w-0"><AuroraBorealis /><FloatingParticles />
+      <div className="space-y-6 relative bg-background w-full min-w-0">{!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
         <div className="flex items-center justify-between"><div><Skeleton className="h-8 w-64 mb-2" /><Skeleton className="h-4 w-96" /></div><Skeleton className="h-10 w-32" /></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[1,2,3].map(i => <Card key={i} className="border border-secondary/20 bg-card"><CardContent className="space-y-4 p-6"><Skeleton className="h-20 w-full" /><Skeleton className="h-12 w-full" /></CardContent></Card>)}</div>
       </div>
@@ -62,7 +67,7 @@ export function QueuesView() {
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis /><FloatingParticles />
+      {!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
       <PageHeader title="Filas de Atendimento" subtitle="Organize e distribua os atendimentos por departamento"
         breadcrumbs={[{ label: 'Gestão' }, { label: 'Filas' }]}
         actions={

@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion } from '@/components/ui/motion';
+import { MotionConfig, useReducedMotion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,11 +18,14 @@ import { useClientWallet } from '@/hooks/business/useClientWallet';
 
 export function ClientWalletView() {
   const w = useClientWallet();
+  // Movimento reduzido: aurora/partículas têm laço infinito — só entram sem a preferência.
+  const reduzido = useReducedMotion() ?? false;
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis />
-      <FloatingParticles />
+      {!reduzido && <AuroraBorealis />}
+      {!reduzido && <FloatingParticles />}
 
       <PageHeader
         title="Carteira de Clientes"
@@ -30,7 +34,7 @@ export function ClientWalletView() {
         actions={
           <Dialog open={w.isAddDialogOpen} onOpenChange={w.setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={reduzido ? undefined : { scale: 1.02 }} whileTap={reduzido ? undefined : { scale: 0.98 }}>
                 <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
               </motion.div>
             </DialogTrigger>
@@ -132,5 +136,6 @@ export function ClientWalletView() {
         </CardContent>
       </Card>
     </div>
+    </MotionConfig>
   );
 }

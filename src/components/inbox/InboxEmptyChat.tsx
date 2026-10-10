@@ -1,27 +1,32 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { MessageSquare, MessageSquarePlus, Search as SearchIcon } from 'lucide-react';
 
 export function InboxEmptyChat() {
+  // Movimento reduzido: os três cartões decorativos têm laço infinito (`repeat: Infinity`)
+  // e o cartão de texto tem entrada. Com a preferência ligada o laço é cortado por completo
+  // (não basta o `reducedMotion` do framer-motion, que mantém as animações de opacidade).
+  const reduzido = useReducedMotion() ?? false;
+
   return (
     <div className="flex-1 flex items-center justify-center bg-inbox-panel min-h-0 overflow-hidden">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="text-center p-8 max-w-md">
+      <motion.div initial={reduzido ? false : { opacity: 0, y: 12 }} animate={reduzido ? undefined : { opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="text-center p-8 max-w-md">
         <div className="relative w-28 h-28 mx-auto mb-8">
           <motion.div
-            animate={{ rotate: [0, 3, -3, 0] }}
+            animate={reduzido ? undefined : { rotate: [0, 3, -3, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
             className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary/12 via-primary/6 to-transparent flex items-center justify-center ring-1 ring-primary/10 shadow-lg shadow-primary/5"
           >
             <MessageSquare className="w-12 h-12 text-primary/50" />
           </motion.div>
           <motion.div
-            animate={{ y: [0, -8, 0], opacity: [0.6, 1, 0.6] }}
+            animate={reduzido ? undefined : { y: [0, -8, 0], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-primary/15 flex items-center justify-center shadow-sm ring-1 ring-primary/10"
           >
             <MessageSquarePlus className="w-5 h-5 text-primary/60" />
           </motion.div>
           <motion.div
-            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
+            animate={reduzido ? undefined : { scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
             className="absolute -bottom-2 -left-2 w-7 h-7 rounded-xl bg-accent/15 flex items-center justify-center ring-1 ring-accent/10"
           >

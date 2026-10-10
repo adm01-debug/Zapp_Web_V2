@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,7 +140,10 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
     );
   }
 
+  // Movimento reduzido: o `MotionConfig` desliga as animações de transform/entrada desta tela
+  // quando o sistema pede menos movimento (o `whileHover` dos dias e a entrada do diálogo).
   return (
+    <MotionConfig reducedMotion="user">
     <>
       <Card className="overflow-hidden">
         <CardHeader className="border-b border-border/50">
@@ -319,5 +322,6 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
         </DialogContent>
       </Dialog>
     </>
+    </MotionConfig>
   );
 }

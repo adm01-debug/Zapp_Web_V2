@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
+import { MotionConfig, useReducedMotion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -76,9 +77,14 @@ export function ConnectionsView() {
     } finally { setSyncingHistory(null); }
   };
 
+  // Movimento reduzido: a aurora e as partículas são puramente decorativas, com laço infinito
+  // de opacidade que o `reducedMotion` do framer-motion não corta — só entram sem a preferência.
+  const reduzido = useReducedMotion() ?? false;
+
   return (
+    <MotionConfig reducedMotion="user">
     <div className="space-y-6 relative bg-background w-full min-w-0">
-      <AuroraBorealis /><FloatingParticles />
+      {!reduzido && <AuroraBorealis />}{!reduzido && <FloatingParticles />}
       
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
@@ -206,5 +212,6 @@ export function ConnectionsView() {
       <InstanceSettingsDialog open={settingsDialog.open} onOpenChange={(open) => setSettingsDialog(prev => ({ ...prev, open }))} instanceName={settingsDialog.instanceName} connectionName={settingsDialog.connectionName} />
       <NumberReputationMonitor />
     </div>
+    </MotionConfig>
   );
 }
