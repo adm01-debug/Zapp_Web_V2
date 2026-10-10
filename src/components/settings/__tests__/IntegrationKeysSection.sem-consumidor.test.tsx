@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockSingle = vi.hoisted(() => vi.fn());
@@ -75,5 +76,27 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
       expect(toast.success).toHaveBeenCalledWith('Chave salva com sucesso');
     });
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('o botão olho alterna aria-label entre "Mostrar chave" e "Ocultar chave" com aria-pressed', async () => {
+    render(<IntegrationKeysSection />);
+
+    const botaoOlho = await screen.findByRole('button', {
+      name: /Mostrar chave ElevenLabs API Key/i,
+    });
+    expect(botaoOlho).toBeInTheDocument();
+    expect(botaoOlho).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(botaoOlho);
+
+    expect(screen.getByRole('button', { name: /Ocultar chave ElevenLabs API Key/i })).toBeInTheDocument();
+    expect(botaoOlho).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('axe não aponta violações no botão olho', async () => {
+    render(<IntegrationKeysSection />);
+    const botaoOlho = await screen.findByRole('button', { name: /Mostrar chave ElevenLabs API Key/i });
+    const results = await axe(botaoOlho);
+    expect(results).toHaveNoViolations();
   });
 });
