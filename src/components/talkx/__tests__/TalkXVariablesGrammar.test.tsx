@@ -5,6 +5,17 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
 
+// X051: a revisão do wizard passou a resolver o disparo pelo controlador único
+// (`useTalkXLifecycle` → `useTalkX`, que usa react-query). Sem a porta mockada
+// este teste cairia em "No QueryClient set"; as operações não são exercitadas
+// nem asseridas aqui.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
+
 import { TalkXMessageEditor } from '../TalkXMessageEditor';
 import { TalkXWizardReview } from '../TalkXWizardDelivery';
 import { personalizePreview } from '../talkxShared';
