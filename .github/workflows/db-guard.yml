@@ -982,3 +982,17 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # N-102a (fatia de DDL da janela de envio do Talk X): a janela precisa de
+      # send_weekdays/respect_dnd em talkx_campaigns e do setting dnd_hours em
+      # talkx_settings — sem isso nenhuma RPC da janela compila. O harness roda a
+      # migration REAL sobre uma base LEGADA em PostgreSQL 17 descartavel e prova
+      # RED->GREEN, idempotencia (replay no-op, linha legada herda o default), ACL
+      # intacta (a migration nao faz GRANT/REVOKE nem da acesso a authenticated) e
+      # o rollback do cabecalho em ida e volta. Espelha talkx-settings-replay-idempotent
+      # (mesmo harness docker/logs/exec): o isolamento padrao do E47 cria base
+      # propria por teste e desfaz as roles criadas no rm, dispensando bypass neste passo.
+      - name: Provar o DDL da janela de envio do Talk X (N-102a)
+        env:
+          TALKX_N102A_DDL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102a-ddl.test.sh
