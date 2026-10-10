@@ -22,6 +22,8 @@ export interface AiSuggestReplyDeps {
   ) => Promise<Response | null>;
   /** Roteador de IA (default: `generateWithRouting`). */
   generate?: (params: GenerateParams) => Promise<GenerateResult>;
+  /** Busca artigos na KB para a última mensagem do cliente (default: RPC `search_knowledge_base` real). */
+  searchKnowledgeBase?: (query: string, maxResults: number) => Promise<{ data: Array<{ category?: string; title: string; content: string; rank: number }> | null } | null>;
 }
 
 export async function handleAiSuggestReply(
@@ -54,25 +56,31 @@ export async function handleAiSuggestReply(
     // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
     const requestId = parsed.data.requestId ?? null;
 
-    // Fetch Knowledge Base articles for context
+    // Fetch Knowledge Base articles for context — only articles returned
+    // by search_knowledge_base para a última mensagem do cliente entram
+    // no prompt. Se retornar vazio, nenhum artigo entra.
     let knowledgeContext = '';
     try {
       const supabaseUrl = requireEnv("SUPABASE_URL");
       const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const { data: articles } = await supabase
-        .from('knowledge_base_articles')
-        .select('title, content, category')
-        .eq('is_published', true)
-        .limit(10);
+      const lastClientMessage = Array.isArray(messages)
+        ? [...messages].reverse().find((m) => m.sender !== 'agent')?.content
+        : null;
 
-      if (articles && articles.length > 0) {
-        knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
-          articles.map((a: { category: string | null; title: string; content: string }) =>
-            `[${a.category || 'Geral'}] ${a.title}: ${a.content.substring(0, 500)}`
-          ).join('\n---\n')
-        }`;
+      if (lastClientMessage) {
+        const searchKB = deps.searchKnowledgeBase ??
+          ((q: string, max: number) =>
+            supabase.rpc('search_knowledge_base', { search_query: q, max_results: max }));
+        const searchResult = await searchKB(lastClientMessage, 5);
+        if (searchResult?.data && searchResult.data.length > 0) {
+          knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
+            searchResult.data.map((a: { category?: string; title: string; content: string; rank: number }) =>
+              `[${a.category || 'Geral'}] ${a.title} (relevância: ${(a.rank * 100).toFixed(0)}%):\n${a.content.substring(0, 800)}`
+            ).join('\n---\n')
+          }`;
+        }
       }
 
       // Este client roda com service_role (bypassa RLS). Sem esta checagem,
