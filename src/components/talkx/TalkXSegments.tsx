@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search, RefreshCw,
 } from 'lucide-react';
@@ -52,11 +52,11 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     return Date.parse(fromList.updated_at) >= Date.parse(selected.updated_at) ? fromList : selected;
   }, [segments, selected]);
 
-  const closeDetail = () => {
+  const closeDetail = useCallback(() => {
     const id = selected?.id;
     setSelected(null);
     if (id) rowRefs.current[id]?.focus();
-  };
+  }, [selected?.id]);
 
   const filtered = useMemo(() => {
     let r = segments;
@@ -351,6 +351,20 @@ function SegmentDetailPanel({ s, onEdit, onCampaign, onClose }: { s: TalkXSegmen
   const { data: est, isFetching, refetch } = useAudienceEstimate(s.rules, true);
   const rules = (s.rules?.groups ?? []).flatMap((g) => g.rules);
   const ativo = s.status === 'active';
+
+  // Esc fecha o painel; o foco volta à linha porque o pai devolve no `onClose`.
+  // Não fecha quando um diálogo ou menu está aberto (Radix UI marca com data-state="open")
+  // nem quando o evento já foi consumido por outro handler.
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (e.defaultPrevented) return;
+      if (document.querySelector('[data-state="open"]')) return;
+      onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
     <RailCard icon={Bookmark} color="violet" title="Detalhes do segmento"
       right={<button type="button" onClick={onClose} aria-label="Fechar" title="Fechar (Esc)" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}

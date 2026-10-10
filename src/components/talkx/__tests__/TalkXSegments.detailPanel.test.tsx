@@ -160,7 +160,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     await abrirPainel();
     expect(screen.queryByText('⭐ Favorito')).toBeNull();
 
-    // O ⋮ da linha favorita e a consulta da lista é invalidada: a cópia nova
+    // O botão Favoritar da linha e a consulta da lista é invalidada: a cópia nova
     // (com updated_at mais novo) chega pelo cache.
     fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));
     state.segments = [{ ...segmento, is_favorite: true, updated_at: '2026-10-09T12:00:00.000Z' }];
