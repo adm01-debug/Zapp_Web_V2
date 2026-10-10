@@ -254,7 +254,7 @@ export function AutoTicketClassifier() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Switch checked={autoClassify} onCheckedChange={setAutoClassify} />
+            <Switch checked={autoClassify} onCheckedChange={setAutoClassify} aria-label="Auto-classificar" />
             <Label className="text-sm">Auto-classificar</Label>
           </div>
           <Button size="sm" onClick={runBatchClassification} disabled={classifying}>

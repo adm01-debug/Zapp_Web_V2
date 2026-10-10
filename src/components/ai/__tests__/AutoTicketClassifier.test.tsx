@@ -59,6 +59,11 @@ describe('AutoTicketClassifier', () => {
       expect(screen.getByText('Auto-classificar')).toBeInTheDocument();
     });
 
+    it('switch tem nome acessivel Auto-classificar', () => {
+      render(<AutoTicketClassifier />);
+      expect(screen.getByRole('switch', { name: 'Auto-classificar' })).toBeInTheDocument();
+    });
+
     it('renders batch classify button', () => {
       render(<AutoTicketClassifier />);
       expect(screen.getByText('Classificar em Lote')).toBeInTheDocument();

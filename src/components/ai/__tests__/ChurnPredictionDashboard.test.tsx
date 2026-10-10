@@ -77,6 +77,21 @@ describe('ChurnPredictionDashboard', () => {
       });
     });
 
+    it('barras de progresso de risco tem aria-label e score numerico visivel', async () => {
+      render(<ChurnPredictionDashboard />);
+      await waitFor(() => {
+        expect(screen.getByText(/Contatos em Risco/)).toBeInTheDocument();
+      });
+      const bars = screen.getAllByRole('progressbar');
+      expect(bars.length).toBeGreaterThan(0);
+      bars.forEach((bar) => {
+        expect(bar).toHaveAttribute('aria-label');
+        expect(bar.getAttribute('aria-label')).toMatch(/%/);
+      });
+      // score numerico visivel na linha: o Badge da linha exibe {riskScore}% (sem duplicar o texto)
+      expect(screen.getAllByText(/\d+%/).length).toBeGreaterThanOrEqual(bars.length);
+    });
+
     it('shows loading skeletons while fetching', () => {
       const { container } = render(<ChurnPredictionDashboard />);
       expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
