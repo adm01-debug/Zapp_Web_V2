@@ -101,6 +101,19 @@ printf '[PASS] B.1-B.7 whatsapp-audio com 26214400 e 5 MIMEs audio/*, sem text/h
 [[ "$MX_MIME_AFTER" != *'text/html'* ]] || fail "B.12 multiplix-audio nao deveria permitir text/html apos a migration"
 printf '[PASS] B.8-B.12 multiplix-audio com 52428800, audio/* + video/mp4, sem text/html\n'
 
+# Criterio pelo comportamento (ANY), nao por substring
+WA_HTML_ANY="$(psql_test -Atqc "SELECT 'text/html' = ANY(allowed_mime_types) FROM storage.buckets WHERE id='whatsapp-audio';")"
+WA_MPEG_ANY="$(psql_test -Atqc "SELECT 'audio/mpeg' = ANY(allowed_mime_types) FROM storage.buckets WHERE id='whatsapp-audio';")"
+WA_WEBP_ANY="$(psql_test -Atqc "SELECT 'image/webp' = ANY(allowed_mime_types) FROM storage.buckets WHERE id='whatsapp-audio';")"
+MX_HTML_ANY="$(psql_test -Atqc "SELECT 'text/html' = ANY(allowed_mime_types) FROM storage.buckets WHERE id='multiplix-audio';")"
+MX_MP4_ANY="$(psql_test -Atqc "SELECT 'video/mp4' = ANY(allowed_mime_types) FROM storage.buckets WHERE id='multiplix-audio';")"
+[[ "$WA_HTML_ANY" == 'f' ]] || fail "B.12a comportamento: 'text/html' = ANY(whatsapp-audio) deveria ser f (obteve $WA_HTML_ANY)"
+[[ "$WA_MPEG_ANY" == 't' ]] || fail "B.12b comportamento: 'audio/mpeg' = ANY(whatsapp-audio) deveria ser t"
+[[ "$WA_WEBP_ANY" == 'f' ]] || fail "B.12c comportamento: 'image/webp' = ANY(whatsapp-audio) deveria ser f (bucket so de audio)"
+[[ "$MX_HTML_ANY" == 'f' ]] || fail "B.12d comportamento: 'text/html' = ANY(multiplix-audio) deveria ser f"
+[[ "$MX_MP4_ANY" == 't' ]] || fail "B.12e comportamento: 'video/mp4' = ANY(multiplix-audio) deveria ser t"
+printf '[PASS] B.12a-B.12e criterio pelo comportamento (ANY): text/html=f, audio/mpeg=t, image/webp=f no whatsapp-audio; video/mp4=t no multiplix-audio\n'
+
 # Rollback: extrai as linhas "--   ..." do bloco "-- Rollback (SQL executavel" do cabecalho e executa de verdade
 ROLLBACK_SQL="$(grep '^--   ' "$migration" | sed 's/^--   //')"
 [[ -n "$ROLLBACK_SQL" ]] || fail "B.13 cabecalho da migration sem bloco '-- Rollback (SQL executavel' com linhas '--   ...'"
