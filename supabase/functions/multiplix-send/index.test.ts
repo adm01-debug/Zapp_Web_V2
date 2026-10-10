@@ -1,6 +1,19 @@
 import { connectionCapabilityDenial, handleMultiplixSend, personalize } from './index.ts';
 import { resolveBlockContent } from '../_shared/multiplix-content.ts';
 
+// ── F60 (TL-035): hermeticidade do ambiente (`Deno.env` é processo-wide) ──────
+/** Variáveis que OUTRO arquivo da suíte (crm-integration) seta para a URL de
+ *  produção e NÃO limpa. O rate-limiter persistente (`enforceRateLimit` ->
+ *  `consume_rate_limit`) guarda o cliente Supabase numa promise de MÓDULO
+ *  (`validation.ts`): assim que um teste o cria com a URL vazada, os testes
+ *  seguintes do arquivo reutilizam esse cliente e um fetch cai no meio de um teste
+ *  "zero rede". Limpar só no momento do teste (helper abaixo) NÃO basta — um teste
+ *  ANTERIOR deste arquivo já teria criado o cliente. Limpar no CARREGAMENTO do
+ *  módulo garante que nenhum teste daqui crie o cliente; o helper mantém o mesmo
+ *  isolamento dentro dos testes "zero rede" e restaura o ambiente que encontrar. */
+const F60_ENV_QUE_VAZA = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "EVOLUTION_API_FLAVOR"] as const;
+for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -1853,7 +1866,9 @@ Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do w
   const ctx = newCtx(opts);
   const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(risco.length === 1, `esperava UMA marcacao de risco, veio ${risco.length}`);
     assert(
@@ -1881,7 +1896,9 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   // 503 = indisponibilidade temporaria do provedor: o item falha, mas a conexao esta bem.
   const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(
       risco.length === 0,
@@ -3098,19 +3115,36 @@ Deno.test("F43: correlationId é propagado por request e o log não carrega cont
 // os dois saem pelo mesmo kind do adaptador.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** F60: roda `rodar` com essas variaveis LIMPAS e as restaura depois, seja qual
+ *  for o resultado — o teste prova o que diz sem depender da ordem da suite. */
+async function comAmbienteHermetico<T>(rodar: () => Promise<T>): Promise<T> {
+  const anteriores = F60_ENV_QUE_VAZA.map((nome) => [nome, Deno.env.get(nome)] as const);
+  for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+  try {
+    return await rodar();
+  } finally {
+    for (const [nome, valor] of anteriores) {
+      if (valor === undefined) Deno.env.delete(nome);
+      else Deno.env.set(nome, valor);
+    }
+  }
+}
+
 /** F60: roda o handler com QUALQUER fetch bloqueado e devolve as URLs tentadas.
  *  Prova "zero rede" sem depender da flavor do provedor (em GO o POST de texto sai
  *  em /send/text — fora do filtro "/message/" que os testes antigos contavam). */
 async function runWithFetchRecorded(opts: MockOpts): Promise<{ ctx: MockCtx; urls: string[] }> {
-  const ctx = newCtx(opts);
-  const provider = stubProviderFetch();
-  try {
-    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
-    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
-    return { ctx, urls: provider.urls };
-  } finally {
-    provider.restore();
-  }
+  return await comAmbienteHermetico(async () => {
+    const ctx = newCtx(opts);
+    const provider = stubProviderFetch();
+    try {
+      const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      return { ctx, urls: provider.urls };
+    } finally {
+      provider.restore();
+    }
+  });
 }
 
 Deno.test("F60: conexao que NAO declara documento barra o bloco de documento (skipped, zero rede)", async () => {
