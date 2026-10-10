@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
-import { toast } from '@/lib/lazyToast';
+import { toastError } from '@/lib/sonnerLazy';
 import { describeReason, type CapabilityReason } from '@/lib/calls/capabilities';
 
 /**
@@ -50,7 +49,7 @@ export function useMicrophoneGuard() {
       motivoRef.current = motivo;
       conferidoEmRef.current = 0;
       setMicReason(motivo);
-      if (!silencioso) toast.error(describeReason(motivo) ?? 'Microfone indisponível');
+      if (!silencioso) toastError(describeReason(motivo) ?? 'Microfone indisponível');
       return false;
     }
   }, []);

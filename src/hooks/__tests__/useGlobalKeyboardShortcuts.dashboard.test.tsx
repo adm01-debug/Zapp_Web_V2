@@ -79,7 +79,7 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('Ctrl+2 em /?view=inbox deixa a URL em ?view=dashboard e emite zapp:navigate', () => {
+  it('Ctrl+2 em /?view=inbox deixa a URL em ?view=dashboard e emite zapp:navigate', async () => {
     window.history.replaceState(null, '', '/?view=inbox');
     render(
       <MemoryRouter>
@@ -95,7 +95,7 @@ describe('#447 — Ctrl+2 seleciona a view dashboard', () => {
     // CAMPO `view` do detail (o mesmo detail legítimo traz `entryId` junto).
     expect(nav.viewsPedidas()).toContain('dashboard');
     // O aviso continua acontecendo (e agora diz a verdade).
-    expect(toast.info).toHaveBeenCalledWith('📊 Dashboard', { duration: 1500 });
+    await waitFor(() => expect(toast.info).toHaveBeenCalledWith('📊 Dashboard', { duration: 1500 }));
   });
 
   it('Ctrl+2 já em ?view=dashboard não tira a view do dashboard', () => {

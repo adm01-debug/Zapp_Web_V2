@@ -12,7 +12,7 @@
  *    inválida por evento duplicado.
  */
 
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toast } from 'sonner';
@@ -939,7 +939,7 @@ describe('t_1d36d214 — "Ligar" do inbox disca no cartão do contato (C02)', ()
 
       expect(texto('saida-phone')).toBe('-');
       expect(texto('status')).toBe('active');
-      expect(aviso).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(aviso).toHaveBeenCalledTimes(1));
       // A sessão em curso não foi tocada: o pedido não discou nada no duble
       // atual (o `h.value` é trocado quando o motor reporta `active`).
       expect(h.value.makeCall).not.toHaveBeenCalled();

@@ -1,8 +1,7 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import { getLogger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-// t_fd52bf49: a fachada pede o sonner por import() — a lib fica fora do bundle inicial.
-import { toast } from '@/lib/lazyToast';
+import { toastError, toastInfo } from '@/lib/sonnerLazy';
 import { novoCallId, desfechoDaChamada, type CallEndOutcome, type UpsertMyCallInput, type FilaDePersistencia } from '@/lib/calls/persistence';
 import type { CallEngineSink, EngineStatus } from '@/lib/calls/adapters/CallEngine';
 import type { AdapterDirection } from '@/lib/calls/adapters/CallAdapter';
@@ -45,7 +44,7 @@ export function useCallEngineSink(deps: CallEngineSinkDeps): CallEngineSink {
     const persistir = async (input: UpsertMyCallInput) => {
       const { ok, error } = await filaDePersistencia.executar(input);
       // Falha de banco nunca é silenciosa: log com o id da chamada + toast.
-      if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toast.error('Não foi possível salvar a ligação'); }
+      if (!ok) { log.error(`Falha ao gravar a chamada (id=${input.id})`, error); toastError('Não foi possível salvar a ligação'); }
     };
     return {
       onStatus: setCallStatus,
@@ -53,7 +52,7 @@ export function useCallEngineSink(deps: CallEngineSinkDeps): CallEngineSink {
       onEstablished: startTimer,
       onTerminated: stopTimer,
       onMuted: setIsMuted,
-      onError: (message) => toast.error(message),
+      onError: (message) => toastError(message),
       create: async (params) => {
         const id = novoCallId(params.sessionId);
         setCurrentCallId(id);
@@ -78,7 +77,7 @@ export function useCallEngineSink(deps: CallEngineSinkDeps): CallEngineSink {
           id: novoCallId(), direction: 'inbound', status: persistedStatus, channel: 'voip',
           peerNumber: number, endReason, endedAt: new Date().toISOString(),
         });
-        toast.info(REASON_LABEL.line_busy_here);
+        toastInfo(REASON_LABEL.line_busy_here);
       },
     };
   }, [startTimer, stopTimer, findContactByPhone, filaDePersistencia, onEnd, directionRef, setCallDirection, setCallStatus, setCurrentCallId, setCurrentNumber, setIsMuted]);

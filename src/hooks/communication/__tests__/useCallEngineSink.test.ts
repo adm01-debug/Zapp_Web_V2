@@ -16,7 +16,7 @@
  *   mais lenta (senão o `answered` tardio sobrescreveria o desfecho).
  */
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 /** Fronteiras dubladas: log, toast e o cliente Supabase. Nada de rede real. */
@@ -122,7 +122,7 @@ afterEach(() => {
 });
 
 describe('useCallEngineSink — ponte para estado, timer e toast (T09)', () => {
-  it('status, mute e erro caem no setter/toast certos', () => {
+  it('status, mute e erro caem no setter/toast certos', async () => {
     const deps = montarDeps();
     const { result } = usar(deps);
 
@@ -133,7 +133,7 @@ describe('useCallEngineSink — ponte para estado, timer e toast (T09)', () => {
     expect(deps.setIsMuted).toHaveBeenCalledWith(true);
 
     act(() => result.current.onError('VoIP não conectado.'));
-    expect(h.toastError).toHaveBeenCalledWith('VoIP não conectado.');
+    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith('VoIP não conectado.'));
   });
 
   it('onSession escreve a direção na REF (o sink é memoizado) e no estado', () => {

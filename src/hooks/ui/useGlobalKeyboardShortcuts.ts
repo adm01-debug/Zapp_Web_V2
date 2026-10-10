@@ -1,8 +1,16 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from '@/lib/lazyToast';
+
 import { useCustomShortcuts } from './useCustomShortcuts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { toastInfo } from '@/lib/sonnerLazy';
+
+// A lib sonner (~9 KB gzip) não pode entrar no bundle inicial: estes toasts só
+// existem depois de um atalho de teclado, então o import() dinâmico fica no
+// helper lazy — fora do modulepreload do index.html (bundle-budget, t_cb884f65).
+function toastAtalho(mensagem: string) {
+  toastInfo(mensagem, { duration: 1500 });
+}
 
 // Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`
 // do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html
@@ -37,7 +45,7 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
     },
     'go-to-inbox': () => {
       navigate('/');
-      toast.info('📥 Inbox', { duration: 1500 });
+      toastAtalho('📥 Inbox');
     },
     'go-to-dashboard': () => {
       // #447: só `navigate('/')` + toast anunciava Dashboard sem selecionar a
@@ -48,15 +56,15 @@ export function useGlobalKeyboardShortcuts(customActions?: GlobalShortcutAction[
       // shell: volta para a raiz já com a view no caminho.
       if (location.pathname !== '/') navigate('/?view=dashboard');
       navigateToView('dashboard');
-      toast.info('📊 Dashboard', { duration: 1500 });
+      toastAtalho('📊 Dashboard');
     },
     'go-to-contacts': () => {
       navigate('/');
-      toast.info('👥 Contatos', { duration: 1500 });
+      toastAtalho('👥 Contatos');
     },
     'go-to-settings': () => {
       navigate('/');
-      toast.info('⚙️ Configurações', { duration: 1500 });
+      toastAtalho('⚙️ Configurações');
     },
     'toggle-theme': () => {
       document.dispatchEvent(new CustomEvent('toggle-theme'));

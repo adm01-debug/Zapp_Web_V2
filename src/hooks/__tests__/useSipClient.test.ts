@@ -140,9 +140,12 @@ globalThis.MediaStream = class MediaStream {
 // — foi o que quebrou o lote de 09/10 em cima da `dia`. O contrato que este
 // arquivo guarda é o do hook (QUAL toast, com QUE mensagem), que é o que a
 // fachada expõe; o encaminhamento dela ao sonner tem teste próprio em
-// `src/lib/__tests__/lazyToast.test.ts`.
-vi.mock('@/lib/lazyToast', () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
+// `src/lib/__tests__/sonnerLazy.test.ts`.
+vi.mock('@/lib/sonnerLazy', () => ({
+  toastError: vi.fn(),
+  toastInfo: vi.fn(),
+  toastSuccess: vi.fn(),
+  toastWarning: vi.fn(),
 }));
 
 // T20: a eleição de aba vem do `tabLeaderStore`. Aqui ele é MOCKADO (snapshot
@@ -173,7 +176,7 @@ vi.mock('@/lib/calls/tabLeaderStore', () => ({
 
 import { useSipClient } from '../communication/useSipClient';
 import type { CallEndOutcome } from '@/lib/calls/callStatus';
-import { toast } from '@/lib/lazyToast';
+import { toastError, toastInfo, toastSuccess, toastWarning } from '@/lib/sonnerLazy';
 
 /** Deixa a cadeia assíncrona do sink (contato + RPC) rodar até o fim. */
 async function escoar(voltas = 12): Promise<void> {
@@ -266,7 +269,7 @@ describe('useSipClient', () => {
       mockRegisterStateListeners.forEach(fn => fn('Registered'));
     });
     expect(result.current.sipStatus).toBe('registered');
-    expect(toast.success).toHaveBeenCalledWith('VoIP conectado!');
+    expect(toastSuccess).toHaveBeenCalledWith('VoIP conectado!');
   });
 
   it('should set disconnected when registerer fires Unregistered', async () => {
@@ -316,7 +319,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('desatualizada'));
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('desatualizada'));
     expect(result.current.sipStatus).toBe('idle');
     expect(mockMakeURI).not.toHaveBeenCalled();
   });
@@ -330,7 +333,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
     expect(result.current.sipStatus).toBe('idle');
   });
 
@@ -343,7 +346,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('sessão'));
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('sessão'));
     expect(result.current.sipStatus).toBe('idle');
   });
 
@@ -353,7 +356,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.connectWithStoredCredentials();
     });
-    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('SIP_PASSWORD'));
     expect(result.current.sipStatus).toBe('idle');
   });
 
@@ -364,7 +367,7 @@ describe('useSipClient', () => {
     await act(async () => {
       await result.current.makeCall('123');
     });
-    expect(toast.error).toHaveBeenCalledWith('VoIP não conectado.');
+    expect(toastError).toHaveBeenCalledWith('VoIP não conectado.');
     expect(result.current.callStatus).toBe('idle');
     expect(mockInvite).not.toHaveBeenCalled();
   });
@@ -382,7 +385,7 @@ describe('useSipClient', () => {
       await result.current.makeCall('123');
     });
 
-    expect(toast.error).toHaveBeenCalledWith('VoIP não conectado.');
+    expect(toastError).toHaveBeenCalledWith('VoIP não conectado.');
     expect(result.current.callStatus).toBe('idle');
     expect(mockInvite).not.toHaveBeenCalled();
   });
@@ -538,7 +541,7 @@ describe('useSipClient', () => {
     await act(async () => { await result.current.makeCall('111'); });
     await act(async () => { await result.current.makeCall('222'); });
 
-    expect(toast.error).toHaveBeenCalledWith('Já existe uma chamada em andamento.');
+    expect(toastError).toHaveBeenCalledWith('Já existe uma chamada em andamento.');
     expect(result.current.currentNumber).toBe('111');
   });
 
@@ -753,7 +756,7 @@ describe('useSipClient', () => {
 
     expect(mockRpc).toHaveBeenCalledTimes(3);
     expect(gravacoes().map(c => c.p_id)).toEqual(['sessao-falha', 'sessao-falha', 'sessao-falha']);
-    expect(toast.error).toHaveBeenCalledWith('Não foi possível salvar a ligação');
+    expect(toastError).toHaveBeenCalledWith('Não foi possível salvar a ligação');
     erro.mockRestore();
   });
 
@@ -886,7 +889,7 @@ describe('useSipClient', () => {
 
     await discar(result);
 
-    expect(toast.error).toHaveBeenCalledWith('Microfone bloqueado');
+    expect(toastError).toHaveBeenCalledWith('Microfone bloqueado');
     expect(result.current.micReason).toBe('mic_blocked');
     expect(result.current.callStatus).toBe('idle');
     expect(mockInvite).not.toHaveBeenCalled();
@@ -899,7 +902,7 @@ describe('useSipClient', () => {
 
     await discar(result);
 
-    expect(toast.error).toHaveBeenCalledWith('Nenhum microfone encontrado');
+    expect(toastError).toHaveBeenCalledWith('Nenhum microfone encontrado');
     expect(result.current.micReason).toBe('mic_missing');
     expect(mockInvite).not.toHaveBeenCalled();
   });
@@ -921,7 +924,7 @@ describe('useSipClient', () => {
       await escoar();
     });
 
-    expect(toast.error).toHaveBeenCalledWith('Microfone em uso por outro programa');
+    expect(toastError).toHaveBeenCalledWith('Microfone em uso por outro programa');
     expect(result.current.micReason).toBe('mic_busy');
     const accept = (invitation as unknown as { accept: ReturnType<typeof vi.fn> }).accept;
     expect(accept).not.toHaveBeenCalled();
@@ -1013,7 +1016,7 @@ describe('useSipClient', () => {
       p_status: 'missed', p_end_reason: 'busy_here', p_direction: 'inbound', p_peer_number: '5511988887777',
     });
     expect(perdida?.p_id).not.toBe(idDaPrimeira);
-    expect(toast.info).toHaveBeenCalledWith('Você já está em uma ligação');
+    expect(toastInfo).toHaveBeenCalledWith('Você já está em uma ligação');
     // A chamada em curso não foi afetada por nada disso.
     expect(result.current.callStatus).toBe('ringing');
     expect(result.current.currentNumber).toBe('5511988887777');
