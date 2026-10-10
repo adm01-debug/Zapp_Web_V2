@@ -108,6 +108,24 @@ describe('talkxTimelineCopy — frase de cada evento (X152)', () => {
     expect(description.phrase).toBe('Campanha pausada — Motivo: janela de envio fechada · por Ana');
   });
 
+  it('`message_sent` sem acesso à mensagem fica só com o título genérico', () => {
+    const description = describeTimelineEvent(item({ kind: 'message_sent', message: null }));
+    expect(description.title).toBe(TITULO_GENERICO);
+    expect(description.phrase).toBeNull();
+  });
+
+  it('`reply_received` sem acesso à mensagem fica só com o título genérico', () => {
+    const description = describeTimelineEvent(item({ kind: 'reply_received', message: null }));
+    expect(description.title).toBe(TITULO_GENERICO);
+    expect(description.phrase).toBeNull();
+  });
+
+  it('`skipped_optout` sem acesso à mensagem fica só com o título genérico', () => {
+    const description = describeTimelineEvent(item({ kind: 'skipped_optout', message: null }));
+    expect(description.title).toBe(TITULO_GENERICO);
+    expect(description.phrase).toBeNull();
+  });
+
   it('tipo desconhecido não vira o tipo cru na tela', () => {
     const description = describeTimelineEvent(item({ kind: 'tipo_novo_do_servidor' }));
     expect(description.title).toBe(TITULO_GENERICO);
