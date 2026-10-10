@@ -70,7 +70,20 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
+  // Recorrência (migration 20261006232024). Opcionais até o types-sync canônico.
+  // `null` = não repete. Só diária/semanal existem; "Personalizado" é futuro.
+  recurrence_frequency?: TalkXRecurrenceFrequency | null;
+  // 0 = domingo … 6 = sábado (extract(dow)); obrigatório quando semanal.
+  recurrence_weekdays?: number[] | null;
+  recurrence_end_at?: string | null;
+  // Controle da série: gravado só pelo servidor, nunca enviado pelo front.
+  recurrence_series_id?: string | null;
+  recurrence_next_campaign_id?: string | null;
+  recurrence_closed_at?: string | null;
+  recurrence_closed_reason?: string | null;
 }
+
+export type TalkXRecurrenceFrequency = 'daily' | 'weekly';
 
 export interface TalkXRecipient {
   id: string;
