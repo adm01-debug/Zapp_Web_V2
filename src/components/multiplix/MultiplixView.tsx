@@ -491,30 +491,61 @@ export default function MultiplixView() {
           <div className="flex flex-col gap-3 border-b border-border p-4">
             <div className="flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">Público</span>
-              <Select value={roles[0] || 'all'} onValueChange={(v) => setRoles(v === 'all' ? [] : [v as RoleValue])}>
-                <SelectTrigger aria-label="Público" className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" aria-label="Público" aria-haspopup="listbox" className="h-10 w-full justify-between font-normal">
+                    <span className="truncate">{rolesRotulo}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" aria-label="Filtro de público" className="w-56 p-1">
+                  <div className="flex flex-col">
+                    <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
+                      <Checkbox checked={roles.length === 0} onCheckedChange={() => setRoles([])} aria-label="Todos os públicos" />
+                      Todos
+                    </label>
+                    {(Object.entries(ROLE_LABELS) as Array<[RoleValue, string]>).map(([value, label]) => (
+                      <label key={value} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/40">
+                        <Checkbox checked={roles.includes(value)} onCheckedChange={() => toggleRole(value)} aria-label={label} />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">Ramo</span>
-              <Select value={ramo || 'all'} onValueChange={(v) => setRamo(v === 'all' ? '' : v)} disabled={loadingRamos}>
-                <SelectTrigger aria-label="Ramo" className="w-full"><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {(ramos ?? []).map((r) => (
-                    <SelectItem key={r.ramo_atividade} value={r.ramo_atividade}>
-                      {r.ramo_atividade} ({r.total})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={ramoOpen} onOpenChange={(next) => { setRamoOpen(next); if (!next) setRamoBusca(''); }}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" aria-label="Ramo" disabled={loadingRamos} className="h-10 w-full justify-between font-normal">
+                    <span className="truncate">{ramoRotulo}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" aria-label="Filtro de ramo" className="w-72 p-0">
+                  {/* Filtro do cmdk desligado: a busca é feita aqui, sem acento e
+                      sem caixa, sobre os 566 valores que o servidor devolveu. */}
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Buscar ramo…" value={ramoBusca} onValueChange={setRamoBusca} />
+                    <CommandList>
+                      <CommandEmpty>Nenhum ramo encontrado</CommandEmpty>
+                      <CommandItem value="todos" onSelect={() => { setRamo(''); setRamoOpen(false); }}>
+                        Todos
+                      </CommandItem>
+                      {ramosFiltrados.map((nome) => (
+                        <CommandItem key={nome} value={nome} onSelect={() => { setRamo(nome); setRamoOpen(false); }}>
+                          <span className="truncate">{nome}</span>
+                          {ramoTotais.has(nome) && (
+                            <span className="ml-auto text-2xs text-muted-foreground tabular-nums">{fmtInt(ramoTotais.get(nome) ?? 0)}</span>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -532,7 +563,7 @@ export default function MultiplixView() {
 
             <div className="flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">Buscar por nome</span>
-              <Input aria-label="Buscar por nome" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Nome da empresa..." />
+              <Input aria-label="Buscar por nome" value={term} onChange={(e) => handleTermChange(e.target.value)} placeholder="Nome da empresa..." />
             </div>
 
             <Button className="w-full" onClick={runSearch} disabled={search.isPending || count.isPending || loadingAll}>
