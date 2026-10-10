@@ -41,6 +41,13 @@ describe('TalkXReplyPeakCard — "Pico de Respostas" (X153)', () => {
     expect(screen.getByText('-60% nas respostas')).toBeTruthy();
   });
 
+  it('variação zero não mostra "aumento significativo"', () => {
+    render(<TalkXReplyPeakCard currentWindow={5} previousWindow={5} spark={[1, 2, 3]} replyRatePct={10} />);
+
+    expect(screen.getByText('0% nas respostas')).toBeTruthy();
+    expect(screen.queryByText(/aumento significativo/)).toBeNull();
+  });
+
   it('desenha uma mini-barra por minuto da série', () => {
     render(<TalkXReplyPeakCard currentWindow={9} previousWindow={5} spark={[0, 1, 2, 3, 4, 5, 6, 7]} replyRatePct={8} />);
 

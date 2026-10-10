@@ -42,4 +42,21 @@ describe('TalkXProgressRing — anel da Visão Geral (X153)', () => {
     // os três percentuais sem base saem zerados
     expect(screen.getAllByText('(0%)')).toHaveLength(3);
   });
+
+  it('não excede 360° quando failed > 0 — a soma das fatias não passa da circunferência', () => {
+    render(<TalkXProgressRing sent={100} delivered={70} replied={10} failed={20} total={100} />);
+
+    const circ = 2 * Math.PI * 72;
+    const circles = document.querySelectorAll('svg circle');
+    let totalDash = 0;
+    circles.forEach((circle) => {
+      const dashStr = circle.getAttribute('stroke-dasharray');
+      if (dashStr) {
+        const dash = parseFloat(dashStr.split(' ')[0]);
+        totalDash += dash;
+        expect(dash).toBeLessThanOrEqual(circ);
+      }
+    });
+    expect(totalDash).toBeCloseTo(circ, 0);
+  });
 });

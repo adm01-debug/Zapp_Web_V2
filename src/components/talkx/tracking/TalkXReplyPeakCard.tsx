@@ -72,12 +72,16 @@ export function TalkXReplyPeakCard({
       className={className}
     >
       <div className="space-y-3 pt-1">
-        {variationText ? (
+        {variation !== null && variation > 0 ? (
           <div>
             <p className="text-[13px] font-semibold text-foreground tabular-nums">{variationText}</p>
             <p className="text-2xs text-foreground-secondary">
               Houve um aumento significativo de respostas nos últimos 10 minutos.
             </p>
+          </div>
+        ) : variation !== null ? (
+          <div>
+            <p className="text-[13px] font-semibold text-foreground tabular-nums">{variationText}</p>
           </div>
         ) : (
           <div>

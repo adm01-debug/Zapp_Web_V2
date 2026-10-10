@@ -29,7 +29,7 @@ export function TalkXProgressRing({ sent, delivered, replied, failed, total, cla
   const slice = (value: number) => (total > 0 ? (Math.max(0, value) / total) * circ : 0);
   const progress = pct(sent, total);
   const pending = Math.max(0, total - sent);
-  const waitingDelivery = Math.max(0, sent - delivered);
+  const waitingDelivery = Math.max(0, sent - delivered - failed);
   const segments: { value: number; color: string }[] = [
     { value: delivered, color: 'hsl(var(--dash-green))' },
     { value: waitingDelivery, color: 'hsl(var(--primary))' },

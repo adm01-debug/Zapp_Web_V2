@@ -100,10 +100,6 @@ vi.mock('recharts', () => {
   };
 });
 
-vi.mock('@/components/dashboard/overview/DashboardKpiCard', () => ({
-  DashboardKpiCard: () => <div data-testid="kpi-card" />,
-}));
-
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() } }));
 
 // Cadeia thenable genérica: o componente só lê listas via .select().eq().order().limit(n).

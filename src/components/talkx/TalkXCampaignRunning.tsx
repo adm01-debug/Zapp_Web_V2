@@ -5,8 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, Res
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
   Users, ChevronLeft, RefreshCw, Activity, Send,
-  Zap, CheckCircle2, AlertTriangle, Pause, Square, Eye, Settings2, Mail,
-  Clock, MessageCircle, ArrowRight,
+  Pause, Square, Eye, Settings2, Mail, Clock, MessageCircle, ArrowRight,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
@@ -22,7 +21,6 @@ import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
 import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, StatusPill, CAMPAIGN_STATUS, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { TalkXProgressRing } from './tracking/TalkXProgressRing';
 import { TalkXReplyPeakCard } from './tracking/TalkXReplyPeakCard';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
 import { msToSeconds, secondsToMs, intervalForProfile, isValidIntervalSeconds, LIMITS_MIN_S, LIMITS_MAX_S } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
@@ -140,24 +138,13 @@ function TabOverview({ c, chartData, replySpark, historyQuery, onRetryHistory }:
             />
           </div>
         </RailCard>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3 content-start">
-            <DashboardKpiCard size="compact" index={0} label="Enviadas" value={fmtInt(c.sent_count)} delta={{ text: `de ${fmtInt(c.total_recipients)} prev.`, tone: 'muted' }} tile="blue" icon={Zap} bars={null} barsColor="blue" chart="none" />
-            <DashboardKpiCard size="compact" index={1} label="Entregues" value={fmtInt(c.delivered_count)} delta={{ text: c.sent_count > 0 ? `${Math.round((c.delivered_count / c.sent_count) * 100)}% das enviadas` : '—', tone: 'muted' }} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-            <DashboardKpiCard size="compact" index={2} label="Falhas" value={fmtInt(c.failed_count)} delta={c.sent_count > 0 ? { text: `${Math.round((c.failed_count / c.sent_count) * 100)}% de erro`, tone: 'muted' } : null} tile="red" icon={AlertTriangle} bars={null} barsColor="red" chart="none" />
-            <DashboardKpiCard size="compact" index={3} label="A confirmar" value={fmtInt(outcomeUnknown)} delta={{ text: 'Sem reenvio automático', tone: 'muted' }} tile="amber" icon={AlertTriangle} bars={null} barsColor="amber" chart="none" />
-            <DashboardKpiCard size="compact" index={4} label="Restantes" value={fmtInt(pending)} delta={{ text: `${elapsed}min decorridos`, tone: 'muted' }} tile="amber" icon={Users} bars={null} barsColor="amber" chart="none" />
-          </div>
-          {/* X153: benchmark histórico (CAP-083) ainda sem dado no banco — o card não
-              pode afirmar "acima do normal" sem fonte, então não recebe benchmark. */}
-          <TalkXReplyPeakCard
+        <TalkXReplyPeakCard
             currentWindow={repliesNow}
             previousWindow={repliesBefore}
             spark={replySpark}
             replyRatePct={c.sent_count > 0 ? Math.round(((c.replied_count ?? 0) / c.sent_count) * 100) : 0}
             benchmark={null}
           />
-        </div>
       </div>
       {/* Ritmo de Envio — X047: carregando -> erro -> vazio -> conteúdo */}
       <TalkXQueryBoundary
@@ -885,7 +872,6 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
             {/* Conteúdo das sub-tabs */}
             <div>
               {activeTab === 'overview' && (
-<<<<<<< HEAD
                 <>
                   {campaign.status === 'paused' && (
                     <TalkXResumeChecklist
@@ -896,6 +882,7 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                     />
                   )}
                   <TabOverview c={campaign} chartData={chartData} replySpark={replySpark} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
               {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
