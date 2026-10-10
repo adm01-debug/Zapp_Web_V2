@@ -23,6 +23,12 @@
 #       e libera mudança que toca SOMENTE archived_at;
 #     - ACL negar-por-padrão: EXECUTE só para authenticated;
 #     - reaplicar a migration não duplica o trigger.
+#   N-127b (refazer 1: TOCTOU no delete):
+#     - campanha vinculada ENTRE o EXISTS e o DELETE nao orfa (a RPC trava a
+#       linha FOR UPDATE e devolve talkx_template_in_use);
+#     - a prova isola a RPC de proposito (derruba o trigger de DELETE): em
+#       producao o trigger continua como segunda barreira;
+#     - id nulo/inexistente -> template_not_found, sem apagar nada.
 #
 # A migration é encontrada pelo marcador interno 'talkx_n127_duplicate_archive_delete'
 # (sobrevive ao rename do hermes-db-migrar --nova); fallback para .tmp/n127.sql.
@@ -36,6 +42,9 @@ if [[ -z "$migration" ]]; then
 fi
 [[ -f "$migration" ]] || { printf '[FALHA] migration N-127 nao encontrada (marcador talkx_n127_duplicate_archive_delete)\n' >&2; exit 1; }
 
+migration_b="$(grep -rlF 'talkx_n127b_delete_template_atomic' "$repo_root/supabase/migrations" 2>/dev/null | grep -v '/_superseded/' | sort | tail -1 || true)"
+[[ -n "$migration_b" ]] || { printf '[FALHA] migration N-127b nao encontrada (marcador talkx_n127b_delete_template_atomic)\n' >&2; exit 1; }
+
 fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
 pass() { printf '[PASS] %s\n' "$1"; }
 
@@ -44,6 +53,7 @@ cleanup() {
   if [[ "$cid" =~ ^talkx-n127-[0-9]+$ ]]; then
     docker rm -f "$cid" >/dev/null 2>&1 || true
   fi
+  rm -f "$repo_root"/.tmp/n127-race-*.fifo "$repo_root"/.tmp/n127-race-*.log 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
@@ -293,6 +303,8 @@ SQL
 # ═════════════════════════════════════════════════════════════════════════════
 psql_exec < "$migration" >/dev/null || fail 'migration N-127 nao aplicou (GREEN)'
 pass "migration N-127 aplicada ($(basename "$migration"))"
+psql_exec < "$migration_b" >/dev/null || fail 'migration N-127b nao aplicou (GREEN)'
+pass "migration N-127b aplicada ($(basename "$migration_b"))"
 
 # ── 1) duplicated: copia conteudo e variantes como rascunho proprio ──────────
 dup_out="$(psql_script <<SQL
@@ -471,9 +483,80 @@ assert_eq 'GREEN: authenticated com EXECUTE nas 3 RPCs' 'true,true,true' "$acl_a
 acl_guard="$(psql_val "SELECT has_function_privilege('authenticated', 'public.guard_talkx_template_delete()', 'EXECUTE')::text")"
 assert_eq 'GREEN: trigger de DELETE nao e executavel por authenticated' 'false' "$acl_guard"
 
-# ── 12) idempotencia: reaplicar a migration nao duplica o trigger ────────────
+# ── 13) N-127b: corrida entre vincular campanha e excluir (TOCTOU) ──────────
+# Sessao A segura um INSERT de campanha NAO commitado (FOR KEY SHARE na linha
+# do template pelo cheque da FK); a sessao B chama a RPC como o dono. Com a
+# trava, B serializa (espera A commitar) e depois recusa com in_use — sem ela,
+# B apaga o template e a campanha fica com template_id NULL (orfao SET NULL).
+# O trigger de DELETE e derrubado DE PROPOSITO aqui para isolar a RPC: a prova
+# e que a RPC sozinha e atomica; em producao o trigger continua como segunda
+# barreira (os blocos 6–9 acima provam ele ligado).
+t_race='70000000-0000-0000-0000-000000000007'
+c_race='20000000-0000-0000-0000-000000000007'
+psql_exec >/dev/null <<SQL
+INSERT INTO public.talkx_templates (id, name, content, status, created_by)
+  VALUES ('$t_race', 'Corrida', 'x', 'approved', '$profile_owner');
+SQL
+psql_exec >/dev/null <<SQL
+DROP TRIGGER trg_guard_talkx_template_delete ON public.talkx_templates;
+SQL
+mkdir -p "$repo_root/.tmp"
+race_tag="$RANDOM$RANDOM"
+race_fifo="$repo_root/.tmp/n127-race-$race_tag.fifo"
+race_a_out="$repo_root/.tmp/n127-race-$race_tag-a.log"
+race_b_out="$repo_root/.tmp/n127-race-$race_tag-b.log"
+mkfifo "$race_fifo"
+docker exec -i "$cid" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres < "$race_fifo" > "$race_a_out" 2>&1 &
+race_a_pid=$!
+exec {race_fd}>"$race_fifo"
+printf '%s\n' "BEGIN;" "INSERT INTO public.talkx_campaigns (id, template_id, created_by) VALUES ('$c_race', '$t_race', '$profile_owner');" >&$race_fd
+sleep 1
+timeout 60 docker exec "$cid" psql -X -Atq -U postgres -d postgres \
+  -c "SET ROLE authenticated" \
+  -c "SET request.jwt.claim.role = 'authenticated'" \
+  -c "SET request.jwt.claim.sub = '$user_owner'" \
+  -c "SELECT public.delete_talkx_template('$t_race')::text" > "$race_b_out" 2>&1 &
+race_b_pid=$!
+sleep 3
+if [[ -s "$race_b_out" ]]; then
+  printf '%s\n' "COMMIT;" >&$race_fd
+  exec {race_fd}>&-
+  wait "$race_a_pid" 2>/dev/null || true
+  wait "$race_b_pid" 2>/dev/null || true
+  fail "N-127b: delete RPC respondeu sem esperar a campanha concorrente (sem serializacao) -> $(cat "$race_b_out")"
+fi
+pass 'N-127b: delete RPC espera a transacao concorrente (serializa na trava)'
+printf '%s\n' "COMMIT;" >&$race_fd
+exec {race_fd}>&-
+wait "$race_a_pid" 2>/dev/null || true
+wait "$race_b_pid" 2>/dev/null || true
+rm -f "$race_fifo"
+race_b="$(cat "$race_b_out")"
+rm -f "$race_a_out" "$race_b_out"
+assert_has 'N-127b: campanha vinculada no meio do caminho -> talkx_template_in_use' 'talkx_template_in_use' "$race_b"
+race_alive="$(psql_val "SELECT count(*) FROM public.talkx_templates WHERE id = '$t_race'")"
+assert_eq 'N-127b: template continua no banco' '1' "$race_alive"
+race_link="$(psql_val "SELECT count(*) FROM public.talkx_campaigns WHERE id = '$c_race' AND template_id = '$t_race'")"
+assert_eq 'N-127b: campanha segue vinculada (sem orfao SET NULL)' '1' "$race_link"
+
+# ── 14) N-127b: entrada invalida (nulo e inexistente) ─────────────────────────
+bad_del="$(psql_script <<SQL
+BEGIN;
+SET LOCAL role authenticated;
+SET LOCAL request.jwt.claim.role = 'authenticated';
+SET LOCAL request.jwt.claim.sub = '$user_owner';
+SELECT public.delete_talkx_template(NULL)::text;
+SELECT public.delete_talkx_template('90000000-0000-0000-0000-000000000000')::text;
+COMMIT;
+SQL
+)"
+assert_not_has 'N-127b: id nulo/inexistente nunca apaga' '"ok": true' "$bad_del"
+assert_has 'N-127b: id nulo/inexistente -> template_not_found' 'template_not_found' "$bad_del"
+
+# ── 15) idempotencia: reaplicar as migrations nao duplica o trigger ──────────
 psql_exec < "$migration" >/dev/null || fail 'migration N-127 nao reaplicou (idempotencia)'
+psql_exec < "$migration_b" >/dev/null || fail 'migration N-127b nao reaplicou (idempotencia)'
 trig="$(psql_val "SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.talkx_templates'::regclass AND tgname = 'trg_guard_talkx_template_delete' AND NOT tgisinternal")"
 assert_eq 'GREEN: reaplicar nao duplica o trigger de DELETE' '1' "$trig"
 
-echo '[OK] Talk X N-127: duplicar copia conteudo e variantes, arquivar preserva updated_at, DELETE direto de template em campanha e recusado e o guard de conteudo segue travado.'
+echo '[OK] Talk X N-127/N-127b: duplicar copia conteudo e variantes, arquivar preserva updated_at, DELETE direto de template em campanha e recusado, delete RPC e atomico contra campanha concorrente e o guard de conteudo segue travado.'
