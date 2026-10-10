@@ -33,7 +33,6 @@ interface WhitelistedIP {
   id: string;
   ip_address: string;
   description: string | null;
-  added_by: string | null;
   created_at: string;
 }
 
@@ -54,7 +53,7 @@ export function IPWhitelistPanel() {
     setLoading(true);
     const { data, error } = await supabase
       .from('ip_whitelist')
-      .select('*')
+      .select('id, ip_address, description, created_at')
       .order('created_at', { ascending: false });
 
     if (!error && data) {

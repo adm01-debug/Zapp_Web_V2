@@ -11,8 +11,8 @@ import { ptBR } from 'date-fns/locale';
 import { BlockIPDialog, UnblockIPDialog } from './BlockedIPDialogs';
 
 interface BlockedIP {
-  id: string; ip_address: string; reason: string; blocked_at: string;
-  expires_at: string | null; is_permanent: boolean; request_count: number; last_attempt_at: string | null;
+  id: string; ip_address: string; reason: string; expires_at: string | null;
+  is_permanent: boolean; request_count: number;
 }
 
 export function BlockedIPsPanel() {
@@ -24,7 +24,10 @@ export function BlockedIPsPanel() {
 
   const fetchBlockedIPs = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('blocked_ips').select('*').order('blocked_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('blocked_ips')
+      .select('id, ip_address, reason, expires_at, is_permanent, request_count')
+      .order('blocked_at', { ascending: false });
     if (!error && data) setBlockedIPs(data as BlockedIP[]);
     setLoading(false);
   };
