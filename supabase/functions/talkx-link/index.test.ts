@@ -1,5 +1,6 @@
 import { handleTalkxLink, mergeUtm } from "./index.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { encodeTalkxRecipientToken } from "../_shared/talkx-tracking-token.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -406,16 +407,44 @@ Deno.test("POST com value acima do teto (erro da RPC) devolve 422 sem vazar text
   assert(!JSON.stringify(body).includes("exceeds_max"), `vazou texto do banco: ${JSON.stringify(body)}`);
 });
 
-// ── [refazer 1] GET com token opaco (?r=<token>) ─────────────────────────────
-// O token é montado literalmente aqui (o teste NÃO importa função do handler):
-// HMAC-SHA256(secret, recipientId), 16 primeiros bytes, base64url. Se o
-// talkx-send assinar outro payload, o teste de token válido falha — é isso que
-// prova o contrato entre as duas funções.
+// ── [refazer 1+2] GET com token opaco (?r=<token>) ──────────────────────────
+// O token é montado literalmente aqui (o teste NÃO importa função do
+// handler): UUID cifrado com máscara SHA-256(secret + "|talkx-track-enc-v1")
+// + MAC HMAC-SHA256(secret, "talkx-track-v1" + cifra) truncada em 8 bytes,
+// 24 bytes em base64url (32 chars). É uma implementação INDEPENDENTE do
+// mesmo contrato — se o talkx-send assinar outro payload, o teste de token
+// válido falha. É isso que prova o contrato entre as duas funções.
 const TRACKING_SECRET = "test-convert-secret";
 const TOKEN_UUID_A = "11111111-1111-4111-8111-111111111111";
 const TOKEN_UUID_B = "22222222-2222-4222-8222-222222222222";
 
+function uuidBytesForTest(uuid: string): Uint8Array {
+  const hex = uuid.replace(/-/g, "");
+  const out = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+function b64urlForTest(bytes: Uint8Array): string {
+  const bin = Array.from(bytes).map((b) => String.fromCharCode(b)).join("");
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlToBytesForTest(token: string): Uint8Array {
+  const padded = token.replace(/-/g, "+").replace(/_/g, "/") + "==".slice(0, (4 - (token.length % 4)) % 4);
+  const bin = atob(padded);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
 async function trackingTokenForTest(secret: string, recipientId: string): Promise<string> {
+  const uuid = uuidBytesForTest(recipientId);
+  const maskFull = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret + "|talkx-track-enc-v1")),
+  );
+  const cipher = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) cipher[i] = uuid[i] ^ maskFull[i];
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -423,18 +452,32 @@ async function trackingTokenForTest(secret: string, recipientId: string): Promis
     false,
     ["sign"],
   );
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(recipientId));
-  const bytes = new Uint8Array(digest).slice(0, 16);
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const domain = new TextEncoder().encode("talkx-track-v1");
+  const payload = new Uint8Array(domain.length + 16);
+  payload.set(domain, 0);
+  payload.set(cipher, domain.length);
+  const tag = new Uint8Array(await crypto.subtle.sign("HMAC", key, payload)).slice(0, 8);
+  const token = new Uint8Array(24);
+  token.set(cipher, 0);
+  token.set(tag, 16);
+  return b64urlForTest(token);
 }
 
+// Fake O(1): recipients por id (point lookup). Qualquer tentativa de
+// varredura (.eq("campaign_id", ...) + lista, o padrão O(N) recusado)
+// estoura — se o handler voltar a varrer, estes testes quebram.
 function makeTokenFake(opts: {
   link?: Record<string, unknown> | null;
   recipientIds?: string[];
+  recipients?: Record<string, string>;
   clickResult?: unknown;
   seen?: Array<{ fn: string; args: Record<string, unknown> }>;
 }) {
   const seen = opts.seen ?? [];
+  const queries: Array<{ table: string; col: string; val: unknown }> = [];
+  const byId = new Map<string, string>();
+  for (const id of opts.recipientIds ?? []) byId.set(id, "camp-1");
+  for (const [id, camp] of Object.entries(opts.recipients ?? {})) byId.set(id, camp);
   const supabase = {
     rpc: async (fn: string, args: Record<string, unknown>) => {
       seen.push({ fn, args });
@@ -443,27 +486,28 @@ function makeTokenFake(opts: {
     },
     from: (table: string) => ({
       select: (_cols: string) => ({
-        eq: (_col: string, _val: unknown) => ({
+        eq: (col: string, val: unknown) => ({
           maybeSingle: async () => {
+            queries.push({ table, col, val });
             if (table === "talkx_links") return { data: opts.link ?? null, error: null };
-            return { data: null, error: { message: `maybeSingle inesperado: ${table}` } };
-          },
-          then: (onF: (v: unknown) => void, onR?: (e: unknown) => void) => {
-            try {
-              if (table === "talkx_recipients") {
-                onF({ data: (opts.recipientIds ?? []).map((id) => ({ id })), error: null });
-              } else {
-                onF({ data: null, error: { message: `lista inesperada: ${table}` } });
-              }
-            } catch (e) {
-              if (onR) onR(e);
+            if (table === "talkx_recipients" && col === "id") {
+              const id = String(val);
+              const camp = byId.get(id);
+              if (!camp) return { data: null, error: null };
+              return { data: { id, campaign_id: camp }, error: null };
             }
+            return { data: null, error: { message: `maybeSingle inesperado: ${table}.${col}` } };
+          },
+          then: (_onF: (v: unknown) => void, _onR?: (e: unknown) => void) => {
+            throw new Error(
+              `varredura O(N) proibida: ${table}.eq(${col}) com lista — use point lookup por id`,
+            );
           },
         }),
       }),
     }),
   };
-  return { supabase: supabase as unknown as SupabaseClient, seen };
+  return { supabase: supabase as unknown as SupabaseClient, seen, queries };
 }
 
 function tokenLinkRow() {
@@ -535,4 +579,68 @@ Deno.test("GET com token mas sem segredo configurado NÃO atribui (anônimo)", a
   const click = seen.find((c) => c.fn === "record_talkx_link_click");
   assert(click !== undefined, "o clique deveria ser registrado na RPC");
   assert(click.args.p_recipient === null, `sem segredo nenhum token pode atribuir, recebido: ${JSON.stringify(click.args)}`);
+});
+
+// ── [refazer 2.2] além de UMA página: 1500 destinatários, sem varredura ─────
+// O fake guarda 1500 recipients mas só responde point lookup por id; se o
+// handler tentar listar (.eq("campaign_id") + then), o fake estoura. O token
+// do primeiro resolve com 3 point lookups (link por slug, recipient por id,
+// link por id p/ track) — prova que o custo por clique não depende de N.
+Deno.test("GET resolve com 1500 destinatários sem varredura (só point lookups)", async () => {
+  const ids: string[] = [TOKEN_UUID_A, TOKEN_UUID_B];
+  for (let i = 0; i < 1498; i++) {
+    const tail = String(i).padStart(12, "0");
+    ids.push(`33333333-3333-4333-8333-${tail}`);
+  }
+  const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_A);
+  const { supabase, seen, queries } = makeTokenFake({
+    link: tokenLinkRow(),
+    recipientIds: ids,
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `com 1500 recipients deve redirecionar, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === TOKEN_UUID_A, `deve atribuir ao dono do token, recebido: ${JSON.stringify(click.args)}`);
+  assert(queries.length === 3, `só 3 point lookups (link por slug, recipient por id, link por id), vieram ${queries.length}: ${JSON.stringify(queries)}`);
+  assert(
+    queries[1].table === "talkx_recipients" && queries[1].col === "id",
+    `o lookup de recipient deve ser por id, veio: ${JSON.stringify(queries[1])}`,
+  );
+  assert(
+    queries.every((q) => q.col === "slug" || q.col === "id"),
+    `nenhum lookup pode ser varredura por campaign_id: ${JSON.stringify(queries)}`,
+  );
+});
+
+// ── contrato ponta a ponta: implementação independente == código real ──────
+// trackingTokenForTest (acima) é uma implementação INDEPENDENTE do contrato;
+// encodeTalkxRecipientToken é o código real usado pelo talkx-send. Se um dia
+// divergirem, este teste quebra — e com ele a prova de que o token válido
+// do teste "GET com token válido..." representa o que o envio gera.
+Deno.test("token do teste == token real do talkx-send (contrato único)", async () => {
+  for (const uuid of [TOKEN_UUID_A, TOKEN_UUID_B]) {
+    const mirror = await trackingTokenForTest(TRACKING_SECRET, uuid);
+    const real = await encodeTalkxRecipientToken(uuid, TRACKING_SECRET);
+    assert(real === mirror, `contrato divergiu para ${uuid}: real=${real} espelho=${mirror}`);
+  }
+});
+// O token é válido (MAC passa) mas o recipient pertence a camp-2 e o link é
+// da camp-1: o clique segue anônimo, nunca atribuído à campanha errada.
+// ── [refazer 2.2] token de OUTRA campanha: p_recipient null ──────────────────
+Deno.test("GET com token de outra campanha NÃO atribui (p_recipient null)", async () => {
+  const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_B);
+  const { supabase, seen } = makeTokenFake({
+    link: tokenLinkRow(),
+    recipients: { [TOKEN_UUID_A]: "camp-1", [TOKEN_UUID_B]: "camp-2" },
+    clickResult: { target_url: "https://loja.com/checkout", link_id: "link-1" },
+  });
+  const req = new Request(`https://example.com/talkx-link?s=promo&r=${token}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv({ TALKX_CONVERT_SECRET: TRACKING_SECRET }) });
+  assert(res.status === 302, `redirect não pode quebrar por campanha errada, status ${res.status}`);
+  const click = seen.find((c) => c.fn === "record_talkx_link_click");
+  assert(click !== undefined, "o clique deveria ser registrado na RPC");
+  assert(click.args.p_recipient === null, `token de outra campanha não pode atribuir, recebido: ${JSON.stringify(click.args)}`);
 });

@@ -9,6 +9,7 @@ import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, parseBusinessHours } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
+import { encodeTalkxRecipientToken } from "../_shared/talkx-tracking-token.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 import {
   newCorrelationId,
@@ -51,32 +52,62 @@ async function deriveTestSendKey(parts: Array<string | null | undefined>): Promi
 const TALKX_TRACKING_TOKEN_BYTES = 16;
 
 /**
- * Gera o token opaco do recipient_id (HMAC-SHA256 com TALKX_CONVERT_SECRET,
- * truncado em 16 bytes, base64url). Sem segredo configurado recusa-se a
- * gerar (undefined): o chamador NÃO pode cair no id cru.
+ * Gera o token opaco do recipient_id (?r=<token>): UUID cifrado de forma
+ * deterministica com chave derivada de TALKX_CONVERT_SECRET + MAC truncada
+ * (ver _shared/talkx-tracking-token.ts - contrato UNICO entre send e link).
+ * Sem segredo configurado recusa-se a gerar (undefined): o chamador NAO
+ * pode cair no id cru. 32 chars base64url (16 cipher + 8 tag).
  */
 export async function hmacTokenForRecipient(
   recipientId: string,
   secret?: string,
 ): Promise<string | undefined> {
   const key = secret ?? Deno.env.get("TALKX_CONVERT_SECRET");
-  if (!key) return undefined;
-  const keyData = new TextEncoder().encode(key);
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const payload = new TextEncoder().encode(recipientId);
-  const digest = await crypto.subtle.sign("HMAC", cryptoKey, payload);
-  return base64UrlEncode(new Uint8Array(digest).slice(0, TALKX_TRACKING_TOKEN_BYTES));
+  return encodeTalkxRecipientToken(recipientId, key);
 }
 
-function base64UrlEncode(bytes: Uint8Array): string {
-  const binary = String.fromCharCode(...bytes);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+/**
+ * Helpers de link rastreável no nível usado pelo envio (trackingUrlFor /
+ * linksByLabelFor): monta as URLs de TODOS os links da campanha para um
+ * destinatário. Pura (recebe as linhas já lidas) para ser testável sem
+ * banco: sem segredo, trackingUrlFor devolve undefined e linksByLabelFor
+ * devolve {} — NUNCA o recipient_id cru.
+ */
+export function buildTalkxTrackingLinkHelpers(params: {
+  links: Array<{ slug?: unknown; label?: unknown }>;
+  secret: string | undefined;
+  configuredBase: string;
+  supabaseUrl: string;
+}): {
+  trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+  linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
+} {
+  const urlFor = (slug: string, recipientId: string): Promise<string | undefined> =>
+    buildTalkxTrackingUrl({
+      slug,
+      recipientId,
+      secret: params.secret,
+      configuredBase: params.configuredBase,
+      supabaseUrl: params.supabaseUrl,
+    });
+  const oldestSlug = typeof params.links[0]?.slug === "string" ? params.links[0].slug : undefined;
+  const slugByLabel = new Map<string, string>();
+  for (const row of params.links) {
+    if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
+      slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
+    }
+  }
+  const trackingUrlFor = async (recipientId: string): Promise<string | undefined> =>
+    oldestSlug ? await urlFor(oldestSlug, recipientId) : undefined;
+  const linksByLabelFor = async (recipientId: string): Promise<Record<string, string>> => {
+    const out: Record<string, string> = {};
+    for (const [label, slug] of Array.from(slugByLabel.entries())) {
+      const url = await urlFor(slug, recipientId);
+      if (url) out[label] = url;
+    }
+    return out;
+  };
+  return { trackingUrlFor, linksByLabelFor };
 }
 
 /**
@@ -495,27 +526,12 @@ export async function handleTalkxSend(
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
       const secret = Deno.env.get("TALKX_CONVERT_SECRET");
       // Sem segredo: urlFor devolve undefined (link indisponível) — NUNCA o id cru.
-      const urlFor = (slug: string, recipientId: string): Promise<string | undefined> =>
-        buildTalkxTrackingUrl({ slug, recipientId, secret, configuredBase, supabaseUrl });
-      const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
-      const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
-      const slugByLabel = new Map<string, string>();
-      for (const row of rows) {
-        if (typeof row.slug === "string" && typeof row.label === "string" && row.label.trim()) {
-          slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
-        }
-      }
-      const trackingUrlFor = async (recipientId: string): Promise<string | undefined> =>
-        oldestSlug ? await urlFor(oldestSlug, recipientId) : undefined;
-      const linksByLabelFor = async (recipientId: string): Promise<Record<string, string>> => {
-        const out: Record<string, string> = {};
-        for (const [label, slug] of slugByLabel) {
-          const url = await urlFor(slug, recipientId);
-          if (url) out[label] = url;
-        }
-        return out;
-      };
-      return { trackingUrlFor, linksByLabelFor };
+      return buildTalkxTrackingLinkHelpers({
+        links: ((links ?? []) as { slug?: unknown; label?: unknown }[]),
+        secret,
+        configuredBase,
+        supabaseUrl,
+      });
     };
 
     // X022: rótulos de link cadastrados na campanha. {{link:rotulo}} com rótulo

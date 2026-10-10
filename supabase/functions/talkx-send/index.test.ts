@@ -1,4 +1,4 @@
-import { handleTalkxSend, personalize, randomBetween, hmacTokenForRecipient, buildTalkxTrackingUrl } from './index.ts';
+import { handleTalkxSend, personalize, randomBetween, hmacTokenForRecipient, buildTalkxTrackingUrl, buildTalkxTrackingLinkHelpers } from './index.ts';
 import {
   TEST_SERVICE_KEY, CAMPAIGN_ID, makePost,
   makeCampaign, makeConnection,
@@ -1350,8 +1350,8 @@ Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o 
 Deno.test('hmacTokenForRecipient produces a deterministic base64url token for a recipient', async () => {
   Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
   try {
-    const token1 = await hmacTokenForRecipient('recipient-abc-123');
-    const token2 = await hmacTokenForRecipient('recipient-abc-123');
+    const token1 = await hmacTokenForRecipient('11111111-2222-4333-8444-555555555555');
+    const token2 = await hmacTokenForRecipient('11111111-2222-4333-8444-555555555555');
     assert(token1 !== undefined, 'token should not be undefined');
     assert(token1 === token2, 'same recipient_id must produce the same token');
     assert(/^[A-Za-z0-9_-]+$/.test(token1), `token must be base64url, got: ${token1}`);
@@ -1363,8 +1363,8 @@ Deno.test('hmacTokenForRecipient produces a deterministic base64url token for a 
 Deno.test('hmacTokenForRecipient produces different tokens for different recipients', async () => {
   Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
   try {
-    const token1 = await hmacTokenForRecipient('recipient-aaa');
-    const token2 = await hmacTokenForRecipient('recipient-bbb');
+    const token1 = await hmacTokenForRecipient('11111111-2222-4333-8444-555555555555');
+    const token2 = await hmacTokenForRecipient('22222222-3333-4444-8555-666666666666');
     assert(token1 !== token2, 'different recipient_ids must produce different tokens');
   } finally {
     Deno.env.delete("TALKX_CONVERT_SECRET");
@@ -1372,17 +1372,17 @@ Deno.test('hmacTokenForRecipient produces different tokens for different recipie
 });
 
 // ── [refazer 1] token curto + URL sem id cru + sem segredo ───────────────────
-Deno.test('hmacTokenForRecipient é curto (22 chars) e ausente sem segredo', async () => {
+Deno.test('hmacTokenForRecipient é curto (32 chars) e ausente sem segredo', async () => {
   Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
   try {
-    const token = await hmacTokenForRecipient('recipient-abc-123');
+    const token = await hmacTokenForRecipient('11111111-2222-4333-8444-555555555555');
     assert(token !== undefined, 'com segredo o token deve existir');
-    assert(token.length === 22, `token curto de 22 chars, recebido: ${token} (${token.length})`);
-    assert(/^[A-Za-z0-9_-]{22}$/.test(token), `token deve ser base64url: ${token}`);
+    assert(token.length === 32, `token curto de 32 chars (24 bytes: 16 cifra + 8 MAC), recebido: ${token} (${token.length})`);
+    assert(/^[A-Za-z0-9_-]{32}$/.test(token), `token deve ser base64url: ${token}`);
   } finally {
     Deno.env.delete("TALKX_CONVERT_SECRET");
   }
-  const semSegredo = await hmacTokenForRecipient('recipient-abc-123');
+  const semSegredo = await hmacTokenForRecipient('11111111-2222-4333-8444-555555555555');
   assert(semSegredo === undefined, 'sem TALKX_CONVERT_SECRET o token deve ser undefined (nunca o id cru)');
 });
 
@@ -1413,4 +1413,48 @@ Deno.test('buildTalkxTrackingUrl sem segredo devolve undefined (nao gera link, n
     supabaseUrl: 'https://supabase-test.example',
   });
   assert(url === undefined, `sem segredo nenhum link pode ser gerado, recebido: ${url}`);
+});
+
+// ── [refazer 2] nível trackingUrlFor/linksByLabelFor: URL sem id cru + sem segredo ──
+// O caminho real do envio (loadTrackingLinks) delega a
+// buildTalkxTrackingLinkHelpers; estes testes passam por ELE — não só pelo
+// buildTalkxTrackingUrl — provando que {{link}} e {{link:rotulo}} nunca
+// carregam o recipient_id cru e somem sem segredo.
+Deno.test('trackingUrlFor/linksByLabelFor embutem o token e NUNCA o recipient_id cru', async () => {
+  const recipientId = '11111111-2222-4333-8444-555555555555';
+  const secret = 'test-secret-for-hmac';
+  const { trackingUrlFor, linksByLabelFor } = buildTalkxTrackingLinkHelpers({
+    links: [
+      { slug: 'promo', label: 'Oferta' },
+      { slug: 'ajuda', label: 'Ajuda' },
+    ],
+    secret,
+    configuredBase: 'https://l.talkx.exemplo',
+    supabaseUrl: 'https://supabase-test.example',
+  });
+  const url = await trackingUrlFor(recipientId);
+  assert(url !== undefined, 'com segredo trackingUrlFor deve existir');
+  assert(!url.includes(recipientId), `trackingUrlFor NAO pode conter o id cru: ${url}`);
+  assert(!url.includes(encodeURIComponent(recipientId)), `trackingUrlFor NAO pode conter o id nem codificado: ${url}`);
+  assert(/r=[A-Za-z0-9_-]{32}/.test(url), `trackingUrlFor deve carregar o token opaco em r=: ${url}`);
+  const byLabel = await linksByLabelFor(recipientId);
+  assert(Object.keys(byLabel).length === 2, `linksByLabelFor deve trazer os 2 rotulos, veio: ${JSON.stringify(byLabel)}`);
+  for (const [label, labelUrl] of Object.entries(byLabel)) {
+    assert(!labelUrl.includes(recipientId), `linksByLabelFor[${label}] NAO pode conter o id cru: ${labelUrl}`);
+    assert(/r=[A-Za-z0-9_-]{32}/.test(labelUrl), `linksByLabelFor[${label}] deve carregar o token opaco: ${labelUrl}`);
+  }
+});
+
+Deno.test('trackingUrlFor devolve undefined e linksByLabelFor omite o rotulo sem segredo', async () => {
+  const recipientId = '11111111-2222-4333-8444-555555555555';
+  const { trackingUrlFor, linksByLabelFor } = buildTalkxTrackingLinkHelpers({
+    links: [{ slug: 'promo', label: 'Oferta' }],
+    secret: undefined,
+    configuredBase: 'https://l.talkx.exemplo',
+    supabaseUrl: 'https://supabase-test.example',
+  });
+  const url = await trackingUrlFor(recipientId);
+  assert(url === undefined, `sem segredo trackingUrlFor deve ser undefined, recebido: ${url}`);
+  const byLabel = await linksByLabelFor(recipientId);
+  assert(Object.keys(byLabel).length === 0, `sem segredo linksByLabelFor deve omitir o rotulo, veio: ${JSON.stringify(byLabel)}`);
 });

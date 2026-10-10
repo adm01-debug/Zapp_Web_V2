@@ -8,7 +8,11 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, getClientIP, enforceRateLimit } from "../_shared/validation.ts";
-import { verifyHmacSignature, timingSafeEqual } from "../_shared/hmac-validation.ts";
+import { verifyHmacSignature } from "../_shared/hmac-validation.ts";
+import {
+  decodeTalkxRecipientToken,
+  isTalkxRecipientUuid,
+} from "../_shared/talkx-tracking-token.ts";
 
 const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min
 const MAX_BODY_BYTES = 4096;             // corpo do POST até 4 KB
@@ -290,18 +294,15 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
   return new Response("Method not allowed", { status: 405 });
 }
 
-const TALX_RECIPIENT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** UUID = link legado com id cru (vai direto para a RPC, sem resolucao). */
-function isTalkxRecipientUuid(value: string): boolean {
-  return TALX_RECIPIENT_UUID_RE.test(value);
-}
-
 /**
- * Resolve o token opaco de rastreamento (?r=<token>) para o recipient_id.
- * Compara em tempo constante contra os destinatarios da campanha do link;
- * token forjado, de outra campanha ou sem TALKX_CONVERT_SECRET resulta em
- * null (clique anonimo, nunca atribuicao indevida).
+ * Resolve o token opaco de rastreamento (?r=<token>) para o recipient_id
+ * em O(1): decodifica local (MAC em tempo constante, 1 import de chave),
+ * depois 2 point lookups indexados (link por slug, recipient por id com
+ * checagem de campanha). Sem varredura, sem paginacao: o custo por clique
+ * nao depende do tamanho da campanha. Token forjado, de outra campanha ou
+ * sem TALKX_CONVERT_SECRET resulta em null (clique anonimo, nunca
+ * atribuicao indevida). `r=` aleatorio falha no decode antes de qualquer
+ * SELECT (sem amplificacao de custo por clique invalido).
  */
 async function resolveTalkxLinkToken(params: {
   slug: string;
@@ -311,6 +312,8 @@ async function resolveTalkxLinkToken(params: {
 }): Promise<string | null> {
   const secret = params.env.get("TALKX_CONVERT_SECRET");
   if (!secret) return null;
+  const recipientId = await decodeTalkxRecipientToken(params.token, secret);
+  if (!recipientId) return null;
   const { data: link } = await params.supabase
     .from("talkx_links")
     .select("id,campaign_id")
@@ -318,38 +321,14 @@ async function resolveTalkxLinkToken(params: {
     .maybeSingle();
   const campaignId = (link as { campaign_id?: unknown } | null)?.campaign_id;
   if (typeof campaignId !== "string" || campaignId.length === 0) return null;
-  const { data: recipients, error } = await params.supabase
+  const { data: recipient } = await params.supabase
     .from("talkx_recipients")
-    .select("id")
-    .eq("campaign_id", campaignId);
-  if (error || !Array.isArray(recipients)) return null;
-  for (const row of recipients as Array<{ id?: unknown }>) {
-    if (typeof row?.id !== "string") continue;
-    const expected = await talkxTrackingToken(row.id, secret);
-    if (timingSafeEqual(expected, params.token)) return row.id;
-  }
-  return null;
-}
-
-/**
- * O MESMO token do talkx-send: HMAC-SHA256(secret, recipientId), 16
- * primeiros bytes, base64url (22 chars). Duplicado aqui de proposito —
- * talkx-send e talkx-link rodam em isolates separados e nao se importam;
- * o contrato entre eles e provado pelo teste ponta a ponta (token valido
- * resolve, adulterado nao atribui).
- */
-async function talkxTrackingToken(recipientId: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(recipientId));
-  const bytes = new Uint8Array(digest).slice(0, 16);
-  const binary = String.fromCharCode(...bytes);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    .select("id,campaign_id")
+    .eq("id", recipientId)
+    .maybeSingle();
+  const row = recipient as { id?: unknown; campaign_id?: unknown } | null;
+  if (!row || row.id !== recipientId || row.campaign_id !== campaignId) return null;
+  return recipientId;
 }
 
 async function hashIp(ip: string, salt: string): Promise<string> {
