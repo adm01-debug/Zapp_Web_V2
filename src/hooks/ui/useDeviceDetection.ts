@@ -138,11 +138,11 @@ export function useDeviceDetection() {
     try {
       const { data, error } = await supabase
         .from('user_devices')
-        .select('*')
+        .select('id, device_name, browser, os, ip_address, is_trusted, last_seen_at')
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
+      setDevices((data ?? []) as UserDevice[]);
     } catch (error) {
       log.error('Error fetching devices:', error);
     }

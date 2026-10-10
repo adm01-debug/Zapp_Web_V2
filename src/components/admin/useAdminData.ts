@@ -97,7 +97,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     } else if (activeTab === 'audit') {
       const { data: logs } = await supabase
         .from('audit_logs')
-        .select('*')
+        .select('id, user_id, action, entity_type, details, created_at')
         .order('created_at', { ascending: false })
         .limit(100);
 
