@@ -1,4 +1,4 @@
-import { handleTalkxSend, personalize, randomBetween } from './index.ts';
+import { handleTalkxSend, personalize, randomBetween, hmacTokenForRecipient, buildTalkxTrackingUrl } from './index.ts';
 import {
   TEST_SERVICE_KEY, CAMPAIGN_ID, makePost,
   makeCampaign, makeConnection,
@@ -1345,4 +1345,72 @@ Deno.test('X062 continue: destinatário com documento recebe a URL ASSINADA e o 
     provider.restore();
     clock.restore();
   }
+});
+
+Deno.test('hmacTokenForRecipient produces a deterministic base64url token for a recipient', async () => {
+  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
+  try {
+    const token1 = await hmacTokenForRecipient('recipient-abc-123');
+    const token2 = await hmacTokenForRecipient('recipient-abc-123');
+    assert(token1 !== undefined, 'token should not be undefined');
+    assert(token1 === token2, 'same recipient_id must produce the same token');
+    assert(/^[A-Za-z0-9_-]+$/.test(token1), `token must be base64url, got: ${token1}`);
+  } finally {
+    Deno.env.delete("TALKX_CONVERT_SECRET");
+  }
+});
+
+Deno.test('hmacTokenForRecipient produces different tokens for different recipients', async () => {
+  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
+  try {
+    const token1 = await hmacTokenForRecipient('recipient-aaa');
+    const token2 = await hmacTokenForRecipient('recipient-bbb');
+    assert(token1 !== token2, 'different recipient_ids must produce different tokens');
+  } finally {
+    Deno.env.delete("TALKX_CONVERT_SECRET");
+  }
+});
+
+// ── [refazer 1] token curto + URL sem id cru + sem segredo ───────────────────
+Deno.test('hmacTokenForRecipient é curto (22 chars) e ausente sem segredo', async () => {
+  Deno.env.set("TALKX_CONVERT_SECRET", "test-secret-for-hmac");
+  try {
+    const token = await hmacTokenForRecipient('recipient-abc-123');
+    assert(token !== undefined, 'com segredo o token deve existir');
+    assert(token.length === 22, `token curto de 22 chars, recebido: ${token} (${token.length})`);
+    assert(/^[A-Za-z0-9_-]{22}$/.test(token), `token deve ser base64url: ${token}`);
+  } finally {
+    Deno.env.delete("TALKX_CONVERT_SECRET");
+  }
+  const semSegredo = await hmacTokenForRecipient('recipient-abc-123');
+  assert(semSegredo === undefined, 'sem TALKX_CONVERT_SECRET o token deve ser undefined (nunca o id cru)');
+});
+
+Deno.test('buildTalkxTrackingUrl embute o token e NUNCA o recipient_id cru', async () => {
+  const recipientId = '11111111-2222-4333-8444-555555555555';
+  const secret = 'test-secret-for-hmac';
+  const token = await hmacTokenForRecipient(recipientId, secret);
+  assert(token !== undefined, 'setup: token deveria existir');
+  const bases = [
+    { slug: 'promo', recipientId, secret, configuredBase: 'https://l.talkx.exemplo', supabaseUrl: 'https://supabase-test.example' },
+    { slug: 'promo', recipientId, secret, configuredBase: '', supabaseUrl: 'https://supabase-test.example' },
+  ];
+  for (const params of bases) {
+    const url = await buildTalkxTrackingUrl(params);
+    assert(url !== undefined, 'com segredo a URL deve existir');
+    assert(url.includes(`r=${token}`), `URL deve carregar o token em r=: ${url}`);
+    assert(!url.includes(recipientId), `URL NAO pode conter o recipient_id cru: ${url}`);
+    assert(!url.includes(encodeURIComponent(recipientId)), `URL NAO pode conter o id nem codificado: ${url}`);
+  }
+});
+
+Deno.test('buildTalkxTrackingUrl sem segredo devolve undefined (nao gera link, nao expoe id)', async () => {
+  const url = await buildTalkxTrackingUrl({
+    slug: 'promo',
+    recipientId: '11111111-2222-4333-8444-555555555555',
+    secret: undefined,
+    configuredBase: 'https://l.talkx.exemplo',
+    supabaseUrl: 'https://supabase-test.example',
+  });
+  assert(url === undefined, `sem segredo nenhum link pode ser gerado, recebido: ${url}`);
 });
