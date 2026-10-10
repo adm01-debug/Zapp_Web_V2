@@ -6,10 +6,10 @@
 --   DROP FUNCTION IF EXISTS public.can_manage_contacts(uuid);
 --   DROP TABLE IF EXISTS public.talkx_ddd_regions;
 --
--- Projeção com RLS e fonte local (X037, docs/talkx/v4/etapas/F04-dados-comerciais-e-vinculo-com-o-crm.md).
+-- Projeção com RLS e fonte local (X037).
 -- Refazer 2: cursor p_after, RLS no DDD. Nada disto pré-existia. Sem BEGIN/COMMIT.
 
--- 1. DDD -> UF/região (X037: "tabela talkx_ddd_regions, portada de getRegionFromPhone.ts").
+-- 1. DDD -> UF/região (X037).
 -- Tabela de referência pública por desenho: só leitura para authenticated.
 CREATE TABLE IF NOT EXISTS public.talkx_ddd_regions (
   ddd smallint PRIMARY KEY,

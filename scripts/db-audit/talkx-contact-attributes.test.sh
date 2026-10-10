@@ -91,15 +91,15 @@ INSERT INTO public.contacts (name, phone, assigned_to) VALUES ('Apagado Silva', 
 UPDATE public.contacts SET deleted_at = now() WHERE name = 'Apagado Silva';
 UPDATE public.contacts SET is_lid_legacy = true WHERE name = 'Legado Silva';
 SQL
-STALE="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' ORDER BY id LIMIT 1;" | tail -n1)"
+STALE="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' AND name LIKE 'Contato%' ORDER BY id LIMIT 1;" | tail -n1)"
 psql_sql "INSERT INTO public.talkx_contact_attributes (contact_id, salesperson_name, salesperson_profile_id, state, region) VALUES ('$STALE', 'Vendedor B', '$PB', 'RJ', 'Sudeste');" >/dev/null
-MID1="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' ORDER BY id LIMIT 1 OFFSET 1;" | tail -n1)"
-MID2="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PB' ORDER BY id LIMIT 1;" | tail -n1)"
-DID="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' ORDER BY id LIMIT 1 OFFSET 2;" | tail -n1)"
+MID1="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' AND name LIKE 'Contato%' ORDER BY id LIMIT 1 OFFSET 1;" | tail -n1)"
+MID2="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PB' AND name LIKE 'Contato%' ORDER BY id LIMIT 1;" | tail -n1)"
+DID="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' AND name LIKE 'Contato%' ORDER BY id LIMIT 1 OFFSET 2;" | tail -n1)"
 psql_sql "INSERT INTO public.messages (contact_id, sender, created_at) VALUES ('$MID1', 'agent', '2026-10-02 10:00:00+00'), ('$MID1', 'contact', '2026-10-01 10:00:00+00'), ('$MID2', 'agent', '2026-10-02 10:00:00+00');" >/dev/null
 psql_sql "INSERT INTO public.sales_deals (contact_id, stage_id, status, created_at, updated_at) VALUES ('$DID', '20000000-0000-0000-0000-000000000001', 'open', '2026-09-01 10:00:00+00', '2026-09-02 10:00:00+00'), ('$DID', '20000000-0000-0000-0000-000000000002', 'open', '2026-09-10 10:00:00+00', '2026-09-11 10:00:00+00');" >/dev/null
-echo '== P1 RLS + P2 cursor (limite 10 < 27 elegiveis) =='
-expect_value_role 'C0 pagina unica retorna 10 (nao cobre tudo)' '10' 'service_role' "SELECT processed FROM public.talkx_refresh_local_attributes(10, NULL);"
+echo '== P1 RLS + P2 cursor =='
+expect_value_role 'C0 pagina unica = 10' '10' 'service_role' "SELECT processed FROM public.talkx_refresh_local_attributes(10, NULL);"
 after="$(psql_sql "SELECT last_id FROM public.talkx_refresh_local_attributes(10, NULL) LIMIT 1;" | tail -n1)"
 total=10
 for _ in $(seq 1 10); do
@@ -109,12 +109,12 @@ for _ in $(seq 1 10); do
   (( n == 0 )) && break
 done
 [[ "$total" == "27" ]] || fail "C1 cursor: esperado total 27, obtido '$total'"
-printf '[PASS] C1 cursor cobre os 27 (10+...+resto)\n'
+printf '[PASS] C1 cursor soma 27\n'
 expect_value 'C2 total 27 sem duplicar' '27' "SELECT count(*) FROM public.talkx_contact_attributes;"
 expect_value_as 'B1 owner ve 27' '27' "$JWT_O" "SELECT count(*) FROM public.talkx_contact_attributes;"
 expect_value_as 'B2 A ve 14' '14' "$JWT_A" "SELECT count(*) FROM public.talkx_contact_attributes ca JOIN public.contacts c ON c.id = ca.contact_id WHERE c.assigned_to = '$PA';"
 expect_value_as 'B3 B ve 12' '12' "$JWT_B" "SELECT count(*) FROM public.talkx_contact_attributes ca JOIN public.contacts c ON c.id = ca.contact_id WHERE c.assigned_to = '$PB';"
-BCONTACT="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' ORDER BY id LIMIT 1;" | tail -n1)"
+BCONTACT="$(psql_sql "SELECT id FROM public.contacts WHERE assigned_to = '$PA' AND name LIKE 'Contato%' ORDER BY id LIMIT 1;" | tail -n1)"
 expect_value_as 'B4 B nao ve contato de A' '0' "$JWT_B" "SELECT count(*) FROM public.talkx_contact_attributes WHERE contact_id = '$BCONTACT';"
 expect_value_role 'B5 service_role 27' '27' 'service_role' "SELECT count(*) FROM public.talkx_contact_attributes;"
 expect_error_role 'B6 anon sem SELECT attrs' 'permission denied' 'anon' "SELECT count(*) FROM public.talkx_contact_attributes;"
@@ -139,6 +139,7 @@ grep -q '^(a policy' "$migration" && fail 'rollback com comentario na linha exec
 RB="$(grep '^-- Rollback:' "$migration" | sed 's/^-- Rollback: //')"
 [[ -n "$RB" ]] || fail 'linha -- Rollback: vazia'
 psql_sql "$RB" >/dev/null
+printf '[PASS] R0 rollback da linha 2 executou\n'
 expect_value 'R1 attrs removida' '' "SELECT to_regclass('public.talkx_contact_attributes')::text;"
 expect_value 'R2 ddd removida' '' "SELECT to_regclass('public.talkx_ddd_regions')::text;"
 expect_value 'R3 funcoes removidas' '0' "SELECT count(*) FROM pg_proc WHERE proname IN ('talkx_refresh_local_attributes','can_manage_contacts');"
