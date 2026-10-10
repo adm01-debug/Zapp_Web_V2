@@ -311,12 +311,12 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
 
 describe('acessibilidade — nomes acessíveis nos controles', () => {
   it('o seletor de gatilho tem aria-label', () => {
-    renderDialog(buildAutomation());
+    renderDialog(buildAutomation({}));
     expect(screen.getByRole('combobox', { name: 'Gatilho' })).toBeInTheDocument();
   });
 
   it('o seletor de ação tem aria-label', () => {
-    renderDialog(buildAutomation());
+    renderDialog(buildAutomation({}));
     expect(screen.getByRole('combobox', { name: 'Ação' })).toBeInTheDocument();
   });
 });
