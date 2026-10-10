@@ -55,6 +55,10 @@ const ALLOWLIST = new Set([
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
   // db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  // N-173: CHECK whatsapp_connections.instance_id nao aceita NULL nem vazio.
+  // Prova em PG 17 descartavel: INSERT com NULL/''/espacos falha, valor valido
+  // tem sucesso, rollback remove a constraint e re-aplicacao a restaura.
+  'scripts/db-audit/n173-whatsapp-instance-id-not-empty.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.

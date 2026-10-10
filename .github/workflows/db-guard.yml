@@ -363,6 +363,18 @@ jobs:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh
 
+      # N-173 (P2 · banco): a coluna instance_id de whatsapp_connections
+      # nasceu como TEXT nullable (20251215024517). Sem CHECK, INSERT com
+      # NULL ou '' cria "fantasmas" que escapam da trava de duplicidade
+      # (whatsapp_connections_instance_id_key). O teste aplica a migration
+      # 20261010003940 num PostgreSQL 17 descartavel e prova: INSERT com
+      # NULL/''/espacos falha, INSERT valido tem sucesso, rollback remove
+      # a constraint e re-aplicacao a restaura.
+      - name: Provar restricao de instance_id em whatsapp_connections (N-173)
+        env:
+          N173_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n173-whatsapp-instance-id-not-empty.test.sh
+
       # R2-DB-009 (cartao t_94758927): no marco de mensagens (10/50/100/500/1000) o trigger de
       # gamificacao chamava grant_agent_achievement com tipo reservado e o RAISE derrubava o
       # enqueue inteiro (mensagem nao gravada, agent_stats revertido) para todo agente comum.
