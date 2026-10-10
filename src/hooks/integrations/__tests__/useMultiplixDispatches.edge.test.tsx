@@ -43,6 +43,7 @@ import {
   useMultiplixDispatchesList,
   useMultiplixDispatch,
   useMultiplixRecipients,
+  useMultiplixEstimate,
   MultiplixDispatchEdgeError,
   type MultiplixDispatch,
   type MultiplixRecipientRow,
@@ -284,6 +285,48 @@ describe('useMultiplixDispatches — leituras via edge `multiplix-dispatch`', ()
       headers: { Authorization: 'Bearer tok-123' },
     });
     expect(result.current.data?.rows).toHaveLength(501);
+  });
+
+  // F50 (TL-028): os TRES numeros da estimativa (mensagens = aptos x blocos,
+  // versoes de roteiro e consumo de voz) sao do SERVIDOR. Antes deste cartao o
+  // front nao chamava a acao `estimate` em lugar nenhum: o numero nao existia
+  // na tela e nada no `src` usava o contrato da edge.
+  it('useMultiplixEstimate chama a acao estimate com o dispatch_id e entrega os tres numeros', async () => {
+    functionsInvoke.mockResolvedValue({
+      data: {
+        data: {
+          messages: 6, script_versions: 4,
+          voice: { characters: 1234, renderings: 3 },
+          eligible_recipients: 3, blocks: 2,
+        },
+      },
+      error: null,
+    });
+
+    const { result } = renderHook(() => useMultiplixEstimate('d1'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(functionsInvoke).toHaveBeenCalledWith('multiplix-dispatch', {
+      body: { action: 'estimate', payload: { dispatch_id: 'd1' } },
+      headers: { Authorization: 'Bearer tok-123' },
+    });
+    expect(result.current.data).toEqual({
+      messages: 6, script_versions: 4,
+      voice: { characters: 1234, renderings: 3 },
+      eligible_recipients: 3, blocks: 2,
+    });
+  });
+
+  // Zero na estimativa significa "nada a enviar" — nunca "nao deu para saber".
+  // Resposta sem os campos vira erro nomeado em vez de um numero inventado.
+  it('useMultiplixEstimate falha alto quando a edge responde sem os numeros', async () => {
+    functionsInvoke.mockResolvedValue({ data: { data: { messages: 6 } }, error: null });
+
+    const { result } = renderHook(() => useMultiplixEstimate('d1'), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect((result.current.error as MultiplixDispatchEdgeError).code).toBe('multiplix_estimate_shape');
   });
 });
 
