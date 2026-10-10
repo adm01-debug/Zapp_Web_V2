@@ -8,6 +8,7 @@ import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
   fetchMultiplixRecipientsTotal,
+  type MultiplixRecipientRow,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import {
   IconTile, StatusPill, fmtInt, pct, fmtDateTime,
@@ -85,7 +86,53 @@ function confirmErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro ao confirmar disparo';
 }
 
+/**
+ * TL-042: erro do destinatário em linguagem de operador. O `error_message`
+ * cru (código do motor/provedor) não diz o que fazer — os casos conhecidos
+ * ganham texto legível; o resto segue exibido (rotulado como erro no painel).
+ */
+const RECIPIENT_ERROR_TEXT: Record<string, string> = {
+  'Contato na lista negra (opt-out)': 'Contato optou por não receber mensagens (lista negra).',
+  'Sem confirmacao do provedor (lease expirado apos o POST) — reconciliar pelo webhook':
+    'Mensagem enviada, mas sem confirmação do provedor — será reconciliada pelo retorno.',
+  'Recuperado de envio legado sem lease': 'Enviado antes do controle atual de entregas.',
+};
+
+function recipientErrorText(errorMessage: string | null | undefined): string {
+  if (!errorMessage) return '—';
+  return RECIPIENT_ERROR_TEXT[errorMessage] ?? errorMessage;
+}
+
 interface Props { dispatchId: string; onBack: () => void }
+
+/**
+ * TL-042: detalhe do destinatário selecionado (extraído para componente para
+ * não usar IIFE no JSX). Todo campo opcional cai em '—'; o erro sai legível
+ * via `recipientErrorText`, nunca o `error_message` cru.
+ */
+function RecipientDetail({ recipient }: { recipient: MultiplixRecipientRow }) {
+  return (
+    <section aria-label="Detalhe do destinatário" className="px-4 py-3 border-b border-border bg-muted/20">
+      <div className="flex items-center gap-1.5 mb-2">
+        <User className="w-3.5 h-3.5 text-muted-foreground" />
+        <p className="text-xs font-semibold text-foreground">{recipient.company_name_snapshot ?? 'Empresa'}</p>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-2xs">
+        <dt className="text-muted-foreground">WhatsApp</dt><dd className="text-foreground text-right">{recipient.destino_e164 ?? '—'}</dd>
+        <dt className="text-muted-foreground">Status</dt><dd className="text-right"><StatusPill status={recipient.status} map={RECIPIENT_STATUS} /></dd>
+        <dt className="text-muted-foreground">Tentativas</dt><dd className="text-foreground text-right">{recipient.attempt_count ?? '—'}</dd>
+        <dt className="text-muted-foreground">ID externo</dt><dd className="text-foreground text-right">{recipient.external_id ?? '—'}</dd>
+        <dt className="text-muted-foreground">Enviada em</dt><dd className="text-foreground text-right">{recipient.sent_at ? fmtDateTime(recipient.sent_at) : '—'}</dd>
+        <dt className="text-muted-foreground">Entregue em</dt><dd className="text-foreground text-right">{recipient.delivered_at ? fmtDateTime(recipient.delivered_at) : '—'}</dd>
+        <dt className="text-muted-foreground">Erro</dt><dd className={recipient.error_message ? 'text-destructive text-right' : 'text-foreground text-right'}>{recipientErrorText(recipient.error_message)}</dd>
+        <dt className="text-muted-foreground">Mensagem</dt><dd className="text-foreground text-right truncate">{recipient.personalized_message ?? '—'}</dd>
+        <dt className="text-muted-foreground">Elegibilidade</dt><dd className="text-foreground text-right">{recipient.eligibility ?? '—'}</dd>
+        <dt className="text-muted-foreground">Motivo eleg.</dt><dd className="text-foreground text-right">{recipient.eligibility_reason ?? '—'}</dd>
+        <dt className="text-muted-foreground">Motivo inclusão</dt><dd className="text-foreground text-right">{recipient.inclusion_reason ?? '—'}</dd>
+      </dl>
+    </section>
+  );
+}
 
 export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   const qc = useQueryClient();
@@ -219,6 +266,10 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
   }
 
   const outcomeUnknown = dispatch.outcome_unknown_count ?? 0;
+  // TL-042: destinatário selecionado resolvido uma vez (sem IIFE no JSX).
+  const selectedRecipient = selectedRecipientId
+    ? recipients.find((r) => r.id === selectedRecipientId)
+    : undefined;
   const processed = dispatch.sent_count + dispatch.failed_count + outcomeUnknown + skippedCount;
   const progress = dispatch.total_recipients > 0 ? pct(processed, dispatch.total_recipients) : 0;
   const remaining = Math.max(0, dispatch.total_recipients - processed);
@@ -357,14 +408,30 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           </p>
         )}
         <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
+          {selectedRecipient && <RecipientDetail recipient={selectedRecipient} />}
           {recipients.map((r) => {
             const sm = RECIPIENT_STATUS[r.status] ?? RECIPIENT_STATUS.pending;
+            const isOpen = selectedRecipientId === r.id;
             return (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 cursor-pointer" onClick={() => setSelectedRecipientId(selectedRecipientId === r.id ? null : r.id)}>
+              <div
+                key={r.id}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isOpen}
+                aria-label={`Ver detalhe de ${r.company_name_snapshot || 'sem nome'}`}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 cursor-pointer"
+                onClick={() => setSelectedRecipientId(selectedRecipientId === r.id ? null : r.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedRecipientId(selectedRecipientId === r.id ? null : r.id);
+                  }
+                }}
+              >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
                   <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
+                  {r.error_message && <p className="text-2xs text-destructive truncate">{recipientErrorText(r.error_message)}</p>}</div>
                 <StatusPill status={r.status} map={RECIPIENT_STATUS} />
                 {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
               </div>
@@ -377,28 +444,6 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           )}
           {!recipientsFailed && !recipientsLoading && recipients.length === 0 && <p className="text-center py-8 text-muted-foreground text-xs">Nenhum destinatário encontrado</p>}
         </div>
-        {/* Detalhe real do destinatário selecionado — dados do banco, nao mock. */}
-        {selectedRecipientId && (() => {
-          const r = recipients.find(x => x.id === selectedRecipientId);
-          if (!r) return null;
-          return (
-            <section className="mt-3 px-4 py-3 border border-border rounded-lg bg-muted/10">
-              <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Detalhe do destinatário</h4>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-2xs">
-                <dt className="text-muted-foreground">Empresa</dt><dd className="text-foreground truncate">{r.company_name_snapshot || '—'}</dd>
-                <dt className="text-muted-foreground">WhatsApp</dt><dd className="text-foreground">{r.destino_e164 ?? '—'}</dd>
-                <dt className="text-muted-foreground">Status</dt><dd><StatusPill status={r.status} map={RECIPIENT_STATUS} /></dd>
-                <dt className="text-muted-foreground">Enviada em</dt><dd className="text-foreground">{r.sent_at ? fmtDateTime(r.sent_at) : '—'}</dd>
-                <dt className="text-muted-foreground">Entregue em</dt><dd className="text-foreground">{r.delivered_at ? fmtDateTime(r.delivered_at) : '—'}</dd>
-                <dt className="text-muted-foreground">Erro</dt><dd className={r.error_message ? 'text-dash-red' : 'text-foreground'}>{r.error_message ?? '—'}</dd>
-                <dt className="text-muted-foreground">Mensagem</dt><dd className="text-foreground truncate">{r.personalized_message ?? '—'}</dd>
-                <dt className="text-muted-foreground">Elegibilidade</dt><dd className="text-foreground">{r.eligibility ?? '—'}</dd>
-                <dt className="text-muted-foreground">Motivo eleg.</dt><dd className="text-foreground">{r.eligibility_reason ?? '—'}</dd>
-                <dt className="text-muted-foreground">Motivo inclusão</dt><dd className="text-foreground">{r.inclusion_reason ?? '—'}</dd>
-              </dl>
-            </section>
-          );
-        })()}
       </section>
 
       <AlertDialog open={confirmPause} onOpenChange={setConfirmPause}>

@@ -47,6 +47,10 @@ export interface MultiplixRecipientRow {
   eligibility: string | null;
   eligibility_reason: string | null;
   inclusion_reason: string | null;
+  // TL-042: existem em `multiplix_recipients` (Row tem ambos); a edge ainda
+  // nao os devolve em `recipients.list` — o painel mostra '—' até lá.
+  attempt_count?: number | null;
+  external_id?: string | null;
 }
 
 // ---------------------------------------------------------------------------
