@@ -40,7 +40,7 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
   const [ending, setEnding] = useState(false);
 
   const handleResume = useCallback(async () => {
-    if (!campaign || resuming) return;
+    if (!campaign || resuming) return false;
     setResuming(true);
     try {
       // `startCampaign` valida o corpo da resposta (a recusa por janela de envio
@@ -50,25 +50,29 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
       // Fecha o modal só com o aceite do servidor: na recusa o operador continua
       // no modal para tentar de novo.
       if (started) setResumeOpen(false);
+      return started;
     } catch {
       // O hook trata o próprio erro, mas se a chamada lançar o operador precisa
       // ver: o modal continua aberto para tentar de novo.
       toast.error('Erro ao retomar a campanha.');
+      return false;
     } finally {
       setResuming(false);
     }
   }, [campaign, resuming, startCampaign]);
 
   const handleEnd = useCallback(async () => {
-    if (!campaign || ending) return;
+    if (!campaign || ending) return false;
     setEnding(true);
     try {
       await cancelCampaign(campaign.id);
       setEndOpen(false);
       toast.warning('Campanha encerrada.');
       onBack();
+      return true;
     } catch {
       toast.error('Erro ao encerrar a campanha.');
+      return false;
     } finally {
       setEnding(false);
     }
@@ -154,7 +158,7 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
           <TalkXConfirmDialog
             open={resumeOpen}
             onClose={() => setResumeOpen(false)}
-            onConfirm={() => { void handleResume(); }}
+            onConfirm={() => handleResume()}
             icon={Play}
             iconColor="blue"
             title="Retomar campanha?"
@@ -168,7 +172,7 @@ export function TalkXCampaignPaused({ campaignId, onBack, onStatusChange }: Prop
           <TalkXConfirmDialog
             open={endOpen}
             onClose={() => setEndOpen(false)}
-            onConfirm={() => { void handleEnd(); }}
+            onConfirm={() => handleEnd()}
             icon={Square}
             iconColor="red"
             tone="danger"
