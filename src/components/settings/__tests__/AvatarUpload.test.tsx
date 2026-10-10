@@ -76,7 +76,7 @@ vi.mock('lucide-react', () => ({
 }));
 
 import { useAuth } from '@/hooks/auth/useAuth';
-import { AvatarUpload } from '@/components/settings/AvatarUpload';
+import { AvatarUpload, AVATAR_SIGNED_URL_TTL_SECONDS } from '@/components/settings/AvatarUpload';
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
 
@@ -92,15 +92,16 @@ describe('AvatarUpload — signed URL e path storage', () => {
     mockEq.mockResolvedValue({ error: null });
   });
 
-  it('chama createSignedUrl (não getPublicUrl) para exibir avatar de usuário autenticado', async () => {
+  it('chama createSignedUrl com expiração curta (não getPublicUrl) para exibir avatar de usuário autenticado', async () => {
     mockUseAuth.mockReturnValue({ user: makeUser('user-1'), profile: makeProfile('avatars/user-1/avatar.jpg'), refreshProfile: vi.fn() });
 
     render(<AvatarUpload />);
 
     await waitFor(() => {
-      expect(mockCreateSignedUrl).toHaveBeenCalledWith('avatars/user-1/avatar.jpg', 3600);
+      expect(mockCreateSignedUrl).toHaveBeenCalledWith('avatars/user-1/avatar.jpg', AVATAR_SIGNED_URL_TTL_SECONDS);
     });
 
+    expect(AVATAR_SIGNED_URL_TTL_SECONDS).toBeLessThanOrEqual(900);
     expect(mockGetPublicUrl).not.toHaveBeenCalled();
   });
 
@@ -112,6 +113,20 @@ describe('AvatarUpload — signed URL e path storage', () => {
     await waitFor(() => {
       expect(mockCreateSignedUrl).not.toHaveBeenCalled();
     });
+    expect(document.querySelector('img')?.getAttribute('src')).toBeFalsy();
+  });
+
+  it('bucket privado: quando a API nega a URL assinada, não exibe imagem (sem bytes para anônimo)', async () => {
+    mockCreateSignedUrl.mockResolvedValue({ data: null, error: { message: 'permission denied' } });
+    mockUseAuth.mockReturnValue({ user: makeUser('user-1'), profile: makeProfile('avatars/user-1/avatar.jpg'), refreshProfile: vi.fn() });
+
+    render(<AvatarUpload />);
+
+    await waitFor(() => {
+      expect(mockCreateSignedUrl).toHaveBeenCalled();
+    });
+    expect(document.querySelector('img')?.getAttribute('src')).toBeFalsy();
+    expect(mockGetPublicUrl).not.toHaveBeenCalled();
   });
 
   it('armazena o caminho do arquivo (não a URL assinada) no perfil após upload', async () => {
@@ -128,5 +143,6 @@ describe('AvatarUpload — signed URL e path storage', () => {
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith({ avatar_url: 'user-1/avatar.jpg' });
     });
+    expect(mockGetPublicUrl).not.toHaveBeenCalled();
   });
 });

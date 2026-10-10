@@ -1,7 +1,28 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { toast } from 'sonner';
 import type { AppRole } from '@/hooks/system/useUserRole';
+
+const AVATAR_BUCKET = 'avatars';
+// Mesma validade curta usada no AvatarUpload: o perfil guarda só o caminho e a
+// tela assina a URL sob demanda — o bucket `avatars` deixou de ser público.
+const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
+
+function isStorageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+/** Devolve o caminho durável do objeto a partir de uma URL assinada (ou do próprio caminho). */
+function avatarObjectPath(value: string | null): string | null {
+  if (!value || !isStorageUrl(value)) return value;
+  try {
+    const origin = new URL(SUPABASE_URL).origin;
+    return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [origin])?.path ?? value;
+  } catch {
+    return value;
+  }
+}
 
 export interface UserWithRole {
   id: string;
@@ -92,7 +113,17 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
             role: (userRole?.role || 'agent') as AppRole,
           };
         });
-        setUsers(usersWithRoles);
+        // Bucket privado: o perfil guarda só o caminho; assina para exibir no painel.
+        const usersWithSignedAvatars = await Promise.all(
+          usersWithRoles.map(async (user) => {
+            if (!user.avatar_url || isStorageUrl(user.avatar_url)) return user;
+            const { data } = await supabase.storage
+              .from(AVATAR_BUCKET)
+              .createSignedUrl(user.avatar_url, AVATAR_SIGNED_URL_TTL_SECONDS);
+            return { ...user, avatar_url: data?.signedUrl ?? user.avatar_url };
+          })
+        );
+        setUsers(usersWithSignedAvatars);
       }
     } else if (activeTab === 'audit') {
       const { data: logs } = await supabase
@@ -171,7 +202,7 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
     editingUser: UserWithRole,
     avatarFile: File | null,
   ): Promise<boolean> => {
-    let avatarUrl = editingUser.avatar_url;
+    let avatarUrl = avatarObjectPath(editingUser.avatar_url);
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
