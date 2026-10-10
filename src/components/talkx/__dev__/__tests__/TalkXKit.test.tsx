@@ -36,6 +36,7 @@ describe('TalkXKit — prancha de referência (X055)', () => {
     render(<TalkXKit />);
 
     expect(screen.queryByTestId('talkx-kit-forcado')).toBeNull();
+    expect(screen.getByText('Estes estados e modais seguem o padrão visual do ZAPP e servem como referência para implementação e QA.')).toBeTruthy();
     expect(screen.getByTestId('talkx-kit-trilha')).toBeTruthy();
     expect(screen.getByTestId('talkx-kit-estados')).toBeTruthy();
     expect(screen.getByTestId('talkx-kit-modais')).toBeTruthy();

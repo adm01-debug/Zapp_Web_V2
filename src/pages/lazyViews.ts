@@ -54,6 +54,9 @@ export const MediaMigrationTool = lazyWithRetry(() => import('@/components/admin
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
+// X055 — prancha de referência do Talk X: só alcançável por ?view=talkx-kit
+// (sem entrada em menu), em chunk lazy separado.
+export const TalkXKitView = lazyWithRetry(() => import('@/components/talkx/__dev__/TalkXKit').then(m => ({ default: m.TalkXKit })));
 export const MultiplixView = lazyWithRetry(() => import('@/components/multiplix/MultiplixView'));
 export const EvolutionMonitoringDashboard = lazyWithRetry(() => import('@/components/monitoring/EvolutionMonitoringDashboard').then(m => ({ default: m.EvolutionMonitoringDashboard })));
 export const AchievementsSystemLazy = lazyWithRetry(async () => {

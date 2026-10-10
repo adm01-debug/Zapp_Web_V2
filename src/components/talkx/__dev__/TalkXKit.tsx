@@ -261,7 +261,7 @@ export function TalkXKit() {
 
       <footer className="space-y-0.5 border-t border-border/70 pt-4">
         <p className="text-xs text-foreground-secondary">
-          Estes estados e modais seguem o padrão visual do ZAPP…
+          Estes estados e modais seguem o padrão visual do ZAPP e servem como referência para implementação e QA.
         </p>
         <p className="text-2xs text-muted-foreground">ZAPP Talk X • Campanhas • Estados do Sistema e Modais</p>
         <p data-testid="talkx-kit-versao" className="text-2xs text-muted-foreground">v{APP_VERSION}</p>
