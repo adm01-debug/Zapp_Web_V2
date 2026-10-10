@@ -626,6 +626,16 @@ jobs:
           TALKX_AUDIENCE_RPC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-rpc.test.sh
 
+      # N-111: tabela oficial de campos/operadores de segmento do Talk X
+      # (talkx_segment_fields) + funcao de compilacao (talkx_compile_segment_rules).
+      # Recusa (22023) valor malicioso no ramo de data (in_last_days/not_in_last_days)
+      # antes de compor SQL, aplica a migration 2x (idempotencia) e prova os
+      # predicados contra contatos reais, tudo com papel authenticated.
+      - name: Simular a tabela e funcao de segmentos do Talk X (N-111)
+        env:
+          TALKX_SEGMENT_FIELDS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-fields.test.sh
+
       # X017: geracao de destinatarios no servidor a partir do rascunho salvo
       # (snapshot_talkx_campaign_audience) — colunas respect_suppression/
       # audience_snapshot_at, criterio de elegivel no replace e recusa de
