@@ -186,7 +186,7 @@ export function MobileDrawerMenu({
                 <div className="relative">
                   <Avatar className="w-9 h-9 ring-2 ring-primary/20">
                     <AvatarImage src={agentAvatar} alt={agentName} />
-                    <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
+                    <AvatarFallback className="bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -243,7 +243,7 @@ export function MobileDrawerMenu({
               {/* Recentes */}
               {!search.trim() && recentItems.length > 0 && (
                 <div className="mb-2">
-                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Recentes
                   </p>
                   {recentItems.map((item) => {
@@ -268,7 +268,7 @@ export function MobileDrawerMenu({
               )}
               {filteredSections.map((section, sectionIdx) => (
                 <div key={section.title} className="mb-2">
-                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground/70">
+                  <p className="px-3 py-1.5 text-3xs font-bold uppercase tracking-wider text-muted-foreground">
                     {section.title}
                   </p>
                   {section.items.map((item, itemIdx) => {
@@ -323,6 +323,7 @@ export function MobileDrawerMenu({
                   variant="ghost"
                   size="sm"
                   onClick={onLogout}
+                  aria-label="Sair da conta"
                   className="h-10 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation active:scale-[0.98]"
                 >
                   <LogOut className="w-4 h-4" />

@@ -15,6 +15,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useNotifications } from '@/hooks/system/useNotifications';
 import { NotificationItem } from './NotificationItem';
 
+/** Id do título que nomeia o diálogo do popover (`aria-labelledby`). */
+const TITULO_ID = 'notifications-popover-title';
+
 interface NotificationsPopoverProps {
   /** Modo recolhido da sidebar: botão maior, centralizado e com tooltip. */
   collapsed?: boolean;
@@ -57,11 +60,17 @@ export function NotificationsPopover({ collapsed = false }: NotificationsPopover
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       )}
 
-      <PopoverContent side="right" align="start" sideOffset={8} className="w-[360px] p-0 overflow-hidden">
+      <PopoverContent
+        side="right"
+        align="start"
+        sideOffset={8}
+        aria-labelledby={TITULO_ID}
+        className="w-[360px] p-0 overflow-hidden"
+      >
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold text-sm text-foreground">Notificações</h3>
+            <h3 id={TITULO_ID} className="font-semibold text-sm text-foreground">Notificações</h3>
             {unreadCount > 0 && (
               <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-3xs font-bold">
                 {unreadCount}
