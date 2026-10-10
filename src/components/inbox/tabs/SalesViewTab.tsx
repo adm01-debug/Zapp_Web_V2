@@ -62,7 +62,7 @@ export function SalesViewTab({ contactId, profileId, onTabChange, conversationId
 
       <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
         {isLoading ? (
-          <div className="space-y-2 animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
+          <div className="space-y-2 motion-safe:animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
         ) : (
           <OpenDealsList deals={crm360?.openDeals ?? []} />
         )}
@@ -75,7 +75,7 @@ export function SalesViewTab({ contactId, profileId, onTabChange, conversationId
           data-conversation-id={conversationId ?? ''}
         >
           {isLoading ? (
-            <div className="space-y-2 animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
+            <div className="space-y-2 motion-safe:animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
           ) : !temVinculo ? (
             <EmptyState
               icon={Link2}
