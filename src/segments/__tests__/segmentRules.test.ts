@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeRules, isRuleComplete, describeRule, describeRules } from '../segmentRules';
+import type { SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 
-const v2Rules = {
-  version: 2 as const,
+const v1Rules = {
   join: 'or' as const,
   groups: [
     { id: 'g1', match: 'and' as const, rules: [
       { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
-      { id: 'r2', field: 'tags', op: 'has', value: 'vip' },
+      { id: 'r2', field: 'tags', op: 'contains', value: 'vip' },
     ] },
     { id: 'g2', match: 'or' as const, rules: [
       { id: 'r3', field: 'contact_type', op: 'eq', value: 'lead' },
@@ -16,8 +16,8 @@ const v2Rules = {
 };
 
 describe('normalizeRules', () => {
-  it('preserves valid v2 rules unchanged', () => {
-    const result = normalizeRules(v2Rules);
+  it('converts v1 rules to v2 format', () => {
+    const result = normalizeRules(v1Rules as SegmentRules);
     expect(result.groups).toHaveLength(2);
     expect(result.groups[0].rules).toHaveLength(2);
     expect(result.groups[1].rules).toHaveLength(1);
@@ -84,7 +84,7 @@ describe('describeRule', () => {
   });
 
   it('describes a has rule with fallback operator label', () => {
-    expect(describeRule({ id: 'r1', field: 'tags', op: 'has', value: 'vip' })).toBe('tags has vip');
+    expect(describeRule({ id: 'r1', field: 'tags', op: 'contains', value: 'vip' })).toBe('tags contém vip');
   });
 
   it('describes a gte rule with number (no locale formatting for non-currency)', () => {
@@ -94,8 +94,16 @@ describe('describeRule', () => {
 
 describe('describeRules', () => {
   it('describes all rules across groups as a single string', () => {
-    const result = describeRules(v2Rules);
-    expect(result).toBe('company igual a Acme · tags has vip · contact_type igual a lead');
+    const result = describeRules({ version: 2, join: 'or', groups: [
+      { id: 'g1', match: 'and', rules: [
+        { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+        { id: 'r2', field: 'tags', op: 'contains', value: 'vip' },
+      ] },
+      { id: 'g2', match: 'or', rules: [
+        { id: 'r3', field: 'contact_type', op: 'eq', value: 'lead' },
+      ] },
+    ]});
+    expect(result).toBe('company igual a Acme · tags contém vip · contact_type igual a lead');
   });
 
   it('returns "Toda a base" for empty rules', () => {

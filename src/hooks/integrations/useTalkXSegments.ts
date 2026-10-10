@@ -8,9 +8,8 @@ import { CONVERSATION_STATUSES } from '@/types/chat';
 import { OPERATIONAL_PRIORITY_VALUES, SENTIMENT_VALUES } from '@/lib/ai-vocabulary';
 import { zonedDayStartISO } from '@/lib/localDay';
 import { GROUP_CATEGORIES } from '@/hooks/groups/types';
-import { normalizeRules, isRuleComplete as isRuleCompleteV2, describeRule, describeRules } from '@/segments/segmentRules';
+import { normalizeRules, describeRule, describeRules } from '@/segments/segmentRules';
 import { SEGMENT_FIELD_CATALOG } from '@/segments/segmentFieldCatalog';
-import { useSegmentAudience } from './useSegmentAudience';
 
 /**
  * Fuso do filtro de segmento. O segmento e gravado como string de filtro e reusado por
@@ -487,4 +486,4 @@ export function useTalkXSegments() {
   };
 }
 
-export { normalizeRules, describeRule, describeRules, SEGMENT_FIELD_CATALOG, useSegmentAudience };
+export { normalizeRules, describeRule, describeRules, SEGMENT_FIELD_CATALOG };

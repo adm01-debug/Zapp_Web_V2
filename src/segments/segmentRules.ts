@@ -9,7 +9,7 @@
  * `updated_at` vira "última interação".
  */
 
-import { RULE_FIELDS, type RuleField, type RuleOp, type SegmentRule, type SegmentRuleGroup, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
+import { type SegmentRules, type SegmentRuleGroup } from '@/hooks/integrations/useTalkXSegments';
 import { SEGMENT_FIELD_CATALOG } from './segmentFieldCatalog';
 
 /* ------------------------------------------------------------------ */
@@ -53,15 +53,12 @@ export function normalizeRules(rules: SegmentRules | null | undefined): SegmentR
     groups: rules.groups.map((g) => ({
       id: g.id,
       match: g.match,
-      rules: g.rules.map((r) => {
-        const fieldValue = (r.field as RuleField).value ?? (r.field as unknown as string);
-        return {
-          id: r.id,
-          field: fieldValue,
-          op: r.op,
-          value: r.value,
-        };
-      }),
+      rules: g.rules.map((r) => ({
+      id: r.id,
+      field: r.field,
+      op: r.op,
+      value: r.value,
+    })),
     })),
   };
 }

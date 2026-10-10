@@ -7,8 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
-import { useSegmentAudience } from '@/hooks/integrations/useSegmentAudience';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
 import { describeRule } from '@/segments/segmentRules';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
@@ -74,14 +73,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     }
     setSaving(true);
     try {
+      const count = await countAudience(draft.rules);
       if (editing?.id) {
         // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
         // antes de salvar.
-        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules });
+        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
         setSelected(saved);
       } else {
-        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules });
+        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
       }
       closeBuilder();
     } catch (e) {
@@ -307,7 +307,7 @@ function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
 }
 
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
-  const audience = useSegmentAudience(s.rules, true);
+  const { data: est } = useAudienceEstimate(s.rules, true);
   return (
     <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || undefined}
       right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
@@ -316,14 +316,14 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
         <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
-      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(audience.count)} contatos</span>} />
+      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
       <MetaRow label="Origem" value={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} />
       <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
-      {audience.sample && audience.sample.length > 0 && (
+      {est?.sample && est.sample.length > 0 && (
         <div className="mt-2">
           <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos</p>
-          {audience.sample.map((c) => (
+          {est.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2 py-1.5">
               <InitialsAvatar name={c.name || '?'} size={28} />
               <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
