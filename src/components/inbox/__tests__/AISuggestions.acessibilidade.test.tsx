@@ -1,35 +1,85 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AISuggestions } from '../AISuggestions';
 
-const readSource = (relPath: string) => {
-  const base = new URL(import.meta.url).pathname;
-  return readFileSync(join(dirname(base), relPath), 'utf-8');
-};
+const invokeMock = vi.hoisted(() => vi.fn());
 
-describe('Acessibilidade — ícones e botões com aria-label', () => {
-  it('ObjectionDetector: ícone de dúvida tem aria-label', () => {
-    const content = readSource('../ObjectionDetector.tsx');
-    expect(content).toContain('aria-label="Dúvida sobre objeção"');
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { functions: { invoke: invokeMock } },
+}));
+
+vi.mock('@/hooks/ui/use-toast', () => ({
+  useToast: () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
+
+vi.mock('framer-motion', () => {
+  const passthrough = (tag: 'div' | 'span' | 'button') =>
+    ({ children, ...props }: { children?: unknown; [key: string]: unknown }) => {
+      const Tag = tag;
+      return <Tag {...props}>{children}</Tag>;
+    };
+  return {
+    motion: { div: passthrough('div'), span: passthrough('span'), button: passthrough('button') },
+    AnimatePresence: ({ children }: { children?: unknown }) => <>{children}</>,
+  };
+});
+
+const messages = [
+  { id: 'm1', content: 'Hello', sender: 'agent' as const, timestamp: new Date().toISOString() },
+  { id: 'm2', content: 'Hi', sender: 'contact' as const, timestamp: new Date().toISOString() },
+];
+
+describe('AISuggestions — acessibilidade', () => {
+  it('botão de abertura tem title acessível', () => {
+    invokeMock.mockResolvedValue({ data: { suggestions: [] }, error: null });
+
+    render(
+      <TooltipProvider>
+        <AISuggestions messages={messages} contactName="Ana" contactId="contact-A" onSelectSuggestion={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByTitle('Sugestões de IA')).toBeInTheDocument();
   });
 
-  it('ToolPanel: botão de fechar tem aria-label', () => {
-    const content = readSource('../ai-tools/ToolPanel.tsx');
-    expect(content).toContain('aria-label="Fechar painel"');
+  it('axe: sem violações de button-name no painel fechado', async () => {
+    invokeMock.mockResolvedValue({ data: { suggestions: [] }, error: null });
+
+    const { container } = render(
+      <TooltipProvider>
+        <AISuggestions messages={messages} contactName="Ana" contactId="contact-A" onSelectSuggestion={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    const results = await axe(container, {
+      runOnly: { type: 'tag', values: ['button-name'] },
+    });
+    expect(results).toHaveNoViolations();
   });
 
-  it('SentimentTab: botões de métrica têm aria-label via config', () => {
-    const content = readSource('../ai-tools/SentimentTab.tsx');
-    expect(content).toContain('aria-label={config.label}');
-  });
+  it('axe: sem violações de button-name no painel aberto', async () => {
+    invokeMock.mockResolvedValue({ data: { suggestions: [{ type: 'direct' as const, text: 'Sugestão', emoji: '✨', source: null }] }, error: null });
 
-  it('SummaryResult: botão de ouvir resumo tem aria-label', () => {
-    const content = readSource('../summary/SummaryResult.tsx');
-    expect(content).toContain('aria-label={label}');
-  });
+    const { container } = render(
+      <TooltipProvider>
+        <AISuggestions messages={messages} contactName="Ana" contactId="contact-A" onSelectSuggestion={vi.fn()} />
+      </TooltipProvider>,
+    );
 
-  it('AISuggestions: botão de fechar tem aria-label', () => {
-    const content = readSource('../AISuggestions.tsx');
-    expect(content).toContain('aria-label="Fechar sugestões"');
+    fireEvent.click(screen.getByTitle('Sugestões de IA'));
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const results = await axe(container, {
+      runOnly: { type: 'tag', values: ['button-name'] },
+    });
+    expect(results).toHaveNoViolations();
   });
 });

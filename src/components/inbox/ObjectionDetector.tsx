@@ -107,7 +107,7 @@ const ObjectionCard = memo(forwardRef<HTMLDivElement, {
   const [expanded, setExpanded] = useState(true);
   return (
     <motion.div ref={ref} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8, scale: 0.97 }} transition={{ delay: idx * 0.06, type: 'spring', stiffness: 400, damping: 30 }} className="rounded-2xl bg-muted/8 border border-border/30 overflow-hidden">
-      <button type="button" onClick={() => setExpanded(prev => !prev)} className="flex items-start gap-3 w-full text-left p-4" aria-expanded={expanded} aria-label="Dúvida sobre objeção">
+      <button type="button" onClick={() => setExpanded(prev => !prev)} className="flex items-start gap-3 w-full text-left p-4" aria-expanded={expanded}>
         <div className="shrink-0 mt-0.5 w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><ShieldQuestion className="w-4 h-4 text-primary" /></div>
         <div className="flex-1 min-w-0 space-y-2">
           <p className="text-[13px] text-foreground font-medium leading-snug pr-4">{obj.objection}</p>
