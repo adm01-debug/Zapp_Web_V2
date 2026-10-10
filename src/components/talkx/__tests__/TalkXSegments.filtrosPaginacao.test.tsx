@@ -300,8 +300,8 @@ describe('TalkXSegments · filtros e paginação da biblioteca (TL-135c)', () =>
     expect(screen.queryByText('Clientes recorrentes')).toBeNull();
     expect(params().get('segproprietario')).toBe('sem-proprietario');
 
-    // E a opção "Todos os proprietários" devolve a lista inteira.
-    escolherNoSelect('Proprietário', 'Todos os proprietários');
+    // O item "Todos" (sentinela 'all' da barra) devolve a lista inteira.
+    escolherNoSelect('Proprietário', 'Todos');
     expect(screen.getByText('Clientes VIP')).toBeTruthy();
     expect(screen.getByText('Órfão da base')).toBeTruthy();
     expect(params().get('segproprietario')).toBeNull();

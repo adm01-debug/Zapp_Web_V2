@@ -174,7 +174,9 @@ export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
             // A opção "Sem proprietário" cobre o segmento sem `created_by`
             // (SEGMENT_LIBRARY_OWNER_NONE): sem ela esses segmentos não teriam
             // como ser recortados, porque não entram na lista de criadores.
-            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: [...ownerOptions.map(([id, name]) => ({ value: id, label: name })), { value: SEGMENT_LIBRARY_OWNER_NONE, label: 'Sem proprietário' }] },
+            // O item "all" (value 'all', rótulo "Todos") é o sentinela da barra
+            // para "sem recorte" — é o que o pedido chama de "value '' rótulo Todos".
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos', options: [...ownerOptions.map(([id, name]) => ({ value: id, label: name })), { value: SEGMENT_LIBRARY_OWNER_NONE, label: 'Sem proprietário' }] },
           ]}
           values={{ origin: filterOrigin, status: filterStatus, tag: filterTag, owner: filterOwner }}
           onFilter={(k, v) => { setFilterValue(k as keyof SegmentLibraryFilters, v); }}
