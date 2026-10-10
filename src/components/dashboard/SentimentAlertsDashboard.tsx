@@ -20,7 +20,7 @@ export function SentimentAlertsDashboard() {
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2 opacity-50 cursor-not-allowed" disabled><ShieldAlert className="h-4 w-4 text-destructive" />Exportação Bloqueada</Button>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40"><Calendar className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40" aria-label="Filtrar período"><Calendar className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="14">Últimos 14 dias</SelectItem>
               <SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem>
