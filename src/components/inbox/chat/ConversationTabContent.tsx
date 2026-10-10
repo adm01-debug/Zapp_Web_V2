@@ -99,7 +99,8 @@ export function ConversationTabContent({
 
       {activeTab === 'orders' && (
         <Panel name="SalesView">
-          <SalesViewTab contactId={contactId} profileId={profileId ?? null} />
+          {/* `onTabChange` é obrigatório aqui: sem ele o "Ver no CRM" do Resumo comercial fica inerte. */}
+          <SalesViewTab contactId={contactId} profileId={profileId ?? null} onTabChange={onTabChange} />
         </Panel>
       )}
 

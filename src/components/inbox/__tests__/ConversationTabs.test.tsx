@@ -32,6 +32,16 @@ vi.mock('@/components/inbox/tabs/NotesTab', () => ({
   ),
 }));
 
+// Mesmo encanamento do NotesTab: o "Ver no CRM" do Resumo comercial (aba
+// SalesView) fica INERTE se `onTabChange` não for repassado por ConversationTabContent.
+vi.mock('@/components/inbox/tabs/SalesViewTab', () => ({
+  SalesViewTab: ({ contactId, onTabChange }: { contactId: string; onTabChange?: (tab: string) => void }) => (
+    <button data-testid="salesview-ver-crm" onClick={() => onTabChange?.('crm')}>
+      Ver no CRM → ({contactId})
+    </button>
+  ),
+}));
+
 const ABAS = ['chat', 'files', 'ia', 'crm', 'orders', 'history', 'tasks', 'notes'] as const;
 
 const COUNTS: ConversationTabCounts = {
@@ -185,6 +195,26 @@ describe('ConversationTabContent — repassa onTabChange às abas', () => {
     fireEvent.click(await screen.findByTestId('notes-ver-tarefas'));
 
     expect(onTabChange).toHaveBeenCalledWith('tasks');
+  });
+
+  it('o link "Ver no CRM" do Resumo comercial (SalesView) troca para a aba CRM 360°', async () => {
+    const onTabChange = vi.fn();
+    const conversation = { contact: { id: 'c1', name: 'Ana' } } as unknown as Conversation;
+
+    render(
+      <ConversationTabContent
+        activeTab="orders"
+        onTabChange={onTabChange}
+        conversation={conversation}
+        messages={[]}
+      >
+        {null}
+      </ConversationTabContent>,
+    );
+
+    fireEvent.click(await screen.findByTestId('salesview-ver-crm'));
+
+    expect(onTabChange).toHaveBeenCalledWith('crm');
   });
 });
 
