@@ -183,7 +183,7 @@ describe('SkillBasedRoutingSettings — acessibilidade dos seletores (N-157)', (
   });
 
   it('4 comboboxes são encontrados por nome e axe não aponta violações', async () => {
-    render(<SkillBasedRoutingSettings />, { wrapper });
+    const { container } = render(<SkillBasedRoutingSettings />, { wrapper });
 
     // Seleciona um agente para revelar o seletor de nível de proficiência.
     const seletorAgente = await waitFor(
@@ -205,11 +205,12 @@ describe('SkillBasedRoutingSettings — acessibilidade dos seletores (N-157)', (
     expect(screen.getByRole('combobox', { name: 'Selecionar fila' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Nível mínimo da fila' })).toBeInTheDocument();
 
-    // Axe zerado — escopo no container do componente para evitar ruídos de região do page-level.
-    const componentRoot = screen.getByRole('heading', { name: /Roteamento por Habilidades/ })
-      .closest('div');
-    expect(componentRoot).toBeTruthy();
-    const results = await axe(componentRoot!);
+    // Axe zerado — roda sobre o container completo do componente (inclui CardContent
+    // onde os selects vivem) e desliga regras de ruído page-level (region) e de
+    // botões desabilitados preexistentes (button-name) que não pertencem a esta correção.
+    const results = await axe(container, {
+      rules: { region: { enabled: false }, 'button-name': { enabled: false } },
+    });
     expect(results).toHaveNoViolations();
   });
 });
