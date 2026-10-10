@@ -117,12 +117,16 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
           };
         });
         // Bucket privado: o perfil guarda só o caminho; assina para exibir no painel.
+        // Legado: avatar_url pode ser a URL pública completa — normaliza para
+        // caminho antes de assinar, senão a imagem quebra com o bucket privado.
         const usersWithSignedAvatars = await Promise.all(
           usersWithRoles.map(async (user) => {
-            if (!user.avatar_url || isStorageUrl(user.avatar_url)) return user;
+            if (!user.avatar_url) return user;
+            const objectPath = avatarObjectPath(user.avatar_url);
+            if (!objectPath || isStorageUrl(objectPath)) return user;
             const { data, error } = await supabase.storage
               .from(AVATAR_BUCKET)
-              .createSignedUrl(user.avatar_url, AVATAR_SIGNED_URL_TTL_SECONDS);
+              .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS);
             if (error || !data?.signedUrl) {
               log.warn('avatar_signed_url_error', { error: error?.message ?? 'sem signedUrl' });
               return user;
