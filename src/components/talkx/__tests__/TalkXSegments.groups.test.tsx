@@ -248,18 +248,20 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
 
     // O catálogo de filtros adiciona a condição com o campo — e o campo traz o tipo.
-    for (const filtro of ['Lead score', 'Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
+    // Lead score fica "em breve" (nada calcula a coluna): botão desabilitado, não adiciona condição.
+    expect(screen.getByRole('button', { name: /Lead score/ })).toBeDisabled();
+    for (const filtro of ['Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
       fireEvent.click(screen.getByRole('button', { name: filtro }));
     }
     adicionarCondicao(0);
 
-    // Ícone por tipo de campo (number, text, date, uuid, enum, array).
-    for (const icone of ['hash', 'type', 'calendar-days', 'user', 'list-filter', 'tags']) {
+    // Ícone por tipo de campo (text, date, uuid, enum, array); o number só existe em campos "em breve".
+    for (const icone of ['type', 'calendar-days', 'user', 'list-filter', 'tags']) {
       expect(container.querySelector(`svg.lucide-${icone}`), `ícone ${icone}`).not.toBeNull();
     }
 
     // Linha vertical com um nó por condição.
     expect(container.querySelector('[data-talkx-line]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(6);
+    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(5);
   });
 });
