@@ -16,7 +16,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 postgres_image="${TALKX_N102_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-talkx-n102-window-${RANDOM}-$$"
 base_mig="$repo_root/supabase/migrations/20261009203548_talkx_campaigns_send_weekdays_dnd.sql"
-fix_mig="$(ls "$repo_root"/supabase/migrations/*_talkx_n102_window_send_fixes.sql 2>/dev/null | tail -n 1 || true)"
+fix_mig="$(ls "$repo_root"/supabase/migrations/*_talkx_n102_window_fixes.sql 2>/dev/null | tail -n 1 || true)"
 skip_fix="${TALKX_N102_SKIP_FIX:-0}"
 profile_id="10000000-0000-0000-0000-000000000001"
 user_id="aaaaaaaa-0000-0000-0000-000000000001"
@@ -39,7 +39,7 @@ ok() { printf '[ok] %s\n' "$1"; }
 psql_test() { docker exec -i "$container_name" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
 [[ -f "$base_mig" ]] || fail "migration base 20261009203548 não encontrada"
-[[ -n "$fix_mig" && -f "$fix_mig" ]] || fail "migration *_talkx_n102_window_send_fixes.sql não encontrada"
+[[ -n "$fix_mig" && -f "$fix_mig" ]] || fail "migration *_talkx_n102_window_fixes.sql não encontrada"
 
 if [[ "$skip_fix" == "1" ]]; then
   printf '[info] modo VERMELHO: correção NÃO aplicada (só a migration de 20261009203548)\n'

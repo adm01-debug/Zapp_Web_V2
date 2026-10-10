@@ -436,7 +436,7 @@ jobs:
       - name: Simular correção da janela de envio da campanha Talk X (N-102)
         env:
           TALKX_N102_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102-window-send.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-n102-window.test.sh
 
       - name: Simular correção do vazamento 22009 na RPC Talk X (V09e)
         env:

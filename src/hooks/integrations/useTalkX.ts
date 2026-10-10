@@ -70,10 +70,6 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
-  // N-102: dias da semana permitidos para envio (0=dom, 6=sáb; nulo=todos).
-  send_weekdays?: number[] | null;
-  // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
-  respect_dnd?: boolean | null;
 }
 
 export interface TalkXRecipient {
