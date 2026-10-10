@@ -1,27 +1,20 @@
 #!/usr/bin/env bash
-# Harness descartavel (postgres:17-alpine): save_talkx_template_variants.
-#
-# Prova:
-#   RED  — a funcao nao existe antes da migration;
-#   GREEN — a migration aplica, a funcao existe, EXECUTE e RLS funcionam.
-#
-# Casos:
-#   (a) authenticated pode chamar a RPC (EXECUTE concedido);
-#   (b) anon nao pode chamar a RPC (EXECUTE negado);
-#   (c) a funcao retorna not_authorized para usuario sem permisso;
-#   (d) a funcao retorna template_not_found para template inexistente;
-#   (e) a funcao retorna stale_template quando updated_at diverge;
-#   (f) 0 variantes e permitido;
-#   (g) variante com recipients nao pode ser removida;
-#   (h) peso diferente de 100 retorna weights_must_sum_to_100;
-#   (i) conteudo vazio retorna exactly_one_variant_must_have_content;
-#   (j) label invalido retorna invalid_label;
-#   (k) label duplicado retorna duplicate_label;
-#   (l) id de variante inexistente retorna variant_not_found.
+# Harness descartavel (postgres:17-alpine): public.save_talkx_template_variants.
+# RED: a migration anterior falha as provas novas (id preservado, sucesso 2/3, payload
+# invalido, peso nulo/0, id nao-uuid). GREEN: a migration nova passa todas.
+# A chamada da RPC sai de `SET LOCAL ROLE authenticated` + claims (auth.uid() real).
+# Casos: (a) EXECUTE p/ authenticated; (b) anon sem EXECUTE; (c) not_authorized;
+# (d) template_not_found; (e) stale_template; (f) 0 variantes; (g) variante com
+# destinatario nao removida; (h) pesos != 100; (i) sem controle; (j) invalid_label;
+# (k) duplicate_label; (l) variant_not_found; (m) payload nao-array; (n) peso nulo/<=0;
+# (o) id nao-uuid; (p) sucesso 2 variantes; (q) sucesso 3 variantes; (r) id preservado;
+# (s) remocao sem destinatario; (t) id preservado com label trocado.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-fail() { printf '[FALHA] %s\n' "$1" >&2; exit 1; }
+migration="${TALKX_VARIANTS_MIGRATION_FILE:-$repo_root/supabase/migrations/20261010151242_save_talkx_template_variants.sql}"
+fail() { printf '[FALHA] %s\n' "$1" >&2; failures=$((failures + 1)); }
+failures=0
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
 test_password='talkx_variants_test_only'
@@ -87,14 +80,7 @@ CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
     WHERE user_id = _user_id AND role IN ('admin', 'supervisor')
   )
 $$;
-
-CREATE FUNCTION public.current_profile_id() RETURNS uuid
-  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1
-$$;
-
 GRANT EXECUTE ON FUNCTION public.is_admin_or_supervisor(uuid) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.current_profile_id() TO authenticated, anon, service_role;
 
 CREATE TABLE public.talkx_templates (
   id uuid PRIMARY KEY,
@@ -127,143 +113,140 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- RLS ligado; a RPC e SECURITY DEFINER (roda como o dono), logo nao depende de policy no harness.
 ALTER TABLE public.talkx_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.talkx_template_variants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.talkx_recipients ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY talkx_template_variants_select ON public.talkx_template_variants
-  FOR SELECT USING (true);
-
-CREATE POLICY talkx_template_variants_write ON public.talkx_template_variants
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.talkx_templates tmpl
-      JOIN public.profiles prof ON prof.id = auth.uid()
-      WHERE tmpl.id = template_id
-        AND (tmpl.created_by = auth.uid() OR prof.role IN ('admin', 'supervisor'))
-    )
-  );
-
-CREATE POLICY talkx_recipients_select ON public.talkx_recipients
-  FOR SELECT USING (true);
-
-CREATE POLICY talkx_recipients_write ON public.talkx_recipients
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.talkx_templates tmpl
-      JOIN public.profiles prof ON prof.id = auth.uid()
-      WHERE tmpl.id = template_id
-        AND (tmpl.created_by = auth.uid() OR prof.role IN ('admin', 'supervisor'))
-    )
-  );
 SQL
 
-# ---- criacao do owner e admin ----
+# ---- criacao do owner, admin e outro usuario ----
 psql_test >/dev/null <<SQL
 INSERT INTO public.profiles (id, user_id, role) VALUES
   ('$profile_owner', '$user_owner', 'agent'),
   ('$profile_admin', '$user_admin', 'admin'),
   ('$profile_other', '$user_other', 'agent');
-
-INSERT INTO public.user_roles (user_id, role) VALUES
-  ('$user_admin', 'admin');
-SQL
-
-# ---- RED: funcao nao existia antes ----
-# O RED e implicito: se a migration falhou, o teste ja teria parado.
-
-# ---- aplicar a migration da funcao ----
-[[ -f "$repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql" ]] \
-  || fail "migration ausente: $repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql"
-psql_test < "$repo_root/supabase/migrations/20261010090000_save_talkx_template_variants.sql" >/dev/null \
-  || fail 'GREEN: a migration save_talkx_template_variants falhou ao aplicar'
-
-# ---- GREEN: provas ----
-
-# (a) authenticated pode chamar a RPC
-auth_exec="$(psql_test -Atqc "SELECT has_function_privilege('authenticated', 'public.save_talkx_template_variants(uuid, timestamptz, jsonb)', 'EXECUTE')")"
-[[ "$auth_exec" == 't' ]] || fail "GREEN: authenticated deveria ter EXECUTE na RPC"
-
-# (b) anon nao pode chamar a RPC
-anon_exec="$(psql_test -Atqc "SELECT has_function_privilege('anon', 'public.save_talkx_template_variants(uuid, timestamptz, jsonb)', 'EXECUTE')")"
-[[ "$anon_exec" == 'f' ]] || fail "GREEN: anon nao deveria ter EXECUTE na RPC"
-
-# Inserir template para testes de permissao
-psql_test >/dev/null <<SQL
+INSERT INTO public.user_roles (user_id, role) VALUES ('$user_admin', 'admin');
 INSERT INTO public.talkx_templates (id, name, category, content, status, created_by)
 VALUES ('$template_id', 'template teste', 'geral', 'conteudo original', 'approved', '$profile_owner');
 SQL
 
-# (c) usuario sem permisso eh rejeitado (not_authorized)
-# Simula authenticated como user_other (nao e dono do template nem admin)
-no_perm_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_other'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, NULL, '[{\"label\":\"A\",\"content\":\"conteudo\",\"weight\":100}]'::jsonb);")"
-[[ "$no_perm_result" == *'"ok": false'* ]] || fail "GREEN: usuario sem permisso deveria ser rejeitado (got: $no_perm_result)"
-[[ "$no_perm_result" == *'not_authorized'* ]] || fail "GREEN: usuario sem permisso deveria retornar not_authorized (got: $no_perm_result)"
+# ---- aplicar a migration da funcao ----
+[[ -f "$migration" ]] || fail "migration ausente: $migration"
+psql_test < "$migration" >/dev/null || fail 'GREEN: a migration save_talkx_template_variants falhou ao aplicar'
 
-# (d) template inexistente retorna template_not_found
-not_found_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('00000000-0000-0000-0000-000000000099'::uuid, NULL, '[{\"label\":\"A\",\"content\":\"conteudo\",\"weight\":100}]'::jsonb);")"
-[[ "$not_found_result" == *'"ok": false'* ]] || fail "GREEN: template inexistente deveria retornar erro (got: $not_found_result)"
-[[ "$not_found_result" == *'template_not_found'* ]] || fail "GREEN: template inexistente deveria retornar template_not_found (got: $not_found_result)"
+# ---- helpers ----
+call_rpc() { # $1=template $2=uid $3=expected_updated_at $4=variants json
+  local sql
+  sql="$(printf 'BEGIN; SET LOCAL ROLE authenticated; SET LOCAL request.jwt.claim.sub = %s; SET LOCAL request.jwt.claim.role = %s; SELECT public.save_talkx_template_variants(%s::uuid, %s, %s::jsonb); COMMIT;' \
+    "'$2'" "'authenticated'" "'$1'" "$3" "'$4'")"
+  psql_test -Atqc "$sql" || true
+}
+assert_ok()  { [[ "$1" == *'"ok": true'*  ]] || fail "$2: esperava ok=true (got: $1)"; }
+assert_err() { [[ "$1" == *'"ok": false'* ]] || fail "$3: esperava ok=false (got: $1)"; [[ "$1" == *"$2"* ]] || fail "$3: esperava $2 (got: $1)"; }
+variant_count() { psql_test -Atqc "SELECT COUNT(*) FROM public.talkx_template_variants WHERE template_id = '$template_id'"; }
+expected_ts() { psql_test -Atqc "SELECT updated_at FROM public.talkx_templates WHERE id = '$template_id'"; }
+expected_arg() { printf "'%s'::timestamptz" "$(expected_ts)"; }
 
-# (e) optimistic locking: updated_at divergido retorna stale_template
-psql_test >/dev/null <<SQL
-UPDATE public.talkx_templates SET updated_at = '2020-01-01' WHERE id = '$template_id';
-SQL
+# (a) authenticated tem EXECUTE
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated', 'public.save_talkx_template_variants(uuid, timestamptz, jsonb)', 'EXECUTE')")" == 't' ]] \
+  || fail 'GREEN: authenticated deveria ter EXECUTE na RPC'
 
-stale_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, '2019-01-01'::timestamptz, '[{\"label\":\"A\",\"content\":\"conteudo\",\"weight\":100}]'::jsonb);")"
-[[ "$stale_result" == *'"ok": false'* ]] || fail "GREEN: updated_at divergido deveria retornar stale_template (got: $stale_result)"
-[[ "$stale_result" == *'stale_template'* ]] || fail "GREEN: updated_at divergido deveria retornar stale_template (got: $stale_result)"
+# (b) anon nao tem EXECUTE
+[[ "$(psql_test -Atqc "SELECT has_function_privilege('anon', 'public.save_talkx_template_variants(uuid, timestamptz, jsonb)', 'EXECUTE')")" == 'f' ]] \
+  || fail 'GREEN: anon nao deveria ter EXECUTE na RPC'
 
-# (f) 0 variantes e permitido (remove todas sem recipients)
-# Reset updated_at para evitar stale_template dos testes anteriores
-psql_test >/dev/null <<SQL
-UPDATE public.talkx_templates SET updated_at = now() WHERE id = '$template_id';
-SQL
-zero_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, (SELECT updated_at FROM public.talkx_templates WHERE id = '$template_id'), '[]'::jsonb);")"
-[[ "$zero_result" == *'"ok": true'* ]] || fail "GREEN: 0 variantes deveria ser aceito (got: $zero_result)"
+# (c) usuario sem permissao -> not_authorized
+assert_err "$(call_rpc "$template_id" "$user_other" NULL '[{"label":"A","content":"conteudo","weight":100}]')" not_authorized 'usuario sem permissao'
 
-# Inserir variante para testes de recipients
+# (d) template inexistente -> template_not_found
+assert_err "$(call_rpc '00000000-0000-0000-0000-000000000099' "$user_owner" NULL '[{"label":"A","content":"conteudo","weight":100}]')" template_not_found 'template inexistente'
+
+# (e) optimistic locking -> stale_template
+psql_test -Atqc "UPDATE public.talkx_templates SET updated_at = '2020-01-01' WHERE id = '$template_id'" >/dev/null
+assert_err "$(call_rpc "$template_id" "$user_owner" "'2019-01-01'::timestamptz" '[{"label":"A","content":"conteudo","weight":100}]')" stale_template 'updated_at divergido'
+psql_test -Atqc "UPDATE public.talkx_templates SET updated_at = now() WHERE id = '$template_id'" >/dev/null
+
+# (f) 0 variantes permitido
+psql_test -Atqc "DELETE FROM public.talkx_template_variants WHERE template_id = '$template_id'" >/dev/null
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[]')"
+assert_ok "$r" '0 variantes'
+[[ "$(variant_count)" == 0 ]] || fail '0 variantes: esperava 0 linhas'
+
+# (g) variante com destinatario nao pode ser removida
 psql_test >/dev/null <<SQL
 INSERT INTO public.talkx_template_variants (id, template_id, label, content, weight)
 VALUES ('$variant_id', '$template_id', 'A', 'conteudo variante', 100);
-INSERT INTO public.talkx_recipients (id, template_id, variant_id)
-VALUES ('$recipient_id', '$template_id', '$variant_id');
+INSERT INTO public.talkx_recipients (id, template_id, variant_id) VALUES ('$recipient_id', '$template_id', '$variant_id');
 SQL
-
-# (g) variante com recipients nao pode ser removida (talkx_variant_in_use)
-has_recipients_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, (SELECT updated_at FROM public.talkx_templates WHERE id = '$template_id'), '[]'::jsonb);")"
-[[ "$has_recipients_result" == *'"ok": false'* ]] || fail "GREEN: variante com recipients deveria ser rejeitada (got: $has_recipients_result)"
-[[ "$has_recipients_result" == *'talkx_variant_in_use'* ]] || fail "GREEN: variante com recipients deveria retornar talkx_variant_in_use (got: $has_recipients_result)"
-
-# Limpa recipients para proximos testes
+assert_err "$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[]')" talkx_variant_in_use 'variante com destinatario'
 psql_test >/dev/null <<SQL
 DELETE FROM public.talkx_recipients WHERE id = '$recipient_id';
 DELETE FROM public.talkx_template_variants WHERE id = '$variant_id';
 SQL
 
-# (h) peso diferente de 100 retorna weights_must_sum_to_100
-weight_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, (SELECT updated_at FROM public.talkx_templates WHERE id = '$template_id'), '[{\"label\":\"A\",\"content\":\"conteudo\",\"weight\":50},{\"label\":\"B\",\"content\":\"\",\"weight\":40}]'::jsonb);")"
-[[ "$weight_result" == *'"ok": false'* ]] || fail "GREEN: peso != 100 deveria ser rejeitado (got: $weight_result)"
-[[ "$weight_result" == *'weights_must_sum_to_100'* ]] || fail "GREEN: peso != 100 deveria retornar weights_must_sum_to_100 (got: $weight_result)"
+# (h) pesos != 100
+assert_err "$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"label":"A","content":"conteudo","weight":50},{"label":"B","content":"","weight":40}]')" weights_must_sum_to_100 'peso != 100'
 
-# (i) sem conteudo retorna exactly_one_variant_must_have_content
-no_content_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, (SELECT updated_at FROM public.talkx_templates WHERE id = '$template_id'), '[{\"label\":\"A\",\"content\":\"\",\"weight\":50},{\"label\":\"B\",\"content\":\"\",\"weight\":50}]'::jsonb);")"
-[[ "$no_content_result" == *'"ok": false'* ]] || fail "GREEN: conteudo vazio deveria ser rejeitado (got: $no_content_result)"
-[[ "$no_content_result" == *'exactly_one_variant_must_have_content'* ]] || fail "GREEN: conteudo vazio deveria retornar exactly_one_variant_must_have_content (got: $no_content_result)"
+# (i) sem controle
+assert_err "$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"label":"A","content":"","weight":50},{"label":"B","content":"","weight":50}]')" exactly_one_variant_must_have_content 'conteudo vazio'
 
-# (j) label invalido retorna invalid_label
-invalid_label_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, NULL, '[{\"label\":\"D\",\"content\":\"conteudo\",\"weight\":50},{\"label\":\"A\",\"content\":\"\",\"weight\":50}]'::jsonb);")"
-[[ "$invalid_label_result" == *'"ok": false'* ]] || fail "GREEN: label invalido deveria ser rejeitado (got: $invalid_label_result)"
-[[ "$invalid_label_result" == *'invalid_label'* ]] || fail "GREEN: label invalido deveria retornar invalid_label (got: $invalid_label_result)"
+# (j) label invalido
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"label":"D","content":"conteudo","weight":50},{"label":"A","content":"","weight":50}]')" invalid_label 'label invalido'
 
-# (k) label duplicado retorna duplicate_label
-dup_label_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, NULL, '[{\"label\":\"A\",\"content\":\"conteudo A\",\"weight\":50},{\"label\":\"A\",\"content\":\"\",\"weight\":50}]'::jsonb);")"
-[[ "$dup_label_result" == *'"ok": false'* ]] || fail "GREEN: label duplicado deveria ser rejeitado (got: $dup_label_result)"
-[[ "$dup_label_result" == *'duplicate_label'* ]] || fail "GREEN: label duplicado deveria retornar duplicate_label (got: $dup_label_result)"
+# (k) label duplicado
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"label":"A","content":"conteudo A","weight":50},{"label":"A","content":"","weight":50}]')" duplicate_label 'label duplicado'
 
-# (l) id de variante inexistente retorna variant_not_found
-not_found_variant_result="$(psql_test -Atqc "SET request.jwt.claim.sub = '$user_owner'; SET request.jwt.claim.role = 'authenticated'; SELECT public.save_talkx_template_variants('$template_id'::uuid, NULL, '[{\"id\":\"00000000-0000-0000-0000-000000000099\",\"label\":\"A\",\"content\":\"conteudo\",\"weight\":50},{\"label\":\"B\",\"content\":\"\",\"weight\":50}]'::jsonb);")"
-[[ "$not_found_variant_result" == *'"ok": false'* ]] || fail "GREEN: variante inexistente deveria ser rejeitada (got: $not_found_variant_result)"
-[[ "$not_found_variant_result" == *'variant_not_found'* ]] || fail "GREEN: variante inexistente deveria retornar variant_not_found (got: $not_found_variant_result)"
+# (l) id inexistente -> variant_not_found
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"id":"00000000-0000-0000-0000-000000000099","label":"A","content":"conteudo","weight":50},{"label":"B","content":"","weight":50}]')" variant_not_found 'id inexistente'
 
-printf '[OK] save_talkx_template_variants: todas as provas GREEN passaram\n'
+# (p) sucesso: 2 variantes, um controle, soma 100
+psql_test -Atqc "DELETE FROM public.talkx_template_variants WHERE template_id = '$template_id'" >/dev/null
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"label":"A","content":"conteudo A","weight":60},{"label":"B","content":"","weight":40}]')"
+assert_ok "$r" 'sucesso 2 variantes'
+[[ "$r" == *'"saved_count": 2'* ]] || fail "2 variantes: esperava saved_count 2 (got: $r)"
+[[ "$(variant_count)" == 2 ]] || fail '2 variantes: esperava 2 linhas'
+id_a="$(psql_test -Atqc "SELECT id FROM public.talkx_template_variants WHERE template_id = '$template_id' AND label = 'A'")"
+
+# (q) sucesso: 3 variantes (atualiza A por id, cria B e C)
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"id":"'"$id_a"'","label":"A","content":"conteudo A v2","weight":40},{"label":"B","content":"","weight":30},{"label":"C","content":"","weight":30}]')"
+assert_ok "$r" 'sucesso 3 variantes'
+[[ "$r" == *'"saved_count": 3'* ]] || fail "3 variantes: esperava saved_count 3 (got: $r)"
+[[ "$(variant_count)" == 3 ]] || fail '3 variantes: esperava 3 linhas'
+
+# (r) id existente preservado com conteudo novo
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"id":"'"$id_a"'","label":"A","content":"conteudo A v3","weight":40},{"label":"B","content":"","weight":30},{"label":"C","content":"","weight":30}]')"
+assert_ok "$r" 'id preservado'
+[[ "$(variant_count)" == 3 ]] || fail 'id preservado: contagem mudou'
+[[ "$(psql_test -Atqc "SELECT content FROM public.talkx_template_variants WHERE id = '$id_a'")" == 'conteudo A v3' ]] || fail 'id preservado: conteudo nao atualizado'
+[[ "$(psql_test -Atqc "SELECT COUNT(*) FROM public.talkx_template_variants WHERE id = '$id_a'")" == 1 ]] || fail 'id preservado: id sumiu'
+
+# (s) variante sem destinatario e removida (B e C saem, voltam como novos)
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"id":"'"$id_a"'","label":"A","content":"conteudo A v3","weight":60},{"label":"B","content":"","weight":40}]')"
+assert_ok "$r" 'remocao sem destinatario'
+[[ "$(variant_count)" == 2 ]] || fail 'remocao: esperava 2 linhas'
+[[ "$(psql_test -Atqc "SELECT COUNT(*) FROM public.talkx_template_variants WHERE template_id = '$template_id' AND label = 'C'")" == 0 ]] || fail 'remocao: label C deveria sumir'
+id_b="$(psql_test -Atqc "SELECT id FROM public.talkx_template_variants WHERE template_id = '$template_id' AND label = 'B'")"
+
+# (t) id existente preservado com label trocado (A -> C), sem colisao
+r="$(call_rpc "$template_id" "$user_owner" "$(expected_arg)" '[{"id":"'"$id_a"'","label":"C","content":"conteudo A v4","weight":60},{"id":"'"$id_b"'","label":"B","content":"","weight":40}]')"
+assert_ok "$r" 'id preservado com label trocado'
+[[ "$(psql_test -Atqc "SELECT label FROM public.talkx_template_variants WHERE id = '$id_a'")" == 'C' ]] || fail 'label trocado: id_a deveria estar em C'
+[[ "$(psql_test -Atqc "SELECT label FROM public.talkx_template_variants WHERE id = '$id_b'")" == 'B' ]] || fail 'label trocado: id_b deveria seguir em B'
+[[ "$(variant_count)" == 2 ]] || fail 'label trocado: esperava 2 linhas'
+
+# (m) payload nao-array -> invalid_variants_payload
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '{"a":1}')" invalid_variants_payload 'payload nao-array'
+
+# (n) peso nulo / <= 0 -> invalid_weight
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"label":"A","content":"conteudo","weight":null},{"label":"B","content":"","weight":100}]')" invalid_weight 'peso nulo'
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"label":"A","content":"conteudo","weight":0},{"label":"B","content":"","weight":100}]')" invalid_weight 'peso zero'
+
+# (o) id nao-uuid -> invalid_variant_id
+assert_err "$(call_rpc "$template_id" "$user_owner" NULL '[{"id":"nao-uuid","label":"A","content":"conteudo","weight":50},{"label":"B","content":"","weight":50}]')" invalid_variant_id 'id nao-uuid'
+
+if [[ "$failures" -eq 0 ]]; then
+  printf '[OK] save_talkx_template_variants: todas as provas GREEN passaram\n'
+else
+  printf '[FALHA] save_talkx_template_variants: %s prova(s) falharam\n' "$failures" >&2
+  exit 1
+fi
