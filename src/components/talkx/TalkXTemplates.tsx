@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight,
@@ -14,6 +15,7 @@ import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useT
 import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
+import { parseTalkXTemplateRoute, pushTalkXTemplateRoute, replaceTalkXTemplateRoute, type TalkXTemplateRoute } from './talkxTemplateRoute';
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -74,14 +76,84 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
   const trocarModo = (modo: GalleryMode) => { setGalleryMode(modo); salvarModoGaleria(modo); };
 
-  const openNew = () => { setEditing(null); setMode('edit'); };
-  const openEdit = (t: TalkXTemplate) => { setEditing(t); setMode('edit'); };
+  // X094 — o editor da tela 05 vive no endereço
+  // (`?view=talkx&tab=templates&template=<id|new>&ttab=conteudo|ab|historico`): o link
+  // direto abre o template, o F5 mantém a tela e voltar/avançar do navegador fecham e
+  // reabrem. `route` é o que o endereço pede — a fonte de verdade do editor aberto.
+  const [route, setRoute] = useState<TalkXTemplateRoute | null>(
+    () => parseTalkXTemplateRoute(window.location.search).route,
+  );
 
-  // R2-MOD-039: o menu do topo ("Templates ▾ → Novo template") abre o editor VAZIO. O modo
-  // é DERIVADO do pedido (não sincronizado por efeito, para não disparar render em cascata),
-  // e o editor do novo template tem `key` própria para não herdar os campos do template que
-  // estivesse aberto — "novo" aqui é sempre em branco.
-  const viewMode: ViewMode = startNew ? 'edit' : mode;
+  // Template que o endereço pede; `template=new` é o editor vazio, sem linha na consulta.
+  const routedTemplate = useMemo(
+    () => (route && route.templateId !== 'new'
+      ? templates.find((candidate) => candidate.id === route.templateId) ?? null
+      : null),
+    [route, templates],
+  );
+
+  const openEditorAt = useCallback((nextRoute: TalkXTemplateRoute) => {
+    setRoute(nextRoute);
+    pushTalkXTemplateRoute(nextRoute);
+  }, []);
+
+  // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
+  // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
+  // (R2-MOD-024 decide que só a biblioteca troca o template ativo).
+  const mirrorEditorTemplate = useCallback((templateId: string) => {
+    const current = parseTalkXTemplateRoute(window.location.search).route;
+    replaceTalkXTemplateRoute({ templateId, ttab: current?.ttab ?? 'conteudo' });
+  }, []);
+
+  // Fechar o editor (salvar, duplicar ou Voltar) devolve a biblioteca e o endereço.
+  const closeEditor = useCallback(() => {
+    setRoute(null);
+    replaceTalkXTemplateRoute(null);
+    onStartNewHandled?.();
+  }, [onStartNewHandled]);
+
+  const openNew = () => { setEditing(null); setMode('edit'); openEditorAt({ templateId: 'new', ttab: 'conteudo' }); };
+  const openEdit = (t: TalkXTemplate) => { setEditing(t); setMode('edit'); openEditorAt({ templateId: t.id, ttab: 'conteudo' }); };
+
+  const syncFromBrowserHistory = useCallback(() => {
+    const parsed = parseTalkXTemplateRoute(window.location.search);
+    if (parsed.needsNormalization) replaceTalkXTemplateRoute(parsed.route);
+    // O histórico é a fonte de verdade do que está aberto: o editor da visita
+    // anterior não sobrevive à navegação.
+    setRoute(parsed.route);
+  }, []);
+
+  useEffect(() => {
+    const initial = parseTalkXTemplateRoute(window.location.search);
+    if (initial.needsNormalization) replaceTalkXTemplateRoute(initial.route);
+    window.addEventListener('popstate', syncFromBrowserHistory);
+    return () => {
+      window.removeEventListener('popstate', syncFromBrowserHistory);
+      // Sair da aba fecha o editor: o endereço da tela 05 não sobrevive à visita
+      // (voltar pela Biblioteca mostra a lista, não o editor que ficou aberto).
+      replaceTalkXTemplateRoute(null);
+    };
+  }, [syncFromBrowserHistory]);
+
+  // Id que a consulta não devolve (apagado, de outra conta ou digitado à mão): a
+  // tela cai na biblioteca e o endereço perde o parâmetro, sem criar entrada no
+  // histórico — o mesmo desenho do wizard quando a campanha do endereço não existe.
+  useEffect(() => {
+    if (!route || route.templateId === 'new' || isLoading || routedTemplate) return;
+    replaceTalkXTemplateRoute(null);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (!isError) toast.error('Template não encontrado ou sem acesso.');
+  }, [isError, isLoading, route, routedTemplate]);
+
+  // R2-MOD-039: o menu do topo ("Templates ▾ → Novo template") abre o editor VAZIO.
+  // X094: o pedido vira endereço e é o endereço que dirige o editor — o popstate
+  // disparado aqui (mesma mecânica do goTab) é quem atualiza o estado da tela.
+  useEffect(() => {
+    if (!startNew) return;
+    pushTalkXTemplateRoute({ templateId: 'new', ttab: 'conteudo' });
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    onStartNewHandled?.();
+  }, [onStartNewHandled, startNew]);
 
   const filtered = useMemo(() => {
     let r = templates;
@@ -113,15 +185,31 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
   const limparFiltros = () => { clearFilters(); setPage(1); };
 
-  if (viewMode === 'edit') {
+  if (route && (route.templateId === 'new' || routedTemplate)) {
     return (
       <TalkXTemplateEditor
-        key={startNew ? 'novo-template' : (editing?.id ?? 'novo-template')}
+        key={route.templateId === 'new' ? 'novo-template' : `template-${route.templateId}`}
         templates={templates}
         isLoading={isLoading}
-        editing={startNew ? null : editing}
-        onClose={() => { setMode('list'); onStartNewHandled?.(); }}
+        editing={route.templateId === 'new' ? null : routedTemplate}
+        initialTtab={route.ttab}
+        onActiveTemplateChange={mirrorEditorTemplate}
+        onClose={closeEditor}
       />
+    );
+  }
+
+  if (route) {
+    // O endereço pede um template que a consulta ainda não devolveu: esqueleto no
+    // lugar da biblioteca, para o F5 do link direto não piscar a lista primeiro.
+    return (
+      <div
+        className="min-h-full w-full min-w-0"
+        role="status" aria-live="polite" aria-busy={isLoading} data-talkx-query="loading"
+      >
+        <span className="sr-only">Carregando conteúdo…</span>
+        <TalkXSkeletonRows rows={4} />
+      </div>
     );
   }
 
