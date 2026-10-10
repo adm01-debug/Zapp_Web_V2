@@ -31,6 +31,28 @@ import {
 export { personalize, randomBetween, hmacTokenForRecipient };
 
 /**
+ * Constrói a URL de rastreamento de um link talkx-link para um destinatário.
+ *
+ * Quando TALKX_CONVERT_SECRET está configurado, o parâmetro `r` contém o
+ * token HMAC-SHA256 do recipient_id — nunca o recipient_id em si.
+ * Quando o secret não está configurado, o comportamento é o anterior:
+ * o recipient_id codificado aparece no URL.
+ */
+export async function buildTalkxLinkUrl(
+  slug: string,
+  recipientId: string,
+  secret: string | undefined,
+  configuredBase: string,
+  supabaseUrl: string,
+): Promise<string> {
+  const token = secret ? await hmacTokenForRecipient(recipientId) : undefined;
+  const rParam = token ?? encodeURIComponent(recipientId);
+  return configuredBase.length > 0
+    ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${rParam}`
+    : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${rParam}`;
+}
+
+/**
  * IA-047 — chave estável (SHA-256 em hex) do pedido de envio de TESTE, derivada
  * dos campos que definem o pedido. Determinística: o mesmo pedido produz a MESMA
  * chave, então repetir o clique cai na UNIQUE de `talkx_test_send_claims`.
@@ -461,11 +483,7 @@ export async function handleTalkxSend(
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
       const secret = Deno.env.get("TALKX_CONVERT_SECRET");
       const urlFor = async (slug: string, recipientId: string): Promise<string> => {
-        const token = secret ? await hmacTokenForRecipient(recipientId) : undefined;
-        const rParam = token ?? encodeURIComponent(recipientId);
-        return configuredBase.length > 0
-          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${rParam}`
-          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${rParam}`;
+        return buildTalkxLinkUrl(slug, recipientId, secret, configuredBase, supabaseUrl);
       };
       const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
       const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;

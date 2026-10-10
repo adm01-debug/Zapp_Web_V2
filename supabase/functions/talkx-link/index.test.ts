@@ -459,3 +459,14 @@ Deno.test("POST com value acima do teto (erro da RPC) devolve 422 sem vazar text
   const body = await res.json();
   assert(!JSON.stringify(body).includes("exceeds_max"), `vazou texto do banco: ${JSON.stringify(body)}`);
 });
+
+Deno.test("GET com token HMAC de um recipient diferente do URL é rejeitado com 401", async () => {
+  const supabase = makeFakeSupabase();
+  const recipientA = "recipient-aaa-different";
+  const recipientB = "recipient-bbb-different";
+  const token = await hmacHex(CONVERT_SECRET, recipientA);
+  const url = `/talkx-link?s=abc123&r=${encodeURIComponent(recipientB)}&t=${encodeURIComponent(token)}`;
+  const req = new Request(`http://localhost${url}`, { method: "GET" });
+  const res = await handleTalkxLink(req, { supabase, env: makeEnv() });
+  assert(res.status === 401, `token de ${recipientA} deve ser rejeitado quando URL usa ${recipientB}, status=${res.status}`);
+});
