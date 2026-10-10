@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { EmojiPicker, QuickReactionPicker } from '@/components/ui/emoji-picker';
 
 // N-200 — o botão que abre o seletor de emoji tem nome acessível.
@@ -44,5 +45,32 @@ describe('EmojiPicker — botão que abre o seletor tem nome acessível', () => 
     render(<QuickReactionPicker onReact={onReact} />);
     const like = screen.getByRole('button', { name: '👍' });
     expect(like.tagName).toBe('BUTTON');
+  });
+
+  // jsdom não tem layout: contraste fica fora (mesmo padrão dos *.a11y do
+  // repo); o alvo aqui é estrutural — botão sem nome (regra button-name).
+  // O <main> contém o fragmento para a regra `region` não mascarar o alvo.
+  it('axe: gatilho padrão do EmojiPicker sem violações', async () => {
+    const { container } = render(
+      <main>
+        <EmojiPicker onEmojiSelect={onSelect} />
+      </main>,
+    );
+    const results = await axe(container, {
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
+  });
+
+  it('axe: gatilho do QuickReactionPicker sem violações', async () => {
+    const { container } = render(
+      <main>
+        <QuickReactionPicker onReact={onReact} />
+      </main>,
+    );
+    const results = await axe(container, {
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });
