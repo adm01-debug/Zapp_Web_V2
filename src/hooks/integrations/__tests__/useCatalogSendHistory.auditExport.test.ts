@@ -72,6 +72,10 @@ describe('exportSendHistoryCsv — auditoria', () => {
         }),
       }),
     );
+    // Ordem (critério de pronto: auditoria depois do download, não junto).
+    expect(download.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(logAudit).mock.invocationCallOrder[0],
+    );
   });
 
   it('não registra auditoria quando o download é bloqueado', async () => {
