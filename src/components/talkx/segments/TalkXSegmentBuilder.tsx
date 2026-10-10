@@ -32,12 +32,18 @@ export interface TalkXSegmentBuilderProps {
   saving: boolean;
   /** Nomes já usados na biblioteca, sem o segmento em edição (para o nome repetido). */
   existingNames?: string[];
+  /** X112 — lista lateral "Meus segmentos" (primeira coluna, >= 1280px). */
+  sideList?: React.ReactNode;
+  /** Botão que abre a lista como gaveta abaixo de 1280px. */
+  sideListButton?: React.ReactNode;
   onSave: (draft: SegmentBuilderContent) => void;
   onCancel: () => void;
+  /** X112 (TL-134 refazer): a lista lateral troca de segmento sem sair do construtor. O pai registra aqui a guarda que confirma edições sujas antes de trocar. */
+  onGuardChange?: (guard: (proceed: () => void) => void) => void;
 }
 
 export function TalkXSegmentBuilder({
-  initial, isNew, saving, existingNames = [], onSave, onCancel,
+  initial, isNew, saving, existingNames = [], sideList, sideListButton, onSave, onCancel, onGuardChange,
 }: TalkXSegmentBuilderProps) {
   const [state, dispatch] = React.useReducer(segmentBuilderReducer, initial, createBuilderState);
   const { name, description, rules } = state;
@@ -50,6 +56,8 @@ export function TalkXSegmentBuilder({
   const [draggingField, setDraggingField] = React.useState<string | null>(null);
   const [showErrors, setShowErrors] = React.useState(false);
   const [confirmExit, setConfirmExit] = React.useState(false);
+  /** Troca pendente (outro segmento ou novo) aguardando confirmação de edição suja. */
+  const [pendingProceed, setPendingProceed] = React.useState<(() => void) | null>(null);
 
   const errors = React.useMemo(
     () => validateSegment({ name, description, rules, existingNames }),
@@ -92,16 +100,29 @@ export function TalkXSegmentBuilder({
     if (errors.rules) { toast.error(errors.rules); return; }
     onSave(builderContent(state));
   };
-  const requestExit = () => { if (dirty) setConfirmExit(true); else onCancel(); };
+  const requestProceed = (proceed: () => void) => {
+    if (dirty) { setPendingProceed(() => proceed); setConfirmExit(true); }
+    else { proceed(); }
+  };
+  const requestExit = () => requestProceed(onCancel);
+
+  // O pai troca de segmento pela mesma confirmação de saída: sem edição suja
+  // a troca é direta; com edição suja o diálogo decide (descartar troca,
+  // cancelar preserva a edição atual).
+  React.useEffect(() => { onGuardChange?.(requestProceed); });
 
   const iconButton = 'h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center text-foreground-secondary enabled:hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed shrink-0';
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_280px] gap-4 min-w-0">
+    <div className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_280px] gap-4 min-w-0">
+      {/* X112 — coluna 1: "Meus Segmentos". Abaixo de 1280px vira a gaveta
+          aberta pelo botão "Meus segmentos" do cabeçalho do construtor. */}
+      {sideList && <div className="hidden xl:block min-w-0">{sideList}</div>}
       <div className="min-w-0 space-y-4">
         {/* Header */}
         <div className="rounded-2xl bg-card border border-border/70 p-4 flex items-center gap-3">
           <button type="button" onClick={requestExit} aria-label="Voltar" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"><ArrowLeft className="w-4 h-4" /></button>
+          {sideListButton}
           <IconTile icon={Bookmark} color="violet" size={48} />
           <div className="min-w-0 flex-1">
             <Input value={name} onChange={(e) => dispatch({ type: 'name', value: e.target.value })} placeholder="Nome do segmento…" aria-invalid={showErrors && !!errors.name} className="text-lg font-bold border-0 bg-transparent p-0 h-auto focus-visible:ring-0 text-foreground placeholder:text-muted-foreground/50" />
@@ -211,33 +232,34 @@ export function TalkXSegmentBuilder({
           </div>
         </section>
 
-      </div>
-
-      {/* Col 3: Catálogo de filtros — primeira coluna no xl: */}
-      <aside className="hidden xl:block order-first rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
-        <p className="text-[13px] font-bold text-foreground">Filtros</p>
-        <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
-        {(['basico', 'comportamento', 'comercial', 'lgpd'] as const).map((cat) => (
-          <div key={cat}>
-            <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
-            <div className="flex flex-col gap-1">
-              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  draggable
-                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
-                  onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
-                  onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
-                >
-                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
-                </button>
-              ))}
+        {/* Catálogo de filtros — abaixo dos grupos, como no mock. A coluna 1 do
+            construtor passou a ser a lista "Meus segmentos" (X112). */}
+        <aside className="hidden xl:block rounded-2xl bg-card border border-border/70 p-3.5 space-y-3 max-h-[600px] overflow-y-auto">
+          <p className="text-[13px] font-bold text-foreground">Filtros</p>
+          <p className="text-2xs text-foreground-secondary leading-snug">Clique para adicionar ao grupo ativo</p>
+          {(['basico', 'comportamento', 'comercial', 'lgpd'] as const).map((cat) => (
+            <div key={cat}>
+              <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
+              <div className="flex flex-col gap-1">
+                {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    draggable
+                    onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                    onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
+                    onClick={() => addFieldToGroup(f.value)}
+                    className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  >
+                    <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </aside>
+          ))}
+        </aside>
+
+      </div>
 
       {/* Resumo do segmento */}
       <div className="space-y-4 min-w-0">
@@ -262,7 +284,7 @@ export function TalkXSegmentBuilder({
         </RailCard>
       </div>
 
-      <AlertDialog open={confirmExit} onOpenChange={(v) => { if (!v) setConfirmExit(false); }}>
+      <AlertDialog open={confirmExit} onOpenChange={(v) => { if (!v) { setConfirmExit(false); setPendingProceed(null); } }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg">Alterações não salvas</AlertDialogTitle>
@@ -271,9 +293,9 @@ export function TalkXSegmentBuilder({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="h-9 text-[13px]">Continuar editando</AlertDialogCancel>
-            <GhostButton onClick={() => { setConfirmExit(false); onCancel(); }} className="h-9 text-[13px]">Descartar</GhostButton>
-            <PrimaryButton onClick={() => { setConfirmExit(false); handleSave(); }} className="h-9 text-[13px]">Salvar e sair</PrimaryButton>
+            <AlertDialogCancel onClick={() => setPendingProceed(null)} className="h-9 text-[13px]">Continuar editando</AlertDialogCancel>
+            <GhostButton onClick={() => { const p = pendingProceed; setPendingProceed(null); setConfirmExit(false); if (p) p(); else onCancel(); }} className="h-9 text-[13px]">Descartar</GhostButton>
+            <PrimaryButton onClick={() => { setPendingProceed(null); setConfirmExit(false); handleSave(); }} className="h-9 text-[13px]">Salvar e sair</PrimaryButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
