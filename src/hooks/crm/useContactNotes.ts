@@ -6,6 +6,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
  import { useAuth } from '@/hooks/auth/useAuth';
 import { log } from '@/lib/logger';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
+import { supabase } from '@/integrations/supabase/client';
+import { createStorageObjectId } from '@/lib/storage_object_upload';
+import type { Database } from '@/integrations/supabase/types';
+
+/** Bucket de mídia já usado pelas mensagens (mesmo padrão do chat). */
+const NOTES_MEDIA_BUCKET = 'whatsapp-media';
 
 export type ContactNoteCategory = 'note' | 'fact' | 'objection' | 'promise';
 
@@ -19,6 +25,12 @@ export interface ContactNote {
   due_date: string | null;
   created_at: string;
   updated_at: string;
+  /**
+   * URL do objeto de áudio quando a nota é uma nota de voz; `null`/ausente em
+   * notas de texto. Opcional de propósito: literais de `ContactNote` em testes
+   * de outros cartões não o trazem.
+   */
+  audio_url?: string | null;
   author?: {
     id: string;
     name: string;
@@ -36,7 +48,21 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
 
    const { data: allNotes = [], isLoading, error, refetch } = useQuery({
      queryKey: contactNotesKey(contactId, user?.id),
-     queryFn: () => ContactService.fetchNotes(contactId) as Promise<ContactNote[]>,
+     queryFn: async () => {
+       const notes = (await ContactService.fetchNotes(contactId)) as ContactNote[];
+       // `contact_notes.audio_url` é coluna nova e o select do ContactService ainda
+       // não a traz (arquivo fora do escopo deste cartão). Buscamos só essa coluna
+       // pelos ids já carregados e mesclamos em memória.
+       const ids = notes.map((n) => n.id);
+       if (ids.length === 0) return notes;
+       const { data } = await supabase
+         .from('contact_notes')
+         .select('id, audio_url')
+         .in('id', ids);
+       const rows = (data ?? []) as unknown as Array<{ id: string; audio_url: string | null }>;
+       const audioById = new Map(rows.map((r) => [r.id, r.audio_url]));
+       return notes.map((n) => ({ ...n, audio_url: audioById.get(n.id) ?? null }));
+     },
      enabled: !!contactId,
    });
 
@@ -73,8 +99,59 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     },
   });
 
+  const addAudioNoteMutation = useMutation({
+    mutationFn: async ({ blob, category, dueDate }: { blob: Blob; category?: ContactNoteCategory; dueDate?: string | null }) => {
+      if (!profile?.id) throw new Error('Perfil não encontrado');
+      const path = `${contactId}/${createStorageObjectId()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from(NOTES_MEDIA_BUCKET)
+        .upload(path, blob, { cacheControl: '31536000', upsert: false });
+      if (uploadError) throw new Error(`Erro ao enviar áudio: ${uploadError.message}`);
+
+      const { data: locator } = supabase.storage.from(NOTES_MEDIA_BUCKET).getPublicUrl(path);
+      const audioUrl = locator?.publicUrl;
+      if (!audioUrl) {
+        await supabase.storage.from(NOTES_MEDIA_BUCKET).remove([path]);
+        throw new Error('Não foi possível obter a URL do áudio.');
+      }
+
+      // `types.ts` é gerado e ainda não conhece `audio_url` (coluna desta migration);
+      // cast único para não tocar no arquivo de tipos, fora do escopo do cartão.
+      const payload = {
+        contact_id: contactId,
+        author_id: profile.id,
+        content: '',
+        category: category ?? 'note',
+        due_date: dueDate ?? null,
+        audio_url: audioUrl,
+      } as unknown as Database['public']['Tables']['contact_notes']['Insert'];
+
+      const { data, error } = await supabase.from('contact_notes').insert(payload).select().single();
+      if (error) {
+        await supabase.storage.from(NOTES_MEDIA_BUCKET).remove([path]);
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      invalidate();
+      toast({
+        title: 'Nota de áudio adicionada',
+        description: 'O áudio foi salvo na nota.',
+      });
+    },
+    onError: (error) => {
+      log.error('Error adding audio note:', error);
+      toast({
+        title: 'Erro ao salvar áudio',
+        description: 'Não foi possível salvar a nota de áudio.',
+        variant: 'destructive',
+      });
+    },
+  });
+
    const deleteNoteMutation = useMutation({
-     mutationFn: (noteId: string) => ContactService.deleteNote(noteId),
+    mutationFn: (noteId: string) => ContactService.deleteNote(noteId),
     onSuccess: () => {
       invalidate();
       toast({
@@ -110,6 +187,10 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     return addNoteMutation.mutateAsync({ content, category, dueDate });
   }, [addNoteMutation]);
 
+  const addAudioNote = useCallback((blob: Blob, category?: ContactNoteCategory, dueDate?: string | null) => {
+    return addAudioNoteMutation.mutateAsync({ blob, category, dueDate });
+  }, [addAudioNoteMutation]);
+
   const deleteNote = useCallback((noteId: string) => {
     return deleteNoteMutation.mutateAsync(noteId);
   }, [deleteNoteMutation]);
@@ -129,10 +210,12 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     error,
     refetch,
     addNote,
+    addAudioNote,
     deleteNote,
     updateNote,
     toggleNoteDone,
     isAdding: addNoteMutation.isPending,
+    isAddingAudio: addAudioNoteMutation.isPending,
     isDeleting: deleteNoteMutation.isPending,
     isUpdating: updateNoteMutation.isPending,
     currentProfileId: profile?.id,

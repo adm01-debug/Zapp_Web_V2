@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, CheckSquare, type LucideIcon,
+  Sparkles, FileText, Lightbulb, XCircle, Handshake, Clock, BarChart3, Trash2, CheckSquare, Mic, Play, Pause, Loader2, type LucideIcon,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,50 @@ import { SectionCard } from './SectionCard';
 import type { KpiTone } from './KpiStrip';
 import { QuickAdd } from '@/components/tasks/shared/QuickAdd';
 import type { ConversationTab } from '../chat/ConversationTabs';
+import { useAudioPlayer } from '@/hooks/communication/useAudioPlayer';
+import { AudioRecorder } from '@/components/inbox/AudioRecorder';
+import { VoiceDictationButton } from '@/components/mobile/VoiceDictationButton';
+
+/** Player de uma nota de voz — mesmo controle único de volume do áudio de mensagem. */
+function NoteAudioPlayer({ note }: { note: ContactNote }) {
+  const { audioRef, resolvedUrl, isPlaying, isLoading, hasError, togglePlay, currentTime, duration, formatTime } = useAudioPlayer({
+    audioUrl: note.audio_url ?? '',
+    messageId: note.id,
+  });
+
+  return (
+    <div className="flex items-center gap-2" data-testid="note-audio-player">
+      <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="w-8 h-8 rounded-full shrink-0"
+        aria-label={isPlaying ? 'Pausar áudio da nota' : 'Tocar áudio da nota'}
+        disabled={isLoading}
+        onClick={() => void togglePlay()}
+      >
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+      </Button>
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {hasError ? 'Áudio indisponível' : `${formatTime(currentTime)} / ${formatTime(duration)}`}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Corpo de uma nota: player quando há áudio e texto quando há conteúdo. A nota de voz grava
+ * `content` vazio, então o texto some sozinho nesse caso.
+ */
+function NoteBody({ note }: { note: ContactNote }) {
+  return (
+    <>
+      {note.audio_url && <NoteAudioPlayer note={note} />}
+      {note.content.trim() !== '' && <p className="text-sm text-foreground">{note.content}</p>}
+    </>
+  );
+}
 
 interface NotesTabProps {
   contactId: string;
@@ -22,15 +66,18 @@ interface NotesTabProps {
   onTabChange?: (tab: ConversationTab) => void;
 }
 
-function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
+function AddInline({ placeholder, withDueDate, onSave, onSaveAudio, onCancel }: {
   placeholder: string;
   withDueDate?: boolean;
   onSave: (content: string, dueDate?: string | null) => Promise<void>;
+  /** Quando presente, habilita as gravações: nota de voz e ditado por voz. */
+  onSaveAudio?: (blob: Blob) => Promise<void>;
   onCancel: () => void;
 }) {
   const [value, setValue] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [saving, setSaving] = useState(false);
+  const [recording, setRecording] = useState(false);
 
   const submit = async () => {
     if (!value.trim() || saving) return;
@@ -42,6 +89,20 @@ function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
       setDueDate('');
     } catch {
       // Gravação falhou: mantém o texto e o formulário aberto (o erro é avisado pelo hook).
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSendAudio = async (blob: Blob) => {
+    if (!onSaveAudio || saving) return;
+    setSaving(true);
+    try {
+      await onSaveAudio(blob);
+      // Fecha apenas com a gravação confirmada; em falha o gravador fica aberto.
+      setRecording(false);
+    } catch {
+      // O erro é avisado pelo hook.
     } finally {
       setSaving(false);
     }
@@ -64,9 +125,36 @@ function AddInline({ placeholder, withDueDate, onSave, onCancel }: {
       {withDueDate && (
         <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 w-40 rounded-md border border-border bg-background px-2 text-xs" />
       )}
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>Cancelar</Button>
-        <Button size="sm" className="h-7 text-xs" disabled={!value.trim() || saving} onClick={() => void submit()}>Salvar</Button>
+      {recording && (
+        <AudioRecorder
+          onSend={(blob) => { void handleSendAudio(blob); }}
+          onCancel={() => setRecording(false)}
+        />
+      )}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          {onSaveAudio && !recording && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 rounded-full"
+              aria-label="Gravar nota de áudio"
+              disabled={saving}
+              onClick={() => setRecording(true)}
+            >
+              <Mic className="w-4 h-4" />
+            </Button>
+          )}
+          <VoiceDictationButton
+            onTranscript={(text) => setValue((prev) => (prev ? `${prev} ${text}` : text))}
+            disabled={saving}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onCancel}>Cancelar</Button>
+          <Button size="sm" className="h-7 text-xs" disabled={!value.trim() || saving} onClick={() => void submit()}>Salvar</Button>
+        </div>
       </div>
     </div>
   );
@@ -82,11 +170,12 @@ interface NoteCategoryCardProps {
   withDueDate?: boolean;
   currentProfileId?: string;
   onAdd: (content: string, category: ContactNoteCategory, dueDate?: string | null) => Promise<unknown> | void;
+  onAddAudio?: (blob: Blob, category: ContactNoteCategory) => Promise<unknown> | void;
   onDelete: (id: string) => void;
   renderItem?: (note: ContactNote) => ReactNode;
 }
 
-function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, withDueDate, currentProfileId, onAdd, onDelete, renderItem }: NoteCategoryCardProps) {
+function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, withDueDate, currentProfileId, onAdd, onAddAudio, onDelete, renderItem }: NoteCategoryCardProps) {
   const [adding, setAdding] = useState(false);
 
   return (
@@ -105,6 +194,10 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
             await onAdd(content, category, dueDate);
             setAdding(false);
           }}
+          onSaveAudio={onAddAudio ? async (blob) => {
+            await onAddAudio(blob, category);
+            setAdding(false);
+          } : undefined}
         />
       )}
 
@@ -114,7 +207,7 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
           <li key={note.id} data-testid="note-card" className="group rounded-lg border border-border bg-muted/20 p-2.5">
             {renderItem ? renderItem(note) : (
               <>
-                <p className="text-sm text-foreground">{note.content}</p>
+                <NoteBody note={note} />
                 <div className="flex items-center justify-between mt-1.5">
                   <p className="text-xs text-muted-foreground">
                     {format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })} · Por: {note.author?.name ?? 'Você'}
@@ -140,9 +233,10 @@ function ObjectionItem({ note, onDelete, canDelete }: { note: ContactNote; onDel
   const text = match ? match[2] : note.content;
   return (
     <>
+      {note.audio_url && <NoteAudioPlayer note={note} />}
       <div className="flex items-center gap-2">
         {tag && <span className="h-5 px-2 rounded-full bg-warning/15 text-warning border border-warning/30 text-2xs font-semibold shrink-0">{tag}</span>}
-        <p className="text-sm text-foreground italic">&ldquo;{text}&rdquo;</p>
+        {text.trim() !== '' && <p className="text-sm text-foreground italic">&ldquo;{text}&rdquo;</p>}
       </div>
       <div className="flex items-center justify-between mt-1.5">
         <p className="text-xs text-muted-foreground">{format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })}</p>
@@ -171,7 +265,10 @@ function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNot
     <div className="flex items-start gap-2">
       <input type="checkbox" checked={note.is_done} onChange={() => onToggle(note)} className="mt-0.5 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className={cn('text-sm text-foreground', note.is_done && 'line-through text-muted-foreground')}>{note.content}</p>
+        {note.audio_url && <NoteAudioPlayer note={note} />}
+        {note.content.trim() !== '' && (
+          <p className={cn('text-sm text-foreground', note.is_done && 'line-through text-muted-foreground')}>{note.content}</p>
+        )}
         <div className="flex items-center justify-between mt-1">
           {note.due_date ? (
             <p className="text-xs text-muted-foreground">{noteDueLabel(note.due_date)}</p>
@@ -189,7 +286,7 @@ function PromiseItem({ note, onToggle, onDelete, canDelete }: { note: ContactNot
 
 /** Aba Notas (2.8) — 6 cards de CRUD por categoria + pendências (tarefas) + resumo comercial (contacts.notes). */
 export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
-  const { allNotes, addNote, deleteNote, toggleNoteDone, currentProfileId } = useContactNotes(contactId);
+  const { allNotes, addNote, addAudioNote, deleteNote, toggleNoteDone, currentProfileId } = useContactNotes(contactId);
   const { byDue, create: createTask } = useMyWorkItems({ contactId });
   const openTasks = [...byDue.overdue, ...byDue.today, ...byDue.tomorrow, ...byDue.upcoming, ...byDue.noDue];
   const summaryNote = useContactSummaryNote(contactId);
@@ -215,18 +312,21 @@ export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
           icon={FileText} title="Notas privadas" tone="blue" category="note" placeholder="Escreva uma nota privada..."
           notes={byCategory('note')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
+          onAddAudio={(blob, category) => addAudioNote(blob, category)}
         />
 
         <NoteCategoryCard
           icon={Lightbulb} title="Fatos relevantes" tone="yellow" category="fact" placeholder="Ex.: Cliente prefere contato por WhatsApp após 18h"
           notes={byCategory('fact')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
+          onAddAudio={(blob, category) => addAudioNote(blob, category)}
         />
 
         <NoteCategoryCard
           icon={XCircle} title="Objeções" tone="red" category="objection" placeholder="Ex.: [Preço] Acha o valor alto"
           notes={byCategory('objection')} currentProfileId={currentProfileId}
           onAdd={(content, category) => addNote(content, category)} onDelete={deleteNote}
+          onAddAudio={(blob, category) => addAudioNote(blob, category)}
           renderItem={(note) => <ObjectionItem note={note} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
@@ -234,6 +334,7 @@ export function NotesTab({ contactId, onTabChange }: NotesTabProps) {
           icon={Handshake} title="Promessas feitas" tone="green" category="promise" placeholder="Ex.: Enviar catálogo atualizado" withDueDate
           notes={byCategory('promise')} currentProfileId={currentProfileId}
           onAdd={(content, category, dueDate) => addNote(content, category, dueDate)} onDelete={deleteNote}
+          onAddAudio={(blob, category) => addAudioNote(blob, category)}
           renderItem={(note) => <PromiseItem note={note} onToggle={toggleNoteDone} onDelete={deleteNote} canDelete={note.author_id === currentProfileId} />}
         />
 
