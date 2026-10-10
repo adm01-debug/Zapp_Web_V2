@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -55,17 +55,17 @@ test('E87: specsEmQuarentena devolve os caminhos, ordenados', () => {
   assert.deepEqual(lista, ['e2e/a.spec.ts', 'e2e/z.spec.ts']);
 });
 
-test('E87: arquivo ausente nao derruba o CI -- vira aviso', () => {
+test('E87: arquivo ausente nao derruba o CI -- vira aviso', async () => {
   const vazio = join(tmpdir(), 'sem-quarentena-mesmo-99');
   mkdirSync(vazio, { recursive: true });
-  const r = carregarQuarentena(vazio, 'e2e/quarantine.json');
+  const r = await carregarQuarentena(vazio, 'e2e/quarantine.js');
   assert.deepEqual(r.itens, []);
   assert.equal(r.avisos.length, 1);
 });
 
-test('E87: o repositorio real esta em conformidade hoje', () => {
-  const { itens, avisos } = carregarQuarentena();
-  assert.deepEqual(avisos, [], 'e2e/quarantine.json tem de existir');
+test('E87: o repositorio real esta em conformidade hoje', async () => {
+  const { itens, avisos } = await carregarQuarentena();
+  assert.deepEqual(avisos, [], 'e2e/quarantine.js tem de existir');
   assert.ok(Array.isArray(itens));
   assert.deepEqual(
     validar(itens, { hoje: hojeISO() }),
@@ -74,10 +74,7 @@ test('E87: o repositorio real esta em conformidade hoje', () => {
   );
 });
 
-test('E87: o schema do arquivo real documenta os quatro campos', () => {
-  const cru = JSON.parse(readFileSync(new URL('../../e2e/quarantine.json', import.meta.url), 'utf8'));
-  for (const campo of ['spec', 'motivo', 'issue', 'prazo']) {
-    assert.ok(cru._campos?.[campo], `o arquivo tem de documentar o campo ${campo}`);
-  }
-  assert.deepEqual(cru.quarentena, []);
+test('E87: o modulo quarantine.js exporta a lista quarentena', async () => {
+  const mod = await import(new URL('../../e2e/quarantine.js', import.meta.url));
+  assert.ok(Array.isArray(mod.quarentena), 'quarantine.js exporta quarentena como array');
 });

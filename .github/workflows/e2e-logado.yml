@@ -47,6 +47,21 @@ jobs:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Grupo 1: projetos autenticados (dependem do setup para gerar
+          # e2e/.auth/user.json). Todos rodam no mesmo job para evitar
+          # login concorrente em runners paralelos.
+          - name: authenticated
+            projects: setup chromium-e2e-core chromium-authenticated firefox-talkx webkit-talkx firefox-conversation webkit-conversation firefox-catalog webkit-catalog
+          # Grupo 2: projetos deslogados, browsers principais.
+          - name: deslogado-principal
+            projects: chromium chromium-theme chromium-mapa chromium-contacts-visual chromium-a11y chromium-email-navy firefox-email-navy webkit-email-navy firefox-auth webkit-auth
+          # Grupo 3: projetos deslogados, telefonia.
+          - name: deslogado-secundario
+            projects: chromium-telefonia firefox-telefonia webkit-telefonia
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
@@ -97,43 +112,28 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.63.0 install-deps chromium firefox webkit
 
-      # Uma unica invocacao do Playwright, com os projetos listados
-      # EXPLICITAMENTE em vez de confiar na resolucao automatica de dependsOn:
-      # na run 362506313557 (commit 9aea3c2), rodar so "--project=chromium-e2e-core"
-      # (sem path de arquivo no CLI) nao disparou "setup" e e2e/.auth/user.json
-      # nunca foi gerado. chromium-authenticated cobre todos os specs autenticados;
-      # firefox-talkx e webkit-talkx cobrem talkx.spec.ts nos engines alternativos
-      # (auth cookies do user.json sao browser-agnosticos).
-      # firefox-conversation e webkit-conversation cobrem conversation.spec.ts e
-      # messaging.spec.ts nos engines alternativos -- mesma logica de browser-agnosticismo.
-      # chromium-mapa cobre as specs do modulo MAPA (E71/E72 picker,
-      # e2e/location-picker.spec.ts; E73 cadastro, e2e/contact-address.spec.ts; E74
-      # mapa/pino, e2e/contact-map-pin.spec.ts). Projeto proprio e SEM setup: essas
-      # specs autenticam por sessao FALSA (installFakeSession) com REST/RPC e a
-      # Mapbox mockados, entao nao usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem o
-      # storageState de e2e/.auth/user.json -- nenhum secret novo e necessario.
+      # E83: a suite logada roda em 3 jobs de matriz com timeout proprio.
+      # Cada job tem ate 15 min; se um ficar lento, os outros continuam
+      # independentes. Um dispatch na main termina com sucesso ou falha,
+      # nunca "cancelled" por timeout de run unica.
       #
-      # catalog.spec.ts (CT-82) e o fluxo de envio do catalogo. O Chromium e
-      # coberto pelo chromium-authenticated (catch-all); firefox-catalog e
-      # webkit-catalog dao a paridade dos 3 browsers pedida no aceite. O spec e
-      # SKIPADO enquanto E2E_CATALOG_PRODUCT_SKU_VERIFIED nao for true (pende a
-      # verificacao do SKU no PromoGifts, sistema externo). NAO entram no ci.yml.
+      # Grupo authenticated: setup + projetos que usam storageState
+      # (e2e/.auth/user.json). O setup gera o storageState e os projetos
+      # seguintes o consomem. Rodam no mesmo job para evitar login
+      # concorrente em runners paralelos.
       #
-      # E88: firefox-auth/webkit-auth provam a tela de login (auth.spec.ts) no Firefox
-      # e no WebKit. Sao DESLOGADOS (sem `dependencies`/`storageState`, nenhum secret),
-      # mas sairam do job de PR do ci.yml: cross-browser de auth nao precisa bloquear
-      # todo PR, e este workflow -- que ja instala os 3 engines -- e quem prova os
-      # engines alternativos depois do merge. Travado em ci-e2e-projects.unit.mjs.
+      # Grupo deslogado-principal: projetos deslogados nos browsers
+      # principais (chromium, firefox, webkit) mais auth cross-browser
+      # e mapa. Nao usam storageState real nem secrets de login.
       #
-      # chromium-telefonia / firefox-telefonia / webkit-telefonia cobrem
-      # e2e/telefonia.spec.ts (T86) nos 3 browsers -- o aceite do item pede verde nos
-      # tres. Mesma receita do chromium-mapa: sessao FALSA (installFakeSession) com o
-      # app shell e as RPCs da tela (search_my_calls, my_calls_kpi,
-      # set_call_agent_notes) mockados, entao NAO usam E2E_TEST_EMAIL/E2E_TEST_PASSWORD
-      # nem o storageState de e2e/.auth/user.json -- nenhum secret novo. O spec esta
-      # no testIgnore do chromium-authenticated para nao rodar sob login real.
-      # E82: o e-mail do usuario de teste entra no log do Playwright (o fill() imprime o
-      # valor). Mascarar ANTES de qualquer saida, para o ::add-mask:: valer o run todo.
+      # Grupo deslogado-secundario: projetos de telefonia nos 3
+      # browsers. Usam installFakeSession (sessao FALSA) com o app
+      # shell e as RPCs mockadas, entao nao usam
+      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD nem storageState.
+      #
+      # E82: o e-mail do usuario de teste entra no log do Playwright
+      # (o fill() imprime o valor). Mascarar ANTES de qualquer saida,
+      # para o ::add-mask:: valer o run todo.
       - name: 🔒 Mascarar o e-mail do E2E no log
         env:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
@@ -147,7 +147,7 @@ jobs:
           fi
 
       - name: 📐 Run Playwright E2E (login real)
-        run: bun run test:e2e -- --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=chromium-mapa --project=firefox-auth --project=webkit-auth --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+        run: bun run test:e2e -- ${{ matrix.projects }}
         env:
           CI: true
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
