@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import type { HTMLAttributes } from 'react';
 
 // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
 import { makeTaskRow } from '@/test/mocks/tarefas';
@@ -273,12 +274,14 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
         item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
         mode="board"
         onOpenContact={vi.fn()}
-        dragHandleProps={{
-          role: 'button',
-          tabIndex: 0,
-          'aria-describedby': 'dnd-desc',
-          'data-rbd-drag-handle-draggable-id': 't1',
-        }}
+        dragHandleProps={
+          {
+            role: 'button',
+            tabIndex: 0,
+            'aria-describedby': 'dnd-desc',
+            'data-rbd-drag-handle-draggable-id': 't1',
+          } as unknown as HTMLAttributes<HTMLElement>
+        }
       />,
     );
 
