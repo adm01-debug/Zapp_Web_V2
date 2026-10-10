@@ -25,7 +25,6 @@ export const AutomationsManager = lazyWithRetry(() => import('@/components/autom
 export const IntegrationsHub = lazyWithRetry(() => import('@/components/integrations/IntegrationsHub').then(m => ({ default: m.IntegrationsHub })));
 export const LGPDComplianceView = lazyWithRetry(() => import('@/components/compliance/LGPDComplianceView').then(m => ({ default: m.LGPDComplianceView })));
 export const KnowledgeBaseView = lazyWithRetry(() => import('@/components/knowledge/KnowledgeBaseView').then(m => ({ default: m.KnowledgeBaseView })));
-export const PaymentLinksView = lazyWithRetry(() => import('@/components/payments/PaymentLinksView').then(m => ({ default: m.PaymentLinksView })));
 export const WhatsAppFlowsBuilder = lazyWithRetry(() => import('@/components/whatsapp-flows/WhatsAppFlowsBuilder').then(m => ({ default: m.WhatsAppFlowsBuilder })));
 export const MetaCAPIView = lazyWithRetry(() => import('@/components/meta-capi/MetaCAPIView').then(m => ({ default: m.MetaCAPIView })));
 export const DiagnosticsView = lazyWithRetry(() => import('@/components/diagnostics/DiagnosticsView').then(m => ({ default: m.DiagnosticsView })));

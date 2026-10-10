@@ -2,7 +2,7 @@ import type { AppRole } from './role.service';
 import type { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, MessagesSquare, Mail, User, BarChart3, Kanban, Sparkles, Settings,
-  Building2, Wallet, Package, CreditCard, LayoutDashboard, CalendarClock, UsersRound,
+  Building2, Wallet, Package, LayoutDashboard, CalendarClock, UsersRound,
   Bot, RefreshCw, Workflow, Brain, TrendingDown, Tags, Megaphone, FileText,
   FileBarChart, AlertTriangle, HeartPulse, Gauge, Target, Trophy,
   Link2, Plug, Inbox, PhoneCall, Activity, Calendar,
@@ -136,7 +136,6 @@ export class NavigationService {
         label: 'Em Desenvolvimento',
         icon: FlaskConical,
         items: [
-          { id: 'payments', icon: CreditCard, label: 'Pagamentos', roles: STAFF_ROLES },
           { id: 'meta-capi', icon: Activity, label: 'Meta CAPI', roles: STAFF_ROLES },
           { id: 'google-calendar', icon: Calendar, label: 'Calendário', roles: STAFF_ROLES },
         ],
