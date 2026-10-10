@@ -152,7 +152,8 @@ BEGIN
 
   -- IDs que existem no input mas não no banco (novos) — OK
   -- IDs que existem no banco mas não no input (a remover) — verificar recipients
-  IF v_existing_variant_ids IS NOT NULL THEN
+  -- Teto: no máximo 3 variantes por chamada (regra de negócio A/B/C)
+  IF v_existing_variant_ids IS NOT NULL AND array_length(v_existing_variant_ids, 1) <= 3 THEN
     FOREACH v_id_to_remove IN ARRAY v_existing_variant_ids
     LOOP
       IF v_input_ids IS NULL OR NOT (v_id_to_remove = ANY(v_input_ids)) THEN
