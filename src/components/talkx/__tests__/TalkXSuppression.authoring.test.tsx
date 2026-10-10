@@ -1,7 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// X181: o menu ⋮ da linha (Radix DropdownMenu) precisa das mesmas APIs que o
+// jsdom não implementa nos testes do catálogo (medida do trigger e rolagem).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+  if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
+});
 
 // V04 (plano Talk X V3, achado P1-4): a autoria da supressão tem de sair do
 // perfil ativo. blocked_by e removed_by referenciam profiles(id) e o id do
@@ -29,9 +38,10 @@ vi.mock('@/integrations/supabase/client', () => {
     self.maybeSingle = () => Promise.resolve({ data: { id: 'profile-1' }, error: null });
     // #407: a busca de contato passou a mandar filtro ao servidor e a fechar a
     // consulta com .order(...).limit(...) — o mock precisa aceitar o encadeamento.
-    self.order = () => Object.assign(Promise.resolve({ data, error: null }), {
-      limit: () => Promise.resolve({ data, error: null }),
-    });
+    self.order = () =>
+      Object.assign(Promise.resolve({ data, error: null }), {
+        limit: () => Promise.resolve({ data, error: null }),
+      });
     return self;
   };
   return {
@@ -52,20 +62,30 @@ vi.mock('@/integrations/supabase/client', () => {
           const self: Record<string, unknown> = {};
           self.select = () => self;
           self.is = () => self;
-          self.order = () => Promise.resolve({
-            data: [{
-              id: 'bl-1',
-              contact_id: 'c1',
-              reason: 'Manual',
-              blocked_by: 'profile-1',
-              created_at: '2026-09-01T10:00:00.000Z',
-              origin: 'manual',
-              campaign_id: null,
-              removed_by: null,
-              contacts: { name: 'Ana Souza', phone: '+5511988887777', company: 'ACME', avatar_url: null },
-            }],
-            error: null,
-          });
+          self.order = () =>
+            Promise.resolve({
+              data: [
+                {
+                  id: 'bl-1',
+                  contact_id: 'c1',
+                  reason: 'Manual',
+                  reason_code: 'manual',
+                  blocked_by: 'profile-1',
+                  created_at: '2026-09-01T10:00:00.000Z',
+                  origin: 'manual',
+                  campaign_id: null,
+                  expires_at: null,
+                  removed_by: null,
+                  contacts: {
+                    name: 'Ana Souza',
+                    phone: '+5511988887777',
+                    company: 'ACME',
+                    avatar_url: null,
+                  },
+                },
+              ],
+              error: null,
+            });
           self.update = (payload: Record<string, unknown>) => {
             updated.push(payload);
             return { eq: () => Promise.resolve({ error: null }) };
@@ -84,6 +104,12 @@ vi.mock('@/lib/supabaseHelpers', () => ({
       inserted.push(payload);
       return Promise.resolve({ error: null });
     },
+    update: (payload: Record<string, unknown>) => ({
+      in: () => {
+        updated.push(payload);
+        return Promise.resolve({ error: null });
+      },
+    }),
   }),
 }));
 
@@ -98,6 +124,26 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
+vi.mock('@/components/catalog/useSendProduct', () => ({ openContactChat: vi.fn() }));
+
+vi.mock('@/hooks/integrations/useTalkXSuppression', () => ({
+  SUPPRESSION_ACTIVITY_EVENT_TYPES: [
+    'suppression_add',
+    'suppression_remove',
+    'suppression_update',
+    'suppression_import',
+    'suppression_export',
+  ],
+  useTalkXSuppressionActivity: () => ({
+    isLoading: false,
+    isError: false,
+    items: [],
+    total: 0,
+    refetch: vi.fn(),
+  }),
+  useTalkXSuppressionStats: () => ({ data: undefined, isLoading: false }),
+}));
+
 import { TalkXSuppression } from '@/components/talkx/TalkXSuppression';
 
 function renderView() {
@@ -105,7 +151,7 @@ function renderView() {
   return render(
     <QueryClientProvider client={queryClient}>
       <TalkXSuppression />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 
@@ -136,10 +182,12 @@ describe('TalkXSuppression · autoria (V04)', () => {
   it('grava removed_by com o id do perfil ativo, sem nova ida ao auth nem a profiles', async () => {
     renderView();
 
-    const rowButtons = await screen.findAllByRole('button', { name: /Remover/i });
-    fireEvent.click(rowButtons[0]);
-    const confirmButtons = await screen.findAllByRole('button', { name: /^Remover$/i });
-    fireEvent.click(confirmButtons[confirmButtons.length - 1]);
+    await screen.findByText('Ana Souza');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Ações de Ana Souza' }), {
+      key: 'ArrowDown',
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remover da lista' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Remover$/i }));
 
     await waitFor(() => expect(updated).toHaveLength(1));
     expect(updated[0]).toMatchObject({ removed_by: 'profile-1' });
