@@ -63,7 +63,7 @@ export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDupli
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Switch checked={automation.is_active} onCheckedChange={onToggle} />
+          <Switch checked={automation.is_active} onCheckedChange={onToggle} aria-label="Ativar automação" />
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} aria-label="Editar automação"><Edit2 className="w-4 h-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} aria-label="Duplicar automação"><Copy className="w-4 h-4" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={onDelete} aria-label="Excluir automação"><Trash2 className="w-4 h-4" /></Button>

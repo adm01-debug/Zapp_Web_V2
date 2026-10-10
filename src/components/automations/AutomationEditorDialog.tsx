@@ -132,7 +132,7 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
           <div className="space-y-2">
             <Label>Gatilho (Quando executar?)</Label>
             <Select value={triggerType} onValueChange={setTriggerType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Gatilho"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TRIGGER_TYPES.map((t) => (
                   <SelectItem key={t.type} value={t.type}>
@@ -145,7 +145,7 @@ function AutomationEditorForm({ open, onOpenChange, automation, onSave }: Automa
           <div className="space-y-2">
             <Label>Ação (O que fazer?)</Label>
             <Select value={actionType} onValueChange={setActionType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Ação"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {ACTION_TYPES.map((a) => (
                   <SelectItem key={a.type} value={a.type}>

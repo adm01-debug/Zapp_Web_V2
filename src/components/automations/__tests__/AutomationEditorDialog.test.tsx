@@ -59,7 +59,7 @@ vi.mock('@/components/ui/select', async () => {
         </button>
       );
     },
-    SelectTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div role="combobox" {...props}>{children}</div>,
     SelectValue: () => null,
   };
 });
@@ -306,5 +306,17 @@ describe('AutomationEditorDialog (R2-MOD-002)', () => {
     expect(payload.actions).toEqual([
       { type: 'send_notification', config: { message: 'Novo texto', priority: 'high' } },
     ]);
+  });
+});
+
+describe('acessibilidade — nomes acessíveis nos controles', () => {
+  it('o seletor de gatilho tem aria-label', () => {
+    renderDialog(buildAutomation());
+    expect(screen.getByRole('combobox', { name: 'Gatilho' })).toBeInTheDocument();
+  });
+
+  it('o seletor de ação tem aria-label', () => {
+    renderDialog(buildAutomation());
+    expect(screen.getByRole('combobox', { name: 'Ação' })).toBeInTheDocument();
   });
 });
