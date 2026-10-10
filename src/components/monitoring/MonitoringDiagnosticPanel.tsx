@@ -35,7 +35,7 @@ function ScoreGauge({ score }: { score: number }) {
       </motion.div>
       <div className="flex-1 space-y-1.5">
         <div className="flex justify-between text-xs text-muted-foreground"><span>Saúde</span><span>{score}/100</span></div>
-        <Progress value={score} className={cn('h-2.5 rounded-full', pc)} />
+        <Progress value={score} className={cn('h-2.5 rounded-full', pc)} aria-label="Saúde" />
         <div className="flex items-center gap-1 text-2xs text-muted-foreground">
           <TrendingUp className="w-3 h-3" />
           <span>{score >= 80 ? 'Sistema saudável' : score >= 50 ? 'Necessita atenção' : 'Ação imediata'}</span>
@@ -43,6 +43,11 @@ function ScoreGauge({ score }: { score: number }) {
       </div>
     </div>
   );
+}
+
+/** Extrai só o host de uma URL de webhook para não vazar token no relatório. */
+function webhookHost(url: string): string {
+  try { return new URL(url).hostname; } catch { return url; }
 }
 
 /** Y29 — o relatório TXT sai pela porta única de gravação, com o gate
@@ -56,7 +61,7 @@ function exportReportTxt(d: DiagnosticResult, canDownload: boolean): boolean {
   ];
   d.diagnostics.forEach(x => {
     lines.push(`--- ${x.instance} ---`, `  Conexão: ${x.connectionState}`, `  Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`);
-    if (x.webhook) { lines.push(`  URL: ${x.webhook.url}`, `  Eventos: ${x.webhook.eventsCount}`); if (x.webhook.missingCritical?.length) lines.push(`  Ausentes: ${x.webhook.missingCritical.join(', ')}`); }
+    if (x.webhook) { lines.push(`  URL: ${webhookHost(x.webhook.url)}`, `  Eventos: ${x.webhook.eventsCount}`); if (x.webhook.missingCritical?.length) lines.push(`  Ausentes: ${x.webhook.missingCritical.join(', ')}`); }
     if (x.messageFlow) lines.push(`  Fluxo: ↓${x.messageFlow.lastHour.incoming} ↑${x.messageFlow.lastHour.outgoing} (${x.messageFlow.flowHealth})`);
     if (x.autoFix) lines.push(`  Auto-fix: ${x.autoFix.applied ? 'Aplicado' : 'Falhou'}`);
     lines.push('');
@@ -98,7 +103,7 @@ async function exportReportPdf(d: DiagnosticResult, canDownload: boolean) {
       doc.text(`Conexão: ${x.connectionState}`, 20, y); y += 6;
       doc.text(`Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`, 20, y); y += 6;
       if (x.webhook) {
-        doc.text(`URL: ${x.webhook.url}`, 20, y); y += 6;
+        doc.text(`URL: ${webhookHost(x.webhook.url)}`, 20, y); y += 6;
         doc.text(`Eventos configurados: ${x.webhook.eventsCount}`, 20, y); y += 6;
         if (x.webhook.missingCritical?.length) { doc.text(`Ausentes: ${x.webhook.missingCritical.join(', ')}`, 20, y); y += 6; }
       }
