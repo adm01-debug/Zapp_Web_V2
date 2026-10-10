@@ -17,6 +17,7 @@
  */
 import { toast } from 'sonner';
 import { downloadFileWithPermission } from '@/lib/downloadFile';
+import { logAudit } from '@/lib/audit';
 
 // ─── Constantes do contrato (E29.1-E29.5) ──────────────────────
 
@@ -226,9 +227,9 @@ export function defaultCatalogExportFetcher(filters: Record<string, unknown> = {
  * valor vem do chamador (`useDownloadPermission`). Sem permissão NÃO há
  * `createObjectURL` nem clique e a função devolve `false`, para o chamador não
  * anunciar um download que não houve. */
-export function triggerCsvDownload(csv: string, filename: string, canDownload: boolean): boolean {
+export function triggerCsvDownload(csv: string, filename: string, canDownload: boolean | undefined): boolean {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  return downloadFileWithPermission(blob, filename, { canDownload });
+  return downloadFileWithPermission(blob, filename, { canDownload: canDownload ?? false });
 }
 
 // ─── Orquestração (toast loading → success) ────────────────────
@@ -282,6 +283,13 @@ export async function exportCatalogCsv(options: CatalogExportOptions = {}): Prom
     return { ok: false, rows: 0, filename, error: 'empty', downloaded: false };
   }
 
+  // Y29 — sem permissão declarada (`canDownload === false`) o download é
+  // bloqueado AQUI, antes de chamar o `download` (inclusive o injetado nos
+  // testes): nada é gravado e nada é registrado na auditoria.
+  if (options.canDownload === false) {
+    toast.dismiss(toastId);
+    return { ok: false, rows: rows.length, filename, error: 'download-blocked', downloaded: false };
+  }
   const wrote = download(buildCatalogCsv(rows), filename);
   // Sem permissão, a porta recusa gravar (devolve `false`) e já avisou o
   // usuário: nada de toast de sucesso para um arquivo que não saiu.
@@ -289,6 +297,17 @@ export async function exportCatalogCsv(options: CatalogExportOptions = {}): Prom
     toast.dismiss(toastId);
     return { ok: false, rows: rows.length, filename, error: 'download-blocked', downloaded: false };
   }
+  // Auditoria (quem exportou, com filtro e nº de linhas): agendada antes do
+  // toast de sucesso para não correr atrás dele; sem permissão ou com o
+  // download bloqueado este ponto nunca é alcançado.
+  queueMicrotask(() => {
+    void logAudit({
+      action: 'catalog_export',
+      entityType: 'catalog_export',
+      entityId: filename,
+      details: { filter: options.filterKey ?? 'todos', filters: options.filters ?? {}, rows: rows.length },
+    });
+  });
   toast.success(`${rows.length.toLocaleString('pt-BR')} produto(s) exportado(s) em ${filename}`, { id: toastId });
   return { ok: true, rows: rows.length, filename, downloaded: true };
 }
