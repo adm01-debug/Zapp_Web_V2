@@ -127,6 +127,7 @@ vi.mock('@/hooks/integrations/useTalkXMonitor', () => ({
       recipients: h.rateRows,
       rateByMinute: [],
       isLoading: false,
+      isFetching: false,
       isError: h.rateError !== null,
       refetch: h.refetchRate,
     };
@@ -200,6 +201,28 @@ describe('TalkXRateChart — ritmo, janela, previsto e término (X147)', () => {
     expect(screen.queryByTestId('serie-Previsto')).toBeNull();
     expect(screen.queryByText(/Previsto/)).toBeNull();
     expect(screen.queryByText(/Término estimado/)).toBeNull();
+  });
+
+  it('o skeleton de carregamento usa motion-safe:animate-pulse e não animate-pulse incondicional', () => {
+    render(
+      <TalkXRateChart
+        title="Ritmo de Entrega"
+        windowMinutes={60}
+        onWindowChange={vi.fn()}
+        series={[]}
+        forecast={null}
+        limitPerMinute={6}
+        query={{ isLoading: true, isError: false, error: null }}
+        onRetry={vi.fn()}
+        truncated={false}
+      />,
+    );
+
+    const skeleton = document.querySelector('[class*="animate-pulse"]');
+    expect(skeleton).toBeTruthy();
+    const classes = (skeleton as HTMLElement).className.split(' ');
+    expect(classes).toContain('motion-safe:animate-pulse');
+    expect(classes).not.toContain('animate-pulse');
   });
 
   it('com forecast: desenha "Previsto" tracejada e o balão com o término estimado', () => {

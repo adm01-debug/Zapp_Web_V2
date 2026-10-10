@@ -127,6 +127,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const {
     recipients: rateRows,
     isLoading: rateLoading,
+    isFetching: rateFetching,
     isError: rateError,
     refetch: refetchRate,
   } = useTalkXMonitor(campaignId);
@@ -254,7 +255,7 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
             series={rateSeries}
             forecast={rateForecast}
             limitPerMinute={rateLimit}
-            query={{ isLoading: rateLoading, isFetching: rateLoading, isError: rateError, error: null }}
+            query={{ isLoading: rateLoading, isFetching: rateFetching, isError: rateError, error: null }}
             onRetry={() => { void refetchRate(); }}
             truncated={(rateRows?.length ?? 0) >= 2000}
           />
