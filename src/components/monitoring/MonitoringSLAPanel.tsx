@@ -47,6 +47,7 @@ function SLAGauge({ value, target }: { value: number | null; target: number }) {
       </div>
       <Progress
         value={unknown ? 0 : Math.min(value, 100)}
+        aria-label="SLA global"
         className={cn('h-2', unknown ? '[&>div]:bg-muted-foreground' : met ? '[&>div]:bg-emerald-500' : '[&>div]:bg-destructive')}
       />
     </div>
@@ -124,6 +125,7 @@ export function MonitoringSLAPanel({ uptime, instanceUptimes, truncated = false 
                     </div>
                     <Progress
                       value={Math.min(inst.percentage, 100)}
+                      aria-label={`SLA de ${inst.instanceId}`}
                       className={cn('h-1.5 mb-3', met ? '[&>div]:bg-emerald-500' : '[&>div]:bg-destructive')}
                     />
                     <div className="grid grid-cols-3 gap-2 text-center">

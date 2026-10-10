@@ -65,7 +65,7 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
             <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 pl-8 text-xs" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-[120px] text-xs"><Filter className="w-3 h-3 mr-1" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="Filtrar por status"><Filter className="w-3 h-3 mr-1" /><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="ok">✓ OK</SelectItem>
@@ -74,7 +74,7 @@ export function MonitoringHealthLogs({ healthLogs }: Props) {
             </SelectContent>
           </Select>
           <Select value={instanceFilter} onValueChange={setInstanceFilter}>
-            <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Instância" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-[140px] text-xs" aria-label="Filtrar por instância"><SelectValue placeholder="Instância" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
               {instances.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
