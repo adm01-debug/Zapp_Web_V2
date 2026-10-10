@@ -29,22 +29,18 @@ describe('contrato: acessibilidade da tela de campanhas (axe)', () => {
   const fonte = readFileSync(resolve(raiz, 'src/components/multiplix/MultiplixView.tsx'), 'utf8');
 
   it('os tres filtros de campanhas tem nome acessivel igual ao rotulo visivel, no PROPRIO elemento gatilho', () => {
-    // Publico/Ramo: <Button> (gatilho do Popover+Checkbox / Popover+Command).
-    expect(fonte).toMatch(/<Button[^>]*aria-label="Público"/);
-    expect(fonte).toMatch(/<Button[^>]*aria-label="Ramo"/);
+    // Publico/Ramo/UF: <SelectTrigger> (dropdown select).
+    expect(fonte).toMatch(/<SelectTrigger[^>]*aria-label="Público"/);
+    expect(fonte).toMatch(/<SelectTrigger[^>]*aria-label="Ramo"/);
     // UF: continua <SelectTrigger>.
     expect(fonte).toMatch(/<SelectTrigger[^>]*aria-label="UF"/);
   });
 
   it('nenhum controle dos filtros ficou sem aria-label', () => {
-    // O unico filtro que continua <Select> (UF) segue exigindo o aria-label...
+    // Os tres filtros usam <SelectTrigger> com aria-label.
     const triggers = fonte.match(/<SelectTrigger[^>]*>/g) ?? [];
-    expect(triggers.length).toBeGreaterThanOrEqual(1);
-    for (const t of triggers) expect(t).toMatch(/aria-label=/);
-
-    // ...e os dois que viraram combobox/multi-selecao carregam o mesmo rotulo
-    // visivel no PROPRIO <Button> gatilho do Popover (nao num elemento qualquer).
-    const botoesDeFiltro = fonte.match(/<Button[^>]*aria-label="(Público|Ramo)"[^>]*>/g) ?? [];
-    expect(botoesDeFiltro.length).toBe(2);
+    const filtroTriggers = triggers.filter((t) => /aria-label="(Público|Ramo|UF)"/.test(t));
+    expect(filtroTriggers.length).toBe(3);
+    for (const t of filtroTriggers) expect(t).toMatch(/aria-label=/);
   });
 });
