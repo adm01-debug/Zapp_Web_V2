@@ -60,16 +60,51 @@ describe('useUrlFilters', () => {
     expect(result.current.filters.dateTo).toBe('2024-12-31');
   });
 
-  it('parses search from URL', () => {
-    mockSearchParams.set('q', 'hello world');
+  it('ignora ?q= da URL: o texto livre não é lido dela', () => {
+    mockSearchParams.set('q', '11999998888');
     const { result } = renderHook(() => useUrlFilters());
-    expect(result.current.filters.search).toBe('hello world');
+    expect(result.current.filters.search).toBe('');
+  });
+
+  it('busca fica em estado local e nunca é gravada na URL (PII)', () => {
+    const { result } = renderHook(() => useUrlFilters());
+    act(() => {
+      result.current.setFilters({ search: '11999998888', status: ['open'] });
+    });
+    expect(result.current.filters.search).toBe('11999998888');
+    expect(result.current.hasActiveFilters).toBe(true);
+
+    const updater = mockSetSearchParams.mock.calls[0][0] as (p: URLSearchParams) => URLSearchParams;
+    const gravado = updater(new URLSearchParams('view=inbox&q=11999998888'));
+    expect(gravado.toString()).not.toContain('11999998888');
+    expect(gravado.has('q')).toBe(false);
+    // filtros não-PII continuam na URL e params alheios são preservados
+    expect(gravado.get('status')).toBe('open');
+    expect(gravado.get('view')).toBe('inbox');
+  });
+
+  it('limpar a busca esvazia o estado local', () => {
+    const { result } = renderHook(() => useUrlFilters());
+    act(() => { result.current.setFilters({ search: 'ana' }); });
+    act(() => { result.current.setFilters({ search: '' }); });
+    expect(result.current.filters.search).toBe('');
+    expect(result.current.hasActiveFilters).toBe(false);
+  });
+
+  it('clearFilters zera a busca local e remove ?q= antigo', () => {
+    const { result } = renderHook(() => useUrlFilters());
+    act(() => { result.current.setFilters({ search: 'ana' }); });
+    act(() => { result.current.clearFilters(); });
+    expect(result.current.filters.search).toBe('');
+    const calls = mockSetSearchParams.mock.calls;
+    const updater = calls[calls.length - 1][0] as (p: URLSearchParams) => URLSearchParams;
+    expect(updater(new URLSearchParams('q=ana&view=inbox')).toString()).toBe('view=inbox');
   });
 
   it('setFilters calls setSearchParams', () => {
     const { result } = renderHook(() => useUrlFilters());
     act(() => {
-      result.current.setFilters({ search: 'test' });
+      result.current.setFilters({ status: ['open'] });
     });
     expect(mockSetSearchParams).toHaveBeenCalled();
   });

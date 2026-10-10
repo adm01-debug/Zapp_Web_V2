@@ -1,9 +1,14 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 /**
- * Hook to persist and sync filters with URL search params
- * Enables sharing filtered views via URL and restores filters on navigation
+ * Hook to persist and sync filters with URL search params.
+ * Enables sharing filtered views via URL and restores filters on navigation.
+ *
+ * O texto livre da busca NÃO vai para a URL (SEC-FRONTEND-05): no Inbox ele casa
+ * nome, telefone e e-mail do contato, e na barra de endereço vazaria para o
+ * histórico, a restauração de sessão e qualquer link copiado. Fica só em estado
+ * local; os demais filtros (status, tags, agente, datas) não são PII e seguem na URL.
  */
 
 export interface UrlFiltersState {
@@ -21,11 +26,15 @@ const PARAM_KEYS = {
   agentId: 'agent',
   dateFrom: 'from',
   dateTo: 'to',
-  search: 'q',
 } as const;
+
+// Chave antiga da busca. Nunca mais é gravada nem lida; só é apagada para limpar
+// links/históricos antigos que ainda carreguem o texto digitado.
+const LEGACY_SEARCH_KEY = 'q';
 
 export function useUrlFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState('');
 
   // Parse filters from URL
   const filters = useMemo<UrlFiltersState>(() => {
@@ -38,12 +47,14 @@ export function useUrlFilters() {
       agentId: searchParams.get(PARAM_KEYS.agentId),
       dateFrom: searchParams.get(PARAM_KEYS.dateFrom),
       dateTo: searchParams.get(PARAM_KEYS.dateTo),
-      search: searchParams.get(PARAM_KEYS.search) || '',
+      search,
     };
-  }, [searchParams]);
+  }, [searchParams, search]);
 
   // Update URL with new filters
   const setFilters = useCallback((newFilters: Partial<UrlFiltersState>) => {
+    if (newFilters.search !== undefined) setSearch(newFilters.search);
+
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
 
@@ -92,14 +103,8 @@ export function useUrlFilters() {
         }
       }
 
-      // Handle search
-      if (newFilters.search !== undefined) {
-        if (newFilters.search) {
-          params.set(PARAM_KEYS.search, newFilters.search);
-        } else {
-          params.delete(PARAM_KEYS.search);
-        }
-      }
+      // Link antigo com ?q= (texto digitado): some assim que qualquer filtro muda.
+      params.delete(LEGACY_SEARCH_KEY);
 
       return params;
     }, { replace: true });
@@ -107,9 +112,11 @@ export function useUrlFilters() {
 
   // Clear all filters — preserves non-filter params (e.g. ?view=)
   const clearFilters = useCallback(() => {
+    setSearch('');
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       Object.values(PARAM_KEYS).forEach(key => params.delete(key));
+      params.delete(LEGACY_SEARCH_KEY);
       return params;
     }, { replace: true });
   }, [setSearchParams]);
