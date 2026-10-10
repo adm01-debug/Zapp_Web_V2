@@ -77,4 +77,15 @@ describe('ActiveCampaignIndicator — cartão de campanha ativa (X053)', () => {
     expect(screen.getByText('Pausada')).toBeInTheDocument();
     expect(screen.queryByText('Em andamento')).not.toBeInTheDocument();
   });
+
+  it('o ponto "Ao vivo" só anima quando o sistema permite movimento', () => {
+    const { container } = render(<ActiveCampaignIndicator campaigns={[ANTIGA]} onOpen={vi.fn()} live />);
+
+    // `motion-safe:` é inerte sob `prefers-reduced-motion: reduce` — é o que mantém o
+    // ponto estático para quem pediu menos movimento (mesmo padrão do "Ao vivo" do
+    // War Room). A classe `talkx-live-dot` do CSS anima sempre, então não foi usada.
+    const ponto = container.querySelector('.motion-safe\\:animate-pulse');
+    expect(ponto).not.toBeNull();
+    expect(ponto).toHaveAttribute('title', 'Ao vivo');
+  });
 });

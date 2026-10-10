@@ -53,7 +53,7 @@ export function ActiveCampaignIndicator({ campaigns, onOpen, live = false }: {
         >
           <span
             title={live ? 'Ao vivo' : undefined}
-            className={cn('w-2 h-2 rounded-full shrink-0', topPaused ? 'bg-warning' : 'bg-success', live && 'talkx-live-dot')}
+            className={cn('w-2 h-2 rounded-full shrink-0', topPaused ? 'bg-warning' : 'bg-success', live && 'motion-safe:animate-pulse')}
           />
           <span className="flex flex-col leading-tight min-w-0">
             <span className={cn('text-2xs font-semibold', topPaused ? 'text-warning' : 'text-success')}>{topLabel}</span>
