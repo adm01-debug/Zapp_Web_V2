@@ -6,6 +6,8 @@
 -- (UPDATE por id, INSERT so para novas); remover variante com destinatario e recusado.
 --
 -- Rollback: drop function if exists public.save_talkx_template_variants(uuid, timestamptz, jsonb);
+-- Rollback (SQL executavel, na ordem):
+--   drop function if exists public.save_talkx_template_variants(uuid, timestamptz, jsonb);
 -- A funcao e nova (nao substitui corpo anterior); basta remove-la.
 
 CREATE OR REPLACE FUNCTION public.save_talkx_template_variants(
