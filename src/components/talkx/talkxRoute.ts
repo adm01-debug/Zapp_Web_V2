@@ -147,7 +147,7 @@ export function replaceTalkXOpenRoute(target: TalkXOpenTarget): void {
 
 // --- Screen routing (TL-152): campaign monitor screen via ?screen= ---
 
-export type TalkXScreen = 'monitor' | 'scheduled' | 'running' | 'report';
+export type TalkXScreen = 'monitor' | 'scheduled' | 'running';
 export type TalkXScreenTarget = TalkXScreen | 'wizard';
 
 export type TalkXRoute = {
@@ -160,12 +160,14 @@ export type ParsedTalkXScreenRoute = {
   needsNormalization: boolean;
 };
 
-const SCREENS = new Set<string>(['monitor', 'scheduled', 'running', 'report']);
+const SCREENS = new Set<string>(['monitor', 'scheduled', 'running']);
 const CAMPAIGN_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 
 /**
  * A situação da campanha decide a tela de acompanhamento.
- * `paused` cai na tela running e `completed`/`cancelled` caem no report.
+ * `paused` cai na tela running e `completed`/`cancelled` caem no monitor em
+ * leitura (X143: a tela de relatório ainda não existe; sem tela própria, o
+ * endereço nunca é `?screen=report`).
  */
 export function screenForStatus(status: string | null | undefined): TalkXScreenTarget {
   switch (status) {
@@ -179,7 +181,7 @@ export function screenForStatus(status: string | null | undefined): TalkXScreenT
       return 'running';
     case 'completed':
     case 'cancelled':
-      return 'report';
+      return 'monitor';
     default:
       return 'monitor';
   }
