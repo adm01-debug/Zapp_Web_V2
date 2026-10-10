@@ -1,12 +1,10 @@
 -- talkx_campaign_report_breakdowns
--- Rollback: remover a função talkx_campaign_report_breakdowns
--- Rollback (SQL executável, na ordem):
---   DROP FUNCTION IF EXISTS public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz);
+-- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz);
 CREATE OR REPLACE FUNCTION public.talkx_campaign_report_breakdowns(
   p_campaign uuid,
   p_from timestamptz,
   p_to timestamptz
-) RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
   v_tz text;
   v_result jsonb;
@@ -21,15 +19,41 @@ BEGIN
 
   WITH heatmap AS (
     SELECT
-      EXTRACT(ISODOW FROM r.sent_at AT TIME ZONE v_tz)::int AS dow,
-      EXTRACT(HOUR FROM r.sent_at AT TIME ZONE v_tz)::int AS hour,
-      COUNT(*) FILTER (WHERE r.sent_at IS NOT NULL) AS sends,
-      COUNT(*) FILTER (WHERE r.replied_at IS NOT NULL) AS replies,
-      COUNT(cl.id) AS clicks
-    FROM public.talkx_recipients r
-    LEFT JOIN public.talkx_link_clicks cl ON cl.recipient_id = r.id AND cl.clicked_at >= p_from AND cl.clicked_at < p_to
-    WHERE r.campaign_id = p_campaign AND r.sent_at IS NOT NULL AND r.sent_at >= p_from AND r.sent_at < p_to
-    GROUP BY 1, 2
+      d.dow,
+      h.hour,
+      COALESCE(s.sends, 0) AS sends,
+      COALESCE(r.replies, 0) AS replies,
+      COALESCE(c.clicks, 0) AS clicks
+    FROM generate_series(1, 7) AS d(dow)
+    CROSS JOIN generate_series(0, 23) AS h(hour)
+    LEFT JOIN (
+      SELECT
+        EXTRACT(ISODOW FROM r.sent_at AT TIME ZONE v_tz)::int AS dow,
+        EXTRACT(HOUR FROM r.sent_at AT TIME ZONE v_tz)::int AS hour,
+        COUNT(*) AS sends
+      FROM public.talkx_recipients r
+      WHERE r.campaign_id = p_campaign AND r.sent_at IS NOT NULL AND r.sent_at >= p_from AND r.sent_at < p_to
+      GROUP BY 1, 2
+    ) s ON s.dow = d.dow AND s.hour = h.hour
+    LEFT JOIN (
+      SELECT
+        EXTRACT(ISODOW FROM r.replied_at AT TIME ZONE v_tz)::int AS dow,
+        EXTRACT(HOUR FROM r.replied_at AT TIME ZONE v_tz)::int AS hour,
+        COUNT(*) AS replies
+      FROM public.talkx_recipients r
+      WHERE r.campaign_id = p_campaign AND r.replied_at IS NOT NULL AND r.replied_at >= p_from AND r.replied_at < p_to
+      GROUP BY 1, 2
+    ) r ON r.dow = d.dow AND r.hour = h.hour
+    LEFT JOIN (
+      SELECT
+        EXTRACT(ISODOW FROM cl.clicked_at AT TIME ZONE v_tz)::int AS dow,
+        EXTRACT(HOUR FROM cl.clicked_at AT TIME ZONE v_tz)::int AS hour,
+        COUNT(*) AS clicks
+      FROM public.talkx_link_clicks cl
+      JOIN public.talkx_recipients r ON r.id = cl.recipient_id AND r.campaign_id = p_campaign
+      WHERE cl.clicked_at >= p_from AND cl.clicked_at < p_to
+      GROUP BY 1, 2
+    ) c ON c.dow = d.dow AND c.hour = h.hour
   ),
   heatmap_pivot AS (
     SELECT
@@ -62,7 +86,7 @@ BEGIN
       COUNT(cl.id) AS clicks,
       COUNT(DISTINCT cl.recipient_id) AS unique_clicks,
       ROUND(CASE WHEN (SELECT COUNT(*) FROM public.talkx_recipients WHERE campaign_id = p_campaign AND sent_at IS NOT NULL) > 0
-        THEN COUNT(cl.id)::numeric / (SELECT COUNT(*) FROM public.talkx_recipients WHERE campaign_id = p_campaign AND sent_at IS NOT NULL) * 100
+        THEN COUNT(DISTINCT cl.recipient_id)::numeric / (SELECT COUNT(*) FROM public.talkx_recipients WHERE campaign_id = p_campaign AND sent_at IS NOT NULL) * 100
         ELSE 0 END, 1) AS rate_pct
     FROM public.talkx_links l
     LEFT JOIN public.talkx_link_clicks cl ON cl.link_id = l.id AND cl.clicked_at >= p_from AND cl.clicked_at < p_to
@@ -96,3 +120,6 @@ BEGIN
   RETURN COALESCE(v_result, '{}'::jsonb);
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz) TO authenticated, service_role;

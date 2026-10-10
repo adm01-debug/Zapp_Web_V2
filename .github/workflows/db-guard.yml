@@ -917,6 +917,15 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
+      # N-134 (Fase 6 · banco): breakdowns do relatorio Talk X — SECURITY DEFINER,
+      # REVOKE/GRANT, heatmap 7x24 completo, by_segment e by_link com valores da fixture.
+      # Harness RED→GREEN em PostgreSQL 17 descartavel com role authenticated + claims.
+      - name: Provar breakdowns do relatorio Talk X — heatmap 7x24, by_segment, by_link (N-134)
+        env:
+          BREAKDOWN_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-report-breakdowns.test.sh
+
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
