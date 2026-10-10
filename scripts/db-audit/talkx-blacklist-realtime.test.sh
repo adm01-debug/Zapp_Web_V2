@@ -55,7 +55,7 @@ psql_q() { psql_test -Atqc "$1"; }
 # --- registro dos casos (ausencia de medicao = falha) -----------------------
 declare -A CASES_SEEN=()
 declare -a CASES_EXPECTED=(
-  pre_state_absent published_with_scope scope_excludes_phone scope_minimal replay_idempotent
+  pre_state_absent published_with_scope scope_excludes_phone scope_minimal replay_idempotent rollback_removes
 )
 case_done() { CASES_SEEN["$1"]=1; }
 
@@ -165,7 +165,7 @@ case_done published_with_scope
 phone_published="$(psql_q "SELECT count(*) FROM pg_publication_tables
   WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'
     AND 'phone' = ANY (attnames)")"
-[[ "$phone_published" == '0' ]] || fail "(3) `phone` esta publicado no Realtime [obtido: $phone_published]"
+[[ "$phone_published" == '0' ]] || fail "(3) \`phone\` esta publicado no Realtime [obtido: $phone_published]"
 pass '(3) `phone` FORA da lista de colunas publicadas'
 case_done scope_excludes_phone
 
@@ -197,6 +197,20 @@ cols_after_replay="$(psql_q "SELECT coalesce(array_to_string(array_agg(a ORDER B
 [[ "$cols_after_replay" == 'contact_id,id' ]] || fail "(5) replay afrouxou o escopo [obtido: $cols_after_replay]"
 pass '(5) replay idempotente: 1 entrada e escopo segue minimo'
 case_done replay_idempotent
+
+# ---------------------------------------------------------------------------
+# (6) ROLLBACK: a linha `-- Rollback:` do cabecalho da migration, executada de
+# verdade, retira a tabela da publicacao (0 linhas em pg_publication_tables)
+# ---------------------------------------------------------------------------
+rollback_sql="$(sed -n 's/^-- Rollback: //p' "$migration")"
+[[ -n "$rollback_sql" ]] || fail '(6) cabecalho da migration sem linha -- Rollback: executavel'
+printf '%s\n' "$rollback_sql" | psql_test -v ON_ERROR_STOP=1 >/dev/null || fail '(6) rollback nao executou'
+rows_after_rollback="$(psql_q "SELECT count(*) FROM pg_publication_tables
+  WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'")"
+[[ "$rows_after_rollback" == '0' ]] || fail "(6) rollback nao retirou a tabela da publicacao [obtido: $rows_after_rollback]"
+pass '(6) rollback executado: 0 linhas em pg_publication_tables'
+case_done rollback_removes
+psql_test < "$migration" >/dev/null || fail '(6) reaplicacao apos o rollback falhou'
 
 # ---------------------------------------------------------------------------
 # AUSENCIA DE MEDICAO CONTA COMO FALHA
