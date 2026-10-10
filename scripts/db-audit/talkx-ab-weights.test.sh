@@ -19,15 +19,22 @@
 #       aceita quando ambos ficam em 100;
 #   (i) talkx_assign_variant: o mesmo contato recebe a mesma variante em 2 snapshots;
 #   (j) contatos distintos respeitam os pesos (distribuicao A=60 / B=40);
-#   (k) authenticated nao executa talkx_assign_variant (grant so para service_role).
+#   (k) authenticated nao executa talkx_assign_variant (grant so para service_role);
+#   (l) escopo: a migration nao carrega DDL das colunas A/B (ab_*) em talkx_campaigns.
 
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-mapfile -t migration_candidates < <(ls -1 "$repo_root"/supabase/migrations/*_talkx_ab_weights_constraint.sql 2>/dev/null || true)
-[[ "${#migration_candidates[@]}" == '1' ]] \
-  || { printf 'FAIL: esperava exatamente 1 migration talkx_ab_weights_constraint, achei %s\n' "${#migration_candidates[@]}" >&2; exit 1; }
-migration_n103="${migration_candidates[0]}"
+# TALKX_AB_WEIGHTS_MIGRATION permite a prova vermelho-verde: rodar ESTE teste
+# contra a migration anterior (que falha) e contra a migration atual (que passa).
+if [[ -n "${TALKX_AB_WEIGHTS_MIGRATION:-}" ]]; then
+  migration_n103="$TALKX_AB_WEIGHTS_MIGRATION"
+else
+  mapfile -t migration_candidates < <(ls -1 "$repo_root"/supabase/migrations/*_talkx_ab_weights_constraint.sql 2>/dev/null || true)
+  [[ "${#migration_candidates[@]}" == '1' ]] \
+    || { printf 'FAIL: esperava exatamente 1 migration talkx_ab_weights_constraint, achei %s\n' "${#migration_candidates[@]}" >&2; exit 1; }
+  migration_n103="${migration_candidates[0]}"
+fi
 postgres_image="${TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-ab-weights-test-$$"
 test_password="talkx_ab_weights_test_only"
@@ -101,6 +108,19 @@ CREATE TABLE public.talkx_template_variants (
 CREATE INDEX idx_talkx_template_variants_template ON public.talkx_template_variants (template_id);
 CREATE UNIQUE INDEX talkx_template_variants_template_id_label_key ON public.talkx_template_variants (template_id, label);
 
+-- talkx_campaigns e profiles existem no banco real e sao criadas aqui para que
+-- o harness tambem consiga aplicar a migration ANTERIOR (prova vermelho-verde
+-- via TALKX_AB_WEIGHTS_MIGRATION); a migration atual nao as referencia.
+CREATE TABLE public.talkx_campaigns (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id uuid REFERENCES public.talkx_templates(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
 -- Roles necessarios para que a migration nao falhe no REVOKE/GRANT.
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
@@ -120,12 +140,6 @@ psql_test < "$migration_n103" >/dev/null
 # Replayavel: uma segunda aplicacao nao pode falhar.
 psql_test < "$migration_n103" >/dev/null
 pass '(a) migration N-103 aplica sobre o schema minimo e e replayavel'
-
-# Escopo: a migration nao carrega DDL das colunas A/B em talkx_campaigns.
-if grep -qE 'ADD COLUMN.*ab_(enabled|metric|min_sample|winner)' "$migration_n103"; then
-  fail '(a) a migration ainda adiciona colunas ab_* (DDL de A/B fora do escopo)'
-fi
-pass '(a) a migration nao adiciona colunas ab_* (escopo restrito a constraint/atribuicao)'
 
 [[ "$(psql_q "SELECT count(*) FROM pg_trigger WHERE tgname = 'talkx_template_variants_weight_sum'")" == '1' ]] \
   || fail '(a) trigger talkx_template_variants_weight_sum ausente'
@@ -296,5 +310,13 @@ pass "(j) distribuicao respeita os pesos: $count_a/400 atribuidos a variante A (
 expect_error '(k) authenticated nao executa talkx_assign_variant -> 42501' \
   'permission denied' '42501' \
   "SET LOCAL ROLE authenticated; SELECT public.talkx_assign_variant('$contact_id'::uuid, '$dist_template'::uuid);"
+
+# ---------------------------------------------------------------------------
+# (l) Escopo: a migration nao carrega DDL das colunas A/B em talkx_campaigns.
+# ---------------------------------------------------------------------------
+if grep -qE 'ADD COLUMN.*ab_(enabled|metric|min_sample|winner)' "$migration_n103"; then
+  fail '(l) a migration ainda adiciona colunas ab_* (DDL de A/B fora do escopo)'
+fi
+pass '(l) a migration nao adiciona colunas ab_* (escopo restrito a constraint/atribuicao)'
 
 printf 'PASS: N-103 talkx_ab_weights_constraint — constraint de soma de pesos (INSERT/UPDATE/DELETE/troca de template), atribuicao estavel, distribuicao, replayavel e grants\n'
