@@ -21,6 +21,7 @@
     "public.queue_members",
     "public.queues",
     "public.sales_deals",
+    "public.talkx_blacklist",
     "public.talkx_campaign_events",
     "public.talkx_campaign_segments",
     "public.talkx_campaigns",
