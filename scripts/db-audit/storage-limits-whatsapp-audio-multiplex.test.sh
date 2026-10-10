@@ -101,9 +101,9 @@ printf '[PASS] B.1-B.7 whatsapp-audio com 26214400 e 5 MIMEs audio/*, sem text/h
 [[ "$MX_MIME_AFTER" != *'text/html'* ]] || fail "B.12 multiplix-audio nao deveria permitir text/html apos a migration"
 printf '[PASS] B.8-B.12 multiplix-audio com 52428800, audio/* + video/mp4, sem text/html\n'
 
-# Rollback: extrai a linha "-- Rollback:" do cabecalho da migration e executa de verdade
-ROLLBACK_SQL="$(grep '^-- Rollback:' "$migration" | sed 's/^-- Rollback: //')"
-[[ -n "$ROLLBACK_SQL" ]] || fail "B.13 cabecalho da migration sem linha '-- Rollback:' executavel"
+# Rollback: extrai as linhas "--   ..." do bloco "-- Rollback (SQL executavel" do cabecalho e executa de verdade
+ROLLBACK_SQL="$(grep '^--   ' "$migration" | sed 's/^--   //')"
+[[ -n "$ROLLBACK_SQL" ]] || fail "B.13 cabecalho da migration sem bloco '-- Rollback (SQL executavel' com linhas '--   ...'"
 psql_test -c "$ROLLBACK_SQL" >/dev/null || fail 'B.13 rollback do cabecalho falhou ao executar'
 
 WA_MIME_RB="$(psql_test -Atqc "SELECT allowed_mime_types IS NULL FROM storage.buckets WHERE id='whatsapp-audio';")"
