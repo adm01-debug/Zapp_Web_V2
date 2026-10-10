@@ -75,7 +75,7 @@ Donos: **Dono** (Joaquim), **Claude** (verificações e infraestrutura que eu co
 - **E002** [Dono] **Aceite de risco por escrito.** O dono registra que entende o risco de banimento e a violação dos termos do WhatsApp. *Aceite:* texto em `docs/` assinado por commit do dono.
 - **E003** [Dono] **Parecer jurídico.** Conversa com o advogado sobre engenharia reversa do protocolo/codec do WhatsApp e uso de biblioteca de pesquisa. *Aceite:* resposta registrada (não é parecer deste documento).
 - **E004** [Claude] **ADR-0xx "motor de chamadas do WhatsApp".** Registra a decisão, as alternativas (API oficial da Meta, Wavoip, manter só eventos) e o critério de troca. *Aceite:* `docs/adr/` commitado.
-- **E005** [Claude] **Contrato de transporte.** Define as interfaces `WhatsAppCallEngine` (dial/answer/hangup/reject/eventos) e `MediaTransport` (abrir/fechar/enviar quadro/receber quadro/estatísticas), para o motor ser trocável. *Aceite:* interfaces e testes de contrato escritos antes de qualquer implementação.
+- **E005** [Claude] **Contrato de transporte.** Define as interfaces `WhatsAppCallEngine` (dial/answer/hangup/reject/eventos) e `MediaTransport` (abrir/fechar/enviar quadro/receber quadro/estatísticas), para o motor ser trocável. *Aceite:* interfaces e testes de contrato escritos antes de qualquer implementação. **FEITO 10/10/2026:** interfaces em `src/lib/calls/WhatsAppCallEngine.ts` e `src/lib/calls/MediaTransport.ts`; testes de contrato em `src/lib/calls/__tests__/WhatsAppCallEngine.contrato.test.ts` e `src/lib/calls/__tests__/MediaTransport.contrato.test.ts` (11 casos). Sem motor real e sem religar nada — `WhatsAppCallAdapter` segue como estava.
 - **E006** [Dono] **Onde roda a Evolution GO hoje.** Servidor, versão, como é implantada, quem tem acesso. *Aceite:* resposta registrada; define quem executa as etapas *Infra*.
 - **E007** [Claude] **Métricas de sucesso.** Taxa de chamadas com áudio bidirecional, atraso, falhas por 100 chamadas, restrições do número. *Aceite:* painel/planilha definidos.
 - **E008** [Claude] **Registro de riscos** (seção 7) com dono e plano de resposta para cada um. *Aceite:* no documento.
@@ -250,4 +250,5 @@ Vídeo e chamada em grupo (a biblioteca os tem, mas são experimentais); URA/DTM
 6. Trocar o motor (por exemplo, para a API oficial da Meta) não exige refazer estado, histórico nem interface.
 
 ## 9. Estado de execução
-_A preencher ao longo da execução. Nenhuma etapa foi iniciada._
+_Atualizado a cada cartão._
+- E005 (Fase 0) — **feito em 10/10/2026**: interfaces `WhatsAppCallEngine`/`MediaTransport` (`src/lib/calls/`) + testes de contrato verdes. Nenhum motor real implementado; `WhatsAppCallAdapter.ts` inalterado. Próximas da fase: E004, E006.
