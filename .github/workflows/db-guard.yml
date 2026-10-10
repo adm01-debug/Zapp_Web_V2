@@ -625,7 +625,7 @@ jobs:
           TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
 
-      - name: Saude de segmento do Talk X (N-116)
+      - name: Saude de segmento (N-116)
         env:
           TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-health.test.sh

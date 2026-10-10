@@ -1,12 +1,13 @@
 -- Rollback:
 DROP FUNCTION IF EXISTS public.talkx_segment_health(jsonb, uuid);
+--   drop function if exists public.talkx_segment_health(jsonb, uuid);
 --
 -- N-116/X102: talkx_segment_health(p_rules, p_segment_id) - risco, sinais e composicao,
 -- so agregados; reusa talkx_audience_query. ACL/recusas: admin/supervisor (42501); sem regras ->
 -- 22023 'rules'; segmento inexistente -> P0002; so p_rules = campo livre; com os dois,
 -- p_rules vence e o segmento precisa existir. Sinais: warm/eligible>=70%; bloqueio<2%
 -- (sent>=100); engajamento>=media (sent>=100). Nivel: sem eligible NULL; Alto warm<40%
--- ou bloqueio>=5%; Baixo 3 sinais ok; senao Moderado (sem envio: nota, bloqueio zero). ADITIVA.
+-- ou bloqueio>=5%; Baixo 3 sinais ok; senao Moderado (sem envio: nota, bloqueio zero).
 
 CREATE OR REPLACE FUNCTION public.talkx_segment_health(
 p_rules jsonb DEFAULT NULL,

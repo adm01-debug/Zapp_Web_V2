@@ -170,7 +170,6 @@ SQL
 psql_test >/dev/null < "$audience_migration"
 psql_test >/dev/null < "$migration" || fail "migration de saude nao aplica: $migration"
 psql_test >/dev/null < "$migration"
-pass 'migrations ok'
 
 admin_session="SET ROLE authenticated; SET request.jwt.claim.sub='$admin_uid';"
 agent_session="SET ROLE authenticated; SET request.jwt.claim.sub='$agent_uid';"
@@ -186,7 +185,6 @@ expect() {
 
 [[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_segment_health(jsonb,uuid)', 'EXECUTE')")" == 'f' ]] || fail 'anon com EXECUTE'
 [[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_segment_health(jsonb,uuid)', 'EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE'
-pass 'ACL anon/authenticated'
 
 for kv in matched=5 eligible=4 suppressed=1 warm=4 inactive_180d=1 no_consent=2 composition,pessoas=2 composition,empresas=1 composition,nao_informado=1 top_tags,0,tag=lead top_tags,0,count=2 top_tags,1,tag=vip level=moderado note=sem_historico_de_envio score=100 signals,qualified_base=true; do
   expect 'Alpha' a "${kv%%=*}" "${kv##*=}"
@@ -198,7 +196,6 @@ done
 [[ -z "$(field a signals,engagement)" ]] || fail 'Alpha: sinal 3 deveria ser nulo'
 codes="$(psql_q "$admin_session SELECT string_agg(s->>'code', ',' ORDER BY s->>'code') FROM jsonb_array_elements(public.talkx_segment_health(NULL, '$(seg a)'::uuid) -> 'suggestions') s;")"
 [[ "$codes" == 'add_consent_filter,review_suppressed_origin,split_active_inactive' ]] || fail "Alpha: sugestoes inesperadas [$codes]"
-pass 'Alpha ok'
 
 # base 205-2.
 expect 'base' a base_total 203
@@ -206,12 +203,10 @@ expect 'base' a base_total 203
 for kv in eligible=99 suppressed=1 last_90d,sent=100 last_90d,delivered=100 last_90d,replied=30 last_90d,failed=0 last_90d,optout=1 signals,qualified_base=true signals,low_block=true signals,engagement=true level=baixo score=99; do
   expect 'Gamma' c "${kv%%=*}" "${kv##*=}"
 done
-pass 'Gamma: Baixo'
 
 for kv in last_90d,sent=100 last_90d,failed=6 signals,low_block=false level=alto; do
   expect 'Epsilon' e "${kv%%=*}" "${kv##*=}"
 done
-pass 'Epsilon: Alto'
 
 for kv in matched=0 eligible=0 suppressed=0 warm=0 inactive_180d=0 no_consent=0 composition,pessoas=0 composition,empresas=0 composition,nao_informado=0; do
   expect 'Nada' f "${kv%%=*}" "${kv##*=}"
@@ -224,23 +219,19 @@ for q in level score note signals,qualified_base; do
 done
 [[ "$(field f top_tags)" == '[]' ]] || fail 'Nada: top_tags deveria ser []'
 [[ "$(field f suggestions)" == '[]' ]] || fail 'Nada: suggestions deveria ser []'
-pass 'Nada: zeros e nulos'
 
 
 by_rules="$(psql_q "$admin_session SELECT public.talkx_segment_health('$alpha_rules'::jsonb, NULL);")"
 by_segment="$(psql_q "$admin_session SELECT public.talkx_segment_health(NULL, '$(seg a)'::uuid);")"
 [[ "$by_rules" == "$by_segment" ]] || fail 'p_rules e p_segment_id deveriam dar o mesmo resultado'
-pass 'livre == salvo'
 
 both="$(psql_q "$admin_session SELECT public.talkx_segment_health('$alpha_rules'::jsonb, '$(seg a)'::uuid);")"
 [[ "$both" == "$by_segment" ]] || fail 'com os dois parametros, p_rules deveria vencer'
-pass 'p_rules vence'
 expect_error 'p_rules com segmento inexistente -> P0002' 'talkx_segment_not_found' 'P0002' \
   "$admin_session SELECT public.talkx_segment_health('$alpha_rules'::jsonb, '99999999-0000-0000-0000-000000000000'::uuid);"
 
 
 [[ "$(psql_q "$admin_session SELECT jsonb_path_exists(public.talkx_segment_health(NULL, '$(seg a)'::uuid), '\$.**.phone') OR jsonb_path_exists(public.talkx_segment_health(NULL, '$(seg a)'::uuid), '\$.**.name');")" == 'f' ]] || fail 'resposta expoe phone/name'
-pass 'so agregados'
 
 
 expect_error 'agente -> 42501' 'talkx_segment_health_role_required' '42501' \
@@ -263,6 +254,5 @@ rb_out="$(psql_test -c "$admin_session SELECT public.talkx_segment_health(NULL, 
 rb_status=$?
 set -e
 (( rb_status != 0 )) || { printf '%s\n' "$rb_out" >&2; fail 'rollback: funcao ainda executa'; }
-pass 'rollback ok'
 
 printf 'PASS: N-116 talkx_segment_health — risco, sinais, composicao, lista vazia e recusas\n'
