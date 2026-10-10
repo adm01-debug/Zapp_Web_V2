@@ -64,6 +64,9 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // N-141: policies de snooze, favorite e pin restritas a authenticated (nao anon).
+  // Migracao 20261010000000 — teste de banco com container descartavel (docker).
+  'scripts/db-audit/scope-snoozes-pins-favorites-authenticated.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
