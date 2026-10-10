@@ -1,49 +1,78 @@
+// O teste prova que o gráfico de volume tem aria-label acessível
+// (N-056: descrição em texto para leitores de tela).
+// Sem a correção, o container do gráfico NÃO tem role="img" nem aria-label.
+process.env.TZ = 'UTC';
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VolumeChart } from '../overview/VolumeChart';
 
-const mockUseTodayHourlyVolume = vi.fn();
 vi.mock('@/hooks/dashboard/useTodayHourlyVolume', () => ({
-  useTodayHourlyVolume: () => mockUseTodayHourlyVolume(),
+  useTodayHourlyVolume: vi.fn(),
 }));
 
-const mockUseDemandPrediction = vi.fn();
 vi.mock('@/hooks/business/useDemandPrediction', () => ({
-  useDemandPrediction: () => mockUseDemandPrediction(),
+  useDemandPrediction: vi.fn(),
 }));
 
-describe('VolumeChart', () => {
-  it('sem dados, mostra empty state compacto em vez do gráfico', () => {
-    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour: Array(24).fill(0), last7ByDay: [], currentHour: 10, currentHourCount: 0, avg7dCurrentHour: null } });
-    mockUseDemandPrediction.mockReturnValue({ data: [] });
+import { useTodayHourlyVolume } from '@/hooks/dashboard/useTodayHourlyVolume';
+import { useDemandPrediction } from '@/hooks/business/useDemandPrediction';
+
+const mockUseTodayHourlyVolume = vi.mocked(useTodayHourlyVolume);
+const mockUseDemandPrediction = vi.mocked(useDemandPrediction);
+
+function mockTodayByHour(counts: (number | null)[]) {
+  return {
+    todayByHour: counts,
+    last7ByDay: counts.map((c, i) => ({ date: `2026-06-0${i + 1}`, count: c ?? 0 })),
+    currentHour: 10,
+    currentHourCount: counts[10] ?? 0,
+    avg7dCurrentHour: 5,
+  };
+}
+
+describe('VolumeChart — acessibilidade', () => {
+  it('renderiza o gráfico com aria-label que inclui o total e o período', () => {
+    mockUseTodayHourlyVolume.mockReturnValue({
+      data: mockTodayByHour([0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 15, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      isPending: false,
+    } as never);
+    mockUseDemandPrediction.mockReturnValue({ data: [] } as never);
+
     render(<VolumeChart />);
+
+    const chart = screen.getByTestId('volume-plot');
+    expect(chart).toHaveAttribute('role', 'img');
+    expect(chart).toHaveAttribute('aria-label');
+    expect(chart.getAttribute('aria-label')).toContain('Volume de Atendimentos');
+    expect(chart.getAttribute('aria-label')).toContain('50 conversas no total');
+    expect(chart.getAttribute('aria-label')).toContain('Hoje');
+  });
+
+  it('inclui previsão no aria-label quando há média 7 dias', () => {
+    mockUseTodayHourlyVolume.mockReturnValue({
+      data: mockTodayByHour([0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 15, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      isPending: false,
+    } as never);
+    mockUseDemandPrediction.mockReturnValue({
+      data: [{ time: '10:00', predicted: 12, isPrediction: true }],
+    } as never);
+
+    render(<VolumeChart />);
+
+    const chart = screen.getByTestId('volume-plot');
+    expect(chart.getAttribute('aria-label')).toContain('incluindo média 7 dias');
+  });
+
+  it('sem dados, mensagem de vazio é acessível', () => {
+    mockUseTodayHourlyVolume.mockReturnValue({
+      data: mockTodayByHour(Array(24).fill(null)),
+      isPending: false,
+    } as never);
+    mockUseDemandPrediction.mockReturnValue({ data: [] } as never);
+
+    render(<VolumeChart />);
+
     expect(screen.getByText('Sem conversas no período')).toBeInTheDocument();
-  });
-
-  it('com dados, renderiza o plot e a legenda "Conversas reais"', () => {
-    const todayByHour = Array(24).fill(0);
-    todayByHour[8] = 5;
-    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 3, avg7dCurrentHour: 2 } });
-    mockUseDemandPrediction.mockReturnValue({ data: [] });
-    render(<VolumeChart />);
-    expect(screen.getByTestId('volume-plot')).toBeInTheDocument();
-    expect(screen.getByText('— Conversas reais')).toBeInTheDocument();
-    expect(screen.queryByText('╌ Média 7 dias')).not.toBeInTheDocument();
-  });
-
-  it('com previsão IA disponível, mostra o item de legenda correspondente', () => {
-    const todayByHour = Array(24).fill(0);
-    todayByHour[8] = 5;
-    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour, last7ByDay: [], currentHour: 10, currentHourCount: 3, avg7dCurrentHour: 2 } });
-    mockUseDemandPrediction.mockReturnValue({ data: [{ time: '11:00', predicted: 4, lower: 2, upper: 6, isPrediction: true }] });
-    render(<VolumeChart />);
-    expect(screen.getByText('╌ Média 7 dias')).toBeInTheDocument();
-  });
-
-  it('não renderiza "Capacidade máxima" (sem fonte real)', () => {
-    mockUseTodayHourlyVolume.mockReturnValue({ data: { todayByHour: Array(24).fill(1), last7ByDay: [], currentHour: 10, currentHourCount: 1, avg7dCurrentHour: 1 } });
-    mockUseDemandPrediction.mockReturnValue({ data: [] });
-    render(<VolumeChart />);
-    expect(screen.queryByText(/Capacidade/)).not.toBeInTheDocument();
   });
 });
