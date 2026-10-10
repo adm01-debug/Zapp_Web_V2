@@ -182,8 +182,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao enviar foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     const { error } = await supabase
@@ -246,8 +246,8 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm') {
         toast.error('Erro ao fazer upload da foto');
         return false;
       }
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      avatarUrl = urlData.publicUrl;
+      // Guarda o caminho do arquivo (não a URL assinada, que expira)
+      avatarUrl = filePath;
     }
 
     try {
