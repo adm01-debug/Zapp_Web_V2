@@ -125,3 +125,6 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# Task workspace directories (hermes auto-generated)
+[a-z0-9][a-z0-9-]*-[a-z0-9]{10,}/
