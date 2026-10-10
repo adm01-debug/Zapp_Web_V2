@@ -2,7 +2,9 @@
 -- segmento (nomes), por link (rotulo distinto do destino) e por variante.
 -- SECURITY INVOKER: respeita o RLS do chamador; o acesso ao EXECUTE e restrito
 -- por REVOKE/GRANT abaixo (authenticated e service_role).
--- Rollback: DROP FUNCTION IF EXISTS public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz);
+-- Rollback: a funcao e NOVA (nao existia antes); o rollback remove apenas ela.
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.talkx_campaign_report_breakdowns(uuid, timestamptz, timestamptz);
 
 CREATE OR REPLACE FUNCTION public.talkx_campaign_report_breakdowns(
   p_campaign uuid,

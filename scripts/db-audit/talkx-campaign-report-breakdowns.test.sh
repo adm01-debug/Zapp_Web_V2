@@ -177,8 +177,8 @@ expect_error_as 'p_to nulo rejeitado' 'p_from/p_to' "$JWT" \
 expect_error_as 'campanha inexistente rejeitada' 'nao encontrada' "$JWT" \
   "SELECT public.talkx_campaign_report_breakdowns('00000000-0000-0000-0000-000000000000', '2026-10-10T00:00:00-03:00', '2026-10-11T00:00:00-03:00')"
 
-# ─── BLOCO ROLLBACK: o SQL da linha `-- Rollback:` executa e a funcao some ──────
-ROLLBACK_SQL="$(grep '^-- Rollback:' "$migration" | sed 's/^-- Rollback: //')"
+# ─── BLOCO ROLLBACK: o SQL do bloco `-- Rollback (SQL executável` executa e a funcao some ──
+ROLLBACK_SQL="$(awk '/^-- Rollback \(SQL execut/ {flag=1; next} flag==1 && /^\-\-   / {sub(/^\-\-   /,""); print} flag==1 && !/^\-\-   / && !/^\-\- Rollback/ {exit}' "$migration")"
 [[ -n "$ROLLBACK_SQL" ]] || fail 'migration sem linha -- Rollback:'
 psql_sql "$ROLLBACK_SQL" >/dev/null
 printf '[PASS] rollback executou\n'
