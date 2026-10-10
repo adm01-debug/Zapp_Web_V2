@@ -184,7 +184,7 @@ BEGIN
   -- Tudo validado: aplicar as mudanças
 
   -- Remover variantes que não estão no input (já verificado que não têm recipients)
-  IF v_existing_variant_ids IS NOT NULL THEN
+  IF v_existing_variant_ids IS NOT NULL AND array_length(v_existing_variant_ids, 1) <= 3 THEN
     FOREACH v_id_to_remove IN ARRAY v_existing_variant_ids
     LOOP
       IF v_input_ids IS NULL OR NOT (v_id_to_remove = ANY(v_input_ids)) THEN
