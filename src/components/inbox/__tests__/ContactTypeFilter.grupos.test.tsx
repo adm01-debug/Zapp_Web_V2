@@ -57,4 +57,9 @@ describe('ContactTypeFilter — classificação de grupo (R2-INB-055)', () => {
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' });
     expect(screen.getByRole('option', { name: /Todos os Grupos/ })).toHaveTextContent('1');
   });
+
+  it('o combobox tem aria-label acessível', () => {
+    render(<ContactTypeFilter value={null} onChange={() => {}} conversations={conversas} />);
+    expect(screen.getByRole('combobox', { name: 'Tipo de contato' })).toBeInTheDocument();
+  });
 });
