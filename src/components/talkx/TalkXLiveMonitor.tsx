@@ -10,10 +10,6 @@ import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
 import { motion } from 'framer-motion';
 import { TalkXRateChart } from './tracking/TalkXRateChart';
 import { buildRateSeries, forecastFromCampaign, type TalkXRateWindow } from './tracking/talkxRatePanel';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pill, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
