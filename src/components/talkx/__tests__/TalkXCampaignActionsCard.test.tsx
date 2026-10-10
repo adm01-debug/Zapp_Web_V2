@@ -64,6 +64,7 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     cancelCampaign: vi.fn(),
     startCampaign: vi.fn(),
     refetchCampaigns: vi.fn(),
+    setSelectedCampaignId: vi.fn(),
     isLoading: false,
     isFetching: false,
     isError: false,
