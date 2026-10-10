@@ -361,7 +361,7 @@ describe('EmailComposer — acessibilidade do diálogo flutuante', () => {
 
     // Renderiza o trigger e foca antes de montar o compositor
     const { unmount: unmountTrigger } = render(<Trigger />);
-    triggerElement?.focus();
+    (triggerElement as HTMLButtonElement | null)?.focus();
     expect(document.activeElement).toBe(triggerElement);
 
     // Monta o compositor (salva o foco atual = trigger)
