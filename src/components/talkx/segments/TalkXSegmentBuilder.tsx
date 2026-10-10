@@ -8,9 +8,8 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 
 import { PrimaryButton, GhostButton, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import {
-  RULE_FIELDS, rulesJoin, splitRules, useAudienceEstimate, type RuleField, type SegmentRule,
-} from '@/hooks/integrations/useTalkXSegments';
+import { SEGMENT_FIELD_CATALOG, type SegmentFieldDef } from '@/segments/segmentFieldCatalog';
+import { rulesJoin, splitRules, useAudienceEstimate, type RuleField, type SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { IconTile, RailCard, fmtInt } from '../talkxShared';
 import { toast } from 'sonner';
 import { RuleRow } from './RuleRow';
@@ -154,8 +153,8 @@ export function TalkXSegmentBuilder({
                   onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverGroupId(null); }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    const dropped = RULE_FIELDS.find((x) => x.value === e.dataTransfer.getData('text/plain'));
-                    if (dropped) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.value) });
+                    const dropped = SEGMENT_FIELD_CATALOG.find((x) => x.name === e.dataTransfer.getData('text/plain'));
+                    if (dropped) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.name as RuleField) });
                     setDragOverGroupId(null); setDraggingField(null);
                   }}
                 >
@@ -221,15 +220,15 @@ export function TalkXSegmentBuilder({
           <div key={cat}>
             <p className="text-3xs uppercase tracking-widest text-muted-foreground mb-1.5">{cat === 'basico' ? 'Básicos' : cat === 'comportamento' ? 'Comportamento' : cat === 'comercial' ? 'Comercial' : 'LGPD'}</p>
             <div className="flex flex-col gap-1">
-              {RULE_FIELDS.filter((f) => f.category === cat).map((f) => (
+              {SEGMENT_FIELD_CATALOG.filter((f) => f.category === cat).map((f) => (
                 <button
-                  key={f.value}
+                  key={f.name}
                   type="button"
                   draggable
-                  onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onDragStart={(e) => { setDraggingField(f.name); e.dataTransfer.setData('text/plain', f.name); e.dataTransfer.effectAllowed = 'copy'; }}
                   onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
-                  onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  onClick={() => addFieldToGroup(f.name as RuleField)}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.name ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
                 >
                   <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
                 </button>

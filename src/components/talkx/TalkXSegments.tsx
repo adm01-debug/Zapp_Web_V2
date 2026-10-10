@@ -7,7 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth } from '@/hooks/integrations/useTalkXSegments';
+import { useSegmentAudience } from '@/hooks/integrations/useSegmentAudience';
+import { describeRule } from '@/segments/segmentRules';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
@@ -72,15 +74,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     }
     setSaving(true);
     try {
-      const count = await countAudience(draft.rules);
       if (editing?.id) {
         // O rail de detalhe lê `selected`: guardar a linha devolvida pelo banco
         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
         // antes de salvar.
-        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        const saved = await updateSegment.mutateAsync({ id: editing.id, name: draft.name, description: draft.description || null, rules: draft.rules });
         setSelected(saved);
       } else {
-        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules });
       }
       closeBuilder();
     } catch (e) {
@@ -158,10 +159,11 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                       <Td><Pill label={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} tone={s.origin === 'crm360' ? 'violet' : 'info'} /></Td>
                       <Td>
                         <div className="flex flex-wrap gap-1 max-w-[280px]">
-                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => {
-                            const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                            return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">{field}</span>;
-                          })}
+                          {(s.rules?.groups ?? []).flatMap((g) => g.rules).slice(0, 3).map((r, i) => (
+                            <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow border border-primary/20">
+                              {describeRule(r)}
+                            </span>
+                          ))}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length > 3 && <span className="text-3xs text-muted-foreground">+{(s.rules?.groups ?? []).flatMap((g) => g.rules).length - 3}</span>}
                           {(s.rules?.groups ?? []).flatMap((g) => g.rules).length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
                         </div>
@@ -305,7 +307,7 @@ function LibraryKpis({ stats }: { stats: TalkXSegmentLibraryStats }) {
 }
 
 function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
-  const { data: est } = useAudienceEstimate(s.rules, true);
+  const audience = useSegmentAudience(s.rules, true);
   return (
     <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || undefined}
       right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
@@ -314,14 +316,14 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
         <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
         <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
       </div>
-      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(audience.count)} contatos</span>} />
       <MetaRow label="Origem" value={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} />
       <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
-      {est?.sample && est.sample.length > 0 && (
+      {audience.sample && audience.sample.length > 0 && (
         <div className="mt-2">
           <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos</p>
-          {est.sample.map((c) => (
+          {audience.sample.map((c) => (
             <div key={c.id} className="flex items-center gap-2 py-1.5">
               <InitialsAvatar name={c.name || '?'} size={28} />
               <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
