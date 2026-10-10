@@ -26,18 +26,18 @@ const mockGoals = [
 
 const mockWaitingCounts: Record<string, number> = { q1: 15, q2: 0 };
 
-function contactsCountBuilder(queueIdRef: { id: string }) {
-  return {
-    eq: vi.fn((column: string, value: unknown) => {
-      if (column === 'queue_id') queueIdRef.id = String(value);
-      return contactsCountBuilder(queueIdRef);
-    }),
-    is: vi.fn(() => contactsCountBuilder(queueIdRef)),
-    not: vi.fn(() =>
-      Promise.resolve({ count: mockWaitingCounts[queueIdRef.id] ?? 0, error: null }),
-    ),
-  };
-}
+// Contatos aguardando por fila — fonte do mock de talk_me_list_waiting (RPC).
+// q1: 60 mensagens pendentes e espera mais antiga há 40 min; q2: 5 pendentes, sem espera.
+const mockWaitingContacts = [
+  { queue_id: 'q1', pending_message_count: 60, waiting_since: new Date(Date.now() - 40 * 60000).toISOString() },
+  { queue_id: 'q2', pending_message_count: 5, waiting_since: null },
+];
+
+// Métricas agregadas por fila vindas de talk_me_list_queues (oldest_waiting_at).
+const mockQueuesMetrics = [
+  { queue_id: 'q1', queue_name: 'Suporte', queue_color: '#3B82F6', waiting_count: 15, oldest_waiting_at: new Date(Date.now() - 40 * 60000).toISOString() },
+  { queue_id: 'q2', queue_name: 'Vendas', queue_color: '#10B981', waiting_count: 0, oldest_waiting_at: null },
+];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -65,13 +65,40 @@ vi.mock('@/integrations/supabase/client', () => ({
         };
       }
       if (table === 'contacts') {
+        // fetchWaitingCounts é a única consulta em contacts, sempre com
+        // `select('id', { count: 'exact', head: true })`. Qualquer outra
+        // consulta cai aqui e quebra (sem `.in`), de propósito.
         return {
-          select: vi.fn(() => contactsCountBuilder({ id: '' })),
+          select: vi.fn(() => ({
+            eq: vi.fn((col: string, val: unknown) => {
+              const qid = col === 'queue_id' ? String(val) : '';
+              return {
+                is: vi.fn(() => ({
+                  is: vi.fn(() => ({
+                    not: vi.fn(() =>
+                      Promise.resolve({ count: mockWaitingCounts[qid] ?? 0, error: null }),
+                    ),
+                  })),
+                })),
+              };
+            }),
+          })),
         };
       }
       return {
         select: vi.fn().mockResolvedValue({ data: [], error: null }),
       };
+    }),
+    rpc: vi.fn().mockImplementation((fn: string, params?: object) => {
+      if (fn === 'talk_me_list_queues') {
+        return Promise.resolve({ data: mockQueuesMetrics, error: null });
+      }
+      if (fn === 'talk_me_list_waiting') {
+        const queueId = (params as { p_queue_id?: string })?.p_queue_id;
+        const contacts = mockWaitingContacts.filter((m: { queue_id: string }) => m.queue_id === queueId);
+        return Promise.resolve({ data: contacts, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
     }),
   },
 }));
@@ -91,6 +118,7 @@ vi.mock('@/components/queues/CreateQueueDialog', () => ({ CreateQueueDialog: () 
 vi.mock('@/components/queues/AddMemberDialog', () => ({ AddMemberDialog: () => null }));
 vi.mock('@/components/queues/QueueGoalsDialog', () => ({ QueueGoalsDialog: () => null }));
 
+import { supabase } from '@/integrations/supabase/client';
 import { QueuesView } from '@/components/queues/QueuesView';
 
 function renderView() {
@@ -118,11 +146,55 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     // Fila q2 tem 0 aguardando -> nenhum alerta de espera dela.
     expect(screen.getAllByText(/contatos aguardando atendimento/)).toHaveLength(1);
 
-    // q1 tambem estoura a taxa minima de atribuicao (cabecalho conta 2 alertas).
-    expect(screen.getByText('Alertas Ativos (2)')).toBeInTheDocument();
+    // q1 tambem estoura a taxa minima de atribuicao (cabecalho conta 4 alertas: waiting_contacts, assignment_rate, wait_time, messages_pending).
+    expect(screen.getByText('Alertas Ativos (4)')).toBeInTheDocument();
 
     // O cartao da fila mostra a contagem real (nao mais 0).
     expect(screen.getAllByText('Aguardando')).toHaveLength(2);
     expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('dispara alerta de wait_time quando o tempo de espera excede max_wait_time_minutes', async () => {
+    renderView();
+
+    await waitFor(() => {
+      // q1 tem oldestWaitingAt = 40 min atras, max_wait_time_minutes = 30 -> alerta
+      expect(screen.getByText(/40 min de espera/)).toBeInTheDocument();
+    });
+
+    // q2 tem oldestWaitingAt = null -> nenhum alerta de wait_time
+    expect(screen.getAllByText(/min de espera/)).toHaveLength(1);
+  });
+
+  it('dispara alerta de messages_pending quando mensagens pendentes excedem max_messages_pending', async () => {
+    renderView();
+
+    await waitFor(() => {
+      // q1 tem 60 mensagens pendentes, max_messages_pending = 50 -> alerta
+      expect(screen.getByText(/60 mensagens pendentes/)).toBeInTheDocument();
+    });
+
+    // q2 tem 5 mensagens pendentes, max_messages_pending = 50 -> nenhum alerta
+    expect(screen.getAllByText(/mensagens pendentes/)).toHaveLength(1);
+  });
+
+  it('carrega as filas com waiting_count mesmo se as RPCs de métricas falharem', async () => {
+    (supabase.rpc as unknown as ReturnType<typeof vi.fn>).mockImplementation((fn: string) => {
+      if (fn === 'talk_me_list_queues' || fn === 'talk_me_list_waiting') {
+        return Promise.reject(new Error('rpc indisponível'));
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+    renderView();
+
+    // waiting_count vem de contacts (count exact), não das RPCs: o alerta de espera da q1 aparece.
+    // (Sem o isolamento no useQueues, o erro das RPCs derrubava tudo e nada aparecia aqui.)
+    await waitFor(() => {
+      expect(screen.getByText(/15 contatos aguardando atendimento/)).toBeInTheDocument();
+    });
+
+    // Sem métricas, os alertas de wait_time e messages_pending ficam apagados.
+    expect(screen.queryByText(/min de espera/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/mensagens pendentes/)).not.toBeInTheDocument();
   });
 });

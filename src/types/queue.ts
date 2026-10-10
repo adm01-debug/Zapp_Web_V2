@@ -20,4 +20,7 @@ export interface QueueWithMembers extends Queue {
   color: string;
   members: QueueMember[];
   waiting_count: number;
+  pendingMessageCount: number;
+  oldestWaitingAt: string | null;
+  waitMinutes: number | null;
 }

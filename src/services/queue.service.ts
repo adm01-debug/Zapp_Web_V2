@@ -38,6 +38,57 @@ export class QueueService {
     return new Map(entries);
   }
 
+  /**
+   * Métricas por fila para cálculo de alertas: mensagens pendentes e
+   * timestamp do contato mais antigo aguardando.
+   *
+   * Usa as funções RPC existentes (talk_me_list_queues e talk_me_list_waiting)
+   * que já computam waiting_since e pending_message_count a partir da tabela
+   * messages — não é possível consultar essas colunas diretamente em
+   * contacts pois são valores derivados, não colunas armazenadas.
+   */
+  static async fetchQueueMetrics(queueIds: string[]): Promise<Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>> {
+    const metrics = new Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>();
+    queueIds.forEach(id => metrics.set(id, { pendingMessageCount: 0, oldestWaitingAt: null }));
+
+    // oldest_waiting_at por fila
+    const { data: queuesData, error: queuesError } = await supabase
+      .rpc('talk_me_list_queues');
+    if (queuesError) throw queuesError;
+
+    for (const q of (queuesData ?? [])) {
+      const existing = metrics.get(q.queue_id);
+      if (existing) {
+        existing.oldestWaitingAt = q.oldest_waiting_at ?? null;
+      }
+    }
+
+    // pending_message_count por fila — soma de pending_message_count de
+    // cada contato aguardando na fila (via talk_me_list_waiting), com as
+    // chamadas por fila em paralelo (Promise.all). Se uma fila falhar, o erro
+    // propaga e o chamador (useQueues) isola a falha.
+    // p_limit 1000: se a fila tiver mais de 1000 contatos aguardando, a soma
+    // é um mínimo (subestima o total); os alertas disparam do mesmo jeito.
+    const waitingResults = await Promise.all(
+      queueIds.map(async (queueId) => {
+        const { data, error } = await supabase
+          .rpc('talk_me_list_waiting', { p_queue_id: queueId, p_limit: 1000 });
+        if (error) throw error;
+        return [queueId, data ?? []] as const;
+      })
+    );
+
+    for (const [queueId, waitingData] of waitingResults) {
+      const existing = metrics.get(queueId);
+      if (!existing) continue;
+      for (const contact of waitingData) {
+        existing.pendingMessageCount += (contact.pending_message_count ?? 0);
+      }
+    }
+
+    return metrics;
+  }
+
   static async fetchMembers() {
     return supabase
       .from('queue_members')
