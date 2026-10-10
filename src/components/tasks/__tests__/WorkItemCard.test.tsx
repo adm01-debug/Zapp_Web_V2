@@ -10,6 +10,7 @@
  * remover alarme).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { axe } from 'vitest-axe';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
 // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
@@ -102,12 +103,10 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(kebab().className).toContain('opacity-0');
   });
 
-  it('Enter no card abre a tarefa', () => {
-    const onOpen = vi.fn();
-    render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} />);
+  it('o card não é foco (sem tabIndex)', () => {
+    render(<WorkItemCard item={item()} mode="list" onOpen={vi.fn()} />);
 
-    fireEvent.keyDown(card(), { key: 'Enter' });
-    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(card()).not.toHaveAttribute('tabindex');
   });
 
   it('as teclas x e X alternam a conclusão', () => {
@@ -134,7 +133,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(onToggleDone).not.toHaveBeenCalled();
   });
 
-  it('o checkbox conclui sem abrir o card; clicar no corpo abre', () => {
+  it('o checkbox conclui sem abrir o card; clicar no corpo não abre', () => {
     const onOpen = vi.fn();
     const onToggleDone = vi.fn();
     render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} onToggleDone={onToggleDone} />);
@@ -143,8 +142,9 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(onToggleDone).toHaveBeenCalledTimes(1);
     expect(onOpen).not.toHaveBeenCalled();
 
+    // O corpo do card não é mais clicável (sem onClick no article).
     fireEvent.click(screen.getByText('Ligar para o cliente'));
-    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen).not.toHaveBeenCalled();
   });
 
   it('o chip do contato vem do item e o clique abre a conversa sem abrir o card', () => {
@@ -211,5 +211,28 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     abrirSubmenu(/Lembrar-me/);
     await screen.findByRole('menuitem', { name: '15 min' });
     expect(screen.queryByRole('menuitem', { name: 'Remover alarme' })).toBeNull();
+  });
+
+  it('o botão "Abrir conversa" tem área de toque ≥ 44 px (WCAG 2.5.5)', () => {
+    render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+      />,
+    );
+
+    const btn = screen.getByRole('button', { name: 'Abrir conversa' });
+    expect(btn.className).toContain('min-h-[44px]');
+    expect(btn.className).toContain('min-w-[44px]');
+  });
+
+  it('não viola nested-interactive nem aria-allowed-role (axe)', async () => {
+    const { container } = render(<WorkItemCard item={item()} mode="list" />);
+
+    const resultado = await axe(container, {
+      runOnly: { type: 'rule', values: ['nested-interactive', 'aria-allowed-role'] },
+    });
+    expect(resultado.violations.map((v) => v.id)).toEqual([]);
   });
 });

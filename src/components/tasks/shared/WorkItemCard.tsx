@@ -188,11 +188,9 @@ export const WorkItemCard = React.memo(function WorkItemCard({
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
-      tabIndex={0}
       role="article"
       aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
       onKeyDown={handleKeyDown}
-      onClick={onOpen}
       className={[
         'group relative border bg-card cursor-pointer',
         isAgenda
@@ -258,7 +256,8 @@ export const WorkItemCard = React.memo(function WorkItemCard({
               // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
               // num controle invisível — o anel de foco do `button:focus-visible` some
               // junto com o `opacity-0`, que apaga também a sombra).
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              // E18: área mínima de toque de 44 px em mobile (WCAG 2.5.5).
+              className="absolute bottom-2 right-2 min-h-[44px] min-w-[44px] rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >
