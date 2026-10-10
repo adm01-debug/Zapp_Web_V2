@@ -350,12 +350,12 @@ describe('Tela 10 — cabeçalho, selo e estado pronta para envio (TL-151)', () 
 
 describe('TL-151 — formatTalkXScheduleLabel (extração do selo)', () => {
   it('formata a parede local como dd/mm • HH:mm', async () => {
-    const { formatTalkXScheduleLabel } = await import('../TalkXCampaignScheduled');
+    const { formatTalkXScheduleLabel } = await import('../talkxScheduleStatus');
     expect(formatTalkXScheduleLabel('2030-06-09T22:30')).toBe('09/06 • 22:30');
   });
 
   it('entrada vazia ou inválida vira traço', async () => {
-    const { formatTalkXScheduleLabel } = await import('../TalkXCampaignScheduled');
+    const { formatTalkXScheduleLabel } = await import('../talkxScheduleStatus');
     expect(formatTalkXScheduleLabel('')).toBe('—');
     expect(formatTalkXScheduleLabel('invalida')).toBe('—');
   });
