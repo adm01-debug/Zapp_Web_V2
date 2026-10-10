@@ -40,15 +40,32 @@ describe('SectionCard', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('renders action as a pill when variant="pill"', () => {
+  it('renders action as a pill with high-contrast text using --primary-text token', () => {
+    const onClick = vi.fn();
     render(
-      <SectionCard icon={FileText} title="Título" action={{ label: '+ Adicionar', onClick: vi.fn(), variant: 'pill' }}>
+      <SectionCard icon={FileText} title="Título" action={{ label: '+ Adicionar', onClick, variant: 'pill' }}>
         <p />
       </SectionCard>
     );
     const btn = screen.getByText('+ Adicionar');
+    expect(btn.className).toContain('text-[hsl(var(--primary-text))]');
     expect(btn.className).toContain('bg-primary/15');
     expect(btn.className).toContain('rounded-lg');
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults the heading level to h2 for accessibility', () => {
+    render(<SectionCard icon={FileText} title="Título"><p /></SectionCard>);
+    const heading = document.querySelector('h2');
+    expect(heading).toBeInTheDocument();
+    expect(heading?.textContent).toBe('Título');
+  });
+
+  it('accepts a custom headingLevel prop', () => {
+    render(<SectionCard icon={FileText} title="Título" headingLevel="h3"><p /></SectionCard>);
+    expect(document.querySelector('h2')).not.toBeInTheDocument();
+    expect(document.querySelector('h3')).toBeInTheDocument();
   });
 
   it('renders subtitle and headerRight when provided', () => {
