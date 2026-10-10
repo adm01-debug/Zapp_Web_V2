@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 
 /** SL-075 E43: o item "Integrações (IA/Bots)" não pode mais existir. VERMELHO antes; VERDE depois. */
 
@@ -30,5 +31,19 @@ describe('ConnectionCard — menu sem as integrações que a GO não tem (E43)',
     expect(screen.getByText('Excluir')).toBeTruthy();
     expect(screen.queryByText(/Integrações \(IA\/Bots\)/)).toBeNull();
     expect(screen.queryByText(/Integrações/)).toBeNull();
+  });
+
+  it('o botão do menu do card tem aria-label com o nome da conexão', () => {
+    render(<ConnectionCard {...props} />);
+    expect(screen.getByRole('button', { name: 'Ações da conexão Principal' })).toBeTruthy();
+  });
+
+  it('axe não acusa botão sem nome no menu (button-name/aria-command-name)', async () => {
+    const { container } = render(<ConnectionCard {...props} />);
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    const semNome = results.violations.filter((v) =>
+      ['button-name', 'aria-input-field-name', 'aria-toggle-field-name', 'aria-command-name'].includes(v.id),
+    );
+    expect(semNome).toEqual([]);
   });
 });

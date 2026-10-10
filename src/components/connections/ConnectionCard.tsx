@@ -135,7 +135,7 @@ export function ConnectionCard({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                    <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Ações da conexão ${connection.name}`}><MoreVertical className="w-4 h-4" /></Button>
                   </motion.div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
