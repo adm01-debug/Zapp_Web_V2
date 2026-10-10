@@ -12,12 +12,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { toHaveNoViolations } from 'vitest-axe/matchers';
 import { FileUploader } from '@/components/inbox/FileUploader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useFileUploadLogic } from '@/components/inbox/useFileUploadLogic';
-
-expect.extend(toHaveNoViolations);
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -64,7 +61,7 @@ const baseQueue = (files: File[]) =>
     preview: null,
   }));
 
-function hookReturn(overrides: Record<string, unknown>) {
+function hookReturn(overrides?: Record<string, unknown>) {
   return {
     isDialogOpen: true,
     filePreview: null,
