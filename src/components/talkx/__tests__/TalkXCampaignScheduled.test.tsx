@@ -252,3 +252,31 @@ describe('Tela 10 — configurações de agendamento (X137)', () => {
     expect(h.updateAsync.mock.calls[0][0].confirm_consent).toBe(false);
   });
 });
+
+describe('Tela 10 — cabeçalho, selo e estado pronta para envio (TL-151)', () => {
+  it('mostra o breadcrumb "Campanhas › Talk X › Campanha Agendada"', () => {
+    const { container } = render(view());
+    expect(container.textContent).toContain('Campanhas › Talk X › Campanha Agendada');
+  });
+
+  it('mostra o título "Campanha Agendada • {nome}"', () => {
+    render(view());
+    expect(screen.getByText('Campanha Agendada • Promoção de Outubro')).toBeTruthy();
+  });
+
+  it('mostra a descrição da campanha como subtítulo quando existe', () => {
+    h.campaigns = [{ ...CAMPAIGN, description: 'Campanha de verão' }];
+    render(view());
+    expect(screen.getByText('Campanha de verão')).toBeTruthy();
+  });
+
+  it('mostra o selo com data no fuso da campanha (dd/mm • HH:mm)', () => {
+    render(view());
+    expect(screen.getByText(/Agendada para 09\/06 • 22:30/)).toBeTruthy();
+  });
+
+  it('mostra "pronta para ser enviada" quando não há bloqueio', () => {
+    render(view());
+    expect(screen.getByText(/Campanha pronta para ser enviada/)).toBeTruthy();
+  });
+});

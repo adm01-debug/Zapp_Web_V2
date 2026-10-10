@@ -1019,3 +1019,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };
 }
+
+/**
+ * X120 — mock temporário enquanto o RPC de verificação de bloqueio
+ * não é implementado. Retorna `null` (sem bloqueio) por padrão.
+ */
+export function useTalkXCampaignBlock(_campaignId: string) {
+  return { data: null, isLoading: false, error: null };
+}

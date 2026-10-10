@@ -17,7 +17,7 @@ import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/Dash
 import { cn } from '@/lib/utils';
 import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
-import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
+import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone, useTalkXCampaignBlock } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -233,8 +233,23 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   }, [campaign, updateCampaign, onBack]);
 
   const scheduledLabel = campaign?.scheduled_at
-    ? fmtDateTime(campaign.scheduled_at)
-    : localDate && localTime ? fmtDateTime(localToUTCInTimezone(`${localDate}T${localTime}`, localTz)) : '—';
+    ? (() => {
+        const local = utcToLocalInTimezone(campaign.scheduled_at, campaign.schedule_timezone ?? DEFAULT_SCHEDULE_TIMEZONE);
+        return `${local.slice(8, 10)}/${local.slice(5, 7)} • ${local.slice(11, 16)}`;
+      })()
+    : localDate && localTime
+      ? (() => {
+          const local = utcToLocalInTimezone(localToUTCInTimezone(`${localDate}T${localTime}`, localTz), localTz);
+          return `${local.slice(8, 10)}/${local.slice(5, 7)} • ${local.slice(11, 16)}`;
+        })()
+      : '—';
+
+  /**
+   * X120: quando o RPC de verificação de bloqueio retornar um bloqueio,
+   * a frase "pronta para envio" é substituída pelo aviso de pendências.
+   * Enquanto o hook não existe, o estado padrão é sem bloqueio.
+   */
+  const { data: x120Block } = useTalkXCampaignBlock(campaign.id);
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -248,7 +263,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
         <span className="text-2xs text-muted-foreground hidden sm:inline">
-          Campanhas / <span className="text-foreground">{campaign.name}</span>
+          Campanhas › Talk X › <span className="text-foreground">Campanha Agendada</span>
         </span>
       </div>
 
@@ -257,9 +272,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <div className="flex items-center gap-3">
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
-            <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
+            <p className="text-[13px] font-semibold text-foreground">Campanha Agendada • {campaign.name}</p>
+            <p className="text-2xs text-muted-foreground">{campaign.description ?? campaign.name}</p>
           </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
+            Talk X · Agendamento de campanha
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <GhostButton icon={Pencil} onClick={() => onEdit(campaign)}>Editar no wizard</GhostButton>
@@ -272,7 +290,13 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
         <p className="text-[13px] text-foreground">
           <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
-          {' '}— Campanha pronta para ser enviada.
+          {x120Block ? (
+            <>
+              {' '}— <span className="text-destructive">{x120Block}</span>
+            </>
+          ) : (
+            ' — Campanha pronta para ser enviada.'
+          )}
         </p>
       </div>
 
