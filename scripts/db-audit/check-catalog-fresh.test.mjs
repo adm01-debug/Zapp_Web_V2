@@ -242,3 +242,81 @@ test('rejeita CATALOG_PATH absoluto fora das raizes permitidas', () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /fora das raizes permitidas/);
 });
+
+// TL-050 (refazer): coerencia entre os artefatos derivados do banco COMMITADOS.
+// O guard de acoplamento (supabase-usage-guard.mjs) roda offline contra o
+// schema-catalog.json; as outras baselines (retrato canonico, publicacao Realtime e
+// grants) descrevem o MESMO banco. Catalogo mais velho que elas deixa o guard
+// falso-positivo — o objeto existe no banco, com RLS, e o `.from()` reprova. Este
+// teste le os quatro arquivos commitados e exige que o catalogo cubra o que os
+// outros tres citam; o valor esperado vem dos artefatos gerados pelo banco, nao do
+// proprio catalogo. Cobre os dois sentidos: sobrando objeto no catalogo tambem e
+// falha (o banco deixou de ter o objeto).
+function lerArtefato(relativo) {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, relativo), 'utf8'));
+}
+
+// Nomes escolhidos a mao pelo banco vem entre aspas na assinatura estavel do
+// manifesto (`conversation_tasks."position"`); nas colunas do catalogo saem sem.
+const semAspas = (nome) => nome.replace(/"/gu, '');
+
+test('catalogo commitado cobre os objetos que os outros artefatos do banco citam', () => {
+  const catalogo = lerArtefato('supabase/schema-catalog.json');
+  const manifesto = lerArtefato('supabase/schema-manifest.json');
+  const realtime = lerArtefato('scripts/db-audit/realtime-publication-baseline.json');
+  const grants = lerArtefato('scripts/db-audit/grants-baseline.json');
+
+  const tabelas = new Set(catalogo.tables);
+  const relacoes = new Set([...catalogo.tables, ...catalogo.views]);
+
+  const semRlsNoCatalogo = Object.keys(manifesto.rls).filter((t) => !tabelas.has(t)).sort();
+  assert.deepEqual(
+    semRlsNoCatalogo,
+    [],
+    'tabela com RLS no schema-manifest.json e ausente do schema-catalog.json',
+  );
+
+  const colunasDoCatalogo = new Set(catalogo.columns.map((c) => semAspas(c.split(':')[0])));
+  const semColunaNoCatalogo = Object.keys(manifesto.columns)
+    .map(semAspas)
+    .filter((c) => !colunasDoCatalogo.has(c))
+    .sort();
+  assert.deepEqual(
+    semColunaNoCatalogo,
+    [],
+    'coluna do schema-manifest.json ausente do schema-catalog.json',
+  );
+
+  const foraDaPublicacao = realtime.tables
+    .map((t) => t.split('.').pop())
+    .filter((t) => !relacoes.has(t))
+    .sort();
+  assert.deepEqual(
+    foraDaPublicacao,
+    [],
+    'tabela da realtime-publication-baseline.json ausente do schema-catalog.json',
+  );
+
+  const foraDosGrants = grants.anon_table_select
+    .filter((t) => !relacoes.has(t))
+    .sort();
+  assert.deepEqual(
+    foraDosGrants,
+    [],
+    'tabela do anon_table_select em grants-baseline.json ausente do schema-catalog.json',
+  );
+});
+
+test('a secao tables do catalogo nao perde relacao que o retrato canonico cita', () => {
+  // Sentido inverso: relacao que so o catalogo tem e o retrato canonico nao cita
+  // significa catalogo escrito a mao/adiantado em relacao ao banco.
+  const catalogo = lerArtefato('supabase/schema-catalog.json');
+  const manifesto = lerArtefato('supabase/schema-manifest.json');
+  const tabelas = new Set(catalogo.tables);
+  const citadasPeloManifesto = new Set([
+    ...Object.keys(manifesto.rls),
+    ...Object.keys(manifesto.columns).map((c) => semAspas(c.split(':')[0]).split('.')[0]),
+  ]);
+  const soNoCatalogo = [...tabelas].filter((t) => !citadasPeloManifesto.has(t)).sort();
+  assert.deepEqual(soNoCatalogo, [], 'tabela do schema-catalog.json que o retrato canonico nao cita');
+});
