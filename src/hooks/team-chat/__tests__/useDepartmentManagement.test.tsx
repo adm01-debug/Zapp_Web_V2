@@ -115,6 +115,20 @@ describe('useSaveDepartmentWhatsApp — gravação pela RPC canônica, sem acess
     expect(args.p_api_key).toBeUndefined();
   });
 
+  it('string vazia em evolution_api_key nao envia p_api_key (normaliza para undefined)', async () => {
+    await runSave({ mode: 'evolution', config: { evolution_api_key: '' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(args.p_api_key).toBeUndefined();
+  });
+
+  it('string vazia em official_token nao envia p_api_key (normaliza para undefined)', async () => {
+    await runSave({ mode: 'official', config: { official_token: '' }, actorName: 'Ana' });
+
+    const [, args] = f.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(args.p_api_key).toBeUndefined();
+  });
+
   it('recusa da RPC ({ok:false,error}) nao passa como sucesso', async () => {
     f.rpc.mockResolvedValueOnce({ data: { ok: false, error: 'not_authorized' }, error: null });
 
