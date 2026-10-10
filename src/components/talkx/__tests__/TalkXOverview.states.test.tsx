@@ -315,6 +315,9 @@ describe('Visão geral — acessibilidade da tela 01 (TL-175A)', () => {
     const rascunho = { ...campaign, id: 'c-draft', name: 'Campanha rascunho', status: 'draft' } as unknown as TalkXCampaign;
     render(<TalkXOverview {...baseProps} campaigns={[rascunho]} />);
 
+    // TL-115: os rascunhos ficam recolhidos por padrao — expandir o bloco antes de medir.
+    fireEvent.click(screen.getByRole('button', { name: 'Rascunhos pendentes(1)' }));
+
     const pilula = screen.getByRole('button', { name: 'Retomar' });
     expect(pilula.className).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
 
