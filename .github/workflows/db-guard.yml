@@ -829,3 +829,15 @@ jobs:
         env:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
+
+      # N-146: 3 policies RESTRICTIVE em gmail_accounts — nenhuma policy permissiva futura pode sobrescrever
+      - name: Provar que policies RESTRICTIVE bloqueiam escrita em gmail_accounts (N-146)
+        env:
+          GMAIL_RESTRICTIVE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gmail-write-blocks-restrictive.test.sh
+
+      - name: Provar identidade de storage para team-chat-files (R2-STORAGE-001)
+        env:
+          TEAM_CHAT_STORAGE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-storage-identity.test.sh

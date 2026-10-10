@@ -1,6 +1,7 @@
 import {
   AUDIENCE_CACHE_TTL_MS,
   fetchAudienceList,
+  handleMultiplixAudienceRequest,
   mapResolvedRecipients,
   MULTIPLIX_OVER_POLICY_LIMIT,
   MULTIPLIX_RESOLVE_TRUNCATED,
@@ -477,4 +478,44 @@ Deno.test('F22: escopo diferente assina diferente (nao da para subir de agent pa
   const agent = await signScope(['customers_own'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   const admin = await signScope(['admin'], null, SEGREDO_DE_TESTE, NOW_PARA_EXP_FIXO);
   assert(agent.hmac !== admin.hmac, 'escopos diferentes geraram o mesmo hmac');
+});
+
+// ── stub de rede para requireAuth (R2-AUTH-022) ─────────────────────────
+const ROTA_POLITICA = '/rest/v1/rpc/resolve_network_policy';
+
+function withFetch(routes: Record<string, unknown>) {
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+    const alvo = new URL(url);
+    const hostComPath = `${alvo.hostname}${alvo.pathname}`;
+    const stub = routes[hostComPath] ?? routes[alvo.pathname];
+    if (!stub) return Promise.resolve(new Response('nao stubado', { status: 599 }));
+    return Promise.resolve(
+      new Response(stub === null ? null : JSON.stringify(stub), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+  }) as typeof fetch;
+  return () => { globalThis.fetch = original; };
+}
+
+Deno.test('handler: requireAuth devolve 503 quando a política de rede recusa', async () => {
+  const restore = withFetch({ [ROTA_POLITICA]: { allowed: false, status: 503 } });
+  try {
+    const req = new Request(`http://localhost/functions/v1/multiplix-audience`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer token-admin',
+        'Content-Type': 'application/json',
+        'x-scope': 'admin',
+      },
+      body: JSON.stringify({ customer_id: 'cust_1', audience_id: 'aud_1' }),
+    });
+    const res = await handleMultiplixAudienceRequest(req);
+    assert(res.status === 503, `esperado 503, obteve ${res.status}`);
+  } finally {
+    restore();
+  }
 });

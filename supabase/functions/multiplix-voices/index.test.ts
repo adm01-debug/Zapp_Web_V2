@@ -183,6 +183,13 @@ const ROTA_AUTH = { match: '/auth/v1/user', body: { id: USER_B, aud: 'authentica
 const ROTA_PAPEL_AGENT = { match: '/rest/v1/user_roles', body: [{ role: 'agent' }] };
 const ROTA_PERFIL_B = { match: '/rest/v1/profiles', body: { id: PERFIL_B } };
 const ROTA_NAO_STAFF = { match: '/rest/v1/rpc/is_admin_or_supervisor', body: false };
+// Política de rede (R2-AUTH-022 / 27.3): `requireAuth` consulta
+// `resolve_network_policy` depois de autenticar, antes do handler. O stub
+// responde pela decisão para o teste exercitar o resto do caminho.
+const ROTA_POLITICA_LIBERA = {
+  match: '/rest/v1/rpc/resolve_network_policy',
+  body: [{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
+};
 
 function makeRequest(body: unknown, withAuth = true): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -214,7 +221,7 @@ Deno.test('F64 handler: sem env configurada devolve 503', async () => {
 
 Deno.test('F64 handler: acao fora do contrato devolve 400', async () => {
   await withEnv(ENV_OK, async () => {
-    const stub = withFetch([ROTA_AUTH]);
+    const stub = withFetch([ROTA_AUTH, ROTA_POLITICA_LIBERA]);
     try {
       const res = await handleMultiplixVoicesRequest(makeRequest({ action: 'voices.delete' }));
       assert(res.status === 400, `esperado 400, veio ${res.status}`);
@@ -231,6 +238,7 @@ Deno.test('F64 handler: voices.list devolve so o grant vivo que alcanca o chamad
       ROTA_PAPEL_AGENT,
       ROTA_PERFIL_B,
       ROTA_NAO_STAFF,
+      ROTA_POLITICA_LIBERA,
       {
         match: '/rest/v1/multiplix_voice_grants',
         body: [
@@ -262,6 +270,7 @@ Deno.test('F64 handler: assets.sign nega 403 quando a voz nao tem grant para o c
       ROTA_PAPEL_AGENT,
       ROTA_PERFIL_B,
       ROTA_NAO_STAFF,
+      ROTA_POLITICA_LIBERA,
       { match: '/rest/v1/multiplix_voice_assets', body: assetRow({ voice_id: VOZ_PERFIL }) },
       { match: '/rest/v1/multiplix_voice_grants', body: [grantRow({ voice_id: VOZ_PERFIL, roles: null, perfis: [PERFIL_C] })] },
     ]);
@@ -283,6 +292,7 @@ Deno.test('F64 handler: assets.sign devolve 403 de INVALIDADO quando o roteiro m
       ROTA_PAPEL_AGENT,
       ROTA_PERFIL_B,
       ROTA_NAO_STAFF,
+      ROTA_POLITICA_LIBERA,
       { match: '/rest/v1/multiplix_voice_assets', body: assetRow({ invalidated_at: '2026-10-03T00:00:00Z' }) },
       { match: '/rest/v1/multiplix_voice_grants', body: [grantRow()] },
     ]);
@@ -309,6 +319,7 @@ Deno.test('F64 handler: assets.sign assina com o TTL do envio no caminho feliz',
       ROTA_PAPEL_AGENT,
       ROTA_PERFIL_B,
       ROTA_NAO_STAFF,
+      ROTA_POLITICA_LIBERA,
       { match: '/rest/v1/multiplix_voice_assets', body: assetRow() },
       { match: '/rest/v1/multiplix_voice_grants', body: [grantRow()] },
       { match: '/storage/v1/object/sign/', body: { signedURL: '/object/sign/multiplix-voice/comercial/a.mp3?token=abc' } },
