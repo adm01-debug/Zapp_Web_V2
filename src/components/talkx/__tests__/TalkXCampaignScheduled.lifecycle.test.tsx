@@ -51,6 +51,12 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   }),
 }));
 
+// X120 (TL-151): a tela lê o estado real da linha; aqui a linha segue
+// conectada para não interferir no que o X051 prova (disparo/cancelamento).
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => ({ status: 'connected', label: 'Conectada', loading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));

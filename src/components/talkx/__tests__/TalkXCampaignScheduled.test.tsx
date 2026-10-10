@@ -43,6 +43,7 @@ const h = vi.hoisted(() => ({
   startCampaign: vi.fn(),
   pauseCampaign: vi.fn(),
   cancelCampaign: vi.fn(),
+  connection: { status: 'connected' as string | null, label: 'Conectada' as string | null, loading: false },
   onBack: vi.fn(),
   onEdit: vi.fn(),
   onStatusChange: vi.fn(),
@@ -64,6 +65,10 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     pauseCampaign: h.pauseCampaign,
     cancelCampaign: h.cancelCampaign,
   }),
+}));
+
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => h.connection,
 }));
 
 vi.mock('sonner', () => ({
@@ -137,6 +142,7 @@ function escolherVelocidade(rotulo: string) {
 
 beforeEach(() => {
   h.campaigns = [CAMPAIGN];
+  h.connection = { status: 'connected', label: 'Conectada', loading: false };
   h.refetch.mockClear();
   h.updateAsync.mockReset();
   h.updateAsync.mockResolvedValue({});
@@ -304,9 +310,36 @@ describe('Tela 10 — cabeçalho, selo e estado pronta para envio (TL-151)', () 
     expect(screen.getByText(/Agendada para 09\/06 • 22:30/)).toBeTruthy();
   });
 
-  it('mostra "pronta para ser enviada" como texto fixo (X120 ainda sem hook nesta base)', () => {
+  it('mostra "pronta para ser enviada" quando não há bloqueio (linha conectada, público e mensagem ok)', () => {
     render(view());
     expect(screen.getByText(/Campanha pronta para ser enviada/)).toBeTruthy();
+    expect(screen.queryByText(/pendência antes do envio/)).toBeNull();
+  });
+
+  it('X120 com bloqueio (linha desconectada): mostra o aviso e esconde "pronta"', () => {
+    h.connection = { status: 'disconnected', label: 'Desconectada', loading: false };
+    render(view());
+    expect(screen.queryByText(/Campanha pronta para ser enviada/)).toBeNull();
+    expect(screen.getByText(/1 pendência antes do envio/)).toBeTruthy();
+    expect(screen.getByText(/A linha WhatsApp está desconectada/)).toBeTruthy();
+  });
+
+  it('X120 com 3 bloqueios (sem linha, sem público, mensagem vazia): lista tudo e esconde "pronta"', () => {
+    h.campaigns = [{ ...CAMPAIGN, whatsapp_connection_id: null, total_recipients: 0, message_template: '  ' }];
+    h.connection = { status: null, label: null, loading: false };
+    render(view());
+    expect(screen.queryByText(/Campanha pronta para ser enviada/)).toBeNull();
+    expect(screen.getByText(/3 pendências antes do envio/)).toBeTruthy();
+    expect(screen.getByText(/Nenhuma linha WhatsApp selecionada/)).toBeTruthy();
+    expect(screen.getByText(/O público não tem contatos elegíveis/)).toBeTruthy();
+    expect(screen.getByText(/A mensagem da campanha está vazia/)).toBeTruthy();
+  });
+
+  it('X120 com conexão ainda carregando: não inventa bloqueio e mantém "pronta"', () => {
+    h.connection = { status: null, label: null, loading: true };
+    render(view());
+    expect(screen.getByText(/Campanha pronta para ser enviada/)).toBeTruthy();
+    expect(screen.queryByText(/pendência antes do envio/)).toBeNull();
   });
 });
 

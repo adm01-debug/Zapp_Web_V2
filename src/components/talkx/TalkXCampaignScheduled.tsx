@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
-  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
+  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge, AlertTriangle,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone }
 import { intervalForProfile } from './talkxLimits';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { toast } from 'sonner';
 
 const TIMEZONES = [
@@ -55,6 +56,33 @@ export function formatTalkXScheduleLabel(local: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
   if (!m) return '—';
   return `${m[3]}/${m[2]} • ${m[4]}:${m[5]}`;
+}
+
+/**
+ * X120 — pendências que BLOQUEIAM o envio, com a mesma regra que a revisão do
+ * wizard usa: linha WhatsApp ativa, público com contatos elegíveis e mensagem
+ * escrita. Função pura sobre dados que a tela já tem (campanha + estado real
+ * da conexão lido por `useTalkXConnectionStatus`); enquanto o status ainda
+ * está sendo lido (`connectionLoading`) ele não conta como pendência — não se
+ * inventa bloqueio com dado ainda não carregado.
+ */
+export function campaignBlockingChecks(
+  campaign: Pick<TalkXCampaign, 'whatsapp_connection_id' | 'total_recipients' | 'message_template'>,
+  connectionStatus: string | null,
+  connectionLoading: boolean,
+): string[] {
+  const problemas: string[] = [];
+  if (!campaign.whatsapp_connection_id) {
+    problemas.push('Nenhuma linha WhatsApp selecionada.');
+  } else if (!connectionLoading && connectionStatus && connectionStatus !== 'connected') {
+    const rotulo = connectionStatus === 'disconnected' ? 'desconectada'
+      : connectionStatus === 'pending' ? 'pendente'
+      : connectionStatus;
+    problemas.push(`A linha WhatsApp está ${rotulo}.`);
+  }
+  if ((campaign.total_recipients ?? 0) <= 0) problemas.push('O público não tem contatos elegíveis.');
+  if (!campaign.message_template?.trim()) problemas.push('A mensagem da campanha está vazia.');
+  return problemas;
 }
 
 interface Props {
@@ -135,6 +163,11 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
+  // X120: estado real da linha (nada de stub — lê whatsapp_connections).
+  const { status: connectionStatus, loading: connectionLoading } = useTalkXConnectionStatus(
+    campaign.whatsapp_connection_id,
+  );
+  const blockers = campaignBlockingChecks(campaign, connectionStatus, connectionLoading);
   // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
   // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
   // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
@@ -293,14 +326,31 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </div>
       </div>
 
-      {/* Status pill */}
-      <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
-        <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-        <p className="text-[13px] text-foreground">
-          <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
-          {' '}— Campanha pronta para ser enviada.
-        </p>
-      </div>
+      {/* Status pill — X120: "pronta" só aparece sem bloqueio real */}
+      {blockers.length === 0 ? (
+        <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
+          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <p className="text-[13px] text-foreground">
+            <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
+            {' '}— Campanha pronta para ser enviada.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-warning/30 bg-warning/8 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[13px] text-foreground">
+              <span className="font-semibold text-warning">Agendada para {scheduledLabel}</span>
+              {' '}— {blockers.length === 1 ? '1 pendência antes do envio' : `${blockers.length} pendências antes do envio`}:
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {blockers.map((b) => (
+                <li key={b} className="text-xs text-foreground-secondary">• {b}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 3 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
