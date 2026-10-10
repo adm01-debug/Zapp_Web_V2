@@ -354,6 +354,10 @@ describe('CT-20 — exportCatalogCsv (auditoria: quem exportou, filtro e linhas)
         }),
       }),
     );
+    // Ordem (critério de pronto: auditoria depois do download, não junto).
+    expect(download.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(logAudit).mock.invocationCallOrder[0],
+    );
   });
 
   it('sem permissão (canDownload: false) NÃO chama o download nem registra auditoria', async () => {
