@@ -191,12 +191,16 @@ describe('L06 · saneamento adversarial de navigateToView', () => {
   it('com SÓ chaves desconhecidas não grava nada nem limpa emailThread remanescente', () => {
     window.history.replaceState(null, '', '/?view=inbox&emailThread=thread-deep-link');
     pushSpy.mockClear();
+    replaceSpy.mockClear();
     navigateToView('inbox', { admin: 'true', whatever: 'x' });
 
     expect(param('admin')).toBeNull();
     expect(param('whatever')).toBeNull();
     expect(param('emailThread')).toBe('thread-deep-link');
     expect(search()).toBe('?view=inbox&emailThread=thread-deep-link');
+    // View ja ativa: mesma entrada (replaceState, sem empilhar).
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalledTimes(1);
 
     // Chave só no protótipo não conta como parâmetro (Object.entries é own-only).
     const comPrototipo = Object.create({ emailTo: 'injetado@x.co' }) as Record<string, string>;
