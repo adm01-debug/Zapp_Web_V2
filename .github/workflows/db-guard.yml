@@ -625,6 +625,11 @@ jobs:
           TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-audience-snapshot.test.sh
 
+      - name: Saude de segmento do Talk X (N-116)
+        env:
+          TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-health.test.sh
+
       # Auditoria: correção de DUAS regressões vivas por recriação de função —
       # save_talkx_campaign_draft perdeu template_version_id (V26) e
       # transition_talkx_campaign não gravava launched_by/launched_at no start
