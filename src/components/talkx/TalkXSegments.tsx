@@ -49,7 +49,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     parseSegmentLibraryFilters(typeof window !== 'undefined' ? window.location.search : ''),
   );
 
-  const { search, origin: filterOrigin, status: filterStatus, tag: filterTag, owner: filterOwner, page } = filters;
+  const { search, origin: filterOrigin, status: filterStatus, tag: filterTag, owner: filterOwner } = filters;
 
   /** Opções de tag e proprietário derivadas dos segmentos (vivas, não estáticas). */
   const tagOptions = useMemo(() => {
