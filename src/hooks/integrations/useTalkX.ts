@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
+import type { SupabaseClient as SupabaseJsClient } from '@supabase/supabase-js';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { TALKX_OVERVIEW_STATS_KEY } from './useTalkXOverviewStats';
@@ -76,6 +78,15 @@ export interface TalkXCampaign {
   send_weekdays?: number[] | null;
   // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
   respect_dnd?: boolean | null;
+  // V27 — A/B testing: habilita teste de variante, métrica de sucesso,
+  // amostra mínima e registro do vencedor (colunas adicionadas pela
+  // migration 20261010_talkx_campaigns_ab_testing).
+  ab_enabled?: boolean;
+  ab_metric?: 'reply_rate' | 'click_rate' | 'delivery_rate' | null;
+  ab_min_sample?: number | null;
+  ab_winner_variant_id?: string | null;
+  ab_winner_decided_at?: string | null;
+  ab_winner_decided_by?: string | null;
 }
 
 export interface TalkXRecipient {
@@ -145,6 +156,124 @@ function parseDraftSaveResult(data: unknown): TalkXDraftSaveResult {
     revision: revision as number,
     creationReplayed: result.creation_replayed === true,
   };
+}
+
+/** V27 (N-120) — linha de `talkx_recipients` usada nas barras de resultado do A/B. */
+export interface TalkXAbRecipient {
+  variant_id: string;
+  status: string;
+  replied_at: string | null;
+  clicked_at: string | null;
+  delivered_at: string | null;
+}
+
+/** V27 (N-120, refazer 1) — contagem de UMA variante do A/B, medida no servidor. */
+export interface TalkXAbVariantStat {
+  variant_id: string;
+  /** Rotulo do catalogo (`talkx_template_variants.label`); null quando a campanha nao tem template. */
+  label: string | null;
+  total: number;
+  replies: number;
+  clicks: number;
+  deliveries: number;
+}
+
+/**
+ * Superficie do cliente Supabase usada pelo A/B, INJETADA por parametro (nao
+ * importada do modulo): o teste finge o servidor com um cliente falso no mesmo
+ * formato e inspeciona as consultas reais — ver `useTalkX.abStats.test.ts`.
+ */
+export type TalkXAbStatsClient = Pick<SupabaseJsClient<Database>, 'from'>;
+
+/** Teto da varredura de descoberta quando a campanha nao tem template (so ids). */
+const TALKX_AB_VARIANT_SCAN_LIMIT = 1000;
+
+async function countHeads(
+  client: TalkXAbStatsClient,
+  campaignId: string,
+  variantId: string,
+  notNullColumn?: 'replied_at' | 'clicked_at' | 'delivered_at',
+): Promise<number> {
+  let query = client
+    .from('talkx_recipients')
+    .select('id', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId)
+    .eq('variant_id', variantId);
+  if (notNullColumn) query = query.not(notNullColumn, 'is', null);
+  const { count, error } = await query;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * V27 (N-120, refazer 1) — amostra do A/B por variante, contada no SERVIDOR.
+ *
+ * O PostgREST corta a lista de linhas no max-rows (padrao 1000): derivar taxas do
+ * tamanho do array erra em campanha grande. Cada numero sai de `count: 'exact',
+ * head: true` — total por variante e, por metrica, so linhas com o carimbo
+ * correspondente nao nulo (`replied_at`/`clicked_at`/`delivered_at`).
+ *
+ * As variantes vem do catalogo (`talkx_template_variants` do template da
+ * campanha — exato, com rotulo); sem template, de uma varredura leve so com a
+ * coluna `variant_id` (sem rotulo, A/B/C na tela). Nenhuma migration nova.
+ */
+export async function fetchTalkXAbStats(
+  client: TalkXAbStatsClient,
+  campaignId: string,
+): Promise<{ variants: TalkXAbVariantStat[] }> {
+  const { data: campaignRow, error: campaignError } = await client
+    .from('talkx_campaigns')
+    .select('template_id')
+    .eq('id', campaignId)
+    .maybeSingle();
+  if (campaignError) throw campaignError;
+  const templateId = campaignRow?.template_id ?? null;
+
+  let variants: Array<{ variant_id: string; label: string | null }>;
+  if (templateId) {
+    const { data, error } = await client
+      .from('talkx_template_variants')
+      .select('id, label')
+      .eq('template_id', templateId)
+      .order('label', { ascending: true });
+    if (error) throw error;
+    variants = ((data ?? []) as Array<{ id: string; label: string }>).map((v) => ({
+      variant_id: v.id,
+      label: v.label,
+    }));
+  } else {
+    const { data, error } = await client
+      .from('talkx_recipients')
+      .select('variant_id')
+      .eq('campaign_id', campaignId)
+      .not('variant_id', 'is', null)
+      .limit(TALKX_AB_VARIANT_SCAN_LIMIT);
+    if (error) throw error;
+    // Defesa: se algum dia uma linha sem variante escapar do filtro `not ... is null`
+    // do servidor, ela nao vira uma "variante" fantasma (o `eq` com null contaria
+    // as linhas sem variante como se fossem uma variante).
+    const ids = [
+      ...new Set(
+        ((data ?? []) as Array<{ variant_id: string | null }>)
+          .map((r) => r.variant_id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ].sort();
+    variants = ids.map((variant_id) => ({ variant_id, label: null }));
+  }
+
+  const stats = await Promise.all(
+    variants.map(async (v) => {
+      const [total, replies, clicks, deliveries] = await Promise.all([
+        countHeads(client, campaignId, v.variant_id),
+        countHeads(client, campaignId, v.variant_id, 'replied_at'),
+        countHeads(client, campaignId, v.variant_id, 'clicked_at'),
+        countHeads(client, campaignId, v.variant_id, 'delivered_at'),
+      ]);
+      return { variant_id: v.variant_id, label: v.label, total, replies, clicks, deliveries };
+    }),
+  );
+  return { variants: stats };
 }
 
 export function useTalkX() {
@@ -232,6 +361,21 @@ export function useTalkX() {
         .order('created_at');
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
+    },
+    enabled: !!selectedCampaignId,
+  });
+
+  // V27 (N-120) — AB testing: amostra por variante para as barras do resultado.
+  // O vencedor NÃO vem daqui: a tela lê `talkx_campaigns.ab_winner_variant_id`,
+  // gravado pelo talkx-scheduler. O front não chama `talkx_determine_winner`
+  // porque essa RPC é restrita ao service_role (ver a migration do A/B).
+  // Refazer 1: contagens no servidor (`fetchTalkXAbStats`) — derivar do tamanho
+  // do array erra acima do max-rows do PostgREST (padrão 1000).
+  const abStatsQuery = useQuery({
+    queryKey: ['talkx-ab-stats', selectedCampaignId],
+    queryFn: async () => {
+      if (!selectedCampaignId) return null;
+      return fetchTalkXAbStats(supabase, selectedCampaignId);
     },
     enabled: !!selectedCampaignId,
   });
@@ -489,6 +633,8 @@ export function useTalkX() {
     isLive,
     recipients: recipientsQuery.data || [],
     recipientsLoading: recipientsQuery.isLoading,
+    abStats: abStatsQuery.data,
+    abStatsLoading: abStatsQuery.isLoading,
     selectedCampaignId,
     setSelectedCampaignId,
     createCampaign,
