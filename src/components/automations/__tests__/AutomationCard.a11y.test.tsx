@@ -25,7 +25,7 @@ describe('AutomationCard — nomes acessíveis', () => {
   it('o interruptor de ativação tem aria-label "Ativar automação"', () => {
     render(
       <AutomationCard
-        automation={buildAutomation()}
+        automation={buildAutomation({})}
         onToggle={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
@@ -38,7 +38,7 @@ describe('AutomationCard — nomes acessíveis', () => {
   it('o interruptor sem aria-label não existe (controle sem nome acessível)', () => {
     render(
       <AutomationCard
-        automation={buildAutomation()}
+        automation={buildAutomation({})}
         onToggle={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
