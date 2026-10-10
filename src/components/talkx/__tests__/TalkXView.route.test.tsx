@@ -129,6 +129,28 @@ describe('TalkXView tab deep links (X007)', () => {
     expect(new URLSearchParams(window.location.search).get('tab')).toBe('suppression');
   });
 
+  // X053 — a trilha do cabeçalho é preenchida pela ROTA: mesma aba na URL, mesma
+  // trilha na tela; trocar a aba pela rota troca a trilha.
+  it('a trilha do cabeçalho segue a aba da rota', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&tab=suppression');
+    render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('suppression')).toBeInTheDocument());
+
+    const trilha = () => screen.getByRole('navigation', { name: 'Trilha de navegação' }).textContent ?? '';
+    expect(trilha()).toContain('Talk X');
+    expect(trilha()).toContain('Campanhas');
+    expect(trilha()).toContain('Lista de supressão');
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&tab=analytics');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    await waitFor(() => expect(screen.getByTestId('analytics')).toBeInTheDocument());
+
+    expect(trilha()).toContain('Comparativo');
+    expect(trilha()).not.toContain('Lista de supressão');
+  });
+
   it('Analytics ▾ → Configurações grava tab=analytics&sub=configuracoes', async () => {
     window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);

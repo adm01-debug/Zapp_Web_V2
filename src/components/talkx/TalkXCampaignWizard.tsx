@@ -23,7 +23,7 @@ import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
 import { TalkXMessageEditor } from './TalkXMessageEditor';
-import { IconTile, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { IconTile, ModuleBreadcrumb, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
@@ -154,16 +154,14 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      {/* E61: Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
-        <span>Talk X</span>
-        <span className="text-border">›</span>
-        <span>Campanhas</span>
-        <span className="text-border">›</span>
-        <span>{campaign ? `Editar ${campaign.name}` : 'Nova campanha'}</span>
-        <span className="text-border">›</span>
-        <span className="text-foreground font-medium">{STEPS.find(s => s.n === step)?.label}</span>
-      </nav>
+      {/* X053: a trilha saiu daqui para o componente do kit (nav com aria-label). */}
+      <ModuleBreadcrumb
+        items={(() => {
+          const nomeCampanha = campaign ? `Editar ${campaign.name}` : 'Nova campanha';
+          const stepLabel = STEPS.find((s) => s.n === step)?.label;
+          return stepLabel ? ['Talk X', 'Campanhas', nomeCampanha, stepLabel] : ['Talk X', 'Campanhas', nomeCampanha];
+        })()}
+      />
 
             {/* Header + stepper */}
       <div className="rounded-2xl bg-card border border-border/70 p-4 flex flex-col xl:flex-row xl:items-center gap-4">

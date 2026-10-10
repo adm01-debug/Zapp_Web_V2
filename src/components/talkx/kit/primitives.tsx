@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -38,18 +38,39 @@ export function IconTile({ icon: Icon, color = 'blue', size = 40, glow = false, 
     </div>
   );
 }
-/** Cabeçalho de página do módulo: tile grande + título + subtítulo + ações à direita. */
-export function ModuleHeader({ icon, color = 'blue', title, subtitle, right }: { icon: LucideIcon; color?: TileColor; title: string; subtitle?: string; right?: ReactNode }) {
+/**
+ * Trilha do módulo (X053/V45). Um único lugar desenha a trilha — antes cada tela
+ * montava a sua à mão e as cópias divergiam. `aria-label` fixo para a trilha ser
+ * localizável por leitor de tela e por teste; o último item é o ponto atual.
+ */
+export function ModuleBreadcrumb({ items, className }: { items: string[]; className?: string }) {
+  if (items.length === 0) return null;
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div className="flex items-center gap-3.5 min-w-0">
-        <IconTile icon={icon} color={color} size={56} className="rounded-2xl shadow-[0_8px_24px_-10px_hsl(var(--primary)/.6)]" />
-        <div className="min-w-0">
-          <h1 className="text-3xl leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate">{title}</h1>
-          {subtitle && <p className="text-[13px] text-foreground-secondary mt-0.5">{subtitle}</p>}
+    <nav aria-label="Trilha de navegação" className={cn('flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5 flex-wrap min-w-0', className)}>
+      {items.map((item, i) => (
+        <Fragment key={`${i}-${item}`}>
+          {i > 0 && <span aria-hidden="true" className="text-border">›</span>}
+          <span className={i === items.length - 1 ? 'text-foreground font-medium truncate' : 'truncate'}>{item}</span>
+        </Fragment>
+      ))}
+    </nav>
+  );
+}
+/** Cabeçalho de página do módulo: trilha + tile grande + título + subtítulo + ações à direita. */
+export function ModuleHeader({ icon, color = 'blue', title, subtitle, breadcrumb, right }: { icon: LucideIcon; color?: TileColor; title: string; subtitle?: string; breadcrumb?: string[]; right?: ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-2">
+      {breadcrumb && breadcrumb.length > 0 && <ModuleBreadcrumb items={breadcrumb} />}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <IconTile icon={icon} color={color} size={56} className="rounded-2xl shadow-[0_8px_24px_-10px_hsl(var(--primary)/.6)]" />
+          <div className="min-w-0">
+            <h1 className="text-3xl leading-tight font-bold font-display text-foreground tracking-[-0.02em] truncate">{title}</h1>
+            {subtitle && <p className="text-[13px] text-foreground-secondary mt-0.5">{subtitle}</p>}
+          </div>
         </div>
+        {right && <div className="flex items-center gap-2 shrink-0 flex-wrap">{right}</div>}
       </div>
-      {right && <div className="flex items-center gap-2 shrink-0 flex-wrap">{right}</div>}
     </div>
   );
 }

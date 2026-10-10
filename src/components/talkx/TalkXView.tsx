@@ -12,7 +12,8 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { ModuleHeader, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { ModuleHeader, ModuleBreadcrumb, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { ActiveCampaignIndicator } from './kit/ActiveCampaignIndicator';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { TalkXHelpCenter } from './help/TalkXHelpCenter';
 import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
@@ -38,6 +39,23 @@ import {
 import type { WizardStep } from './useCampaignEditor';
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+
+// X053: a trilha do cabeçalho sai da rota (?tab=/sub=). Os rótulos são os mesmos
+// que as abas e o menu de Analytics mostram — a trilha não inventa nome novo.
+const TAB_LABELS: Record<string, string> = {
+  overview: 'Visão geral',
+  segments: 'Segmentos',
+  templates: 'Biblioteca',
+  suppression: 'Lista de supressão',
+  analytics: 'Comparativo',
+};
+
+function moduleTrail(tab: string, sub?: string): string[] {
+  const label = tab === 'analytics' && sub === 'configuracoes'
+    ? 'Configurações'
+    : TAB_LABELS[tab] ?? 'Campanhas';
+  return ['Talk X', 'Campanhas', label];
+}
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -302,11 +320,19 @@ export default function TalkXView() {
   }
 
   if (topView === 'monitor' && monitorId) {
+    const monitorCampaign = campaigns.find((candidate) => candidate.id === monitorId);
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        <div className="flex items-center gap-3 mb-4">
-          <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bv-muted/50">
-            <ArrowLeft className="w-4 h-4" />Voltar à campanhas
+        {/* X053: a trilha substitui o botão solto do Monitor (que tinha classes
+            inexistentes); o voltar continua, com as classes do sistema. */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <ModuleBreadcrumb items={['Talk X', 'Campanhas', monitorCampaign?.name ?? 'Monitor']} />
+          <button
+            type="button"
+            onClick={backToList}
+            className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0 ml-auto"
+          >
+            <ArrowLeft className="w-4 h-4" />Voltar às campanhas
           </button>
         </div>
         <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
@@ -326,16 +352,19 @@ export default function TalkXView() {
     <div className="min-h-full w-full min-w-0 bg-background space-y-5">
       <ModuleHeader
         icon={Zap}
+        breadcrumb={moduleTrail(activeTab, activeSub)}
         title="Campanhas"
         subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
         right={
           <div className="flex items-center gap-3">
-            {isLive && (
-              <span className="flex items-center gap-1.5 text-2xs text-success font-medium">
-                <span className="w-2 h-2 rounded-full bg-success talkx-live-dot" />
-                Ao vivo
-              </span>
-            )}
+            <ActiveCampaignIndicator
+              campaigns={campaigns}
+              live={isLive}
+              onOpen={(id) => {
+                const campaign = campaigns.find((candidate) => candidate.id === id);
+                if (campaign) onView(campaign);
+              }}
+            />
             <button
               type="button" onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
