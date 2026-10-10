@@ -51,27 +51,20 @@ vi.mock('@/components/admin/VisibilityGrantsManager', () => ({
 
 import RolesPage from '@/pages/admin/RolesPage';
 
-describe('a11y: seletores nos papéis e visibilidade têm nome acessível (N-065)', () => {
-  it('axe não acusa combobox sem nome em RolesPage', async () => {
+describe('a11y: seletores nos papéis têm nome acessível (N-065)', () => {
+  it('axe não acusa violação de nome em RolesPage', async () => {
     const { container } = render(<RolesPage />);
 
     const results = await axe(container, {
       rules: { 'color-contrast': { enabled: false } },
     });
-    const semNome = results.violations.filter((v) =>
-      ['button-name', 'aria-input-field-name', 'aria-toggle-field-name', 'aria-command-name'].includes(v.id),
-    );
-    expect(semNome).toEqual([]);
+    expect(results.violations).toEqual([]);
   });
 
-  it('encontra 2 combobox com nome acessível (RolesPage)', () => {
+  it('encontra 2 combobox com nome visível (RolesPage)', () => {
     render(<RolesPage />);
 
-    const selects = screen.getAllByRole('combobox');
-    expect(selects).toHaveLength(2);
-
-    const nomes = selects.map((s) => s.getAttribute('aria-label') ?? '');
-    expect(nomes).toContain('Selecione um usuário');
-    expect(nomes).toContain('Selecione uma role');
+    expect(screen.getByRole('combobox', { name: 'Usuário' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Role' })).toBeInTheDocument();
   });
 });

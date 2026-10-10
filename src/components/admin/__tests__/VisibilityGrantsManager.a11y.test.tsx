@@ -34,26 +34,24 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 import { VisibilityGrantsManager } from '@/components/admin/VisibilityGrantsManager';
 
 describe('a11y: seletores de visibilidade têm nome acessível (N-065)', () => {
-  it('axe não acusa combobox sem nome em VisibilityGrantsManager', async () => {
+  it('axe não acusa violação de nome em VisibilityGrantsManager', async () => {
     const { container } = render(<VisibilityGrantsManager />);
+
+    await screen.findAllByRole('combobox');
 
     const results = await axe(container, {
       rules: { 'color-contrast': { enabled: false } },
     });
-    const semNome = results.violations.filter((v) =>
-      ['button-name', 'aria-input-field-name', 'aria-toggle-field-name', 'aria-command-name'].includes(v.id),
-    );
-    expect(semNome).toEqual([]);
+    expect(results.violations).toEqual([]);
   });
 
-  it('encontra 2 combobox com nome acessível (VisibilityGrantsManager)', async () => {
+  it('encontra 2 combobox com nome visível (VisibilityGrantsManager)', async () => {
     render(<VisibilityGrantsManager />);
 
     const selects = await screen.findAllByRole('combobox');
     expect(selects).toHaveLength(2);
 
-    const nomes = selects.map((s) => s.getAttribute('aria-label') ?? '');
-    expect(nomes).toContain('Selecione o agente especial');
-    expect(nomes).toContain('Selecione o agente alvo');
+    expect(screen.getByRole('combobox', { name: 'Agente Especial' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Pode ver contatos de' })).toBeInTheDocument();
   });
 });

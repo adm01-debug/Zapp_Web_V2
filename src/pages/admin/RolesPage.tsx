@@ -144,9 +144,9 @@ export default function RolesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Usuário</label>
+              <label className="text-sm font-medium" htmlFor="user-select">Usuário</label>
               <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger aria-label="Selecione um usuário"><SelectValue placeholder="Selecione um usuário" /></SelectTrigger>
+                <SelectTrigger aria-label="Usuário"><SelectValue placeholder="Selecione um usuário" /></SelectTrigger>
                 <SelectContent>
                   {availableUsers.map((user) => (
                     <SelectItem key={user.user_id} value={user.user_id}>{user.name} ({user.email})</SelectItem>
@@ -155,9 +155,9 @@ export default function RolesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
+              <label className="text-sm font-medium" htmlFor="role-select">Role</label>
               <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'admin' | 'supervisor' | 'agent' | 'special_agent')}>
-                <SelectTrigger aria-label="Selecione uma role"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="role-select" aria-label="Role"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(ROLE_CONFIG).map(([role, config]) => (
                     <SelectItem key={role} value={role}>
