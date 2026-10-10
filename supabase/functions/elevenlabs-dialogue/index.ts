@@ -52,6 +52,22 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
   const rl = await enforceRateLimit(`elevenlabs-dialogue:${auth.userId}`, 20, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
+  // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+  // Verifica ANTES de ler o body, para recusar logo sem consumir
+  // memória, crédito ou tempo de provedor.
+  const killSwitch = await evaluateAiKillSwitch({
+    functionName: "elevenlabs-dialogue",
+    providerType: "elevenlabs",
+  });
+  if (!killSwitch.allowed) {
+    log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+    return jsonResponse(
+      { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+      503,
+      req,
+    );
+  }
+
   try {
     const parsed = parseBody(ElevenLabsDialogueSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
@@ -62,22 +78,6 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
     // requisição sai só para o provedor rejeitar (422) ou cortar a geração.
     const limitError = dialogueLimitError(script);
     if (limitError) return errorResponse(limitError, 400, req);
-
-    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
-    const killSwitch = await evaluateAiKillSwitch({
-      functionName: "elevenlabs-dialogue",
-      providerType: "elevenlabs",
-    });
-    if (!killSwitch.allowed) {
-      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
-      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
-      // corpo por "Internal server error" e o consumidor perderia o código.
-      return jsonResponse(
-        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
-        503,
-        req,
-      );
-    }
 
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 

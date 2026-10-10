@@ -1,6 +1,5 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
-import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
 import { evaluateAiKillSwitch } from "../_shared/ai-kill-switch.ts";
 
 /**
@@ -103,6 +102,22 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
   const rl = await enforceRateLimit(`elevenlabs-sts:${auth.userId}`, 10, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 
+  // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
+  // Verifica ANTES de ler o body ou o upload, para recusar logo sem
+  // consumir memória, crédito ou tempo de provedor.
+  const killSwitch = await evaluateAiKillSwitch({
+    functionName: "elevenlabs-sts",
+    providerType: "elevenlabs",
+  });
+  if (!killSwitch.allowed) {
+    log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
+    return jsonResponse(
+      { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
+      503,
+      req,
+    );
+  }
+
   try {
     const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
 
@@ -128,30 +143,10 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
       return errorResponse(uploadRejection.error, uploadRejection.status, req);
     }
 
-    // SL-008 (achado B4) — a mesma lista fechada de `schemas.ts`: o cliente não
-    // escolhe voz fora do catálogo nem modelo. Antes `voiceId` era livre (≤100
-    // caracteres), então dava para acionar uma voz clonada da conta compartilhada.
-    const inputs = resolveElevenLabsStsInputs(formData.get('voiceId'), formData.get('modelId'));
-    if (!inputs.ok) return errorResponse(inputs.error, 400, req);
-    const { voiceId, modelId: selectedModel } = inputs;
-
-    log.info("Converting audio", { size: audioFile.size, voiceId, model: selectedModel });
-
-    // IA-009 — kill switch lido NO SERVIDOR antes de tocar a ElevenLabs.
-    const killSwitch = await evaluateAiKillSwitch({
-      functionName: "elevenlabs-sts",
-      providerType: "elevenlabs",
-    });
-    if (!killSwitch.allowed) {
-      log.warn("IA desativada por flag", { code: killSwitch.code, key: killSwitch.key });
-      // `jsonResponse` (e não `errorResponse`): acima de 500 o errorResponse troca o
-      // corpo por "Internal server error" e o consumidor perderia o código.
-      return jsonResponse(
-        { error: { code: "AI_DISABLED", message: killSwitch.message ?? "IA desativada." } },
-        503,
-        req,
-      );
-    }
+    const voiceId = formData.get('voiceId') as string;
+    const modelId = formData.get('modelId') as string;
+    if (!voiceId || voiceId.length > 100) return errorResponse('Valid voice ID is required', 400, req);
+    const selectedModel = (modelId && modelId.length <= 100) ? modelId : 'eleven_multilingual_sts_v2';
 
     const apiFormData = new FormData();
     apiFormData.append('audio', audioFile);
