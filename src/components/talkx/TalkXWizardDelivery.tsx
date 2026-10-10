@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
-  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
+  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle, CheckCircle2, XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -260,6 +260,26 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
             </label>
           ))}
         </RailCard>
+
+        {campaign?.launch_confirmations && (
+          <RailCard icon={ShieldCheck} color="green" title="Confirmações no banco" subtitle="Status das confirmações registradas.">
+            {[
+              { k: 'consent', v: campaign.launch_confirmations.consent, l: 'Consentimento dos contatos' },
+              { k: 'content', v: campaign.launch_confirmations.content, l: 'Conteúdo da mensagem' },
+              { k: 'suppression', v: campaign.launch_confirmations.suppression, l: 'Lista de supressão' },
+            ].map((c) => (
+              <div key={c.k} className="flex items-center gap-2.5 py-1">
+                {c.v ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" /> : <XCircle className="w-4 h-4 text-muted-foreground shrink-0" />}
+                <span className={cn('text-xs leading-snug', c.v ? 'text-foreground' : 'text-muted-foreground')}>{c.l}</span>
+              </div>
+            ))}
+            {campaign.launch_confirmed_by && (
+              <p className="text-2xs text-muted-foreground mt-2">
+                Confirmado por {campaign.launch_confirmed_by} em {fmtDateTime(campaign.launch_confirmed_at)}
+              </p>
+            )}
+          </RailCard>
+        )}
 
         <div className={cn('rounded-2xl border p-4 flex items-start gap-3', allGood ? 'border-dash-green/40 bg-dash-green/10' : 'border-dash-amber/40 bg-dash-amber/10')}>
           <div className={cn('w-9 h-9 rounded-full flex items-center justify-center shrink-0', allGood ? 'bg-dash-green text-white' : 'bg-dash-amber text-black')}>{allGood ? <Check className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}</div>

@@ -70,6 +70,10 @@ export interface TalkXCampaign {
   // Introduzido por 20260912130000. Opcional até o types-sync canônico após
   // aplicar a migration; o editor usa 1 como revisão de linhas legadas.
   revision?: number;
+  // V26 — confirmações de lançamento via RPC confirm_talkx_campaign_launch.
+  launch_confirmations?: { consent?: boolean; content?: boolean; suppression?: boolean } | null;
+  launch_confirmed_by?: string | null;
+  launch_confirmed_at?: string | null;
 }
 
 export interface TalkXRecipient {
@@ -472,6 +476,32 @@ export function useTalkX() {
     queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
   }, [queryClient]);
 
+  const confirmCampaignLaunch = useCallback(async (
+    campaignId: string,
+    expectedRevision: number,
+    confirmations: { consent: boolean; content: boolean; suppression: boolean },
+  ): Promise<{ ok: boolean; applied: boolean }> => {
+    try {
+      const { data, error } = await supabase.rpc('confirm_talkx_campaign_launch', {
+        p_campaign_id: campaignId,
+        p_expected_revision: expectedRevision,
+        p_confirmations: confirmations,
+        p_mode: 'confirm',
+      });
+      if (error) throw error;
+      const result = data as { ok?: boolean; applied?: boolean; error?: string } | null;
+      if (!result?.ok) {
+        throw new Error(result?.error ?? 'Confirmação de lançamento recusada');
+      }
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+      return { ok: true, applied: result.applied ?? false };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
+      toast.error(`Erro ao confirmar lançamento: ${msg}`);
+      return { ok: false, applied: false };
+    }
+  }, [queryClient]);
+
   return {
     campaigns: campaignsQuery.data || [],
     isLoading: campaignsQuery.isLoading,
@@ -495,6 +525,7 @@ export function useTalkX() {
     startCampaign,
     pauseCampaign,
     cancelCampaign,
+    confirmCampaignLaunch,
     refetchCampaigns: campaignsQuery.refetch,
   };
 }

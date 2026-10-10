@@ -315,7 +315,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentId?: string; templateId?: string; step?: WizardStep }) {
-  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
+  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign, confirmCampaignLaunch } = useTalkX();
   const { segments } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const { profile } = useAuth();
@@ -848,6 +848,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         await updateCampaign.mutateAsync({ id, status: 'scheduled' });
       }
       if (mode === 'launch') {
+        // V26: confirma as 3 verificacoes via RPC antes de iniciar.
+        const confirmed = await confirmCampaignLaunch(id, draftRevisionRef.current, { consent: true, content: true, suppression: true });
+        if (!confirmed.ok) throw new Error('Falha ao confirmar o lançamento. Verifique as confirmações e tente novamente.');
         // V12: a trilha (started) é gravada pelo servidor na transição; o cliente
         // não insere o evento para não duplicar.
         const started = await startCampaign(id);
@@ -857,7 +860,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign]);
+  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegment, snapshotDraftAudience, startCampaign, confirmCampaignLaunch]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
