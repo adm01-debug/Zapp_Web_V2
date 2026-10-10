@@ -162,6 +162,18 @@ describe('FileDetailContent — R2-INB-060', () => {
 
     expect(container.querySelector('img')).toBeNull();
   });
+
+  it('figurinha (type sticker, da dia) segue a mesma regra: o erro é da URL que falhou, não do painel', () => {
+    const fig1 = mediaItem({ id: 's1', type: 'sticker', displayName: 'fig-1.webp', signedUrl: 'https://signed.test/s1.webp' });
+    const fig2 = mediaItem({ id: 's2', type: 'sticker', displayName: 'fig-2.webp', signedUrl: 'https://signed.test/s2.webp' });
+    const { container, rerender, props } = renderPanel(fig1);
+    fireEvent.error(container.querySelector('img') as HTMLImageElement);
+    expect(container.querySelector('img')).toBeNull();
+
+    rerender(<FileDetailPanel {...props} item={fig2} />);
+
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://signed.test/s2.webp');
+  });
 });
 
 /**
