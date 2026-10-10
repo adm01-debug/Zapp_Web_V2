@@ -12205,7 +12205,7 @@ export type Database = {
           legacy_or_deleted: boolean
         }[]
       }
-      talkx_benchmarks: { Args: never; Returns: Json }
+      talkx_benchmarks: { Args: { p_days?: number; p_limit?: number }; Returns: Json }
       talkx_campaign_logs: {
         Args: { p_after?: string; p_campaign_id: string; p_limit?: number }
         Returns: {
