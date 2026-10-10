@@ -26,15 +26,36 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 let reduceMotion = false;
+/** Props de cada motion.div renderizado pelo componente, na ordem de renderização. */
+const motionDivProps: Array<Record<string, unknown>> = [];
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
+  const { createElement } = await import('react');
+  const makeMotionComponent = (tag: string) => {
+    const MotionComponent = ({ children, ...props }: { children?: ReactNode } & Record<string, unknown>) => {
+      if (tag === 'div') motionDivProps.push(props);
+      const domProps: Record<string, unknown> = { ...props };
+      for (const key of ['animate', 'initial', 'exit', 'transition', 'whileHover', 'whileTap']) delete domProps[key];
+      return createElement(tag, domProps, children);
+    };
+    return MotionComponent;
+  };
+  const motion = new Proxy({}, { get: (_target, tag: string) => makeMotionComponent(tag) });
   return {
     ...actual,
     useReducedMotion: () => reduceMotion,
+    motion,
   };
 });
 
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
+
+/** Props do motion.div do ícone Sparkles: o único com o gradiente bg-gradient-to-br. */
+function iconeSparklesProps() {
+  return motionDivProps.find(
+    (props) => typeof props.className === 'string' && props.className.includes('bg-gradient-to-br'),
+  );
+}
 
 /** Encadeamento do query builder do Supabase usado pelos passos do checklist. */
 function chain(result: unknown) {
@@ -61,6 +82,7 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
     localStorage.clear();
     mockUseAuth.mockReturnValue({ user: { id: 'u1' } });
     reduceMotion = false;
+    motionDivProps.length = 0;
   });
 
   it('não marca o tema como concluído quando a consulta não devolve configuração', async () => {
@@ -120,17 +142,7 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
 
     const botaoExpandir = screen.getByRole('button', { name: 'Expandir passos' });
     expect(botaoExpandir).toBeTruthy();
-  });
-
-  it('botão recolher tem nome acessível "Recolher passos" quando expandido', async () => {
-    mockSupabaseComUserSettings({ data: null, error: null });
-
-    render(<OnboardingChecklist />);
-
-    await screen.findByText(/passos concluídos/);
-
-    const botao = screen.getByRole('button', { name: 'Recolher passos' });
-    expect(botao).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Recolher passos' })).toBeNull();
   });
 
   it('botão dispensar tem nome acessível "Dispensar configuração da conta"', async () => {
@@ -153,7 +165,7 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
     expect(screen.getByRole('progressbar', { name: 'Progresso da configuração da conta' })).toBeTruthy();
   });
 
-  it('com prefers-reduced-motion o ícone não anima', async () => {
+  it('com prefers-reduced-motion o ícone não anima: animate e transition ficam indefinidos', async () => {
     reduceMotion = true;
     mockSupabaseComUserSettings({ data: null, error: null });
 
@@ -161,7 +173,23 @@ describe('OnboardingChecklist — passo "Personalize seu tema"', () => {
 
     await screen.findByText(/passos concluídos/);
 
-    expect(screen.getByRole('button', { name: 'Recolher passos' })).toBeTruthy();
-    expect(screen.getByRole('progressbar', { name: 'Progresso da configuração da conta' })).toBeTruthy();
+    const icone = iconeSparklesProps();
+    expect(icone).toBeTruthy();
+    expect(icone?.animate).toBeUndefined();
+    expect(icone?.transition).toBeUndefined();
+  });
+
+  it('sem prefers-reduced-motion o ícone anima: animate rotaciona e transition repete infinitamente', async () => {
+    reduceMotion = false;
+    mockSupabaseComUserSettings({ data: null, error: null });
+
+    render(<OnboardingChecklist />);
+
+    await screen.findByText(/passos concluídos/);
+
+    const icone = iconeSparklesProps();
+    expect(icone).toBeTruthy();
+    expect(icone?.animate).toEqual({ rotate: [0, 10, -10, 0] });
+    expect(icone?.transition).toEqual({ duration: 2, repeat: Infinity });
   });
 });
