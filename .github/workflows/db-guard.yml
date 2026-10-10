@@ -975,3 +975,4 @@ jobs:
           PROFILES_ESCALATION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/profiles-role-escalation-guard.test.sh
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh
