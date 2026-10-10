@@ -5,7 +5,6 @@ import { queryKeys } from './queryKeys';
 export interface ActiveDepartment {
   id: string;
   name: string;
-  description: string | null;
   is_active: boolean;
 }
 
@@ -15,7 +14,7 @@ export function useActiveDepartments(enabled: boolean) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('departments')
-        .select('id, name, description, is_active')
+        .select('id, name, is_active')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;

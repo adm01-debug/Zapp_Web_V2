@@ -186,7 +186,7 @@ export function TeamConversationList({
                   </div>
                   <div className="flex items-center gap-1 justify-between">
                     <p className="text-xs text-muted-foreground truncate">
-                      {conv.last_message?.content ?? (dept ? dept.description ?? dept.name : '')}
+                      {conv.last_message?.content ?? (dept ? dept.name : '')}
                     </p>
                     {conv.department_id && canManageDepartments && dept && (
                       <Button
