@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
+import type { TalkXCampaignWithRules } from './tracking/talkxCampaignRules';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -24,6 +25,14 @@ import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/st
 interface Props { campaignId: string; onBack?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
+
+/** Minutos → "12 min" / "1h 05m". Sem estimativa (fila vazia ou taxa zero) → "—". */
+function fmtEta(minutes: number | null): string {
+  if (minutes === null) return '—';
+  if (minutes <= 0) return 'Concluída';
+  const m = Math.round(minutes);
+  return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m` : `${m} min`;
+}
 
 export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const qc = useQueryClient();
@@ -104,7 +113,13 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+  // X147: `max_per_minute` da campanha limita a série "Previsto" (nunca promete
+  // mais do que o throttle configurado permite).
+  const throttlePerMinute = (campaign as TalkXCampaignWithRules | undefined)?.max_per_minute ?? null;
+  const {
+    rateByMinute: chartData = [], ratePerMinute = 0, finishMinutes = null, segmentQueue = [],
+    isLoading: rateLoading, isError: rateError, refetch: refetchRate,
+  } = useTalkXMonitor(campaignId, throttlePerMinute);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
@@ -190,9 +205,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
       </div>
 
       {tab==='overview' && (
+        <div className="space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
           <section className="rounded-2xl bg-card border border-border/70 p-4">
-            <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · estimado)</span></p>
+            <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · Previsto = média medida, limitada pelo teto da campanha)</span></p>
             <TalkXQueryBoundary
               query={{ isLoading: rateLoading, isError: rateError, error: null }}
               entity="estimativas de ritmo"
@@ -210,6 +226,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                   <ReTooltip contentStyle={{background:'hsl(var(--popover))',border:'1px solid hsl(var(--border))',borderRadius:12,fontSize: CHART_TOOLTIP_FONT_SIZE}}/>
                   <Area type="monotone" dataKey="Enviadas" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gS)" dot={false}/>
                   <Area type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} fill="none" dot={false}/>
+                  <Area type="monotone" dataKey="Previsto" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 4" fill="none" dot={false}/>
                 </AreaChart>
               </ResponsiveContainer>
             </TalkXQueryBoundary>
@@ -217,8 +234,58 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
           <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
             <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>
             <MetaRow label="Conexão WA" value={connStatusLabel ?? '—'}/>
+            <MetaRow label="Taxa de envio" value={`${ratePerMinute.toFixed(1)} msg/min`}/>
+            <MetaRow label="Término estimado" value={fmtEta(finishMinutes)}/>
             <MetaRow label="Iniciado em" value={campaign.started_at?fmtDateTime(campaign.started_at):'—'}/>
           </RailCard>
+        </div>
+
+        {/* T11-046..052 — Fila por Segmento: destinatários da campanha agrupados
+            pelo segmento de origem (talkx_recipients.segment_id). */}
+        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <p className="text-sm font-bold text-foreground">Fila por Segmento</p>
+            <span className="text-xs text-foreground-secondary tabular-nums">
+              {fmtInt(segmentQueue.reduce((acc, s) => acc + s.total, 0))} destinatários
+            </span>
+          </div>
+          {segmentQueue.length === 0 ? (
+            <div className="py-4">
+              <TalkXEmptyState icon={Inbox} title="Fila vazia" description="Os segmentos aparecem aqui assim que os destinatários da campanha são criados." />
+            </div>
+          ) : (
+            <div className="overflow-x-auto" role="region" aria-label="Fila por Segmento">
+              <table className="w-full text-left border-collapse">
+                <caption className="sr-only">Fila por segmento: total, enviadas, restante e progresso por segmento.</caption>
+                <thead>
+                  <tr className="text-2xs uppercase tracking-wide text-foreground-secondary">
+                    <th scope="col" className="px-4 py-2 font-medium">Segmento</th>
+                    <th scope="col" className="px-3 py-2 font-medium text-right">Total</th>
+                    <th scope="col" className="px-3 py-2 font-medium text-right">Enviadas</th>
+                    <th scope="col" className="px-3 py-2 font-medium text-right">Restante</th>
+                    <th scope="col" className="px-4 py-2 font-medium">Progresso</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {segmentQueue.map((s) => (
+                    <tr key={s.segmentId ?? 'sem-segmento'} className="hover:bg-muted/20">
+                      <td className="px-4 py-2.5 text-[13px] font-medium text-foreground max-w-[240px] truncate" title={s.name}>{s.name}</td>
+                      <td className="px-3 py-2.5 text-[13px] text-foreground-secondary text-right tabular-nums">{fmtInt(s.total)}</td>
+                      <td className="px-3 py-2.5 text-[13px] text-foreground-secondary text-right tabular-nums">{fmtInt(s.sent)}</td>
+                      <td className="px-3 py-2.5 text-[13px] text-foreground-secondary text-right tabular-nums">{fmtInt(s.remaining)}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <Progress value={s.progress} className="h-1.5 w-[120px]" />
+                          <span className="text-2xs text-foreground-secondary tabular-nums">{s.progress}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
         </div>
       )}
 
