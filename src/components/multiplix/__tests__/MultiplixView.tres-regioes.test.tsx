@@ -1,19 +1,7 @@
 /**
- * TL-006 / F72 — a tela Multiplix mostra as TRÊS regiões ao mesmo tempo
- * (01 PÚBLICO / 02 COMPOSIÇÃO / 03 PRÉVIA & REVISÃO) e a composição vive na
- * própria tela, não em um diálogo fechado (`MultiplixComposerDialog`).
- *
- * Vermelho antes da correção: as regiões 02 e 03 não existiam, o rodapé de
- * ações não existia e os campos de composição só apareciam dentro do diálogo
- * — que o Radix nem monta enquanto está fechado.
- *
- * Rebase em dia/2026-10-09 (TL-007): a região 01 passou a renderizar a tabela
- * via `@tanstack/react-virtual`, que depende de medições de layout que o jsdom
- * não fornece (clientHeight fica 0 sem layout real). Mesmo dublê já aceito em
- * `MultiplixView.lista-virtualizada.test.tsx` e em
- * `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx`: delega
- * para as opções do componente (count/estimateSize) e devolve uma janela —
- * com 1-2 linhas de teste, a janela cobre todas.
+ * TL-006 / F72 — a tela mostra as TRÊS regiões ao mesmo tempo (01 PÚBLICO /
+ * 02 COMPOSIÇÃO / 03 PRÉVIA & REVISÃO) e a composição vive na própria tela,
+ * não num diálogo. Vermelho antes: as regiões 02/03 e o rodapé não existiam.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

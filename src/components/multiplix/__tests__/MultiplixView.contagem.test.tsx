@@ -1,24 +1,8 @@
 /**
- * F78 / TL-010 — Multiplix: a conta "N contatos × M blocos = N×M mensagens" fica
- * SEMPRE visível na região 02 (COMPOSIÇÃO) da tela, e o nome do disparo deixa de
- * ser obrigatório ("dá para enviar sem nomear").
- *
- * Este cartão (TL-006, "3 regiões simultâneas") moveu a composição de um diálogo
- * (`MultiplixComposerDialog`, removido) para dentro da própria `MultiplixView`.
- * O TL-010 tinha entregue a conta N×M e o título opcional NO DIÁLOGO; este
- * arquivo porta o mesmo comportamento (e os mesmos casos) para a tela, contra o
- * componente REAL — substitui
- * `MultiplixComposerDialog.contagem.test.tsx` (apagado com o diálogo).
- *
- * O que este teste prova, contra o `MultiplixView` real:
- *  1. a conta aparece sempre e acompanha a seleção (região 01) e a composição
- *     (região 02) — 0 selecionado/0 bloco -> 0 mensagens; com seleção e bloco
- *     preenchido -> N×1 mensagens;
- *  2. sem nome digitado o disparo SAI com o título sugerido (público + assunto)
- *     — o `mutateAsync` recebe o nome sugerido, não string vazia;
- *  3. o nome digitado continua mandando (a sugestão é só sugestão);
- *  4. sem mensagem o envio continua bloqueado (o bloco de texto não foi
- *     dispensado).
+ * F78 / TL-010 — a conta "N contatos × M blocos = N×M mensagens" fica SEMPRE
+ * visível na região 02 (COMPOSIÇÃO) e o nome do disparo é opcional. Porta os
+ * casos do TL-010 (que viviam no diálogo removido) para a tela, contra o
+ * `MultiplixView` real.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';

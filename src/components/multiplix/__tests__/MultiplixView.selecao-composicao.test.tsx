@@ -1,26 +1,8 @@
 /**
- * TL-027 (inventario F46) — "ligar selecao a UI de composicao".
- *
- * O F46 vive no servidor (`multiplix-dispatch`: o conjunto e montado em UM
- * lugar). A parte de TELAS que o inventario aponta como faltante e esta: a
- * selecao feita na busca vira o publico da UI de composicao — o front manda a
- * INTENCAO (os company_ids marcados) e quem resolve/decide quem recebe e a edge
- * (`multiplix-dispatch`, acao `draft.create`, que re-resolve sob o escopo do
- * JWT).
- *
- * Este teste NAO mocka as telas nem os hooks: renderiza `MultiplixView` e
- * mocka so a rede (o cliente Supabase) e o virtualizador da tabela — o jsdom
- * nao tem layout (clientHeight 0) e o `@tanstack/react-virtual` (F74) nao
- * devolveria janela nenhuma; o mesmo padrao ja aceito em
- * `MultiplixView.lista-virtualizada.test.tsx`, e o duble segue delegando nas
- * opcoes do componente (`count`/`estimateSize`). O que ele trava:
- *   1. so as empresas MARCADAS viajam para a criacao do disparo (o desmarcado
- *      nao entra — a exclusao da UI vence a inclusao);
- *   2. o front NAO resolve publico no navegador: sai a selecao (`company_ids`)
- *      e mais nada — nenhuma acao de `resolve` e chamada pela tela.
- *
- * A composicao agora e inline na regiao 02 (MultiplixView), nao num dialog
- * separado (MultiplixComposerDialog foi removido).
+ * TL-027 (inventario F46) — a selecao da busca vira o publico da composicao:
+ * o front manda a INTENCAO (os company_ids marcados) e a edge
+ * (`multiplix-dispatch`, `draft.create`) re-resolve sob o escopo do JWT. Este
+ * teste renderiza `MultiplixView` real e mocka so a rede e o virtualizador.
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';

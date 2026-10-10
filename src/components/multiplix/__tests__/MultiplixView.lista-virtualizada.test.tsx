@@ -1,29 +1,9 @@
 /**
- * F74 (TL-007) — a lista de público do Multiplix não tinha virtualização e
- * "Selecionar todas" usava só o conjunto carregado (teto de 500 no front).
- *
- * Este teste monta a tela REAL (`MultiplixView`) e prova dois contratos:
- * 1) a tabela é renderizada por `@tanstack/react-virtual`: com 5.000 linhas
- *    carregadas, só a janela visível vai para o DOM e o corpo reserva a altura
- *    total de rolagem (sem isso, 5.000 `<tr>` de uma vez);
- * 2) "Selecionar todos os N resultados" usa o N do SERVIDOR (`count`, F47) e
- *    materializa a seleção paginando o servidor — não o conjunto carregado.
- *
- * O virtualizer real depende de medições de layout que o jsdom não fornece
- * (clientHeight fica 0 sem layout real) — mesmo padrão já aceito em
- * `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx`: o hook é
- * substituído por um dublê que delega para as opções do COMPONENTE
- * (count/estimateSize) e devolve uma janela. Se o componente voltar a fazer
- * `rows.map`, as asserções caem (a linha fora da janela aparece no DOM).
- *
- * Rebase em dia/2026-10-09 (TL-006/F72): a composição deixou de viver num
- * diálogo (`MultiplixComposerDialog`, removido — a seleção chegava até ele por
- * `selectedCompanyIds`) e passou para a região 02 da própria `MultiplixView`.
- * O que antes se lia em `lastComposerProps()?.selectedCompanyIds` agora se lê
- * no rodapé real da tela ("N empresa(s) selecionada(s)", via `contagemSelecao()`
- * abaixo) ou nas checkboxes visíveis (quando a linha está na janela do
- * virtualizador) — o contrato provado (N do servidor, paginação, truncagem)
- * não mudou, só a fonte da leitura.
+ * F74 (TL-007) — a tabela do público é virtualizada e "Selecionar todos os N
+ * resultados" usa o N do SERVIDOR (`count`, F47). Rebase em dia/2026-10-09
+ * (TL-006/F72): a fonte da leitura da seleção passou de
+ * `lastComposerProps()?.selectedCompanyIds` para o rodapé da tela
+ * (`contagemSelecao()`); o contrato provado não mudou.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
