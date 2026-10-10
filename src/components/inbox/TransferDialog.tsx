@@ -214,7 +214,7 @@ export function TransferDialog({ open, onOpenChange, onTransfer, queueId }: Tran
                 </div>
               ) : (
                 <Select value={selectedTarget} onValueChange={setSelectedTarget}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Departamento de destino">
                     <SelectValue placeholder="Escolha um departamento" />
                   </SelectTrigger>
                   <SelectContent>

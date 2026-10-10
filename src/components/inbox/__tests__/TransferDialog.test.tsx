@@ -6,6 +6,7 @@
  * silenciosamente no banco (toast de erro genérico). Este teste trava que
  * o picker já filtra corretamente antes de chegar no banco.
  */
+import { axe } from 'vitest-axe';
 import { describe, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -115,5 +116,24 @@ describe('TransferDialog — contrato público restrito a agent|queue (#88)', ()
       expect(onTransfer).toHaveBeenCalledWith('agent', 'colega-profile', undefined)
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('TransferDialog — acessibilidade (N-044)', () => {
+  it('combobox de destino tem nome acessível quando o tipo é fila', () => {
+    renderDialog('queue-1');
+
+    fireEvent.click(screen.getByRole('radio', { name: /departamento/i }));
+
+    expect(screen.getAllByRole('combobox', { name: /destino/i })).toHaveLength(1);
+  });
+
+  it('axe button-name sem violações no diálogo de transferência', async () => {
+    const { container } = renderDialog('queue-1');
+
+    fireEvent.click(screen.getByRole('radio', { name: /departamento/i }));
+
+    const results = await axe(container, { runOnly: { type: 'rule', values: ['button-name'] } });
+    expect(results).toHaveNoViolations();
   });
 });

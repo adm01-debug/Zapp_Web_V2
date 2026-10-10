@@ -38,10 +38,13 @@ vi.mock('@/components/ui/select', () => ({
   ),
   SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({ children, 'aria-label': ariaLabel }: { children: React.ReactNode; 'aria-label'?: string }) => (
+    <div role="combobox" aria-label={ariaLabel}>{children}</div>
+  ),
   SelectValue: () => null,
 }));
 
+import { axe } from 'vitest-axe';
 import { CloseConversationDialog } from '../CloseConversationDialog';
 
 describe('CloseConversationDialog', () => {
@@ -71,5 +74,33 @@ describe('CloseConversationDialog', () => {
     expect(mockRpc.mock.calls[0][0]).toBe('close_conversation_atomic');
     expect(mockRpc.mock.calls[0][1].p_client_request_id)
       .toBe(mockRpc.mock.calls[1][1].p_client_request_id);
+  });
+});
+
+describe('CloseConversationDialog — acessibilidade (N-044)', () => {
+  it('comboboxes de motivo, resultado e destino têm nome acessível', () => {
+    render(
+      <CloseConversationDialog
+        open
+        onOpenChange={vi.fn()}
+        contactId="50000000-0000-0000-0000-000000000001"
+      />,
+    );
+
+    const comboboxes = screen.getAllByRole('combobox', { name: /motivo|resultado|destino/i });
+    expect(comboboxes).toHaveLength(3);
+  });
+
+  it('axe button-name sem violações no diálogo de encerramento', async () => {
+    const { container } = render(
+      <CloseConversationDialog
+        open
+        onOpenChange={vi.fn()}
+        contactId="50000000-0000-0000-0000-000000000001"
+      />,
+    );
+
+    const results = await axe(container, { runOnly: { type: 'rule', values: ['button-name'] } });
+    expect(results).toHaveNoViolations();
   });
 });
