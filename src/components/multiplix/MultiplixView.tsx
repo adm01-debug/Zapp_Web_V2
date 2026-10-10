@@ -466,8 +466,7 @@ export default function MultiplixView() {
         </div>
       )}
 
-      {/* F72: as três regiões ficam simultâneas na tela (grid do protótipo),
-          não em um assistente passo a passo. */}
+      {/* F72: as três regiões ficam simultâneas na tela (grid do protótipo). */}
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* 01 PÚBLICO */}
         <section
@@ -706,8 +705,7 @@ export default function MultiplixView() {
             <p className="text-2xs text-muted-foreground">Escreva uma mensagem única para as empresas selecionadas.</p>
           </div>
 
-          {/* F78 (TL-010): a conta do disparo fica SEMPRE visivel, com ou sem
-              selecao/composicao — N contatos x M blocos = N x M mensagens. */}
+          {/* F78 (TL-010): a conta do disparo fica SEMPRE visivel. */}
           <p
             data-testid="multiplix-contagem-mensagens"
             aria-live="polite"
@@ -719,8 +717,7 @@ export default function MultiplixView() {
           <div className="flex flex-col gap-1 p-4">
             <span className="text-xs text-muted-foreground">Nome do disparo (opcional)</span>
             <Input aria-label="Nome do disparo" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Convite feira 2026" />
-            {/* F78 (TL-010): sem nome digitado o disparo sai com o titulo
-                sugerido (publico + assunto) — nao trava o envio. */}
+            {/* F78 (TL-010): sem nome digitado sai o titulo sugerido. */}
             <p className="text-xs text-muted-foreground">
               Título sugerido: <span className="text-foreground">{suggestedName}</span>
             </p>

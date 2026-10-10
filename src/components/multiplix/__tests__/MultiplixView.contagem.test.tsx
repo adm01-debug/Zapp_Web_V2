@@ -7,9 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-// A região 01 renderiza a tabela via `@tanstack/react-virtual`, que depende de
-// medições de layout que o jsdom não fornece. Mesmo dublê de
-// `MultiplixView.tres-regioes.test.tsx` / `MultiplixView.lista-virtualizada.test.tsx`.
+// Dublê do virtualizador (mesmo de `tres-regioes`/`lista-virtualizada`).
 vi.mock('@tanstack/react-virtual', () => ({
   useVirtualizer: (options: { count: number; estimateSize: (i: number) => number }) => {
     const size = options.estimateSize(0);

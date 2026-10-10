@@ -105,12 +105,8 @@ function lastVirtualizerOptions() {
   return state.virtualizerOptions[state.virtualizerOptions.length - 1];
 }
 
-// TL-006/F72: a seleção não chega mais a um diálogo por prop — ela vive em
-// `selected` (estado da própria tela) e aparece em DOIS rodapés reais ("N
-// empresa(s) selecionada(s)": um no fim da região 01, outro perto dos botões
-// da região 02). O da região 01 tem o número num `<strong>` DENTRO do `<p>`
-// que também tem o texto "selecionada(s)" — "X empresa(s) no filtro atual."
-// (count do servidor) também usa `<strong>`, por isso o escopo pelo `<p>` pai.
+// TL-006/F72: a seleção vive em `selected` (estado da tela) e aparece em DOIS
+// rodapés — o da região 01 tem o N dentro de um `<p>` com "selecionada(s)".
 function contagemSelecao(): number {
   const p = Array.from(document.querySelectorAll('p')).find((el) => el.textContent?.includes('selecionada(s)'));
   const n = p?.querySelector('strong')?.textContent;
