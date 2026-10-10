@@ -3,6 +3,7 @@ import {
   extractAuthSessionId,
   decideSessionUpsert,
   buildSessionInsert,
+  buildDeviceAlertEmail,
 } from "./index.ts";
 
 // R2-AUTH-004 (item 6): contratos executáveis do inventário de sessão.
@@ -92,4 +93,35 @@ Deno.test("buildSessionInsert nunca persiste token ou secret", () => {
 Deno.test("decodeJwtClaims devolve {} para entrada malformada (não lança nem vaza)", () => {
   if (Object.keys(decodeJwtClaims("nao-e-jwt")).length !== 0) fail("token malformado deveria devolver {}");
   if (Object.keys(decodeJwtClaims("a.!!!não-base64.c")).length !== 0) fail("payload inválido deveria devolver {}");
+});
+
+// ─── Hardening: campos do e-mail escapados (injeção de HTML) ───
+
+Deno.test("buildDeviceAlertEmail escapa os campos vindos do chamador", () => {
+  const html = buildDeviceAlertEmail({
+    deviceName: '<script>alert(1)</script>',
+    browser: 'Mozilla & "Co"',
+    os: "<b>Linux</b>",
+    clientIp: '1.2.3.4"><img src=x onerror=alert(1)>',
+    whenLabel: "10/10/2026 20:00",
+  });
+  if (html.includes("<script>")) fail("device_name cru não pode chegar ao HTML");
+  if (html.includes("<img src=x")) fail("clientIp cru não pode chegar ao HTML");
+  if (html.includes("<b>Linux</b>")) fail("os cru não pode chegar ao HTML");
+  if (!html.includes("&lt;script&gt;alert(1)&lt;/script&gt;")) fail("device_name deveria sair escapado");
+  if (!html.includes("Mozilla &amp; &quot;Co&quot;")) fail("browser deveria sair escapado");
+  if (!html.includes("&lt;b&gt;Linux&lt;/b&gt;")) fail("os deveria sair escapado");
+});
+
+Deno.test("buildDeviceAlertEmail preserva valores benignos", () => {
+  const html = buildDeviceAlertEmail({
+    deviceName: "Chrome no Windows",
+    browser: "Chrome 120",
+    os: "Windows 11",
+    clientIp: "203.0.113.10",
+    whenLabel: "10/10/2026 20:00",
+  });
+  for (const valor of ["Chrome no Windows", "Chrome 120", "Windows 11", "203.0.113.10"]) {
+    if (!html.includes(valor)) fail(`valor benigno ${valor} deveria aparecer no e-mail`);
+  }
 });

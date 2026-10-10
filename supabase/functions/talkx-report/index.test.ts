@@ -250,3 +250,41 @@ Deno.test("sem RESEND_API_KEY devolve 503 e não envia e-mail", async () => {
     spie.restaurar();
   }
 });
+
+// ─── Hardening: falha do provedor não vaza o corpo cru na resposta ───────────────
+Deno.test("Resend 422 devolve só o status (code), sem o corpo cru do provedor", async () => {
+  const original = globalThis.fetch;
+  const detalheInterno = "internal: rate_limit_key=sensitive-abc123";
+  globalThis.fetch = ((input: string | URL | Request) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.includes("api.resend.com")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ message: detalheInterno }), {
+          status: 422,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    throw new Error(`fetch inesperado: ${url}`);
+  }) as typeof fetch;
+  try {
+    const { client } = makeFakeSupabase({
+      campaign: { ...CAMPANHA_BASE, total_recipients: 1, sent_count: 1, delivered_count: 1, failed_count: 0 },
+      profile: PERFIL_CRIADOR,
+      callerId: "user-1",
+      recipients: ["sent"],
+    });
+    const res = await handleTalkxReport(pedido(), { supabase: client, env: envComResend() });
+    const texto = await res.text();
+
+    assert(res.status === 502, `status ${res.status} != 502`);
+    const body = JSON.parse(texto) as { reason?: string; code?: number; detail?: unknown };
+    assert(body.reason === "resend_error", `reason errado: ${texto}`);
+    assert(body.code === 422, `code deveria ser 422, veio ${JSON.stringify(body)}`);
+    assert(body.detail === undefined, `detalhe do provedor não deveria sair: ${texto}`);
+    assert(!texto.includes("sensitive-abc123"), `corpo do provedor vazou: ${texto}`);
+    assert(!texto.includes("rate_limit_key"), `detalhe interno vazou: ${texto}`);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
