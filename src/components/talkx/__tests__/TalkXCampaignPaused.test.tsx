@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
 /**
@@ -11,13 +12,61 @@ import React from 'react';
  *  - banner âmbar de pausa com a data em que a campanha foi pausada;
  *  - "Retomar campanha" passa pelo servidor (`startCampaign`) e o modal de
  *    confirmação NÃO fecha antes de a resposta voltar — numa recusa
- *    (janela de envio, por exemplo) o operador continua no modal para tentar
- *    de novo;
+ *    (janela de envio, por exemplo) o operador continua no modal, com o motivo
+ *    à vista, e nada navega;
  *  - "Encerrar campanha" chama `cancelCampaign` e só volta para a lista depois
  *    que o servidor aceitou;
+ *  - painéis X160 montados nos dados do painel + benchmarks (nunca estáticos);
  *  - consulta com erro mostra o erro (e não o conteúdo nem o vazio);
  *  - campanha que saiu de "pausada" por fora avisa o contêiner pai.
  */
+
+vi.mock('recharts', () => {
+  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
+  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;
+  return {
+    ResponsiveContainer: Box,
+    LineChart: SvgBox,
+    Line: () => null,
+    XAxis: () => null,
+    YAxis: () => null,
+    CartesianGrid: () => null,
+    Tooltip: () => null,
+    Legend: () => null,
+    ReferenceLine: () => null,
+  };
+});
+
+const panelState = vi.hoisted(() => ({
+  report: null as unknown,
+  replies: [] as Array<{ replied_at: string | null }>,
+  benchmarks: null as unknown,
+}));
+
+vi.mock('@/lib/supabaseHelpers', () => {
+  // Cadeia thenable: os painéis da pausada só leem recipients via
+  // .select().eq().not().order().limit(n).
+  const chain = (): Record<string, unknown> => ({
+    select: () => chain(),
+    eq: () => chain(),
+    not: () => chain(),
+    order: () => chain(),
+    limit: () => chain(),
+    then: (resolve: (value: unknown) => void) =>
+      resolve({ data: panelState.replies, error: null }),
+  });
+  return {
+    fromTable: () => chain(),
+    supabase: {
+      rpc: (fn: string) => {
+        if (fn === 'talkx_campaign_report') {
+          return Promise.resolve({ data: panelState.report, error: null });
+        }
+        return Promise.resolve({ data: panelState.benchmarks, error: null });
+      },
+    },
+  };
+});
 
 type QueryState = {
   campaigns: Array<Record<string, unknown>>;
@@ -102,12 +151,15 @@ function setQueryState(over: Partial<QueryState>) {
 }
 
 function view() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <TalkXCampaignPaused
-      campaignId="camp-pausada-1"
-      onBack={h.onBack}
-      onStatusChange={h.onStatusChange}
-    />
+    <QueryClientProvider client={queryClient}>
+      <TalkXCampaignPaused
+        campaignId="camp-pausada-1"
+        onBack={h.onBack}
+        onStatusChange={h.onStatusChange}
+      />
+    </QueryClientProvider>
   );
 }
 
@@ -118,6 +170,9 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     h.cancelCampaign.mockReset();
     h.onBack.mockClear();
     h.onStatusChange.mockClear();
+    panelState.report = null;
+    panelState.replies = [];
+    panelState.benchmarks = null;
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.warning).mockClear();
   });
@@ -154,7 +209,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     await waitFor(() => expect(screen.queryByText('Retomar campanha?')).toBeNull());
   });
 
-  it('retomar recusado pelo servidor: o modal continua aberto', async () => {
+  it('retomar recusado pelo servidor: mostra o motivo, sem toast duplicado e sem navegar', async () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.startCampaign.mockResolvedValue(false);
 
@@ -163,7 +218,55 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
     await waitFor(() => expect(h.startCampaign).toHaveBeenCalledTimes(1));
+    // o operador continua no modal, com o motivo à vista
     expect(screen.getByText('Retomar campanha?')).toBeTruthy();
+    expect(screen.getByText(/O servidor não aceitou a retomada/)).toBeTruthy();
+    // o toast da recusa é o do próprio startCampaign — a tela não duplica
+    expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
+    expect(h.onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('painéis X160: série do painel + respostas + benchmarks, nunca estáticos', async () => {
+    setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
+    const duasHorasAtras = new Date(Date.now() - 2 * 3_600_000).toISOString();
+    const umaHoraAtras = new Date(Date.now() - 3_600_000).toISOString();
+    panelState.report = {
+      hourly_series: [{ hour: duasHorasAtras, sent: 10, delivered: 8 }],
+      kpis: { avg_reply_secs: 161 },
+    };
+    panelState.replies = [{ replied_at: umaHoraAtras }];
+    panelState.benchmarks = {
+      global: { campaign_count: 4, avg_delivery_rate_pct: 80, avg_reply_rate_pct: 10 },
+    };
+
+    render(view());
+
+    // Resumo de Enviados: chips somam a série exibida (10 enviados, 8 entregues, 1 resposta).
+    // O título aparece já no loading — espera-se pelos DADOS, não pelo título.
+    await waitFor(() => expect(screen.getByText('Enviados 10')).toBeTruthy(), { timeout: 8000 });
+    expect(screen.getByText('Entregues 8')).toBeTruthy();
+    expect(screen.getByText('Respostas 1')).toBeTruthy();
+    // Principais Métricas: totais da linha + média de resposta do painel + comparativo com base
+    expect(screen.getByText('Principais Métricas')).toBeTruthy();
+    expect(screen.getByText('2m 41s')).toBeTruthy();
+    expect(screen.getAllByText(/vs\. média/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('painéis indisponíveis: zeros sem comparativo, sem quebrar a tela', async () => {
+    setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
+    panelState.report = null;
+    panelState.replies = [];
+    panelState.benchmarks = null;
+
+    render(view());
+
+    // Sem painel: série vazia → mensagem de vazio; métricas da linha, sem comparativo.
+    // (Espera-se pelo DADO — o título e os chips zerados aparecem já no loading.)
+    await waitFor(() => expect(screen.getByText('Nenhum envio registrado nesta campanha ainda.')).toBeTruthy(), { timeout: 8000 });
+    expect(screen.getByText('Nenhum envio registrado nesta campanha ainda.')).toBeTruthy();
+    expect(screen.getByText('Principais Métricas')).toBeTruthy();
+    expect(screen.getByText('93%')).toBeTruthy();
+    expect(screen.queryByText(/vs\. média/)).toBeNull();
   });
 
   it('retomar com a chamada estourando: avisa o operador e mantém o modal aberto', async () => {
