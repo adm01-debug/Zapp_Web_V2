@@ -236,15 +236,15 @@ export function ChatbotFlowsView() {
                             {format(new Date(flow.created_at), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                           <div className="flex items-center gap-1">
-                            <Button size="icon" variant="ghost" className="h-7 w-7"
+                            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Editar fluxo"
                               onClick={() => setEditingFlow(flow)}>
                               <Edit2 className="w-3.5 h-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7"
+                            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Duplicar fluxo"
                               onClick={() => handleDuplicate(flow)}>
                               <Copy className="w-3.5 h-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" aria-label="Excluir fluxo"
                               onClick={() => deleteFlow.mutate(flow.id)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>

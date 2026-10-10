@@ -58,7 +58,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
   ];
 
   return (
-    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips">
+    <div className="flex flex-wrap gap-1.5 px-4 pb-3" data-testid="status-chips" role="tablist" aria-label="Filtros de conversa">
       {chips.map(chip => {
         const isActive = chipTab === chip.id;
         const tone = COUNTER_TONE[chip.id];
@@ -66,6 +66,8 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
           <button
             key={chip.id}
             data-testid={`status-chip-${chip.id}`}
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onChipTabChange(chip.id)}
             className={cn(
               'h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center',

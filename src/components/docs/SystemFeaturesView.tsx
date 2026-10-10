@@ -78,7 +78,19 @@ export function SystemFeaturesView() {
 
             return (
               <motion.div key={section.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: section.id * 0.02 }}>
-                <Card className="cursor-pointer hover:shadow-md transition-shadow border-border/50" onClick={() => !searchTerm && toggleSection(section.id)}>
+                <Card
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  className="cursor-pointer hover:shadow-md transition-shadow border-border/50"
+                  onClick={() => !searchTerm && toggleSection(section.id)}
+                  onKeyDown={(e) => {
+                    if (!searchTerm && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      toggleSection(section.id);
+                    }
+                  }}
+                >
                   <CardHeader className="py-3 px-4">
                     <CardTitle className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-3">

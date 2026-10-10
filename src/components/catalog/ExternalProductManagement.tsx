@@ -917,10 +917,10 @@ export const ExternalProductManagement: React.FC = () => {
         </div>
 
         <div className="flex border rounded-md">
-          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" onClick={() => handleViewMode('grid')} title="Grade">
+          <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="rounded-r-none" aria-pressed={viewMode === 'grid'} onClick={() => handleViewMode('grid')} title="Grade">
             <Grid3X3 className="w-4 h-4" />
           </Button>
-          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" onClick={() => handleViewMode('list')} title="Lista">
+          <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="rounded-l-none" aria-pressed={viewMode === 'list'} onClick={() => handleViewMode('list')} title="Lista">
             <List className="w-4 h-4" />
           </Button>
         </div>
