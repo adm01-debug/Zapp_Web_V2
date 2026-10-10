@@ -21,9 +21,11 @@ import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
+import { campaignBlockingChecks, formatTalkXScheduleLabel } from './talkxScheduleStatus';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { TalkXScheduleTimeline } from './TalkXScheduleTimeline';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { toast } from 'sonner';
 
 /**
@@ -153,6 +155,14 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
+  // X120: estado real da linha (nada de stub — lê whatsapp_connections).
+  const { status: connectionStatus, loading: connectionLoading } = useTalkXConnectionStatus(
+    campaign.whatsapp_connection_id,
+  );
+  const blockers = useMemo(
+    () => campaignBlockingChecks(campaign, connectionStatus, connectionLoading),
+    [campaign, connectionStatus, connectionLoading],
+  );
   // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
   // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
   // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
