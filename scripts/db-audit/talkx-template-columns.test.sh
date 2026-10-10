@@ -56,7 +56,6 @@ CREATE TABLE public.talkx_templates (
   category text,
   content text NOT NULL,
   media_url text,
-  media_type text CHECK (media_type IS NULL OR media_type IN ('image','video','document','audio')),
   tags text[] DEFAULT '{}',
   status text NOT NULL DEFAULT 'draft',
   use_count integer NOT NULL DEFAULT 0,
@@ -75,8 +74,13 @@ migration_file="${repo_root}/supabase/migrations/20261010085042_talkx_templates_
 # Apply the migration real (pipe via stdin so psql reads from the host file).
 psql_test < "$migration_file" >/dev/null || fail "Falha ao aplicar a migration"
 
+# Apply the media_type migration (additive, only adds the missing column).
+media_type_migration="${repo_root}/supabase/migrations/20261011000012_talkx_templates_add_media_type.sql"
+[[ -f "$media_type_migration" ]] || fail "Arquivo de migration nao encontrado: $media_type_migration"
+psql_test < "$media_type_migration" >/dev/null || fail "Falha ao aplicar a migration de media_type"
+
 # Verify the new columns exist.
-for col in channel icon interactive media_file_name media_size_bytes media_width media_height archived_at; do
+for col in channel icon interactive media_file_name media_type media_size_bytes media_width media_height archived_at; do
   psql_test -v col="$col" -Atqc "SELECT 1 FROM information_schema.columns WHERE table_name='talkx_templates' AND column_name='$col'" | grep -q '^1$' || fail "Coluna $col nao existe apos a migration"
 done
 
@@ -96,6 +100,14 @@ psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, icon) VALUES
 
 # Verify media metadata columns accept values.
 psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, media_file_name, media_size_bytes, media_width, media_height) VALUES ('media', 'content', 'photo.jpg', 102400, 1920, 1080)" >/dev/null || fail "INSERT com metadados de midia deveria ter sucedido"
+
+# Verify media_type CHECK constraint rejects invalid values.
+psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, media_type) VALUES ('bad', 'content', 'exe')" 2>&1 && fail "INSERT com media_type='exe' deveria ter falhado"
+
+# Verify media_type accepts valid values.
+for mt in image video document audio; do
+  psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, media_type) VALUES ('ok_${mt}', 'content', '${mt}')" >/dev/null || fail "INSERT com media_type='${mt}' deveria ter sucedido"
+done
 
 # Verify archived_at accepts a timestamptz value.
 psql_test -Atqc "INSERT INTO public.talkx_templates (name, content, archived_at) VALUES ('archived', 'content', '2026-01-01T00:00:00Z')" >/dev/null || fail "INSERT com archived_at deveria ter sucedido"
