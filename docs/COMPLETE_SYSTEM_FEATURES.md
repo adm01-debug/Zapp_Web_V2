@@ -44,20 +44,21 @@
 32. [Design System](#32-design-system)
 33. [Banco de Dados](#33-banco-de-dados)
 34. [Edge Functions](#34-edge-functions)
-35. [Campanhas de Mensagens em Massa](#35-campanhas-de-mensagens-em-massa)
-36. [Chatbot / Fluxos Automatizados](#36-chatbot--fluxos-automatizados)
-37. [Pipeline de Vendas (CRM)](#37-pipeline-de-vendas-crm)
-38. [Base de Conhecimento](#38-base-de-conhecimento)
-39. [Hub de Integrações](#39-hub-de-integrações)
-40. [Links de Pagamento](#40-links-de-pagamento)
-41. [Conformidade LGPD](#41-conformidade-lgpd)
-42. [WhatsApp Flows Builder](#42-whatsapp-flows-builder)
-43. [Diagnósticos do Sistema](#43-diagnósticos-do-sistema)
-44. [Meta Conversions API (CAPI)](#44-meta-conversions-api-capi)
-45. [Gestão de Agentes](#45-gestão-de-agentes)
-46. [Sequências de Follow-up](#46-sequências-de-follow-up)
-47. [API Pública](#47-api-pública)
-48. [Componentes Cognitivos (UX)](#48-componentes-cognitivos-ux)
+35. [Multiplix (disparos em massa por departamento)](#35-multiplix-disparos-em-massa-por-departamento)
+36. [Campanhas de Mensagens em Massa](#36-campanhas-de-mensagens-em-massa)
+37. [Chatbot / Fluxos Automatizados](#37-chatbot--fluxos-automatizados)
+38. [Pipeline de Vendas (CRM)](#38-pipeline-de-vendas-crm)
+39. [Base de Conhecimento](#39-base-de-conhecimento)
+40. [Hub de Integrações](#40-hub-de-integrações)
+41. [Links de Pagamento](#41-links-de-pagamento)
+42. [Conformidade LGPD](#42-conformidade-lgpd)
+43. [WhatsApp Flows Builder](#43-whatsapp-flows-builder)
+44. [Diagnósticos do Sistema](#44-diagnósticos-do-sistema)
+45. [Meta Conversions API (CAPI)](#45-meta-conversions-api-capi)
+46. [Gestão de Agentes](#46-gestão-de-agentes)
+47. [Sequências de Follow-up](#47-sequências-de-follow-up)
+48. [API Pública](#48-api-pública)
+49. [Componentes Cognitivos (UX)](#49-componentes-cognitivos-ux)
 
 ---
 
@@ -801,7 +802,28 @@
 
 ---
 
-## 35. Campanhas de Mensagens em Massa
+## 35. Multiplix (disparos em massa por departamento)
+
+Módulo de disparos em massa por departamento (fila por item, público elegível, voz por IA), com a
+ponte para o Singu. Status **"presente"** = artefato existe nesta cópia; não afirma aprovação de
+gate, piloto nem go-live (F98 segue decisão do dono). Registro de execução do módulo em
+`docs/multiplix/CHANGELOG_MULTIPLIX.md`.
+
+| # | Funcionalidade | Status | Arquivo Principal |
+|---|---------------|--------|-------------------|
+| 35.1 | Tela do módulo (rota e nav por permissão/flag) | presente | `src/components/multiplix/MultiplixView.tsx` |
+| 35.2 | Monitor de disparos (progresso, recentes, destinatários) | presente | `src/components/multiplix/MultiplixMonitor.tsx` |
+| 35.3 | Composer do disparo (rascunho, público, voz) | presente | `src/components/multiplix/MultiplixComposerDialog.tsx` |
+| 35.4 | Estado do disparo no app (criação, ciclo, idempotência) | presente | `src/hooks/integrations/useMultiplixDispatches.ts` |
+| 35.5 | Público/elegibilidade no app | presente | `src/hooks/integrations/useMultiplixAudience.ts` |
+| 35.6 | Regra de elegibilidade compartilhada (app ↔ edge) | presente | `src/lib/multiplix-eligibility.ts` |
+| 35.7 | API do disparo (Edge Function) | presente | `supabase/functions/multiplix-dispatch/index.ts` |
+| 35.8 | API do público (Edge Function) | presente | `supabase/functions/multiplix-audience/index.ts` |
+| 35.9 | Registro de execução do módulo | presente | `docs/multiplix/CHANGELOG_MULTIPLIX.md` |
+
+---
+
+## 36. Campanhas de Mensagens em Massa
 
 | Item | Valor |
 |------|-------|
@@ -814,7 +836,7 @@
 
 ---
 
-## 36. Chatbot / Fluxos Automatizados
+## 37. Chatbot / Fluxos Automatizados
 
 | Item | Valor |
 |------|-------|
@@ -828,7 +850,7 @@
 
 ---
 
-## 37. Pipeline de Vendas (CRM)
+## 38. Pipeline de Vendas (CRM)
 
 | Item | Valor |
 |------|-------|
@@ -840,7 +862,7 @@
 
 ---
 
-## 38. Base de Conhecimento
+## 39. Base de Conhecimento
 
 | Item | Valor |
 |------|-------|
@@ -854,7 +876,7 @@
 
 ---
 
-## 39. Hub de Integrações
+## 40. Hub de Integrações
 
 | Item | Valor |
 |------|-------|
@@ -865,7 +887,7 @@
 
 ---
 
-## 40. Links de Pagamento
+## 41. Links de Pagamento
 
 | Item | Valor |
 |------|-------|
@@ -878,7 +900,7 @@
 
 ---
 
-## 41. Conformidade LGPD
+## 42. Conformidade LGPD
 
 | Item | Valor |
 |------|-------|
@@ -889,7 +911,7 @@
 
 ---
 
-## 42. WhatsApp Flows Builder
+## 43. WhatsApp Flows Builder
 
 | Item | Valor |
 |------|-------|
@@ -901,7 +923,7 @@
 
 ---
 
-## 43. Diagnósticos do Sistema
+## 44. Diagnósticos do Sistema
 
 | Item | Valor |
 |------|-------|
@@ -913,7 +935,7 @@
 
 ---
 
-## 44. Meta Conversions API (CAPI)
+## 45. Meta Conversions API (CAPI)
 
 | Item | Valor |
 |------|-------|
@@ -926,7 +948,7 @@
 
 ---
 
-## 45. Gestão de Agentes
+## 46. Gestão de Agentes
 
 | Item | Valor |
 |------|-------|
@@ -939,7 +961,7 @@
 
 ---
 
-## 46. Sequências de Follow-up
+## 47. Sequências de Follow-up
 
 | Item | Valor |
 |------|-------|
@@ -951,7 +973,7 @@
 
 ---
 
-## 47. API Pública
+## 48. API Pública
 
 | Item | Valor |
 |------|-------|
@@ -963,7 +985,7 @@
 
 ---
 
-## 48. Componentes Cognitivos (UX)
+## 49. Componentes Cognitivos (UX)
 
 | Item | Valor |
 |------|-------|
