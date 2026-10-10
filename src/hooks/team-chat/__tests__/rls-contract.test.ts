@@ -66,14 +66,14 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (table: string) => f.cadeia(table),
     rpc: (nome: string, args?: unknown) => {
       f.rpcs.push({ nome, args });
+      f.arestas.push({ table: `rpc:${nome}`, op: 'rpc', payload: args });
+      if (nome === 'create_department_invite') {
+        return Promise.resolve({ data: { ok: true, invite_id: 'inv-1', code: 'SRV000000001' }, error: null });
+      }
       return Promise.resolve({ data: [], error: null });
     },
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: () => {},
-    rpc: (nome: string, args?: Record<string, unknown>) => {
-      f.arestas.push({ table: `rpc:${nome}`, op: 'rpc', payload: args });
-      return Promise.resolve({ data: { ok: true, invite_id: 'inv-1', code: 'SRV000000001' }, error: null });
-    },
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
   },
 }));
