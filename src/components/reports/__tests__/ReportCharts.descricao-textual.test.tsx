@@ -96,7 +96,7 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     );
     const svg = superficie(container);
     expect(svg.getAttribute('aria-label')).toBe(
-      'Gráfico de comparação de métricas: período atual versus anterior',
+      'Gráfico de comparação de métricas: período atual versus anterior. Maior valor atual: 10 em M1.',
     );
     expect(svg.querySelector(':scope > title')?.textContent).toBe(
       'Gráfico de comparação de métricas',
@@ -118,7 +118,9 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
       />,
     );
     const svg = superficie(container);
-    expect(svg.getAttribute('aria-label')).toContain('Período Atual');
+    expect(svg.getAttribute('aria-label')).toBe(
+      'Gráfico de área Período Atual. Total 43, máximo 28 em 02/01.',
+    );
     expect(svg.querySelector(':scope > title')?.textContent).toContain('Período Atual');
     expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
   });
@@ -129,7 +131,9 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
       <DistributionPieChart data={mockBySender} label="Distribuição Atual" isLoading={false} />,
     );
     const svg = superficie(container);
-    expect(svg.getAttribute('aria-label')).toContain('Distribuição Atual');
+    expect(svg.getAttribute('aria-label')).toBe(
+      'Gráfico de pizza Distribuição Atual. Maior fatia: Agente com 60.',
+    );
     expect(svg.querySelector(':scope > title')?.textContent).toContain('Distribuição Atual');
     expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
   });
@@ -144,6 +148,14 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     );
     const svgs = [...container.querySelectorAll('svg.recharts-surface[role]')];
     expect(svgs.length).toBe(2);
+    const area = svgs.find((svg) => svg.querySelector(':scope > title')?.textContent === 'Mensagens por dia');
+    expect(area?.getAttribute('aria-label')).toBe(
+      'Gráfico de mensagens enviadas e recebidas por dia. Máximo de enviadas: 20 em 02/01, de recebidas: 8 em 02/01.',
+    );
+    const pizza = svgs.find((svg) => svg.querySelector(':scope > title')?.textContent === 'Distribuição por remetente');
+    expect(pizza?.getAttribute('aria-label')).toBe(
+      'Gráfico de distribuição de remetentes. Maior remetente: Agente com 60.',
+    );
     for (const svg of svgs) {
       expect(svg.getAttribute('aria-label')).toBeTruthy();
       expect((svg.querySelector(':scope > title')?.textContent ?? '').length).toBeGreaterThan(0);
@@ -158,7 +170,9 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     instalarRO();
     const { container } = render(<AgentsChart data={mockByAgent} isLoading={false} />);
     const svg = superficie(container);
-    expect(svg.getAttribute('aria-label')).toBe('Gráfico de mensagens por agente');
+    expect(svg.getAttribute('aria-label')).toBe(
+      'Gráfico de mensagens por agente. Maior volume: Agente A com 100 mensagens.',
+    );
     expect(svg.querySelector(':scope > title')?.textContent).toBe('Mensagens por agente');
     expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
   });
@@ -173,12 +187,31 @@ describe('ReportCharts — descrição textual acessível no SVG', () => {
     );
     const svgs = [...container.querySelectorAll('svg.recharts-surface[role]')];
     expect(svgs.length).toBe(3);
-    const titulos = svgs.map((s) => s.querySelector(':scope > title')?.textContent);
-    expect(titulos).toContain('Novos contatos por dia');
-    expect(titulos).toContain('Contatos por tipo');
-    expect(titulos).toContain('Contatos por tag');
+    const porTitulo = (t: string) => svgs.find((svg) => svg.querySelector(':scope > title')?.textContent === t);
+    expect(porTitulo('Novos contatos por dia')?.getAttribute('aria-label')).toBe(
+      'Gráfico de novos contatos por dia. Máximo de novos contatos: 5 em 02/01.',
+    );
+    expect(porTitulo('Contatos por tipo')?.getAttribute('aria-label')).toBe(
+      'Gráfico de contatos por tipo. Maior tipo: WhatsApp com 80.',
+    );
+    expect(porTitulo('Contatos por tag')?.getAttribute('aria-label')).toBe(
+      'Gráfico de contatos por tag. Maior etiqueta: Lead com 70.',
+    );
     for (const svg of svgs) {
       expect((svg.querySelector(':scope > desc')?.textContent ?? '').length).toBeGreaterThan(0);
     }
+  });
+
+  it('dados vazios: rótulo estático sem máximo (sem quebrar)', () => {
+    instalarRO();
+    const { container } = render(
+      <ComparisonSummaryChart data={[]} isLoading={false} />,
+    );
+    const svg = superficie(container);
+    expect(svg.getAttribute('aria-label')).toBe(
+      'Gráfico de comparação de métricas: período atual versus anterior.',
+    );
+    const vazio = render(<AgentsChart data={[]} isLoading={false} />);
+    expect(vazio.container.textContent).toContain('Nenhum dado disponível');
   });
 });
