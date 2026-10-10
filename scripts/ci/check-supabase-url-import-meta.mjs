@@ -4,32 +4,56 @@
 // projeto (o proprio src/integrations/supabase/client.ts documenta isso). A URL
 // canonica vem de src/config/supabase.ts (SUPABASE_URL).
 //
-// Excecoes (não varridas):
-//   - arquivos de teste (*.test.ts, *.test.tsx, *.spec.ts, *.spec.tsx, __tests__/)
-//   - src/config/supabase.ts (configuracao, nao aplicação)
+// Cobre as tres formas usadas na base: acesso por ponto
+// (import.meta.env.VITE_SUPABASE_URL), por colchete
+// (import.meta.env['VITE_SUPABASE_URL']) e por destructuring
+// (const { VITE_SUPABASE_URL } = import.meta.env).
+//
+// Excecoes (nao varridas):
+//   - arquivos de teste por nome (*.test.ts, *.test.tsx, *.js, *.jsx, *.spec.*)
+//   - qualquer arquivo dentro de um diretorio __tests__/
+//   - src/config/supabase.ts (configuracao, nao aplicacao)
 //
 // Uso: node scripts/ci/check-supabase-url-import-meta.mjs
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, dirname, relative } from 'node:path';
+import { join, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = dirname(fileURLToPath(import.meta.url));
 const SRC = join(RAIZ, '..', '..', 'src');
 
-const PADRAO_URL = /import\.meta\.env\.VITE_SUPABASE_URL\b/u;
-const PADRAO_KEY = /import\.meta\.env\.VITE_SUPABASE_PUBLISHABLE_KEY\b/u;
+const VARIAVEIS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'];
+const LE_ENV = /import\.meta\.env/u;
+const PADROES = VARIAVEIS.map((variavel) => ({
+  variavel,
+  re: new RegExp(`\\b${variavel}\\b`, 'u'),
+}));
 
-/** Retorna true se o caminho é um arquivo de teste. */
+/** Devolve os nomes das variaveis sensiveis lidas na linha via import.meta.env. */
+function variaveisNaLinha(linha) {
+  if (!LE_ENV.test(linha)) return [];
+  return PADROES.filter((p) => p.re.test(linha)).map((p) => p.variavel);
+}
+
+/** Retorna true se o caminho é um arquivo de teste pelo nome. */
 function ehTeste(caminho) {
   return /\.test\.(ts|tsx|js|jsx)$/u.test(caminho) || /\.spec\.(ts|tsx|js|jsx)$/u.test(caminho);
+}
+
+/** Normaliza o caminho para comparacao com separador '/'. */
+function normalizar(caminho) {
+  return caminho.split('\\').join('/');
 }
 
 /** Retorna true se o caminho deve ser ignorado pela guarda. */
 function ignorar(caminho) {
   if (ehTeste(caminho)) return true;
+  const posix = normalizar(caminho);
+  // Qualquer arquivo dentro de um diretorio __tests__/ e ignorado.
+  if (/(^|\/)__tests__\//u.test(posix)) return true;
   // src/config/supabase.ts é arquivo de configuração — a URL canônica vem de SUPABASE_URL, não de VITE_*.
-  if (caminho.endsWith('src/config/supabase.ts')) return true;
+  if (posix.endsWith('src/config/supabase.ts')) return true;
   return false;
 }
 
@@ -45,6 +69,7 @@ export function varrer(dir = SRC) {
       return;
     }
     for (const nome of entradas.sort()) {
+      if (nome === '__tests__') continue;
       const caminho = join(diretorio, nome);
       let stat;
       try {
@@ -60,19 +85,11 @@ export function varrer(dir = SRC) {
         const linhas = conteudo.split(/\r?\n/u);
         for (let i = 0; i < linhas.length; i += 1) {
           const linha = linhas[i];
-          if (PADRAO_URL.test(linha)) {
+          for (const variavel of variaveisNaLinha(linha)) {
             violacoes.push({
               arquivo: relative(process.cwd(), caminho),
               linha: i + 1,
-              variavel: 'VITE_SUPABASE_URL',
-              texto: linha.trim(),
-            });
-          }
-          if (PADRAO_KEY.test(linha)) {
-            violacoes.push({
-              arquivo: relative(process.cwd(), caminho),
-              linha: i + 1,
-              variavel: 'VITE_SUPABASE_PUBLISHABLE_KEY',
+              variavel,
               texto: linha.trim(),
             });
           }
@@ -98,7 +115,7 @@ export function guarda(dir = SRC) {
 }
 
 const executadoDireto =
-  process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop());
+  Boolean(process.argv[1]) && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (executadoDireto) {
   const violacoes = guarda();
   if (violacoes.length > 0) {
