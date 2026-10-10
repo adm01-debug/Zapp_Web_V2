@@ -582,6 +582,14 @@ jobs:
           TALKX_CAMPAIGN_WORKER_LEASE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-worker-lease.test.sh
 
+      # N-095: lista paginada dos destinatários da campanha (talkx_campaign_recipients_page).
+      # Prova paginacao com rows/next_cursor/total, filtros por status/segmento/busca,
+      # recusa para quem nao e criador nem admin/supervisor, e ausencia do campo source.
+      - name: Provar a RPC de paginacao de destinatarios da campanha Talk X (N-095)
+        env:
+          TALKX_RECIPIENTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/talkx-campaign-recipients-page.test.sh
+
       # X014: exigir papel admin/supervisor no banco para criar, agendar e alterar
       # campanha (RPCs, policies de talkx_campaigns, gatilho de agendamento, revoke
       # de anon em talkx_settings, policy de talkx_blacklist e ramo admin em
