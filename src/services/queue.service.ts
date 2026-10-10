@@ -38,6 +38,38 @@ export class QueueService {
     return new Map(entries);
   }
 
+  /**
+   * Métricas por fila para cálculo de alertas: mensagens pendentes e
+   * timestamp do contato mais antigo aguardando.
+   */
+  static async fetchQueueMetrics(queueIds: string[]): Promise<Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>> {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('queue_id, pending_message_count, waiting_since')
+      .in('queue_id', queueIds)
+      .is('assigned_to', null)
+      .is('deleted_at', null)
+      .not('conversation_status', 'in', '(resolved,archived)');
+    if (error) throw error;
+
+    const metrics = new Map<string, { pendingMessageCount: number; oldestWaitingAt: string | null }>();
+    queueIds.forEach(id => metrics.set(id, { pendingMessageCount: 0, oldestWaitingAt: null }));
+
+    (data ?? []).forEach(contact => {
+      const existing = metrics.get(contact.queue_id);
+      if (!existing) return;
+      existing.pendingMessageCount += (contact.pending_message_count ?? 0);
+      if (contact.waiting_since) {
+        const contactDate = new Date(contact.waiting_since);
+        if (!existing.oldestWaitingAt || contactDate < new Date(existing.oldestWaitingAt)) {
+          existing.oldestWaitingAt = contact.waiting_since;
+        }
+      }
+    });
+
+    return metrics;
+  }
+
   static async fetchMembers() {
     return supabase
       .from('queue_members')

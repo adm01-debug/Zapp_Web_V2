@@ -26,6 +26,13 @@ const mockGoals = [
 
 const mockWaitingCounts: Record<string, number> = { q1: 15, q2: 0 };
 
+// Métricas por fila para cálculo de alertas de wait_time e messages_pending.
+// Cada entrada representa um contato na tabela contacts (como o fetchQueueMetrics espera).
+const mockContactsMetrics = [
+  { queue_id: 'q1', pending_message_count: 60, waiting_since: new Date(Date.now() - 40 * 60000).toISOString() },
+  { queue_id: 'q2', pending_message_count: 5, waiting_since: null },
+];
+
 function contactsCountBuilder(queueIdRef: { id: string }) {
   return {
     eq: vi.fn((column: string, value: unknown) => {
@@ -35,6 +42,19 @@ function contactsCountBuilder(queueIdRef: { id: string }) {
     is: vi.fn(() => contactsCountBuilder(queueIdRef)),
     not: vi.fn(() =>
       Promise.resolve({ count: mockWaitingCounts[queueIdRef.id] ?? 0, error: null }),
+    ),
+  };
+}
+
+function contactsMetricsBuilder(queueIdRef: { id: string }) {
+  return {
+    in: vi.fn((column: string, values: unknown[]) => {
+      if (column === 'queue_id') queueIdRef.id = String(values[0]);
+      return contactsMetricsBuilder(queueIdRef);
+    }),
+    is: vi.fn(() => contactsMetricsBuilder(queueIdRef)),
+    not: vi.fn(() =>
+      Promise.resolve({ data: mockContactsMetrics, error: null }),
     ),
   };
 }
@@ -66,7 +86,13 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'contacts') {
         return {
-          select: vi.fn(() => contactsCountBuilder({ id: '' })),
+          select: vi.fn((columns?: string | object) => {
+            // Se select chamado com colunas específicas (não 'id' com count), é fetchQueueMetrics
+            if (typeof columns === 'string' && columns !== 'id') {
+              return contactsMetricsBuilder({ id: '' });
+            }
+            return contactsCountBuilder({ id: '' });
+          }),
         };
       }
       return {
@@ -118,11 +144,35 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     // Fila q2 tem 0 aguardando -> nenhum alerta de espera dela.
     expect(screen.getAllByText(/contatos aguardando atendimento/)).toHaveLength(1);
 
-    // q1 tambem estoura a taxa minima de atribuicao (cabecalho conta 2 alertas).
-    expect(screen.getByText('Alertas Ativos (2)')).toBeInTheDocument();
+    // q1 tambem estoura a taxa minima de atribuicao (cabecalho conta 4 alertas: waiting_contacts, assignment_rate, wait_time, messages_pending).
+    expect(screen.getByText('Alertas Ativos (4)')).toBeInTheDocument();
 
     // O cartao da fila mostra a contagem real (nao mais 0).
     expect(screen.getAllByText('Aguardando')).toHaveLength(2);
     expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('dispara alerta de wait_time quando o tempo de espera excede max_wait_time_minutes', async () => {
+    renderView();
+
+    await waitFor(() => {
+      // q1 tem oldestWaitingAt = 40 min atras, max_wait_time_minutes = 30 -> alerta
+      expect(screen.getByText(/40 min de espera/)).toBeInTheDocument();
+    });
+
+    // q2 tem oldestWaitingAt = null -> nenhum alerta de wait_time
+    expect(screen.getAllByText(/min de espera/)).toHaveLength(1);
+  });
+
+  it('dispara alerta de messages_pending quando mensagens pendentes excedem max_messages_pending', async () => {
+    renderView();
+
+    await waitFor(() => {
+      // q1 tem 60 mensagens pendentes, max_messages_pending = 50 -> alerta
+      expect(screen.getByText(/60 mensagens pendentes/)).toBeInTheDocument();
+    });
+
+    // q2 tem 5 mensagens pendentes, max_messages_pending = 50 -> nenhum alerta
+    expect(screen.getAllByText(/mensagens pendentes/)).toHaveLength(1);
   });
 });
