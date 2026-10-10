@@ -289,7 +289,7 @@ Deno.test("dispatch/test: envia template de teste com sucesso → provider_messa
   try {
     const req = makePost({
       bearer: TEST_SERVICE_KEY,
-      body: { action: "test", templateContent: "Ola {{nome}}, tudo bem?", phone: "+5511999990001" },
+      body: { action: "test", connectionId: "conn-1", templateContent: "Ola {{nome}}, tudo bem?", phone: "+551****0001" },
     });
     const res = await handleTalkxSend(req, makeTestActionDeps(makeConnection()));
     assert(res.status === 200, `esperado 200, recebido ${res.status}`);
@@ -302,16 +302,107 @@ Deno.test("dispatch/test: envia template de teste com sucesso → provider_messa
   }
 });
 
-Deno.test("dispatch/test: sem conexão WhatsApp ativa → 400", async () => {
+Deno.test("dispatch/test: sem connectionId → 400 connectionId obrigatorio", async () => {
   setDispatchEnv();
-  const req = makePost({
-    bearer: TEST_SERVICE_KEY,
-    body: { action: "test", templateContent: "Ola {{nome}}", phone: "+5511999990001" },
-  });
-  const res = await handleTalkxSend(req, makeTestActionDeps(null));
-  assert(res.status === 400, `esperado 400, recebido ${res.status}`);
-  const body = await res.json();
-  assert(body.error === "Nenhuma conexao WhatsApp ativa", `body inesperado: ${JSON.stringify(body)}`);
+  const restore = mockGlobalFetch();
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: { action: "test", templateContent: "Ola {{nome}}", phone: "+551****0001" },
+    });
+    const res = await handleTalkxSend(req, makeTestActionDeps(makeConnection()));
+    assert(res.status === 400, `esperado 400, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.error === "connectionId obrigatorio", `body inesperado: ${JSON.stringify(body)}`);
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("dispatch/test: connectionId informada mas conexao nao encontrada → 404", async () => {
+  setDispatchEnv();
+  const restore = mockGlobalFetch();
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: { action: "test", connectionId: "conn-inexistente", templateContent: "Ola {{nome}}", phone: "+551****0001" },
+    });
+    const res = await handleTalkxSend(req, makeTestActionDeps(null));
+    assert(res.status === 404, `esperado 404, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.error === "Conexao nao encontrada", `body inesperado: ${JSON.stringify(body)}`);
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("dispatch/test: connectionId informada mas conexao nao conectada → 400", async () => {
+  setDispatchEnv();
+  const restore = mockGlobalFetch();
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: { action: "test", connectionId: "conn-desconectada", templateContent: "Ola {{nome}}", phone: "+551****0001" },
+    });
+    const res = await handleTalkxSend(req, makeTestActionDeps({ id: "conn-desconectada", status: "disconnected", instance_id: "PRINCIPAL" }));
+    assert(res.status === 400, `esperado 400, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.error === "A conexao informada nao esta conectada", `body inesperado: ${JSON.stringify(body)}`);
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("dispatch/test: acima do limite de envios de teste → 429", async () => {
+  setDispatchEnv();
+  const restore = mockGlobalFetch();
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: { action: "test", connectionId: "conn-1", templateContent: "Ola {{nome}}", phone: "+551****0001" },
+    });
+    const deps = makeTestActionDeps(makeConnection(), { testSendsCount: 5 });
+    const res = await handleTalkxSend(req, deps);
+    assert(res.status === 429, `esperado 429, recebido ${res.status}`);
+    const body = await res.json();
+    assert(body.error === "Limite de envios de teste atingido", `body inesperado: ${JSON.stringify(body)}`);
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("dispatch/test: envio de teste grava talkx_test_sends", async () => {
+  setDispatchEnv();
+  const restore = mockGlobalFetch();
+  let insertCalled = false;
+  let insertPayload: unknown = null;
+  try {
+    const req = makePost({
+      bearer: TEST_SERVICE_KEY,
+      body: { action: "test", connectionId: "conn-1", templateContent: "Ola {{nome}}", phone: "+551****0001" },
+    });
+    const deps = makeTestActionDeps(makeConnection(), {
+      settings: [{ key: "test_send_limit", value: "5" }],
+    });
+    // Override talkx_test_sends mock to track insert
+    const origFrom = deps.supabase.from.bind(deps.supabase);
+    deps.supabase.from = (table: string) => {
+      const qb = origFrom(table);
+      if (table === "talkx_test_sends") {
+        qb.insert = (payload: unknown) => { insertCalled = true; insertPayload = payload; return qb; };
+      }
+      return qb;
+    };
+    const res = await handleTalkxSend(req, deps);
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(insertCalled, "talkx_test_sends.insert nao foi chamado");
+    const payload = insertPayload as Record<string, unknown>;
+    assert(payload?.connection_id === "conn-1", `connection_id errado: ${JSON.stringify(payload)}`);
+    assert(payload?.to_phone === "5510001", `to_phone errado: ${JSON.stringify(payload)}`);
+    assert(payload?.status === "sent", `status errado: ${JSON.stringify(payload)}`);
+  } finally {
+    restore();
+  }
 });
 
 // ---------------------------------------------------------------------------
