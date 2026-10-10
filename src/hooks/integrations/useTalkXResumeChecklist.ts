@@ -18,9 +18,9 @@
  * campanha rodam em série (`scope`), para dois toggles rápidos não se
  * sobrescreverem; falha de gravação avisa o operador com toast.
  *
- * Precheck: a RPC de banco `talkx_campaign_resume_precheck` (que devolveria o
- * precheck inteiro numa chamada) ainda não existe no banco canônico — a trilha de
- * banco é separada nesta leva (sem DDL aqui). Enquanto isso o precheck é montado
+ * Precheck: a RPC `talkx_campaign_resume_precheck` (conexão, janela e supressão, com
+ * `can_resume`/`blockers`) vem de `useTalkXServerResumePrecheck`; os 5 itens abaixo
+ * continuam montados no cliente. O precheck dos itens é montado
  * com as leituras que o front já pode fazer: `talkx_engine_window_open`,
  * `talkx_campaign_segments`, `talkx_templates`, `whatsapp_connections`,
  * `talkx_settings(key='optout_autoreply')` e `talkx_optout_keywords`. O orçamento
