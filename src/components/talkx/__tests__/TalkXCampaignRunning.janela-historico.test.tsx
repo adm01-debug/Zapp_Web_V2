@@ -181,7 +181,7 @@ describe('janela e ritmo do histórico — TalkXCampaignRunning / Resultados (R2
     };
 
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Resultados' }));
 
     expect(await screen.findByText('Tempo estimado para concluir')).toBeTruthy();
     expect(screen.getByText('0 msgs/min')).toBeTruthy();
@@ -197,7 +197,7 @@ describe('janela e ritmo do histórico — TalkXCampaignRunning / Resultados (R2
     };
 
     renderView();
-    fireEvent.click(screen.getByRole('button', { name: 'Resultados' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Resultados' }));
 
     expect(await screen.findByText('Tempo estimado para concluir')).toBeTruthy();
     // 20 envios num minuto / janela de 10 minutos = 2 msgs/min (não 20); 5 pendentes / 2 = 3 min.
