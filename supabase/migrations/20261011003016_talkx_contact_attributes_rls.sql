@@ -1,13 +1,13 @@
 -- talkx_contact_attributes_rls (X037 · N-094 refazer 2)
 -- Rollback: DROP FUNCTION IF EXISTS public.talkx_refresh_local_attributes(integer, uuid); DROP TABLE IF EXISTS public.talkx_contact_attributes; DROP FUNCTION IF EXISTS public.can_manage_contacts(uuid); DROP TABLE IF EXISTS public.talkx_ddd_regions;
+-- Rollback (SQL executável, na ordem; policies morrem com as tabelas):
+--   DROP FUNCTION IF EXISTS public.talkx_refresh_local_attributes(integer, uuid);
+--   DROP TABLE IF EXISTS public.talkx_contact_attributes;
+--   DROP FUNCTION IF EXISTS public.can_manage_contacts(uuid);
+--   DROP TABLE IF EXISTS public.talkx_ddd_regions;
 --
--- Projeção talkx_contact_attributes com RLS e atributos de fonte local (plano
--- docs/talkx/v4/etapas/F04-dados-comerciais-e-vinculo-com-o-crm.md, X037).
--- Refazer 2: (1) refresh com cursor p_after para cobertura total, (2) RLS em
--- talkx_ddd_regions, (3) rollback executável na linha 2.
--- Rollback completo: nada disto pré-existia. As policies morrem com as tabelas.
---
--- Sem BEGIN/COMMIT: a migration aplica numa única transação; qualquer erro desfaz tudo.
+-- Projeção com RLS e fonte local (X037, docs/talkx/v4/etapas/F04-dados-comerciais-e-vinculo-com-o-crm.md).
+-- Refazer 2: cursor p_after, RLS no DDD. Nada disto pré-existia. Sem BEGIN/COMMIT.
 
 -- 1. DDD -> UF/região (X037: "tabela talkx_ddd_regions, portada de getRegionFromPhone.ts").
 -- Tabela de referência pública por desenho: só leitura para authenticated.
