@@ -116,6 +116,11 @@ describe('L06 · saneamento adversarial de navigateToView', () => {
     navigateToView('contacts');
     navigateToView('email-chat', { emailContact: `${UUID}z` });
     expect(param('emailContact')).toBeNull();
+
+    // ...e com chaves (o comentário do teste promete os três quase-UUID).
+    navigateToView('contacts');
+    navigateToView('email-chat', { emailContact: `{${UUID}}` });
+    expect(param('emailContact')).toBeNull();
   });
 
   it('parâmetro repetido não acumula: a URL de entrada fica com UM valor (o último)', () => {
