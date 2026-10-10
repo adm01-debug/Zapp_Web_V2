@@ -14,12 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, newRule, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, DEFAULT_SEGMENT_LIBRARY_FILTERS, parseSegmentLibraryFilters, readSegmentLibraryPageSize, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, newRule, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type SegmentLibraryFilters, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, parseSegmentLibraryFilters, readSegmentLibraryPageSize, saveSegmentLibraryPageSize, syncSegmentLibraryUrl } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
 
 interface Props {
@@ -32,7 +33,9 @@ type ViewMode = 'list' | 'edit';
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
-export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
+export function TalkXSegments({ onUseCampaign, userId: userIdProp }: Props) {
+  const { profile } = useAuth();
+  const userId = userIdProp ?? profile?.id ?? null;
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
@@ -59,9 +62,9 @@ export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
     return Array.from(tags).sort();
   }, [segments]);
   const ownerOptions = useMemo(() => {
-    const owners = new Set<string>();
-    segments.forEach((s) => { if (s.creator?.name) owners.add(s.creator.name); });
-    return Array.from(owners).sort();
+    const owners = new Map<string, string>();
+    segments.forEach((s) => { if (s.created_by && s.creator?.name) owners.set(s.created_by, s.creator.name); });
+    return Array.from(owners.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [segments]);
 
   const filtered = useMemo(() => {
@@ -69,7 +72,7 @@ export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
     if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
     if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
     if (filterTag !== 'all') r = r.filter((s) => (s.tags ?? []).includes(filterTag));
-    if (filterOwner !== 'all') r = r.filter((s) => s.creator?.name === filterOwner);
+    if (filterOwner !== 'all') r = r.filter((s) => s.created_by === filterOwner);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
   }, [segments, filterOrigin, filterStatus, filterTag, filterOwner, search]);
@@ -78,7 +81,10 @@ export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
   const page = Math.min(filters.page, pageCount);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  useEffect(() => { syncSegmentLibraryUrl(filters, pageSize); }, [filters, pageSize]);
+  useEffect(() => {
+    const clampedPage = Math.min(filters.page, pageCount);
+    syncSegmentLibraryUrl({ ...filters, page: clampedPage }, pageSize);
+  }, [filters, pageSize, pageCount]);
 
   /** Nomes da biblioteca sem o próprio segmento em edição: base do aviso de nome repetido. */
   const existingNames = useMemo(
@@ -163,10 +169,10 @@ export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
             { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
             { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
             { key: 'tag', label: 'Tag', allLabel: 'Todas as tags', options: tagOptions.map((t) => ({ value: t, label: t })) },
-            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: ownerOptions.map((o) => ({ value: o, label: o })) },
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos os proprietários', options: ownerOptions.map(([id, name]) => ({ value: id, label: name })) },
           ]}
           values={{ origin: filterOrigin, status: filterStatus, tag: filterTag, owner: filterOwner }}
-          onFilter={setFilterValue}
+          onFilter={(k, v) => { setFilterValue(k as keyof SegmentLibraryFilters, v); }}
           hasActive={hasActiveFilters}
           onClear={clearFilters}
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
@@ -234,7 +240,7 @@ export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" hasActiveFilters={hasActiveFilters} onClearFilters={clearFilters} /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" /></div>}
         </section>
       </div>
 
