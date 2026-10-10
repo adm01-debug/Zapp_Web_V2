@@ -71,7 +71,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
             <Button
               variant="ghost"
               size="icon"
-              className="w-10 h-10 rounded-xl touch-manipulation active:scale-95"
+              className="w-11 h-11 rounded-xl touch-manipulation active:scale-95"
               onClick={onMenuOpen}
               aria-label="Abrir menu"
             >
@@ -114,7 +114,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-10 h-10 rounded-xl touch-manipulation active:scale-95"
+                className="w-11 h-11 rounded-xl touch-manipulation active:scale-95"
                 onClick={onSearchOpen}
                 aria-label="Buscar"
               >
@@ -126,7 +126,7 @@ export const MobileHeader = forwardRef<HTMLElement, MobileHeaderProps>(
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-10 h-10 rounded-xl touch-manipulation active:scale-95 relative"
+                className="w-11 h-11 rounded-xl touch-manipulation active:scale-95 relative"
                 onClick={onNotificationsOpen}
                 aria-label="Notificações"
               >
