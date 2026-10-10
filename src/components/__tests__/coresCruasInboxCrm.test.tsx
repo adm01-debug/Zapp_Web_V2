@@ -10,17 +10,24 @@
  *   4. `contacts/contactTypeConfig` — os 6 tipos (color/gradient/dotBg/badgeClass)
  *   5. `groups/GroupsView` — aviso `text-warning` → `--warning-text`
  *
- * Duas provas, no espírito das outras trancas de `src/components/__tests__`:
+ * Três provas, no espírito das outras trancas de `src/components/__tests__`:
  *
  *  A) FONTE — nenhum literal de cor crua voltou aos arquivos do cartão (o
  *     `componentesDuplicados.test.ts` usa a mesma varredura de arquivo).
- *  B) MEDIDA — as classes do badge/avatar/hover são ligadas ao TOKEN que o
- *     `tokens.css` publica e o contraste WCAG é medido nos 4 temas (CLARO,
- *     ESCURO, ALTO-CONTRASTE, ALTO-CONTRASTE+ESCURO) com o mesmo medidor de
- *     `calls/__tests__/telefoniaContraste.test.tsx` (HSL → sRGB → luminância).
- *     Onde não fecha AA, o cartão manda MEDIR e REGISTRAR, não repintar — o
- *     resíduo do hover `--warning | --card` no claro é o mesmo já publicado no
- *     laudo da Telefonia (2,14) e é o único registrado aqui.
+ *  B) MEDIDA — cada par (fg,bg) DERIVA das classes que o código aplica hoje
+ *     (`badgeClass` do CONTACT_TYPE_CONFIG, branches do AvatarFallback,
+ *     `hover:text/bg` do Inbox, aviso do GroupsView); o contraste WCAG é
+ *     medido nos 4 temas (CLARO, ESCURO, ALTO-CONTRASTE,
+ *     ALTO-CONTRASTE+ESCURO) com o mesmo medidor de
+ *     `calls/__tests__/telefoniaContraste.test.tsx` (HSL → sRGB →
+ *     luminância), compondo o fundo `/NN` sobre o `--card` REAL do tema.
+ *     Critério: texto ≥ 4.5 (WCAG 1.4.3), ícone ≥ 3.0 (WCAG 1.4.11). Os
+ *     números são CANDIDATOS medidos para tensionar contraste, não
+ *     "aprovado seguro": onde não fecha AA, o cartão manda MEDIR e
+ *     REGISTRAR, não repintar — o único resíduo é o hover Fixar no
+ *     claro/alto-contraste (1.98 contra o fundo real com a tinta `/10`;
+ *     2,14 contra o `--card` puro, o mesmo já publicado no laudo da
+ *     Telefonia).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import fs from 'node:fs';
@@ -101,7 +108,7 @@ const token = (vars: Record<string, string>, nome: string): string => {
   if (!vars[chave]) throw new Error(`token --${chave} não existe no tema`);
   return vars[chave];
 };
-/** `'--fg | --bg'` ou `'--fg | --tinta/NN'` (tinta composta sobre o `--card`). */
+/** `'--fg | --bg'` ou `'--fg | --tinta/NN'` (tinta composta sobre o `--card` real). */
 function medir(vars: Record<string, string>, par: string): number {
   const [cor, fundo] = par.split('|').map((p) => p.trim());
   const frente = hslToRgb(...parseHsl(token(vars, cor)));
@@ -180,67 +187,125 @@ describe('cor crua → token — nenhum literal cru volta (Inbox/CRM)', () => {
   });
 });
 
-// ─── B) MEDIDA: classe do componente → token → contraste WCAG ───
-type Caso = {
-  nome: string;
-  /** fg/bg efetivos por tema (o `dark:` muda a cor). */
-  par: Record<string, string>;
-  min: number;
-  /** temas em que o par não fecha o mínimo (resíduo registrado, não repintado). */
-  residuo: string[];
-  valores: Record<string, number>;
-};
+// ─── B) MEDIDA: pares (fg,bg) DERIVADOS das classes reais → contraste WCAG ───
+const ehEscuro = (tema: string) => tema === 'escuro' || tema === 'alto-contraste+escuro';
 
-/** Os pares saem das classes que os componentes realmente aplicam (abaixo). */
-const CASOS: Caso[] = [
-  { nome: 'tipo cliente (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--primary-text | --primary/15', escuro: '--primary-text | --primary/15', 'alto-contraste': '--primary-text | --primary/15', 'alto-contraste+escuro': '--primary-text | --primary/15' },
-    valores: { claro: 7.58, escuro: 7.66, 'alto-contraste': 6.94, 'alto-contraste+escuro': 8.49 } },
-  { nome: 'tipo fornecedor (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--dash-tile-violet | --dash-violet/15', escuro: '--dash-violet | --dash-violet/10', 'alto-contraste': '--dash-tile-violet | --dash-violet/15', 'alto-contraste+escuro': '--dash-violet | --dash-violet/10' },
-    valores: { claro: 9, escuro: 4.66, 'alto-contraste': 9, 'alto-contraste+escuro': 5.23 } },
-  { nome: 'tipo transportadora (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--dash-tile-amber | --dash-amber/15', escuro: '--dash-amber | --dash-amber/15', 'alto-contraste': '--dash-tile-amber | --dash-amber/15', 'alto-contraste+escuro': '--dash-amber | --dash-amber/15' },
-    valores: { claro: 6.65, escuro: 7.32, 'alto-contraste': 6.65, 'alto-contraste+escuro': 8.37 } },
-  { nome: 'tipo colaborador (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--success | --success/15', escuro: '--success | --success/15', 'alto-contraste': '--success | --success/15', 'alto-contraste+escuro': '--success | --success/15' },
-    valores: { claro: 4.58, escuro: 5.99, 'alto-contraste': 4.58, 'alto-contraste+escuro': 6.81 } },
-  { nome: 'tipo prestador (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--warning-text | --warning/15', escuro: '--warning-text | --warning/15', 'alto-contraste': '--warning-text | --warning/15', 'alto-contraste+escuro': '--warning-text | --warning/15' },
-    valores: { claro: 4.82, escuro: 7.29, 'alto-contraste': 4.82, 'alto-contraste+escuro': 8.35 } },
-  { nome: 'tipo parceiro (badge)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--destructive-text | --destructive/15', escuro: '--destructive-text | --destructive/15', 'alto-contraste': '--destructive-text | --destructive/15', 'alto-contraste+escuro': '--destructive-text | --destructive/15' },
-    valores: { claro: 5.63, escuro: 4.93, 'alto-contraste': 5.18, 'alto-contraste+escuro': 5.8 } },
-  { nome: 'avatar departamento', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--dash-tile-violet | --dash-violet/15', escuro: '--dash-violet | --dash-violet/10', 'alto-contraste': '--dash-tile-violet | --dash-violet/15', 'alto-contraste+escuro': '--dash-violet | --dash-violet/10' },
-    valores: { claro: 9, escuro: 4.66, 'alto-contraste': 9, 'alto-contraste+escuro': 5.23 } },
-  { nome: 'hover Resolver (ícone)', min: MIN_ICONE, residuo: [],
-    par: { claro: '--success | --card', escuro: '--success | --card', 'alto-contraste': '--success | --card', 'alto-contraste+escuro': '--success | --card' },
-    valores: { claro: 5.66, escuro: 7.7, 'alto-contraste': 5.66, 'alto-contraste+escuro': 8.47 } },
-  { nome: 'hover Fixar (ícone)', min: MIN_ICONE, residuo: ['claro', 'alto-contraste'],
-    par: { claro: '--warning | --card', escuro: '--warning | --card', 'alto-contraste': '--warning | --card', 'alto-contraste+escuro': '--warning | --card' },
-    valores: { claro: 2.14, escuro: 9.96, 'alto-contraste': 2.14, 'alto-contraste+escuro': 10.97 } },
-  { nome: 'hover Adiar (ícone)', min: MIN_ICONE, residuo: [],
-    par: { claro: '--info | --card', escuro: '--info | --card', 'alto-contraste': '--info | --card', 'alto-contraste+escuro': '--info | --card' },
-    valores: { claro: 3.47, escuro: 5.82, 'alto-contraste': 3.47, 'alto-contraste+escuro': 6.4 } },
-  { nome: 'aviso de grupos (texto)', min: MIN_TEXTO, residuo: [],
-    par: { claro: '--warning-text | --warning/10', escuro: '--warning-text | --warning/10', 'alto-contraste': '--warning-text | --warning/10', 'alto-contraste+escuro': '--warning-text | --warning/10' },
-    valores: { claro: 5.01, escuro: 8.2, 'alto-contraste': 5.01, 'alto-contraste+escuro': 9.33 } },
-];
+/** Nomes de token publicados (sem `--`): só vale cor que o tokens.css publica. */
+const PUBLICADOS = new Set(Object.values(TEMAS).flatMap((v) => Object.keys(v)));
 
-describe('cor crua → token — contraste WCAG medido nos tokens reais', () => {
-  for (const caso of CASOS) {
-    it(`${caso.nome}`, () => {
-      const medido: Record<string, number> = {};
-      for (const [tema, vars] of Object.entries(TEMAS)) medido[tema] = Number(medir(vars, caso.par[tema]).toFixed(2));
-      // A medida é a do laudo: se um token mudar, cai aqui e o laudo tem de ser refeito.
-      expect(medido).toEqual(caso.valores);
-      for (const [tema, razao] of Object.entries(medido)) {
-        if (caso.residuo.includes(tema)) continue;
-        expect(razao, `${caso.nome} em ${tema} abaixo de ${caso.min}`).toBeGreaterThanOrEqual(caso.min);
-      }
-    });
+function candidatosFgBg(classes: string, escuro: boolean): string[] {
+  const toks = classes.split(/\s+/);
+  return escuro
+    ? [...toks.filter((t) => t.startsWith('dark:')), ...toks.filter((t) => !t.startsWith('dark:'))]
+    : toks.filter((t) => !t.startsWith('dark:'));
+}
+
+/** Primeira cor de texto publicada na lista de classes. */
+function fgDe(classes: string, escuro: boolean): string {
+  for (const t of candidatosFgBg(classes, escuro)) {
+    const c = t.replace(/^dark:/, '');
+    const arb = c.match(/^text-\[hsl\(var\((--[a-z-]+)\)\)\]$/);
+    if (arb) return arb[1];
+    const nomeada = c.match(/^text-([a-z0-9-]+)$/);
+    if (nomeada && PUBLICADOS.has(nomeada[1])) return `--${nomeada[1]}`;
   }
+  throw new Error(`sem cor de texto publicada em: ${classes}`);
+}
+
+/** Primeiro fundo `bg-NOME/NN` publicado na lista de classes. */
+function bgDe(classes: string, escuro: boolean): string {
+  for (const t of candidatosFgBg(classes, escuro)) {
+    const c = t.replace(/^dark:/, '');
+    const m = c.match(/^bg-([a-z0-9-]+)\/(\d+)$/);
+    if (m && PUBLICADOS.has(m[1])) return `--${m[1]}/${m[2]}`;
+  }
+  throw new Error(`sem fundo bg-NOME/NN publicado em: ${classes}`);
+}
+
+/** `'--fg | --bg/NN'` pronto para o `medir`, saído das classes reais. */
+const parDeClasses = (classes: string, escuro: boolean) => `${fgDe(classes, escuro)} | ${bgDe(classes, escuro)}`;
+
+/** Hovers do Inbox: cada par sai do `aria-label` + `hover:text/bg` da fonte. */
+function hoversDaFonte(): { nome: string; par: string }[] {
+  const hs = [...conteudo('src/components/inbox/VirtualizedRealtimeList.tsx')
+    .matchAll(/aria-label="([^"]+)"[\s\S]{0,500}?hover:text-([a-z0-9-]+) hover:bg-([a-z0-9-]+)\/(\d+)/g)]
+    .map((m) => ({ nome: m[1], par: `--${m[2]} | --${m[3]}/${m[4]}` }));
+  for (const h of hs) {
+    const [fg, bg] = h.par.split('|').map((p) => p.trim());
+    for (const tk of [fg, bg.split('/')[0]])
+      if (!PUBLICADOS.has(tk.replace(/^--/, ''))) throw new Error(`hover ${h.nome} usa token não publicado: ${tk}`);
+  }
+  return hs;
+}
+
+/** Avatares: as 3 branches do `AvatarFallback` na fonte (o B2 prova que chegam ao DOM). */
+function avataresDaFonte(): { nome: string; classes: string }[] {
+  const teamFonte = conteudo('src/components/team-chat/TeamConversationList.tsx');
+  const mAvatar = teamFonte.match(/conv\.type === 'direct' \? '([^']+)' :\s*conv\.department_id \? '([^']+)' :\s*'([^']+)'/);
+  if (!mAvatar) throw new Error('branches do AvatarFallback não encontradas no TeamConversationList');
+  return [
+    { nome: 'avatar direta', classes: mAvatar[1] },
+    { nome: 'avatar departamento', classes: mAvatar[2] },
+    { nome: 'avatar grupo', classes: mAvatar[3] },
+  ];
+}
+
+/** Aviso do GroupsView: `bg-warning/NN` + texto por token, direto da fonte. */
+function parAvisoDaFonte(): string {
+  const groupsFonte = conteudo('src/components/groups/GroupsView.tsx');
+  const mAviso = groupsFonte.match(/bg-warning\/(\d+)[^"']*?text-\[hsl\(var\((--[a-z-]+)\)\)\]/);
+  if (!mAviso) throw new Error('aviso do GroupsView sem bg-warning/NN + texto por token');
+  return `${mAviso[2]} | --warning/${mAviso[1]}`;
+}
+
+describe('cor crua → token — contraste medido nas classes reais', () => {
+  it('os 3 hovers do cartão derivam de token publicado', () => {
+    expect(hoversDaFonte().map((h) => h.nome)).toEqual(
+      expect.arrayContaining(['Resolver conversa', 'Fixar conversa', 'Adiar conversa']),
+    );
+  });
+
+  it('badges: par da badgeClass fecha AA (texto ≥ 4.5) nos 4 temas', () => {
+    for (const [tipo, cfg] of Object.entries(CONTACT_TYPE_CONFIG)) {
+      for (const [tema, vars] of Object.entries(TEMAS)) {
+        const par = parDeClasses(cfg.badgeClass, ehEscuro(tema));
+        const r = medir(vars, par);
+        expect(r, `badge ${tipo} (${par}) em ${tema}: ${r.toFixed(2)} < 4.5`).toBeGreaterThanOrEqual(MIN_TEXTO);
+      }
+    }
+  });
+
+  it('avatares: par do AvatarFallback fecha AA (texto ≥ 4.5) nos 4 temas', () => {
+    for (const av of avataresDaFonte()) {
+      for (const [tema, vars] of Object.entries(TEMAS)) {
+        const par = parDeClasses(av.classes, ehEscuro(tema));
+        const r = medir(vars, par);
+        expect(r, `${av.nome} (${par}) em ${tema}: ${r.toFixed(2)} < 4.5`).toBeGreaterThanOrEqual(MIN_TEXTO);
+      }
+    }
+  });
+
+  it('hovers: par das classes hover fecha 3:1 (ícone); Fixar no claro é resíduo registrado', () => {
+    const RESIDUO: Record<string, string[]> = { 'Fixar conversa': ['claro', 'alto-contraste'] };
+    for (const h of hoversDaFonte()) {
+      for (const [tema, vars] of Object.entries(TEMAS)) {
+        const r = medir(vars, h.par);
+        if ((RESIDUO[h.nome] ?? []).includes(tema)) {
+          expect(r, `${h.nome} (${h.par}) em ${tema}: ${r.toFixed(2)} agora fecha — tire do RESIDUO`).toBeLessThan(MIN_ICONE);
+        } else {
+          expect(r, `${h.nome} (${h.par}) em ${tema}: ${r.toFixed(2)} < 3`).toBeGreaterThanOrEqual(MIN_ICONE);
+        }
+      }
+    }
+  });
+
+  it('aviso de grupos: par das classes fecha AA (texto ≥ 4.5) nos 4 temas', () => {
+    for (const [tema, vars] of Object.entries(TEMAS)) {
+      const PAR_AVISO = parAvisoDaFonte();
+      const r = medir(vars, PAR_AVISO);
+      expect(r, `aviso (${PAR_AVISO}) em ${tema}: ${r.toFixed(2)} < 4.5`).toBeGreaterThanOrEqual(MIN_TEXTO);
+    }
+  });
 
   it('o badge de todo tipo declara um token de texto que existe nos 4 temas', () => {
     for (const cfg of Object.values(CONTACT_TYPE_CONFIG)) {
