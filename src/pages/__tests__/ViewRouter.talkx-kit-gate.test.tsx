@@ -32,7 +32,7 @@ function renderKit() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <AuthProvider user={{ id: '1', role: 'agent' } as never}>
+      <AuthProvider>
         <MemoryRouter initialEntries={['/?view=talkx-kit']}>
           <ViewRouter currentView={TALKX_KIT_VIEW_ID} />
         </MemoryRouter>
