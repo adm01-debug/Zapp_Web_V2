@@ -95,7 +95,7 @@ export function InviteAgentDialog({ open, onOpenChange }: InviteAgentDialogProps
           <div className="space-y-2">
             <Label>Cargo</Label>
             <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Cargo">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
