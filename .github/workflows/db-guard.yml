@@ -917,6 +917,12 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-settings-rls.test.sh
 
+      - name: Provar que talkx_compile_segment_rules usa %I e quote_literal (N-111 em diante, N-112)
+        env:
+          TALKX_SEGMENT_FIELDS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-segment-fields.test.sh
+
       - name: Provar contrato de integridade de som em user_settings — NOT NULL e vocabulário fechado
         env:
           SOUND_INTEGRITY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
