@@ -55,6 +55,7 @@ const ALLOWLIST = new Set([
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
   // db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  'scripts/db-audit/multiplix-revoke-execute-public.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
