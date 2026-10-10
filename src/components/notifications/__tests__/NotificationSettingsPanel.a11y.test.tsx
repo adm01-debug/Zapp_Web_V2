@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { NotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 const h = vi.hoisted(() => ({
   settings: {
@@ -29,15 +30,18 @@ const h = vi.hoisted(() => ({
     slaSoundType: 'alert' as const,
     goalSoundType: 'chime' as const,
     transcriptionSoundType: 'soft' as const,
-  },
-  updateSettings: vi.fn(),
+  } as NotificationSettings,
+  updateSettings: vi.fn((_: Partial<NotificationSettings>) => {}),
 }));
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({
     settings: h.settings,
     updateSettings: h.updateSettings,
+    resetSettings: vi.fn().mockResolvedValue(true),
     isQuietHours: () => false,
+    isLoading: false,
+    isSaving: false,
   }),
 }));
 
@@ -48,7 +52,7 @@ vi.mock('@/utils/notificationSounds', () => ({
 }));
 
 import { NotificationSettingsPanel } from '../NotificationSettingsPanel';
-import { NotificationTypeSection } from '../NotificationTypeCards';
+import { NotificationTypeSection, SoundSelector } from '../NotificationTypeCards';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 function renderPanel() {
@@ -60,9 +64,11 @@ function renderPanel() {
 }
 
 describe('N-198 — controles de som com nome acessível', () => {
-  it('o botão "Testar som" mestre tem aria-label', () => {
+  it('o botão "Testar som" mestre tem aria-label inequívoco', () => {
     renderPanel();
+    // getByRole lança se houver 0 ou 2+; o getAllByRole abaixo prova que há exatamente 1.
     expect(screen.getByRole('button', { name: 'Testar som' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Testar som' })).toHaveLength(1);
   });
 
   it('o seletor de som de mensagem tem aria-label "Som de mensagem"', () => {
@@ -91,6 +97,16 @@ describe('N-198 — controles de som com nome acessível', () => {
     expect(
       screen.getByRole('button', { name: 'Testar som de mensagem' }),
     ).toBeInTheDocument();
+  });
+
+  it('o seletor de conquista usa o rótulo do tipo ("Som de conquista")', () => {
+    render(
+      <TooltipProvider>
+        <SoundSelector value="chime" onChange={() => {}} notificationType="achievement" label="Som" soundVolume={70} />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Som de conquista' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Testar som de conquista' })).toBeInTheDocument();
   });
 
 });

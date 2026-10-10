@@ -25,12 +25,12 @@ const SOUND_TYPES: { value: SoundTypeOption; label: string; description: string 
   { value: 'soft', label: 'Suave', description: 'Notificação discreta' },
 ];
 
-const TIPO_LABEL: Record<string, string> = {
+const TIPO_LABEL: Record<NotificationType, string> = {
   message: 'mensagem',
   mention: 'menção',
   sla_breach: 'violação de SLA',
   sla_warning: 'aviso de SLA',
-  achievement: 'transcrição de áudio',
+  achievement: 'conquista',
   goal_achieved: 'meta alcançada',
 };
 
