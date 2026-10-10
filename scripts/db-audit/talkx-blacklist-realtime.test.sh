@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# talkx-blacklist-realtime (X069p1 · banco): escopo de COLUNAS da publicacao Realtime
-# da lista de supressao.
+# talkx-blacklist-realtime (X069p1 · banco): escopo MINIMO de colunas da publicacao
+# Realtime da lista de supressao.
 #
 # ESCOPO DESTA ENTREGA — leia antes de interpretar um verde:
 #   Este harness prova SOMENTE que a migration
 #   supabase/migrations/20261011000013_talkx_blacklist_realtime_column_scope.sql
-#   publica public.talkx_blacklist na publicacao supabase_realtime com uma LISTA DE
-#   COLUNAS que NAO inclui `phone` (o telefone do contato nao pode trafegar no payload
-#   do Realtime — a policy de SELECT e USING (true) para authenticated) e que o restante
-#   do registro (id, contact_id, reason, ...) segue publicado.
+#   publica public.talkx_blacklist na publicacao supabase_realtime com a LISTA MINIMA
+#   de colunas (id, contact_id) — so o que a tela usa para reagir quando um telefone
+#   entra ou sai da lista. NADA alem disso trafega no evento: nem `phone` (o telefone
+#   do contato nao pode ir no payload do Realtime — a policy de SELECT e USING (true)
+#   para authenticated), nem os metadados que a tela nao consome (reason, blocked_by,
+#   created_at, removed_by, removed_at, origin, campaign_id, reason_code, expires_at,
+#   source_message_id).
+#
+#   Fechado por padrao: se uma DDL futura adicionar coluna que a tela passe a precisar,
+#   uma NOVA migration (revisada) estende a lista — coluna nova nunca entra sozinha.
+#   O `add table (...)` falha alto se um nome da lista deixar de existir (deriva de
+#   DDL vira erro, nao silencio).
 #
 #   NAO se testa aqui o COMPORTAMENTO da assinatura no navegador (worker de telas/hooks),
 #   nem se a RPC de supressao grava a linha — isso e de outros cartoes. Tambem NAO se
@@ -20,9 +28,10 @@
 # wal_level=logical, cria um schema minimo com os objetos que a migration toca, aplica a
 # migration REAL e prova cada caso abaixo.
 #
-# VERMELHO: rode com TALKX_BLACKLIST_REALTIME_TEST_MIGRATION apontando para um arquivo
-# vazio (ou qualquer migration que nao publique a tabela) e o harness FALHA no caso
-# `published_with_scope` — e a prova de que o aceite depende desta migration.
+# VERMELHO: rode com TALKX_BLACKLIST_REALTIME_TEST_MIGRATION apontando para a migration
+# de 12 colunas (.tmp/old-migration-12cols.sql, a entrega recusada) e o harness FALHA no
+# caso `scope_minimal` — e a prova de que o aceite (lista minima) depende desta migration.
+# Rode apontando para um arquivo vazio e FALHA em `published_with_scope`.
 #
 # AUSENCIA DE MEDICAO CONTA COMO FALHA: cada caso registra sua execucao em CASES_SEEN e
 # o harness FALHA no fim se algum caso esperado nao tiver rodado.
@@ -46,7 +55,7 @@ psql_q() { psql_test -Atqc "$1"; }
 # --- registro dos casos (ausencia de medicao = falha) -----------------------
 declare -A CASES_SEEN=()
 declare -a CASES_EXPECTED=(
-  pre_state_absent published_with_scope scope_excludes_phone scope_keeps_registro replay_idempotent
+  pre_state_absent published_with_scope scope_excludes_phone scope_minimal replay_idempotent
 )
 case_done() { CASES_SEEN["$1"]=1; }
 
@@ -82,9 +91,9 @@ start_postgres || fail 'PostgreSQL de teste nao iniciou'
 
 # ---------------------------------------------------------------------------
 # Schema minimo: a publicacao realtime JA existente (sem talkx_blacklist) e a tabela
-# talkx_blacklist com a forma atual (todas as colunas, INCLUSIVE `phone`), para que a
-# exclusao do telefone na publicacao seja uma escolha medida e nao um efeito de a coluna
-# nao existir.
+# talkx_blacklist com a forma atual (TODAS as colunas reais, INCLUSIVE `phone` e os
+# metadados), para que a exclusao de cada coluna na publicacao seja uma escolha medida
+# e nao um efeito de a coluna nao existir.
 # ---------------------------------------------------------------------------
 psql_test >/dev/null <<'SQL'
 CREATE TYPE public.talkx_blacklist_reason AS ENUM ('manual', 'optout', 'spam', 'outro');
@@ -161,32 +170,32 @@ pass '(3) `phone` FORA da lista de colunas publicadas'
 case_done scope_excludes_phone
 
 # ---------------------------------------------------------------------------
-# (4) ESCOPO MANTEM O REGISTRO: as outras colunas seguem publicadas
+# (4) ESCOPO MINIMO: EXATAMENTE (contact_id, id) — nada alem do que a tela usa.
+# Compara o conjunto publicado com o esperado, ordenado: qualquer coluna a mais
+# (reason, blocked_by, created_at, removed_by, removed_at, origin, campaign_id,
+# reason_code, expires_at, source_message_id) ou a menos reprova.
 # ---------------------------------------------------------------------------
-required=(id contact_id reason blocked_by created_at removed_by removed_at origin campaign_id reason_code expires_at source_message_id)
-missing=''
-for col in "${required[@]}"; do
-  hit="$(psql_q "SELECT count(*) FROM pg_publication_tables
-    WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'
-      AND '$col' = ANY (attnames)")"
-  [[ "$hit" == '1' ]] || missing="$missing $col"
-done
-[[ -z "$missing" ]] || fail "(4) colunas do registro ausentes da publicacao:$missing"
-pass '(4) registro publicado sem lacuna (12 colunas, incluindo a PK id)'
-case_done scope_keeps_registro
+published_cols="$(psql_q "SELECT coalesce(array_to_string(array_agg(a ORDER BY a), ','), '')
+  FROM pg_publication_tables,
+       LATERAL unnest(attnames) AS a
+  WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'")"
+[[ "$published_cols" == 'contact_id,id' ]] || fail "(4) publicacao NAO e minima (id, contact_id) [obtido: $published_cols]"
+pass '(4) escopo minimo exato: (contact_id, id) e nada mais'
+case_done scope_minimal
 
 # ---------------------------------------------------------------------------
-# (5) REPLAY: a migration e idempotente (roda 2x sem erro e nao duplica/afrouxa)
+# (5) REPLAY: a migration e idempotente (roda 2x sem erro, nao duplica, nao afrouxa)
 # ---------------------------------------------------------------------------
 psql_test < "$migration" >/dev/null || fail '(5) reaplicacao da migration falhou'
 rows_after_replay="$(psql_q "SELECT count(*) FROM pg_publication_tables
   WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'")"
 [[ "$rows_after_replay" == '1' ]] || fail "(5) replay duplicou a publicacao [obtido: $rows_after_replay]"
-phone_after_replay="$(psql_q "SELECT count(*) FROM pg_publication_tables
-  WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'
-    AND 'phone' = ANY (attnames)")"
-[[ "$phone_after_replay" == '0' ]] || fail "(5) replay reintroduziu `phone` na publicacao [obtido: $phone_after_replay]"
-pass '(5) replay idempotente: 1 entrada e `phone` segue fora'
+cols_after_replay="$(psql_q "SELECT coalesce(array_to_string(array_agg(a ORDER BY a), ','), '')
+  FROM pg_publication_tables,
+       LATERAL unnest(attnames) AS a
+  WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='talkx_blacklist'")"
+[[ "$cols_after_replay" == 'contact_id,id' ]] || fail "(5) replay afrouxou o escopo [obtido: $cols_after_replay]"
+pass '(5) replay idempotente: 1 entrada e escopo segue minimo'
 case_done replay_idempotent
 
 # ---------------------------------------------------------------------------
@@ -197,4 +206,4 @@ for c in "${CASES_EXPECTED[@]}"; do
 done
 printf 'PASS: %s/%s casos de aceite medidos\n' "${#CASES_EXPECTED[@]}" "${#CASES_EXPECTED[@]}"
 
-printf 'PASS: talkx_blacklist publicada em supabase_realtime com lista de colunas SEM phone (replay idempotente)\n'
+printf 'PASS: talkx_blacklist publicada em supabase_realtime com escopo MINIMO (id, contact_id) — replay idempotente\n'
