@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Pause, Square, Play, Timer, CheckCircle2, Loader2,
-  SkipForward, Activity, RefreshCw, Zap, Inbox,
+  SkipForward, Activity, RefreshCw, Zap, Inbox, Search,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -56,6 +56,10 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
 
   const { label: connStatusLabel } = useTalkXConnectionStatus(campaign?.whatsapp_connection_id);
 
+  const [recipientsCursor, setRecipientsCursor] = useState<string | null>(null);
+  const [recipientsPage, setRecipientsPage] = useState<TalkXRecipient[]>([]);
+  const [recipientsNextCursor, setRecipientsNextCursor] = useState<string | null>(null);
+
   const {
     data: recipientsData,
     isLoading: recipientsLoading,
@@ -63,19 +67,34 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
     error: recipientsErrorObj,
     refetch: refetchRecipients,
   } = useQuery({
-    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
+    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter, recipientsCursor],
     queryFn: async () => {
-      let q = supabase.from('talkx_recipients')
-        .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
-        .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data ?? []) as unknown as TalkXRecipient[];
+      const { data: rpcData, error: rpcError } = await supabase.rpc('talkx_campaign_recipients_page', {
+        p_campaign_id: campaignId,
+        p_limit: 50,
+        p_cursor: recipientsCursor ?? null,
+        p_status: statusFilter === 'all' ? null : statusFilter,
+        p_search: null,
+      });
+      if (rpcError) throw rpcError;
+      return rpcData as { rows: TalkXRecipient[]; next_cursor: string | null; total: number };
     },
     refetchInterval: REFETCH,
   });
-  const recipients = recipientsData ?? [];
+
+  // Sync RPC result into local pagination state
+  useEffect(() => {
+    if (recipientsData) {
+      setRecipientsPage(recipientsData.rows);
+      setRecipientsNextCursor(recipientsData.next_cursor);
+    }
+  }, [recipientsData]);
+
+  const loadMoreRecipients = () => {
+    if (recipientsNextCursor) setRecipientsCursor(recipientsNextCursor);
+  };
+
+  const recipients = recipientsPage;
 
   useEffect(() => {
     const ch = supabase.channel(`talkx-mon-${campaignId}`)
@@ -256,6 +275,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
                 );
               })}
             </div>
+            {recipientsNextCursor && (
+              <div className="p-3 text-center border-t border-border/40">
+                <button type="button" onClick={loadMoreRecipients} className="text-xs font-semibold text-primary hover:underline">Carregar mais</button>
+              </div>
+            )}
           </TalkXQueryBoundary>
         </section>
       )}
