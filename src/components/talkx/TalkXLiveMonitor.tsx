@@ -152,7 +152,9 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
             </>)}
           </div>
         </div>
-        <Progress value={progress} className="h-3 mb-1.5"/>
+        {/* Nome acessível: a barra é `role="progressbar"` e não tem texto próprio; o
+            número visível abaixo dela é uma legenda, não um rótulo associável. */}
+        <Progress value={progress} aria-label="Progresso do envio" className="h-3 mb-1.5"/>
         <div className="flex items-center justify-between text-2xs text-foreground-secondary">
           <span>{progress}% concluído · {fmtInt(processed)} de {fmtInt(campaign.total_recipients)}</span>
           {isRunning && <span className="text-primary-glow font-medium animate-pulse">Enviando agora…</span>}
