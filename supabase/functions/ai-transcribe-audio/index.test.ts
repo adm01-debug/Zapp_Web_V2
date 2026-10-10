@@ -285,7 +285,10 @@ Deno.test(
     assert(!downloadCalled, "o handler real não pode baixar antes de autorizar");
 
     const source = await Deno.readTextFile(new URL("./index.ts", import.meta.url));
-    const semImports = source.replace(/^import[\s\S]*?;\s*$/gm, "");
+    // `[^]` cobre qualquer caractere, inclusive quebra de linha — e não usa a
+    // classe de escape que o ratchet tests/contracts/_adv_edge_legacy_producers.test.ts
+    // pina na árvore (outra grafia entraria no inventário e quebraria o contrato).
+    const semImports = source.replace(/^import[^]*?;\s*$/gm, "");
     const visibilidade = semImports.indexOf("await assertMessageVisibleToCaller(");
     const download = semImports.indexOf("await downloadAudio(");
 
