@@ -962,6 +962,21 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/revoke-auth-sessions.test.sh
 
+      # N-138 (seguranca, inventario de email): as colunas de token OAuth criptografado
+      # (access_token_encrypted, refresh_token_encrypted) de public.gmail_accounts seguiam
+      # legiveis por SELECT direto para anon/authenticated por causa de um grant de SELECT no
+      # NIVEL DA TABELA (privilegio default do schema public) — e um REVOKE por coluna nao
+      # remove grant de tabela. O contrato reproduz o grant de tabela num PostgreSQL 17
+      # descartavel, prova RED (anon/authenticated leem os tokens) e GREEN apos a migration
+      # (REVOKE de tabela + GRANT de coluna so nas 12 colunas nao-sensiveis), com os 5 cenarios
+      # do criterio + RED. SKIP_DOCKER_SHIM=1: cria as roles anon/authenticated/service_role
+      # (globais ao cluster, colidiriam no shim) e usa `docker exec pg_isready`, fora do shim.
+      - name: Provar revogação das colunas de token do Gmail (N-138)
+        env:
+          GMAIL_TOKEN_COLS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-revoke-gmail-tokens.test.sh
+
       # N-002 (P1 · seguranca, inventario A4b): a trava que impede um usuario comum de
       # virar admin em public.profiles (gatilho prevent_privilege_escalation, corrigido
       # pela migration 20260830161547) existia sem nenhum teste. O contrato aplica os
