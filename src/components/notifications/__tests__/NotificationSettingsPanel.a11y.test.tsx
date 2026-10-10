@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import type { NotificationSettings } from '@/hooks/system/useNotificationSettings';
 
 const h = vi.hoisted(() => ({
@@ -53,6 +54,30 @@ vi.mock('@/utils/notificationSounds', () => ({
 
 import { NotificationSettingsPanel } from '../NotificationSettingsPanel';
 import { NotificationTypeSection, SoundSelector } from '../NotificationTypeCards';
+
+/**
+ * O axe varre a página inteira: Switches sem nome (button-name), Slider sem
+ * nome (aria-input-field-name) e `region` (seção renderizada fora de landmark
+ * no teste) são achados FORA deste cartão — vão como comentário no Kanban,
+ * não como correção aqui. O que este cartão garante: nenhuma regra do axe
+ * se queixa dos controles de som (seletores e botões "Testar som").
+ */
+async function axeSemQueixaNosControlesDeSom() {
+  // jsdom não tem layout: contraste fica fora (padrão do repo).
+  const results = await axe(document.body, { rules: { 'color-contrast': { enabled: false } } });
+  // `region` lista TODO conteúdo quando a seção é renderizada fora de landmark
+  // no teste (artefato do harness, documentado no WelcomeModal.a11y.test) —
+  // não é queixa sobre os controles, então fica fora desta checagem.
+  const htmlDosNos = results.violations
+    .filter((v) => v.id !== 'region')
+    .flatMap((v) => v.nodes.map((n) => n.html));
+  return htmlDosNos.filter(
+    (html) =>
+      html.includes('aria-label="Som de') ||
+      html.includes('aria-label="Testar som') ||
+      html.includes('role="combobox"'),
+  );
+}
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 function renderPanel() {
@@ -97,6 +122,40 @@ describe('N-198 — controles de som com nome acessível', () => {
     expect(
       screen.getByRole('button', { name: 'Testar som de mensagem' }),
     ).toBeInTheDocument();
+  });
+
+  it('todos os tipos da seção têm seletor e botão com nome acessível', () => {
+    render(
+      <TooltipProvider>
+        <NotificationTypeSection
+          settings={h.settings}
+          updateSettings={h.updateSettings}
+        />
+      </TooltipProvider>,
+    );
+    for (const tipo of ['mensagem', 'menção', 'violação de SLA', 'meta alcançada', 'conquista']) {
+      expect(screen.getByRole('combobox', { name: `Som de ${tipo}` })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: `Testar som de ${tipo}` })).toBeInTheDocument();
+    }
+  });
+
+  it('axe: nenhuma regra se queixa dos controles de som do painel', async () => {
+    renderPanel();
+    expect(screen.getByRole('button', { name: 'Testar som' })).toBeInTheDocument();
+    expect(await axeSemQueixaNosControlesDeSom()).toEqual([]);
+  });
+
+  it('axe: nenhuma regra se queixa dos controles de som da seção de tipos', async () => {
+    render(
+      <TooltipProvider>
+        <NotificationTypeSection
+          settings={h.settings}
+          updateSettings={h.updateSettings}
+        />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Som de mensagem' })).toBeInTheDocument();
+    expect(await axeSemQueixaNosControlesDeSom()).toEqual([]);
   });
 
   it('o seletor de conquista usa o rótulo do tipo ("Som de conquista")', () => {
