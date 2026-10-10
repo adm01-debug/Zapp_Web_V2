@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { X } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { talkxScaleIn } from '@/components/ui/motion/variants';
 import { cn } from '@/lib/utils';
 import type { TileColor } from './constants';
@@ -51,22 +51,21 @@ export function TalkXDialogShell({ open, onClose, title, children, footer, class
 }) {
   const prefersReducedMotion = useReducedMotion();
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        aria-describedby={undefined}
-        onOpenAutoFocus={e => {
-          if (initialFocusRef?.current) { e.preventDefault(); initialFocusRef.current.focus(); }
-        }}
+    <AlertDialog open={open} onOpenChange={v => !v && onClose()}>
+      <AlertDialogContent
+        onOpenAutoFocus={initialFocusRef
+          ? e => { if (initialFocusRef.current) { e.preventDefault(); initialFocusRef.current.focus(); } }
+          : undefined}
         className={cn('w-full max-w-md gap-0 overflow-hidden p-0', className)}
       >
+        <AlertDialogDescription className="sr-only">{`Confirmação: ${title}`}</AlertDialogDescription>
         <motion.div
           initial={prefersReducedMotion ? false : 'hidden'}
           animate="visible"
           variants={prefersReducedMotion ? undefined : talkxScaleIn}
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/30 px-4 py-3">
-            <DialogTitle className="min-w-0 truncate text-sm font-semibold text-foreground">{title}</DialogTitle>
+            <AlertDialogTitle className="min-w-0 truncate text-sm font-semibold text-foreground">{title}</AlertDialogTitle>
             <button type="button" onClick={onClose} aria-label="Fechar"
               className="talkx-glow-ring -mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
@@ -78,8 +77,8 @@ export function TalkXDialogShell({ open, onClose, title, children, footer, class
             <div className="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/20 px-4 py-3">{footer}</div>
           )}
         </motion.div>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -161,7 +160,9 @@ export function TalkXConfirmDialog({
       }
       return;
     }
-    onClose();
+    // Legado: `onConfirm` síncrono (tipicamente `() => void handleX()`) devolve
+    // void e o próprio consumidor controla quando fechar (ex.: só depois do
+    // servidor aceitar). O shell não fecha por conta própria aqui.
   };
 
   const detailsBlock = details.length > 0 && (
@@ -197,7 +198,7 @@ export function TalkXConfirmDialog({
     >
       <div className="flex flex-col items-center gap-3 text-center">
         <IconTile icon={icon} color={iconColor ?? toneTileColor(tone)} size={48} glow />
-        <p className="text-base font-semibold text-foreground">{subtitle ?? title}</p>
+        {subtitle && <p className="text-base font-semibold text-foreground">{subtitle}</p>}
         <p className="text-[13px] leading-snug text-foreground-secondary">
           <ConfirmQuestion description={description} entityName={entityName} />
         </p>
