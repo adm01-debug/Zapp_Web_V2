@@ -1,5 +1,6 @@
 -- revogar-execute-public-multiplix-trigger
--- Rollback: GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO PUBLIC, anon, authenticated;
+-- Rollback:
+--   GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO PUBLIC, anon, authenticated;
 
 -- A função multiplix_audiences_validate_shared_roles() é o único gatilho do banco
 -- que ainda concede EXECUTE a PUBLIC, anon e authenticated. Revogar essas
