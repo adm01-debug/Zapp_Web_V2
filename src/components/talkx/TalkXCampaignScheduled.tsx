@@ -458,7 +458,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                 <MetaRow icon={Clock} label="Hora" value={localTime || '—'} />
                 <MetaRow icon={Timer} label="Fuso" value={localTz} />
                 {windowEnabled && <MetaRow icon={ShieldCheck} label="Janela" value={`${windowStart} – ${windowEnd}`} />}
-                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} sub={campaign.audience_source === 'segment' && campaign.segment_ids ? `${campaign.segment_ids.length} segmento(s) selecionado(s)` : undefined} />
+                <MetaRow icon={Users} label="Destinatários" value={`${fmtInt(campaign.total_recipients)} contatos`} />
               </div>
             </div>
           </div>
