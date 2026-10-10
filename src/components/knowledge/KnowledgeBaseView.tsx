@@ -76,7 +76,7 @@ export function KnowledgeBaseView() {
         <TabsContent value="articles" className="flex-1 mt-4">
           <div className="flex gap-3 mb-4">
             <div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar artigos..." className="pl-9" /></div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>)}</SelectContent></Select>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}><SelectTrigger className="w-40" aria-label="Filtrar por categoria"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>)}</SelectContent></Select>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6 overflow-y-auto">
             <AnimatePresence>{filteredArticles.map((article) => (
@@ -85,11 +85,11 @@ export function KnowledgeBaseView() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-3xs">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`Editar artigo: ${article.title}`} onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Excluir artigo: ${article.title}`} onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
-                  <h3 className="font-semibold text-sm text-foreground mb-1">{article.title}</h3>
+                  <h2 className="font-semibold text-sm text-foreground mb-1">{article.title}</h2>
                   <p className="text-xs text-muted-foreground line-clamp-3 mb-3">{article.content}</p>
                   <div className="flex items-center gap-1 flex-wrap">
                     {article.tags.slice(0, 3).map(tag => <Badge key={tag} variant="secondary" className="text-3xs h-4">{tag}</Badge>)}
@@ -120,7 +120,7 @@ export function KnowledgeBaseView() {
           <div className="space-y-4">
             <div><Label>Título *</Label><Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Título do artigo" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Categoria</Label><Select value={formCategory} onValueChange={setFormCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>Categoria</Label><Select value={formCategory} onValueChange={setFormCategory}><SelectTrigger aria-label="Categoria"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>)}</SelectContent></Select></div>
               <div><Label>Tags (separadas por vírgula)</Label><Input value={formTags} onChange={(e) => setFormTags(e.target.value)} placeholder="tag1, tag2" /></div>
             </div>
             <div><Label>Conteúdo *</Label><Textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} rows={12} placeholder="Escreva o conteúdo do artigo..." className="font-mono text-sm" /></div>
