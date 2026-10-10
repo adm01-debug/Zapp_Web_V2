@@ -222,6 +222,9 @@ describe('TalkXRateChart — ritmo, janela, previsto e término (X147)', () => {
     expect(skeleton).toBeTruthy();
     const classes = (skeleton as HTMLElement).className.split(' ');
     expect(classes).toContain('motion-safe:animate-pulse');
+    // A classe nua `animate-pulse` animaria mesmo com prefers-reduced-motion ligado:
+    // só a variante `motion-safe:animate-pulse` é aceita aqui.
+    expect(classes).not.toContain('animate-pulse');
   });
 
   it('com forecast: desenha "Previsto" tracejada e o balão com o término estimado', () => {
