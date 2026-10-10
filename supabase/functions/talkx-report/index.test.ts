@@ -18,6 +18,8 @@ interface FakeOpts {
   recipients?: string[];
   countErrorFor?: string | null;
   pageCap?: number;
+  breakdowns?: unknown;
+  rpcErrorFor?: string | null;
 }
 
 function makeFakeSupabase(opts: FakeOpts = {}) {
@@ -74,7 +76,16 @@ function makeFakeSupabase(opts: FakeOpts = {}) {
     },
   };
 
-  return { client: { from, auth } as unknown as SupabaseClient, countCalls };
+  const rpcCalls: Array<{ fn: string; args: unknown }> = [];
+  const rpc = async (fn: string, args: unknown) => {
+    rpcCalls.push({ fn, args });
+    if (opts.rpcErrorFor && opts.rpcErrorFor === fn) {
+      return { data: null, error: { message: "rpc indisponivel" } };
+    }
+    return { data: opts.breakdowns ?? null, error: null };
+  };
+
+  return { client: { from, auth, rpc } as unknown as SupabaseClient, countCalls, rpcCalls };
 }
 
 function envComResend(valor = "chave-teste") {
@@ -246,6 +257,76 @@ Deno.test("sem RESEND_API_KEY devolve 503 e não envia e-mail", async () => {
 
     assert(res.status === 503, `status ${res.status} != 503`);
     assert(spie.emails.length === 0, `não deveria enviar e-mail, veio ${spie.emails.length}`);
+  } finally {
+    spie.restaurar();
+  }
+});
+
+// ─── N-134: detalhamentos via talkx_campaign_report_breakdowns ──────────────────
+const BREAKDOWNS_FIXTURE = {
+  heatmap: { timezone: "America/Sao_Paulo", cells: [{ dow: 6, hour: 10, sends: 2, replies: 1, clicks: 3 }] },
+  by_segment: [{ segment: "Premium", sent: 2, replies: 1, conversions: 1, rate_pct: 50.0 }],
+  by_link: [{ label: "Exemplo", target_url: "https://exemplo.test/oferta-x", clicks: 3, unique_clicks: 2, rate_pct: 66.7 }],
+  by_variant: [{ variant: "A", sent: 3, replies: 2, conversions: 2 }],
+};
+
+function pedidoComPeriodo(campaignId = "camp-1", from = "2026-10-10T00:00:00-03:00", to = "2026-10-11T00:00:00-03:00"): Request {
+  return new Request("https://exemplo.test/talkx-report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer jwt-teste" },
+    body: JSON.stringify({ campaignId, from, to }),
+  });
+}
+
+Deno.test("N-134: resposta 200 inclui os detalhamentos da RPC de breakdowns", async () => {
+  const spie = interceptarResend();
+  try {
+    const { client, rpcCalls } = makeFakeSupabase({
+      campaign: { ...CAMPANHA_BASE, total_recipients: 3, sent_count: 3, delivered_count: 0, failed_count: 0 },
+      profile: PERFIL_CRIADOR,
+      callerId: "user-1",
+      recipients: ["sent", "sent", "sent"],
+      breakdowns: BREAKDOWNS_FIXTURE,
+    });
+    const res = await handleTalkxReport(pedidoComPeriodo(), { supabase: client, env: envComResend() });
+
+    assert(res.status === 200, `status ${res.status} != 200`);
+    assert(spie.emails.length === 1, `esperava 1 e-mail, veio ${spie.emails.length}`);
+    assert(rpcCalls.length === 1, `esperava 1 chamada rpc, veio ${rpcCalls.length}`);
+    assert(rpcCalls[0].fn === "talkx_campaign_report_breakdowns", `rpc errada: ${rpcCalls[0].fn}`);
+    const args = rpcCalls[0].args as Record<string, unknown>;
+    assert(args.p_campaign === "camp-1", `p_campaign errado: ${String(args.p_campaign)}`);
+    assert(args.p_from === "2026-10-10T00:00:00-03:00", `p_from errado: ${String(args.p_from)}`);
+    assert(args.p_to === "2026-10-11T00:00:00-03:00", `p_to errado: ${String(args.p_to)}`);
+    const body = await res.json() as { ok?: boolean; breakdowns?: unknown };
+    assert(body.ok === true, `ok deveria ser true: ${JSON.stringify(body)}`);
+    assert(
+      JSON.stringify(body.breakdowns) === JSON.stringify(BREAKDOWNS_FIXTURE),
+      `breakdowns divergente: ${JSON.stringify(body.breakdowns)}`,
+    );
+  } finally {
+    spie.restaurar();
+  }
+});
+
+Deno.test("N-134: RPC de breakdowns falhando não bloqueia o e-mail (200, breakdowns null)", async () => {
+  const spie = interceptarResend();
+  try {
+    const { client, rpcCalls } = makeFakeSupabase({
+      campaign: { ...CAMPANHA_BASE, total_recipients: 1, sent_count: 1, delivered_count: 0, failed_count: 0 },
+      profile: PERFIL_CRIADOR,
+      callerId: "user-1",
+      recipients: ["sent"],
+      rpcErrorFor: "talkx_campaign_report_breakdowns",
+    });
+    const res = await handleTalkxReport(pedidoComPeriodo(), { supabase: client, env: envComResend() });
+
+    assert(res.status === 200, `status ${res.status} != 200`);
+    assert(spie.emails.length === 1, `esperava 1 e-mail, veio ${spie.emails.length}`);
+    assert(rpcCalls.length === 1, `esperava 1 chamada rpc, veio ${rpcCalls.length}`);
+    const body = await res.json() as { ok?: boolean; breakdowns?: unknown };
+    assert(body.ok === true, `ok deveria ser true: ${JSON.stringify(body)}`);
+    assert(body.breakdowns === null, `breakdowns deveria ser null: ${JSON.stringify(body.breakdowns)}`);
   } finally {
     spie.restaurar();
   }
