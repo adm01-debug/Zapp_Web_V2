@@ -47,7 +47,7 @@ export interface TalkXTimelineItem {
 
 interface TalkXTimelinePage {
   items: TalkXTimelineItem[];
-  /** Cursor da próxima página: `created_at` do item mais antigo da página; nulo quando a página veio incompleta. */
+  /** Cursor da próxima página: composto `created_at|id` do item mais antigo da página; nulo quando a página veio incompleta. */
   nextCursor: string | null;
 }
 
@@ -90,7 +90,12 @@ export function useTalkXCampaignTimeline(campaignId: string | null | undefined, 
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .limit(pageSize);
-    if (cursor) query = query.lt('created_at', cursor);
+    if (cursor) {
+      const [cursorCreatedAt, cursorId] = cursor.split('|');
+      query = query.or(
+        `created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`,
+      );
+    }
     if (kinds.length > 0) query = query.in('event_type', kinds);
 
     const { data, error } = await query;
@@ -100,7 +105,8 @@ export function useTalkXCampaignTimeline(campaignId: string | null | undefined, 
     return {
       items: rows.map(toTimelineItem),
       // Página cheia = pode haver mais; incompleta = fim da lista.
-      nextCursor: rows.length === pageSize ? rows[rows.length - 1].created_at : null,
+      // Cursor compound: created_at|id do item mais antigo.
+      nextCursor: rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null,
     };
   };
 

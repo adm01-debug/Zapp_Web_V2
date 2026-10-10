@@ -47,6 +47,7 @@ vi.mock('@/integrations/supabase/client', () => {
     chain.limit = () => chain;
     chain.lt = (_col: string, value: string) => { cursor = value; return chain; };
     chain.in = (_col: string, values: string[]) => { kind = values[0] ?? null; return chain; };
+    chain.or = (filter: string) => { cursor = filter; return chain; };
     chain.then = (onFulfilled: (value: unknown) => unknown) => resolver().then(onFulfilled);
     return chain;
   };
@@ -86,8 +87,8 @@ const PRIMEIRA: unknown[] = [
       after: { max_per_minute: 60, business_hours_only: true },
     }),
   }),
-  // resposta sem acesso à mensagem (RLS): só o título, sem trecho
-  evento(3, { event_type: 'reply_received', message: null }),
+  // evento sem mensagem: só o título, sem trecho
+  evento(3, { event_type: 'created', message: null }),
   evento(4, { event_type: 'connection_failed', message: 'Falha de conexão (status: disconnected)' }),
   ...Array.from({ length: 15 }, (_, i) => evento(i + 5)),
 ];
@@ -136,13 +137,13 @@ describe('TalkXOperationalTimeline — leitura do servidor (X152)', () => {
     expect(section.textContent).not.toContain('max_per_minute');
   });
 
-  it('resposta sem acesso à mensagem fica só com o título (sem trecho)', async () => {
+  it('evento sem mensagem fica só com o título (sem trecho)', async () => {
     renderTimeline();
 
     const section = await waitFor(() => cardSection());
-    await waitFor(() => expect(within(section).getByText('Resposta recebida')).toBeTruthy());
-    const linha = within(section).getByText('Resposta recebida').closest('li') as HTMLElement;
-    expect(linha.textContent).toContain('Resposta recebida');
+    await waitFor(() => expect(within(section).getByText('Campanha criada')).toBeTruthy());
+    const linha = within(section).getByText('Campanha criada').closest('li') as HTMLElement;
+    expect(linha.textContent).toContain('Campanha criada');
     expect(linha.textContent).not.toContain('“');
     expect(linha.querySelectorAll('p').length).toBe(1);
   });
@@ -165,7 +166,7 @@ describe('TalkXOperationalTimeline — leitura do servidor (X152)', () => {
     expect(within(painel).getAllByText('Observação').length).toBe(15);
   });
 
-  it('"Carregar mais" pede a segunda página pelo cursor do item mais antigo', async () => {
+  it('"Carregar mais" pede a segunda página pelo cursor compound do item mais antigo', async () => {
     renderTimeline();
 
     const section = await waitFor(() => cardSection());
@@ -173,14 +174,46 @@ describe('TalkXOperationalTimeline — leitura do servidor (X152)', () => {
     const painel = await screen.findByRole('dialog');
     await waitFor(() => expect(painel.querySelectorAll('li').length).toBe(20));
 
-    const maisAntigo = (PRIMEIRA[PRIMEIRA.length - 1] as { created_at: string }).created_at;
-    expect(h.calls.some((c) => c.cursor === maisAntigo)).toBe(false);
+    // Primeira carga não usa cursor (sem .or()).
+    expect(h.calls.some((c) => c.cursor && c.cursor.startsWith('created_at.lt.'))).toBe(false);
 
     fireEvent.click(within(painel).getByRole('button', { name: /Carregar mais/ }));
 
-    await waitFor(() => expect(h.calls.some((c) => c.cursor === maisAntigo)).toBe(true));
+    // Segunda carga usa cursor compound via .or().
+    await waitFor(() => expect(h.calls.some((c) => c.cursor && c.cursor.startsWith('created_at.lt.'))).toBe(true));
     await waitFor(() => expect(within(painel).getByText('Campanha concluída')).toBeTruthy());
     expect(within(painel).getAllByText('Retomada automática').length).toBeGreaterThan(0);
+  });
+
+  it('cursor compound com .or resolve empate de created_at entre páginas', async () => {
+    const mesmoCreatedAt = new Date(BASE - 5 * 60_000).toISOString();
+    h.primeiraPagina = [
+      evento(0, { event_type: 'started', created_at: mesmoCreatedAt, id: 'ev-a' }),
+      evento(1, { event_type: 'note', created_at: mesmoCreatedAt, id: 'ev-b' }),
+      evento(2, { event_type: 'resumed', actor: { name: 'Ana' }, created_at: mesmoCreatedAt, id: 'ev-c' }),
+      ...Array.from({ length: 17 }, (_, i) => evento(i + 3)),
+    ];
+    h.segundaPagina = [
+      evento(20, { event_type: 'completed', created_at: mesmoCreatedAt, id: 'ev-d' }),
+    ];
+
+    renderTimeline();
+
+    const section = await waitFor(() => cardSection());
+    await waitFor(() => expect(section.querySelectorAll('li').length).toBe(5));
+
+    fireEvent.click(await within(section).findByRole('button', { name: /Ver todos/ }));
+    const painel = await screen.findByRole('dialog');
+    await waitFor(() => expect(painel.querySelectorAll('li').length).toBe(20));
+
+    // Ainda não há cursor compound na primeira carga.
+    expect(h.calls.some((c) => c.cursor && c.cursor.startsWith('created_at.lt.'))).toBe(false);
+
+    fireEvent.click(within(painel).getByRole('button', { name: /Carregar mais/ }));
+
+    // A segunda carga usa cursor compound via .or() com created_at e id.
+    await waitFor(() => expect(h.calls.some((c) => c.cursor && c.cursor.startsWith('created_at.lt.'))).toBe(true));
+    await waitFor(() => expect(within(painel).getByText('Campanha concluída')).toBeTruthy());
   });
 
   it('erro no bloco: mostra o erro (nunca o vazio) e o retry refaz só esta consulta', async () => {

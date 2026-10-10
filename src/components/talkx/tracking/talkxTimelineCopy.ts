@@ -163,25 +163,6 @@ const TIMELINE_COPY_FORA_DO_CICLO: Record<string, TalkXTimelineCopy> = {
   report_shared: { title: 'Relatório compartilhado', icon: Send, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   import_created: { title: 'Importação iniciada', icon: Upload, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   import_completed: { title: 'Importação concluída', icon: CheckCircle2, tone: 'text-dash-green', detail: (i) => readableMessage(i.message) },
-  message_sent: {
-    title: 'Mensagem enviada',
-    icon: Send,
-    tone: 'text-dash-green',
-    detail: (i) => contactSentence(i, (name, phone) => (phone ? `Para ${name} (${phone})` : `Para ${name}`)),
-  },
-  reply_received: {
-    title: 'Resposta recebida',
-    icon: MessageSquare,
-    tone: 'text-dash-violet',
-    detail: (i) => {
-      // Sem acesso à mensagem (RLS) o trecho não existe: o item fica só com o título.
-      const snippet = truncate((i.message ?? '').trim(), 80);
-      if (!snippet) return null;
-      const name = i.contactName?.trim();
-      return `${name ? `${name} respondeu: ` : ''}“${snippet}”`;
-    },
-  },
-  skipped_optout: { title: 'Contato suprimido por opt-out', icon: Ban, tone: 'text-dash-amber', detail: (i) => contactSentence(i, (name) => `Para ${name}`) },
 };
 
 /** Tipo fora do mapa: título neutro + a mensagem legível, nunca o tipo cru. */

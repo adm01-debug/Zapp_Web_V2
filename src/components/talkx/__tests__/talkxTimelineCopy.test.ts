@@ -61,7 +61,7 @@ describe('talkxTimelineCopy — todo tipo do servidor tem título em português 
 
   it('o mapa tem uma opção de filtro por tipo, em ordem alfabética, sem repetir valor', () => {
     const options = timelineKindOptions();
-    expect(options.length).toBe(TIPOS_DA_UNIAO.length + TIPOS_ACEITOS_PELO_BANCO_ALEM_DA_UNIAO.length + 3);
+    expect(options.length).toBe(TIPOS_DA_UNIAO.length + TIPOS_ACEITOS_PELO_BANCO_ALEM_DA_UNIAO.length);
     const labels = options.map((o) => o.label);
     expect([...labels].sort((a, b) => a.localeCompare(b, 'pt-BR'))).toEqual(labels);
     expect(new Set(options.map((o) => o.value)).size).toBe(options.length);
@@ -106,32 +106,6 @@ describe('talkxTimelineCopy — frase de cada evento (X152)', () => {
   it('`paused` com motivo escreve "Motivo: ..." e o autor', () => {
     const description = describeTimelineEvent(item({ kind: 'paused', message: 'janela de envio fechada', actorName: 'Ana' }));
     expect(description.phrase).toBe('Campanha pausada — Motivo: janela de envio fechada · por Ana');
-  });
-
-  it('resposta SEM acesso à mensagem: só o título, sem trecho', () => {
-    const description = describeTimelineEvent(item({ kind: 'reply_received', contactName: 'Fulano', message: null }));
-    expect(description.phrase).toBe('Resposta recebida');
-    expect(description.detail).toBeNull();
-  });
-
-  it('resposta com acesso: "<nome> respondeu" e o trecho cortado em 80 caracteres', () => {
-    const description = describeTimelineEvent(item({
-      kind: 'reply_received',
-      contactName: 'Fulano',
-      message: 'a'.repeat(120),
-    }));
-    expect(description.title).toBe('Resposta recebida');
-    expect(description.phrase).toContain('Fulano respondeu: “');
-    expect(description.phrase).toContain('a'.repeat(80));
-    expect(description.phrase).not.toContain('a'.repeat(81));
-    expect(description.phrase).toContain('…');
-  });
-
-  it('mensagem enviada: "Para <nome> (<telefone>)"', () => {
-    const description = describeTimelineEvent(item({
-      kind: 'message_sent', contactName: 'Fulano', contactPhone: '+55 11 99999-0000',
-    }));
-    expect(description.phrase).toBe('Mensagem enviada — Para Fulano (+55 11 99999-0000)');
   });
 
   it('tipo desconhecido não vira o tipo cru na tela', () => {
