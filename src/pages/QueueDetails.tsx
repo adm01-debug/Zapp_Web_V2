@@ -95,24 +95,24 @@ export default function QueueDetails() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background p-6 space-y-6"><AuroraBorealis /><FloatingParticles />
+      <main className="min-h-screen bg-background p-6 space-y-6"><AuroraBorealis /><FloatingParticles />
         <div className="flex items-center gap-4"><Skeleton className="h-10 w-10" /><Skeleton className="h-8 w-64" /></div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-32" />)}</div>
         <Skeleton className="h-96" />
-      </div>
+      </main>
     );
   }
 
   if (!queue) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center"><AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><h2 className="text-xl font-semibold text-foreground mb-2">Fila não encontrada</h2><Button onClick={() => navigate('/')}>Voltar</Button></div>
-      </div>
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center"><AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" /><h1 className="text-xl font-semibold text-foreground mb-2">Fila não encontrada</h1><Button onClick={() => navigate('/')}>Voltar</Button></div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <AuroraBorealis /><FloatingParticles />
       <PageHeader title={queue.name} subtitle={queue.description || undefined} showBack onBack={() => navigate('/')}
         breadcrumbs={[{ label: 'Filas', onClick: () => navigate('/'), href: '/' }, { label: queue.name }]}
@@ -149,6 +149,6 @@ export default function QueueDetails() {
           <QueueContactsTable contacts={contacts} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }
