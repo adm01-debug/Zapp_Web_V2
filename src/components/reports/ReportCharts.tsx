@@ -49,7 +49,7 @@ export function ComparisonSummaryChart({ data, isLoading }: { data: Array<Record
         <CardContent>
           {isLoading ? <Skeleton className="h-[250px] w-full" /> : (
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={data} layout="vertical">
+              <BarChart data={data} layout="vertical" aria-label="Gráfico de comparação de métricas: período atual versus anterior" title="Gráfico de comparação de métricas">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} width={120} />
@@ -85,7 +85,7 @@ export function PeriodAreaChart({ data, label, dateLabel, gradientId, color, tot
       <CardContent>
         {isLoading ? <Skeleton className="h-[250px] w-full" /> : (
           <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={data}>
+            <AreaChart data={data} aria-label={`Gráfico de área ${label}`} title={label}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={color} stopOpacity={0.3} />
@@ -124,7 +124,7 @@ export function DistributionPieChart({ data, label, isLoading, colors, variant =
       <CardContent>
         {isLoading ? <Skeleton className="h-[200px] w-full" /> : (
           <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
+            <PieChart aria-label={`Gráfico de pizza ${label}`} title={label}>
               <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value">
                 {data.map((_, index) => <Cell key={`cell-${index}`} fill={finalColors[index % finalColors.length]} />)}
               </Pie>
@@ -147,7 +147,7 @@ export function DailyMessagesChart({ data, isLoading }: { data: ChartData; isLoa
         <CardContent>
           {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={data.daily}>
+              <AreaChart data={data.daily} aria-label="Gráfico de mensagens enviadas e recebidas por dia" title="Mensagens por dia">
                 <defs>
                   <linearGradient id="colorEnviadas" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -176,7 +176,7 @@ export function DailyMessagesChart({ data, isLoading }: { data: ChartData; isLoa
         <CardContent>
           {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+              <PieChart aria-label="Gráfico de distribuição de remetentes" title="Distribuição por remetente">
                 <Pie data={data.bySender} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
                   {data.bySender.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
@@ -199,7 +199,7 @@ export function AgentsChart({ data, isLoading }: { data: Array<{ name: string; m
       <CardContent>
         {isLoading ? <Skeleton className="h-[400px] w-full" /> : data.length > 0 ? (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={data} layout="vertical">
+            <BarChart data={data} layout="vertical" aria-label="Gráfico de mensagens por agente" title="Mensagens por agente">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" fontSize={12} width={120} />
@@ -224,7 +224,7 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
         <CardContent>
           {isLoading ? <Skeleton className="h-[300px] w-full" /> : (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data.daily}>
+              <LineChart data={data.daily} aria-label="Gráfico de novos contatos por dia" title="Novos contatos por dia">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -241,7 +241,7 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
         <CardContent>
           {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.byType.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+              <PieChart aria-label="Gráfico de contatos por tipo" title="Contatos por tipo">
                 <Pie data={data.byType} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                   {data.byType.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
@@ -259,7 +259,7 @@ export function ContactsCharts({ data, isLoading }: { data: ContactsChartData; i
         <CardContent>
           {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.byTag.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.byTag}>
+              <BarChart data={data.byTag} aria-label="Gráfico de contatos por tag" title="Contatos por tag">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
