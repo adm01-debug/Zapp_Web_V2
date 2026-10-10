@@ -206,9 +206,40 @@ describe('X049 — espera da ação', () => {
     expect(screen.getByRole('button', { name: 'Excluir' })).toBeEnabled();
   });
 
+  it('enquanto a ação pende, o botão fica desabilitado e um 2º clique não dispara outra chamada', async () => {
+    const onConfirm = vi.fn(() => new Promise<void>(() => { /* fica pendente de propósito */ }));
+    const onClose = vi.fn();
+    renderConfirm('excluirCampanha', { onConfirm, onClose });
+
+    const botao = screen.getByRole('button', { name: 'Excluir' });
+    // dois cliques no mesmo turno: sem a trava por ref, ambos leem `pending`
+    // ainda falso e a ação dispara duas vezes.
+    await act(async () => {
+      fireEvent.click(botao);
+      fireEvent.click(botao);
+    });
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+  });
+
   it('abre com o foco no "Cancelar" nos destrutivos', async () => {
     renderConfirm('excluirCampanha');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus());
+  });
+
+  it('onConfirm legado `() => void` (sem payload) segue fechando o modal', () => {
+    const onConfirm = vi.fn(() => { /* assinatura antiga, ignora o payload */ });
+    const onClose = vi.fn();
+    // chamador legado: `() => void`, sem `reasonField` — continua compatível
+    renderConfirm('duplicarCampanha', { onConfirm: onConfirm as () => void, onClose });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicar' }));
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('com check pendente o botão não confirma; marcado, confirma', () => {
