@@ -104,7 +104,7 @@ export function SkipLinks() {
     >
       {showIndicator && (
         <div className="motion-safe:animate-slide-down fixed top-20 left-4 z-[9998] bg-muted/95 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-muted-foreground shadow-lg border border-border">
-          Pressione <kbd className="px-1.5 py-0.5 bg-background rounded border border-border font-mono">Tab</kbd> para navegar
+          Pressione <kbd className="px-1.5 py-0.5 bg-card rounded border border-border font-mono">Tab</kbd> para navegar
         </div>
       )}
 
