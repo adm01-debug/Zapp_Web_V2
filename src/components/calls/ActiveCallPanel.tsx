@@ -52,7 +52,6 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
   const nome = sessao.session.name;
 
   const duracaoTransicao = reduzirMotion ? 0 : 0.12;
-  const duracaoFade = reduzirMotion ? 0 : 0.15;
 
   // T64: encerrada a ligacao, o lugar da chamada passa a ser o resumo pos-chamada.
   if (estado === 'ended') {

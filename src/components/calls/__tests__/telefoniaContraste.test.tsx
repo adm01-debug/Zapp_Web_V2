@@ -28,12 +28,39 @@ const { estado } = vi.hoisted(() => ({
   estado: { incomingCall: null as null | Record<string, unknown> },
 }));
 
+// Dublê do framer-motion: o `motion.div` vira um `<div>` que expõe no DOM o que o
+// componente pediu para animar (`data-motion-inicial` / `data-motion-animar` /
+// `data-motion-duracao`) — sem vazar as props de animação como atributo inválido.
+// `useReducedMotion` responde ao toggle do teste, para medir também o caminho
+// "movimento reduzido" (T75).
+const { reduzirMovimento } = vi.hoisted(() => ({ reduzirMovimento: { value: false } }));
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+    div: ({
+      children,
+      initial,
+      animate,
+      transition,
+      ...rest
+    }: {
+      children?: unknown;
+      initial?: unknown;
+      animate?: unknown;
+      transition?: { duration?: number };
+      [k: string]: unknown;
+    }) => (
+      <div
+        {...rest}
+        data-motion-inicial={initial === undefined ? 'nenhuma' : JSON.stringify(initial)}
+        data-motion-animar={animate === undefined ? 'nenhuma' : JSON.stringify(animate)}
+        data-motion-duracao={transition?.duration === undefined ? 'nenhuma' : String(transition.duration)}
+      >
+        {children as never}
+      </div>
+    ),
   },
   AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
-  useReducedMotion: () => false,
+  useReducedMotion: () => reduzirMovimento.value,
 }));
 vi.mock('../CallDialog', () => ({ CallDialog: () => <div data-testid="call-dialog" /> }));
 vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
@@ -67,7 +94,10 @@ import { CallDirectionCell } from '../CallDirectionCell';
 import { IncomingCallAlert } from '../IncomingCallAlert';
 import { Badge } from '@/components/ui/badge';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  reduzirMovimento.value = false;
+});
 
 // ─── Medidor WCAG (HSL → sRGB → luminância relativa) ───
 type RGB = [number, number, number];
@@ -341,5 +371,29 @@ describe('T78 — os componentes reais pintam os pares do laudo', () => {
     const cabecalhoVideo = video.querySelector<HTMLElement>('.bg-info')!;
     expect(cabecalhoVideo).toBeTruthy();
     expect(cabecalhoVideo.className).toContain('text-primary-foreground');
+  });
+});
+
+// ─── T75: o fade de entrada do KPI respeita `useReducedMotion` ───
+// Sem motion, o tile já nasce com opacidade 1 e nenhuma transição; com motion,
+// entra de opacidade 0 em 0,15 s. Os dois casos são medidos no tile REAL.
+describe('T75 — CallKpiCard: fade de entrada de 150 ms', () => {
+  it('com movimento ligado entra animando: opacidade 0 → 1 em 0,15 s', () => {
+    reduzirMovimento.value = false;
+    const { container } = render(<CallKpiCard rotulo="Total" valor="12" />);
+    const card = container.querySelector<HTMLElement>('[data-testid="tel-kpi-card"]')!;
+    expect(card.getAttribute('data-motion-inicial')).toBe('{"opacity":0}');
+    expect(card.getAttribute('data-motion-animar')).toBe('{"opacity":1}');
+    expect(card.getAttribute('data-motion-duracao')).toBe('0.15');
+  });
+
+  it('com movimento reduzido o tile nasce visível e sem transição', () => {
+    reduzirMovimento.value = true;
+    const { container } = render(<CallKpiCard rotulo="Total" valor="12" />);
+    const card = container.querySelector<HTMLElement>('[data-testid="tel-kpi-card"]')!;
+    expect(card.getAttribute('data-motion-inicial')).toBe('nenhuma');
+    expect(card.getAttribute('data-motion-animar')).toBe('nenhuma');
+    expect(card.getAttribute('data-motion-duracao')).toBe('nenhuma');
+    expect(card.querySelector('[data-testid="tel-kpi-value"]')!.textContent).toBe('12');
   });
 });
