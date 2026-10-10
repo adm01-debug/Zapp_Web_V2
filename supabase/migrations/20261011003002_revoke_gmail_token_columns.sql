@@ -1,5 +1,10 @@
 -- revoke_gmail_token_columns
--- Rollback: REVOKE ALL ON public.gmail_accounts FROM anon, authenticated; GRANT SELECT ON public.gmail_accounts TO anon, authenticated;
+-- Rollback: restaura o estado anterior (grant de TABELA para anon/authenticated):
+--   revogar o GRANT de coluna e devolver o GRANT de tabela que o privilegio default
+--   do schema public concedia (ALL: SELECT/INSERT/UPDATE/DELETE).
+-- Rollback (SQL executável, na ordem):
+--   revoke all on public.gmail_accounts from anon, authenticated;
+--   grant all on public.gmail_accounts to anon, authenticated;
 --
 -- Racional (N-138): as colunas de token OAuth criptografado da tabela
 -- public.gmail_accounts — access_token_encrypted e refresh_token_encrypted
