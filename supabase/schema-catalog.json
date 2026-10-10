@@ -2384,7 +2384,7 @@
         "upsert_my_call",
         "user_has_permission"
     ],
-    "generated_at": "2026-10-04",
+    "generated_at": "2026-10-10",
     "format_version": 2,
     "check_constraints": [
         "agent_presence.agent_presence_status_check:CHECK ((status = ANY (ARRAY['online'::text, 'away'::text, 'offline'::text])))",
