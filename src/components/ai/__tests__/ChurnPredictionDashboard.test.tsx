@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { ChurnPredictionDashboard } from '../ChurnPredictionDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -86,10 +87,25 @@ describe('ChurnPredictionDashboard', () => {
       expect(bars.length).toBeGreaterThan(0);
       bars.forEach((bar) => {
         expect(bar).toHaveAttribute('aria-label');
-        expect(bar.getAttribute('aria-label')).toMatch(/%/);
+        expect(bar.getAttribute('aria-label')).toMatch(/^Risco de churn de .+: \d+%$/);
       });
+      // o nome acessivel computado chega ao leitor em TODAS as barras: busca por role+nome
+      const nomeadas = screen.getAllByRole('progressbar', { name: /Risco de churn de / });
+      expect(nomeadas.length).toBe(bars.length);
       // score numerico visivel na linha: o Badge da linha exibe {riskScore}% (sem duplicar o texto)
       expect(screen.getAllByText(/\d+%/).length).toBeGreaterThanOrEqual(bars.length);
+    });
+
+    it('axe nao acusa barra de progresso sem nome', async () => {
+      const { container } = render(<ChurnPredictionDashboard />);
+      await screen.findAllByRole('progressbar');
+      const results = await axe(container, {
+        rules: { 'color-contrast': { enabled: false } },
+      });
+      const semNome = results.violations.filter((v) =>
+        ['aria-progressbar-name', 'aria-toggle-field-name', 'button-name'].includes(v.id),
+      );
+      expect(semNome).toEqual([]);
     });
 
     it('shows loading skeletons while fetching', () => {

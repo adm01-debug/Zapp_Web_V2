@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { AutoTicketClassifier } from '../AutoTicketClassifier';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -62,6 +63,19 @@ describe('AutoTicketClassifier', () => {
     it('switch tem nome acessivel Auto-classificar', () => {
       render(<AutoTicketClassifier />);
       expect(screen.getByRole('switch', { name: 'Auto-classificar' })).toBeInTheDocument();
+    });
+
+    it('axe nao acusa controle sem nome (aria-toggle-field-name)', async () => {
+      const { container } = render(<AutoTicketClassifier />);
+      const results = await axe(container, {
+        rules: { 'color-contrast': { enabled: false } },
+      });
+      const semNome = results.violations.filter((v) =>
+        ['button-name', 'aria-input-field-name', 'aria-toggle-field-name', 'aria-command-name'].includes(
+          v.id,
+        ),
+      );
+      expect(semNome).toEqual([]);
     });
 
     it('renders batch classify button', () => {
