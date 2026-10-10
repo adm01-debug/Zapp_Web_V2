@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { subDays } from 'date-fns';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -211,10 +211,10 @@ export function QueuesComparisonDashboard() {
           {/* Detailed Table */}
           <Card className="border border-secondary/20 bg-card/50 backdrop-blur">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
+              <h2 className="font-semibold leading-none tracking-tight text-base flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Detalhamento por Fila
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[300px]">
@@ -229,7 +229,7 @@ export function QueuesComparisonDashboard() {
                       <TableHead className="text-right">Média/Contato</TableHead>
                       <TableHead className="text-right">Atendentes</TableHead>
                       <TableHead className="text-right">Taxa Atrib.</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead><span className="sr-only">Ações</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
