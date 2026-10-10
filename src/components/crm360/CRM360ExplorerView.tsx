@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Building2, Pencil } from 'lucide-react';
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { CRM360StatsCards } from './CRM360StatsCards';
@@ -37,7 +38,26 @@ export function CRM360ExplorerView() {
 
   const handleSuccess = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  if (roleLoading) return null;
+  // Enquanto a permissão de supervisor é checada, mostra um esqueleto do
+  // conteúdo (mesmo padrão de QueuesView.tsx) em vez de tela em branco.
+  if (roleLoading) {
+    return (
+      <div className="space-y-4 h-full flex flex-col w-full min-w-0" role="status" aria-label="Carregando CRM 360">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-6 w-24" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="flex-1 w-full min-h-[200px] rounded-lg" />
+      </div>
+    );
+  }
 
   if (!isSupervisor) {
     return (

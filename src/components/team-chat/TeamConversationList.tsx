@@ -10,6 +10,15 @@ import { useActiveDepartments, ActiveDepartment } from '@/hooks/team-chat/useAct
 import { DepartmentManagementDialog } from './DepartmentManagementDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Mesmo padrão de carregamento da lista do Inbox (ConversationListSidebar).
+const SKELETON_WIDTHS = [
+  { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
+  { name: 91, msg: 80 }, { name: 65, msg: 48 }, { name: 78, msg: 65 },
+  { name: 88, msg: 73 },
+];
 
 type FilterType = 'all' | 'direct' | 'group' | 'department';
 
@@ -28,6 +37,7 @@ interface Props {
   currentUserId?: string;
   canManageDepartments?: boolean;
   currentUserName?: string;
+  loading?: boolean;
 }
 
 export function TeamConversationList({
@@ -38,6 +48,7 @@ export function TeamConversationList({
   currentUserId,
   canManageDepartments,
   currentUserName,
+  loading = false,
 }: Props) {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -120,8 +131,29 @@ export function TeamConversationList({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas">
-        {filtered.length === 0 ? (
+      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas" aria-busy={loading}>
+        {loading ? (
+          <div className="p-3 space-y-1" role="status" aria-label="Carregando conversas">
+            {SKELETON_WIDTHS.map(({ name, msg }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
+                className="flex items-center gap-3 p-2.5 rounded-xl"
+              >
+                <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-3.5 rounded-md" style={{ width: `${name}%` }} />
+                    <Skeleton className="h-3 w-10 rounded-md" />
+                  </div>
+                  <Skeleton className="h-3 rounded-md" style={{ width: `${msg}%` }} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
             <span>Nenhuma conversa</span>

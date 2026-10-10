@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
 export function TeamChatView() {
-  const { data: conversations = [] } = useTeamConversations();
+  const { data: conversations = [], isLoading: conversationsLoading } = useTeamConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -35,6 +35,7 @@ export function TeamChatView() {
           selectedId={selectedId}
           onSelect={(id) => { setSelectedId(id); setShowDetails(false); }}
           onNewConversation={() => setShowNewDialog(true)}
+          loading={conversationsLoading}
         />
       </div>
 

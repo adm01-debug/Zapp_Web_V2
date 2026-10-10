@@ -55,6 +55,8 @@ const ACTION_COLORS: Record<string, string> = {
   role_change: 'bg-accent/10 text-accent-foreground',
 };
 
+const LOGS_PAGE_LIMIT = 200;
+
 const ACTION_ICONS: Record<string, typeof Shield> = {
   login: User,
   logout: User,
@@ -74,6 +76,7 @@ export function AuditLogDashboard() {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [truncated, setTruncated] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -81,7 +84,7 @@ export function AuditLogDashboard() {
       .from('audit_logs')
       .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(LOGS_PAGE_LIMIT);
 
     if (actionFilter === ROLE_FILTER_VALUE) {
       query = query.like('action', ROLE_ACTION_PREFIX + '%');
@@ -95,6 +98,9 @@ export function AuditLogDashboard() {
     const { data, error } = await query;
     if (!error && data) {
       setLogs(data as AuditLog[]);
+      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
+      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
+      setTruncated(data.length >= LOGS_PAGE_LIMIT);
       
       const today = localDayKey(new Date());
       const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
@@ -146,7 +152,7 @@ export function AuditLogDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
+          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
           { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
           { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
@@ -225,6 +231,11 @@ export function AuditLogDashboard() {
             <FileText className="w-5 h-5" />
             Logs de Auditoria ({filteredLogs.length})
           </CardTitle>
+          {truncated && (
+            <p className="text-xs text-warning mt-1">
+              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
