@@ -32,6 +32,8 @@ export const MAX_CAMPAIGNS_PER_TICK = 10;
 export const MAX_RESUMES_PER_CONNECTION = 1;
 /** Timeout de cada POST a talkx-send: a resposta é imediata (X013), então 10 s é folga. */
 export const TALKX_SEND_TIMEOUT_MS = 10_000;
+/** Teto de campanhas AB com vencedor decidido e gravado por tick (N-119). */
+export const MAX_AB_DECISIONS_PER_TICK = 25;
 
 /**
  * Nome da RPC SECURITY DEFINER que lê o segredo do Vault (criada na X010).
@@ -253,6 +255,26 @@ export async function handleTalkxScheduler(
       }
       if (connectionId !== null) resumedConnections.add(connectionId);
       resumeCandidates.push(decision);
+    }
+
+    // ── 2.5 Seleção do vencedor AB (lote único) ───────────────────────────────
+    // UMA chamada por tick: a RPC decide e GRAVA o vencedor de cada campanha AB
+    // ainda sem decisão (SKIP LOCKED + limite), em vez de N selects + N RPCs +
+    // N updates com uma escrita fora da transação que calcula (N-119).
+    // Roda mesmo sem campanha devida: a decisão depende de amostra, não de agenda.
+    try {
+      const { data: decided, error: abError } = await supabase.rpc("talkx_decide_ab_winners", {
+        p_limit: MAX_AB_DECISIONS_PER_TICK,
+      });
+      if (abError) {
+        log.error("AB winner selection failed", { error: abError.message });
+      } else if (Array.isArray(decided) && decided.length > 0) {
+        log.info(`AB winners decided: ${decided.length}`, {
+          campaigns: decided.map((d: { campaign_id: string }) => d.campaign_id),
+        });
+      }
+    } catch (err) {
+      log.error("AB winner selection failed", { error: String(err) });
     }
 
     if (!dueCampaigns?.length && !resumeCandidates.length) {

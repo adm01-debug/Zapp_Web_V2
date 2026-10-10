@@ -647,6 +647,11 @@ jobs:
           TALKX_ENGINE_TICK_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-engine-tick.test.sh
 
+      - name: Simular resultado por variante e escolha do vencedor AB do Talk X (N-119)
+        env:
+          TALKX_AB_WINNER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-ab-winner.test.sh
+
       # O teste existente acima monta o fixture aplicando SO a migration de
       # 20260911150000 (um overload), e por isso nunca viu a ambiguidade que
       # existe em producao quando a versao de 3 args de 20260916210000 tambem
