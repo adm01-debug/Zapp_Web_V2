@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project_ref": "[REDACTED]",
+  "cron_jobs": [
+    { "jobname": "talkx-scheduler-1min", "schedule": "* * * * *" },
+    { "jobname": "tasks-notify-due", "schedule": "* * * * *" },
+    { "jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *" },
+    { "jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *" },
+    { "jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *" },
+    { "jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *" },
+    { "jobname": "connection-health-check", "schedule": "2-57/5 * * * *" },
+    { "jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *" },
+    { "jobname": "avatars-refresh", "schedule": "7 * * * *" },
+    { "jobname": "cleanup-link-preview-cache", "schedule": "12 3 * * *" },
+    { "jobname": "vacuum-contacts-daily", "schedule": "42 3 * * *" },
+    { "jobname": "vacuum-messages-post-expurgo", "schedule": "20 3 2 9 *" }
+  ]
+}
