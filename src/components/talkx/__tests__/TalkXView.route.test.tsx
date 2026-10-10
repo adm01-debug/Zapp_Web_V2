@@ -51,6 +51,7 @@ vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div data-testid="scheduled" /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div data-testid="running" /> }));
+vi.mock('@/components/talkx/TalkXCampaignPaused', () => ({ TalkXCampaignPaused: () => <div data-testid="paused" /> }));
 
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
@@ -437,7 +438,7 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
     expect(params.get('wizard')).toBeNull();
   });
 
-  it('onView de pausada abre a running e grava a rota (sem tela pausada no contêiner)', async () => {
+  it('onView de pausada abre a tela propria e grava a rota (X156/T13)', async () => {
     f.campaigns = [{ ...sched, id: 'cmp_paused', name: 'Pausada', status: 'paused' }];
     window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);
@@ -445,9 +446,9 @@ describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
 
     fireEvent.click(screen.getByText('Ver primeira campanha'));
 
-    expect(await screen.findByTestId('running')).toBeInTheDocument();
+    expect(await screen.findByTestId('paused')).toBeInTheDocument();
     const params = new URLSearchParams(window.location.search);
     expect(params.get('campaign')).toBe('cmp_paused');
-    expect(params.get('screen')).toBe('running');
+    expect(params.get('screen')).toBe('paused');
   });
 });

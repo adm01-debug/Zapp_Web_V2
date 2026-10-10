@@ -195,7 +195,7 @@ describe('Talk X screen routing (TL-152)', () => {
     expect(screenForStatus('draft')).toBe('wizard');
     expect(screenForStatus('scheduled')).toBe('scheduled');
     expect(screenForStatus('sending')).toBe('running');
-    expect(screenForStatus('paused')).toBe('running');
+    expect(screenForStatus('paused')).toBe('paused');
     expect(screenForStatus('completed')).toBe('monitor');
     expect(screenForStatus('cancelled')).toBe('monitor');
     expect(screenForStatus(null)).toBe('monitor');
