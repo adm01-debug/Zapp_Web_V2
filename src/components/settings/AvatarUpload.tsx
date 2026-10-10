@@ -10,6 +10,10 @@ import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AvatarUpload');
 
+// Expiração curta: o perfil guarda só o caminho do arquivo e a URL assinada é
+// regerada a cada render, então não há motivo para uma validade longa.
+export const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
+
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
   const feedback = useActionFeedback();
@@ -27,7 +31,7 @@ export function AvatarUpload() {
     (async () => {
       const { data, error } = await supabase.storage
         .from('avatars')
-        .createSignedUrl(filePath, 3600);
+        .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
       const signedUrl = data?.signedUrl ?? null;
       if (!cancelled && !error && signedUrl) {
         setAvatarUrl(signedUrl);

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockUpdate = vi.fn();
 const mockEqUpdate = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
+  SUPABASE_URL: 'https://proj.supabase.co',
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn().mockReturnValue({
@@ -41,6 +42,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { useAdminData, type UserWithRole } from '@/components/admin/useAdminData';
+import { supabase } from '@/integrations/supabase/client';
 import { renderHook, act } from '@testing-library/react';
 
 describe('useAdminData - can_download no handleSaveUser', () => {
@@ -145,5 +147,115 @@ describe('UserWithRole interface', () => {
     };
 
     expect(typeof user.can_download).toBe('boolean');
+  });
+});
+
+describe('useAdminData — avatares no bucket privado', () => {
+  const storageFrom = supabase.storage.from as unknown as ReturnType<typeof vi.fn>;
+  const tableFrom = supabase.from as unknown as ReturnType<typeof vi.fn>;
+  const createSignedUrl = vi.fn();
+  const getPublicUrl = vi.fn();
+  const upload = vi.fn();
+  let lastUpdate: Record<string, unknown> | null = null;
+
+  const profileRow = {
+    id: 'user-1',
+    user_id: 'auth-1',
+    name: 'Test User',
+    email: 'test@test.com',
+    avatar_url: 'auth-1/avatar.png',
+    nickname: null,
+    signature: null,
+    job_title: null,
+    department: null,
+    phone: null,
+    access_level: 'basic',
+    max_chats: 5,
+    can_download: true,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  };
+
+  const buildUser = (avatar_url: string | null): UserWithRole => ({
+    id: 'user-1', user_id: 'auth-1', name: 'Test User', email: 'test@test.com',
+    avatar_url, nickname: null, signature: null, role: 'agent', job_title: null,
+    department: null, phone: null, access_level: 'basic', max_chats: 5,
+    can_download: true, is_active: true, created_at: new Date().toISOString(),
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    lastUpdate = null;
+    createSignedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.png' }, error: null });
+    upload.mockResolvedValue({ error: null });
+    storageFrom.mockReturnValue({ upload, getPublicUrl, createSignedUrl });
+    tableFrom.mockImplementation((table: string) => ({
+      select: () => {
+        const result = {
+          data: table === 'profiles' ? [profileRow] : [{ user_id: 'auth-1', role: 'agent' }],
+          error: null,
+        };
+        const thenable = Promise.resolve(result) as Promise<typeof result> & {
+          order: () => Promise<typeof result>;
+          in: () => Promise<{ data: unknown[]; error: null }>;
+          single: () => Promise<typeof result>;
+        };
+        thenable.order = async () => result;
+        thenable.in = async () => ({ data: [], error: null });
+        thenable.single = async () => result;
+        return thenable;
+      },
+      update: (payload: Record<string, unknown>) => {
+        lastUpdate = payload;
+        return { eq: async () => ({ error: null }) };
+      },
+      insert: async () => ({ data: null, error: null }),
+    }));
+  });
+
+  it('assina o caminho guardado ao carregar usuários (bucket privado)', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+
+    await act(async () => {
+      await result.current.fetchData();
+    });
+
+    expect(createSignedUrl).toHaveBeenCalledWith('auth-1/avatar.png', 300);
+    expect(getPublicUrl).not.toHaveBeenCalled();
+    expect(result.current.users[0].avatar_url).toBe('https://signed.example.com/avatar.png');
+  });
+
+  it('upload de avatar pelo admin grava o caminho, não a URL', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+
+    await act(async () => {
+      await result.current.handleSaveUser(buildUser(null), file);
+    });
+
+    expect(upload).toHaveBeenCalled();
+    expect(lastUpdate?.avatar_url).toMatch(/^[0-9a-f-]{36}\.png$/);
+    expect(getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('salvar sem trocar a foto persiste o caminho, não a URL assinada', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+    const signed = 'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc';
+
+    await act(async () => {
+      await result.current.handleSaveUser(buildUser(signed), null);
+    });
+
+    expect(lastUpdate?.avatar_url).toBe('auth-1/avatar.png');
+  });
+
+  it('remover o avatar grava null (não sobra URL pública)', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+
+    await act(async () => {
+      await result.current.handleSaveUser(buildUser(null), null);
+    });
+
+    expect(lastUpdate?.avatar_url).toBeNull();
   });
 });
