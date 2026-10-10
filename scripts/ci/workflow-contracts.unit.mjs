@@ -247,7 +247,12 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
-    const cache = blocos.find((p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p));
+    // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
+    // install) — o passo dos browsers do Playwright é o que aponta para
+    // `~/.cache/ms-playwright`, não necessariamente o primeiro `actions/cache`.
+    const cache = blocos.find(
+      (p) => /uses:\s*actions\/cache@[a-f0-9]{40}\b/.test(p) && /~\/\.cache\/ms-playwright\b/.test(p),
+    );
     if (!cache) {
       problemas.push(`${nome}: sem passo actions/cache para os browsers`);
       continue;
@@ -292,4 +297,82 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+// E67 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo job que roda
+// `bun install` restaura o cache global do Bun ANTES de instalar.
+//
+// Por que importa: o `bun install` é o passo mais repetido e mais caro do
+// pipeline (10 jobs em 5 workflows). Sem `actions/cache`, cada run baixa o
+// registry inteiro do zero.
+//
+// Âncoras que o teste trava, cada uma por um motivo:
+//   (a) o passo de cache existe no MESMO job (cache de outro job não serve);
+//   (b) ele vem ANTES do install (depois não economiza nada);
+//   (c) o caminho é `~/.bun/install/cache` (o cache global de pacotes);
+//   (d) a chave acompanha `hashFiles('bun.lock')` — chave fixa devolveria
+//       dependência velha para um lock novo, e o `--frozen-lockfile` passaria
+//       a validar contra o que não foi instalado.
+
+const USES_CACHE = /uses:\s*actions\/cache@[a-f0-9]{40}\b/;
+const PATH_CACHE_BUN = /path:\s*~\/\.bun\/install\/cache\s*$/;
+const KEY_CACHE_BUN = /key:\s*bun-\$\{\{\s*hashFiles\('bun\.lock'\)\s*\}\}\s*$/;
+
+/** Blocos de job de um workflow: chaves de 2 espaços sob `jobs:` (texto cru). */
+function blocosDeJob(texto) {
+  const linhas = texto.split('\n');
+  const inicio = linhas.findIndex((l) => /^jobs:\s*$/.test(l));
+  if (inicio === -1) return [];
+
+  const blocos = [];
+  let atual = null;
+  for (let i = inicio + 1; i < linhas.length; i += 1) {
+    const l = linhas[i];
+    if (/^ {2}["']?[A-Za-z0-9_][A-Za-z0-9_.-]*["']?:\s*$/.test(l)) {
+      if (atual) blocos.push(atual);
+      atual = { nome: l.trim().replace(/:$/, '').replace(/["']/g, ''), linhas: [] };
+      continue;
+    }
+    // Chave de topo de novo: acabou o bloco `jobs:`.
+    if (/^\S/.test(l)) {
+      if (atual) blocos.push(atual);
+      atual = null;
+      continue;
+    }
+    if (atual) atual.linhas.push(l);
+  }
+  if (atual) blocos.push(atual);
+  return blocos.map((b) => ({ nome: b.nome, texto: b.linhas.join('\n') }));
+}
+
+test('E67: todo job que roda bun install restaura o cache do Bun antes de instalar', () => {
+  const problemas = [];
+  let jobsComInstall = 0;
+
+  for (const nome of nomes) {
+    for (const job of blocosDeJob(wf[nome])) {
+      const linhasJob = job.texto.split('\n');
+      const idxInstall = linhasJob.findIndex((l) => /\bbun install\b/.test(l));
+      if (idxInstall === -1) continue;
+      jobsComInstall += 1;
+
+      const idxCache = linhasJob.findIndex((l) => USES_CACHE.test(l));
+      if (idxCache === -1) {
+        problemas.push(`${nome} → ${job.nome}: sem passo actions/cache`);
+        continue;
+      }
+      if (idxCache > idxInstall) {
+        problemas.push(`${nome} → ${job.nome}: cache DEPOIS do bun install (não economiza nada)`);
+      }
+      if (!linhasJob.some((l) => PATH_CACHE_BUN.test(l))) {
+        problemas.push(`${nome} → ${job.nome}: cache sem path ~/.bun/install/cache`);
+      }
+      if (!linhasJob.some((l) => KEY_CACHE_BUN.test(l))) {
+        problemas.push(`${nome} → ${job.nome}: cache sem key atrelada a bun.lock (hashFiles('bun.lock'))`);
+      }
+    }
+  }
+
+  assert.ok(jobsComInstall > 0, 'nenhum job com bun install encontrado: o extrator de jobs quebrou');
+  assert.deepEqual(problemas, [], `job com bun install sem cache do Bun:\n${problemas.join('\n')}`);
 });
