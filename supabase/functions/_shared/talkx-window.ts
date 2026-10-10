@@ -349,7 +349,11 @@ export function deliveryWindowStatus(
       if (dndSetting.holidays.includes(todayIso)) {
         return { allowed: false, reason: "dnd" };
       }
-      if (currentMinutes >= dndStart && currentMinutes < dndEnd) {
+      // N-118: DND que vira a meia-noite (start > end) cobre os dois lados.
+      const dndAtivo = dndStart <= dndEnd
+        ? currentMinutes >= dndStart && currentMinutes < dndEnd
+        : currentMinutes >= dndStart || currentMinutes < dndEnd;
+      if (dndAtivo) {
         return { allowed: false, reason: "dnd" };
       }
     }

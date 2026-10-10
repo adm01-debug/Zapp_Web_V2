@@ -2,15 +2,21 @@
 -- helper validate_talkx_send_weekdays (erro 22023), window_open no fuso da
 -- campanha (DND só com opt-in) e novos campos nas RPCs vigentes save/update.
 
--- Rollback:
---   drop function if exists public.talkx_campaign_window_open(uuid, timestamptz);
---   drop function if exists public.validate_talkx_send_weekdays(jsonb, text);
---   alter table public.talkx_campaigns drop column if exists send_weekdays;
---   alter table public.talkx_campaigns drop column if exists respect_dnd;
---   -- Depois de derrubar as colunas, reaplicar as RPCs-fonte (versões sem N-118),
---   -- pois save/update referenciam as colunas:
---   --   supabase/migrations/20261002451230_talkx_owner_responsible_unify.sql
---   --   supabase/migrations/20261002551230_talkx_limits_ritmo.sql
+-- Rollback (executado e provado no banco local da tarefa; ordem importa):
+--   1) Recriar save_talkx_campaign_draft e update_talkx_campaign_limits nas
+--      versoes vigentes (sem N-118): reexecutar
+--      supabase/migrations/20261002551230_talkx_limits_ritmo.sql do
+--      CREATE OR REPLACE FUNCTION public.save_talkx_campaign_draft ate o fim
+--      do arquivo (so CREATE OR REPLACE + REVOKE/GRANT das duas RPCs;
+--      idempotente; o CREATE OR REPLACE preserva os GRANTs vigentes).
+--      Este passo remove as referencias ao helper antes do passo 2.
+--   2) drop function public.talkx_campaign_window_open(uuid, timestamptz);
+--      drop function public.validate_talkx_send_weekdays(jsonb, text);
+--   3) alter table public.talkx_campaigns
+--      drop column send_weekdays, drop column respect_dnd;
+--   4) Conferir: pg_proc sem talkx_campaign_window_open/validate_talkx_send_weekdays,
+--      information_schema sem as duas colunas, prosrc das duas RPCs identico
+--      ao da base e save/update chamaveis (prova em .tmp/relato.md).
 
 -- 1) Colunas na tabela de campanhas.
 ALTER TABLE public.talkx_campaigns
@@ -76,10 +82,11 @@ SET search_path = public, pg_temp
 AS $function$
 DECLARE
   v_campaign public.talkx_campaigns%ROWTYPE;
+  v_tz text;
+  v_local_ts timestamp;
   v_dnd_hours jsonb;
   v_weekday smallint;
-  v_local_hour integer;
-  v_local_minute integer;
+  v_now_minutes integer;
   v_start_minutes integer;
   v_end_minutes integer;
 BEGIN
@@ -91,8 +98,19 @@ BEGIN
     RAISE EXCEPTION 'talkx_campaign_not_found' USING ERRCODE = 'P0002';
   END IF;
 
-  -- Dia da semana em UTC (0=dom, 6=sáb).
-  v_weekday := EXTRACT(DOW FROM p_at)::smallint;
+  -- Fuso da campanha: hora, dia e o "hoje" dos feriados vêm de p_at no
+  -- schedule_timezone dela. Fuso inválido fecha (fail-closed).
+  BEGIN
+    v_tz := COALESCE(NULLIF(v_campaign.schedule_timezone, ''), 'America/Sao_Paulo');
+    v_local_ts := p_at AT TIME ZONE v_tz;
+  EXCEPTION
+    WHEN invalid_parameter_value THEN
+      RETURN QUERY SELECT false, 'invalid_timezone', NULL::timestamptz;
+      RETURN;
+  END;
+  v_weekday := EXTRACT(DOW FROM v_local_ts)::smallint;
+  v_now_minutes := EXTRACT(HOUR FROM v_local_ts)::integer * 60
+    + EXTRACT(MINUTE FROM v_local_ts)::integer;
 
   -- 1) Verificar send_weekdays (null = todos os dias permitidos).
   IF v_campaign.send_weekdays IS NOT NULL THEN
@@ -103,9 +121,11 @@ BEGIN
   END IF;
 
   -- 2) Horário de não perturbar (talkx_settings.dnd_hours), SOMENTE quando a
-  --    campanha optou (respect_dnd; default true). Domingos e feriados NÃO
-  --    vêm do DND: pertencem ao business_hours. Formato:
-  --    { "start": "HH:MM", "end": "HH:MM" }. DND malformado fecha a janela.
+  --    campanha optou (respect_dnd; default true). Contrato:
+  --    { start HH:MM, end HH:MM, sundays bool, holidays YYYY-MM-DD[] }.
+  --    DND que vira a meia-noite cobre os dois lados; fim exclusivo.
+  --    Fora do contrato fecha (reason dnd). Domingos/feriados só bloqueiam
+  --    quando o setting manda — sem bloqueio padrão.
   IF COALESCE(v_campaign.respect_dnd, true) THEN
     SELECT value INTO v_dnd_hours
       FROM public.talkx_settings
@@ -115,29 +135,76 @@ BEGIN
       DECLARE
         v_dnd_start time;
         v_dnd_end time;
+        v_dnd_sundays boolean;
+        v_dnd_holidays jsonb;
+        v_today text;
+        v_holiday text;
       BEGIN
+        IF jsonb_typeof(v_dnd_hours) <> 'object' THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
         BEGIN
           v_dnd_start := NULLIF(v_dnd_hours ->> 'start', '')::time;
           v_dnd_end := NULLIF(v_dnd_hours ->> 'end', '')::time;
+          v_dnd_sundays := COALESCE((v_dnd_hours ->> 'sundays')::boolean, false);
         EXCEPTION
           WHEN invalid_text_representation OR invalid_datetime_format OR datetime_field_overflow THEN
             RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
             RETURN;
         END;
 
-        -- DND start..end (fim exclusivo), só com início/fim válidos.
-        IF v_dnd_start IS NOT NULL AND v_dnd_end IS NOT NULL THEN
-          v_local_hour := EXTRACT(HOUR FROM p_at)::integer;
-          v_local_minute := EXTRACT(MINUTE FROM p_at)::integer;
-          v_start_minutes := EXTRACT(HOUR FROM v_dnd_start)::integer * 60
-            + EXTRACT(MINUTE FROM v_dnd_start)::integer;
-          v_end_minutes := EXTRACT(HOUR FROM v_dnd_end)::integer * 60
-            + EXTRACT(MINUTE FROM v_dnd_end)::integer;
-          IF (v_local_hour * 60 + v_local_minute) >= v_start_minutes
-             AND (v_local_hour * 60 + v_local_minute) < v_end_minutes THEN
+        -- start/end ausentes: fora do contrato → fecha (como o TS).
+        IF v_dnd_start IS NULL OR v_dnd_end IS NULL THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
+
+        -- sundays presente mas não-booleano: fora do contrato → fecha.
+        IF (v_dnd_hours ? 'sundays')
+           AND jsonb_typeof(v_dnd_hours -> 'sundays') <> 'boolean' THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
+
+        -- Domingo só bloqueia quando o setting manda.
+        IF v_dnd_sundays AND v_weekday = 0 THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
+
+        -- Feriados do setting (ausente = []); item fora do formato fecha.
+        v_dnd_holidays := COALESCE(v_dnd_hours -> 'holidays', '[]'::jsonb);
+        IF jsonb_typeof(v_dnd_holidays) <> 'array' THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
+        v_today := to_char(v_local_ts, 'YYYY-MM-DD');
+        FOR v_holiday IN SELECT jsonb_array_elements_text(v_dnd_holidays)
+        LOOP
+          IF v_holiday !~ '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$' THEN
             RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
             RETURN;
           END IF;
+          IF v_holiday = v_today THEN
+            RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+            RETURN;
+          END IF;
+        END LOOP;
+
+        -- start..end, fim exclusivo; virando a meia-noite cobre os dois lados.
+        v_start_minutes := EXTRACT(HOUR FROM v_dnd_start)::integer * 60
+          + EXTRACT(MINUTE FROM v_dnd_start)::integer;
+        v_end_minutes := EXTRACT(HOUR FROM v_dnd_end)::integer * 60
+          + EXTRACT(MINUTE FROM v_dnd_end)::integer;
+        IF v_start_minutes <= v_end_minutes THEN
+          IF v_now_minutes >= v_start_minutes AND v_now_minutes < v_end_minutes THEN
+            RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+            RETURN;
+          END IF;
+        ELSIF v_now_minutes >= v_start_minutes OR v_now_minutes < v_end_minutes THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
         END IF;
       END;
     END IF;
@@ -155,7 +222,8 @@ BEGIN
         + EXTRACT(MINUTE FROM v_campaign.send_window_start)::integer;
       v_window_end_minutes := EXTRACT(HOUR FROM v_campaign.send_window_end)::integer * 60
         + EXTRACT(MINUTE FROM v_campaign.send_window_end)::integer;
-      v_current_minutes := EXTRACT(HOUR FROM p_at)::integer * 60 + EXTRACT(MINUTE FROM p_at)::integer;
+      -- Hora local no fuso da campanha (ponto 2).
+      v_current_minutes := v_now_minutes;
 
       IF v_current_minutes < v_window_start_minutes OR v_current_minutes >= v_window_end_minutes THEN
         RETURN QUERY SELECT false, 'outside_send_window', NULL::timestamptz;
@@ -197,7 +265,8 @@ BEGIN
         END IF;
 
         IF v_bh_days IS NOT NULL AND jsonb_typeof(v_bh_days) = 'array' THEN
-          IF NOT (v_weekday = ANY(v_bh_days::integer[])) THEN
+          -- Dia no fuso do business_hours (como o TS).
+          IF NOT (EXTRACT(DOW FROM p_at AT TIME ZONE COALESCE(v_bh_tz, 'America/Sao_Paulo'))::smallint = ANY(v_bh_days::integer[])) THEN
             RETURN QUERY SELECT false, 'outside_business_hours', NULL::timestamptz;
             RETURN;
           END IF;
@@ -261,6 +330,8 @@ DECLARE
   v_owner uuid;
   v_template_version_id uuid;
   v_requested_status text;
+  v_max_per_minute smallint;
+  v_pace record;
 BEGIN
   IF COALESCE(auth.role(), '') <> 'authenticated' OR auth.uid() IS NULL THEN
     RAISE EXCEPTION 'authentication_required' USING ERRCODE = '42501';
@@ -276,8 +347,7 @@ BEGIN
     RAISE EXCEPTION 'active_profile_not_found' USING ERRCODE = '42501';
   END IF;
 
-  -- X014: criar/editar rascunho é ato de admin/supervisor (o front já esconde o
-  -- módulo do agente; aqui a barreira é do banco).
+  -- X014: criar/editar rascunho é ato de admin/supervisor.
   IF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN
     RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501';
   END IF;
@@ -288,7 +358,6 @@ BEGIN
   END IF;
 
   v_name := NULLIF(btrim(p_payload ->> 'name'), '');
-  -- X009: mensagem ausente/vazia é aceita enquanto o rascunho está em draft.
   v_message_template := COALESCE(p_payload ->> 'message_template', '');
   v_description := p_payload ->> 'description';
   v_objective := p_payload ->> 'objective';
@@ -303,11 +372,6 @@ BEGIN
   v_schedule_timezone := COALESCE(NULLIF(p_payload ->> 'schedule_timezone', ''), 'America/Sao_Paulo');
   v_window_start := NULLIF(p_payload ->> 'send_window_start', '')::time;
   v_window_end := NULLIF(p_payload ->> 'send_window_end', '')::time;
-  v_speed_profile := COALESCE(NULLIF(p_payload ->> 'speed_profile', ''), 'moderate');
-  v_typing_delay_min := COALESCE(NULLIF(p_payload ->> 'typing_delay_min', '')::integer, 1500);
-  v_typing_delay_max := COALESCE(NULLIF(p_payload ->> 'typing_delay_max', '')::integer, 4000);
-  v_send_interval_min := COALESCE(NULLIF(p_payload ->> 'send_interval_min', '')::integer, 8000);
-  v_send_interval_max := COALESCE(NULLIF(p_payload ->> 'send_interval_max', '')::integer, 20000);
   v_business_hours_only := COALESCE((p_payload ->> 'business_hours_only')::boolean, false);
   -- N-118: dias de envio e opt-out do DND. Fora do contrato levanta
   -- invalid_talkx_campaign_draft (22023); [] = irrestrito (NULL).
@@ -315,27 +379,38 @@ BEGIN
   v_respect_dnd := COALESCE((p_payload ->> 'respect_dnd')::boolean, true);
   v_respect_suppression := COALESCE((p_payload ->> 'respect_suppression')::boolean, true);
   v_confirm_consent := COALESCE((p_payload ->> 'confirm_consent')::boolean, false);
-  -- X009: passo do wizard, padrão 1 quando o payload não traz draft_step.
   v_draft_step := COALESCE(NULLIF(p_payload ->> 'draft_step', '')::integer, 1);
   v_owner := NULLIF(p_payload ->> 'owner', '')::uuid;
   v_template_version_id := NULLIF(p_payload ->> 'template_version_id', '')::uuid;
   v_requested_status := NULLIF(p_payload ->> 'status', '');
 
-  -- Unificação owner × responsible_id: `owner` é o ÚNICO responsável. Ausente ->
-  -- o próprio ator (perfil ativo, já validado acima). Antes, este papel era do
-  -- `responsible_id`, que o front nunca enviava e caía no default do ator.
+  -- X018: ritmo derivado do perfil (clamp na faixa) em vez dos valores crus.
+  SELECT * INTO v_pace FROM public.talkx_resolve_speed_pace(
+    NULLIF(p_payload ->> 'speed_profile', ''),
+    NULLIF(p_payload ->> 'send_interval_min', '')::integer,
+    NULLIF(p_payload ->> 'send_interval_max', '')::integer,
+    NULLIF(p_payload ->> 'typing_delay_min', '')::integer,
+    NULLIF(p_payload ->> 'typing_delay_max', '')::integer
+  );
+  v_speed_profile := v_pace.speed_profile;
+  v_send_interval_min := v_pace.send_interval_min;
+  v_send_interval_max := v_pace.send_interval_max;
+  v_typing_delay_min := v_pace.typing_delay_min;
+  v_typing_delay_max := v_pace.typing_delay_max;
+
+  -- X018: max_per_minute (nulo = usa o padrão do setting; acima do teto -> 22023).
+  v_max_per_minute := NULLIF(p_payload ->> 'max_per_minute', '')::smallint;
+
+  -- Unificação owner × responsible_id: owner é o ÚNICO responsável.
   IF v_owner IS NULL THEN
     v_owner := v_actor_profile_id;
   END IF;
 
-  -- X017: ate a decisao N12 o contrato RECUSA desmarcar a supressao. A coluna
-  -- existe desde a V21; o valor `false` simplesmente nao pode ser gravado ainda.
+  -- X017: recusa desmarcar a supressão.
   IF v_respect_suppression IS NOT TRUE THEN
     RAISE EXCEPTION 'talkx_respect_suppression_false_nao_liberado' USING ERRCODE = '22023';
   END IF;
 
-  -- X009: mensagem vazia permitida em draft (limite 4.096); objective/audience_source
-  -- seguem obrigatórios (colunas NOT NULL no schema).
   IF v_name IS NULL OR length(v_name) > 200
      OR v_objective IS NULL OR v_audience_source IS NULL
      OR length(v_message_template) > 4096
@@ -345,8 +420,8 @@ BEGIN
      OR jsonb_typeof(v_audience_filters) <> 'object'
      OR (v_audience_source = 'segment' AND v_segment_id IS NULL)
      OR (v_audience_source <> 'segment' AND v_segment_id IS NOT NULL)
-     OR v_typing_delay_min < 0 OR v_typing_delay_min > v_typing_delay_max OR v_typing_delay_max > 60000
-     OR v_send_interval_min < 0 OR v_send_interval_min > v_send_interval_max OR v_send_interval_max > 300000
+     OR v_send_interval_min > v_send_interval_max
+     OR v_typing_delay_min > v_typing_delay_max
      OR v_speed_profile NOT IN ('slow', 'moderate', 'fast')
      OR (v_media_url IS NOT NULL AND (length(v_media_url) > 8192 OR v_media_url !~ '^https://'))
      OR (v_media_type IS NOT NULL AND v_media_type NOT IN ('image', 'video', 'document', 'audio'))
@@ -355,8 +430,17 @@ BEGIN
      OR ((v_window_start IS NULL) <> (v_window_end IS NULL))
      OR (v_window_start IS NOT NULL AND v_window_start >= v_window_end)
      OR (v_draft_step < 1 OR v_draft_step > 4)
-     OR (v_requested_status IS NOT NULL AND v_requested_status <> 'draft') THEN
+     OR (v_requested_status IS NOT NULL AND v_requested_status <> 'draft')
+     OR (v_max_per_minute IS NOT NULL AND v_max_per_minute < 1) THEN
     RAISE EXCEPTION 'invalid_talkx_campaign_draft' USING ERRCODE = '22023';
+  END IF;
+
+  -- X018: max_per_minute acima do teto por minuto da conexão -> 22023.
+  IF v_max_per_minute IS NOT NULL
+     AND v_max_per_minute > COALESCE((SELECT (settings.value)::text::integer
+                                        FROM public.talkx_settings settings
+                                       WHERE settings.key = 'max_per_minute_per_connection'), 6) THEN
+    RAISE EXCEPTION 'talkx_max_per_minute_acima_do_teto' USING ERRCODE = '22023';
   END IF;
 
   IF v_connection_id IS NOT NULL
@@ -381,6 +465,7 @@ BEGIN
       media_url, media_type, scheduled_at, schedule_timezone,
       send_window_start, send_window_end, business_hours_only, send_weekdays, respect_dnd, speed_profile,
       typing_delay_min, typing_delay_max, send_interval_min, send_interval_max,
+      max_per_minute,
       respect_suppression, confirm_consent, draft_step, owner, template_version_id,
       status, created_by, draft_creation_key, revision, created_at, updated_at
     ) VALUES (
@@ -389,6 +474,7 @@ BEGIN
       v_media_url, v_media_type, v_scheduled_at, v_schedule_timezone,
       v_window_start, v_window_end, v_business_hours_only, v_send_weekdays, v_respect_dnd, v_speed_profile,
       v_typing_delay_min, v_typing_delay_max, v_send_interval_min, v_send_interval_max,
+      v_max_per_minute,
       v_respect_suppression, v_confirm_consent, v_draft_step, v_owner, v_template_version_id,
       'draft', v_actor_profile_id, p_creation_key, 1, v_now, v_now
     )
@@ -437,7 +523,8 @@ BEGIN
        OR v_campaign.typing_delay_min IS DISTINCT FROM v_typing_delay_min
        OR v_campaign.typing_delay_max IS DISTINCT FROM v_typing_delay_max
        OR v_campaign.send_interval_min IS DISTINCT FROM v_send_interval_min
-       OR v_campaign.send_interval_max IS DISTINCT FROM v_send_interval_max THEN
+       OR v_campaign.send_interval_max IS DISTINCT FROM v_send_interval_max
+       OR v_campaign.max_per_minute IS DISTINCT FROM v_max_per_minute THEN
       RAISE EXCEPTION 'talkx_draft_creation_key_payload_conflict' USING ERRCODE = '40001';
     END IF;
 
@@ -497,6 +584,7 @@ BEGIN
          typing_delay_max = v_typing_delay_max,
          send_interval_min = v_send_interval_min,
          send_interval_max = v_send_interval_max,
+         max_per_minute = v_max_per_minute,
          status = COALESCE(v_requested_status, campaign.status),
          revision = campaign.revision + 1,
          updated_at = v_now

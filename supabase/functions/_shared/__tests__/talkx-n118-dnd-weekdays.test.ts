@@ -121,3 +121,16 @@ Deno.test("N-118: respect_dnd=false ignora o DND, inclusive quando inválido", (
   const valido = parseDndHours({ start: "00:00", end: "23:59", sundays: false, holidays: [] });
   assertEquals(deliveryWindowStatus(campaign, WED_SP_11H, null, valido).allowed, true);
 });
+
+Deno.test("N-118: DND que vira a meia-noite bloqueia dos dois lados (22:00-07:00)", () => {
+  const campaign = { ...NEUTRA, schedule_timezone: "UTC" };
+  const dnd = parseDndHours({ start: "22:00", end: "07:00", sundays: false, holidays: [] });
+  // 23:30 UTC (sexta) → dentro do DND.
+  assertEquals(reasonOf(deliveryWindowStatus(campaign, new Date("2026-10-02T23:30:00Z"), null, dnd)), "dnd");
+  // 06:30 UTC (sexta) → dentro do DND (madrugada seguinte).
+  assertEquals(reasonOf(deliveryWindowStatus(campaign, new Date("2026-10-02T06:30:00Z"), null, dnd)), "dnd");
+  // 07:00 UTC → fim exclusivo, fora do DND.
+  assertEquals(deliveryWindowStatus(campaign, new Date("2026-10-02T07:00:00Z"), null, dnd).allowed, true);
+  // 12:00 UTC → fora do DND.
+  assertEquals(deliveryWindowStatus(campaign, new Date("2026-10-02T12:00:00Z"), null, dnd).allowed, true);
+});
