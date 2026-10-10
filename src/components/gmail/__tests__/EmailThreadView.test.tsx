@@ -257,14 +257,22 @@ describe('EmailThreadView', () => {
   it('botão Voltar chama onBack', () => {
     const onBack = vi.fn();
     render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
-    fireEvent.click(screen.getByTestId('icon-arrow-left').closest('button')!);
+    const btn = screen.getByRole('button', { name: 'Voltar' });
+    // Nome acessível vem do conteúdo (sr-only), não de atributo oculto.
+    expect(btn).not.toHaveAttribute('aria-label');
+    expect(btn.querySelector('.sr-only')).toHaveTextContent('Voltar');
+    fireEvent.click(btn);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', () => {
     config.threadMessages = [makeMessage({ gmail_message_id: 'gm-trash' })];
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
-    fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
+    const btn = screen.getByRole('button', { name: 'Excluir' });
+    // Nome acessível vem do conteúdo (sr-only), não de atributo oculto.
+    expect(btn).not.toHaveAttribute('aria-label');
+    expect(btn.querySelector('.sr-only')).toHaveTextContent('Excluir');
+    fireEvent.click(btn);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
   });
 

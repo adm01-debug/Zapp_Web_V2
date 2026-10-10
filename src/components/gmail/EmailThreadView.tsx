@@ -198,7 +198,8 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
       {/* Header */}
       <div className="p-3 border-b flex items-center gap-3">
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          <span className="sr-only">Voltar</span>
         </Button>
 
         <div className="flex-1 min-w-0">
@@ -245,7 +246,8 @@ export function EmailThreadView({ thread, onBack }: EmailThreadViewProps) {
                   className="h-8 w-8 text-destructive"
                   onClick={() => lastMessage && trashMessage.mutate(lastMessage.gmail_message_id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
+                  <span className="sr-only">Excluir</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Excluir</TooltipContent>

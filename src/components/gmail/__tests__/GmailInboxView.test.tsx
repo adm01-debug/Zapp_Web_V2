@@ -25,8 +25,8 @@ vi.mock('@/components/ui/select', () => ({
       {children}
     </div>
   ),
-  SelectTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+  SelectValue: ({ placeholder, ...props }: { placeholder?: string; [key: string]: unknown }) => <span {...props}>{placeholder}</span>,
   SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children, onClick }: { children: ReactNode; value?: string; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
 }));
@@ -306,5 +306,15 @@ describe('GmailInboxView', () => {
     render(<GmailInboxView />);
     expect(screen.getByText('Verificando conta Gmail...')).toBeInTheDocument();
     expect(screen.queryByText('Gmail não conectado')).not.toBeInTheDocument();
+  });
+
+  it('filtro de status: nome acessível vem do valor visível, sem aria-label', () => {
+    const { container } = render(<GmailInboxView />);
+    const trigger = container.querySelector('[aria-labelledby="gmail-status-filter-value"]');
+    expect(trigger).not.toBeNull();
+    expect(trigger).not.toHaveAttribute('aria-label');
+    const rotulo = document.getElementById('gmail-status-filter-value');
+    expect(rotulo?.textContent?.trim().length).toBeGreaterThan(0);
+    expect(trigger?.getAttribute('aria-labelledby')).toBe(rotulo?.id);
   });
 });
