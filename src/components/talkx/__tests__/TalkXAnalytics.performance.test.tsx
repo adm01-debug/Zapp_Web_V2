@@ -72,6 +72,9 @@ vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-1' }, user: { id: 'user-1' }, session: null, loading: false }),
 }));
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({
+  useCRMAdminAccess: () => true,
+}));
 
 import { AnalyticsPerformanceChart } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
 import type { PerformancePoint } from '@/components/talkx/analytics/AnalyticsPerformanceChart';
@@ -264,14 +267,35 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
 
     // O seletor do gráfico nasce no filtro da tela (30 dias) e, tocado, refaz a consulta.
     await waitFor(() => expect(rpcMock).toHaveBeenCalled());
-    const firstArgs = rpcMock.mock.calls[0][1] as { p_from: string; p_to: string };
-    expect(rpcMock.mock.calls[0][0]).toBe('talkx_overview_stats');
-    expect((new Date(firstArgs.p_to).getTime() - new Date(firstArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(30, 1);
+    const firstCall = rpcMock.mock.calls.find(
+      (call) => call[0] === 'talkx_overview_stats',
+    ) as [string, { p_from: string; p_to: string }];
+    expect(firstCall[0]).toBe('talkx_overview_stats');
+    expect((new Date(firstCall[1].p_to).getTime() - new Date(firstCall[1].p_from).getTime()) / 86_400_000).toBeCloseTo(30, 1);
 
     fireEvent.click(screen.getByRole('button', { name: '90 dias' }));
 
-    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(2));
-    const secondArgs = rpcMock.mock.calls[1][1] as { p_from: string; p_to: string };
+    await waitFor(() => {
+      const call90 = rpcMock.mock.calls.find(
+        (call) =>
+          call[0] === 'talkx_overview_stats' &&
+          (new Date((call[1] as { p_to: string; p_from: string }).p_to).getTime() -
+            new Date((call[1] as { p_from: string; p_to: string }).p_from).getTime()) /
+            86_400_000 >
+            60,
+      );
+      return call90 !== undefined;
+    });
+    const calls90 = rpcMock.mock.calls.filter(
+      (call) =>
+        call[0] === 'talkx_overview_stats' &&
+        (new Date((call[1] as { p_to: string; p_from: string }).p_to).getTime() -
+          new Date((call[1] as { p_from: string; p_to: string }).p_from).getTime()) /
+          86_400_000 >
+          60,
+    );
+    expect(calls90).toHaveLength(1);
+    const secondArgs = calls90[0][1] as { p_from: string; p_to: string };
     expect((new Date(secondArgs.p_to).getTime() - new Date(secondArgs.p_from).getTime()) / 86_400_000).toBeCloseTo(90, 1);
   });
 
