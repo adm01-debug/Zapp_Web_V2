@@ -58,10 +58,11 @@ export function ToolPanel({ isOpen, onClose, icon, title, subtitle, children, cl
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Fechar painel"
                 className="h-8 w-8 rounded-lg shrink-0 hover:bg-destructive/10 hover:text-destructive"
                 onClick={onClose}
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
 
