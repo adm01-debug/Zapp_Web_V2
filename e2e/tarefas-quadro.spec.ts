@@ -27,6 +27,10 @@
  * (`backlog`/`todo`/`doing`/...). Não dependemos de classe CSS nem de texto do
  * cabeçalho para achar a coluna — só para ler o contador "3/3" dela.
  */
+// Nota de integracao (refazer Y10, add/add com o dia): a variante com login real
+// e guarda de coletor foi descartada — o dia ja cobre este arquivo com a versao
+// hermetica E21 (sessao falsa + rede real barrada), que roda deslogada e dispensa
+// a guarda. Nenhuma mudanca de comportamento aqui.
 import { test, expect, type Locator, type Page, type Route } from '@playwright/test';
 
 import { bloquearRedeReal, json, mockAppShell, querObjetoUnico, type Registro } from './fixtures/mapa-mocks';
