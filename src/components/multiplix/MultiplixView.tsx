@@ -92,7 +92,7 @@ function StepLabel({ step, label }: { step: string; label: string }) {
       <span className="grid h-5 w-5 place-items-center rounded-md border border-border text-3xs font-bold text-muted-foreground">
         {step}
       </span>
-      <span className="text-2xs font-bold uppercase tracking-[1.5px] text-muted-foreground">{label}</span>
+      <span className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -469,7 +469,8 @@ export default function MultiplixView() {
       {/* F72: as três regiões ficam simultâneas na tela (grid do protótipo). */}
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* 01 PÚBLICO */}
-        <section
+        <div
+          role="region"
           aria-label="01 Público"
           className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
         >
@@ -692,10 +693,11 @@ export default function MultiplixView() {
             <p className="text-sm text-foreground"><strong>{selected.size}</strong> empresa(s) selecionada(s)</p>
             <p className="mt-1 text-2xs text-muted-foreground">Seleção limitada a {fmtInt(POLICY_MAX_IDS)} empresas por disparo.</p>
           </div>
-        </section>
+        </div>
 
         {/* 02 COMPOSIÇÃO */}
-        <section
+        <div
+          role="region"
           aria-label="02 Composição"
           className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
         >
@@ -751,10 +753,11 @@ export default function MultiplixView() {
           <p className="mt-auto px-4 pb-4 text-2xs text-muted-foreground">
             Conversa individual, sem criar grupos. O mesmo texto é preparado uma vez e vale para as empresas selecionadas.
           </p>
-        </section>
+        </div>
 
         {/* 03 PRÉVIA & REVISÃO */}
-        <section
+        <div
+          role="region"
           aria-label="03 Prévia e revisão"
           className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card"
         >
@@ -765,7 +768,7 @@ export default function MultiplixView() {
           </div>
 
           <div className="border-b border-border p-4">
-            <span className="text-2xs font-bold uppercase tracking-[1.5px] text-muted-foreground">Visualizar como</span>
+            <span className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">Visualizar como</span>
             <Select
               value={previewRow?.company_id ?? ''}
               onValueChange={setPreviewCompanyId}
@@ -794,7 +797,7 @@ export default function MultiplixView() {
           </div>
 
           <div className="flex flex-col gap-3 p-4">
-            <p className="text-center text-2xs uppercase tracking-[0.6px] text-muted-foreground">Prévia da mensagem · não enviada</p>
+            <p className="text-center text-2xs uppercase tracking-wider text-muted-foreground">Prévia da mensagem · não enviada</p>
             {previewRow ? (
               <div className="ml-3 rounded-xl border border-border bg-muted/20 p-3 text-sm text-foreground whitespace-pre-wrap break-words">
                 {previewText}
@@ -808,14 +811,13 @@ export default function MultiplixView() {
             <p className="text-2xs text-muted-foreground">Prévia local: as variáveis são substituídas no envio.</p>
             <p className="mt-1 text-2xs text-muted-foreground">Os destinatários não se veem.</p>
           </div>
-        </section>
+        </div>
       </div>
 
       {/* Rodapé fixo: resumo do disparo + ações (antes viviam no diálogo). */}
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{name.trim() || 'Novo disparo'}</p>
-          <p className="text-2xs text-muted-foreground">{selected.size} empresa(s) selecionada(s)</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" disabled={busy || !canSubmit} onClick={() => void submit(false)}>
