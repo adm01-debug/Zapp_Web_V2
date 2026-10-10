@@ -15,6 +15,7 @@ const mockLogs = [
 const estado = vi.hoisted(() => ({
   dados: [] as unknown[],
   chamadas: {
+    select: '' as string,
     eq: [] as Array<[string, unknown]>,
     in: [] as Array<[string, unknown[]]>,
     like: [] as Array<[string, string]>,
@@ -31,20 +32,23 @@ type ConstrutorConsulta = PromiseLike<ResultadoConsulta> & {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => {
-            const resultado = Promise.resolve({ data: estado.dados, error: null });
-            const construtor: ConstrutorConsulta = {
-              eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
-              in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
-              like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
-              then: resultado.then.bind(resultado),
-            };
-            return construtor;
-          }),
-        })),
-      })),
+      select: vi.fn((cols: string) => {
+        estado.chamadas.select = cols;
+        return ({
+          order: vi.fn(() => ({
+            limit: vi.fn(() => {
+              const resultado = Promise.resolve({ data: estado.dados, error: null });
+              const construtor: ConstrutorConsulta = {
+                eq: (coluna, valor) => { estado.chamadas.eq.push([coluna, valor]); return construtor; },
+                in: (coluna, valores) => { estado.chamadas.in.push([coluna, valores]); return construtor; },
+                like: (coluna, padrao) => { estado.chamadas.like.push([coluna, padrao]); return construtor; },
+                then: resultado.then.bind(resultado),
+              };
+              return construtor;
+            }),
+          })),
+        });
+      }),
     })),
   },
 }));
@@ -78,6 +82,19 @@ describe('AuditLogDashboard', () => {
     estado.chamadas.eq.length = 0;
     estado.chamadas.in.length = 0;
     estado.chamadas.like.length = 0;
+    estado.chamadas.select = '';
+  });
+
+  // ===== QUERY COLUMNS =====
+  describe('Query columns', () => {
+    it('selects explicit columns instead of * for audit_logs', async () => {
+      render(<AuditLogDashboard />);
+      await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+      expect(estado.chamadas.select).not.toBe('*');
+      expect(estado.chamadas.select).toContain('id');
+      expect(estado.chamadas.select).toContain('action');
+      expect(estado.chamadas.select).toContain('created_at');
+    });
   });
 
   // ===== RENDERING =====

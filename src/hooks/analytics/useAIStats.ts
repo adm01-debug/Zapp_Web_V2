@@ -140,7 +140,7 @@ export function useAIStats(selectedPeriod: PeriodOption) {
 
       const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: alertData } = await supabase
-        .from('audit_logs').select('*').eq('action', 'sentiment_alert')
+        .from('audit_logs').select('id, entity_id, created_at, details').eq('action', 'sentiment_alert')
         .gte('created_at', last24h).order('created_at', { ascending: false }).limit(5);
 
       const activeAlerts: SentimentAlert[] = (alertData || []).map(log => ({

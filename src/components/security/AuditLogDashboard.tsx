@@ -79,7 +79,7 @@ export function AuditLogDashboard() {
     setLoading(true);
     let query = supabase
       .from('audit_logs')
-      .select('*')
+      .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
       .limit(200);
 
