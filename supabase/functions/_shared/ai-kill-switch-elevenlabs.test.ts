@@ -82,6 +82,9 @@ function stubFetch(flags: Record<string, boolean>, flagsStatus = 200) {
     if (u.pathname.includes("/rest/v1/rpc/consume_rate_limit")) {
       return Promise.resolve(jsonResp([{ allowed: true, remaining: 29 }]));
     }
+    if (u.pathname.includes("/rest/v1/rpc/resolve_network_policy")) {
+      return Promise.resolve(jsonResp([{ allowed: true }]));
+    }
     if (u.pathname.endsWith("/rest/v1/feature_flags")) {
       if (flagsStatus >= 400) {
         return Promise.resolve(jsonResp({ message: "indisponivel" }, flagsStatus));
