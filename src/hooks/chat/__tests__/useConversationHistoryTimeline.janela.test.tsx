@@ -64,9 +64,9 @@ describe('useConversationHistoryTimeline — janela em dias de calendário', () 
     expect(valores).toHaveLength(1);
     expect(valores[0]).toBe(inicioDoDia('2026-09-24'));
     expect(localDayKey(valores[0])).toBe('2026-09-24');
-    // e as 5 fontes da timeline usam a mesma janela
+    // e as 6 fontes da timeline (inclui `calls`) usam a mesma janela
     expect(capturadas.gte.map((c) => c.tabela).sort()).toEqual([
-      'contact_notes', 'conversation_events', 'conversation_tasks', 'messages', 'sales_deals',
+      'calls', 'contact_notes', 'conversation_events', 'conversation_tasks', 'messages', 'sales_deals',
     ]);
   });
 

@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { localDayKey } from '@/lib/localDay';
+import { RESULT_LABEL, toResult } from '@/lib/calls/callStatus';
 import { startOfDay, subDays } from 'date-fns';
 
 export type TimelineEventKind =
-  | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen';
+  | 'message_in' | 'message_out' | 'note' | 'transfer' | 'assign' | 'file' | 'task' | 'deal' | 'close' | 'reopen' | 'call';
 
-export type TimelineTypeFilter = 'all' | 'messages' | 'notes' | 'tasks' | 'transfers' | 'files' | 'deals';
+export type TimelineTypeFilter = 'all' | 'messages' | 'notes' | 'tasks' | 'transfers' | 'files' | 'deals' | 'calls';
 
 export interface TimelineEvent {
   id: string;
@@ -84,6 +85,19 @@ export interface RawActivityRow {
   created_at: string | null;
 }
 
+/** Linha crua de `calls` — colunas reais conferidas em useCalls.ts/useCallHistory.ts. */
+export interface RawCallRow {
+  id: string;
+  /** `inbound` = recebida · `outbound` = realizada (pode vir ausente em linha antiga). */
+  direction: string | null;
+  status: string;
+  /** Instante da ligação (a tabela `calls` não tem `created_at` como data do evento). */
+  started_at: string;
+  duration_seconds: number | null;
+  answered_at: string | null;
+  ended_at: string | null;
+}
+
 export interface TimelineRawRows {
   messages: RawMessageRow[];
   events: RawEventRow[];
@@ -91,6 +105,8 @@ export interface TimelineRawRows {
   tasks: RawTaskRow[];
   deals: RawDealRow[];
   activities: RawActivityRow[];
+  /** Ligações do contato (`calls`). Opcional: os testes puros de buildTimeline não precisam dele. */
+  calls?: RawCallRow[];
   /** mensagens da janela anterior (mesma duração), só para o delta de tempo médio de resposta. */
   previousMessages?: RawMessageRow[];
 }
@@ -102,6 +118,7 @@ const TYPE_KINDS: Record<Exclude<TimelineTypeFilter, 'all'>, TimelineEventKind[]
   transfers: ['transfer', 'assign'],
   files: ['file'],
   deals: ['deal', 'close', 'reopen'],
+  calls: ['call'],
 };
 
 const ASSIGN_TYPES = new Set(['assign', 'unassign']);
@@ -110,6 +127,18 @@ const TRANSFER_TYPES = new Set(['transfer', 'queue_transfer', 'overload_reassign
 function truncate(text: string | null | undefined, max = 120): string | undefined {
   if (!text) return undefined;
   return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+/**
+ * Duração legível da ligação a partir de `calls.duration_seconds`.
+ * Ausente/zero não rende texto (ligação perdida não tem duração a mostrar).
+ */
+function formatCallDuration(seconds: number | null | undefined): string | undefined {
+  if (seconds == null || seconds <= 0) return undefined;
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  if (min === 0) return `${sec}s`;
+  return sec === 0 ? `${min}min` : `${min}min ${sec}s`;
 }
 
 /**
@@ -238,6 +267,19 @@ export function buildTimeline(
         title: kind === 'transfer' ? 'Transferência' : kind === 'assign' ? 'Atribuição' : kind === 'close' ? 'Conversa encerrada' : 'Conversa reaberta',
         subtitle: e.from_agent_name && e.to_agent_name ? `De: ${e.from_agent_name} · Para: ${e.to_agent_name}` : undefined,
       })),
+    ...(rows.calls ?? []).map((c): TimelineEvent => {
+      const result = toResult(c);
+      const resultado = result ? RESULT_LABEL[result] : undefined;
+      const duracao = formatCallDuration(c.duration_seconds);
+      const subtitle = [resultado, duracao].filter((p): p is string => !!p).join(' · ');
+      return {
+        id: `call-${c.id}`,
+        at: c.started_at,
+        kind: 'call',
+        title: c.direction === 'inbound' ? 'Chamada recebida' : c.direction === 'outbound' ? 'Chamada realizada' : 'Chamada',
+        subtitle: subtitle || undefined,
+      };
+    }),
   ]
     .filter((e) => e.at)
     .sort((a, b) => b.at.localeCompare(a.at));
@@ -264,7 +306,7 @@ export function buildTimeline(
   return {
     days: [...days.entries()].map(([date, dayEvents]) => ({ date, events: dayEvents })),
     metrics: {
-      total: rows.messages.length + rows.events.length + rows.tasks.length + rows.notes.length + rows.deals.length + rows.activities.length,
+      total: rows.messages.length + rows.events.length + rows.tasks.length + rows.notes.length + rows.deals.length + rows.activities.length + (rows.calls?.length ?? 0),
       lastContactAt,
       avgResponseMin: averageResponseMinutes(rows.messages),
       avgResponsePrevMin: rows.previousMessages ? averageResponseMinutes(rows.previousMessages) : null,
@@ -311,19 +353,22 @@ export function useConversationHistoryTimeline(
       const notesQuery = supabase.from('contact_notes').select('id, content, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
       const tasksQuery = supabase.from('conversation_tasks').select('id, title, status, completed_at, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
       const dealsQuery = supabase.from('sales_deals').select('id, title, value, status, created_at').eq('contact_id', cid).order('created_at', { ascending: false }).limit(fetchLimit);
+      const callsQuery = supabase.from('calls').select('id, direction, status, started_at, duration_seconds, answered_at, ended_at').eq('contact_id', cid).order('started_at', { ascending: false }).limit(fetchLimit);
 
-      const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes] = await Promise.all([
+      const [messagesRes, eventsRes, notesRes, tasksRes, dealsRes, callsRes] = await Promise.all([
         sinceIso ? messagesQuery.gte('created_at', sinceIso) : messagesQuery,
         sinceIso ? eventsQuery.gte('created_at', sinceIso) : eventsQuery,
         sinceIso ? notesQuery.gte('created_at', sinceIso) : notesQuery,
         sinceIso ? tasksQuery.gte('created_at', sinceIso) : tasksQuery,
         sinceIso ? dealsQuery.gte('created_at', sinceIso) : dealsQuery,
+        sinceIso ? callsQuery.gte('started_at', sinceIso) : callsQuery,
       ]);
       if (messagesRes.error) throw messagesRes.error;
       if (eventsRes.error) throw eventsRes.error;
       if (notesRes.error) throw notesRes.error;
       if (tasksRes.error) throw tasksRes.error;
       if (dealsRes.error) throw dealsRes.error;
+      if (callsRes.error) throw callsRes.error;
 
       const dealIds = (dealsRes.data ?? []).map((d) => d.id);
       const activitiesRes = dealIds.length
@@ -339,6 +384,7 @@ export function useConversationHistoryTimeline(
         (notesRes.data?.length ?? 0) > limit ||
         (tasksRes.data?.length ?? 0) > limit ||
         (dealsRes.data?.length ?? 0) > limit ||
+        (callsRes.data?.length ?? 0) > limit ||
         (activitiesRes.data?.length ?? 0) > limit;
 
       const timeline = buildTimeline(
@@ -349,6 +395,7 @@ export function useConversationHistoryTimeline(
           tasks: (tasksRes.data ?? []) as RawTaskRow[],
           deals: (dealsRes.data ?? []) as RawDealRow[],
           activities: (activitiesRes.data ?? []) as RawActivityRow[],
+          calls: (callsRes.data ?? []) as RawCallRow[],
         },
         { type, limit },
       );
