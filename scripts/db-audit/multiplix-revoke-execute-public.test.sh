@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
-# N-144 — Prova que a migration revoga EXECUTE de PUBLIC na função de gatilho
-# do Multiplix (multiplix_audiences_validate_shared_roles) e que só
-# postgres e service_role conservam EXECUTE depois da migration.
+# N-144 — Prova que a migration 20261010101613 revoga EXECUTE de PUBLIC, anon e
+# authenticated na função de gatilho REAL
+# public.multiplix_audiences_validate_shared_roles() (criada pela migration
+# real 20261001261230, F35 — sem stub da função) e que só postgres/service_role
+# conservam EXECUTE, sem quebrar a inserção como authenticated (função trigger
+# dispensa EXECUTE no disparo).
 #
-# Bloco A — estado ANTERIOR (defeito): PUBLIC tem EXECUTE.
-# Bloco B — migration aplicada: só postgres/service_role têm EXECUTE.
-# Bloco C — rollback executado: PUBLIC tem EXECUTE de volta.
-# Bloco D — reaplicação idempotente: só postgres/service_role têm EXECUTE.
-
+# Bloco A — estado ANTERIOR (defeito, função real pós-F35): PUBLIC/anon/
+#   authenticated têm EXECUTE; nenhuma entrada explícita para service_role.
+# Bloco B — migration aplicada: só postgres/service_role têm EXECUTE; chamada
+#   direta como anon/authenticated recebe `permission denied`; INSERT como
+#   authenticated funciona (o gatilho dispara).
+# Bloco C — rollback extraído do próprio arquivo da migration: PUBLIC volta.
+# Bloco D — reaplicação idempotente: só postgres/service_role.
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261010101613_revoke_execute_public_multiplix_trigger.sql"
+migrations_dir="$repo_root/supabase/migrations"
+f35="$migrations_dir/20261001261230_f35_multiplix_audiences.sql"
+migration="$migrations_dir/20261010101613_revoke_execute_public_multiplix_trigger.sql"
 postgres_image="${MULTIPLIX_REVOKE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-multiplix-revoke-test-$$"
 
@@ -27,14 +34,29 @@ fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 psql_sql() {
   docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"
 }
+psql_stdin() {
+  docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres
+}
 psql_file() {
   docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres < "$1"
+}
+
+migration_arquivo() {
+  local file="$migrations_dir/$1"
+  [[ -f "$file" ]] || fail "migration ausente: $1"
+  printf '  · %s\n' "$1" >&2
+  psql_file "$file" >/dev/null
 }
 
 as_user() {
   local jwt="$1" sql="$2"
   docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
     -c "SET ROLE authenticated; SELECT set_config('request.jwt.claims', '$jwt', false); $sql"
+}
+
+as_anon() {
+  docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "SET ROLE anon; $1"
 }
 
 expect_value() {
@@ -44,137 +66,200 @@ expect_value() {
   printf '[PASS] %s\n' "$l"
 }
 
-expect_value_as() {
-  local l="$1" e="$2" j="$3" s="$4" a
+expect_ok_as() {
+  local l="$1" j="$2" s="$3" a
   a="$(as_user "$j" "$s" | tail -n1)"
-  [[ "$a" == "$e" ]] || fail "$l: esperado '$e', obtido '$a'"
+  [[ "$a" == "$4" ]] || fail "$l: esperado '$4', obtido '$a'"
   printf '[PASS] %s\n' "$l"
 }
 
-expect_error_as() {
-  local l="$1" j="$2" s="$3" output status
+# Prova que o papel recebe `permission denied` ao chamar a função diretamente
+# (SELECT ...): a checagem de EXECUTE vem antes de qualquer execução.
+expect_perm_denied() {
+  local l="$1" modo="$2" output status
   set +e
-  output="$(as_user "$j" "$s" 2>&1)"
-  status=$?
-  set -e
-  if (( status == 0 )); then
-    printf '%s\n' "$output" >&2
-    fail "$l: deveria ter falhado, mas passou"
+  if [[ "$modo" == anon ]]; then
+    output="$(as_anon 'SELECT public.multiplix_audiences_validate_shared_roles();' 2>&1)"
+    status=$?
+  else
+    output="$(as_user "$modo" 'SELECT public.multiplix_audiences_validate_shared_roles();' 2>&1)"
+    status=$?
   fi
+  set -e
+  (( status != 0 )) || { printf '%s\n' "$output" >&2; fail "$l: deveria ter falhado, mas passou"; }
+  [[ "$output" == *permission*denied* ]] || { printf '%s\n' "$output" >&2; fail "$l: falhou sem 'permission denied'"; }
   printf '[PASS] %s\n' "$l"
 }
 
-printf '=== Iniciando container Postgres descartável ===\n'
-docker run --rm -d --name "$container_name" \
-  -e POSTGRES_PASSWORD=test_only \
-  "$postgres_image" >/dev/null
+start_postgres() {
+  for attempt in 1 2 3; do
+    docker rm -f "$container_name" >/dev/null 2>&1 || true
+    if ! docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null; then
+      printf 'WARN: PostgreSQL container failed to start (attempt %s/3)\n' "$attempt" >&2
+      continue
+    fi
+    for _ in $(seq 1 15); do
+      if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+        sleep 1
+        if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+          return 0
+        fi
+      fi
+      sleep 1
+    done
+    printf 'WARN: PostgreSQL bootstrap was not stable (attempt %s/3)\n' "$attempt" >&2
+    docker logs "$container_name" >&2 || true
+  done
+  return 1
+}
 
-# Prontidão
-for _ in 1 2; do
-  docker exec "$container_name" psql -X -qAt -U postgres -d postgres -c 'SELECT 1' >/dev/null 2>&1 || sleep 1
-done
+start_postgres || fail 'PostgreSQL de teste não iniciou'
 
-tmp_dir="$(mktemp -d)"
-trap 'rm -rf "$tmp_dir"; cleanup' EXIT INT TERM
+# ── infraestrutura que o Supabase fornece + dependências reais da F35 ─────────
+# (auth com uid()/role(), papéis da API, enum app_role, profiles/user_roles e
+# os helpers que as policies da F35 chamam: has_role e is_admin_or_supervisor
+# com a assinatura real; update_updated_at_column para o 2º trigger da F35).
+psql_stdin >/dev/null <<'SQL'
+CREATE SCHEMA auth;
 
-# pre.sql: schema mínimo + a função de gatilho no estado ANTERIOR à migration
-# (sem SECURITY DEFINER, SET search_path = public — igual ao original).
-cat > "$tmp_dir/pre.sql" <<'SQL'
-CREATE ROLE anon NOLOGIN;
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN BYPASSRLS;
-
-CREATE SCHEMA IF NOT EXISTS auth;
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
-  AS $$ SELECT coalesce(
-       nullif(current_setting('request.jwt.claim.sub', true), ''),
-       nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
-     )::uuid $$;
-CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE
-  AS $$ SELECT coalesce(
-       nullif(current_setting('request.jwt.claim.role', true), ''),
-       nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'
-     )::text $$;
-GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
-
--- Função de gatilho no estado ANTERIOR (publica, sem SECURITY DEFINER):
--- EXECUTE para PUBLIC é o defeito que a migration corrige.
-CREATE OR REPLACE FUNCTION public.multiplix_audiences_validate_shared_roles()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path = public
-AS $$
-BEGIN
-  RETURN NEW;
-END;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text
 $$;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  )::uuid
+$$;
+
+CREATE ROLE anon;
+CREATE ROLE authenticated;
+CREATE ROLE service_role;
+ALTER ROLE service_role BYPASSRLS;
+
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+CREATE TYPE public.app_role AS ENUM ('admin', 'supervisor', 'agent', 'special_agent');
+CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid NOT NULL);
+CREATE TABLE public.user_roles (user_id uuid NOT NULL, role public.app_role NOT NULL);
+
+CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role IN ('admin', 'supervisor'))
+$$;
+CREATE FUNCTION public.has_role(_user_id uuid, _role public.app_role) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
+$$;
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN NEW.updated_at = statement_timestamp(); RETURN NEW; END
+$$;
+
+-- Ator: admin dono (o perfil que a policy "Users can create audiences" exige).
+INSERT INTO public.profiles (id, user_id) VALUES
+  ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a');
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('20000000-0000-0000-0000-00000000000a', 'admin');
+GRANT ALL ON public.profiles, public.user_roles TO authenticated;
 SQL
+printf '=== Infraestrutura + dependências da F35 criadas ===\n'
 
-psql_file "$tmp_dir/pre.sql" >/dev/null
-printf '=== Schema pré-migration criado ===\n'
+# ── a migration REAL que criou a função (sem stub) ────────────────────────────
+migration_arquivo "20261001261230_f35_multiplix_audiences.sql"
 
-# ── Bloco A: defeito existe (PUBLIC tem EXECUTE) ──────────────────────────
-printf '\n=== Bloco A: estado ANTERIOR (defeito) ===\n'
+# Entrada PUBLIC no proacl (grantee = 0): prova sobre o PUBLIC em si, não via anon.
+tem_public_execute() {
+  psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) a WHERE n.nspname = 'public' AND p.proname = 'multiplix_audiences_validate_shared_roles' AND a.grantee = 0 AND a.privilege_type = 'EXECUTE'" | tail -n1
+}
+tem_service_role_explicito() {
+  psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) a WHERE n.nspname = 'public' AND p.proname = 'multiplix_audiences_validate_shared_roles' AND a.grantee = 'service_role'::regrole AND a.privilege_type = 'EXECUTE'" | tail -n1
+}
 
-expect_value 'A.1 anon tem EXECUTE da função (defeito)' 't' \
+# ── Bloco A: defeito na função REAL (pós-F35, pré-migration) ──────────────────
+printf '\n=== Bloco A: estado ANTERIOR (defeito na função real) ===\n'
+[[ "$(tem_public_execute)" == '1' ]] || fail 'A.1 PUBLIC sem EXECUTE na função real: o defeito não reproduziu'
+printf '[PASS] A.1 PUBLIC tem EXECUTE na função real (defeito)\n'
+
+expect_value 'A.2 anon tem EXECUTE da função real (defeito)' 't' \
   "SELECT has_function_privilege('anon','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'A.2 authenticated tem EXECUTE da função (defeito)' 't' \
+expect_value 'A.3 authenticated tem EXECUTE da função real (defeito)' 't' \
   "SELECT has_function_privilege('authenticated','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'A.3 service_role tem EXECUTE da função' 't' \
-  "SELECT has_function_privilege('service_role','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
+[[ "$(tem_service_role_explicito)" == '0' ]] || fail 'A.4 service_role já tinha entrada explícita: o rollback não precisaria do REVOKE'
+printf '[PASS] A.4 sem entrada explícita para service_role (estado anterior exato)\n'
 
-expect_value 'A.4 postgres tem EXECUTE da função' 't' \
-  "SELECT has_function_privilege('postgres','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
-
-# ── Bloco B: migration aplicada (só postgres/service_role) ────────────────
+# ── Bloco B: migration desta tarefa aplicada ──────────────────────────────────
 printf '\n=== Bloco B: migration aplicada ===\n'
-psql_file "$migration" >/dev/null
+migration_arquivo "20261010101613_revoke_execute_public_multiplix_trigger.sql"
 printf 'Migration aplicada.\n'
 
-expect_value 'B.1 anon NÃO tem mais EXECUTE' 'f' \
+[[ "$(tem_public_execute)" == '0' ]] || fail 'B.1 PUBLIC ainda tem EXECUTE depois da migration'
+printf '[PASS] B.1 PUBLIC sem EXECUTE (sem entrada grantee=0 no proacl)\n'
+
+expect_value 'B.2 anon NÃO tem mais EXECUTE' 'f' \
   "SELECT has_function_privilege('anon','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'B.2 authenticated NÃO tem mais EXECUTE' 'f' \
+expect_value 'B.3 authenticated NÃO tem mais EXECUTE' 'f' \
   "SELECT has_function_privilege('authenticated','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'B.3 service_role conserva EXECUTE' 't' \
+expect_value 'B.4 service_role conserva EXECUTE' 't' \
   "SELECT has_function_privilege('service_role','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'B.4 postgres conserva EXECUTE' 't' \
+expect_value 'B.5 postgres conserva EXECUTE' 't' \
   "SELECT has_function_privilege('postgres','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-# ── Bloco C: rollback executado (PUBLIC tem EXECUTE de volta) ─────────────
+expect_perm_denied 'B.6 anon recebe permission denied ao chamar a função' anon
+
+admin_jwt='{"role":"authenticated","sub":"20000000-0000-0000-0000-00000000000a"}'
+expect_perm_denied 'B.7 authenticated recebe permission denied ao chamar a função' "$admin_jwt"
+
+# A inserção como authenticated continua funcionando (o gatilho dispara sem
+# precisar de EXECUTE): prova que a revogação não quebrou o fluxo legítimo.
+expect_ok_as 'B.8 INSERT como authenticated funciona (gatilho dispara)' "$admin_jwt" \
+  "INSERT INTO public.multiplix_audiences (name, kind, owner_id) VALUES ('Público do A', 'static_list', '10000000-0000-0000-0000-00000000000a') RETURNING 1;" '1'
+
+expect_value 'B.9 linha inserida presente' '1' \
+  "SELECT count(*) FROM public.multiplix_audiences WHERE owner_id = '10000000-0000-0000-0000-00000000000a'"
+
+# ── Bloco C: rollback extraído do próprio arquivo da migration ────────────────
 printf '\n=== Bloco C: rollback executado ===\n'
-rollback_sql="GRANT EXECUTE ON FUNCTION public.multiplix_audiences_validate_shared_roles() TO PUBLIC, anon, authenticated;"
+rollback_sql="$(grep -E '^-- Rollback:' "$migration" | sed 's/^-- Rollback: //')"
+[[ -n "$rollback_sql" ]] || fail 'rollback ausente no cabeçalho da migration'
 psql_sql "$rollback_sql" >/dev/null
 printf 'Rollback executado.\n'
 
-expect_value 'C.1 anon tem EXECUTE de volta (rollback)' 't' \
+[[ "$(tem_public_execute)" == '1' ]] || fail 'C.1 PUBLIC sem EXECUTE depois do rollback'
+printf '[PASS] C.1 PUBLIC com EXECUTE de volta (rollback)\n'
+
+expect_value 'C.2 anon tem EXECUTE de volta (rollback)' 't' \
   "SELECT has_function_privilege('anon','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'C.2 authenticated tem EXECUTE de volta (rollback)' 't' \
+expect_value 'C.3 authenticated tem EXECUTE de volta (rollback)' 't' \
   "SELECT has_function_privilege('authenticated','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'C.3 service_role tem EXECUTE de volta (rollback, via PUBLIC)' 't' \
+expect_value 'C.4 service_role tem EXECUTE (via PUBLIC, sem entrada explícita)' 't' \
   "SELECT has_function_privilege('service_role','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
+[[ "$(tem_service_role_explicito)" == '0' ]] || fail 'C.5 rollback deixou entrada explícita para service_role (estado anterior não tinha)'
+printf '[PASS] C.5 sem entrada explícita para service_role (estado anterior restaurado)\n'
 
-# ── Bloco D: reaplicação idempotente (só postgres/service_role) ───────────
+# ── Bloco D: reaplicação idempotente ──────────────────────────────────────────
 printf '\n=== Bloco D: reaplicação idempotente ===\n'
-psql_file "$migration" >/dev/null
+migration_arquivo "20261010101613_revoke_execute_public_multiplix_trigger.sql"
 printf 'Migration reaplicada.\n'
 
-expect_value 'D.1 anon NÃO tem EXECUTE (reaplicação)' 'f' \
+[[ "$(tem_public_execute)" == '0' ]] || fail 'D.1 PUBLIC com EXECUTE após reaplicação'
+printf '[PASS] D.1 PUBLIC sem EXECUTE (reaplicação)\n'
+
+expect_value 'D.2 anon NÃO tem EXECUTE (reaplicação)' 'f' \
   "SELECT has_function_privilege('anon','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'D.2 authenticated NÃO tem EXECUTE (reaplicação)' 'f' \
+expect_value 'D.3 authenticated NÃO tem EXECUTE (reaplicação)' 'f' \
   "SELECT has_function_privilege('authenticated','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
-expect_value 'D.3 service_role conserva EXECUTE (reaplicação)' 't' \
+expect_value 'D.4 service_role conserva EXECUTE (reaplicação)' 't' \
   "SELECT has_function_privilege('service_role','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
-
-expect_value 'D.4 postgres conserva EXECUTE (reaplicação)' 't' \
-  "SELECT has_function_privilege('postgres','public.multiplix_audiences_validate_shared_roles()','EXECUTE')"
 
 printf '\n=== Todos os blocos passaram ===\n'
