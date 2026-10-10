@@ -94,3 +94,20 @@ describe('card.tsx — sem o runtime de animação no caminho inicial (SL-103A)'
     expect(FONTE).not.toMatch(/\bAnimatePresence\b/);
   });
 });
+
+describe('CardTitle — nível de título', () => {
+  it('padrão continua h3 (nenhuma tela muda sem pedir)', () => {
+    render(<CardTitle>Título Padrão</CardTitle>);
+    expect(screen.getByRole('heading', { level: 3, name: 'Título Padrão' })).toBeInTheDocument();
+  });
+
+  it('CardTitle level={2} renderiza h2 com as mesmas classes', () => {
+    render(<CardTitle level={2}>Título Nível 2</CardTitle>);
+    expect(screen.getByRole('heading', { level: 2, name: 'Título Nível 2' })).toBeInTheDocument();
+  });
+
+  it('CardTitle level={1} renderiza h1 com as mesmas classes', () => {
+    render(<CardTitle level={1}>Título Nível 1</CardTitle>);
+    expect(screen.getByRole('heading', { level: 1, name: 'Título Nível 1' })).toBeInTheDocument();
+  });
+});
