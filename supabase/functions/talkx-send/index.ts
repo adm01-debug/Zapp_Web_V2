@@ -28,7 +28,7 @@ import {
 // removidas — vêm do kernel compartilhado. `personalize` (F37) segue reexportado,
 // junto com `randomBetween`, para não quebrar os importadores deste módulo
 // (index.test.ts importa ambos daqui).
-export { personalize, randomBetween };
+export { personalize, randomBetween, hmacTokenForRecipient };
 
 /**
  * IA-047 — chave estável (SHA-256 em hex) do pedido de envio de TESTE, derivada
@@ -41,6 +41,32 @@ async function deriveTestSendKey(parts: Array<string | null | undefined>): Promi
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/**
+ * Gera um token HMAC-SHA256 curto (base64url) a partir do recipient_id.
+ * Usa TALKX_CONVERT_SECRET como chave; se não estiver configurada,
+ * recusa-se a gerar o token (retorna undefined).
+ */
+async function hmacTokenForRecipient(recipientId: string): Promise<string | undefined> {
+  const secret = Deno.env.get("TALKX_CONVERT_SECRET");
+  if (!secret) return undefined;
+  const keyData = new TextEncoder().encode(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const payload = new TextEncoder().encode(recipientId);
+  const digest = await crypto.subtle.sign("HMAC", cryptoKey, payload);
+  return base64UrlEncode(new Uint8Array(digest));
+}
+
+function base64UrlEncode(bytes: Uint8Array): string {
+  const binary = String.fromCharCode(...bytes);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export async function handleTalkxSend(
@@ -427,8 +453,8 @@ export async function handleTalkxSend(
     // Com o domínio próprio, a URL é /l/:slug (rewrite no vercel.json); sem ele,
     // cai no caminho direto da edge (?s=...&r=...).
     const loadTrackingLinks = async (): Promise<{
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
     }> => {
       const { data: links } = await supabase
         .from("talkx_links")
@@ -436,10 +462,13 @@ export async function handleTalkxSend(
         .eq("campaign_id", campaignId)
         .order("created_at", { ascending: true });
       const configuredBase = (Deno.env.get("TALKX_LINK_BASE_URL") ?? "").trim().replace(/\/+$/, "");
-      const urlFor = (slug: string, recipientId: string) =>
-        configuredBase.length > 0
-          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${encodeURIComponent(recipientId)}`
-          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${encodeURIComponent(recipientId)}`;
+      const urlFor = async (slug: string, recipientId: string): Promise<string> => {
+        const token = await hmacTokenForRecipient(recipientId);
+        const rParam = token ?? encodeURIComponent(recipientId);
+        return configuredBase.length > 0
+          ? `${configuredBase}/l/${encodeURIComponent(slug)}?r=${rParam}`
+          : `${supabaseUrl}/functions/v1/talkx-link?s=${encodeURIComponent(slug)}&r=${rParam}`;
+      };
       const rows = (links ?? []) as { slug?: unknown; label?: unknown }[];
       const oldestSlug = typeof rows[0]?.slug === "string" ? rows[0].slug : undefined;
       const slugByLabel = new Map<string, string>();
@@ -448,11 +477,11 @@ export async function handleTalkxSend(
           slugByLabel.set(row.label.trim().toLowerCase(), row.slug);
         }
       }
-      const trackingUrlFor = (recipientId: string) =>
-        oldestSlug ? urlFor(oldestSlug, recipientId) : undefined;
-      const linksByLabelFor = (recipientId: string) => {
+      const trackingUrlFor = async (recipientId: string): Promise<string | undefined> =>
+        oldestSlug ? await urlFor(oldestSlug, recipientId) : undefined;
+      const linksByLabelFor = async (recipientId: string): Promise<Record<string, string>> => {
         const out: Record<string, string> = {};
-        for (const [label, slug] of slugByLabel) out[label] = urlFor(slug, recipientId);
+        for (const [label, slug] of slugByLabel) out[label] = await urlFor(slug, recipientId);
         return out;
       };
       return { trackingUrlFor, linksByLabelFor };
@@ -640,8 +669,8 @@ export async function handleTalkxSend(
       evolutionUrl: string;
       evolutionKey: string;
       supabaseUrl: string;
-      trackingUrlFor: (recipientId: string) => string | undefined;
-      linksByLabelFor: (recipientId: string) => Record<string, string>;
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>;
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>;
       mediaForSend: () => Promise<string>;
       deliveryLogs: DeliveryLogEntry[];
     }
@@ -903,8 +932,8 @@ export async function handleTalkxSend(
       minuteRemaining: number,
       dayRemaining: number,
       businessHours: { start?: string; end?: string; days?: number[] } | null,
-      trackingUrlFor: (recipientId: string) => string | undefined,
-      linksByLabelFor: (recipientId: string) => Record<string, string>,
+      trackingUrlFor: (recipientId: string) => Promise<string | undefined>,
+      linksByLabelFor: (recipientId: string) => Promise<Record<string, string>>,
     ): Promise<EngineState> => {
       // whatsapp-media e bucket privado: a GO so baixa via signed URL (TTL 300s). Uma
       // assinatura serve varios destinatarios; reassina depois de 240s porque campanhas
