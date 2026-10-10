@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { toast } from 'sonner';
-import { logAudit } from '@/lib/audit';
 import {
   CATALOG_EXPORT_BOM,
   CATALOG_EXPORT_COLUMNS,
@@ -26,14 +25,15 @@ vi.mock('sonner', () => ({
   toast: { loading: vi.fn(() => 'toast-1'), success: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
 }));
 
-// Auditoria: mock para provar que o registro acontece (ou não) sem chamar a RPC real.
-vi.mock('@/lib/audit', () => ({
-  logAudit: vi.fn().mockResolvedValue(undefined),
+// Auditoria: SEM mock de '@/lib/audit' — o logAudit REAL roda e a RPC do
+// Supabase é interceptada no client (prova o caminho de produção; o
+// user_id é anexado no SQL, `auth.uid()` em log_audit_event).
+const { invokeMock, rpcMock } = vi.hoisted(() => ({
+  invokeMock: vi.fn(),
+  rpcMock: vi.fn(async () => ({ error: null })),
 }));
-
-const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: invokeMock } },
+  supabase: { functions: { invoke: invokeMock }, rpc: rpcMock },
 }));
 
 const prod = (o: Partial<CatalogExportProduct> = {}): CatalogExportProduct => ({
@@ -341,22 +341,43 @@ describe('CT-20 — exportCatalogCsv (auditoria: quem exportou, filtro e linhas)
     const [csv, filename] = download.mock.calls[0];
     expect(filename).toBe('catalogo_in_stock_20261001.csv');
     expect(csv).toBe(buildCatalogCsv(rows));
-    // A auditoria é agendada por queueMicrotask: escoa antes de conferir.
-    await Promise.resolve();
-    expect(logAudit).toHaveBeenCalledWith(
+    // O logAudit REAL roda (a RPC é mockada no client, não o módulo).
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_audit_event',
       expect.objectContaining({
-        action: 'catalog_export',
-        entityType: 'catalog_export',
-        entityId: 'catalogo_in_stock_20261001.csv',
-        details: expect.objectContaining({
-          filter: 'in_stock',
-          rows: 2,
-        }),
+        p_action: 'catalog_export',
+        p_entity_type: 'catalog_export',
+        p_entity_id: 'catalogo_in_stock_20261001.csv',
+        p_details: expect.objectContaining({ filter: 'in_stock', rows: 2 }),
+        p_user_agent: expect.any(String),
       }),
     );
-    // Ordem (critério de pronto: auditoria depois do download, não junto).
-    expect(download.mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(logAudit).mock.invocationCallOrder[0],
+    // Ordem: auditoria ANTES do download (existe mesmo se o download lançar).
+    expect(rpcMock.mock.invocationCallOrder[0]).toBeLessThan(
+      download.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('o registro existe mesmo quando o download lança (auditoria antes, sem queueMicrotask)', async () => {
+    const fetchPage = vi.fn(async () => ({ data: [prod()] }));
+    const download = vi.fn(() => {
+      throw new Error('boom');
+    });
+
+    await expect(
+      exportCatalogCsv({
+        filterKey: 'todos',
+        date: new Date(2026, 9, 1),
+        fetchPage,
+        download,
+        canDownload: true,
+      }),
+    ).rejects.toThrow('boom');
+    // Sem a correção (queueMicrotask depois do download) este RPC nunca acontecia.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_audit_event',
+      expect.objectContaining({ p_action: 'catalog_export' }),
     );
   });
 
@@ -375,11 +396,10 @@ describe('CT-20 — exportCatalogCsv (auditoria: quem exportou, filtro e linhas)
     expect(result).toMatchObject({ ok: false, rows: 2, downloaded: false, error: 'download-blocked' });
     expect(download).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
-    await Promise.resolve();
-    expect(logAudit).not.toHaveBeenCalled();
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('não registra auditoria quando o download é bloqueado', async () => {
+  it('download bloqueado (devolve false) com permissão: a tentativa fica registrada, sem toast de sucesso', async () => {
     const fetchPage = vi.fn(async () => ({ data: [prod()] }));
     const download = vi.fn(() => false);
 
@@ -392,8 +412,11 @@ describe('CT-20 — exportCatalogCsv (auditoria: quem exportou, filtro e linhas)
     });
 
     expect(result).toMatchObject({ ok: false, downloaded: false, error: 'download-blocked' });
-    await Promise.resolve();
-    expect(logAudit).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    // A auditoria acontece ANTES do download (o resultado só existe depois
+    // de chamar); em produção este ramo é inalcançável com permissão
+    // liberada (a porta real devolve `true`).
+    expect(rpcMock).toHaveBeenCalledTimes(1);
   });
 });
 

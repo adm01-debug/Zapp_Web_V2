@@ -58,6 +58,14 @@ vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   };
 });
 
+// Y29 — os exports da tela passam pelo gate `profiles.can_download` antes de
+// baixar (e de auditar); sem permissão liberada o caminho feliz não existe.
+// O mock de auth deste arquivo não tem `user`, então o hook real devolveria
+// `false`: permissão liberada como nos testes irmãos (CT57).
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 // CT-21/CT-28 — o "Exportar catálogo" do rail passa por exportCatalogCsv e o
 // "Exportar seleção" da barra desce até o download; ambos são observados sem
 // tocar na edge nem no DOM (buildCatalogCsv/catalogExportFilename seguem reais).

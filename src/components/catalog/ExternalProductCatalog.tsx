@@ -43,6 +43,8 @@ const CatalogBulkSendDialog = lazy(() =>
 // CT-28 — "Exportar seleção" reusa os builders puros do CSV (CT-20); nada é
 // buscado na edge: as linhas são exatamente os produtos selecionados.
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+import { logAudit } from '@/lib/audit';
+import { notifyDownloadBlocked } from '@/lib/downloadFile';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { favoriteToProduct, CatalogErrorState, countLabel, useRateLimitCooldown, CatalogDialogFallback } from './catalogShared';
 import { TalkXPagination, TalkXEmptyState } from '@/components/talkx/talkxShared';
@@ -381,7 +383,19 @@ export const ExternalProductCatalog: React.FC<ExternalProductCatalogProps> = ({
   /** CT-28 — "Exportar seleção": CSV com exatamente os produtos escolhidos. */
   const handleExportSelection = () => {
     if (selectedProducts.length === 0) return;
-    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()), canDownload);
+    // Y29 — sem `can_download` NADA é gerado nem auditado (mesmo aviso da porta).
+    if (!canDownload) { notifyDownloadBlocked(); return; }
+    const filename = catalogExportFilename('selecao', new Date());
+    // Auditoria (quem exportou e nº de linhas): ANTES do download,
+    // fire-and-forget — a RPC já está em voo quando o download roda (o registro
+    // existe mesmo que ele lance); sem `await` para não atrasar o CSV.
+    void logAudit({
+      action: 'catalog_export',
+      entityType: 'catalog_export',
+      entityId: filename,
+      details: { filter: 'selecao', rows: selectedProducts.length },
+    });
+    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), filename, canDownload);
     if (wrote === false) return;
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   };

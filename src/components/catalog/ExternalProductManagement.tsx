@@ -62,6 +62,7 @@ const CatalogBulkSendDialog = lazy(() =>
 // catálogo do chat: as linhas são exatamente os produtos selecionados na tela
 // (nada é buscado na edge; o export do filtro inteiro é o do rail).
 import { buildCatalogCsv, catalogExportFilename, triggerCsvDownload } from './catalogExport';
+import { logAudit } from '@/lib/audit';
 import { notifyDownloadBlocked } from '@/lib/downloadFile';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { CatalogFavoritesTab } from './CatalogFavoritesTab';
@@ -392,10 +393,20 @@ export const ExternalProductManagement: React.FC = () => {
     // Y29 / SEC-SAIDAS_DE_INFORMACAO-02 — sem `can_download` NADA é gerado:
     // o builder nem roda (o CSV leva nome de contato e de agente).
     if (!canDownload) { notifyDownloadBlocked(); return; }
-    const wrote = triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), sendHistoryFilename(new Date()), canDownload);
+    const filename = sendHistoryFilename(new Date());
+    // Auditoria (quem exportou, com filtro e nº de linhas): ANTES do download,
+    // fire-and-forget — a RPC já está em voo quando o download roda (o registro
+    // existe mesmo que ele lance); sem `await` para não atrasar o CSV.
+    void logAudit({
+      action: 'catalog_send_history_export',
+      entityType: 'catalog_send_history_export',
+      entityId: filename,
+      details: { filter: 'enviados', filters: { search: sentSearch, status: sentStatus }, rows: filteredSendRows.length },
+    });
+    const wrote = triggerCsvDownload(buildSendHistoryCsv(filteredSendRows), filename, canDownload);
     if (wrote === false) return;
     toast.success(`${filteredSendRows.length} envio(s) exportado(s) em CSV`);
-  }, [filteredSendRows, canDownload]);
+  }, [filteredSendRows, canDownload, sentSearch, sentStatus]);
 
   // E47: seleção em massa
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -446,7 +457,18 @@ export const ExternalProductManagement: React.FC = () => {
    * reusando os builders puros do CT-20 (sem tocar na edge). */
   const handleExportSelection = useCallback(() => {
     if (selectedProducts.length === 0) return;
-    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), catalogExportFilename('selecao', new Date()), canDownload);
+    // Y29 — sem `can_download` NADA é gerado nem auditado (mesmo aviso da porta).
+    if (!canDownload) { notifyDownloadBlocked(); return; }
+    const filename = catalogExportFilename('selecao', new Date());
+    // Auditoria (quem exportou e nº de linhas): ANTES do download,
+    // fire-and-forget (ver comentário do histórico).
+    void logAudit({
+      action: 'catalog_export',
+      entityType: 'catalog_export',
+      entityId: filename,
+      details: { filter: 'selecao', rows: selectedProducts.length },
+    });
+    const wrote = triggerCsvDownload(buildCatalogCsv(selectedProducts), filename, canDownload);
     if (wrote === false) return;
     toast.success(`${selectedProducts.length} produto(s) exportado(s) em CSV`);
   }, [selectedProducts, canDownload]);
