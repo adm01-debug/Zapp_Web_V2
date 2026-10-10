@@ -122,4 +122,25 @@ describe('useTalkXCampaignSummary — resumo da campanha calculado no servidor (
     await waitFor(() => expect(vazio.result.current.isLoading).toBe(false));
     expect(vazio.result.current).toMatchObject({ total: 0, eligible: 0, suppressed: 0 });
   });
+
+  it('isUnavailable é true quando enabled=false (crm360 ou origem sem filtro)', () => {
+    const { result } = renderHook(
+      () => useTalkXCampaignSummary({ rules, enabled: false }),
+      { wrapper },
+    );
+    expect(result.current.isUnavailable).toBe(true);
+    expect(result.current.total).toBe(0);
+    expect(result.current.eligible).toBe(0);
+    expect(result.current.suppressed).toBe(0);
+    expect(result.current.isLoading).toBe(false);
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('isUnavailable é false quando enabled=true (padrão)', () => {
+    rpcMock.mockResolvedValue({ data: { eligible: 10, suppressed: 2 }, error: null });
+
+    const { result } = renderHook(() => useTalkXCampaignSummary({ rules }), { wrapper });
+    // O hook começa com isLoading=true e isUnavailable=false antes da resolução.
+    expect(result.current.isUnavailable).toBe(false);
+  });
 });

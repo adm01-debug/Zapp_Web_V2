@@ -619,10 +619,18 @@ function WizardRail({ ed }: { ed: WizardState }) {
   // local: "Público total" era `selectedContacts.length` e "Bloqueados por
   // supressão" era 0 para segmento (e só existia depois de um save). Agora os
   // três números saem do mesmo critério de elegibilidade/supressão do disparo.
+  // Regras: nunca chamar talkx_resolve_audience sem filtro. Origem sem
+  // segmentId ou sem regras completas fica indisponível ('—').
+  const completed = completedRules(ed.audienceRules);
+  const hasCompleteRules = completed.groups.some((g) => g.rules.length > 0);
+  const summaryEnabled =
+    ed.audienceSource !== 'crm360' &&
+    (ed.audienceSource !== 'segment' || !!ed.segmentId) &&
+    (ed.audienceSource !== 'contacts' || hasCompleteRules);
   const summary = useTalkXCampaignSummary({
-    rules: ed.audienceSource === 'contacts' ? completedRules(ed.audienceRules) : null,
+    rules: ed.audienceSource === 'contacts' ? completed : null,
     segmentIds: ed.audienceSource === 'segment' && ed.segmentId ? [ed.segmentId] : null,
-    enabled: ed.audienceSource !== 'crm360',
+    enabled: summaryEnabled,
   });
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -651,9 +659,9 @@ function WizardRail({ ed }: { ed: WizardState }) {
           </div>
         )}
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={summary.isLoading ? '…' : fmtInt(summary.total)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={summary.isLoading ? '…' : fmtInt(summary.eligible)} sub={summary.total > 0 ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={summary.isLoading ? '…' : fmtInt(summary.suppressed)} sub={summary.total > 0 ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.total)} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.eligible)} sub={!summary.isUnavailable && summary.total > 0 ? fmtPct(summary.eligible, summary.total) : undefined} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={summary.isUnavailable ? '—' : summary.isLoading ? '…' : fmtInt(summary.suppressed)} sub={!summary.isUnavailable && summary.total > 0 ? fmtPct(summary.suppressed, summary.total) : undefined} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
