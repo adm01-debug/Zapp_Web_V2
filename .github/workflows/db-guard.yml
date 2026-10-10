@@ -477,6 +477,11 @@ jobs:
       - name: Simular READ marcando read_at + read_count (V17)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v17-read-at.test.sh
 
+      - name: Record talkx recipient sent inserts message when external_id not exists
+        env:
+          TALKX_RECIPIENT_SENT_MSG_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-recipient-sent-insert-message.test.sh
+
       - name: Simular retry manual de destinatário terminal (V19)
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-v19-retry-recipient.test.sh
 
