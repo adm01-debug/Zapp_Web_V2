@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Phone, PhoneOff, Mic, MicOff, Grid3X3, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,12 +43,16 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
   const sessao = useCallSession();
   const { voip } = useCallChannels();
   const [tecladoAberto, setTecladoAberto] = useState(false);
+  const reduzirMotion = useReducedMotion();
 
   const estado = sessao.session.status;
   const recebendo = estado === 'ringing_in';
   const ativa = estado === 'active';
   const numero = sessao.session.phone || sessao.currentNumber || '';
   const nome = sessao.session.name;
+
+  const duracaoTransicao = reduzirMotion ? 0 : 0.12;
+  const duracaoFade = reduzirMotion ? 0 : 0.15;
 
   // T64: encerrada a ligacao, o lugar da chamada passa a ser o resumo pos-chamada.
   if (estado === 'ended') {
@@ -62,13 +66,14 @@ export function ActiveCallPanel({ segundos }: ActiveCallPanelProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.12 }}
+        transition={{ duration: duracaoTransicao }}
+        whileTap={{ scale: 0.98 }}
       >
         <Card className="border-primary/30 bg-card" data-testid="tel-active-panel">
           <CardContent className="flex flex-col items-center gap-4 p-4">
             {/* Estado (T62) */}
             <p
-              className="text-sm font-medium text-muted-foreground"
+              className={`text-sm font-medium text-muted-foreground ${estado === 'ringing_out' || estado === 'connecting' ? 'motion-safe:animate-pulse' : ''}`}
               aria-live="polite"
               data-testid="tel-active-status"
             >

@@ -33,6 +33,7 @@ vi.mock('framer-motion', () => ({
     div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
   },
   AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
+  useReducedMotion: () => false,
 }));
 vi.mock('../CallDialog', () => ({ CallDialog: () => <div data-testid="call-dialog" /> }));
 vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
