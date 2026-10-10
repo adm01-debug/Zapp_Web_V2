@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { queryKeys } from './queryKeys';
 
 export interface DepartmentProfile {
   id: string;
@@ -90,24 +91,6 @@ const INVITE_MAX_USES = 1;
 const INVITE_EXPIRES_HOURS = 7 * 24;
 
 /**
- * `get_department_whatsapp_config` existe no banco desde a migration 20261006213734
- * (F10) mas ainda nao esta em `src/integrations/supabase/types.ts`, arquivo fora do
- * escopo deste cartao. O cast local chama a MESMA RPC com o MESMO nome/parametro que
- * a migration declara, sem editar o arquivo de tipos gerado.
- */
-function rpcForaDosTipos(
-  nome: string,
-  args?: Record<string, unknown>,
-): Promise<{ data: unknown; error: { message: string } | null }> {
-  return (supabase as unknown as {
-    rpc: (
-      nome: string,
-      args?: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  }).rpc(nome, args);
-}
-
-/**
  * A RPC de leitura `get_department_whatsapp_config` devolve uma TABELA
  * `(mode, instance_id, has_api_key)` — sem a chave. Devolver o payload cru deixava
  * `credentials.mode` indefinido e a tela nunca carregava o modo salvo (familia
@@ -126,7 +109,7 @@ export function toDepartmentWhatsAppCredentials(payload: unknown): DepartmentWha
 
 export function useDepartmentProfiles() {
   return useQuery<DepartmentProfile[]>({
-    queryKey: ['departmentChat', 'profiles'],
+    queryKey: queryKeys.departments.members(),
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_team_profiles');
       if (error) throw error;
@@ -138,7 +121,7 @@ export function useDepartmentProfiles() {
 
 export function useDepartmentAuditLogs(departmentId: string) {
   return useQuery<DepartmentAuditLog[]>({
-    queryKey: ['departmentChat', 'audit', departmentId],
+    queryKey: queryKeys.departments.audit(departmentId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('department_audit_logs')
@@ -158,7 +141,7 @@ export function useDepartmentAuditLogs(departmentId: string) {
 
 export function useDepartmentInvites(departmentId: string) {
   return useQuery<DepartmentInvite[]>({
-    queryKey: ['departmentChat', 'invites', departmentId],
+    queryKey: queryKeys.departments.invites(departmentId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('department_invitations')
@@ -189,9 +172,9 @@ export function useDepartmentInvites(departmentId: string) {
  */
 export function useDepartmentWhatsAppCredentials(departmentId: string) {
   return useQuery<DepartmentWhatsAppCredentials>({
-    queryKey: ['departmentChat', 'whatsapp', departmentId],
+    queryKey: queryKeys.departments.whatsapp(departmentId),
     queryFn: async () => {
-      const { data, error } = await rpcForaDosTipos('get_department_whatsapp_config', {
+      const { data, error } = await supabase.rpc('get_department_whatsapp_config', {
         p_department_id: departmentId,
       });
       if (error) throw error;
@@ -229,8 +212,8 @@ export function useCreateDepartmentInvite(departmentId: string) {
       return { ok: true, invite_id: result.invite_id, code: result.code };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'invites', departmentId] });
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.invites(departmentId) });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.audit(departmentId) });
     },
   });
 }
@@ -259,7 +242,7 @@ export function useDeleteDepartmentInvite(departmentId: string) {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'invites', departmentId] });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.invites(departmentId) });
     },
   });
 }
@@ -289,8 +272,8 @@ export function useAcceptDepartmentInvite() {
       return { ok: true, department_id: result.department_id };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['profile'] });
-      qc.invalidateQueries({ queryKey: ['team-conversations'] });
+      qc.invalidateQueries({ queryKey: queryKeys.profile() });
+      qc.invalidateQueries({ queryKey: queryKeys.inbox() });
     },
   });
 }
@@ -313,8 +296,8 @@ export function useAddDepartmentMember(departmentId: string) {
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'profiles'] });
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.members() });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.audit(departmentId) });
     },
   });
 }
@@ -337,8 +320,8 @@ export function useRemoveDepartmentMember(departmentId: string) {
       });
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'profiles'] });
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.members() });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.audit(departmentId) });
     },
   });
 }
@@ -377,8 +360,8 @@ export function useSaveDepartmentWhatsApp(departmentId: string) {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'whatsapp', departmentId] });
-      qc.invalidateQueries({ queryKey: ['departmentChat', 'audit', departmentId] });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.whatsapp(departmentId) });
+      qc.invalidateQueries({ queryKey: queryKeys.departments.audit(departmentId) });
     },
   });
 }

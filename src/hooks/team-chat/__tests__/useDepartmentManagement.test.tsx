@@ -26,7 +26,7 @@ type Chamada = { alvo: string; op: string; args?: unknown };
 const f = vi.hoisted(() => {
   const chamadas: Chamada[] = [];
   const respostas = new Map<string, { data: unknown; error: unknown }>();
-  const rpcImpl = vi.fn((nome: string, args?: Record<string, unknown>) =>
+  const rpcImpl = vi.fn(() =>
     Promise.resolve({ data: null as unknown, error: null as unknown }),
   );
 
@@ -59,7 +59,7 @@ const f = vi.hoisted(() => {
     if (this !== supabase) {
       return Promise.reject(new TypeError('supabase.rpc chamado sem this'));
     }
-    return rpcImpl(nome, args);
+    return rpcImpl();
   });
   supabase.rpc = rpc;
 
@@ -226,7 +226,6 @@ describe('useDepartmentWhatsAppCredentials — RPC de leitura atual', () => {
     });
   });
 });
-
 
 describe('useSaveDepartmentWhatsApp — RPC de gravação atual', () => {
   it('chama set_department_whatsapp_config com nulos presentes e nao escreve em tabelas legadas', async () => {
