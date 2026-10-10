@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Camera, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { getLogger } from '@/lib/logger';
@@ -14,6 +15,25 @@ const log = getLogger('AvatarUpload');
 // regerada a cada render, então não há motivo para uma validade longa.
 export const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
 
+const AVATAR_BUCKET = 'avatars';
+
+function isStorageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+/**
+ * Normaliza o valor guardado em profile.avatar_url para o caminho do objeto.
+ * Avatares legados guardam a URL pública completa ('.../object/public/avatars/...?t=...');
+ * com o bucket privado esse valor precisa virar caminho antes de assinar.
+ * Aceita rotas /object/public/, /object/sign/ e /object/authenticated/, ignora a query
+ * e restringe ao bucket `avatars`. Retorna null quando não dá para normalizar.
+ */
+function avatarObjectPath(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (!isStorageUrl(value)) return value;
+  return parseSupabaseStorageObjectUrl(value, [AVATAR_BUCKET], [])?.path ?? null;
+}
+
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
   const feedback = useActionFeedback();
@@ -23,8 +43,15 @@ export function AvatarUpload() {
 
   // Gera URL assinada temporária a partir do caminho armazenado
   useEffect(() => {
-    const filePath = profile?.avatar_url;
-    if (!filePath || !user) {
+    const raw = profile?.avatar_url;
+    if (!raw || !user) {
+      setAvatarUrl(null);
+      return;
+    }
+    // Legado: avatar_url pode ser a URL pública completa; normaliza para caminho.
+    const filePath = avatarObjectPath(raw);
+    if (!filePath || isStorageUrl(filePath)) {
+      setAvatarUrl(null);
       return;
     }
     let cancelled = false;
@@ -71,6 +98,16 @@ export function AvatarUpload() {
         if (updateError) throw updateError;
 
         await refreshProfile();
+        // O caminho é fixo (`<user.id>/avatar.<ext>`), então profile.avatar_url pode
+        // não mudar e o useEffect não roda de novo: reassina e atualiza a prévia aqui.
+        try {
+          const { data: signed } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .createSignedUrl(filePath, AVATAR_SIGNED_URL_TTL_SECONDS);
+          if (signed?.signedUrl) setAvatarUrl(signed.signedUrl);
+        } catch {
+          // Mantém a prévia via refreshProfile; a próxima renderização reassina.
+        }
       },
       {
         loadingMessage: 'Enviando foto...',

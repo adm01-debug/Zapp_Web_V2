@@ -249,13 +249,94 @@ describe('useAdminData — avatares no bucket privado', () => {
     expect(lastUpdate?.avatar_url).toBe('auth-1/avatar.png');
   });
 
-  it('remover o avatar grava null (não sobra URL pública)', async () => {
+  it('remoção real: usuário com avatar remove a foto e grava null', async () => {
+    const { result } = renderHook(() => useAdminData('users'));
+    // Fluxo real da tela: o formulário parte do usuário COM avatar e limpa o campo.
+    const edited: UserWithRole = { ...buildUser('auth-1/avatar.png'), avatar_url: null };
+
+    await act(async () => {
+      await result.current.handleSaveUser(edited, null);
+    });
+
+    expect(upload).not.toHaveBeenCalled();
+    expect(lastUpdate?.avatar_url).toBeNull();
+    expect(getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('normaliza URL pública legada ao carregar (bucket privado não quebra)', async () => {
+    tableFrom.mockImplementation((table: string) => ({
+      select: () => {
+        const legacyRow = {
+          ...profileRow,
+          avatar_url: 'https://proj.supabase.co/storage/v1/object/public/avatars/auth-1/avatar.png?t=123',
+        };
+        const result = {
+          data: table === 'profiles' ? [legacyRow] : [{ user_id: 'auth-1', role: 'agent' }],
+          error: null,
+        };
+        const thenable = Promise.resolve(result) as Promise<typeof result> & {
+          order: () => Promise<typeof result>;
+          in: () => Promise<{ data: unknown[]; error: null }>;
+          single: () => Promise<typeof result>;
+        };
+        thenable.order = async () => result;
+        thenable.in = async () => ({ data: [], error: null });
+        thenable.single = async () => result;
+        return thenable;
+      },
+      update: (payload: Record<string, unknown>) => {
+        lastUpdate = payload;
+        return { eq: async () => ({ error: null }) };
+      },
+      insert: async () => ({ data: null, error: null }),
+    }));
     const { result } = renderHook(() => useAdminData('users'));
 
     await act(async () => {
-      await result.current.handleSaveUser(buildUser(null), null);
+      await result.current.fetchData();
     });
 
-    expect(lastUpdate?.avatar_url).toBeNull();
+    // Assina o CAMINHO normalizado, nunca a URL http direto
+    expect(createSignedUrl).toHaveBeenCalledWith('auth-1/avatar.png', 300);
+    expect(getPublicUrl).not.toHaveBeenCalled();
+    expect(result.current.users[0].avatar_url).toBe('https://signed.example.com/avatar.png');
+  });
+
+  it('normaliza URL assinada legada ao carregar', async () => {
+    tableFrom.mockImplementation((table: string) => ({
+      select: () => {
+        const legacyRow = {
+          ...profileRow,
+          avatar_url: 'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc',
+        };
+        const result = {
+          data: table === 'profiles' ? [legacyRow] : [{ user_id: 'auth-1', role: 'agent' }],
+          error: null,
+        };
+        const thenable = Promise.resolve(result) as Promise<typeof result> & {
+          order: () => Promise<typeof result>;
+          in: () => Promise<{ data: unknown[]; error: null }>;
+          single: () => Promise<typeof result>;
+        };
+        thenable.order = async () => result;
+        thenable.in = async () => ({ data: [], error: null });
+        thenable.single = async () => result;
+        return thenable;
+      },
+      update: (payload: Record<string, unknown>) => {
+        lastUpdate = payload;
+        return { eq: async () => ({ error: null }) };
+      },
+      insert: async () => ({ data: null, error: null }),
+    }));
+    const { result } = renderHook(() => useAdminData('users'));
+
+    await act(async () => {
+      await result.current.fetchData();
+    });
+
+    expect(createSignedUrl).toHaveBeenCalledWith('auth-1/avatar.png', 300);
+    expect(result.current.users[0].avatar_url).toBe('https://signed.example.com/avatar.png');
   });
 });
+
