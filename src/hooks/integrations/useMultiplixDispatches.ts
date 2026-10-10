@@ -43,6 +43,10 @@ export interface MultiplixRecipientRow {
   sent_at: string | null;
   error_message: string | null;
   personalized_message: string | null;
+  delivered_at: string | null;
+  eligibility: string | null;
+  eligibility_reason: string | null;
+  inclusion_reason: string | null;
 }
 
 // ---------------------------------------------------------------------------
