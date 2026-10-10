@@ -1,5 +1,7 @@
 -- login_block_log
--- Rollback: DROP FUNCTION IF EXISTS public.log_login_block(text, text, text, text, text);
+-- Rollback: dropa a RPC nova; nao altera tabela, coluna ou funcao existente.
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.log_login_block(text, text, text, text, text);
 --
 -- Registra em public.audit_logs cada tentativa de login barrada pela politica de rede
 -- (IP/pais) aplicada em auth-login via public.resolve_network_policy (migration
