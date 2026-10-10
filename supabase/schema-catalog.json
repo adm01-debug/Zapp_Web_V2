@@ -2839,7 +2839,7 @@
         "talkx_campaign_logs(p_campaign_id uuid, p_after timestamp with time zone, p_limit integer)->TABLE(id uuid, campaign_id uuid, recipient_id uuid, attempt integer, stage text, outcome text, http_status integer, error_code text, worker_id text, duration_ms integer, created_at timestamp with time zone)|kind=f",
         "talkx_campaign_pace(p_campaign_id uuid)->jsonb|kind=f",
         "talkx_campaign_reply_stats(p_campaign_id uuid)->jsonb|kind=f",
-        "talkx_campaign_report(p_campaign uuid)->jsonb|kind=f",
+        "talkx_campaign_report(p_campaign uuid, p_from timestamptz, p_to timestamptz, p_granularity text, p_segment jsonb)->jsonb|kind=f",
         "talkx_connection_send_budget(p_connection_id uuid)->jsonb|kind=f",
         "talkx_delete_link(p_link_id uuid)->jsonb|kind=f",
         "talkx_engine_alerts()->jsonb|kind=f",

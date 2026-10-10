@@ -109,11 +109,11 @@ red_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM json
 psql_test < "$repo_root/supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql" >/dev/null \
   || fail 'migration V16 nao aplicou (GREEN)'
 
-green_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM jsonb_array_elements(public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'hourly_series') h")"
+green_sent="$(psql_test -Atqc "SELECT COALESCE(SUM((h->>'sent')::int),0) FROM jsonb_array_elements(public.talkx_campaign_report('20000000-0000-0000-0000-000000000001', now() - interval '1 day', now(), 'hour', '{}'::jsonb)->'hourly_series') h")"
 [[ "$green_sent" == '5' ]] || fail "GREEN: serie horaria deveria contar 5 (got $green_sent)"
 
 # V18: avg(replied_at - sent_at) presente no kpis quando há resposta
-green_avg="$(psql_test -Atqc "SELECT (public.talkx_campaign_report('20000000-0000-0000-0000-000000000001')->'kpis'->>'avg_reply_secs') IS NOT NULL")"
+green_avg="$(psql_test -Atqc "SELECT (public.talkx_campaign_report('20000000-0000-0000-0000-000000000001', now() - interval '1 day', now(), 'hour', '{}'::jsonb)->'kpis'->>'avg_reply_secs') IS NOT NULL")"
 [[ "$green_avg" == 't' ]] || fail "GREEN: avg_reply_secs deveria existir no kpis (V18)"
 
 echo '[OK] Talk X V16: serie horaria conta sent + delivered (3 sent + 2 delivered = 5) + avg_reply_secs (V18).'

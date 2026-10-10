@@ -6,19 +6,13 @@
  *             linhas e passam a ser contagens exatas no servidor (head/count),
  *             feitas no mesmo instante; `cancelled` e `outcome_unknown` são
  *             reportados explicitamente e nunca inferidos como pendentes.
+ * talkx_campaign_report: usa a RPC multi-arg (p_campaign, p_from, p_to,
+ *   p_granularity, p_segment) que retorna time_series, funnel e KPIs
+ *   consolidados; substitui as contagens manuais por status.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { EMAIL_FONT_STACK } from "../_shared/email-font-stack.ts";
-
-/**
- * Status possíveis em talkx_recipients — CHECK talkx_recipients_status_check
- * (migration 20260930650000): pending, sending, sent, delivered, failed,
- * skipped, outcome_unknown, cancelled. As classes que o relatório não lê dos
- * agregados da campanha são contadas aqui, uma a uma, de forma explícita.
- */
-const CONTADOS_POR_STATUS = ['pending', 'sending', 'skipped', 'outcome_unknown', 'cancelled'] as const;
-type StatusContado = typeof CONTADOS_POR_STATUS[number];
 
 export interface TalkxReportDeps {
   supabase: SupabaseClient;
@@ -47,20 +41,6 @@ function jsonErr(req: Request, body: Record<string, unknown>, status: number): R
  * sem trazer linhas e sem teto de página. Devolve o número ou lança para o
  * chamador transformar em recusa — relatório com total incompleto não é enviado.
  */
-async function contarPorStatus(
-  supabase: SupabaseClient,
-  campaignId: string,
-  status: StatusContado,
-): Promise<number> {
-  const { count, error } = await supabase
-    .from('talkx_recipients')
-    .select('id', { count: 'exact', head: true })
-    .eq('campaign_id', campaignId)
-    .eq('status', status);
-  if (error) throw new Error(`recipients_count_failed:${status}:${error.message}`);
-  return count ?? 0;
-}
-
 // ─── Main handler ─────────────────────────────────────────────────────────────────────────────
 export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Promise<Response> {
   const corsResponse = handleCors(req);
@@ -124,34 +104,33 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     }
     if (!recipientEmail) return jsonErr(req, { ok: false, reason: 'no_recipient_email' }, 422);
 
-    // ── 3. Contagens exatas por status (R2-API-038) ─────────────────────────────────
-    // Contagens no servidor, no mesmo instante, sem página e sem teto: nenhuma
-    // classe é inferida por subtração, então destinatário fora de qualquer página
-    // deixa de aparecer como pendente. Falha em qualquer contagem → 502 e nenhum
-    // relatório: total incompleto não é enviado como completo.
-    let counts: Record<StatusContado, number>;
-    try {
-      const valores = await Promise.all(
-        CONTADOS_POR_STATUS.map((status) => contarPorStatus(supabase, campaignId, status)),
-      );
-      counts = Object.fromEntries(
-        CONTADOS_POR_STATUS.map((status, i) => [status, valores[i]]),
-      ) as Record<StatusContado, number>;
-    } catch (err) {
-      log.error('Recipients count failed', { campaignId, error: err instanceof Error ? err.message : String(err) });
-      return jsonErr(req, { ok: false, reason: 'recipients_query_failed' }, 502);
+    // ── 3. Relatório via RPC talkx_campaign_report (substitui contagens manuais R2-API-038) ──
+    const { from, to, granularity, segment } = await req.json() as {
+      campaignId: string;
+      from?: string;
+      to?: string;
+      granularity?: string;
+      segment?: Record<string, unknown>;
+    };
+    if (!from) return jsonErr(req, { ok: false, reason: 'missing_from' }, 400);
+    if (!to) return jsonErr(req, { ok: false, reason: 'missing_to' }, 400);
+    const { data: report, error: reportErr } = await supabase.rpc('talkx_campaign_report', {
+      p_campaign: campaignId,
+      p_from: from,
+      p_to: to,
+      p_granularity: granularity ?? 'day',
+      p_segment: segment ?? null,
+    });
+    if (reportErr || !report) {
+      log.error('talkx_campaign_report RPC failed', { campaignId, error: reportErr?.message });
+      return jsonErr(req, { ok: false, reason: 'report_rpc_failed', detail: reportErr?.message }, 502);
     }
 
-    // ── 4. KPIs ────────────────────────────────────────────────────────────────────────
-    const total = campaign.total_recipients ?? 0;
-    const sent = campaign.sent_count ?? 0;
-    const failed = campaign.failed_count ?? 0;
-    // Classes lidas do estado real de talkx_recipients (nunca por subtração).
-    const skipped = counts.skipped;
-    const pending = counts.pending;
-    const sending = counts.sending;
-    const semConfirmacao = counts.outcome_unknown;
-    const cancelados = counts.cancelled;
+    // ── 4. KPIs a partir do resultado da RPC ──────────────────────────────────
+    const kpis = report.kpis ?? {};
+    const total = kpis.total_recipients ?? 0;
+    const sent = kpis.sent_count ?? 0;
+    const failed = kpis.failed_count ?? 0;
     const sendRate = total > 0 ? ((sent / total) * 100).toFixed(1) : '—';
     const failRate = (sent + failed) > 0 ? ((failed / (sent + failed)) * 100).toFixed(1) : '—';
     const fmtDate = (d: string | null) =>
@@ -161,6 +140,17 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     const safeCampaignName = escHtml(campaign.name);
     const safeRecipientName = escHtml(recipientName);
     const statusLabel: Record<string, string> = { completed: 'Concluída', sending: 'Enviando', paused: 'Pausada', cancelled: 'Cancelada', draft: 'Rascunho' };
+    const funnel = report.funnel ?? {};
+    const funnelTotal = funnel.total ?? 0;
+    const funnelSent = funnel.sent ?? 0;
+    const funnelDelivered = funnel.delivered ?? 0;
+    const funnelOpened = funnel.opened ?? 0;
+    const funnelClicked = funnel.clicked ?? 0;
+    const funnelReplied = funnel.replied ?? 0;
+    const funnelBounced = funnel.bounced ?? 0;
+    const funnelRevenue = funnel.revenue ?? 0;
+    const funnelSendRate = funnelTotal > 0 ? ((funnelSent / funnelTotal) * 100).toFixed(1) : '—';
+    const funnelFailRate = (funnelSent + funnelBounced) > 0 ? ((funnelBounced / (funnelSent + funnelBounced)) * 100).toFixed(1) : '—';
     const htmlBody = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -175,14 +165,14 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     <p style="margin:0 0 20px;color:#374151;font-size:15px">Olá, <strong>${safeRecipientName}</strong>! Aqui está o resumo da campanha <strong>${safeCampaignName}</strong>.</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
       <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Status</td><td style="padding:10px 14px;font-size:14px;color:#111827;font-weight:700;border-bottom:1px solid #e5e7eb">${statusLabel[campaign.status] ?? campaign.status}</td></tr>
-      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Total de destinatários</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${total.toLocaleString('pt-BR')}</td></tr>
-      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Enviadas</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${sent.toLocaleString('pt-BR')} (${sendRate}%)</td></tr>
-      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Falhas</td><td style="padding:10px 14px;font-size:14px;color:#dc2626;font-weight:700;border-bottom:1px solid #e5e7eb">${failed.toLocaleString('pt-BR')} (${failRate}%)</td></tr>
-      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Ignorados (blacklist/sem fone)</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${skipped.toLocaleString('pt-BR')}</td></tr>
-      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Pendentes</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${pending.toLocaleString('pt-BR')}</td></tr>
-      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Em envio</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${sending.toLocaleString('pt-BR')}</td></tr>
-      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Sem confirmação do provedor</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${semConfirmacao.toLocaleString('pt-BR')}</td></tr>
-      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Cancelados</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${cancelados.toLocaleString('pt-BR')}</td></tr>
+      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Total de destinatários</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelTotal.toLocaleString('pt-BR')}</td></tr>
+      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Enviadas</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelSent.toLocaleString('pt-BR')} (${funnelSendRate}%)</td></tr>
+      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Falhas</td><td style="padding:10px 14px;font-size:14px;color:#dc2626;font-weight:700;border-bottom:1px solid #e5e7eb">${funnelBounced.toLocaleString('pt-BR')} (${funnelFailRate}%)</td></tr>
+      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Entregues</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelDelivered.toLocaleString('pt-BR')}</td></tr>
+      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Abertas</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelOpened.toLocaleString('pt-BR')}</td></tr>
+      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Cliques</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelClicked.toLocaleString('pt-BR')}</td></tr>
+      <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Respostas</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${funnelReplied.toLocaleString('pt-BR')}</td></tr>
+      <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Receita</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">R$ ${(funnelRevenue / 100).toFixed(2)}</td></tr>
       <tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Iniciada em</td><td style="padding:10px 14px;font-size:14px;color:#111827;border-bottom:1px solid #e5e7eb">${fmtDate(campaign.started_at)}</td></tr>
       <tr style="background:#f9fafb"><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600">Concluída em</td><td style="padding:10px 14px;font-size:14px;color:#111827">${fmtDate(campaign.completed_at)}</td></tr>
     </table>
