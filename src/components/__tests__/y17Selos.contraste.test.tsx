@@ -73,6 +73,12 @@ vi.mock('../catalog/catalogExport', async (importOriginal) => {
     exportCatalogCsv: vi.fn(async () => ({ ok: true, rows: 0, filename: 'x.csv', downloaded: true })),
   };
 });
+// Y29: o rail lê `profiles.can_download` (useDownloadPermission → useAuth), que
+// exige um AuthProvider — dublado como no `CatalogRail.test.tsx` para o rail
+// montar sem sessão. Não afeta o delta medido aqui.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
 
 afterEach(() => {
   cleanup();
