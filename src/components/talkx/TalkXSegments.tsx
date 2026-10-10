@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 
 interface Props {
   onUseCampaign: (segmentId: string) => void;
+  userId?: string | null;
 }
 
 type ViewMode = 'list' | 'edit';
@@ -31,7 +32,7 @@ type ViewMode = 'list' | 'edit';
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
-export function TalkXSegments({ onUseCampaign }: Props) {
+export function TalkXSegments({ onUseCampaign, userId = null }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
