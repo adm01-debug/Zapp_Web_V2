@@ -39,6 +39,21 @@ vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div d
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
 
+// Ponto 2: prova que a TELA chama as escritas do item aberto. É mock PARCIAL —
+// o parser real (parseTalkXRoute etc.) continua em uso, porque o contrato dele
+// já tem teste próprio em talkxRoute.test.ts; só as duas escritas viram espiãs,
+// para o teste falhar se a tela deixar de gravar/limpar o item aberto na URL.
+const routeWrites = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+
+vi.mock('../talkxRoute', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../talkxRoute')>();
+  return {
+    ...actual,
+    pushTalkXOpenRoute: (...args: Parameters<typeof actual.pushTalkXOpenRoute>) => routeWrites.push(...args),
+    replaceTalkXOpenRoute: (...args: Parameters<typeof actual.replaceTalkXOpenRoute>) => routeWrites.replace(...args),
+  };
+});
+
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
 import { replaceTalkXWizardRoute } from '@/components/talkx/talkxWizardRoute';
@@ -268,37 +283,48 @@ describe('TalkXView — normalização de item aberto malformado (Ponto 1)', () 
 
   afterEach(() => vi.clearAllMocks());
 
-  it('remove parâmetro segment vazio da URL após normalização', async () => {
+  it('a tela reescreve o endereço: o segment vazio sai da URL no render', async () => {
     render(<TalkXView />);
 
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 50));
+    // Ponto 1 provado pela TELA (não pelo parser): ao montar, o endereço com
+    // `segment=` vazio tem de ser limpo — antes da correção ele ficava na URL.
+    await waitFor(() => {
+      expect(new URLSearchParams(window.location.search).has('segment')).toBe(false);
     });
-
-    const params = new URLSearchParams(window.location.search);
-    expect(params.has('segment')).toBe(false);
     expect(window.location.search).not.toContain('segment=');
   });
 });
 
-describe('TalkXView — pushTalkXOpenRoute ao abrir campanha (Ponto 2)', () => {
+describe('TalkXView — item aberto na URL (Ponto 2)', () => {
   beforeEach(() => {
+    routeWrites.push.mockClear();
+    routeWrites.replace.mockClear();
+    // A campanha c1 precisa existir na lista para a tela resolver o deep link.
+    f.campaigns = [{
+      id: 'c1', name: 'Campanha C1', status: 'sending',
+      sent_count: 0, failed_count: 0, delivered_count: 0, total_recipients: 0,
+    }];
+    f.isLoading = false;
     window.history.replaceState(null, '', '/?view=talkx&campaign=c1');
   });
 
   afterEach(() => vi.clearAllMocks());
 
-  it('chama pushTalkXOpenRoute ao abrir campanha via deep link na URL', async () => {
+  it('abre a campanha da URL e grava o item aberto pela rota (pushTalkXOpenRoute)', async () => {
     render(<TalkXView />);
 
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 50));
-    });
+    // Prova que a tela leu o `campaign` da URL e o gravou no endereço: antes da
+    // correção a tela ignorava o parse e o push nunca acontecia.
+    await waitFor(() => expect(routeWrites.push).toHaveBeenCalledWith({ kind: 'campaign', id: 'c1' }));
+    expect(await screen.findByText(/Voltar à campanhas/)).toBeInTheDocument();
+  });
 
-    // A campanha na URL deve ter sido aberta e o pushTalkXOpenRoute
-    // deve ter sido chamado com o item aberto correto.
-    // O pushTalkXOpenRoute é chamado via onViewMonitor → openMonitor.
-    // Verificamos que a URL de navegação contém o campaign correto.
-    expect(window.location.search).toContain('campaign=c1');
+  it('voltar à lista limpa o item aberto pela rota (replaceTalkXOpenRoute(null))', async () => {
+    render(<TalkXView />);
+    await screen.findByText(/Voltar à campanhas/);
+
+    fireEvent.click(screen.getByText(/Voltar à campanhas/));
+
+    expect(routeWrites.replace).toHaveBeenCalledWith(null);
   });
 });

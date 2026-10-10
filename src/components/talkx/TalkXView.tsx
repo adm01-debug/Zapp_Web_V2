@@ -54,7 +54,12 @@ export default function TalkXView() {
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
   const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXRoute(window.location.search).wizard.route ? 'wizard' : 'tabs');
-  const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
+  const [activeTab, setActiveTab] = useState<TalkXTab>(() => {
+    const parsed = parseTalkXRoute(window.location.search);
+    if (parsed.segment) return 'segments';
+    if (parsed.template) return 'templates';
+    return parsed.tab;
+  });
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
@@ -119,21 +124,9 @@ export default function TalkXView() {
       const normalized = normalizeTalkXOpenRoute(new URL(window.location.href));
       if (normalized) window.history.replaceState(null, '', normalized);
     }
-    // Lê o item aberto da URL na carga inicial (campaign, segment ou template).
-    if (!isLoading && campaigns.length > 0) {
-      const { campaign, segment, template } = parseTalkXRoute(window.location.search);
-      if (campaign) {
-        const found = campaigns.find((c) => c.id === campaign.id);
-        if (found) openMonitor(found);
-      } else if (segment) {
-        setActiveTab('segments');
-      } else if (template) {
-        setActiveTab('templates');
-      }
-    }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [syncFromBrowserHistory, campaigns, isLoading]);
+  }, [syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
@@ -205,6 +198,21 @@ export default function TalkXView() {
     writeWizardRoute(null, true);
     replaceTalkXOpenRoute(null);
   }, [writeWizardRoute]);
+
+  // Lê o item aberto da URL na carga inicial. O `segment`/`template` viram a aba
+  // ativa no inicializador de `activeTab` (topo do componente); a campanha depende
+  // da lista já carregada, por isso abre aqui — depois de `openMonitor` existir.
+  useEffect(() => {
+    if (isLoading || campaigns.length === 0) return;
+    const { campaign } = parseTalkXRoute(window.location.search);
+    if (!campaign) return;
+    const found = campaigns.find((c) => c.id === campaign);
+    if (!found) return;
+    // setTimeout(0) move o setState para fora do corpo síncrono do efeito — mesmo
+    // padrão de catalogShared.tsx; mantém react-hooks/set-state-in-effect verde.
+    const timer = setTimeout(() => openMonitor(found), 0);
+    return () => clearTimeout(timer);
+  }, [isLoading, campaigns, openMonitor]);
 
   // X189: a Ajuda é uma tela do módulo com rota própria; o endereço vive na URL
   // para o botão voltar do navegador andar um passo por vez (lista → artigo).
