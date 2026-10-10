@@ -684,6 +684,16 @@ jobs:
           TALKX_COUNTERS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-counters-integrity.test.sh
 
+      # N-127: duplicar template (copia conteudo e variantes A/B como rascunho do
+      # dono; template alheio sem admin -> not_authorized), arquivar/desarquivar
+      # (archived_at sai da lista ativa sem reescrever updated_at) e travar a
+      # exclusao de template em campanha inclusive por DELETE direto na tabela
+      # (trigger BEFORE DELETE). Harness RED->GREEN em PostgreSQL 17 descartavel.
+      - name: Provar duplicar, arquivar e travar exclusao de template (N-127)
+        env:
+          TALKX_N127_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh
+
       # X027: recibos de leitura idempotentes e atribuição de resposta no banco —
       # read sem delivered preenche delivered_at/read_at e sobe delivered_count/read_count
       # uma única vez; record_talkx_recipient_delivered vira invólucro; attribute_talkx_reply
