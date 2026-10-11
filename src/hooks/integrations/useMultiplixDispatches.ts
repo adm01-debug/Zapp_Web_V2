@@ -302,6 +302,83 @@ export async function fetchMultiplixRecipientsTotal(dispatchId: string, status: 
   );
 }
 
+/**
+ * Estimativa do disparo devolvida pela acao `estimate` da edge
+ * `multiplix-dispatch`: os numeros sao do SERVIDOR (o front so mostra).
+ */
+export interface MultiplixEstimate {
+  /** Mensagens a enviar: destinatarios aptos x blocos. */
+  messages: number;
+  /** Versoes DISTINTAS dos roteiros finais (ja renderizados). */
+  script_versions: number;
+  /** Consumo de voz: caracteres a sintetizar e renderizacoes de TTS. */
+  voice: { characters: number; renderings: number };
+  /** Destinatarios aptos (o primeiro fator de `messages`). */
+  eligible_recipients: number;
+  /** Blocos que compoem a mensagem (o segundo fator de `messages`). */
+  blocks: number;
+}
+
+function estimateNumber(source: Record<string, unknown>, field: string, where: string): number {
+  const value = source[field];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new MultiplixDispatchEdgeError(
+      'multiplix_estimate_shape',
+      `estimate: ${where} sem ${field}`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Desembrulha a estimativa do envelope da edge (`{ data: <EstimateResult> }`).
+ *
+ * Campo ausente ou nao numerico vira erro nomeado de proposito: na tela, ZERO
+ * significa "nada a enviar" — se a resposta vier incompleta, mostrar zero
+ * esconderia uma estimativa que nunca chegou.
+ */
+export function readMultiplixEstimate(data: unknown): MultiplixEstimate {
+  const payload = data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)
+    ? (data as Record<string, unknown>).data
+    : data;
+  if (!payload || typeof payload !== 'object') {
+    throw new MultiplixDispatchEdgeError('multiplix_estimate_shape', 'estimate: resposta em formato inesperado');
+  }
+  const obj = payload as Record<string, unknown>;
+  const voice = obj.voice;
+  if (!voice || typeof voice !== 'object') {
+    throw new MultiplixDispatchEdgeError('multiplix_estimate_shape', 'estimate: resposta sem voice');
+  }
+  return {
+    messages: estimateNumber(obj, 'messages', 'estimate'),
+    script_versions: estimateNumber(obj, 'script_versions', 'estimate'),
+    voice: {
+      characters: estimateNumber(voice as Record<string, unknown>, 'characters', 'estimate.voice'),
+      renderings: estimateNumber(voice as Record<string, unknown>, 'renderings', 'estimate.voice'),
+    },
+    eligible_recipients: estimateNumber(obj, 'eligible_recipients', 'estimate'),
+    blocks: estimateNumber(obj, 'blocks', 'estimate'),
+  };
+}
+
+/**
+ * F50: mensagens (aptos x blocos), versoes de roteiro e consumo de voz do
+ * disparo. O `dispatch_id` viaja no MESMO payload do recorte de dono que
+ * `dispatch.list` usa, entao a estimativa de um disparo fora do escopo do
+ * usuario nao volta numero nenhum. Releitura periodica porque os aptos e os
+ * blocos mudam com o disparo em andamento (o numero na tela nao pode envelhecer).
+ */
+export function useMultiplixEstimate(dispatchId: string | null) {
+  return useQuery({
+    queryKey: ['multiplix-estimate', dispatchId],
+    queryFn: async () => readMultiplixEstimate(
+      await invokeMultiplixDispatch('estimate', { dispatch_id: dispatchId }),
+    ),
+    enabled: !!dispatchId,
+    refetchInterval: 10_000,
+  });
+}
+
 export interface CreateMultiplixDispatchInput {
   name: string;
   messageTemplate: string;

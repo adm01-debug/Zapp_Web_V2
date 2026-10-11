@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   useMultiplixDispatch, useMultiplixRecipients, useMultiplixDispatchAction,
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
-  fetchMultiplixRecipientsTotal,
+  fetchMultiplixRecipientsTotal, useMultiplixEstimate,
 } from '@/hooks/integrations/useMultiplixDispatches';
 import {
   IconTile, StatusPill, fmtInt, pct, fmtDateTime,
@@ -137,6 +137,11 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
     enabled: !!dispatchId,
     refetchInterval: 5_000,
   });
+
+  // F50: os TRES numeros da estimativa do disparo — mensagens (aptos x blocos),
+  // versoes de roteiro (distintas entre os roteiros finais) e consumo de voz —
+  // vem do SERVIDOR (acao `estimate`); a tela nao recalcula nem arredonda.
+  const { data: estimate, isError: estimateFailed } = useMultiplixEstimate(dispatchId);
 
   const dispatchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recipientsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -307,6 +312,38 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
           </p>
         )}
       </div>
+
+      {/* F50: o que o disparo VAI produzir, conforme o servidor calcula. Os
+          numeros de baixo (Enviadas/Falhas/...) sao o que ja aconteceu; estes
+          sao o previsto — por isso vem antes. Falha de leitura AVISA: zero aqui
+          significa "nada a enviar", nunca "nao deu para saber". */}
+      {(estimate || estimateFailed) && (
+        <section aria-label="Estimativa do disparo" className="rounded-2xl bg-card border border-border/70 p-4">
+          <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <BarChart3 className="w-4 h-4" />Estimativa do disparo
+          </p>
+          {estimateFailed ? (
+            <p className="mt-2 text-2xs text-dash-red flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span>Não foi possível calcular a estimativa deste disparo.</span>
+            </p>
+          ) : estimate && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+              {[
+                { l: 'Mensagens', v: fmtInt(estimate.messages), d: `${fmtInt(estimate.eligible_recipients)} aptos × ${fmtInt(estimate.blocks)} blocos` },
+                { l: 'Versões de roteiro', v: fmtInt(estimate.script_versions), d: 'roteiros finais distintos' },
+                { l: 'Caracteres de voz', v: fmtInt(estimate.voice.characters), d: `${fmtInt(estimate.voice.renderings)} renderizações de voz` },
+              ].map(({ l, v, d }) => (
+                <div key={l} className="rounded-xl bg-input/40 border border-border/70 p-3 min-w-0">
+                  <p className="text-lg font-bold text-foreground tabular-nums">{v}</p>
+                  <p className="text-3xs text-foreground-secondary">{l}</p>
+                  <p className="text-3xs text-muted-foreground truncate">{d}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[

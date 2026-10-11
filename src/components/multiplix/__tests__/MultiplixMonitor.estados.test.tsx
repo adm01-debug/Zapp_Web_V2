@@ -62,6 +62,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', async () => {
     fetchMultiplixRecipientsTotal: () => h.skippedCountError
       ? Promise.reject(new Error('recipients.list nao devolveu total'))
       : Promise.resolve(0),
+    // F50 (TL-028): o monitor tambem consulta a estimativa. Este teste e sobre os
+    // estados de erro/carregamento, entao a estimativa fica vazia (nada renderiza).
+    useMultiplixEstimate: () => ({ data: undefined, isError: false }),
   };
 });
 

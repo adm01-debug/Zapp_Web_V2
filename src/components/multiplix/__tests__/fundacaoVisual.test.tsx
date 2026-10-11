@@ -238,6 +238,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
   useMultiplixDispatchAction: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useConfirmMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   fetchMultiplixRecipientsTotal: () => Promise.resolve(0),
+  // F50 (TL-028): o monitor tambem consulta a estimativa; este teste olha so o
+  // visual dos outros estados, entao a estimativa fica vazia (nada renderiza).
+  useMultiplixEstimate: () => ({ data: undefined, isError: false }),
   MultiplixDispatchEdgeError: class MultiplixDispatchEdgeError extends Error {},
 }));
 

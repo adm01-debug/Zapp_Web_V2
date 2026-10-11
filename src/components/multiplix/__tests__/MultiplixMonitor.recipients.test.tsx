@@ -47,6 +47,9 @@ vi.mock('@/hooks/integrations/useMultiplixDispatches', () => ({
   // precisa expor o hook, senao o componente chama uma funcao inexistente.
   useConfirmMultiplixDispatch: () => ({ mutateAsync: vi.fn(), isPending: false }),
   fetchMultiplixRecipientsTotal: () => Promise.resolve(0),
+  // F50 (TL-028): o monitor tambem consulta a estimativa. Este teste e sobre a
+  // lista de destinatarios, entao a estimativa fica vazia (nada e renderizado).
+  useMultiplixEstimate: () => ({ data: undefined, isError: false }),
 }));
 
 import { MultiplixMonitor } from '@/components/multiplix/MultiplixMonitor';
