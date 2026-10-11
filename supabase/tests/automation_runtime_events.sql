@@ -20,7 +20,8 @@
 --      (permission denied); authenticated não escreve na fila (permission denied); service_role escreve;
 --      RLS ligada e política explícita (nada de USING(true)).
 --   BLOCO C (rollback): quando rodado com -v rollback=<arquivo>, executa o bloco "-- Rollback
---      (completo)" extraído do próprio arquivo da migration, confere que o estado voltou e reaplica.
+--      (SQL executável, na ordem):" extraído do próprio arquivo da migration, confere que o estado
+--      voltou e reaplica.
 --
 -- COMO RODA. Em Postgres descartável; fixtures e asserções numa transação que termina em ROLLBACK —
 -- zero efeito colateral e idempotente. A superfície mínima do Supabase é criada À MÃO aqui
@@ -29,7 +30,8 @@
 -- DO $$ ... $$, nunca superusuário/dono:
 --   docker run --rm -d --name zapp-v2-autoruntime-$$ -v "$PWD:/repo:ro" \
 --     -e POSTGRES_PASSWORD=test_only postgres:17-alpine
---   sed -n 's/^-- > //p' supabase/migrations/20261011190932_automation_runtime.sql > .tmp/rollback.sql
+--   sed -n '/^-- Rollback (SQL executável, na ordem):$/,/^-- Fim do rollback\.$/p' \
+--     supabase/migrations/20261011190932_automation_runtime.sql | sed -n 's/^--   //p' > .tmp/rollback.sql
 --   docker exec -i zapp-v2-autoruntime-$$ psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
 --     -v mig=/repo/supabase/migrations/20261011190932_automation_runtime.sql \
 --     -v rollback=/repo/.tmp/rollback.sql \

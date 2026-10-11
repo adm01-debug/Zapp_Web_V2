@@ -1,8 +1,14 @@
 -- automation_runtime
--- Rollback: dropa os dois gatilhos (em public.messages e public.contacts), as duas funcoes de
--- gatilho, o indice adicionado em public.automations e as duas tabelas novas — bloco "Rollback
--- (completo)" abaixo, executavel. Nao ha dado legado a devolver: as duas tabelas nascem vazias. O
--- que a fila enfileirar DEPOIS da migration se perde no rollback (fila interna, sem copia de dado).
+-- Rollback: dropa os dois gatilhos (em public.messages e public.contacts), as duas funcoes de gatilho, o indice adicionado em public.automations e as duas tabelas novas. Nao ha dado legado a devolver (as tabelas nascem vazias); o que a fila enfileirar DEPOIS da migration se perde no rollback (fila interna, sem copia de dado).
+-- Rollback (SQL executável, na ordem):
+--   drop trigger if exists trg_automation_events_on_tags on public.contacts;
+--   drop trigger if exists trg_automation_events_on_message on public.messages;
+--   drop function if exists public.enqueue_automation_events_on_tags();
+--   drop function if exists public.enqueue_automation_events_on_message();
+--   drop index if exists public.idx_automations_active_trigger_type;
+--   drop table if exists public.automation_executions;
+--   drop table if exists public.automation_events;
+-- Fim do rollback.
 -- Motor de automações do Zapp Web V2 — base de idempotência.
 -- Este cartão entrega só o BANCO: a fila de eventos de gatilho (public.automation_events), o log de
 -- execuções (public.automation_executions) e os gatilhos de entrada de mensagem e de tag. O motor
@@ -55,16 +61,6 @@
 --   * Nenhum objeto existente muda de ACL, de coluna ou de dado. As tabelas novas ficam FORA da
 --     publication supabase_realtime (fila interna, não é para o cliente).
 --
--- Rollback (completo; para executar, remova o prefixo "-- > " de cada linha):
--- > DROP TRIGGER IF EXISTS trg_automation_events_on_tags ON public.contacts;
--- > DROP TRIGGER IF EXISTS trg_automation_events_on_message ON public.messages;
--- > DROP FUNCTION IF EXISTS public.enqueue_automation_events_on_tags();
--- > DROP FUNCTION IF EXISTS public.enqueue_automation_events_on_message();
--- > DROP INDEX IF EXISTS public.idx_automations_active_trigger_type;
--- > DROP TABLE IF EXISTS public.automation_executions;
--- > DROP TABLE IF EXISTS public.automation_events;
--- Fim do rollback.
-
 -- ---------------------------------------------------------------------------
 -- 1. Fila de eventos de gatilho
 -- ---------------------------------------------------------------------------

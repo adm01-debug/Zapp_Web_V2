@@ -32,9 +32,11 @@ Decisões de contrato (para o cartão do executor):
 - verde depois: mesmo arquivo com a migration →
   `NOTICE: T1 OK: ...` … `NOTICE: T10 OK: nulo, apagada, tags NULL e keywords malformado tratados sem evento indevido`
   `NOTICE: C1 OK: rollback removeu tabelas, funções e gatilhos` / `C2 OK: reaplicar a migration é idempotente` (rc=0).
-- Rollback: 7 linhas extraídas do bloco `-- Rollback (completo)` do próprio arquivo, EXECUTADAS em C1 e
-  reaplicadas em C2. A migration foi aplicada no banco LOCAL da tarefa por `hermes-db-migrar`
-  (`APLICADA no banco LOCAL 'v2-2610111602b52d'`, COMMIT); produção não foi tocada.
+- Rollback: 7 linhas `--   drop ...;` do bloco `-- Rollback (SQL executável, na ordem):` (formato do
+  modelo `20261006141643`), EXECUTADAS em C1 e com a migration reaplicada em C2. A migration foi
+  aplicada no banco LOCAL da tarefa por `hermes-db-migrar` (`APLICADA no banco LOCAL 'v2-2610111602b52d'`,
+  COMMIT); produção não foi tocada. (O juiz barato apontou o formato do rollback na 1ª tentativa de
+  fechar; corrigi o cabeçalho e refiz a prova — T1..T10 + C1/C2 verdes de novo.)
 
 ## Passada de efeito colateral
 1. Gatilhos das tabelas tocadas (conferido no banco local): `messages` já tem
