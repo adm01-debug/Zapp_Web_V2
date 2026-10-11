@@ -245,6 +245,7 @@ export function RateLimitConfigPanel() {
                   <Switch
                     checked={rule.is_active}
                     onCheckedChange={(checked) => updateRule(rule.id, { is_active: checked })}
+                    aria-label={`Ativar ${rule.name}`}
                   />
                   <div>
                     <Input

@@ -52,11 +52,11 @@ export function NotificationSettingsPanel() {
                 {settings.soundEnabled ? <Volume2 className="w-5 h-5 text-primary" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
               </div>
               <div>
-                <CardTitle className="text-lg">Sons de Notificação</CardTitle>
+                <CardTitle id="notif-sound-title" className="text-lg">Sons de Notificação</CardTitle>
                 <CardDescription>Configurações globais de áudio</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} />
+            <Switch checked={settings.soundEnabled} onCheckedChange={(checked) => updateSettings({ soundEnabled: checked })} aria-labelledby="notif-sound-title" />
           </div>
         </CardHeader>
         {settings.soundEnabled && (
@@ -95,11 +95,11 @@ export function NotificationSettingsPanel() {
                 <Bell className="w-5 h-5 text-success" />
               </div>
               <div>
-                <CardTitle className="text-lg">Notificações do Navegador</CardTitle>
+                <CardTitle id="notif-browser-title" className="text-lg">Notificações do Navegador</CardTitle>
                 <CardDescription>Pop-ups mesmo com a aba minimizada</CardDescription>
               </div>
             </div>
-            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} />
+            <Switch checked={settings.browserNotifications} onCheckedChange={(checked) => updateSettings({ browserNotifications: checked })} aria-labelledby="notif-browser-title" />
           </div>
         </CardHeader>
         {settings.browserNotifications && (

@@ -28,7 +28,7 @@ interface AdminUsersTableProps {
 export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser }: AdminUsersTableProps) {
   return (
     <Card className="border border-secondary/20 bg-card">
-      <CardHeader><CardTitle className="text-lg">Usuários</CardTitle></CardHeader>
+      <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
       <CardContent>
         <Table>
           <TableHeader>

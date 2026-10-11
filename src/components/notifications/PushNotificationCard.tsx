@@ -80,7 +80,7 @@ export function PushNotificationCard() {
               )}
             </div>
             <div>
-              <CardTitle className="text-lg">Notificações Push</CardTitle>
+              <CardTitle id="push-notif-title" className="text-lg">Notificações Push</CardTitle>
               <CardDescription>
                 Receba alertas mesmo com o navegador minimizado
               </CardDescription>
@@ -90,6 +90,7 @@ export function PushNotificationCard() {
             checked={isSubscribed}
             onCheckedChange={() => toggleSubscription()}
             disabled={isLoading || permission === 'denied'}
+            aria-labelledby="push-notif-title"
           />
         </div>
       </CardHeader>

@@ -136,7 +136,7 @@ function NotifRow({ icon: Icon, iconColor, title, desc, enabled, onToggle, sound
       </div>
       <div className="flex items-center gap-3">
         {soundSelector}
-        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} />}
+        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} aria-label={`Ativar notificação de ${title}`} />}
       </div>
     </div>
   );
@@ -157,13 +157,14 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
               <TrendingDown className="w-5 h-5 text-warning" />
             </div>
             <div>
-              <CardTitle className="text-lg">Alertas de Sentimento</CardTitle>
+              <CardTitle id="sentiment-alert-title" className="text-lg">Alertas de Sentimento</CardTitle>
               <CardDescription>Notificações quando clientes ficam insatisfeitos</CardDescription>
             </div>
           </div>
           <Switch
             checked={settings.sentimentAlertEnabled}
             onCheckedChange={(checked) => updateSettings({ sentimentAlertEnabled: checked })}
+            aria-labelledby="sentiment-alert-title"
           />
         </div>
       </CardHeader>
@@ -242,13 +243,13 @@ export function QuietHoursCard({ settings, updateSettings, isQuietHours }: Quiet
               <Moon className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-lg">Horário Silencioso</CardTitle>
+              <CardTitle id="quiet-hours-title" className="text-lg">Horário Silencioso</CardTitle>
               <CardDescription>Desativar sons em horários específicos</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {isQuietHours() && <Badge variant="secondary" className="bg-muted">Ativo agora</Badge>}
-            <Switch checked={settings.quietHoursEnabled} onCheckedChange={(checked) => updateSettings({ quietHoursEnabled: checked })} />
+            <Switch checked={settings.quietHoursEnabled} onCheckedChange={(checked) => updateSettings({ quietHoursEnabled: checked })} aria-labelledby="quiet-hours-title" />
           </div>
         </div>
       </CardHeader>
