@@ -82,3 +82,10 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# Autoteste da assinatura HMAC do evolution-webhook. Ferramenta administrativa: o
+# front chama via supabase.functions.invoke (manda o JWT da sessao) e a funcao
+# exige admin/supervisor pelo JWT. verify_jwt=true e o default do CLI; declarado
+# aqui para documentacao explicita.
+[functions.webhook-hmac-selftest]
+verify_jwt = true
