@@ -12,6 +12,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261011124430_message_attempts.sql"
+metrics_migration="$repo_root/supabase/migrations/20261011152008_get_send_metrics.sql"
 helpers_migration="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 messages_rls_migration="$repo_root/supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql"
 postgres_image="${MESSAGE_ATTEMPTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
@@ -42,6 +43,21 @@ expect_failure() {
     printf '%s\n' "$output" >&2
     fail "$label deveria falhar"
   fi
+  printf '[PASS] %s\n' "$label"
+}
+# Como expect_failure, mas exige tambem o trecho da mensagem de erro real
+# (prova QUE erro foi: permissao x parametro), sem depender de pg_temp entre sessoes.
+expect_failure_like() {
+  local label="$1" needle="$2" sql="$3" output status
+  set +e
+  output="$(psql_sql "$sql" 2>&1)"
+  status=$?
+  set -e
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "$label deveria falhar"
+  fi
+  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: mensagem de erro sem '$needle'"; }
   printf '[PASS] %s\n' "$label"
 }
 
@@ -96,10 +112,20 @@ psql_sql "
     assigned_to uuid REFERENCES public.profiles(id),
     queue_id uuid REFERENCES public.queues(id)
   );
+  CREATE TABLE public.whatsapp_connections (
+    id uuid PRIMARY KEY,
+    name text NOT NULL,
+    phone_number text
+  );
   CREATE TABLE public.messages (
     id uuid PRIMARY KEY,
     contact_id uuid NOT NULL REFERENCES public.contacts(id),
     media_url text,
+    sender text NOT NULL DEFAULT 'contact',
+    status text,
+    status_updated_at timestamptz,
+    delivery_attempt_count integer NOT NULL DEFAULT 0,
+    whatsapp_connection_id uuid,
     created_at timestamptz NOT NULL DEFAULT now()
   );
   ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
@@ -119,7 +145,7 @@ psql_sql "
     AS \$\$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id=_user_id AND role='admin') \$\$;
   CREATE FUNCTION public.is_admin_or_supervisor(p_user_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp
-    AS \$\$ SELECT EXISTS (SELECT 1 FROM public.profiles WHERE user_id=p_user_id AND is_active AND role IN ('admin','supervisor')) \$\$;
+    AS \$\$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id=p_user_id AND role IN ('admin','supervisor')) \$\$;
   GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
   GRANT EXECUTE ON FUNCTION auth.uid(), auth.role() TO PUBLIC;
   GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
@@ -263,6 +289,101 @@ expect_failure 'anon lendo a tabela direto' "SET ROLE anon; SELECT count(*) FROM
   || fail 'nao-admin leu a tabela pela RLS'
 
 # ---------------------------------------------------------------------------
+# BLOCO C: get_send_metrics (metricas agregadas de envio)
+# ---------------------------------------------------------------------------
+psql_file "$metrics_migration" >/dev/null
+
+psql_sql "
+  INSERT INTO public.whatsapp_connections (id, name, phone_number) VALUES
+    ('55555555-5555-5555-5555-555555555551','Conexao Alfa','+5511999999999'),
+    ('55555555-5555-5555-5555-555555555552','Conexao Beta','+5511888888888');
+  INSERT INTO public.profiles (id, user_id, role) VALUES
+    ('11111111-1111-1111-1111-111111111114','dddddddd-dddd-dddd-dddd-dddddddddddd','supervisor');
+  INSERT INTO public.user_roles (user_id, role) VALUES
+    ('dddddddd-dddd-dddd-dddd-dddddddddddd','supervisor');
+  INSERT INTO public.messages
+    (id, contact_id, sender, status, created_at, status_updated_at, delivery_attempt_count, whatsapp_connection_id) VALUES
+    ('66666666-6666-6666-6666-666666666601','33333333-3333-3333-3333-333333333331','agent','delivered', now() - interval '10 minutes', now() - interval '10 minutes' + interval '1 second', 2, '55555555-5555-5555-5555-555555555551'),
+    ('66666666-6666-6666-6666-666666666602','33333333-3333-3333-3333-333333333331','agent','sent',      now() - interval '20 minutes', now() - interval '20 minutes' + interval '2 second', 1, '55555555-5555-5555-5555-555555555551'),
+    ('66666666-6666-6666-6666-666666666603','33333333-3333-3333-3333-333333333331','agent','failed',    now() - interval '30 minutes', now() - interval '30 minutes' + interval '500 milliseconds', 4, '55555555-5555-5555-5555-555555555551'),
+    ('66666666-6666-6666-6666-666666666604','33333333-3333-3333-3333-333333333332','agent','read',      now() - interval '40 minutes', now() - interval '40 minutes' + interval '3 second', 1, '55555555-5555-5555-5555-555555555552'),
+    ('66666666-6666-6666-6666-666666666605','33333333-3333-3333-3333-333333333332','agent','failed',    now() - interval '50 minutes', now() - interval '50 minutes' + interval '800 milliseconds', 3, '55555555-5555-5555-5555-555555555552'),
+    ('66666666-6666-6666-6666-666666666606','33333333-3333-3333-3333-333333333332','agent','sending',   now() - interval '5 minutes',  NULL, 1, '55555555-5555-5555-5555-555555555552');
+  INSERT INTO public.message_attempts (message_id, attempt_no, outcome, error_code) VALUES
+    ('66666666-6666-6666-6666-666666666601',1,'sent',NULL),
+    ('66666666-6666-6666-6666-666666666603',4,'failed_final','E_TIMEOUT'),
+    ('66666666-6666-6666-6666-666666666605',1,'failed_retryable','E_TIMEOUT'),
+    ('66666666-6666-6666-6666-666666666605',3,'failed_retryable','E_HTTP_500');
+" >/dev/null
+
+SUP='dddddddd-dddd-dddd-dddd-dddddddddddd'
+M_SIG='public.get_send_metrics(timestamp with time zone,uuid)'
+
+# ACL pela assinatura exata: authenticated/service_role sim, anon e PUBLIC nao.
+[[ "$(psql_sql "SELECT has_function_privilege('authenticated','$M_SIG','EXECUTE');")" == 't' ]] \
+  || fail 'authenticated nao executa get_send_metrics'
+[[ "$(psql_sql "SELECT has_function_privilege('service_role','$M_SIG','EXECUTE');")" == 't' ]] \
+  || fail 'service_role nao executa get_send_metrics'
+[[ "$(psql_sql "SELECT has_function_privilege('anon','$M_SIG','EXECUTE');")" == 'f' ]] \
+  || fail 'anon executa get_send_metrics'
+[[ "$(psql_sql "SELECT proacl::text !~ '[{,]=X/' FROM pg_proc WHERE oid='$M_SIG'::regprocedure;")" == 't' ]] \
+  || fail 'PUBLIC conservou EXECUTE em get_send_metrics'
+
+# Números esperados (6 envios do agente: sending 1, sent 1, delivered 1, read 1, failed 2)
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'totals' ->> 'failed';")" == '2' ]] \
+  || fail 'admin: total failed != 2'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'totals' ->> 'total';")" == '6' ]] \
+  || fail 'admin: total != 6'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'totals' ->> 'sending';")" == '1' ]] \
+  || fail 'admin: sending != 1'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'failure_rate';")" == '0.3333' ]] \
+  || fail 'admin: failure_rate != 0.3333'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'avg_attempts';")" == '2.00' ]] \
+  || fail 'admin: avg_attempts != 2.00'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'latency_p95_ms';")" == '2900.0' ]] \
+  || fail 'admin: latency_p95_ms != 2900.0'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'top_errors' -> 0 ->> 'error_code';")" == 'E_TIMEOUT' ]] \
+  || fail 'admin: top_errors[0].error_code != E_TIMEOUT'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'top_errors' -> 0 ->> 'count';")" == '2' ]] \
+  || fail 'admin: top_errors[0].count != 2'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'top_errors' -> 1 ->> 'error_code';")" == 'E_HTTP_500' ]] \
+  || fail 'admin: top_errors[1].error_code != E_HTTP_500'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'by_connection' -> 0 ->> 'connection_name';")" == 'Conexao Alfa' ]] \
+  || fail 'admin: by_connection[0].connection_name != Conexao Alfa'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() -> 'by_connection' -> 0 ->> 'total';")" == '3' ]] \
+  || fail 'admin: by_connection[0].total != 3'
+
+# Supervisao enxerga o mesmo que admin.
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$SUP'; SELECT public.get_send_metrics() -> 'totals' ->> 'total';")" == '6' ]] \
+  || fail 'supervisor: total != 6 (autorizacao nao cobre supervisor)'
+
+# Filtro por conexao: só a Beta (read 1, failed 1, sending 1).
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics(now() - interval '24 hours','55555555-5555-5555-5555-555555555552') -> 'totals' ->> 'total';")" == '3' ]] \
+  || fail 'filtro por conexao: total != 3'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT jsonb_array_length(public.get_send_metrics(now() - interval '24 hours','55555555-5555-5555-5555-555555555552') -> 'by_connection');")" == '1' ]] \
+  || fail 'filtro por conexao: by_connection != 1 linha'
+
+# Sem vazamento: nem telefone, nem payload/conteudo.
+leak="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics()::text;")"
+[[ "$leak" != *'5511999999999'* ]] || fail 'get_send_metrics vazou telefone'
+[[ "$leak" != *'phone'* ]] || fail 'get_send_metrics expos campo de telefone'
+[[ "$leak" != *'content'* ]] || fail 'get_send_metrics expos conteudo'
+
+# Autorizacao e janela: agente comum, anon e periodo > 30 dias recusados
+# (com o tipo de erro conferido pela mensagem, nao por detalhe de sessao).
+expect_failure_like 'agente comum sem permissao' 'forbidden' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$UAG'; SELECT public.get_send_metrics();"
+expect_failure_like 'outsider sem permissao' 'forbidden' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$UOU'; SELECT public.get_send_metrics();"
+expect_failure_like 'anon sem permissao' 'permission denied' \
+  "SET ROLE anon; SELECT public.get_send_metrics();"
+expect_failure_like 'periodo maior que 30 dias' 'period_too_wide' \
+  "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics(now() - interval '400 days');"
+# controle positivo: chamada valida do admin passa
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$UA'; SELECT public.get_send_metrics() ? 'totals';")" == 't' ]] \
+  || fail 'admin: chamada valida nao devolveu totals'
+
+# ---------------------------------------------------------------------------
 # ROLLBACK: extrai as linhas executaveis do proprio cabecalho da migration
 # ---------------------------------------------------------------------------
 rollback_file="$(mktemp /tmp/zapp-message-attempts-rollback.XXXXXX.sql)"
@@ -283,4 +404,17 @@ psql_file "$migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='message_attempts';")" == '1' ]] \
   || fail 'reaplicacao nao recriou a policy exatamente uma vez'
 
-printf '[OK] message_attempts: contrato, idempotencia, RLS (admin/agente/outsider/anon) e rollback validados em PostgreSQL 17.\n'
+# --- Rollback da migration de metricas (get_send_metrics), idempotente -------
+metrics_rollback="$(mktemp /tmp/zapp-get-send-metrics-rollback.XXXXXX.sql)"
+grep -iE '^--   (drop|create|alter|revoke|grant|comment) ' "$metrics_migration" \
+  | sed -E 's/^--   //' > "$metrics_rollback"
+[[ "$(wc -l < "$metrics_rollback")" -ge 1 ]] || fail 'rollback de get_send_metrics veio vazio'
+psql_file "$metrics_rollback" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='get_send_metrics';")" == '0' ]] \
+  || fail 'rollback nao removeu get_send_metrics'
+psql_file "$metrics_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='get_send_metrics';")" == '1' ]] \
+  || fail 'reaplicacao nao recriou get_send_metrics'
+rm -f "$metrics_rollback"
+
+printf '[OK] message_attempts + get_send_metrics: contrato, idempotencia, RLS/autorizacao (admin/supervisor/agente/anon), agregacao, janela de 30 dias, sem vazamento e rollback validados em PostgreSQL 17.\n'
