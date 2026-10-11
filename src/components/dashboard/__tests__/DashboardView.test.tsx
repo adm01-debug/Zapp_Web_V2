@@ -114,3 +114,23 @@ describe('DashboardView — guard de navegacao de abas (RBAC)', () => {
     expect(screen.getByTestId('stub-ai-quick-access')).toBeInTheDocument();
   });
 });
+
+describe('DashboardView — zonas visuais da Visão Geral', () => {
+  it('agrupa os cards em zonas rotuladas e não mistura operação com IA/engajamento', () => {
+    renderWithProviders();
+
+    const numeros = screen.getByTestId('dash-zone-numeros');
+    const operacao = screen.getByTestId('dash-zone-operacao');
+    const engajamento = screen.getByTestId('dash-zone-engajamento');
+
+    expect(numeros).toHaveTextContent('Números de hoje');
+    expect(operacao).toHaveTextContent('Operação em tempo real');
+    expect(engajamento).toHaveTextContent('Engajamento e IA');
+
+    expect(operacao.contains(screen.getByTestId('dash-row2'))).toBe(true);
+    expect(operacao.contains(screen.getByTestId('dash-row3'))).toBe(true);
+    expect(engajamento.contains(screen.getByTestId('dash-row4'))).toBe(true);
+    expect(engajamento.contains(screen.getByTestId('dash-gamification'))).toBe(true);
+    expect(engajamento.contains(screen.getByTestId('dash-row3'))).toBe(false);
+  });
+});

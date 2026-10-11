@@ -4,23 +4,15 @@ import { SLARulesManager } from '@/components/settings/SLARulesManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Clock, AlertTriangle, Target, History, Settings2 } from 'lucide-react';
+import { Clock, Target, History, Settings2 } from 'lucide-react';
 import { useSLAMetrics, PeriodFilter } from '@/hooks/sla/useSLAMetrics';
 import { useSLAHistory } from '@/hooks/sla/useSLAHistory';
-import { cn } from '@/lib/utils';
 import { SLAMetricCards } from './SLAMetricCards';
 import { SLAAgentTable } from './SLAAgentTable';
-
-const getRateColor = (rate: number) => {
-  if (rate >= 90) return 'text-success';
-  if (rate >= 70) return 'text-warning';
-  return 'text-destructive';
-};
 
 export const SLADashboard = () => {
   const navigate = useNavigate();
@@ -159,61 +151,30 @@ export const SLADashboard = () => {
 
       <SLAAgentTable agents={data.byAgent} />
 
-      {/* SLA Overview Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-        <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Visão Geral do SLA
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Primeira Resposta</span>
-                <span className={cn("text-sm font-bold", getRateColor(data.overall.firstResponse.rate))}>
-                  {data.overall.firstResponse.rate.toFixed(1)}%
-                </span>
-              </div>
-              <Progress value={data.overall.firstResponse.rate} className="h-3" />
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>{data.overall.firstResponse.onTime} no prazo</span>
-                <span>{data.overall.firstResponse.breached} atrasados</span>
-              </div>
-            </div>
+      {/* Base do cálculo de 1ª resposta — só o dado que os cards de métrica
+          acima ainda NÃO mostram. Antes havia dois cards ("Visão Geral do SLA" e
+          "Resumo de Violações") repetindo a mesma taxa e as mesmas contagens "no
+          prazo"/"atrasados" de SLAMetricCards, exibidas 3x na mesma tela. */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Base do cálculo de 1ª resposta
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-muted/50 border border-border">
+            <p className="text-sm text-muted-foreground">Conversas avaliadas</p>
+            <p className="text-2xl font-bold text-foreground">{data.overall.firstResponse.total}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">no prazo + atrasadas — denominador da taxa</p>
+          </div>
+          <div className="p-4 rounded-xl bg-muted/50 border border-border">
+            <p className="text-sm text-muted-foreground">Pendentes de 1ª resposta</p>
+            <p className="text-2xl font-bold text-foreground">{data.overall.firstResponse.pending}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">ainda sem desfecho — não entram na taxa</p>
+          </div>
         </CardContent>
-        </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-        <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Resumo de Violações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.7 }} className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/15 transition-colors">
-                <p className="text-sm text-muted-foreground">Violações 1ª Resposta</p>
-                <p className="text-2xl font-bold text-destructive">
-                  {data.overall.firstResponse.breached}
-                </p>
-              </motion.div>
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.9 }} className="p-4 rounded-xl bg-success/10 border border-success/20 hover:bg-success/15 transition-colors">
-                <p className="text-sm text-muted-foreground">No Prazo 1ª Resposta</p>
-                <p className="text-2xl font-bold text-success">
-                  {data.overall.firstResponse.onTime}
-                </p>
-              </motion.div>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
-      </div>
+      </Card>
 
       {/* Configuração de Prazos */}
       <Tabs defaultValue="global" className="w-full">

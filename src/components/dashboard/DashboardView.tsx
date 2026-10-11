@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,30 @@ import { GamificationSection } from './overview/GamificationSection';
 import { useUserRole } from '@/hooks/system/useUserRole';
 
 const OVERVIEW_TAB = 'overview';
+
+/**
+ * Agrupa os cards da Visão Geral em zonas rotuladas, no lugar de uma grade
+ * plana de ~12 blocos de peso visual idêntico: nada dizia quais números olhar
+ * primeiro. Cada zona tem um título curto e um separador sutil; a primeira não
+ * leva separador (é o topo da aba).
+ */
+function DashboardZone({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return (
+    <section
+      data-testid={`dash-zone-${id}`}
+      aria-labelledby={`dash-zone-${id}-title`}
+      className="space-y-2.5 pt-4 mt-2 border-t border-border first:border-t-0 first:pt-0 first:mt-0"
+    >
+      <h3
+        id={`dash-zone-${id}-title`}
+        className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground"
+      >
+        {title}
+      </h3>
+      <div className="space-y-2.5">{children}</div>
+    </section>
+  );
+}
 
 const DASHBOARD_TABS: DashboardTabDef[] = [
   { value: 'overview', label: 'Visão Geral', icon: TrendingUp },
@@ -158,6 +182,7 @@ export function DashboardView() {
           <div data-testid="dash-banner">
             <GreetingBanner personal={!isStaff} />
           </div>
+          <DashboardZone id="numeros" title="Números de hoje">
           <div data-testid="dash-kpis">
             {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
                 Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
@@ -174,6 +199,8 @@ export function DashboardView() {
             )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
           </div>
+          </DashboardZone>
+          <DashboardZone id="operacao" title="Operação em tempo real">
           <div data-testid="dash-row2" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.9fr_1fr_1fr] gap-2.5">
             <VolumeChart queueId={filters.queueId} agentId={filters.agentId} />
             <NowPanel
@@ -208,6 +235,8 @@ export function DashboardView() {
               />
             )}
           </div>
+          </DashboardZone>
+          <DashboardZone id="engajamento" title="Engajamento e IA">
           <div data-testid="dash-row4" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[4fr_3fr_3fr] gap-2.5">
             <AIToolsCard onSeeAll={() => goToTab('ai')} />
             <CsatCard period={csatPeriod} onPeriodChange={setCsatPeriod} />
@@ -216,6 +245,7 @@ export function DashboardView() {
           <div data-testid="dash-gamification">
             <GamificationSection stats={stats} isStaff={isStaff} />
           </div>
+          </DashboardZone>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-2.5">
