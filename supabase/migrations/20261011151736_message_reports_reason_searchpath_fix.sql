@@ -1,24 +1,26 @@
 -- message_reports_reason_searchpath_fix (INB-246, refazer 2)
--- Rollback: ALTERs inversos de search_path/CHECK + corpo anterior de report_message (bloco comentado no fim).
--- Correção da migration 20261011125915 (já aplicada no banco local da tarefa,
--- por isso não foi editada): alinha ao cartão (O QUE FAZER item 3 e REGRAS DE BANCO).
---   1. message_reports.reason passa a aceitar exatamente
---      ('spam','improprio','urgencia','outro') — antes estava 'conteudo_improprio'
---      no lugar de 'improprio', no CHECK e na validação de report_message().
---   2. As 5 funções SECURITY DEFINER passam a usar
---      SET search_path = pg_catalog, public (antes public, pg_temp).
+-- Rollback: no diff final, a migration 20261011125915 já contém os mesmos valores
+-- corretos; portanto o rollback desta migration redundante reaplica o estado correto
+-- (CHECK com 'improprio' e search_path = pg_catalog, public) e não volta a um estado
+-- intermediário da rodada anterior.
+-- Correção redundante/safety net da migration 20261011125915: alinha ao cartão
+-- (O QUE FAZER item 3 e REGRAS DE BANCO) caso esta migration seja aplicada sobre
+-- uma tentativa intermediária, mas no diff final a migration original já está correta.
+--   1. message_reports.reason aceita exatamente
+--      ('spam','improprio','urgencia','outro') no CHECK e em report_message().
+--   2. As 5 funções SECURITY DEFINER usam SET search_path = pg_catalog, public.
 -- Privilégios (REVOKE/GRANT) foram criados certos na migration anterior e ficam
 -- como estão; CREATE OR REPLACE preserva os privilégios existentes.
 --
--- Rollback: inverte os ALTERs abaixo e reaplica o corpo anterior de report_message (bloco comentado no fim do arquivo).
--- Rollback (SQL executável, na ordem — restaura o estado da migration anterior):
---   alter function public.toggle_message_favorite(uuid) set search_path = public, pg_temp;
---   alter function public.pin_message(uuid) set search_path = public, pg_temp;
---   alter function public.unpin_message(uuid) set search_path = public, pg_temp;
---   alter function public.message_pins_force_contact_id() set search_path = public, pg_temp;
+-- Rollback: reexecuta o estado correto da migration original final (no-op seguro).
+-- Rollback (SQL executável, na ordem):
+--   alter function public.toggle_message_favorite(uuid) set search_path = pg_catalog, public;
+--   alter function public.pin_message(uuid) set search_path = pg_catalog, public;
+--   alter function public.unpin_message(uuid) set search_path = pg_catalog, public;
+--   alter function public.message_pins_force_contact_id() set search_path = pg_catalog, public;
 --   alter table public.message_reports drop constraint if exists message_reports_reason_check;
---   alter table public.message_reports add constraint message_reports_reason_check check (reason in ('spam', 'conteudo_improprio', 'urgencia', 'outro'));
---   (report_message: reaplicar o corpo com a lista antiga — ver bloco comentado no fim;
+--   alter table public.message_reports add constraint message_reports_reason_check check (reason in ('spam', 'improprio', 'urgencia', 'outro'));
+--   (report_message: reaplicar o corpo correto — ver bloco comentado no fim;
 --   CREATE OR REPLACE abaixo preserva REVOKE/GRANT, então o rollback não os toca.)
 
 -- ===================== 1. search_path das 4 funções =====================
@@ -90,9 +92,9 @@ $$;
 alter table public.message_reports drop constraint if exists message_reports_reason_check;
 alter table public.message_reports add constraint message_reports_reason_check check (reason in ('spam', 'improprio', 'urgencia', 'outro'));
 
--- ===================== Rollback: corpo anterior de report_message =====================
--- (Descomente e execute para reverter o item 2 junto com os ALTERs do cabeçalho.
--- Corpo idêntico ao aplicado pela migration anterior: lista antiga + search_path antigo.)
+-- ===================== Rollback: corpo correto de report_message =====================
+-- (Descomente e execute junto com os ALTERs do cabeçalho. No diff final, este corpo
+-- é idêntico ao estado correto da migration original, então o rollback é no-op seguro.)
 -- create or replace function public.report_message(
 --   p_message_id uuid,
 --   p_reason text,
@@ -101,7 +103,7 @@ alter table public.message_reports add constraint message_reports_reason_check c
 -- returns uuid
 -- language plpgsql
 -- security definer
--- set search_path = public, pg_temp
+-- set search_path = pg_catalog, public
 -- as $$
 -- declare
 --   v_user    uuid := auth.uid();
@@ -112,7 +114,7 @@ alter table public.message_reports add constraint message_reports_reason_check c
 --   if v_user is null then
 --     raise exception 'not_authenticated' using errcode = '42501';
 --   end if;
---   if p_reason is null or p_reason not in ('spam', 'conteudo_improprio', 'urgencia', 'outro') then
+--   if p_reason is null or p_reason not in ('spam', 'improprio', 'urgencia', 'outro') then
 --     raise exception 'invalid_report_reason' using errcode = '22023';
 --   end if;
 --   v_note := nullif(btrim(coalesce(p_note, '')), '');
