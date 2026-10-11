@@ -141,15 +141,15 @@ INSERT INTO public.departments (id, name) VALUES
   ('$DEP_GAMA','Departamento Gama'),
   ('$DEP_VAZIO','Departamento Vazio');
 
-INSERT INTO public.profiles (id, user_id, role, department_id) VALUES
-  ('10000000-0000-0000-0000-0000000000f1','$ADMIN_SUB','admin','$DEP_ALFA'),
-  ('10000000-0000-0000-0000-0000000000f2','$AGENT_SUB','agent','$DEP_ALFA'),
-  ('10000000-0000-0000-0000-0000000000f3','$SUP_SUB','supervisor','$DEP_ALFA');
+INSERT INTO public.profiles (id, user_id, role, department_id, updated_at) VALUES
+  ('10000000-0000-0000-0000-0000000000f1','$ADMIN_SUB','admin','$DEP_ALFA','2020-01-01T00:00:00+00'),
+  ('10000000-0000-0000-0000-0000000000f2','$AGENT_SUB','agent','$DEP_ALFA','2020-01-02T00:00:00+00'),
+  ('10000000-0000-0000-0000-0000000000f3','$SUP_SUB','supervisor','$DEP_ALFA','2020-01-03T00:00:00+00');
 
-INSERT INTO public.team_conversations (id, type, department_id) VALUES
-  ('60000000-0000-0000-0000-0000000000c1','group','$DEP_ALFA'),
-  ('60000000-0000-0000-0000-0000000000c2','department','$DEP_BETA'),
-  ('60000000-0000-0000-0000-0000000000c7','department','$DEP_GAMA');
+INSERT INTO public.team_conversations (id, type, department_id, updated_at) VALUES
+  ('60000000-0000-0000-0000-0000000000c1','group','$DEP_ALFA','2020-02-01T00:00:00+00'),
+  ('60000000-0000-0000-0000-0000000000c2','department','$DEP_BETA','2020-02-02T00:00:00+00'),
+  ('60000000-0000-0000-0000-0000000000c7','department','$DEP_GAMA','2020-02-07T00:00:00+00');
 
 INSERT INTO public.queues (id, name) VALUES ('70000000-0000-0000-0000-0000000000a1','Fila Alfa');
 
@@ -213,9 +213,20 @@ checa_contrato() { # fase
   assert_eq "$fase" 'sem destino: filas contadas >=1' 't' \
     "$(q1 "$admin_call SELECT ((public.delete_department('$DEP_ALFA', NULL))->>'queues')::int >= 1; COMMIT;")" || return 1
 
-  # move + apaga + audita
+  # move + apaga + audita (updated_at preservado: o gatilho e desligado so no UPDATE da RPC)
+  local ts_perfil_antes ts_perfil_depois ts_conv_antes ts_conv_depois
+  ts_perfil_antes="$(q1 "SELECT updated_at::text FROM public.profiles WHERE user_id='$AGENT_SUB'")"
+  ts_conv_antes="$(q1 "SELECT updated_at::text FROM public.team_conversations WHERE id='60000000-0000-0000-0000-0000000000c1'")"
+
   assert_eq "$fase" 'com destino: ok true' 'true' \
     "$(q1 "$admin_call SELECT (public.delete_department('$DEP_ALFA', '$DEP_BETA'))->>'ok'; COMMIT;")" || return 1
+
+  ts_perfil_depois="$(q1 "SELECT updated_at::text FROM public.profiles WHERE user_id='$AGENT_SUB'")"
+  ts_conv_depois="$(q1 "SELECT updated_at::text FROM public.team_conversations WHERE id='60000000-0000-0000-0000-0000000000c1'")"
+  assert_eq "$fase" 'com destino: updated_at do membro ANTES=DEPOIS' "$ts_perfil_antes" "$ts_perfil_depois" || return 1
+  assert_eq "$fase" 'com destino: updated_at da conversa ANTES=DEPOIS' "$ts_conv_antes" "$ts_conv_depois" || return 1
+  assert_eq "$fase" 'com destino: membro mudou de departamento' "$DEP_BETA" \
+    "$(q1 "SELECT department_id FROM public.profiles WHERE user_id='$AGENT_SUB'")" || return 1
   assert_eq "$fase" 'com destino: Alfa apagado' '0' \
     "$(q1 "SELECT count(*) FROM public.departments WHERE id='$DEP_ALFA'")" || return 1
   assert_eq "$fase" 'com destino: membros movidos' '3' \
@@ -331,7 +342,8 @@ CREATE TABLE public.profiles (
   user_id uuid NOT NULL,
   role text,
   is_active boolean DEFAULT true,
-  department_id uuid
+  department_id uuid,
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE FUNCTION public.current_profile_id() RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -364,10 +376,24 @@ CREATE TABLE public.team_conversations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   type text NOT NULL DEFAULT 'group',
   name text,
-  department_id uuid REFERENCES public.departments(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
+  department_id uuid REFERENCES public.departments(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX idx_team_conversations_dept_unique
   ON public.team_conversations(department_id) WHERE type = 'department' AND department_id IS NOT NULL;
+
+-- Gatilhos de updated_at reais (update_updated_at_column: NEW.updated_at = now()).
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_team_conversations_updated_at
+  BEFORE UPDATE ON public.team_conversations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE TABLE public.queues (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL);
 CREATE TABLE public.queue_members (
