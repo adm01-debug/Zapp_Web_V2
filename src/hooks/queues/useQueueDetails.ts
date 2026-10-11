@@ -217,6 +217,7 @@ export function useQueueDetails(id: string | undefined): QueueDetailsState {
   }, [id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-fila padrão, sem estado derivado de props para sincronizar.
     void fetchAll();
   }, [fetchAll]);
 
