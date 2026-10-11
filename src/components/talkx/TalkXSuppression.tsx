@@ -808,7 +808,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       <TalkXConfirmDialog
         open={!!removing}
         onClose={() => setRemoving(null)}
-        onConfirm={() => removing && removeMutation.mutate(removing.ids)}
+        onConfirm={() => { if (removing) removeMutation.mutate(removing.ids); }}
         icon={Trash2}
         iconColor="red"
         tone="danger"
