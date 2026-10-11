@@ -70,7 +70,9 @@ export function PasswordResetRequestsPanel() {
     finally { setProcessing(false); }
   };
 
-  const filteredRequests = requests.filter(r => r.email.toLowerCase().includes(search.toLowerCase()) && (activeTab === 'all' || r.status === 'pending'));
+  const matchesSearch = (r: ResetRequest) => r.email.toLowerCase().includes(search.toLowerCase());
+  const pendingRequests = requests.filter(r => r.status === 'pending' && matchesSearch(r));
+  const allRequests = requests.filter(matchesSearch);
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
   const statusBadge = (status: string) => {
@@ -78,6 +80,48 @@ export function PasswordResetRequestsPanel() {
     if (status === 'approved') return <Badge variant="default" className="gap-1 bg-success"><CheckCircle className="w-3 h-3" /> Aprovado</Badge>;
     if (status === 'rejected') return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Rejeitado</Badge>;
     return null;
+  };
+
+  // Conteúdo compartilhado pelas abas; cada TabsContent monta apenas o painel ativo.
+  const renderRequests = (items: ResetRequest[], emptyText: string) => {
+    if (loading) return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
+    if (items.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <Key className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+          <p className="text-muted-foreground">{search ? 'Nenhuma solicitação encontrada' : emptyText}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-3">
+        <AnimatePresence mode="popLayout">
+          {items.map((req) => (
+            <motion.div key={req.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="p-2 rounded-lg bg-muted"><User className="w-4 h-4 text-muted-foreground" /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{req.email}</span>{statusBadge(req.status)}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Solicitado {formatDistanceToNow(new Date(req.created_at), { addSuffix: true, locale: ptBR })}</div>
+                    {req.reason && <p className="text-sm mt-2 p-2 rounded bg-muted"><strong>Motivo:</strong> {req.reason}</p>}
+                    {req.ip_address && <p className="text-xs text-muted-foreground mt-1">IP: {req.ip_address}</p>}
+                    {req.status === 'rejected' && req.rejection_reason && <div className="mt-2 p-2 rounded bg-destructive/10 text-sm"><strong className="text-destructive">Motivo da rejeição:</strong> {req.rejection_reason}</div>}
+                    {req.reviewed_at && <p className="text-xs text-muted-foreground mt-1">Revisado em {format(new Date(req.reviewed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>}
+                  </div>
+                </div>
+                {req.status === 'pending' && (
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedRequest(req); setRejectDialogOpen(true); }}><XCircle className="w-4 h-4 mr-1" />Rejeitar</Button>
+                    <Button size="sm" onClick={() => { setSelectedRequest(req); void handleApprove(req); }} disabled={processing}><CheckCircle className="w-4 h-4 mr-1" />Aprovar</Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    );
   };
 
   return (
@@ -100,40 +144,10 @@ export function PasswordResetRequestsPanel() {
             <TabsTrigger value="pending" className="gap-2"><Clock className="w-4 h-4" />Pendentes ({pendingCount})</TabsTrigger>
             <TabsTrigger value="all" className="gap-2">Todas ({requests.length})</TabsTrigger>
           </TabsList>
+          <div className="relative mt-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar por email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
+          <TabsContent value="pending" className="mt-4">{renderRequests(pendingRequests, 'Nenhuma solicitação pendente')}</TabsContent>
+          <TabsContent value="all" className="mt-4">{renderRequests(allRequests, 'Nenhuma solicitação encontrada')}</TabsContent>
         </Tabs>
-        <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar por email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
-
-        {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-        : filteredRequests.length === 0 ? <div className="text-center py-8"><Key className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" /><p className="text-muted-foreground">{search ? 'Nenhuma solicitação encontrada' : 'Nenhuma solicitação pendente'}</p></div>
-        : (
-          <div className="space-y-3">
-            <AnimatePresence mode="popLayout">
-              {filteredRequests.map((req) => (
-                <motion.div key={req.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="p-2 rounded-lg bg-muted"><User className="w-4 h-4 text-muted-foreground" /></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap"><span className="font-medium">{req.email}</span>{statusBadge(req.status)}</div>
-                        <div className="text-sm text-muted-foreground mt-1">Solicitado {formatDistanceToNow(new Date(req.created_at), { addSuffix: true, locale: ptBR })}</div>
-                        {req.reason && <p className="text-sm mt-2 p-2 rounded bg-muted"><strong>Motivo:</strong> {req.reason}</p>}
-                        {req.ip_address && <p className="text-xs text-muted-foreground mt-1">IP: {req.ip_address}</p>}
-                        {req.status === 'rejected' && req.rejection_reason && <div className="mt-2 p-2 rounded bg-destructive/10 text-sm"><strong className="text-destructive">Motivo da rejeição:</strong> {req.rejection_reason}</div>}
-                        {req.reviewed_at && <p className="text-xs text-muted-foreground mt-1">Revisado em {format(new Date(req.reviewed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>}
-                      </div>
-                    </div>
-                    {req.status === 'pending' && (
-                      <div className="flex gap-2 shrink-0">
-                        <Button size="sm" variant="outline" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedRequest(req); setRejectDialogOpen(true); }}><XCircle className="w-4 h-4 mr-1" />Rejeitar</Button>
-                        <Button size="sm" onClick={() => { setSelectedRequest(req); void handleApprove(req); }} disabled={processing}><CheckCircle className="w-4 h-4 mr-1" />Aprovar</Button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
       </CardContent>
       <RejectResetDialog open={rejectDialogOpen} email={selectedRequest?.email || ''} processing={processing} onClose={() => setRejectDialogOpen(false)} onReject={handleReject} />
     </Card>
