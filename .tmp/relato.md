@@ -1,67 +1,24 @@
 Especialista: Íris (area-front-componentes)
 
-## Como a branch foi montada (leia primeiro)
-Meu código CONSOME o dado `subtitle` (etapa 081, card `t_15507eb6`) — sem ele o `BoardColumn` não
-compila. O pai não estava integrado na `dia/2026-10-11`, então a branch tem 2 commits:
-1. o HUNK de dependência do pai `t_15507eb6` (o `subtitle` em `KANBAN_COLUMNS`, só
-   `src/hooks/tasks/workItem.types.ts`; commit `9c01d7ed6`);
-2. a minha entrega (`113bf61f0`).
-Os outros dois pais citados no cartão (`t_2a65fbc1` = T16 barra de filtros e `t_a332243d` = T11
-primitivos) são de OUTRO escopo e não são usados por nenhuma linha do meu diff: trazidos inteiros
-levavam o diff a 113886 caracteres e o próprio `hermes-tarefa-fechar` recusou por regra (>90000).
-Eles ficam para o integrador, como manda "um cartão = um defeito".
-
 ## O que mudou e por quê
-Etapas 080, 082 e 083 do Quadro.
-
-- `src/components/tasks/board/BoardColumn.tsx`
-  - 080: o cabeçalho passou a mostrar o SUBTÍTULO curto (`KANBAN_COLUMNS.subtitle`) ao lado do
-    rótulo ("Caixa de entrada · A organizar", "Fazendo · Conclua uma para iniciar outra"…). O
-    rótulo continua sendo o PRIMEIRO `<span>` da coluna — é por ele que a medição de contraste do
-    cabeçalho (`quadroLarguraFocoContraste`) resolve a cor. A política LONGA continua só no
-    tooltip do botão "Política da coluna" (ⓘ), sem virar texto do cabeçalho.
-  - 082: na coluna de limite duro ("Fazendo") entraram a barra de progresso SEGMENTADA (um
-    segmento por vaga, `WIP_LIMITS.doing.hard`, azul/primária até encher e destrutiva quando
-    cheia, com `role="progressbar"` e aria-valuenow/max) e o rodapé "Seu limite é de 3 tarefas em
-    execução." com ícone de informação. O preenchimento é limitado a `Math.min(doingCount, hard)`:
-    quem estourou o limite pinta a barra CHEIA, nunca uma barra maior que o teto. Colunas sem
-    limite duro não recebem barra nem rodapé.
-  - 083: a coluna ganhou a prop `shake`. Enquanto ligada, a BORDA fica destrutiva (aviso que não
-    depende de animação) e o tranco curto usa `motion-safe:animate-wiggle` — com movimento
-    reduzido o `motion-safe` não existe e só a borda muda, como o plano pede.
-- `src/components/tasks/board/TasksBoardMode.tsx`
-  - 083: o `handleDragEnd`, no caso `blocked/wip_full`, agora dá o tranco curto na coluna de
-    destino (`result.destination.droppableId`) por 600 ms além do toast explicativo que já
-    existia. O drop continua recusado: o card volta à origem e nada é escrito (`onMove` não roda).
-    O timer é limpo no unmount.
+- src/components/tasks/shared/WorkItemCard.tsx: o card ganhou as etapas 084–090 — checkbox CIRCULAR pelo primitivo `TaskCheckbox` nas três superfícies (D16/084), título em até duas linhas (`line-clamp-2`; a Agenda segue `truncate` de uma linha), "Urgente" em `PriorityPill` junto ao título com a prioridade padrão descendo para a linha de contexto (085), tag "Atrasada" (ícone `AlertCircle` + texto) ao lado do prazo vencido e o prazo pelo `DateLabel` em cor destrutiva (086), rótulos "Prazo"/"Lembrete" em duas colunas e descrição curta (`line-clamp-2`) no card em "Fazendo" ou selecionado (087/088), chip de espera com ponto âmbar, motivo truncado e `title` de tooltip (089), e o estado selecionado — borda `primary`, fundo `primary/10`, alça ⠿ e `data-selected` (090). O prazo deixou de vir do `DueChip` local: é o `DateLabel` sobre `workItemFormat.ts` (a regra única de datas, T04); o atraso usa `isOverdue` do `workItemAggregates` (mesma regra do badge e do `bucketByDue`).
+- src/components/tasks/__tests__/WorkItemCard.test.tsx: novo bloco com um teste por etapa (084–090), medindo cada uma pelo DOM real do componente — inclusive a seleção vinda do `TasksUiProvider.selectedId`.
+- src/components/tasks/__tests__/TasksListMode.test.tsx e agendaGroups.test.tsx: as asserções do checkbox do card passaram de role `button` para role `checkbox`, porque o card agora usa o primitivo `TaskCheckbox` (role="checkbox", mesmo nome acessível "Concluir tarefa"/"Reabrir tarefa"). Nenhum teste afrouxado: só o papel acessível acompanhou o primitivo.
 
 ## Prova
-- Teste novo: `src/components/tasks/board/__tests__/BoardColumn.subtitulo-limite.test.tsx` (8 casos).
-  Renderiza o componente REAL (`BoardColumn`/`TasksBoardMode`) e dispara o drop pelo `onDragEnd`
-  registrado (mock do `@hello-pangea/dnd`, mesmo padrão de `taskComponents.test.tsx`); o toast é o
-  espião compartilhado do `@/test/mocks/tarefas`.
-- vermelho antes (BoardColumn e TasksBoardMode voltados à `dia/2026-10-11`): `6 failed | 2 passed`
-  (os 2 verdes são asserções negativas: "coluna sem limite não ganha barra" e "reorganizar por
-  dentro não treme", que já valiam).
-- verde depois: `Test Files 1 passed (1); Tests 8 passed (8)`.
-- regressão dos vizinhos da área (mesma execução): `src/components/tasks/__tests__/quadroLarguraFocoContraste`,
-  `movimentoEContraste`, `taskComponents`, `TasksBoardMode`, `TasksBoardMode.a11y`,
-  `src/components/tasks/board/__tests__/BoardColumn.politica-coluna` e `contratosVisiveis` →
-  `Test Files 8 passed (8); Tests 68 passed | 1 todo (69)`.
-- `npx eslint` nos 3 arquivos: sem saída (limpo); `npx tsc --noEmit -p tsconfig.json`: saída vazia.
-
-## Avisos do juiz automático (já conferidos)
-- "teste novo não chama o código real": NÃO PROCEDE. O teste renderiza `BoardColumn`/`TasksBoardMode`
-  reais e dispara o `onDragEnd` real do quadro; nenhum mock devolve a resposta pronta (o único mock
-  é o `@hello-pangea/dnd`, que o jsdom não roda, e o espião de `toast`).
-- "arquivo fora de ARQUIVOS QUE PODE TOCAR" (`src/hooks/tasks/workItem.types.ts`): é o HUNK de
-  dependência do pai `t_15507eb6` (etapa 081), que o cartão manda trazer por cherry-pick do pai não
-  integrado e sem o qual o `BoardColumn` não compila. Trouxe só ele; o resto do pai (filtros,
-  agregados, testes) ficou de fora.
+- vermelho antes (card antigo, `git show HEAD^:src/components/tasks/shared/WorkItemCard.tsx`, x os testes novos):
+  `FAIL src/components/tasks/__tests__/WorkItemCard.test.tsx` → `Tests 10 failed | 10 passed (20)`
+- verde depois: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 31 passed (31); Tests 357 passed | 1 todo (358)`
+- `npx eslint` nos 4 arquivos alterados: sem saída (0 avisos/erros).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `resolveDragEnd.ts` (fora dos arquivos que o cartão cita): o alvo do tranco é lido de
-  `result.destination` no próprio `TasksBoardMode`.
-- Não toquei em tokens/`tailwind.config.ts`: o tranco usa a animação `wiggle` que já existe.
-- Não trouxe os pais T16 (barra de filtros) e T11 (primitivos): fora do escopo deste cartão e
-  furavam o teto de revisão; não são referenciados por nenhuma linha do meu diff.
+- `ContactAvatar`: o contato do card continua no `ContactChip` (testid `contact-chip`, coberto por cardAcoes/WorkItemCard), que já entrega avatar pequeno + nome (D18); trocar por dentro do `ContactChip` mexeria num arquivo fora de ARQUIVOS QUE PODE TOCAR.
+- `StatusPill`: nenhuma etapa de 084–090 pede a pílula de coluna dentro do card (o "chip de espera" da 089 é ponto âmbar + motivo, não a pílula de status).
+- `workItemPresets.ts`: não existe nesta faixa (a faixa T04 traz só `workItemFormat.ts`) e o card não usa presets de prazo/lembrete — isso é do painel/QuickAdd.
+- A ligação de quem ABRE o painel (`TasksModule` passa a usar `openPanel` em vez do seu `selectedItem`) não é arquivo meu: o card reage a `isSelected` (prop) e ao `TasksUiProvider.selectedId`, e o teste da 090 prova os dois caminhos.
+
+## Escopo e números (conferidos com `git diff --stat` contra a base da tarefa)
+- O diff da tarefa tem 19 arquivos, 4 deles de teste, com 16 casos de teste novos.
+- SÃO MEUS 4 arquivos, no commit `feat(tarefas): redesenha o cartao do quadro (etapas 084 a 090)`: `src/components/tasks/shared/WorkItemCard.tsx` + 3 arquivos de teste (`WorkItemCard.test.tsx`, `TasksListMode.test.tsx`, `agendaGroups.test.tsx`) — o card e `src/components/tasks/__tests__/`, os dois caminhos de ARQUIVOS QUE PODE TOCAR. 8 dos casos novos são meus: um por etapa 084–090 e o do caminho do provider na 090.
+- Os outros 15 arquivos e os outros 8 casos NÃO são meus: são a FAIXA DOS PAIS que o próprio bloco DEPENDÊNCIA do cartão manda trazer — os primitivos compartilhados T11 (`TaskCheckbox`, `PriorityPill`, `StatusPill`, `DateLabel`, `ContactAvatar`), a base do painel (`TasksUiContext.tsx`, `tasksUi.ts`, `TasksModule.tsx`, `useMyWorkItems.ts`) e os formatos T04 (`workItemFormat.ts`, `workItem.types.ts`), mais o subtítulo/limite de coluna (`BoardColumn.tsx`, `TasksBoardMode.tsx`, `BoardColumn.subtitulo-limite.test.tsx`). Vieram nos commits `chore(tarefas): traz a faixa dos pais …` (cherry-pick de `ddc4fc76f` + a faixa de `2f6cf568e`) e `feat(tarefas): subtitulo nas colunas…`. Sem eles os primitivos que o cartão manda usar não existiriam no workspace — por isso a faixa fica no diff e não é "achado fora do escopo".
+- Nenhum arquivo fora do módulo de Tarefas foi tocado por mim.
