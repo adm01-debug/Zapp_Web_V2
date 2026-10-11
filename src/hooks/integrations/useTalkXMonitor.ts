@@ -235,15 +235,16 @@ export function useTalkXMonitor(
   });
 
   const names = namesQuery.data;
-  const now = Date.now();
+  // Sem Date.now() no corpo do render (react-hooks/purity): cada agregador
+  // usa o próprio padrão Date.now() interno, como antes.
   const remaining = countRemaining(recipients);
-  const ratePerMinute = measureRatePerMinute(recipients, now, startedAt);
+  const ratePerMinute = measureRatePerMinute(recipients, undefined, startedAt);
 
   return {
     recipients,
     isLoading: query.isLoading,
     isError: query.isError,
-    rateByMinute: buildRateByMinute(recipients, { throttlePerMinute, startedAt, now }),
+    rateByMinute: buildRateByMinute(recipients, { throttlePerMinute, startedAt }),
     ratePerMinute,
     remaining,
     finishMinutes: estimateFinishMinutes(remaining, ratePerMinute),
