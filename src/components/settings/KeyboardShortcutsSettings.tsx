@@ -120,6 +120,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                 className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
                 onClick={handleConfirm}
                 disabled={!pendingShortcut}
+                aria-label={`Confirmar atalho ${shortcut.name}`}
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -128,6 +129,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                 variant="ghost"
                 className="h-8 w-8 text-destructive hover:bg-destructive/10"
                 onClick={cancelRecording}
+                aria-label={`Cancelar gravação do atalho ${shortcut.name}`}
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -158,6 +160,7 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutBinding }) {
                     resetShortcut(shortcut.id);
                     toast.success('Atalho restaurado ao padrão');
                   }}
+                  aria-label={`Restaurar atalho ${shortcut.name} ao padrão`}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </Button>
