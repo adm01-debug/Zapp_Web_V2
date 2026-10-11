@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
   LayoutDashboard, HelpCircle,
@@ -32,6 +32,10 @@ import {
   pushTalkXWizardRoute,
   replaceTalkXTabRoute,
   replaceTalkXWizardRoute,
+  parseTalkXScreenRoute,
+  screenForStatus,
+  replaceTalkXRoute,
+  type TalkXScreen,
   type TalkXTab,
   type TalkXWizardRoute,
 } from './talkxRoute';
@@ -50,7 +54,16 @@ export default function TalkXView() {
   // estado não aparece (nunca um falso "desconectado" na tela).
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
-  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXRoute(window.location.search).wizard.route ? 'wizard' : 'tabs');
+  // TL-152: a mesma precedência do syncFromBrowserHistory (?campaign= com
+  // screen explícito vence o wizard) — load e popstate abrem a mesma tela
+  // para o mesmo endereço.
+  const [topView, setTopView] = useState<TalkXTopView>(() => {
+    const screenRoute = parseTalkXScreenRoute(window.location.search).route;
+    if (screenRoute?.screen) return screenRoute.screen;
+    const wizard = parseTalkXRoute(window.location.search).wizard.route;
+    if (wizard) return 'wizard';
+    return 'tabs';
+  });
   const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
   const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
@@ -59,6 +72,10 @@ export default function TalkXView() {
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
+  // TL-152: a rota de tela resolve os ids quando as campanhas chegam
+  // (primeira pintura); uma vez só, para não puxar a View de volta a
+  // cada recarregamento das campanhas.
+  const didInitialScreenSync = useRef(false);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
@@ -79,7 +96,12 @@ export default function TalkXView() {
 
   const syncFromBrowserHistory = useCallback(() => {
     const parsedWizard = parseTalkXRoute(window.location.search).wizard;
+    const parsedScreen = parseTalkXScreenRoute(window.location.search);
+
     if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
+    // TL-152: ?screen= inválido (ex.: report, que não tem tela) é normalizado
+    // aqui também — o parâmetro é removido sem abrir outra tela no lugar.
+    if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
 
     // The browser history event, rather than a render effect, is the source of
     // truth for back/forward. Resetting here also guarantees a draft from the
@@ -87,6 +109,33 @@ export default function TalkXView() {
     setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
+
+    // TL-152: screen routing takes priority over wizard routing when
+    // ?campaign= is present in the URL. Sem screen, a situação decide
+    // (screenForStatus); campanha inexistente cai na lista, como hoje.
+    if (parsedScreen.route) {
+      const campaignId = parsedScreen.route.campaignId;
+      const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
+      const screen = parsedScreen.route.screen ?? (campaign ? screenForStatus(campaign.status) : undefined);
+      if (screen === 'wizard') {
+        setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
+        setTopView('wizard');
+        return;
+      }
+      if (screen) {
+        setEditingCampaign(null);
+        setMonitorId(null);
+        setScheduledCampaignId(null);
+        setRunningCampaignId(null);
+        switch (screen) {
+          case 'scheduled': setScheduledCampaignId(campaignId); break;
+          case 'running': setRunningCampaignId(campaignId); break;
+          default: setMonitorId(campaignId); break;
+        }
+        setTopView(screen === 'scheduled' || screen === 'running' ? screen : 'monitor');
+        return;
+      }
+    }
 
     if (!parsedWizard.route) {
       setEditingCampaign(null);
@@ -112,9 +161,19 @@ export default function TalkXView() {
     // entrada nova no histórico) em vez de mostrar área vazia.
     const initialTab = parseTalkXRoute(window.location.search);
     if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
+    // TL-152: normaliza ?screen= desconhecido (remove o parâmetro sem
+    // entrar no histórico, para não criar entradas inúteis).
+    const initialScreen = parseTalkXScreenRoute(window.location.search);
+    if (initialScreen.needsNormalization) replaceTalkXRoute(null);
+    // TL-152: o init só define o topView — os ids da tela roteada resolvem
+    // aqui, quando as campanhas chegam (primeira pintura, uma vez só).
+    if (!didInitialScreenSync.current && !isLoading) {
+      didInitialScreenSync.current = true;
+      syncFromBrowserHistory();
+    }
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [syncFromBrowserHistory]);
+  }, [isLoading, syncFromBrowserHistory]);
 
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
@@ -152,6 +211,7 @@ export default function TalkXView() {
     setLocalDraftRouteId(null);
     setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard');
     writeWizardRoute({ campaignId: 'new', step: 1 });
+    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
   const openEdit = useCallback((c: TalkXCampaign) => {
     setLocalDraftRouteId(null);
@@ -162,14 +222,32 @@ export default function TalkXView() {
       ? (savedStep as WizardStep)
       : 1;
     writeWizardRoute({ campaignId: c.id, step });
+    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
-  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); }, []);
-  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); }, []);
-  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); }, []);
+  // TL-152: cada tela de acompanhamento tem endereço próprio (?campaign= e
+  // ?screen=). Abrir a tela grava a rota (push: voltar retorna à lista) e
+  // limpa a rota do wizard — um endereço nunca aponta para duas telas.
+  // Transições reativas (mudança de status, pós-lançamento) usam replace.
+  const writeScreenRoute = useCallback((campaignId: string, screen: TalkXScreen, replace = false) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('campaign', campaignId);
+    url.searchParams.set('screen', screen);
+    url.searchParams.delete('wizard');
+    url.searchParams.delete('step');
+    const href = `${url.pathname}${url.search}${url.hash}`;
+    if (replace) window.history.replaceState(null, '', href);
+    else window.history.pushState(null, '', href);
+    setWizardRoute(null);
+  }, []);
+
+  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); writeScreenRoute(c.id, 'monitor'); }, [writeScreenRoute]);
+  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
+  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
   const backToList = useCallback(() => {
     setLocalDraftRouteId(null);
     setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setWizardInitial(undefined);
     writeWizardRoute(null, true);
+    replaceTalkXRoute(null);
   }, [writeWizardRoute]);
 
   // X189: a Ajuda é uma tela do módulo com rota própria; o endereço vive na URL
@@ -205,6 +283,7 @@ export default function TalkXView() {
       setLocalDraftRouteId(created.id);
       setTopView('wizard');
       writeWizardRoute({ campaignId: created.id, step: 1 });
+      replaceTalkXRoute(null);
     } catch {
       // A mutation já mostra o toast de erro.
     }
@@ -240,6 +319,7 @@ export default function TalkXView() {
           if (campaign.status === 'sending') {
             setMonitorId(campaign.id);
             setTopView('monitor');
+            writeScreenRoute(campaign.id, 'monitor', true);
             return;
           }
           backToList();
@@ -254,7 +334,7 @@ export default function TalkXView() {
       <TalkXCampaignRunning
         initialCampaignId={runningCampaignId}
         onBack={backToList}
-        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); }}
+        onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor', true); }}
       />
     );
   }
@@ -287,10 +367,12 @@ export default function TalkXView() {
             if (status === 'scheduled') {
               setScheduledCampaignId(id);
               setTopView('scheduled');
+              writeScreenRoute(id, 'scheduled', true);
               return;
             }
             setMonitorId(id);
             setTopView('monitor');
+            writeScreenRoute(id, 'monitor', true);
           }}
           initial={{ ...wizardInitial, step: wizardRoute?.step }}
           routeStep={wizardRoute?.step}
@@ -417,7 +499,7 @@ export default function TalkXView() {
             onUseTemplate={(templateId) => openNew({ templateId })}
             startNew={templateStartNew}
             onStartNewHandled={() => setTemplateStartNew(false)}
-            onOpenMonitor={(id) => { setMonitorId(id); setTopView('monitor'); }}
+            onOpenMonitor={(id) => { const c = campaigns.find((x) => x.id === id); if (c) openMonitor(c); }}
           />
         </TabsContent>
         <TabsContent value="suppression" className="mt-4">

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const f = vi.hoisted(() => ({
@@ -28,16 +28,23 @@ vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
   ),
 }));
 vi.mock('@/components/talkx/TalkXOverview', () => ({
-  TalkXOverview: ({ onNew }: { onNew: () => void }) => <button type="button" onClick={onNew}>Abrir novo wizard</button>,
+  TalkXOverview: ({ campaigns, onNew, onView }: {
+    campaigns: Array<{ id: string }>; onNew: () => void; onView: (c: { id: string }) => void;
+  }) => (
+    <>
+      <button type="button" onClick={onNew}>Abrir novo wizard</button>
+      <button type="button" onClick={() => onView(campaigns[0])}>Ver primeira campanha</button>
+    </>
+  ),
 }));
-vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
+vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div data-testid="monitor" /> }));
 vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));
 vi.mock('@/components/talkx/TalkXTemplates', () => ({ TalkXTemplates: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSuppression', () => ({ TalkXSuppression: () => <div data-testid="suppression" /> }));
 vi.mock('@/components/talkx/TalkXAnalytics', () => ({ TalkXAnalytics: () => <div data-testid="analytics" /> }));
 vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div data-testid="settings" /> }));
-vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
-vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
+vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div data-testid="scheduled" /> }));
+vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div data-testid="running" /> }));
 
 import TalkXView from '@/components/talkx/TalkXView';
 import { TalkXWizardReview } from '@/components/talkx/TalkXWizardDelivery';
@@ -258,5 +265,172 @@ describe('TalkXWizardReview — "Editar" respeita a rota (V22)', () => {
     });
 
     expect(onEditStep).toHaveBeenCalledWith(2);
+  });
+});
+
+// TL-152 (refazer): ?screen=report não tem tela — a URL é normalizada
+// (parâmetro removido) em vez de reescrever para o monitor.
+describe('TalkXView ?screen=report sem tela própria (TL-152)', () => {
+  beforeEach(() => {
+    f.campaigns = [{
+      id: 'cmp_done', name: 'Finalizada', status: 'completed',
+      sent_count: 10, failed_count: 0, delivered_count: 10, total_recipients: 10,
+    }];
+    f.isLoading = false;
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('normaliza ?screen=report sem abrir outra tela no lugar (fica na lista)', async () => {
+    render(<TalkXView />);
+
+    await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+  });
+
+  it('voltar no navegador com ?screen=report também normaliza sem abrir tela', async () => {
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&campaign=cmp_done&screen=report');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    await waitFor(() => expect(new URLSearchParams(window.location.search).has('screen')).toBe(false));
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+  });
+});
+
+// TL-152: ?campaign=<id> abre a tela da situação (primeira pintura e voltar).
+describe('TalkXView ?campaign= roteia pela situação (TL-152)', () => {
+  const sched = {
+    id: 'cmp_sched', name: 'Agendada', status: 'scheduled',
+    sent_count: 0, failed_count: 0, delivered_count: 0, total_recipients: 5,
+  };
+  const run = {
+    id: 'cmp_run', name: 'Disparando', status: 'sending',
+    sent_count: 3, failed_count: 0, delivered_count: 3, total_recipients: 5,
+  };
+  const done = {
+    id: 'cmp_done', name: 'Finalizada', status: 'completed',
+    sent_count: 10, failed_count: 0, delivered_count: 10, total_recipients: 10,
+  };
+
+  beforeEach(() => {
+    f.campaigns = [draft, sched, run, done];
+    f.isLoading = false;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it('?screen=monitor abre o monitor na primeira pintura (caso do cartão)', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done&screen=monitor');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('monitor')).toBeInTheDocument();
+  });
+
+  it('sem screen, agendada abre a tela scheduled', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_sched');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('scheduled')).toBeInTheDocument();
+  });
+
+  it('sem screen, em disparo abre a tela running', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_run');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
+  });
+
+  it('sem screen, finalizada cai no monitor em leitura', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=cmp_done');
+    render(<TalkXView />);
+
+    expect(await screen.findByTestId('monitor')).toBeInTheDocument();
+  });
+
+  it('sem screen, rascunho abre o editor (wizard)', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=draft_1');
+    render(<TalkXView />);
+
+    const wizard = await screen.findByTestId('wizard');
+    expect(wizard).toHaveAttribute('data-campaign-id', 'draft_1');
+  });
+
+  it('sem screen, campanha inexistente cai na lista, como hoje', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=zzz');
+    render(<TalkXView />);
+
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+    expect(screen.queryByTestId('monitor')).not.toBeInTheDocument();
+  });
+
+  it('voltar no navegador para ?campaign= sem screen roteia pela situação', async () => {
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', '/?view=talkx&campaign=cmp_run');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
+  });
+
+  it('wizard e campanha no mesmo endereço abrem a mesma tela no load e na popstate (screen vence)', async () => {
+    f.campaigns = [draft, sched, run];
+    const conflito = '/?view=talkx&wizard=draft_1&step=2&campaign=cmp_run&screen=running';
+    window.history.replaceState(null, '', conflito);
+    const primeira = render(<TalkXView />);
+    expect(await primeira.findByTestId('running')).toBeInTheDocument();
+    expect(primeira.queryByTestId('wizard')).not.toBeInTheDocument();
+    primeira.unmount();
+    cleanup();
+
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, '', conflito);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
+    expect(screen.queryByTestId('wizard')).not.toBeInTheDocument();
+  });
+
+  it('onView grava ?campaign= e ?screen= na URL (cada tela tem endereço próprio)', async () => {
+    f.campaigns = [sched];
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ver primeira campanha'));
+
+    expect(await screen.findByTestId('scheduled')).toBeInTheDocument();
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('campaign')).toBe('cmp_sched');
+    expect(params.get('screen')).toBe('scheduled');
+    expect(params.get('wizard')).toBeNull();
+  });
+
+  it('onView de pausada abre a running e grava a rota (sem tela pausada no contêiner)', async () => {
+    f.campaigns = [{ ...sched, id: 'cmp_paused', name: 'Pausada', status: 'paused' }];
+    window.history.replaceState(null, '', '/?view=talkx');
+    render(<TalkXView />);
+    expect(await screen.findByRole('button', { name: 'Abrir novo wizard' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ver primeira campanha'));
+
+    expect(await screen.findByTestId('running')).toBeInTheDocument();
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('campaign')).toBe('cmp_paused');
+    expect(params.get('screen')).toBe('running');
   });
 });
