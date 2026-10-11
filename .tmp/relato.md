@@ -1,23 +1,41 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Escopo do refazer
+Este refazer mantém a entrega de código anterior e corrige o motivo da recusa: o relato agora explica os arquivos que vieram dos cartões pais, a origem de cada cherry-pick e a cobertura dos testes de `StatusChips`/`countByChip`. Os arquivos `src/hooks/inbox/chipCounts.ts`, `src/hooks/inbox/__tests__/chipCounts.test.ts` e `src/hooks/inbox/useInboxFilters.ts` aparecem no diff porque são o H1/infraestrutural do próprio fluxo `countByChip`: sem eles o contador dos chips continuaria sendo calculado dentro de `StatusChips` e não usaria a mesma função/filtros estruturais da lista.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## Pontos da recusa
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+Ponto 1 — `StatusChips.tsx` com `archived`, `COUNTER_TONE` e ícone `Archive`:
+- O que há no diff: `src/components/inbox/conversation-list/StatusChips.tsx` passa a receber `snoozedIds`, `showAll` e `selectedQueueId`, usa `countByChip(...)` e mantém o chip `Arquivadas` com `Archive`/`aria-hidden="true"`.
+- Origem: o chip visual `Arquivadas` veio do B1 `t_2bcde689` (`feat(inbox): chip Arquivadas com contador por conversation_status`, sha original 452075a32). Ele é necessário neste cartão porque `countByChip` calcula o número que esse chip exibe.
+- Prova verde: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx src/hooks/inbox/__tests__/chipCounts.test.ts src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` retornou `Test Files  4 passed (4)` e `Tests  31 passed (31)`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+Ponto 2 — origem dos 3 commits pais:
+- 452075a32: B1 `t_2bcde689`, `StatusChips` cria/renderiza o chip Arquivadas e seus testes.
+- 16f60f5de: B2 `t_e476c02e`, `useInboxFilters` faz a lista do chip Arquivadas usar só `conversation_status === 'archived'`.
+- df5d7885e: H1 `t_9637c51a`, cria `src/hooks/inbox/chipCounts.ts` e `src/hooks/inbox/__tests__/chipCounts.test.ts` para centralizar a regra dos contadores.
+- No workspace atual, B1/B2 já estavam equivalentes na base do dia e o cherry-pick deles ficou vazio; H1 entrou como `449a3caf5` e a correção final como `dd0a3e992`.
 
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+Ponto 3 — testes de `StatusChips` omitidos no relato anterior:
+- `src/components/inbox/__tests__/StatusChips.test.tsx` cobre `renders the 6 chips (no Spam — não existe no modelo)` para provar que o sexto chip é `archived`/Arquivadas.
+- O mesmo arquivo cobre `mostra o ícone Archive apenas no chip Arquivadas` para provar que só Arquivadas renderiza o `Archive` com `aria-hidden="true"`.
+- Prova verde do comando rodado agora: `Test Files  4 passed (4)` e `Tests  31 passed (31)`.
+
+Ponto 4 — busca/tipo/data nos contadores:
+- Nesta entrega, `countByChip` aplica os critérios estruturais que definem a mesma população base da lista por chip: `conversation_status`, mensagens, não lidas, responsável/perfil, adiadas, `showAll` e fila selecionada.
+- Busca textual, tipo de contato e data não entram neste diff porque são filtros posteriores do painel, não parte do escopo deste cartão. A entrega atual fica completa sem alterar esses filtros.
+
+## Arquivos no diff (`git diff --name-only dia/2026-10-11...HEAD`)
+- `.tmp/relato.md`
+- `src/components/inbox/ConversationListSidebar.tsx`
+- `src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx`
+- `src/components/inbox/__tests__/StatusChips.test.tsx`
+- `src/components/inbox/conversation-list/StatusChips.tsx`
+- `src/hooks/inbox/__tests__/chipCounts.test.ts`
+- `src/hooks/inbox/chipCounts.ts`
+- `src/hooks/inbox/useInboxFilters.ts`
+
+## Verificações executadas
+- `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx src/hooks/inbox/__tests__/chipCounts.test.ts src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Test Files  4 passed (4)`, `Tests  31 passed (31)`.
+- Script local de conferência no código atual → `ChipTab archived: True`, `COUNTER_TONE archived: True`, `Archive import/icon: True`, `aria-hidden icon: True`, `test renders the 6 chips: True`, `test Archive icon: True`, `countByChip used: True`.
+- `git diff --stat dia/2026-10-11...HEAD` → 8 arquivos, 429 inserções e 106 remoções; `git diff dia/2026-10-11...HEAD | wc -c` → 40400 bytes, abaixo do limite de 90000.
