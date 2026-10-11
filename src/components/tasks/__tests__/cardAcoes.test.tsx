@@ -341,6 +341,10 @@ describe('FASE C2 — integração com o TasksModule (28/29/32)', () => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    // Etapa 050: a Lista (modo padrão) virou TABELA e não tem mais card/kebab —
+    // o que este bloco exercita (contact-chip e kebab do card, etapas 29/32) vive
+    // no Quadro. A Lista em tabela é pinada em `TasksListTable.test.tsx`.
+    localStorage.setItem('tasks-mode', 'board');
     window.history.replaceState(null, '', '/');
   });
   afterEach(() => {

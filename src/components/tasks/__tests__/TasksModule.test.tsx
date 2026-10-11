@@ -453,6 +453,10 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    // Etapa 050: a Lista (modo padrão) virou TABELA — as etapas 77/78 exercem
+    // atalhos sobre o CARD EM FOCO, e card só existe no Quadro agora. O Quadro
+    // entra como pano de fundo; nenhuma asserção destes casos foi afrouxada.
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
     window.history.replaceState(null, '', '/?view=tasks');
   });
   afterEach(() => {
@@ -483,9 +487,12 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   });
 
   it('N abre o modal de criação pelo contexto (etapa 014)', async () => {
+    // Etapa 050: na Lista (agora tabela) a carga se prova pela linha; o QuickAdd
+    // do topo é único aqui (no Quadro cada coluna tem o seu).
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();
-    await screen.findByTestId('work-item-card');
+    await screen.findByTestId('task-row');
 
     const botao = screen.getByRole('button', { name: /Nova tarefa/ });
     expect(botao.getAttribute('aria-expanded')).toBe('false');
@@ -570,9 +577,11 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   });
 
   it('criar pelo QuickAdd anuncia "Tarefa criada"', async () => {
+    // Etapa 050: QuickAdd do topo (único) sobre a Lista em tabela.
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
     setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
     renderModule();
-    await screen.findByTestId('work-item-card');
+    await screen.findByTestId('task-row');
 
     const campo = screen.getByTestId('quick-add-input');
     fireEvent.change(campo, { target: { value: 'Comprar café' } });
@@ -584,9 +593,11 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   it('mover pelo kebab anuncia "Movida para {coluna} (n de limite)"', async () => {
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
     renderModule();
-    await screen.findByTestId('work-item-card');
+    const card = await screen.findByTestId('work-item-card');
 
-    fireEvent.keyDown(await screen.findByLabelText('Mais opções'), { key: 'Enter', code: 'Enter' });
+    // Etapa 050: no Quadro cada COLUNA tem o seu QuickAdd e o seu "Mais opções";
+    // o kebab é escopado no card (mesma asserção de antes).
+    fireEvent.keyDown(within(card).getByRole('button', { name: 'Mais opções' }), { key: 'Enter', code: 'Enter' });
     const mover = await screen.findByRole('menuitem', { name: /Mover para/ });
     mover.focus();
     fireEvent.keyDown(mover, { key: 'ArrowRight', code: 'ArrowRight' });
@@ -609,7 +620,10 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   });
 
   it('fora do Quadro o card não se diz arrastável (não é alça de arrasto)', async () => {
-    setSelectResult({ data: [makeTaskRow({ id: 't1' })], error: null });
+    // Etapa 050: fora do Quadro o único modo que ainda desenha CARD é a Agenda
+    // (a Lista virou tabela). Item com prazo para hoje, para o card existir.
+    localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
+    setSelectResult({ data: [makeTaskRow({ id: 't1', due_date: hojeFimDoDia() })], error: null });
     renderModule();
     const card = await screen.findByTestId('work-item-card');
 
@@ -681,6 +695,8 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
 
   it('`?task=` com um id fora da carga não abre o Sheet', async () => {
     window.history.replaceState(null, '', '/?task=nao-existe');
+    // Etapa 050: a Lista virou tabela — o marcador de "carga desenhada" é o Quadro.
+    localStorage.setItem(MODE_STORAGE_KEY, 'board');
 
     renderModule();
     await screen.findByTestId('work-item-card');
