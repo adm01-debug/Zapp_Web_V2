@@ -381,8 +381,9 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     window.history.replaceState(null, '', '/');
     renderModulo();
 
-    const card = await screen.findByTestId('work-item-card');
-    fireEvent.click(card.querySelector('[data-testid="work-item-open"]') ?? card);
+    await screen.findByTestId('work-item-card');
+    // N-180: o article não abre mais; a abertura é pelo botão do título.
+    fireEvent.click(screen.getByRole('button', { name: 'Ligar para o cliente' }));
 
     const titulo = await screen.findByTestId('sheet-titulo');
     expect((titulo as HTMLInputElement).value).toBe('Ligar para o cliente');
@@ -419,12 +420,12 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     window.history.replaceState(null, '', '/');
     renderModulo();
 
-    const card = await waitFor(() => {
+    await waitFor(() => {
       const el = document.querySelector('[data-item-id="t1"]');
       expect(el).toBeTruthy();
-      return el as HTMLElement;
     });
-    fireEvent.click(card);
+    // N-180: abertura pelo botão do título (article sem onClick).
+    fireEvent.click(screen.getByRole('button', { name: 'Ligar para o cliente' }));
 
     // Troca o Contato no Sheet (Radix abre pelo teclado no jsdom).
     const trigger = await screen.findByTestId('sheet-contato');
@@ -454,12 +455,12 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     window.history.replaceState(null, '', '/');
     renderModulo();
 
-    const card = await waitFor(() => {
+    await waitFor(() => {
       const el = document.querySelector('[data-item-id="t1"]');
       expect(el).toBeTruthy();
-      return el as HTMLElement;
     });
-    fireEvent.click(card);
+    // N-180: abertura pelo botão do título (article sem onClick).
+    fireEvent.click(screen.getByRole('button', { name: 'Ligar para o cliente' }));
 
     const trigger = await screen.findByTestId('sheet-contato');
     trigger.focus();

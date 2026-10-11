@@ -474,8 +474,9 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   it('E abre o Sheet da tarefa em foco', async () => {
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente' })], error: null });
     renderModule();
-    const card = await screen.findByTestId('work-item-card');
-    card.focus();
+    await screen.findByTestId('work-item-card');
+    // N-180: o article não é focável na Lista; o foco vai ao botão do título.
+    screen.getByRole('button', { name: 'Ligar para o cliente' }).focus();
 
     comandar('tasks-open-sheet');
 
@@ -499,8 +500,9 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   it('X conclui a tarefa em foco e anuncia "Concluída"', async () => {
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
     renderModule();
-    const card = await screen.findByTestId('work-item-card');
-    card.focus();
+    await screen.findByTestId('work-item-card');
+    // N-180: o article não é focável na Lista; o foco vai ao botão do título.
+    screen.getByRole('button', { name: 'Ligar' }).focus();
 
     comandar('tasks-complete');
 
@@ -511,8 +513,9 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
   it('Delete cancela a tarefa em foco com desfazer', async () => {
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'todo' })], error: null });
     renderModule();
-    const card = await screen.findByTestId('work-item-card');
-    card.focus();
+    await screen.findByTestId('work-item-card');
+    // N-180: o article não é focável na Lista; o foco vai ao botão do título.
+    screen.getByRole('button', { name: 'Ligar' }).focus();
 
     comandar('tasks-cancel');
 
