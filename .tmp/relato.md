@@ -1,23 +1,18 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- docs/DB-INVENTORY.md: a linha de `sicoob_contact_mapping` passou de `roadmap | —` para `parcial | scripts/db-audit/inbox-contact-authorization.test.sh`. Motivo: o teste NOVO que a própria entrega de t_6207b23f criou cita a tabela ao montar a fixture das 17 tabelas do achado -05 (linhas 310 e 324 do .test.sh), e o guard `scripts/ci/db-inventory-doc.unit.mjs` conta arquivo de `scripts/` como consumidor (citante) — então o status correto virou `parcial` e a coluna de consumidores deixou de ser `—`.
+- Cherry-pick da entrega já aplicado: 697fa256d -> 1dbe38ab4 e c68425913 -> 5490e3b9f, sem tocar no conteúdo das 3 migrations nem do teste.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` -> `not ok 3 - docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` com `"sicoob_contact_mapping" está como "roadmap", mas o repositório diz "parcial"` e `"sicoob_contact_mapping" não lista nenhum consumidor (o repositório cita em 1 arquivo(s))`.
+- verde depois: mesmo comando -> `# tests 15 / # pass 15 / # fail 0`.
+- grupo node do espelho (os MESMOS arquivos que o ci_espelho.sh roda): `node --test --test-reporter=tap $(ls scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs)` -> o item `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` NÃO aparece entre os `not ok`. Os demais `not ok` são falhas pré-existentes da base dia/2026-10-11; o espelho só reprova falha NOVA trazida pelo cartão.
+- `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations OK).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Pontos do revisor (refazer)
+- Ponto 1: a quebra do ESPELHO DO CI era o inventário desalinhado ao teste da entrega. Corrigido em docs/DB-INVENTORY.md e provado vermelho->verde acima. Nenhuma asserção foi afrouxada: nenhum arquivo de guarda/teste foi tocado.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não alterei as 3 migrations nem o `.test.sh` da entrega: a fixture precisa mesmo citar `sicoob_contact_mapping` (é uma das 17 tabelas do achado -05); reescrever o teste para esconder a citação seria afrouxar a prova.
+- `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` foi BLOQUEADO pelo HERMES-GUARD (ferramenta do integrador, execução protegida). Rodei o grupo node equivalente do jeito que ele roda e o item do cartão desapareceu.
