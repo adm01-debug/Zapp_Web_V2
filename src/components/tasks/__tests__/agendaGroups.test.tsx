@@ -89,7 +89,7 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Rascunho' } });
 
     const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${amanha.getDate()} de`, 'i') }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${amanha.getDate()} de`, 'i') }));
 
     const campo = screen.getByTestId('quick-add-input');
     // Antes (etapa 57) o `key={selectedDay}` do pai remontava o campo e o texto
@@ -125,7 +125,7 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
   it('F2 (auditoria): o botão "Atrasadas" aponta para a REGIÃO que controla (`aria-controls`)', () => {
     renderAgenda([], [makeItem({ title: 'Velha', due_date: asHoje(-3) })]);
 
-    const botao = screen.getByRole('button', { name: /atrasada/i });
+    const botao = screen.getByRole('button', { name: /tarefa atrasada/i });
     const regiao = document.getElementById('agenda-atrasadas');
 
     expect(botao.getAttribute('aria-controls')).toBe('agenda-atrasadas');
@@ -200,7 +200,7 @@ describe('TasksAgendaMode — etapa 55', () => {
     const atrasadas = Array.from({ length: 4 }, (_, i) => makeItem({ title: `Vencida ${i + 1}` }));
     renderAgenda([], atrasadas);
 
-    const bloco = screen.getByRole('button', { name: /4 atrasadas/ });
+    const bloco = screen.getByRole('button', { name: /4 tarefas atrasadas/ });
     expect(bloco.getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByText('Vencida 1')).toBeNull();
 
@@ -214,7 +214,7 @@ describe('TasksAgendaMode — etapa 55', () => {
   it('com até 3 atrasadas, o bloco já vem aberto', () => {
     renderAgenda([], [makeItem({ title: 'Vencida única' })]);
     expect(screen.getByText('Vencida única')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /1 atrasada/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: /1 tarefa atrasada/ }).getAttribute('aria-expanded')).toBe('true');
   });
 
   it('sem nada no dia, mostra o estado vazio', () => {

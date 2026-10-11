@@ -105,9 +105,9 @@ function renderAgenda(
 const rotuloCurto = (iso: string): string =>
   new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-/** Botão da faixa do dia AGORA + offset, pelo rótulo acessível "N de outubro". */
+/** Botão da faixa do dia AGORA + offset, pelo rótulo acessível "… N de outubro …". */
 const botaoDoDia = (offset: number) =>
-  screen.getByRole('button', { name: new RegExp(`^${numeroDoDia(offset)} de `, 'i') });
+  screen.getByRole('button', { name: new RegExp(`${numeroDoDia(offset)} de `, 'i') });
 
 describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
   beforeEach(() => {
@@ -121,12 +121,17 @@ describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
   it('monta a faixa de 7 dias a partir do "agora" fixo, com hoje marcado', () => {
     renderAgenda([]);
 
-    // Só os 7 botões de dia têm nome acessível "N de outubro".
+    // Só os 7 botões de dia têm nome acessível com a data ("quinta-feira, 1 de outubro — …").
     const dias = screen.getAllByRole('button', { name: /\d+ de /i });
     expect(dias).toHaveLength(7);
 
-    expect(botaoDoDia(0).getAttribute('aria-label')).toBe('1 de outubro');
-    expect(botaoDoDia(6).getAttribute('aria-label')).toBe('7 de outubro');
+    // Etapa 111: o nome acessível do dia traz a data E as contagens do dia.
+    const rotuloHoje = botaoDoDia(0).getAttribute('aria-label') ?? '';
+    const rotuloUltimo = botaoDoDia(6).getAttribute('aria-label') ?? '';
+    expect(rotuloHoje).toContain('1 de outubro');
+    expect(rotuloUltimo).toContain('7 de outubro');
+    expect(rotuloHoje).toContain('Nenhum compromisso');
+    expect(rotuloUltimo).toContain('Nenhum compromisso');
 
     expect(botaoDoDia(0).getAttribute('aria-current')).toBe('date');
     expect(botaoDoDia(1).getAttribute('aria-current')).toBeNull();
@@ -208,7 +213,9 @@ describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
     expect(dots[0].querySelectorAll('span')).toHaveLength(0);
     expect(dots[1].querySelectorAll('span')).toHaveLength(0);
     expect(dots[2].querySelectorAll('span')).toHaveLength(1);
-    expect(dots[2].querySelector('.bg-primary')).toBeTruthy();
+    // Etapa 111: prazo é o ponto ÂMBAR (o azul passou a ser o lembrete).
+    expect(dots[2].querySelector('.bg-warning')).toBeTruthy();
+    expect(dots[2].querySelector('.bg-primary')).toBeNull();
   });
 
   it('fins de semana ganham o tom esmaecido na faixa; dias úteis não', () => {
