@@ -28,18 +28,21 @@ const h = vi.hoisted(() => {
     state.invokeError
       ? { data: null, error: state.invokeError }
       : { data: { ok: true }, error: null });
+  // ADR-005: arquivar conversa passa pela RPC set_conversation_status.
+  const rpc = vi.fn(async (_fn: string, _args: Record<string, unknown>) => ({ error: null }));
   const toast = Object.assign(vi.fn(), {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     warning: vi.fn(),
   });
-  return { state, eq, update, select, from, invoke, toast };
+  return { state, eq, update, select, from, invoke, rpc, toast };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: h.from,
+    rpc: h.rpc,
     functions: { invoke: h.invoke },
     auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) },
   },
@@ -154,24 +157,29 @@ describe('ContactDetails — ações rápidas persistem (cartão #241)', () => {
     expect(seloVip()).toBeTruthy();
   });
 
-  it('"Arquivar" usa a semântica do archiveContact (assigned_to: null); Desfazer restaura o valor anterior real', async () => {
+  it('"Arquivar" usa a RPC set_conversation_status (archived) e o Desfazer reabre (assigned_to intocado)', async () => {
     render(<ContactDetails conversation={conversation} onClose={() => {}} />);
     openMais();
     fireEvent.click(screen.getByText('Arquivar'));
-    await waitFor(() => expect(h.update).toHaveBeenCalledWith({ assigned_to: null }));
-    // A segunda implementação paralela está proibida: nunca escreve status.
-    expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
+    await waitFor(() =>
+      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'archived',
+        p_reason: 'arquivada_no_chat',
+      }),
     );
+    // A implementação paralela de escrita direta está proibida.
+    expect(h.update).not.toHaveBeenCalled();
 
     await clickUndo();
-    // Restaura o assigned_to lido antes da escrita — não força 'open'.
     await waitFor(() =>
-      expect(h.update).toHaveBeenLastCalledWith({ assigned_to: 'agent-9' }),
+      expect(h.rpc).toHaveBeenLastCalledWith('set_conversation_status', {
+        p_contact_id: 'c1',
+        p_next: 'open',
+        p_reason: 'desfazer_arquivamento',
+      }),
     );
-    expect(h.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_status: expect.anything() }),
-    );
+    expect(h.update).not.toHaveBeenCalled();
   });
 
   it('"Bloquear" impede novas mensagens pelo fluxo real (update-block-status na edge) e grava a tag', async () => {
