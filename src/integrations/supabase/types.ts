@@ -7058,6 +7058,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sla_delivery_rules: {
+        Row: {
+          breach_minutes: number
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+          warning_minutes: number
+        }
+        Insert: {
+          breach_minutes: number
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          warning_minutes: number
+        }
+        Update: {
+          breach_minutes?: number
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          warning_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_delivery_rules_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sla_rules: {
         Row: {
           agent_id: string | null
@@ -11929,6 +11970,16 @@ export type Database = {
         Returns: Json
       }
       resolve_contact_guard_actor: { Args: never; Returns: string }
+      resolve_sla_delivery_rule: {
+        Args: { p_contact_id: string }
+        Returns: {
+          breach_minutes: number
+          contact_id: string
+          rule_id: string
+          source: string
+          warning_minutes: number
+        }[]
+      }
       resolve_talkx_outcome_unknown: {
         Args: {
           p_confirm_duplicate_risk?: boolean

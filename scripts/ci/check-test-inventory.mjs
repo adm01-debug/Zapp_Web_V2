@@ -113,6 +113,13 @@ const ALLOWLIST = new Set([
   // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
   // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
   'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
+  // Paridade V3 (alerta de atraso de ENTREGA): prova em PG 17 descartável (docker local) a
+  // migration 20261011140925_sla_delivery_rules.sql — colunas/CHECKs, RLS ligada, leitura por
+  // authenticated, escrita só admin/supervisor, anon barrado, seed idempotente, a resolução
+  // contato>global>30/60 e o rollback executável. Passo de uma linha em db-guard.yml — promover
+  // pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/sla-delivery-rules.test.sh',
+>>>>>>> d1ead1b2e (feat(sla): paridade V3 do alerta de atraso de entrega (sla_delivery_rules + resolve_sla_delivery_rule))
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
