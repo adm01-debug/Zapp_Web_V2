@@ -4467,6 +4467,53 @@ export type Database = {
         }
         Relationships: []
       }
+      message_attempts: {
+        Row: {
+          attempt_no: number
+          created_at: string
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          message_id: string
+          outcome: string
+          provider_response: Json | null
+          provider_status: number | null
+        }
+        Insert: {
+          attempt_no: number
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_id: string
+          outcome: string
+          provider_response?: Json | null
+          provider_status?: number | null
+        }
+        Update: {
+          attempt_no?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string
+          outcome?: string
+          provider_response?: Json | null
+          provider_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attempts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           contact_id: string | null
@@ -11511,6 +11558,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      list_message_attempts: {
+        Args: { p_message_id: string }
+        Returns: {
+          attempt_no: number
+          created_at: string
+          error_code: string
+          error_message: string
+          outcome: string
+        }[]
+      }
+      list_message_attempts_admin: {
+        Args: { p_message_id: string }
+        Returns: {
+          attempt_no: number
+          created_at: string
+          error_code: string
+          error_message: string
+          outcome: string
+          provider_response: Json
+        }[]
+      }
       list_multiplix_claimable_items: {
         Args: { p_dispatch_id: string; p_limit?: number }
         Returns: {
@@ -11549,6 +11617,19 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: undefined
+      }
+      log_message_attempt: {
+        Args: {
+          p_attempt_no: number
+          p_duration_ms?: number
+          p_error_code?: string
+          p_error_message?: string
+          p_message_id: string
+          p_outcome: string
+          p_provider_response?: Json
+          p_provider_status?: number
+        }
+        Returns: boolean
       }
       log_talkx_campaign_checklist: {
         Args: { p_campaign_id: string; p_items: Json }
