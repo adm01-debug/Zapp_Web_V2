@@ -72,7 +72,7 @@ const ALLOWLIST = new Set([
   // t_4e49a6dc (paridade V3 -> V2, faixa C): contrato das RPCs aditivas
   // assume_conversation / return_conversation_to_queue em PG 17 descartável (docker):
   // permissoes por papel, portoes de fila/dono, auditoria sem PII, corrida real entre
-  // dois processos, rollback extraido do proprio arquivo e 5 mutacoes. Passo de uma
+  // dois processos, rollback extraido do proprio arquivo e 6 mutacoes. Passo de uma
   // linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/assume-return-conversation.test.sh',
 ]);

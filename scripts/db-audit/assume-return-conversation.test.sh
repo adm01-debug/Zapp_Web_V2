@@ -37,6 +37,8 @@
 #                so admin devolveria; o dono nao-admin e barrado -> o contrato FALHA.
 #   MUTACAO E  — copia sem o portao de fila no devolver: admin fora da fila devolve
 #                contato alheio -> o contrato FALHA.
+#   MUTACAO F  — copia voltando a bloquear resolved no assumir: resolved nao reabre
+#                -> o contrato FALHA.
 #
 # Uso: bash scripts/db-audit/assume-return-conversation.test.sh
 #      ASSUME_RETURN_TEST_POSTGRES_IMAGE=postgres:17-alpine  (default)
@@ -515,6 +517,9 @@ elif marker == 'sem_portao_dono':
 elif marker == 'sem_barreira_dono_return':
     old = "  IF v_contact.assigned_to <> v_profile_id AND NOT v_is_admin THEN"
     new = "  IF NOT v_is_admin THEN"
+elif marker == 'sem_reabrir_resolved':
+    old = "  IF v_contact.conversation_status = 'archived' THEN"
+    new = "  IF v_contact.conversation_status IN ('resolved', 'archived') THEN"
 elif marker == 'sem_where':
     old = "     AND assigned_to IS NOT DISTINCT FROM v_expected;"
     new = "     AND true;"
@@ -601,6 +606,22 @@ if exige_falha 'MUTACAO E' checa_contrato; then
   ok 'MUTACAO E: sem o portao de fila no devolver o contrato FALHA (admin fora da fila devolve)'
 else
   fail 'MUTACAO E: sem o portao de fila no devolver o contrato passou -- prova fraca'
+fi
+
+
+echo
+echo '── MUTACAO F: copia bloqueando resolved no assumir ────────────────────'
+mutar "$migration" "$tmp_dir/mut_f.sql" 'sem_reabrir_resolved' >/dev/null
+grep -qF "conversation_status IN ('resolved', 'archived')" "$tmp_dir/mut_f.sql" ||
+  fail 'MUTACAO F: a copia nao voltou a bloquear resolved'
+grep -qF "conversation_status = 'archived'" "$migration" ||
+  fail 'MUTACAO F: o arquivo do repo foi alterado'
+psql_q -c "DROP FUNCTION public.assume_conversation(uuid), public.return_conversation_to_queue(uuid, text)" >/dev/null
+psql_file "$tmp_dir/mut_f.sql" >/dev/null
+if exige_falha 'MUTACAO F' checa_contrato; then
+  ok 'MUTACAO F: bloquear resolved no assumir faz o contrato FALHAR (resolved precisa reabrir)'
+else
+  fail 'MUTACAO F: bloquear resolved passou -- a reabertura nao esta coberta'
 fi
 
 echo
