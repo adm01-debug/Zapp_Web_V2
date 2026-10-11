@@ -129,9 +129,9 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
     }
   };
 
-  if (falhas.length === 0) return null;
-
-  const dispensado = !visivel && (
+  // O componente NUNCA sai antes do `AnimatePresence`: com falhas zerando o banner ainda precisa
+  // rodar o `exit`. `visivel` (falhas > 0 e não dispensado) é quem controla o filho.
+  const dispensado = falhas.length > 0 && !visivel && (
     <div
       data-testid="send-error-banner-dispensado"
       className={cn('mx-3 mt-2 flex items-center gap-2 text-2xs text-muted-foreground', className)}

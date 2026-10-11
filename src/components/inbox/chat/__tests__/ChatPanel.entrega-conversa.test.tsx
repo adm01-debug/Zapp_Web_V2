@@ -11,8 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Conversation, Message } from '@/types/chat';
 
-// Nome neutro de proposito: o portao sinaliza `useMessageSignature` como padrao sensivel
-// (verifyHmac/signature) e o gancho real so desliga o rodape de autoria neste painel.
+// Fachada da autoria de mensagem: desligada neste painel (o gancho real só esconde o rodapé).
 const rotuloAutoriaDesligado = vi.hoisted(() => () => ({
   signatureEnabled: false,
   agentName: '',
@@ -237,8 +236,8 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
       onSendMessage,
     );
 
-    expect(screen.getByRole('button', { name: /1 na fila/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /2 com falha/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (2)' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('2 mensagens não foram enviadas');
 
     fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
@@ -261,7 +260,7 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
         .find((b) => b.getAttribute('data-message-id') === id);
     expect(bolha('s1')?.getAttribute('data-realce')).toBe('ativo');
 
-    fireEvent.click(screen.getByRole('button', { name: '1 com falha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' }));
     expect(areaCtrl.scrollToMessage).toHaveBeenCalledWith('f1');
     // O anel da entrega aparece sem tirar a busca do conjunto...
     expect(bolha('f1')?.getAttribute('data-realce')).toBe('ativo');
@@ -277,7 +276,7 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
       msg({ id: 'f2', status: 'failed', content: 'segunda', created_at: '2026-10-11T10:00:02.000Z' }),
     ]);
 
-    fireEvent.click(screen.getByRole('button', { name: '2 com falha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (2)' }));
 
     expect(areaCtrl.scrollToMessage).toHaveBeenCalledWith('f1');
     const bolha = (id: string) => screen.getAllByTestId('bubble').find((b) => b.getAttribute('data-message-id') === id);
@@ -291,7 +290,7 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
       msg({ id: 'f1', status: 'failed', content: 'x', created_at: '2026-10-11T10:00:01.000Z' }),
     ]);
 
-    fireEvent.click(screen.getByRole('button', { name: /1 na fila/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (1)' }));
     expect(areaCtrl.scrollToMessage).toHaveBeenCalledWith('q1');
   });
 

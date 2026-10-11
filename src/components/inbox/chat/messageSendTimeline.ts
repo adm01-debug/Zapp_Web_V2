@@ -163,7 +163,6 @@ export function buildMessageSendTimeline(message: MessageSendFields): SendTimeli
   return steps;
 }
 
-/** Resumo da conversa para a barra de falhas/progresso (item 062, metade de cliente). */
 /** Estado de envio de UMA mensagem do agente para as pilulas do resumo (paridade V3). */
 export type EstadoDeEnvio = 'queued' | 'inFlight' | 'failed';
 
@@ -184,6 +183,7 @@ export function estadoDeEnvio(message: MessageSendFields): EstadoDeEnvio | 'conf
   return isoTexte(message.delivery_claimed_at) !== null ? 'inFlight' : 'queued';
 }
 
+/** Resumo da conversa para a barra de falhas/progresso (item 062, metade de cliente). */
 export function summarizeDeliveryProgress(messages: readonly MessageSendFields[]): DeliveryProgress {
   const progress: DeliveryProgress = { total: 0, queued: 0, inFlight: 0, failed: 0, confirmed: 0 };
 

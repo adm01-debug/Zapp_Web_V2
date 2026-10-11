@@ -417,6 +417,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
 
+        {/* Entrega da conversa (paridade V3): pílulas de fila/envio/falha e o aviso de não enviada.
+            Silenciosos quando não há pendência — não mexem no scroll nem no envio. */}
+        <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
+        <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
+
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
           ttsLoading={ttsLoading} ttsPlaying={ttsPlaying} ttsMessageId={ttsMessageId} instanceName={instanceName}

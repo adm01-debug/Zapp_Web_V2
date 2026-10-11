@@ -139,6 +139,29 @@ describe('SendErrorBanner', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull(), { timeout: 3000 });
   });
 
+  it('falhas zerando: o alerta fica durante o exit e só então sai (AnimatePresence sempre montado)', async () => {
+    const comFalha = msg({ status: 'failed', content: 'oi' });
+    const { rerender } = render(<SendErrorBanner messages={[comFalha]} onSendMessage={vi.fn()} />);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    rerender(<SendErrorBanner messages={[]} onSendMessage={vi.fn()} />);
+    // Sem o `return null`, o alerta continua no DOM enquanto o `exit` roda...
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    // ...e sai depois.
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull(), { timeout: 3000 });
+  });
+
+  it('com reduzir movimento a saída é só por opacidade (sem translate)', async () => {
+    controle.reduzido = true;
+    const comFalha = msg({ status: 'failed', content: 'oi' });
+    const { rerender } = render(<SendErrorBanner messages={[comFalha]} onSendMessage={vi.fn()} />);
+    expect(screen.getByRole('alert').style.transform).not.toContain('translate');
+
+    rerender(<SendErrorBanner messages={[]} onSendMessage={vi.fn()} />);
+    expect(screen.getByRole('alert').style.transform).not.toContain('translate');
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull(), { timeout: 3000 });
+  });
+
   it('desmontar durante o envio não agenda estado depois', async () => {
     const agendados = vi.spyOn(globalThis, 'setTimeout');
     try {

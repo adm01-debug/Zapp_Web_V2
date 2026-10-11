@@ -92,8 +92,8 @@ describe('ConversationDeliverySummary — tela', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: /2 na fila/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /3 com falha/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (3)' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /enviando/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /confirmad/ })).toBeNull();
   });
@@ -104,7 +104,22 @@ describe('ConversationDeliverySummary — tela', () => {
         messages={[msg({ status: 'sending', delivery_claimed_at: '2026-10-11T10:00:01.000Z' })]}
       />,
     );
-    expect(screen.getByRole('button', { name: /1 enviando/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem enviando (1)' })).toBeInTheDocument();
+  });
+
+  it('o nome acessível é a AÇÃO pedida com a contagem, nos dois ramos (animado e estático)', () => {
+    const { unmount } = render(
+      <ConversationDeliverySummary
+        messages={[msg({ status: 'failed' }), msg({ status: 'failed' }), msg({ status: 'sending' })]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (1)' })).toBeInTheDocument();
+    unmount();
+
+    controle.reduzido = true; // ramo estático: <button> comum
+    render(<ConversationDeliverySummary messages={[msg({ status: 'failed' })]} />);
+    expect(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' })).toBeInTheDocument();
   });
 
   it('clicar numa pílula pede o foco naquele estado', () => {
@@ -116,10 +131,10 @@ describe('ConversationDeliverySummary — tela', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /1 com falha/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' }));
     expect(onFocusState).toHaveBeenCalledWith('failed');
 
-    fireEvent.click(screen.getByRole('button', { name: /1 na fila/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (1)' }));
     expect(onFocusState).toHaveBeenCalledWith('queued');
   });
 
@@ -137,8 +152,8 @@ describe('ConversationDeliverySummary — tela', () => {
       />,
     );
 
-    const fila = screen.getByRole('button', { name: /1 na fila/ });
-    const falha = screen.getByRole('button', { name: /1 com falha/ });
+    const fila = screen.getByRole('button', { name: 'Ir para a primeira mensagem na fila (1)' });
+    const falha = screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' });
 
     fila.focus();
     fireEvent.keyDown(fila, { key: 'ArrowRight' });
@@ -150,7 +165,7 @@ describe('ConversationDeliverySummary — tela', () => {
 
   it('com movimento normal a pílula nasce fora do lugar (opacidade 0)', () => {
     render(<ConversationDeliverySummary messages={[msg({ status: 'failed' })]} />);
-    const pilula = screen.getByRole('button', { name: /1 com falha/ });
+    const pilula = screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' });
     expect(pilula.style.opacity).toBe('0');
   });
 
@@ -161,7 +176,7 @@ describe('ConversationDeliverySummary — tela', () => {
       <ConversationDeliverySummary messages={[msg({ status: 'failed' })]} onFocusState={onFocusState} />,
     );
 
-    const pilula = screen.getByRole('button', { name: /1 com falha/ });
+    const pilula = screen.getByRole('button', { name: 'Ir para a primeira mensagem com falha (1)' });
     expect(pilula.style.opacity).not.toBe('0');
     expect(pilula.style.transform).not.toContain('translate');
 

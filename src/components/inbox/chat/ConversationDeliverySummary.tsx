@@ -27,16 +27,40 @@ export interface ConversationDeliverySummaryProps {
 interface Pilula {
   estado: EstadoDeEnvio;
   rotulo: string;
+  /** Rótulo acessível de AÇÃO (o que o clique faz), com a contagem anexada em `aria-label`. */
+  acao: string;
   ponto: string;
   texto: string;
   pulso?: boolean;
 }
 
 const PILULAS: readonly Pilula[] = [
-  { estado: 'queued', rotulo: 'na fila', ponto: 'bg-info', texto: 'text-[hsl(var(--info))]' },
-  { estado: 'inFlight', rotulo: 'enviando', ponto: 'bg-primary', texto: 'text-primary', pulso: true },
-  { estado: 'failed', rotulo: 'com falha', ponto: 'bg-destructive', texto: 'text-[hsl(var(--destructive-text))]' },
+  {
+    estado: 'queued',
+    rotulo: 'na fila',
+    acao: 'Ir para a primeira mensagem na fila',
+    ponto: 'bg-info',
+    texto: 'text-[hsl(var(--info))]',
+  },
+  {
+    estado: 'inFlight',
+    rotulo: 'enviando',
+    acao: 'Ir para a primeira mensagem enviando',
+    ponto: 'bg-primary',
+    texto: 'text-primary',
+    pulso: true,
+  },
+  {
+    estado: 'failed',
+    rotulo: 'com falha',
+    acao: 'Ir para a primeira mensagem com falha',
+    ponto: 'bg-destructive',
+    texto: 'text-[hsl(var(--destructive-text))]',
+  },
 ];
+
+/** Nome acessível da pílula: a AÇÃO pedida pelo cartão + a contagem entre parênteses. */
+const nomeAcessivel = (p: Pilula, quantidade: number): string => `${p.acao} (${quantidade})`;
 
 /** Número que conta com mola (sem animação quando o movimento é reduzido). */
 function NumeroAnimado({ valor }: { valor: number }) {
@@ -134,7 +158,7 @@ export function ConversationDeliverySummary({ messages, onFocusState, className 
           <button
             key={p.estado}
             type="button"
-            aria-label={`${valores[p.estado]} ${p.rotulo}`}
+            aria-label={nomeAcessivel(p, valores[p.estado])}
             className={classePilula}
             onClick={() => onFocusState?.(p.estado)}
           >
@@ -161,7 +185,7 @@ export function ConversationDeliverySummary({ messages, onFocusState, className 
         <motion.button
           key={p.estado}
           type="button"
-          aria-label={`${valores[p.estado]} ${p.rotulo}`}
+          aria-label={nomeAcessivel(p, valores[p.estado])}
           variants={pilulaVariants}
           className={classePilula}
           onClick={() => onFocusState?.(p.estado)}
