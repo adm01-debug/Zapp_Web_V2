@@ -94,3 +94,34 @@ describe('card.tsx — sem o runtime de animação no caminho inicial (SL-103A)'
     expect(FONTE).not.toMatch(/\bAnimatePresence\b/);
   });
 });
+
+describe('CardTitle — nível de título (N-209)', () => {
+  it('padrão continua h3 (nenhuma tela muda sem pedir)', () => {
+    render(<CardTitle>Título Padrão</CardTitle>);
+    const titulo = screen.getByRole('heading', { level: 3, name: 'Título Padrão' });
+    expect(titulo.tagName).toBe('H3');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+  });
+
+  it("as='h2' renderiza h2 com as mesmas classes do h3 padrão", () => {
+    const { unmount } = render(<CardTitle>Título Padrão</CardTitle>);
+    const padrao = screen.getByRole('heading', { level: 3, name: 'Título Padrão' }).className;
+    unmount();
+    render(<CardTitle as="h2">Título Nível 2</CardTitle>);
+    const titulo = screen.getByRole('heading', { level: 2, name: 'Título Nível 2' });
+    expect(titulo.tagName).toBe('H2');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+    expect(titulo.className).toBe(padrao);
+  });
+
+  it("as='h1' renderiza h1 com as mesmas classes e mescla className extra via cn()", () => {
+    render(
+      <CardTitle as="h1" className="texto-extra">
+        Título Nível 1
+      </CardTitle>,
+    );
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Título Nível 1' });
+    expect(titulo.tagName).toBe('H1');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight', 'texto-extra');
+  });
+});
