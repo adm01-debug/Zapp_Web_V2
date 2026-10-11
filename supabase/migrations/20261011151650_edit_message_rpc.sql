@@ -24,6 +24,26 @@
 --      consegue se auto-marcar.
 --      O soft delete (is_deleted=true, tombstone '[Mensagem apagada]') continua
 --      funcionando, e service_role / Edge seguem escrevendo status e external_id.
+--
+-- Mapa dos fluxos legitimos que atualizam public.messages (item 1 do cartao) e as
+-- colunas de cada um. Nenhum deles e barrado pela guarda:
+--   - is_read (marcar lido/nao lido): src/services/chat.service.ts,
+--     src/services/realtime.service.ts, src/hooks/inbox/useInboxBulkActions.ts e
+--     supabase/functions/_shared/evolution-webhook-handlers.ts (service_role)
+--     -> coluna is_read (fora do UPDATE OF do gatilho).
+--   - soft delete: src/components/inbox/MessageContextActions.tsx e
+--     src/components/inbox/chat/MessageHoverToolbar.tsx -> is_deleted + content
+--     (tombstone '[Mensagem apagada]'); a guarda libera a troca de texto quando
+--     is_deleted vira true.
+--   - transcricao: src/components/inbox/AudioMessagePlayer.tsx -> transcription,
+--     transcription_status (fora do UPDATE OF do gatilho).
+--   - media_url: supabase/functions/migrate-media-storage e
+--     recover-corrupted-audios (service_role) -> media_url.
+--   - status/external_id/entrega: Edges com service_role e as RPCs
+--     claim/complete/fail_outbound_message (dono postgres) -> status,
+--     status_updated_at, external_id, delivery_*.
+--   - reactions: tabela public.message_reactions (nao messages).
+--   - reacoes de conteudo do cliente (edicao): passa a ser SO a RPC edit_message.
 
 CREATE OR REPLACE FUNCTION public.guard_message_immutable_columns()
 RETURNS trigger
