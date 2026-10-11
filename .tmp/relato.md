@@ -37,15 +37,12 @@ Decisões de contrato (para o cartão do executor):
   modelo `20261006141643`), EXECUTADAS em C1 e com a migration reaplicada em C2. A migration foi
   aplicada no banco LOCAL da tarefa por `hermes-db-migrar` (`APLICADA no banco LOCAL 'v2-2610111602b52d'`,
   COMMIT); produção não foi tocada.
-- Juiz barato, 1ª tentativa: (a) rollback fora do formato do modelo `20261006141643` → reescrevi o
-  cabeçalho com as 7 linhas `--   drop ...;` e refiz a prova; (b) avisou "LOOP sem teto" na meu gatilho de
-  tag → REMOVI o loop (agora um único `INSERT ... SELECT` sobre o diff de UMA linha de `contacts`); a
-  `grep -c LOOP` no arquivo dá 0 e T1..T10 + C1/C2 estão verdes de novo. O aviso de "números não batem"
-  era a contagem de arquivos do diff (agora o relato diz os 3).
-- Correção do corpo da função no banco LOCAL: como a versão já estava registrada em `APLICADA_LOCAL` (o
-  `hermes-db-migrar` recusa reaplicar o mesmo arquivo), apliquei o `CREATE OR REPLACE FUNCTION` corrigido
-  por `zapp-db-local psql . v2-2610111602b52d`; conferido: `position('LOOP' in prosrc) = 0`. A prova de
-  verdade roda o ARQUIVO REAL no Postgres descartável e está verde.
+- Juiz barato, 1ª tentativa: rollback fora do formato do modelo `20261006141643` → reescrevi com as 7
+  linhas `--   drop ...;`; aviso de "LOOP sem teto" no gatilho de tag → REMOVI o loop (agora um único
+  `INSERT ... SELECT` sobre o diff de UMA linha de `contacts`; `grep -c LOOP` = 0). O aviso de "números"
+  era a contagem de arquivos do diff (agora dito acima). Prova refeita: T1..T10 + C1/C2 verdes.
+- Corpo corrigido no banco LOCAL: `APLICADA_LOCAL` recusa reaplicar o mesmo arquivo, então apliquei o
+  `CREATE OR REPLACE FUNCTION` por `zapp-db-local psql . v2-2610111602b52d` (`position('LOOP' in prosrc)=0`).
 
 ## Passada de efeito colateral
 1. Gatilhos das tabelas tocadas (conferido no banco local): `messages` já tem
