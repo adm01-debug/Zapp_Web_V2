@@ -20,6 +20,10 @@ Especialista: iris (area-front-componentes)
 - verde depois: `npx vitest run src/components/ui/__tests__/VolumeSliderPopoverContent.test.tsx src/components/ui/__tests__/VolumeDial.test.tsx src/components/inbox/__tests__/contrastePlayerSlider.test.tsx src/components/notifications/__tests__/SoundVolumeControl.test.tsx src/components/inbox/__tests__/MediaVolume.test.tsx`
   → `Test Files 5 passed (5); Tests 83 passed (83)`.
 
+## Sobre arquivos fora da lista que o juiz apontou
+- `src/components/ui/VolumeDial.tsx`: NÃO foi alterado por este cartão. Ele veio no commit do cartão PAI `t_cdf7b04b` (`041118391`), ancestral do meu HEAD; aparece no diff contra a ponta do dia só porque o pai é a dependência deste cartão (o cartão manda reaproveitar o `VolumeDial`).
+- `src/test/volumeControlMocks.ts`: alterado por mim (aditivo) porque o mock de `framer-motion` não expunha `useReducedMotion`/`animate`, que o `VolumeDial` importa; sem eles o painel não renderiza no jsdom e os testes dos DOIS consumidores quebram. É helper de teste dos dois consumidores (item 6 do cartão, "outros testes dos dois consumidores").
+
 ## O que NÃO fiz e por quê
 - Não toquei em `useVolumeRocker`, `VolumeTriggerButton`, stores nem persistência (item 5 do cartão).
 - Não medi no navegador por Playwright (motivo acima, R1).
