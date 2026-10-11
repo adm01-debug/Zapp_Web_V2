@@ -756,8 +756,8 @@
     },
     {
       "path": "supabase/functions/talkx-report/index.ts",
-      "bytes": 14928,
-      "sha256": "00499d505d140052e174f80095ccaa7c4a57e09a8db2d6e3ca9ad2041ef4b988"
+      "bytes": 14937,
+      "sha256": "2c3b7b94456aa2a5a99d7b67acf28d66f464eaeaad6d8780088eb109875698c1"
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
@@ -2035,7 +2035,7 @@
       "name": "talkx-report",
       "entrypoint": "supabase/functions/talkx-report/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eb3db437eebdbb33cc7dca6cf3923c762594d76e8e32831e2da907f614cfe6fd",
+      "source_sha256": "958d2b414ffb1e73560d8558aa0b63db6a504bd96167cd7a793c8404a9db16c8",
       "source_files": [
         "supabase/functions/_shared/email-font-stack.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2205,5 +2205,5 @@
       ]
     }
   ],
-  "manifest_sha256": "acef741bb39241ce68f0c363f79782b3bfb0148ccf46376cf4327502ed31253b"
+  "manifest_sha256": "b5cd669d388ef4051b28e3eb9ad5308481a1897728be0b02f1733b105783f20c"
 }
