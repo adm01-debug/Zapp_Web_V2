@@ -32,7 +32,7 @@ const MODE_STORAGE_KEY = 'tasks-mode';
  * dias (`agenda-day-dots`), que só existe fora do esqueleto.
  */
 const MODOS = [
-  { modo: 'list', rotulo: 'Lista', carregou: 'work-item-card' },
+  { modo: 'list', rotulo: 'Lista', carregou: 'task-row' },
   { modo: 'board', rotulo: 'Quadro', carregou: 'work-item-card' },
   { modo: 'agenda', rotulo: 'Agenda', carregou: 'agenda-day-dots' },
 ] as const;
