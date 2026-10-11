@@ -8,9 +8,6 @@ import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/w
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
-// Etapa 069: o estado de UI (seleção/painel/modal/densidade) passa a viver no
-// contexto — as superfícies leem por `useTasksUi` em vez de reabrir este arquivo.
-import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
@@ -21,7 +18,6 @@ import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
-import { TasksHeaderMenu }  from './shared/TasksHeaderMenu';
 
 const STORAGE_KEY = 'tasks-mode';
 
@@ -84,12 +80,9 @@ export function TasksModule() {
   // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
   // de milhar) e com singular correto — "1 aberta", não "1 abertas".
   // Fase F (auditoria): "reais" é literal — o filtro não muda o cabeçalho.
-  // Etapa 013 (plano, linha 251; imagem 05, linha 133): o subtítulo ganha a
-  // chamada "Seu espaço de execução" na frente das duas contagens.
   const openCount = byStatusReal.backlog.length + byStatusReal.todo.length + byStatusReal.doing.length + byStatusReal.waiting.length;
   const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
   const subtitleHoje = `${kpiReal.dueToday.toLocaleString('pt-BR')} para hoje`;
-  const subtitulo = `Seu espaço de execução · ${subtitleAbertas} · ${subtitleHoje}`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
@@ -189,10 +182,7 @@ export function TasksModule() {
   // `view === 'tasks'` e guarda de input. Aqui só chega o comando,
   // pelo evento `tasks-shortcut` — o módulo não instala listener de teclado.
   const aplicarAtalho = useCallback((id: string, key?: string) => {
-    // `tasks-focus-quickadd` (tecla `N`) NÃO é tratado aqui: desde a etapa 014
-    // o comando abre o modal de criação pelo `TasksUiContext`, e quem está
-    // dentro do provedor é o `TasksHeaderMenu` (este módulo monta o provedor,
-    // então não lê o próprio contexto).
+    if (id === 'tasks-focus-quickadd') { quickAddRef.current?.focus(); return; }
     if (id === 'tasks-mode') {
       setMode(key === '2' ? 'board' : key === '3' ? 'agenda' : 'list');
       return;
@@ -242,7 +232,6 @@ export function TasksModule() {
   }
 
   return (
-    <TasksUiProvider>
     <div data-testid="tasks-module" className="flex flex-col h-full gap-4">
       {/* Etapa 78: região viva única do módulo — narra criar, concluir, mover e
           desfazer sem roubar o foco de quem usa leitor de tela. */}
@@ -258,8 +247,7 @@ export function TasksModule() {
       <PageHeader
         variant="plain"
         title="Tarefas"
-        subtitle={subtitulo}
-        actions={<TasksHeaderMenu />}
+        subtitle={`${subtitleAbertas} · ${subtitleHoje}`}
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
@@ -383,6 +371,5 @@ export function TasksModule() {
         focusField={focusField}
       />
     </div>
-    </TasksUiProvider>
   );
 }
