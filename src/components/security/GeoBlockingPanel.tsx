@@ -58,6 +58,34 @@ export function GeoBlockingPanel() {
   const getModeLabel = () => settings?.mode === 'whitelist' ? 'Whitelist Ativa' : settings?.mode === 'blacklist' ? 'Blacklist Ativa' : 'Desativado';
   const getModeDescription = () => settings?.mode === 'whitelist' ? 'Apenas países na whitelist podem acessar' : settings?.mode === 'blacklist' ? 'Países na blacklist são bloqueados' : 'Todos os países podem acessar';
 
+  // A lista de países + a busca servem às duas abas: cada uma leva este painel dentro do
+  // seu TabsContent (whitelist/blacklist). A busca continua na tela e funcional nas duas.
+  const listaDePaises = (
+    <>
+      <div className="relative mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar país..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
+      {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> :
+       filteredCountries.length === 0 ? (
+        <div className="text-center py-8"><Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" /><p className="text-muted-foreground">{search ? 'Nenhum país encontrado' : `Nenhum país na ${activeTab}`}</p>
+          {activeTab === 'whitelist' && settings?.mode === 'whitelist' && allowedCountries.length === 0 && <p className="text-xs text-warning mt-2">⚠️ Atenção: com whitelist ativa e vazia, ninguém poderá acessar!</p>}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <AnimatePresence mode="popLayout">
+            {filteredCountries.map((country) => (
+              <motion.div key={country.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${activeTab === 'whitelist' ? 'bg-success/10' : 'bg-destructive/10'}`}><MapPin className={`w-4 h-4 ${activeTab === 'whitelist' ? 'text-success' : 'text-destructive'}`} /></div>
+                  <div><div className="flex items-center gap-2"><span className="font-medium">{country.country_name}</span><Badge variant="outline" className="text-xs">{country.country_code}</Badge></div><p className="text-xs text-muted-foreground">Adicionado {formatDistanceToNow(new Date(country.created_at), { addSuffix: true, locale: ptBR })}</p></div>
+                </div>
+                <Button variant="ghost" size="icon" aria-label="Remover país" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setCountryToRemove(country)}><Trash2 className="w-4 h-4" /></Button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -119,29 +147,8 @@ export function GeoBlockingPanel() {
               <TabsTrigger value="whitelist" className="gap-2"><ShieldCheck className="w-4 h-4" />Whitelist ({allowedCountries.length})</TabsTrigger>
               <TabsTrigger value="blacklist" className="gap-2"><Shield className="w-4 h-4" />Blacklist ({blockedCountries.length})</TabsTrigger>
             </TabsList>
-            <div className="mt-4">
-              <div className="relative mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar país..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div>
-              {loading ? <div className="text-center py-8 text-muted-foreground">Carregando...</div> :
-               filteredCountries.length === 0 ? (
-                <div className="text-center py-8"><Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" /><p className="text-muted-foreground">{search ? 'Nenhum país encontrado' : `Nenhum país na ${activeTab}`}</p>
-                  {activeTab === 'whitelist' && settings?.mode === 'whitelist' && allowedCountries.length === 0 && <p className="text-xs text-warning mt-2">⚠️ Atenção: com whitelist ativa e vazia, ninguém poderá acessar!</p>}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <AnimatePresence mode="popLayout">
-                    {filteredCountries.map((country) => (
-                      <motion.div key={country.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${activeTab === 'whitelist' ? 'bg-success/10' : 'bg-destructive/10'}`}><MapPin className={`w-4 h-4 ${activeTab === 'whitelist' ? 'text-success' : 'text-destructive'}`} /></div>
-                          <div><div className="flex items-center gap-2"><span className="font-medium">{country.country_name}</span><Badge variant="outline" className="text-xs">{country.country_code}</Badge></div><p className="text-xs text-muted-foreground">Adicionado {formatDistanceToNow(new Date(country.created_at), { addSuffix: true, locale: ptBR })}</p></div>
-                        </div>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setCountryToRemove(country)}><Trash2 className="w-4 h-4" /></Button>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
-            </div>
+            <TabsContent value="whitelist" className="mt-4">{listaDePaises}</TabsContent>
+            <TabsContent value="blacklist" className="mt-4">{listaDePaises}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>

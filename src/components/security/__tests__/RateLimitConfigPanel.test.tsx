@@ -211,6 +211,13 @@ describe('RateLimitConfigPanel', () => {
         expect(initialSwitches).toBe(5);
       }
     });
+
+    it('o botão de remover regra tem nome acessível', async () => {
+      render(<RateLimitConfigPanel />);
+      await waitFor(() => screen.getByDisplayValue('Login'));
+      // t_a07d8dd9: botão só de ícone precisa de aria-label; 5 regras padrão, 5 botões.
+      expect(screen.getAllByRole('button', { name: 'Remover regra' })).toHaveLength(5);
+    });
   });
 
   // ===== EDIT RULE =====

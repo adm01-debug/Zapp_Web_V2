@@ -255,7 +255,7 @@ export function RateLimitConfigPanel() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => removeRule(rule.id)}>
+                  <Button variant="ghost" size="icon" aria-label="Remover regra" onClick={() => removeRule(rule.id)}>
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>
