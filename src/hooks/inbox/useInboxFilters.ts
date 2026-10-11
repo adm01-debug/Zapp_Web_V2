@@ -2,8 +2,7 @@ import { useMemo, useCallback, useState } from 'react';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
-import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
-import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
 import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
 import {
@@ -16,6 +15,8 @@ import {
   isResolved,
   isArchived,
   isInQueue,
+  passesExtraFilters,
+  countByChip,
 } from './chipCounts';
 
 interface UseInboxFiltersProps {
@@ -82,6 +83,13 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
   }, [setUrlFilters]);
 
+  // Contexto dos filtros extras (busca, tipo, painel) — o MESMO objeto alimenta
+  // a lista e o countByChip, para os dois nunca usarem regras diferentes.
+  const extraFilterContext = useMemo(
+    () => ({ search, selectedContactType, filters }),
+    [search, selectedContactType, filters],
+  );
+
   const filteredConversations = useMemo(() => {
     let result = conversations.filter(hasContact);
 
@@ -131,59 +139,11 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
     // attending e waiting já são tratados pelo subTab derivado
 
-    // Search
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.contact.name.toLowerCase().includes(searchLower) ||
-          c.contact.phone.includes(search) ||
-          c.contact.email?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Status filter — mesmos estados do FSM persistido: "Pendentes" = waiting
-    // (aguardando atendente) e "Resolvidas" = resolved. A derivação antiga
-    // ("sem mensagem = resolvida") não vale mais.
-    if (filters.status.length > 0) {
-      result = result.filter((c) => {
-        const hasUnread = c.unreadCount > 0;
-        const isAssigned = !!c.contact.assigned_to;
-        if (filters.status.includes('unread') && hasUnread) return true;
-        if (filters.status.includes('read') && !hasUnread && isAssigned) return true;
-        if (filters.status.includes('pending') && c.contact.conversation_status === 'waiting') return true;
-        if (filters.status.includes('resolved') && c.contact.conversation_status === 'resolved') return true;
-        return false;
-      });
-    }
-
-    // Tags filter
-    if (filters.tags.length > 0) {
-      result = result.filter((c) => {
-        const ctags = (c.contact as { tags?: string[] }).tags || [];
-        return filters.tags.some(name => ctags.includes(name));
-      });
-    }
-
-    // Agent filter
-    if (filters.agentId) {
-      result = result.filter((c) => c.contact.assigned_to === filters.agentId);
-    }
-
-    // Date range filter
-    if (filters.dateRange.from) {
-      result = result.filter((c) => {
-        const lastMessageDate = c.lastMessage
-          ? new Date(c.lastMessage.created_at)
-          : new Date(c.contact.created_at);
-        if (filters.dateRange.from && isBefore(lastMessageDate, startOfDay(filters.dateRange.from))) return false;
-        if (filters.dateRange.to && isAfter(lastMessageDate, endOfDay(filters.dateRange.to))) return false;
-        return true;
-      });
-    }
-
-    // Contact type filter
-    result = filterByContactType(result, selectedContactType);
+    // Filtros por cima do chip — busca, painel Filtros (status/tags/atendente/
+    // datas) e tipo de contato. A regra vive em passesExtraFilters, em
+    // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
+    // o length da lista não têm mais como divergir.
+    result = result.filter((c) => passesExtraFilters(c, extraFilterContext));
 
     // Smart sorting
     result.sort((a, b) => {
@@ -195,7 +155,21 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     });
 
     return result;
-  }, [conversations, search, filters, mainTab, subTab, chipTab, showAll, selectedQueueId, selectedContactType, profileId, snoozedIds]);
+  }, [conversations, extraFilterContext, mainTab, subTab, chipTab, showAll, selectedQueueId, profileId, snoozedIds]);
+
+  // Contadores dos chips com o contexto atual — a tela só lê o número. Memoizado
+  // pelos mesmos insumos da lista; cada tecla da busca recalcula UMA varredura
+  // (o loop testa os seis chips por conversa), sem uma passada por chip.
+  const chipCounts = useMemo(
+    () =>
+      countByChip(conversations, profileId, {
+        snoozedIds,
+        showAll,
+        selectedQueueId,
+        ...extraFilterContext,
+      }),
+    [conversations, profileId, snoozedIds, showAll, selectedQueueId, extraFilterContext],
+  );
 
   return {
     chipTab, setChipTab,
@@ -207,6 +181,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     filters, setFilters,
     search, setSearch,
     filteredConversations,
+    chipCounts,
     clearUrlFilters,
   };
 }
