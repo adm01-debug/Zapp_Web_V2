@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 const mockOrder = vi.hoisted(() => vi.fn());
 const mockSelectAposUpdate = vi.hoisted(() => vi.fn());
@@ -55,7 +56,7 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
     mockSelectAposUpdate.mockResolvedValue({ data: [], error: null });
 
     render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {
@@ -66,12 +67,19 @@ describe('GlobalSettingsSection — configurações sem consumidor operacional',
 
   it('anuncia sucesso somente quando a escrita é aceita', async () => {
     render(<GlobalSettingsSection />);
-    const interruptor = (await screen.findAllByRole('switch'))[0];
+    const interruptor = await screen.findByRole('switch', { name: 'Criação de Usuários' });
     fireEvent.click(interruptor);
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Configuração atualizada');
     });
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('o axe não acusa violações de label na tela', async () => {
+    render(<GlobalSettingsSection />);
+    await screen.findByRole('switch', { name: 'Criação de Usuários' });
+    const results = await axe(document.body, { rules: { region: { enabled: false } } });
+    expect(results.violations.filter((v) => v.id === 'label')).toEqual([]);
   });
 });
