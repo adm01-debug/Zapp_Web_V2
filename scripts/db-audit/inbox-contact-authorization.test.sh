@@ -327,8 +327,8 @@ R1="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT 
 [[ "$R1" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "report_message nao devolveu uuid (=$R1)"
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','spam','de novo');")" == "$R1" ]] || fail 'relato duplicado nao devolveu o id existente'
 # Juiz item 1: reason com os valores do cartao ('spam','improprio','urgencia','outro')
-[[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND table_name='message_reports';")" == '3' ]] || fail 'CHECKs de message_reports duplicados ou ausentes (reason, note, status)'
-[[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND table_name='message_reports' AND check_clause LIKE '%improprio%';")" == '1' ]] || fail 'CHECK de reason sem os valores do cartao'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.table_constraints WHERE constraint_schema='public' AND table_name='message_reports' AND constraint_type='CHECK';")" == '3' ]] || fail 'CHECKs de message_reports duplicados ou ausentes (reason, note, status)'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND constraint_name IN (SELECT constraint_name FROM information_schema.table_constraints WHERE constraint_schema='public' AND table_name='message_reports') AND check_clause LIKE '%improprio%';")" == '1' ]] || fail 'CHECK de reason sem os valores do cartao'
 R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
 [[ "$R_IMP" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "reason 'improprio' do cartao foi rejeitado (=$R_IMP)"
 [[ "$(psql_sql "SELECT count(*) FROM public.message_reports WHERE message_id='$M1'")" == '1' ]] || fail 'relato duplicou a linha do mesmo usuario'
