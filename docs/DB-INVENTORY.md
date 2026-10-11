@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 166 |
+| Tabelas (`tables`) | 167 |
 | Views (`views`) | 12 |
-| Colunas (`columns`) | 1947 |
-| Funções (`functions`) | 251 |
-| Assinaturas de função (`function_signatures`) | 253 |
+| Colunas (`columns`) | 1954 |
+| Funções (`functions`) | 252 |
+| Assinaturas de função (`function_signatures`) | 254 |
 | Funções de gatilho (`trigger_functions`) | 64 |
-| Restrições de verificação (`check_constraints`) | 157 |
+| Restrições de verificação (`check_constraints`) | 158 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -197,6 +197,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `talkx_links` | Links com slug usados nas campanhas TalkX | ativo | `src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.engajamento.test.tsx`, `src/hooks/integrations/__tests__/useTalkXInsights.test.ts` … |
 | `talkx_optout_keywords` | Palavras de descadastro reconhecidas pelo TalkX | ativo | `supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts`, `supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts`, `supabase/functions/_shared/evolution-webhook-messages.ts` … |
 | `talkx_recipients` | Destinatários da campanha TalkX (mensagem personalizada e estado) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/TalkXLiveMonitor.tsx` … |
+| `talkx_segment_fields` | Whitelist de campos e operadores permitidos para compilar segmentos do TalkX | parcial | `.github/workflows/db-guard.yml`, `scripts/db-audit/talkx-segment-fields.test.sh` |
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx`, `src/components/talkx/useCampaignEditor.ts`, `src/hooks/integrations/useTalkXSegments.ts` … |
 | `talkx_settings` | Configurações chave-valor do TalkX | ativo | `src/hooks/integrations/useTalkXSettings.ts`, `supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts`, `supabase/functions/_shared/__tests__/talkx-v20-window-business-hours.test.ts` … |
 | `talkx_template_variants` | Variantes de template do TalkX (rótulo, conteúdo e mídia) | ativo | `src/hooks/integrations/useTalkXTemplates.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/process-recipient.ts` … |
