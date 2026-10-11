@@ -73,7 +73,7 @@ vi.mock('framer-motion', () => {
     motion: { div: MotionDiv },
     AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
     // CT-70 — a view lê useReducedMotion; aqui só o stub para o mock.
-    useReducedMotion: () => false,
+    useReducedMotion: vi.fn(() => false),
   };
 });
 
