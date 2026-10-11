@@ -49,6 +49,11 @@ const h = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   toastInfo: vi.fn(),
+  connection: { status: 'connected', label: 'Conectada', loading: false } as {
+    status: string | null;
+    label: string | null;
+    loading: boolean;
+  },
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
@@ -64,6 +69,10 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
     pauseCampaign: h.pauseCampaign,
     cancelCampaign: h.cancelCampaign,
   }),
+}));
+
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => h.connection,
 }));
 
 vi.mock('sonner', () => ({
@@ -148,6 +157,7 @@ beforeEach(() => {
   h.toastSuccess.mockClear();
   h.toastError.mockClear();
   h.toastInfo.mockClear();
+  h.connection = { status: 'connected', label: 'Conectada', loading: false };
 });
 
 describe('Tela 10 — configurações de agendamento (X137)', () => {
