@@ -49,3 +49,18 @@ describe('SystemFeaturesView — estado real do catálogo (R2-GOV-002)', () => {
     expect(screen.getByTestId('catalog-status-badge')).not.toHaveTextContent(/desativada/i);
   });
 });
+
+// t_638c8a1a: o título usava o emoji literal "📋" no <h1>, destoando do ícone Lucide
+// em container colorido que o resto do grupo Admin/Segurança/LGPD/Configurações usa.
+describe('SystemFeaturesView — título com ícone, não emoji (t_638c8a1a)', () => {
+  it('o cabeçalho traz o nome limpo e um ícone, sem o emoji literal', () => {
+    render(<SystemFeaturesView />);
+
+    const titulo = screen.getByRole('heading', { name: 'Funcionalidades do Sistema' });
+    expect(titulo).toBeInTheDocument();
+    // O emoji saiu do título.
+    expect(screen.queryByText(/📋/)).toBeNull();
+    // Há um ícone (svg) no bloco do título, como nos demais cabeçalhos do grupo.
+    expect(titulo.parentElement?.parentElement?.querySelector('svg')).not.toBeNull();
+  });
+});

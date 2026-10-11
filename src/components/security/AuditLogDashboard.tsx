@@ -74,6 +74,7 @@ export function AuditLogDashboard() {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -245,37 +246,49 @@ export function AuditLogDashboard() {
                       key={log.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{log.action}</span>
-                          {log.entity_type && (
-                            <Badge variant="outline" className="text-xs">
-                              {log.entity_type}
-                            </Badge>
-                          )}
+                      <div className="flex items-center gap-3 p-3">
+                        <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
-                          {log.ip_address && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Globe className="w-3 h-3" />
-                                {log.ip_address}
-                              </span>
-                            </>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{log.action}</span>
+                            {log.entity_type && (
+                              <Badge variant="outline" className="text-xs">
+                                {log.entity_type}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {log.ip_address && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  {log.ip_address}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
+                        {log.details && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedLogId((prev) => (prev === log.id ? null : log.id))}
+                            aria-expanded={expandedLogId === log.id}
+                            className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-0.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/70"
+                          >
+                            {expandedLogId === log.id ? '−detalhes' : '+detalhes'}
+                          </button>
+                        )}
                       </div>
-                      {log.details && (
-                        <Badge variant="secondary" className="text-xs shrink-0">
-                          +detalhes
-                        </Badge>
+                      {expandedLogId === log.id && log.details && (
+                        <pre className="mx-3 mb-3 max-h-48 overflow-auto rounded-md bg-background/60 p-2 text-xs text-foreground/80">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
                       )}
                     </motion.div>
                   );

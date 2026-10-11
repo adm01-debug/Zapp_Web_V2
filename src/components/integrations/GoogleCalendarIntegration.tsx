@@ -99,6 +99,10 @@ export function GoogleCalendarIntegration() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Controles indisponíveis até a autenticação OAuth ser implementada (mesma
+            condição do botão "Conectar Google Calendar").
+          </p>
           <div className="flex items-center justify-between">
             <div>
               <Label>Sincronização automática</Label>
@@ -106,7 +110,7 @@ export function GoogleCalendarIntegration() {
                 Criar eventos automaticamente ao agendar mensagens
               </p>
             </div>
-            <Switch checked={autoSync} onCheckedChange={setAutoSync} />
+            <Switch checked={autoSync} onCheckedChange={setAutoSync} disabled />
           </div>
 
           <Separator className="bg-border/30" />
@@ -118,6 +122,7 @@ export function GoogleCalendarIntegration() {
               value={reminderMinutes}
               onChange={(e) => setReminderMinutes(e.target.value)}
               placeholder="15"
+              disabled
               className="w-32 bg-muted border-border"
             />
           </div>
@@ -130,6 +135,7 @@ export function GoogleCalendarIntegration() {
               value={calendarId}
               onChange={(e) => setCalendarId(e.target.value)}
               placeholder="primary"
+              disabled
               className="bg-muted border-border"
             />
             <p className="text-xs text-muted-foreground">Deixe vazio para usar o calendário principal</p>

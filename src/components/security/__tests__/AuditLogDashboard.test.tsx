@@ -282,3 +282,37 @@ describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', (
     expect(estado.chamadas.eq).not.toContainEqual(['entity_type', 'user']);
   });
 });
+
+// t_638c8a1a: o "+detalhes" era um <Badge> puramente decorativo — parecia um
+// controle mas não abria nada. A correção o torna um botão de verdade que revela
+// o JSON de `details` (e pode recolher de novo).
+describe('t_638c8a1a — "+detalhes" abre o JSON de details', () => {
+  beforeEach(() => {
+    estado.dados = mockLogs;
+  });
+
+  it('revela e recolhe o details ao clicar', async () => {
+    render(<AuditLogDashboard />);
+    await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+
+    // Dois registros do mock têm `details` (id 2 e id 4).
+    const botoes = await screen.findAllByRole('button', { name: '+detalhes' });
+    expect(botoes).toHaveLength(2);
+
+    const primeiro = botoes[0];
+    expect(primeiro).toHaveAttribute('aria-expanded', 'false');
+    // Antes de clicar o JSON não está na tela.
+    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
+
+    fireEvent.click(primeiro);
+
+    const aberto = screen.getByRole('button', { name: '−detalhes' });
+    expect(aberto).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/"reason": "test"/)).toBeInTheDocument();
+
+    // Clicar de novo recolhe.
+    fireEvent.click(aberto);
+    expect(screen.queryByText(/"reason": "test"/)).toBeNull();
+    expect(screen.getAllByRole('button', { name: '+detalhes' })).toHaveLength(2);
+  });
+});

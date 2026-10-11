@@ -1,14 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
 
-// t_f2a68e4c: os quatro controles sem efeito do AgentsView (`Filtrar`, `Editar`,
-// `Configurações`, `Desativar`) passam a ser apresentados como indisponíveis:
-// `disabled` + motivo visível/`title` no botão e `aria-disabled=true` nos itens de
-// menu. A prova de que os itens não são ativáveis é o menu continuar ABERTO depois
-// do clique e do Enter — um item habilitado fecha o menu ao ser selecionado.
+// t_638c8a1a: os quatro controles sem efeito do AgentsView (`Filtrar`, `Editar`,
+// `Configurações`, `Desativar`) existiam apenas para ficar `disabled` com tooltip
+// (ticket t_f2a68e4c). O cartão manda REMOVER o afordance em vez de mantê-lo sempre
+// desabilitado, para o usuário não tentar clicar repetidamente num controle que
+// nunca funciona. Como o cartão manda remover o código, o antigo teste destes
+// controles (que provava o estado `disabled`) é substituído por este, que usa os
+// MESMOS cinco casos para provar o contrato oposto — os controles NÃO existem mais
+// e o que a tela mostrava (o atendente, as ações reais) continua lá.
 //
 // O teste monta o componente real e mocka só o hook que a tela consome
 // (`@/hooks/crm/useAgents`, importado no topo do AgentsView).
@@ -58,105 +61,51 @@ function renderAgentsView() {
   );
 }
 
-// Gatilho do cartão do atendente: o Radix o marca com `aria-haspopup="menu"`.
-// Localizar por esse atributo (e não pelo nome acessível, que é provado no teste 2)
-// mantém as provas de clique/teclado independentes do rótulo do gatilho.
-function gatilhoDoMenu() {
-  const gatilho = screen
-    .getAllByRole('button')
-    .find((botao) => botao.getAttribute('aria-haspopup') === 'menu');
-  if (!gatilho) throw new Error('gatilho do menu do atendente não encontrado');
-  return gatilho;
-}
-
-function abrirMenuPorClique() {
-  fireEvent.pointerDown(gatilhoDoMenu(), { button: 0, ctrlKey: false });
-}
-
-function abrirMenuPorTeclado() {
-  const gatilho = gatilhoDoMenu();
-  gatilho.focus();
-  fireEvent.keyDown(gatilho, { key: 'Enter' });
-  return gatilho;
-}
-
-const ACOES_INDISPONIVEIS = [
-  { nome: /Editar/, motivo: /Editar atendente: ainda não disponível nesta tela/ },
-  { nome: /Configurações/, motivo: /Configurações do atendente: ainda não disponível nesta tela/ },
-  { nome: /Desativar/, motivo: /Desativar atendente: ainda não disponível nesta tela/ },
-];
-
-describe('AgentsView — controles sem efeito ficam indisponíveis', () => {
-  it('o botão Filtrar fica desabilitado e diz o motivo (não parece acionável)', () => {
+describe('AgentsView — controles sem efeito foram removidos (t_638c8a1a)', () => {
+  it('o botão "Filtrar" não existe mais e o atendente continua na tela', () => {
     renderAgentsView();
 
-    const filtrar = screen.getByRole('button', { name: /Filtrar/ });
-
-    expect(filtrar).toBeDisabled();
-    expect(filtrar).toHaveAttribute('aria-disabled', 'true');
-    // Motivo do usuário que enxerga (title/face) e do leitor de tela (nome acessível).
-    expect(filtrar).toHaveAttribute('title', 'Filtrar por status: ainda não disponível nesta tela');
-    expect(filtrar).toHaveAccessibleName(/indisponível/i);
-
-    // Sem handler de clique: clicar não muda nada na tela.
-    fireEvent.click(filtrar);
+    // O atendente continua listado: a remoção do controle não apagou conteúdo.
     expect(screen.getByText('Ana Souza')).toBeInTheDocument();
-    expect(filtrar).toBeDisabled();
+
+    // O afordance morto não existe mais.
+    expect(screen.queryByRole('button', { name: /Filtrar/ })).toBeNull();
+    expect(screen.queryByText(/Filtrar/i)).toBeNull();
   });
 
-  it('o gatilho do menu do atendente tem nome acessível', () => {
+  it('não há mais gatilho de menu de ações (aria-haspopup) por atendente', () => {
     renderAgentsView();
 
-    expect(gatilhoDoMenu()).toHaveAccessibleName('Ações de Ana Souza');
+    const gatilho = screen
+      .getAllByRole('button')
+      .find((botao) => botao.getAttribute('aria-haspopup') === 'menu');
+    expect(gatilho).toBeUndefined();
   });
 
-  it('abre o menu por clique e os três itens aparecem indisponíveis', async () => {
+  it('não há menu nem os itens Editar/Configurações/Desativar', () => {
     renderAgentsView();
-    abrirMenuPorClique();
 
-    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Editar/ })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Configurações/ })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Desativar/ })).toBeNull();
+  });
 
-    for (const { nome, motivo } of ACOES_INDISPONIVEIS) {
-      const item = screen.getByRole('menuitem', { name: nome });
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).toHaveAttribute('data-disabled');
-      expect(item).toHaveAttribute('title', expect.stringMatching(motivo));
-      expect(item).toHaveAccessibleName(/indisponível/i);
+  it('nenhum botão da tela oferece as ações removidas', () => {
+    renderAgentsView();
+
+    const rotulos = screen.getAllByRole('button').map((b) => b.textContent ?? '');
+    for (const morto of ['Filtrar', 'Editar', 'Configurações', 'Desativar']) {
+      expect(rotulos.some((rotulo) => rotulo.includes(morto))).toBe(false);
     }
   });
 
-  it('clique em item indisponível não ativa nada: o menu continua aberto', async () => {
+  it('os controles que continuam válidos seguem presentes', () => {
     renderAgentsView();
-    abrirMenuPorClique();
 
-    const editar = await screen.findByRole('menuitem', { name: /Editar/ });
-    fireEvent.click(editar);
-
-    // Item habilitado fecharia o menu ao ser selecionado; indisponível não ativa.
-    expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Editar/ })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Desativar/ })).toBeInTheDocument();
-  });
-
-  it('teclado abre o menu e Enter no item indisponível não ativa nem fecha', async () => {
-    renderAgentsView();
-    abrirMenuPorTeclado();
-
-    const menu = await screen.findByRole('menu');
-    expect(menu).toBeInTheDocument();
-
-    const editar = screen.getByRole('menuitem', { name: /Editar/ });
-    fireEvent.keyDown(editar, { key: 'Enter' });
-    fireEvent.keyDown(editar, { key: ' ' });
-
-    expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Editar/ })).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
-
-    // A navegação por seta não deposita o foco num item indisponível.
-    fireEvent.keyDown(menu, { key: 'ArrowDown' });
-    expect(document.activeElement).not.toBe(editar);
+    // Ações reais da tela não foram afetadas pela remoção.
+    expect(screen.getByRole('button', { name: /Atualizar/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Adicionar Atendente/ })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Buscar atendentes/)).toBeInTheDocument();
   });
 });

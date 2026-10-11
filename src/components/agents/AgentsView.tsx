@@ -16,20 +16,9 @@ import { Progress } from '@/components/ui/progress';
 import { motion, StaggeredList, StaggeredItem } from '@/components/ui/motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Search,
   Plus,
-  MoreVertical,
   MessageSquare,
-  Settings,
-  UserX,
-  Edit,
-  Filter,
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -149,20 +138,9 @@ export function AgentsView() {
             className="pl-9 bg-muted/20 border-border/30 focus:border-primary/50"
           />
         </div>
-        {/* t_f2a68e4c: o filtro por status não tem integração canônica nesta tela.
-            Em vez de um botão que parece filtrar e não filtra, ele fica desabilitado
-            e diz o motivo na própria face (mesmo padrão de FileActionsMenu /
-            FileDetailPanel: `disabled` + motivo visível + `title`). */}
-        <Button
-          variant="outline"
-          disabled
-          aria-disabled="true"
-          title="Filtrar por status: ainda não disponível nesta tela"
-          className="border-secondary/30"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filtrar · indisponível
-        </Button>
+        {/* t_638c8a1a: o filtro por status não tem integração canônica nesta tela e
+            o botão "Filtrar" (sempre desabilitado) foi removido para não oferecer
+            um afordance que nunca funciona. Volta quando o fluxo existir. */}
       </motion.div>
 
       {/* Agents Grid */}
@@ -212,47 +190,6 @@ export function AgentsView() {
                           </p>
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Ações de ${agent.name}`}
-                            className="w-8 h-8 hover:bg-muted/30"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        {/* t_f2a68e4c: sem fluxo canônico nesta tela, os três itens
-                            ficam `disabled` (Radix emite `aria-disabled=true`, tira do
-                            teclado e não fecha o menu ao clicar) e dizem o motivo. */}
-                        <DropdownMenuContent align="end" className="bg-card border-border/30">
-                          <DropdownMenuItem
-                            disabled
-                            title="Editar atendente: ainda não disponível nesta tela"
-                            className="hover:bg-primary/10"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Editar · indisponível
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled
-                            title="Configurações do atendente: ainda não disponível nesta tela"
-                            className="hover:bg-primary/10"
-                          >
-                            <Settings className="w-4 h-4 mr-2" />
-                            Configurações · indisponível
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled
-                            title="Desativar atendente: ainda não disponível nesta tela"
-                            className="text-destructive hover:bg-destructive/10"
-                          >
-                            <UserX className="w-4 h-4 mr-2" />
-                            Desativar · indisponível
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
 
                     {/* Capacity */}

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Shield, ShieldAlert, Download, Trash2, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Shield, ShieldAlert, Download, Trash2, FileText, AlertTriangle, CheckCircle2, CircleSlash } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 
@@ -81,15 +81,24 @@ export function LGPDComplianceView() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              { title: 'Acesso', desc: 'Solicitar acesso aos seus dados pessoais armazenados' },
-              { title: 'Portabilidade', desc: 'Exportar seus dados em formato legível por máquina' },
-              { title: 'Retificação', desc: 'Corrigir dados pessoais incorretos ou incompletos' },
-              { title: 'Eliminação', desc: 'Solicitar a exclusão dos seus dados pessoais' },
+              { title: 'Acesso', desc: 'Solicitar acesso aos seus dados pessoais armazenados', available: true },
+              { title: 'Portabilidade', desc: 'Exportar seus dados em formato legível por máquina', available: false },
+              { title: 'Retificação', desc: 'Corrigir dados pessoais incorretos ou incompletos', available: true },
+              { title: 'Eliminação', desc: 'Solicitar a exclusão dos seus dados pessoais', available: true },
             ].map((right) => (
               <div key={right.title} className="flex items-start gap-2 p-3 rounded-lg bg-muted/30">
-                <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{right.title}</p>
+                {right.available ? (
+                  <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                ) : (
+                  <CircleSlash className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" aria-hidden="true" />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground flex flex-wrap items-center gap-2">
+                    {right.title}
+                    {!right.available && (
+                      <Badge variant="secondary" className="text-3xs">indisponível</Badge>
+                    )}
+                  </p>
                   <p className="text-xs text-muted-foreground">{right.desc}</p>
                 </div>
               </div>
