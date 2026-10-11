@@ -17,6 +17,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql"
+group_migration="$repo_root/supabase/migrations/20261011155946_enqueue_group_outbound_message.sql"
 postgres_image="${ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-enqueue-scope-test-$$"
 
@@ -52,6 +53,7 @@ expect_value() {
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$group_migration" ]] || fail "migration de grupo nao encontrada: $group_migration"
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 
@@ -119,16 +121,32 @@ CREATE TABLE public.queue_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), queue_id uuid NOT NULL, profile_id uuid NOT NULL,
   is_active boolean DEFAULT true, created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE TABLE public.contacts (id uuid PRIMARY KEY, whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id));
+CREATE TABLE public.contacts (id uuid PRIMARY KEY, whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id), phone text);
+-- whatsapp_groups espelha a tabela real (id, whatsapp_connection_id, group_id = JID).
+CREATE TABLE public.whatsapp_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id),
+  group_id text NOT NULL, name text,
+  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+);
+-- messages: contact_id e NULLABLE no schema real (destino de grupo); colunas de lease do delivery.
 CREATE TABLE public.messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  contact_id uuid NOT NULL REFERENCES public.contacts(id),
+  contact_id uuid REFERENCES public.contacts(id),
   client_message_id uuid, whatsapp_connection_id uuid, agent_id uuid,
   sender text, content text, message_type text, media_url text, caption text,
-  reply_to_id uuid, is_read boolean, status text, external_id text, status_updated_at timestamptz
+  reply_to_id uuid, is_read boolean, status text, external_id text, status_updated_at timestamptz,
+  media_filename text, media_mimetype text,
+  delivery_claim_token uuid, delivery_claimed_at timestamptz, delivery_claim_expires_at timestamptz,
+  delivery_claimed_by text, delivery_last_claim_token uuid,
+  delivery_attempt_count integer NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX messages_contact_client_msg_uq
   ON public.messages (contact_id, client_message_id) WHERE client_message_id IS NOT NULL;
+-- service_role le as tabelas da fila em producao (as Edge Functions usam esse papel).
+GRANT SELECT ON public.messages, public.contacts, public.whatsapp_groups,
+  public.whatsapp_connections, public.profiles TO service_role;
 
 CREATE FUNCTION public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)
   RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -284,10 +302,128 @@ REVOKE ALL ON FUNCTION public.enqueue_outbound_message(
 GRANT EXECUTE ON FUNCTION public.enqueue_outbound_message(
   uuid, uuid, text, text, text, uuid, uuid, text
 ) TO authenticated;
+
+-- claim/complete ATUAIS de producao (corpo de 20260909220000 + telefone normalizado de
+-- 20260909270000): a fila de delivery so resolvia destino via JOIN contacts. E o estado
+-- ANTES da migration de grupo que este arquivo verifica.
+CREATE OR REPLACE FUNCTION public.claim_outbound_message(
+  p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90
+) RETURNS TABLE(
+  message_id uuid, client_message_id uuid, contact_id uuid, agent_id uuid, content text,
+  message_type text, media_url text, caption text, media_filename text, media_mimetype text,
+  reply_to_id uuid, reply_external_id text, whatsapp_connection_id uuid,
+  whatsapp_instance_name text, contact_phone text, claim_token uuid,
+  claim_expires_at timestamptz, delivery_attempt_count integer
+)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+AS $function$
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501';
+  END IF;
+  IF p_message_id IS NULL OR p_agent_id IS NULL
+     OR p_worker IS NULL OR p_worker !~ '^[A-Za-z0-9._:@/-]{1,100}$'
+     OR p_lease_seconds IS NULL OR p_lease_seconds NOT BETWEEN 30 AND 300 THEN
+    RAISE EXCEPTION 'invalid_delivery_claim' USING ERRCODE = '22023';
+  END IF;
+  RETURN QUERY
+  WITH candidate AS (
+    SELECT message.id, connection.id AS resolved_connection_id
+    FROM public.messages AS message
+    JOIN public.contacts AS contact ON contact.id = message.contact_id
+    JOIN public.whatsapp_connections AS connection
+      ON connection.id = COALESCE(message.whatsapp_connection_id, contact.whatsapp_connection_id)
+     AND connection.status = 'connected'
+     AND NULLIF(connection.instance_id, '') IS NOT NULL
+    WHERE message.id = p_message_id
+      AND message.agent_id = p_agent_id
+      AND message.sender = 'agent'
+      AND message.status = 'sending'
+      AND message.external_id IS NULL
+      AND message.client_message_id IS NOT NULL
+      AND regexp_replace(contact.phone, '\D', '', 'g') ~ '^[0-9]{8,15}$'
+      AND (message.delivery_claim_token IS NULL
+        OR message.delivery_claim_expires_at <= statement_timestamp())
+    FOR UPDATE OF message SKIP LOCKED
+  ), claimed AS (
+    UPDATE public.messages AS message
+    SET delivery_claim_token = gen_random_uuid(),
+        delivery_claimed_at = statement_timestamp(),
+        delivery_claim_expires_at = statement_timestamp() + make_interval(secs => p_lease_seconds),
+        delivery_claimed_by = p_worker,
+        delivery_attempt_count = message.delivery_attempt_count + 1,
+        whatsapp_connection_id = candidate.resolved_connection_id,
+        updated_at = statement_timestamp()
+    FROM candidate WHERE message.id = candidate.id RETURNING message.*
+  )
+  SELECT claimed.id, claimed.client_message_id, claimed.contact_id, claimed.agent_id,
+         claimed.content, claimed.message_type, claimed.media_url, claimed.caption,
+         claimed.media_filename, claimed.media_mimetype, claimed.reply_to_id, reply.external_id,
+         claimed.whatsapp_connection_id, connection.instance_id,
+         regexp_replace(contact.phone, '\D', '', 'g'),
+         claimed.delivery_claim_token, claimed.delivery_claim_expires_at,
+         claimed.delivery_attempt_count
+  FROM claimed
+  JOIN public.contacts AS contact ON contact.id = claimed.contact_id
+  JOIN public.whatsapp_connections AS connection ON connection.id = claimed.whatsapp_connection_id
+  LEFT JOIN public.messages AS reply ON reply.id = claimed.reply_to_id;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.claim_outbound_message(uuid, uuid, text, integer)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_outbound_message(uuid, uuid, text, integer) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.complete_outbound_message(
+  p_message_id uuid, p_claim_token uuid, p_external_id text, p_delivery_status text DEFAULT 'sent'
+) RETURNS public.messages
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_message public.messages%ROWTYPE;
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501';
+  END IF;
+  IF p_message_id IS NULL OR p_claim_token IS NULL
+     OR length(btrim(COALESCE(p_external_id, ''))) NOT BETWEEN 1 AND 512
+     OR p_delivery_status IS NULL
+     OR p_delivery_status NOT IN ('sent', 'delivered', 'read') THEN
+    RAISE EXCEPTION 'invalid_delivery_completion' USING ERRCODE = '22023';
+  END IF;
+  SELECT * INTO v_message FROM public.messages AS message
+  WHERE message.id = p_message_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'outbound_message_not_found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_message.external_id = btrim(p_external_id)
+     AND v_message.status IN ('sent', 'delivered', 'read')
+     AND v_message.delivery_claim_token IS NULL
+     AND v_message.delivery_last_claim_token = p_claim_token THEN
+    RETURN v_message;
+  END IF;
+  IF v_message.delivery_claim_token IS DISTINCT FROM p_claim_token
+     OR v_message.status IS DISTINCT FROM 'sending'
+     OR v_message.external_id IS NOT NULL THEN
+    RAISE EXCEPTION 'outbound_delivery_claim_conflict' USING ERRCODE = 'P0002';
+  END IF;
+  UPDATE public.messages
+  SET external_id = btrim(p_external_id), status = p_delivery_status,
+      status_updated_at = statement_timestamp(), delivery_claim_token = NULL,
+      delivery_claimed_at = NULL, delivery_claim_expires_at = NULL,
+      delivery_claimed_by = NULL, delivery_last_claim_token = p_claim_token,
+      updated_at = statement_timestamp()
+  WHERE id = p_message_id RETURNING * INTO v_message;
+  RETURN v_message;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.complete_outbound_message(uuid, uuid, text, text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_outbound_message(uuid, uuid, text, text) TO service_role;
 SQL
 
 cat > "$tmp_dir/seed.sql" <<'SQL'
 DELETE FROM public.messages;
+DELETE FROM public.whatsapp_groups;
 DELETE FROM public.queue_members;
 DELETE FROM public.whatsapp_connection_queues;
 DELETE FROM public.queues;
@@ -323,10 +459,17 @@ INSERT INTO public.whatsapp_connection_queues (whatsapp_connection_id, queue_id)
 INSERT INTO public.queue_members (queue_id, profile_id, is_active) VALUES
   ('90000000-0000-0000-0000-000000000001', 'aa000000-0000-0000-0000-000000000001', true),
   ('90000000-0000-0000-0000-000000000001', 'cc000000-0000-0000-0000-000000000001', true);
-INSERT INTO public.contacts (id, whatsapp_connection_id) VALUES
-  ('c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001'),
-  ('c0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002'),
-  ('c0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002');
+INSERT INTO public.contacts (id, whatsapp_connection_id, phone) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', '5511911111111'),
+  ('c0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', '5511922222222'),
+  ('c0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', '5511933333333');
+-- Grupos: g_fila na conexao da fila; g_free na conexao sem vinculo; g_bad com JID invalido;
+-- g_sem_conn sem conexao (fallback) para cobrir o ramo de resolucao.
+INSERT INTO public.whatsapp_groups (id, whatsapp_connection_id, group_id, name) VALUES
+  ('a0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', '120363000000000000@g.us', 'Grupo Fila'),
+  ('a0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', '5511999999999-1234567890@g.us', 'Grupo Free'),
+  ('a0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', 'sem-jid-valido', 'Grupo Invalido'),
+  ('a0000000-0000-0000-0000-000000000004', NULL, '120363111111111111@g.us', 'Grupo Sem Conexao');
 SQL
 
 psql_file "$tmp_dir/pre.sql"
@@ -342,12 +485,24 @@ contact_free='c0000000-0000-0000-0000-000000000002'
 contact_other='c0000000-0000-0000-0000-000000000003'
 conn_fila='e0000000-0000-0000-0000-000000000001'
 conn_free='e0000000-0000-0000-0000-000000000002'
+g_fila='a0000000-0000-0000-0000-000000000001'
+g_free='a0000000-0000-0000-0000-000000000002'
+g_bad='a0000000-0000-0000-0000-000000000003'
+g_sem='a0000000-0000-0000-0000-000000000004'
 
 enq() { # $1=contact $2=connection $3=cid $4=texto  (sem ponto-e-virgula; conexao vazia -> NULL)
   local conn="NULL"
   [[ -n "$2" ]] && conn="'$2'::uuid"
   printf "SELECT public.enqueue_outbound_message('%s'::uuid,'%s'::uuid,'%s','text',NULL,NULL,%s)" "$1" "$3" "$4" "$conn"
 }
+
+enqg() { # $1=group $2=connection $3=cid $4=texto  (RPC de grupo)
+  local conn="NULL"
+  [[ -n "$2" ]] && conn="'$2'::uuid"
+  printf "SELECT public.enqueue_group_outbound_message('%s'::uuid,'%s'::uuid,'%s','text',NULL,NULL,%s)" "$1" "$3" "$4" "$conn"
+}
+
+enqg_group_missing() { printf "SELECT public.enqueue_group_outbound_message('%s'::uuid,'%s'::uuid,'oi','text',NULL,NULL,NULL)" "$g_fila" 'e0000000-0000-0000-0000-0000000000c0'; }
 
 echo '-- BLOCO A: ANTES da migration (o defeito) ------------------------------------------'
 
@@ -388,4 +543,131 @@ expect_error 'B7 a guarda de permissao do L9 continua valendo (quem nao tem send
 expect_value 'B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas' '4' \
   "SELECT count(*) FROM public.messages"
 
+echo
+echo '-- BLOCO C0: ANTES da migration de grupo (o defeito) -------------------------------'
+
+psql_file "$tmp_dir/seed.sql"
+
+# Defeito: nao existe RPC de enfileiramento para grupo.
+expect_error 'C0.1 grupo nao tem caminho de enfileiramento (funcao ausente)' \
+  'does not exist' \
+  "$(enqg_group_missing)"
+
+# Defeito: a fila so resolve destino por JOIN contacts, entao uma mensagem sem contato
+# (o unico jeito de representar grupo no esquema antigo) fica presa: claim devolve 0.
+psql_sql "INSERT INTO public.messages (contact_id, client_message_id, whatsapp_connection_id, agent_id, sender, status, content, message_type) VALUES (NULL, 'c0000000-0000-0000-0000-0000000000f1'::uuid, '$conn_fila'::uuid, 'aa000000-0000-0000-0000-000000000001'::uuid, 'agent', 'sending', 'grupo sem contato', 'text');" >/dev/null
+expect_value 'C0.2 mensagem sem contato (grupo) nao e claimavel pela fila antiga' '0' \
+  "SELECT set_config('request.jwt.claim.role','service_role',false); SET ROLE service_role; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='c0000000-0000-0000-0000-0000000000f1'), 'aa000000-0000-0000-0000-000000000001'::uuid, 'worker-1', 90);"
+
+echo
+echo '-- Aplicando a migration de grupo ---------------------------------------------------'
+psql_file "$group_migration"
+psql_file "$tmp_dir/seed.sql"
+
+echo
+echo '-- BLOCO C: DEPOIS da migration de grupo -------------------------------------------'
+
+# C1 enfileira no grupo (CARLA e membro da fila; g_fila esta na conexao da fila).
+expect_value 'C1 CARLA enfileira mensagem para o grupo -- permitido, 1 linha' '1' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT count(*) FROM ($(enqg $g_fila $conn_fila e0000000-0000-0000-0000-0000000000c1 'oi grupo')) q;"
+
+expect_value 'C2 a linha e de grupo (contact_id NULL, whatsapp_group_id setado, conexao resolvida)' '1' \
+  "SELECT count(*) FROM public.messages WHERE client_message_id = 'e0000000-0000-0000-0000-0000000000c1' AND contact_id IS NULL AND whatsapp_group_id = '$g_fila' AND whatsapp_connection_id = '$conn_fila' AND agent_id = 'aa000000-0000-0000-0000-000000000001' AND sender = 'agent' AND status = 'sending'"
+
+# C3 idempotencia: mesma chave nao duplica.
+expect_value 'C3 mesma chave (mesmo payload) nao duplica' '1' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT count(*) FROM ($(enqg $g_fila $conn_fila e0000000-0000-0000-0000-0000000000c1 'oi grupo')) q;"
+expect_value 'C3b continua 1 linha para a chave' '1' \
+  "SELECT count(*) FROM public.messages WHERE client_message_id = 'e0000000-0000-0000-0000-0000000000c1'"
+
+# C4 mesma chave com payload diferente e recusada.
+expect_error 'C4 mesma chave com conteudo diferente e recusada (23505)' \
+  'client_message_id_reused_with_different_payload' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); $(enqg $g_fila $conn_fila e0000000-0000-0000-0000-0000000000c1 'conteudo trocado');"
+
+# C5 claim resolve o destino como o JID do grupo, na conexao da fila.
+expect_value 'C5 claim entrega o JID do grupo como destino (contact_phone)' '1' \
+  "SELECT set_config('request.jwt.claim.role','service_role',false); SET ROLE service_role; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='e0000000-0000-0000-0000-0000000000c1'), 'aa000000-0000-0000-0000-000000000001'::uuid, 'worker-1', 90) WHERE contact_phone = '120363000000000000@g.us' AND whatsapp_instance_name = 'inst-q' AND contact_id IS NULL;"
+
+# C6 complete funciona igual na mensagem de grupo (destino nao importa para o fechamento).
+expect_value 'C6 complete fecha a mensagem de grupo (status sent + external_id)' 'sent' \
+  "SELECT set_config('request.jwt.claim.role','service_role',false); SET ROLE service_role; SELECT status FROM public.complete_outbound_message((SELECT id FROM public.messages WHERE client_message_id='e0000000-0000-0000-0000-0000000000c1'), (SELECT delivery_claim_token FROM public.messages WHERE client_message_id='e0000000-0000-0000-0000-0000000000c1'), 'ext-grupo-1');"
+
+# C7 mensagem ja enviada nao e reclamada de novo.
+expect_value 'C7 apos complete a mensagem nao e mais claimavel' '0' \
+  "SELECT set_config('request.jwt.claim.role','service_role',false); SET ROLE service_role; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='e0000000-0000-0000-0000-0000000000c1'), 'aa000000-0000-0000-0000-000000000001'::uuid, 'worker-1', 90);"
+
+# C8 entrada invalida (imagem sem media_url) e recusada antes de gravar.
+expect_error 'C8 imagem sem media_url e recusada (22023)' 'invalid_outbound_message' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT public.enqueue_group_outbound_message('$g_fila'::uuid,'e0000000-0000-0000-0000-0000000000c8'::uuid,'legenda','image',NULL,NULL,'$conn_fila'::uuid);"
+
+# C9 guarda de permissao (L9) tambem vale para grupo.
+expect_error 'C9 quem nao tem send_messages e recusado (grupo)' 'send_messages_permission_required' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$NO_PERM',false); $(enqg $g_free $conn_free e0000000-0000-0000-0000-0000000000c9 'sem permissao');"
+
+# C10 anon nao tem EXECUTE.
+expect_error 'C10 anon nao tem EXECUTE na RPC de grupo' 'permission denied' \
+  "SET ROLE anon; SELECT public.enqueue_group_outbound_message('$g_fila'::uuid,'e0000000-0000-0000-0000-0000000000ca'::uuid,'oi','text',NULL,NULL,NULL);"
+# C11 service_role nao tem EXECUTE (revogado).
+expect_error 'C11 service_role nao tem EXECUTE na RPC de grupo' 'permission denied' \
+  "SET ROLE service_role; SELECT public.enqueue_group_outbound_message('$g_fila'::uuid,'e0000000-0000-0000-0000-0000000000cb'::uuid,'oi','text',NULL,NULL,NULL);"
+
+# C12 grupo inexistente e grupo sem acesso tem a MESMA resposta, sem gravar.
+expect_error 'C12 grupo inexistente e recusado (42501)' 'message_group_not_authorized' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT public.enqueue_group_outbound_message('a0000000-0000-0000-0000-0000000000ff'::uuid,'e0000000-0000-0000-0000-0000000000cc'::uuid,'oi','text',NULL,NULL,NULL);"
+expect_value 'C12b a recusa nao gravou nada' '0' \
+  "SELECT count(*) FROM public.messages WHERE client_message_id = 'e0000000-0000-0000-0000-0000000000cc'"
+
+# C13 JID invalido e recusado cedo (nao fica preso na fila).
+expect_error 'C13 grupo com JID invalido e recusado (22023)' 'message_group_not_deliverable' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); $(enqg $g_bad $conn_free e0000000-0000-0000-0000-0000000000cd 'oi bad');"
+
+# C14 escopo de conexao tambem vale para grupo: DORA (fora da fila) escolhendo a conexao da fila num grupo de outra conexao.
+expect_error 'C14 DORA (fora da fila) escolhe a conexao da fila para um grupo de outra conexao -- recusada' \
+  'whatsapp_connection_out_of_scope' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$DORA',false); $(enqg $g_free $conn_fila e0000000-0000-0000-0000-0000000000ce 'oi dora grupo');"
+expect_value 'C15 CARLA (membro da fila) faz o mesmo -- permitido' '1' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT count(*) FROM ($(enqg $g_free $conn_fila e0000000-0000-0000-0000-0000000000cf 'oi carla grupo')) q;"
+
+# C16 grupo sem conexao cai no fallback da conexao escolhida.
+expect_value 'C16 grupo sem conexao usa a conexao escolhida (fallback)' '1' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT count(*) FROM ($(enqg $g_sem $conn_free e0000000-0000-0000-0000-0000000000d0 'oi sem conn')) q;"
+
+# C17 regressao: o caminho de CONTATO segue identico (claim devolve o telefone em digitos).
+expect_value 'C17 regressao: contato enfileira e claim devolve o telefone' '1' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); SELECT count(*) FROM ($(enq $contact_fila $conn_fila e0000000-0000-0000-0000-0000000000d1 'oi contato')) q;"
+expect_value 'C17b claim do contato devolve o telefone normalizado' '1' \
+  "SELECT set_config('request.jwt.claim.role','service_role',false); SET ROLE service_role; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='e0000000-0000-0000-0000-0000000000d1'), 'aa000000-0000-0000-0000-000000000001'::uuid, 'worker-1', 90) WHERE contact_phone = '5511911111111' AND contact_id = '$contact_fila';"
+
+echo
+echo '-- BLOCO D: invariantes de estrutura -----------------------------------------------'
+
+expect_value 'D1 whatsapp_group_id e FK para whatsapp_groups' '1' \
+  "SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY (c.conkey) WHERE c.contype = 'f' AND t.relname = 'messages' AND a.attname = 'whatsapp_group_id' AND confrelid = 'public.whatsapp_groups'::regclass"
+expect_value 'D2 indice unico parcial de idempotencia de grupo existe' '1' \
+  "SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'messages' AND indexname = 'messages_group_client_msg_uq'"
+expect_value 'D3 RPC de grupo e SECURITY DEFINER com search_path fixo' '1' \
+  "SELECT count(*) FROM pg_proc WHERE proname = 'enqueue_group_outbound_message' AND prosecdef AND array_to_string(proconfig,',') LIKE '%search_path%'"
+expect_value 'D4 RPC de grupo so tem EXECUTE para authenticated' '1' \
+  "SELECT count(*) FROM pg_proc p WHERE p.proname = 'enqueue_group_outbound_message' AND has_function_privilege('authenticated', p.oid, 'EXECUTE') AND NOT has_function_privilege('anon', p.oid, 'EXECUTE') AND NOT has_function_privilege('service_role', p.oid, 'EXECUTE')"
+
 printf '\n[OK] contrato de escopo de conexao no enfileiramento verificado\n'
+printf '[OK] enfileiramento e delivery de grupo (whatsapp_group_id) verificado\n'
+
+echo
+echo '-- BLOCO E: o rollback da propria migration roda e desfaz tudo ---------------------'
+
+# Extrai os statements do cabecalho -- Rollback: da migration e aplica (rollback real, nao prosa).
+sed -n '1,8p' "$group_migration" | sed -n 's/^--   //p' > "$tmp_dir/rollback.sql"
+psql_file "$tmp_dir/rollback.sql"
+
+expect_value 'E1 a coluna whatsapp_group_id foi removida' '0' \
+  "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='messages' AND column_name='whatsapp_group_id'"
+expect_value 'E2 a RPC de grupo foi removida' '0' \
+  "SELECT count(*) FROM pg_proc WHERE proname='enqueue_group_outbound_message'"
+expect_value 'E3 os indices de grupo foram removidos' '0' \
+  "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND tablename='messages' AND indexname IN ('messages_group_client_msg_uq','messages_whatsapp_group_id_idx')"
+expect_value 'E4 claim volta ao corpo so-de-contato (sem whatsapp_group_id)' '1' \
+  "SELECT count(*) FROM pg_proc WHERE proname='claim_outbound_message' AND pg_get_functiondef(oid) NOT LIKE '%whatsapp_group_id%'"
+
+printf '\n[OK] rollback da migration de grupo executado e verificado\n'
