@@ -1,23 +1,18 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (geral)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- ESTADO.md: reposicionei as âncoras `arquivo:linha` do documento para a ponta atual de dia/2026-10-11 — 12 âncoras apontavam para uma linha que **não** contém a própria edge (o doc só é verdadeiro no estado isolado de quando foi escrito). A guarda continua exigindo o mesmo critério: toda âncora citada tem de existir e a linha citada tem de conter a edge.
+- `scripts/ci/docs-estado-registry-convention.unit.mjs` e TESTING_CONVENTION.md: a entrega apontava a quarentena do E2E para um caminho inexistente (`e2e/quarantine.json`); corrigi para `e2e/quarantine.js`, que é o módulo real.
+- Os três documentos (ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md) e a guarda entram nesta branch pelo cherry-pick da entrega `2e674b5da` (não recomecei), mais os reposicionamentos acima.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
-
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+- vermelho antes (doc da entrega contra as fontes da ponta atual, mesma lógica da guarda): `node .tmp/diag-ancoras.mjs .tmp/ESTADO.delivery.md` → `TOTAL ANCORAS RUINS: 12` (ex.: `ai-proxy (A) src/hooks/inbox/useObjectionDetector.ts:163`, `talkx-send (A) src/hooks/integrations/useTalkX.ts:442`).
+- verde depois (a guarda real do item): `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `ℹ tests 11 / ℹ pass 11 / ℹ fail 0`.
+- verde depois (ancoragem): `node .tmp/diag-ancoras.mjs ESTADO.md` → `TOTAL ANCORAS RUINS: 0`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (51s)` (tipos, lint, migrations, dependências e db_guard OK).
+- O item do espelho é um teste node; rodei a mesma porção node do `ci_espelho.sh` (`node --test --test-reporter=tap scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs`): `# tests 1319 / # pass 1309 / # fail 9 / # skipped 1` e `node: ESTADO.md cita só âncoras reais...` NÃO aparece entre os 9 (são falhas de base: fixtures do lint-ratchet e 2 do Talk X, que o `ci_espelho` desconta por já falharem na base).
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o HERMES-GUARD bloqueou a chamada duas vezes ("mexer nas guardas/ferramentas do Hermes"); não contornei a guarda — repliquei a porção node, que é exatamente onde está o item.
+- Não mudei o critério da guarda nem removi asserção: o teste continua exigindo `arquivo:linha` com a edge na linha citada e comparando grupo/totais/órfãs com o código; só reposicionei os números no documento.
+- Não toquei em banco, Edge, segredo nem produção.
