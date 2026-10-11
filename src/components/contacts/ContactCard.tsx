@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
 import { canDeleteContact } from './contactPermissions';
@@ -26,6 +27,10 @@ export function ContactCard({
   const avatarColors = getAvatarColor(contact.name);
   const displayName = `${contact.name}${contact.surname ? ' ' + contact.surname : ''}`.trim();
   const company = companyName || contact.company;
+  // Em telas sem `:hover` real (toque) o `group-hover` nunca dispara e o checkbox
+  // ficaria eternamente invisivel. No ponteiro grosso ele nasce visivel; no desktop
+  // segue revelado no hover e no foco de teclado (`focus-within`).
+  const ponteiroGrosso = usePointerCoarse();
 
   // "Último contato em" quando há mensagem real; fallback para data de cadastro
   const footerLabel = contact.last_message_at
@@ -44,11 +49,11 @@ export function ContactCard({
       )}
       onClick={() => onOpenDetails(contact.id)}
     >
-      {/* Selection checkbox */}
+      {/* Selection checkbox — revelado no hover (desktop) e sempre visivel no toque */}
       <div
         className={cn(
-          "absolute top-3 left-3 z-10 transition-opacity duration-150",
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          "absolute top-3 left-3 z-10 transition-opacity duration-150 focus-within:opacity-100",
+          isSelected || ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
         onClick={(e) => e.stopPropagation()}
       >

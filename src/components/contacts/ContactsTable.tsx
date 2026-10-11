@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { CompanyLogo } from './CompanyLogo';
 import { HighlightText } from './HighlightText';
@@ -65,6 +66,10 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  // Sem `:hover` real (toque) o `group-hover` nao dispara e a coluna de acoes ficaria
+  // inacessivel. No ponteiro grosso ela nasce visivel; no desktop segue no hover e no
+  // foco de teclado (`focus-within`).
+  const ponteiroGrosso = usePointerCoarse();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -216,7 +221,13 @@ export function ContactsTable({
                   </div>
                 </td>
                 <td className="p-3 text-right">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className={cn(
+                      "flex items-center justify-end gap-1 transition-opacity focus-within:opacity-100",
+                      ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-primary/10 hover:text-primary" onClick={() => onOpenChat(contact.id)} title="Conversar">
                       <MessageSquare className="w-3.5 h-3.5" />
                     </Button>

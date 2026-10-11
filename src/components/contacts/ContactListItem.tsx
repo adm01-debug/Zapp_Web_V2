@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
+import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
 import { canDeleteContact } from './contactPermissions';
@@ -25,6 +26,10 @@ export function ContactListItem({
 }: ContactItemProps) {
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const avatarColors = getAvatarColor(contact.name);
+  // Sem `:hover` real (toque) o `group-hover` nao dispara e a barra de acoes ficaria
+  // inacessivel. No ponteiro grosso ela nasce visivel; no desktop segue no hover e no
+  // foco de teclado (`focus-within`).
+  const ponteiroGrosso = usePointerCoarse();
 
   return (
     <div
@@ -142,9 +147,12 @@ export function ContactListItem({
         {format(new Date(contact.created_at), "dd/MM/yy", { locale: ptBR })}
       </span>
 
-      {/* Actions */}
+      {/* Actions — revelada no hover (desktop) e sempre visivel no toque */}
       <div
-        className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+        className={cn(
+          "flex items-center gap-0.5 transition-opacity shrink-0 focus-within:opacity-100",
+          ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50" onClick={() => onOpenChat(contact.id)} title="Conversar">
