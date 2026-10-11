@@ -1,67 +1,37 @@
-Especialista: worker (geral)
+Especialista: worker (sql) (area-sql-banco)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- `supabase/migrations/20261011151650_edit_message_rpc.sql` (nova): cria a RPC `public.edit_message(uuid, text)` (SECURITY DEFINER) e a guarda `trg_guard_message_immutable_columns` (BEFORE UPDATE OF content, sender, created_at, external_id, contact_id, agent_id em `public.messages`). Fecha o defeito: a edição ia por `UPDATE` direto e a policy de UPDATE é por CONTATO (visibilidade), não por remetente — qualquer agente que vê o contato reescrevia o conteúdo de mensagem RECEBIDA ou já enviada, e ainda trocava sender / external_id / created_at. `-- Rollback:` executável nas primeiras linhas.
+- `scripts/db-audit/edit-message-authorization.test.sh` (novo): prova em Postgres descartável (postgres:17-alpine), com `SET ROLE authenticated` / `service_role` e claims sintéticas, aplicando a migration real da cópia.
+- `src/integrations/supabase/types.ts`: entrada `Functions.edit_message` no formato do gerador (bloco da linha do `messages`), para o front chamar `rpc('edit_message')`.
+- `scripts/ci/check-test-inventory.mjs`: registra o `.test.sh` novo na ALLOWLIST (com justificativa) para não ficar órfão — o próprio arquivo manda o agente registrar ali, não editar workflow.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+## Prova
+- vermelho antes (BLOCO A, schema mínimo SEM a migration):
+  `[PASS] A1 ALICE, authenticated, reescreve o conteudo de uma mensagem RECEBIDA (defeito)`
+  `[PASS] A2 ALICE tambem reescreve sender pela via direta (defeito)`
+  `[PASS] A3 a RPC edit_message ainda nao existe (defeito)`
+- verde depois (BLOCO B, com a migration aplicada), `bash scripts/db-audit/edit-message-authorization.test.sh` → 25 PASS, 0 FAIL:
+  `[PASS] B1 UPDATE direto de content da mensagem RECEBIDA e recusado (message_content_edit_requires_rpc)`
+  `[PASS] B3 authenticated NAO forja a marca de sessao para passar a guarda`
+  `[PASS] B4/B5/B6 sender, external_id e created_at recusados (message_immutable_columns_forbidden)`
+  `[PASS] B7 a RPC edita a propria mensagem enviada e devolve o novo conteudo`
+  `[PASS] B9 a edicao gravou UM evento de auditoria sem o texto da mensagem`
+  `[PASS] B10/B11/B12/B13/B14/B15/B16/B17 recebida, sem send_messages, fora da janela, sem external_id, apagada, contato invisivel (sem revelar existencia), vazia, >4096 recusados`
+  `[PASS] B18/B19/B20 soft delete, is_read e transcription continuam`
+  `[PASS] B21 service_role (Edge) segue escrevendo content/external_id`
+  `[PASS] B22/B23/B24/B25 ACL (authenticated EXECUTE, anon nao, guarda fechada, trigger armado)`
+  `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
-
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Decisões (com o porquê)
+- Janela de 15 min imposta no SERVIDOR: paridade com `EDIT_WINDOW_MINUTES = 15` do editor (`useChatPanelHandlers.ts`) e com o WhatsApp.
+- Erro idêntico `message_not_found_or_not_authorized` para "não existe" e "não pode ver": evita oráculo de existência (recusa anterior do revisor por oráculo de enumeração).
+- Exceção de conteúdo só com `current_user='postgres'` E a marca de sessão `app.edit_message_rpc='on'` (ligada dentro da própria RPC): o `authenticated` não consegue se auto-marcar (teste B3 prova). Não uso bypass só por papel para não abrir uma "guarda removida no caminho".
+- Soft delete continua: `is_deleted=true` ainda pode trocar o texto pelo tombstone (`[Mensagem apagada]`), porque é o fluxo real do app (MessageContextActions / MessageHoverToolbar / useFileUploadLogic).
+- `agent_id`/`contact_id` também entram na lista imutável por authenticated; ledger `audit_logs` grava ação + `contact_id` sem o texto da mensagem e sem dado pessoal.
+- Efeitos colaterais conferidos: a guarda só dispara em UPDATE das colunas listadas (is_read/transcription não pagam o custo); `complete_outbound_message`/`enqueue_outbound_message` (dono postgres) seguem trocando status/external_id; `service_role` intacto.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não toquei `src/**`: `useChatPanelHandlers.ts:176` ainda faz UPDATE direto de content e DEIXARÁ de funcionar até o front chamar `rpc('edit_message')`. Registrei em `kanban_comment` (worker telas/hooks). Fora dos meus arquivos do cartão.
+- Não editei `.github/workflows/db-guard.yml` (passo do CI é do dono do workflow); o teste entrou na ALLOWLIST do inventário, como os demais `.test.sh` de docker descartável.
+- Não regenerei `supabase/schema-manifest.json` / `schema-catalog.json`: são sincronizados do banco canônico por fluxo separado (commits `chore(db): sincronizar artefatos`).
