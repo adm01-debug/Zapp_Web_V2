@@ -88,7 +88,7 @@ import { useWhisperMessagesMutation } from '@/hooks/chat/useWhisperMessagesMutat
 import { useWhisperCount } from '@/hooks/chat/useWhisperCount';
 
 function montarHandlers(opts: {
-  onSendMessage: (content: string, replyToId?: string | null) => unknown;
+  onSendMessage: (content: string, replyToId?: string | null) => void | Promise<void>;
   contactId?: string;
   temAnexoPendente?: () => boolean;
 }) {
@@ -137,7 +137,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('grava em whisper_messages com o responsável da conversa e NÃO chama onSendMessage', async () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage });
 
     await sussurrar(result, 'Fica de olho, o cliente costuma pedir desconto.');
@@ -158,7 +158,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('retry depois da falha continua sussurro — o texto é preservado e nada vaza ao canal', async () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage });
 
     // 1ª tentativa: a gravação falha.
@@ -184,7 +184,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
 
   it('conversa sem responsável: recusa, mantém o texto, não grava e não envia', async () => {
     mocks.assignedTo = null;
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage });
 
     await sussurrar(result, 'nota para ninguém');
@@ -196,7 +196,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('contato sem UUID: recusa antes de tocar no banco e mantém o texto', async () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage, contactId: 'contato-x' });
 
     await sussurrar(result, 'nota em conversa sem contato');
@@ -207,7 +207,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('com anexo pendente o sussurro é recusado sem gravar nem enviar', async () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage, temAnexoPendente: () => true });
 
     await sussurrar(result, 'nota com anexo');
@@ -218,7 +218,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('Escape desliga o modo sussurro', () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage });
 
     act(() => result.current.setIsWhisper(true));
@@ -232,7 +232,7 @@ describe('sussurro do compositor — grava na nota interna e nunca no canal', ()
   });
 
   it('sem sussurro ligado o envio continua indo pelo canal (sem regressão)', async () => {
-    const onSendMessage = vi.fn().mockResolvedValue(undefined);
+    const onSendMessage = vi.fn(async (_c: string, _r?: string | null): Promise<void> => {});
     const { result } = montarHandlers({ onSendMessage });
 
     act(() => result.current.setInputValue('mensagem normal'));
