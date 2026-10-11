@@ -27,6 +27,10 @@ rodou verde. Nada ficou em aberto neste cartão.
 ## Prova
 - **Verificação do repo:** `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (80s)` com
   `OK tipos 78s`, `OK lint`, `OK dependencias`, `OK db_guard`, `OK migrations`.
+- **Teste do repositório rodado agora (zero falhas, zero pulados):**
+  `node --test scripts/ci/docs-design-drift.unit.mjs` → `tests 11 / pass 11 / fail 0 / skipped 0`,
+  incluindo o caso `doc de Tarefas/Quadro cita a classe do subcabeçalho que o código usa` — a guarda
+  que ancora doc × código do módulo de Tarefas continua verde com o documento novo.
 - **Contraste (a prova do documento):** `node .tmp/medir-contraste.mjs`
   - vermelho antes (os pares que o código usa hoje, tabela A) → `A: 12 pares, 12 falhas`
     (ex.: `kpi-tile-green-fg sobre kpi-tile-green/13 — claro 1.51 FALHA`, mínimo 3:1;
