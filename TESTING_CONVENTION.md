@@ -61,8 +61,8 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
   sintético criado localmente. É proibido usar a URL/credencial de produção, reaproveitar
   `e2e/.auth/*` de outra sessão, rodar o projeto `chromium-authenticated` fora disso, ou
   subir o app com `--mode production`. Fixture "real" de produção não é fixture.
-* **Quarentena com prazo:** um spec quebrado e adiado entra em `e2e/quarantine.json`, com
-  `spec`, `motivo`, `issue` e `prazo` (`AAAA-MM-DD`). O verificador
+* **Quarentena com prazo:** um spec quebrado e adiado entra em `e2e/quarantine.js` (módulo
+  que exporta a lista `quarentena`), com `spec`, `motivo`, `issue` e `prazo` (`AAAA-MM-DD`). O verificador
   `scripts/ci/check-quarantine.mjs` recusa item sem forma completa e **derruba o CI** quando
   o prazo vence. Quarentena sem prazo é `skip` com outro nome.
 
