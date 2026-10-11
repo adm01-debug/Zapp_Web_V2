@@ -165,8 +165,8 @@ export function AdminView() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nível de Acesso</Label>
-                  <Select value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
+                  <Label htmlFor="edit_access_level">Nível de Acesso</Label>
+                  <Select id="edit_access_level" value={editingUser.access_level || 'basic'} onValueChange={(v) => setEditingUser({ ...editingUser, access_level: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(accessLevelConfig).map(([key, config]) => (
@@ -217,8 +217,8 @@ export function AdminView() {
             <div className="space-y-2"><Label htmlFor="add_email">Email *</Label><Input id="add_email" type="email" placeholder="usuario@email.com" value={newUser.email} onChange={(e) => setNewUser(p => ({ ...p, email: e.target.value }))} /></div>
             <div className="space-y-2"><Label htmlFor="add_senha">Senha *</Label><Input id="add_senha" type="password" placeholder="Mínimo 6 caracteres" value={newUser.password} onChange={(e) => setNewUser(p => ({ ...p, password: e.target.value }))} /></div>
             <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
+              <Label htmlFor="add_role">Role</Label>
+              <Select id="add_role" value={newUser.role} onValueChange={(v) => setNewUser(p => ({ ...p, role: v as AppRole }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {(Object.keys(roleIconMap) as AppRole[]).map((key) => {
@@ -237,9 +237,10 @@ export function AdminView() {
                 <Label className="text-sm font-medium">Serviços Google vinculados</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {([{ key: 'google_sheets', label: 'Google Sheets' }, { key: 'google_docs', label: 'Google Docs' }, { key: 'google_calendar', label: 'Google Calendar' }, { key: 'google_drive', label: 'Google Drive' }] as const).map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Switch checked={newUserGoogleServices[key]} onCheckedChange={(checked) => setNewUserGoogleServices(prev => ({ ...prev, [key]: checked }))} />{label}
-                    </label>
+                    <div key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Switch id={"add_google_" + key} checked={newUserGoogleServices[key]} onCheckedChange={(checked) => setNewUserGoogleServices(prev => ({ ...prev, [key]: checked }))} aria-label={label} />
+                      <label htmlFor={"add_google_" + key}>{label}</label>
+                    </div>
                   ))}
                 </div>
               </div>

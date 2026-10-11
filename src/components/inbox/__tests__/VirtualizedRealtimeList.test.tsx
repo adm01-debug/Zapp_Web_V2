@@ -1,16 +1,8 @@
 /**
- * Cobre exatamente os dois achados centrais da auditoria desta sessão:
- * 1) o badge de canal (Instagram/Facebook/...) some para WhatsApp (bug
- *    original corrigido na PR #616 — logo invertida mostrava o logo do
- *    WhatsApp em todo contato).
- * 2) o mini-avatar do atendente só aparece quando a conversa está com
- *    OUTRA pessoa, não quando é o próprio usuário logado vendo suas
- *    próprias conversas (feature da PR #620).
- *
- * O virtualizer real do @tanstack/react-virtual depende de medições de
- * layout que o jsdom não fornece de forma confiável (clientHeight fica 0
- * sem um ResizeObserver real) — mockado para retornar todas as linhas,
- * já que o alvo do teste é o conteúdo de cada linha, não a virtualização.
+ * Cobre os achados da auditoria A11Y-CHAT_INBOX_TEAMS-06/-07 e A11Y-CONTATOS_CRM-08:
+ * 1) badge de canal (Instagram/Telegram) nao deve renderizar (proibido pelo produto)
+ * 2) botao de favorito esta fora do role=button da linha (nao confunde o teclado)
+ * 3) acoes (favoritar/resolver/transferir/fixar/adiar) com area >= 24x24 (44 no celular)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -46,9 +38,6 @@ vi.mock('@/hooks/ui/useDensity', () => ({
 
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
-// Radix Popover não abre de forma confiável sob jsdom+fireEvent (padrão já
-// usado em ChatPanelHeader.test.tsx) — mockado como pass-through pra poder
-// clicar direto nas opções de snooze sem depender do estado real de open.
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({ children }: { children: ReactNode }) => <>{children}</>,
   PopoverTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -94,27 +83,27 @@ function renderList(
   );
 }
 
-describe('VirtualizedRealtimeList — badge de canal e mini-avatar do atendente', () => {
+describe('VirtualizedRealtimeList — badge de canal (Instagram/Telegram nao renderizam)', () => {
   beforeEach(() => {
     agentsMapMock = new Map();
   });
 
-  it('mostra o badge do canal para Instagram, mas não para WhatsApp', () => {
+  it('nao mostra badge de canal para Instagram nem Telegram, mas mostra para Facebook', () => {
     const conversations = [
       makeConversation({ id: 'insta-1', channel_type: 'instagram' }),
+      makeConversation({ id: 'tele-1', channel_type: 'telegram' }),
+      makeConversation({ id: 'fb-1', channel_type: 'messenger' }),
       makeConversation({ id: 'wpp-1', channel_type: 'whatsapp' }),
       makeConversation({ id: 'wpp-2', channel_type: null }),
     ];
     const { container } = renderList(conversations);
 
-    // channelBadge é decorativo (aria-hidden) — não dá pra usar getByRole.
-    // Seletor casa exatamente as classes do span do badge (VirtualizedRealtimeList.tsx),
-    // não os ícones lucide (que não têm rounded-full nem w-5/h-5 no wrapper).
     const badges = container.querySelectorAll('span.w-5.h-5.rounded-full[aria-hidden="true"]');
+    // So Facebook (messenger) deve renderizar badge — Instagram, Telegram e WhatsApp nao.
     expect(badges.length).toBe(1);
   });
 
-  it('esconde o mini-avatar quando a conversa é do próprio usuário logado', () => {
+  it('esconde o mini-avatar quando a conversa e do proprio usuario logado', () => {
     agentsMapMock = new Map([[OTHER_AGENT_ID, { id: OTHER_AGENT_ID, name: 'Colega Um', avatar_url: null }]]);
     const conversations = [
       makeConversation({ id: 'mine', assigned_to: CURRENT_USER_ID }),
@@ -128,12 +117,79 @@ describe('VirtualizedRealtimeList — badge de canal e mini-avatar do atendente'
     expect(miniAvatars[0]).toHaveAttribute('aria-label', 'Atendido por Colega Um');
   });
 
-  it('sem entrada no agentsMap para o assigned_to, não quebra e não mostra mini-avatar', () => {
-    agentsMapMock = new Map(); // colega existe mas perfil não veio na query (RLS)
+  it('sem entrada no agentsMap para o assigned_to, nao quebra e nao mostra mini-avatar', () => {
+    agentsMapMock = new Map();
     const conversations = [makeConversation({ id: 'orphan-assignment', assigned_to: OTHER_AGENT_ID })];
     renderList(conversations);
 
     expect(screen.queryAllByRole('img', { name: /Atendido por/i })).toHaveLength(0);
+  });
+});
+
+describe('VirtualizedRealtimeList — favorito fora do role=button da linha', () => {
+  beforeEach(() => {
+    agentsMapMock = new Map();
+  });
+
+  it('o botao Favoritar nao e descendente do elemento role=button da linha', () => {
+    const onFavorite = vi.fn();
+    const conversations = [makeConversation({ id: 'c1' })];
+    renderList(conversations, { onFavorite, favoriteIds: new Set(['c1']) });
+
+    const row = screen.getByTestId('conversation-item');
+    const rowButton = row.querySelector('[role="button"]');
+    const favoriteBtn = screen.getByRole('button', { name: 'Remover favorito' });
+    expect(favoriteBtn).not.toBeNull();
+    expect(rowButton?.contains(favoriteBtn)).toBeFalsy();
+  });
+
+  it('clicar no favoritar chama onFavorite e nao dispara onSelectConversation', () => {
+    const onFavorite = vi.fn();
+    const onSelect = vi.fn();
+    const conversations = [makeConversation({ id: 'c1' })];
+    renderList(conversations, { onFavorite, onSelectConversation: onSelect, favoriteIds: new Set() });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Favoritar conversa' }));
+    expect(onFavorite).toHaveBeenCalledWith('c1');
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+describe('VirtualizedRealtimeList — acoes com area de toque >= 24x24 (44 no celular)', () => {
+  beforeEach(() => {
+    agentsMapMock = new Map();
+  });
+
+  it('as 5 acoes tem min-h e min-w >= 24px por classe', () => {
+    const conversations = [makeConversation({ id: 'c1' })];
+    renderList(conversations);
+
+    const buttons = screen.getAllByRole('button');
+    const actionLabels = ['Resolver conversa', 'Transferir conversa', 'Fixar conversa', 'Adiar conversa', 'Arquivar conversa', 'Favoritar conversa', 'Remover favorito'];
+    const actionButtons = buttons.filter(b => actionLabels.includes(b.getAttribute('aria-label') || ''));
+
+    for (const btn of actionButtons) {
+      const minH = btn.classList.contains('min-h-6');
+      const minW = btn.classList.contains('min-w-6');
+      expect(minH, `${btn.getAttribute('aria-label')} tem min-h-6`).toBeTruthy();
+      expect(minW, `${btn.getAttribute('aria-label')} tem min-w-6`).toBeTruthy();
+    }
+  });
+
+  it('as 5 acoes tem min-h/min-w >= 44px no breakpoint max-md', () => {
+    const conversations = [makeConversation({ id: 'c1' })];
+    renderList(conversations);
+
+    const buttons = screen.getAllByRole('button');
+    const actionLabels = ['Resolver conversa', 'Transferir conversa', 'Fixar conversa', 'Adiar conversa', 'Arquivar conversa', 'Favoritar conversa', 'Remover favorito'];
+    const actionButtons = buttons.filter(b => actionLabels.includes(b.getAttribute('aria-label') || ''));
+
+    for (const btn of actionButtons) {
+      const maxMdMinH = btn.classList.contains('max-md:min-h-11');
+      const maxMdMinW = btn.classList.contains('max-md:min-w-11');
+      expect(maxMdMinH, `${btn.getAttribute('aria-label')} tem max-md:min-h-11`).toBeTruthy();
+      expect(maxMdMinW, `${btn.getAttribute('aria-label')} tem max-md:min-w-11`).toBeTruthy();
+    }
   });
 });
 
@@ -142,36 +198,29 @@ describe('VirtualizedRealtimeList — popover de snooze', () => {
     agentsMapMock = new Map();
   });
 
-  it('clicar numa opção chama onSnooze com a duração e fecha o popover', () => {
+  it('clicar numa opcao chama onSnooze com a duracao', () => {
     const onSnooze = vi.fn();
     renderList([makeConversation({ id: 'c1' })], { onSnooze });
 
     fireEvent.click(screen.getByRole('button', { name: 'Amanhã às 9h' }));
-
     expect(onSnooze).toHaveBeenCalledWith('c1', 'tomorrow');
-    // Popover mockado como pass-through: fechar (setSnoozeOpen(false)) não
-    // desmonta o conteúdo, mas confirma que o handler não quebrou o restante
-    // da linha — outra opção continua clicável e chama de novo.
     fireEvent.click(screen.getByRole('button', { name: 'Em 1 hora' }));
     expect(onSnooze).toHaveBeenCalledWith('c1', '1h');
     expect(onSnooze).toHaveBeenCalledTimes(2);
   });
 
-  it('sem onSnooze, o conteúdo do popover não é renderizado', () => {
+  it('sem onSnooze, o conteudo do popover nao e renderizado', () => {
     renderList([makeConversation({ id: 'c1' })]);
-
     expect(screen.queryByRole('button', { name: 'Amanhã às 9h' })).not.toBeInTheDocument();
   });
 });
 
-describe('VirtualizedRealtimeList — SLA não é 1:1 com o contato', () => {
+describe('VirtualizedRealtimeList — SLA nao e 1:1 com o contato', () => {
   beforeEach(() => {
     agentsMapMock = new Map();
   });
 
-  it('usa a linha de conversation_sla aberta (first_response_at null), não a primeira do array', () => {
-    // Simula o histórico real: 1 linha antiga já respondida (poderia mostrar
-    // "violado" de um atendimento encerrado) + 1 linha aberta do atendimento atual.
+  it('usa a linha de conversation_sla aberta (first_response_at null), nao a primeira do array', () => {
     const conversation = makeConversation({ id: 'c1' });
     (conversation.contact as unknown as {
       conversation_sla: Array<{ first_message_at: string; first_response_at: string | null }>;
@@ -181,14 +230,10 @@ describe('VirtualizedRealtimeList — SLA não é 1:1 com o contato', () => {
     ];
 
     renderList([conversation]);
-
-    // SLAIndicator (compact) só renderiza role="status" com aria-label "SLA
-    // ..." quando firstMessageAt vem definido — confirma que achou a linha
-    // aberta (2ª do array), não a 1ª (que já tem first_response_at).
     expect(screen.getByRole('status', { name: /SLA/i })).toBeInTheDocument();
   });
 
-  it('sem nenhuma linha aberta em conversation_sla, não mostra SLA (não cai pra uma linha fechada)', () => {
+  it('sem nenhuma linha aberta em conversation_sla, nao mostra SLA', () => {
     const conversation = makeConversation({ id: 'c1' });
     (conversation.contact as unknown as {
       conversation_sla: Array<{ first_message_at: string; first_response_at: string | null }>;
@@ -197,7 +242,6 @@ describe('VirtualizedRealtimeList — SLA não é 1:1 com o contato', () => {
     ];
 
     renderList([conversation]);
-
     expect(screen.queryByRole('status', { name: /SLA/i })).not.toBeInTheDocument();
   });
 });

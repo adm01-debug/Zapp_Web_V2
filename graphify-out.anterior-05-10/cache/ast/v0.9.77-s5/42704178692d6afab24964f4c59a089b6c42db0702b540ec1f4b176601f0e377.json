@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260920120100_autovacuum_hot_tables_sql", "label": "20260920120100_autovacuum_hot_tables.sql", "file_type": "code", "source_file": "supabase/migrations/20260920120100_autovacuum_hot_tables.sql", "source_location": null}], "edges": []}

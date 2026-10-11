@@ -28,6 +28,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { MediaLibraryAdmin } from '../MediaLibraryAdmin';
+import { AIGenerateDialog } from '../media-library/AIGenerateDialog';
 import { toast } from 'sonner';
 
 // ═══════════════════════════════════════════════════════════
@@ -1820,6 +1821,68 @@ describe('MediaLibraryAdmin - Pure Logic', () => {
       const longPrompt = 'A'.repeat(100);
       const name = longPrompt.substring(0, 80);
       expect(name.length).toBe(80);
+    });
+  });
+
+  // ─── Accessibility: aria-labels ──────────────────────────────
+
+  describe('Accessibility — aria-labels', () => {
+    it('play button has accessible label "Tocar mídia"', async () => {
+      setupSupabaseQuery([makeAudioMeme()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => {
+        const btn = screen.getByRole('button', { name: /Tocar mídia/i });
+        expect(btn).toBeInTheDocument();
+      });
+    });
+
+    it('pause button has accessible label "Pausar mídia" when playing', async () => {
+      setupSupabaseQuery([makeAudioMeme()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => expect(screen.getByText('Preview')).toBeInTheDocument());
+      const btns = screen.getAllByRole('button');
+      const pauseBtn = btns.find(b => b.getAttribute('aria-label')?.match(/Pausar/i));
+      expect(pauseBtn).toBeDefined();
+    });
+
+    it('rename button has accessible label "Renomear"', async () => {
+      setupSupabaseQuery([makeSticker()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => expect(screen.getByText('Test Sticker')).toBeInTheDocument());
+      const editBtn = screen.getAllByRole('button').find(b => b.getAttribute('aria-label')?.match(/Renomear/i));
+      expect(editBtn).toBeDefined();
+    });
+
+    it('favorite button has accessible label "Favoritar"', async () => {
+      setupSupabaseQuery([makeSticker()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => expect(screen.getByText('Test Sticker')).toBeInTheDocument());
+      const favBtn = screen.getAllByRole('button').find(b => b.getAttribute('aria-label')?.match(/Favoritar/i));
+      expect(favBtn).toBeDefined();
+    });
+
+    it('delete button has accessible label "Excluir"', async () => {
+      setupSupabaseQuery([makeSticker()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => expect(screen.getByText('Test Sticker')).toBeInTheDocument());
+      const delBtn = screen.getAllByRole('button').find(b => b.getAttribute('aria-label')?.match(/Excluir/i));
+      expect(delBtn).toBeDefined();
+    });
+
+    it('category select has accessible label with item name', async () => {
+      setupSupabaseQuery([makeSticker()]);
+      render(<MediaLibraryAdmin />);
+      await waitFor(() => expect(screen.getByText('Test Sticker')).toBeInTheDocument());
+      const selectTrigger = screen.getAllByRole('combobox').find(el => el.getAttribute('aria-label')?.match(/Categoria de/i));
+      expect(selectTrigger).toBeDefined();
+    });
+
+    it('AI generate preview button has accessible label "Tocar prévia"', async () => {
+      render(<AIGenerateDialog open={true} onOpenChange={vi.fn()} onSaved={vi.fn()} />);
+      await waitFor(() => {
+        const btn = screen.getByRole('button', { name: /Tocar prévia/i });
+        expect(btn).toBeInTheDocument();
+      });
     });
   });
 });

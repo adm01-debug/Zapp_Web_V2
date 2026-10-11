@@ -14,17 +14,31 @@ import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talk
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
+  backoffDelayForAttempts,
   type MediaKind,
   type MessageKind,
   newCorrelationId,
   normalizePhone,
   personalize,
+  planRetry,
   prepareMedia,
   providerErrorInfo,
   randomBetween,
   send,
   sleep,
 } from "../_shared/messaging/index.ts";
+// MX02 (item 46/P1): texto e midia do ITEM saem do SEU bloco, resolvidos pelo
+// MESMO modulo que a previa usa. Antes o worker usava `dispatch.message_template`
+// e `dispatch.media_url/media_type` (globais) e so o fileName vinha do bloco — o
+// operador revisava uma mensagem e saia outra.
+import {
+  asString,
+  resolveBlockResolution,
+  VOICE_ASSETS_BUCKET,
+  type BlockAsset,
+  type ContentBlockRow,
+  type ResolvedBlock,
+} from "../_shared/multiplix-content.ts";
 
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
 // `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
@@ -64,15 +78,62 @@ function kindForMedia(kind: MediaKind): MessageKind {
   }
 }
 
-/** F56: nome do arquivo do documento vem do bloco (F33: content.media.fileName). */
-function mediaFileNameFromBlock(content: Record<string, unknown> | null | undefined): string | undefined {
-  const media = content?.media;
-  if (!media || typeof media !== "object") return undefined;
-  const nome = (media as Record<string, unknown>).fileName;
-  return typeof nome === "string" && nome.trim() !== "" ? nome : undefined;
+type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
+
+/**
+ * F60 (TL-035) — capacidades DECLARADAS da conexao (`whatsapp_connections.capabilities`).
+ *
+ * A coluna existe desde 02/10/2026 (`20261002671230_f60_conexao_capacidades_e_risco.sql`,
+ * default `'{}'`) e nenhum consumidor a lia: um bloco que a instancia nao entrega so
+ * era recusado pelo provedor, DEPOIS do POST — o item virava `outcome_unknown`/
+ * `item_failed` sem que a tela dissesse que a causa era a conexao.
+ *
+ * Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO. A conexao nao afirma
+ * nada, entao o worker nao inventa limite — so o `false` explicito (e um `max_chars`
+ * NUMERICO) recusa. Tratar o vazio como "tudo pode" seria a mesma coisa que nao olhar
+ * a coluna; tratar como "nada pode" pararia o modulo inteiro, porque `{}` e o default
+ * de toda conexao.
+ *
+ * A chave consultada e o kind do que vai sair, com UMA excecao: nota de voz (`voice`)
+ * e `audio` caem em `ptt` — o adaptador envia as duas pelo MESMO kind (`kindForMedia`
+ * mapeia `audio` -> `ptt`). Chave que o operador declarar a mais no jsonb vale pelo
+ * nome do kind (ex.: `video`); chave nao declarada nao limita nada.
+ *
+ * Devolve o motivo NOMEADO da exclusao (o operador le a causa na tela, como em
+ * `missing_variable:`) ou `null` quando nao ha recusa.
+ */
+export function connectionCapabilityDenial(
+  capabilities: unknown,
+  kind: "text" | "image" | "document" | "audio" | "voice" | "video" | "ptt",
+  text: string,
+): string | null {
+  // Coluna ausente/nula/jsonb de outro tipo = nao declarado.
+  if (capabilities === null || typeof capabilities !== "object" || Array.isArray(capabilities)) return null;
+  const caps = capabilities as Record<string, unknown>;
+  const capabilityKey = kind === "audio" || kind === "voice" ? "ptt" : kind;
+  if (caps[capabilityKey] === false) return `connection_capability_unsupported:${capabilityKey}`;
+  const maxChars = caps.max_chars;
+  if (typeof maxChars === "number" && Number.isFinite(maxChars) && text.length > maxChars) {
+    return `connection_capability_max_chars:${maxChars}`;
+  }
+  return null;
 }
 
-type PreparedForSend = { kind: MessageKind; url: string; fileName: string };
+// SL-054: o backoff do DLQ é COMPARTILHADO (kernel, `BACKOFF_CEILING_MS`:
+// 30 s, 2 min, 10 min) — a MESMA tabela do `nextBackoff`/`planRetry`. Antes
+// este worker mantinha a própria cópia da política; corrigir um motor deixava o
+// outro para trás em silêncio (mesmo caso que originou o
+// `_shared/messaging/timing.ts`). O primeiro degrau é o piso determinístico
+// quando o planRetry não devolve retryAfter (decisão dead_letter): retry
+// imediato é proibido; quem decide o teto continua sendo a RPC.
+
+// F25/MX09: permissao nomeada que o produto usa para liberar a ENTRADA no
+// Multiplix (nav/rota e criacao do PROPRIO disparo). A matriz F25 da `agent`
+// `multiplix.audience.customers.own` + `multiplix.dispatch.create`; sem aceitar
+// essa permissao aqui, o papel minimo autorizado pelo front (que nao acumula
+// admin/supervisor nem manage_all) levava 403 ao iniciar o proprio disparo. Ela
+// abre a ENTRADA apenas: o dono continua exigido por `canManageDispatch`.
+const DISPATCH_CREATE_PERMISSION = "multiplix.dispatch.create";
 
 export async function handleMultiplixSend(
   req: Request,
@@ -109,6 +170,7 @@ export async function handleMultiplixSend(
     }
     let authUserId: string | null = null;
     let hasManageAll = false;
+    let hasDispatchCreate = false;
     if (!isCronAuth) {
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
@@ -142,7 +204,17 @@ export async function handleMultiplixSend(
           _user_id: user.id, _permission_name: "multiplix.dispatch.manage_all",
         });
         hasManageAll = !permissionError && manageAll === true;
-        if (isAdminOrSupervisor !== true && !hasManageAll) {
+        // F25/MX09: a permissao de ENTRADA do produto (`multiplix.dispatch.create`,
+        // que o `agent` recebe junto de `customers.own`) tambem abre a porta.
+        // Sem ela, o papel minimo autorizado pelo front levava 403 ao iniciar o
+        // PROPRIO disparo. O alcance continua limitado pelo DONO em
+        // `canManageDispatch` logo abaixo — a permissao abre a entrada, nao o
+        // disparo alheio (isso continua exigindo manage_all).
+        const { data: canCreate, error: createPermissionError } = await supabase.rpc("user_has_permission", {
+          _user_id: user.id, _permission_name: DISPATCH_CREATE_PERMISSION,
+        });
+        hasDispatchCreate = !createPermissionError && canCreate === true;
+        if (isAdminOrSupervisor !== true && !hasManageAll && !hasDispatchCreate) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
         }
       }
@@ -218,9 +290,12 @@ export async function handleMultiplixSend(
 
     // Conexao WhatsApp: usa a escolhida no dispatch; sem uma, cai na primeira
     // conexao conectada (composer ainda nao oferece selecao de conexao).
+    // F60: `capabilities` vem junto na MESMA leitura — e ela que o laco consulta
+    // antes do POST (ver `connectionCapabilityDenial`); sem isso a coluna ficaria
+    // sem consumidor e um bloco que a instancia nao entrega so morreria no provedor.
     const connectionQuery = dispatch.whatsapp_connection_id
-      ? supabase.from("whatsapp_connections").select("id, status, instance_id").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
-      : supabase.from("whatsapp_connections").select("id, status, instance_id").eq("status", "connected").limit(1).maybeSingle();
+      ? supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("id", dispatch.whatsapp_connection_id).eq("status", "connected").maybeSingle()
+      : supabase.from("whatsapp_connections").select("id, status, instance_id, capabilities").eq("status", "connected").limit(1).maybeSingle();
     const { data: connection } = await connectionQuery;
     const initialInstanceId = liveTalkXInstanceId(connection);
     if (!initialInstanceId) {
@@ -282,9 +357,9 @@ export async function handleMultiplixSend(
     const RELOAD_EVERY = 20;
     const workerId = `multiplix-send:${crypto.randomUUID()}`;
     let signedMedia: { sourceUrl: string; signedUrl: string; at: number } | null = null;
-    const mediaForSend = async (mediaUrl: string) => {
+    const mediaForSend = async (mediaUrl: string, buckets?: string[]) => {
       if (!signedMedia || signedMedia.sourceUrl !== mediaUrl || Date.now() - signedMedia.at > 240_000) {
-        signedMedia = { sourceUrl: mediaUrl, signedUrl: await resolvePrivateBucketUrl(supabase, mediaUrl, undefined, supabaseUrl), at: Date.now() };
+        signedMedia = { sourceUrl: mediaUrl, signedUrl: await resolvePrivateBucketUrl(supabase, mediaUrl, buckets, supabaseUrl), at: Date.now() };
       }
       return signedMedia.signedUrl;
     };
@@ -408,19 +483,25 @@ export async function handleMultiplixSend(
         // material do envio.
         const { data: itemDetail, error: itemDetailError } = await supabase
           .from("multiplix_delivery_items")
-          .select("id, recipient_id, block_id, attempt_count, status, " +
-            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, personalized_message), " +
-            "block:multiplix_blocks!inner(id, block_order, content)")
+          .select("id, recipient_id, block_id, attempt_count, status, personalized_message, voice_asset_id, " +
+            "recipient:multiplix_recipients!inner(id, destino_e164, company_name_snapshot, variables_snapshot), " +
+            "block:multiplix_blocks!inner(id, block_order, block_type, content, personalization_mode, content_version, asset_id)")
           .eq("id", item.item_id)
           .single();
         if (itemDetailError) throw new Error(`multiplix_item_detail_failed: ${itemDetailError.message}`);
-        const recipient = (itemDetail as unknown as {
-          recipient: { id: string; destino_e164: string | null; company_name_snapshot: string | null; personalized_message: string | null };
-        }).recipient;
-        const block = (itemDetail as unknown as {
-          block: { id: string; block_order: number; content: Record<string, unknown> };
-        }).block;
-
+        const itemDetailRow = itemDetail as unknown as {
+          personalized_message: string | null;
+          voice_asset_id: string | null;
+          recipient: {
+            id: string;
+            destino_e164: string | null;
+            company_name_snapshot: string | null;
+            variables_snapshot: unknown;
+          };
+          block: ContentBlockRow;
+        };
+        const recipient = itemDetailRow.recipient;
+        const block = itemDetailRow.block;
         const { data: currentDispatch, error: currentDispatchError } = await supabase
           .from("multiplix_dispatches")
           .select("status, send_interval_min, send_interval_max, typing_delay_min, typing_delay_max, send_window_start, send_window_end, business_hours_only, speed_profile, schedule_timezone, message_template, media_url, media_type")
@@ -489,40 +570,144 @@ export async function handleMultiplixSend(
           continue;
         }
 
-        let personalizedMsg: string = recipient.personalized_message ?? "";
-        if (!personalizedMsg) {
-          let calculatedMessage: string;
-          try {
-            // F37: dialeto unificado do kernel — o nome da empresa entra por
-            // contact.company, que e o campo consumido por {{empresa}}.
-            calculatedMessage = personalize(
-              dispatch.message_template,
-              { company: recipient.company_name_snapshot },
-              {},
-              typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
-            ).text;
-          } catch (e) {
-            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
-              p_item_id: item.item_id,
-              p_claim_token: claim.claim_token,
-              p_status: "failed",
-              p_error_message: e instanceof Error ? e.message : "Erro ao montar mensagem",
-            });
-            if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-            failedCount++;
-            processedCount++;
-            continue;
+        // MX02/F70: a resolucao do conteudo do bloco e a montagem do texto rodam
+        // DEPOIS do claim (o item so pode ser concluido com o lease em maos) e DENTRO
+        // de um try/catch proprio: excecao aqui (kernel de personalizacao, bloco
+        // malformado) conclui SOMENTE este item como 'failed', com a mensagem do erro,
+        // e o lote segue para os proximos itens em vez de derrubar a invocacao (500).
+        // Aqui so entra o que e DETERMINISTICO: resolver o bloco e montar o texto. A
+        // gravacao do snapshot (RPC, I/O) fica FORA — ver logo abaixo.
+        let resolvedBlock: ResolvedBlock;
+        let mediaAsset: (BlockAsset & { url: string }) | null;
+        let voicePending: boolean;
+        let blockHasNothing: boolean;
+        let personalizedMsg: string;
+        // MX06: o motivo nomeado da exclusao por variavel pendente e decidido no
+        // try deterministico, mas a conclusao 'skipped' (RPC, I/O) roda FORA dele
+        // — mesmo criterio que tira a gravacao do snapshot dali.
+        let unresolvedMotivo: string | null = null;
+        // Sinaliza que o texto veio do BLOCO (e nao de um snapshot ja gravado) e
+        // precisa ser persistido no item.
+        let persistSnapshot = false;
+        try {
+          // MX02: o conteudo do bloco e resolvido AQUI, com o `variables_snapshot` do
+          // item e o nome da empresa — o mesmo resolvedor que a previa (F48) usa.
+          // MX06: `resolveBlockResolution` traz junto o relatorio do kernel
+          // (missing/unknown) — e ele que sustenta o 'skipped' de variavel pendente.
+          const resolution = resolveBlockResolution(
+            block,
+            recipient,
+            typeof dispatch.schedule_timezone === "string" ? dispatch.schedule_timezone : DEFAULT_SCHEDULE_TIMEZONE,
+          );
+          resolvedBlock = resolution.block;
+          // O ativo so conta como midia quando tem URL endereçavel (documento/audio/
+          // imagem/video); o bloco de voz (F64/F65) nasce com `url: null`.
+          const mediaAssetUrl = resolvedBlock.asset?.url;
+          mediaAsset = resolvedBlock.asset && typeof mediaAssetUrl === "string" && mediaAssetUrl !== ""
+            ? { ...resolvedBlock.asset, url: mediaAssetUrl }
+            : null;
+          // F69: bloco de voz sem ativo renderizado (F65 pendente) SEGURA o item —
+          // nunca vira texto solto nem cai no template global.
+          voicePending = resolvedBlock.asset?.kind === "voice" && mediaAsset === null;
+          // Bloco sem texto e sem midia: nao existe mensagem a enviar.
+          blockHasNothing = resolvedBlock.text === "" && mediaAsset === null && !voicePending;
+
+          // MX02: o snapshot e do ITEM (`multiplix_delivery_items.personalized_message`).
+          // Um destinatario tem N itens (um por bloco) — guardar a mensagem no
+          // recipient (como o worker fazia) apagaria a dos blocos 2..N.
+          personalizedMsg = itemDetailRow.personalized_message ?? "";
+          if (!personalizedMsg && !voicePending && !blockHasNothing) {
+            // MX06: o contrato do validate (campo ausente = exclusao) vale no
+            // envio. missing/unknown => 'skipped' com motivo nomeado e
+            // deterministico, ANTES do snapshot e de qualquer POST — nunca sai
+            // texto com lacuna ("") nem "[variavel]" para o cliente. O default
+            // explicito ({{chave|padrao}}) nao entra em missing/unknown e segue.
+            // O relatorio vem da MESMA resolucao que produziu o texto do bloco.
+            if (resolution.missing.length > 0 || resolution.unknown.length > 0) {
+              unresolvedMotivo = [
+                ...resolution.missing.map((key) => `missing_variable:${key}`),
+                ...resolution.unknown.map((key) => `unknown_variable:${key}`),
+              ].sort().join(";");
+            } else {
+              // O texto do bloco ja vem renderizado pelo kernel (`personalize`), com o
+              // nome da empresa e o `variables_snapshot` do item — a MESMA saida da
+              // previa. Nada e remontado a partir do template global do disparo.
+              personalizedMsg = resolvedBlock.text;
+              persistSnapshot = personalizedMsg !== "";
+            }
           }
+        } catch (err) {
+          // Falha DETERMINISTICA deste item (o proximo item pode ter bloco bom): conclui
+          // SO ele como 'failed' e segue o lote. Nunca um 500 que derruba a invocacao.
+          const reason = err instanceof Error ? err.message : "multiplix_block_resolution_failed";
+          const message = `multiplix_block_resolution_failed: ${reason}`.slice(0, 1000);
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "failed",
+            p_error_message: message,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          failedCount++;
+          processedCount++;
+          const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
+          await sleep(interval);
+          continue;
+        }
+
+        // MX06: a conclusao 'skipped' por variavel pendente fica fora do try
+        // deterministico (RPC e I/O) — mesmo criterio do snapshot.
+        if (unresolvedMotivo !== null) {
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: unresolvedMotivo,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          skippedCount++;
+          processedCount++;
+          continue;
+        }
+
+        // F60 (TL-035): a conexao DECLARA o que entrega (`capabilities`). Bloco que
+        // ela nao declara entregar — ou texto acima do `max_chars` declarado — nao vai
+        // ao provedor: exclui o item com o motivo NOMEADO, ANTES de baixar a midia e de
+        // congelar o snapshot. Vale no caminho PADRAO (a conexao lida na selecao, sem
+        // precisar de parametro nenhum na requisicao). `{}`/chave ausente = NAO
+        // DECLARADO, e o que nao esta declarado nao recusa — ver o contrato em
+        // `connectionCapabilityDenial`.
+        const capabilityDenial = connectionCapabilityDenial(
+          connection?.capabilities,
+          resolvedBlock.asset?.kind ?? "text",
+          personalizedMsg,
+        );
+        if (capabilityDenial !== null) {
+          const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+            p_item_id: item.item_id,
+            p_claim_token: claim.claim_token,
+            p_status: "skipped",
+            p_error_message: capabilityDenial,
+          });
+          if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+          skippedCount++;
+          processedCount++;
+          continue;
+        }
+
+        // MX02/F70: a gravacao do snapshot fica FORA do try/catch determinista. O RPC
+        // escreve no banco e pode falhar por motivo TRANSITORIO: nesse caso o erro sobe
+        // como `multiplix_message_snapshot_failed` (o comportamento anterior) e o item
+        // NAO e concluido como 'failed' — o lease vence e a retomada continua possivel.
+        if (persistSnapshot) {
           const { data: snapshotMessage, error: snapshotError } = await supabase.rpc("persist_multiplix_item_message_snapshot", {
             p_item_id: item.item_id,
             p_claim_token: claim.claim_token,
-            p_personalized_message: calculatedMessage,
+            p_personalized_message: personalizedMsg,
           });
           if (snapshotError) throw new Error(`multiplix_message_snapshot_failed: ${snapshotError.message}`);
           personalizedMsg = snapshotMessage as string;
         }
-
-        const recipientHasMedia = typeof dispatch.media_url === "string" && typeof dispatch.media_type === "string";
 
         let providerPostAttempted = false;
         let sendTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -530,21 +715,87 @@ export async function handleMultiplixSend(
         // grande e PTT podem passar disso — e item com lease vencido volta para a fila (outro
         // worker pega) ou o sweeper fecha como outcome_unknown. A RPC so renova para o dono
         // vivo, entao o timer nao atrapalha quem legitimamente retomou o item.
+        // R2-API-013: o builder do supabase-js e THENABLE LAZY -- a requisicao so sai quando
+        // alguem consome a promessa. `void supabase.rpc(...)` criava o builder e NAO despachava
+        // nada, entao a renovacao prometida pelo comentario acima nunca acontecia e o lease de
+        // 90 s vencia calado. Agora cada tick CONSOME a renovacao, confere error/resultado e nao
+        // empilha heartbeats: um tick que chega com o anterior em voo e ignorado.
         let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+        let heartbeatInFlight = false;
         const stopHeartbeat = () => {
           if (heartbeatTimer !== undefined) {
             clearInterval(heartbeatTimer);
             heartbeatTimer = undefined;
           }
         };
-        heartbeatTimer = setInterval(() => {
-          void supabase.rpc("heartbeat_multiplix_item", {
-            p_item_id: item.item_id,
-            p_claim_token: claim.claim_token,
-            p_lease_seconds: 90,
-          });
-        }, 30_000);
+        const heartbeatOnce = async () => {
+          if (heartbeatInFlight) return;
+          heartbeatInFlight = true;
+          try {
+            const { data, error } = await supabase.rpc("heartbeat_multiplix_item", {
+              p_item_id: item.item_id,
+              p_claim_token: claim.claim_token,
+              p_lease_seconds: 90,
+            });
+            if (error) {
+              log.warn("multiplix_heartbeat_failed", { correlationId, itemId: item.item_id, error: error.message ?? String(error) });
+            } else if (data !== true) {
+              // false = a RPC NAO renovou (token/lease perdido: outro worker pode ter retomado o
+              // item pelo SKIP LOCKED). Nao derruba o envio em curso -- quem decide o destino do
+              // item continua sendo a RPC de conclusao --, mas o operador precisa enxergar que
+              // este item ficou sem lease proprio.
+              log.warn("multiplix_heartbeat_not_renewed", { correlationId, itemId: item.item_id });
+            }
+          } catch (e) {
+            // Renovacao e best-effort: rede caindo aqui nao pode derrubar o envio em curso.
+            log.warn("multiplix_heartbeat_failed", { correlationId, itemId: item.item_id, error: e instanceof Error ? e.message : String(e) });
+          } finally {
+            heartbeatInFlight = false;
+          }
+        };
+        heartbeatTimer = setInterval(() => { void heartbeatOnce(); }, 30_000);
         try {
+          // t_4fe1 (F64/F65): bloco de voz com ativo JA renderizado nao e
+          // pendencia — o arquivo mora em `multiplix_voice_assets.caminho`
+          // (bucket privado multiplix-voice). O identificador vem do ITEM no modo
+          // personalizado (`voice_asset_id`) e do BLOCO em same_audio
+          // (`asset_id`). Ativo ausente ou invalidado segue pendente — F69.
+          if (voicePending) {
+            const voiceAssetId = resolvedBlock.asset?.shared === true
+              ? asString(block.asset_id)
+              : asString(itemDetailRow.voice_asset_id);
+            if (voiceAssetId !== null) {
+              const { data: voiceAssetRow, error: voiceAssetError } = await supabase
+                .from("multiplix_voice_assets")
+                .select("caminho, invalidated_at")
+                .eq("id", voiceAssetId)
+                .maybeSingle();
+              if (voiceAssetError) throw new Error(`multiplix_voice_asset_lookup_failed: ${voiceAssetError.message}`);
+              const caminho = voiceAssetRow && voiceAssetRow.invalidated_at === null
+                ? asString((voiceAssetRow as { caminho?: unknown }).caminho)
+                : null;
+              if (caminho !== null) {
+                // O locator `authenticated` e a forma estavel do objeto privado;
+                // a URL enviada sai assinada pelo mediaForSend/resolvePrivateBucketUrl
+                // — o MESMO mecanismo das demais midias privadas (TTL no envio).
+                mediaAsset = {
+                  ...(resolvedBlock.asset as BlockAsset),
+                  url: `${supabaseUrl}/storage/v1/object/authenticated/${VOICE_ASSETS_BUCKET}/` +
+                    caminho.split("/").map(encodeURIComponent).join("/"),
+                };
+                voicePending = false;
+              }
+            }
+          }
+          // MX02/F69: item sem conteudo utilizavel volta a fila no backoff
+          // pre-dispatch (nunca um POST com mensagem inventada pelo dispatch global).
+          if (voicePending) {
+            throw new Error("multiplix_block_pending_media: bloco de voz sem ativo renderizado");
+          }
+          if (blockHasNothing) {
+            throw new Error("multiplix_block_empty_content: bloco sem texto e sem midia");
+          }
+
           const typingDelay = randomBetween(dispatch.typing_delay_min, dispatch.typing_delay_max);
 
           try {
@@ -601,7 +852,7 @@ export async function handleMultiplixSend(
             }
             // F55: esta saida devolve o item a fila (release), entao o timer perde a razao de
             // existir agora — a RPC ja recusaria o token a partir daqui de qualquer forma.
-            stopHeartbeat();
+            // O encerramento do timer acontece no finally deste bloco (R2-API-013).
             break passLoop;
           }
 
@@ -634,13 +885,19 @@ export async function handleMultiplixSend(
           // F56: o envio passa pelo adaptador (send) em vez de um POST montado a mao. Ele
           // acrescenta duas coisas que o POST cru nao fazia: PRESENCA (composing; recording
           // para nota de voz) e o fileName do documento — sem ele o PDF chega sem nome.
-          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: "document" no dispatch
-          // podia esconder um JPEG, e o nome do arquivo so existe no bloco (F33).
+          // prepareMedia (F40) e quem decide o tipo REAL do arquivo: o `kind` do bloco e
+          // so a expectativa da extensao, e o nome do arquivo so existe no bloco (F33).
           let prepared: PreparedForSend | null = null;
-          if (recipientHasMedia) {
-            const pronto = await prepareMedia(await mediaForSend(dispatch.media_url), {
-              fileName: mediaFileNameFromBlock(block.content),
-            });
+          if (mediaAsset) {
+            // F40/F56: prepareMedia segue sendo a autoridade do tipo REAL do arquivo
+            // (magic bytes) — o `kind` do bloco e so a expectativa. O nome do arquivo
+            // vem do bloco (`content.media.file_name` ou `fileName`), unica fonte dele.
+            const pronto = await prepareMedia(
+              // F65: o ativo de voz mora no bucket privado multiplix-voice — o
+              // sign precisa conhecer esse bucket (os demais seguem no default).
+              await mediaForSend(mediaAsset.url, mediaAsset.kind === "voice" ? [VOICE_ASSETS_BUCKET] : undefined),
+              { fileName: mediaAsset.file_name ?? undefined },
+            );
             if (!pronto.ok) {
               throw new Error(`multiplix_media_rejected: ${pronto.reason}: ${pronto.detail}`);
             }
@@ -697,59 +954,114 @@ export async function handleMultiplixSend(
           } else if (envio.ok && !sendResult.error) {
             throw new Error("multiplix_provider_outcome_unknown: missing_provider_message_id");
           } else {
-            failedCount++;
             // F61: o operador le TEXTO, nunca o JSON do provedor. `providerErrorInfo`
             // traduz o par (status, corpo) pelo mapa do E095 e devolve o codigo ESTAVEL
             // do erro — assim "Numero nao existe no WhatsApp" chega na tela em vez de
             // {"status":400,"error":{"code":...}}. O corpo bruto nao entra no campo que
             // a tela mostra; o codigo vai para a trilha de eventos (abaixo).
             const providerError = providerErrorInfo(envio.status, envio.body);
-            const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
-              p_item_id: item.item_id,
-              p_claim_token: claim.claim_token,
-              p_status: "failed",
-              p_error_message: providerError.operatorMessage,
-            });
-            if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
-            // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
-            // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
-            // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
-            // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
-            await supabase.from("multiplix_events").insert({
-              dispatch_id: dispatchId,
-              item_id: item.item_id,
-              recipient_id: item.recipient_id ?? null,
-              kind: "item_failed",
-              payload: {
-                error_class: providerError.class,
-                error_code: providerError.code,
-                provider_status: envio.status,
-              },
-            });
-            // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
-            // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
-            // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
-            // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
-            // derrubaria disparo bom.
-            if (providerError.class === "permanent" && connection?.id) {
-              const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
-                p_connection_id: connection.id,
-                p_signal: null,
-                p_error_class: "permanent",
+            if (providerError.class === "transient") {
+              // MX05: rejeicao TRANSITORIA inequivoca do provedor (rate limit / timeout de
+              // rede) NAO e falha terminal — o item volta para a fila com o MESMO backoff com
+              // teto do kernel (30 s / 2 min / 10 min) e so vira dead letter quando a RPC
+              // esgotar as tentativas. Antes este ramo concluia o item como 'failed' e a
+              // garantida pelo plano nunca acontecia (probe de rate limit: failed=1, rescheduleCalls=0).
+              // Um 5xx NAO entra aqui: o resultado do POST e ambiguo e reenviar cego pode
+              // duplicar mensagem (o caminho de outcome_unknown, acima, e a protecao de
+              // idempotencia).
+              // attempt_count do item + 1 e a tentativa que acabou de falhar (o claim ja
+              // incrementou no banco; o valor que list_multiplix_claimable_items devolve e o
+              // anterior).
+              const attempt = (typeof item.attempt_count === "number" ? item.attempt_count : 0) + 1;
+              const decision = planRetry(providerError, attempt);
+              // Sem retryAfter o kernel ja decidiu dead_letter (attempt >= MAX_ATTEMPTS).
+              // `new Date()` agendaria o retry para AGORA — proibido. O piso e o
+              // primeiro degrau deterministico do backoff; quem transforma em
+              // falha definitiva e a RPC, nao o relogio do worker.
+              const retryAfter = decision.retryAfter ?? new Date(Date.now() + backoffDelayForAttempts(0)).toISOString();
+              const { data: schedResult, error: rescheduleError } = await supabase.rpc("reschedule_multiplix_item", {
+                p_item_id: item.item_id,
+                p_claim_token: claim.claim_token,
+                p_retry_after: retryAfter,
+                p_error_message: providerError.operatorMessage,
               });
-              // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
-              // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
-              if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+              if (rescheduleError) throw new Error(`multiplix_recipient_reschedule_failed: ${rescheduleError.message}`);
+              // Quem decide o TETO e a funcao SQL (attempt_count >= 3 -> failed); o worker so
+              // informa quando tentar de novo — nunca reenvia sem fim.
+              const schedAction = schedResult?.action;
+              if (schedAction === "dead_lettered") failedCount++;
+              // Mesma trilha de eventos do F61: classe + codigo estavel + status. O texto do
+              // provedor nao entra (pode carregar dado de cliente). dead_lettered NAO e
+              // reagendamento — a RPC ja marcou o item 'failed' no banco e a trilha registra
+              // item_failed; payload.action guarda o veredicto da RPC para a auditoria.
+              await supabase.from("multiplix_events").insert({
+                dispatch_id: dispatchId,
+                item_id: item.item_id,
+                recipient_id: item.recipient_id ?? null,
+                kind: schedAction === "dead_lettered" ? "item_failed" : "item_rescheduled",
+                payload: {
+                  error_class: providerError.class,
+                  error_code: providerError.code,
+                  provider_status: envio.status,
+                  attempt,
+                  retry_after: retryAfter,
+                  action: schedAction,
+                },
+              });
+            } else {
+              const { error: completionError } = await supabase.rpc("complete_multiplix_item", {
+                p_item_id: item.item_id,
+                p_claim_token: claim.claim_token,
+                p_status: "failed",
+                p_error_message: providerError.operatorMessage,
+              });
+              if (completionError) throw new Error(`multiplix_recipient_completion_failed: ${completionError.message}`);
+              failedCount++;
+              // F61 (segunda metade): o codigo CRU (classe + codigo estavel + status HTTP)
+              // vai para `multiplix_events`, que e onde quem depura olha. NAO grava o corpo
+              // do provedor: ele pode carregar telefone/conteudo de cliente, e diagnostico
+              // nao precisa disso — o par (classe, codigo) ja diz o que aconteceu.
+              await supabase.from("multiplix_events").insert({
+                dispatch_id: dispatchId,
+                item_id: item.item_id,
+                recipient_id: item.recipient_id ?? null,
+                kind: "item_failed",
+                payload: {
+                  error_class: providerError.class,
+                  error_code: providerError.code,
+                  provider_status: envio.status,
+                },
+              });
+              // F60 (gatilho): um erro PERMANENTE nao e azar de um item — e sinal de que a
+              // CONEXAO esta em risco. Tres consecutivos, ou um banimento, pausam todos os
+              // dispatches dela (a funcao decide o limiar; o worker so reporta o sinal).
+              // `unknown` NAO conta: nao sabemos o que aconteceu, e pausar por duvida
+              // derrubaria disparo bom.
+              if (providerError.class === "permanent" && connection?.id) {
+                const { error: riskError } = await supabase.rpc("register_multiplix_connection_failure", {
+                  p_connection_id: connection.id,
+                  p_signal: null,
+                  p_error_class: "permanent",
+                });
+                // Nao derruba o envio: o item ja foi concluido acima. A marcacao de risco e
+                // defesa em profundidade — falhar nela nao pode fazer o worker perder o item.
+                if (riskError) console.error(`multiplix_connection_risk_failed: ${riskError.message}`);
+              }
             }
           }
-          stopHeartbeat();
         } catch (err) {
-          clearTimeout(sendTimeout);
+          // R2-API-013: o timer morre na ENTRADA do catch, junto do timeout do
+          // POST — antes do reagendamento/conclusao e do `await sleep(interval)`
+          // que precede o continue. O finally segue como rede de seguranca (a
+          // funcao e idempotente), mas so ele nao basta: ele roda DEPOIS do
+          // sleep, e um tick nessa janela renovava um item ja reagendado ou
+          // concluido, gerando RPC inutil e 'multiplix_heartbeat_not_renewed'
+          // falso.
           stopHeartbeat();
+          clearTimeout(sendTimeout);
           if (!providerPostAttempted) {
-            const backoffMs = [30_000, 120_000, 600_000];
             const attemptSoFar = typeof item.attempt_count === "number" ? item.attempt_count : 0;
-            const delayMs = backoffMs[Math.min(attemptSoFar, backoffMs.length - 1)];
+            const delayMs = backoffDelayForAttempts(attemptSoFar);
             const retryAfter = new Date(Date.now() + delayMs).toISOString();
             const reason = err instanceof Error ? err.message : "pre_dispatch_error";
             const { data: schedResult } = await supabase.rpc("reschedule_multiplix_item", {
@@ -779,6 +1091,11 @@ export async function handleMultiplixSend(
           const interval = randomBetween(dispatch.send_interval_min, dispatch.send_interval_max);
           await sleep(interval);
           continue;
+        } finally {
+          // R2-API-013: TODA saida do item passa por aqui -- sucesso, erro tratado, release com
+          // break e o opt-out tardio com continue (que antes pulava o stopHeartbeat e deixava o
+          // timer renovando um item ja concluido).
+          stopHeartbeat();
         }
 
         processedCount++;
@@ -806,8 +1123,18 @@ export async function handleMultiplixSend(
       // horas e podia estourar o limite de tempo no meio do disparo.
       break passLoop;
     }
+    // MX03 (TL-034): a conclusao tem de olhar a fila que ESTE worker consome — os
+    // ITENS (`multiplix_delivery_items`). A antiga
+    // `complete_multiplix_dispatch_if_drained` conta pending/sending em
+    // `multiplix_recipients`, fila que `record_multiplix_item_sent` /
+    // `complete_multiplix_item` NAO alimentam: com todo item terminal o recipient
+    // seguia 'pending' e o disparo NUNCA concluia (o cron reinvocava a toa, e
+    // contadores/UI ficavam inconsistentes). A equivalente por item e
+    // `complete_multiplix_dispatch_if_items_drained` (f32b §10); a antiga esta
+    // marcada DEPRECATED em 20261001231230:677 e continua existindo so para os
+    // workers ainda nao migrados.
     const { data: completed, error: completionError } = await supabase.rpc(
-      "complete_multiplix_dispatch_if_drained", { p_dispatch_id: dispatchId },
+      "complete_multiplix_dispatch_if_items_drained", { p_dispatch_id: dispatchId },
     );
     if (completionError) throw new Error(`multiplix_dispatch_completion_failed: ${completionError.message}`);
 

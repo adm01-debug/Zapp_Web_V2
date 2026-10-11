@@ -22,12 +22,12 @@ import type { MediaItem, MediaType } from './media-library/useMediaLibrary';
 import { StatsCards } from './media-library/StatsCards';
 import { AIGenerateDialog } from './media-library/AIGenerateDialog';
 
-function InlineCategorySelect({ value, categories, onChange }: { value: string; categories: Record<string, string>; onChange: (cat: string) => void }) {
+function InlineCategorySelect({ value, categories, onChange, nome }: { value: string; categories: Record<string, string>; onChange: (cat: string) => void; nome: string }) {
   const allCategories = { ...categories };
   if (value && !(value in allCategories)) allCategories[value] = '❓';
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-6 text-3xs w-[130px] border-border/40"><SelectValue /></SelectTrigger>
+      <SelectTrigger className="h-6 text-3xs w-[130px] border-border/40" aria-label={`Categoria de ${nome}`}><SelectValue /></SelectTrigger>
       <SelectContent>{Object.entries(allCategories).map(([cat, emoji]) => <SelectItem key={cat} value={cat} className="text-xs">{emoji} {cat}</SelectItem>)}</SelectContent>
     </Select>
   );
@@ -93,7 +93,7 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
                     <Checkbox checked={lib.selected.has(item.id)} onCheckedChange={() => lib.toggleSelect(item.id)} />
                     <div className="w-12 h-10 shrink-0">
                       {type === 'audio_memes' ? (
-                        <button onClick={() => lib.handlePreview(item)} className={cn('w-10 h-10 rounded-lg flex items-center justify-center transition-colors', lib.playingId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/20')}>
+                        <button onClick={() => lib.handlePreview(item)} className={cn('w-10 h-10 rounded-lg flex items-center justify-center transition-colors', lib.playingId === item.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/20')} aria-label={lib.playingId === item.id ? `Pausar ${item.name || 'mídia'}` : `Tocar mídia ${item.name || ''}`}>
                           {lib.playingId === item.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
                       ) : (
@@ -105,18 +105,18 @@ function MediaAdminPanel({ type }: { type: MediaType }) {
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <div className="flex items-center gap-1">
-                          <Input value={lib.editName} onChange={e => lib.setEditName(e.target.value)} className="h-7 text-xs" autoFocus onKeyDown={e => { if (e.key === 'Enter') void lib.handleRename(item); if (e.key === 'Escape') lib.setEditingId(null); }} />
-                          <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.handleRename(item)}><Check className="w-3 h-3" /></Button>
-                          <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.setEditingId(null)}><X className="w-3 h-3" /></Button>
+                          <Input value={lib.editName} onChange={e => lib.setEditName(e.target.value)} className="h-7 text-xs" autoFocus onKeyDown={e => { if (e.key === 'Enter') void lib.handleRename(item); if (e.key === 'Escape') lib.setEditingId(null); }} aria-label={`Novo nome de ${item.name || 'item'}`} />
+                          <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.handleRename(item)} aria-label={`Salvar nome de ${item.name || 'item'}`}><Check className="w-3 h-3" /></Button>
+                          <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => lib.setEditingId(null)} aria-label="Cancelar edição"><X className="w-3 h-3" /></Button>
                         </div>
                       ) : <p className="text-xs font-medium text-foreground truncate">{item.name || 'Sem nome'}</p>}
                     </div>
-                    <div className="w-[130px]"><InlineCategorySelect value={item.category} categories={lib.categories} onChange={(cat) => lib.handleSingleCategoryChange(item, cat)} /></div>
+                    <div className="w-[130px]"><InlineCategorySelect value={item.category} categories={lib.categories} onChange={(cat) => lib.handleSingleCategoryChange(item, cat)} nome={item.name || ''} /></div>
                     <div className="w-16 text-center"><Badge variant="secondary" className="text-[9px]">{item.use_count || 0}x</Badge></div>
-                    <div className="w-12 text-center"><button onClick={() => lib.handleToggleFavorite(item)} className="p-1 rounded hover:bg-muted/50 transition-colors"><Star className={cn('w-3.5 h-3.5 mx-auto transition-colors', item.is_favorite ? 'fill-warning text-warning' : 'text-muted-foreground/30 hover:text-warning')} /></button></div>
+                    <div className="w-12 text-center"><button onClick={() => lib.handleToggleFavorite(item)} className="p-1 rounded hover:bg-muted/50 transition-colors" aria-label={item.is_favorite ? `Desfavoritar ${item.name || 'item'}` : `Favoritar ${item.name || 'item'}`}><Star className={cn('w-3.5 h-3.5 mx-auto transition-colors', item.is_favorite ? 'fill-warning text-warning' : 'text-muted-foreground/30 hover:text-warning')} /></button></div>
                     <div className="w-24 flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { lib.setEditingId(item.id); lib.setEditName(item.name || ''); }}><Edit2 className="w-3.5 h-3.5 text-muted-foreground" /></Button>
-                      <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="w-7 h-7"><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir item</AlertDialogTitle><AlertDialogDescription>Excluir "{item.name || 'Sem nome'}" permanentemente?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => lib.handleDelete(item)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => { lib.setEditingId(item.id); lib.setEditName(item.name || ''); }} aria-label={`Renomear ${item.name || 'item'}`}><Edit2 className="w-3.5 h-3.5 text-muted-foreground" /></Button>
+                      <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Excluir ${item.name || 'item'}`}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir item</AlertDialogTitle><AlertDialogDescription>Excluir "{item.name || 'Sem nome'}" permanentemente?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => lib.handleDelete(item)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                     </div>
                   </div>
                 );

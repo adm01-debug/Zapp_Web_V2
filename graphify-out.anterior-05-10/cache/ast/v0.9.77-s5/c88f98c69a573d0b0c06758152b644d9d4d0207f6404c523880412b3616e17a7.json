@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927390000_revoke_trigger_funcs_public_execute_sql", "label": "20260927390000_revoke_trigger_funcs_public_execute.sql", "file_type": "code", "source_file": "supabase/migrations/20260927390000_revoke_trigger_funcs_public_execute.sql", "source_location": null}], "edges": []}

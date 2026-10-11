@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260925230700_revoke_anon_execute_dashboard_sentiment_alerts_sql", "label": "20260925230700_revoke_anon_execute_dashboard_sentiment_alerts.sql", "file_type": "code", "source_file": "supabase/migrations/20260925230700_revoke_anon_execute_dashboard_sentiment_alerts.sql", "source_location": null}], "edges": []}

@@ -125,4 +125,10 @@ describe('NotesTab', () => {
     fireEvent.click(screen.getByText('Criar'));
     expect(mockCreateTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Ligar amanhã', contactId: 'c1' }));
   });
+
+  it('Nenhum registro ainda nao e filho direto de ul (lista acessivel)', () => {
+    renderTab([]);
+    const message = screen.getByText('Nenhum registro ainda');
+    expect(message.parentElement?.tagName).not.toBe('UL');
+  });
 });

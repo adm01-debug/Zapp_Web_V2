@@ -94,8 +94,8 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
         />
       )}
 
+      {notes.length === 0 && !adding && <p className="text-sm text-muted-foreground py-2">Nenhum registro ainda</p>}
       <ul className="space-y-2 max-h-[240px] overflow-y-auto scrollbar-thin">
-        {notes.length === 0 && !adding && <p className="text-sm text-muted-foreground py-2">Nenhum registro ainda</p>}
         {notes.map((note) => (
           <li key={note.id} data-testid="note-card" className="group rounded-lg border border-border bg-muted/20 p-2.5">
             {renderItem ? renderItem(note) : (

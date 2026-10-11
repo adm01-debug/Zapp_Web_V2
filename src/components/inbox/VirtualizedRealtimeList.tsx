@@ -313,7 +313,7 @@ const ConversationRow = memo(({
   const sentiment = normalizeSentiment(conversation.contact.ai_sentiment);
   const isHighPriority = priority.value === 'high' || priority.value === 'urgent';
   const channelType = conversation.contact.channel_type;
-  const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
+  const channelBadge = channelType && channelType !== 'whatsapp' && channelType !== 'instagram' && channelType !== 'telegram' ? CHANNEL_BADGE_CONFIG[channelType] : null;
   const assignedToId = conversation.contact.assigned_to;
   const assignedAgent = assignedToId && assignedToId !== currentUserId ? agentsMap.get(assignedToId) : null;
   // conversation_sla vem do embed do select (RealtimeService.fetchContacts:
@@ -476,14 +476,7 @@ const ConversationRow = memo(({
                     })}
                   </span>
                 )}
-                <button
-                  aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
-                  onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  className="w-4 h-4 flex items-center justify-center text-muted-foreground/40 hover:text-warning transition-colors"
-                >
-                  <Star className={cn('w-3.5 h-3.5', isFavorite && 'fill-warning text-warning')} />
-                </button>
+
               </div>
             </div>
             {conversation.contact.job_title && (
@@ -533,6 +526,14 @@ const ConversationRow = memo(({
           </div>
           </div>
         </div>
+        <button
+          aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
+          onClick={(e) => handleAction(e, onFavorite, 'Favoritar')}
+          onKeyDown={(e) => e.stopPropagation()}
+          className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 flex items-center justify-center text-muted-foreground/40 hover:text-warning transition-colors flex-shrink-0"
+        >
+          <Star className={cn('w-3.5 h-3.5', isFavorite && 'fill-warning text-warning')} />
+        </button>
 
         {/* Hover action buttons */}
         <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-all duration-150 pl-[60px]">
@@ -542,7 +543,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Resolver conversa"
                   onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
+                  className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </button>
@@ -554,7 +555,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Transferir conversa"
                   onClick={(e) => handleAction(e, onTransfer, 'Transferir')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
+                  className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
                 </button>
@@ -566,7 +567,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Fixar conversa"
                   onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                  className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
                 >
                   <Pin className="w-3.5 h-3.5" />
                 </button>
@@ -580,7 +581,7 @@ const ConversationRow = memo(({
                     <button
                       aria-label="Adiar conversa"
                       onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                      className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
                     </button>
@@ -607,7 +608,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Arquivar conversa"
                   onClick={(e) => handleAction(e, onArchive, 'Arquivar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
+                  className="min-h-6 min-w-6 max-md:min-h-11 max-md:min-w-11 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all duration-150"
                 >
                   <Archive className="w-3.5 h-3.5" />
                 </button>

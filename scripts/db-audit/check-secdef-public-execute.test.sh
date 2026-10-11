@@ -200,6 +200,12 @@ assert_mutation_blocked 'trigger SECURITY DEFINER com PUBLIC tambem e bloqueado'
   'REVOKE EXECUTE ON FUNCTION public.record_talkx_campaign_lifecycle_event() FROM PUBLIC' \
   'record_talkx_campaign_lifecycle_event() [PUBLIC,anon]'
 
+
+assert_mutation_blocked 'trigger SECURITY DEFINER novo criado apos migration com EXECUTE para PUBLIC (simula funcao de gatilho nascida aberta)' \
+  "CREATE FUNCTION public.zz_novo_gatilho() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS 'BEGIN RETURN NEW; END'; GRANT EXECUTE ON FUNCTION public.zz_novo_gatilho() TO PUBLIC" \
+  'DROP FUNCTION public.zz_novo_gatilho()' \
+  'zz_novo_gatilho() [PUBLIC,anon]'
+
 # Fora do escopo da guarda: continua verde.
 psql_sql "
   CREATE FUNCTION public.zz_invoker() RETURNS int LANGUAGE sql SECURITY INVOKER AS 'SELECT 1';

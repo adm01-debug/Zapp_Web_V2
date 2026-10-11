@@ -1,4 +1,5 @@
-import { handleMultiplixSend, personalize } from './index.ts';
+import { connectionCapabilityDenial, handleMultiplixSend, personalize } from './index.ts';
+import { resolveBlockContent } from '../_shared/multiplix-content.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -17,12 +18,14 @@ Deno.test('personalize resolve {{saudacao}} para um período válido do dia', ()
   assert(validGreetings.includes(result), `unexpected greeting result: ${result}`);
 });
 
-Deno.test('personalize usa string vazia quando company é ausente/null (built-in {{empresa}} sem valor)', () => {
-  // Comportamento do kernel para um built-in SEM valor: {{empresa}} resolve para
-  // '' — o fallback "[variavel]" cobre apenas chaves FORA do conjunto de
-  // built-ins. Idêntico ao antigo personalizeMultiplix; nada a corrigir aqui.
-  const result = personalize('Empresa: {{empresa}}', {}).text;
-  assert(result === 'Empresa: ', `unexpected result: ${result}`);
+Deno.test('personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06)', () => {
+  // O kernel NÃO muda de semântica: built-in sem valor continua resolvendo o
+  // TEXTO para '' — a novidade do MX06 é que o worker passa a consumir o
+  // relatório e pula o destinatário em vez de mandar a lacuna. Este teste só
+  // existe para fixar as duas metades do contrato do kernel.
+  const result = personalize('Empresa: {{empresa}}', {});
+  assert(result.text === 'Empresa: ', `unexpected result: ${result.text}`);
+  assert(result.missing.includes('empresa'), `missing deveria conter empresa: ${JSON.stringify(result.missing)}`);
 });
 
 Deno.test('personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança)', () => {
@@ -96,7 +99,7 @@ function dispatchRow(overrides: DispatchRow = {}): DispatchRow {
   };
 }
 
-function recipientRow(index: number, phone: string | null) {
+function recipientRow(index: number, phone: string | null, overrides: Record<string, unknown> = {}) {
   return {
     id: `recipient-${index}`,
     dispatch_id: "00000000-0000-0000-0000-000000000001",
@@ -108,7 +111,11 @@ function recipientRow(index: number, phone: string | null) {
     attempt_count: 0,
     retry_after: null,
     personalized_message: null,
+    // F48/MX06: mapa de campos customizados congelado no confirm — o MESMO
+    // insumo que o validate alimenta ao personalize.
+    variables_snapshot: {},
     created_at: new Date(Date.now() + index).toISOString(),
+    ...overrides,
   };
 }
 
@@ -121,10 +128,12 @@ interface MockOpts {
   isAdminOrSupervisor?: boolean;
   /** resposta de user_has_permission('multiplix.dispatch.manage_all') (F06) */
   manageAll?: boolean;
+  /** resposta de user_has_permission('multiplix.dispatch.create') (F25/MX09) */
+  dispatchCreate?: boolean;
   /** perfil (profiles.id) do usuario do JWT — e o que casa com created_by */
   ownProfileId?: string;
   dispatch?: DispatchRow | null;
-  connection?: { id: string; status: string; instance_id: string } | null;
+  connection?: { id: string; status: string; instance_id: string; capabilities?: unknown } | null;
   recipients?: Array<ReturnType<typeof recipientRow>>;
   /** telefones que a lista negra responde como suprimidos (F09) */
   suppressedPhones?: string[];
@@ -137,6 +146,22 @@ interface MockOpts {
    * tem de seguir fail-closed (mata o fail-open do mutante M25). */
   suppressionRpcError?: boolean;
   blockContent?: Record<string, unknown>;
+  /** MX02: `block_type` do bloco devolvido no detalhe do item (default "text") */
+  blockType?: string;
+  /** MX02: `variables_snapshot` do destinatario (variaveis congeladas do item) */
+  variablesSnapshot?: Record<string, string>;
+  /** MX02: `multiplix_delivery_items.personalized_message` — snapshot DO ITEM */
+  itemPersonalizedMessage?: string | null;
+  /** F65: `multiplix_delivery_items.voice_asset_id` — ativo de voz DO ITEM (personalizado) */
+  itemVoiceAssetId?: string | null;
+  /** F65: `multiplix_blocks.asset_id` — ativo de voz compartilhado (same_audio) */
+  blockAssetId?: string | null;
+  /** F65: `personalization_mode` do bloco ("same_audio" consome o asset_id do bloco) */
+  blockPersonalizationMode?: string | null;
+  /** F65: linhas de `multiplix_voice_assets` por id (caminho no bucket + invalidated_at) */
+  voiceAssets?: Record<string, { caminho: string | null; invalidated_at?: string | null }>;
+  /** MX02/F70: a RPC que grava o snapshot falha (erro transitorio do banco) */
+  snapshotRpcError?: boolean;
   /** cota diaria restante da conexao (F17); null desliga a checagem */
   dailyRemaining?: number | null;
   /** F11a: reivindicacao que nao devolve token (lease de outro worker) */
@@ -145,6 +170,14 @@ interface MockOpts {
   windowClosesAfterStart?: boolean;
   /** MX07: resposta da RPC get_instance_token (null = instância sem token cadastrado) */
   instanceToken?: string | null;
+  /** R2-API-013: a RPC do heartbeat se comporta como o PostgrestBuilder do supabase-js --
+   * builder THENABLE LAZY, que so despacha a requisicao quando alguem consome a promessa. */
+  lazyHeartbeat?: boolean;
+  /** R2-API-013: resultado da RPC heartbeat_multiplix_item (default: { data: true, error: null }). */
+  heartbeatResult?: { data?: unknown; error?: Error | null };
+  /** R2-API-013: segura a renovacao em voo ate o teste chamar releaseHeartbeat (prova de que
+   * um tick novo nao empilha outro heartbeat por cima do que ainda esta pendente). */
+  heartbeatPending?: boolean;
 }
 
 interface MockCtx {
@@ -152,10 +185,23 @@ interface MockCtx {
   limits: number[];
   completions: Array<Record<string, unknown>>;
   events: Array<Record<string, unknown>>;
+  /** MX02/F69: itens devolvidos a fila no backoff pre-dispatch */
+  reschedules: Array<Record<string, unknown>>;
+  /** MX02/F69: itens que estouraram o teto de tentativas (dead-letter do reschedule) */
+  deadLettered: Array<Record<string, unknown>>;
+  /** F65: chamadas ao sign do Storage (`createSignedUrl`) — bucket, path e ttl pedidos */
+  signCalls: Array<{ bucket: string; path: string; ttl: number }>;
   dispatch: DispatchRow | null;
   remaining: Array<ReturnType<typeof recipientRow>>;
   recipientSelects: number;
   suppressionChecks: number;
+  /** R2-API-013: builders de heartbeat CRIADOS (com o cliente lazy, criar nao despacha). */
+  heartbeatBuilders: number;
+  /** R2-API-013: builders de heartbeat CONSUMIDOS (.then/await) -- e o que renova o lease. */
+  heartbeatConsumed: number;
+  /** R2-API-013: portao da renovacao em voo, liberado por releaseHeartbeat. */
+  heartbeatGate: Promise<void>;
+  releaseHeartbeat: () => void;
 }
 
 // Chainable query builder: a cadeia devolve o proprio builder e o builder e
@@ -164,6 +210,9 @@ interface MockCtx {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   let limit: number | null = null;
+  // F65: a busca do ativo de voz filtra por id (.eq) — o builder grava os filtros
+  // para a tabela devolver a linha CERTA (as demais ignoram, como antes).
+  const eqFilters: Array<[string, unknown]> = [];
   // F61: o worker grava o codigo cru do provedor na trilha de eventos. Sem capturar aqui,
   // o insert cairia no vazio e o teste passaria sem provar nada (teste decorativo).
   if (table === "multiplix_events") {
@@ -200,9 +249,35 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
           block_id: "block-1",
           attempt_count: alvo.attempt_count ?? 0,
           status: "sending",
-          recipient: alvo,
-          block: { id: "block-1", block_order: 0, content: opts.blockContent ?? {} },
+          // MX02: o snapshot da mensagem e do ITEM (um destinatario tem N itens),
+          // nao do recipient — ler o do recipient perderia os blocos 2..N.
+          personalized_message: opts.itemPersonalizedMessage ?? null,
+          // F65: o ativo de voz personalizado e do ITEM (um por destinatario) —
+          // same_audio lera o asset_id do BLOCO, compartilhado entre todos.
+          voice_asset_id: opts.itemVoiceAssetId ?? null,
+          recipient: { ...alvo, variables_snapshot: opts.variablesSnapshot ?? alvo.variables_snapshot ?? null },
+          // MX02: o conteudo do envio vem do BLOCO do item. O default espelha o
+          // template do disparo do mock, para o cenario legado "bloco == template".
+          block: {
+            id: "block-1",
+            block_order: 0,
+            block_type: opts.blockType ?? "text",
+            content: opts.blockContent ?? { text: opts.dispatch?.message_template ?? "Ola {{empresa}}" },
+            personalization_mode: opts.blockPersonalizationMode ?? null,
+            content_version: 1,
+            asset_id: opts.blockAssetId ?? null,
+          },
         },
+        error: null,
+      };
+    }
+    // F65: o ativo de voz e lido por id (select + eq + maybeSingle). Devolve a
+    // linha mockada para o id pedido; sem linha, null — o banco responderia vazio.
+    if (table === "multiplix_voice_assets") {
+      const idFilter = eqFilters.filter(([col]) => col === "id").pop()?.[1];
+      const row = idFilter === undefined ? null : (opts.voiceAssets?.[String(idFilter)] ?? null);
+      return {
+        data: row === null ? null : { id: String(idFilter), invalidated_at: null, ...row },
         error: null,
       };
     }
@@ -213,7 +288,9 @@ function tableBuilder(table: string, opts: MockOpts, ctx: MockCtx): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: Record<string, any> = {};
   const chain = () => b;
-  b.select = chain; b.eq = chain; b.in = chain; b.is = chain; b.or = chain;
+  b.select = chain; b.in = chain; b.is = chain; b.or = chain;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  b.eq = (col: string, val: unknown) => { eqFilters.push([col, val]); return b as any; };
   b.update = chain; b.insert = chain; b.order = chain; b.delete = chain;
   b.limit = (n: number) => { limit = n; ctx.limits.push(n); return b; };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -238,8 +315,14 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             return Promise.resolve({ data: opts.cronVaultResult ?? null, error: null });
           case "is_admin_or_supervisor":
             return Promise.resolve({ data: opts.isAdminOrSupervisor === true, error: null });
-          case "user_has_permission":
-            return Promise.resolve({ data: opts.manageAll === true, error: null });
+          case "user_has_permission": {
+            // F25/MX09: nomes de permissao diferentes decidem entradas
+            // diferentes — o stub responde pela permissao PEDIDA, em vez de um
+            // booleano unico, senao os dois gates nao seriam distinguiveis.
+            const requested = String(args._permission_name ?? "");
+            const granted = requested === "multiplix.dispatch.create" ? opts.dispatchCreate : opts.manageAll;
+            return Promise.resolve({ data: granted === true, error: null });
+          }
           case "transition_multiplix_dispatch": {
             // Espelha o efeito no estado do mock para o motor enxergar a
             // transicao seguinte (ex.: pause -> 'paused').
@@ -279,11 +362,21 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             });
           case "claim_multiplix_item":
             if (opts.claimReturnsNothing) return Promise.resolve({ data: [], error: null });
+            // Fiel ao banco (f32b §2): o claim INCREMENTA attempt_count do item —
+            // e o valor que o reschedule le para decidir o dead-letter em >= 3.
+            {
+              const claimedId = String(args.p_item_id).replace(/^item-/, "");
+              const row = ctx.remaining.find((r) => r.id === claimedId);
+              if (row) row.attempt_count = (row.attempt_count ?? 0) + 1;
+            }
             return Promise.resolve({ data: [{ claim_token: `claim-${String(args.p_item_id)}` }], error: null });
           case "persist_multiplix_item_message_snapshot":
             // Fiel ao banco: a RPC grava o texto e devolve a string personalizada. O stub
             // nao a implementava, entao devolvia undefined e o texto enviado era undefined
             // — invisivel enquanto o POST nao validava; o adaptador (F56) valida.
+            // MX02/F70: erro TRANSITORIO do RPC injetavel — prova que ele nao e engolido
+            // pelo catch da resolucao (que encerraria o item como 'failed').
+            if (opts.snapshotRpcError) return Promise.resolve({ data: null, error: new Error("snapshot write failed") });
             return Promise.resolve({ data: String(args.p_personalized_message ?? ""), error: null });
           case "complete_multiplix_item": {
             ctx.completions.push(args);
@@ -299,6 +392,13 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             ctx.remaining = ctx.remaining.filter((r) => r.id !== id);
             return Promise.resolve({ data: true, error: null });
           }
+          case "complete_multiplix_dispatch_if_items_drained":
+            // Fiel ao banco (f32b §10): a drenagem POR ITEM conclui SÓ quando nao
+            // sobra item em 'pending'/'sending'/'failed_transient'. No mock a fila
+            // viva e `ctx.remaining`, entao "drenada" = fila vazia. Sem espelhar
+            // esse efeito o stub devolveria `true` fixo (default do switch) e o
+            // teste nao distinguiria a drenagem real da antiga.
+            return Promise.resolve({ data: ctx.remaining.length === 0, error: null });
           case "talkx_recipient_is_suppressed": {
             ctx.suppressionChecks++;
             if (opts.suppressionRpcError) {
@@ -323,6 +423,44 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             const remaining = opts.dailyRemaining ?? 500;
             return Promise.resolve({ data: { limit: 500, sent: 500 - remaining, remaining }, error: null });
           }
+          case "reschedule_multiplix_item": {
+            // Fiel ao banco (f32b §7): o reschedule NAO incrementa attempt_count
+            // (o claim ja subiu esta tentativa) e devolve dead_lettered em
+            // `attempt_count >= 3` — o item vira 'failed' e NUNCA volta a fila.
+            // Abaixo do teto ele volta com `next_attempt_at` no futuro; nas duas
+            // saidas ele sai da fila DESTA passada (sem isso o stub giraria o
+            // laco contra a fila).
+            ctx.reschedules.push(args);
+            const itemId = String(args.p_item_id).replace(/^item-/, "");
+            const row = ctx.remaining.find((r) => r.id === itemId);
+            const attempt = row?.attempt_count ?? 0;
+            ctx.remaining = ctx.remaining.filter((r) => r.id !== itemId);
+            if (attempt >= 3) {
+              ctx.deadLettered.push(args);
+              return Promise.resolve({ data: { action: "dead_lettered", attempt }, error: null });
+            }
+            return Promise.resolve({ data: { action: "rescheduled", attempt }, error: null });
+          }
+          case "heartbeat_multiplix_item": {
+            const resultado = {
+              data: opts.heartbeatResult?.data ?? true,
+              error: opts.heartbeatResult?.error ?? null,
+            };
+            if (!opts.lazyHeartbeat) return Promise.resolve(resultado);
+            // Fiel ao PostgrestBuilder: CRIAR o builder nao faz request nenhum. So o consumo
+            // (then/await) despacha -- e e o consumo que este stub conta.
+            ctx.heartbeatBuilders++;
+            const executar = () => {
+              ctx.heartbeatConsumed++;
+              return opts.heartbeatPending ? ctx.heartbeatGate.then(() => resultado) : Promise.resolve(resultado);
+            };
+            return {
+              then: (onFulfilled?: (valor: unknown) => unknown, onRejected?: (motivo: unknown) => unknown) =>
+                executar().then(onFulfilled, onRejected),
+              catch: (onRejected?: (motivo: unknown) => unknown) => executar().catch(onRejected),
+              finally: (aoFinalizar?: () => void) => executar().finally(aoFinalizar),
+            };
+          }
           default:
             return Promise.resolve({ data: true, error: null });
         }
@@ -339,6 +477,24 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
       from(table: string) {
         return tableBuilder(table, opts, ctx);
       },
+      // F65: a URL enviada e ASSINADA pelo mecanismo privado (resolvePrivateBucketUrl
+      // -> storage.from(bucket).createSignedUrl). O stub devolve a forma real do
+      // Supabase e grava a chamada — o teste prova bucket e path pedidos.
+      storage: {
+        from(bucket: string) {
+          return {
+            createSignedUrl(path: string, ttl: number) {
+              ctx.signCalls.push({ bucket, path, ttl });
+              return Promise.resolve({
+                data: {
+                  signedUrl: `https://stub.supabase.co/storage/v1/object/sign/${bucket}/${path}?token=sig-teste`,
+                },
+                error: null,
+              });
+            },
+          };
+        },
+      },
     },
   };
 }
@@ -350,15 +506,26 @@ function newCtx(opts: MockOpts): MockCtx {
   if (opts.connection === undefined) {
     opts.connection = { id: "conn-0001", status: "connected", instance_id: "instance-abc" };
   }
+  // R2-API-013: portao do heartbeat. Com heartbeatPending a renovacao fica em voo ate o teste
+  // liberar -- e assim que se observa um tick chegando com o anterior ainda pendente.
+  let liberarHeartbeat: () => void = () => {};
+  const heartbeatGate = new Promise<void>((resolve) => { liberarHeartbeat = () => resolve(); });
   return {
     rpcCalls: [],
     events: [],
     limits: [],
     completions: [],
+    reschedules: [],
+    deadLettered: [],
     dispatch,
     remaining: [...(opts.recipients ?? [])],
     recipientSelects: 0,
     suppressionChecks: 0,
+    signCalls: [],
+    heartbeatBuilders: 0,
+    heartbeatConsumed: 0,
+    heartbeatGate,
+    releaseHeartbeat: () => liberarHeartbeat(),
   };
 }
 
@@ -662,6 +829,46 @@ Deno.test("F06 (bug 01/10/2026): admin COM multiplix.dispatch.manage_all inicia 
   );
 });
 
+// ------------------------------------------------------------- F25/MX09 (permissao)
+// O produto (F25) libera a ENTRADA no Multiplix pelo nome `multiplix.dispatch.create`
+// (nav/rota e criacao do proprio disparo) — matriz: `agent` = customers.own +
+// dispatch.create. O worker, porem, so aceitava admin/supervisor OU manage_all
+// antes de checar o dono, entao o papel minimo autorizado pelo front levava 403
+// ao iniciar o PROPRIO disparo. A permissao passa a abrir a entrada; o dono
+// continua sendo exigido por `canManageDispatch`.
+
+Deno.test("F25/MX09: JWT com multiplix.dispatch.create (sem admin/supervisor, sem manage_all) inicia o PROPRIO disparo → permitido", async () => {
+  const { ctx, status } = await runWithJwt(startRequestOpts({
+    authUser: { id: "user-agent-001" },
+    isAdminOrSupervisor: false,
+    manageAll: false,
+    dispatchCreate: true,
+    ownProfileId: "profile-me",
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-me" }),
+  }));
+  assert(status === 200, `esperado 200 (dono com multiplix.dispatch.create), recebido ${status}`);
+  assert(
+    rpcs(ctx, "transition_multiplix_dispatch").some((call) => call.args.p_action === "start"),
+    "esperava a transicao de start do proprio disparo com multiplix.dispatch.create",
+  );
+});
+
+Deno.test("F25/MX09 (negado): JWT com multiplix.dispatch.create inicia disparo de OUTRO dono → 403 sem transicao", async () => {
+  // A permissao abre a ENTRADA, nunca o disparo alheio: sem manage_all o dono
+  // continua sendo exigido. Sem esta negacao, "aceitar dispatch.create" abriria
+  // o start de qualquer disparo para todo `agent`.
+  const { ctx, status } = await runWithJwt(startRequestOpts({
+    authUser: { id: "user-agent-002" },
+    isAdminOrSupervisor: false,
+    manageAll: false,
+    dispatchCreate: true,
+    ownProfileId: "profile-me",
+    dispatch: dispatchRow({ status: "draft", created_by: "profile-outro" }),
+  }));
+  assert(status === 403, `esperado 403 (disparo de outro dono), recebido ${status}`);
+  assert(rpcs(ctx, "transition_multiplix_dispatch").length === 0, "nao pode transicionar disparo de outro dono");
+});
+
 // ------------------------------------------------------------------- F09 (opt-out)
 
 Deno.test("F09: destinatário na lista negra vira 'skipped' com motivo, sem POST ao provedor", async () => {
@@ -698,10 +905,59 @@ Deno.test("F11a: uma invocacao processa UM lote (MULTIPLIX_BATCH_SIZE) e devolve
   assert(ctx.completions.length === 20, `esperava 20 conclusoes, recebeu ${ctx.completions.length}`);
   assert(ctx.limits.length === 1, `esperava 1 unica selecao limitada, houve ${ctx.limits.length}`);
   assert(ctx.limits[0] === 20, `lote default deveria ser 20, veio ${JSON.stringify(ctx.limits)}`);
-  // Nao afirmamos body.completed aqui: o mock devolve true fixo para
-  // complete_multiplix_dispatch_if_drained — quem decide "concluido" e a funcao
-  // SQL, coberta pelos testes da F13. O que prova o lote unico e o teto de 20
-  // conclusoes acima, com 25 itens disponiveis na fila.
+  // Nao afirmamos body.completed aqui de proposito: quem decide "concluido" e a
+  // RPC de drenagem (o mock a espelha, na secao MX03). O que prova o lote unico e
+  // o teto de 20 conclusoes acima, com 25 itens disponiveis na fila (5 sobram, o
+  // disparo NAO conclui nesta passada).
+});
+
+// ------------------------------------------------------------------- MX03 (drenagem por item)
+
+Deno.test("MX03: a conclusão do disparo consulta a fila POR ITEM (delivery_items), nunca a de recipients", async () => {
+  // O worker encerrava chamando complete_multiplix_dispatch_if_drained, cuja
+  // ULTIMA definicao (20260929600000:90) conta pending/sending em
+  // multiplix_recipients — fila que os RPCs por item (record_multiplix_item_sent /
+  // complete_multiplix_item) NAO alimentam. Consequencia (achado MX03): mesmo com
+  // todo item terminal o recipient continuava 'pending' e o disparo NUNCA concluia
+  // no fluxo atual. A drenagem correta e complete_multiplix_dispatch_if_items_drained
+  // (f32b §10), e a antiga esta marcada DEPRECATED em 20261001231230:677.
+  const recipients = [recipientRow(1, "5511955550001"), recipientRow(2, "5511955550002")];
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: recipients.length }),
+    recipients,
+    suppressedPhones: recipients.map((r) => String(r.destino_e164)),
+  };
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    "o worker tem de concluir pela drenagem POR ITEM (complete_multiplix_dispatch_if_items_drained)",
+  );
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_drained").length === 0,
+    "o worker nao pode mais consultar a fila antiga de recipients na conclusao",
+  );
+  // A fila de itens drenou (os 2 itens suprimidos viraram 'skipped', terminais):
+  // a drenagem por item devolve true e o disparo conclui.
+  assert(body.completed === true, `fila de itens drenada deveria concluir o disparo, veio ${body.completed}`);
+});
+
+Deno.test("MX03: com item ainda na fila a drenagem por item NAO conclui o disparo nesta passada", async () => {
+  // Contraprova do contrato: o `completed` do worker e o resultado da drenagem
+  // por item — nao um true cego. Um lote de 25 para tamanho 20 deixa 5 itens vivos.
+  const opts = batchSendingOpts("551193333", 25);
+  const ctx = newCtx(opts);
+  const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(
+    rpcs(ctx, "complete_multiplix_dispatch_if_items_drained").length === 1,
+    "o worker tem de consultar a drenagem POR ITEM mesmo quando a fila nao esta vazia",
+  );
+  assert(body.completed === false, `fila com item vivo nao pode concluir o disparo, veio ${body.completed}`);
 });
 
 Deno.test("F11a: MULTIPLIX_BATCH_SIZE muda o tamanho do lote", async () => {
@@ -1098,20 +1354,25 @@ Deno.test("gap M25: erro na RPC de supressao nao libera envio (fail-closed)", as
   }
 });
 
-Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", async () => {
+Deno.test("gap M32/MX02: item com midia no BLOCO usa o endpoint de midia (nao sendText)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   // Sem flavor explicito o evoFetch traduz para EVOLUTION GO e, sem token de
   // instancia, devolve 400 sem chamar o provedor — o POST so e observavel em v2.
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo global aponta para OUTRO arquivo — prova que o endpoint (e a
+    // midia) vem do bloco do item, nao de `dispatch.media_url/media_type`.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "image",
-      media_url: "https://exemplo.test/foto.png",
+      media_type: "document",
+      media_url: "https://exemplo.test/global.pdf",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550004")],
+    // O ativo vive no bloco de ARQUIVO (`file`) — o mesmo contrato da previa.
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/foto.png" } },
   };
   const ctx = newCtx(opts);
   // F56: o envio de midia passa pelo prepareMedia, que BUSCA o arquivo para detectar o
@@ -1128,7 +1389,12 @@ Deno.test("gap M32: dispatch com midia usa o endpoint de midia (nao sendText)", 
     );
     assert(
       posts.every((url) => !url.includes("sendText")),
-      `dispatch com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+      `item com midia nao pode usar sendText, veio: ${JSON.stringify(posts)}`,
+    );
+    const corpoMidia = provider.posts.find((p) => p.url.includes("sendMedia"));
+    assert(
+      String(corpoMidia?.body.media).includes("foto.png"),
+      `a midia tem de ser a do bloco, saiu: ${String(corpoMidia?.body.media)}`,
     );
   } finally {
     provider.restore();
@@ -1192,6 +1458,207 @@ Deno.test("F38: destino invalido (possivel LID de 14 digitos) vira 'skipped' no_
   );
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MX06 — variável não resolvida bloqueia o envio (skipped, NUNCA POST com lacuna)
+// O validate (multiplix-dispatch/inspect.ts) já classifica campo ausente como
+// `exclusao`; o worker honra o MESMO contrato consumindo missing/unknown do
+// personalize. Antes do MX06 ele lia só .text: "Ola {{empresa}}" com snapshot
+// nulo saía como "Ola ".
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test("MX06: {{empresa}} sem company_name_snapshot vira 'skipped' missing_variable — zero POST, zero snapshot", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550200", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem incompleta nao pode ser congelada em snapshot",
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem comecar com variavel pendente",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: placeholder desconhecido (typo {{empressa}}) vira 'skipped' unknown_variable — zero POST", async () => {
+  // typo nao e builtin, nao e campo customizado, nao e link -> `unknown` do
+  // kernel. Antes saia "[empressa]" para o cliente.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empressa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550201")],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem com placeholder desconhecido nao pode ser congelada",
+  );
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(ctx.completions[0].p_status === "skipped", `status esperado 'skipped', veio ${ctx.completions[0].p_status}`);
+  assert(
+    ctx.completions[0].p_error_message === "unknown_variable:empressa",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: o motivo lista TODAS as chaves pendentes, ordenadas (missing + unknown)", async () => {
+  // Deterministico: independente da ordem no template, o motivo sai ordenado —
+  // e cada chave carrega o prefixo da sua classe (missing vs unknown).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "{{cargo}} de {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550202", { company_name_snapshot: null })],
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  assert(providerPosts === 0, `nenhum POST ao provedor era esperado, houve ${providerPosts}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_error_message === "missing_variable:empresa;unknown_variable:cargo",
+    `motivo inesperado: ${ctx.completions[0].p_error_message}`,
+  );
+});
+
+Deno.test("MX06: builtin presente envia byte a byte o texto do kernel ({{empresa}} com snapshot)", async () => {
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550203", { company_name_snapshot: "Acme Ltda" })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{empresa}}", { company: "Acme Ltda" }, {}, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: alem do oraculo do kernel (criterio 2 pede igualdade byte a
+    // byte com o kernel), o payload tem de casar com o literal esperado — assim
+    // o teste nao depende de recalcular o mesmo codigo que esta sob teste.
+    assert(
+      textos[0].body.text === "Ola Acme Ltda",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Acme Ltda'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: campo customizado do variables_snapshot resolve e envia byte a byte ({{cargo}})", async () => {
+  // O validate alimenta personalize com as strings de variables_snapshot — o
+  // worker usa o MESMO insumo, senao um campo aprovado viraria [cargo]/skip.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{cargo}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550204", { variables_snapshot: { cargo: "Diretor" } })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const esperado = personalize("Ola {{cargo}}", { company: "Empresa 1" }, { cargo: "Diretor" }, "America/Sao_Paulo").text;
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    // MX06/juiz: oraculo do kernel + literal, para o teste nao ser tautologico.
+    assert(
+      textos[0].body.text === "Ola Diretor",
+      `payload literal divergente: '${String(textos[0].body.text)}' !== 'Ola Diretor'`,
+    );
+    assert(
+      textos[0].body.text === esperado,
+      `payload diverge do kernel: '${String(textos[0].body.text)}' !== '${esperado}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio resolvido tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: default explicito {{empresa|padrao}} com snapshot nulo ENVIA (nao entra em missing)", async () => {
+  // `{{chave|padrao}}`: o kernel nao inclui a chave em missing/unknown — o valor
+  // padrao e aprovado pelo contrato do validate e o envio segue normal.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa|Empresa Parceira}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550205", { company_name_snapshot: null })],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText (default explicito), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Ola Empresa Parceira",
+      `payload inesperado: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio com default tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("MX06: mensagem congelada (personalized_message) sai como esta, mesmo com variavel pendente no template", async () => {
+  // Snapshot ja aprovado no confirm: o worker nao repersonaliza nem revalida —
+  // o texto congelado e a verdade do que foi revisado.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "Ola {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550206", { company_name_snapshot: null })],
+    // MX02: o snapshot congelado e do ITEM (multiplix_delivery_items), nao do recipient.
+    itemPersonalizedMessage: "Texto congelado",
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    const textos = provider.posts.filter((p) => p.url.includes("sendText"));
+    assert(textos.length === 1, `esperava 1 POST sendText, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      textos[0].body.text === "Texto congelado",
+      `o congelado tem de sair como esta: '${String(textos[0].body.text)}'`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio congelado tem de ser registrado");
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
 Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 envio e pausa)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
@@ -1224,21 +1691,28 @@ Deno.test("gap M12/F17: a cota diaria e consumida por envio (remaining=1 -> 1 en
   }
 });
 
-Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", async () => {
+Deno.test("F56/MX02: documento sai com o fileName, a url e a legenda do BLOCO (o PDF chega com nome)", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
+    // MX02: o disparo aponta para OUTRO arquivo (imagem sem nome). Se o worker
+    // ainda olhasse `dispatch.media_url/media_type`, sairia a imagem global — as
+    // asserções abaixo separam os dois caminhos.
     dispatch: dispatchRow({
       status: "sending",
-      media_type: "document",
-      media_url: "https://exemplo.test/contrato.pdf",
+      media_type: "image",
+      media_url: "https://exemplo.test/global.png",
       total_recipients: 1,
     }),
     recipients: [recipientRow(1, "5511955550008")],
-    // F33: o nome do arquivo vive no content do bloco, e e a unica fonte dele —
-    // a URL assinada do bucket nao preserva o nome.
-    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", fileName: "Contrato Assinado.pdf" } },
+    // F33: url/caption/nome do arquivo vivem no content do bloco, e sao a unica
+    // fonte deles — a URL assinada do bucket nao preserva o nome.
+    blockType: "file",
+    blockContent: {
+      text: "Segue o contrato da {{empresa}}",
+      media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+    },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1254,6 +1728,14 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
       midia[0].body.mediatype === "document",
       `tipo real (detectado nos bytes) esperado document, veio ${String(midia[0].body.mediatype)}`,
     );
+    assert(
+      String(midia[0].body.media).includes("contrato.pdf"),
+      `a midia tem de ser a do bloco, saiu: ${String(midia[0].body.media)}`,
+    );
+    assert(
+      midia[0].body.caption === "Segue o contrato da Empresa 1",
+      `a legenda tem de ser o texto do bloco personalizado, saiu: ${String(midia[0].body.caption)}`,
+    );
   } finally {
     provider.restore();
     if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
@@ -1261,18 +1743,16 @@ Deno.test("F56: documento sai com o fileName do bloco (o PDF chega com nome)", a
   }
 });
 
-Deno.test("F56: audio do dispatch sai como PTT e avisa presenca 'recording'", async () => {
+Deno.test("F56/MX02: audio do BLOCO sai como PTT e avisa presenca 'recording'", async () => {
   const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
   Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,
-    dispatch: dispatchRow({
-      status: "sending",
-      media_type: "audio",
-      media_url: "https://exemplo.test/nota.ogg",
-      total_recipients: 1,
-    }),
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
     recipients: [recipientRow(1, "5511955550009")],
+    // MX02: o audio e do BLOCO (`audio_recorded`), nao mais do disparo global.
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
   };
   const ctx = newCtx(opts);
   const provider = stubProviderComMidia();
@@ -1410,4 +1890,1279 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   } finally {
     provider.restore();
   }
+});
+
+// -----------------------------------------------------------------------------
+// MX05 - rejeicao TRANSITORIA do provedor (429) volta para a fila com backoff
+// limitado; nunca vira 'failed' terminal.
+// O kernel (errors.ts) ja classifica (429 -> transient/rate_limited) e ja tem o
+// backoff com teto; o defeito era o CONSUMIDOR: o ramo de resposta nao-OK
+// concluia o item como 'failed' e `reschedule_multiplix_item` so era chamado
+// quando nenhum POST tinha saido (Probe429: failed=1, rescheduleCalls=0).
+// Um 5xx continua em `outcome_unknown` (o POST e ambiguo; reenviar cego pode
+// duplicar mensagem) - por isso a guarda abaixo.
+// -----------------------------------------------------------------------------
+
+Deno.test("MX05: 429 do provedor reagenda o item com backoff limitado (nunca 'failed' terminal)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550701")],
+  };
+  const ctx = newCtx(opts);
+  const antes = Date.now();
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  let corpo: { sent?: number; failed?: number; outcome_unknown?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = rpcs(ctx, "reschedule_multiplix_item");
+  assert(reagendamentos.length === 1, `esperava 1 reagendamento do item, houve ${reagendamentos.length}`);
+  const args = reagendamentos[0].args;
+  assert(args.p_item_id === "item-recipient-1", `item_id inesperado: ${String(args.p_item_id)}`);
+  assert(
+    args.p_claim_token === "claim-item-recipient-1",
+    `claim_token inesperado: ${String(args.p_claim_token)}`,
+  );
+  // Backoff COM TETO do kernel: a 1a falha espera 30 s (nao retry imediato).
+  const retryAfter = Date.parse(String(args.p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(args.p_retry_after)}`);
+  const esperaMs = retryAfter - antes;
+  assert(
+    esperaMs >= 29_000 && esperaMs <= 31_000,
+    `p_retry_after fora da 1a janela de 30 s: ${String(args.p_retry_after)} (${esperaMs}ms)`,
+  );
+
+  // O ponto do MX05: rejeicao temporaria NAO conclui o item como falha terminal.
+  assert(
+    rpcs(ctx, "complete_multiplix_item").length === 0,
+    "429 transitorio NAO pode concluir o item ('failed') - a retentativa do kernel tem de acontecer",
+  );
+  // Nem marca a conexao em risco: isso e para erro PERMANENTE (F60).
+  assert(
+    rpcs(ctx, "register_multiplix_connection_failure").length === 0,
+    "429 transitorio nao pode marcar a conexao em risco",
+  );
+  // O codigo cru continua indo para a trilha de eventos, com a classe transitoria.
+  const evento = ctx.events.find((e: Record<string, unknown>) => String(e.kind).startsWith("item_"));
+  assert(evento !== undefined, "esperava um evento do item na trilha");
+  const payload = evento.payload as Record<string, unknown>;
+  assert(payload.error_class === "transient", `error_class inesperado: ${String(payload.error_class)}`);
+  assert(payload.error_code === "rate_limited", `error_code inesperado: ${String(payload.error_code)}`);
+  assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
+  // E o item nao conta como falha na resposta do worker.
+  assert(corpo.failed === 0, `o reagendamento nao pode contar como falha: ${JSON.stringify(corpo)}`);
+});
+
+Deno.test("MX05/guarda: erro PERMANENTE continua indo para dead letter (nao vira retentativa)", async () => {
+  // A correcao do MX05 nao pode transformar TODO erro do provedor em retry:
+  // numero inexistente/opt-out sao permanentes e NUNCA reententam.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550702")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } }, 400);
+  let corpo: { failed?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(
+    rpcs(ctx, "reschedule_multiplix_item").length === 0,
+    "erro permanente NAO pode ser reagendado (reententaria quem nunca vai receber)",
+  );
+  const completions = rpcs(ctx, "complete_multiplix_item");
+  assert(completions.length === 1, `esperava 1 conclusao, houve ${completions.length}`);
+  assert(completions[0].args.p_status === "failed", `status esperado 'failed', veio ${String(completions[0].args.p_status)}`);
+  // O item concluido como 'failed' tem de contar na resposta do worker —
+  // antes do conserto a conclusao acontecia mas failed saia 0.
+  assert(corpo.failed === 1, `a falha permanente tem de contar na resposta: ${JSON.stringify(corpo)}`);
+  assert(
+    rpcs(ctx, "register_multiplix_connection_failure").length === 1,
+    "erro permanente continua marcando o risco da conexao (F60)",
+  );
+});
+
+Deno.test("MX05/guarda: 5xx continua outcome_unknown (reenviar cego duplicaria mensagem)", async () => {
+  // A protecao de idempotencia do POST ambiguo NAO entra na retentativa: o
+  // 5xx segue pelo caminho de resultado desconhecido.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550703")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+  assert(rpcs(ctx, "reschedule_multiplix_item").length === 0, "5xx nao pode virar retentativa cega");
+  const completions = rpcs(ctx, "complete_multiplix_item");
+  assert(completions.length === 1, `esperava 1 conclusao, houve ${completions.length}`);
+  assert(
+    completions[0].args.p_status === "outcome_unknown",
+    `status esperado 'outcome_unknown', veio ${String(completions[0].args.p_status)}`,
+  );
+});
+
+Deno.test("MX05: transitorio que esgota as tentativas vira dead letter pela RPC (teto respeitado)", async () => {
+  // Na 3a tentativa a propria RPC transforma o reagendamento em dead letter (o
+  // worker informa o retry_after, nao decide o teto) - o item nao reententa
+  // sem fim.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550704")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  let corpo: { sent?: number; failed?: number } = {};
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    corpo = await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(rpcs(ctx, "reschedule_multiplix_item").length === 1, "a RPC de reagendamento continua sendo a autoridade do teto");
+  assert(corpo.failed === 1, `o dead letter da RPC conta como falha: ${JSON.stringify(corpo)}`);
+});
+
+Deno.test("MX05: dead_lettered da RPC vira item_failed na trilha (nao mero reagendamento)", async () => {
+  // Quando a RPC esgota as tentativas ela devolve action='dead_lettered' e o
+  // item ja esta 'failed' no banco. Registrar 'item_rescheduled' esconderia a
+  // morte do item numa trilha que so deveria mostrar fila — a auditoria tem de
+  // enxergar a falha.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550705")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = ctx.events.filter(
+    (e: Record<string, unknown>) => e.kind === "item_rescheduled" && e.item_id === "item-recipient-1",
+  );
+  assert(
+    reagendamentos.length === 0,
+    "dead_lettered NAO pode ser auditado como item_rescheduled (o item morreu, nao voltou a fila)",
+  );
+  const falha = ctx.events.find(
+    (e: Record<string, unknown>) => e.kind === "item_failed" && e.item_id === "item-recipient-1",
+  );
+  assert(falha !== undefined, "esperava um evento item_failed para o dead_lettered da RPC");
+  const payload = falha.payload as Record<string, unknown>;
+  assert(
+    payload.action === "dead_lettered",
+    `payload.action esperado 'dead_lettered', veio ${String(payload.action)}`,
+  );
+  assert(payload.error_class === "transient", `error_class inesperado: ${String(payload.error_class)}`);
+  assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
+});
+
+Deno.test("MX05: decisao dead_letter (sem retryAfter do kernel) nao agenda retry imediato", async () => {
+  // attempt_count = 3 -> a tentativa que falha e a 4a: planRetry devolve
+  // dead_letter SEM retryAfter. O fallback do worker tem de ser o 1o degrau do
+  // backoff (30 s) — `new Date()` agendaria o retry para AGORA, o que e
+  // proibido; quem aposenta o item continua sendo a RPC.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550706")],
+  };
+  opts.recipients![0].attempt_count = 3;
+  const ctx = newCtx(opts);
+  const antes = Date.now();
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  } finally {
+    provider.restore();
+  }
+
+  const reagendamentos = rpcs(ctx, "reschedule_multiplix_item");
+  assert(reagendamentos.length === 1, `esperava 1 chamada a reschedule_multiplix_item, houve ${reagendamentos.length}`);
+  const retryAfter = Date.parse(String(reagendamentos[0].args.p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(reagendamentos[0].args.p_retry_after)}`);
+  const esperaMs = retryAfter - antes;
+  assert(esperaMs > 1_000, `retry quase imediato (${esperaMs}ms) — o fallback nao pode ser 'agora'`);
+  assert(
+    esperaMs >= 29_000 && esperaMs <= 31_000,
+    `p_retry_after fora do 1o degrau de 30 s: ${String(reagendamentos[0].args.p_retry_after)} (${esperaMs}ms)`,
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MX02 (item 46/P1) — o worker envia o conteudo do BLOCO do item, e nao mais o
+// template/midia GLOBAIS do disparo. A previa (F48) e o worker compartilham o
+// resolvedor `_shared/multiplix-content.ts`; estes testes provam a paridade.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Provedor de sucesso que registra os corpos enviados (texto e midia). */
+async function runComClienteV2(opts: MockOpts) {
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body = (await res.json()) as any;
+    return { ctx, provider, body };
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+}
+
+Deno.test("MX02: o texto enviado e o do BLOCO do item, nao o template global do disparo", async () => {
+  // Caso medido na auditoria: template global "GLOBAL {{empresa}}" x bloco
+  // "BLOCO CORRETO {{empresa}}" — o worker mandava "GLOBAL Empresa 1".
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550010")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "BLOCO CORRETO Empresa 1",
+    `o texto tem de sair do bloco; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o `variables_snapshot` do item entra na personalizacao (previa == envio)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550011")],
+    blockContent: { text: "Ola {{empresa}} — falar com {{cargo}}" },
+    variablesSnapshot: { cargo: "Diretor" },
+  };
+  const { provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Ola Empresa 1 — falar com Diretor",
+    `variavel do item nao entrou no texto; saiu: ${String(envios[0].body.text)}`,
+  );
+});
+
+Deno.test("MX02: o snapshot do ITEM prevalece e nao e regravado", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550012")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    itemPersonalizedMessage: "Mensagem congelada do item (bloco 2)",
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    envios[0].body.text === "Mensagem congelada do item (bloco 2)",
+    `o snapshot do item tem de prevalecer; saiu: ${String(envios[0].body.text)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "snapshot ja gravado nao pode ser regravado",
+  );
+});
+
+Deno.test("MX02/F69: bloco de voz sem ativo renderizado SEGURA o item (nao manda o template global)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550013")],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(
+    provider.posts.length === 0,
+    `bloco de voz pendente nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`,
+  );
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+  assert(rpcs(ctx, "record_multiplix_item_sent").length === 0, "nada pode ser marcado como enviado");
+});
+
+Deno.test("MX02: bloco sem texto e sem midia nao vira POST (devolve o item com codigo nomeado)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550014")],
+    blockContent: {},
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(provider.posts.length === 0, `bloco vazio nao pode gerar POST, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  const reschedules = ctx.reschedules;
+  assert(reschedules.length === 1, `esperava 1 devolucao a fila, houve ${reschedules.length}`);
+  assert(
+    String(reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(reschedules[0].p_error_message)}`,
+  );
+});
+
+Deno.test("MX02: payload do worker == resolucao da previa para o MESMO bloco e destinatario", async () => {
+  const recipient = recipientRow(1, "5511955550015");
+  const content = {
+    text: "Segue o contrato da {{empresa}}",
+    media: { url: "https://exemplo.test/contrato.pdf", caption: "Segue o contrato da {{empresa}}", file_name: "Contrato Assinado.pdf" },
+  };
+  const block = {
+    id: "block-1",
+    block_order: 0,
+    block_type: "file",
+    content,
+    personalization_mode: null,
+    content_version: 1,
+    asset_id: null,
+  };
+  // A MESMA funcao que `handlePreview` chama para montar a previa (F48).
+  const previa = resolveBlockContent(block, recipient, "America/Sao_Paulo");
+
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipient],
+    blockType: "file",
+    blockContent: content,
+  };
+  const { provider } = await runComClienteV2(opts);
+  const midia = provider.posts.filter((p) => p.url.includes("sendMedia"));
+  assert(midia.length === 1, `esperava 1 POST de midia, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(
+    midia[0].body.fileName === previa.asset?.file_name,
+    `nome do arquivo divergente da previa: envio=${String(midia[0].body.fileName)} previa=${String(previa.asset?.file_name)}`,
+  );
+  assert(
+    String(midia[0].body.media).includes(String(previa.asset?.url)),
+    `midia divergente da previa: envio=${String(midia[0].body.media)} previa=${String(previa.asset?.url)}`,
+  );
+  assert(
+    midia[0].body.caption === previa.text,
+    `texto divergente da previa: envio=${String(midia[0].body.caption)} previa=${previa.text}`,
+  );
+});
+
+Deno.test("MX02/F70: excecao na resolucao do bloco conclui SO o item como 'failed' e o lote continua", async () => {
+  // Prova do defeito corrigido: a resolucao do bloco rodava FORA de try/catch —
+  // uma excecao ali subia ao catch do handler, devolvia 500 e o item nem virava
+  // 'failed'. Aqui o `variables_snapshot` do item 1 lanca ao ser percorrido pelo
+  // resolvedor; o item 2 e normal e TEM de ser enviado na mesma passada.
+  const quebrado = recipientRow(1, "5511955550020");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (quebrado as any).variables_snapshot = new Proxy({}, {
+    ownKeys() {
+      throw new Error("variables_snapshot quebrado");
+    },
+  });
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 2 }),
+    recipients: [quebrado, recipientRow(2, "5511955550021")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts); // ja afirma resposta 200
+  const falhas = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(falhas.length === 1, `esperava 1 conclusao do item 1, houve ${falhas.length}`);
+  assert(falhas[0].p_status === "failed", `item 1 tinha de virar 'failed', veio ${String(falhas[0].p_status)}`);
+  assert(
+    String(falhas[0].p_error_message).includes("multiplix_block_resolution_failed"),
+    `mensagem sem o codigo nomeado: ${String(falhas[0].p_error_message)}`,
+  );
+  assert(
+    String(falhas[0].p_error_message).includes("variables_snapshot quebrado"),
+    `mensagem sem o texto do erro original: ${String(falhas[0].p_error_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto (so o item 2), veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.number === "5511955550021", `o POST tinha de ser do item 2; foi para ${String(envios[0].body.number)}`);
+  assert(envios[0].body.text === "BLOCO CORRETO Empresa 2", `texto do item 2 divergente: ${String(envios[0].body.text)}`);
+});
+
+Deno.test("MX02/F70: falha do RPC de snapshot NAO conclui o item como 'failed' (erro transitorio, retomavel)", async () => {
+  // A gravacao do snapshot e I/O (RPC), nao resolucao deterministica: uma falha
+  // TRANSITORIA ali tem de preservar o comportamento anterior a F70 — o erro sobe com
+  // o codigo proprio `multiplix_message_snapshot_failed` (o handler devolve 500 e o
+  // lease vence, permitindo retomada), NUNCA encerrar o item como 'failed' com o
+  // codigo enganoso do catch de resolucao (`multiplix_block_resolution_failed`).
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550024")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+    snapshotRpcError: true,
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderComMidia();
+  // O codigo do erro nao aparece no corpo da resposta (o handler devolve 500 generico),
+  // entao a prova vem do log estruturado do proprio modulo.
+  const erros: string[] = [];
+  const consoleErrorOriginal = console.error;
+  console.error = (...args: unknown[]) => { erros.push(args.map((a) => String(a)).join(" ")); };
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  let status = 0;
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    status = res.status;
+  } finally {
+    console.error = consoleErrorOriginal;
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+
+  // 1) O item NAO pode ser encerrado: para o banco ele continua reivindicado e o lease
+  // vence (retomavel). Este e o assert que o codigo com a regressao viola.
+  const concluidos = ctx.completions.filter((c) => String(c.p_item_id) === "item-recipient-1");
+  assert(
+    concluidos.length === 0,
+    `item NAO pode ser concluido por falha transitoria do snapshot: ${JSON.stringify(concluidos)}`,
+  );
+  assert(
+    !ctx.completions.some((c) => String(c.p_status) === "failed"),
+    `nenhum item pode virar 'failed' aqui: ${JSON.stringify(ctx.completions)}`,
+  );
+  // 2) Comportamento anterior preservado: o erro derruba a invocacao (500) em vez de
+  // encerrar o item — o lease vence e o item volta para a fila.
+  assert(status === 500, `esperado 500 (retomavel), recebido ${status}`);
+  // 3) O codigo de erro e o proprio do snapshot, nunca o do catch de resolucao.
+  const log = erros.join("\n");
+  assert(
+    log.includes("multiplix_message_snapshot_failed"),
+    `o erro do snapshot tinha de subir com o codigo proprio; log: ${log}`,
+  );
+  assert(
+    !log.includes("multiplix_block_resolution_failed"),
+    `o catch da resolucao engoliu a falha do snapshot; log: ${log}`,
+  );
+  const tentativas = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(tentativas.length === 1, `o snapshot tinha de ser tentado 1 vez, houve ${tentativas.length}`);
+  assert(
+    provider.posts.filter((p) => p.url.includes("/message/")).length === 0,
+    "nenhum POST de mensagem pode sair sem o snapshot gravado",
+  );
+  // Vermelho medido: com o index.ts do cherry-pick (RPC dentro do try), o log traz
+  // `multiplix_block_resolution_failed`, o item e concluido 'failed' e a resposta e 200.
+});
+
+Deno.test("MX02: o snapshot da mensagem e gravado NO ITEM, uma vez, antes do POST", async () => {
+  // A mensagem enviada ao provedor tem de ser a MESMA gravada em
+  // `multiplix_delivery_items.personalized_message` — o texto do BLOCO ja
+  // personalizado, nunca o template global.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", message_template: "GLOBAL {{empresa}}", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550022")],
+    blockContent: { text: "BLOCO CORRETO {{empresa}}" },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  const snapshots = rpcs(ctx, "persist_multiplix_item_message_snapshot");
+  assert(snapshots.length === 1, `esperava 1 gravacao de snapshot, houve ${snapshots.length}`);
+  assert(snapshots[0].args.p_item_id === "item-recipient-1", `snapshot no item errado: ${String(snapshots[0].args.p_item_id)}`);
+  assert(
+    typeof snapshots[0].args.p_claim_token === "string" && (snapshots[0].args.p_claim_token as string).length > 0,
+    "snapshot tem de levar o claim_token do lease em maos",
+  );
+  assert(
+    snapshots[0].args.p_personalized_message === "BLOCO CORRETO Empresa 1",
+    `snapshot gravou texto divergente do bloco: ${String(snapshots[0].args.p_personalized_message)}`,
+  );
+  const envios = provider.posts.filter((p) => p.url.includes("sendText"));
+  assert(envios.length === 1, `esperava 1 POST de texto, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(envios[0].body.text === snapshots[0].args.p_personalized_message, "o POST tem de levar o MESMO texto gravado no item");
+});
+
+Deno.test("MX02/F69: o reschedule de `multiplix_block_pending_media` respeita o teto de tentativas", async () => {
+  // attempt_count 2 + claim (que incrementa, f32b §2) = 3a tentativa: o
+  // reschedule responde dead_lettered (f32b §7) e o item vira 'failed' — nunca
+  // volta a fila nem gira de novo nesta passada.
+  const item = recipientRow(1, "5511955550023");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02: o reschedule de `multiplix_block_empty_content` respeita o teto de tentativas", async () => {
+  // Mesmo desenho do teste de voz pendente, com bloco sem texto e sem midia:
+  // attempt_count 2 + claim = 3a tentativa -> dead_lettered, sem reenvio a fila.
+  const item = recipientRow(1, "5511955550024");
+  item.attempt_count = 2;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const { ctx, provider, body } = await runComClienteV2(opts);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 1, `3a tentativa tinha de dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(rpcs(ctx, "claim_multiplix_item").length === 1, "o item foi reivindicado uma unica vez (sem giro)");
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(body.failed === 1, `body.failed esperado 1, veio ${JSON.stringify(body)}`);
+});
+
+Deno.test("MX02/F69: abaixo do teto o item volta a fila com o backoff da tentativa", async () => {
+  // attempt_count 1 + claim = 2a tentativa (< 3): reschedule devolve
+  // `rescheduled` e o item sai da fila desta passada com next_attempt_at ~120s
+  // a frente (backoff da 2a tentativa: [30s, 120s, 600s]).
+  const item = recipientRow(1, "5511955550025");
+  item.attempt_count = 1;
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [item],
+    blockContent: {},
+  };
+  const antes = Date.now();
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_empty_content"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  const retryAfter = Date.parse(String(ctx.reschedules[0].p_retry_after));
+  assert(Number.isFinite(retryAfter), `p_retry_after invalido: ${String(ctx.reschedules[0].p_retry_after)}`);
+  const delta = retryAfter - antes;
+  assert(
+    delta >= 110_000 && delta <= 130_000,
+    `backoff da 2a tentativa tinha de ser ~120s, veio ${delta}ms`,
+  );
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+});
+
+// ---------------------------------------------------------------------------
+// t_4fe1 (F65) — bloco voice_ai com ativo JA renderizado ENVIA o audio: a URL
+// sai de multiplix_voice_assets.caminho, assinada pelo mecanismo privado
+// existente (resolvePrivateBucketUrl, bucket multiplix-voice), UMA vez — sem
+// reschedule e sem dead-letter. Antes o resolvedor devolvia url:null para todo
+// voice_ai e o item pronto girava na fila ate morrer.
+// ---------------------------------------------------------------------------
+
+Deno.test("F65: voice_ai personalizado (voice_asset_id do item) envia o audio assinado UMA vez, sem reschedule/dead_letter", async () => {
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  try {
+    const opts: MockOpts = {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550030")],
+      blockType: "voice_ai",
+      blockContent: { voice: { script: "Roteiro da {{empresa}}", voice_id: "voz-1" } },
+      // Modo personalizado: o ativo e identificado pelo voice_asset_id do ITEM.
+      itemVoiceAssetId: "va-item-1",
+      voiceAssets: { "va-item-1": { caminho: "comercial/voz-item.ogg", invalidated_at: null } },
+    };
+    const { ctx, provider, body } = await runComClienteV2(opts);
+
+    const assinaturas = ctx.signCalls.filter((c) => c.bucket === "multiplix-voice");
+    assert(
+      assinaturas.length === 1,
+      `esperava 1 assinatura no bucket privado multiplix-voice, houve ${JSON.stringify(ctx.signCalls)}`,
+    );
+    assert(
+      assinaturas[0].path === "comercial/voz-item.ogg",
+      `o path assinado tem de ser o caminho do ativo: ${assinaturas[0].path}`,
+    );
+    const audios = provider.posts.filter((p) => p.url.includes("sendWhatsAppAudio"));
+    assert(audios.length === 1, `esperava 1 POST de audio, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      String(audios[0].body.audio).includes("/object/sign/multiplix-voice/comercial/voz-item.ogg"),
+      `o audio enviado tem de ser a URL ASSINADA do ativo, saiu: ${String(audios[0].body.audio)}`,
+    );
+    assert(rpcs(ctx, "record_multiplix_item_sent").length === 1, "o envio concluido tem de ser registrado");
+    assert(body.sent === 1, `body.sent esperado 1, veio ${JSON.stringify(body)}`);
+    assert(
+      ctx.reschedules.length === 0,
+      `ativo pronto nao pode voltar a fila, reschedules=${JSON.stringify(ctx.reschedules)}`,
+    );
+    assert(ctx.deadLettered.length === 0, `ativo pronto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+    assert(
+      ctx.completions.every((c) => c.p_status !== "failed"),
+      `nenhuma conclusao 'failed' esperada: ${JSON.stringify(ctx.completions)}`,
+    );
+  } finally {
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+  }
+});
+
+Deno.test("F65: voice_ai same_audio usa o asset_id do BLOCO (nao do item) e envia o audio assinado", async () => {
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
+  try {
+    const opts: MockOpts = {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550031")],
+      blockType: "voice_ai",
+      blockContent: { voice: { script: "Roteiro compartilhado", voice_id: "voz-1" } },
+      // same_audio: UM ativo para o disparo inteiro — o identificador mora no
+      // BLOCO (asset_id), nao no item (que aqui nem tem voice_asset_id).
+      blockPersonalizationMode: "same_audio",
+      blockAssetId: "va-shared-1",
+      voiceAssets: { "va-shared-1": { caminho: "comercial/voz-compartilhada.ogg", invalidated_at: null } },
+    };
+    const { ctx, provider, body } = await runComClienteV2(opts);
+
+    const assinaturas = ctx.signCalls.filter((c) => c.bucket === "multiplix-voice");
+    assert(
+      assinaturas.length === 1,
+      `esperava 1 assinatura no bucket privado multiplix-voice, houve ${JSON.stringify(ctx.signCalls)}`,
+    );
+    assert(
+      assinaturas[0].path === "comercial/voz-compartilhada.ogg",
+      `same_audio tem de assinar o caminho do ativo DO BLOCO: ${assinaturas[0].path}`,
+    );
+    const audios = provider.posts.filter((p) => p.url.includes("sendWhatsAppAudio"));
+    assert(audios.length === 1, `esperava 1 POST de audio, veio ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+    assert(
+      String(audios[0].body.audio).includes("/object/sign/multiplix-voice/comercial/voz-compartilhada.ogg"),
+      `o audio enviado tem de ser a URL ASSINADA do ativo compartilhado: ${String(audios[0].body.audio)}`,
+    );
+    assert(body.sent === 1, `body.sent esperado 1, veio ${JSON.stringify(body)}`);
+    assert(ctx.reschedules.length === 0, `ativo pronto nao pode voltar a fila: ${JSON.stringify(ctx.reschedules)}`);
+    assert(ctx.deadLettered.length === 0, `ativo pronto nao pode dead-letter: deadLettered=${ctx.deadLettered.length}`);
+  } finally {
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+  }
+});
+
+Deno.test("F65: voice_asset_id apontando ativo INVALIDADO segue pendente (multiplix_block_pending_media, zero POST)", async () => {
+  // A invalidacao (F45: roteiro mudou, ativo regerado) devolve o item a fila com
+  // o MESMO codigo do "sem ativo" — a ausencia REAL de ativo continua pendente.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550032")],
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}", voice_id: "voz-1" } },
+    itemVoiceAssetId: "va-item-1",
+    voiceAssets: { "va-item-1": { caminho: "comercial/voz-velha.ogg", invalidated_at: "2026-10-01T00:00:00Z" } },
+  };
+  const { ctx, provider } = await runComClienteV2(opts);
+  assert(provider.posts.length === 0, `nenhum POST esperado, houve ${JSON.stringify(provider.posts.map((p) => p.url))}`);
+  assert(ctx.reschedules.length === 1, `esperava 1 reschedule, houve ${ctx.reschedules.length}`);
+  assert(
+    String(ctx.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+    `codigo nomeado esperado, veio: ${String(ctx.reschedules[0].p_error_message)}`,
+  );
+  assert(ctx.deadLettered.length === 0, `abaixo do teto nao pode dead-letter, deadLettered=${ctx.deadLettered.length}`);
+});
+
+// ---------------------------------------------------------------------------
+// R2-API-013 (reauditoria 03/10/2026): o heartbeat do lease era um builder RPC
+// descartado (`void supabase.rpc(...)`) e o opt-out tardio nao encerrava o
+// timer. Estes testes usam um cliente LAZY (fiel ao PostgrestBuilder: criar o
+// builder nao despacha nada) e timers VIRTUAIS: o relogio de 30 s nao avanca
+// sozinho -- o teste dispara o tick e observa se a renovacao realmente saiu,
+// com o lease de 90 s ainda valido.
+// ---------------------------------------------------------------------------
+
+/** R2-API-013: leitura dos contadores do heartbeat por funcao (tipo number declarado) --
+ * o mesmo campo e comparado com valores diferentes ao longo do teste, e o estreitamento do
+ * `asserts condition` compararia '0' com '1' depois da primeira assercao. */
+function heartbeatCriados(ctx: MockCtx): number {
+  return ctx.heartbeatBuilders;
+}
+
+function heartbeatConsumidas(ctx: MockCtx): number {
+  return ctx.heartbeatConsumed;
+}
+
+/** Cede as microtasks pendentes do handler sem depender de relogio real. */
+function aguardarMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** Timers VIRTUAIS do heartbeat: o intervalo so dispara quando o teste chama o tick. */
+function stubHeartbeatTimers() {
+  const ticks: Array<() => void> = [];
+  const periodos: number[] = [];
+  const ativos = new Set<number>();
+  const setIntervalOriginal = globalThis.setInterval;
+  const clearIntervalOriginal = globalThis.clearInterval;
+  let proximoId = 1;
+  globalThis.setInterval = ((cb: () => void, ms?: number) => {
+    const id = proximoId++;
+    ativos.add(id);
+    ticks.push(cb);
+    periodos.push(Number(ms ?? 0));
+    return id;
+  }) as unknown as typeof globalThis.setInterval;
+  globalThis.clearInterval = ((id?: number) => {
+    if (id !== undefined) ativos.delete(id);
+  }) as unknown as typeof globalThis.clearInterval;
+  return {
+    ticks,
+    periodos,
+    ativos,
+    restore: () => {
+      globalThis.setInterval = setIntervalOriginal;
+      globalThis.clearInterval = clearIntervalOriginal;
+    },
+  };
+}
+
+/** Roda o handler com timers virtuais e o provedor pedido, e devolve o ctx do mock mais os
+ * timers -- o teste dispara os ticks e julga a renovacao; restoreTimers fica para o finally. */
+async function runComHeartbeatVirtual(
+  opts: MockOpts,
+  provedor: () => { restore: () => void } = stubProviderFetch,
+): Promise<{ ctx: MockCtx; timers: ReturnType<typeof stubHeartbeatTimers>; status: number; restoreTimers: () => void }> {
+  const ctx = newCtx(opts);
+  const timers = stubHeartbeatTimers();
+  const provider = provedor();
+  let status = 0;
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    status = res.status;
+  } finally {
+    provider.restore();
+  }
+  return { ctx, timers, status, restoreTimers: timers.restore };
+}
+
+/** Disparo de 1 destinatario que cai no opt-out TARDIO (entre o claim e o POST): o item e
+ * concluido no caminho de `continue` -- que era justamente o que deixava o timer vivo. */
+function optsOptOutTardio(phone: string): MockOpts {
+  return {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, phone)],
+    suppressedPhones: [],
+    suppressAfterFirstCheck: true,
+  };
+}
+
+Deno.test("R2-API-013: cada tick do heartbeat CONSOME a RPC (builder descartado nao renova o lease)", async () => {
+  const opts: MockOpts = { ...optsOptOutTardio("5511955550301"), lazyHeartbeat: true };
+  const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+  try {
+    assert(status === 200, `esperado 200, recebido ${status}`);
+    assert(timers.ticks.length === 1, `o worker nao armou o timer do heartbeat (${timers.ticks.length})`);
+    assert(
+      timers.periodos[0] === 30_000,
+      `o tick tem de sair em 30 s (um terco do lease de 90 s), veio ${timers.periodos[0]} ms`,
+    );
+    assert(ctx.suppressionChecks >= 2, `esperava o opt-out tardio (2 checagens), houve ${ctx.suppressionChecks}`);
+    // Antes do tick nada foi criado nem despachado: o builder e criado dentro do tick.
+    assert(heartbeatCriados(ctx) === 0, `builder criado fora do tick: ${heartbeatCriados(ctx)}`);
+    assert(heartbeatConsumidas(ctx) === 0, `renovacao consumida fora do tick: ${heartbeatConsumidas(ctx)}`);
+
+    timers.ticks[0](); // 30 s de relogio virtual
+    await aguardarMicrotasks();
+
+    assert(heartbeatCriados(ctx) === 1, `o tick criou ${heartbeatCriados(ctx)} builder(s) de heartbeat`);
+    assert(
+      heartbeatConsumidas(ctx) === 1,
+      `o tick descartou o builder RPC (renovacoes consumidas=${heartbeatConsumidas(ctx)}); ` +
+        "o lease de 90 s venceria sem nenhuma renovacao sair",
+    );
+    const hb = rpcs(ctx, "heartbeat_multiplix_item");
+    assert(hb.length === 1, `esperava 1 chamada a RPC de heartbeat, houve ${hb.length}`);
+    assert(hb[0].args.p_item_id === "item-recipient-1", `p_item_id inesperado: ${String(hb[0].args.p_item_id)}`);
+    assert(
+      hb[0].args.p_claim_token === "claim-item-recipient-1",
+      `p_claim_token inesperado: ${String(hb[0].args.p_claim_token)}`,
+    );
+    assert(hb[0].args.p_lease_seconds === 90, `p_lease_seconds esperado 90, veio ${String(hb[0].args.p_lease_seconds)}`);
+  } finally {
+    restoreTimers();
+  }
+});
+
+Deno.test("R2-API-013: tick com renovacao EM VOO nao empilha outro heartbeat (sem sobreposicao)", async () => {
+  const opts: MockOpts = {
+    ...optsOptOutTardio("5511955550302"),
+    lazyHeartbeat: true,
+    heartbeatPending: true,
+  };
+  const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+  try {
+    assert(status === 200, `esperado 200, recebido ${status}`);
+    assert(timers.ticks.length === 1, `o worker nao armou o timer do heartbeat (${timers.ticks.length})`);
+
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(heartbeatConsumidas(ctx) === 1, `o primeiro tick nao consumiu a renovacao (${heartbeatConsumidas(ctx)})`);
+
+    // Dois ticks com a renovacao anterior pendente: nenhum pode despachar outro heartbeat.
+    timers.ticks[0]();
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(
+      heartbeatConsumidas(ctx) === 1,
+      `heartbeats sobrepostos: ${heartbeatConsumidas(ctx)} renovacoes despachadas com a anterior em voo`,
+    );
+
+    ctx.releaseHeartbeat();
+    await aguardarMicrotasks();
+    timers.ticks[0]();
+    await aguardarMicrotasks();
+    assert(
+      heartbeatConsumidas(ctx) === 2,
+      `com a renovacao concluida o proximo tick tem de renovar de novo, veio ${heartbeatConsumidas(ctx)}`,
+    );
+  } finally {
+    restoreTimers();
+  }
+});
+
+Deno.test("R2-API-013: o timer do heartbeat morre em toda saida do item (inclusive opt-out tardio)", async () => {
+  // (a) opt-out tardio: o `continue` da ultima checagem de supressao pulava o stopHeartbeat e
+  // o timer seguia renovando um item ja concluido.
+  const tardio = await runComHeartbeatVirtual(optsOptOutTardio("5511955550303"));
+  try {
+    assert(tardio.status === 200, `esperado 200, recebido ${tardio.status}`);
+    assert(
+      tardio.ctx.suppressionChecks >= 2,
+      `esperava o opt-out tardio, houve ${tardio.ctx.suppressionChecks} checagens`,
+    );
+    assert(tardio.timers.ticks.length === 1, "o heartbeat nao foi armado neste cenario");
+    assert(
+      tardio.timers.ativos.size === 0,
+      `timer do heartbeat vazou no opt-out tardio: ${tardio.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    tardio.restoreTimers();
+  }
+
+  // (b) envio concluido: o item sai por record_multiplix_item_sent e o timer tambem para.
+  const sucesso = await runComHeartbeatVirtual(
+    {
+      cronVaultResult: TEST_CRON_SECRET,
+      dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+      recipients: [recipientRow(1, "5511955550304")],
+    },
+    stubProviderSuccess,
+  );
+  try {
+    assert(sucesso.status === 200, `esperado 200 no envio concluido, recebido ${sucesso.status}`);
+    assert(
+      rpcs(sucesso.ctx, "record_multiplix_item_sent").length === 1,
+      "o envio de sucesso nao concluiu (nada a limpar)",
+    );
+    assert(
+      sucesso.timers.ativos.size === 0,
+      `timer do heartbeat vazou no envio concluido: ${sucesso.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    sucesso.restoreTimers();
+  }
+
+  // (c) erro antes do POST (provedor indisponivel): o ramo de reschedule tambem encerra.
+  const erroPre = await runComHeartbeatVirtual({
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550305")],
+  });
+  try {
+    assert(erroPre.status === 200, `esperado 200 no erro tratado, recebido ${erroPre.status}`);
+    assert(
+      erroPre.timers.ativos.size === 0,
+      `timer do heartbeat vazou no caminho de erro: ${erroPre.timers.ativos.size} ativo(s)`,
+    );
+  } finally {
+    erroPre.restoreTimers();
+  }
+
+  // (d) erro do item -> catch -> reagendamento -> `await sleep(interval)` -> continue.
+  // A regressao era o timer ficar VIVO na janela entre o erro tratado e o fim do
+  // sleep (o finally so roda depois do sleep): um tick nessa janela renovava um
+  // item ja devolvido a fila e logava 'multiplix_heartbeat_not_renewed' falso.
+  // Como send_interval_min/max sao 0, o sleep do catch e um setTimeout(0) — para
+  // enxergar a janela o teste CAPTURA os timeouts e retem o do catch ate depois
+  // das assercoes.
+  const setTimeoutReal = globalThis.setTimeout;
+  const timeoutsCapturados: Array<{ cb: () => void; ms: number }> = [];
+  globalThis.setTimeout = ((cb: (...a: unknown[]) => void, ms?: number, ...a: unknown[]) => {
+    timeoutsCapturados.push({ cb: () => cb(...a), ms: Number(ms ?? 0) });
+    return timeoutsCapturados.length; // id simbolico — o clearTimeout real nao o encontra (inofensivo)
+  }) as unknown as typeof globalThis.setTimeout;
+  const timersErro = stubHeartbeatTimers();
+  const optsErro: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550307")],
+    // voice_ai sem ativo renderizado lanca multiplix_block_pending_media dentro do
+    // try, ANTES do POST — o catch cai no ramo !providerPostAttempted (reagendamento).
+    blockType: "voice_ai",
+    blockContent: { voice: { script: "Roteiro da {{empresa}}" } },
+    lazyHeartbeat: true,
+  };
+  const ctxErro = newCtx(optsErro);
+  try {
+    // Um macrotask real drena TODAS as microtasks pendentes — e assim que o teste
+    // bombeia o worker sem depender do setTimeout (que ficou capturado).
+    const ceder = () => new Promise<void>((resolve) => setTimeoutReal(resolve, 0));
+    const execucao = handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(optsErro, ctxErro));
+    // Tratador anexado desde ja: qualquer rejeicao do handler fica guardada em
+    // vez de virar unhandledrejection no meio do bombeio.
+    const fim = execucao.then((res) => ({ res }), (err: unknown) => ({ err }));
+
+    // Dispara os timeouts capturados ate o item ser REAGENDADO. O primeiro
+    // timeout que nasce depois disso e o `await sleep(interval)` do catch —
+    // ele fica retido para o teste olhar dentro da janela.
+    let sleepDoCatch: (() => void) | null = null;
+    for (let volta = 0; volta < 1_000 && sleepDoCatch === null; volta++) {
+      await ceder();
+      if (ctxErro.reschedules.length === 0) {
+        while (timeoutsCapturados.length > 0) timeoutsCapturados.shift()!.cb();
+      } else if (timeoutsCapturados.length > 0) {
+        sleepDoCatch = timeoutsCapturados.shift()!.cb;
+      }
+    }
+    assert(
+      ctxErro.reschedules.length === 1 &&
+        String(ctxErro.reschedules[0].p_error_message).includes("multiplix_block_pending_media"),
+      `esperava o item reagendado pelo catch (ramo pre-dispatch), houve ${JSON.stringify(ctxErro.reschedules)}`,
+    );
+    assert(sleepDoCatch !== null, "o catch nao chegou ao `await sleep(interval)`");
+    assert(timersErro.ticks.length === 1, "o heartbeat nao foi armado neste cenario");
+
+    // DENTRO da janela: item ja reagendado e sleep do catch ainda pendente. O tick
+    // virtual so dispara se o timer ainda estiver ATIVO — que e o que a regressao
+    // permitia (clearInterval so viria no finally, depois do sleep).
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0,
+      `timer do heartbeat vivo durante o sleep do catch: ${timersErro.ativos.size} ativo(s)`,
+    );
+    assert(
+      heartbeatConsumidas(ctxErro) === 0,
+      `tick na janela do erro tratado renovou o lease de um item ja reagendado (${heartbeatConsumidas(ctxErro)} consumidas)`,
+    );
+
+    sleepDoCatch(); // libera o sleep do catch -> finally -> continue -> fim da passada
+    const fimResult = await fim;
+    assert("res" in fimResult, `o handler rejeitou depois do erro tratado: ${String((fimResult as { err: unknown }).err)}`);
+    assert(fimResult.res.status === 200, `esperado 200 depois do erro tratado, recebido ${fimResult.res.status}`);
+
+    // DEPOIS da janela: nao pode sobrar timer nem sair renovacao tardia.
+    if (timersErro.ativos.size > 0) {
+      timersErro.ticks[0]();
+      await ceder();
+    }
+    assert(
+      timersErro.ativos.size === 0 && heartbeatConsumidas(ctxErro) === 0,
+      `heartbeat tardio depois do continue do catch: timers=${timersErro.ativos.size}, consumidas=${heartbeatConsumidas(ctxErro)}`,
+    );
+  } finally {
+    timersErro.restore();
+    globalThis.setTimeout = setTimeoutReal;
+  }
+});
+
+Deno.test("R2-API-013: falha da RPC de heartbeat e tratada (nao derruba o envio nem vira rejeicao solta)", async () => {
+  const rejeicoes: unknown[] = [];
+  const onRejeicao = (evento: PromiseRejectionEvent) => { rejeicoes.push(evento.reason); };
+  globalThis.addEventListener("unhandledrejection", onRejeicao);
+  try {
+    // Dois modos de falha da renovacao: erro da RPC e resultado `false` (lease perdido).
+    const casos: Array<{ nome: string; aviso: string; resultado: { data?: unknown; error?: Error | null } }> = [
+      {
+        nome: "erro da RPC",
+        aviso: "multiplix_heartbeat_failed",
+        resultado: { data: null, error: new Error("lease_token divergente") },
+      },
+      {
+        nome: "lease nao renovado (false)",
+        aviso: "multiplix_heartbeat_not_renewed",
+        resultado: { data: false, error: null },
+      },
+    ];
+    for (const caso of casos) {
+      const opts: MockOpts = {
+        ...optsOptOutTardio("5511955550306"),
+        lazyHeartbeat: true,
+        heartbeatResult: caso.resultado,
+      };
+      const avisos: string[] = [];
+      const warnOriginal = console.warn;
+      console.warn = ((...args: unknown[]) => {
+        avisos.push(args.map((arg) => String(arg)).join(" "));
+      }) as typeof console.warn;
+      const { ctx, timers, status, restoreTimers } = await runComHeartbeatVirtual(opts);
+      try {
+        assert(status === 200, `[${caso.nome}] esperado 200, recebido ${status}`);
+        assert(timers.ticks.length === 1, `[${caso.nome}] o heartbeat nao foi armado`);
+        timers.ticks[0]();
+        await aguardarMicrotasks();
+        assert(
+          heartbeatConsumidas(ctx) === 1,
+          `[${caso.nome}] a renovacao que falhou tambem precisa ser consumida (${heartbeatConsumidas(ctx)})`,
+        );
+        assert(
+          avisos.some((aviso) => aviso.includes(caso.aviso)),
+          `[${caso.nome}] a renovacao perdida nao foi reportada ao operador (avisos: ${JSON.stringify(avisos)})`,
+        );
+        assert(
+          ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+          `[${caso.nome}] a falha do heartbeat contaminou a conclusao do item`,
+        );
+      } finally {
+        console.warn = warnOriginal;
+        restoreTimers();
+      }
+    }
+    await aguardarMicrotasks();
+    assert(rejeicoes.length === 0, `heartbeat que falhou virou rejeicao solta: ${String(rejeicoes[0])}`);
+  } finally {
+    globalThis.removeEventListener("unhandledrejection", onRejeicao);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F60 (TL-035) — a conexao DECLARA o que entrega (`whatsapp_connections.capabilities`)
+// e o worker honra a declaracao ANTES do POST. A coluna existe desde 02/10
+// (20261002671230_f60_conexao_capacidades_e_risco.sql, default '{}') e NENHUM
+// consumidor a lia: um bloco que a instancia nao entrega so era recusado pelo
+// provedor, depois do POST — o item virava outcome_unknown/failed sem dizer que a
+// causa era a conexao.
+// Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO -> o worker nao inventa
+// limite; so o `false` explicito (e um `max_chars` NUMERICO) recusa. A exclusao e
+// DETERMINISTICA (skipped, nao volta a fila): o mesmo bloco contra a mesma conexao
+// daria o mesmo resultado. Nota de voz (`voice`) e `audio` caem na chave `ptt` —
+// os dois saem pelo mesmo kind do adaptador.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** F60: roda o handler com QUALQUER fetch bloqueado e devolve as URLs tentadas.
+ *  Prova "zero rede" sem depender da flavor do provedor (em GO o POST de texto sai
+ *  em /send/text — fora do filtro "/message/" que os testes antigos contavam). */
+async function runWithFetchRecorded(opts: MockOpts): Promise<{ ctx: MockCtx; urls: string[] }> {
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    return { ctx, urls: provider.urls };
+  } finally {
+    provider.restore();
+  }
+}
+
+Deno.test("F60: conexao que NAO declara documento barra o bloco de documento (skipped, zero rede)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550301")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", file_name: "Contrato.pdf" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada (nem o download da midia), houve ${JSON.stringify(urls)}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_status === "skipped",
+    `status esperado 'skipped', veio ${String(ctx.completions[0].p_status)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:document",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem ser marcado como iniciado",
+  );
+});
+
+Deno.test("F60: conexao que NAO declara nota de voz barra o audio (chave ptt) — zero rede", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550302")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { ptt: false } },
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o audio tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:ptt",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+});
+
+Deno.test("F60: texto acima do max_chars DECLARADO e excluido com o teto no motivo — zero rede", async () => {
+  // "Ola Empresa 1" = 13 caracteres; o teto declarado e 5.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550303")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { max_chars: 5 } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o texto acima do teto tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_max_chars:5",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem recusada pela conexao nao pode ser congelada em snapshot",
+  );
+});
+
+Deno.test("F60: capabilities VAZIO nao inventa limite — o item segue e e enviado", async () => {
+  // O caso que o cartao fixa: "vazio significa NAO DECLARADO". Todas as conexoes
+  // nascem com '{}' — recusar o vazio pararia o modulo inteiro.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550304")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: {} },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-1");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "conexao sem capacidade declarada nao pode excluir o envio (vazio = nao declarado)",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F60: o veto e POR CAPACIDADE — document:false nao barra um bloco de texto", async () => {
+  // Guarda contra o excesso de zelo: declarar que a conexao nao entrega DOCUMENTO
+  // nao pode excluir um bloco de texto. Sem esta prova, um mutante que barra
+  // qualquer item com capabilities nao-vazio passaria.
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550305")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-2");
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "capacidade de OUTRO tipo nao pode excluir o bloco de texto",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+});
+
+Deno.test("F60 (unidade): connectionCapabilityDenial — vazio nao limita; `false` e numero limitam", () => {
+  // Bordas que o teste de integracao nao alcanca: o TETO exato (passa) contra um
+  // caractere acima (recusa), `max_chars` nao-numerico (nao limita) e a chave do
+  // audio caindo em `ptt`.
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(10)) === null,
+    "texto EXATAMENTE no teto declarado tem de passar",
+  );
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)) === "connection_capability_max_chars:10",
+    `um caractere acima do teto tem de recusar, veio ${String(connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)))}`,
+  );
+  assert(
+    connectionCapabilityDenial({}, "text", "x".repeat(10_000)) === null,
+    "capabilities vazio = nao declarado: nao pode inventar teto",
+  );
+  assert(connectionCapabilityDenial(null, "document", "x") === null, "coluna nula = nao declarado");
+  assert(connectionCapabilityDenial(undefined, "document", "x") === null, "coluna ausente = nao declarado");
+  assert(
+    connectionCapabilityDenial({ max_chars: "4096" }, "text", "x".repeat(9_000)) === null,
+    "max_chars nao-numerico (string) nao pode virar teto",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "ptt", "oi") === "connection_capability_unsupported:ptt",
+    "ptt:false tem de recusar a nota de voz",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "audio", "oi") === "connection_capability_unsupported:ptt",
+    "audio e nota de voz saem pelo MESMO kind (ptt) — a mesma chave tem de valer",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: true }, "voice", "oi") === null,
+    "capacidade declarada como compativel nao pode recusar",
+  );
 });

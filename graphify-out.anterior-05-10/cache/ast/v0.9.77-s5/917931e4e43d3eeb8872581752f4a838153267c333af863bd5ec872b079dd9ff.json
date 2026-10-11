@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_20260927270000_team_chat_e09_member_own_row_update_policy_sql", "label": "20260927270000_team_chat_e09_member_own_row_update_policy.sql", "file_type": "code", "source_file": "supabase/migrations/20260927270000_team_chat_e09_member_own_row_update_policy.sql", "source_location": null}], "edges": []}

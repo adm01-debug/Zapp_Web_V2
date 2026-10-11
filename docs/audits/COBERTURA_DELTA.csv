@@ -1,0 +1,24 @@
+﻿repository,code_sha,path,coverage,scope_note,product_runtime_tested
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,.github/workflows/db-guard.yml,SELECTED_RANGES,365–665: inclusão e contratos dos testes SQL.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,docs/design/salesview-journey/VERIFICACAO_S38_S41_S42_S43_2026-10-02.md,INVENTORIED_ONLY,Documento alterado listado; conteúdo novo não reavaliado.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,docs/design/salesview-journey/contraste-alto-por-elemento-2026-10-04.png,INVENTORIED_ONLY,Imagem não inspecionada visualmente nesta etapa.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,docs/talkx/OPERACAO.md,INVENTORIED_ONLY,Alteração inventariada; texto novo não lido nesta etapa.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,docs/talkx/n8n/talkx-alerts.json,FULL_FILE,"Contrato de itens, resposta HTTP e conexões entre nós.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,docs/talkx/v4/STATUS.md,INVENTORIED_ONLY,Placar não recertificado; não é prova de funcionamento.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,scripts/db-audit/talkx-engine-health.test.sh,FULL_FILE,"Fixtures, asserts e cenários ausentes; não executado.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,scripts/db-audit/talkx-lgpd.test.sh,FULL_FILE,"Fixtures, retenção diária e assertions; não executado.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,scripts/db-audit/talkx-retry-resolve.test.sh,FULL_FILE,"Reenvio, autorização e reabertura; não executado.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,scripts/edge-deploy/log-injection.unit.mjs,FULL_FILE,Testes de saneamento de mensagens de implantação; não executado.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,scripts/edge-deploy/register-deployment.mjs,FULL_FILE,Leitura do registro de implantação; não invocado.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,src/components/talkx/TalkXSettings.tsx,FULL_FILE,Estados e vínculo com atualização de configurações; sem preview visual.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,src/components/talkx/__tests__/TalkXSettings.states.test.tsx,FULL_FILE,Contrato de estados da interface; suíte React não executada.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/deployment-manifest.json,INVENTORIED_ONLY,Manifesto do delta não revalidado integralmente por hash.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/functions/_shared/validation.ts,FULL_FILE,Logger e contratos auxiliares; Logger extraído testado offline.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/functions/talkx-send/_test-utils.ts,INVENTORIED_ONLY,Alteração no utilitário identificada; não certificada.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/functions/talkx-send/index.ts,SELECTED_RANGES,"500–EOF, fluxo do continue e logging; trechos equivalentes no bundle vivo.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/functions/talkx-send/process-recipient.ts,FULL_FILE,"Transições, erro, persistência e correlação por destinatário.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/functions/talkx-send/x033-delivery-log.test.ts,FULL_FILE,Mapeamento de resultados; não cobre todo caminho de saída excepcional.,false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/migrations/20261003222707_talkx_retry_resolve.sql,FULL_FILE,"X031: retry, permissões, mutabilidade e resolução de resultado incerto.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql,FULL_FILE,"X032: confirmação de lançamento, audiência e retenção.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,supabase/migrations/20261003242707_talkx_log_saude_alertas.sql,FULL_FILE,"X033: redefinições efetivas, alertas, logs, saúde e tick.",false
+adm01-debug/Zapp_Web_V2,65679f38d400f7edc6a071f68554dd3b0372f03f,tests/contracts/_adv_edge_legacy_producers.test.ts,INVENTORIED_ONLY,Ratchet de contagem alterado; versão nova não reexecutada.,false
