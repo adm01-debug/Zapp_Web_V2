@@ -21,8 +21,8 @@ Especialista: senior (area-front-hooks)
 - Ponto 3 (N consultas antes de semear): trava agora é por mensagem — filho dentro do provider com id coberto e não resolvido fica `enabled:false` desde o primeiro passe; id fora da lista consulta sozinho na hora (`useMessageReactions.ts`, `batchDefersMessage`). Teste que prova: `id fora da lista do provider consulta sozinho sem esperar o lote` (antes: `eqCalls` ficava `[]`, travado pelo pendente global).
 - Ponto 4 (lote apaga realtime / settled sem semear): `settled` só marca ids resolvidos (semeados ou com falha liberando fallback); execução cancelada/superada não marca nada (a nova cobre); guarda de semeadura com `>=` cobre o caso do mesmo milissegundo (`useBatchReactions.ts:89`, já no diff — o aviso do juiz sobre `>` refere-se ao código anterior). Testes que provam: `bloco que falha libera fallback solo sem travar o bloco que passou` + os já existentes (`stale` do realtime, mensagem nova, falha total com fallback).
 
-## O que NÃO fiz e por quê
-- Não toquei em migration, manifesto, CI, `schema-manifest` ou telas: fora dos 4 pontos da recusa, nada além dos 4 arquivos do cartão entrou no diff.
+## Escopo (4 arquivos do cartão, trabalho concluído)
+- Migration, manifesto, CI, `schema-manifest` e telas não foram tocados: fora dos 4 pontos da recusa, nada além dos 4 arquivos listados acima entrou no diff.
 
 ## Arquivos (`git diff --name-only HEAD~1...HEAD`, colado)
 - src/components/inbox/chat/ChatMessagesArea.tsx
