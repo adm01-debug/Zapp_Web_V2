@@ -1,26 +1,22 @@
-Especialista: hugo — area-front-hooks
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/hooks/tasks/workItemFormat.ts (novo): regra ÚNICA de datas (etapa 058 / D21), pura e no fuso local. `formatWorkItemDate` devolve "Ontem, 17:00" / "Hoje, 14:00" / "Amanhã, 10:00" / "13 out., 15:00"; `format: 'day'` devolve só o dia ("Hoje", "Ontem", "09 out."), o caso das concluídas; `formatWorkItemFieldDate`/`formatWorkItemField` dão "Hoje, 11/10" + hora separada para painel/modal. Nenhum formato traz o dia da semana (o "Seg, 09/09, 14:20" da imagem 04 não é reproduzível). Dias comparados por `localDayKey`/`parseDayKey` de `src/lib/localDay` (import, não editei lá): a virada do dia manda, não a distância em horas. Valor ausente/inválido -> `null`.
-- src/hooks/tasks/workItemPresets.ts (novo): presets de prazo (`duePresetDate`/`duePresetISO`: hoje, amanhã, próxima semana, às 23:59 locais) e de lembrete (`remindPresetDate`/`remindPresetISO`: em 1 h, amanhã 9h, próxima segunda 9h) — etapa 161. A aritmética de prazo é de CALENDÁRIO (`setDate` sobre a meia-noite local), então um preset criado às 23:30 cai no dia seguinte e não no mesmo dia; `remindPresetDate('tomorrow9')` REAPROVEITA `tomorrowAtNine` importado de `useMyWorkItems`. `checkRemindCoherence` (etapa 162) devolve `{ state, message }` com `ok` / `in_past` / `after_due` / `no_due`: lembrete tem de estar no futuro e ANTES do prazo (igual ao prazo conta como `after_due`); sem lembrete devolve `ok` com mensagem vazia.
-- src/hooks/tasks/__tests__/workItemFormat.test.ts e workItemPresets.test.ts (novos): os testes unitários do cartão.
-
-Etapa 058/161/162 conferidas antes contra o código ATUAL: não existiam (o QuickAdd faz os presets inline, em `src/components/tasks/shared/QuickAdd.tsx`, arquivo fora do escopo deste cartão) — por isso as funções nasceram como módulos novos, sem uso na tela (critério 3: as superfícies adotam nos cartões seguintes).
+- `src/components/tasks/shared/TaskCheckbox.tsx` (novo): checkbox CIRCULAR (D16), `<button>` nativo com `role="checkbox"`/`aria-checked` e os mesmos nomes acessíveis do card ("Concluir tarefa"/"Reabrir tarefa"). Uma implementação para Lista, Quadro, Agenda, painel e modal — o clique não sobe para o card.
+- `src/components/tasks/shared/PriorityPill.tsx` (novo): pílula de prioridade com um par de cor por prioridade (D12). Os rótulos vêm de `workItemLabels.ts` (nunca do `PriorityChip.tsx`); prioridade nula/desconhecida cai em `medium`.
+- `src/components/tasks/shared/StatusPill.tsx` (novo): pílula de estado com cor própria; "Fazendo" azul cheio, "Aguardando" pelo token de TEXTO do aviso, "Cancelada" riscada. O rótulo sai do `KANBAN_COLUMNS` (mesma fonte do quadro).
+- `src/components/tasks/shared/DateLabel.tsx` (novo): data do módulo delegando ao `workItemFormat.ts` (regra única, D21) — Hoje/Ontem/Amanhã com hora, `format="day"` para concluídas, "Sem prazo" quando vazio, par de texto destrutivo quando atrasado e o de aviso quando é hoje.
+- `src/components/tasks/shared/ContactAvatar.tsx` (novo): foto quando existe (`alt=""`, imagem decorativa) e inicial sobre a cor determinística de `getAvatarColor` quando não; nome acessível no contêiner (`role="img"` + `aria-label`).
+- `src/components/tasks/shared/tasksUi.ts` + `TasksUiContext.tsx` (novos): contexto de UI (seleção, painel, modal, densidade) e o `TasksUiProvider`. O hook/contexto ficaram num `.ts` separado do `.tsx` de propósito — exportar hook de arquivo com JSX conta dívida NOVA no `react-refresh/only-export-components` (o lint tem `baseline` e recusa ocorrência nova). É a única divergência do "ARQUIVOS QUE PODE TOCAR", e é o mesmo padrão que o módulo já usa (`workItemLabels.ts`).
+- `src/components/tasks/TasksModule.tsx` (5 linhas): só envolvi o conteúdo no `<TasksUiProvider>`; nenhuma lógica de tela mudou. Migrar o `selectedItem` interno para o contexto é das etapas seguintes (T14/T15), não deste cartão.
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Error: Failed to resolve import "@/hooks/tasks/workItemPresets" ... Test Files 2 failed (2); Tests no tests` (os módulos ainda não existiam).
-- verde depois: mesmo comando -> `Test Files 2 passed (2); Tests 28 passed (28)`.
-
-## Casos de teste (nome de cada um)
-workItemFormat.test.ts (11 casos): rotula Hoje/Ontem/Amanhã pelo dia LOCAL; fora de Hoje/Ontem/Amanhã usa "dd mês." em pt-BR; com hora compõe "Ontem, 17:00"/"Hoje, 14:00"/"Amanhã, 10:00"/"13 out., 15:00"; concluída mostra SÓ o dia; nunca inclui o dia da semana; fuso local (23:30 não vira o dia seguinte, com Date e com ISO); virada do dia (00:05 é "Amanhã", 23:55 é "Ontem"); campos do painel/modal "Hoje, 11/10" + hora à parte; hora separada null; valor ausente/inválido -> null; aceita ISO com offset.
-workItemPresets.test.ts (17 casos): presets de prazo (hoje 23:59; amanhã às 23:30 -> dia seguinte; próxima semana +7 dias; ISO = Date); presets de lembrete (em 1 h = +3.600.000 ms; amanhã 9h reaproveita `tomorrowAtNine`; próxima segunda 9h a partir de domingo; próxima segunda na PRÓPRIA segunda não devolve o mesmo dia; ISO = Date); coerência (sem lembrete; futuro antes do prazo confirma; no passado, inclusive igual ao agora; depois do prazo; igual ao prazo não é "antes"; sem prazo; in_past tem prioridade sobre after_due; aceita ISO com offset).
-
-## Borda do enunciado (virada do dia, fim de semana, UTC-3, horário de verão)
-- Virada do dia: coberta nos dois arquivos (23:30/23:55/00:05 e o preset criado às 23:30).
-- Fim de semana: `nextMondayAtNine` a partir de domingo (11/10 -> 12/10) e na própria segunda (12/10 -> 19/10).
-- UTC-3: as datas dos testes são construídas no relógio LOCAL (`new Date(2026, 9, 11, 14, 0)`), então os rótulos valem com qualquer fuso do processo; o caso "23:30 não vira o dia seguinte" também cobre o ISO que o banco devolve.
-- Horário de verão: o diff de dias é por dia de CALENDÁRIO (via `localDayKey`/`parseDayKey`), não por 24 h — é o caminho que sobrevive ao dia de 23/25 h; a aritmética dos presets usa `setDate`, não `+86_400_000`.
+- vermelho antes: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Error: Failed to resolve import "@/components/tasks/shared/TaskCheckbox" ... Does the file exist?` / `Test Files 1 failed (1); Tests no tests`.
+- verde depois: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 26 passed (26)`.
+- módulo inteiro (o wrap do provider não regride nada): `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 248 passed | 1 todo (249)`.
+- lint: `npx eslint` nos 9 arquivos → saída vazia, exit 0 (zero avisos novos no lint-ratchet).
+- tipos: `npx tsc --noEmit -p tsconfig.json` → saída vazia, exit 0.
 
 ## O que NÃO fiz e por quê
-- Não toquei nas telas nem no QuickAdd: fora dos arquivos que o cartão permite (as superfícies adotam nos cartões seguintes).
-- Sem migration, Edge Function, dependência nova ou exportação de dado.
+- Não toquei em `PriorityChip`, `DueChip`, `ContactChip` nem em `TasksModule.tsx` além do provider: os primitivos são novos (D16) e a substituição nos consumidores é das etapas seguintes; nada foi reescrito.
+- Não migrei o estado interno do `TasksModule` para o contexto: o cartão manda só envolver o conteúdo no provider.
+- Sem DDL, Edge Function, dependência nova ou mudança de valor/teto/escala.
