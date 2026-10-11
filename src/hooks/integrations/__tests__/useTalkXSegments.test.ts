@@ -240,3 +240,114 @@ describe('X017 — audiência resolvida pela RPC do motor (não mais no navegado
     expect(supabase.from).not.toHaveBeenCalledWith('contacts');
   });
 });
+
+// Ponte Singu (recon t_0ed9b4f1 + RPC t_50615e90): a regra de "setor de atividade real" (real_sector)
+// e "UF real" (real_uf) nao filtra uma coluna de public.contacts — o valor cru e PRE-RESOLVIDO no
+// servidor (edge Singu -> empresas -> p_contact_ids) e a RPC devolve so os contatos dessas empresas.
+// O que o front PRECISA garantir e que a regra sobreviva ate a resolucao: um campo fora do catalogo
+// vira "incompleto" e o splitRules o DESCARTA, entao o publico resolveria a BASE INTEIRA, sem o
+// filtro (amplia a audiencia sem querer). Estes testes prendem esse contrato.
+describe('Ponte Singu — setor/UF reais chegam a resolucao de publico', () => {
+  const realSector = regra('real_sector', 'eq', 'Farmacia');
+  const realUf = regra('real_uf', 'eq', 'SP');
+  const segmentoReal = { groups: [{ id: 'g', match: 'and', rules: [realSector, realUf] }] } as never;
+
+  it('a regra de setor/UF real e COMPLETA e nao e descartada pelo splitRules', () => {
+    expect(isRuleComplete(realSector)).toBe(true);
+    expect(isRuleComplete(realUf)).toBe(true);
+    const { complete, incompleteCount } = splitRules(segmentoReal);
+    expect(incompleteCount).toBe(0);
+    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);
+  });
+
+  it('a resolucao entrega o filtro real na RPC (sem isso o publico viria a base inteira)', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    const { complete, incompleteCount } = splitRules(segmentoReal);
+    // Sem o catalogo, as 2 regras sumiriam (incompleteCount 2) e a RPC iria sem filtro
+    // (`groups: []`), contando/resolvendo a base inteira em vez do subconjunto do Singu.
+    expect(incompleteCount).toBe(0);
+
+    rpc.mockResolvedValueOnce({ data: { eligible: 2 }, error: null });
+    const total = await countAudience(complete);
+    expect(total).toBe(2);
+
+    const args = rpc.mock.calls[0][1] as { p_rules: { groups: { rules: { field: string; value: string }[] }[] } };
+    expect(args.p_rules.groups).toHaveLength(1);
+    expect(args.p_rules.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);
+    expect(args.p_rules.groups[0].rules[0].value).toBe('Farmacia');
+  });
+
+  it('resolveAudience devolve o conjunto de empresas que a ponte pre-resolveu (nao a base inteira)', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    // A RPC pagina so os contatos das empresas do ramo/UF (dados da ponte Singu); nada de
+    // contatos fora do ramo entram na resolucao.
+    const esperado = [
+      { id: 'c1', name: 'Ana', nickname: null, phone: '55119*****', company: 'Acme', avatar_url: null, tags: null },
+      { id: 'c3', name: 'Carla', nickname: null, phone: '55119*****', company: 'Acme', avatar_url: null, tags: null },
+    ];
+    rpc.mockResolvedValueOnce({ data: { mode: 'page', rows: esperado, has_more: false, next_after: null }, error: null });
+
+    const rows = await resolveAudience(segmentoReal, 50);
+
+    expect(rows.map((r) => r.id)).toEqual(['c1', 'c3']);
+    expect(rows.every((r) => r.company === 'Acme')).toBe(true);
+    const args = rpc.mock.calls[0][1] as { p_rules: { groups: { rules: unknown[] }[] } };
+    expect(args.p_rules.groups[0].rules).toHaveLength(2);
+  });
+});
+
+// Criterio 2 do cartao: um segmento JA SALVO com os campos antigos (texto livre company/city/state)
+// tem de resolver exatamente como antes — nada de migracao manual, nada de filtro reescrito.
+describe('retrocompatibilidade — segmento salvo com texto livre resolve igual', () => {
+  const segmentoAntigo = {
+    groups: [{ id: 'g', match: 'and', rules: [
+      { id: 'r1', field: 'company', op: 'eq', value: 'Acme' },
+      { id: 'r2', field: 'city', op: 'eq', value: 'Sao Paulo' },
+      { id: 'r3', field: 'state', op: 'eq', value: 'SP' },
+    ] }],
+  } as never;
+
+  it('company/city/state continuam completos e viram o MESMO filtro PostgREST de antes', () => {
+    const { complete, incompleteCount } = splitRules(segmentoAntigo);
+    expect(incompleteCount).toBe(0);
+    expect(rulesToPostgrest(complete)).toBe(
+      'and(company.eq."Acme",city.eq."Sao Paulo",state.eq."SP")',
+    );
+  });
+
+  it('a estimativa de um segmento antigo envia os 3 campos de texto livre intactos na RPC', async () => {
+    const rpc = supabase.rpc as unknown as ReturnType<typeof vi.fn>;
+    rpc.mockClear();
+    rpc.mockResolvedValueOnce({ data: { eligible: 3 }, error: null });
+
+    const total = await countAudience(segmentoAntigo);
+
+    expect(total).toBe(3);
+    const args = rpc.mock.calls[0][1] as { p_rules: { groups: { rules: { field: string }[] }[] } };
+    expect(args.p_rules.groups[0].rules.map((r) => r.field)).toEqual(['company', 'city', 'state']);
+  });
+});
+
+// Caso de borda (criterio 3): empresa SEM setor/UF real. "sem dado real" e uma condicao valida
+// (is_empty), mas valor EM BRANCO nao e — a condicao em branco fica de fora da estimativa (X008).
+describe('caso de borda — empresa sem setor/UF real', () => {
+  it('is_empty (sem dado real) vale; valor vazio no eq nao vale', () => {
+    expect(isRuleComplete(regra('real_sector', 'is_empty', ''))).toBe(true);
+    expect(isRuleComplete(regra('real_uf', 'is_empty', ''))).toBe(true);
+    expect(isRuleComplete(regra('real_sector', 'eq', ''))).toBe(false);
+    expect(isRuleComplete(regra('real_uf', 'eq', '   '))).toBe(false);
+  });
+
+  it('o valor vazio nao derruba o count: so a condicao com dado real entra na resolucao', () => {
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        regra('real_sector', 'eq', ''),        // incompleta -> de fora
+        regra('real_uf', 'is_empty', ''),      // sem UF real -> valida
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_uf']);
+  });
+});
