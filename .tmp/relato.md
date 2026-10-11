@@ -32,3 +32,6 @@ Especialista: Íris (area-front-componentes)
   segundo botão de fechar para não duplicar ícone.
 - `TasksModule.tsx` não foi alterado: a API de props do painel é a mesma, então o "Abrir conversa" usa `openContactChat` direto,
   sem fio novo pelo módulo.
+- Tirei do branch `src/hooks/tasks/useWorkItemDraft.ts` (+ teste) e `src/hooks/tasks/workItemPresets.ts` (+ teste): são etapas
+  148/149/161, de outros cartões (o painel deste cartão terminou na 136 e não os importa — `git grep` confirma que o único
+  consumidor era o próprio teste). Isso baixou o diff para dentro do limite de revisão do portão.
