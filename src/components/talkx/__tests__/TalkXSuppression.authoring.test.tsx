@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -27,6 +27,11 @@ beforeAll(() => {
 const inserted: Record<string, unknown>[] = [];
 const updated: Record<string, unknown>[] = [];
 const getUser = vi.fn();
+
+// X050 — controle da resposta do UPDATE de "Remover": com `segurar` ligado, a
+// promessa só resolve quando o teste chama o liberador. É assim que se prova
+// que o modal do kit fica aberto enquanto a mutation não volta.
+const updateGate = { segurar: false, liberar: [] as Array<() => void> };
 
 vi.mock('@/integrations/supabase/client', () => {
   const chain = (data: unknown[]) => {
@@ -88,7 +93,12 @@ vi.mock('@/integrations/supabase/client', () => {
             });
           self.update = (payload: Record<string, unknown>) => {
             updated.push(payload);
-            return { eq: () => Promise.resolve({ error: null }) };
+            return {
+              eq: () => {
+                if (!updateGate.segurar) return Promise.resolve({ error: null });
+                return new Promise((resolve) => { updateGate.liberar.push(() => resolve({ error: null })); });
+              },
+            };
           };
           return self;
         }
@@ -107,7 +117,10 @@ vi.mock('@/lib/supabaseHelpers', () => ({
     update: (payload: Record<string, unknown>) => ({
       in: () => {
         updated.push(payload);
-        return Promise.resolve({ error: null });
+        // X050: o UPDATE de "Remover" sai pelo `fromTable` (HEAD usa `.in()` para
+        // 1 ou N linhas), então o portão do teste também vive aqui.
+        if (!updateGate.segurar) return Promise.resolve({ error: null });
+        return new Promise((resolve) => { updateGate.liberar.push(() => resolve({ error: null })); });
       },
     }),
   }),
@@ -145,6 +158,9 @@ vi.mock('@/hooks/integrations/useTalkXSuppression', () => ({
 }));
 
 import { TalkXSuppression } from '@/components/talkx/TalkXSuppression';
+import { toast } from 'sonner';
+
+const toastSuccess = toast.success as unknown as ReturnType<typeof vi.fn>;
 
 function renderView() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -160,6 +176,9 @@ describe('TalkXSuppression · autoria (V04)', () => {
     inserted.length = 0;
     updated.length = 0;
     getUser.mockClear();
+    toastSuccess.mockClear();
+    updateGate.segurar = false;
+    updateGate.liberar.length = 0;
   });
 
   it('grava blocked_by com o id do perfil ativo, nunca com o id do auth', async () => {
@@ -193,5 +212,40 @@ describe('TalkXSuppression · autoria (V04)', () => {
     expect(updated[0]).toMatchObject({ removed_by: 'profile-1' });
     expect(updated[0].removed_by).not.toBe('auth-user-1');
     expect(getUser).not.toHaveBeenCalled();
+  });
+
+  // X050 — a confirmação de "Remover da lista" (⋮ da linha) virou o preset
+  // `removerSupressao` do kit (barra de título, ✕, tile e botão violeta) e o
+  // modal só fecha quando o UPDATE volta: o `onConfirm` devolve a Promise.
+  it('"Remover" abre o modal do kit com os textos do mock e só fecha quando a mutation resolve', async () => {
+    updateGate.segurar = true;
+    renderView();
+
+    await screen.findByText('Ana Souza');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Ações de Ana Souza' }), {
+      key: 'ArrowDown',
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remover da lista' }));
+
+    const modal = await screen.findByRole('alertdialog');
+    expect(within(modal).getByText('Remover da Supressão')).toBeTruthy();
+    expect(within(modal).getByText('Remover da supressão')).toBeTruthy();
+    expect(within(modal).getByText('Deseja remover este contato da lista de supressão?')).toBeTruthy();
+    expect(within(modal).getByText('O contato poderá receber mensagens nas próximas campanhas.')).toBeTruthy();
+    // O nome do contato aparece nas linhas de detalhe (não na pergunta).
+    expect(within(modal).getByText('Contato')).toBeTruthy();
+    expect(within(modal).getByText('Ana Souza')).toBeTruthy();
+
+    fireEvent.click(within(modal).getByRole('button', { name: /^Remover$/i }));
+
+    // O UPDATE saiu, mas ainda não voltou: nada de fechar nem de anunciar sucesso.
+    await waitFor(() => expect(updated).toHaveLength(1));
+    expect(screen.getByRole('alertdialog')).toBeTruthy();
+    expect(toastSuccess).not.toHaveBeenCalled();
+
+    await act(async () => { updateGate.liberar.splice(0).forEach((liberar) => liberar()); });
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(toastSuccess).toHaveBeenCalledWith('Contato removido da lista de supressão', expect.objectContaining({ duration: 10000 }));
   });
 });

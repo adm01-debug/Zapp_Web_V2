@@ -22,6 +22,8 @@ import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessag
 import { TalkXMessagePreview } from './TalkXMessagePreview';
 import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { KpiCard } from './kit/kpi';
+import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
+import { useTalkXConfirm } from './kit/useTalkXConfirm';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -39,6 +41,7 @@ interface Props {
 export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
   const { createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants, saveVariant, deleteVariant, countVariantRecipients } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
+  const { confirmar, dialogo } = useTalkXConfirm();
 
   // Inicializa campos do template sendo editado
   const [eName, setEName] = useState(editing?.name ?? '');
@@ -172,9 +175,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     } finally { setSaving(false); }
   };
 
-  const loadTemplate = (t: TalkXTemplate) => {
+  const loadTemplate = async (t: TalkXTemplate) => {
     setVersions([]); setShowVersions(false);
-    if (isDirty && !window.confirm('Tem alterações não salvas. Descartar?')) return;
+    if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
     activateTemplate(t.id);
     versionsTemplateIdRef.current = null;
@@ -250,8 +253,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
 
     const recipientCount = await countVariantRecipients(variant.id);
     if (!isActiveOrigin(templateId)) return;
-    if (recipientCount > 0 && !window.confirm(`Variante usada em ${recipientCount} envio(s). Excluir apaga atribuição A/B. Continuar?`)) return;
-    if (!isActiveOrigin(templateId)) return;
+    if (recipientCount > 0) {
+      const confirmado = await confirmar({
+        ...PRESETS_DO_PRODUTO.excluirVariante,
+        details: [{ label: 'Envios', value: fmtInt(recipientCount) }],
+      });
+      if (!confirmado) return;
+      if (!isActiveOrigin(templateId)) return;
+    }
 
     await deleteVariant(variant.id);
     if (!isActiveOrigin(templateId)) return;
@@ -318,10 +327,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   };
 
   /** E46: restaura campos de uma versao anterior */
-  const restoreVersion = (v: typeof versions[0]) => {
+  const restoreVersion = async (v: typeof versions[0]) => {
     // R2-MOD-024: recusa restaurar histórico que não pertence ao template ativo.
     if (!isActiveOrigin(v.template_id)) return;
-    if (!confirm('Restaurar esta versão? Os campos atuais serão substituídos.')) return;
+    if (!(await confirmar(PRESETS_DO_PRODUTO.restaurarVersao))) return;
     setEName(v.name); setEDesc(v.description ?? ''); setECat(v.category); setEContent(v.content);
     setEStatus(v.status as 'draft'|'review'|'approved');
     setEMediaUrl(v.media_url ?? ''); setEMediaType(v.media_type ?? ''); setEHasMedia(!!v.media_url);
@@ -378,7 +387,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => loadTemplate(t)}
+                      onClick={() => { void loadTemplate(t); }}
                       className={cn(
                         'w-full text-left rounded-xl px-2 py-1.5 border transition-colors',
                         activeTemplateId === t.id
@@ -413,8 +422,10 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           <button
             type="button"
             onClick={() => {
-              if (isDirty && !confirm('Descartar alterações?')) return;
-              onClose();
+              void (async () => {
+                if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
+                onClose();
+              })();
             }}
             aria-label="Voltar"
             className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 shrink-0"
@@ -735,7 +746,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
                     <p className="text-2xs font-semibold text-foreground">v{v.version_number} · {v.name.slice(0, 20)}</p>
                     <p className="text-3xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                   </div>
-                  <button type="button" onClick={() => restoreVersion(v)} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => { void restoreVersion(v); }} className="h-6 w-6 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary flex-shrink-0"><RotateCcw className="w-3 h-3" /></button>
                 </div>
               ))}
             </div>
@@ -744,6 +755,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
       </aside>
 
       {/* E47: Test Dialog */}
+      {dialogo}
       <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
             <div>
               <Label className="text-xs text-foreground-secondary">Número de destino</Label>

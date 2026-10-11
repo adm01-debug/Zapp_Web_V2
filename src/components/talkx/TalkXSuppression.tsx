@@ -31,6 +31,7 @@ import {
   type TalkXSuppressionStat,
 } from '@/hooks/integrations/useTalkXSuppression';
 import { ProtectionGauge } from './suppression/ProtectionGauge';
+import { PRESETS_DO_MOCK } from './kit/dialogPresets';
 
 type ReasonCode = 'opt_out' | 'invalid_number' | 'manual' | 'lgpd' | 'no_commercial_permission' | 'bounce';
 type SuppressionStatus = 'suprimido' | 'expirado' | 'removido';
@@ -549,7 +550,11 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
   const removingIsBulk = removingEntries.length > 1;
   const removingNeedsCheck = removingEntries.some(requiresRemovalConfirmation);
   const removingDetails = removing && !removingIsBulk
-    ? [{ label: 'Telefone', value: displayPhone(removingEntries[0]) }, { label: 'Motivo', value: removingEntries[0].reason ?? '—' }]
+    ? [
+        { label: 'Contato', value: displayName(removingEntries[0]) },
+        { label: 'Telefone', value: displayPhone(removingEntries[0]) },
+        { label: 'Motivo', value: removingEntries[0].reason ?? '—' },
+      ]
     : [];
 
   return (
@@ -804,20 +809,24 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
         </DialogContent>
       </Dialog>
 
-      {/* Modal remover (kit) — opt-out/LGPD exige a confirmação marcada */}
+      {/* Modal remover (kit, X050) — texto do preset `removerSupressao` (tile e
+          botão violeta, nome do contato nas linhas de detalhe). Opt-out/LGPD exige
+          a confirmação marcada e o modal só fecha quando a mutation volta. */}
       <TalkXConfirmDialog
         open={!!removing}
         onClose={() => setRemoving(null)}
-        onConfirm={() => removing && removeMutation.mutate(removing.ids)}
-        icon={Trash2}
-        iconColor="red"
-        tone="danger"
-        title={removingIsBulk ? `Remover ${removingEntries.length} contatos da lista?` : 'Remover da lista de supressão?'}
-        entityName={removing && !removingIsBulk ? displayName(removingEntries[0]) : undefined}
-        description="Volta a poder receber mensagens do Talk X nas próximas campanhas."
+        onConfirm={() => (removing ? removeMutation.mutateAsync(removing.ids) : false)}
+        title={removingIsBulk ? `Remover ${removingEntries.length} contatos da lista?` : PRESETS_DO_MOCK.removerSupressao.title}
+        subtitle={removingIsBulk ? `Remover ${removingEntries.length} contatos da lista` : PRESETS_DO_MOCK.removerSupressao.subtitle}
+        description={removingIsBulk ? `Deseja remover ${removingEntries.length} contatos da lista de supressão?` : PRESETS_DO_MOCK.removerSupressao.description}
+        consequence={removingIsBulk ? 'Os contatos poderão receber mensagens nas próximas campanhas.' : PRESETS_DO_MOCK.removerSupressao.consequence}
+        tone={PRESETS_DO_MOCK.removerSupressao.tone}
+        icon={PRESETS_DO_MOCK.removerSupressao.icon}
+        iconColor={PRESETS_DO_MOCK.removerSupressao.iconColor}
         details={removingDetails}
         checks={removingNeedsCheck ? [{ id: 'confirmacao', label: removingIsBulk ? 'Confirmo que esta seleção pediu para sair ou revogou o consentimento (LGPD).' : 'Confirmo que este contato pediu para sair ou revogou o consentimento (LGPD).' }] : []}
-        confirmLabel="Remover"
+        confirmLabel={PRESETS_DO_MOCK.removerSupressao.confirmLabel}
+        cancelLabel={PRESETS_DO_MOCK.removerSupressao.cancelLabel}
         loading={removeMutation.isPending}
       />
 

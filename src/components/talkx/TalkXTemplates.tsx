@@ -3,18 +3,15 @@ import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
 } from 'lucide-react';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
-import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime } from './talkxShared';
+import { RailCard, RailAction, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
 import { KpiCard } from './kit/kpi';
+import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
@@ -203,12 +200,22 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
 
 
-      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
-        <AlertDialogContent className="rounded-2xl border-border/70">
-          <AlertDialogHeader><AlertDialogTitle>Excluir template?</AlertDialogTitle><AlertDialogDescription>O template <b className="text-foreground">"{deleting?.name}"</b> será excluído permanentemente.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-dash-red hover:bg-dash-red/90 text-white" onClick={() => { if (deleting) deleteTemplate.mutate(deleting.id); setDeleting(null); }}>Excluir</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TalkXConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting ? deleteTemplate.mutateAsync(deleting.id) : false}
+        title={PRESETS_DO_PRODUTO.excluirTemplate.title}
+        subtitle={PRESETS_DO_PRODUTO.excluirTemplate.subtitle}
+        description={PRESETS_DO_PRODUTO.excluirTemplate.description}
+        consequence={PRESETS_DO_PRODUTO.excluirTemplate.consequence}
+        tone={PRESETS_DO_PRODUTO.excluirTemplate.tone}
+        icon={PRESETS_DO_PRODUTO.excluirTemplate.icon}
+        iconColor={PRESETS_DO_PRODUTO.excluirTemplate.iconColor}
+        confirmLabel={PRESETS_DO_PRODUTO.excluirTemplate.confirmLabel}
+        cancelLabel={PRESETS_DO_PRODUTO.excluirTemplate.cancelLabel}
+        entityName={deleting?.name}
+        loading={deleteTemplate.isPending}
+      />
     </div>
   );
 }
