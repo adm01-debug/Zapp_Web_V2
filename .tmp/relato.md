@@ -46,6 +46,14 @@ alterei o contrato existente — só uma coluna ADITIVA nullable.
 - `zapp-verify . --rapido` → `OK tipos / OK lint / OK migrations` e
   `VERIFY: VERDE SEM BANCO`.
 
+## Teste dos arquivos de src (tipos gerados + ripple)
+O juiz barato acusa `src/integrations/supabase/types.ts` e `src/adapters/evolutionAdapter.ts`
+sem teste próprio. Não cabe teste para eles: `types.ts` é GERADO (espelho do schema; a prova é
+o D1..D4 da suíte, que roda contra a migration real e verifica coluna/FK/índice/ACL no catálogo)
+e `evolutionAdapter.ts` é só o ajuste de um literal de tipo (`whatsapp_group_id: null`) exigido
+pela regeneração — provado por `zapp-verify . --rapido` → `OK tipos`. A prova de comportamento do
+cartão é a suíte `scripts/db-audit/enqueue-connection-scope.test.sh`, no MESMO commit.
+
 ## O que NÃO fiz e por quê
 - Não liguei a tela ao novo RPC: `useForwardMedia.ts` ainda recusa grupo
   ("Encaminhamento para grupos ainda não é suportado"). Trocar a chamada da tela para
