@@ -1,29 +1,26 @@
-Especialista: Hugo (area-front-hooks)
-
-Concluí o que o cartão pede: as etapas 21 (tempo médio da criação à conclusão, com formato pt-BR), 52 (subtítulo de data dos grupos), 112/117 (contagens por tipo no dia da Agenda) e 126 (Agenda só com os itens já carregados, 7 dias, com o teste da virada), e o relatório de lacunas da etapa 8. Tudo em `workItemAggregates.ts` (funções puras) + os testes do próprio módulo; nenhuma consulta nova.
+Especialista: hugo — area-front-hooks
 
 ## O que mudou e por quê
-- `src/hooks/tasks/workItemAggregates.ts`:
-  - `kpis()` passa a devolver `avgLeadTimeDays` (etapa 21/D13): média de `completed_at − created_at` das concluídas dos últimos 7 dias. `avgCycleTimeDays` (started_at → completed_at) continua calculado e no mesmo campo — é o contrato que `TasksKpiStrip.tsx` já lê hoje.
-  - `formatLeadTime(days)` nova, pura e exportada: pt-BR com uma casa decimal e vírgula (`1,4 dias`), singular em 1 (`1 dia`) e `—` quando não há dados (null/NaN).
-  - `daySubtitle(date)` nova, pura: dia por extenso em pt-BR no fuso local — `Domingo, 11 de outubro`; data inválida devolve `''` em vez de derrubar a tela (etapa 52).
-  - `DayGroup` ganhou `subtitle` e `dateKey`, preenchidos por `groupUpcomingByDay` (etapa 52).
-  - `agendaDayCounts(day, atrasadas)` e `agendaDayAriaLabel(day, atrasadas)` novas, puras (etapas 112/117): contagens por tipo (`prazos`, `lembretes`, `atrasadas`, `semHora`, `total`) e o texto do `aria-label`. A tarefa com prazo E alarme aparece nas duas seções mas conta UMA vez no `total`. O `agendaDayDots` fica intacto (ver "O que NÃO fiz").
-- `src/hooks/tasks/__tests__/workItemAggregates.test.ts`: 4 describes novos (etapas 21, 52, 112/117 e 126) com os casos que provam o comportamento; nenhum teste existente foi alterado.
+- src/hooks/tasks/workItemFormat.ts (novo): regra ÚNICA de datas (etapa 058 / D21), pura e no fuso local. `formatWorkItemDate` devolve "Ontem, 17:00" / "Hoje, 14:00" / "Amanhã, 10:00" / "13 out., 15:00"; `format: 'day'` devolve só o dia ("Hoje", "Ontem", "09 out."), o caso das concluídas; `formatWorkItemFieldDate`/`formatWorkItemField` dão "Hoje, 11/10" + hora separada para painel/modal. Nenhum formato traz o dia da semana (o "Seg, 09/09, 14:20" da imagem 04 não é reproduzível). Dias comparados por `localDayKey`/`parseDayKey` de `src/lib/localDay` (import, não editei lá): a virada do dia manda, não a distância em horas. Valor ausente/inválido -> `null`.
+- src/hooks/tasks/workItemPresets.ts (novo): presets de prazo (`duePresetDate`/`duePresetISO`: hoje, amanhã, próxima semana, às 23:59 locais) e de lembrete (`remindPresetDate`/`remindPresetISO`: em 1 h, amanhã 9h, próxima segunda 9h) — etapa 161. A aritmética de prazo é de CALENDÁRIO (`setDate` sobre a meia-noite local), então um preset criado às 23:30 cai no dia seguinte e não no mesmo dia; `remindPresetDate('tomorrow9')` REAPROVEITA `tomorrowAtNine` importado de `useMyWorkItems`. `checkRemindCoherence` (etapa 162) devolve `{ state, message }` com `ok` / `in_past` / `after_due` / `no_due`: lembrete tem de estar no futuro e ANTES do prazo (igual ao prazo conta como `after_due`); sem lembrete devolve `ok` com mensagem vazia.
+- src/hooks/tasks/__tests__/workItemFormat.test.ts e workItemPresets.test.ts (novos): os testes unitários do cartão.
+
+Etapa 058/161/162 conferidas antes contra o código ATUAL: não existiam (o QuickAdd faz os presets inline, em `src/components/tasks/shared/QuickAdd.tsx`, arquivo fora do escopo deste cartão) — por isso as funções nasceram como módulos novos, sem uso na tela (critério 3: as superfícies adotam nos cartões seguintes).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` com `kpis()` na regra antiga (só o tempo de ciclo, sem `avgLeadTimeDays`) → `AssertionError: expected null to be 4` e `Tests 1 failed | 60 passed (61)` — a concluída que nasceu 7 dias antes de terminar e só entrou em "Fazendo" no último dia dava ciclo 1 e lead time 4.
-- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 1 passed (1)` / `Tests 61 passed (61)`.
-- regressão dos consumidores (hook, telas de tarefas e a aba do Inbox): `npx vitest run src/hooks/tasks src/components/tasks src/components/inbox/tabs` → `Test Files 76 passed (76)` / `Tests 809 passed | 2 todo (811)`.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Error: Failed to resolve import "@/hooks/tasks/workItemPresets" ... Test Files 2 failed (2); Tests no tests` (os módulos ainda não existiam).
+- verde depois: mesmo comando -> `Test Files 2 passed (2); Tests 28 passed (28)`.
 
-## Etapa 8 — lacunas de dados do que a UI nova precisa (sem banco novo, sem consulta nova)
-- Resumo do dia (`N tarefas com prazo · M lembretes`) e `aria-label` da faixa: NÃO existia contagem por tipo — o `agendaDayDots` só devolvia cores (no máximo 3). Resolvido: `agendaDayCounts`/`agendaDayAriaLabel`.
-- Tempo médio decimal: existia só a métrica de ciclo, e nenhum formato pt-BR; o rótulo "Da criação à conclusão" não tinha número correspondente. Resolvido: `avgLeadTimeDays` + `formatLeadTime`.
-- Janela de 30 dias: já coberta pela query única B13 (`DONE_WINDOW_DAYS` + `.or('status.neq.done,completed_at.is.null,completed_at.gte.<cutoff>')` em `useMyWorkItems`); os recortes de 7 dias da Agenda são locais (`splitDoneByRecency`/`weekBuckets`). Nada a criar.
-- Progresso do limite: os limites estão em `WIP_LIMITS` (hard/soft por status) e a contagem por status em `bucketByStatus` — o dado existe; falta só a apresentação (tela).
+## Casos de teste (nome de cada um)
+workItemFormat.test.ts (11 casos): rotula Hoje/Ontem/Amanhã pelo dia LOCAL; fora de Hoje/Ontem/Amanhã usa "dd mês." em pt-BR; com hora compõe "Ontem, 17:00"/"Hoje, 14:00"/"Amanhã, 10:00"/"13 out., 15:00"; concluída mostra SÓ o dia; nunca inclui o dia da semana; fuso local (23:30 não vira o dia seguinte, com Date e com ISO); virada do dia (00:05 é "Amanhã", 23:55 é "Ontem"); campos do painel/modal "Hoje, 11/10" + hora à parte; hora separada null; valor ausente/inválido -> null; aceita ISO com offset.
+workItemPresets.test.ts (17 casos): presets de prazo (hoje 23:59; amanhã às 23:30 -> dia seguinte; próxima semana +7 dias; ISO = Date); presets de lembrete (em 1 h = +3.600.000 ms; amanhã 9h reaproveita `tomorrowAtNine`; próxima segunda 9h a partir de domingo; próxima segunda na PRÓPRIA segunda não devolve o mesmo dia; ISO = Date); coerência (sem lembrete; futuro antes do prazo confirma; no passado, inclusive igual ao agora; depois do prazo; igual ao prazo não é "antes"; sem prazo; in_past tem prioridade sobre after_due; aceita ISO com offset).
+
+## Borda do enunciado (virada do dia, fim de semana, UTC-3, horário de verão)
+- Virada do dia: coberta nos dois arquivos (23:30/23:55/00:05 e o preset criado às 23:30).
+- Fim de semana: `nextMondayAtNine` a partir de domingo (11/10 -> 12/10) e na própria segunda (12/10 -> 19/10).
+- UTC-3: as datas dos testes são construídas no relógio LOCAL (`new Date(2026, 9, 11, 14, 0)`), então os rótulos valem com qualquer fuso do processo; o caso "23:30 não vira o dia seguinte" também cobre o ISO que o banco devolve.
+- Horário de verão: o diff de dias é por dia de CALENDÁRIO (via `localDayKey`/`parseDayKey`), não por 24 h — é o caminho que sobrevive ao dia de 23/25 h; a aritmética dos presets usa `setDate`, não `+86_400_000`.
 
 ## O que NÃO fiz e por quê
-- Não mudei a assinatura de `agendaDayDots`. O único consumidor é `src/components/tasks/agenda/TasksAgendaMode.tsx`, que tipa o retorno como `string[]` (cores) e não está nos arquivos deste cartão: trocar o retorno para contagens quebraria a tela agora. As contagens entraram como funções novas que o mesmo componente consome sem mexer no contrato atual.
-- Não liguei o rótulo "Da criação à conclusão" ao número novo: quem desenha é `src/components/tasks/shared/TasksKpiStrip.tsx` (linha 68 ainda usa `avgCycleTimeDays` com `Math.round(...)+'d'`), que é tela — `area-front-componentes` (Íris). Deixei o dado pronto (`avgLeadTimeDays` + `formatLeadTime`).
-- Lacuna conhecida, documentada no JSDoc de `groupUpcomingByDay`: o rótulo "Semana que vem" reúne mais de um dia no MESMO grupo (comportamento da etapa 49, mantido de propósito); nesse grupo `subtitle`/`dateKey` apontam para o dia mais cedo. Separar por dia dentro dele mudaria o rótulo e os testes da etapa 49.
-- Nenhuma consulta nova: tudo aqui é agregação pura sobre os `items` já carregados (B13 preservado).
+- Não toquei nas telas nem no QuickAdd: fora dos arquivos que o cartão permite (as superfícies adotam nos cartões seguintes).
+- Sem migration, Edge Function, dependência nova ou exportação de dado.
