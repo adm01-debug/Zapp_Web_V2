@@ -58,7 +58,7 @@ export function MentionInput({ value, onChange, onSubmit, placeholder, disabled 
         <Input value={value} onChange={handleInputChange} placeholder={placeholder} disabled={disabled}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !showMentions) { e.preventDefault(); onSubmit(); } }}
           className="flex-1" />
-        <Button onClick={onSubmit} disabled={disabled || !value.trim()} size="icon">
+        <Button onClick={onSubmit} disabled={disabled || !value.trim()} size="icon" aria-label="Enviar comentário com menção">
           <Send className="w-4 h-4" />
         </Button>
       </div>

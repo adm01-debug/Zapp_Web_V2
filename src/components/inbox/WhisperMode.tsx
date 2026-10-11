@@ -152,7 +152,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                 <EyeOff className="w-3 h-3" />
                 Modo Sussurro — Invisível ao cliente
               </div>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsExpanded(false)}>
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsExpanded(false)} aria-label="Recolher">
                 <X className="w-3 h-3" />
               </Button>
             </div>
@@ -181,7 +181,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                   className="h-7 text-xs"
                   onKeyDown={e => e.key === 'Enter' && sendWhisper()}
                 />
-                <Button size="icon" className="h-7 w-7 shrink-0" onClick={sendWhisper} disabled={!message.trim()}>
+                <Button size="icon" className="h-7 w-7 shrink-0" onClick={sendWhisper} disabled={!message.trim()} aria-label="Enviar sussurro">
                   <Send className="w-3 h-3" />
                 </Button>
               </div>
