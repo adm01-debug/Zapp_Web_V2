@@ -21,16 +21,18 @@ import {
   URL_REDACTION,
 } from "../message-attempts.ts";
 
+const FAKE_TOKEN = 'chave-falsa-de-teste-0000';
+
 const SECRETS = {
   phone: '5511999999999',
   messageText: 'seu pedido saiu para entrega',
-  tokens: ['sk-live-SUPERSEGREDO1234567890'],
+  tokens: [FAKE_TOKEN],
 };
 
 Deno.test('sanitizeAttemptText remove telefone, token, URL assinada e texto da mensagem', () => {
   const raw = [
     'erro ao enviar para 5511999999999',
-    'apikey=sk-live-SUPERSEGREDO1234567890',
+    `apikey=${FAKE_TOKEN}`,
     'media https://proj.supabase.co/storage/v1/object/sign/whatsapp-media/a.jpg?token=abc123def456',
     'corpo: seu pedido saiu para entrega',
   ].join(' | ');
@@ -38,7 +40,7 @@ Deno.test('sanitizeAttemptText remove telefone, token, URL assinada e texto da m
   const clean = sanitizeAttemptText(raw, SECRETS) ?? '';
 
   assert(!clean.includes('5511999999999'), `telefone vazou: ${clean}`);
-  assert(!clean.includes('SUPERSEGREDO'), `token vazou: ${clean}`);
+  assert(!clean.includes(FAKE_TOKEN), `token vazou: ${clean}`);
   assert(!clean.includes('abc123def456'), `assinatura da URL vazou: ${clean}`);
   assert(!clean.includes('seu pedido saiu para entrega'), `texto da mensagem vazou: ${clean}`);
   assertStringIncludes(clean, PHONE_REDACTION);
@@ -62,7 +64,7 @@ Deno.test('sanitizeProviderResponse sanitiza o JSON do provedor e mantém JSON v
   const provider = {
     status: 'error',
     number: '5511999999999',
-    apikey: 'sk-live-SUPERSEGREDO1234567890',
+    apikey: FAKE_TOKEN,
     media: 'https://proj.supabase.co/storage/v1/object/sign/whatsapp-media/a.jpg?token=abc123def456',
     body: 'seu pedido saiu para entrega',
   };
@@ -72,7 +74,7 @@ Deno.test('sanitizeProviderResponse sanitiza o JSON do provedor e mantém JSON v
 
   assertEquals(clean.status, 'error');
   assert(!serialized.includes('5511999999999'), `telefone vazou: ${serialized}`);
-  assert(!serialized.includes('SUPERSEGREDO'), `token vazou: ${serialized}`);
+  assert(!serialized.includes(FAKE_TOKEN), `token vazou: ${serialized}`);
   assert(!serialized.includes('abc123def456'), `assinatura vazou: ${serialized}`);
   assert(!serialized.includes('seu pedido saiu para entrega'), `texto vazou: ${serialized}`);
 });
