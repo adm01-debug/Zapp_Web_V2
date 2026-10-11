@@ -1,7 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { BellRing, CalendarIcon, CheckCircle2, ChevronDown, PauseCircle, X } from 'lucide-react';
+import { ArrowUpRight, CalendarIcon, CheckCircle2, Maximize2, Minimize2, PauseCircle, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -20,24 +18,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Calendar } from '@/components/ui/calendar';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
+import { StatusPill } from './StatusPill';
+import { PriorityPill } from './PriorityPill';
+import { ContactAvatar } from './ContactAvatar';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 import { useNarrowViewport } from './pointerMedia';
 import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime';
 import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
+import { PlanejamentoSection } from './sheet/PlanejamentoSection';
+import { formatCriadaEm } from './sheet/planejamento';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
 /** Abaixo de `md` o Sheet desce para a base (etapa 23) — mesmo corte do quadro. */
 const PRIORIDADES: Priority[] = ['low', 'medium', 'high', 'urgent'];
+
+/**
+ * Etapa 134: o "ícone colorido" dos selects é um ponto com os MESMOS tokens das
+ * pílulas (`StatusPill`/`PriorityPill`, D12) — nenhuma cor literal nova.
+ */
+const PONTO_ESTADO: Record<WorkItemStatus, string> = {
+  backlog:   'bg-muted-foreground',
+  todo:      'bg-primary',
+  doing:     'bg-primary',
+  waiting:   'bg-warning',
+  done:      'bg-success',
+  cancelled: 'bg-muted-foreground',
+};
+
+const PONTO_PRIORIDADE: Record<Priority, string> = {
+  low:    'bg-muted-foreground',
+  medium: 'bg-primary',
+  high:   'bg-warning',
+  urgent: 'bg-destructive',
+};
 
 /** Sem hora escolhida, o prazo vale o dia inteiro (convenção do módulo). */
 function compor(dia: string | null, hora: string): string | null {
@@ -82,13 +98,20 @@ interface SheetProps {
 export function WorkItemSheet(props: SheetProps) {
   const { item, open, onOpenChange, focusField } = props;
   const narrow = useNarrowViewport();
+  // Etapa 132: "expandir" do cabeçalho alarga o painel no desktop. Persistir a
+  // escolha é da etapa 146 (outro cartão) — aqui é só o controle.
+  const [expandido, setExpandido] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={narrow ? 'bottom' : 'right'}
         data-testid="work-item-sheet"
-        className={narrow ? 'h-[90vh] overflow-y-auto' : 'w-[420px] sm:max-w-[420px] overflow-y-auto'}
+        className={
+          narrow
+            ? 'h-[90vh] overflow-y-auto'
+            : `overflow-y-auto ${expandido ? 'w-[min(720px,90vw)] sm:max-w-[720px]' : 'w-[420px] sm:max-w-[420px]'}`
+        }
         onEscapeKeyDown={() => onOpenChange(false)}
       >
         {item && (
@@ -97,6 +120,8 @@ export function WorkItemSheet(props: SheetProps) {
             {...props}
             item={item}
             onOpenChange={onOpenChange}
+            expandido={expandido}
+            onAlternarExpansao={() => setExpandido((v) => !v)}
           />
         )}
       </SheetContent>
@@ -104,7 +129,11 @@ export function WorkItemSheet(props: SheetProps) {
   );
 }
 
-type FormProps = Omit<SheetProps, 'item' | 'open'> & { item: WorkItem };
+type FormProps = Omit<SheetProps, 'item' | 'open'> & {
+  item: WorkItem;
+  expandido: boolean;
+  onAlternarExpansao: () => void;
+};
 
 function Formulario({
   item,
@@ -117,6 +146,8 @@ function Formulario({
   contactOptions,
   doingCount,
   focusField,
+  expandido,
+  onAlternarExpansao,
 }: FormProps) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? '');
@@ -151,6 +182,8 @@ function Formulario({
   // em estado terminal o Sheet não oferece alarme nem "Adiar" (o card já esconde
   // o RemindChip aí); mostra o motivo no lugar dos controles.
   const lembreteElegivel = aceitaLembrete(item.status);
+  // Etapa 140: "Criada em 9 out. 2026", discreto no fim da seção.
+  const criadaEm = formatCriadaEm(item.created_at);
 
   const mudou = useMemo(() => {
     const due = compor(dia, hora);
@@ -177,6 +210,14 @@ function Formulario({
     setAlarmeDia(diaLocal(quando.toISOString()));
     setAlarmeHora(horaLocal(quando.toISOString()));
     setAvisadoEm(null);
+  }
+
+  /** Etapa 139: "Remover" da linha do lembrete — limpa o alarme e desarma o
+   *  "Avisado em" (o banco também zera `notified_at` no `setReminder(null)`). */
+  function removerAlarme() {
+    setAlarmeDia(null);
+    setAvisadoEm(null);
+    onSetReminder(item, null);
   }
 
   /**
@@ -228,45 +269,123 @@ function Formulario({
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <SheetHeader>
-        <SheetTitle>Editar tarefa</SheetTitle>
+      {/* Etapa 132: cabeçalho — ícone calendário em quadrado primary, "Detalhes
+          da tarefa" e expandir. O fechar é o X que o próprio SheetContent já
+          posiciona no topo-direito (alvo de 40 px, rótulo acessível). */}
+      <SheetHeader className="space-y-0">
+        <div data-testid="sheet-cabecalho" className="flex items-start gap-3 pr-8">
+          <span
+            aria-hidden
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
+          >
+            <CalendarIcon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="text-base">Detalhes da tarefa</SheetTitle>
+            {/* Etapa 133: badges de estado e prioridade no topo, lendo o mesmo
+                estado que os campos editam — por isso acompanham a edição. */}
+            <p data-testid="sheet-badges" className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <StatusPill status={status} />
+              <PriorityPill priority={prioridade} />
+            </p>
+          </div>
+          <button
+            type="button"
+            data-testid="sheet-expandir"
+            aria-pressed={expandido}
+            aria-label={expandido ? 'Recolher painel' : 'Expandir painel'}
+            title={expandido ? 'Recolher painel' : 'Expandir painel'}
+            onClick={onAlternarExpansao}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {expandido ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+        </div>
       </SheetHeader>
 
       <div className="flex flex-col gap-3">
         <div>
           <Label htmlFor="sheet-titulo">Título</Label>
+          {/* Etapa 134: título como input grande (é o que a imagem 03 mostra). */}
           <Input
             id="sheet-titulo"
             data-testid="sheet-titulo"
-            autoFocus={focusField !== 'remind_at'}
+            autoFocus={!focusField}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1.5 bg-input/40 border-border/70"
+            className="mt-1.5 h-11 text-base font-semibold bg-input/40 border-border/70"
           />
         </div>
 
-        <div>
-          <Label htmlFor="sheet-estado">Estado</Label>
-          <Select value={status} onValueChange={(v) => setStatus(v as WorkItemStatus)}>
-            <SelectTrigger id="sheet-estado" data-testid="sheet-estado" className="mt-1.5 bg-input/40 border-border/70">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {KANBAN_COLUMNS.map((c) => {
-                const bloqueado = c.status === 'doing' && doingCheio;
-                return (
-                  <SelectItem key={c.status} value={c.status} disabled={bloqueado}>
-                    {bloqueado ? `${c.label} está cheio (${doingCount}/3)` : c.label}
+        {/* Etapa 134: Estado e Prioridade lado a lado, cada um um select com o
+            ícone colorido (ponto com os tokens D12) e a opção bloqueada pelo
+            limite explicada no próprio rótulo. */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="sheet-estado">Estado</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as WorkItemStatus)}>
+              <SelectTrigger id="sheet-estado" data-testid="sheet-estado" className="mt-1.5 bg-input/40 border-border/70">
+                <span aria-hidden className={`mr-1.5 h-2 w-2 shrink-0 rounded-full ${PONTO_ESTADO[status]}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {KANBAN_COLUMNS.map((c) => {
+                  const bloqueado = c.status === 'doing' && doingCheio;
+                  return (
+                    <SelectItem key={c.status} value={c.status} disabled={bloqueado}>
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${PONTO_ESTADO[c.status]}`} />
+                        {bloqueado ? `${c.label} está cheio (${doingCount}/3)` : c.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="sheet-prioridade">Prioridade</Label>
+            <Select value={prioridade} onValueChange={(v) => setPrioridade(v as Priority)}>
+              <SelectTrigger
+                id="sheet-prioridade"
+                data-testid="sheet-prioridade"
+                data-priority={prioridade}
+                className="mt-1.5 bg-input/40 border-border/70"
+              >
+                <span aria-hidden className={`mr-1.5 h-2 w-2 shrink-0 rounded-full ${PONTO_PRIORIDADE[prioridade]}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORIDADES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    <span className="flex items-center gap-1.5">
+                      <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${PONTO_PRIORIDADE[p]}`} />
+                      {PRIORITY_LABELS[p]}
+                    </span>
                   </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {motivoObrigatorio && (
-          <div>
-            <Label htmlFor="sheet-motivo">Motivo de espera</Label>
+          <div
+            data-testid="sheet-motivo-caixa"
+            className="rounded-lg border border-warning/40 bg-warning/5 p-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="sheet-motivo" className="text-[hsl(var(--warning-text))]">
+                Motivo da espera
+              </Label>
+              <span
+                data-testid="sheet-motivo-obrigatorio"
+                className="rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 text-2xs font-semibold leading-none text-[hsl(var(--warning-text))]"
+              >
+                Obrigatório
+              </span>
+            </div>
             <Textarea
               id="sheet-motivo"
               data-testid="sheet-motivo"
@@ -274,165 +393,74 @@ function Formulario({
               value={motivo}
               onChange={(e) => { setMotivo(e.target.value); setErro(null); }}
               placeholder="Por que parou? Ex.: aguardando aprovação do cliente"
-              className="mt-1.5 bg-input/40 border-border/70"
+              className="mt-1.5 bg-background/60 border-warning/40"
             />
             {erro && <p data-testid="sheet-motivo-erro" className="mt-1 text-2xs text-destructive">{erro}</p>}
           </div>
         )}
 
-        <div>
-          <Label>Prioridade</Label>
-          <div className="mt-1.5 flex gap-1.5">
-            {PRIORIDADES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                data-testid={`sheet-prio-${p}`}
-                aria-pressed={prioridade === p}
-                onClick={() => setPrioridade(p)}
-                className={`h-7 px-2.5 rounded-full border text-2xs font-medium transition-colors ${
-                  prioridade === p
-                    ? 'bg-primary/15 border-primary/50 text-primary-glow'
-                    : 'bg-input/40 border-border/70 text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {PRIORITY_LABELS[p]}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        {/* Etapa 136: Contato com avatar no select e "Abrir conversa ↗" ao lado,
+            pelo mesmo mecanismo do card (`openContactChat`). */}
         <div>
           <Label htmlFor="sheet-contato">Contato</Label>
-          <Select
-            value={contactId || 'sem'}
-            onValueChange={(v) => setContactId(v === 'sem' ? '' : v)}
-          >
-            <SelectTrigger id="sheet-contato" data-testid="sheet-contato" className="mt-1.5 bg-input/40 border-border/70">
-              <SelectValue placeholder="Sem contato" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sem">Sem contato</SelectItem>
-              {contactOptions.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name || 'Sem nome'}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label>Prazo</Label>
-          <div className="mt-1.5 flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-testid="sheet-prazo"
-                  className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dia ? format(new Date(`${dia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR }) : 'Sem prazo'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  locale={ptBR}
-                  selected={dia ? new Date(`${dia}T12:00:00`) : undefined}
-                  onSelect={(d) => setDia(d ? diaLocal(d.toISOString()) : null)}
-                />
-                <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                  <Input
-                    type="time"
-                    data-testid="sheet-prazo-hora"
-                    value={hora}
-                    onChange={(e) => setHora(e.target.value)}
-                    className="h-8 bg-input/40"
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => { setDia(null); setHora(''); }}>
-                    Limpar
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Select
+              value={contactId || 'sem'}
+              onValueChange={(v) => setContactId(v === 'sem' ? '' : v)}
+            >
+              <SelectTrigger id="sheet-contato" data-testid="sheet-contato" className="min-w-0 flex-1 bg-input/40 border-border/70">
+                <SelectValue placeholder="Sem contato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sem">Sem contato</SelectItem>
+                {contactOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      {/* Decorativo dentro da opção: o nome acessível fica no
+                          texto, para o leitor de tela não repetir o contato. */}
+                      <span aria-hidden>
+                        <ContactAvatar name={c.name} size="sm" />
+                      </span>
+                      {c.name || 'Sem nome'}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="sheet-abrir-conversa"
+              disabled={!contactId}
+              onClick={() => { if (contactId) openContactChat(contactId); }}
+              className="shrink-0 gap-1 border-border/70 text-xs"
+            >
+              Abrir conversa <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+            </Button>
           </div>
         </div>
 
-        <div>
-          <Label>Alarme</Label>
-          {lembreteElegivel ? (
-            <>
-              <div className="mt-1.5 flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      data-testid="sheet-alarme"
-                      autoFocus={focusField === 'remind_at'}
-                      className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
-                    >
-                      {avisadoEm && alarmeDia
-                        ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
-                        : <CalendarIcon className="mr-2 h-4 w-4" />}
-                      {alarmeDia
-                        ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
-                        : 'Sem alarme'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      locale={ptBR}
-                      selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
-                      onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
-                    />
-                    <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                      <Input
-                        type="time"
-                        data-testid="sheet-alarme-hora"
-                        value={alarmeHora}
-                        onChange={(e) => setAlarmeHora(e.target.value)}
-                        className="h-8 bg-input/40"
-                      />
-                      <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
-                      Adiar <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              {avisadoEm && (
-                <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
-                  Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
-                </p>
-              )}
-              {alarmeDia && (
-                <button
-                  type="button"
-                  data-testid="sheet-remover-alarme"
-                  onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
-                  className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
-                >
-                  Remover alarme
-                </button>
-              )}
-            </>
-          ) : (
-            <p data-testid="sheet-alarme-indisponivel" className="mt-1.5 text-2xs text-muted-foreground">
-              {MOTIVO_SEM_LEMBRETE}
-            </p>
-          )}
-        </div>
+        {/* Etapas 137–139: a seção "Planejamento" (os dois cartões, a validação
+            do lembrete contra o prazo e a linha Agendado · Adiar · Remover)
+            mora em `sheet/PlanejamentoSection.tsx` — este arquivo está no teto
+            de linhas do CI e não pode crescer. */}
+        <PlanejamentoSection
+          prazoDia={dia}
+          prazoHora={hora}
+          onPrazoDia={setDia}
+          onPrazoHora={setHora}
+          avisoDia={alarmeDia}
+          avisoHora={alarmeHora}
+          onAvisoDia={setAlarmeDia}
+          onAvisoHora={setAlarmeHora}
+          lembreteElegivel={lembreteElegivel}
+          motivoIndisponivel={MOTIVO_SEM_LEMBRETE}
+          focoAviso={focusField === 'remind_at'}
+          avisadoEm={avisadoEm}
+          onAdiar={adiar}
+          onRemover={removerAlarme}
+        />
+
 
         <div>
           <button
@@ -446,15 +474,28 @@ function Formulario({
           {mostraDescricao && (
             <>
               <Label htmlFor="sheet-descricao" className="mt-1.5 block">Descrição da tarefa</Label>
+              {/* Etapa 140: caixa redimensionável (`resize-y`) com contador. */}
               <Textarea
                 id="sheet-descricao"
                 data-testid="sheet-descricao"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1.5 bg-input/40 border-border/70"
+                className="mt-1.5 resize-y bg-input/40 border-border/70"
                 rows={3}
               />
+              <p
+                data-testid="sheet-descricao-contador"
+                className="mt-1 text-2xs text-muted-foreground"
+              >
+                {description.length} {description.length === 1 ? 'caractere' : 'caracteres'}
+              </p>
             </>
+          )}
+          {/* Etapa 140: "Criada em 9 out. 2026", discreto. */}
+          {criadaEm && (
+            <p data-testid="sheet-criada-em" className="mt-1 text-2xs text-muted-foreground">
+              {criadaEm}
+            </p>
           )}
         </div>
       </div>
