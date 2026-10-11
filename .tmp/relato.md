@@ -1,8 +1,11 @@
 Especialista: Edgar (area-edge-api)
 
 ## O que mudou e por quê
-- supabase/functions/ai-suggest-reply/index.ts + index.test.ts: trazidos do trabalho anterior (cherry-pick de 917741078) — só os artigos devolvidos por search_knowledge_base para a última mensagem do cliente entram no prompt; RPC vazio ou em erro deixa o contexto vazio, sem fallback para publicados.
-- docs/DB-INVENTORY.md: linha de `knowledge_base_articles` troca o consumidor `supabase/functions/ai-suggest-reply/index.ts` por `supabase/functions/_shared/ai-kb-ingest.ts` — motivo do motivo registrado: depois do cherry-pick, index.ts deixou de citar a tabela (passou a usar o RPC), e o espelho do CI acusava consumidor que não cita o objeto.
+Diff contra a base (dia/2026-10-11): 4 arquivos, 290 inserções, 77 remoções; 1 arquivo de teste.
+- supabase/functions/ai-suggest-reply/index.ts (alterado): passa a consultar só os artigos devolvidos por search_knowledge_base para a última mensagem do cliente; RPC vazio ou em erro deixa o contexto vazio, sem fallback para artigos publicados. Cherry-pick do trabalho anterior (917741078).
+- supabase/functions/ai-suggest-reply/index.test.ts (novo): 6 casos de teste novos chamando o handler real — provam o RPC com a última mensagem, artigos no prompt, tabela de publicados intocada, erro/vazio com contexto vazio e nenhum RPC sem mensagem do cliente.
+- docs/DB-INVENTORY.md (1 linha): a linha de `knowledge_base_articles` troca o consumidor `supabase/functions/ai-suggest-reply/index.ts` por `supabase/functions/_shared/ai-kb-ingest.ts` — depois do cherry-pick o index.ts deixou de citar a tabela (passou a usar o RPC), e o espelho do CI acusava consumidor que não cita o objeto (motivo registrado da recusa).
+- .tmp/relato.md: este relato.
 
 ## Prova
 - vermelho antes (motivo registrado, reproduzido): `node --test scripts/ci/db-inventory-doc.unit.mjs` → `✖ docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` com `'"knowledge_base_articles" lista "supabase/functions/ai-suggest-reply/index.ts", mas esse arquivo não cita o objeto'` (14 passed, 1 fail).
