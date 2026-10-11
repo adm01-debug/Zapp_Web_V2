@@ -11,6 +11,7 @@ import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { splitDoneByRecency }   from '@/hooks/tasks/workItemAggregates';
 import { formatWorkItemDate }   from '@/hooks/tasks/workItemFormat';
 import type { WorkItemCardActions } from '../shared/cardActions';
+import { usePressaoLonga } from '../shared/pointerMedia';
 
 interface Props extends WorkItemCardActions {
   status: WorkItemStatus;
@@ -45,6 +46,21 @@ export function BoardColumn({
   // Etapa 81: em ponteiro grosso o arrasto não existe — nada entra por drop.
   const isDropDisabled = dragDisabled || (hardFull && dragSourceStatus !== status);
 
+  // Etapa 096: com um arrasto em curso, a coluna Aguardando se realça em âmbar —
+  // é o aviso de que soltar ali vai pedir o motivo antes de escrever no banco.
+  const realceEspera = !dragDisabled && dragSourceStatus != null && status === 'waiting';
+  // Etapa 095: a dica do alvo mostra a contagem do destino DEPOIS do drop (com o
+  // teto do limite duro, nunca "4 de 3").
+  const dicaSolta = limit.hard != null
+    ? `Solte para mover para ${col.label} (${Math.min(doingCount + 1, limit.hard)} de ${limit.hard})`
+    : `Solte para mover para ${col.label}`;
+
+  // Etapa 094: no toque o arrasto só pega depois de uma pressão longa (a lib de
+  // DnD respeita `isDragDisabled` na hora de levantar o cartão, então o swipe
+  // continua sendo rolagem até a coluna estar armada).
+  const pressao = usePressaoLonga();
+  const arrastoBloqueado = dragDisabled && !pressao.armado;
+
   // Etapa 51 (B5): a coluna Concluído mostra os 7 dias e revela o resto da janela
   // de 30 dias no rodapé "Ver até 30 dias →" (filtro local, sem query nova).
   const [showOlderDone, setShowOlderDone] = useState(false);
@@ -70,6 +86,7 @@ export function BoardColumn({
     // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
     <div
       data-board-column={status}
+      {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
       className={[
         'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
         // Etapa 093: recolhida, a coluna para de dividir a largura (`flex-none`)
@@ -78,6 +95,8 @@ export function BoardColumn({
         // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
         // depende de animação); o tranco curto só existe sem movimento reduzido.
         shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
+        // Etapa 096: âmbar por dentro da borda, sem trocar a cor da coluna.
+        realceEspera ? 'ring-2 ring-inset ring-warning/60' : '',
       ].join(' ')}
     >
       {/* cabeçalho sticky */}
@@ -151,8 +170,31 @@ export function BoardColumn({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5' : ''}`}
+            onPointerDown={pressao.aoPressionar}
+            onPointerUp={pressao.aoSoltar}
+            onPointerCancel={pressao.aoSoltar}
+            className={`flex-1 min-w-0 overflow-y-auto p-2 space-y-1.5 min-h-[80px] ${snapshot.isDraggingOver ? 'bg-primary/5 ring-2 ring-inset ring-primary' : ''}`}
           >
+            {/* Etapa 094: no toque a coluna precisa avisar que o arrasto pede
+                pressão longa — sem isso o gesto morre na rolagem. */}
+            {dragDisabled && (
+              <p
+                data-testid="board-longpress-hint"
+                className="px-1 pb-1 text-[11px] text-muted-foreground"
+              >
+                {pressao.armado ? 'Arraste o cartão' : 'Pressione e segure para arrastar'}
+              </p>
+            )}
+            {/* Etapa 095: alvo de soltura — a coluna em foco ganha a borda primary
+                (o ring) e a dica diz para onde e como a contagem fica. */}
+            {snapshot.isDraggingOver && (
+              <p
+                data-testid="board-drop-target"
+                className="rounded-lg border border-primary/40 bg-primary/10 px-2 py-1 text-[11px] font-medium text-foreground"
+              >
+                {dicaSolta}
+              </p>
+            )}
             {isLoading && <BoardColumnSkeleton />}
             {/* Fase F (auditoria): com concluídas de 8 a 30 dias atrás do rodapé a
                 coluna NÃO está vazia — antes ela mostrava "Coluna vazia" e o
@@ -167,9 +209,16 @@ export function BoardColumn({
               </div>
             )}
             {!isLoading && visibleItems.map((item, index) => (
-              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={dragDisabled}>
+              <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={arrastoBloqueado}>
                 {(drag, snap) => (
-                  <div ref={drag.innerRef} {...drag.draggableProps}>
+                  // Etapa 094: o cartão levantado ganha o overlay elevado
+                  // (`--shadow-lg`) — a sombra do card comum continua sendo a dele.
+                  <div
+                    ref={drag.innerRef}
+                    {...drag.draggableProps}
+                    {...(snap.isDragging ? { 'data-testid': 'drag-overlay' } : {})}
+                    className={snap.isDragging ? 'rounded-[14px] shadow-[var(--shadow-lg)]' : ''}
+                  >
                     {/* Etapa 092: no Concluído, cada cartão traz o check verde e a
                         data da conclusão (a mesma regra de dia do módulo). */}
                     {status === 'done' && (
@@ -202,7 +251,15 @@ export function BoardColumn({
                 )}
               </Draggable>
             ))}
-            {provided.placeholder}
+            {/* Etapa 094: o lugar da soltura vira um rasgo tracejado enquanto o
+                arrasto está por cima — o placeholder real continua sendo o que
+                segura o espaço para a lib. */}
+            <div
+              data-testid="board-drop-placeholder"
+              className={snapshot.isDraggingOver ? 'rounded-[14px] border-2 border-dashed border-primary/60 p-1' : ''}
+            >
+              {provided.placeholder}
+            </div>
           </div>
         )}
       </Droppable>
