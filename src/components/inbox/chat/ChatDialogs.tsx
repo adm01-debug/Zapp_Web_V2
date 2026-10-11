@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { Conversation, Message, InteractiveMessage, InteractiveButton, LocationMessage } from '@/types/chat';
 import { ExternalProductCatalog } from '@/components/catalog/ExternalProductCatalog';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
+import type { TransferTargetType } from '../TransferDialog';
 
 const TransferDialog = lazy(() => import('../TransferDialog').then(m => ({ default: m.TransferDialog })));
 const ScheduleMessageDialog = lazy(() => import('../ScheduleMessageDialog').then(m => ({ default: m.ScheduleMessageDialog })));
@@ -26,7 +27,7 @@ interface ChatDialogsProps {
   conversation: Conversation;
   forwardMessage: Message | null;
   contactId: string;
-  onTransfer: (type: 'agent' | 'queue', targetId: string, message?: string) => void;
+  onTransfer: (type: TransferTargetType, targetId: string, message?: string) => void | Promise<void>;
   onScheduleMessage: (message: string, scheduledAt: Date, attachment?: File) => Promise<void>;
   onSendInteractiveMessage: (interactive: InteractiveMessage) => Promise<void>;
   onForwardToTargets: ForwardCallback;
@@ -56,7 +57,7 @@ export function ChatDialogs({
   return (
     <>
       <Suspense fallback={null}>
-        {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer as (type: "agent" | "connection" | "queue", targetId: string, message?: string) => void} />}
+        {dialogs.transferDialog && <TransferDialog open={dialogs.transferDialog} onOpenChange={(v) => v ? openDialog('transferDialog') : closeDialog('transferDialog')} onTransfer={onTransfer} queueId={conversation.contact.queue_id ?? null} />}
         {dialogs.scheduleDialog && <ScheduleMessageDialog open={dialogs.scheduleDialog} onOpenChange={(v) => v ? openDialog('scheduleDialog') : closeDialog('scheduleDialog')} onSchedule={onScheduleMessage} />}
         {dialogs.globalSearch && (
           <GlobalSearch

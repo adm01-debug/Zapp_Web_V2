@@ -237,25 +237,19 @@ export function useConversationActions() {
       toast.error('Transferência por conexão ainda não é suportada');
       return;
     }
-    const updateData: { assigned_to?: string; queue_id?: string } =
-      type === 'agent' ? { assigned_to: targetId } : { queue_id: targetId };
-    const { error } = await supabase.from('contacts').update(updateData).eq('id', contactId);
-    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
-    // usa a rejeição pra manter o diálogo/alvo abertos.
-    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
+
     const trimmedNote = note?.trim();
-    const { error: eventError } = await supabase.from('conversation_events').insert({
-      event_type: 'transfer',
-      contact_id: contactId,
-      ...(type === 'agent' ? { to_agent_id: targetId } : { to_queue_id: targetId }),
-      ...(trimmedNote ? { metadata: { note: trimmedNote } } : {}),
+    const { error } = await supabase.rpc('transfer_conversation', {
+      p_contact_id: contactId,
+      p_to_agent_id: type === 'agent' ? targetId : null,
+      p_to_queue_id: type === 'queue' ? targetId : null,
+      p_note: trimmedNote || null,
     });
-    if (eventError) {
-      // Falha ao gravar o evento é falha da transferência: rejeita (não resolve)
-      // para a sidebar manter diálogo/alvo abertos, e não sinaliza sucesso.
-      toast.error('Conversa transferida, mas o registro do evento falhou');
-      throw eventError;
-    }
+
+    // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
+    // usa a rejeição pra manter o diálogo/alvo abertos. A RPC é transacional:
+    // erro nela significa que nem UPDATE em contacts nem evento foram persistidos.
+    if (error) { toast.error('Erro ao transferir conversa'); throw error; }
     toast.success(type === 'agent' ? 'Chat transferido para outro atendente' : 'Chat transferido para outra fila');
   }, []);
 
