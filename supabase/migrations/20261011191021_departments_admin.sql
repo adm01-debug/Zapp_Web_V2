@@ -139,15 +139,29 @@ BEGIN
   END IF;
 
   IF p_move_to IS NOT NULL THEN
+    -- O gatilho update_profiles_updated_at regrava updated_at em QUALQUER UPDATE. Uma
+    -- movimentacao de vinculo (quem pertence a qual departamento) nao e mudanca de conteudo
+    -- do perfil, entao a data nao deve ser reescrita (recusa real de 06/10). Desliga SO esse
+    -- gatilho durante o UPDATE e o religa logo depois, na MESMA transacao: erro adiante
+    -- aborta tudo e o gatilho volta intacto (DDL e transacional).
+    ALTER TABLE public.profiles DISABLE TRIGGER update_profiles_updated_at;
     UPDATE public.profiles
        SET department_id = p_move_to
      WHERE department_id = p_department_id;
     GET DIAGNOSTICS v_moved_members = ROW_COUNT;
+    ALTER TABLE public.profiles ENABLE TRIGGER update_profiles_updated_at;
 
+    -- Mesmo motivo para as conversas migradas.
+    ALTER TABLE public.team_conversations DISABLE TRIGGER update_team_conversations_updated_at;
     UPDATE public.team_conversations
        SET department_id = p_move_to
      WHERE department_id = p_department_id;
     GET DIAGNOSTICS v_moved_conversations = ROW_COUNT;
+    -- A FK de team_conversations e DEFERRABLE: o UPDATE deixa evento pendente e o
+    -- ALTER ... ENABLE recusaria com "pending trigger events". Forco as checagens
+    -- diferidas agora (SET CONSTRAINTS e do escopo da transacao) e religo o gatilho.
+    SET CONSTRAINTS ALL IMMEDIATE;
+    ALTER TABLE public.team_conversations ENABLE TRIGGER update_team_conversations_updated_at;
   END IF;
 
   DELETE FROM public.departments WHERE id = p_department_id;

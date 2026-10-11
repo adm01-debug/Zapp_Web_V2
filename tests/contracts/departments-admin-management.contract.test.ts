@@ -74,6 +74,14 @@ describe('contrato de gestao de departamentos pelo admin', () => {
     expect(typesSource).toMatch(/departments_overview:\s*\{/);
   });
 
+  it('preserva updated_at no move (gatilho desligado so durante o UPDATE)', () => {
+    expect(activeSql).toContain('DISABLE TRIGGER update_profiles_updated_at');
+    expect(activeSql).toContain('ENABLE TRIGGER update_profiles_updated_at');
+    expect(activeSql).toContain('DISABLE TRIGGER update_team_conversations_updated_at');
+    expect(activeSql).toContain('ENABLE TRIGGER update_team_conversations_updated_at');
+    expect(activeSql).toContain('SET CONSTRAINTS ALL IMMEDIATE');
+  });
+
   it('mantem o teste executavel registrado no db-guard', () => {
     const workflow = readFileSync(resolve(root, '.github/workflows/db-guard.yml'), 'utf8');
     expect(existsSync(dbauditPath)).toBe(true);
