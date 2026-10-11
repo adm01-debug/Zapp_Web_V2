@@ -108,7 +108,7 @@
 
 - **IA-179 — Gerar briefing operacional periódico — PARCIAL.** Existe conteúdo de briefing, mas
   **sob demanda**: `src/components/admin/SupervisorCopilot.tsx` responde perguntas do supervisor por
-  consulta, e `src/components/inbox/chat/ChatHeader.tsx` mostra a inteligência da conversa. Falta o
+  consulta, e `src/components/inbox/chat/ChatPanelHeader.tsx` mostra a inteligência da conversa. Falta o
   que o critério pede — geração **periódica** por equipe, com janela temporal, frequência e
   destinatários configuráveis e filtro por acesso do destinatário. Não há *job* de briefing.
 

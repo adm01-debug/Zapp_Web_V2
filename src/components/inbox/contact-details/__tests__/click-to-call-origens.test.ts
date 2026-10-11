@@ -12,7 +12,9 @@ import path from 'node:path';
  * `events.test.ts` (16 casos), e o consumidor por `CallSessionProvider.test.tsx`.
  *
  * Divergencia registrada do plano: ele nomeia `ChatHeader` como origem, mas ali a
- * prop so e repassada — quem de fato emite no inbox e o `ChatPanel` (`:247`).
+ * prop so era repassada — quem de fato emite no inbox e o `ChatPanel` (`:247`).
+ * `ChatHeader.tsx` foi removido como codigo morto (2026-10-11), entao saiu da lista
+ * de hospedeiros: o unico hospedeiro vivo e o `ContactHeaderSection`.
  */
 const raiz = process.cwd();
 const ler = (rel: string): string => readFileSync(path.join(raiz, rel), 'utf8');
@@ -24,7 +26,6 @@ const EMISSORES = [
 
 const HOSPEDEIROS = [
   ['ContactHeaderSection', 'src/components/inbox/contact-details/ContactHeaderSection.tsx'],
-  ['ChatHeader', 'src/components/inbox/chat/ChatHeader.tsx'],
 ] as const;
 
 describe('clique-para-discar — as origens migradas (T29)', () => {
