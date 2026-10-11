@@ -1,67 +1,25 @@
-Especialista: worker (geral)
+Especialista: Íris (area-front-componentes)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- `src/components/ui/VolumeDial.tsx` (novo): dial circular de volume, no padrão slider-08 — anel SVG com arco de 270° aberto na base (pathLength=270 + strokeDasharray, `transform=rotate(135 …)`), preenchido por gradiente dos tokens existentes (`--primary` → `--primary-glow`), knob em `transform` e número grande no centro em `tabular-nums`. Props do cartão: `value, min, max, step, disabled, muted, onChange, ariaLabel, valueLabel, size`.
+- `src/components/ui/__tests__/VolumeDial.test.tsx` (novo): prova renderizando o componente REAL e disparando eventos reais de ponteiro/teclado/roda.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+Comportamento provado:
+- Ponteiro converte ângulo → valor (topo do anel = meio da faixa). Clicar no trilho salta para o valor; arrastar (pointer capture) acompanha.
+- A abertura inferior do arco é limite: cruzar a base NÃO salta de 100 para 0 (o valor fica na ponta); mover o ponteiro para dentro da abertura mantém o valor.
+- Teclado: setas ±1 passo, PageUp/PageDown ±5 passos, Home=mínimo, End=máximo, com limite nas pontas.
+- Roda do mouse NÃO altera o volume (não há listener de roda).
+- Estado `muted`: arco esmaecido, knob em tom neutro e centro mostra "Mudo"; `aria-valuetext="Mudo"`.
+- Acessibilidade: `role="slider"`, nome acessível via `aria-label`, `aria-valuemin/max/now` com o valor real e `aria-valuetext="N por cento"`; foco visível (`focus-visible:ring-*`); `disabled` sai da ordem de tabulação e não reage a teclado/ponteiro.
+- Movimento: só `transform`/`opacity`; com `useReducedMotion` o número troca direto (sem contagem) e o knob não anima. Sem movimento reduzido, o número conta até o novo valor com mola curta (`animate`).
+- Alvo de toque: `size` padrão 96 px (>= 40 px), `touch-none` no elemento.
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
-
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Prova
+- vermelho antes: `npx vitest run src/components/ui/__tests__/VolumeDial.test.tsx -t "não salta"` (com o guard da abertura trocado por clamp no código) → `FAIL … aria-valuenow="100" / Received: aria-valuenow="0"` (o valor saltava de 100 para 0 ao cruzar a base). Código restaurado em seguida.
+- verde depois: `npx vitest run src/components/ui/__tests__/VolumeDial.test.tsx` → `Test Files 1 passed (1); Tests 12 passed (12)`.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (tipos, lint, db_guard e migrations OK). O cartão não toca banco, por isso o banco não foi verificado.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não integrei o `VolumeDial` em nenhuma tela: o cartão pede só o componente (o consumidor é o cartão dependente `t_3102071a` da sidebar de volume, em produção V1/V3).
+- Nenhuma migration, Edge Function, DDL, dependência nova ou export/import em massa: fora do escopo de front.
+- Token/classe conferidos no projeto antes do uso (`tailwind.config.ts`: `ring`, `background`, `glow-primary`; `tokens.css`: `--ring`, `--primary-glow`, `--shadow-glow-primary`). Nenhum valor, teto ou escala foi alterado.
