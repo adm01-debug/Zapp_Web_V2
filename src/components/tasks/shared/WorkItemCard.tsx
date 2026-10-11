@@ -183,13 +183,20 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // "tarefa arrastável" em vez do "button" cru da lib de DnD.
   const roleDescription = mode === 'board' ? { 'aria-roledescription': 'tarefa arrastável' } : {};
 
+  // N-180: o spread do dragHandleProps vem ANTES do role="article". A lib de
+  // DnD manda role="button" no card (que já contém checkbox, kebab e "Abrir
+  // conversa"), o que criava botão-dentro-de-botão: o leitor de tela anunciava
+  // widget e o axe acusava nested-interactive + aria-allowed-role, já que
+  // role="button" não é permitido no elemento <article>. Com o role="article"
+  // por cima, o card segue article e a alça continua focável pelo tabIndex.
   return (
     <article
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
-      tabIndex={0}
+      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       role="article"
+      tabIndex={0}
       aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
       onKeyDown={handleKeyDown}
       onClick={onOpen}
@@ -206,7 +213,6 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             ? 'border-border/40 opacity-60'
             : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
       ].join(' ')}
-      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       {...roleDescription}
     >
       {isAgenda ? (
@@ -258,7 +264,14 @@ export const WorkItemCard = React.memo(function WorkItemCard({
               // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
               // num controle invisível — o anel de foco do `button:focus-visible` some
               // junto com o `opacity-0`, que apaga também a sombra).
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              // E18: área mínima de toque de 44 px em mobile (WCAG 2.5.5).
+              // N-180.5: escondido ele não intercepta clique sobre o conteúdo
+              // (pointer-events-none); o mouse volta no hover e no foco.
+              // N-180.6: em aparelho sem hover (toque) "hover" nunca dispara, então
+              // opacity-0 + pointer-events-none deixavam o botão inalcançável. A
+              // variante [@media(hover:none)] o deixa sempre visível e clicável ali,
+              // sem mudar nada em quem usa mouse (a media query não casa lá).
+              className="absolute bottom-2 right-2 flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-md bg-muted/80 hover:bg-primary/20 opacity-0 pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto group-hover:pointer-events-auto focus-visible:pointer-events-auto group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >
