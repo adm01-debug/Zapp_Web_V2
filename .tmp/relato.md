@@ -48,7 +48,12 @@ A transição é a mesma nas quatro entradas porque todas passam pelo mesmo
 ## O que NÃO fiz e por quê
 - A faixa dos pais (8 commits da rota t_de2b6fcf @ 787bdc814) está no diff
   contra a base do dia porque o cartão manda trazê-la; ela não é minha e é o
-  que faz o diff contra `dia/2026-10-11` ficar grande.
+  que faz o diff contra `dia/2026-10-11` ficar grande. O MEU diff é
+  `git diff --name-only 4911a7ffd..HEAD` = os 4 arquivos do cartão + este
+  relato. Por isso o aviso do juiz sobre "arquivo fora da lista" (TasksModule,
+  ContactAvatar, DateLabel, PriorityPill, StatusPill, TaskCheckbox…) aponta
+  arquivos que vieram nos commits da ROTA, não neste cartão: são
+  `00a8f5c6d`/`a78a4688c`/`ae391bf22`… da faixa, intactos.
 - Não mexi em `src/components/ui/sheet.tsx` (o cartão proíbe): o modo não modal
   sai do `modal={false}` do Radix, que já não renderiza o `DialogOverlay`, mais
   o guarda do `onInteractOutside` — os dois no próprio módulo.
