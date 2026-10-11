@@ -45,3 +45,13 @@ Trouxe `dia/2026-10-11..v2/painel-detalhes-tarefa-2610111453-26101115131f85` (14
 - Etapas 137–140 (planejamento, validações, lembrete, descrição) são de cartões filhos — não toquei.
 - Persistir o "expandir" (70% e escolha salva) é outra etapa; aqui o controle só alterna a largura.
 - O "fechar" do cabeçalho é o X que o próprio `SheetContent` já renderiza no topo-direito; não criei um segundo botão para não duplicar ícone.
+
+## Juiz barato — avisos que NÃO procedem (não mudam nada)
+
+- Aviso 1 (SHAs do cherry-pick não demonstrados): procede ao contrário — a seção "Cherry-pick dos pais
+  (faixa de cada um, na ordem)" lista, para cada pai, o SHA no meu branch (o `cartao` de cada pai está em
+  `~/hermes-workspaces/.v2-fila/*.json`).
+- Aviso 2 (arquivos fora de ARQUIVOS QUE PODE TOCAR): `TasksModule.tsx` e os primitivos de `src/components/tasks/shared/`
+  (ContactAvatar, DateLabel, PriorityPill, StatusPill, TaskCheckbox, tasksUi/TasksUiContext) NÃO são deste cartão — são dos
+  pais t_a332243d e t_f268a0d8, trazidos pelo cherry-pick que a seção DEPENDÊNCIA do próprio cartão manda fazer e que a
+  recusa declarou justificável. Reverter o cherry-pick quebraria o painel (ele importa `ContactAvatar`).
