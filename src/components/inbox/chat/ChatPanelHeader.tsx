@@ -101,7 +101,7 @@ function ChatPanelHeaderBase({
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-lg font-bold text-foreground truncate">{conversation.contact.name}</h3>
+            <h2 className="text-lg font-bold text-foreground truncate" title={conversation.contact.name}>{conversation.contact.name}</h2>
             {onToggleFavorite && (
               <button
                 aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
