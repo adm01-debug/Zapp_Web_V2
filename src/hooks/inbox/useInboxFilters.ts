@@ -87,7 +87,18 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // persistido `contacts.conversation_status`, e não mais da derivação por
     // `messages.length` (que mostrava como "aberta" toda conversa com mensagem e
     // como "resolvida" apenas a que nunca teve nenhuma).
-    if (mainTab === 'open') {
+    if (chipTab === 'archived') {
+      // Chip "Arquivadas" (B2): a lista obedece o estado persistido
+      // `conversation_status === 'archived'`, independente de mainTab/subTab
+      // (o chip deriva mainTab 'open'/subTab null, ramo que não conhece esse
+      // estado). Busca, fila e tipo de contato seguem aplicados por cima,
+      // abaixo — por isso só o filtro de fila, que hoje vive no ramo 'open',
+      // é replicado aqui.
+      result = result.filter(c => c.contact.conversation_status === 'archived');
+      if (selectedQueueId) {
+        result = result.filter(c => c.contact.queue_id === selectedQueueId);
+      }
+    } else if (mainTab === 'open') {
       // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
       // é o guarda de atividade que mantém fora da inbox o contato histórico que
       // nunca conversou (buildConversation sintetiza 1 mensagem quando há agregado).
