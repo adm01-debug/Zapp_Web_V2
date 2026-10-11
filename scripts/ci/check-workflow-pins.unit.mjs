@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -238,4 +238,23 @@ test("os workflows reais do repositório batem com a fonte única", () => {
   const fonte = loadToolchain(RAIZ);
   assert.deepEqual(TOOLCHAIN_KEYS.filter((chave) => !(chave in fonte)), []);
   assert.equal(main(RAIZ), 0);
+});
+
+test("N-022/E76: os 3 workflows fixam o playwright da fonte única (E54/S8543)", () => {
+  const fonte = loadToolchain(RAIZ);
+  const versao = fonte.playwright;
+  assert.match(versao, /^\d+\.\d+\.\d+$/u);
+  const lock = readFileSync(join(RAIZ, "bun.lock"), "utf8");
+  assert.ok(
+    lock.includes(`playwright@${versao}`),
+    `bun.lock deve conter playwright@${versao} (fonte: .github/toolchain.json)`,
+  );
+  for (const f of ["ci.yml", "e2e-logado.yml", "e2e-talkx.yml"]) {
+    const wf = readFileSync(join(RAIZ, ".github", "workflows", f), "utf8");
+    assert.ok(
+      wf.includes(`playwright@${versao}`),
+      `${f} deve fixar playwright@${versao} (E54/S8543; fonte: .github/toolchain.json)`,
+    );
+    assert.deepEqual(findToolchainDrift(wf, f, fonte), []);
+  }
 });

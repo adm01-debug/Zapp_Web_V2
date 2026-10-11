@@ -112,6 +112,8 @@ jobs:
           key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
 
       - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
+        # N-022 (E54/S8543): pin da fonte unica .github/toolchain.json; sem
+        # versao o bunx puxaria release nao verificado e os browsers iriam a deriva.
         if: steps.pw-cache.outputs.cache-hit != 'true'
         run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
 
