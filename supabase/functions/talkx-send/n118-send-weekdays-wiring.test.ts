@@ -42,7 +42,6 @@ const messagePosts = (posts: Array<{ url: string }>) => posts.filter((p) => p.ur
  * `from("talkx_campaigns")`: monta o builder PostgREST e devolve a linha
  * FILTRADA pelas colunas que o `select` pediu. `select("*")` devolve tudo.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeColumnsAwareCampaignQB(
   rowProvider: () => Record<string, unknown> | null,
   requested: string[],
