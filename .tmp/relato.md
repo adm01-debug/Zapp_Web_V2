@@ -1,67 +1,26 @@
-Especialista: worker (geral)
+Especialista: Hugo (area-front-hooks)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+CONCLUÍ: arquivar conversa (individual, em massa e no genérico) grava `archived` pela RPC `set_conversation_status` e o Desfazer reabre; `assigned_to` fica intocado.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+## O que mudou e por quê
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
+- `src/hooks/chat/useConversationActions.ts` (`archiveContact`) — arquivar conversa deixou de desatribuir o contato e passou a transicionar o estado pela RPC `set_conversation_status` (`p_next: 'archived'`), e o Desfazer chama a mesma RPC com `p_next: 'open'`. `assigned_to` fica intocado (critério 2 do cartão): o estado é a marca e a reabertura devolve a conversa ao mesmo responsável. Erro da RPC → `toast.error('Erro ao arquivar conversa')` e nenhum Desfazer; erro no Desfazer sobe para o `undoToast` (que já avisa e reoferece).
+- `src/hooks/inbox/useInboxBulkActions.ts` (`bulkArchive`) — saiu o `SELECT` de `assigned_to` dos originais (que dependia de RLS e devolvia só a própria fila) e o `UPDATE assigned_to = null`; cada contato transiciona pela mesma RPC, com no máximo 5 em voo (`executarComConcorrencia`, helper novo no topo do módulo). Falha parcial: toast `"X arquivadas, Y falharam"` e a seleção fica só com as que falharam; o Desfazer reabre apenas as que foram arquivadas de verdade (o aviso de contagem usa a contagem real, e o `executeUndoable` continua sendo quem abre a janela de Desfazer). Falha total: mantém a seleção, não recarrega e não oferece Desfazer.
+- `src/hooks/inbox/useBulkActions.ts` — no ramo `archive`, `tableName === 'contacts'` passou a chamar a RPC por id; as demais tabelas (que têm coluna `status`) seguem com o update direto de antes. O `throw` no erro cai no `catch` do `executeAction`, que já mostra `toast.error`.
+- Testes: `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts`, `src/hooks/__tests__/useBulkActions.archive-fsm.test.tsx` — passam a provar o caminho pela RPC (args `p_contact_id`/`p_next`/`p_reason`), que `contacts` não recebe update direto, a concorrência ≤ 5, a falha parcial (contagem + seleção só das que falharam + Desfazer só nas arquivadas) e a falha total. O teste que documentava o defeito antigo por `it.fails` (o `SELECT` barrado por RLS) saiu: o defeito foi eliminado junto com o `SELECT`.
 
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
+## Prova
 
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+- vermelho antes (código da base `HEAD`, testes novos): `npx vitest run <os 4 arquivos>` → `Test Files 4 failed (4); Tests 10 failed | 45 passed (55)`
+- verde depois (mesmo comando, código desta entrega): `Test Files 4 passed (4); Tests 55 passed (55)`
+- regressão de área: `npx vitest run src/hooks src/components/inbox` → `Test Files 506 passed (506); Tests 4435 passed | 18 expected fail | 6 todo`, zero falhas
+- prova vermelho→verde feita no próprio workspace: as 3 fontes foram copiadas para `.tmp/`, `git checkout HEAD --` nas 3, vermelho rodado, fontes restauradas e verde rodado; `.tmp/` limpo depois (o lint ratchet varre o `.tmp/`).
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+
+- `src/components/inbox/chat/useChatPanelHandlers.ts:356` (case `'archive'` do slash/`/archive`) ainda grava `assigned_to = null` direto e não arquiva. O "O QUE FAZER 4" pede que ele passe pela função, mas o arquivo não está em ARQUIVOS QUE PODE TOCAR e é de outra área (`src/components/**`): registrei em `kanban_comment` (comment 9080) e não toquei. É o único chamador que não passa pelas funções alteradas.
+- `src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx` (fora da lista do cartão) foi atualizado porque o teste de "Arquivar" codificava exatamente a semântica antiga (`update { assigned_to: null }`) que o critério 2 substitui; só a expectativa mudou (passou a exigir a RPC), o componente não foi tocado. Sem isso a suíte ficaria vermelha por causa da mudança autorizada.
+
+## Nota de comportamento (segue o ADR-005, não é pendência)
+
+Arquivar uma conversa em estado `waiting` falha: a FSM do ADR-005 (`set_conversation_status`, migration `20260930090000`) não permite `waiting -> archived`. O erro cai no tratamento exigido pelo cartão (toast individual; "Y falharam" no lote). Não inventei transição além do que o ADR permite.
