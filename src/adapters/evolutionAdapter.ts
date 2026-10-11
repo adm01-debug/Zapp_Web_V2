@@ -168,6 +168,10 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     // IA, logo nao tem prioridade — 'medium' era valor fabricado (mascara de
     // ausencia na tela). A coluna e nullable no schema.
     ai_priority: null,
+    // Contato derivado nao tem prioridade manual gravada no cadastro.
+    manual_priority: null,
+    manual_priority_at: null,
+    manual_priority_by: null,
     consent_status: 'opt_in',
     lead_origin: null,
     lead_score: 0,
