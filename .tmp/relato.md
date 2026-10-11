@@ -9,7 +9,9 @@ Especialista: worker (geral)
 - contrato da remoção: `npx vitest run --config vitest.contracts.config.ts tests/contracts/no-campaigns-classicas.contract.test.ts` → `Test Files 1 passed (1); Tests 2 passed (2)`
 
 ## Pontos do revisor
-- Ponto 1: o item do espelho `node: COMPLETE_SYSTEM_FEATURES.md não cita arquivo de código que não existe` volta a passar; corrigi a causa (documento), sem tocar no teste nem afrouxar a asserção que o reprovava.
+- Ponto 1: parti do commit da entrega — cherry-pick de 0f549b4d4 e 979bb42d8 (os 2 commits de t_e6d2db32) sobre a ponta de dia/2026-10-11; não recomecei.
+- Ponto 2: reproduzi o item sobre a ponta atual (`not ok 7`) e corrigi a causa — o documento citava 4 arquivos apagados pela própria remoção; o teste/checagem não foi tocado nem afrouxado.
+- Ponto 3: provei o comando verde (`# pass 7 / # fail 0`) e `zapp-verify . --rapido` verde; fecho citando o sha.
 
 ## O que NÃO fiz e por quê
 - Não alterei o teste `scripts/ci/complete-system-features-doc.unit.mjs` nem a checagem: a guarda estava certa, apontando citação de arquivo inexistente.
