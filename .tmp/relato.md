@@ -17,6 +17,7 @@ Especialista: senior (ci/guarda + banco; sem skill de área dedicada — o cart�
 
 ## O que NÃO fiz e por quê
 - Não alterei o teste nem a migration da entrega: o teste passa integralmente no container descartável (prova acima); mexer neles seria escopo fora da recusa.
+- Sobre a policy `Anon can file a password reset request` (DROP IF EXISTS + CREATE TO anon) e o `REVOKE EXECUTE` do gatilho na migration: são o próprio conteúdo do cartão (título: silenciar o rate limit do pedido anônimo de reset — item 72/R2-AUTH-006), trazidos inalterados da entrega `abb0d3116`. Prova com papéis reais no teste executado acima: `B.8 anon nao le a fila`, `B.9 logado comum nao le a fila`, `B.16/B.17 anon nao faz UPDATE/DELETE`, `B.19 service_role ve a solicitacao pendente`, `B.20 gatilho sem EXECUTE para anon/authenticated`.
 - Não toquei em `check-test-inventory.mjs` nem na ALLOWLIST: a guarda está certa, a entrega é que estava incompleta.
 
 ## Arquivos do diff contra a base
