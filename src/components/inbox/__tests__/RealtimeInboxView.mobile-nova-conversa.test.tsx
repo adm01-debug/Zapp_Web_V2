@@ -14,6 +14,7 @@ import type { Conversation } from '@/types/chat';
 const mocks = vi.hoisted(() => ({
   setShowNewConversation: vi.fn(),
   refetch: vi.fn(),
+  isMobile: true,
   inbox: {} as Record<string, unknown>,
 }));
 
@@ -21,8 +22,8 @@ vi.mock('@/hooks/inbox/useRealtimeInbox', () => ({
   useRealtimeInbox: () => mocks.inbox,
 }));
 
-// isMobile=true para este teste.
-vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => true }));
+// isMobile controlável por teste (padrão true).
+vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => mocks.isMobile }));
 vi.mock('@/hooks/ui/usePullToRefresh', () => ({ usePullToRefresh: () => ({}) }));
 vi.mock('@/hooks/ui/useGlobalSearchShortcut', () => ({ useGlobalSearchShortcut: vi.fn() }));
 vi.mock('@/hooks/inbox/useInboxBulkActions', () => ({
@@ -121,6 +122,7 @@ function baseInbox(): Record<string, unknown> {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.isMobile = true;
   mocks.inbox = baseInbox();
 });
 
@@ -137,5 +139,29 @@ describe('N-032 — Nova conversa acessível no celular', () => {
     fireEvent.click(botao);
     expect(mocks.setShowNewConversation).toHaveBeenCalledTimes(1);
     expect(mocks.setShowNewConversation).toHaveBeenCalledWith(true);
+  });
+});
+
+describe('N-032 — FAB de Nova conversa não cobre o chat aberto no celular', () => {
+  it('mobile com conversa aberta: o botão "Nova conversa" NÃO é renderizado', () => {
+    mocks.inbox = { ...baseInbox(), selectedContactId: 'contato-1' };
+    render(buildUi());
+
+    expect(screen.queryByRole('button', { name: 'Nova conversa' })).toBeNull();
+  });
+
+  it('mobile na lista (sem conversa aberta): o botão continua disponível', () => {
+    render(buildUi());
+
+    expect(screen.getByRole('button', { name: 'Nova conversa' })).toBeInTheDocument();
+  });
+
+  it('desktop com conversa aberta: o botão continua renderizado (54×54)', () => {
+    mocks.isMobile = false;
+    mocks.inbox = { ...baseInbox(), selectedContactId: 'contato-1' };
+    render(buildUi());
+
+    const botao = screen.getByRole('button', { name: 'Nova conversa' });
+    expect(botao).toHaveClass('h-[54px]', 'w-[54px]');
   });
 });
