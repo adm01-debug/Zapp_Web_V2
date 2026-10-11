@@ -28,6 +28,14 @@ Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão 
   `.tmp/check-anchors.mjs` → `ANCHORS OK` (nenhuma outra âncora desalinhada).
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (131s)`.
 
+## Aviso do juiz barato (ANTES DE ENTREGAR)
+O aviso aponta "código alterado sem teste neste commit" (`useTalkX.ts`, `talkx-send/index.ts`,
+`_test-utils.ts`). Não procede: esses são os commits empilhados da entrega (não meus) e o diff
+`ebf1b4314..HEAD` inclui `supabase/functions/talkx-send/index.test.ts` (+116 linhas). O meu
+commit é doc-only (só a âncora do `ESTADO.md`), e o defeito que ele fecha é provado pelo teste
+JÁ EXISTENTE `scripts/ci/docs-estado-registry-convention.unit.mjs` (item 2 do `ci_espelho.sh`):
+vermelho antes, verde depois — não há teste novo a escrever para uma correção de documento.
+
 ## O que NÃO fiz e por quê
 - Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o `HERMES-GUARD` bloqueia
   qualquer comando que cite aquele caminho de ferramenta (`mexer nas guardas/ferramentas do
@@ -35,4 +43,4 @@ Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão 
   prova é a mesma execução; não contornei o bloqueio.
 - Não toquei em `supabase/functions/**` nem na migration: a causa era só a âncora do documento.
 
-sha do commit: `8dc79b7b4`.
+sha do commit da correção: `8dc79b7b4`.
