@@ -66,7 +66,7 @@ beforeEach(() => {
   mockFrom.mockImplementation((tabela: string) => {
     if (tabela === 'queues') {
       return {
-        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: queueState, error: null }) }) }),
+        select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: queueState, error: null }) }) }),
         update: (updates: Record<string, unknown>) => ({
           eq: (_coluna: string, id: string) => {
             mockUpdate(id, updates);
@@ -89,11 +89,13 @@ beforeEach(() => {
     }
     if (tabela === 'messages') {
       return {
-        select: (_colunas?: string, opts?: { count?: string; head?: boolean }) =>
-          opts?.head
-            ? { eq: () => Promise.resolve({ data: null, count: 0, error: null }) }
-            : { eq: () => ({ order: () => ({ limit: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }) }) }) },
+        select: () => ({
+          in: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }),
+        }),
       };
+    }
+    if (tabela === 'profiles') {
+      return { select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }) };
     }
     if (tabela === 'conversation_sla') {
       return { select: () => ({ eq: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }) }) };
