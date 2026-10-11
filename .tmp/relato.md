@@ -1,23 +1,23 @@
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- src/hooks/tasks/workItemFilters.ts (etapas 024/037): `TasksFilters` ganhou `status` (WorkItemStatus | 'all') e `due` ('all'|'overdue'|'today'|'week'|'none'). `filtersFromSearch` lê os dois da URL (`?status=`, `?due=`), ignora valor fora da lista (cai em 'all') e mantém o `q` herdado; `searchWithFilters` grava só o que difere do padrão e preserva os params alheios (`view`, `task`); `isFilterActive` conta os dois como filtro ativo. Como `useTasksFilters.clear()` aplica `DEFAULT_FILTERS` sobre a URL corrente, "Limpar tudo" zera `status` e `due` (e o `q` da correção do cartão pai não volta).
+- src/hooks/tasks/workItemAggregates.ts (etapas 024/037): `applyFilters` passou a RECORTAR por estado e prazo, com `now` injetável (default `new Date()`). `today` segue o veredito de `bucketByDue` (prazo de hoje SEM contar o já vencido); `week` é a janela dos próximos 7 dias; `none` é o sem prazo. Um estado escolhido manda no lugar do toggle "concluídas" (`done`): `status=doing&done=0` devolve a coluna, não vazio.
+- src/hooks/tasks/workItem.types.ts (etapa 081): `KANBAN_COLUMNS` ganhou `subtitle` curto — "A organizar", "Próximas ações", "Conclua uma para iniciar outra", "Dependências externas", "Últimos 7 dias" — e a `policy` longa continua intacta.
+- Testes: `workItemColumns.test.ts` (novo); `workItemFilters.test.ts` (+4 casos de URL round-trip); `useTasksFilters.test.tsx` (+1); `workItemAggregates.test.ts` (+7 de recorte); `QuickAdd.test.tsx` (etapa 041: Ctrl+2 e o caso "sem linguagem natural").
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (só os testes novos, com os 3 arquivos de src revertidos por `git stash push`): `npx vitest run <os 5 arquivos>` -> `Test Files 4 failed (4); Tests 15 failed | 65 passed (80)`.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemFilters.test.ts src/hooks/tasks/__tests__/workItemColumns.test.ts src/hooks/tasks/__tests__/workItemAggregates.test.ts src/hooks/tasks/__tests__/useTasksFilters.test.tsx src/components/tasks/__tests__/QuickAdd.test.tsx` -> `Test Files 5 passed (5); Tests 93 passed (93)`.
+- regressão do módulo: `npx vitest run src/hooks/tasks src/components/tasks` -> `Test Files 31 passed (31); Tests 356 passed | 1 todo (357)`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Etapa 041 (revisão, sem reescrever o componente)
+O parser do QuickAdd já cumpria a decisão G-5: Ctrl+1/2/3 (Hoje/Amanhã/Próx. semana), Ctrl+L (lembrete) e Ctrl+@ (contato), todos documentados no `title` do campo, sem NLP. Não alterei `QuickAdd.tsx`; provei em teste que o texto "amanhã às 9h ligar para o cliente" entra CRU (título inteiro, prazo e lembrete nulos) e que Ctrl+2 marca amanhã.
+
+## Escopo
+- `applyFilters` mora em `src/hooks/tasks/workItemAggregates.ts`, que o cartão não lista mas é o recorte único dos três modos (hooks/dados, minha área). Estendi ali porque sem isso o filtro ficaria só na URL, sem efeito. A regra do toggle ficou comentada no código.
+- `status`/`due` são opcionais em `TasksFilters` para não quebrar objetos montados à mão (ex.: `TasksBoardMode.test.tsx`, do iris). Ausentes são lidos como 'all'.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não mexi na UI (TasksFilterBar / popover) — é do iris (cartões 036/038).
+- Não toquei banco, migration nem Edge.
