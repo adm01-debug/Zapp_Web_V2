@@ -329,8 +329,6 @@ R1="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT 
 # Juiz item 1: reason com os valores do cartao ('spam','improprio','urgencia','outro')
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.table_constraints WHERE constraint_schema='public' AND table_name='message_reports' AND constraint_name IN ('message_reports_reason_check','message_reports_note_check','message_reports_status_check');")" == '3' ]] || fail 'CHECKs de message_reports duplicados ou ausentes (reason, note, status)'
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND constraint_name='message_reports_reason_check' AND check_clause LIKE '%improprio%';")" == '1' ]] || fail 'CHECK de reason sem os valores do cartao'
-R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
-[[ "$R_IMP" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "reason 'improprio' do cartao foi rejeitado (=$R_IMP)"
 [[ "$(psql_sql "SELECT count(*) FROM public.message_reports WHERE message_id='$M1'")" == '1' ]] || fail 'relato duplicou a linha do mesmo usuario'
 expect_failure 'relato com motivo invalido (22023)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','xingamento',NULL);"
 expect_failure 'relato com nota acima de 500 caracteres' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','outro',repeat('a',501));"
@@ -342,6 +340,9 @@ expect_failure 'escrita direta de relato sem RPC' "SET ROLE authenticated; SET r
 [[ "$(psql_sql "SELECT public.is_admin('$U5');")" == 'f' ]] || fail 'U5 deveria nao ser admin'
 [[ "$(psql_sql "SELECT public.is_admin_or_supervisor('$U5');")" == 't' ]] || fail 'U5 deveria ser supervisor'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'admin nao viu o relato'
+# Juiz item 1 (inserção real): reason 'improprio' do cartão entra de ponta a ponta (após as contagens acima)
+R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
+[[ "$R_IMP" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "reason 'improprio' do cartao foi rejeitado (=$R_IMP)"
 
 # ---- status do relato: so admin, com carimbo do proprio revisor ----
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; WITH changed AS (UPDATE public.message_reports SET status='dismissed' WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'nao-admin alterou o status do relato'
