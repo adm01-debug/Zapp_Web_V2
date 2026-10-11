@@ -97,6 +97,17 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
     return messagesByDate[dateKey] || [];
   }, [selectedDate, messagesByDate]);
 
+  // N-196: a linha de agendamento carrega só `contact_id` (não há nome/telefone
+  // embutido), então o rótulo do cancelar usa esse contato + um trecho CURTO do
+  // conteúdo + o horário — o texto integral deixaria o nome acessível longo
+  // demais para leitor de tela.
+  const rotuloCancelar = (msg: ScheduledMessage) => {
+    const bruto = msg.content.trim();
+    const trecho = bruto.length > 40 ? `${bruto.slice(0, 40).trimEnd()}…` : bruto;
+    const horario = format(new Date(msg.scheduled_at), 'HH:mm');
+    return `Cancelar envio para ${msg.contact_id} — "${trecho}" às ${horario}`;
+  };
+
   const getMessageIcon = (type: string) => {
     switch (type) {
       case 'image': return <Image className="w-3 h-3" />;
@@ -159,7 +170,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
             <div className="flex items-center gap-2">
               {/* Agent filter */}
               <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filtrar por agente">
                   <User className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Todos os agentes" />
                 </SelectTrigger>
@@ -311,6 +322,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
                         variant="ghost"
                         size="icon"
                         className="shrink-0 text-destructive hover:text-destructive"
+                        aria-label={rotuloCancelar(msg)}
                         onClick={() => cancelMessage(msg.id)}
                       >
                         <X className="w-4 h-4" />
