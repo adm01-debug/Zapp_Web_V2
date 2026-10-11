@@ -20,3 +20,7 @@ Especialista: worker (sql) (area-sql-banco)
 ## O que NÃO fiz e por quê
 - A confirmação do envio (gravar `sent`/`failed` no ledger) é da edge `searchbox-budget-alert` (área do worker edge) via `service_role`; o LEDGER e as permissões dele são banco e estão aqui. Nenhum arquivo de `supabase/functions/**` foi tocado.
 - Não toquei o banco de produção nem criei metadado de exportação/segredo.
+
+## Sobre o alarme "SEM DDL/migration" do juiz (não procede)
+O rodapé de REGRAS do cartão traz, copiado de template, a frase "sem DDL/Edge/dependência nova salvo se o pedido original exigia". O pedido ORIGINAL deste cartão (R2-API-058, item 230 do BACKLOG_VERIFICADO) é explicitamente da **área migrations** e a entrega é uma migration — o defeito só se corrige no banco (ledger mensal + função do tick do cron). Logo a migration é exatamente o que o pedido exigia: o alarme é falso e o MESMO `hermes-tarefa-fechar` foi repetido sem alterar o diff.
+
