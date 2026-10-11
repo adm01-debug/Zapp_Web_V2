@@ -47,6 +47,7 @@ export const DEPARTMENT_AUDIT_ACTIONS = [
   'create_group',
   'delete_group',
   'whatsapp_updated',
+  'access_requested',
 ] as const;
 
 export type DepartmentAuditAction = (typeof DEPARTMENT_AUDIT_ACTIONS)[number];

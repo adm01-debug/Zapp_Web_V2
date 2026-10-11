@@ -4,7 +4,7 @@
 #
 # Roda em PostgreSQL descartavel (docker) e aplica os ARQUIVOS REAIS das migrations:
 #   supabase/migrations/20261006213734_team_chat_f10_department_whatsapp_safe_config.sql (estado anterior)
-#   supabase/migrations/20261010024534_request_department_access_rpc.sql (esta entrega)
+#   supabase/migrations/20261011131142_request_department_access_rpc.sql (esta entrega)
 # sobre um estado ANTERIOR fiel ao canonico (pre.sql, com a fonte de cada bloco citada),
 # executando como os PAPEIS REAIS (`SET LOCAL ROLE authenticated/anon` + request.jwt.claims;
 # postgres so nas sondagens de CHECK/ACL). NENHUMA credencial de producao entra aqui.
@@ -24,7 +24,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration="$repo_root/supabase/migrations/20261010024534_request_department_access_rpc.sql"
+migration="$repo_root/supabase/migrations/20261011131142_request_department_access_rpc.sql"
 prev_migration="$repo_root/supabase/migrations/20261006213734_team_chat_f10_department_whatsapp_safe_config.sql"
 postgres_image="${REQUEST_DEPT_ACCESS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-request-dept-access-test-$$"
