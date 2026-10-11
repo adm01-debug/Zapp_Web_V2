@@ -396,6 +396,11 @@ jobs:
           DROP_EXTID_INDEX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/drop-redundant-messages-external-id-index.test.sh
 
+      - name: Replay efeitos inbound
+        env:
+          INBOUND_EFFECTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbound-effects-replay.test.sh
+
       - name: Simular fila, autorização e aceite concorrente do TALK ME
         env:
           TALK_ME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
