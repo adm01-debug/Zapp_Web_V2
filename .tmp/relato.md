@@ -13,6 +13,7 @@ Especialista: senior (ci/guarda + banco; sem skill de área dedicada — o cart�
 ## Pontos do revisor
 - Ponto 1 (o órfão que quebra o ESPELHO DO CI quando empilhado): resolvido — o caminho `scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh` agora aparece num bloco `run:` real do `db-guard.yml`, que é exatamente o que a regex do inventário procura; inventário verde acima. Não usei ALLOWLIST (seria afrouxar a asserção) nem comentário citando o caminho (o inventário conta, mas o teste não rodaria — maquiar o espelho, vedado pelo cartão).
 - Ponto 2 (instrução de reproduzir sobre a ponta atual com cherry-pick): cumprido — `cherry-pick -n abb0d3116` sobre a ponta de `dia/2026-10-11`, vermelho reproduzido antes da correção.
+- Ponto 3 (higiene: inventário verde, sem defeito novo, só arquivos do título, comandos verificados): cumprido — inventário verde acima; a etapa nova usa a mesma receita das outras 100+ etapas (harness + imagem fixada + nome de var que o teste lê), e o teste foi executado de verdade pelo mesmo comando (todos os `[PASS]`, `PASS: R2-AUTH-006`); o diff contra a base tem só os 3 arquivos do título (teste + migration da entrega, inalterados, + 8 linhas no `db-guard.yml`); YAML válido; segunda passada sem defeito novo (nenhum chamador além do workflow; sem `SKIP_DOCKER_SHIM` porque o teste não precisa; sem ALLOWLIST; sem toque na guarda).
 
 ## O que NÃO fiz e por quê
 - Não alterei o teste nem a migration da entrega: o teste passa integralmente no container descartável (prova acima); mexer neles seria escopo fora da recusa.
