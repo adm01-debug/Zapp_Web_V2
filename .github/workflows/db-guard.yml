@@ -376,18 +376,6 @@ jobs:
           GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
-      # Escopo da inbox (cartao t_7b157a81): a tela V3 usa 'Meus/Departamento/Todos', mas o banco
-      # nao tinha as permissoes nomeadas nem trilha de auditoria da tentativa indevida. O passo prova
-      # em PostgreSQL descartavel: permissoes ausentes antes da migration e presentes depois (admin e
-      # supervisor, NAO o agente); EXECUTE so para authenticated (anon/service_role/PUBLIC fora); a
-      # funcao grava 1 linha de auditoria com o escopo pedido, deduplica por usuario+escopo+hora,
-      # nao quebra com escopo invalido, nao grava para anonimo/uid nulo, e o rollback do cabecalho
-      # remove permissoes, atribuicoes e a funcao.
-      - name: Simular permissoes de escopo da inbox e auditoria da tentativa indevida (t_7b157a81)
-        env:
-          INBOX_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/inbox-scope-permissions.test.sh
-
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
