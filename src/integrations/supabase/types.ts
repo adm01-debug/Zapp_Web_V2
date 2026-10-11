@@ -10385,6 +10385,35 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      admin_blocked_accounts: {
+        Args: never
+        Returns: {
+          attempt_count: number
+          email: string
+          ip_address: string
+          last_attempt_at: string
+          locked_until: string
+          motivo: string
+        }[]
+      }
+      admin_login_attempts: {
+        Args: {
+          p_email_like?: string
+          p_pagina?: number
+          p_periodo?: string
+          p_so_falhas?: boolean
+        }
+        Returns: {
+          attempt_count: number
+          bloqueado_agora: boolean
+          email: string
+          ip_address: string
+          last_attempt_at: string
+          locked_until: string
+          total_linhas: number
+          user_agent: string
+        }[]
+      }
       ai_budget_reconcile: { Args: never; Returns: number }
       ai_budget_release: {
         Args: { p_id: string; p_reason: string }
