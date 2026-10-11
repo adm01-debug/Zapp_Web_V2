@@ -128,6 +128,18 @@ function hasExactKeys(value, expectedKeys) {
   return JSON.stringify(Object.keys(value).sort((a, b) => a.localeCompare(b))) === JSON.stringify([...expectedKeys].sort((a, b) => a.localeCompare(b)));
 }
 
+// As colunas de disco/ledger saem sempre saneadas: toda divergencia usa o
+// formato unico "versao | disco | ledger | motivo" e um nome nunca pode
+// injetar uma coluna extra (separador '|') nem quebrar a linha (controles/aspas).
+function safeDivergenceName(name) {
+  if (name === null || name === undefined) return '(nenhum)';
+  return JSON.stringify(name).slice(1, -1).replace(/\|/g, '\\|');
+}
+
+function divergenceLine(version, disk, ledger, reason) {
+  return `${version} | ${safeDivergenceName(disk)} | ${safeDivergenceName(ledger)} | ${reason}`;
+}
+
 function loadEvidence(filePath) {
   const document = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const errors = [];
@@ -552,22 +564,26 @@ function compare(migrations, records, exceptionsByVersion) {
 
   if (withoutRecord.length) {
     errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
-    errors.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
+    for (const { version, fileName } of withoutRecord) {
+      errors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));
+      errors.push(`  ${version}  ${fileName}`);
+    }
   }
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
-    errors.push(...withoutFile.map((record) => {
+    for (const record of withoutFile) {
       const normalizedName = record.name
         ? normalizeLedgerName(record.version, record.name)
         : null;
-      return [
+      errors.push(divergenceLine(record.version, null, normalizedName ?? record.name, 'registro no banco sem arquivo no repo'));
+      errors.push([
         `  version=${record.version}`,
         `ledger_name=${JSON.stringify(record.name)}`,
         `normalized_name=${JSON.stringify(normalizedName)}`,
         `ledger_statements_sha256=${ledgerStatementsSha256(record.statements)}`,
         `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
-      ].join(' ');
-    }));
+      ].join(' '));
+    }
   }
 
   for (const migration of migrations) {
@@ -695,6 +711,9 @@ function compare(migrations, records, exceptionsByVersion) {
     const namesMatch = ledgerName !== null && ledgerName === migration.name;
     if (record.name && !namesMatch) {
       errors.push(
+        divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'nome divergente'),
+      );
+      errors.push(
         `nome divergente em ${migration.version}: arquivo=${JSON.stringify(migration.name)}; `
         + `ledger=${JSON.stringify(record.name)}`,
       );
@@ -718,6 +737,7 @@ function compare(migrations, records, exceptionsByVersion) {
     if (!strongEvidenceAndName) {
       for (const source of sourceReferences) {
         if (source !== migration.fileName) {
+          errors.push(divergenceLine(migration.version, migration.fileName, source, 'fonte divergente'));
           errors.push(`fonte divergente em ${migration.version}: arquivo=${migration.fileName}; ledger=${source}`);
         }
       }
@@ -727,18 +747,21 @@ function compare(migrations, records, exceptionsByVersion) {
     if (fileHashes.length === 1) {
       hasEvidence = true;
       if (fileHashes[0] !== migration.rawHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'hash de arquivo divergente'));
         errors.push(`hash de arquivo divergente em ${migration.version}`);
       }
     }
     if (sqlHashes.length === 1) {
       hasEvidence = true;
       if (sqlHashes[0] !== migration.sqlHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'hash SQL divergente'));
         errors.push(`hash SQL divergente em ${migration.version}`);
       }
     }
     if (ledgerSql) {
       hasEvidence = true;
       if (ledgerSql !== fileSql) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'conteudo SQL divergente'));
         errors.push(
           `conteudo SQL divergente em ${migration.version} `
           + `(arquivo=${sha256(fileSql)}, ledger=${ledgerSqlHash}) `
@@ -760,6 +783,9 @@ function compare(migrations, records, exceptionsByVersion) {
         // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente
         // de migracao com prosa no lugar do SQL.
         errors.push(
+          divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'statements no ledger sao prosa pura sem hash verificavel'),
+        );
+        errors.push(
           `${migration.version} (${migration.fileName}): statements no ledger sao prosa pura `
           + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '
           + 'regra 7 da secao 1 do CLAUDE.md (statements devem ser o SQL real e completo). '
@@ -776,6 +802,17 @@ function compare(migrations, records, exceptionsByVersion) {
 
 function printErrors(errors) {
   for (const error of errors) console.error(error);
+}
+
+// Linhas de resumo de divergencia ("versao | disco | ledger | motivo") saem na
+// coluna 0 para o operador filtrar o log com `grep '^[0-9]'`; as mensagens
+// antigas e os cabecalhos de secao continuam recuados como sempre.
+const DIVERGENCE_LINE_RE = /^\d{14} \| /;
+
+function printDriftErrors(errors) {
+  for (const error of errors) {
+    console.error(DIVERGENCE_LINE_RE.test(error) ? error : `  ${error}`);
+  }
 }
 
 function main() {
@@ -819,7 +856,7 @@ function main() {
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
   if (result.errors.length) {
     console.error('\nFALHA: drift de migrations detectado:');
-    printErrors(result.errors.map((error) => `  ${error}`));
+    printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
     return 1;
   }
