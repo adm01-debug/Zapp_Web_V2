@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 80,
-    "source_file_count": 159,
+    "source_file_count": 160,
     "verify_jwt_true": 66,
     "verify_jwt_false": 14
   },
@@ -146,8 +146,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 13560,
-      "sha256": "a5c696eeebe4107ac547ce292da2b577620573e691aacdd2a08b3de3b3075816"
+      "bytes": 15049,
+      "sha256": "bb0f9237079a15c0d13398a1ec0fb08b3f08f4db92f30a952d3086b84d9ea064"
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
@@ -168,6 +168,11 @@
       "path": "supabase/functions/_shared/evolution-helpers.ts",
       "bytes": 19194,
       "sha256": "32f66be17a4cc176a888fba7ae19bf57bdbc75b733df0a282032bac14c0be736"
+    },
+    {
+      "path": "supabase/functions/_shared/evolution-instance-token.ts",
+      "bytes": 3747,
+      "sha256": "fdbf4ef691def5c6c770ddac4aad5d0a691e844decd157189eff7374d3e98e39"
     },
     {
       "path": "supabase/functions/_shared/evolution-media.ts",
@@ -551,8 +556,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 79328,
-      "sha256": "9cc34faee3311e8673b5169eb0ba264d3dd0583f1232e2a8eeacc3f059d1afa8"
+      "bytes": 81557,
+      "sha256": "22b3c539d7d7b77300af5ebe42a469b7ac02bfdd64c6e90ff448b5d64d269977"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -581,8 +586,8 @@
     },
     {
       "path": "supabase/functions/get-call-recording/index.ts",
-      "bytes": 6230,
-      "sha256": "99defc59c94f367a754daef44c7027134dc3fc6ccdd5beed50130ca07792c1de"
+      "bytes": 7303,
+      "sha256": "215b05d2608ecb2d956f62462f2719e9c6921ee859f0ed35278520f8055d43d2"
     },
     {
       "path": "supabase/functions/get-mapbox-token/index.ts",
@@ -1485,11 +1490,12 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f164ae5a4e9a7cb3f63d7035af88fb2f6278848a62aee12b8c66be27fbe46466",
+      "source_sha256": "dbeafcbdb4497c8f3b8725980d0302708510f7bcb4944950bce8e3e3f51886af",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-session-routes.ts",
         "supabase/functions/_shared/evolution-sync-actions.ts",
@@ -1591,7 +1597,7 @@
       "name": "get-call-recording",
       "entrypoint": "supabase/functions/get-call-recording/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eea07fadc2778b15f94580f0e7b5d7ec9857f819f23be1fa61c2fc85a23a07fb",
+      "source_sha256": "edf39da1334c8b66ae5161bd655aa57ea23e9ec0cb90dd60074ddc3d278cb570",
       "source_files": [
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -1708,12 +1714,13 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "aee3e37ae5b280432e8913bc9543d360dd34c20989a246b2a5fecb80c859e7db",
+      "source_sha256": "bac5693a2035dead98f2e82c4928029e5db066c9e666f358ae59b2f40ee11b58",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -1804,11 +1811,12 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c90e02fe644979b108055c37cd0273a69c93508465843916d960ab615bfbce3c",
+      "source_sha256": "abcfc78e8b73737a8f77a396bdc49b2f30e9db56b93aed44b367289e0c861acf",
       "source_files": [
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
+        "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2054,13 +2062,14 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ce1b2f502eac5870d99d2e459cfa72080d7d6fea312ec0747b633c251cf2453c",
+      "source_sha256": "7c4ea47113f510a7e84bad9f2d1712b8a8fb3aef0585a1f42aa0df838f5b51c7",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
+        "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2196,5 +2205,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a4cc0bb60cff6d5f50306c1bed0dec9f5bf111559023f2e1b4f2d3ebc97503a3"
+  "manifest_sha256": "633901d7eeb3bca6b0c9841827ec63d4bd1415afc7ea5ed2fd5d340410cc6032"
 }
