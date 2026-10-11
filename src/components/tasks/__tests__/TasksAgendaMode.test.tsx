@@ -105,9 +105,8 @@ function renderAgenda(
 const rotuloCurto = (iso: string): string =>
   new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-/** Botão da faixa do dia AGORA + offset, pelo rótulo acessível "… N de outubro …". */
-const botaoDoDia = (offset: number) =>
-  screen.getByRole('button', { name: new RegExp(`${numeroDoDia(offset)} de `, 'i') });
+/** Cartão da faixa do dia AGORA + offset, pela posição na faixa (offsets 0…6). */
+const botaoDoDia = (offset: number) => screen.getAllByTestId('agenda-day')[offset];
 
 describe('TasksAgendaMode — etapa 88 (relógio fixo)', () => {
   beforeEach(() => {

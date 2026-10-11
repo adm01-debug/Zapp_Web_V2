@@ -89,7 +89,7 @@ describe('TasksAgendaMode — etapa 57 (QuickAdd no dia selecionado)', () => {
     fireEvent.change(screen.getByTestId('quick-add-input'), { target: { value: 'Rascunho' } });
 
     const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${amanha.getDate()} de`, 'i') }));
+    fireEvent.click(screen.getAllByTestId('agenda-day')[1]);
 
     const campo = screen.getByTestId('quick-add-input');
     // Antes (etapa 57) o `key={selectedDay}` do pai remontava o campo e o texto
