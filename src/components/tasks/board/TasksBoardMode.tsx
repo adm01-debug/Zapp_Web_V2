@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -47,6 +47,19 @@ export function TasksBoardMode({
   // Etapa 52 (B8): guarda de onde o arrasto COMECOU — sem isso a coluna "Fazendo"
   // cheia bloqueia ate a reorganizacao dela mesma.
   const [dragSourceStatus, setDragSourceStatus] = useState<WorkItemStatus | null>(null);
+  // Etapa 83: coluna que levou o tranco do último drop recusado por limite cheio.
+  const [colunaTremendo, setColunaTremendo] = useState<WorkItemStatus | null>(null);
+  const tremorTimer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
+  }, []);
+
+  /** Dá o tranco curto na coluna de destino e o desfaz sozinho (o drop não move nada). */
+  const tremerColuna = useCallback((alvo: WorkItemStatus) => {
+    setColunaTremendo(alvo);
+    if (tremorTimer.current !== null) window.clearTimeout(tremorTimer.current);
+    tremorTimer.current = window.setTimeout(() => setColunaTremendo(null), 600);
+  }, []);
   // Etapa 81: no ponteiro grosso o arrasto sai de cena e o `MoveToMenu` do card
   // assume; na tela estreita as setas e os dots conduzem a faixa de colunas.
   const dragDesligado = usePointerCoarse();
@@ -100,15 +113,20 @@ export function TasksBoardMode({
         onRequestWaitingReason?.(decisao.item);
         return;
       case 'blocked':
-        if (decisao.reason === 'wip_full')
+        if (decisao.reason === 'wip_full') {
+          // Etapa 83: o card volta à origem (a lib cancela o drop) e a coluna de
+          // destino leva o tranco curto — a borda avisa mesmo sem animação.
           toast.error('Fazendo está cheio (máx. 3). Conclua um item antes.');
+          const alvo = result.destination?.droppableId as WorkItemStatus | undefined;
+          if (alvo) tremerColuna(alvo);
+        }
         return;
       case 'move':
         // etapa 15: leva o indice de destino para persistir a ordem das duas colunas
         onMove(decisao.item, decisao.to, decisao.opts);
         return;
     }
-  }, [byStatus, byStatusFull, doingCount, onMove, onRequestWaitingReason, onReorder]);
+  }, [byStatus, byStatusFull, doingCount, onMove, onRequestWaitingReason, onReorder, tremerColuna]);
 
   const ultimaColuna = BOARD_COLUMNS.length - 1;
 
@@ -162,6 +180,7 @@ export function TasksBoardMode({
               doingCount={doingTotal}
               dragSourceStatus={dragSourceStatus}
               dragDisabled={dragDesligado}
+              shake={colunaTremendo === status}
               onOpen={onOpen}
               onMoveTo={(it, to) => (onMoveTo ?? onMove)(it, to)}
               onDelete={onDelete}
