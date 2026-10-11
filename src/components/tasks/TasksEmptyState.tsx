@@ -1,4 +1,4 @@
-import { CheckSquare } from 'lucide-react';
+import { CheckSquare, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -12,10 +12,25 @@ interface Props {
 
 export function TasksEmptyState({ variant, onClearFilter, onAddTask, columnLabel, policy }: Props) {
   if (variant === 'filter') {
+    // Etapa 045 — nenhum resultado do recorte: mesma linguagem visual do vazio
+    // geral (ícone em bloco, título e apoio curtos) e a saída em um clique.
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <p className="text-sm text-muted-foreground">Nenhuma tarefa com esse filtro</p>
-        <Button variant="ghost" size="sm" onClick={onClearFilter}>Limpar filtros</Button>
+      <div
+        data-testid="tasks-empty-filter"
+        className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-12 text-center"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+          <Search className="h-6 w-6" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">Nenhum resultado</p>
+          <p className="text-xs text-muted-foreground">Ajuste a busca ou os filtros para ver tarefas.</p>
+        </div>
+        {onClearFilter && (
+          <Button variant="outline" size="sm" onClick={onClearFilter}>
+            Limpar filtros
+          </Button>
+        )}
       </div>
     );
   }
