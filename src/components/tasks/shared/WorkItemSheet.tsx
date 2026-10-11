@@ -1,7 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ArrowUpRight, BellRing, CalendarIcon, CheckCircle2, ChevronDown, Maximize2, Minimize2, PauseCircle, X } from 'lucide-react';
+import { ArrowUpRight, CalendarIcon, CheckCircle2, Maximize2, Minimize2, PauseCircle, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -20,14 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Calendar } from '@/components/ui/calendar';
 import { KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { StatusPill } from './StatusPill';
@@ -37,6 +27,8 @@ import { openContactChat } from '@/components/catalog/useSendProduct';
 import { useNarrowViewport } from './pointerMedia';
 import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime';
 import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
+import { PlanejamentoSection } from './sheet/PlanejamentoSection';
+import { formatCriadaEm } from './sheet/planejamento';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
@@ -190,6 +182,8 @@ function Formulario({
   // em estado terminal o Sheet não oferece alarme nem "Adiar" (o card já esconde
   // o RemindChip aí); mostra o motivo no lugar dos controles.
   const lembreteElegivel = aceitaLembrete(item.status);
+  // Etapa 140: "Criada em 9 out. 2026", discreto no fim da seção.
+  const criadaEm = formatCriadaEm(item.created_at);
 
   const mudou = useMemo(() => {
     const due = compor(dia, hora);
@@ -216,6 +210,14 @@ function Formulario({
     setAlarmeDia(diaLocal(quando.toISOString()));
     setAlarmeHora(horaLocal(quando.toISOString()));
     setAvisadoEm(null);
+  }
+
+  /** Etapa 139: "Remover" da linha do lembrete — limpa o alarme e desarma o
+   *  "Avisado em" (o banco também zera `notified_at` no `setReminder(null)`). */
+  function removerAlarme() {
+    setAlarmeDia(null);
+    setAvisadoEm(null);
+    onSetReminder(item, null);
   }
 
   /**
@@ -438,119 +440,27 @@ function Formulario({
           </div>
         </div>
 
-        <div>
-          <Label>Prazo</Label>
-          <div className="mt-1.5 flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  data-testid="sheet-prazo"
-                  className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dia ? format(new Date(`${dia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR }) : 'Sem prazo'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  locale={ptBR}
-                  selected={dia ? new Date(`${dia}T12:00:00`) : undefined}
-                  onSelect={(d) => setDia(d ? diaLocal(d.toISOString()) : null)}
-                />
-                <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                  <Input
-                    type="time"
-                    data-testid="sheet-prazo-hora"
-                    value={hora}
-                    onChange={(e) => setHora(e.target.value)}
-                    className="h-8 bg-input/40"
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => { setDia(null); setHora(''); }}>
-                    Limpar
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
+        {/* Etapas 137–139: a seção "Planejamento" (os dois cartões, a validação
+            do lembrete contra o prazo e a linha Agendado · Adiar · Remover)
+            mora em `sheet/PlanejamentoSection.tsx` — este arquivo está no teto
+            de linhas do CI e não pode crescer. */}
+        <PlanejamentoSection
+          prazoDia={dia}
+          prazoHora={hora}
+          onPrazoDia={setDia}
+          onPrazoHora={setHora}
+          avisoDia={alarmeDia}
+          avisoHora={alarmeHora}
+          onAvisoDia={setAlarmeDia}
+          onAvisoHora={setAlarmeHora}
+          lembreteElegivel={lembreteElegivel}
+          motivoIndisponivel={MOTIVO_SEM_LEMBRETE}
+          focoAviso={focusField === 'remind_at'}
+          avisadoEm={avisadoEm}
+          onAdiar={adiar}
+          onRemover={removerAlarme}
+        />
 
-        <div>
-          <Label>Alarme</Label>
-          {lembreteElegivel ? (
-            <>
-              <div className="mt-1.5 flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      data-testid="sheet-alarme"
-                      autoFocus={focusField === 'remind_at'}
-                      className="flex-1 justify-start bg-input/40 border-border/70 font-normal"
-                    >
-                      {avisadoEm && alarmeDia
-                        ? <BellRing className="mr-2 h-4 w-4 text-destructive" />
-                        : <CalendarIcon className="mr-2 h-4 w-4" />}
-                      {alarmeDia
-                        ? `${format(new Date(`${alarmeDia}T12:00:00`), 'dd/MM/yyyy', { locale: ptBR })} ${alarmeHora}`
-                        : 'Sem alarme'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      locale={ptBR}
-                      selected={alarmeDia ? new Date(`${alarmeDia}T12:00:00`) : undefined}
-                      onSelect={(d) => setAlarmeDia(d ? diaLocal(d.toISOString()) : null)}
-                    />
-                    <div className="flex items-center gap-2 border-t border-border/50 p-2">
-                      <Input
-                        type="time"
-                        data-testid="sheet-alarme-hora"
-                        value={alarmeHora}
-                        onChange={(e) => setAlarmeHora(e.target.value)}
-                        className="h-8 bg-input/40"
-                      />
-                      <Button variant="ghost" size="sm" onClick={() => setAlarmeDia(null)}>Limpar</Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" data-testid="sheet-adiar" className="shrink-0 gap-1">
-                      Adiar <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem data-testid="sheet-adiar-15" onClick={() => adiar(15)}>15 min</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="sheet-adiar-60" onClick={() => adiar(60)}>1 hora</DropdownMenuItem>
-                    <DropdownMenuItem data-testid="sheet-adiar-amanha" onClick={() => adiar('tomorrow9')}>Amanhã 9h</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              {avisadoEm && (
-                <p data-testid="sheet-avisado" className="mt-1 text-2xs text-muted-foreground">
-                  Avisado em {format(new Date(avisadoEm), 'dd/MM HH:mm', { locale: ptBR })}
-                </p>
-              )}
-              {alarmeDia && (
-                <button
-                  type="button"
-                  data-testid="sheet-remover-alarme"
-                  onClick={() => { setAlarmeDia(null); setAvisadoEm(null); onSetReminder(item, null); }}
-                  className="mt-1 text-2xs text-muted-foreground hover:text-destructive"
-                >
-                  Remover alarme
-                </button>
-              )}
-            </>
-          ) : (
-            <p data-testid="sheet-alarme-indisponivel" className="mt-1.5 text-2xs text-muted-foreground">
-              {MOTIVO_SEM_LEMBRETE}
-            </p>
-          )}
-        </div>
 
         <div>
           <button
@@ -564,15 +474,28 @@ function Formulario({
           {mostraDescricao && (
             <>
               <Label htmlFor="sheet-descricao" className="mt-1.5 block">Descrição da tarefa</Label>
+              {/* Etapa 140: caixa redimensionável (`resize-y`) com contador. */}
               <Textarea
                 id="sheet-descricao"
                 data-testid="sheet-descricao"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1.5 bg-input/40 border-border/70"
+                className="mt-1.5 resize-y bg-input/40 border-border/70"
                 rows={3}
               />
+              <p
+                data-testid="sheet-descricao-contador"
+                className="mt-1 text-2xs text-muted-foreground"
+              >
+                {description.length} {description.length === 1 ? 'caractere' : 'caracteres'}
+              </p>
             </>
+          )}
+          {/* Etapa 140: "Criada em 9 out. 2026", discreto. */}
+          {criadaEm && (
+            <p data-testid="sheet-criada-em" className="mt-1 text-2xs text-muted-foreground">
+              {criadaEm}
+            </p>
           )}
         </div>
       </div>
