@@ -123,18 +123,29 @@ function casaPrazo(item: WorkItem, filtro: DueFilter, now: Date): boolean {
  * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
  * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
  *
- * `done` é o filtro que olha o estado terminal do item. `q` casa só o título
- * (o mesmo recorte que a busca sempre fez, agora sem acento).
+ * `done` é um dos filtros que olham o estado terminal do item; `status`
+ * (etapa 037) recorta a coluna e, quando escolhido, manda no lugar do toggle
+ * `done` — pedir `status=done` traz só as concluídas mesmo com o toggle
+ * desligado. `q` casa só o título (o mesmo recorte que a busca sempre fez,
+ * agora sem acento).
  *
  * @param now âncora do recorte de prazo (injetável para o teste).
  */
 export function applyFilters(items: WorkItem[], f: TasksFilters, now: Date = new Date()): WorkItem[] {
   const termo = normalizarBusca(f.q).trim();
   const base  = items ?? [];
-  const dueFiltro = f.due ?? 'all';
+  const statusFiltro = f.status ?? 'all';
+  const dueFiltro    = f.due ?? 'all';
 
   return base.filter(item => {
-    if (!f.done && item.status === 'done') return false;
+    // Um estado escolhido é o recorte — o toggle "mostrar concluídas" só vale
+    // quando nenhum estado foi pedido (`all`), senão `status=done&done=0`
+    // devolveria vazio, contrariando o próprio filtro.
+    if (statusFiltro !== 'all') {
+      if (item.status !== statusFiltro) return false;
+    } else if (!f.done && item.status === 'done') {
+      return false;
+    }
     if (dueFiltro !== 'all' && !casaPrazo(item, dueFiltro, now)) return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
     if (f.contact !== null && item.contact?.id !== f.contact) return false;
