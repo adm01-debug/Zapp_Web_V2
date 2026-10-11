@@ -869,12 +869,10 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=payments` → `PaymentLinksView` |
-| Componente | `src/components/payments/PaymentLinksView.tsx` |
-| Hook | `src/hooks/payments/usePaymentLinks.ts` |
+| Rota | `?view=payments` (removida em 2026-10-11) |
 | Tabela | `payment_links` |
 
-**Funcionalidades:** CRUD de links de pagamento, métodos PIX e Cartão, valores, status (pending/paid/expired/cancelled), copiar link e enviar ao contato.
+**Funcionalidades:** CRUD de links de pagamento, métodos PIX e Cartão, valores, status (pending/paid/expired/cancelled), copiar link e enviar ao contato. **Atualização (2026-10-11):** o módulo foi **removido** do app (tela PaymentLinksView, hook usePaymentLinks e rota `?view=payments` deixaram de existir); a tabela `payment_links` continua no banco, hoje sem consumidor de código de produto (ver `docs/DB-INVENTORY.md`).
 
 ---
 
