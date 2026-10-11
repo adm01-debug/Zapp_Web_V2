@@ -1,23 +1,57 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: designer (design-system-zapp)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- `docs/tarefas/ESPECIFICACOES.md` (novo, único arquivo que o cartão autoriza): a especificação
+  visual do módulo de Tarefas com **uma seção por etapa** do plano (005 tokens e tema claro, 006
+  ícones, 010 tipografia e espaçamento, 016 card de KPI, 031 seletor de modos, 049 tabela, 079
+  coluna do Quadro, 107 Agenda, 131 painel, 153 modal), cada uma com medidas em px, token de cada
+  cor/efeito, estados (repouso, hover, foco, selecionado, desabilitado, limite) e o **tema claro**
+  (as 5 imagens são só do escuro). Mais a seção 12 com as incoerências entre as imagens e a regra
+  adotada (**D12** e **D16 a D21** — pílula com a cor da prioridade, checkbox circular, contato como
+  avatar, captura só na Caixa de entrada, estado sempre visível na Agenda, uma regra única de data) e
+  a seção 13 amarrando o desenho às decisões vigentes de `docs/design/TAREFAS_QUADRO_STATUS.md`
+  (G-5 sem parser, G-6 limites 3/5, G-8 concluídas por 7 dias, B13 uma query só).
+- O inventário (seção 1) foi levantado no código ATUAL, não no plano: os tokens de prioridade,
+  estado e KPI existem em `src/styles/tokens.css`; `--priority-low-text`, `--kpi-tile-*-text` e um
+  par de texto para `--info` **não existem** — o documento proíbe criá-los e manda usar os pares que
+  já existem. `text-kpi-value` (34 px) e `text-2xs`/`text-3xs` existem no `tailwind.config.ts`;
+  `--chart-1`…`--chart-10` existem como variável mas **não** têm classe Tailwind. O `text-[13px]`
+  ainda usado em 8 pontos do módulo (título de coluna, rótulo de KPI, grupos, filtros) é arbitrário
+  sem token de 13 px: a seção 3 dá o degrau que o substitui.
+- Nenhum código de produto, nenhuma migration, nenhuma dependência, nenhuma cor literal: o diff é um
+  arquivo `.md`.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
-
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+- **Contraste (a prova do documento):** `node .tmp/medir-contraste.mjs`
+  - vermelho antes (os pares que o código usa hoje, tabela A) → `A: 12 pares, 12 falhas`
+    (ex.: `kpi-tile-green-fg sobre kpi-tile-green/13 — claro 1.51 FALHA`, mínimo 3:1;
+    `status-pending usado como TEXTO sobre card — claro 1.79 FALHA`, mínimo 4,5:1).
+  - verde depois (os pares que a especificação adota, tabela B) → `B: 23 pares, 0 falhas`
+    (ex.: `blue: L35% claro / L72% escuro sobre tinta /13 → claro 7.81 OK; escuro 6.28 OK`;
+    `Média — tinta âmbar /15 + texto → claro 4.82 OK; escuro 7.29 OK`;
+    `Baixa — azul L42% claro / L60% escuro → claro 4.62 OK; escuro 4.75 OK`).
+  - o script lê os tokens de verdade de `src/styles/tokens.css` (nada digitado à mão) e as duas
+    tabelas estão impressas dentro do próprio documento (seções 1.4 e 1.5). É ele que sustenta a
+    correção que o plano pede no tema claro: os tiles de KPI reprovam AA no claro hoje (1,51 a 2,71)
+    e passam com o ajuste de luminosidade do `-fg` (5,12 a 8,09) — mesma matiz/saturação, precedente
+    `--warning-text`/`--primary-text`.
+- **Documento como produto (regra 9):** `python3` conferiu 613 linhas, 13 tabelas e 0 tabelas
+  desalinhadas (duas linhas com `|` dentro de código foram escapadas com `\|`); os títulos das
+  seções cobrem as 10 etapas pedidas; as linhas e colunas dos quadros de contraste batem com a saída
+  do script.
+- `npx eslint .tmp/medir-contraste.mjs` → saída vazia, exit 0 (o script temporário não suja o
+  lint-ratchet).
+- `docs/tarefas/ESPECIFICACOES.md` é o único arquivo no diff (o bloco FATOS MEDIDOS tem o stat).
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- **Não editei `src/`.** O cartão é especificação: o ajuste de token do tema claro (tiles de KPI e
+  `--priority-low`) e a troca dos 8 `text-[13px]` ficam para os cartões das etapas que mexem nesses
+  arquivos — aqui eles estão medidos e prescritos, não aplicados.
+- **Ressalva honesta sobre as imagens:** não consegui ABRIR os 5 PNGs por ferramenta —
+  `vision_analyze` devolveu `Only base64 data is allowed` para o caminho do WSL (também com
+  `\\wsl.localhost\...`), e não há canal de anexo nesta execução. O inventário elemento a elemento
+  (colunas, KPIs, seções da Agenda, campos do painel e do modal, cores) veio da seção 3 do plano
+  (que descreve as 5 telas item por item) e da conferência no código atual; nenhum elemento foi
+  inventado. Se algum detalhe divergir da imagem, isso volta como `[refazer]` e eu corrijo no
+  mesmo documento.
+- Não criei cartão, não criei token, não criei skill; não mencionei o identificador do banco.
