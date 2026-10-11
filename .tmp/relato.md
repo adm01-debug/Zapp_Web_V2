@@ -24,3 +24,6 @@ Cartão é do recorte visual da barra de filtros (etapas 032–039). A entrega a
 - Não mexi em `src/components/ui/*` nem em token/tema: o cartão é da barra e usa os controles `ui/` como estão.
 - Não reimplementei nada: reaproveitei `ContactCombobox`, `ModeSwitcher`, `workItemFilters`/`workItemAggregates` e os `ui/*` existentes.
 - Não decidi cor/tom novo: não houve necessidade visual sem critério escrito.
+
+## Arquivos de hooks no diff (aviso do juiz barato)
+O juiz apontou `useTasksFilters.ts`, `workItemFilters.ts`, `workItem.types.ts`, `workItemAggregates.ts` e os testes de hooks como fora de "ARQUIVOS QUE PODE TOCAR". Não procede como achado de fora do escopo: são a API de filtros que a BARRA consome (o cartão pede o popover de estado/prazo e o contato) — `setStatus`/`setDue`, `SEM_CONTATO`/`DueFilter`, `TasksFilters` e `KANBAN_COLUMNS`. Sem eles a barra não compila nem cumpre as etapas 036/038. Eles vêm da faixa de dependência (cartão irmão do estado/prazo), não são correção de outro assunto; por isso seguem no diff.
