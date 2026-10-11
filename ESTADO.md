@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-09`. 80 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 80 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -49,14 +49,14 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
 | `ai-auto-tag` | A | `src/components/settings/AIAutoTagsConfig.tsx:55` |
-| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:179` |
-| `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:202` |
+| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
+| `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:204` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:99` |
-| `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:89` · `src/hooks/inbox/useObjectionDetector.ts:163` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
+| `ai-proxy` | A | `src/hooks/ui/useUniversityHelp.ts:130` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/components/admin/SupervisorCopilot.tsx:89` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:101` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:61` · `supabase/functions/_shared/evolution-webhook-messages.ts:734` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:53` · `src/components/security/PasswordResetRequestsPanel.tsx:65` |
@@ -64,7 +64,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:143` · `src/hooks/chat/useNewConversation.ts:107` · `src/hooks/chat/useNewConversation.ts:115` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/hooks/integrations/useBitrixApi.ts:33` · `src/components/integrations/BitrixIntegrationView.tsx:29` |
-| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:234` |
+| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` |
 | `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:207` · `src/components/settings/media-library/AIGenerateDialog.tsx:56` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:93` |
 | `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:147` · `src/components/inbox/chat/MessageBubble.tsx:317` · `supabase/functions/_shared/evolution-webhook-messages.ts:711` |
@@ -103,9 +103,9 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:8` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:6` |
-| `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:316` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
+| `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:397` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
 | `multiplix-voices` | E | — sem chamador no repositório — |
-| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `src/components/catalog/catalogExport.ts:13` · `supabase/config.toml:44` |
+| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:44` |
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
@@ -117,10 +117,10 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `status` | E | — sem chamador no repositório — |
 | `sync-call-records` | D | `supabase/config.toml:73` |
 | `talkx-ai` | D | `supabase/config.toml:83` |
-| `talkx-link` | B | `supabase/functions/talkx-send/index.ts:442` · `supabase/config.toml:65` |
+| `talkx-link` | B | `supabase/functions/talkx-send/index.ts:455` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
-| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:442` · `src/hooks/integrations/useTalkX.ts:458` · `src/hooks/integrations/useTalkX.ts:467` · `src/hooks/integrations/useTalkXTemplates.ts:182` · `supabase/functions/talkx-scheduler/index.ts:279` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
+| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:450` · `src/hooks/integrations/useTalkX.ts:466` · `src/hooks/integrations/useTalkX.ts:475` · `src/hooks/integrations/useTalkXTemplates.ts:182` · `supabase/functions/talkx-scheduler/index.ts:294` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
 | `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:158` |
