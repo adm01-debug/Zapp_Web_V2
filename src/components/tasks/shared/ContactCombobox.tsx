@@ -187,7 +187,7 @@ export function ContactCombobox({
                   type="button"
                   data-testid={`contact-combobox-extra-${o.value}`}
                   onClick={() => { o.onSelect(); setOpen(false); }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+                  className="flex min-h-10 w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
                 >
                   <Check className={cn('h-3.5 w-3.5 shrink-0 text-primary', !o.selected && 'opacity-0')} />
                   <span className="truncate">{o.label}</span>
@@ -204,7 +204,7 @@ export function ContactCombobox({
           aria-label="Remover contato"
           data-testid="contact-combobox-clear"
           onClick={() => onChange(null)}
-          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
+          className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
         >
           <X className="h-3 w-3" />
         </button>
