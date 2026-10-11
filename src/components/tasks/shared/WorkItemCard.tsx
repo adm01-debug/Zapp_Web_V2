@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, MessageSquare } from 'lucide-react';
+import { MoreVertical, MessageSquare, AlertCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,12 +11,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { agingDays } from '@/hooks/tasks/workItemMachine';
+import { isOverdue } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
-import { PriorityChip }  from './PriorityChip';
-import { DueChip }       from './DueChip';
-import { RemindChip }    from './RemindChip';
-import { ContactChip }   from './ContactChip';
-import { AgingDot }      from './AgingDot';
+import { TaskCheckbox }   from './TaskCheckbox';
+import { useTasksUiOptional } from './tasksUi';
+import { PriorityPill }   from './PriorityPill';
+import { DateLabel }      from './DateLabel';
+import { RemindChip }     from './RemindChip';
+import { ContactChip }    from './ContactChip';
+import { AgingDot }       from './AgingDot';
 import { MoveToMenu, MoveTargets } from '../board/MoveToMenu';
 import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 
@@ -44,14 +47,25 @@ interface Props {
   /** Contagem real de "Fazendo" — trava a opção cheia (etapa 29). */
   doingCount?: number;
   isDragging?: boolean;
+  /**
+   * Etapa 090: o card é o MESMO item aberto no painel de detalhes. Quem abre o
+   * painel (Quadro/módulo) passa `isSelected`; sem a prop, o card cai no
+   * `selectedId` do `TasksUiProvider` (`useTasksUiOptional`) — assim a seleção
+   * do painel sincroniza o card sem o chamador repetir o estado.
+   */
+  isSelected?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
 export const WorkItemCard = React.memo(function WorkItemCard({
   item, mode, contactName, onOpen, onToggleDone, onComplete, onReopen, onMoveTo,
   onRequestWaitingReason, onSnooze, onClearReminder, onOpenReminder, onDelete,
-  onOpenContact, doingCount = 0, isDragging, dragHandleProps,
+  onOpenContact, doingCount = 0, isDragging, isSelected, dragHandleProps,
 }: Props) {
+  // Etapa 090: seleção explícita (prop) ou vinda do painel de detalhes
+  // (`selectedId` do provider); fora do provider o hook opcional devolve null.
+  const ui = useTasksUiOptional();
+  const selecionado = isSelected ?? ui?.selectedId === item.id;
   const aging = ['doing','waiting'].includes(item.status) ? agingDays(item) : 0;
   const isDone = item.status === 'done' || item.status === 'cancelled';
   // #425 / R2-MOD-057: o executor do alarme ignora done/cancelled — nesses
@@ -61,6 +75,15 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   const isAgenda = mode === 'agenda';
   // Etapa 32: o contato vem do item quando o chamador não o monta.
   const nomeContato = contactName ?? item.contact?.name ?? null;
+  // Etapa 085: "Urgente" vai em destaque junto ao título; as demais prioridades
+  // seguem na linha de contexto, abaixo.
+  const urgente = item.priority === 'urgent';
+  // Etapa 086: a tag "Atrasada" acompanha o prazo vencido (regra única de
+  // atraso — `isOverdue`, a mesma do badge e do `bucketByDue`).
+  const atrasada = !!item.due_date && !isDone && isOverdue(item.due_date);
+  // Etapas 087/088: no card em "Fazendo" (ou no card selecionado, etapa 090) o
+  // prazo e o lembrete ganham rótulos em duas colunas e a descrição curta aparece.
+  const detalhado = !isAgenda && (item.status === 'doing' || selecionado);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Só atalhos do PRÓPRIO card: teclas disparadas por filhos (checkbox, kebab)
@@ -73,22 +96,62 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   };
 
   // Peças montadas uma vez e usadas nos dois layouts (nada de copiar JSX).
-  const checkbox = (mode === 'list' || isAgenda) ? (
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); onToggleDone?.(); }}
-      className={`${isAgenda ? '' : 'mt-0.5'} h-[18px] w-[18px] shrink-0 rounded-[4px] border-2 border-border flex items-center justify-center hover:border-primary transition-colors`}
-      aria-label={isDone ? 'Reabrir tarefa' : 'Concluir tarefa'}
-    >
-      {isDone && <span className="block h-2.5 w-2.5 rounded-sm bg-primary" />}
-    </button>
-  ) : null;
+  // Etapa 084 (D16): checkbox CIRCULAR em todas as superfícies, pela mesma peça
+  // (`TaskCheckbox`) da Lista, do Quadro, da Agenda, do painel e do modal.
+  const checkbox = (
+    <TaskCheckbox
+      done={isDone}
+      onToggle={onToggleDone}
+      className={isAgenda ? 'shrink-0' : 'mt-0.5'}
+    />
+  );
 
+  // Etapas 084/085: título em até 2 linhas (a Agenda segue em linha única).
   const titulo = (
-    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug ${isAgenda ? 'truncate' : 'line-clamp-2'} ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
       {item.title}
     </span>
   );
+
+  // Etapas 086/087: prazo pela regra única de datas (`DateLabel` → workItemFormat)
+  // com a tag "Atrasada" ao lado quando vencido.
+  const prazo = item.due_date && !isDone ? (
+    <span className="inline-flex items-center gap-1.5 min-w-0">
+      <DateLabel value={item.due_date} overdue={atrasada} />
+      {atrasada && (
+        <span
+          data-testid="overdue-tag"
+          className="inline-flex items-center gap-0.5 text-2xs font-semibold text-[hsl(var(--destructive-text))]"
+        >
+          <AlertCircle className="h-3 w-3" aria-hidden />
+          Atrasada
+        </span>
+      )}
+    </span>
+  ) : null;
+
+  const lembrete = item.remind_at && lembreteElegivel ? (
+    <RemindChip
+      remindAt={item.remind_at}
+      notifiedAt={item.notified_at}
+      onSnooze={onSnooze}
+      onClearReminder={onClearReminder}
+      onOpenReminder={onOpenReminder}
+    />
+  ) : null;
+
+  // Etapa 089: em Aguardando, chip com ponto âmbar e o motivo curto, truncado
+  // com tooltip (a Agenda não mostra — etapa 56).
+  const espera = item.status === 'waiting' && item.waiting_reason ? (
+    <span
+      data-testid="waiting-chip"
+      title={item.waiting_reason}
+      className="inline-flex items-center gap-1.5 min-w-0 max-w-full rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 text-2xs font-medium text-[hsl(var(--warning-text))]"
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" aria-hidden />
+      <span className="truncate">{item.waiting_reason}</span>
+    </span>
+  ) : null;
 
   const contexto = (
     <>
@@ -99,16 +162,11 @@ export const WorkItemCard = React.memo(function WorkItemCard({
           onClick={onOpenContact}
         />
       )}
-      {item.due_date && !isDone && <DueChip dueDate={item.due_date} />}
-      {item.remind_at && lembreteElegivel && (
-        <RemindChip
-          remindAt={item.remind_at}
-          notifiedAt={item.notified_at}
-          onSnooze={onSnooze}
-          onClearReminder={onClearReminder}
-          onOpenReminder={onOpenReminder}
-        />
-      )}
+      {/* Etapa 085: a prioridade padrão (não urgente) fica na linha de contexto. */}
+      {!urgente && <PriorityPill priority={item.priority} />}
+      {/* Com os rótulos em duas colunas (087), o prazo e o lembrete saem daqui. */}
+      {!detalhado && prazo}
+      {!detalhado && lembrete}
       {aging > 0 && <AgingDot days={aging} />}
     </>
   );
@@ -194,6 +252,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
+      {...(selecionado ? { 'data-selected': 'true' } : {})}
       {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       role="article"
       tabIndex={0}
@@ -201,17 +260,21 @@ export const WorkItemCard = React.memo(function WorkItemCard({
       onKeyDown={handleKeyDown}
       onClick={onOpen}
       className={[
-        'group relative border bg-card cursor-pointer',
+        'group relative border cursor-pointer',
         isAgenda
           ? 'flex flex-row h-11 items-center gap-2 rounded-xl px-3'
           : 'flex flex-col gap-1.5 rounded-[14px] p-3 min-h-[72px]',
+        // Etapa 090: card selecionado = borda primary + fundo primary/10.
+        selecionado ? 'bg-primary/10' : 'bg-card',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         'transition-[border-color,box-shadow,transform] duration-150',
-        isDragging
-          ? 'border-primary/60 shadow-[0_8px_24px_-8px_hsl(var(--primary)/.45)] rotate-[1deg] scale-[1.02]'
-          : isDone
-            ? 'border-border/40 opacity-60'
-            : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
+        selecionado
+          ? 'border-primary'
+          : isDragging
+            ? 'border-primary/60 shadow-[0_8px_24px_-8px_hsl(var(--primary)/.45)] rotate-[1deg] scale-[1.02]'
+            : isDone
+              ? 'border-border/40 opacity-60'
+              : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
       ].join(' ')}
       {...roleDescription}
     >
@@ -221,18 +284,23 @@ export const WorkItemCard = React.memo(function WorkItemCard({
           {checkbox}
           {titulo}
           <div className="ml-auto flex shrink-0 items-center gap-1.5 min-w-0 overflow-hidden">
-            <PriorityChip priority={item.priority} compact />
+            <PriorityPill priority={item.priority} compact />
             {contexto}
           </div>
           {kebab}
         </>
       ) : (
         <>
-          {/* Header: checkbox (lista) ou title */}
+          {/* Header: checkbox · título (2 linhas) · Urgente · alça ⠿ · mover · kebab */}
           <div className="flex items-start gap-2 min-w-0">
             {checkbox}
             {titulo}
-            <PriorityChip priority={item.priority} compact />
+            {/* Etapa 085: Urgente em destaque junto ao título. */}
+            {urgente && <PriorityPill priority="urgent" className="mt-0.5" />}
+            {/* Etapa 090: alça de arrastar ⠿ (o arrasto real é o próprio card). */}
+            {mode === 'board' && (
+              <span aria-hidden className="mt-0.5 shrink-0 select-none text-xs leading-none text-muted-foreground/60">⠿</span>
+            )}
             {/* Etapa 33/82: só existe sob ponteiro grosso; em desktop some. */}
             <MoveToMenu
               item={item}
@@ -243,18 +311,31 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             {kebab}
           </div>
 
-          {/* Chips de contexto */}
+          {/* Chips de contexto (contato, prioridade, prazo, lembrete, dias) */}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
             {contexto}
           </div>
 
-          {/* Motivo de espera (a Agenda não mostra — etapa 56) */}
-          {item.status === 'waiting' && item.waiting_reason && (
-            <p className="flex items-center gap-1 text-2xs text-[hsl(var(--warning-text))] border-t border-border/30 pt-1.5 mt-0.5">
-              <span className="shrink-0">⏸</span>
-              <span className="truncate">{item.waiting_reason}</span>
-            </p>
+          {/* Etapas 087/088: no card em Fazendo/selecionado, Prazo e Lembrete em
+              duas colunas rotuladas, com a descrição curta abaixo. */}
+          {detalhado && (
+            <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 mt-0.5 min-w-0">
+              <div className="min-w-0">
+                <span className="block text-2xs uppercase tracking-wide text-muted-foreground">Prazo</span>
+                {prazo ?? <span className="text-xs text-muted-foreground">Sem prazo</span>}
+              </div>
+              <div className="min-w-0">
+                <span className="block text-2xs uppercase tracking-wide text-muted-foreground">Lembrete</span>
+                {lembrete ?? <span className="text-xs text-muted-foreground">Sem lembrete</span>}
+              </div>
+            </div>
           )}
+          {detalhado && item.description && (
+            <p className="text-2xs text-muted-foreground line-clamp-2 min-w-0">{item.description}</p>
+          )}
+
+          {/* Etapa 089: motivo de espera como chip (a Agenda não mostra — etapa 56) */}
+          {espera}
 
           {/* Acoes rapidas (modo board, mobile) */}
           {mode === 'board' && onOpenContact && nomeContato && (
