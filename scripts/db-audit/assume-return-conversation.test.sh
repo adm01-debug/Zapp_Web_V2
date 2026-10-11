@@ -120,6 +120,7 @@ C_RES='30000000-0000-0000-0000-000000000004'
 C_RACE='30000000-0000-0000-0000-000000000005'
 C_NOQ='30000000-0000-0000-0000-000000000006'
 C_Q2='30000000-0000-0000-0000-000000000007'
+C_ARCH='30000000-0000-0000-0000-000000000008'
 C_MISS='30000000-0000-0000-0000-00000000ffff'
 
 SIG_A='public.assume_conversation(uuid)'
@@ -143,6 +144,7 @@ reset_estado() {
     UPDATE public.contacts SET assigned_to=NULL, conversation_status='open'   WHERE id='$C_TAKE';
     UPDATE public.contacts SET assigned_to='$P_M1', conversation_status='open' WHERE id='$C_OWN';
     UPDATE public.contacts SET assigned_to='$P_M1', conversation_status='resolved' WHERE id='$C_RES';
+    UPDATE public.contacts SET assigned_to='$P_M1', conversation_status='archived' WHERE id='$C_ARCH';
     UPDATE public.contacts SET assigned_to='$P_M1', conversation_status='waiting'  WHERE id='$C_NOQ';
     UPDATE public.contacts SET assigned_to='$P_X', conversation_status='open' WHERE id='$C_Q2';
     DELETE FROM public.audit_logs;
@@ -203,8 +205,10 @@ checa_contrato() { # fase
   assert_eq "$fase" 'estado apos takeover admin (open + responsavel)' "$P_ADMIN|open" \
     "$(psql_q -c "SELECT assigned_to||'|'||conversation_status FROM public.contacts WHERE id='$C_OWN'")" || return 1
 
-  check_error "$fase: admin assume conversa resolved retorna conversation_not_active" 'conversation_not_active' \
-    "BEGIN; $pref_admin SELECT public.assume_conversation('$C_RES'); COMMIT;" || return 1
+  assert_eq "$fase" 'admin assume conversa resolved e reabre como open' "true|$P_ADMIN|open" \
+    "$(assume_fields "$pref_admin" "$C_RES")" || return 1
+  assert_eq "$fase" 'auditoria da reabertura guarda previous_status resolved' 'resolved|open' \
+    "$(psql_q -c "SELECT (details->>'previous_status')||'|'||(details->>'status') FROM public.audit_logs WHERE entity_id='$C_RES' AND action='conversation_assumed'")" || return 1
 
   check_error "$fase: quem nao e o dono nao pode devolver (42501)" '42501' \
     "BEGIN; $pref_m2 SELECT public.return_conversation_to_queue('$C_OWN','nao e meu'); COMMIT;" || return 1
@@ -216,8 +220,8 @@ checa_contrato() { # fase
     "$(psql_q -c "SELECT details->>'reason' FROM public.audit_logs WHERE entity_id='$C_OWN' AND action='conversation_returned_to_queue'")" || return 1
   assert_eq "$fase" 'devolver e idempotente (sem 2a linha de auditoria)' '1' \
     "$(psql_q -c "BEGIN; $pref_admin SELECT public.return_conversation_to_queue('$C_OWN','sem tempo'); COMMIT;" >/dev/null; psql_q -c "SELECT count(*) FROM public.audit_logs WHERE entity_id='$C_OWN' AND action='conversation_returned_to_queue'")" || return 1
-  check_error "$fase: devolver conversa encerrada (conversation_not_active)" 'conversation_not_active' \
-    "BEGIN; $pref_admin SELECT public.return_conversation_to_queue('$C_RES','x'); COMMIT;" || return 1
+  check_error "$fase: devolver conversa arquivada (conversation_not_active)" 'conversation_not_active' \
+    "BEGIN; $pref_admin SELECT public.return_conversation_to_queue('$C_ARCH','x'); COMMIT;" || return 1
 
   check_error "$fase: anon nao tem EXECUTE (42501)" '42501' \
     "BEGIN; $pref_anon SELECT public.assume_conversation('$C_WAIT'); COMMIT;" || return 1
@@ -440,6 +444,7 @@ INSERT INTO public.contacts (id, assigned_to, queue_id, conversation_status) VAL
   ('$C_TAKE', NULL,   '$QUEUE1', 'open'),
   ('$C_OWN',  '$P_M1','$QUEUE1', 'open'),
   ('$C_RES',  '$P_M1','$QUEUE1', 'resolved'),
+  ('$C_ARCH', '$P_M1','$QUEUE1', 'archived'),
   ('$C_RACE', NULL,   '$QUEUE1', 'waiting'),
   ('$C_NOQ',  '$P_M1', NULL,     'waiting'),
   ('$C_Q2',   '$P_X', '$QUEUE2', 'open');

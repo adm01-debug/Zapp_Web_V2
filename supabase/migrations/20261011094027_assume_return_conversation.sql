@@ -53,7 +53,8 @@ BEGIN
     RAISE EXCEPTION 'contact_not_found' USING ERRCODE = 'P0001';
   END IF;
 
-  IF v_contact.conversation_status IN ('resolved', 'archived') THEN
+  -- Assumir conversa resolved reabre o atendimento; archived continua bloqueado.
+  IF v_contact.conversation_status = 'archived' THEN
     RAISE EXCEPTION 'conversation_not_active' USING ERRCODE = 'P0001';
   END IF;
 
