@@ -37,6 +37,11 @@ interface Props {
   id?: string;
   /** `data-testid` do gatilho focável (usado pelos atalhos de teclado). */
   testId?: string;
+  /**
+   * Etapa 035: opções fora da busca por contatos (ex.: "Sem contato" no filtro
+   * de Tarefas). Ficam no topo da lista, antes do campo de busca.
+   */
+  extraOptions?: Array<{ value: string; label: string; selected?: boolean; onSelect: () => void }>;
 }
 
 /** Avatar de 18px: foto quando existe, senão a inicial sobre a cor determinística. */
@@ -113,6 +118,7 @@ export function ContactCombobox({
   className,
   id,
   testId,
+  extraOptions,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [escolhidos, setEscolhidos] = useState<Record<string, ContactOption>>({});
@@ -172,6 +178,23 @@ export function ContactCombobox({
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-[320px] p-0" data-testid="contact-combobox-popover">
+          {/* Etapa 035: opções que não vêm da busca por contatos ("Sem contato"). */}
+          {extraOptions && extraOptions.length > 0 && (
+            <div className="border-b border-border p-1" data-testid="contact-combobox-extras">
+              {extraOptions.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  data-testid={`contact-combobox-extra-${o.value}`}
+                  onClick={() => { o.onSelect(); setOpen(false); }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+                >
+                  <Check className={cn('h-3.5 w-3.5 shrink-0 text-primary', !o.selected && 'opacity-0')} />
+                  <span className="truncate">{o.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {open && <ContactSearchList selectedId={value ?? undefined} onSelect={selecionar} />}
         </PopoverContent>
       </Popover>
