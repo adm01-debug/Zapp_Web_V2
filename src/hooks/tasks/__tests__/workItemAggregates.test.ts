@@ -503,3 +503,65 @@ describe('R2-MOD-058 — regra única de prazo vencido (badge, KPI, grupos e chi
     expect(virou.today.map(i => i.id)).toEqual(['a00']);
   });
 });
+
+/**
+ * Etapas 024/037: o recorte por prazo e por estado atravessa o MESMO
+ * `applyFilters` (nenhum modo dispara consulta nova — B13). A âncora de tempo é
+ * injetada, então o teste não depende do relógio da máquina.
+ */
+describe('etapas 024/037 — applyFilters recorta por prazo e por estado', () => {
+  const ancora = new Date(2026, 9, 3, 12, 0, 0, 0); // 03/10/2026 12:00 local
+  const itens = [
+    makeItem({ id: 'atrasada', due_date: new Date(2026, 9, 1, 10, 0).toISOString() }),
+    makeItem({ id: 'hoje',     due_date: new Date(2026, 9, 3, 23, 59).toISOString() }),
+    makeItem({ id: 'amanha',   due_date: new Date(2026, 9, 4, 23, 59).toISOString() }),
+    makeItem({ id: 'longe',    due_date: new Date(2026, 9, 20, 10, 0).toISOString() }),
+    makeItem({ id: 'sem',      due_date: null }),
+  ];
+  const ids = (f: Parameters<typeof applyFilters>[1]) => applyFilters(itens, f, ancora).map(i => i.id);
+
+  it('due=overdue traz só o que venceu', () => {
+    expect(ids({ ...DEFAULT_FILTERS, due: 'overdue' })).toEqual(['atrasada']);
+  });
+
+  it('due=today é o de hoje SEM contar o atrasado (mesmo veredito do bucketByDue)', () => {
+    expect(ids({ ...DEFAULT_FILTERS, due: 'today' })).toEqual(['hoje']);
+  });
+
+  it('due=week é a janela dos próximos 7 dias (hoje + amanhã; longe e atrasada ficam fora)', () => {
+    expect(ids({ ...DEFAULT_FILTERS, due: 'week' })).toEqual(['hoje', 'amanha']);
+  });
+
+  it('due=none traz só o sem prazo; due=all não recorta nada', () => {
+    expect(ids({ ...DEFAULT_FILTERS, due: 'none' })).toEqual(['sem']);
+    expect(ids(DEFAULT_FILTERS)).toEqual(['atrasada', 'hoje', 'amanha', 'longe', 'sem']);
+  });
+
+  it('due e status somam no mesmo recorte (atrasada E na coluna Fazendo)', () => {
+    const mistos = [
+      makeItem({ id: 'fazer-atrasada', status: 'doing',  due_date: new Date(2026, 9, 1, 10, 0).toISOString() }),
+      makeItem({ id: 'fazer-hoje',     status: 'doing',  due_date: new Date(2026, 9, 3, 23, 59).toISOString() }),
+      makeItem({ id: 'afazer-atrasada',status: 'todo',   due_date: new Date(2026, 9, 1, 10, 0).toISOString() }),
+    ];
+    const r = applyFilters(mistos, { ...DEFAULT_FILTERS, status: 'doing', due: 'overdue' }, ancora);
+    expect(r.map(i => i.id)).toEqual(['fazer-atrasada']);
+  });
+});
+
+describe('etapa 037 — o estado escolhido manda no toggle "concluídas"', () => {
+  const itens = [
+    makeItem({ id: 'b', status: 'backlog' }),
+    makeItem({ id: 'd', status: 'doing' }),
+    makeItem({ id: 'f', status: 'done' }),
+  ];
+  const ids = (f: Parameters<typeof applyFilters>[1]) => applyFilters(itens, f).map(i => i.id);
+
+  it('status=all mantém o comportamento antigo: done=false esconde as concluídas', () => {
+    expect(ids({ ...DEFAULT_FILTERS, done: false })).toEqual(['b', 'd']);
+  });
+
+  it('status escolhido traz só aquela coluna, mesmo com o toggle desligado', () => {
+    expect(ids({ ...DEFAULT_FILTERS, status: 'doing', done: false })).toEqual(['d']);
+    expect(ids({ ...DEFAULT_FILTERS, status: 'done', done: false })).toEqual(['f']);
+  });
+});
