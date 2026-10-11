@@ -63,8 +63,9 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
   subir o app com `--mode production`. Fixture "real" de produção não é fixture.
 * **Quarentena com prazo:** um spec quebrado e adiado entra em `e2e/quarantine.js` (módulo
   que exporta a lista `quarentena`), com `spec`, `motivo`, `issue` e `prazo` (`AAAA-MM-DD`). O verificador
-  `scripts/ci/check-quarantine.mjs` recusa item sem forma completa e **derruba o CI** quando
-  o prazo vence. Quarentena sem prazo é `skip` com outro nome.
+  `scripts/ci/check-quarantine.mjs` recusa item sem forma completa e sai com erro quando executado e encontra prazo vencido.
+  Na dia `dia/2026-10-10`, ele não é chamado por `.github/workflows/ci.yml`; portanto a quarentena só falha o comando que roda esse verificador explicitamente.
+  Quarentena sem prazo é `skip` com outro nome.
 
 ## Regras de nome e de escolha
 
@@ -92,5 +93,7 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 sem `--rapido` — `bun run test` e `bun run build`. `zapp-verify . --rapido` é a checagem a
 cada edição; ele **pula** unidade e build, então não substitui a suíte completa.
 
-As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)
-e, no caso do E2E, pelo job próprio com banco local.
+As camadas 3 e 4 rodam em `.github/workflows/ci.yml` nos passos de Deno e `node:test`.
+A camada 5 roda no job `e2e` do mesmo workflow para E2E deslogado de PR e nos workflows próprios
+`.github/workflows/e2e-logado.yml` e `.github/workflows/e2e-talkx.yml` para fluxos separados.
+Nenhuma das três entra no `zapp-verify`; no caso do E2E, os jobs usam banco local ou sessão sintética conforme a regra R1.

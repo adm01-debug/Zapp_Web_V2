@@ -459,7 +459,42 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   }
   assert.ok(doc.includes('scripts/ci/check-quarantine.mjs'), 'TESTING_CONVENTION.md não cita o verificador da quarentena');
 
-  // 8. a quarentena real respeita a convenção que o doc descreve (prazo em AAAA-MM-DD)
+  // 8. a quarentena precisa dizer a verdade sobre o ci.yml da dia.
+  assert.equal(
+    ci.includes('scripts/ci/check-quarantine.mjs'),
+    false,
+    'se check-quarantine.mjs entrar no ci.yml, atualize TESTING_CONVENTION.md e esta guarda',
+  );
+  assert.ok(
+    doc.includes('Na dia `dia/2026-10-10`, ele não é chamado por `.github/workflows/ci.yml`'),
+    'TESTING_CONVENTION.md precisa dizer que check-quarantine.mjs não está ligado ao ci.yml da dia',
+  );
+  assert.ok(
+    doc.includes('sai com erro quando executado e encontra prazo vencido'),
+    'TESTING_CONVENTION.md precisa limitar a falha da quarentena ao comando executado',
+  );
+
+  // 9. a camada E2E precisa apontar para o job real, sem misturar todo Playwright no job de guards.
+  assert.ok(ci.includes('e2e:'), 'ci.yml perdeu o job e2e do Playwright');
+  assert.ok(ci.includes('bun run test:e2e --'), 'ci.yml perdeu o comando do E2E de PR');
+  assert.ok(
+    doc.includes('As camadas 3 e 4 rodam em `.github/workflows/ci.yml`'),
+    'TESTING_CONVENTION.md precisa limitar a frase de CI das camadas 3/4 ao ci.yml real',
+  );
+  assert.ok(
+    doc.includes('A camada 5 roda no job `e2e` do mesmo workflow para E2E deslogado de PR'),
+    'TESTING_CONVENTION.md precisa separar camadas 3/4 do job e2e do Playwright em ci.yml',
+  );
+  assert.ok(
+    doc.includes('`.github/workflows/e2e-logado.yml`') && doc.includes('`.github/workflows/e2e-talkx.yml`'),
+    'TESTING_CONVENTION.md precisa citar os workflows próprios de E2E fora do job e2e de PR',
+  );
+  assert.ok(
+    !doc.includes('As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)'),
+    'TESTING_CONVENTION.md não pode dizer que 3, 4 e 5 rodam todas no mesmo trecho de ci.yml',
+  );
+
+  // 10. a quarentena real respeita a convenção que o doc descreve (prazo em AAAA-MM-DD)
   for (const item of quarentena) {
     assert.match(item.prazo, /^\d{4}-\d{2}-\d{2}$/, `quarentena de ${item.spec} sem prazo ISO`);
   }
