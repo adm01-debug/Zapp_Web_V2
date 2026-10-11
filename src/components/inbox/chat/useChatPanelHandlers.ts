@@ -350,7 +350,19 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       }
       case 'assign': openDialog('transferDialog'); break;
       // useConversationActions.snoozeConversation já grava em conversation_snoozes e mostra o toast.
-      case 'snooze': if (subCommand) snoozeConversation(contactId, subCommand); break;
+      case 'snooze': {
+        // Sem período não há o que adiar: avisa em vez de não fazer nada.
+        if (!subCommand) {
+          toast({
+            title: 'Informe o período',
+            description: 'Informe o período: 1h, 3h, amanhã ou semana.',
+            variant: 'destructive',
+          });
+          break;
+        }
+        void snoozeConversation(contactId, subCommand);
+        break;
+      }
       // useConversationActions já grava em favorite_contacts e mostra o toast.
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
