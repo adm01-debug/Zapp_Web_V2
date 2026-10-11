@@ -1,29 +1,46 @@
-Especialista: senior (area-front-hooks)
+Especialista: iris (area-front-componentes) — worker (telas e componentes)
+
+## Como resolvi o motivo da retomada
+Motivo registrado: a guarda que o CI do GitHub roda passou a falhar com a entrega anterior —
+`scripts/ci/implicit-any-ratchet.mjs`.
+- Reprodução no estado atual (dia/2026-10-11), mesmo comando do passo do CI:
+  `node scripts/ci/implicit-any-ratchet.mjs` -> `implicit-any errors: 0 (baseline: 0)` (exit 0). NÃO reproduz.
+- Testes da própria guarda, rodados como no job de unit tests do CI
+  (`node --test scripts/ci/implicit-any-ratchet.unit.mjs`, que é o padrão de `.github/workflows/ci.yml:101`):
+  `tests 13`, `pass 13`, `fail 0`.
+- O comando com `deno test` que o cartão sugere dá erro de harness (o `spawn` do compilador sob o runner do
+  deno volta sem status por falta de `--allow-write`); o harness que o CI usa de fato é `node --test`, e por ele
+  a guarda passa. Não há defeito na guarda.
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
-
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- Confirmei no código ATUAL (dia/2026-10-11) que o pedido do chip "Arquivadas" JÁ está implementado, pelo commit
+  `32c68d56a feat(inbox): filtro Arquivadas lista so conversation_status archived`:
+  `src/components/inbox/conversation-list/StatusChips.tsx:10` (`ChipTab` inclui `'archived'`), `:49-57` (conta por
+  `contact.conversation_status === 'archived'` e exclui as arquivadas de Todas/Não lidas/Em atendimento/Aguardando),
+  `:67` (`{ id: 'archived', label: 'Arquivadas', count: counts.archived, icon: Archive }`). Nenhuma mudança de
+  produção foi necessária.
+- `src/components/inbox/__tests__/StatusChips.test.tsx`: cherry-pick do commit `aa1d5c5ff` da branch anterior
+  `v2/chip-arquivadas-statuschips-refazer-c338-...`, que acrescenta os casos do item 4 do critério que faltavam na
+  base, renderizando o componente REAL: (a) "Arquivadas" mostra `0` quando não há arquivadas; (b) clicar em
+  "Arquivadas" chama `onChipTabChange('archived')`; (c) o chip ativo recebe o estilo de ativo e os demais seguem
+  inativos.
+- `.tmp/relato.md`: este relato (arquivo versionado do projeto).
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` -> `Test Files 1 passed (1); Tests 12 passed (12)`.
+- `node scripts/ci/implicit-any-ratchet.mjs` -> `implicit-any errors: 0 (baseline: 0)` (exit 0).
+- `node --test scripts/ci/implicit-any-ratchet.unit.mjs` -> `tests 13; pass 13; fail 0`.
+- `zapp-verify . --rapido` -> `OK db_guard 0s; OK tipos; OK lint; OK migrations; VERIFY: VERDE SEM BANCO`.
+- `zapp-verify full .` (rodado neste workspace) -> `OK testes 1189s; OK build 20s; VERIFY: VERDE SEM BANCO (1403s)`.
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Nota sobre vermelho→verde
+A implementação do chip já estava na base (entregue por outro cartão, `32c68d56a`), então estes testes cobrem
+comportamento já existente e passam também na base: não há linha de produção para ficar vermelha neste cartão.
+O que eles provam é o item 4 do critério que a base NÃO cobria (0 quando não há, clique em `archived`, estilo ativo),
+como regressão do comportamento pedido.
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não alterei `StatusChips.tsx`: o pedido já está implementado na base; mudar sem defeito seria escopo indevido.
+- Não mexi em `src/i18n/index.ts`: os rótulos dos chips não existem lá (o único "Resolvidas" de `index.ts` é
+  `dashboard.resolvedToday`, outro assunto), então o cartão não pede chave nova.
+- Não toquei em migration, Edge Function, dependência, nem no que Arquivar faz hoje (`archiveContact`/`bulkArchive`).

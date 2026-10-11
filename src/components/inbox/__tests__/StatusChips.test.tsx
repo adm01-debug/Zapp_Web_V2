@@ -78,11 +78,42 @@ describe('StatusChips', () => {
     expect(screen.getByTestId('status-chip-resolved')).toHaveTextContent('1');
   });
 
+  it('mostra 0 em "Arquivadas" quando a fixture padrão não tem conversation_status archived', () => {
+    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+    expect(screen.getByTestId('status-chip-archived').querySelector('span')?.textContent).toBe('0');
+  });
+
   it('calls onChipTabChange with the clicked chip id', () => {
     const onChipTabChange = vi.fn();
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={onChipTabChange} />);
     fireEvent.click(screen.getByTestId('status-chip-resolved'));
     expect(onChipTabChange).toHaveBeenCalledWith('resolved');
+  });
+
+  it('chama onChipTabChange com archived ao clicar no chip Arquivadas', () => {
+    const onChipTabChange = vi.fn();
+    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={onChipTabChange} />);
+    fireEvent.click(screen.getByTestId('status-chip-archived'));
+    expect(onChipTabChange).toHaveBeenCalledWith('archived');
+  });
+
+  it('aplica o mesmo estilo ativo dos demais chips em Arquivadas', () => {
+    const activeClassTokens = ['status-chip-active', 'bg-accent', 'border-primary/50', 'text-foreground'];
+    render(<StatusChips conversations={conversations} chipTab="archived" onChipTabChange={() => {}} />);
+
+    const archivedChip = screen.getByTestId('status-chip-archived');
+    for (const classToken of activeClassTokens) {
+      expect(archivedChip).toHaveClass(classToken);
+    }
+
+    for (const chipId of ['all', 'unread', 'attending', 'waiting', 'resolved']) {
+      const inactiveChip = screen.getByTestId(`status-chip-${chipId}`);
+      expect(inactiveChip).not.toHaveClass('status-chip-active');
+      expect(inactiveChip).not.toHaveClass('bg-accent');
+      expect(inactiveChip).toHaveClass('bg-muted/40');
+      expect(inactiveChip).toHaveClass('border-border');
+      expect(inactiveChip).toHaveClass('text-muted-foreground');
+    }
   });
 
   it('conta "Arquivadas" pelo conversation_status real e as exclui da lista ativa', () => {
