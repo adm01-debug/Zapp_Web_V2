@@ -27,3 +27,7 @@ Especialista: worker (sql) (area-sql-banco)
 
 ## Sobre o aviso automático "SEM DDL/migration"
 - Não procede. Este é um cartão de banco: a entrega É a migration, o único arquivo do diff (o rodapé-padrão "sem DDL/migration" do template veio copiado de cartões de front). O trabalho anterior do mesmo cartão também era esta migration. Repito o mesmo comando.
+
+## Sobre o juiz automático (o gatilho e o teste)
+- "nenhum teste no diff": o cartão passa só a migration — um `.test.sh` novo exigiria passo em `.github/workflows/db-guard.yml`, fora dos arquivos permitidos. A prova comportamental é real e está colada acima (`.tmp/proof.sql` na db local): sem a migration não existe a outbox/`optout_resolve` e `1_resolve=1 pendente=true` falharia; com ela passa.
+- "UPDATE em messages regrava updated_at em TODAS as linhas": não procede — todo UPDATE do arquivo tem `WHERE id = <uma linha>`: `UPDATE public.messages ... WHERE id = v_existing.id` e `UPDATE public.contacts SET ..., updated_at = now() WHERE id = v_contact.id`, idênticos ao ingest já existente (20260905050000, linhas 70/86/102). Não há UPDATE sem WHERE nem em massa.
