@@ -1,38 +1,48 @@
-Especialista: Íris (area-front-componentes)
+Especialista: iris
+
+# feat(tarefas): arrastar polido, alvo de soltura, Aguardando, teclado e rolagem do Quadro
+
+Etapas 094 a 098 do plano de design (T24). Nada fora da área do cartão.
 
 ## O que mudou e por quê
-- `src/components/tasks/board/BoardColumn.tsx` — etapa 091: o QuickAdd compacto saiu do topo e passou a ser o cartão tracejado `capture-card` no FIM da Caixa de entrada (linha 227), com a dica "Pressione Enter para criar" (linha 230); só `status === 'backlog'` o recebe (D19, linha 107 do plano).
-- `BoardColumn.tsx` — etapa 092: cada cartão da coluna Concluído ganha o carimbo `done-stamp` (linha 176) com o check verde (token `text-success`, definido em `tailwind.config` e `src/styles/tokens.css`) e a data da conclusão pelo formatador do módulo (`formatWorkItemDate(completed_at, { format: 'day' })`); o botão da janela virou `board-done-older` no RODAPÉ da coluna (linhas 214–223), com o rótulo do plano "Ver até 30 dias →".
-- `BoardColumn.tsx` — etapa 093: o ⁙ do cabeçalho (linha 112, `board-collapse-done`, `aria-expanded`) recolhe/expande a coluna — recolhida só o cabeçalho fica e a coluna passa a `flex-none w-[200px]`, mantendo o piso de 200px das outras (é o que `quadroLarguraFocoContraste` mede).
-- `BoardColumn.tsx` — etapa 103: o vazio por coluna passou a `board-column-empty` (linhas 164–167) com a microcopy do plano "Nada aqui. Arraste uma tarefa ou capture acima" + a política da coluna; o esqueleto por coluna já é o `BoardColumnSkeleton` (etapa 53).
-- `src/components/tasks/board/TasksBoardMode.tsx` — etapa 093: toggle `board-done-toggle` (linha 156, `aria-pressed`). Ligado (padrão) = coluna Concluído no trilho; desligado = a coluna sai do trilho. A régua `colunasVisiveis` alimenta o trilho, os dots e o rótulo da tela estreita. É diferente do switch "Mostrar concluídas" da barra de filtros, que corta os ITENS da consulta — aqui muda a COLUNA.
-- `src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx` — 9 casos novos (091, 092, 093, 103), todos pelo componente REAL (`TasksBoardMode` → `BoardColumn`), com asserção de DOM (nada de mock que já traz a resposta).
-- `src/components/tasks/__tests__/taskComponents.test.tsx` e `.../TasksModule.test.tsx` — troca textual exigida pela etapa: rótulo "Ver mais antigas (30 dias)" → "Ver até 30 dias →" e o vazio por texto → teste por `board-column-empty`, com a MESMA força (5 colunas e 4 colunas vazias; e a negação no carregamento).
+- `src/components/tasks/board/boardInteracao.ts` (NOVO) — a decisão que saiu do JSX: `BOARD_ORDER` (a ordem das colunas numa fonte só), `colunaVizinha` (vizinha de cada coluna, `null` nas pontas), `resolverMoverPorTeclado` (monta o `DropResult` que o teclado representa e REUSA `resolveDragEnd`, então a trava de WIP e o portão do Aguardando valem iguais ao arrasto — nenhuma regra de transição nova) e `bordasDeRolagem` (somas do trilho para as sombras). Etapas 097 e 098.
+- `src/components/tasks/board/TasksBoardMode.tsx` — `aplicarDecisao` separado do `handleDragEnd` (arrasto e teclado interpretam o MESMO veredito); `handleTeclado` no trilho (←/→ andam de coluna em coluna pulando as vazias, ↑/↓ entre os cartões, Alt+←/→ move pela decisão acima, e o handler se retira enquanto há arrasto em curso para não brigar com a lib de DnD); o trilho ganhou `motion-safe:scroll-smooth` (encaixe animado do snap, etapa 094) e foi embrulhado pelas sombras de borda (etapa 098). `BOARD_COLUMNS` passou a ler `BOARD_ORDER` (uma fonte só).
+- `src/components/tasks/board/BoardColumn.tsx` — dica do alvo de soltura `Solte para mover para Fazendo (2 de 3)`, com a contagem DEPOIS do drop e travada no teto duro (`Math.min(doingCount + 1, hard)`, nunca "4 de 3") + anel primary no corpo da coluna de destino (etapa 095); realce âmbar (`ring-warning/60`, `data-testid="board-waiting-emphasis"`) na coluna Aguardando enquanto há arrasto (etapa 096 — quem pede o motivo continua sendo o painel de sempre, intocado); placeholder embrulhado num slot tracejado e o cartão levantado num overlay com `--shadow-lg` (etapa 094); no toque, `usePressaoLonga` arma o arrasto (etapa 094).
+- `src/components/tasks/shared/pointerMedia.ts` — `usePressaoLonga` (300 ms), na MESMA `(pointer: coarse)` do `usePointerCoarse`; ponteiro fino nasce armado, então mouse e teclado não mudaram.
 
 ## Prova
-- vermelho antes (só o teste novo, com `BoardColumn`/`TasksBoardMode` na base): `npx vitest run src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx` → `Tests  6 failed | 3 passed (9)` (os 3 verdes são os que já existiam: nenhuma outra coluna captura, Enter cria, esqueleto).
-- verde depois (mesmo comando): `Test Files  1 passed (1)` / `Tests  9 passed (9)`.
-- regressão da área: `npx vitest run src/components/tasks` → `Test Files  24 passed (24)` / `Tests  247 passed | 1 todo (248)`.
-- `npx eslint` nos 5 arquivos tocados → sem saída (exit 0); `npx tsc --noEmit -p tsconfig.app.json` → sem saída (exit 0).
+- vermelho antes (mesmo teste, com os 3 arquivos de tela restaurados de `HEAD`, via `git show HEAD:<arquivo>`): `npx vitest run src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` → `Tests  9 failed | 4 passed (13)` — falha exatamente o que as etapas 094–098 acrescentam (os 4 que passam são as funções puras de 097/098 e os casos que já existiam: Enter e a trava de WIP).
+- verde depois (no commit deste cartão): `npx vitest run src/components/tasks/__tests__/quadroArrastarTecladoRolagem.test.tsx` → `Test Files  1 passed (1); Tests  13 passed (13)`.
+- regressão da vizinhança do módulo: `npx vitest run src/components/tasks` → `Test Files  25 passed (25); Tests  260 passed | 1 todo (261)`.
+- lint: `npx eslint` nos 5 arquivos do diff → saída vazia, exit 0.
 
-## Critério de pronto, item por item
-- 091 captura na Caixa de entrada → `BoardColumn.tsx:227` + testes "mostra o cartão tracejado no FIM da Caixa de entrada, com a dica e o QuickAdd compacto" e "Enter no campo cria a tarefa na Caixa de entrada".
-- 092 coluna Concluído (check verde + data + "Ver até 30 dias →") → `BoardColumn.tsx:176` e `:215` + testes "cada cartão concluído leva o check verde e a data da conclusão" e "o 'Ver até 30 dias →' é o rodapé da coluna Concluído e revela a janela".
-- 093 toggle "Concluídas" e ⁙ → `TasksBoardMode.tsx:156` e `BoardColumn.tsx:112` + testes "nasce ligado com as 5 colunas e, desligado, tira a coluna Concluído do trilho" e "o ⁙ do cabeçalho recolhe a coluna (só o cabeçalho fica) e expande de volta".
-- 103 esqueleto e vazio por coluna → `BoardColumn.tsx:164` + testes "toda coluna vazia mostra a microcopy única e a sua política" e "carregando, cada coluna traz 3 esqueletos e nenhum vazio".
-- Estados da tela alterada: vazio (teste), carregando (esqueleto, teste); erro não existe nesta peça — a coluna não lê o servidor, o erro do hook aparece no módulo, fora do meu diff.
+Casos do teste próprio (todos pelo componente REAL — `TasksBoardMode` → `BoardColumn` — com `resolveDragEnd` de verdade; só o ARRASTO é fingido, porque a lib não roda no jsdom, como nos testes vizinhos do módulo):
+1. `o cartão levantado ganha o overlay elevado e o lugar da soltura fica tracejado` (094);
+2. `no toque o arrasto só pega depois da pressão longa; toque curto desarma` (094);
+3. `a coluna de destino mostra a borda primary e a dica com a contagem que fica` (095);
+4. `a coluna Aguardando se realça em âmbar durante o arrasto (o painel do motivo é preservado)` (096);
+5. `colunaVizinha devolve null nas pontas e a vizinha certa no meio` (097);
+6. `←/→ andam entre colunas (pulando as vazias) e ↑/↓ entre os cartões` (097);
+7. `Alt+→ move o cartão para a coluna seguinte, com o índice do destino` (097);
+8. `Alt+→ para Aguardando abre o painel do motivo em vez de escrever no banco` (097);
+9. `Alt+→ para Fazendo 3/3 é recusado pela trava do WIP` (097);
+10. `Enter continua abrindo o cartão e, com arrasto em curso, o teclado se retira` (097);
+11. `bordasDeRolagem só acende onde ainda há conteúdo escondido` (098);
+12. `o trilho rola com snap e encaixe animado, e a coluna rola por dentro` (098);
+13. `as sombras das bordas aparecem só onde há coluna escondida` (098).
 
-## Conferência contra o plano (as imagens não são legíveis nesta sessão)
-- seção 3, linha 146 ("Capturar tarefa — Pressione Enter para criar" tracejado) → etapa 091, entregue.
-- seção 3, linha 147 ("Concluído com ícone de menu, check verde e Ver até 30 dias →") → etapa 092: check verde e o rótulo exato do plano; o ícone do cabeçalho é o ⁙ da linha 149 (o plano não define outra ação de menu).
-- seção 3, linha 149 ("Toggle Concluídas ligado = coluna Concluído visível") → etapa 093, semântica definida e provada: ligado (padrão) = coluna visível.
-- etapa 103 (linha 362): a microcopy foi copiada letra a letra.
-- Não abri 01.png–05.png: não há ferramenta de visão nesta sessão; li o plano em texto (linhas citadas) e o `docs/tarefas/ESPECIFICACOES.md` (cartão T01) não existe na minha cópia.
+## Elemento → linha da tabela da seção 3 (e a etapa)
+- 094 placeholder tracejado, overlay `--shadow-lg`, encaixe animado e pressão longa no toque → seção 3 **linha 148** (`Alvos e arrasto polidos (alça, destaque da coluna) | PARCIAL | 094–097`); etapa 094 na **linha 353** e a lacuna do toque na **linha 644**.
+- 095 alvo de soltura (borda primary + dica com a contagem) → seção 3 **linha 148**; etapa 095 na **linha 354**; a política vigente em 8-bis **linha 523** (entra de fora bloqueado, reordenar por dentro liberado).
+- 096 Aguardando abre o painel do motivo + coluna âmbar → seção 3 **linha 148**; etapa 096 na **linha 355**; 8-bis **linha 517** (G-6, Aguardando 5 suave).
+- 097 teclado (←/→, ↑/↓, Alt+←/→, Enter) → seção 3 **linha 148**; etapa 097 na **linha 356**; etapa 144 (**linha 144**, alça ⠿/card selecionado) intacta.
+- 098 rolagem fluida com snap, sombra nas bordas e rolagem vertical por coluna → etapa na **linha 357**; a seção 3 não tem linha própria para a rolagem (as imagens mostram o módulo parado), então a referência é a **linha 338** (etapa 079, especificação da coluna: cabeçalho fixo e rolagem interna), que é a que o código já seguia.
+- Cores: só tokens do tema (`--shadow-lg`, `ring-primary`, `ring-warning/60`, `muted-foreground`); nenhuma cor literal e nenhum selo de canal/origem.
+- Imagens 01–05: NÃO foram abertas — este perfil não tem ferramenta de visão nesta máquina. A conferência foi contra a seção 3 (linha 148), a tabela das etapas (353–357) e 8-bis (517, 523).
 
 ## O que NÃO fiz e por quê
-- O aviso do juiz cita arquivos que o cartão não lista (`TasksModule.tsx`, `ContactAvatar.tsx`, `DateLabel.tsx`, `PriorityPill.tsx`, `StatusPill.tsx`, `TaskCheckbox.tsx` e outros): nenhum está no meu commit — `git show --stat 5a06b4908` traz só os 5 arquivos acima. Eles vêm do cherry-pick da FAIXA DOS PAIS que o próprio cartão manda trazer (`8c4f970be`, `3549a8720`, `4eb3d2f9e`, `1ed088ada`, `7febb5f2e`): o fechar compara a branch inteira com a base do dia.
-- Não criei menu de ações no cabeçalho do Concluído: o plano não define nenhuma ação para ele; o "ícone de menu" da linha 147 é o ⁙ da etapa 093.
-- Não toquei em `WorkItemCard.tsx` nem em `TasksEmptyState.tsx` (fora da lista de arquivos do cartão): o check+data saem do `BoardColumn` e a microcopy do vazio veio para o `BoardColumn` (o variant `column` do `TasksEmptyState` fica sem uso).
-- Não mexi no `QuickAdd.tsx`: o modo compacto já criava no Enter; o cartão tracejado e a dica são do `BoardColumn`.
-- Não criei os "primitivos de captura da faixa" (`e2e/helpers/quadro.ts`, `e2e/quadro-basico.spec.ts`): não existem na minha cópia (`git ls-files e2e | grep -i quadro` → só `e2e/tarefas-quadro.spec.ts`); não invento arquivo novo de e2e.
-- Não implementei "+ Nova tarefa" por coluna (D19, linha 107: NÃO IMPLEMENTAR) nem "ordenar coluna" (decisão declarada da etapa 093: posição manual e ordem por data de conclusão do Concluído).
+- Não toquei em `WorkItemCard.tsx` nem em `TasksModule.tsx` (fora dos arquivos do cartão): a sombra elevada do cartão levantado entra no wrapper de `board/` com o token da etapa, e a narração `Movida para … (n de limite)` segue a mesma (critério do cartão).
+- Nenhum valor/teto/escala mudou: o teto duro de Fazendo continua 3; a dica só LÊ o teto e trava a contagem nele. `resolveDragEnd` não foi alterado.
+- Sem migration, Edge Function, dependência nova, exportação/impressão de dado ou edição em massa.
+- Estados conferidos: colunas vazias (as colunas sem cartão do teste não ganham dica nem realce), coluna cheia (3/3 pelo teclado é recusada), sem arrasto (nenhum overlay/placeholder/dica) e sem toque (hint só aparece em `(pointer: coarse)`).
+- Observação de convivência (não é pendência): no toque a etapa 81 já tirava o arrasto e deixava o `MoveToMenu`; a pressão longa entra por cima disso e o menu continua no card.
