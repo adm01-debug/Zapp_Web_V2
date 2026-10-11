@@ -247,19 +247,29 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     const { container } = render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><TalkXSegments onUseCampaign={() => {}} /></QueryClientProvider>);
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
 
+    // lead_score/risk_score são "em breve" (coluna nunca calculada): o botão
+    // continua visível com o MESMO nome acessível, mas desabilitado — clicar
+    // não adiciona condição (filtro morto removido).
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    expect(leadScore).toHaveAttribute('title', expect.stringContaining('Em breve'));
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+
     // O catálogo de filtros adiciona a condição com o campo — e o campo traz o tipo.
-    for (const filtro of ['Lead score', 'Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
+    for (const filtro of ['Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
       fireEvent.click(screen.getByRole('button', { name: filtro }));
     }
     adicionarCondicao(0);
 
-    // Ícone por tipo de campo (number, text, date, uuid, enum, array).
-    for (const icone of ['hash', 'type', 'calendar-days', 'user', 'list-filter', 'tags']) {
+    // Ícone por tipo de campo (text, date, uuid, enum, array — sem o number do
+    // lead_score "em breve", que não entra na árvore).
+    for (const icone of ['type', 'calendar-days', 'user', 'list-filter', 'tags']) {
       expect(container.querySelector(`svg.lucide-${icone}`), `ícone ${icone}`).not.toBeNull();
     }
 
     // Linha vertical com um nó por condição.
     expect(container.querySelector('[data-talkx-line]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(6);
+    expect(container.querySelectorAll('[data-talkx-node]')).toHaveLength(5);
   });
 });
