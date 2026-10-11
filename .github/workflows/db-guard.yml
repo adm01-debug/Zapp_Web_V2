@@ -386,6 +386,24 @@ jobs:
           GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh
 
+
+      # Despacho de mensagens agendadas (scheduled_messages nunca saia): extrai o corpo
+      # real de dispatch_scheduled_messages da migration versionada, executa em PostgreSQL
+      # 17 descartavel junto com o enqueue canonico extraido de
+      # 20260930200000_enforce_enqueue_connection_scope.sql e prova: so vencidas pendentes,
+      # enfileiramento como o dono, message_id devolvido e gravado (nulo no failed),
+      # sent_at/error_message, idempotencia, expiracao apos 15 min, motivos estaveis
+      # (sem_permissao, contato_invalido, conexao_invalida, autor_inativo,
+      # contato_bloqueado), assinatura do dono, fallback de contato
+      # legado, midia preservada, sem permissao/remetente inativo/sem conexao/contato
+      # invisivel viram failed com motivo e auditoria sem conteudo, lote pelo p_limit,
+      # isolamento por item, ACL (authenticated/anon negados, service_role concedido) e o
+      # FOR UPDATE SKIP LOCKED sob concorrencia.
+      - name: Simular o despacho de mensagens agendadas
+        env:
+          DISPATCH_SCHEDULED_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/dispatch-scheduled-messages.test.sh
+
       - name: Simular vinculo de time na reacao em mensagem (#1265)
         env:
           TEAM_REACTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
