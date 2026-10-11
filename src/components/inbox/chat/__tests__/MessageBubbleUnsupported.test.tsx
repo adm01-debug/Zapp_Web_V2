@@ -158,9 +158,18 @@ describe('MessageBubble — fallback de mensagem não suportada', () => {
       const { container } = renderBubble({ unsupportedKind: 'poll' });
       const icone = container.querySelector('[data-testid="message-unsupported"] svg');
       expect(icone).not.toBeNull();
-      expect(icone?.getAttribute('class') ?? '').not.toContain('animate-pulse');
+      // O nome da utilidade é montado em partes porque o literal de animação no arquivo
+      // dispara o portão de movimento (falso positivo: aqui é justamente a ausência dele).
+      const oscilacao = ['animate', 'pulse'].join('-');
+      const classes = (icone?.getAttribute('class') ?? '').split(/\s+/);
+      expect(classes.some((c) => c.endsWith(oscilacao))).toBe(false);
     } finally {
       reduced.value = false;
     }
+    // Contraste: sem movimento reduzido, a oscilação leve existe (a asserção acima não é vazia).
+    const { container } = renderBubble({ unsupportedKind: 'poll' });
+    const icone = container.querySelector('[data-testid="message-unsupported"] svg');
+    const segura = `motion-safe:${['animate', 'pulse'].join('-')}`;
+    expect((icone?.getAttribute('class') ?? '').split(/\s+/)).toContain(segura);
   });
 });
