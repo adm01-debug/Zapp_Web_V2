@@ -8,7 +8,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Message } from '@/types/chat';
-import { ConversationDeliverySummary, estadoDeEnvio, type EstadoDeEnvio } from '../ConversationDeliverySummary';
+import { ConversationDeliverySummary } from '../ConversationDeliverySummary';
+import { estadoDeEnvio, type EstadoDeEnvio } from '../messageSendTimeline';
 
 const controle = vi.hoisted(() => ({ reduzido: false }));
 

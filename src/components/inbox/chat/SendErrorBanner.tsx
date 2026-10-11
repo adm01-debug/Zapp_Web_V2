@@ -9,9 +9,16 @@
  * o botão chama `onSendMessage` com o texto da última falha de texto. Falha de mídia/interativa não
  * tem como reenviar o binário por aqui: mostra só o aviso, sem botão.
  *
- * Movimento: mola curta, só transform/opacity. Com "reduzir movimento" o banner já nasce no lugar.
+ * Esc escopado: o banner é focável (tabIndex -1, foco inicial só quando o usuário não está
+ * digitando) e o Esc só dispensa com o foco dentro dele — nunca listener global em `window`.
+ * Saída animada de verdade: o `AnimatePresence` fica sempre montado e o conteúdo condicional
+ * mora DENTRO dele, com `key` estável.
+ *
+ * Movimento: mola curta, só transform/opacity. Com "reduzir movimento" o banner já nasce no lugar
+ * (sem estado inicial) e a saída é só por opacidade.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent as TecladoBanner } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,6 +56,9 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const [dispensada, setDispensada] = useState<string | null>(null);
   const [reenvio, setReenvio] = useState<EstadoReenvio>('parado');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const montado = useRef(true);
+  const ocupado = useRef(false);
+  const bannerRef = useRef<HTMLDivElement | null>(null);
 
   const ultima = falhas.length > 0 ? falhas[falhas.length - 1] : null;
   const podeReenviar = podeReenviarComoTexto(ultima);
@@ -57,49 +67,85 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
   const dispensar = useCallback(() => setDispensada(assinatura), [assinatura]);
 
   useEffect(() => {
-    if (!visivel) return;
-    const aoTeclar = (evento: KeyboardEvent) => {
-      if (evento.key === 'Escape') dispensar();
+    montado.current = true;
+    return () => {
+      montado.current = false;
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+        timer.current = null;
+      }
     };
-    window.addEventListener('keydown', aoTeclar);
-    return () => window.removeEventListener('keydown', aoTeclar);
-  }, [visivel, dispensar]);
+  }, []);
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
+  // Foco inicial só quando o usuário não está digitando — nunca rouba o campo de texto.
+  useEffect(() => {
+    if (!visivel) return;
+    const el = bannerRef.current;
+    if (!el) return;
+    const ativo = document.activeElement;
+    if (
+      ativo instanceof HTMLElement &&
+      (ativo.tagName === 'INPUT' || ativo.tagName === 'TEXTAREA' || ativo.isContentEditable)
+    ) {
+      return;
+    }
+    if (ativo !== el && !el.contains(ativo)) el.focus({ preventScroll: true });
+  }, [visivel]);
+
+  const agendar = useCallback((fn: () => void, ms: number) => {
+    if (timer.current !== null) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      fn();
+    }, ms);
   }, []);
 
   const reenviar = async () => {
-    if (!ultima || reenvio !== 'parado') return;
+    if (!ultima || reenvio !== 'parado' || ocupado.current) return;
+    ocupado.current = true;
     setReenvio('enviando');
     try {
       await onSendMessage(ultima.content);
+      if (!montado.current) return;
       setReenvio('concluido');
-      timer.current = setTimeout(() => setReenvio('parado'), 1200);
+      agendar(() => {
+        if (montado.current) setReenvio('parado');
+      }, 1200);
     } catch {
-      setReenvio('parado');
+      if (montado.current) setReenvio('parado');
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  // Esc escopado: só dispensa com o foco dentro do banner.
+  const aoTeclarBanner = (evento: TecladoBanner<HTMLDivElement>) => {
+    if (evento.key === 'Escape') {
+      evento.stopPropagation();
+      dispensar();
     }
   };
 
   if (falhas.length === 0) return null;
 
-  if (!visivel) {
-    return (
-      <div
-        data-testid="send-error-banner-dispensado"
-        className={cn('mx-3 mt-2 flex items-center gap-2 text-2xs text-muted-foreground', className)}
+  const dispensado = !visivel && (
+    <div
+      data-testid="send-error-banner-dispensado"
+      className={cn('mx-3 mt-2 flex items-center gap-2 text-2xs text-muted-foreground', className)}
+    >
+      <span>Aviso de envio dispensado.</span>
+      <button
+        type="button"
+        className="min-h-10 rounded-md px-2 font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setDispensada(null)}
       >
-        <span>Aviso de envio dispensado.</span>
-        <button
-          type="button"
-          className="min-h-10 rounded-md px-2 font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={() => setDispensada(null)}
-        >
-          Desfazer
-        </button>
-      </div>
-    );
-  }
+        Desfazer
+      </button>
+    </div>
+  );
 
   const acao = podeReenviar ? (
     <Button type="button" variant="outline" size="default" onClick={() => void reenviar()} disabled={reenvio === 'enviando'}>
@@ -144,27 +190,32 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
     className,
   );
 
-  if (reduzido) {
-    return (
-      <div role="alert" data-testid="send-error-banner" className={classe}>
-        {conteudo}
-      </div>
-    );
-  }
-
   return (
-    <AnimatePresence>
-      <motion.div
-        role="alert"
-        data-testid="send-error-banner"
-        className={classe}
-        initial={{ opacity: 0, y: -zappMotion.distance.medium }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -zappMotion.distance.medium }}
-        transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.7 }}
-      >
-        {conteudo}
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence>
+        {visivel && (
+          <motion.div
+            key="send-error-banner"
+            ref={bannerRef}
+            tabIndex={-1}
+            onKeyDown={aoTeclarBanner}
+            role="alert"
+            data-testid="send-error-banner"
+            className={classe}
+            initial={reduzido ? false : { opacity: 0, y: -zappMotion.distance.medium }}
+            animate={reduzido ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            exit={reduzido ? { opacity: 0 } : { opacity: 0, y: -zappMotion.distance.medium }}
+            transition={
+              reduzido
+                ? { duration: zappMotion.duration.fast }
+                : { type: 'spring', stiffness: 380, damping: 30, mass: 0.7 }
+            }
+          >
+            {conteudo}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {dispensado}
+    </>
   );
 }

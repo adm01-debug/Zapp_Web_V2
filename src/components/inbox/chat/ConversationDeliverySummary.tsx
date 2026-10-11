@@ -15,37 +15,13 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useSpring } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { zappMotion } from '@/lib/motion';
-import { summarizeDeliveryProgress, type MessageSendFields } from './messageSendTimeline';
-
-export type EstadoDeEnvio = 'queued' | 'inFlight' | 'failed';
+import { estadoDeEnvio, summarizeDeliveryProgress, type EstadoDeEnvio, type MessageSendFields } from './messageSendTimeline';
 
 export interface ConversationDeliverySummaryProps {
   messages: readonly MessageSendFields[];
   /** Clicar numa pílula pede o foco na primeira mensagem daquele estado. */
   onFocusState?: (estado: EstadoDeEnvio) => void;
   className?: string;
-}
-
-/**
- * Classifica o envio de UMA mensagem — a MESMA régua de `summarizeDeliveryProgress`
- * (`./messageSendTimeline`): `failed` = falha; finais `sent`/`delivered`/`read` = confirmado;
- * `delivery_claimed_at` com data ISO válida = em voo; o resto = na fila. Mensagem que não é
- * do agente não entra no resumo, então nunca casa com pílula (volta `confirmed`).
- * O ChatPanel usa esta função para achar a 1ª mensagem do estado da pílula clicada.
- */
-// eslint-disable-next-line react-refresh/only-export-components -- `estadoDeEnvio` é o contrato compartilhado com o ChatPanel (paridade V3, parte 1 do chat).
-export function estadoDeEnvio(message: MessageSendFields): EstadoDeEnvio | 'confirmed' {
-  if (message.sender !== undefined && message.sender !== null && message.sender !== 'agent') return 'confirmed';
-  const status = message.status ?? 'sending';
-  if (status === 'failed') return 'failed';
-  if (status === 'sent' || status === 'delivered' || status === 'read') return 'confirmed';
-  return claimValido(message.delivery_claimed_at) ? 'inFlight' : 'queued';
-}
-
-/** `delivery_claimed_at` só conta como "em voo" com data ISO válida — igual ao `isoTexte` do resumo. */
-function claimValido(valor?: string | null): boolean {
-  if (typeof valor !== 'string' || valor.length === 0) return false;
-  return !Number.isNaN(new Date(valor).getTime());
 }
 
 interface Pilula {

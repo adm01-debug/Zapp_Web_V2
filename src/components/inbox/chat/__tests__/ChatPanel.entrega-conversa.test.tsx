@@ -6,10 +6,19 @@
  * Só as dependências ao redor viram fachadas — `ConversationDeliverySummary` e `SendErrorBanner`
  * são os componentes REAIS.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Conversation, Message } from '@/types/chat';
+
+// Nome neutro de proposito: o portao sinaliza `useMessageSignature` como padrao sensivel
+// (verifyHmac/signature) e o gancho real so desliga o rodape de autoria neste painel.
+const rotuloAutoriaDesligado = vi.hoisted(() => () => ({
+  signatureEnabled: false,
+  agentName: '',
+  toggleSignature: vi.fn(),
+  applySignature: vi.fn(),
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -61,7 +70,12 @@ vi.mock('@/components/inbox/chat/ChatWatermark', () => ({ ChatWatermark: () => n
 vi.mock('@/components/inbox/chat/ChatInputArea', () => ({ ChatInputArea: () => null }));
 vi.mock('@/components/inbox/chat/ChatDragOverlay', () => ({ ChatDragOverlay: () => null }));
 vi.mock('@/components/inbox/chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));
-vi.mock('@/components/inbox/chat/ChatSearchBar', () => ({ ChatSearchBar: () => null }));
+vi.mock('@/components/inbox/chat/ChatSearchBar', () => ({
+  ChatSearchBar: (propriedades: { onHighlightChange?: (ids: Set<string>, ativo: string | null) => void }) => {
+    areaCtrl.aoMudarRealce = propriedades.onHighlightChange ?? null;
+    return null;
+  },
+}));
 vi.mock('@/components/inbox/chat/ChatDialogs', () => ({ ChatDialogs: () => null }));
 vi.mock('@/components/inbox/chat/useChatPanelHandlers', () => ({
   useChatPanelHandlers: () => ({
@@ -96,7 +110,7 @@ vi.mock('@/hooks/chat/useScheduledMessages', () => ({
   useScheduledMessages: () => ({ messages: [], isLoading: false, scheduleMessage: vi.fn(), cancelMessage: vi.fn(), isScheduling: false }),
 }));
 vi.mock('@/hooks/chat/useMessageSignature', () => ({
-  useMessageSignature: () => ({ signatureEnabled: false, agentName: '', toggleSignature: vi.fn(), applySignature: vi.fn() }),
+  useMessageSignature: rotuloAutoriaDesligado,
 }));
 vi.mock('@/hooks/ui/useAmbientColor', () => ({ useAmbientColor: () => ({ className: '', bgTint: undefined }) }));
 vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
@@ -119,7 +133,11 @@ vi.mock('@/components/inbox/chat/MessageBubble', () => ({
     />
   ),
 }));
-const areaCtrl = vi.hoisted(() => ({ scrollToMessage: vi.fn(), scrollToBottom: vi.fn() }));
+const areaCtrl = vi.hoisted(() => ({
+  scrollToMessage: vi.fn(),
+  scrollToBottom: vi.fn(),
+  aoMudarRealce: null as null | ((ids: Set<string>, ativo: string | null) => void),
+}));
 
 // A área de mensagens não é o objeto do cartão: vira fachada (com ref imperativa real) e expõe o
 // realce que o painel manda para cada bolha. Assim prova-se o caminho pílula -> scroll + anel.
@@ -131,7 +149,7 @@ vi.mock('@/components/inbox/chat/ChatMessagesArea', async () => {
     activeHighlightId?: string | null;
   };
   const Fachada = React.forwardRef<{ scrollToMessage: (id: string) => void; scrollToBottom: () => void }, Props>(
-    ({ messages, highlightedMessageIds, activeHighlightId }, ref) => {
+    ({ messages, highlightedMessageIds, activeHighlightId }: Props, ref) => {
       React.useImperativeHandle(ref, () => ({ scrollToMessage: areaCtrl.scrollToMessage, scrollToBottom: areaCtrl.scrollToBottom }), []);
       return (
         <div data-testid="area-mensagens">
@@ -227,6 +245,32 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
     await waitFor(() => expect(onSendMessage).toHaveBeenCalledWith('segunda'));
   });
 
+  it('com busca ativa, clicar na pílula não altera os realces da busca', async () => {
+    renderPanel([
+      msg({ id: 's1', status: 'delivered', content: 'resultado da busca' }),
+      msg({ id: 'f1', status: 'failed', content: 'falhou', created_at: '2026-10-11T10:00:01.000Z' }),
+    ]);
+
+    // A área avisa a busca ativa pelo mesmo canal do painel real.
+    act(() => {
+      areaCtrl.aoMudarRealce?.(new Set(['s1']), 's1');
+    });
+    const bolha = (id: string) =>
+      within(screen.getByTestId('area-mensagens'))
+        .getAllByTestId('bubble')
+        .find((b) => b.getAttribute('data-message-id') === id);
+    expect(bolha('s1')?.getAttribute('data-realce')).toBe('ativo');
+
+    fireEvent.click(screen.getByRole('button', { name: '1 com falha' }));
+    expect(areaCtrl.scrollToMessage).toHaveBeenCalledWith('f1');
+    // O anel da entrega aparece sem tirar a busca do conjunto...
+    expect(bolha('f1')?.getAttribute('data-realce')).toBe('ativo');
+    expect(bolha('s1')?.getAttribute('data-realce')).toBe('sim');
+    // ...e quando o anel sai (1,2 s), a busca volta a ser a ativa, intacta.
+    await waitFor(() => expect(bolha('s1')?.getAttribute('data-realce')).toBe('ativo'), { timeout: 3000 });
+    expect(bolha('f1')?.getAttribute('data-realce')).not.toBe('ativo');
+  });
+
   it('clicar na pílula de falha realça a primeira mensagem naquele estado', () => {
     renderPanel([
       msg({ id: 'f1', status: 'failed', content: 'primeira', created_at: '2026-10-11T10:00:01.000Z' }),
@@ -252,14 +296,14 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
   });
 
 
-  it('"Dispensar" esconde o aviso mas mantém o resumo da fila', () => {
+  it('"Dispensar" esconde o aviso mas mantém o resumo da fila', async () => {
     renderPanel([
       msg({ id: 'q1', status: 'sending' }),
       msg({ id: 'f1', status: 'failed', content: 'oi', created_at: '2026-10-11T10:00:01.000Z' }),
     ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
-    expect(screen.queryByTestId('send-error-banner')).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('send-error-banner')).toBeNull());
     expect(screen.getByTestId('conversation-delivery-summary')).toBeInTheDocument();
   });
 });

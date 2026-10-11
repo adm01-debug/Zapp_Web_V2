@@ -104,30 +104,66 @@ describe('SendErrorBanner', () => {
     expect(screen.queryByRole('button', { name: 'Enviar de novo' })).toBeNull();
   });
 
-  it('"Dispensar" esconde o banner e "Desfazer" o traz de volta', () => {
+  it('"Dispensar" esconde o banner e "Desfazer" o traz de volta', async () => {
     render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={vi.fn()} />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
-    expect(screen.queryByRole('alert')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 
     fireEvent.click(screen.getByRole('button', { name: 'Desfazer' }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
-  it('Esc também dispensa', () => {
+  it('Esc com o foco dentro do banner dispensa', async () => {
+    render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={vi.fn()} />);
+    const banner = screen.getByRole('alert');
+
+    fireEvent.keyDown(banner, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+  });
+
+  it('Esc fora do banner não dispensa', () => {
     render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={vi.fn()} />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
 
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
-  it('outra falha depois de dispensar traz o banner de volta', () => {
+  it('saída é animada: após Dispensar o banner permanece durante o exit e depois sai', async () => {
+    render(<SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull(), { timeout: 3000 });
+  });
+
+  it('desmontar durante o envio não agenda estado depois', async () => {
+    const agendados = vi.spyOn(globalThis, 'setTimeout');
+    try {
+      let resolver: () => void = () => {};
+      const porta = new Promise<void>((r) => { resolver = r; });
+      const { unmount } = render(
+        <SendErrorBanner messages={[msg({ status: 'failed', content: 'oi' })]} onSendMessage={() => porta} />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
+      unmount();
+      await act(async () => { resolver(); });
+
+      const doReenvio = agendados.mock.calls.filter((c) => c[1] === 1200);
+      expect(doReenvio).toHaveLength(0);
+    } finally {
+      agendados.mockRestore();
+    }
+  });
+
+  it('outra falha depois de dispensar traz o banner de volta', async () => {
     const primeira = msg({ id: 'f1', status: 'failed', content: 'oi', created_at: '2026-10-11T10:00:01.000Z' });
     const { rerender } = render(<SendErrorBanner messages={[primeira]} onSendMessage={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Dispensar' }));
-    expect(screen.queryByRole('alert')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 
     rerender(
       <SendErrorBanner
