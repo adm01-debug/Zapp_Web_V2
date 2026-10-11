@@ -257,11 +257,11 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
-export async function countAudience(rules: SegmentRules | null | undefined): Promise<number> {
+export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
-    p_segment_ids: null,
+    p_segment_ids: segmentIds ?? null,
     p_mode: 'count',
     p_limit: null,
     p_after: null,
@@ -278,7 +278,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * (modo `page`, keyset) em vez do PostgREST no navegador. O telefone chega
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
-export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000): Promise<AudienceContact[]> {
+export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
   const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
@@ -288,7 +288,7 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
     const pageSize = Math.min(AUDIENCE_RPC_PAGE_LIMIT, target - rows.length);
     const { data, error } = await rpc('talkx_resolve_audience', {
       p_rules: audienceRulesPayload(rules),
-      p_segment_ids: null,
+      p_segment_ids: segmentIds ?? null,
       p_mode: 'page',
       p_limit: pageSize,
       p_after: after,

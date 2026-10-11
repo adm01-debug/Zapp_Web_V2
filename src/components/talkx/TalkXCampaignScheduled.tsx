@@ -484,7 +484,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
             )}
             <div className="space-y-1.5">
               <MetaRow icon={Zap} label="Campanha" value={campaign.name} />
-              <MetaRow icon={Users} label="Público" value={`${fmtInt(campaign.total_recipients)} contatos`} />
+              <MetaRow icon={Users} label="Público" value={campaign.audience_source === 'segment' && (campaign.segment_ids ?? (campaign.segment_id ? [campaign.segment_id] : [])).length > 0 ? `${fmtInt(campaign.total_recipients)} contatos · ${(campaign.segment_ids ?? (campaign.segment_id ? [campaign.segment_id] : [])).length} segmento(s)` : `${fmtInt(campaign.total_recipients)} contatos`} />
               <MetaRow icon={Send} label="Canal" value={campaign.whatsapp_connection_id ? 'Linha WhatsApp conectada' : 'Sem linha'} />
               <MetaRow icon={Timer} label="Velocidade" value={{ slow: 'Lenta', moderate: 'Moderada', fast: 'Rápida' }[speedProfile]} />
             </div>

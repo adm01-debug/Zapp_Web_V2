@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, Zap, FileText, Users, Database, Bookmark, Filter, MessageSquare, Image, Video, Music,
   Paperclip, X, Wand2, BookOpen, Save, Check, Clock, CalendarDays, Ban, Smartphone, Sparkles, RefreshCw, ChevronDown,
@@ -42,7 +42,7 @@ interface Props {
   campaign: TalkXCampaign | null;
   onClose: () => void;
   onLaunched?: (campaignId: string, status: 'scheduled' | 'sending') => void;
-  initial?: { segmentId?: string; templateId?: string; step?: WizardStep };
+  initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep };
   /** URL state is owned by TalkXView; this component only requests transitions. */
   routeStep?: WizardStep;
   onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
@@ -310,6 +310,12 @@ function StepAudience({ ed }: { ed: WizardState }) {
   // segmentos continua mostrando todos). O filtro fica no ponto de uso: a
   // lista vem do hook compartilhado sem alteração.
   const activeSegments = ed.segments.filter((s) => s.status === 'active');
+  const segmentSearchTerm = (ed.segmentSearch ?? '').trim().toLowerCase();
+  const filteredSegments = useMemo(
+    () => activeSegments.filter((s) => !segmentSearchTerm || s.name.toLowerCase().includes(segmentSearchTerm)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSegments deriva de ed.segments (nova ref a cada render do hook)
+    [ed.segments, segmentSearchTerm],
+  );
   // X124 — o nome tem faixa (3–200): o aviso aparece logo abaixo do campo e o
   // mesmo limite bloqueia "Continuar" no hook (uma régua só, sem divergir).
   const nameLength = ed.name.trim().length;
@@ -405,21 +411,44 @@ function StepAudience({ ed }: { ed: WizardState }) {
           <SourceCard icon={Database} title="CRM 360°" desc="Selecione contatos do seu CRM com base em negócios e estágios." active={ed.audienceSource === 'crm360'} onClick={() => ed.setAudienceSource('crm360')} disabled badge="Vinculação CRM 360° não configurada" />
         </div>
         {ed.audienceSource === 'segment' && (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {activeSegments.map((s) => {
-              const active = ed.segmentId === s.id;
-              return (
-                <button key={s.id} type="button" onClick={() => ed.setSegmentId(s.id)} className={cn('text-left rounded-xl border p-3 transition-all', active ? 'border-primary bg-primary/10' : 'border-border/70 bg-input/30 hover:border-primary/40')}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
-                    <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
-                  </div>
-                  <p className="text-2xs text-foreground-secondary line-clamp-1 mt-0.5">{s.description || 'Sem descrição'}</p>
-                  <p className="text-xs font-semibold text-primary-glow mt-1.5">{fmtInt(s.estimated_count)} contatos</p>
-                </button>
-              );
-            })}
-          </div>
+          <>
+            <div className="mt-4 mb-2">
+              <label htmlFor="talkx-seg-search" className="sr-only">Buscar segmentos por nome</label>
+              <input id="talkx-seg-search" type="search" placeholder="Buscar segmento por nome…" aria-label="Buscar segmentos por nome" value={ed.segmentSearch ?? ''} onChange={(e) => ed.setSegmentSearch(e.target.value)} className="w-full rounded-lg border border-input bg-input/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {filteredSegments.map((s) => {
+                const active = ed.segmentIds.includes(s.id);
+                const perSegment = ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? null;
+                return (
+                  <button key={s.id} type="button" onClick={() => ed.toggleSegmentId(s.id)} aria-pressed={active} className={cn('inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all', active ? 'border-primary bg-primary/10 text-primary' : 'border-border/70 bg-input/30 text-foreground hover:border-primary/40')}>
+                    {s.name}
+                    {perSegment != null && <span className="font-normal opacity-80">({fmtInt(perSegment)})</span>}
+                    {active && <X className="h-3 w-3 text-primary" aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
+            {filteredSegments.length === 0 && (
+              <p className="mt-3 text-xs text-muted-foreground">Nenhum segmento encontrado.</p>
+            )}
+            {ed.selectedSegments.length > 0 && (
+              <div className="mt-3">
+                <p id="talkx-seg-chosen" className="mb-1.5 text-xs font-medium text-foreground-secondary">Segmentos escolhidos:</p>
+                <div role="group" aria-labelledby="talkx-seg-chosen" className="flex flex-wrap gap-1.5">
+                  {ed.selectedSegments.map((s) => (
+                    <span key={s.id} className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      {s.name}
+                      <button type="button" onClick={() => ed.toggleSegmentId(s.id)} className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-primary/20" aria-label={`Remover ${s.name} dos escolhidos`} title="Remover dos escolhidos">
+                        <X className="h-3 w-3" aria-hidden="true" />
+                        <span className="sr-only">Remover dos escolhidos</span>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </SectionCard>
 
@@ -665,7 +694,13 @@ function WizardRail({ ed }: { ed: WizardState }) {
       <RailCard icon={Smartphone} color="green" title="Prévia da mensagem" subtitle={sample ? `Exemplo com ${sample.name}` : 'Exemplo com contato fictício'}>
         <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} />
       </RailCard>
-      {ed.selectedSegment && <SegmentPreviewCard segment={ed.selectedSegment} estimatedCount={ed.segmentEstimate} />}
+      {ed.selectedSegments.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {ed.selectedSegments.map((s) => (
+            <SegmentPreviewCard key={s.id} segment={s} estimatedCount={ed.segmentEstimates?.[s.id]} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

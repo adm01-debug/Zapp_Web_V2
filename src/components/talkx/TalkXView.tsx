@@ -57,7 +57,7 @@ export default function TalkXView() {
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
-  const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
+  const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
   const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
@@ -148,7 +148,7 @@ export default function TalkXView() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, [isLoading, localDraftRouteId, routedCampaign, routedCampaignIsEditable, topView, wizardRoute]);
 
-  const openNew = useCallback((initial?: { segmentId?: string; templateId?: string }) => {
+  const openNew = useCallback((initial?: { segmentIds?: string[]; templateId?: string }) => {
     setLocalDraftRouteId(null);
     setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard');
     writeWizardRoute({ campaignId: 'new', step: 1 });
@@ -410,7 +410,7 @@ export default function TalkXView() {
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
-          <TalkXSegments onUseCampaign={(segmentId) => openNew({ segmentId })} />
+          <TalkXSegments onUseCampaign={(segmentIds) => openNew({ segmentIds })} />
         </TabsContent>
         <TabsContent value="templates" className="mt-4">
           <TalkXTemplates
