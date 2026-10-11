@@ -1,67 +1,56 @@
-Especialista: worker (geral)
+Especialista: workersql
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- supabase/migrations/20261011154935_manual_priority.sql (nova, aditiva): cria as colunas
+  manual_priority / manual_priority_by / manual_priority_at em contacts (nullable, com CHECK
+  contacts_manual_priority_canonical usando o helper canonico public.ai_is_canonical_priority);
+  a RPC public.set_manual_priority(uuid, text) — UNICO caminho de escrita, SECURITY DEFINER com
+  SET search_path = pg_catalog, public, sob o MESMO predicado do modulo Contatos
+  (public.can_edit_contact); e a funcao pura public.effective_priority(public.contacts) =
+  coalesce(manual_priority, ai_priority). Cabecalho com Rollback executavel.
+- scripts/db-audit/manual-priority.test.mjs (novo): prova em PostgreSQL 17 descartavel
+  aplicando as MIGRATIONS REAIS (can_edit_contact nas duas assinaturas, helpers de plataforma
+  extraidos da ultima definicao em supabase/migrations, e o arquivo real da migration) e rodando
+  como as roles reais (authenticated, anon). Coberto pelo glob ja existente
+  `node --test scripts/db-audit/*.test.mjs` do .github/workflows/db-guard.yml — por isso .test.mjs
+  e nao .test.sh novo (que exigiria passo proprio no workflow, que eu nao edito).
+- src/integrations/supabase/types.ts (gerado): contacts Row/Insert/Update ganham os 3 campos
+  manuais; Functions ganha set_manual_priority. (effective_priority nao entra em Functions: recebe
+  o rowtype public.contacts, nao e chamavel via PostgREST — usado no SQL, nao em .rpc().)
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+## Prova
+- vermelho antes: `mv <migration> .tmp/ && node --test scripts/db-audit/manual-priority.test.mjs`
+  → `AssertionError: nenhuma migration casa /^\d{14}_manual_priority\.sql$/ em supabase/migrations`
+  (a feature nao existe sem a migration; o teste falha).
+- verde depois: `node --test scripts/db-audit/manual-priority.test.mjs`
+  → `ℹ tests 15 | ℹ pass 15 | ℹ fail 0`
+  Cobre: estrutura/constraint validada/funcoes; SECURITY DEFINER + search_path fixo + anon sem
+  EXECUTE; sem sessao -> 42501; anon -> 42501; fora do alcance -> 42501 e nada muda; atribuido ->
+  grava prioridade, autor, instante e audit_logs; membro da fila -> OK; admin -> OK; valor fora do
+  vocabulario -> 22023 e nada muda; contato excluido -> 42501; limpar com NULL zera e audita;
+  IA reescrevendo ai_priority NAO altera a manual (effective = manual); matriz do coalesce;
+  RLS herdada (usuario sem vinculo le 0 linhas); e o Rollback do cabecalho roda e desfaz
+  exatamente os objetos criados.
+- migration aplicada no banco LOCAL com a cadeia real:
+  `hermes-db-migrar supabase/migrations/20261011154935_manual_priority.sql`
+  → `APLICADA no banco LOCAL 'v2-2610111244170a' (producao nao foi tocada).`
+- db:guard: `npm run db:guard` → `OK: nenhuma violacao nova.` / `arquivos validos em supabase/migrations: 817`
+  / `DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.`
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
+## Efeitos colaterais conferidos (passada obrigatoria)
+- Nenhum GRANT/papel existente foi alterado: so REVOKE/GRANT sobre os objetos NOVOS. anon fica sem EXECUTE.
+- O UPDATE da RPC nao dispara os gatilhos de contacts que exigem coluna: trg_contacts_fsm_transition
+  (WHEN conversation_status mudou), trg_prevent_contact_queue_hijack / _assignee_hijack (WHEN queue_id /
+  assigned_to mudou) e trg_audit_contact_address_change (AFTER UPDATE OF endereco) nao disparam; so
+  update_contacts_updated_at (a linha de fato mudou, que e o esperado). Nenhuma escrita em massa/backfill.
+- Escrita atomica: um unico UPDATE + um INSERT de auditoria no mesmo corpo; falha = nenhuma das duas.
+- Sem oraculo de enumeracao: contato inexistente, excluido ou sem permissao devolvem o MESMO 42501.
+- Nenhuma coluna editavel por UPDATE direto do cliente: set_manual_priority e a unica via de escrita.
+- ledger: a aplicacao local por hermes-db-migrar registra a versao; a comparacao com
+  supabase_migrations.schema_migrations no destino e do integrador (local nao tem DESTINO_URL).
 
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
-
-## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+## O que NAO fiz e por quê
+- Nao criei a tela/hook de "prioridade manual": o cartao e de banco; a UI consome
+  set_manual_priority / effective_priority depois (contrato entregue aqui).
+- Nao mexi nas Edge Functions de analise de IA: elas escrevem so ai_priority; as colunas manuais
+  sao novas e nenhuma consulta existente as referencia (nao ha quebra de contrato).
