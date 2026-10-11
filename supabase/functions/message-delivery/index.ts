@@ -16,11 +16,16 @@ import {
   enqueueEffectReconcile,
   type ReconcileClient,
 } from '../_shared/effect-reconcile.ts';
+import {
+  classifyDeliveryError,
+  logMessageAttempt,
+  type RedactionSecrets,
+} from '../_shared/message-attempts.ts';
 
 const MAX_REQUEST_BYTES = 8 * 1024;
 const WORKER_NAME = 'edge:message-delivery';
 
-type Claim = {
+export type Claim = {
   message_id: string;
   contact_id: string;
   agent_id: string;
@@ -34,11 +39,13 @@ type Claim = {
   whatsapp_instance_name: string;
   contact_phone: string;
   claim_token: string;
+  delivery_attempt_count: number;
 };
 
 interface ServiceClient {
   rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{
-    data: unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any;
     error: { code?: string } | null;
   }>;
 }
@@ -167,9 +174,20 @@ export function providerPayload(
   }
 }
 
+interface FailDetail {
+  attemptNo: number;
+  errorCode: string | null;
+  errorMessage?: string | null;
+  providerStatus?: number | null;
+  providerResponse?: unknown;
+  durationMs?: number | null;
+}
+
 async function failClaim(
   service: ServiceClient,
   claim: Claim,
+  detail: FailDetail,
+  secrets: RedactionSecrets,
 ): Promise<void> {
   const { error } = await service.rpc('fail_outbound_message', {
     p_message_id: claim.message_id,
@@ -179,6 +197,18 @@ async function failClaim(
     p_retryable: false,
   });
   if (error) console.error(JSON.stringify({ event: 'message_delivery_fail_transition', code: error.code }));
+  // Telemetria da falha. Como p_retryable é sempre false, todo fail é
+  // 'failed_final'. Best-effort: nunca muda o desfecho do envio.
+  await logMessageAttempt(service, {
+    messageId: claim.message_id,
+    attemptNo: detail.attemptNo,
+    outcome: 'failed_final',
+    errorCode: detail.errorCode,
+    errorMessage: detail.errorMessage ?? null,
+    providerStatus: detail.providerStatus ?? null,
+    providerResponse: detail.providerResponse ?? null,
+    durationMs: detail.durationMs ?? null,
+  }, secrets);
 }
 
 /**
@@ -206,6 +236,199 @@ async function enqueueDeliveryReconciliation(
       event: 'message_delivery_reconcile_enqueue_error',
       code: error instanceof Error ? error.message : 'unknown',
     }));
+  }
+}
+
+/**
+ * Cliente de serviço com o mínimo que a entrega usa (rpc + leitura de messages).
+ * Tipos frouxos de propósito: o client real do supabase-js carrega generics
+ * profundos e a checagem estrutural estoura em TS2589.
+ */
+interface DeliveryServiceClient {
+  // deno-lint-ignore no-explicit-any
+  rpc: (fn: string, args?: any) => any;
+  // deno-lint-ignore no-explicit-any
+  from: (table: string) => any;
+}
+
+/** Assinador mínimo aceito por `resolvePrivateBucketUrl` (evita tipos fundos). */
+export interface DeliveryStorageSigner {
+  storage: {
+    from: (bucket: string) => {
+      createSignedUrl: (path: string, expiresIn: number) => PromiseLike<{
+        data?: { signedUrl?: string } | null;
+        error?: unknown;
+      }>;
+    };
+  };
+}
+
+type Fetcher = (url: string, options: RequestInit) => Promise<Response>;
+
+/** Dependências injetáveis da entrega pós-claim (testáveis sem rede). */
+export interface OutboundDeliveryDeps {
+  service: DeliveryServiceClient;
+  caller: DeliveryStorageSigner;
+  supabaseUrl: string;
+  evolutionUrl: string;
+  evolutionKey: string;
+  req: Request;
+  fetcher?: Fetcher;
+  now?: () => number;
+}
+
+/**
+ * Executa UMA tentativa já com a claim em mãos: registra `claimed`, chama o
+ * provedor e fecha em `sent` ou `failed_final`, gravando a tentativa em
+ * `message_attempts`. Qualquer falha do log de tentativa é best-effort e nunca
+ * muda a resposta ao cliente.
+ */
+export async function deliverClaimedMessage(claim: Claim, deps: OutboundDeliveryDeps): Promise<Response> {
+  const { service, caller, supabaseUrl, evolutionUrl, evolutionKey, req } = deps;
+  const fetcher: Fetcher = deps.fetcher ?? ((url, options) => fetch(url, options));
+  const now = deps.now ?? (() => Date.now());
+  const secrets: RedactionSecrets = {
+    phone: claim.contact_phone,
+    messageText: claim.content,
+    tokens: [evolutionKey],
+  };
+  const attemptNo = Number.isInteger(claim.delivery_attempt_count) && claim.delivery_attempt_count > 0
+    ? claim.delivery_attempt_count
+    : 1;
+
+  // Telemetria do claim. Falha aqui NÃO altera o envio.
+  await logMessageAttempt(service, { messageId: claim.message_id, attemptNo, outcome: 'claimed' }, secrets);
+
+  // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
+  // ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).
+  let providerPostAttempted = false;
+  let externalId: string | null = null;
+  let providerStatus: number | null = null;
+  let providerStartedAt = now();
+  try {
+    const mediaUrl = claim.media_url
+      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
+      : null;
+    let richPayload: Record<string, unknown> | null = null;
+    if (claim.message_type === 'poll' || claim.message_type === 'contact') {
+      const { data: messageMetadata, error: metadataError } = await service
+        .from('messages')
+        .select('media_meta')
+        .eq('id', claim.message_id)
+        .maybeSingle();
+      const meta = asRecord(messageMetadata?.media_meta);
+      richPayload = asRecord(meta?.outbound_delivery_payload);
+      if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
+    }
+    const outbound = providerPayload(claim, mediaUrl, richPayload);
+    providerPostAttempted = true;
+    providerStartedAt = now();
+    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body, fetcher);
+    const raw = await providerResponse.text();
+    providerStatus = providerResponse.status;
+    const durationMs = now() - providerStartedAt;
+    let providerData: unknown = null;
+    try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
+
+    if (!providerResponse.ok) {
+      await failClaim(service, claim, {
+        attemptNo,
+        errorCode: classifyDeliveryError({ status: providerStatus, body: raw }).error_code,
+        errorMessage: raw,
+        providerStatus,
+        providerResponse: raw,
+        durationMs,
+      }, secrets);
+      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
+      // 4xx: rejeição definitiva, nada a reconciliar.
+      if (providerStatus >= 500) {
+        await enqueueDeliveryReconciliation(service, claim, null);
+      }
+      console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerStatus }));
+      return errorResponse('Message provider rejected the delivery', 502, req);
+    }
+
+    externalId = extractMessageId(providerData) ?? null;
+    if (!externalId || externalId.length > 512) {
+      await failClaim(service, claim, {
+        attemptNo,
+        errorCode: 'unknown',
+        errorMessage: 'invalid_delivery_receipt',
+        providerStatus,
+        providerResponse: providerData,
+        durationMs,
+      }, secrets);
+      // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
+      await enqueueDeliveryReconciliation(service, claim, null);
+      console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
+      return errorResponse('Message provider returned an invalid delivery receipt', 502, req);
+    }
+
+    const { data: completed, error: completeError } = await service.rpc('complete_outbound_message', {
+      p_message_id: claim.message_id,
+      p_claim_token: claim.claim_token,
+      p_external_id: externalId,
+      p_delivery_status: 'sent',
+    });
+    if (completeError || !completed?.id) {
+      // Evolution may have accepted the send even though its receipt could not
+      // be persisted. Make this terminal so an expired lease can never resend
+      // the same WhatsApp message; reconciliation is an explicit operation.
+      await failClaim(service, claim, {
+        attemptNo,
+        errorCode: 'unknown',
+        errorMessage: completeError?.code ?? 'persist_receipt_failed',
+        providerStatus,
+        providerResponse: providerData,
+        durationMs,
+      }, secrets);
+      // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
+      await enqueueDeliveryReconciliation(service, claim, externalId);
+      console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
+      return errorResponse('Unable to persist delivery receipt', 502, req);
+    }
+
+    // Telemetria do desfecho SENT. Best-effort: o recibo durável já está
+    // gravado, então uma falha aqui nunca vira falha visível ao cliente.
+    await logMessageAttempt(service, {
+      messageId: claim.message_id,
+      attemptNo,
+      outcome: 'sent',
+      providerStatus,
+      providerResponse: providerData,
+      durationMs,
+    }, secrets);
+
+    // This is intentionally best effort: delivery already has its durable
+    // receipt, so a metric failure must never turn a sent WhatsApp message into
+    // a client-visible send failure.
+    try {
+      const { error: metricError } = await service.rpc('mark_first_response', {
+        p_contact_id: claim.contact_id,
+      });
+      if (metricError) {
+        console.error(JSON.stringify({ event: 'message_delivery_metric_error', code: metricError.code }));
+      }
+    } catch {
+      console.error(JSON.stringify({ event: 'message_delivery_metric_error' }));
+    }
+    return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
+  } catch (error) {
+    await failClaim(service, claim, {
+      attemptNo,
+      errorCode: classifyDeliveryError({ error, status: providerStatus }).error_code,
+      errorMessage: error instanceof Error ? error.message : 'unknown',
+      providerStatus,
+      providerResponse: externalId ? { external_id: externalId } : null,
+      durationMs: providerPostAttempted ? now() - providerStartedAt : null,
+    }, secrets);
+    // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
+    // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
+    if (providerPostAttempted) {
+      await enqueueDeliveryReconciliation(service, claim, externalId);
+    }
+    console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
+    return errorResponse('Message delivery failed', 502, req);
   }
 }
 
@@ -278,93 +501,16 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     return errorResponse('Message delivery is already in progress or cannot be sent', 409, req);
   }
 
-  // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
-  // ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).
-  let providerPostAttempted = false;
-  let externalId: string | null = null;
-  try {
-    const mediaUrl = claim.media_url
-      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
-      : null;
-    let richPayload: Record<string, unknown> | null = null;
-    if (claim.message_type === 'poll' || claim.message_type === 'contact') {
-      const { data: messageMetadata, error: metadataError } = await service
-        .from('messages')
-        .select('media_meta')
-        .eq('id', claim.message_id)
-        .maybeSingle();
-      const meta = asRecord(messageMetadata?.media_meta);
-      richPayload = asRecord(meta?.outbound_delivery_payload);
-      if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
-    }
-    const outbound = providerPayload(claim, mediaUrl, richPayload);
-    providerPostAttempted = true;
-    const providerResponse = await evoFetch(evolutionUrl, evolutionKey, outbound.path, outbound.body);
-    const raw = await providerResponse.text();
-    let providerData: unknown = null;
-    try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
-
-    if (!providerResponse.ok) {
-      await failClaim(service, claim);
-      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
-      // 4xx: rejeição definitiva, nada a reconciliar.
-      if (providerResponse.status >= 500) {
-        await enqueueDeliveryReconciliation(service, claim, null);
-      }
-      console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status }));
-      return errorResponse('Message provider rejected the delivery', 502, req);
-    }
-
-    externalId = extractMessageId(providerData) ?? null;
-    if (!externalId || externalId.length > 512) {
-      await failClaim(service, claim);
-      // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
-      await enqueueDeliveryReconciliation(service, claim, null);
-      console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
-      return errorResponse('Message provider returned an invalid delivery receipt', 502, req);
-    }
-
-    const { data: completed, error: completeError } = await service.rpc('complete_outbound_message', {
-      p_message_id: claim.message_id,
-      p_claim_token: claim.claim_token,
-      p_external_id: externalId,
-      p_delivery_status: 'sent',
-    });
-    if (completeError || !completed?.id) {
-      // Evolution may have accepted the send even though its receipt could not
-      // be persisted. Make this terminal so an expired lease can never resend
-      // the same WhatsApp message; reconciliation is an explicit operation.
-      await failClaim(service, claim);
-      // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
-      await enqueueDeliveryReconciliation(service, claim, externalId);
-      console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
-      return errorResponse('Unable to persist delivery receipt', 502, req);
-    }
-
-    // This is intentionally best effort: delivery already has its durable
-    // receipt, so a metric failure must never turn a sent WhatsApp message into
-    // a client-visible send failure.
-    try {
-      const { error: metricError } = await service.rpc('mark_first_response', {
-        p_contact_id: claim.contact_id,
-      });
-      if (metricError) {
-        console.error(JSON.stringify({ event: 'message_delivery_metric_error', code: metricError.code }));
-      }
-    } catch {
-      console.error(JSON.stringify({ event: 'message_delivery_metric_error' }));
-    }
-    return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
-  } catch (error) {
-    await failClaim(service, claim);
-    // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
-    // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
-    if (providerPostAttempted) {
-      await enqueueDeliveryReconciliation(service, claim, externalId);
-    }
-    console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
-    return errorResponse('Message delivery failed', 502, req);
-  }
+  // Entrega (claim já em mãos): registra a tentativa, chama o provedor e fecha
+  // em sent/failed_final. Ver `deliverClaimedMessage`.
+  return await deliverClaimedMessage(claim, {
+    service,
+    caller,
+    supabaseUrl,
+    evolutionUrl,
+    evolutionKey,
+    req,
+  });
 }
 
 if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
