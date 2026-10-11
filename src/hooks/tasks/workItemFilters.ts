@@ -33,6 +33,14 @@ export interface TasksFilters {
   due?: DueFilter;
 }
 
+/**
+ * Sentinela do filtro "Sem contato" (etapa 035): o plano pede a opção ao lado
+ * dos contatos, e `contact: null` já significa "todos". Um valor que não é id
+ * de contato nenhum deixa a regra explícita em `applyFilters` — sem tocar no
+ * formato do `TasksFilters` nem na URL (`contact=__none__`).
+ */
+export const SEM_CONTATO = '__none__';
+
 export const DEFAULT_FILTERS: TasksFilters = {
   q: '',
   prio: 'all',
