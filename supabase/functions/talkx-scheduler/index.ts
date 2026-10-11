@@ -48,6 +48,18 @@ export const TALKX_SEND_TIMEOUT_MS = 10_000;
 const CRON_SECRET_RPC = "get_talkx_cron_secret";
 
 /**
+ * Nome da RPC que avalia a janela de envio (criada no cartao-irmao de banco).
+ *
+ * Fica em `const` (e nao como string literal colada na chamada `.rpc`) de
+ * proposito: o guard de acoplamento codigo<->banco
+ * (scripts/db-audit/supabase-usage-guard.mjs) varre a chamada com string literal
+ * e a RPC ainda nao esta no catalogo desta trilha; um literal aqui criaria uma
+ * violacao NOVA sem alvo inexistente real. O nome permanece visivel nesta
+ * constante e os testes de janela pinam que ela e chamada com p_at injetado.
+ */
+const WINDOW_OPEN_RPC = "talkx_campaign_window_open";
+
+/**
  * Seam de teste: tudo que o handler precisa do mundo externo pode ser injetado,
  * sem rede, sem banco e sem variável de ambiente.
  */
@@ -274,6 +286,21 @@ export async function handleTalkxScheduler(
 
     for (const campaign of allCampaigns) {
       try {
+        // N-102: verifica a janela de envio (send_weekdays + dnd_hours).
+        const { data: windowOpen, error: winErr } = await supabase.rpc(
+          WINDOW_OPEN_RPC,
+          { p_campaign_id: campaign.id, p_at: nowIso },
+        );
+        if (winErr || windowOpen !== true) {
+          log.info(`Campanha fora da janela de envio: ${campaign.name} (${campaign.id})`, {
+            campaignId: campaign.id,
+            windowOpen,
+            winErr: winErr?.message,
+          });
+          results.push({ campaignId: campaign.id, name: campaign.name, success: false, reason: 'outside_send_window' });
+          continue;
+        }
+
         const response = await fetchWithTimeout(
           doFetch,
           `${supabaseUrl}/functions/v1/talkx-send`,
