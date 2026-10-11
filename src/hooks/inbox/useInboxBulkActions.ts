@@ -9,6 +9,34 @@ interface UseInboxBulkActionsProps {
   filteredConversations: ConversationWithMessages[];
 }
 
+/** Quantas RPCs de arquivamento ficam em voo ao mesmo tempo (evita disparar todas de uma vez). */
+const BULK_ARCHIVE_CONCURRENCY = 5;
+
+/**
+ * Roda `fn` sobre os ids com no máximo `limite` chamadas em voo e devolve os ids que
+ * FALHARAM. Uma falha isolada não aborta o restante do lote.
+ */
+async function executarComConcorrencia(
+  ids: string[],
+  limite: number,
+  fn: (id: string) => Promise<void>,
+): Promise<string[]> {
+  const falhas: string[] = [];
+  let proximo = 0;
+  const trabalhadores = Array.from({ length: Math.min(limite, ids.length) }, async () => {
+    while (proximo < ids.length) {
+      const id = ids[proximo++];
+      try {
+        await fn(id);
+      } catch {
+        falhas.push(id);
+      }
+    }
+  });
+  await Promise.all(trabalhadores);
+  return falhas;
+}
+
 export function useInboxBulkActions({ refetch, filteredConversations }: UseInboxBulkActionsProps) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -98,38 +126,55 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     const contactIds = Array.from(selectedIds);
-
-    const { data: originalContacts } = await supabase
-      .from('contacts')
-      .select('id, assigned_to')
-      .in('id', contactIds);
+    // ADR-005: cada contato transiciona pela RPC set_conversation_status (valida papel e
+    // transição), com no máximo BULK_ARCHIVE_CONCURRENCY em voo. Arquivar NÃO toca
+    // assigned_to. O desfazer reabre só as que foram arquivadas de verdade.
+    const arquivadas: string[] = [];
 
     try {
-      await executeUndoable({
-        successMessage: `${contactIds.length} contato(s) arquivado(s)`,
-        undoMessage: 'Arquivamento desfeito',
-        action: async () => {
-          const { error } = await supabase
-            .from('contacts')
-            .update({ assigned_to: null })
-            .in('id', contactIds);
-          if (error) throw error;
-          clearSelection();
-          refetch();
-        },
-        undoAction: async () => {
-          if (originalContacts) {
-            for (const contact of originalContacts) {
-              await supabase
-                .from('contacts')
-                .update({ assigned_to: contact.assigned_to })
-                .eq('id', contact.id);
-            }
-          }
-          refetch();
-        },
-        onCommit: () => {},
+      const falhas = await executarComConcorrencia(contactIds, BULK_ARCHIVE_CONCURRENCY, async (id) => {
+        const { error } = await supabase.rpc('set_conversation_status', {
+          p_contact_id: id,
+          p_next: 'archived',
+          p_reason: 'arquivada_em_massa',
+        });
+        if (error) throw error;
+        arquivadas.push(id);
       });
+
+      if (falhas.length === 0) {
+        clearSelection();
+      } else {
+        // Só quem falhou continua selecionado, para nova tentativa.
+        setSelectedIds(new Set(falhas));
+        toast.error(`${arquivadas.length} arquivadas, ${falhas.length} falharam`);
+      }
+      // Nada arquivado (falha total) = nada mudou na lista.
+      if (arquivadas.length > 0) refetch();
+
+      if (arquivadas.length > 0) {
+        // A gravação já aconteceu acima (com falha parcial isolada): aqui o
+        // executeUndoable só abre a janela de Desfazer — o aviso encerra o anterior e o
+        // undo reabre exatamente as que foram arquivadas.
+        await executeUndoable({
+          successMessage: `${arquivadas.length} contato(s) arquivado(s)`,
+          undoMessage: 'Arquivamento desfeito',
+          action: async () => {},
+          undoAction: async () => {
+            const ids = [...arquivadas];
+            await executarComConcorrencia(ids, BULK_ARCHIVE_CONCURRENCY, async (id) => {
+              const { error } = await supabase.rpc('set_conversation_status', {
+                p_contact_id: id,
+                p_next: 'open',
+                p_reason: 'desfazer_arquivamento_em_massa',
+              });
+              if (error) throw error;
+            });
+            refetch();
+          },
+          onCommit: () => {},
+        });
+      }
     } catch {
       toast.error('Erro ao arquivar contatos');
     } finally {

@@ -9,9 +9,10 @@
  * Casos cobertos: estado inicial, modo de seleção (intocabilidade dos Sets),
  * `selectAll` com deduplicação e lista vazia, marcar como lido (contatos, não lidos e
  * erro), transferência (agente/fila, mensagem ignorada, sem seleção, erro), arquivamento
- * desfazível (retrato da seleção, restauração por contato, erro, e o SELECT de RLS em
- * `it.fails`), avatares em lote (contadores, resposta sem números, erro `Error` e
- * rejeição não-`Error`), e o `loading` durante a operação.
+ * em massa pela RPC set_conversation_status (ADR-005: cada contato, com `p_next`
+ * 'archived', desfazer que reabre só as arquivadas, falha parcial e falha total),
+ * avatares em lote (contadores, resposta sem números, erro `Error` e rejeição
+ * não-`Error`), e o `loading` durante a operação.
  *
  * Fuso horário e paginação não se aplicam (não há data nem leitura paginada aqui).
  */
@@ -42,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
   invoke: vi.fn(),
   from: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({ toast: mocks.toast }));
@@ -52,7 +54,7 @@ vi.mock('@/hooks/system/useUndoableAction', () => ({
 // cadeia de Realtime para dentro do teste.
 vi.mock('@/hooks/chat/useRealtimeMessages', () => ({}));
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: mocks.from, functions: { invoke: mocks.invoke } },
+  supabase: { from: mocks.from, rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
 }));
 
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
@@ -64,6 +66,11 @@ let selectQueue: DbResult[] = [];
 let recorded: RecordedCall[] = [];
 let updateGate: Promise<void> | null = null;
 let lastUndo: UndoOptions | null = null;
+
+// RPC set_conversation_status (ADR-005): registra fn+args e devolve/segura por fila.
+const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+let rpcQueue: DbResult[] = [];
+let rpcGate: Promise<void> | null = null;
 
 function buildChain(
   call: RecordedCall,
@@ -121,6 +128,15 @@ beforeEach(() => {
   recorded = [];
   updateGate = null;
   lastUndo = null;
+  rpcCalls.length = 0;
+  rpcQueue = [];
+  rpcGate = null;
+
+  mocks.rpc.mockImplementation((fn: string, args: Record<string, unknown>) => {
+    rpcCalls.push({ fn, args });
+    const result = rpcQueue.shift() ?? { data: null, error: null };
+    return rpcGate ? rpcGate.then(() => result) : Promise.resolve(result);
+  });
 
   mocks.execute.mockImplementation(async (options: UndoOptions) => {
     lastUndo = options;
@@ -372,14 +388,7 @@ describe('useInboxBulkActions — bulkTransfer', () => {
 });
 
 describe('useInboxBulkActions — bulkArchive', () => {
-  it('lê o assigned_to dos originais, arquiva via ação desfazível e o desfazer RESTAURA cada contato', async () => {
-    selectQueue.push({
-      data: [
-        { id: 'c1', assigned_to: 'ag-1' },
-        { id: 'c2', assigned_to: null },
-      ],
-      error: null,
-    });
+  it('arquiva cada contato pela RPC (p_next archived) e o desfazer reabre só as arquivadas', async () => {
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1', 'c2']);
 
@@ -387,19 +396,21 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await result.current.bulkArchive();
     });
 
-    expect(recorded[0]).toMatchObject({
-      table: 'contacts',
-      op: 'select',
-      columns: 'id, assigned_to',
-      filters: { id: ['c1', 'c2'] },
-    });
+    expect(rpcCalls).toEqual([
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c1', p_next: 'archived', p_reason: 'arquivada_em_massa' },
+      },
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c2', p_next: 'archived', p_reason: 'arquivada_em_massa' },
+      },
+    ]);
+    // Nada de update direto em contacts (ADR-005: o estado é a marca, assigned_to fica).
+    expect(contactUpdates()).toEqual([]);
     expect(mocks.execute).toHaveBeenCalledTimes(1);
     expect(lastUndo?.successMessage).toBe('2 contato(s) arquivado(s)');
     expect(lastUndo?.undoMessage).toBe('Arquivamento desfeito');
-    expect(contactUpdates()[0]).toMatchObject({
-      payload: { assigned_to: null },
-      filters: { id: ['c1', 'c2'] },
-    });
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
 
@@ -407,27 +418,95 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await lastUndo?.undoAction();
     });
 
-    const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: 'c1' } });
-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: 'c2' } });
+    expect(rpcCalls.slice(2)).toEqual([
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
+      },
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c2', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
+      },
+    ]);
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('sem seleção não lê nem arquiva nada', async () => {
+  it('não dispara mais de 5 RPCs em voo ao mesmo tempo', async () => {
+    let emVoo = 0;
+    let pico = 0;
+    let release: (() => void) | undefined;
+    const barreira = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    mocks.rpc.mockImplementation((fn: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ fn, args });
+      emVoo += 1;
+      pico = Math.max(pico, emVoo);
+      return barreira.then(() => {
+        emVoo -= 1;
+        return { data: null, error: null };
+      });
+    });
+
+    const { result } = renderInbox();
+    selectIds(result, ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7']);
+
+    let pendente: Promise<void> | undefined;
+    await act(async () => {
+      pendente = result.current.bulkArchive();
+      await Promise.resolve();
+    });
+
+    expect(pico).toBeLessThanOrEqual(5);
+    expect(rpcCalls).toHaveLength(5);
+
+    await act(async () => {
+      release?.();
+      await pendente;
+    });
+    expect(rpcCalls).toHaveLength(7);
+  });
+
+  it('sem seleção não arquiva nada', async () => {
     const { result } = renderInbox();
 
     await act(async () => {
       await result.current.bulkArchive();
     });
 
-    expect(recorded).toEqual([]);
+    expect(rpcCalls).toEqual([]);
     expect(mocks.execute).not.toHaveBeenCalled();
   });
 
-  it('erro no UPDATE do arquivamento: avisa, não recarrega e mantém a seleção', async () => {
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
-    updateQueue.push({ error: { message: 'rls update' } });
+  it('falha parcial: informa "X arquivadas, Y falharam", mantém só as que falharam e o desfazer reabre só as arquivadas', async () => {
+    rpcQueue = [{ error: null }, { error: { message: 'rls' } }];
+    const { result, refetch } = renderInbox();
+    selectIds(result, ['c1', 'c2']);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    expect(mocks.toast.error).toHaveBeenCalledWith('1 arquivadas, 1 falharam');
+    expect(result.current.selectedIds).toEqual(new Set(['c2']));
+    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+    expect(refetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    // Só c1 (a que foi arquivada de verdade) é reaberta; c2 nunca mudou de estado.
+    expect(rpcCalls.slice(2)).toEqual([
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
+      },
+    ]);
+  });
+
+  it('falha total: informa "0 arquivadas, N falharam", mantém a seleção, não recarrega e não abre desfazer', async () => {
+    rpcQueue = [{ error: { message: 'rls' } }];
     const { result, refetch } = renderInbox();
     selectIds(result, ['c1']);
 
@@ -435,61 +514,35 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await result.current.bulkArchive();
     });
 
-    expect(mocks.toast.error).toHaveBeenCalledWith('Erro ao arquivar contatos');
-    expect(refetch).not.toHaveBeenCalled();
+    expect(mocks.toast.error).toHaveBeenCalledWith('0 arquivadas, 1 falharam');
     expect(result.current.selectedIds.has('c1')).toBe(true);
+    expect(refetch).not.toHaveBeenCalled();
+    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(contactUpdates()).toEqual([]);
     expect(result.current.bulkLoading).toBe(false);
   });
 
-  it('usa o retrato da seleção do momento da chamada: mudar a seleção durante a janela de desfazer não troca o alvo', async () => {
-    // A ação fica pendente de propósito (o desfazer só existe depois que ela roda).
-    mocks.execute.mockImplementation(async (options: UndoOptions) => {
-      lastUndo = options;
-    });
-    selectQueue.push({ data: [{ id: 'c1', assigned_to: 'ag-1' }], error: null });
-
+  it('usa o retrato da seleção: mexer na seleção durante a janela de desfazer não troca o alvo', async () => {
     const { result } = renderInbox();
     selectIds(result, ['c1']);
     await act(async () => {
       await result.current.bulkArchive();
     });
-    expect(recorded[0].filters.id).toEqual(['c1']);
 
     // Durante a janela de 5 s o operador mexe na seleção — o alvo já está congelado.
     act(() => result.current.toggleSelection('c2'));
-    expect(result.current.selectedIds).toEqual(new Set(['c1', 'c2']));
+    expect(result.current.selectedIds).toEqual(new Set(['c2']));
 
-    await act(async () => {
-      await lastUndo?.action();
-    });
-
-    const archiveUpdate = contactUpdates().find(
-      (call) => (call.payload as { assigned_to?: unknown })?.assigned_to === null,
-    );
-    expect(archiveUpdate?.filters.id).toEqual(['c1']);
-  });
-
-  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
-  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
-  // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não
-  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.
-  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.
-  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
-    selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
-    const { result } = renderInbox();
-    selectIds(result, ['c1']);
-
-    await act(async () => {
-      await result.current.bulkArchive();
-    });
-
-    const antesDoDesfazer = contactUpdates().length;
     await act(async () => {
       await lastUndo?.undoAction();
     });
 
-    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
-    expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
+    expect(rpcCalls.slice(1)).toEqual([
+      {
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'c1', p_next: 'open', p_reason: 'desfazer_arquivamento_em_massa' },
+      },
+    ]);
   });
 });
 

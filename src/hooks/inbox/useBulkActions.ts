@@ -8,6 +8,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fromTable } from '@/lib/supabaseHelpers';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // ============================================
@@ -130,18 +131,26 @@ export function useBulkActions<T extends { id: string }>(
         variant: 'outline' as const,
         action: async (actionItems: T[]) => {
           const ids = actionItems.map((i) => i.id);
-          // ADR-005 (passo 3): `contacts` não tem coluna `status` — o estado de
-          // conversa vive em `conversation_status`, e o update antigo
-          // (`status: 'archived'`) era recusado pelo PostgREST (arquivar conversa em
-          // massa não tinha como funcionar). As demais tabelas do hook têm `status`.
-          const payload: Record<string, unknown> = tableName === 'contacts'
-            ? { conversation_status: 'archived', updated_at: new Date().toISOString() }
-            : { status: 'archived', updated_at: new Date().toISOString() };
-          const { error } = await fromTable(tableName)
-            .update(payload)
-            .in('id', ids);
-          
-          if (error) throw error;
+          // ADR-005: em `contacts` o estado de conversa vive em `conversation_status` e a
+          // transição vai pela RPC set_conversation_status (valida papel e transição) —
+          // nunca por update direto (o update antigo `status: 'archived'` era recusado:
+          // a coluna não existe). As demais tabelas do hook têm a coluna `status`.
+          if (tableName === 'contacts') {
+            for (const id of ids) {
+              const { error } = await supabase.rpc('set_conversation_status', {
+                p_contact_id: id,
+                p_next: 'archived',
+                p_reason: 'arquivada_em_massa',
+              });
+              if (error) throw error;
+            }
+          } else {
+            const { error } = await fromTable(tableName)
+              .update({ status: 'archived', updated_at: new Date().toISOString() })
+              .in('id', ids);
+
+            if (error) throw error;
+          }
           toast.success(`${ids.length} item(s) arquivado(s)`);
         },
       },

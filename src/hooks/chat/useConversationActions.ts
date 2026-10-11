@@ -246,14 +246,28 @@ export function useConversationActions() {
   }, [profileId]);
 
   const archiveContact = useCallback(async (contactId: string) => {
-    const { data: original } = await supabase.from('contacts').select('assigned_to').eq('id', contactId).single();
-    const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+    // ADR-005: a transição de estado da conversa passa SEMPRE pela RPC
+    // set_conversation_status (SECURITY DEFINER: valida papel e transição). Arquivar
+    // grava conversation_status = 'archived' e NÃO toca assigned_to — o estado é a
+    // marca; ao reabrir, a conversa volta para o mesmo responsável.
+    const { error } = await supabase.rpc('set_conversation_status', {
+      p_contact_id: contactId,
+      p_next: 'archived',
+      p_reason: 'arquivada_no_chat',
+    });
     if (error) { toast.error('Erro ao arquivar conversa'); return; }
     undoToast({
       message: 'Conversa arquivada',
       icon: '📦',
       onUndo: async () => {
-        await supabase.from('contacts').update({ assigned_to: original?.assigned_to ?? null }).eq('id', contactId);
+        // Na tabela de transições do ADR, 'archived' só volta para 'open'. Se a RPC
+        // falhar, o erro sobe para o undoToast avisar e reoferecer o Desfazer.
+        const { error: undoError } = await supabase.rpc('set_conversation_status', {
+          p_contact_id: contactId,
+          p_next: 'open',
+          p_reason: 'desfazer_arquivamento',
+        });
+        if (undoError) throw undoError;
       },
     });
   }, []);

@@ -33,6 +33,10 @@ const eventsInsertCalls: Record<string, unknown>[] = [];
 let transferRpcResult: Record<string, unknown> = { data: 'event-rpc-id', error: null };
 const transferRpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
+// RPCs (ADR-005: set_conversation_status). Registrado para provar o caminho.
+let rpcResult: Record<string, unknown> = { error: null };
+const rpcCalls: Array<{ fn: string; args: unknown }> = [];
+
 // favoriteContact/unfavoriteContact disparam _favBus, que aciona um
 // loadFavorites() assíncrono em segundo plano (sincroniza outras instâncias
 // do hook). Sem refletir o estado real aqui, esse refetch sempre lia []
@@ -44,9 +48,12 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })) },
     rpc: vi.fn((name: string, args: Record<string, unknown>) => {
-      transferRpcCalls.push({ name, args });
-      if (name === 'transfer_conversation') return Promise.resolve(transferRpcResult);
-      return Promise.resolve({ data: null, error: null });
+      rpcCalls.push({ fn: name, args });
+      if (name === 'transfer_conversation') {
+        transferRpcCalls.push({ name, args });
+        return Promise.resolve(transferRpcResult);
+      }
+      return Promise.resolve(rpcResult);
     }),
     from: vi.fn((table: string) => {
       if (table === 'profiles') {
@@ -165,6 +172,8 @@ describe('useConversationActions', () => {
     eventsInsertCalls.length = 0;
     transferRpcResult = { data: 'event-rpc-id', error: null };
     transferRpcCalls.length = 0;
+    rpcResult = { error: null };
+    rpcCalls.length = 0;
   });
 
   afterEach(() => {
@@ -174,14 +183,21 @@ describe('useConversationActions', () => {
   });
 
   describe('archiveContact', () => {
-    it('desatribui o contato e oferece desfazer que restaura o assigned_to original', async () => {
+    it('arquiva pela RPC set_conversation_status e o desfazer reabre a conversa (assigned_to intocado)', async () => {
       const { result } = await withProfileReady();
 
       await act(async () => {
         await result.current.archiveContact('contact-1');
       });
 
-      expect(contactsUpdateCalls).toEqual([{ assigned_to: null }]);
+      expect(rpcCalls).toEqual([
+        {
+          fn: 'set_conversation_status',
+          args: { p_contact_id: 'contact-1', p_next: 'archived', p_reason: 'arquivada_no_chat' },
+        },
+      ]);
+      // Arquivar NÃO escreve assigned_to (ADR-005: o estado é a marca).
+      expect(contactsUpdateCalls).toEqual([]);
       expect(undoToast).toHaveBeenCalledTimes(1);
       const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
       expect(undoArgs.message).toBe('Conversa arquivada');
@@ -190,14 +206,15 @@ describe('useConversationActions', () => {
         await undoArgs.onUndo();
       });
 
-      expect(contactsUpdateCalls).toEqual([
-        { assigned_to: null },
-        { assigned_to: 'agent-original' },
-      ]);
+      expect(rpcCalls[1]).toEqual({
+        fn: 'set_conversation_status',
+        args: { p_contact_id: 'contact-1', p_next: 'open', p_reason: 'desfazer_arquivamento' },
+      });
+      expect(contactsUpdateCalls).toEqual([]);
     });
 
-    it('em erro no update, mostra toast de erro e não oferece desfazer', async () => {
-      contactsUpdateResult = { error: { message: 'falhou' } };
+    it('em erro na RPC, mostra toast de erro e não oferece desfazer', async () => {
+      rpcResult = { error: { message: 'falhou' } };
       const { result } = await withProfileReady();
 
       await act(async () => {
@@ -206,6 +223,18 @@ describe('useConversationActions', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Erro ao arquivar conversa');
       expect(undoToast).not.toHaveBeenCalled();
+    });
+
+    it('no desfazer, se a RPC de reabertura falhar, o erro sobe para o undoToast avisar', async () => {
+      const { result } = await withProfileReady();
+
+      await act(async () => {
+        await result.current.archiveContact('contact-1');
+      });
+      const undoArgs = (undoToast as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      rpcResult = { error: { message: 'falhou' } };
+
+      await expect(undoArgs.onUndo()).rejects.toBeTruthy();
     });
   });
 
