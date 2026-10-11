@@ -806,12 +806,14 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=campaigns` → `CampaignsView` |
-| Componentes | `src/components/campaigns/CampaignsView.tsx`, `CampaignCreateDialog.tsx`, `CampaignABTesting.tsx` |
-| Hook | `src/hooks/communication/useCampaigns.ts` |
-| Tabelas | `campaigns`, `campaign_contacts` |
+| Rota | `?view=talkx` → `TalkXView` |
+| Componentes | `src/components/talkx/TalkXView.tsx`, `src/components/talkx/TalkXCampaignWizard.tsx` |
+| Hook | `src/hooks/integrations/useTalkX.ts` |
+| Tabelas | `talkx_campaigns`, `talkx_recipients` |
 
-**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, intervalo entre envios, filtros por status e teste A/B.
+**Funcionalidades:** CRUD de campanhas, criação com seleção de contatos/segmentos, status (rascunho/agendada/enviando/concluída/cancelada/pausada), progresso do envio, monitor ao vivo, filtros por status e supressão.
+
+> **Nota (2026-10-11):** o módulo legado "Campanhas Clássicas" (rota `?view=campaigns`) foi removido — o Talk X (`?view=talkx`) é o sistema de Campanhas ativo.
 
 ---
 
