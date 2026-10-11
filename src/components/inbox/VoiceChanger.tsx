@@ -1,6 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { edgeAuthHeaders } from '@/lib/edgeAuthHeaders';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,7 +31,14 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mountedRef = useRef(true);
   const reduceMotion = useReducedMotion() ?? false;
+
+  // Regra 4 do cartao: nenhum setState depois de desmontar.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   // Entrada do aviso inline: mola curta (180–260 ms) quando há movimento; com
   // movimento reduzido nada se desloca — só a opacidade muda.
@@ -93,34 +100,45 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
       audioRef.current = audio;
       // E36 — prévia de voz convertida é mídia de conversa: respeita o volume global.
       const detachMediaVolume = attachMediaVolume(audio);
-      audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
+      audio.onended = () => { detachMediaVolume(); if (mountedRef.current) setIsPlaying(false); };
       audio.onerror = () => {
         detachMediaVolume();
-        setIsPlaying(false);
-        toast.error('Erro ao reproduzir áudio convertido');
+        if (mountedRef.current) {
+          setIsPlaying(false);
+          toast.error('Erro ao reproduzir áudio convertido');
+        }
       };
       setIsPlayLoading(true);
+      let playbackBlocked = false;
       try {
         await audio.play();
-        setIsPlaying(true);
+        if (mountedRef.current) setIsPlaying(true);
       } catch {
         // Reprodução recusada pelo navegador (autoplay bloqueado): desfaz o
-        // estado "tocando" e avisa o usuário em vez de deixar a rejeição solta.
-        detachMediaVolume();
-        audioRef.current = null;
-        setIsPlaying(false);
-        toast.error(PLAYBACK_BLOCKED);
+        // estado "tocando" e avisa o usuário. O áudio NÃO é descartado — o
+        // aviso manda tocar o botão de novo e o botão precisa continuar
+        // funcionando (o volume global segue anexado para a nova tentativa).
+        playbackBlocked = true;
+        if (mountedRef.current) {
+          setIsPlaying(false);
+          toast.error(PLAYBACK_BLOCKED);
+        }
       } finally {
-        setIsPlayLoading(false);
+        if (mountedRef.current) setIsPlayLoading(false);
       }
 
-      toast.success(`Voz convertida para ${voice.name}!`);
+      // Só comemora a conversão se a prévia tocou: com a reprodução recusada o
+      // usuário acabou de ver o aviso, e um "sucesso" logo depois seria
+      // contraditório.
+      if (!playbackBlocked) toast.success(`Voz convertida para ${voice.name}!`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(`Erro ao converter voz: ${msg}`);
-      setSelectedVoice(null);
+      if (mountedRef.current) {
+        toast.error(`Erro ao converter voz: ${msg}`);
+        setSelectedVoice(null);
+      }
     } finally {
-      setIsConverting(false);
+      if (mountedRef.current) setIsConverting(false);
     }
   };
 
@@ -136,16 +154,20 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
       if (!response.ok) throw new Error(`Erro ${response.status}`);
       const blob = await response.blob();
       if (blob.size === 0) throw new Error('áudio convertido vazio');
+      // Regra 4: depois de desmontar, não entrega o blob nem mexe em estado.
+      if (!mountedRef.current) return;
       onVoiceChanged(blob);
       setOpen(false);
       cleanup();
       toast.success('Áudio com voz alterada pronto para envio!');
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Erro desconhecido';
-      setConfirmError(msg);
-      toast.error(`Erro ao preparar o áudio: ${msg}`);
+      if (mountedRef.current) {
+        setConfirmError(msg);
+        toast.error(`Erro ao preparar o áudio: ${msg}`);
+      }
     } finally {
-      setIsConfirming(false);
+      if (mountedRef.current) setIsConfirming(false);
     }
   };
 
@@ -159,12 +181,15 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
     setIsPlayLoading(true);
     try {
       await audioRef.current.play();
+      if (!mountedRef.current) return;
       setIsPlaying(true);
     } catch {
-      setIsPlaying(false);
-      toast.error(PLAYBACK_BLOCKED);
+      if (mountedRef.current) {
+        setIsPlaying(false);
+        toast.error(PLAYBACK_BLOCKED);
+      }
     } finally {
-      setIsPlayLoading(false);
+      if (mountedRef.current) setIsPlayLoading(false);
     }
   };
 
