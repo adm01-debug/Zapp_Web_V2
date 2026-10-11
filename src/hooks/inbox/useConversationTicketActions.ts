@@ -49,6 +49,20 @@ const TICKET_ERROR_MESSAGES: Record<string, string> = {
  * Traduz o token levantado pela RPC (`RAISE EXCEPTION 'not_authorized'`, ...)
  * para uma mensagem em portugues. Sem token conhecido, devolve o generico.
  */
+/**
+ * Tipagem mínima local para as RPCs do cartão pai (t_4e49a6dc).
+ * Evita importar os tipos gerados do pai (proibido pela recusa Ponto 1);
+ * segue o precedente de `AtomicQueueRpc` em outbound-message.service.ts.
+ * A chamada é feita como método de `rpcClient` (nunca função destacada)
+ * para preservar o `this` do client.
+ */
+interface TicketQueueRpc {
+  rpc: (
+    name: 'assume_conversation' | 'return_conversation_to_queue',
+    args: { p_contact_id: string; p_reason?: string | null },
+  ) => Promise<{ data: TicketMutationResult | null; error: { message: string } | null }>;
+}
+
 export function translateTicketActionError(message?: string | null): string {
   if (message) {
     for (const [token, text] of Object.entries(TICKET_ERROR_MESSAGES)) {
@@ -158,7 +172,7 @@ export function useConversationTicketActions(
 
   const assumeMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc('assume_conversation', {
+      const { data, error } = await (supabase as unknown as TicketQueueRpc).rpc('assume_conversation', {
         p_contact_id: contact.id,
       });
       if (error) throw error;
@@ -196,7 +210,7 @@ export function useConversationTicketActions(
 
   const returnMutation = useMutation({
     mutationFn: async (reason?: string) => {
-      const { data, error } = await supabase.rpc('return_conversation_to_queue', {
+      const { data, error } = await (supabase as unknown as TicketQueueRpc).rpc('return_conversation_to_queue', {
         p_contact_id: contact.id,
         p_reason: reason ?? undefined,
       });
