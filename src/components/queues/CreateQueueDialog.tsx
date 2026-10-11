@@ -10,6 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+// Paleta do seletor de cor da fila (tokens do `tokens.css`): vive em `queueColors.ts`
+// para o `EditQueueDialog` usar a MESMA lista sem depender deste módulo — as telas
+// de teste mockam este diálogo inteiro.
+import { QUEUE_COLORS } from './queueColors';
 
 interface CreateQueueDialogProps {
   open: boolean;
@@ -17,21 +21,11 @@ interface CreateQueueDialogProps {
   onSubmit: (queue: { name: string; description: string; color: string }) => void;
 }
 
-const COLORS = [
-  '#3B82F6', // blue
-  '#10B981', // green
-  '#F59E0B', // amber
-  '#EF4444', // red
-  '#8B5CF6', // purple
-  '#EC4899', // pink
-  '#06B6D4', // cyan
-  '#84CC16', // lime
-];
 
 export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState(QUEUE_COLORS[0]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +37,7 @@ export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueD
       await onSubmit({ name, description, color });
       setName('');
       setDescription('');
-      setColor(COLORS[0]);
+      setColor(QUEUE_COLORS[0]);
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -84,7 +78,7 @@ export function CreateQueueDialog({ open, onOpenChange, onSubmit }: CreateQueueD
           <div className="space-y-2">
             <Label className="text-foreground">Cor</Label>
             <div className="flex gap-2 flex-wrap">
-              {COLORS.map((c) => (
+              {QUEUE_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
