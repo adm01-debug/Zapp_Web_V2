@@ -459,7 +459,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                       aria-label="Enviar sussurro"
                     >
                       {isSending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                       ) : enviadoOk ? (
                         <Check className="h-4 w-4 text-success" aria-hidden="true" />
                       ) : (
