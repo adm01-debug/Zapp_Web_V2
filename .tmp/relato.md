@@ -1,23 +1,46 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Conclusão
+CONCLUÍ SEM COMMIT DE CÓDIGO (item 2 do cartão): o defeito do pedido já está corrigido no
+código ATUAL de dia/2026-10-11. Não recriei nada.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## Como o conflito se resolveu
+A entrega anterior já está na ponta atual. O commit `0f5bbfc5e` ("fix(departamentos): usa
+RPC de modo do WhatsApp acessivel ao usuario logado (QA5-09)") JÁ É ancestral do HEAD do
+workspace (`git merge-base --is-ancestor 0f5bbfc5e HEAD` → exit 0). Ou seja: os 4 arquivos
+que apareciam em conflito na fila do integrador já entraram em dia/2026-10-11 iguais ou
+superiores à entrega original (`68fe6e588`). Não há o que cherry-pickar nem conflito a
+resolver — a correção inteira já está aplicada.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+## Prova — o defeito NÃO existe mais (arquivo:linha)
+- Hook do navegador usa a RPC nova: `src/hooks/team-chat/useDepartmentManagement.ts:126`
+  `.rpc('get_department_whatsapp_mode', { p_department_id: departmentId })` (antes lia
+  `get_department_whatsapp_credentials`, que é service_role-only e devolve a chave da API).
+- Assinatura no cliente: `src/integrations/supabase/types.ts:11245`
+  `get_department_whatsapp_mode: { Args: { p_department_id: string }; Returns: string }`.
+- Migration real: `supabase/migrations/20261005111312_p1_department_whatsapp_mode.sql:14`
+  `CREATE OR REPLACE FUNCTION public.get_department_whatsapp_mode(p_department_id uuid)`,
+  com REVOKE de PUBLIC/anon (linha 42) e GRANT a authenticated (linha 44).
+- Passo no CI: `.github/workflows/db-guard.yml:971`
+  `bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh`.
+- Todos os caminhos do mesmo defeito: nenhum arquivo de `src/**` chama mais
+  `get_department_whatsapp_credentials` (só o bootstrap dos próprios testes de contrato). O
+  único ponto de navegador era `useDepartmentWhatsAppCredentials`, hoje na RPC nova.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Prova — testes executados agora (saída real)
+- `npx vitest run src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx`
+  → `Test Files  2 passed (2)` · `Tests  12 passed (12)`
+- `SKIP_DOCKER_SHIM=1 bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh`
+  → `[OK] contrato QA5-09 (RPC de modo do WhatsApp do departamento) verificado: 10 assercoes (postgres:17-alpine)`
+  (ANTES: authenticated sem EXECUTE, chamada morre com 42501; DEPOIS: admin lê `evolution`,
+  retorno sem a sentinela da chave, `pg_get_function_result = text`, anon barrado;
+  MUTAÇÃO A e MUTAÇÃO B FALHAM como esperado.)
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Nenhum arquivo de código alterado: não recriei a função, o teste nem a regra (já estão
+  como a entrega pedia). Diff de código vazio, como manda o item 2 do cartão.
+- Não arrastei arquivo de outro assunto.
+- Único commit deste cartão: `.tmp/relato.md`. A base `dia/2026-10-11` deixou esse arquivo
+  TRACKED (commit 32c68d56a), diferente do normal (untracked); o `hermes-tarefa-fechar`
+  recusa fechar com "há mudanças não commitadas" por causa dele. Commitei SÓ o relato para
+  limpar a árvore — nenhum arquivo do produto entrou nesse commit.
