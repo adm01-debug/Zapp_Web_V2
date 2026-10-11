@@ -17,28 +17,44 @@
  * `afterEach`) e o WebSocket do Realtime fechado. As duas Edge Functions do
  * módulo (`multiplix-audience` e `multiplix-dispatch`), a de envio
  * (`multiplix-send`) e o roteador respondem por `page.route`: nenhum banco,
- * nenhuma credencial, nenhum secret novo, nenhum pedido a produção.
+ * nenhuma credencial, nenhum secret novo, nenhum pedido a produção. Não há
+ * banco algum envolvido — a sessão é falsa e toda a rede do módulo é mockada
+ * (R1: nada de produção, nada de banco remoto).
  *
- * O que este spec prova (o que do aceite do F90 existe hoje na tela):
+ * TELA DE 3 REGIÕES INLINE (F78/TL-010): o antigo `MultiplixComposerDialog`
+ * foi removido — a composição vive na própria tela, em regiões
+ * `role="region"`: "01 Público", "02 Composição" e "03 Prévia e revisão", com
+ * o resumo/ações num rodapé fixo. O que este spec prova hoje:
  *   1. SELEÇÃO PERSISTENTE — marcar empresas e a contagem do rodapé fixo
- *      sobreviverem a "Carregar mais" (paginação) e à edição de um filtro sem
- *      clicar "Buscar"; e a seleção ser LIMPA na nova busca (`runSearch`), que é
- *      o contrato declarado em `MultiplixView.tsx`.
- *   2. CONFIRMAÇÃO — o composer não cria nada com nome/mensagem vazios (os dois
- *      botões nascem desabilitados) e "Salvar e iniciar agora" só chega à Edge
- *      DEPOIS do AlertDialog "Iniciar disparo agora?"; os placeholders entram
- *      pelos chips (`{{empresa}}`/`{{saudacao}}`) e viajam no `message_template`.
- *   3. MONITOR — abrir o disparo pela lista "Disparos recentes", ver o
+ *      sobreviverem a "Carregar mais" (paginação ANEXA a página 1) e à edição
+ *      de um filtro sem clicar "Buscar". A seleção TAMBÉM sobrevive à nova
+ *      busca: `runSearch` NÃO limpa `selected` (F73/E131, comentário no
+ *      próprio `runSearch`; origem: af9a275cd,
+ *      src/components/multiplix/MultiplixView.tsx L188-190 — em código,
+ *      runSearch só chama setRows([])/setRows(data), sem setSelected) —
+ *      o público é o que o operador marcou; o filtro é só a lente.
+ *      A prova de que a página 1 foi anexada é a linha "Mostrando N."
+ *      SUMIR (vira 51 de 51), e não a contagem de <tr>, porque a tabela é
+ *      VIRTUALIZADA (`useVirtualizer`, origem: 7fb708c41, MultiplixView.tsx
+ *      L135; linha "Mostrando" em L460).
+ *   2. COMPOSIÇÃO INLINE + CONTA N×M — a região "02 Composição" está SEMPRE
+ *      visível (não há diálogo), a conta
+ *      `N contatos × M blocos = K mensagens` aparece sempre, e o "Nome do
+ *      disparo" é OPCIONAL: sem nome digitado, o disparo sai com o título
+ *      sugerido (público + assunto) — provado no `name` que chega à Edge.
+ *   3. CONFIRMAÇÃO — nada é criado com mensagem vazia (os dois botões nascem
+ *      desabilitados) e "Salvar e iniciar agora" só chega à Edge DEPOIS do
+ *      AlertDialog "Iniciar disparo agora?"; os placeholders entram pelos
+ *      chips (`{{empresa}}`/`{{saudacao}}`) e viajam no `message_template`.
+ *   4. PRÉVIA (região 03) — a mensagem é mostrada com `{{empresa}}` já
+ *      substituído pela empresa do seletor "Visualizar como".
+ *   5. MONITOR — abrir o disparo pela lista "Disparos recentes", ver o
  *      cabeçalho/progresso/destinatários e voltar.
  *
- * NÃO cobertos aqui, de propósito (medido no código da ponta de 08/10/2026):
- *   - "prévia" e "confirmação bloqueada por placeholder inválido" NÃO existem na
- *     tela: `MultiplixComposerDialog.tsx` não tem prévia nem valida placeholder;
- *     o `preview`/`validate` com `multiplix_unknown_placeholder` vivem SÓ na Edge
- *     `multiplix-dispatch` (`actions/inspect.ts`) e têm teste Deno próprio
- *     (`actions/__tests__/inspect.test.ts`). Inventar asserção de UI para eles
- *     seria teste vermelho por feature inexistente — o que se prova aqui é o
- *     bloqueio que existe (campos vazios) e o caminho dos chips válidos.
+ * A CRIAÇÃO mudou de Edge: o diálogo mandava `create_draft` para
+ * `multiplix-audience`; a tela inline usa `useCreateMultiplixDispatch`, que
+ * manda `draft.create` para `multiplix-dispatch` (payload `payload`) e depois
+ * `start` em `multiplix-send`. O fake reproduz esse contrato.
  */
 import { test, expect, type Page, type Route } from '@playwright/test';
 
@@ -49,7 +65,8 @@ import { installFakeSession } from './fixtures/talkx-demo';
 // `storageState` do projeto `setup` (que exigiria login real).
 test.use({
   storageState: { cookies: [], origins: [] },
-  // 1440x900: a tabela do público (6 colunas) e o rodapé fixo cabem sem corte.
+  // 1440x900: as três regiões (grid de 3 colunas em `lg`) e o rodapé fixo
+  // cabem sem corte.
   viewport: { width: 1440, height: 900 },
 });
 
@@ -66,6 +83,7 @@ const DISPATCH_ID = '00000000-0000-4000-8000-00000000d001';
 const EMPRESA_CHEIA = '51';
 const EMPRESA_P1 = 'E2E Empresa 01';
 const EMPRESA_P2 = 'E2E Empresa 02';
+const TITULO_SUGERIDO = `Multiplix · 2 contatos · {{empresa}} {{saudacao}}`;
 
 /** Linha de `multiplix-audience`/`search` no shape que a tela consome. */
 interface Empresa {
@@ -117,9 +135,9 @@ interface Chamada {
 }
 
 interface BackendFake {
-  /** POSTs em `functions/v1/multiplix-audience` (leitura do público + criação). */
+  /** POSTs em `functions/v1/multiplix-audience` (LEITURA do público). */
   audiencia: Chamada[];
-  /** POSTs em `functions/v1/multiplix-dispatch` (lista/monitor). */
+  /** POSTs em `functions/v1/multiplix-dispatch` (lista/monitor + criação). */
   roteador: Chamada[];
   /** POSTs em `functions/v1/multiplix-send` (start/pause/cancel). */
   envios: Array<{ dispatchId: string; action: string }>;
@@ -148,6 +166,12 @@ function empresa(n: number, nome: string): Empresa {
  * Página 0 cheia (50 linhas) + página 1 com 1 linha, das 51 do filtro: é o que
  * faz "Carregar mais (1 restante)" aparecer e a seleção da página 0 ter de
  * sobreviver ao append (`setRows((prev) => [...prev, ...data])`).
+ *
+ * A tabela é VIRTUALIZADA (`useVirtualizer`, overscan 12, container de 480px;
+ * origem: 7fb708c41, src/components/multiplix/MultiplixView.tsx L135):
+ * só a janela visível vira <tr>. Por isso o spec NÃO conta checkboxes — prova
+ * o append pela linha "Mostrando N." (L460 do mesmo arquivo; some quando
+ * 51 de 51 estão na tela).
  */
 function pagina(n: number): Empresa[] {
   if (n === 0) return Array.from({ length: PAGE_SIZE }, (_, i) => empresa(i + 1, `E2E Empresa ${String(i + 1).padStart(2, '0')}`));
@@ -194,9 +218,13 @@ function destinatario(n: number, status: string): Destinatario {
  *
  * Contratos reais (lidos dos hooks, não inventados):
  *  - `useMultiplixAudience.invokeMultiplixAudience`: body `{ action, params }`,
- *    resposta `{ data: T }`.
+ *    resposta `{ data: T }` (leitura do público).
  *  - `useMultiplixDispatches.invokeMultiplixDispatch`: body `{ action, payload }`,
  *    resposta `{ data, meta? }` desembrulhada por `readMultiplixList`.
+ *  - `useCreateMultiplixDispatch`: body `{ action: 'draft.create', payload }` com
+ *    `{ name, message_template, company_ids, contact_ids, client_request_id,
+ *    scheduled_at, confirm_over_limit }`; resposta `{ data: { dispatch_id,
+ *    recipient_count, created } }`.
  *  - `invokeMultiplixSend`: body `{ dispatchId, action }`, resposta `{ ok }`.
  */
 async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
@@ -208,7 +236,7 @@ async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
       dispatchId?: string;
     };
 
-  // ── Leitura do público + criação do disparo (multiplix-audience) ──────────
+  // ── Leitura do público (multiplix-audience) ───────────────────────────────
   await page.route(/\/functions\/v1\/multiplix-audience/, (route: Route) => {
     const { action = '', params = {} } = corpo(route);
     backend.audiencia.push({ action, params });
@@ -221,32 +249,38 @@ async function mockMultiplix(page: Page, backend: BackendFake): Promise<void> {
         return json(route, { data: 51 });
       case 'search':
         return json(route, { data: pagina(Number(params.page ?? 0)) });
-      case 'create_draft': {
-        // A Edge cria o disparo na transação e devolve o id; o monitor (que abre
-        // logo depois) lê esse id em `dispatch.list`. O fake faz o mesmo.
-        const nome = String(params.name ?? '');
-        backend.disparos = [
-          disparo({ id: DISPATCH_ID, name: nome, message_template: String(params.message_template ?? '') }),
-          ...backend.disparos.filter((d) => d.id !== DISPATCH_ID),
-        ];
-        return json(route, {
-          data: {
-            dispatch_id: DISPATCH_ID,
-            recipient_count: Array.isArray(params.company_ids) ? params.company_ids.length : 0,
-            created: true,
-          },
-        });
-      }
       default:
         return json(route, { error: `acao nao prevista no spec: ${action}` }, 400);
     }
   });
 
-  // ── Lista/monitor (multiplix-dispatch) ────────────────────────────────────
+  // ── Lista/monitor + criação (multiplix-dispatch) ──────────────────────────
   await page.route(/\/functions\/v1\/multiplix-dispatch/, (route: Route) => {
     const { action = '', payload = {} } = corpo(route);
     backend.roteador.push({ action, params: payload });
     switch (action) {
+      case 'draft.create': {
+        // A Edge cria o disparo na transação e devolve o id; o monitor (que abre
+        // logo depois) lê esse id em `dispatch.list`. O fake faz o mesmo.
+        const nome = String(payload.name ?? '');
+        const empresaIds = Array.isArray(payload.company_ids) ? (payload.company_ids as string[]) : [];
+        backend.disparos = [
+          disparo({
+            id: DISPATCH_ID,
+            name: nome,
+            message_template: String(payload.message_template ?? ''),
+            total_recipients: empresaIds.length,
+          }),
+          ...backend.disparos.filter((d) => d.id !== DISPATCH_ID),
+        ];
+        return json(route, {
+          data: {
+            dispatch_id: DISPATCH_ID,
+            recipient_count: empresaIds.length,
+            created: true,
+          },
+        });
+      }
       case 'dispatch.list': {
         const alvo = payload.dispatch_id;
         const linhas = typeof alvo === 'string'
@@ -292,7 +326,7 @@ async function buscar(page: Page): Promise<void> {
   await expect(page.getByRole('cell', { name: EMPRESA_P1, exact: true })).toBeVisible();
 }
 
-/** Rodapé fixo da seleção (só existe com `selected.size > 0`). */
+/** Rodapé fixo da seleção (dentro da região 01). */
 function rodapeSelecao(page: Page, quantas: number) {
   return page.getByText(`${quantas} empresa(s) selecionada(s)`);
 }
@@ -300,6 +334,11 @@ function rodapeSelecao(page: Page, quantas: number) {
 /** Marca a empresa pelo `aria-label` do checkbox da linha. */
 async function marcar(page: Page, nome: string): Promise<void> {
   await page.getByRole('checkbox', { name: `Selecionar ${nome}` }).click();
+}
+
+/** Região da tela de 3 painéis (o `role="region"` com o rótulo do passo). */
+function regiao(page: Page, nome: string) {
+  return page.getByRole('region', { name: nome });
 }
 
 async function preparar(page: Page, backend: BackendFake): Promise<Registro> {
@@ -332,9 +371,14 @@ function backendVazio(): BackendFake {
   };
 }
 
+/** Quantas vezes uma Edge de criação foi chamada (nunca antes da confirmação). */
+function criacoes(backend: BackendFake) {
+  return backend.roteador.filter((c) => c.action === 'draft.create');
+}
+
 // ---------------------------------------------------------------------------
 
-test.describe('Multiplix — E2E do módulo (F90)', () => {
+test.describe('Multiplix — E2E do módulo (F90, tela de 3 regiões)', () => {
   let registro: Registro;
   let backend: BackendFake;
 
@@ -349,15 +393,17 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     expect(registro.redeBarrada).toEqual([]);
   });
 
-  test('seleção persiste na paginação e ao editar o filtro, e é limpa na nova busca', async ({ page }) => {
+  test('seleção persiste na paginação, na edição do filtro e na nova busca', async ({ page }) => {
     await entraEmMultiplix(page);
     await buscar(page);
 
-    // O count da RPC independente aparece acima da tabela.
+    // O count da RPC independente aparece acima da tabela; a tabela é
+    // VIRTUALIZADA (7fb708c41, MultiplixView.tsx L135), então "Mostrando 50."
+    // (L460 do mesmo arquivo) prova que a página 0 (50 de 51) está carregada
+    // sem contar <tr>.
     await expect(page.getByText(/empresa\(s\) no filtro atual/)).toContainText(EMPRESA_CHEIA);
+    await expect(page.getByText(/empresa\(s\) no filtro atual/)).toContainText('Mostrando 50');
 
-    // Página 0 = 50 linhas (limite do backend), com "Carregar mais" porque há 51.
-    await expect(page.getByRole('checkbox', { name: /^Selecionar E2E Empresa / })).toHaveCount(PAGE_SIZE);
     const carregarMais = page.getByRole('button', { name: /Carregar mais/ });
     await expect(carregarMais).toContainText('1 restante');
 
@@ -367,72 +413,105 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     await expect(rodapeSelecao(page, 2)).toBeVisible();
 
     // (a) A seleção sobrevive ao "Carregar mais": a página 1 é ANEXADA
-    // (`[...prev, ...data]`) e o que estava marcado continua marcado.
+    // (`[...prev, ...data]`), "Mostrando" some (51 de 51) e o botão de paginar
+    // desaparece (não há página 2) — o que estava marcado continua marcado.
     await carregarMais.click();
-    await expect(page.getByRole('checkbox', { name: /^Selecionar E2E Empresa / })).toHaveCount(51);
-    await expect(page.getByRole('cell', { name: 'E2E Empresa 51', exact: true })).toBeVisible();
+    await expect(page.getByText(/empresa\(s\) no filtro atual/)).not.toContainText('Mostrando');
+    await expect(carregarMais).toHaveCount(0);
     await expect(rodapeSelecao(page, 2)).toBeVisible();
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).toBeChecked();
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P2}` })).toBeChecked();
 
-    // (b) A seleção sobrevive a editar um filtro SEM clicar "Buscar" (os filtros
-    // são estado separado; só `runSearch` limpa a seleção).
-    await page.getByPlaceholder('Nome da empresa...').fill('brindes');
+    // (b) A seleção sobrevive a editar um filtro SEM clicar "Buscar": o filtro
+    // de público é estado separado da lista; só `runSearch` refaz a busca.
+    // Por que o botão "Público" + checkbox "Cliente" e não o campo "Nome da
+    // empresa..." (que continua existindo — MultiplixView.tsx L447, af9a275cd)?
+    // Digitar no nome dispara o debounce E126 (L240: buscarAposDigitar chama
+    // runSearch 300 ms depois, mesmo commit), que dá setRows([]) e remonta as
+    // linhas no meio da asserção — flaky. O toggle de papel (botão "Público"
+    // L377 + checkbox "Cliente" via ROLE_LABELS L37, origem 614ec7210) muda só
+    // o estado do filtro, sem disparar busca: determinístico.
+    await page.getByRole('button', { name: 'Público' }).click();
+    await page.getByRole('checkbox', { name: 'Cliente' }).click();
     await expect(rodapeSelecao(page, 2)).toBeVisible();
     await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).toBeChecked();
 
-    // (c) Contrato declarado no `runSearch`: a NOVA BUSCA limpa a seleção (o id
-    // fantasma de um resultado antigo não pode ir para um disparo real).
+    // (c) Contrato declarado no `runSearch` (F73/E131): a NOVA BUSCA NÃO limpa a
+    // seleção — o público é o que o operador marcou; o filtro é só a lente
+    // (origem: af9a275cd, src/components/multiplix/MultiplixView.tsx L188-190;
+    // em código, runSearch só chama setRows([])/setRows(data), sem setSelected).
     await page.getByRole('button', { name: 'Buscar' }).click();
-    await expect(rodapeSelecao(page, 2)).toHaveCount(0);
-    await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).not.toBeChecked();
+    await expect(page.getByRole('cell', { name: EMPRESA_P1, exact: true })).toBeVisible();
+    await expect(rodapeSelecao(page, 2)).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: `Selecionar ${EMPRESA_P1}` })).toBeChecked();
 
     // O spec não escreveu nada: nenhuma Edge de criação foi chamada por engano.
-    expect(backend.audiencia.filter((c) => c.action === 'create_draft')).toHaveLength(0);
+    expect(criacoes(backend)).toHaveLength(0);
     expect(backend.envios).toHaveLength(0);
   });
 
-  test('confirmação: nada é criado com campos vazios e o start só sai depois do AlertDialog', async ({ page }) => {
+  test('composição inline: conta N×M, título sugerido opcional e start só depois do AlertDialog', async ({ page }) => {
     await entraEmMultiplix(page);
     await buscar(page);
     await marcar(page, EMPRESA_P1);
     await marcar(page, EMPRESA_P2);
 
-    await page.getByRole('button', { name: 'Criar disparo' }).click();
-    const composer = page.getByRole('dialog');
-    await expect(composer.getByText('Novo disparo Multiplix')).toBeVisible();
-    await expect(composer.getByText(`2 empresa(s) selecionada(s) da busca.`)).toBeVisible();
+    // As três regiões da tela inline, e NENHUM diálogo de composição.
+    await expect(regiao(page, '01 Público')).toBeVisible();
+    const composicao = regiao(page, '02 Composição');
+    await expect(composicao).toBeVisible();
+    await expect(regiao(page, '03 Prévia e revisão')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    // Bloqueio que EXISTE hoje no composer: sem nome e sem mensagem os dois
-    // caminhos ficam desabilitados (não há validação de placeholder na tela).
-    const salvarRascunho = composer.getByRole('button', { name: 'Salvar rascunho' });
-    const iniciarAgora = composer.getByRole('button', { name: 'Salvar e iniciar agora' });
+    // A conta N×M fica SEMPRE visível: 2 selecionadas, 0 blocos (mensagem vazia).
+    const contagem = page.getByTestId('multiplix-contagem-mensagens');
+    await expect(contagem).toHaveText('2 contatos × 0 blocos = 0 mensagens');
+
+    // O nome é OPCIONAL: sem digitar nada, o rodapé mostra o placeholder e a
+    // região 02 anuncia o título sugerido.
+    await expect(page.getByText('Novo disparo')).toBeVisible();
+    // Com a mensagem ainda vazia o assunto entra em branco e a sugestão é só o
+    // módulo + a contagem (o `filter(Boolean)` do `suggestedName` remove o vazio).
+    await expect(composicao.getByText('Título sugerido: Multiplix · 2 contatos')).toBeVisible();
+
+    // Com mensagem vazia os dois caminhos ficam desabilitados.
+    const salvarRascunho = page.getByRole('button', { name: 'Salvar rascunho' });
+    const iniciarAgora = page.getByRole('button', { name: 'Salvar e iniciar agora' });
     await expect(salvarRascunho).toBeDisabled();
     await expect(iniciarAgora).toBeDisabled();
 
-    // Preenche o nome e a mensagem pelos CHIPS (os tokens válidos do composer).
-    await composer.getByPlaceholder('Ex.: Convite feira 2026').fill('Convite feira 2026');
-    await composer.getByRole('button', { name: '+ Empresa' }).click();
-    await composer.getByRole('button', { name: '+ Saudação' }).click();
-    const mensagem = composer.getByPlaceholder('Olá {{empresa}}, {{saudacao}}!');
+    // Preenche a mensagem pelos CHIPS (os tokens válidos da região 02).
+    await composicao.getByRole('button', { name: 'inserir a empresa na mensagem' }).click();
+    await composicao.getByRole('button', { name: 'inserir a saudação na mensagem' }).click();
+    // `textbox` (e não `getByLabel`): os chips também têm "mensagem" no
+    // aria-label ("inserir a empresa na mensagem"), o que torna `getByLabel`
+    // ambíguo.
+    const mensagem = composicao.getByRole('textbox', { name: 'Mensagem' });
     await expect(mensagem).toHaveValue('{{empresa}} {{saudacao}}');
+    // 1 bloco de texto passa a contar: 2 × 1 = 2.
+    await expect(contagem).toHaveText('2 contatos × 1 bloco = 2 mensagens');
+    // Com a mensagem preenchida o assunto do título sugerido acompanha.
+    await expect(composicao.getByText(`Título sugerido: ${TITULO_SUGERIDO}`)).toBeVisible();
     await expect(salvarRascunho).toBeEnabled();
+    await expect(iniciarAgora).toBeEnabled();
 
     // "Salvar e iniciar agora" NÃO cria nada sozinho: abre o AlertDialog.
     await iniciarAgora.click();
     const confirmacao = page.getByRole('alertdialog');
     await expect(confirmacao.getByText('Iniciar disparo agora?')).toBeVisible();
     await expect(confirmacao.getByText(/Isso envia mensagens reais no WhatsApp para 2 empresa\(s\)/)).toBeVisible();
-    expect(backend.audiencia.filter((c) => c.action === 'create_draft')).toHaveLength(0);
+    expect(criacoes(backend)).toHaveLength(0);
     expect(backend.envios).toHaveLength(0);
 
-    // Só a confirmação explícita chama a Edge: create_draft com os company_ids da
-    // seleção e o template com os placeholders, e depois o start em background.
+    // Só a confirmação explícita chama a Edge: `draft.create` em
+    // `multiplix-dispatch` com os company_ids da seleção e o template com os
+    // placeholders; o `name` sai do TÍTULO SUGERIDO (o campo ficou vazio), e
+    // depois vem o start em background.
     await confirmacao.getByRole('button', { name: 'Iniciar agora' }).click();
 
-    await expect.poll(() => backend.audiencia.filter((c) => c.action === 'create_draft').length).toBe(1);
-    const criacao = backend.audiencia.find((c) => c.action === 'create_draft')!;
-    expect(criacao.params.name).toBe('Convite feira 2026');
+    await expect.poll(() => criacoes(backend).length).toBe(1);
+    const criacao = criacoes(backend)[0];
+    expect(criacao.params.name).toBe(TITULO_SUGERIDO);
     expect(criacao.params.message_template).toBe('{{empresa}} {{saudacao}}');
     expect(criacao.params.company_ids).toEqual([
       '00000000-0000-4000-8000-000000000001',
@@ -443,8 +522,30 @@ test.describe('Multiplix — E2E do módulo (F90)', () => {
     await expect.poll(() => backend.envios.length).toBe(1);
     expect(backend.envios[0]).toEqual({ dispatchId: DISPATCH_ID, action: 'start' });
 
-    // `onCreated` abre o monitor do disparo recém-criado.
-    await expect(page.getByRole('heading', { name: 'Convite feira 2026' })).toBeVisible();
+    // `onCreated` abre o monitor do disparo recém-criado, com o título sugerido.
+    await expect(page.getByRole('heading', { name: TITULO_SUGERIDO })).toBeVisible();
+  });
+
+  test('prévia (região 03) substitui {{empresa}} pela empresa vista', async ({ page }) => {
+    await entraEmMultiplix(page);
+    await buscar(page);
+    await marcar(page, EMPRESA_P1);
+
+    const previa = regiao(page, '03 Prévia e revisão');
+    await expect(previa.getByText('Prévia da mensagem · não enviada')).toBeVisible();
+
+    // O seletor "Visualizar como" cai na primeira empresa selecionada enquanto
+    // o operador não escolhe outra.
+    await expect(previa.getByLabel('Visualizar como')).toContainText(EMPRESA_P1);
+
+    await regiao(page, '02 Composição').getByRole('textbox', { name: 'Mensagem' }).fill('Olá {{empresa}}, tudo bem?');
+    await expect(previa.getByText(`Olá ${EMPRESA_P1}, tudo bem?`)).toBeVisible();
+    // 1 contato × 1 bloco = 1 mensagem (singular "contato"/"mensagem").
+    await expect(page.getByTestId('multiplix-contagem-mensagens')).toHaveText('1 contato × 1 bloco = 1 mensagem');
+
+    // Prévia é local: nada foi criado nem enviado.
+    expect(criacoes(backend)).toHaveLength(0);
+    expect(backend.envios).toHaveLength(0);
   });
 
   test('monitor: abre pelo disparo recente, mostra progresso/destinatários e volta', async ({ page }) => {
