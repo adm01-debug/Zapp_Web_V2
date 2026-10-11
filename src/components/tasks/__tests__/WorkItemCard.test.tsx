@@ -12,12 +12,14 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import type { HTMLAttributes } from 'react';
 
 // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
 import { makeTaskRow } from '@/test/mocks/tarefas';
 import { WorkItemCard } from '@/components/tasks/shared/WorkItemCard';
+import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
+import { useTasksUi } from '@/components/tasks/shared/tasksUi';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
 /** Item do domínio a partir da fixture do banco (mesmo shape), sem duplicar dados. */
@@ -57,11 +59,11 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     const { rerender } = render(
       <WorkItemCard item={item({ status: 'todo' })} mode="list" onToggleDone={onToggleDone} />
     );
-    expect(screen.getByRole('button', { name: 'Concluir tarefa' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'Concluir tarefa' })).toBeTruthy();
 
     rerender(<WorkItemCard item={item({ status: 'done' })} mode="list" onToggleDone={onToggleDone} />);
 
-    const reabrir = screen.getByRole('button', { name: 'Reabrir tarefa' });
+    const reabrir = screen.getByRole('checkbox', { name: 'Reabrir tarefa' });
     expect(screen.getByText('Ligar para o cliente').className).toContain('line-through');
     fireEvent.click(reabrir);
     expect(onToggleDone).toHaveBeenCalledTimes(1);
@@ -129,7 +131,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
 
     // A tecla borbulha do checkbox até o article; a guarda de alvo impede que o card
     // trate o Enter/`x` do filho como atalho do PRÓPRIO card.
-    const checkbox = screen.getByRole('button', { name: 'Concluir tarefa' });
+    const checkbox = screen.getByRole('checkbox', { name: 'Concluir tarefa' });
     fireEvent.keyDown(checkbox, { key: 'Enter' });
     fireEvent.keyDown(checkbox, { key: 'x' });
 
@@ -142,7 +144,7 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     const onToggleDone = vi.fn();
     render(<WorkItemCard item={item()} mode="list" onOpen={onOpen} onToggleDone={onToggleDone} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Concluir tarefa' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Concluir tarefa' }));
     expect(onToggleDone).toHaveBeenCalledTimes(1);
     expect(onOpen).not.toHaveBeenCalled();
 
@@ -281,5 +283,123 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     expect(classes).toContain('opacity-0');
     expect(classes).toContain('[@media(hover:none)]:pointer-events-auto');
     expect(classes).toContain('[@media(hover:none)]:opacity-100');
+  });
+});
+
+/**
+ * Etapas 084–090 (plano 200): o card redesenhado. Cada teste mede UMA etapa pelo
+ * DOM real do componente — o checkbox circular (D16), o "Urgente" junto ao
+ * título (085), a tag "Atrasada" (086), os rótulos Prazo/Lembrete e a descrição
+ * curta no card em Fazendo/selecionado (087/088), o chip de espera (089) e o
+ * estado selecionado (090). Os primitivos são do cartão T11 e a data vem do
+ * `workItemFormat.ts` (T04) — nada de reimplementar aqui.
+ */
+describe('etapas 084–090 — card redesenhado', () => {
+  it('084 — checkbox CIRCULAR nas três superfícies e título em até 2 linhas', () => {
+    (['list', 'board', 'agenda'] as const).forEach((mode) => {
+      const { unmount } = render(<WorkItemCard item={item()} mode={mode} onToggleDone={vi.fn()} />);
+
+      const check = screen.getByRole('checkbox', { name: 'Concluir tarefa' });
+      expect(check.getAttribute('data-testid')).toBe('task-checkbox');
+      expect(check.className).toContain('rounded-full');
+      // o quadrado antigo do card não pode voltar
+      expect(check.className).not.toContain('rounded-[4px]');
+
+      const titulo = screen.getByText('Ligar para o cliente');
+      expect(titulo.className).toContain(mode === 'agenda' ? 'truncate' : 'line-clamp-2');
+      unmount();
+    });
+  });
+
+  it('085 — Urgente fica junto ao título e a prioridade padrão desce para a linha de contexto', () => {
+    const { rerender } = render(<WorkItemCard item={item({ priority: 'urgent' })} mode="board" />);
+    const headerUrgente = screen.getByText('Ligar para o cliente').parentElement as HTMLElement;
+    const urgente = within(headerUrgente).getByTestId('priority-pill');
+    expect(urgente.getAttribute('data-priority')).toBe('urgent');
+    expect(urgente.textContent).toBe('Urgente');
+
+    rerender(<WorkItemCard item={item({ priority: 'high' })} mode="board" />);
+    const headerComum = screen.getByText('Ligar para o cliente').parentElement as HTMLElement;
+    expect(within(headerComum).queryByTestId('priority-pill')).toBeNull();
+    // existe, mas na linha de contexto (fora do header do título)
+    expect(screen.getByTestId('priority-pill').getAttribute('data-priority')).toBe('high');
+  });
+
+  it('086 — prazo vencido pinta o texto de destrutivo e acrescenta a tag "Atrasada"', () => {
+    const { rerender } = render(
+      <WorkItemCard item={item({ due_date: '2026-09-25T10:00:00.000Z' })} mode="board" />
+    );
+    expect(screen.getByTestId('date-label').className).toContain('--destructive-text');
+    expect(screen.getByTestId('overdue-tag').textContent).toContain('Atrasada');
+
+    rerender(<WorkItemCard item={item({ due_date: '2026-11-20T14:00:00.000Z' })} mode="board" />);
+    expect(screen.queryByTestId('overdue-tag')).toBeNull();
+  });
+
+  it('087 — no card em "Fazendo" o prazo e o lembrete ganham rótulos em duas colunas', () => {
+    const { rerender } = render(
+      <WorkItemCard item={item({ status: 'todo', due_date: '2026-11-20T14:00:00.000Z' })} mode="list" />
+    );
+    expect(screen.queryByText('Prazo')).toBeNull();
+    expect(screen.queryByText('Lembrete')).toBeNull();
+
+    rerender(
+      <WorkItemCard
+        item={item({ status: 'doing', due_date: '2026-11-20T14:00:00.000Z', remind_at: '2026-11-20T12:00:00.000Z' })}
+        mode="list"
+      />
+    );
+    expect(screen.getByText('Prazo')).toBeTruthy();
+    expect(screen.getByText('Lembrete')).toBeTruthy();
+  });
+
+  it('088 — a descrição curta (2 linhas) só aparece em "Fazendo"/selecionado', () => {
+    const desc = 'Cliente pediu retorno depois das 14h, com o orçamento revisado.';
+    const { rerender } = render(<WorkItemCard item={item({ status: 'todo', description: desc })} mode="board" />);
+    expect(screen.queryByText(desc)).toBeNull();
+
+    rerender(<WorkItemCard item={item({ status: 'doing', description: desc })} mode="board" />);
+    expect(screen.getByText(desc).className).toContain('line-clamp-2');
+  });
+
+  it('089 — em "Aguardando" o motivo vira chip âmbar, truncado e com tooltip', () => {
+    const motivo = 'Retorno da transportadora';
+    render(<WorkItemCard item={item({ status: 'waiting', waiting_reason: motivo })} mode="board" />);
+
+    const chip = screen.getByTestId('waiting-chip');
+    expect(chip.getAttribute('title')).toBe(motivo);
+    expect(chip.textContent).toContain(motivo);
+    expect(chip.className).toContain('--warning-text');
+    expect(chip.querySelector('.bg-warning')).toBeTruthy();
+  });
+
+  it('090 — card selecionado: borda primary, fundo primary/10, alça ⠿ e data-selected', () => {
+    const { rerender } = render(<WorkItemCard item={item()} mode="board" />);
+    expect(card().className).toContain('bg-card');
+    expect(card().getAttribute('data-selected')).toBeNull();
+
+    rerender(<WorkItemCard item={item()} mode="board" isSelected />);
+    expect(card().getAttribute('data-selected')).toBe('true');
+    expect(card().className).toContain('border-primary');
+    expect(card().className).toContain('bg-primary/10');
+    expect(card().textContent).toContain('⠿');
+  });
+
+  it('090 — a seleção do painel (TasksUiProvider.selectedId) também marca o card', () => {
+    function Abrir() {
+      const ui = useTasksUi();
+      return <button onClick={() => ui.openPanel('t1')}>abrir painel</button>;
+    }
+    render(
+      <TasksUiProvider>
+        <Abrir />
+        <WorkItemCard item={item({ id: 't1' })} mode="board" />
+      </TasksUiProvider>
+    );
+
+    expect(card().getAttribute('data-selected')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'abrir painel' }));
+    expect(card().getAttribute('data-selected')).toBe('true');
+    expect(card().className).toContain('bg-primary/10');
   });
 });
