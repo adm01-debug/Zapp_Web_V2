@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, startTransition } from 'react';
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { undoToast } from '@/lib/undoToast';
@@ -18,6 +18,7 @@ import {
 } from '@/hooks/chat/useForwardMedia';
 import type { ForwardCallback } from '@/hooks/chat/useForwardMessage';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
+import { useWhisperMessagesMutation, type MotivoRecusaSussurro } from '@/hooks/chat/useWhisperMessagesMutation';
 import { useMyWorkItems, tomorrowAtNine } from '@/hooks/tasks/useMyWorkItems';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { CHAR_LIMIT } from './useChatInputLogic';
@@ -59,6 +60,12 @@ interface UseChatPanelHandlersOptions {
   openDialog: (key: string) => void;
   closeDialog: (key: string) => void;
   handleSetActiveTool: (tool: 'chatSearch' | 'objections' | 'university' | 'aiAssistant' | 'summary' | null) => void;
+  /**
+   * Sussurro do compositor: informa se há anexo esperando envio. Sussurro é texto
+   * puro (não transporta mídia); com anexo pendente o envio como sussurro é recusado.
+   * Ausente = sem anexo (a barra de composição informa quando houver).
+   */
+  temAnexoPendente?: () => boolean;
 }
 
 /**
@@ -89,16 +96,47 @@ function dentroDaJanelaDeEdicao(message: Message, agora: number = Date.now()): b
   return (agora - message.timestamp.getTime()) / 60000 <= EDIT_WINDOW_MINUTES;
 }
 
+/**
+ * Avisos do sussurro recusado. O envio nunca chama o canal; quando não há a quem
+ * endereçar (ou o contato/perfil ainda não está pronto) o texto é preservado e a
+ * causa é dita ao usuário.
+ */
+const RECUSAS_SUSSURRO: Record<MotivoRecusaSussurro, { title: string; description: string; variant: 'destructive' }> = {
+  contato_invalido: {
+    title: 'Sussurro indisponível',
+    description: 'Esta conversa ainda não tem um contato confirmado. O texto foi mantido.',
+    variant: 'destructive',
+  },
+  sem_responsavel: {
+    title: 'Conversa sem responsável',
+    description: 'Atribua a conversa a um atendente antes de sussurrar. O texto foi mantido.',
+    variant: 'destructive',
+  },
+  sem_perfil: {
+    title: 'Perfil não carregado',
+    description: 'Não foi possível identificar seu perfil. Tente novamente. O texto foi mantido.',
+    variant: 'destructive',
+  },
+  falha: {
+    title: 'Erro ao sussurrar',
+    description: 'O sussurro não foi registrado. O texto foi mantido.',
+    variant: 'destructive',
+  },
+};
+
 export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const {
-    contactPhone, instanceName, onSendMessage, contactId,
+    conversationId, contactPhone, instanceName, onSendMessage, contactId,
     editMessageApi, applySignature, handleTypingStart, handleTypingStop,
-    openDialog, closeDialog, handleSetActiveTool,
+    openDialog, closeDialog, handleSetActiveTool, temAnexoPendente,
   } = opts;
 
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  // Sussurro (nota interna) ligado no compositor: o próximo envio grava em
+  // `whisper_messages` e NÃO sai para o canal. Desligado por padrão.
+  const [isWhisper, setIsWhisper] = useState(false);
   // R2-INB-022: guarda de reenvio. Como o gravador passa a continuar aberto quando o envio
   // falha, o usuário pode tocar "Enviar" de novo; este ref evita disparar dois envios
   // concorrentes da mesma gravação enquanto o primeiro ainda está em voo.
@@ -124,6 +162,13 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const editingMessageRef = useLatest(editingMessage);
   const replyToMessageRef = useLatest(replyToMessage);
   const forwardMessageRef = useLatest(forwardMessage);
+  const isWhisperRef = useLatest(isWhisper);
+
+  // ── Sussurro do compositor (nota interna) ──
+  // O envio vive no hook de mutação; o texto digitado só vira sussurro, nunca
+  // mensagem de canal.
+  const { enviarSussurro } = useWhisperMessagesMutation();
+  const toggleWhisper = useCallback(() => setIsWhisper((ligado) => !ligado), []);
 
   const handleEditStart = useCallback((message: Message) => {
     if (!dentroDaJanelaDeEdicao(message)) {
@@ -154,6 +199,37 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     return true;
   }, []);
 
+  /**
+   * Envia o texto como sussurro (nota interna) e NUNCA chama `onSendMessage`.
+   * O texto só sai do compositor no sucesso; na falha ele fica intacto para o
+   * retry — assim um retry jamais vira mensagem de canal.
+   */
+  const enviarSussurroDoCompositor = useCallback(async (corpo: string) => {
+    if (temAnexoPendente?.()) {
+      toast({
+        title: 'Sussurro indisponível com anexo',
+        description: 'O sussurro é uma nota interna de texto. Remova o anexo para enviar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsSending(true);
+    const resultado = await enviarSussurro({ contactId, content: corpo });
+    setIsSending(false);
+    if (resultado.ok) {
+      setInputValue('');
+      setReplyToMessage(null);
+      setIsWhisper(false);
+      handleTypingStop();
+      toast({
+        title: '🤫 Sussurro enviado',
+        description: 'A nota interna ficou registrada para a equipe — não foi para o cliente.',
+      });
+      return;
+    }
+    toast(RECUSAS_SUSSURRO[resultado.motivo]);
+  }, [contactId, enviarSussurro, handleTypingStop, temAnexoPendente]);
+
   // handleSend now reads from refs → deps are stable → no re-render cascade
   const handleSend = useCallback(async () => {
     const currentInput = inputValueRef.current;
@@ -169,6 +245,14 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     const corpoDoEnvio = currentInput.trim();
     const payloadDoEnvio = currentEditing ? corpoDoEnvio : applySignature(corpoDoEnvio);
     if (recusarAcimaDoLimite(payloadDoEnvio.length)) return;
+
+    // Sussurro (nota interna): grava em `whisper_messages` e NUNCA chama
+    // `onSendMessage` — nem neste envio, nem no retry. O ramo retorna antes de
+    // qualquer caminho de canal.
+    if (isWhisperRef.current) {
+      await enviarSussurroDoCompositor(corpoDoEnvio);
+      return;
+    }
 
     if (currentEditing) {
       const externalId = currentEditing.external_id;
@@ -244,7 +328,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       setInputValue(originalText);
       toast({ title: 'Erro ao enviar', description: 'Tente novamente.', variant: 'destructive' });
     } finally { setIsSending(false); }
-  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, recusarAcimaDoLimite]);
+  }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, isWhisperRef, enviarSussurroDoCompositor, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
   // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
@@ -359,6 +443,9 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); e.stopPropagation(); openDialog('globalSearch'); }
     if (e.key === 'f' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); handleSetActiveTool('chatSearch'); }
     if (e.key === 'Escape' && slashCommandsOpen) closeDialog('slashCommands');
+    // Esc também desliga o sussurro: sair do modo é sempre explícito e nunca
+    // deixa a próxima mensagem saindo como nota interna sem intenção.
+    if (e.key === 'Escape' && isWhisperRef.current) setIsWhisper(false);
   }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
 
   const handleSlashCommand = useCallback((command: SlashCommand, subCommand?: string) => {
@@ -583,6 +670,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
 
   return {
     inputValue, setInputValue, isSending, isRecordingAudio, setIsRecordingAudio,
+    isWhisper, setIsWhisper, toggleWhisper,
     replyToMessage, setReplyToMessage, forwardMessage, editingMessage,
     inputRef,
     handleEditStart, handleCancelEdit, handleSend,
