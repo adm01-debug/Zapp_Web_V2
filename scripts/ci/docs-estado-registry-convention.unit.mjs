@@ -382,7 +382,7 @@ function comandoFoldedDaCi(ci, primeiraLinha) {
   return normalizaEspacos(partes.join(' '));
 }
 
-test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', () => {
+test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', async () => {
   const doc = lerDoc('TESTING_CONVENTION.md');
   const vitest = ler('vitest.config.ts');
   const contratos = ler('vitest.contracts.config.ts');
@@ -446,9 +446,9 @@ test('TESTING_CONVENTION.md descreve os runners reais (configs, scripts e CI)', 
   }
 
   // 7. quarentena do E2E: arquivo, campos e verificador citados no doc existem
-  const arquivoQuarentena = JSON.parse(ler('e2e/quarantine.json'));
-  const quarentena = arquivoQuarentena.quarentena;
-  assert.ok(Array.isArray(quarentena), 'e2e/quarantine.json perdeu a lista `quarentena`');
+  const moduloQuarentena = await import(new URL('../../e2e/quarantine.js', import.meta.url));
+  const quarentena = moduloQuarentena.quarentena;
+  assert.ok(Array.isArray(quarentena), 'e2e/quarantine.js perdeu a lista `quarentena`');
   const verificador = ler('scripts/ci/check-quarantine.mjs');
   for (const campo of ['spec', 'motivo', 'issue', 'prazo']) {
     assert.ok(verificador.includes(`'${campo}'`), `check-quarantine.mjs não exige mais \`${campo}\``);
