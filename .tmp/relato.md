@@ -1,23 +1,29 @@
 Especialista: Hugo (area-front-hooks)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+Concluí o que o cartão pede: as etapas 21 (tempo médio da criação à conclusão, com formato pt-BR), 52 (subtítulo de data dos grupos), 112/117 (contagens por tipo no dia da Agenda) e 126 (Agenda só com os itens já carregados, 7 dias, com o teste da virada), e o relatório de lacunas da etapa 8. Tudo em `workItemAggregates.ts` (funções puras) + os testes do próprio módulo; nenhuma consulta nova.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## O que mudou e por quê
+- `src/hooks/tasks/workItemAggregates.ts`:
+  - `kpis()` passa a devolver `avgLeadTimeDays` (etapa 21/D13): média de `completed_at − created_at` das concluídas dos últimos 7 dias. `avgCycleTimeDays` (started_at → completed_at) continua calculado e no mesmo campo — é o contrato que `TasksKpiStrip.tsx` já lê hoje.
+  - `formatLeadTime(days)` nova, pura e exportada: pt-BR com uma casa decimal e vírgula (`1,4 dias`), singular em 1 (`1 dia`) e `—` quando não há dados (null/NaN).
+  - `daySubtitle(date)` nova, pura: dia por extenso em pt-BR no fuso local — `Domingo, 11 de outubro`; data inválida devolve `''` em vez de derrubar a tela (etapa 52).
+  - `DayGroup` ganhou `subtitle` e `dateKey`, preenchidos por `groupUpcomingByDay` (etapa 52).
+  - `agendaDayCounts(day, atrasadas)` e `agendaDayAriaLabel(day, atrasadas)` novas, puras (etapas 112/117): contagens por tipo (`prazos`, `lembretes`, `atrasadas`, `semHora`, `total`) e o texto do `aria-label`. A tarefa com prazo E alarme aparece nas duas seções mas conta UMA vez no `total`. O `agendaDayDots` fica intacto (ver "O que NÃO fiz").
+- `src/hooks/tasks/__tests__/workItemAggregates.test.ts`: 4 describes novos (etapas 21, 52, 112/117 e 126) com os casos que provam o comportamento; nenhum teste existente foi alterado.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` com `kpis()` na regra antiga (só o tempo de ciclo, sem `avgLeadTimeDays`) → `AssertionError: expected null to be 4` e `Tests 1 failed | 60 passed (61)` — a concluída que nasceu 7 dias antes de terminar e só entrou em "Fazendo" no último dia dava ciclo 1 e lead time 4.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 1 passed (1)` / `Tests 61 passed (61)`.
+- regressão dos consumidores (hook, telas de tarefas e a aba do Inbox): `npx vitest run src/hooks/tasks src/components/tasks src/components/inbox/tabs` → `Test Files 76 passed (76)` / `Tests 809 passed | 2 todo (811)`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Etapa 8 — lacunas de dados do que a UI nova precisa (sem banco novo, sem consulta nova)
+- Resumo do dia (`N tarefas com prazo · M lembretes`) e `aria-label` da faixa: NÃO existia contagem por tipo — o `agendaDayDots` só devolvia cores (no máximo 3). Resolvido: `agendaDayCounts`/`agendaDayAriaLabel`.
+- Tempo médio decimal: existia só a métrica de ciclo, e nenhum formato pt-BR; o rótulo "Da criação à conclusão" não tinha número correspondente. Resolvido: `avgLeadTimeDays` + `formatLeadTime`.
+- Janela de 30 dias: já coberta pela query única B13 (`DONE_WINDOW_DAYS` + `.or('status.neq.done,completed_at.is.null,completed_at.gte.<cutoff>')` em `useMyWorkItems`); os recortes de 7 dias da Agenda são locais (`splitDoneByRecency`/`weekBuckets`). Nada a criar.
+- Progresso do limite: os limites estão em `WIP_LIMITS` (hard/soft por status) e a contagem por status em `bucketByStatus` — o dado existe; falta só a apresentação (tela).
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não mudei a assinatura de `agendaDayDots`. O único consumidor é `src/components/tasks/agenda/TasksAgendaMode.tsx`, que tipa o retorno como `string[]` (cores) e não está nos arquivos deste cartão: trocar o retorno para contagens quebraria a tela agora. As contagens entraram como funções novas que o mesmo componente consome sem mexer no contrato atual.
+- Não liguei o rótulo "Da criação à conclusão" ao número novo: quem desenha é `src/components/tasks/shared/TasksKpiStrip.tsx` (linha 68 ainda usa `avgCycleTimeDays` com `Math.round(...)+'d'`), que é tela — `area-front-componentes` (Íris). Deixei o dado pronto (`avgLeadTimeDays` + `formatLeadTime`).
+- Lacuna conhecida, documentada no JSDoc de `groupUpcomingByDay`: o rótulo "Semana que vem" reúne mais de um dia no MESMO grupo (comportamento da etapa 49, mantido de propósito); nesse grupo `subtitle`/`dateKey` apontam para o dia mais cedo. Separar por dia dentro dele mudaria o rótulo e os testes da etapa 49.
+- Nenhuma consulta nova: tudo aqui é agregação pura sobre os `items` já carregados (B13 preservado).
