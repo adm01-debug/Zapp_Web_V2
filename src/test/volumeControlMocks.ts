@@ -21,6 +21,12 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+  // O `VolumeDial` (e a entrada do painel) consultam o movimento reduzido; nos testes de
+  // componente tratamos como "movimento reduzido LIGADO": o dial mostra o valor direto e
+  // nenhuma animação fica pendente entre asserções (o teste dedicado do dial cobre a
+  // contagem animada, que o jsdom não traz).
+  useReducedMotion: () => true,
+  animate: () => ({ stop: () => {} }),
 }));
 
 // jsdom não traz ResizeObserver, que o Popper do Radix usa para medir o conteúdo

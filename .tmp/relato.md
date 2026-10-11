@@ -1,67 +1,25 @@
-Especialista: worker (geral)
+Especialista: iris (area-front-componentes)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- `src/components/ui/VolumeSliderPopoverContent.tsx`: o slider vertical saiu e entrou o `<VolumeDial>` (padrão slider-08, cartão pai t_cdf7b04b). O contrato de props ficou igual (title, valueLabel, volume, muted, min, max, step, thumbLabel, onVolumeChange, onToggleMute, muteLabel, unmuteLabel, disabled, footer, valueTestId). O valor no centro do dial é o `valueLabel`; o `data-testid` (valueTestId) continua existindo como nó `sr-only` com `aria-live="polite"`, legível por texto. O `role="dialog" rotulado`, o foco preso (Tab/Shift+Tab nas pontas, via `FOCAVEIS`) e o `VOLUME_PANEL_ATTRIBUTE` no contêiner foram conservados. O `aria-valuetext` agora vive no próprio dial (`role="slider"`), então o hack de `setAttribute` no thumb deixou de ser necessário e não existe mais. Título em `text-3xs uppercase tracking` muted, `gap-1`, entrada do painel com escala 0,96→1 + opacidade (`useReducedMotion` respeitado).
+- `src/components/notifications/SoundVolumeControl.tsx` e `src/components/inbox/MediaVolumeControl.tsx`: só o `className` do `PopoverContent` — de `w-56 p-3` para `w-40 p-2.5 bg-card/90 backdrop-blur` (o `bg-card/90` vence o `bg-popover` base por `twMerge` em `cn`). Borda `border-border/60` e `shadow-lg` já vêm do `PopoverContent` base. Nada de `useVolumeRocker`, stores, persistência ou ícone-gatilho.
+- `src/components/ui/__tests__/VolumeSliderPopoverContent.test.tsx`: trocado só o que era específico do slider vertical (o `role="slider"` passou a ser o dial, primeiro focável do DOM; "Aumentar" fecha a ordem); somado `axe` sem violações. Os casos de −/+ passo 5 e limites, silenciar/ativar com `aria-pressed`, desabilitado, diálogo rotulado e foco preso continuam.
+- `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`: a régua de contraste (1.4.11, 3:1) passou a medir o ARCO do dial contra a superfície de vidro `bg-card/90` sobre `background` (pior stop do gradiente), em vez de faixa×trilha do slider.
+- `src/components/notifications/__tests__/SoundVolumeControl.test.tsx` e `src/components/inbox/__tests__/MediaVolume.test.tsx`: o assento do slider antigo (`aria-orientation`, `data-disabled`) virou o do dial (`aria-valuetext`, `aria-disabled="true"`); cada um ganhou o teste de largura `w-40` e o teste de axe do painel aberto.
+- `src/test/volumeControlMocks.ts`: o mock de `framer-motion` ganhou `useReducedMotion: () => true` e `animate` (o `VolumeDial` os importa; sem eles o painel quebra no jsdom). Change aditivo.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+## Medidas finais (conferidas)
+- Largura: 160 px (= `w-40`; `p-2.5` conta dentro do border-box). O teste `E13`/`D07` afirma `w-40` e ausência de `w-56` nos dois consumidores.
+- Altura: 180 px, derivada da soma dos tokens do layout (o painel é `flex-col gap-1` com `p-2.5`): padding 10+10, título `text-3xs leading-none` 10, gap 4, dial 96, gap 4, linha dos três botões `h-8` 32, gap 4, rótulo do mudo `text-3xs leading-none` 10 → 180. O nó `data-testid` é `sr-only` (posicionado), não entra no fluxo. Alvo do cartão: ≤160 × ≤182 — dentro.
+- Não rodei Playwright para medir no navegador: a pré-visualização autenticada exige sessão no app e a regra R1 proíbe usar sessão salva/produção; a medida acima vem do próprio layout (tokens) e a largura é provada por teste.
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
-
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Prova
+- vermelho antes: revertendo à base só os três arquivos de produção (`git show HEAD:<arquivo>`) e rodando
+  `npx vitest run src/components/ui/__tests__/VolumeSliderPopoverContent.test.tsx src/components/notifications/__tests__/SoundVolumeControl.test.tsx`
+  → `Test Files 2 failed (2); Tests 3 failed | 32 passed (35)` — falham o `D07` (`w-40`), o foco preso (primeiro focável) e o Tab no meio (o slider antigo sequestrava o Tab).
+- verde depois: `npx vitest run src/components/ui/__tests__/VolumeSliderPopoverContent.test.tsx src/components/ui/__tests__/VolumeDial.test.tsx src/components/inbox/__tests__/contrastePlayerSlider.test.tsx src/components/notifications/__tests__/SoundVolumeControl.test.tsx src/components/inbox/__tests__/MediaVolume.test.tsx`
+  → `Test Files 5 passed (5); Tests 83 passed (83)`.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não toquei em `useVolumeRocker`, `VolumeTriggerButton`, stores nem persistência (item 5 do cartão).
+- Não medi no navegador por Playwright (motivo acima, R1).

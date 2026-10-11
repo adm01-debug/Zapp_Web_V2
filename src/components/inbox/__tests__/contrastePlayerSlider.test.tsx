@@ -18,20 +18,25 @@
  *     os DOIS, senão o valor inline do tema desfaria o número.
  *
  * Este arquivo é a guarda que faltava: nenhum teste media esses dois pares pelo caminho que a
- * tela usa. Ele renderiza o `AudioMessagePlayer` REAL e o slider REAL do popover de volume
- * (`MediaVolumeControl` → `VolumeSliderPopoverContent` → `ui/slider`), lê a lista de classes que
- * o DOM de verdade recebeu, resolve os tokens de `src/styles/tokens.css` +
+ * tela usa. Ele renderiza o `AudioMessagePlayer` REAL e o DIAL REAL do popover de volume
+ * (`MediaVolumeControl` → `VolumeSliderPopoverContent` → `ui/VolumeDial`), lê as cores que o
+ * SVG de verdade recebeu, resolve os tokens de `src/styles/tokens.css` +
  * `src/styles/accessibility.css` e mede a razão WCAG — inclusive compondo os alfas em sRGB,
  * como o navegador pinta. O bloco "tokens medidos são os que o app escreve" fecha a única
  * premissa que sobrava: o preset `corporate` (o que roda) traz exatamente os valores que o
  * medidor leu da folha.
  *
- * Limiares (WCAG 2.1): 4,5:1 para TEXTO (1.4.3) e 3:1 para a parte gráfica que indica o valor
- * (1.4.11) — é a régua que o próprio plano do E18 fixou para o slider ("1.4.11 pede 3:1", §7.2).
+ * O gráfico que indica o valor deixou de ser a faixa do slider e passou a ser o ARCO do dial;
+ * ele é pintado sobre a superfície de vidro do painel (`bg-card/90` sobre o fundo da página),
+ * então o par medido é arco × superfície — o pior stop do gradiente é o que vale.
  *
- * Medido nesta ponta, tempo do balão recebido / faixa × trilha do slider — re-medido em
- * 09/10/2026 (valores idênticos aos de 08/10/2026):
- *   claro 5,04 / 4,83 · escuro 7,33 / 3,73 · alto contraste 10,12 / 8,77 · alto contraste escuro 9,42 / 4,45
+ * Limiares (WCAG 2.1): 4,5:1 para TEXTO (1.4.3) e 3:1 para a parte gráfica que indica o valor
+ * (1.4.11) — é a régua que o próprio plano do E18 fixou para o indicador de volume ("1.4.11
+ * pede 3:1", §7.2).
+ *
+ * Medido nesta ponta, tempo do balão recebido / arco × superfície do dial — re-medido em
+ * 11/10/2026 (dial no lugar do slider vertical):
+ *   claro 5,04 / 4,38 · escuro 7,33 / 3,46 · alto contraste 10,12 / 4,42 · alto contraste escuro 9,42 / 4,15
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -220,34 +225,51 @@ function medirBalaoRecebido(): MedicaoBalao {
   return medicao;
 }
 
-interface MedicaoSlider {
-  trilha: { token: string; alfa: number };
-  faixa: { token: string; alfa: number };
+interface MedicaoDial {
+  /** Superfície de vidro onde o dial é lido: `bg-card/90` sobre o fundo da página. */
+  superficie: { token: string; alfa: number };
+  /** Anel-trilha fixo do dial (`stroke="hsl(var(--border))"`). */
+  trilha: { token: string };
+  /** Stops do gradiente do arco de valor (o pior é o que vale na medição). */
+  arco: { token: string }[];
 }
 
-/** Sobe do polegar até a raiz do Radix (a classe `touch-none` é a do próprio `ui/slider`). */
-function raizDoSlider(polegar: Element): Element {
-  let atual: Element | null = polegar.parentElement;
-  while (atual && !/\btouch-none\b/.test(atual.className)) atual = atual.parentElement;
-  if (!atual) throw new Error('raiz do slider não encontrada a partir do polegar');
-  return atual;
+/** `hsl(var(--nome))` / `url(#grad)` pairam no atributo; extrai só o nome do token. */
+function nomeDoToken(declaracao: string): string {
+  const m = declaracao.match(/--([\w-]+)/);
+  if (!m) throw new Error(`atributo sem token var(--...): ${declaracao}`);
+  return m[1];
 }
 
-/** Abre o popover do controle REAL e lê a trilha e a faixa que o Radix montou. */
-async function medirSliderDoPopover(): Promise<MedicaoSlider> {
+/**
+ * Abre o popover do controle REAL e lê do SVG do dial a trilha e o gradiente do arco que o
+ * Radix montou. O arco é o indicador de valor; a superfície de leitura é o `bg-card/90` do
+ * `PopoverContent` (o painel em si não pinta fundo).
+ */
+async function medirDialDoPopover(): Promise<MedicaoDial> {
   const { unmount } = render(<MediaVolumeControl />);
   fireEvent.click(screen.getByRole('button', { name: 'Ajustar volume das mídias' }));
 
   // O rótulo vem da fonte única (`@/lib/volumeLabels`): quando ele mudou (S29), a string fixa
   // aqui virou nome inexistente e derrubou a medição inteira no lote do dia — sem tocar o
   // componente. Importar a constante mantém a busca presa ao rótulo que a tela realmente usa.
-  const polegar = await screen.findByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL });
-  const raiz = raizDoSlider(polegar);
-  const trilha = raiz.querySelector(':scope > span') as HTMLElement | null;
-  const faixa = (trilha?.firstElementChild as HTMLElement | null) ?? null;
-  if (!trilha || !faixa) throw new Error('trilha/faixa do slider não renderizaram');
+  const dial = await screen.findByRole('slider', { name: MEDIA_VOLUME_SLIDER_LABEL });
 
-  const medicao: MedicaoSlider = { trilha: fundoDaClasse(trilha.className), faixa: fundoDaClasse(faixa.className) };
+  const circulos = Array.from(dial.querySelectorAll('circle'));
+  const trilhaEl = circulos.find((c) => (c.getAttribute('stroke') ?? '').includes('var(--border)'));
+  const arcoEl = circulos.find((c) => (c.getAttribute('stroke') ?? '').startsWith('url(#'));
+  if (!trilhaEl || !arcoEl) throw new Error('trilha/arco do dial não renderizaram');
+
+  const arco = Array.from(dial.querySelectorAll('stop')).map((stop) => ({
+    token: nomeDoToken(stop.getAttribute('stop-color') ?? ''),
+  }));
+  if (arco.length === 0) throw new Error('gradiente do arco do dial sem stops');
+
+  const medicao: MedicaoDial = {
+    superficie: ancestralComFundo(dial).fundo,
+    trilha: { token: nomeDoToken(trilhaEl.getAttribute('stroke') ?? '') },
+    arco,
+  };
   unmount();
   return medicao;
 }
@@ -279,19 +301,19 @@ describe('SL-020 — a medição usa os tokens que o app realmente escreve', () 
   });
 });
 
-describe('SL-020 — contraste do player de áudio e do slider nos temas', () => {
+describe('SL-020 — contraste do player de áudio e do dial de volume nos temas', () => {
   let balao: MedicaoBalao;
-  let slider: MedicaoSlider;
+  let dial: MedicaoDial;
 
   beforeAll(async () => {
     balao = medirBalaoRecebido();
-    slider = await medirSliderDoPopover();
+    dial = await medirDialDoPopover();
   });
 
-  it('a medição é a do par do cartão: a faixa não pinta a mesma cor da trilha', () => {
-    // Se as duas parassem na mesma cor, a razão medida seria 1:1 e o teste acima já reprovaria —
-    // aqui o par fica nomeado para quem lê a falha saber o que quebrou.
-    expect(slider.trilha.token).not.toBe(slider.faixa.token);
+  it('a medição é a do par do cartão: o arco não pinta a mesma cor da trilha', () => {
+    // Se o arco parasse na cor da trilha, ele sumiria onde cobre o anel — aqui o par fica
+    // nomeado para quem lê a falha saber o que quebrou.
+    for (const stop of dial.arco) expect(stop.token).not.toBe(dial.trilha.token);
   });
 
   for (const [nome, tokens] of ESTADOS) {
@@ -304,13 +326,17 @@ describe('SL-020 — contraste do player de áudio e do slider nos temas', () =>
       ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
     });
 
-    it(`${nome}: a faixa do slider fecha 3:1 sobre a trilha (era 1,30/2,88 com --secondary)`, () => {
-      const trilha = compor(token(tokens, 'popover'), token(tokens, slider.trilha.token), slider.trilha.alfa);
-      const faixa = compor(trilha, token(tokens, slider.faixa.token), slider.faixa.alfa);
-      expect(
-        razao(faixa, trilha),
-        `${slider.faixa.token} sobre trilha ${slider.trilha.token}/${slider.trilha.alfa * 100}`,
-      ).toBeGreaterThanOrEqual(LIMIAR_GRAFICO);
+    it(`${nome}: o arco do dial fecha 3:1 sobre a superfície do painel`, () => {
+      // O painel é vidro (`bg-card/90`) e flutua sobre o fundo da página; o arco é o indicador
+      // de valor (1.4.11). O pior stop do gradiente é o que vale.
+      const superficie = compor(token(tokens, 'background'), token(tokens, dial.superficie.token), dial.superficie.alfa);
+      for (const stop of dial.arco) {
+        const arco = compor(superficie, token(tokens, stop.token), 1);
+        expect(
+          razao(arco, superficie),
+          `${stop.token} sobre ${dial.superficie.token}/${dial.superficie.alfa * 100} sobre background`,
+        ).toBeGreaterThanOrEqual(LIMIAR_GRAFICO);
+      }
     });
   }
 });

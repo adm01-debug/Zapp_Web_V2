@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Minus, Plus, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { VolumeDial } from '@/components/ui/VolumeDial';
 import { VOLUME_PANEL_ATTRIBUTE } from '@/hooks/ui/useVolumeRocker';
 
 export interface VolumeSliderPopoverContentProps {
@@ -30,16 +31,23 @@ const FOCAVEIS =
   'button:not([disabled]), [role="slider"], [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Conteúdo do popover de volume (valor grande, slider vertical, − / +, silenciar),
- * compartilhado pelos controles de volume de alertas e de mídias.
+ * Conteúdo do popover de volume (dial circular + − / + / silenciar), compartilhado pelos
+ * controles de volume de alertas e de mídias.
  *
- * O dono pediu uma forma CLARA de subir, abaixar e anular o som: o painel passou a
- * mostrar o valor grande, ganhou os botões − e + (5%, alvos de 44 px para o toque) e
- * um botão grande de silenciar com o estado visível — antes só havia o slider.
+ * O dono pediu uma forma CLARA de subir, abaixar e anular o som; agora o painel usa o
+ * `VolumeDial` (dial circular, padrão slider-08) no lugar do slider vertical, ficou ~30%
+ * menor e mais moderno — 160 px de largura (de 224) e ~180 px de altura (de 259). O valor
+ * vive no centro do dial, o título fica pequeno em caixa alta e os três controles cabem
+ * numa linha compacta de 32 px. O dial é o alvo grande de toque; os três botões pequenos
+ * ficam em 32 px (aceite documentada por causa da redução de 30%).
  *
- * É um `role="dialog"` rotulado, com o foco preso enquanto aberto (S31). A marca
+ * O elemento com `role="slider"` é o PRÓPRIO dial, que já publica `aria-valuetext` — o
+ * antigo hack de `setAttribute` no thumb do slider deixou de ser necessário.
+ *
+ * É um `role="dialog"` rotulado, com o foco preso enquanto aberto (S31) e entrada suave
+ * (escala 0,96 → 1 + opacidade, ≤200 ms, desligada com movimento reduzido). A marca
  * `data-volume-panel` diz ao `useVolumeRocker` o que é "dentro" do painel: sem ela, o
- * clique no próprio slider contaria como clique fora e fecharia tudo.
+ * clique no próprio dial contaria como clique fora e fecharia tudo.
  */
 export function VolumeSliderPopoverContent({
   title,
@@ -59,16 +67,8 @@ export function VolumeSliderPopoverContent({
   valueTestId,
 }: VolumeSliderPopoverContentProps) {
   const painelRef = useRef<HTMLDivElement>(null);
+  const reduzirMovimento = useReducedMotion() ?? false;
   const passo = step > 0 ? step : 5;
-  const valorFalado = muted ? 'Mudo' : `${volume} por cento`;
-
-  // O `Slider` do projeto não repassa props aos thumbs (o `role="slider"` é do thumb), e
-  // `aria-valuetext` no Root não chegaria ao leitor de tela. Sem tocar no componente
-  // compartilhado (`src/components/ui/slider.tsx`, de outro cartão), o texto falado é
-  // aplicado no thumb já renderizado e refeito a cada mudança de valor.
-  useEffect(() => {
-    painelRef.current?.querySelector('[role="slider"]')?.setAttribute('aria-valuetext', valorFalado);
-  }, [valorFalado, disabled]);
 
   const ajustar = (delta: number) => {
     const proximo = Math.min(max, Math.max(min, volume + delta));
@@ -94,74 +94,83 @@ export function VolumeSliderPopoverContent({
   };
 
   return (
-    <div
+    <motion.div
       ref={painelRef}
       {...{ [VOLUME_PANEL_ATTRIBUTE]: '' }}
       role="dialog"
       aria-label={title}
       onKeyDown={prenderFoco}
-      className="flex flex-col items-center gap-3"
+      initial={reduzirMovimento ? false : { opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="flex flex-col items-center gap-1"
     >
-      <span className="text-3xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="text-3xs font-semibold uppercase leading-none tracking-[0.1em] text-muted-foreground">
         {title}
       </span>
 
-      <span className="text-3xl font-semibold leading-none tabular-nums" data-testid={valueTestId} aria-live="polite">
+      <VolumeDial
+        value={volume}
+        min={min}
+        max={max}
+        step={passo}
+        disabled={disabled}
+        muted={muted}
+        onChange={onVolumeChange}
+        ariaLabel={thumbLabel}
+      />
+
+      {/* O número visível vive no centro do dial; este nó mantém o contrato de `valueTestId`
+          do painel e anuncia a mudança de valor a quem usa leitor de tela. */}
+      <span data-testid={valueTestId} aria-live="polite" className="sr-only">
         {valueLabel}
       </span>
 
-      <div className="flex h-28 items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="h-11 w-11 shrink-0"
+          className="h-8 w-8 shrink-0 rounded-full"
           aria-label={`Diminuir ${title} em ${passo}%`}
           onClick={() => ajustar(-passo)}
           disabled={disabled}
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-3.5 w-3.5" />
         </Button>
 
-        <Slider
-          orientation="vertical"
-          min={min}
-          max={max}
-          step={passo}
-          value={[volume]}
-          onValueChange={(values) => {
-            if (values.length > 0) onVolumeChange(values[0]);
-          }}
+        <Button
+          type="button"
+          variant={muted ? 'default' : 'outline'}
+          size="icon"
+          className="h-8 w-8 shrink-0 rounded-full"
+          aria-label={muted ? unmuteLabel : muteLabel}
+          aria-pressed={muted}
+          onClick={onToggleMute}
           disabled={disabled}
-          thumbLabel={thumbLabel}
-          className="h-28"
-        />
+        >
+          {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+        </Button>
 
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="h-11 w-11 shrink-0"
+          className="h-8 w-8 shrink-0 rounded-full"
           aria-label={`Aumentar ${title} em ${passo}%`}
           onClick={() => ajustar(passo)}
           disabled={disabled}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      <Button
-        type="button"
-        variant={muted ? 'default' : 'outline'}
-        className="h-11 w-full text-sm"
-        onClick={onToggleMute}
-        aria-pressed={muted}
-        disabled={disabled}
-      >
+      {/* Estado visível do mudo (o nome acessível já está no botão + aria-pressed). */}
+      <span aria-hidden="true" className="text-3xs leading-none text-muted-foreground">
         {muted ? unmuteLabel : muteLabel}
-      </Button>
+      </span>
 
       {footer}
-    </div>
+    </motion.div>
   );
 }
