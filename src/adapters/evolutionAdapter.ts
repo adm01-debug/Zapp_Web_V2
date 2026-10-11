@@ -26,6 +26,8 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessa
     agent_id: evo.from_me ? 'system' : null,
     content: evo.content || evo.caption || '',
     sender: evo.from_me || evo.direction === 'outbound' ? 'agent' : 'contact',
+    sender_participant_jid: null,
+    sender_display_name: null,
     message_type: mapMessageType(evo.message_type),
     media_url: evo.media_url,
     is_read: evo.status === 'read',
