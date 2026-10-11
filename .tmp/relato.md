@@ -1,23 +1,41 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Motivo do cartão (conflito) e como resolvi
+O cartão pedia para trazer a ponta de `dia/2026-10-11` e conferir se o defeito ainda existia. O workspace
+já nasceu sobre `dia/2026-10-11` (BASE=dia/2026-10-11, HEAD=616782983), sem conflito: o arquivo
+`src/components/calls/__tests__/RecordingPlayer.test.tsx` da ponta MANTÉM o mock que o pedido original
+queria. Confirmei que o defeito NÃO existe mais e fechei SEM commit de código, como o cartão manda.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## O defeito do pedido ainda existe? NÃO — prova no código atual
+- O mock de `@/integrations/supabase/client` (linhas 14-17) JÁ devolve `SUPABASE_URL` e
+  `auth.getSession` com token sintético: a mesma correção do trabalho anterior
+  (commit f75a1ef80 da branch `v2/tel-recording-001-mock-auth-2610070606027a`, que só acrescentava
+  `auth.getSession` + `SUPABASE_ANON_KEY` ao mock).
+- O hook `src/hooks/calls/useCallRecording.ts` NÃO chama mais `edgeAuthHeaders()`
+  (`grep -n edgeAuthHeaders src/hooks/calls/useCallRecording.ts` → sem resultado; exit 1). Ele autentica
+  por `authorizationDoUsuario()`, que usa `supabase.auth.getSession()` (linhas 28-32), e usa `SUPABASE_URL`
+  na URL da Edge (linha 35) — exatamente os campos que o mock atual fornece. Também não usa
+  `SUPABASE_ANON_KEY`, por isso o mock atual não precisa dele.
+- Portanto não há `TypeError: ... reading 'getSession'`: o mock cobre o caminho real do hook.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+## Prova (verde, saídas reais)
+- `npx vitest run src/components/calls/__tests__/RecordingPlayer.test.tsx` →
+  `Test Files 1 passed (1); Tests 11 passed (11)`
+- `npx vitest run src/hooks/calls/__tests__/useCallRecording.test.tsx` →
+  `Test Files 1 passed (1); Tests 12 passed (12)`
+- Caminho real exercitado (critério 3): no verbose o teste `c3` (T67 "com gravacao disponivel baixa o
+  stream pela Edge...") passou — ele delega ao hook REAL e afirma
+  `fetchMock` chamado em `.../functions/v1/get-call-recording` com `Authorization: Bearer jwt-local`.
+  Sem o mock de auth esse teste não renderiza o player (é o defeito do cartão).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (130s)` (db_guard, tipos, lint, migrations OK).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Nota sobre os números do critério
+O critério falava em "7/7" com o hook chamando `edgeAuthHeaders()`: a ponta de `dia/2026-10-11` evoluiu —
+o hook passou a autenticar por `getSession`+`fetch` (commit 849efb253) e o arquivo de teste cresceu para
+11 casos. Todos verdes, incluindo os 3 do defeito original (c3/v1/v2).
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não commitei código: o cartão manda fechar sem commit quando já resolvido. `git diff --name-only
+  dia/2026-10-11...HEAD` → vazio.
+- Não toquei em `src/hooks/calls/useCallRecording.ts` nem em `RecordingPlayer.tsx` (proibido pelo cartão).
+- Não afrouxei/reescrevi asserção alguma (a de `not.toContain('http')` no `c3` segue intacta e verde).
