@@ -69,6 +69,11 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // t_9b7562b3: autorizacao da edicao de mensagem (RPC edit_message + guarda de colunas
+  // imutaveis) em PG 17 descartavel (docker local) — prova o defeito ANTES (UPDATE direto
+  // de content reescreve mensagem recebida) e a correcao DEPOIS. Passo de uma linha em
+  // db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/edit-message-authorization.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em

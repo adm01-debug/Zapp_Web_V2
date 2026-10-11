@@ -1,23 +1,41 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-sql-banco)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Pontos da recusa
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Ponto 1: a guarda anterior barrava qualquer UPDATE direto de `messages.content` e podia quebrar fluxos legítimos.
+- O que mudei: em `supabase/migrations/20261011151650_edit_message_rpc.sql`, mantive a regra "editar texto só via RPC" e documentei/testei os fluxos legítimos de UPDATE: soft delete inicial com tombstone padrão (`OLD.is_deleted IS NOT TRUE` -> `NEW.is_deleted IS TRUE`), `is_read`, `transcription` e escrita de Edge/service_role. Também fechei a exceção do soft delete: `is_deleted=true` com outro texto, ou tentativa de alterar `content` de mensagem já apagada, cai em `message_content_edit_requires_rpc`.
+- Teste que prova: `scripts/db-audit/edit-message-authorization.test.sh` executa a migration em Postgres real descartável com papéis `authenticated`/`service_role` e cobre B18 a B23 para os fluxos legítimos. Vermelho antes da correção final: `bash scripts/db-audit/edit-message-authorization.test.sh` falhou em `B20 mensagem ja apagada nao troca content via update direto: deveria falhar, mas passou`. Verde depois: o mesmo comando terminou com `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+Ponto 2: o teste anterior não provava SQL de verdade nem o defeito original de autorização.
+- O que mudei: `scripts/db-audit/edit-message-authorization.test.sh` agora reproduz o defeito antes da migration (`A1` reescreve mensagem recebida por UPDATE direto; `A2` troca `sender`; `A3` confirma RPC ausente), aplica o SQL do cartão e valida a correção por comportamento real: UPDATE direto negado, marca de sessão forjada negada, RPC aceita só a própria mensagem enviada e recusa mensagem recebida, sem permissão, fora da janela, sem `external_id`, apagada, conteúdo inválido e contato invisível. O teste também valida ACL da RPC/guarda e o rollback do que a migration cria.
+- Teste que prova: `bash scripts/db-audit/edit-message-authorization.test.sh` passou com todos os blocos A, B e C e terminou em `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Arquivos no diff (5 arquivos; 1 teste)
 
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+scripts/ci/check-test-inventory.mjs
+scripts/db-audit/edit-message-authorization.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011151650_edit_message_rpc.sql
+.tmp/relato.md
+
+## Critério de pronto explicitado
+
+- Soft delete fora da RPC só é permitido na transição inicial `OLD.is_deleted IS NOT TRUE` -> `NEW.is_deleted IS TRUE` com `NEW.content = '[Mensagem apagada]'`; isso está na condição de `guard_message_immutable_columns` em `supabase/migrations/20261011151650_edit_message_rpc.sql`.
+- O teste B18 prova que o soft delete inicial continua permitido; B19 prova que `is_deleted=true` com texto arbitrário é negado; B20 prova que mensagem já apagada não pode trocar `content` por UPDATE direto.
+- `scripts/db-audit/edit-message-authorization.test.sh` é o teste de banco pedido pelo ponto 2 da recusa. `scripts/ci/check-test-inventory.mjs` só registra esse teste novo na allowlist do inventário; não altera workflow nem afrouxa guarda.
+
+## Verificações executadas
+
+- `bash scripts/db-audit/edit-message-authorization.test.sh` -> passou; saída final: `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
+- `hermes-db-migrar supabase/migrations/20261011151650_edit_message_rpc.sql` -> aplicou a migration no banco LOCAL da tarefa antes do ajuste final; depois reapliquei a versão final no mesmo banco local com `psql -f` após remover localmente a função/trigger criados, e confirmei `local_rpc_present=true` e `local_trigger_present=true`.
+- Prova de rollback em transação no banco local (`psql` no Postgres local da tarefa) -> `rollback_rpc_absent=true`, `rollback_trigger_absent=true`, `after_rollback_reverted_rpc_present=true`, `after_rollback_reverted_trigger_present=true`.
+- `bun run typecheck` -> exit 0; terminou `tsc -b --force` sem erros.
+- `node scripts/ci/check-test-inventory.mjs` -> falhou por 3 órfãos já existentes fora deste diff (`department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`, `team-chat-media-contract`). O teste novo deste cartão está registrado na allowlist e não aparece como órfão.
+- `git diff --cached --check` antes do commit -> exit 0.
+
+## O que não fiz
+
+- Não editei workflow nem removi os três testes órfãos preexistentes do inventário, porque isso é fora do escopo deste refazer.
+- Mantive `scripts/ci/check-test-inventory.mjs` no diff só para registrar o teste SQL novo na allowlist exigida pelo próprio inventário; não mexi no YAML nem afrouxei a guarda.
+- `scripts/db-audit/edit-message-authorization.test.sh` é indispensável para cumprir o ponto 2 da recusa (teste que executa o SQL e prova o defeito original), embora a lista resumida de arquivos permitidos do cartão cite apenas `tests de banco`.
+- Não toquei em produção, push, PR ou deploy.
