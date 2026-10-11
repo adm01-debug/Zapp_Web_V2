@@ -48,6 +48,17 @@ export const TALKX_SEND_TIMEOUT_MS = 10_000;
 const CRON_SECRET_RPC = "get_talkx_cron_secret";
 
 /**
+ * Recorrência (diária/semanal): RPC service_role que, a partir de uma ocorrência
+ * 'completed', cria a próxima como 'scheduled' já sem quem recebeu em qualquer
+ * ocorrência anterior da série. Em `const` pelo mesmo motivo de CRON_SECRET_RPC
+ * (guard de acoplamento código↔banco). Pausada/cancelada nunca chega aqui: a RPC
+ * só age sobre 'completed'.
+ */
+const RECURRENCE_RPC = "schedule_next_talkx_recurrence";
+/** Teto de séries avançadas por tick (as demais ficam para o tick seguinte). */
+export const MAX_RECURRENCES_PER_TICK = 10;
+
+/**
  * Seam de teste: tudo que o handler precisa do mundo externo pode ser injetado,
  * sem rede, sem banco e sem variável de ambiente.
  */
@@ -255,9 +266,45 @@ export async function handleTalkxScheduler(
       resumeCandidates.push(decision);
     }
 
+    // ── 2c. Recorrência: ocorrências concluídas sem sucessora ───────────────────────
+    // A nova ocorrência nasce 'scheduled' e dispara pelo passo 1 de um tick futuro.
+    // Falha aqui nunca derruba o tick: a ocorrência continua sem sucessora e é
+    // tentada de novo no próximo.
+    let recurrenceScheduled = 0;
+    // Refazer 2, Ponto 3: falha da RPC de avanço é contada e devolvida em
+    // recurrence_errors — exibir "0 recorrências" com erro real seria
+    // informação falsa. O tick continua (200) para uma série quebrada não
+    // derrubar os envios devidos, mas o erro fica visível no retorno e no log.
+    let recurrenceErrors = 0;
+    const { data: recurringDone, error: recurrenceErr } = await supabase
+      .from("talkx_campaigns")
+      .select("id")
+      .eq("status", "completed")
+      .not("recurrence_frequency", "is", null)
+      .is("recurrence_next_campaign_id", null)
+      .is("recurrence_closed_at", null)
+      .limit(MAX_RECURRENCES_PER_TICK);
+    if (recurrenceErr) {
+      recurrenceErrors += 1;
+      log.error("Error fetching recurring campaigns", { error: recurrenceErr.message });
+    }
+    for (const row of recurringDone ?? []) {
+      const { data: outcome, error: rpcErr } = await supabase.rpc(RECURRENCE_RPC, { p_campaign_id: row.id });
+      if (rpcErr) {
+        recurrenceErrors += 1;
+        log.error(`Recurrence failed for campaign ${row.id}`, { error: rpcErr.message });
+        continue;
+      }
+      const scheduled = (outcome as { scheduled?: unknown } | null)?.scheduled === true;
+      if (scheduled) recurrenceScheduled += 1;
+      log.info(`Recurrence ${scheduled ? "scheduled next occurrence" : "not scheduled"}: ${row.id}`, {
+        outcome: outcome as Record<string, unknown> | null,
+      });
+    }
+
     if (!dueCampaigns?.length && !resumeCandidates.length) {
       return new Response(
-        JSON.stringify({ success: true, message: "No campaigns due or resumable", checked_at: nowIso }),
+        JSON.stringify({ success: true, message: "No campaigns due or resumable", checked_at: nowIso, recurrence_scheduled: recurrenceScheduled, recurrence_errors: recurrenceErrors }),
         { headers }
       );
     }
@@ -320,6 +367,8 @@ export async function handleTalkxScheduler(
         started: results.filter((r) => r.success && r.action === 'start').length,
         resumed: results.filter((r) => r.success && r.action === 'resume').length,
         failed: results.filter((r) => !r.success).length,
+        recurrence_scheduled: recurrenceScheduled,
+        recurrence_errors: recurrenceErrors,
         details: results,
       }),
       { headers }
