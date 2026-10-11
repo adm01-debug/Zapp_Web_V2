@@ -289,9 +289,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
     renderModule();
 
     // 4 nao concluidas (a, b, c, d) e 1 delas vence hoje; a concluida nao conta
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 4 abertas · 1 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('4 abertas · 1 para hoje')).toBeTruthy());
   });
 
   it('usa singular com uma única tarefa aberta', async () => {
@@ -302,9 +300,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 1 aberta · 1 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('1 aberta · 1 para hoje')).toBeTruthy());
   });
 
   it('formata milhar em pt-BR (1.234, não 1234)', async () => {
@@ -315,9 +311,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 1.234 abertas · 0 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('1.234 abertas · 0 para hoje')).toBeTruthy());
   });
 });
 
@@ -452,20 +446,14 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     expect(regiao.textContent).toBe('');
   });
 
-  it('N abre o modal de criação pelo contexto (etapa 014)', async () => {
+  it('N foca o QuickAdd', async () => {
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();
     await screen.findByTestId('work-item-card');
 
-    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
-    expect(botao.getAttribute('aria-expanded')).toBe('false');
-
     comandar('tasks-focus-quickadd');
 
-    // O mesmo estado que o modal (T35) consumirá: o botão que o abre sabe que
-    // está aberto, e o foco não sobra no QuickAdd (que ficaria atrás do modal).
-    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
-    expect(document.activeElement).not.toBe(screen.getByTestId('quick-add-input'));
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
   });
 
   it('o atalho único de modo responde a 1, 2 e 3', async () => {
@@ -658,19 +646,16 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
     expect(screen.queryByTestId('work-item-sheet')).toBeNull();
   });
 
-  it('o atalho N abre o modal também na Agenda (o cabeçalho não muda com a visão)', async () => {
+  it('o atalho N na Agenda leva o foco ao QuickAdd do dia (único da tela)', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
     renderModule();
     await screen.findAllByTestId('agenda-day-dots');
-
-    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
 
     act(() => {
       document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id: 'tasks-focus-quickadd' } }));
     });
 
-    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
-    // o QuickAdd do dia continua sendo o único da tela (nada de campo paralelo)
     expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
   });
 });
