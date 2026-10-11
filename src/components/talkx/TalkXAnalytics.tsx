@@ -1,40 +1,142 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
+import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+import { useActiveDepartments } from '@/hooks/team-chat/useActiveDepartments';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { BarChart3, TrendingUp, Users, CheckCircle2, XCircle, Target, Calendar, Zap, Sparkles } from 'lucide-react';
-import { DashboardKpiCard } from '@/components/dashboard/overview/DashboardKpiCard';
+import { BarChart3, TrendingUp, Users, CheckCircle2, Target, Calendar, Zap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
-import { IconTile, TalkXEmptyState, TalkXSkeletonRows, InsightCard, barsByDay, fmtDateTime, fmtInt, fmtPct } from './talkxShared';
+import { IconTile, KpiCard, KpiCardSkeleton, TalkXEmptyState, TalkXErrorState, TalkXSkeletonRows, InsightCard, fmtDateTime, fmtInt, fmtPct } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXAnalytics, variacaoPct, variacaoPontos, ANALYTICS_REFETCH_MS } from '@/hooks/integrations/useTalkXAnalytics';
 import { AnalyticsPerformanceChart } from './analytics/AnalyticsPerformanceChart';
 import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsPerformanceChart';
 import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
 import type { FunnelStep } from './analytics/AnalyticsFunnel';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
+import {
+  ANALYTICS_FILTER_DEFAULTS, AUDIENCE_OPTIONS, CHANNEL_OPTIONS,
+  PERIOD_LABELS, PERIOD_ORDER, fmtBRL, isValidAnalyticsDepartmentId, pctTexto, readAnalyticsFilters, resolveAnalyticsRange, writeAnalyticsFilters,
+  type AnalyticsCompareRow, type AnalyticsFilterValues, type AnalyticsPeriod,
+} from './talkxAnalyticsFilters';
 
 interface Props { campaigns: TalkXCampaign[]; isLoading?: boolean; isError?: boolean }
-type Period = '7d' | '30d' | '90d';
-const PERIOD_LABELS: Record<Period, string> = { '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', '90d': 'Últimos 90 dias' };
-const DAYS: Record<Period, number> = { '7d': 7, '30d': 30, '90d': 90 };
+
+// X185 — barra de filtros do Analytics: o estado, a URL, o intervalo do período e o
+// validação vivem em ./talkxAnalyticsFilters (módulo .ts, sem componente).
+type Period = AnalyticsPeriod;
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const PERFORMANCE_DAYS: Record<PerformancePeriod, number> = { '7d': 7, '30d': 30, '90d': 90 };
+
+function toPerformancePeriod(period: Period): PerformancePeriod {
+  return period === '7d' || period === '30d' || period === '90d' ? period : '30d';
+}
 
 export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
-  const [period, setPeriod] = useState<Period>('30d');
   // X186: seletor PRÓPRIO do gráfico de performance. `null` = ainda não foi tocado, então
-  // ele segue o filtro da tela (padrão pedido no cartão); escolhido, passa a mandar só nele.
-  const [chartPeriod, setChartPeriod] = useState<Period | null>(null);
+  // ele segue o filtro da tela quando o período é 7/30/90 dias; em mês/customizado,
+  // mantém 30 dias porque o gráfico só aceita estes três atalhos.
+  const [chartPeriod, setChartPeriod] = useState<PerformancePeriod | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null); // E74
-  const days = DAYS[period];
-  // pageLoadTime captured once via lazy init (outside render); cutoff derived stably
   const [pageLoadTime] = useState<number>(() => Date.now());
-  const cutoff = useMemo(() => new Date(pageLoadTime - days * 86_400_000), [pageLoadTime, days]);
+  // X185: os filtros da barra. A URL guarda o recorte para sobreviver ao recarregamento.
+  const [filters, setFilters] = useState<AnalyticsFilterValues>(() => (
+    typeof window === 'undefined' ? ANALYTICS_FILTER_DEFAULTS : readAnalyticsFilters(window.location.search)
+  ));
+
+  const setFilter = useCallback((patch: Partial<AnalyticsFilterValues>) => {
+    setFilters((prev) => {
+      const next = { ...prev, ...patch };
+      writeAnalyticsFilters(next);
+      return next;
+    });
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    const next = { ...ANALYTICS_FILTER_DEFAULTS };
+    setFilters(next);
+    writeAnalyticsFilters(next);
+  }, []);
+
+
+  const period = filters.period;
+  // O intervalo é derivado UMA vez por mudança de filtro (nada de `new Date()` a
+  // cada render, que faria a consulta do resumo mudar de chave sozinha).
+  const range = useMemo(() => resolveAnalyticsRange(filters), [filters]);
+  const cutoff = range.from;
+  const filtersActive = useMemo(
+    () => (Object.keys(ANALYTICS_FILTER_DEFAULTS) as (keyof AnalyticsFilterValues)[])
+      .some((k) => filters[k] !== ANALYTICS_FILTER_DEFAULTS[k]),
+    [filters],
+  );
   const filtered = useMemo(() => campaigns.filter((c) => c.started_at && new Date(c.started_at) >= cutoff), [campaigns, cutoff]);
+
+  // Equipe é filtro de admin/supervisor; sem esse papel a lista nem é consultada
+  // e nenhum valor vindo da URL é enviado para a RPC.
+  const canFilterTeam = useCRMAdminAccess() === true;
+  const { data: departments } = useActiveDepartments(canFilterTeam);
+  const effectiveDepartmentId = canFilterTeam && isValidAnalyticsDepartmentId(filters.departmentId)
+    ? filters.departmentId
+    : 'all';
+
+  // X185: os cinco KPIs e o comparativo saem da RPC `talkx_overview_stats` com os
+  // filtros da barra. A reconsulta de 60 s só roda com campanha em `sending`.
+  const hasSending = campaigns.some((c) => c.status === 'sending');
+  const {
+    data: analytics, isPending: analyticsPending, isError: analyticsError, refetch: refetchAnalytics,
+  } = useTalkXAnalytics({
+    from: range.from,
+    to: range.to,
+    channel: filters.channel,
+    audienceSource: filters.audienceSource,
+    departmentId: effectiveDepartmentId,
+  }, { live: hasSending });
+
+  // X185: card "Comparativo de períodos" no rail — seletor próprio; por padrão ele
+  // segue o período da barra (mesma chave de consulta, sem chamada extra).
+  const [comparePeriod, setComparePeriod] = useState<Period | null>(null);
+  const effectiveComparePeriod = comparePeriod ?? period;
+  const compareRange = useMemo(
+    () => resolveAnalyticsRange({ ...filters, period: effectiveComparePeriod }),
+    [filters, effectiveComparePeriod],
+  );
+  const {
+    data: compareStats, isError: compareError, refetch: refetchCompare,
+  } = useTalkXAnalytics({
+    from: compareRange.from,
+    to: compareRange.to,
+    channel: filters.channel,
+    audienceSource: filters.audienceSource,
+    departmentId: effectiveDepartmentId,
+  }, { live: hasSending });
+  const compareRows = useMemo<AnalyticsCompareRow[]>(() => {
+    const cur = compareStats?.current ?? null;
+    const prev = compareStats?.previous ?? null;
+    return [
+      {
+        label: 'Campanhas enviadas',
+        atual: cur ? fmtInt(cur.campaigns_sent) : '—',
+        anterior: prev ? fmtInt(prev.campaigns_sent) : '—',
+        variacao: variacaoPct(cur?.campaigns_sent, prev?.campaigns_sent),
+      },
+      {
+        label: 'Taxa de resposta',
+        atual: pctTexto(cur?.reply_rate_pct),
+        anterior: pctTexto(prev?.reply_rate_pct),
+        variacao: variacaoPontos(cur?.reply_rate_pct, prev?.reply_rate_pct),
+      },
+      {
+        label: 'Receita influenciada',
+        atual: fmtBRL(cur?.revenue) ?? '—',
+        anterior: fmtBRL(prev?.revenue) ?? '—',
+        variacao: variacaoPct(cur?.revenue, prev?.revenue),
+      },
+    ];
+  }, [compareStats]);
 
   const stats = useMemo(() => {
     const sent = filtered.reduce((a, c) => a + c.sent_count, 0);
@@ -64,39 +166,16 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     staleTime: 60_000,
   });
 
-  // E73: taxa de resposta real
-  const sentCampaignIds = useMemo(
-    () => filtered.filter((c) => c.status === 'completed' || c.status === 'sending').map((c) => c.id),
-    [filtered]
-  );
+  // E76: o resumo por segmento virou o KPI "Conversão por segmento" (X185), lido da
+  // RPC; o ranking de segmentos é da etapa X187.
 
-  // E76: analytics por segmento
-  const { segments: allSegments } = useTalkXSegments();
-  const top3Segments = useMemo(() => {
-    const map = new Map<string, { name: string; sent: number; total: number }>();
-    filtered.forEach((c) => {
-      if (!c.segment_id) return;
-      const existing = map.get(c.segment_id);
-      const name = allSegments?.find((sg) => sg.id === c.segment_id)?.name ?? c.segment_id.slice(0, 8);
-      map.set(c.segment_id, {
-        name,
-        sent: (existing?.sent ?? 0) + (c.sent_count ?? 0),
-        total: (existing?.total ?? 0) + (c.total_recipients ?? 0),
-      });
-    });
-    return [...map.values()]
-      .filter((sg) => sg.total > 0)
-      .map((sg) => ({ ...sg, rate: Math.round((sg.sent / sg.total) * 1000) / 10 }))
-      .sort((a, b) => b.rate - a.rate)
-      .slice(0, 3);
-  }, [filtered, allSegments]);
-
-  // V18: taxa de resposta calculada no servidor (replied_count / sent_count),
-  // sem re-query de talkx_recipients/messages no cliente.
-  const repliedTotal = filtered.reduce((a, c) => a + (c.replied_count ?? 0), 0);
-  const sentTotal = filtered.reduce((a, c) => a + c.sent_count, 0);
-  const replyRate = sentTotal > 0
-    ? Math.round((repliedTotal / sentTotal) * 1000) / 10 : null;
+  // X185: os cartões do topo e o comparativo de períodos usam o resumo da RPC.
+  // A taxa de resposta não é mais recalculada no navegador (janela de 24 h,
+  // só `status='sent'`, teto de 5.000) — vem de `reply_rate_pct` do servidor.
+  const current = analytics?.current ?? null;
+  const previous = analytics?.previous ?? null;
+  const dailyBars = useMemo(() => (analytics?.daily ?? []).map((d) => d.sent), [analytics]);
+  const repliedTotal = current?.replied ?? 0;
 
   // E74: recipients do painel lateral
   const { data: panelRecipients, isLoading: panelLoading } = useQuery({
@@ -121,22 +200,6 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
 
   const topCampaigns = useMemo(() => [...filtered].sort((a, b) => b.sent_count - a.sent_count).slice(0, 5), [filtered]);
 
-  // E82: comparativo taxa de entrega
-  // E82: usa campaigns (nao filtered) — periodo nao deve excluir campanhas antigas do comparativo
-  // Envio (%) = sent_count/total_recipients (dado rastreado; delivered aguarda E87)
-  const compareData = useMemo(() => {
-    const comp = campaigns
-      .filter((c) => c.status === 'completed' && c.total_recipients > 0)
-      .sort((a, b) => new Date(b.completed_at ?? b.updated_at).getTime() - new Date(a.completed_at ?? a.updated_at).getTime())
-      .slice(0, 5)
-      .map((c) => ({
-        name: c.name.length > 16 ? c.name.slice(0, 15) + '…' : c.name,
-        'Envio (%)': c.total_recipients > 0 ? Math.round((c.sent_count / c.total_recipients) * 1000) / 10 : 0,
-        'Falha (%)': (c.sent_count + c.failed_count) > 0 ? Math.round((c.failed_count / (c.sent_count + c.failed_count)) * 1000) / 10 : 0,
-      }))
-      .reverse();
-    return comp;
-  }, [campaigns]);
   // X186: degraus do funil da campanha. Conversão por mensagem ainda não é medida pela
   // plataforma (etapa de banco X073): a fonte entra como `null` e a tela mostra "sem dados
   // ainda" — nunca um zero que não foi medido (A9).
@@ -149,10 +212,10 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   ]), [stats, repliedTotal]);
 
   // X186: série diária do gráfico de performance. O período é o do seletor próprio do
-  // gráfico (padrão = filtro da tela); o corte da tela continua valendo para os KPIs.
-  const effectiveChartPeriod: PerformancePeriod = chartPeriod ?? period;
+  // gráfico; por padrão acompanha a barra quando ela usa 7/30/90 dias.
+  const effectiveChartPeriod: PerformancePeriod = chartPeriod ?? toPerformancePeriod(period);
   const chartCutoff = useMemo(
-    () => new Date(pageLoadTime - DAYS[effectiveChartPeriod] * 86_400_000),
+    () => new Date(pageLoadTime - PERFORMANCE_DAYS[effectiveChartPeriod] * 86_400_000),
     [pageLoadTime, effectiveChartPeriod],
   );
   const { data: performancePoints, isLoading: performanceLoading, isError: performanceError } = useQuery({
@@ -223,29 +286,109 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
-        <div className="flex items-center gap-2 flex-wrap">
-        {(['7d', '30d', '90d'] as Period[]).map((p) => (
-          <button key={p} type="button" onClick={() => setPeriod(p)} className={cn('h-8 px-3.5 rounded-lg text-xs font-medium border transition-colors', period === p ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>{PERIOD_LABELS[p]}</button>
-        ))}
+        {/* X185: barra de filtros — 4 cartões-seletor + "Limpar filtros". O recorte
+            fica na URL para sobreviver ao recarregamento. */}
+        <div className={cn('grid grid-cols-2 gap-3', canFilterTeam ? 'xl:grid-cols-4' : 'xl:grid-cols-3')}>
+          <div className="rounded-xl border border-border/70 bg-card p-3">
+            <label htmlFor="txa-periodo" className="text-3xs font-medium text-muted-foreground uppercase tracking-wide">Período</label>
+            <select id="txa-periodo" aria-label="Período" value={filters.period}
+              onChange={(e) => setFilter({ period: e.target.value as Period })}
+              className="mt-1 w-full h-9 px-2 rounded-lg text-xs bg-input/40 border border-border/70 text-foreground">
+              {PERIOD_ORDER.map((p) => <option key={p} value={p}>{PERIOD_LABELS[p]}</option>)}
+            </select>
+            {filters.period === 'custom' && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <input type="date" aria-label="De" value={filters.from} onChange={(e) => setFilter({ from: e.target.value })}
+                  className="h-8 min-w-0 flex-1 px-1.5 rounded-lg text-2xs bg-input/40 border border-border/70 text-foreground" />
+                <span className="text-3xs text-muted-foreground">até</span>
+                <input type="date" aria-label="Até" value={filters.to} onChange={(e) => setFilter({ to: e.target.value })}
+                  className="h-8 min-w-0 flex-1 px-1.5 rounded-lg text-2xs bg-input/40 border border-border/70 text-foreground" />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border/70 bg-card p-3">
+            <label htmlFor="txa-canal" className="text-3xs font-medium text-muted-foreground uppercase tracking-wide">Canal</label>
+            <select id="txa-canal" aria-label="Canal" value={filters.channel}
+              onChange={(e) => setFilter({ channel: e.target.value })}
+              className="mt-1 w-full h-9 px-2 rounded-lg text-xs bg-input/40 border border-border/70 text-foreground">
+              {CHANNEL_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+
+          <div className="rounded-xl border border-border/70 bg-card p-3">
+            <label htmlFor="txa-origem" className="text-3xs font-medium text-muted-foreground uppercase tracking-wide">Origem do público</label>
+            <select id="txa-origem" aria-label="Origem do público" value={filters.audienceSource}
+              onChange={(e) => setFilter({ audienceSource: e.target.value })}
+              className="mt-1 w-full h-9 px-2 rounded-lg text-xs bg-input/40 border border-border/70 text-foreground">
+              {AUDIENCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+
+          {/* Equipe: só admin/supervisor recebe a lista de departamentos. */}
+          {canFilterTeam && (
+            <div className="rounded-xl border border-border/70 bg-card p-3">
+              <label htmlFor="txa-equipe" className="text-3xs font-medium text-muted-foreground uppercase tracking-wide">Equipe</label>
+              <select id="txa-equipe" aria-label="Equipe" value={filters.departmentId}
+                onChange={(e) => setFilter({ departmentId: e.target.value })}
+                className="mt-1 w-full h-9 px-2 rounded-lg text-xs bg-input/40 border border-border/70 text-foreground">
+                <option value="all">Todas as equipes</option>
+                {(departments ?? []).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-2xs text-muted-foreground">
+            {hasSending
+              ? `Atualizando a cada ${Math.round(ANALYTICS_REFETCH_MS / 1000)} s — há campanha em envio`
+              : 'Sem campanha em envio: os números só mudam quando você atualiza'}
+          </p>
+          <button type="button" onClick={clearFilters} disabled={!filtersActive}
+            className="h-9 px-3 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 motion-safe:transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+            Limpar filtros
+          </button>
+        </div>
+
+      {/* X185: cinco KPIs lidos da RPC, com variação contra o período anterior. */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
+        {analyticsError && !current ? (
+          // Erro do servidor não é "sem dados": a tela diz que falhou e oferece retentar.
+          <div className="col-span-full">
+            <TalkXErrorState entity="estatísticas do período" onRetry={() => { void refetchAnalytics(); }} />
+          </div>
+        ) : analyticsPending && !current ? (
+          Array.from({ length: 5 }).map((_, i) => <KpiCardSkeleton key={i} />)
+        ) : (
+          <>
+            <KpiCard icon={Zap} color="blue" index={0} label="Campanhas enviadas"
+              value={current ? current.campaigns_sent : null}
+              hint={current ? `${fmtInt(current.sent)} mensagens enviadas no período` : undefined}
+              bars={dailyBars}
+              comparison={{ previous: previous?.campaigns_sent ?? null, kind: 'relative' }} />
+            <KpiCard icon={CheckCircle2} color="green" index={1} label="Taxa de entrega"
+              value={current ? current.delivery_rate_pct : null}
+              hint={current ? `${fmtInt(current.failed)} falhas · ${fmtInt(current.delivered)} de ${fmtInt(current.sent)} entregues` : undefined}
+              comparison={{ previous: previous?.delivery_rate_pct ?? null, kind: 'points' }} />
+            <KpiCard icon={Users} color="violet" index={2} label="Taxa de resposta"
+              value={current ? current.reply_rate_pct : null}
+              hint={current ? `${fmtInt(current.replied)} respostas em ${fmtInt(current.sent)} envios` : undefined}
+              comparison={{ previous: previous?.reply_rate_pct ?? null, kind: 'points' }} />
+            <KpiCard icon={Target} color="amber" index={3} label="Conversão por segmento"
+              value={current ? current.segment_conversion_rate_pct ?? null : null}
+              hint="Conversões sobre enviadas, só de destinatários com segmento"
+              comparison={{ previous: previous?.segment_conversion_rate_pct ?? null, kind: 'points' }} />
+            <KpiCard icon={TrendingUp} color="green" index={4} label="Receita influenciada"
+              value={current?.revenue ?? null}
+              hint={current?.revenue == null ? 'Receita atribuída às conversões das campanhas do período' : fmtBRL(current.revenue) ?? undefined}
+              comparison={{ previous: previous?.revenue ?? null, kind: 'relative' }} />
+          </>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
-        <DashboardKpiCard size="hero" index={0} label="Campanhas enviadas" value={fmtInt(filtered.length)} delta={null} tile="blue" icon={Zap} bars={barsByDay(filtered.map((c) => c.started_at))} barsColor="blue" />
-        <DashboardKpiCard size="hero" index={1} label="Taxa de envio" value={stats.total > 0 ? `${String(stats.successRate).replace('.', ',')}%` : '—'} delta={null} tile="green" icon={CheckCircle2} bars={null} barsColor="green" chart="none" />
-        <DashboardKpiCard size="hero" index={2} label="Taxa de resposta" value={replyRate !== null ? `${String(replyRate).replace('.', ',')}%` : '—'} delta={sentTotal > 0 ? { text: `${repliedTotal} de ${sentTotal} responderam`, tone: 'muted' } : { text: 'sem envios no período', tone: 'muted' }} tile="violet" icon={Users} bars={null} barsColor="violet" chart="none" />
-        <DashboardKpiCard size="hero" index={3}
-          label="Envio por segmento"
-          value={top3Segments.length > 0 ? `${top3Segments[0].rate.toString().replace('.', ',')}%` : '—'}
-          delta={top3Segments.length > 0
-            ? { text: top3Segments.map((sg) => `${sg.name.slice(0, 14)}: ${sg.rate.toString().replace('.', ',')}%`).join(' | '), tone: 'muted' }
-            : { text: 'sem campanhas com segmento no período', tone: 'muted' }}
-          tile="amber" icon={Target} bars={null} barsColor="amber" chart="none" />
-        <DashboardKpiCard size="hero" index={4} label="Mensagens enviadas" value={fmtInt(stats.sent)} delta={null} tile="blue" icon={TrendingUp} bars={null} barsColor="blue" chart="none" />
-        <DashboardKpiCard size="hero" index={5} label="Falhas" value={fmtInt(stats.failed)} delta={stats.total > 0 ? { pct: -Math.round((stats.failed / stats.total) * 100), invert: true } : null} tile="red" icon={XCircle} bars={null} barsColor="red" chart="none" />
-      </div>
-
-      {/* E75: respondentes agora derivam de replied_count no servidor (V18); a
-          segmentação individual de respondentes deixa de ser consultada aqui. */}
+      {/* E75: respondentes agora derivam do servidor (V18); a segmentação
+          individual de respondentes deixa de ser consultada aqui. */}
 
       {/* X186: performance no tempo (4 séries) e funil em SVG proporcional. Os dois
           substituem o gráfico de barras "Performance por Campanha" e o funil de larguras
@@ -357,37 +500,6 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
           </div>
         </section>
       )}
-      {/* E82: comparativo taxa de entrega */}
-      {compareData.length >= 2 && (
-        <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <IconTile icon={TrendingUp} color="green" size={36} />
-            <div>
-              <p className="text-[15px] font-bold text-foreground">Comparativo de Campanhas</p>
-              <p className="text-xs text-foreground-secondary">{`Últimas ${compareData.length} concluídas — envio vs falha`}</p>
-            </div>
-          </div>
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={compareData} margin={{ top: 4, right: 4, left: -12, bottom: 32 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/.4)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} interval={0} angle={-18} textAnchor="end" height={40} />
-                <YAxis tick={{ fontSize: CHART_TICK_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
-                <ReTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: CHART_TOOLTIP_FONT_SIZE }} formatter={(v) => [String(v) + '%', '']} />
-                <Bar dataKey="Envio (%)" fill="hsl(var(--dash-green))" radius={[4, 4, 0, 0]} maxBarSize={48}>
-                  <LabelList dataKey="Envio (%)" position="top" formatter={(v: unknown) => Number(v) > 0 ? String(v) + '%' : ''} style={{ fontSize: CHART_LABEL_FONT_SIZE, fill: "hsl(var(--foreground-secondary))" }} />
-                </Bar>
-                <Bar dataKey="Falha (%)" fill="hsl(var(--dash-red))" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center gap-4 justify-end">
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-green" /><span className="text-2xs text-foreground-secondary">Taxa de envio</span></div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-dash-red" /><span className="text-2xs text-foreground-secondary">Taxa de falha</span></div>
-          </div>
-        </section>
-      )}
-
       {/* E74: painel de detalhe por campanha */}
       {selectedCampaignId && (
         <section className="rounded-2xl bg-card border border-border/70 p-4">
@@ -444,6 +556,41 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
 
         </div>
         <div className="space-y-4 min-w-0">
+          {/* X185: comparativo de PERÍODOS no rail, com seletor próprio. Três linhas
+              (campanhas enviadas, taxa de resposta, receita) em 2 colunas e variação. */}
+          <section className="rounded-2xl bg-card border border-border/70 p-4 space-y-3" data-testid="comparativo-periodos">
+            <div className="flex items-center gap-2">
+              <IconTile icon={TrendingUp} color="violet" size={36} />
+              <div className="min-w-0">
+                <p className="text-[15px] font-bold text-foreground">Comparativo de períodos</p>
+                <p className="text-xs text-foreground-secondary">Atual contra o período anterior</p>
+              </div>
+            </div>
+            <select aria-label="Período do comparativo" value={effectiveComparePeriod}
+              onChange={(e) => setComparePeriod(e.target.value as Period)}
+              className="w-full h-9 px-2 rounded-lg text-xs bg-input/40 border border-border/70 text-foreground">
+              {PERIOD_ORDER.map((p) => <option key={p} value={p}>{PERIOD_LABELS[p]}</option>)}
+            </select>
+            <div className="space-y-2">
+              {compareError && !compareStats ? (
+                <TalkXErrorState entity="estatísticas do comparativo" onRetry={() => { void refetchCompare(); }} />
+              ) : compareRows.map((row) => (
+                <div key={row.label} className="grid grid-cols-2 gap-2 items-center rounded-lg border border-border/60 bg-input/20 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-2xs text-foreground-secondary">{row.label}</p>
+                    <p className="text-[13px] font-semibold text-foreground tabular-nums truncate">{row.atual}</p>
+                  </div>
+                  <div className="text-right">
+                    {row.variacao
+                      ? <span className={cn('text-2xs font-semibold tabular-nums', row.variacao.startsWith('-') ? 'text-destructive' : 'text-success')}>{row.variacao}</span>
+                      : <span className="text-2xs text-muted-foreground">sem comparação</span>}
+                    <p className="text-3xs text-muted-foreground tabular-nums">antes: {row.anterior}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* E94: Insights heurísticos */}
           {insights && insights.length > 0 && (
             <section className="space-y-3">
