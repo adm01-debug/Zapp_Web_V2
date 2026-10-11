@@ -186,6 +186,45 @@ BEGIN
     RAISE EXCEPTION 'T10 FALHOU: linha de bypass sobrou (%)', v_rows;
   END IF;
 
+  -- ------------------------------------------------ T12 seed idempotente (roda de novo, nao duplica)
+  -- Mesmas duas instruções da migration; a segunda vez nao pode mudar as contagens.
+  INSERT INTO public.permissions (name, description, category) VALUES
+    ('inbox.view_department', 'Inbox: ver as conversas do proprio departamento', 'inbox'),
+    ('inbox.view_all',        'Inbox: ver as conversas de todos os departamentos', 'inbox')
+  ON CONFLICT (name) DO NOTHING;
+  INSERT INTO public.role_permissions (role, permission_id)
+  SELECT matrix.role, permission.id
+    FROM (VALUES ('admin'::public.app_role), ('supervisor'::public.app_role)) AS matrix(role)
+    JOIN public.permissions AS permission
+      ON permission.name IN ('inbox.view_department', 'inbox.view_all')
+  ON CONFLICT (role, permission_id) DO NOTHING;
+  SELECT count(*) INTO v_perms FROM public.permissions
+   WHERE name IN ('inbox.view_department','inbox.view_all');
+  SELECT count(*) INTO v_rows FROM public.role_permissions rp
+   JOIN public.permissions p ON p.id = rp.permission_id
+   WHERE p.name IN ('inbox.view_department','inbox.view_all');
+  IF v_perms <> 2 OR v_rows <> 4 THEN
+    RAISE EXCEPTION 'T12 FALHOU: seed nao idempotente (permissoes=%, atribuicoes=%)', v_perms, v_rows;
+  END IF;
+
+  -- ------------------------------------------------ T13 a hora compoe a dedupe_key
+  -- A chave gravada termina no balde da hora UTC; mesma linha numa hora diferente NAO colide.
+  SELECT dedupe_key INTO v_acl FROM public.audit_logs
+   WHERE action = 'unauthorized_inbox_scope_access' AND user_id = v_user AND details->>'scope' = 'all';
+  IF v_acl <> 'unauthorized_inbox_scope_access:'||v_user||':all:'
+             ||to_char(now() at time zone 'utc', 'YYYYMMDDHH24') THEN
+    RAISE EXCEPTION 'T13 FALHOU: dedupe_key sem a composicao usuario+escopo+hora (%)', v_acl;
+  END IF;
+  INSERT INTO public.audit_logs (user_id, action, details, dedupe_key)
+  VALUES (v_user, 'unauthorized_inbox_scope_access', '{"scope":"all"}'::jsonb,
+          'unauthorized_inbox_scope_access:'||v_user||':all:'
+          ||to_char((now() at time zone 'utc') + interval '1 hour', 'YYYYMMDDHH24'));
+  SELECT count(*) INTO v_rows FROM public.audit_logs
+   WHERE action = 'unauthorized_inbox_scope_access' AND user_id = v_user;
+  IF v_rows <> 4 THEN
+    RAISE EXCEPTION 'T13 FALHOU: hora diferente deveria gerar nova linha (achei %)', v_rows;
+  END IF;
+
   -- ---------------------------------------------------------------- T11 rollback do cabeçalho EXECUTA
   -- As 3 linhas abaixo são, literalmente, o `-- Rollback (SQL executável, na ordem):` da migration.
   -- Rodam dentro da transação: ao final o ROLLBACK desfaz o DROP/DELETE e o banco volta ao estado.
@@ -205,7 +244,7 @@ BEGIN
     RAISE EXCEPTION 'T11 FALHOU: rollback nao removeu as permissoes (%)', v_perms;
   END IF;
 
-  RAISE NOTICE 'inbox_scope_permissions: suite OK (T1 catalogo, T2 papeis, T3 ACL, T4 gravacao, T5 dedupe, T6 escopo, T7 invalido, T8 anon, T9 sem identidade, T10 escrita direta, T11 rollback)';
+  RAISE NOTICE 'inbox_scope_permissions: suite OK (T1 catalogo, T2 papeis, T3 ACL, T4 gravacao, T5 dedupe, T6 escopo, T7 invalido, T8 anon, T9 sem identidade, T10 escrita direta, T12 seed idempotente, T13 dedupe por hora, T11 rollback)';
 END $inbox_scope_perm$;
 
 ROLLBACK;
