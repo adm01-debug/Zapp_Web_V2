@@ -8,6 +8,9 @@ import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/w
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
+// Etapa 069: o estado de UI (seleção/painel/modal/densidade) passa a viver no
+// contexto — as superfícies leem por `useTasksUi` em vez de reabrir este arquivo.
+import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
@@ -232,6 +235,7 @@ export function TasksModule() {
   }
 
   return (
+    <TasksUiProvider>
     <div data-testid="tasks-module" className="flex flex-col h-full gap-4">
       {/* Etapa 78: região viva única do módulo — narra criar, concluir, mover e
           desfazer sem roubar o foco de quem usa leitor de tela. */}
@@ -368,5 +372,6 @@ export function TasksModule() {
         focusField={focusField}
       />
     </div>
+    </TasksUiProvider>
   );
 }
