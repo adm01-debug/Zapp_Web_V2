@@ -1,18 +1,38 @@
-Especialista: worker (docs)
+Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão sensível.
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- `ESTADO.md` (linha da tabela do grupo B, edge `talkx-link`): a âncora
+  `supabase/functions/talkx-send/index.ts:455` passou para `...:523`.
+  Motivo: a entrega de t_bb810a9e (branch `v2/talkx-teste-conexao-n105-2610101539fe3b`,
+  commit `71b706b4e`) acrescentou linhas em `supabase/functions/talkx-send/index.ts` (limite
+  do envio de teste + auditoria de falha), deslocando a chamada real
+  `/functions/v1/talkx-link` de 455 para 523. O inventário publicado ficou apontando para
+  uma linha que não cita mais a edge — exatamente o caso que a guarda
+  `scripts/ci/docs-estado-registry-convention.unit.mjs` existe para pegar
+  ("Mudou o código? O vermelho obriga a atualizar o documento na mesma entrega").
+- Passos: `git cherry-pick` de `6139d4210` + `610c10d31` + `71b706b4e` (a branch da entrega,
+  sem recomeçar; o 6139d4210 é quem cria a migration, por isso ele vem junto do 71b706b4e),
+  sobre a ponta de `dia/2026-10-11` (`ebf1b4314`). Nenhuma asserção foi afrouxada; só o
+  número da âncora foi corrigido.
 
 ## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
-
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+- vermelho antes (estado empilhado, sem a minha correção):
+  `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs`
+  → `not ok 2 - ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge`
+  → `AssertionError: âncora desatualizada: supabase/functions/talkx-send/index.ts:455 não cita \`talkx-link\``
+  (mesmo item que o `ci_espelho.sh` reporta: `node: ESTADO.md cita só âncoras reais, ...`).
+- verde depois (mesmo comando, mesmo arquivo de guarda):
+  `node --test --test-reporter=tap scripts/ci/docs-estado-registry-convention.unit.mjs`
+  → `# tests 11` · `# pass 11` · `# fail 0` (exit 0)
+- varredura de TODAS as âncoras do ESTADO.md (o teste real para na primeira desatualizada):
+  `.tmp/check-anchors.mjs` → `ANCHORS OK` (nenhuma outra âncora desalinhada).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (131s)`.
 
 ## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+- Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o `HERMES-GUARD` bloqueia
+  qualquer comando que cite aquele caminho de ferramenta (`mexer nas guardas/ferramentas do
+  Hermes é proibido`). Como o item do espelho é exatamente o teste node que rodei acima, a
+  prova é a mesma execução; não contornei o bloqueio.
+- Não toquei em `supabase/functions/**` nem na migration: a causa era só a âncora do documento.
+
+sha do commit: `8dc79b7b4`.
