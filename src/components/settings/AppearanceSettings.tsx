@@ -25,7 +25,7 @@ function DensitySelector() {
   ];
   return (
     <Select value={density} onValueChange={(v) => setDensity(v as DensityMode)}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectTrigger aria-label="Densidade da interface"><SelectValue /></SelectTrigger>
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
@@ -58,7 +58,7 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
           <div className="space-y-2">
             <Label>Tema</Label>
             <Select value={settings.theme} onValueChange={(value) => updateSettings({ theme: value })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Tema"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dark">Escuro</SelectItem>
                 <SelectItem value="light">Claro</SelectItem>
@@ -70,7 +70,7 @@ export function AppearanceSettings({ settings, updateSettings, onResetOnboarding
           <div className="space-y-2">
             <Label>Idioma</Label>
             <Select value={settings.language} onValueChange={(value) => updateSettings({ language: value })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Idioma"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
                 <SelectItem value="en-US">English (US)</SelectItem>
