@@ -198,10 +198,12 @@ checa_contrato() { # fase
     "BEGIN; $pref_x SELECT public.assume_conversation('$C_OWN'); COMMIT;" || return 1
   check_error "$fase: contato ja tem outro responsavel (already_assigned)" 'already_assigned' \
     "BEGIN; $pref_m2 SELECT public.assume_conversation('$C_OWN'); COMMIT;" || return 1
-  assert_eq "$fase" 'admin assume por cima de outro (takeover)' "true|$P_ADMIN|open" \
+  assert_eq "$fase" 'admin assume conversa ja open e mantem open (takeover)' "true|$P_ADMIN|open" \
     "$(assume_fields "$pref_admin" "$C_OWN")" || return 1
+  assert_eq "$fase" 'estado apos takeover admin (open + responsavel)' "$P_ADMIN|open" \
+    "$(psql_q -c "SELECT assigned_to||'|'||conversation_status FROM public.contacts WHERE id='$C_OWN'")" || return 1
 
-  check_error "$fase: assumir conversa encerrada (conversation_not_active)" 'conversation_not_active' \
+  check_error "$fase: admin assume conversa resolved retorna conversation_not_active" 'conversation_not_active' \
     "BEGIN; $pref_admin SELECT public.assume_conversation('$C_RES'); COMMIT;" || return 1
 
   check_error "$fase: quem nao e o dono nao pode devolver (42501)" '42501' \
