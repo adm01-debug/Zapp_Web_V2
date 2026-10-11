@@ -87,6 +87,30 @@ describe('evolutionToRealtimeMessage — tipos sem renderização', () => {
     expect(message.unsupportedKind).toBeUndefined();
   });
 
+  it('ephemeralMessage com conteúdo NÃO some como controle: vira unsupported/other com content', () => {
+    // Recusa rodada 1: ephemeralMessage é invólucro do modo temporário — o texto
+    // é mensagem real do usuário e precisa continuar visível (fallback).
+    const message = evolutionToRealtimeMessage(
+      externalMessage({ message_type: 'ephemeralMessage', content: 'Oi, modo temporário' }),
+    );
+    expect(message.message_type).toBe('unsupported');
+    expect(message.unsupportedKind).toBe('other');
+    expect(message.content).toBe('Oi, modo temporário');
+  });
+
+  it('tipo desconhecido só com mídia (content vazio) vira unsupported/other', () => {
+    const message = evolutionToRealtimeMessage(
+      externalMessage({
+        message_type: 'algumTipoNovo',
+        content: null,
+        caption: null,
+        media_url: 'https://cdn.exemplo/x.bin',
+      }),
+    );
+    expect(message.message_type).toBe('unsupported');
+    expect(message.unsupportedKind).toBe('other');
+  });
+
   it('mensagem de texto comum não muda', () => {
     const message = evolutionToRealtimeMessage(externalMessage({ message_type: 'conversation', content: 'Olá' }));
     expect(message.message_type).toBe('text');
