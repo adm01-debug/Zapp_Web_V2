@@ -24,3 +24,6 @@ Especialista: worker (sql) (area-sql-banco)
 - Não adicionei arquivo de teste: o cartão passa só a migration; um `.test.sh` novo exigiria passo em `.github/workflows/db-guard.yml`, fora do escopo.
 - Não toquei no ingest de 8/11 argumentos nem em Edge/telas: a mudaça entra como sobrecarga de 12 argumentos (aridade disjunta), então a chamada atual continua resolvendo na função existente.
 - Efeito colateral documentado: se a #69 já estiver na base, o rollback desta migration também remove a outbox que ela criou (o inverse exato inclui o que esta migration cria quando a #69 falta). No caso real de hoje — sem a #69 na base — o rollback é o inverse exato.
+
+## Sobre o aviso automático "SEM DDL/migration"
+- Não procede. Este é um cartão de banco: a entrega É a migration, o único arquivo do diff (o rodapé-padrão "sem DDL/migration" do template veio copiado de cartões de front). O trabalho anterior do mesmo cartão também era esta migration. Repito o mesmo comando.
