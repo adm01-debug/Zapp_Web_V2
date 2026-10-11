@@ -275,9 +275,12 @@ export function TasksModule() {
           filters={filtros.filters}
           searchText={filtros.textoDaBusca}
           contactOptions={contactOptions}
+          mode={mode}
           onSearch={filtros.setSearch}
           onPrio={filtros.setPrio}
           onContact={filtros.setContact}
+          onStatus={filtros.setStatus}
+          onDue={filtros.setDue}
           onToggleAlarm={filtros.toggleAlarm}
           onToggleDone={filtros.toggleDone}
           onClear={filtros.clear}
