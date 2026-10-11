@@ -1,23 +1,28 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workertestes (worker (testes) — area-testes-do-produto)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+- scripts/tarefas/seed-local-imagens.ts — a semente passou a carimbar `created_at` das 5 concluídas pelo ciclo da própria tarefa (`cicloDias` 1,0/1,2/1,4/1,6/1,8, média = 1,4 dia), para o critério D13 (tempo médio = da CRIAÇÃO à conclusão). `started_at` ficou no meio do ciclo (cicloDias/2), garantindo `created_at <= started_at <= completed_at`. O bloco `conferir()` agora mede `avg(completed_at - created_at)` nas concluídas dos últimos 7 dias e aborta se != 1,4; o comentário do topo e o doc foram alinhados a D13.
+- docs/tarefas/LINHA_DE_BASE.md — a linha do tempo médio citava `started_at → completed_at`; trocada por `created_at → completed_at` (D13).
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Sem migração, sem Edge Function, sem dependência nova. Roda só no banco LOCAL; recusa host não-local.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+## Prova das 5 concluídas (banco local, consulta na tabela real)
+```
+ id  | ciclo | start_concl | coerente | ha_dias
+ 115 |  1.00 |        0.50 | t        |     1.0
+ 116 |  1.20 |        0.60 | t        |     2.0
+ 117 |  1.40 |        0.70 | t        |     3.0
+ 118 |  1.60 |        0.80 | t        |     4.0
+ 119 |  1.80 |        0.90 | t        |     5.0
+ media = 1.4000   (todas concluídas dentro dos 7 dias; coerente = created<=started<=completed)
+```
+Idempotência: 2 rodadas seguidas → `tarefas 19 | contatos 4` (sem duplicar).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Prova vermelho → verde
+- vermelho antes (mutei `created_at` das concluídas para o valor antigo de 20 dias): `bun scripts/tarefas/seed-local-imagens.ts` → `error: seed tarefas-local: tempo médio esperado 1.4 dia, encontrado 17` (conferir, linha 297).
+- verde depois (restaurado): `bun scripts/tarefas/seed-local-imagens.ts` → `tempo médio (created_at→completed_at) = 1.4 dia`; `14 abertas (3+4+3+4), 5 concluídas, 2 atrasadas, 4 para hoje`; `contatos: 4 (2 com foto, 2 sem foto, 2 cliente)`.
+- recusa fora do banco local: `API_URL=https://projeto.supabase.co bun scripts/tarefas/seed-local-imagens.ts` → `error: seed tarefas local: API_URL aponta para host não-local (projeto.supabase.co). Proibido — só banco local.`
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Etapa 003 (capturas visuais): recortada por acordo do planejador para o cartão `t_9807f20f` (já na fila). Este cartão entrega só 004 e 009.
+- Não toquei banco/Edge/migração nem qualquer arquivo fora de `scripts/tarefas/` e `docs/tarefas/`.
