@@ -343,10 +343,10 @@ begin
 end;
 $$;
 
-revoke all on function public.toggle_message_favorite(uuid) from public, anon;
-revoke all on function public.pin_message(uuid) from public, anon;
-revoke all on function public.unpin_message(uuid) from public, anon;
-revoke all on function public.report_message(uuid, text, text) from public, anon;
+revoke all on function public.toggle_message_favorite(uuid) from public, anon, authenticated;
+revoke all on function public.pin_message(uuid) from public, anon, authenticated;
+revoke all on function public.unpin_message(uuid) from public, anon, authenticated;
+revoke all on function public.report_message(uuid, text, text) from public, anon, authenticated;
 
 grant execute on function public.toggle_message_favorite(uuid) to authenticated, service_role;
 grant execute on function public.pin_message(uuid) to authenticated, service_role;
