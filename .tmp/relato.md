@@ -36,6 +36,9 @@ o hook passou a autenticar por `getSession`+`fetch` (commit 849efb253) e o arqui
 
 ## O que NÃO fiz e por quê
 - Não commitei código: o cartão manda fechar sem commit quando já resolvido. `git diff --name-only
-  dia/2026-10-11...HEAD` → vazio.
+  dia/2026-10-11...HEAD` → apenas `.tmp/relato.md` (este relato); NENHUM arquivo de código.
+- Critério 5 ("o diff mostra só o arquivo de teste"): não se aplica ao caminho "já corrigido" que o
+  próprio cartão abre — a correção do mock já está na ponta de `dia/2026-10-11`, então não há arquivo
+  de teste a mudar. O diff contra a base não traz código, só este relato.
 - Não toquei em `src/hooks/calls/useCallRecording.ts` nem em `RecordingPlayer.tsx` (proibido pelo cartão).
 - Não afrouxei/reescrevi asserção alguma (a de `not.toContain('http')` no `c3` segue intacta e verde).
