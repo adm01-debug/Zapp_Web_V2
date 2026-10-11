@@ -6364,36 +6364,59 @@ export type Database = {
           color: string
           created_at: string
           description: string | null
+          distribution: string
           id: string
           is_active: boolean | null
+          max_per_agent: number | null
           max_wait_time_minutes: number | null
           name: string
+          overflow_queue_id: string | null
+          paused: boolean
           priority: number | null
+          sticky_enabled: boolean
           updated_at: string
         }
         Insert: {
           color?: string
           created_at?: string
           description?: string | null
+          distribution?: string
           id?: string
           is_active?: boolean | null
+          max_per_agent?: number | null
           max_wait_time_minutes?: number | null
           name: string
+          overflow_queue_id?: string | null
+          paused?: boolean
           priority?: number | null
+          sticky_enabled?: boolean
           updated_at?: string
         }
         Update: {
           color?: string
           created_at?: string
           description?: string | null
+          distribution?: string
           id?: string
           is_active?: boolean | null
+          max_per_agent?: number | null
           max_wait_time_minutes?: number | null
           name?: string
+          overflow_queue_id?: string | null
+          paused?: boolean
           priority?: number | null
+          sticky_enabled?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "queues_overflow_queue_id_fkey"
+            columns: ["overflow_queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limit_configs: {
         Row: {

@@ -69,6 +69,12 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // Contrato de distribuicao/transbordo de filas (round robin, menos ocupado, habilidade,
+  // max_per_agent, fixacao, fila pausada e overflow sem ciclo) em PG 17 descartavel (docker
+  // local), contra a migration 20261011193310 — segue a mesma receita das suites acima e
+  // inclui o rollback de verdade. Passo de uma linha em db-guard.yml — promover pelo dono
+  // do workflow.
+  'scripts/db-audit/queues-distribution-overflow.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
