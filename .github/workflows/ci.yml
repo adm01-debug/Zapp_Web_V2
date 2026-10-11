@@ -381,6 +381,9 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
+      - name: 🛡️ Guarda src/ nao lê VITE_SUPABASE_URL/PUBLISHABLE_KEY
+        run: node scripts/ci/check-supabase-url-import-meta.mjs
+
   # ===========================================
   # JOB 5: E2E Tests (Playwright)
   # ===========================================
