@@ -1,18 +1,23 @@
-Especialista: worker (docs)
+Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- src/hooks/tasks/workItemFilters.ts (etapas 024/037): `TasksFilters` ganhou `status` (WorkItemStatus | 'all') e `due` ('all'|'overdue'|'today'|'week'|'none'). `filtersFromSearch` lê os dois da URL (`?status=`, `?due=`), ignora valor fora da lista (cai em 'all') e mantém o `q` herdado; `searchWithFilters` grava só o que difere do padrão e preserva os params alheios (`view`, `task`); `isFilterActive` conta os dois como filtro ativo. Como `useTasksFilters.clear()` aplica `DEFAULT_FILTERS` sobre a URL corrente, "Limpar tudo" zera `status` e `due` (e o `q` da correção do cartão pai não volta).
+- src/hooks/tasks/workItemAggregates.ts (etapas 024/037): `applyFilters` passou a RECORTAR por estado e prazo, com `now` injetável (default `new Date()`). `today` segue o veredito de `bucketByDue` (prazo de hoje SEM contar o já vencido); `week` é a janela dos próximos 7 dias; `none` é o sem prazo. Um estado escolhido manda no lugar do toggle "concluídas" (`done`): `status=doing&done=0` devolve a coluna, não vazio.
+- src/hooks/tasks/workItem.types.ts (etapa 081): `KANBAN_COLUMNS` ganhou `subtitle` curto — "A organizar", "Próximas ações", "Conclua uma para iniciar outra", "Dependências externas", "Últimos 7 dias" — e a `policy` longa continua intacta.
+- Testes: `workItemColumns.test.ts` (novo); `workItemFilters.test.ts` (+4 casos de URL round-trip); `useTasksFilters.test.tsx` (+1); `workItemAggregates.test.ts` (+7 de recorte); `QuickAdd.test.tsx` (etapa 041: Ctrl+2 e o caso "sem linguagem natural").
 
 ## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- vermelho antes (só os testes novos, com os 3 arquivos de src revertidos por `git stash push`): `npx vitest run <os 5 arquivos>` -> `Test Files 4 failed (4); Tests 15 failed | 65 passed (80)`.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemFilters.test.ts src/hooks/tasks/__tests__/workItemColumns.test.ts src/hooks/tasks/__tests__/workItemAggregates.test.ts src/hooks/tasks/__tests__/useTasksFilters.test.tsx src/components/tasks/__tests__/QuickAdd.test.tsx` -> `Test Files 5 passed (5); Tests 93 passed (93)`.
+- regressão do módulo: `npx vitest run src/hooks/tasks src/components/tasks` -> `Test Files 31 passed (31); Tests 356 passed | 1 todo (357)`.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+## Etapa 041 (revisão, sem reescrever o componente)
+O parser do QuickAdd já cumpria a decisão G-5: Ctrl+1/2/3 (Hoje/Amanhã/Próx. semana), Ctrl+L (lembrete) e Ctrl+@ (contato), todos documentados no `title` do campo, sem NLP. Não alterei `QuickAdd.tsx`; provei em teste que o texto "amanhã às 9h ligar para o cliente" entra CRU (título inteiro, prazo e lembrete nulos) e que Ctrl+2 marca amanhã.
+
+## Escopo
+- `applyFilters` mora em `src/hooks/tasks/workItemAggregates.ts`, que o cartão não lista mas é o recorte único dos três modos (hooks/dados, minha área). Estendi ali porque sem isso o filtro ficaria só na URL, sem efeito. A regra do toggle ficou comentada no código.
+- `status`/`due` são opcionais em `TasksFilters` para não quebrar objetos montados à mão (ex.: `TasksBoardMode.test.tsx`, do iris). Ausentes são lidos como 'all'.
 
 ## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+- Não mexi na UI (TasksFilterBar / popover) — é do iris (cartões 036/038).
+- Não toquei banco, migration nem Edge.
