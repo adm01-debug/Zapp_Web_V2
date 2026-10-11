@@ -119,7 +119,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const {
     rateByMinute: chartData = [], ratePerMinute = 0, finishMinutes = null, segmentQueue = [],
     isLoading: rateLoading, isError: rateError, refetch: refetchRate,
-  } = useTalkXMonitor(campaignId, throttlePerMinute);
+  } = useTalkXMonitor(campaignId, throttlePerMinute, campaign?.started_at ?? null);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o

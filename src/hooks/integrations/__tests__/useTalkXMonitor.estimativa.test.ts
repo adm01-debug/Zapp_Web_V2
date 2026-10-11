@@ -1,12 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   buildRateByMinute,
   buildSegmentQueue,
+  countRemaining,
   estimateFinishMinutes,
   measureRatePerMinute,
 } from '../useTalkXMonitor';
 
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+
+/** "Agora" fixo para os testes de média/UTC (sem flutuação de relógio). */
+const FIXED_NOW = new Date('2026-10-10T12:00:00.000Z').getTime();
+const isoAt = (ms: number) => new Date(ms).toISOString();
+const minBefore = (m: number) => isoAt(FIXED_NOW - m * 60_000);
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('estimateFinishMinutes — término estimado (X147)', () => {
   it('taxa constante: restantes ÷ taxa', () => {
@@ -28,19 +38,54 @@ describe('estimateFinishMinutes — término estimado (X147)', () => {
   });
 });
 
-describe('measureRatePerMinute — taxa medida na janela', () => {
-  it('sem envios na janela → 0', () => {
+describe('measureRatePerMinute — taxa MÉDIA desde o início (ponto 1)', () => {
+  it('sem envios → 0', () => {
     expect(measureRatePerMinute([])).toBe(0);
     expect(measureRatePerMinute([{ sent_at: null, delivered_at: null }])).toBe(0);
   });
 
-  it('envios fora da janela de 60 min não contam', () => {
+  it('campanha longa: total ÷ minutos desde o started_at', () => {
+    // 15 envios no total, campanha iniciada há 170 min → 15/170.
+    // A janela deslizante diria 5/5 = 1 (só os 5 recentes ÷ 5 min).
     const data = [
-      { sent_at: minutesAgo(90), delivered_at: null },
-      { sent_at: minutesAgo(30), delivered_at: null },
+      ...Array.from({ length: 10 }, () => ({ sent_at: minBefore(100), delivered_at: null })),
+      ...Array.from({ length: 5 }, () => ({ sent_at: minBefore(5), delivered_at: null })),
     ];
-    // só 1 envio dentro da janela, na marca de 30 min → 1/30
-    expect(measureRatePerMinute(data)).toBeCloseTo(1 / 30, 6);
+    expect(measureRatePerMinute(data, FIXED_NOW, minBefore(170))).toBeCloseTo(15 / 170, 6);
+  });
+
+  it('sem started_at, a âncora é o primeiro envio (toda a campanha)', () => {
+    // 2 envios (100 e 5 min atrás) → 2/100. A janela diria 1/5.
+    const data = [
+      { sent_at: minBefore(100), delivered_at: null },
+      { sent_at: minBefore(5), delivered_at: null },
+    ];
+    expect(measureRatePerMinute(data, FIXED_NOW)).toBeCloseTo(2 / 100, 6);
+  });
+
+  it('started_at inválido cai no primeiro envio', () => {
+    const data = [{ sent_at: minBefore(40), delivered_at: null }];
+    expect(measureRatePerMinute(data, FIXED_NOW, 'não-é-data')).toBeCloseTo(1 / 40, 6);
+  });
+});
+
+describe('countRemaining — restante real exclui entrega incerta (ponto 2)', () => {
+  it('outcome_unknown saiu da fila: não é restante', () => {
+    const recipients = [
+      { status: 'pending' },
+      { status: 'sending' },
+      { status: 'sent' },
+      { status: 'delivered' },
+      { status: 'failed' },
+      { status: 'outcome_unknown' },
+      { status: 'skipped' },
+    ];
+    // restantes: pending + sending + failed + skipped = 4
+    expect(countRemaining(recipients)).toBe(4);
+  });
+
+  it('só incertos → restante zero (há o que confirmar, não o que enviar)', () => {
+    expect(countRemaining([{ status: 'outcome_unknown' }, { status: 'sent' }])).toBe(0);
   });
 });
 
@@ -53,9 +98,46 @@ describe('buildRateByMinute — série Previsto (X147)', () => {
     const pontos = buildRateByMinute(data);
     expect(pontos).toHaveLength(2);
     for (const p of pontos) {
-      expect(p.Previsto).toBe(1); // 2 envios / 2 min de janela
+      expect(p.Previsto).toBe(1); // 2 envios / 2 min desde o primeiro envio
       expect(p.Enviadas).toBe(1);
     }
+  });
+
+  it('Previsto usa a média desde o started_at em campanha longa (ponto 1)', () => {
+    // 10 envios no total, início há 170 min → média 10/170 ≈ 0.059 → 0.1.
+    // Só o envio recente aparece nos buckets, mas a média conta tudo.
+    const data = [
+      ...Array.from({ length: 9 }, () => ({ sent_at: minBefore(100), delivered_at: null })),
+      { sent_at: minBefore(5), delivered_at: null },
+    ];
+    const pontos = buildRateByMinute(data, { startedAt: minBefore(170), now: FIXED_NOW });
+    expect(pontos).toHaveLength(1);
+    expect(pontos[0].Previsto).toBe(0.1);
+  });
+
+  it('rótulos em UTC (HH:MM), imunes ao fuso local (ponto 3)', () => {
+    // Sabota o relógio local: se o código usar getHours/getMinutes, sai "99:99".
+    vi.spyOn(Date.prototype, 'getHours').mockReturnValue(99);
+    vi.spyOn(Date.prototype, 'getMinutes').mockReturnValue(99);
+    const now = new Date('2026-10-10T12:10:00.000Z').getTime();
+    const pontos = buildRateByMinute(
+      [
+        { sent_at: '2026-10-10T11:55:00.000Z', delivered_at: null },
+        { sent_at: '2026-10-10T12:05:00.000Z', delivered_at: null },
+      ],
+      { now },
+    );
+    expect(pontos.map((p) => p.label)).toEqual(['11:55', '12:05']);
+  });
+
+  it('Previsto arredonda para 1 casa: 10 envios em 3 min → 3.3 (ponto 4)', () => {
+    const data = Array.from({ length: 10 }, (_, i) => ({
+      sent_at: isoAt(FIXED_NOW - (180 - i * 18) * 1000),
+      delivered_at: null,
+    }));
+    const pontos = buildRateByMinute(data, { now: FIXED_NOW });
+    expect(pontos.length).toBeGreaterThan(0);
+    for (const p of pontos) expect(p.Previsto).toBe(3.3); // 10/3 = 3.333…
   });
 
   it('Previsto nunca passa do teto (max_per_minute) da campanha', () => {
@@ -74,6 +156,19 @@ describe('buildRateByMinute — série Previsto (X147)', () => {
     ];
     const pontos = buildRateByMinute(data, { throttlePerMinute: 20 });
     expect(pontos.every((p) => p.Previsto === 1)).toBe(true);
+  });
+
+  it('sem teto (ausente/null/0), Previsto usa o ritmo medido (ponto 5)', () => {
+    const mk = () => [
+      { sent_at: minBefore(2), delivered_at: null },
+      { sent_at: minBefore(1), delivered_at: null },
+    ];
+    // média: 2 envios / 2 min = 1
+    for (const opts of [undefined, {}, { throttlePerMinute: null }, { throttlePerMinute: 0 }]) {
+      const pontos = buildRateByMinute(mk(), { ...opts, now: FIXED_NOW });
+      expect(pontos).toHaveLength(2);
+      expect(pontos.every((p) => p.Previsto === 1)).toBe(true);
+    }
   });
 
   it('sem envios na janela → série vazia', () => {
@@ -97,6 +192,19 @@ describe('buildSegmentQueue — Fila por Segmento (T11-046..052)', () => {
     expect(fila).toEqual([
       { segmentId: 'seg-a', name: 'Clientes VIP', total: 2, sent: 1, remaining: 1, progress: 50 },
       { segmentId: 'seg-b', name: 'Novos', total: 1, sent: 1, remaining: 0, progress: 100 },
+    ]);
+  });
+
+  it('outcome_unknown não conta como restante do segmento (ponto 2)', () => {
+    const fila = buildSegmentQueue(
+      [
+        { segment_id: 'seg-a', status: 'outcome_unknown' },
+        { segment_id: 'seg-a', status: 'pending' },
+      ],
+      names,
+    );
+    expect(fila).toEqual([
+      { segmentId: 'seg-a', name: 'Clientes VIP', total: 2, sent: 0, remaining: 1, progress: 0 },
     ]);
   });
 
