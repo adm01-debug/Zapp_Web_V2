@@ -1,5 +1,8 @@
 -- mini_game_xp_daily_limit
--- Rollback: REVOKE EXECUTE ON FUNCTION public.credit_agent_mini_game_xp(uuid,text,integer) FROM authenticated, service_role; DROP FUNCTION public.credit_agent_mini_game_xp(uuid,text,integer); REVOKE ALL ON TABLE public.agent_mini_game_xp_daily FROM service_role; DROP TABLE public.agent_mini_game_xp_daily;
+-- Rollback: dropa a RPC nova e a tabela do contador do dia; nada alem disso foi alterado.
+-- Rollback (SQL executável, na ordem):
+--   drop function if exists public.credit_agent_mini_game_xp(uuid, text, integer);
+--   drop table if exists public.agent_mini_game_xp_daily;
 --
 -- Por que: os mini-games passaram a creditar o XP real da partida (xpEarned) e o
 -- credito anterior (add_agent_xp) nao tinha trava antifarm. Esta RPC nova conta
