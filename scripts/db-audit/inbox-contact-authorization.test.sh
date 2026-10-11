@@ -275,6 +275,10 @@ M5='40000000-0000-0000-0000-000000000005'
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee IN ('PUBLIC','anon')")" == '0' ]] || fail 'PUBLIC ou anon conservou EXECUTE nas RPCs novas'
 [[ "$(psql_sql "SELECT has_function_privilege('authenticated','public.pin_message(uuid)','EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em pin_message'
 [[ "$(psql_sql "SELECT has_function_privilege('service_role','public.report_message(uuid,text,text)','EXECUTE')")" == 't' ]] || fail 'service_role sem EXECUTE em report_message'
+# P1 (refazer 2): endurecimento das 4 RPCs — search_path travado e EXECUTE só para authenticated/service_role
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND p.proconfig::text LIKE '%search_path=public, pg_temp%';")" == '4' ]] || fail 'RPC nova sem SET search_path = public, pg_temp'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee='authenticated';")" == '4' ]] || fail 'authenticated sem EXECUTE em alguma RPC nova'
+expect_failure 'anon sem EXECUTE nas RPCs novas' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');"
 
 # ---- favoritar (toggle) ----
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.toggle_message_favorite('$M1');")" == 't' ]] || fail 'toggle deveria favoritar'
@@ -341,8 +345,35 @@ expect_failure 'resolver sem carimbar resolved_by' "SET ROLE authenticated; SET 
 [[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE details::text LIKE '%object/path%' OR details::text LIKE '%mensagem suspeita%'")" == '0' ]] || fail 'auditoria guardou conteudo da mensagem ou da nota'
 [[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE action='message_reported' AND details->>'reason' IS NULL")" == '0' ]] || fail 'evento de relato sem motivo'
 
+# P2 (refazer 2): sem oraculo — existe-mas-oculto responde igual a inexistente
+expect_same_failure() {
+  local label="$1" sql_exist="$2" sql_ghost="$3" out_exist out_ghost status
+  set +e
+  out_exist="$(psql_sql "$sql_exist" 2>&1)"; status=$?
+  (( status != 0 )) || { set -e; fail "$label (existente) deveria falhar"; }
+  out_ghost="$(psql_sql "$sql_ghost" 2>&1)"; status=$?
+  (( status != 0 )) || { set -e; fail "$label (inexistente) deveria falhar"; }
+  set -e
+  [[ "$out_exist" == "$out_ghost" ]] || { printf 'existente=[%s] inexistente=[%s]\n' "$out_exist" "$out_ghost" >&2; fail "$label distingue existente-oculto de inexistente"; }
+  [[ "$out_exist" == *'message_not_visible'* ]] || fail "$label nao devolveu message_not_visible"
+  printf '[PASS] %s\n' "$label"
+}
+
+GHOST='99999999-9999-9999-9999-999999999999'
+expect_same_failure 'oraculo do toggle' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.toggle_message_favorite('$M1');" "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.toggle_message_favorite('$GHOST');"
+expect_same_failure 'oraculo do pin' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.pin_message('$M1');" "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.pin_message('$GHOST');"
+expect_same_failure 'oraculo do unpin' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.unpin_message('$M1');" "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.unpin_message('$GHOST');"
+expect_same_failure 'oraculo do report' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.report_message('$M1','spam',NULL);" "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.report_message('$GHOST','spam',NULL);"
+
 # ---- reaplicar a migration continua idempotente ----
 psql_file "$favorites_migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports')")" == '3' ]] || fail 'segunda aplicacao da migration quebrou as tabelas'
+
+# Rollback do cabecalho da migration roda e desfaz tudo (3 tabelas + 4 RPCs + funcao do gatilho)
+psql_sql "drop function if exists public.unpin_message(uuid); drop function if exists public.pin_message(uuid); drop function if exists public.report_message(uuid, text, text); drop function if exists public.toggle_message_favorite(uuid); drop function if exists public.message_pins_force_contact_id(); drop table if exists public.message_reports; drop table if exists public.message_pins; drop table if exists public.message_favorites;" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports');")" == '0' ]] || fail 'rollback nao removeu as 3 tabelas'
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc WHERE proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message','message_pins_force_contact_id');")" == '0' ]] || fail 'rollback nao removeu as funcoes'
+psql_file "$favorites_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports');")" == '3' ]] || fail 'reaplicacao pos-rollback quebrou as tabelas'
 
 printf 'Inbox contact authorization PostgreSQL 17 behavioral contract: PASS\n'
