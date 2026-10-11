@@ -35,6 +35,26 @@ vi.mock('@/components/catalog/useSendProduct', () => ({
   openContactChat: h.state.openContactChat,
 }));
 
+// Chat embutido: o Omnichannel reaproveita o painel do Inbox. Aqui ele é
+// substituído por um stub para provar que a linha abre o chat NA PRÓPRIA TELA
+// (e não navega para a view `inbox`), sem montar todo o stack do chat real.
+vi.mock('../OmnichannelChatPanel', () => ({
+  OmnichannelChatPanel: ({
+    conversation,
+    onClose,
+  }: {
+    conversation: { contact: { name: string } };
+    onClose: () => void;
+  }) => (
+    <div data-testid="chat-panel-stub">
+      <span>Chat embutido: {conversation.contact.name}</span>
+      <button type="button" onClick={onClose}>
+        Fechar chat
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: { fetchInitialConversations: h.state.fetchInitialConversations },
 }));
@@ -211,15 +231,17 @@ describe('OmnichannelInbox', () => {
     });
   });
 
-  // ===== R2-API-064: ABRIR A CONVERSA =====
+  // ===== R2-API-064 + chat embutido: ABRIR A CONVERSA =====
   describe('Abrir conversa', () => {
-    it('abre a conversa no canal correspondente ao acionar a linha', async () => {
+    it('abre o chat embutido na própria tela, sem navegar para a view inbox', async () => {
       render(<OmnichannelInbox />);
 
       const row = await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ });
       fireEvent.click(row);
 
-      expect(h.state.openContactChat).toHaveBeenCalledWith('c1');
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      expect(within(panel).getByText(/Chat embutido: Maria Silva/)).toBeInTheDocument();
+      expect(h.state.openContactChat).not.toHaveBeenCalled();
     });
 
     it('abre também a conversa de contato sem histórico', async () => {
@@ -228,7 +250,20 @@ describe('OmnichannelInbox', () => {
       const row = await screen.findByRole('button', { name: /Abrir conversa de Ana Costa/ });
       fireEvent.click(row);
 
-      expect(h.state.openContactChat).toHaveBeenCalledWith('c3');
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      expect(within(panel).getByText(/Chat embutido: Ana Costa/)).toBeInTheDocument();
+    });
+
+    it('fecha o chat embutido e volta a mostrar a lista', async () => {
+      render(<OmnichannelInbox />);
+
+      fireEvent.click(await screen.findByRole('button', { name: /Abrir conversa de Maria Silva/ }));
+      const panel = await screen.findByTestId('omnichannel-inline-chat');
+      fireEvent.click(within(panel).getByRole('button', { name: /Fechar chat/ }));
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('omnichannel-inline-chat')).not.toBeInTheDocument(),
+      );
     });
   });
 
