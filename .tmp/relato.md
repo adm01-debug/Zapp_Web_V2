@@ -28,6 +28,18 @@ Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão 
   `.tmp/check-anchors.mjs` → `ANCHORS OK` (nenhuma outra âncora desalinhada).
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (131s)`.
 
+## Pontos do cartão (O QUE FAZER 1–3)
+- Ponto 1: parti do commit da entrega com `git cherry-pick` (`6139d4210` + `610c10d31` +
+  `71b706b4e`, a branch `v2/talkx-teste-conexao-n105-2610101539fe3b`), sem recomeçar; o
+  `6139d4210` vem junto porque é ele que cria a migration que o `71b706b4e` modifica.
+- Ponto 2: reproduzi o item na ponta de `dia/2026-10-11` e corrigi a causa sem afrouxar
+  asserção — `ESTADO.md`, âncora do `talkx-link` de `talkx-send/index.ts:455` para `:523`.
+  Teste que prova: `scripts/ci/docs-estado-registry-convention.unit.mjs` (vermelho antes,
+  verde depois).
+- Ponto 3: prova verde pelo mesmo comando (`node --test ... docs-estado-registry-convention.unit.mjs`
+  → `# pass 11` · `# fail 0`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (131s)`;
+  sha do commit da correção: `8dc79b7b4`.
+
 ## Aviso do juiz barato (ANTES DE ENTREGAR)
 O aviso aponta "código alterado sem teste neste commit" (`useTalkX.ts`, `talkx-send/index.ts`,
 `_test-utils.ts`). Não procede: esses são os commits empilhados da entrega (não meus) e o diff
