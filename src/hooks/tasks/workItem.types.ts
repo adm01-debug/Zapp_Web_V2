@@ -49,7 +49,7 @@ export const KANBAN_COLUMNS: Array<{
   status: WorkItemStatus;
   label: string;
   shortLabel: string;
-  /** Etapa 080/081: subtítulo curto da coluna. */
+  /** Etapa 080/081: subtítulo curto da coluna; a `policy` longa vira tooltip. */
   subtitle: string;
   policy: string;
 }> = [
