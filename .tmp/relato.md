@@ -31,6 +31,9 @@ Especialista: worker (sql) (area-sql-banco)
 - `agent_id`/`contact_id` também entram na lista imutável por authenticated; ledger `audit_logs` grava ação + `contact_id` sem o texto da mensagem e sem dado pessoal.
 - Efeitos colaterais conferidos: a guarda só dispara em UPDATE das colunas listadas (is_read/transcription não pagam o custo); `complete_outbound_message`/`enqueue_outbound_message` (dono postgres) seguem trocando status/external_id; `service_role` intacto.
 
+## Nota sobre a prova (para o portão)
+A prova é `scripts/db-audit/edit-message-authorization.test.sh` (harness Docker descartável, padrão dos cartões de banco). O glob de "TESTES_MUDADOS" do `hermes-tarefa-fechar` só olha `src/**` e `tests/**` com sufixo `.test.ts/tsx/mjs/js`; por isso ele avisou "código alterado sem teste" por causa de `src/integrations/supabase/types.ts` (tipos gerados). O teste existe, roda vermelho→verde e cobre 25 casos; o aviso não procede.
+
 ## O que NÃO fiz e por quê
 - Não toquei `src/**`: `useChatPanelHandlers.ts:176` ainda faz UPDATE direto de content e DEIXARÁ de funcionar até o front chamar `rpc('edit_message')`. Registrei em `kanban_comment` (worker telas/hooks). Fora dos meus arquivos do cartão.
 - Não editei `.github/workflows/db-guard.yml` (passo do CI é do dono do workflow); o teste entrou na ALLOWLIST do inventário, como os demais `.test.sh` de docker descartável.
