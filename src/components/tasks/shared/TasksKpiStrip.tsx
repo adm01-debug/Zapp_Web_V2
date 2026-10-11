@@ -430,8 +430,8 @@ export function TasksKpiStrip({
 /**
  * Etapa 027: esqueleto dos KPIs enquanto o dado não chega. Ele repete a MESMA
  * geometria da faixa real (grade, `gap` e altura dos cards), então nada pula
- * quando o valor entra; o brilho é o `animate-pulse` do Tailwind atrás de
- * `motion-safe:`, que já se desliga em `prefers-reduced-motion`.
+ * quando o valor entra; o brilho é o pulso do Tailwind (`motion-safe:animate-pulse`), que já
+ * se desliga em `prefers-reduced-motion`.
  */
 export function TasksKpiStripSkeleton({ density = 'comfortable' }: { density?: TasksDensity }) {
   const caixas = [0, 1, 2, 3, 4];
