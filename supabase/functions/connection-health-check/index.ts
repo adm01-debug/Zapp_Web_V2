@@ -1,10 +1,10 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
 import { resolveEvolutionFlavor, resolveSessionRoute } from '../_shared/evolution-session-routes.ts';
-import { errorResponse, jsonResponse, requireEnv } from "../_shared/validation.ts";
+import { errorResponse, jsonResponse, requireEnv, checkRateLimit } from "../_shared/validation.ts";
 import { escapeHtml } from '../_shared/notification-events.ts';
 import { EMAIL_FONT_STACK } from '../_shared/email-font-stack.ts';
-import { isAuthorizedCronOrUser, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
+import { isAuthorizedCronOrUser, timingSafeStringEqual, unauthorizedResponse } from '../_shared/cron-secret-auth.ts';
 import { bootEdge, type EdgeInjected } from '../_shared/edge-boot.ts';
 
 export async function handleConnectionHealthCheck(
@@ -31,14 +31,55 @@ export async function handleConnectionHealthCheck(
     // O guard vive em _shared/cron-secret-auth.ts (as duas edges usam o mesmo); o
     // literal da RPC fica AQUI de proposito, para o guard de catalogo
     // (scripts/db-audit/supabase-usage-guard.mjs) continuar validando o alvo.
+    // Leitura do segredo do Vault com CACHE por request: o mesmo valor serve ao
+    // guard (autorização) e à decisão de cron (dispensa de papel/limite), sem duas
+    // idas à RPC.
+    let cronSecretCache: string | null | undefined;
+    const readVaultSecret = async (): Promise<string | null> => {
+      if (cronSecretCache !== undefined) return cronSecretCache;
+      const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
+      cronSecretCache = !error && typeof data === 'string' ? data : null;
+      return cronSecretCache;
+    };
+
     const authorized = await isAuthorizedCronOrUser(req, supabase, {
       serviceKey,
-      readVaultSecret: async () => {
-        const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
-        return !error && typeof data === 'string' ? data : null;
-      },
+      readVaultSecret,
     });
     if (!authorized) return unauthorizedResponse(headers);
+
+    // N-162: o cron (consumidor automatizado legítimo) dispensa papel e limite;
+    // o resto é chamada de USUÁRIO e exige admin/supervisor + rate limit.
+    // A dispensa é do SEGREDO CONFERIDO, não da PRESENÇA do header: antes bastava
+    // mandar `x-cron-secret` com qualquer valor para o gate de papel e o rate limit
+    // serem pulados — um não-admin autenticado escapava da checagem. Só o segredo
+    // que casa em tempo constante com o do Vault (mesma fonte do guard) dispensa.
+    const cronSecret = req.headers.get('x-cron-secret');
+    const vaultSecret = cronSecret !== null ? await readVaultSecret() : null;
+    const isCronCall = cronSecret !== null && vaultSecret !== null
+      && timingSafeStringEqual(cronSecret, vaultSecret);
+
+    if (!isCronCall) {
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      const isServiceKeyCall = serviceKey !== '' && timingSafeStringEqual(token, serviceKey);
+
+      if (!isServiceKeyCall) {
+        // Identidade do chamante para o cheque de papel e o rate limit.
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        if (userError || !user) return unauthorizedResponse(headers);
+
+        const { data: isStaff } = await supabase.rpc('is_admin_or_supervisor', {
+          _user_id: user.id,
+        });
+        if (!isStaff) return errorResponse('Forbidden', 403, req);
+
+        // Limite por USUÁRIO (não por IP): o mesmo usuário por trás de IPs diferentes
+        // não escapa; usuários diferentes no mesmo IP não se derrubam.
+        const rl = checkRateLimit(`connection-health-check:${user.id}`, 6, 60_000);
+        if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
+      }
+    }
 
     const evolutionUrl = requireEnv('EVOLUTION_API_URL');
     const evolutionKey = requireEnv('EVOLUTION_API_KEY');
