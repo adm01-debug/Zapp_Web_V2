@@ -1,23 +1,13 @@
 /**
- * Etapas 094 a 098 do Quadro (plano de design, 2026-10-11).
+ * Etapas 094 a 098 do Quadro (plano de design, 2026-10-11): arrastar polido
+ * (placeholder tracejado, overlay `--shadow-lg`, encaixe animado, pressão longa
+ * no toque), alvo de soltura, Aguardando âmbar, teclado do Quadro e rolagem com
+ * snap e sombras de borda.
  *
- *  - 094: polimento do arrastar — placeholder tracejado, overlay elevado
- *         (`--shadow-lg`), encaixe animado do snap e, no TOQUE, o arrasto só
- *         depois de uma pressão longa (`pointerMedia`);
- *  - 095: alvo de soltura — a coluna de destino ganha a borda primary e a dica
- *         "Solte para mover para Fazendo (2 de 3)";
- *  - 096: soltar em Aguardando abre o painel do motivo (comportamento atual) e a
- *         coluna fica realçada em âmbar durante o arrasto;
- *  - 097: teclado do Quadro — ←/→ entre colunas, ↑/↓ entre cartões, Alt+←/→ move
- *         pela MESMA decisão do arrasto, Enter continua abrindo;
- *  - 098: rolagem horizontal com snap, sombra nas bordas e rolagem vertical
- *         interna por coluna.
- *
- * Tudo passa pelo componente REAL (`TasksBoardMode` → `BoardColumn`) e por
- * `resolveDragEnd`: nenhum mock devolve a resposta. O `@hello-pangea/dnd` não
- * roda no jsdom (mesmo motivo do mock de `taskComponents`), então ele é
- * substituído por um mock CONTROLÁVEL — só o ambiente do arrasto é fingido
- * (quem está levantado / sobre quem), nunca a regra.
+ * Passa pelo componente REAL (`TasksBoardMode` → `BoardColumn`) e pela decisão
+ * real (`resolveDragEnd`). O `@hello-pangea/dnd` não roda no jsdom (mesmo motivo
+ * dos testes vizinhos), então ele é substituído por um mock CONTROLÁVEL: só o
+ * ambiente do arrasto é fingido (quem está levantado / sobre quem), nunca a regra.
  */
 import type { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
