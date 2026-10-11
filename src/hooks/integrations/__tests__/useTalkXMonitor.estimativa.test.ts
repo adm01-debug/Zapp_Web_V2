@@ -254,6 +254,28 @@ describe('buildSegmentQueue — Fila por Segmento (T11-046..052)', () => {
   });
 });
 
+describe('agregado não depende do lote: 2500 destinatários em 3 páginas (ponto 3)', () => {
+  it('fila maior que o lote combina páginas sem perder nem duplicar', () => {
+    // 1500 enviadas (seg-a) + 800 pendentes (seg-a) + 200 incertas (seg-b),
+    // chegando em lotes de 1000/1000/500 como a rolagem pagina.
+    const enviadas = Array.from({ length: 1500 }, () => ({ segment_id: 'seg-a', status: 'sent' }));
+    const pendentes = Array.from({ length: 800 }, () => ({ segment_id: 'seg-a', status: 'pending' }));
+    const incertas = Array.from({ length: 200 }, () => ({ segment_id: 'seg-b', status: 'outcome_unknown' }));
+    const tudo = [...enviadas, ...pendentes, ...incertas];
+    const paginas = [tudo.slice(0, 1000), tudo.slice(1000, 2000), tudo.slice(2000)];
+    expect(paginas.map((p) => p.length)).toEqual([1000, 1000, 500]);
+    // A primeira página sozinha mente: seg-a com total 1000, sem o resto.
+    expect(buildSegmentQueue(paginas[0]).find((f) => f.segmentId === 'seg-a')?.total).toBe(1000);
+    const combinada = paginas.flat();
+    expect(combinada).toHaveLength(2500);
+    const fila = buildSegmentQueue(combinada, new Map([['seg-a', 'Grande'], ['seg-b', 'Incerto']]));
+    expect(fila.find((f) => f.segmentId === 'seg-a')).toMatchObject({ total: 2300, sent: 1500, remaining: 800 });
+    expect(fila.find((f) => f.segmentId === 'seg-b')).toMatchObject({ total: 200, sent: 0, remaining: 0 });
+    // O restante global também sai da fila combinada, sem o lote pesar.
+    expect(countRemaining(combinada)).toBe(800);
+  });
+});
+
 describe('término estimado exclui entrega incerta (pontos 2+4)', () => {
   it('outcome_unknown não entra no restante nem no término (E[X] exclui X)', () => {
     // 6 envios em 6 min → 1/min; 2 pendentes + 1 incerto na fila.
