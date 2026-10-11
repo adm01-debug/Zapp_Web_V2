@@ -475,6 +475,10 @@ echo '-- BLOCO B: DEPOIS da correcao -------------------------------------------
 expect_error 'B1 CARLA enfileirando a URL da pasta da DORA e recusada (42501 media_url_out_of_contact_scope)' \
   'media_url_out_of_contact_scope' \
   "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); $(enq_media "$contact_carla" a0000000-0000-0000-0000-00000000000b "$dora_url");"
+bypass_url="https://proj.supabase.co/storage/v1/object/download/whatsapp-media/$dora_obj"
+expect_error 'B1b URL fora do formato canonico citando bucket interno e recusada (22023 invalid_outbound_media_url)' \
+  'invalid_outbound_media_url' \
+  "SET ROLE authenticated; SELECT set_config('request.jwt.claims','$CARLA',false); $(enq_media "$contact_carla" a0000000-0000-0000-0000-00000000000d "$bypass_url");"
 expect_value 'B2 nada foi gravado pela tentativa recusada (3 mensagens do seed)' '3' \
   "SELECT count(*) FROM public.messages"
 
@@ -498,5 +502,14 @@ expect_value 'B8 mesmo com mensagem forjada da CARLA apontando para a DORA, a po
   "$(leitura "$CARLA" whatsapp-media "$dora_obj")"
 expect_value 'B9 a mensagem forjada com media_url existe (a negacao e da policy, nao da ausencia da linha)' '1' \
   "SELECT count(*) FROM public.messages WHERE external_id = 'ext-forjada'"
+
+echo
+echo '-- B10: ramo legado exige mensagem RECEBIDA (sender=contact) --'
+legacy_url="$base/whatsapp-media/$legacy_obj"
+psql_sql "INSERT INTO public.messages (contact_id, sender, message_type, media_url, external_id) VALUES ('$contact_dora','agent','image','$legacy_url','ext-forjada-legado')" >/dev/null
+expect_value 'B10 mensagem de SAIDA (agent) com message_type igual a pasta legada NAO libera a leitura' '0' \
+  "$(leitura "$DORA" whatsapp-media "$legacy_obj")"
+expect_value 'B11 a mensagem forjada de saida existe (a negacao e da policy, nao da ausencia da linha)' '1' \
+  "SELECT count(*) FROM public.messages WHERE external_id = 'ext-forjada-legado'"
 
 printf '\n[OK] contrato de escopo de posse da midia privada do Storage verificado\n'

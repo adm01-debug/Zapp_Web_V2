@@ -21,8 +21,9 @@
 -- mensagem (m.contact_id = (storage.foldername(objects.name))[1]) -- a confirmacao de atribuicao
 -- usa public.is_contact_visible_to_user(m.contact_id, auth.uid()), o mesmo predicado canonico do
 -- projeto (admin / atribuido / membro de fila). O caminho LEGADO `<messageType>/...` (midia recebida
--- gravada antes do formato `<contactId>/...`) continua legivel quando a pasta do objeto e o proprio
--- message_type da mensagem recebida, preservando o encaminhar de midia recebida (PR #1845). O vazamento
+-- gravada antes do formato `<contactId>/...`) continua legivel SOMENTE quando a mensagem e recebida
+-- (m.sender = 'contact') e a pasta do objeto e o proprio message_type, preservando o encaminhar de
+-- midia recebida (PR #1845). O vazamento
 -- cruzado nao volta por esse ramo porque a RPC irma recusa URL para pasta de contato alheio e o trigger
 -- de proveniencia barra insercao direta.
 --
@@ -43,8 +44,10 @@ USING (
       AND (
         -- caminho novo `<contactId>/...`: a pasta do objeto e o contato da PROPRIA mensagem
         m.contact_id::text = (storage.foldername(objects.name))[1]
-        -- caminho legado `<messageType>/...`: a pasta do objeto e o tipo da mensagem recebida
-        OR (storage.foldername(objects.name))[1] = m.message_type
+        -- caminho legado `<messageType>/...`: vale SOMENTE para mensagem recebida (sender='contact')
+        -- cuja pasta do objeto e o proprio message_type -- sem isso, uma mensagem de SAIDA (agent)
+        -- forjada/propria com message_type igual ao nome da pasta liberaria objeto alheio.
+        OR (m.sender = 'contact' AND (storage.foldername(objects.name))[1] = m.message_type)
       )
       AND (
         right(m.media_url, length('/' || objects.bucket_id || '/' || objects.name))

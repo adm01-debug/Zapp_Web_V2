@@ -13,7 +13,9 @@
 -- do contato desta mensagem (p_contact_id) ou de um contato visivel ao proprio chamador. Qualquer
 -- outra pasta e recusada com 42501 media_url_out_of_contact_scope. A checagem cobre as formas de
 -- locator (object/render/image x public/sign/authenticated), recusa segmento de travessia (..) e
--- escape codificado (%2e), e ignora URLs de buckets externos (nao internos). Nao altera a ACL.
+-- escape codificado (%2e). URLs que citam bucket interno fora do formato canonico (ex. verbos
+-- alternativos do Storage) sao recusadas com 22023 invalid_outbound_media_url (fail-closed); URLs
+-- de buckets externos (nao internos) seguem ignoradas. Nao altera a ACL.
 
 CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(
   p_contact_id uuid,
@@ -67,6 +69,15 @@ BEGIN
   -- um bucket interno, o caminho do objeto tem de estar na pasta deste contato (ou de um
   -- contato do proprio chamador). Sem isso, a mensagem carregaria a URL do objeto de outra
   -- conversa e a policy de leitura do Storage liberaria a midia alheia.
+  -- Fail-closed: qualquer URL que mencione um bucket interno tem de estar no formato canonico
+  -- acima (object|render/image + public|sign|authenticated). Formas alternativas do Storage
+  -- (ex.: /object/download/, /object/upload/, variante de sign fora do padrao) cairiam fora do
+  -- IF abaixo e passariam sem escopo -- por isso sao recusadas aqui com 22023.
+  IF p_media_url IS NOT NULL
+     AND (p_media_url LIKE '%/whatsapp-media/%' OR p_media_url LIKE '%/audio-messages/%')
+     AND p_media_url !~ '^https://[^/]+/storage/v1/(object|render/image)/(public|sign|authenticated)/(whatsapp-media|audio-messages)/' THEN
+    RAISE EXCEPTION 'invalid_outbound_media_url' USING ERRCODE = '22023';
+  END IF;
   IF p_media_url IS NOT NULL
      AND p_media_url ~ '^https://[^/]+/storage/v1/(object|render/image)/(public|sign|authenticated)/(whatsapp-media|audio-messages)/' THEN
     v_media_path := split_part(
