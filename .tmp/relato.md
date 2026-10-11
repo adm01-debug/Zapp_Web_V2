@@ -11,8 +11,10 @@ Especialista: Íris (area-front-componentes) — cartão de acompanhamento da re
 - verde depois: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (87s)`
 - verde depois: `npx vitest run src/services/__tests__/navigation.service.test.ts` → `Test Files 1 passed (1); Tests 15 passed (15)` (confere que o empilhamento do pai segue verde)
 
-## Pontos do revisor
-- Ponto 1: a entrega do pai (430802478) deixou o ESPELHO DO CI reprovando `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`, por apontar `payment_links` como `ativo` e citar `usePaymentLinks.ts`, removido. Corrigido em `docs/DB-INVENTORY.md` (status `parcial`, consumidor existente). A mesma remoção derrubava `COMPLETE_SYSTEM_FEATURES.md não cita arquivo de código que não existe` (seção 40 citava os dois arquivos removidos): corrigido no mesmo commit. Nenhuma asserção de teste foi tocada.
+## Pontos do revisor (o "O QUE FAZER" do cartão, item a item)
+- Ponto 1 (partir do commit da entrega com cherry-pick, não recomeçar): cherry-pickei 430802478 sobre a ponta de dia/2026-10-11 (32c68d56a) — o commit virou 45d9c525e neste branch (`git cherry-pick 430802478` → `chore(pagamentos): remove modulo de links de pagamento`, os mesmos 6 arquivos do pai, 2 inserções/346 remoções). Não recomecei o cartão.
+- Ponto 2 (reproduzir e corrigir a causa sem afrouxar asserção): reproduzi o `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` depois do cherry-pick (vermelho, acima) e corrigi a causa na fonte — a doc, não o teste. `docs/DB-INVENTORY.md` passou `payment_links` para `parcial` com o único consumidor que existe hoje; `docs/COMPLETE_SYSTEM_FEATURES.md` (mesma remoção, mesma família de teste) parou de citar os dois arquivos removidos. Nenhuma linha de teste/asserção foi tocada: `git diff` do meu commit não toca `scripts/ci/*`.
+- Ponto 3 (provar o mesmo comando verde, `zapp-verify . --rapido` verde e fechar citando o sha): `node --test` dos dois arquivos do espelho → `# pass 22 / # fail 0`; `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (87s)`. Fecho com o sha 45d9c525e (entrega) + 3c896eb11 (correção da causa).
 
 ## O que NÃO fiz e por quê
 - Não rodei `~/arquitetura-v2/integrador/ci_espelho.sh`: a guarda bloqueia executar script de `~/arquitetura-v2` a partir deste workspace (`HERMES-GUARD: mexer nas guardas/ferramentas do Hermes…`). Rodei o mesmo comando `node --test` do espelho direto (linha dos testes node do espião).
