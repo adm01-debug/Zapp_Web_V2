@@ -87,7 +87,7 @@ describe('Auth — mapa-múndi como fundo (L1)', () => {
 
   it('mantém o conteúdo do login renderizado (sem regressão)', () => {
     renderAuth();
-    expect(screen.getByRole('heading', { name: 'Bem-vindo de volta' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ZAPP Web' })).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Entrar/ })).toBeInTheDocument();
