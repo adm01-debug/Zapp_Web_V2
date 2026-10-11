@@ -91,6 +91,18 @@ MUTANTS = [
     ("M32: midia de audio (nota de voz) cai no endpoint de texto",
      '    case "audio":\n      return "ptt";',
      '    case "audio":\n      return "text";'),
+    # F60 (TL-035, 10/10/2026): o worker le `whatsapp_connections.capabilities` e
+    # exclui (skipped, motivo nomeado) o bloco que a conexao nao entrega, ANTES de
+    # qualquer rede. Cada mutante casa com um teste F60 em index.test.ts.
+    ("F60: veto por capacidade declarada removido (false explicito nao barra)",
+     "  if (caps[capabilityKey] === false) return `connection_capability_unsupported:${capabilityKey}`;",
+     "  if (false) return `connection_capability_unsupported:${capabilityKey}`;"),
+    ("F60: teto max_chars declarado ignorado (texto acima do teto passa)",
+     "  if (typeof maxChars === \"number\" && Number.isFinite(maxChars) && text.length > maxChars) {",
+     "  if (typeof maxChars === \"number\" && Number.isFinite(maxChars) && text.length < maxChars) {"),
+    ("F60: audio/voz nao caem na chave ptt (veto ptt nao pega a nota de voz)",
+     '  const capabilityKey = kind === "audio" || kind === "voice" ? "ptt" : kind;',
+     '  const capabilityKey = kind;'),
 ]
 
 pristine = open(WORKER, encoding="utf-8").read()

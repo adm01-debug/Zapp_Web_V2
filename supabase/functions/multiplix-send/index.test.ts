@@ -1,5 +1,6 @@
-import { handleMultiplixSend, personalize } from './index.ts';
+import { connectionCapabilityDenial, handleMultiplixSend, personalize } from './index.ts';
 import { resolveBlockContent } from '../_shared/multiplix-content.ts';
+import { resetRateLimitServiceClient } from '../_shared/validation.ts';
 
 // ── F60: hermeticidade de ambiente nos testes "zero rede" (Deno.env é processo-wide) ─
 // Outro arquivo da suíte (crm-integration) deixa SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY
@@ -161,7 +162,7 @@ interface MockOpts {
   /** perfil (profiles.id) do usuario do JWT — e o que casa com created_by */
   ownProfileId?: string;
   dispatch?: DispatchRow | null;
-  connection?: { id: string; status: string; instance_id: string } | null;
+  connection?: { id: string; status: string; instance_id: string; capabilities?: unknown } | null;
   recipients?: Array<ReturnType<typeof recipientRow>>;
   /** telefones que a lista negra responde como suprimidos (F09) */
   suppressedPhones?: string[];
@@ -3114,4 +3115,243 @@ Deno.test("F43: correlationId é propagado por request e o log não carrega cont
   for (const [index, linhas] of logsPorRequest.entries()) {
     f43AssertSemConteudo(linhas, [telefoneMock, textoMock, "Empresa Sigilosa"], `request ${index + 1}`);
   }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// F60 (TL-035) — a conexao DECLARA o que entrega (`whatsapp_connections.capabilities`)
+// e o worker honra a declaracao ANTES do POST. A coluna existe desde 02/10
+// (20261002671230_f60_conexao_capacidades_e_risco.sql, default '{}') e NENHUM
+// consumidor a lia: um bloco que a instancia nao entrega so era recusado pelo
+// provedor, depois do POST — o item virava outcome_unknown/failed sem dizer que a
+// causa era a conexao.
+// Regra do cartao: `{}` (ou chave ausente) = NAO DECLARADO -> o worker nao inventa
+// limite; so o `false` explicito (e um `max_chars` NUMERICO) recusa. A exclusao e
+// DETERMINISTICA (skipped, nao volta a fila): o mesmo bloco contra a mesma conexao
+// daria o mesmo resultado. Nota de voz (`voice`) e `audio` caem na chave `ptt` —
+// os dois saem pelo mesmo kind do adaptador.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** F60: roda o handler com QUALQUER fetch bloqueado e devolve as URLs tentadas.
+ *  Prova "zero rede" sem depender da flavor do provedor (em GO o POST de texto sai
+ *  em /send/text — fora do filtro "/message/" que os testes antigos contavam).
+ *  Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+ *  EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+ *  fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real. */
+async function runWithFetchRecorded(opts: MockOpts): Promise<{ ctx: MockCtx; urls: string[] }> {
+  const ctx = newCtx(opts);
+  const provider = stubProviderFetch();
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.delete("EVOLUTION_API_FLAVOR");
+  // F60: o limiter persistente guarda o client em cache no modulo — sem este
+  // reset, um client criado com o env de outro arquivo do mesmo processo
+  // `deno test` faria UMA chamada real (registrada pelo stub, quebrando o
+  // "zero rede") mesmo com o env limpo acima.
+  resetRateLimitServiceClient();
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    return { ctx, urls: provider.urls };
+  } finally {
+    provider.restore();
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+  }
+}
+
+Deno.test("F60: conexao que NAO declara documento barra o bloco de documento (skipped, zero rede)", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550301")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "file",
+    blockContent: { media: { url: "https://exemplo.test/contrato.pdf", file_name: "Contrato.pdf" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada (nem o download da midia), houve ${JSON.stringify(urls)}`);
+  assert(ctx.completions.length === 1, `esperava 1 conclusao, recebeu ${ctx.completions.length}`);
+  assert(
+    ctx.completions[0].p_status === "skipped",
+    `status esperado 'skipped', veio ${String(ctx.completions[0].p_status)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:document",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "mark_multiplix_item_dispatch_started").length === 0,
+    "o envio ao provedor nao pode nem ser marcado como iniciado",
+  );
+});
+
+Deno.test("F60: conexao que NAO declara nota de voz barra o audio (chave ptt) — zero rede", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550302")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { ptt: false } },
+    blockType: "audio_recorded",
+    blockContent: { media: { url: "https://exemplo.test/nota.ogg" } },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o audio tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_unsupported:ptt",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+});
+
+Deno.test("F60: texto acima do max_chars DECLARADO e excluido com o teto no motivo — zero rede", async () => {
+  // "Ola Empresa 1" = 13 caracteres; o teto declarado e 5.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550303")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { max_chars: 5 } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const { ctx, urls } = await runWithFetchRecorded(opts);
+  assert(urls.length === 0, `nenhuma requisicao era esperada, houve ${JSON.stringify(urls)}`);
+  assert(
+    ctx.completions.length === 1 && ctx.completions[0].p_status === "skipped",
+    `o texto acima do teto tinha de ser excluido, conclusoes: ${JSON.stringify(ctx.completions)}`,
+  );
+  assert(
+    ctx.completions[0].p_error_message === "connection_capability_max_chars:5",
+    `motivo inesperado: ${String(ctx.completions[0].p_error_message)}`,
+  );
+  assert(
+    rpcs(ctx, "persist_multiplix_item_message_snapshot").length === 0,
+    "mensagem recusada pela conexao nao pode ser congelada em snapshot",
+  );
+});
+
+Deno.test("F60: capabilities VAZIO nao inventa limite — o item segue e e enviado", async () => {
+  // O caso que o cartao fixa: "vazio significa NAO DECLARADO". Todas as conexoes
+  // nascem com '{}' — recusar o vazio pararia o modulo inteiro.
+  // Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+  // EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+  // fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real.
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  resetRateLimitServiceClient();
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550304")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: {} },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-1");
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "conexao sem capacidade declarada nao pode excluir o envio (vazio = nao declarado)",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+  }
+});
+
+Deno.test("F60: o veto e POR CAPACIDADE — document:false nao barra um bloco de texto", async () => {
+  // Guarda contra o excesso de zelo: declarar que a conexao nao entrega DOCUMENTO
+  // nao pode excluir um bloco de texto. Sem esta prova, um mutante que barra
+  // qualquer item com capabilities nao-vazio passaria.
+  // Hermético: salva e restaura SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL e
+  // EVOLUTION_API_FLAVOR que outros testes da suite deixam no ambiente e que
+  // fazem o rate-limiter persistente chamar consume_rate_limit contra o banco real.
+  const supabaseUrlAnterior = Deno.env.get("SUPABASE_URL");
+  const serviceKeyAnterior = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const flavorAnterior = Deno.env.get("EVOLUTION_API_FLAVOR");
+  Deno.env.delete("SUPABASE_URL");
+  Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  resetRateLimitServiceClient();
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1 }),
+    recipients: [recipientRow(1, "5511955550305")],
+    connection: { id: "conn-0001", status: "connected", instance_id: "inst-1", capabilities: { document: false } },
+    blockType: "text",
+    blockContent: { text: "Ola {{empresa}}" },
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderSuccess("WAMID-F60-2");
+  try {
+    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(
+      rpcs(ctx, "record_multiplix_item_sent").length === 1,
+      "capacidade de OUTRO tipo nao pode excluir o bloco de texto",
+    );
+    assert(ctx.completions.length === 0, `nao deveria haver exclusao, houve ${JSON.stringify(ctx.completions)}`);
+  } finally {
+    provider.restore();
+    if (flavorAnterior === undefined) Deno.env.delete("EVOLUTION_API_FLAVOR");
+    else Deno.env.set("EVOLUTION_API_FLAVOR", flavorAnterior);
+    if (supabaseUrlAnterior === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", supabaseUrlAnterior);
+    if (serviceKeyAnterior === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", serviceKeyAnterior);
+  }
+});
+
+Deno.test("F60 (unidade): connectionCapabilityDenial — vazio nao limita; `false` e numero limitam", () => {
+  // Bordas que o teste de integracao nao alcanca: o TETO exato (passa) contra um
+  // caractere acima (recusa), `max_chars` nao-numerico (nao limita) e a chave do
+  // audio caindo em `ptt`.
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(10)) === null,
+    "texto EXATAMENTE no teto declarado tem de passar",
+  );
+  assert(
+    connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)) === "connection_capability_max_chars:10",
+    `um caractere acima do teto tem de recusar, veio ${String(connectionCapabilityDenial({ max_chars: 10 }, "text", "x".repeat(11)))}`,
+  );
+  assert(
+    connectionCapabilityDenial({}, "text", "x".repeat(10_000)) === null,
+    "capabilities vazio = nao declarado: nao pode inventar teto",
+  );
+  assert(connectionCapabilityDenial(null, "document", "x") === null, "coluna nula = nao declarado");
+  assert(connectionCapabilityDenial(undefined, "document", "x") === null, "coluna ausente = nao declarado");
+  assert(
+    connectionCapabilityDenial({ max_chars: "4096" }, "text", "x".repeat(9_000)) === null,
+    "max_chars nao-numerico (string) nao pode virar teto",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "ptt", "oi") === "connection_capability_unsupported:ptt",
+    "ptt:false tem de recusar a nota de voz",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: false }, "audio", "oi") === "connection_capability_unsupported:ptt",
+    "audio e nota de voz saem pelo MESMO kind (ptt) — a mesma chave tem de valer",
+  );
+  assert(
+    connectionCapabilityDenial({ ptt: true }, "voice", "oi") === null,
+    "capacidade declarada como compativel nao pode recusar",
+  );
 });

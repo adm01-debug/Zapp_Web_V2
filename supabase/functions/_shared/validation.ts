@@ -295,6 +295,12 @@ interface RateLimitRpcClient {
   ) => PromiseLike<{ data: unknown; error: unknown }>;
 }
 let serviceClientPromise: Promise<RateLimitRpcClient> | null = null;
+/** Descarta o client service-role do limiter em cache — usado pelos testes para
+ * isolar cenarios no mesmo processo `deno test` (um client criado com o env de
+ * outro arquivo sobreviveria ao save/restore de env). Nunca chamado em prod. */
+export function resetRateLimitServiceClient(): void {
+  serviceClientPromise = null;
+}
 function getServiceClient(): Promise<RateLimitRpcClient> {
   if (!serviceClientPromise) {
     serviceClientPromise = import("https://esm.sh/@supabase/supabase-js@2.87.1").then(({ createClient }) =>
