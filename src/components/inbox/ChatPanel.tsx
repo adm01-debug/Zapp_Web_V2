@@ -26,6 +26,8 @@ import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
+import { ConversationDeliverySummary, estadoDeEnvio, type EstadoDeEnvio } from './chat/ConversationDeliverySummary';
+import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
@@ -293,6 +295,25 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const contactAvatar = conversation.contact.avatar || undefined;
   const handleScrollToMessage = useCallback((id: string) => messagesAreaRef.current?.scrollToMessage(id), []);
 
+  // Pílulas de entrega: rolar até a primeira mensagem do estado e realçar com anel por 1,2 s.
+  const destaqueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleFocusDeliveryState = useCallback((estado: EstadoDeEnvio) => {
+    const alvo = messages.find((m) => m.sender === 'agent' && estadoDeEnvio(m) === estado);
+    if (!alvo) return;
+    setHighlightedMessageIds(new Set([alvo.id]));
+    setActiveHighlightId(alvo.id);
+    messagesAreaRef.current?.scrollToMessage(alvo.id);
+    if (destaqueTimerRef.current) clearTimeout(destaqueTimerRef.current);
+    destaqueTimerRef.current = setTimeout(() => {
+      setHighlightedMessageIds(new Set());
+      setActiveHighlightId(null);
+    }, 1200);
+  }, [messages]);
+
+  useEffect(() => () => {
+    if (destaqueTimerRef.current) clearTimeout(destaqueTimerRef.current);
+  }, []);
+
   const handleQuickReply = (reply: { id: string; title: string; shortcut: string; content: string; category: string }) => {
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
@@ -383,6 +404,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         <Suspense fallback={null}>
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
+
+        {/* Entrega da conversa (paridade V3): pílulas de fila/envio/falha e o aviso de não enviada.
+            Silenciosos quando não há pendência — não mexem no scroll nem no envio. */}
+        <ConversationDeliverySummary messages={messages} onFocusState={handleFocusDeliveryState} />
+        <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
 
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
