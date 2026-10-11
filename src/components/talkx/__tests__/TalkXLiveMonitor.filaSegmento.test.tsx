@@ -129,6 +129,14 @@ describe('Fila por Segmento — TalkXLiveMonitor (X147)', () => {
     expect(within(saude).getByText('1h 12m')).toBeTruthy();
   });
 
+  it('série Previsto leva o sub "(previsto = taxa medida)", nunca ritmo real (ponto 5)', async () => {
+    h.segmentQueue = [];
+    renderMonitor();
+
+    await waitFor(() => expect(screen.getByText('Campanha Fila')).toBeTruthy());
+    expect(screen.getByText('(últimos 60 min · previsto = taxa medida)')).toBeTruthy();
+  });
+
   it('sem taxa (fila parada) o término estimado fica "—", nunca 0 falso', async () => {
     h.ratePerMinute = 0;
     h.finishMinutes = null;

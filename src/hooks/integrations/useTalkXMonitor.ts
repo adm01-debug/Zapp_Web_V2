@@ -98,7 +98,6 @@ export function measureRatePerMinute(
 }
 
 export interface RateOptions {
-  throttlePerMinute?: number | null;
   /** talkx_campaigns.started_at: âncora da média; sem ele, o primeiro envio. */
   startedAt?: string | number | null;
   /** "Agora" injetável (testes); padrão Date.now(). */
@@ -111,10 +110,7 @@ export interface RateOptions {
  * `Previsto` é a projeção simples da etapa: a taxa MÉDIA da campanha (total
  * de envios ÷ minutos desde o `started_at`, ou desde o primeiro envio),
  * projetada para a frente como uma linha de referência e arredondada para
- * 1 casa. Quando a campanha tem teto configurado (`max_per_minute`), a
- * projeção é limitada por ele — o previsto nunca promete mais do que o
- * próprio throttle da campanha permite. Sem teto (null/0/ausente), o
- * Previsto usa o ritmo medido.
+ * 1 casa. É sempre o ritmo total medido (B1): nenhum teto limita a série.
  */
 export function buildRateByMinute(data: RateInput[], opts?: RateOptions): RatePoint[] {
   if (!data.length) return [];
@@ -136,10 +132,7 @@ export function buildRateByMinute(data: RateInput[], opts?: RateOptions): RatePo
   const timestamps = sentTimestamps(data);
   const anchor = toMs(opts?.startedAt) ?? Math.min(...timestamps);
   const measured = timestamps.length / elapsedMinutesSince(anchor, now);
-  const throttle = opts?.throttlePerMinute;
-  const hasCap = typeof throttle === 'number' && Number.isFinite(throttle) && throttle > 0;
-  const expected = hasCap ? Math.min(measured, throttle as number) : measured;
-  const previsto = Math.round(expected * 10) / 10;
+  const previsto = Math.round(measured * 10) / 10;
 
   return Array.from(buckets.entries())
     .sort(([a], [b]) => a.localeCompare(b))
@@ -198,7 +191,6 @@ export function estimateFinishMinutes(remaining: number, ratePerMinute: number):
 
 export function useTalkXMonitor(
   campaignId: string | null,
-  throttlePerMinute: number | null = null,
   startedAt: string | number | null = null,
 ) {
   const query = useQuery({
@@ -244,7 +236,7 @@ export function useTalkXMonitor(
     recipients,
     isLoading: query.isLoading,
     isError: query.isError,
-    rateByMinute: buildRateByMinute(recipients, { throttlePerMinute, startedAt }),
+    rateByMinute: buildRateByMinute(recipients, { startedAt }),
     ratePerMinute,
     remaining,
     finishMinutes: estimateFinishMinutes(remaining, ratePerMinute),

@@ -140,35 +140,42 @@ describe('buildRateByMinute — série Previsto (X147)', () => {
     for (const p of pontos) expect(p.Previsto).toBe(3.3); // 10/3 = 3.333…
   });
 
-  it('Previsto nunca passa do teto (max_per_minute) da campanha', () => {
-    const data = [
-      { sent_at: minutesAgo(2), delivered_at: null },
-      { sent_at: minutesAgo(1), delivered_at: null },
-    ];
-    const pontos = buildRateByMinute(data, { throttlePerMinute: 0.5 });
-    expect(pontos.every((p) => p.Previsto === 0.5)).toBe(true);
-  });
-
-  it('acima do teto, Previsto segue a média medida', () => {
-    const data = [
-      { sent_at: minutesAgo(2), delivered_at: null },
-      { sent_at: minutesAgo(1), delivered_at: null },
-    ];
-    const pontos = buildRateByMinute(data, { throttlePerMinute: 20 });
-    expect(pontos.every((p) => p.Previsto === 1)).toBe(true);
-  });
-
-  it('sem teto (ausente/null/0), Previsto usa o ritmo medido (ponto 5)', () => {
+  it('Previsto é sempre o ritmo total medido (B1: nenhum teto limita a série)', () => {
+    // média: 2 envios / 2 min desde o primeiro envio = 1, com ou sem opções.
     const mk = () => [
       { sent_at: minBefore(2), delivered_at: null },
       { sent_at: minBefore(1), delivered_at: null },
     ];
-    // média: 2 envios / 2 min = 1
-    for (const opts of [undefined, {}, { throttlePerMinute: null }, { throttlePerMinute: 0 }]) {
+    for (const opts of [undefined, {}, { now: FIXED_NOW }]) {
       const pontos = buildRateByMinute(mk(), { ...opts, now: FIXED_NOW });
       expect(pontos).toHaveLength(2);
       expect(pontos.every((p) => p.Previsto === 1)).toBe(true);
     }
+  });
+
+  it('com started_at, Previsto usa a média desde o início (B1)', () => {
+    // 2 envios, início há 30 min → 2/30 ≈ 0.067 → 0.1.
+    const data = [
+      { sent_at: minBefore(2), delivered_at: null },
+      { sent_at: minBefore(1), delivered_at: null },
+    ];
+    const pontos = buildRateByMinute(data, { startedAt: minBefore(30), now: FIXED_NOW });
+    expect(pontos).toHaveLength(2);
+    expect(pontos.every((p) => p.Previsto === 0.1)).toBe(true);
+  });
+
+  it('Previsto do gráfico converge com a taxa do painel (mesma média, ponto 4)', () => {
+    // A taxa do painel e o Previsto do gráfico bebem da mesma média: o
+    // Previsto de cada ponto é a taxa arredondada para 1 casa.
+    const data = [
+      ...Array.from({ length: 9 }, () => ({ sent_at: minBefore(100), delivered_at: null })),
+      { sent_at: minBefore(5), delivered_at: null },
+    ];
+    const startedAt = minBefore(170);
+    const taxa = measureRatePerMinute(data, FIXED_NOW, startedAt);
+    const pontos = buildRateByMinute(data, { startedAt, now: FIXED_NOW });
+    expect(pontos.length).toBeGreaterThan(0);
+    for (const p of pontos) expect(p.Previsto).toBe(Math.round(taxa * 10) / 10);
   });
 
   it('sem envios na janela → série vazia', () => {
@@ -227,5 +234,45 @@ describe('buildSegmentQueue — Fila por Segmento (T11-046..052)', () => {
 
   it('fila vazia → lista vazia', () => {
     expect(buildSegmentQueue([])).toEqual([]);
+  });
+
+  it('duas páginas: o mesmo segmento soma ao cruzar as páginas (ponto 3)', () => {
+    // A rolagem pagina a fila: a prova combina as duas páginas como o hook entrega.
+    const pagina1 = [
+      { segment_id: 'seg-a', status: 'sent' },
+      { segment_id: 'seg-a', status: 'pending' },
+    ];
+    const pagina2 = [
+      { segment_id: 'seg-a', status: 'pending' },
+      { segment_id: 'seg-b', status: 'sent' },
+    ];
+    // Sozinha, a página 1 diria total 2 para seg-a — sem cruzar, a fila mente.
+    expect(buildSegmentQueue(pagina1, names).find((f) => f.segmentId === 'seg-a')?.total).toBe(2);
+    const fila = buildSegmentQueue([...pagina1, ...pagina2], names);
+    expect(fila.find((f) => f.segmentId === 'seg-a')).toMatchObject({ total: 3, sent: 1, remaining: 2 });
+    expect(fila.find((f) => f.segmentId === 'seg-b')).toMatchObject({ total: 1, sent: 1, remaining: 0 });
+  });
+});
+
+describe('término estimado exclui entrega incerta (pontos 2+4)', () => {
+  it('outcome_unknown não entra no restante nem no término (E[X] exclui X)', () => {
+    // 6 envios em 6 min → 1/min; 2 pendentes + 1 incerto na fila.
+    const enviados = Array.from({ length: 6 }, (_, i) => ({
+      status: 'sent',
+      sent_at: minBefore(6 - i),
+      delivered_at: null,
+    }));
+    const fila = [
+      ...enviados,
+      { status: 'pending', sent_at: null, delivered_at: null },
+      { status: 'pending', sent_at: null, delivered_at: null },
+      { status: 'outcome_unknown', sent_at: null, delivered_at: null },
+    ];
+    const restante = countRemaining(fila);
+    expect(restante).toBe(2); // o incerto saiu da fila: não soma no restante
+    const taxa = measureRatePerMinute(fila, FIXED_NOW, minBefore(6));
+    expect(taxa).toBeCloseTo(1, 6);
+    // Se o incerto contasse, o término diria 3 min; diz 2.
+    expect(estimateFinishMinutes(restante, taxa)).toBeCloseTo(2, 6);
   });
 });

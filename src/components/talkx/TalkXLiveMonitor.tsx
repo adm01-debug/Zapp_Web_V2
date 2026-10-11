@@ -7,7 +7,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
-import type { TalkXCampaignWithRules } from './tracking/talkxCampaignRules';
 import { motion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
@@ -113,13 +112,11 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  // X147: `max_per_minute` da campanha limita a série "Previsto" (nunca promete
-  // mais do que o throttle configurado permite).
-  const throttlePerMinute = (campaign as TalkXCampaignWithRules | undefined)?.max_per_minute ?? null;
+  // X147: série "Previsto" usa sempre o ritmo total medido (B1), sem teto.
   const {
     rateByMinute: chartData = [], ratePerMinute = 0, finishMinutes = null, segmentQueue = [],
     isLoading: rateLoading, isError: rateError, refetch: refetchRate,
-  } = useTalkXMonitor(campaignId, throttlePerMinute, campaign?.started_at ?? null);
+  } = useTalkXMonitor(campaignId, campaign?.started_at ?? null);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
@@ -208,7 +205,7 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
         <div className="space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
           <section className="rounded-2xl bg-card border border-border/70 p-4">
-            <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · Previsto = média medida, limitada pelo teto da campanha)</span></p>
+            <p className="text-sm font-bold text-foreground mb-3">Ritmo de Entrega <span className="text-xs font-normal text-foreground-secondary ml-1">(últimos 60 min · previsto = taxa medida)</span></p>
             <TalkXQueryBoundary
               query={{ isLoading: rateLoading, isError: rateError, error: null }}
               entity="estimativas de ritmo"
