@@ -104,7 +104,11 @@ export function TalkXConfirmDialog({
   checks = [], details = [], reasonField, loading = false,
 }: {
   open: boolean; onClose: () => void;
-  onConfirm: (valores: { reason: string }) => void | Promise<unknown>;
+  // O retorno é aceito como `unknown`: além do `void` legado e da promise do
+  // async, consumidores existentes devolvem o próprio objeto do `mutate`
+  // (ex.: `TalkXSuppression` → `MutationResult | null`). O shell só reconhece um
+  // thenable para decidir se espera; qualquer outro retorno segue o fluxo legado.
+  onConfirm: (valores: { reason: string }) => unknown;
   icon: LucideIcon; iconColor?: TileColor;
   title: string; subtitle?: string; description: string; consequence?: string;
   entityName?: string; confirmLabel?: string; cancelLabel?: string;
@@ -139,14 +143,14 @@ export function TalkXConfirmDialog({
   const handleConfirm = async () => {
     if (!allChecked || busy || awaiting.current) return;
     setError(null);
-    let result: void | Promise<unknown>;
+    let result: unknown;
     try {
       result = onConfirm({ reason });
     } catch (e) {
       setError(errorMessage(e));
       return;
     }
-    if (result && typeof (result as Promise<unknown>).then === 'function') {
+    if (result && typeof (result as { then?: unknown }).then === 'function') {
       awaiting.current = true;
       setPending(true);
       try {

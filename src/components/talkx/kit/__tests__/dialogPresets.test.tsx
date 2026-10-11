@@ -245,6 +245,21 @@ describe('X049 — espera da ação', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('onConfirm que devolve um objeto (o `mutate` do consumidor) não é tratado como promessa e não fecha sozinho', () => {
+    // Consumidores reais (ex.: TalkXSuppression) devolvem o próprio resultado do
+    // `mutate`; só um thenable deve pôr o shell em espera. Objeto qualquer cai
+    // no fluxo legado: uma chamada, sem fechamento por conta do shell.
+    const onConfirm = vi.fn(() => ({ mutate: true }));
+    const onClose = vi.fn();
+    renderConfirm('excluirCampanha', { onConfirm, onClose });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
   it('com check pendente o botão não confirma; marcado, confirma', () => {
     const { onConfirm } = renderConfirm('excluirCampanha', {
       checks: [{ id: 'reconheco', label: 'Reconheço que a exclusão é permanente' }],
