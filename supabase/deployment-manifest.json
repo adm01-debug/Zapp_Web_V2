@@ -481,8 +481,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 13239,
-      "sha256": "b4d8577e510ffb1e357378beff30a7cc513a5a318fefa919bd10429173652d71"
+      "bytes": 15490,
+      "sha256": "ff5319e2dd597dc99e929e677b1e8cc01873919b735c01163f895f8a75205e29"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1269,7 +1269,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "881119362d1b3c8684734dde9e064713b6fe3da5948eedd06d14c8f12ada1449",
+      "source_sha256": "56b155d7fd51ced72b74468b35bf5b8b2c770fbbbaa135563b9eeeac1bb4fc74",
       "source_files": [
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -2205,5 +2205,5 @@
       ]
     }
   ],
-  "manifest_sha256": "b5cd669d388ef4051b28e3eb9ad5308481a1897728be0b02f1733b105783f20c"
+  "manifest_sha256": "90cdc04e2151a5a647481c31bddc1f00158eee63ed14c16d2c3c31bc27acdc3c"
 }
