@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildExternalConversations, evolutionToRealtimeMessage } from '@/adapters/evolutionAdapter';
+import type { NormalizedRealtimeMessage } from '@/hooks/realtime/realtimeUtils';
 import type { EvolutionMessage } from '@/types/evolutionExternal';
 
 function externalMessage(over: Partial<EvolutionMessage>): EvolutionMessage {
@@ -100,7 +101,7 @@ describe('buildExternalConversations — o content sobrevive ao fallback', () =>
       externalMessage({ message_type: 'pollCreationMessage', content: 'Qual horário?' }),
     ]);
 
-    const [message] = conversation.messages;
+    const [message] = conversation.messages as NormalizedRealtimeMessage[];
     expect(message.message_type).toBe('unsupported');
     expect(message.unsupportedKind).toBe('poll');
     expect(message.content).toBe('Qual horário?');
