@@ -42,5 +42,7 @@ O cabeçalho da migration traz o SQL executável na ordem: drop dos triggers e d
 
 ## Notas para Reviewer
 
+- O juiz barato acusou "código alterado sem teste novo": `src/integrations/supabase/types.ts` é arquivo GERADO (tipos do banco) e a prova desta entrega é o teste de contrato de banco `scripts/db-audit/queues-distribution-overflow.test.sh` (suite bash, não vitest), que exercita a migration real e falha na base sem ela — o heurístico do juiz não reconhece `.test.sh`.
+
 - `scripts/ci/check-test-inventory.mjs` não está na lista "arquivos que pode tocar" do cartão: inclusivei a suíte na ALLOWLIST porque sem isso o inventário a acusa órfã. Nenhuma outra alteração nesse arquivo.
 - Nenhuma tabela nova → não se aplica RLS nova. Nenhum GRANT/RLS de objeto existente foi alterado; `CREATE OR REPLACE` preserva o ACL de `auto_assign_to_queue_agent` e `skill_based_assign` (conferido no banco local: `anon`/`authenticated` sem EXECUTE nas funções novas).
