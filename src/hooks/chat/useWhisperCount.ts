@@ -17,19 +17,23 @@ export function notificarSussurroEnviado(contactId: string): void {
   ouvintes.forEach((ouvinte) => ouvinte(contactId));
 }
 
+interface EstadoContagem {
+  contactId: string | null;
+  count: number;
+}
+
 /**
  * Contador de sussurros da conversa, para o selo do cabeçalho. Conta as linhas que
  * a RLS já deixa visíveis (enviadas por mim ou endereçadas a mim) — a consulta é
- * `count`/`head`, sem trazer conteúdo nenhum para o cliente.
+ * `count`/`head`, sem trazer conteúdo nenhum para o cliente. O valor carregado é
+ * marcado com o contato de origem: trocar de conversa não mostra a contagem da
+ * anterior enquanto a nova carrega.
  */
 export function useWhisperCount(contactId: string | null | undefined) {
-  const [count, setCount] = useState(0);
+  const [estado, setEstado] = useState<EstadoContagem>({ contactId: null, count: 0 });
 
   useEffect(() => {
-    if (!contactId) {
-      setCount(0);
-      return;
-    }
+    if (!contactId) return;
     let cancelado = false;
 
     const carregar = async () => {
@@ -42,7 +46,7 @@ export function useWhisperCount(contactId: string | null | undefined) {
         log.error('Failed to count whispers:', error);
         return;
       }
-      setCount(count ?? 0);
+      setEstado({ contactId, count: count ?? 0 });
     };
 
     void carregar();
@@ -57,5 +61,5 @@ export function useWhisperCount(contactId: string | null | undefined) {
     };
   }, [contactId]);
 
-  return count;
+  return estado.contactId === (contactId ?? null) ? estado.count : 0;
 }

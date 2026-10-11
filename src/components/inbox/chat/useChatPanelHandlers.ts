@@ -446,7 +446,7 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     // Esc também desliga o sussurro: sair do modo é sempre explícito e nunca
     // deixa a próxima mensagem saindo como nota interna sem intenção.
     if (e.key === 'Escape' && isWhisperRef.current) setIsWhisper(false);
-  }, [handleSend, openDialog, closeDialog, handleSetActiveTool]);
+  }, [handleSend, openDialog, closeDialog, handleSetActiveTool, isWhisperRef]);
 
   const handleSlashCommand = useCallback((command: SlashCommand, subCommand?: string) => {
     closeDialog('slashCommands'); setInputValue('');
