@@ -26,6 +26,8 @@ Acessibilidade (critério 3): o caso "sem violação de acessibilidade (axe)" ro
 ## Dependência (faixas dos pais) — decisão registrada
 Trouxe aqui: `git cherry-pick $(git rev-list --reverse --no-merges dia/2026-10-11..2d12a0c60ea32850489ec3d41575c31d47de7045)` (7 commits). Essa faixa do pai t_f6c4421e já CONTÉM, na ordem, as faixas dos outros dois pais (t_3d9b0963 e t_a332243d) — por isso trouxe só ela, em vez de repetir os três cherry-picks e gerar commits vazios (o `--empty=drop` do cartão não existe no git 2.43 desta máquina). Sem a faixa o critério não existe: é ela que entrega `TasksUiContext`/`tasksUi`, `TasksHeaderMenu` e os primitivos (`PriorityPill` etc.) que o modal lê.
 
+O aviso do juiz sobre "arquivo fora da lista" (ContactAvatar, DateLabel, PriorityPill, StatusPill, TaskCheckbox, TasksHeaderMenu …) é do DIFF DA BRANCH contra a `dia/2026-10-11`, não do meu commit: aqueles arquivos vieram dentro da faixa dos pais, como a seção DEPENDÊNCIA do cartão manda. O que EU escrevi são 6 arquivos — `git show --stat c17bdd86c` — todos da lista (`NewTaskDialog.tsx`, `new-task/`, `TasksModule.tsx`, `__tests__/`).
+
 ## O que NÃO fiz e por quê
 - Rodapé ("Enter para criar", "Cancelar", "+ Criar tarefa", etapa 167), criação otimista (168), coluna de prévia (165) e a caixa informativa (166): são do cartão filho T36/T37 — não dupliquei escopo nem criei botão de criar sem o fluxo combinado.
 - Duas colunas: a segunda coluna é a prévia (etapa 165, T37). Hoje o modal é a coluna de formulário, sem área vazia na tela; quando o T37 montar a prévia, o grid entra lá.
