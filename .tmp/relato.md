@@ -7,6 +7,7 @@ Especialista: workersql (area-sql-banco)
   * backfill idempotente: contatos `open` + sem responsável + com >=1 mensagem -> `waiting`; desliga `update_contacts_updated_at` só durante o UPDATE para NÃO reescrever `updated_at` de linhas existentes (o FSM segue ligado).
   * `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` na função do gatilho.
 - supabase/tests/contacts_waiting_por_atribuicao.sql (NOVO): suíte no banco LOCAL, 5 casos, com o papel real.
+- .tmp/relato.md (este próprio relato): também entra no diff, porque é versionado e o `hermes-tarefa-fechar` exige árvore limpa. Total do diff: 3 arquivos, sendo 1 de teste.
 
 ## Prova
 - vermelho antes (arquivo final, sem o gatilho): `zapp-db-local psql . v2-26101114412bb4 -v ON_ERROR_STOP=1 < supabase/tests/contacts_waiting_por_atribuicao.sql` -> `ERROR:  C2 FALHOU: esperava waiting e veio open`
