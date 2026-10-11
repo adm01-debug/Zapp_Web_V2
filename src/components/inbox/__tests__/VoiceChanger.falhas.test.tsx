@@ -102,6 +102,11 @@ class MockAudio {
 let fetchMock: ReturnType<typeof vi.fn>;
 // Controla a resposta do fetch do blob convertido (preparo do envio).
 let preparoFalha = false;
+// Preparo pendente: permite desmontar o componente no meio do fetch.
+let preparoPendente = false;
+let preparoResolver: null | (() => void) = null;
+// Guarda o unmount do último render, para o teste de desmontagem.
+let unmountFn: (() => void) | null = null;
 
 function botaoPorTexto(texto: string): HTMLButtonElement {
   const alvo = screen.getByText(texto);
@@ -115,6 +120,9 @@ describe('VoiceChanger — falhas de preparo e de reprodução', () => {
     popoverState.onOpenChange = undefined;
     popoverState.open = undefined;
     preparoFalha = false;
+    preparoPendente = false;
+    preparoResolver = null;
+    unmountFn = null;
     audioState.modo = 'ok';
     audioState.resolver = null;
     MockAudio.instances = [];
@@ -137,6 +145,11 @@ describe('VoiceChanger — falhas de preparo e de reprodução', () => {
           blob: async () => new Blob(['convertida'], { type: 'audio/webm' }),
         };
       }
+      if (preparoPendente) {
+        return new Promise((resolve) => {
+          preparoResolver = () => resolve({ ok: true, status: 200, blob: async () => new Blob(['pronta'], { type: 'audio/webm' }) });
+        });
+      }
       if (preparoFalha) {
         return { ok: false, status: 500, json: async () => ({}), blob: async () => new Blob([]) };
       }
@@ -154,7 +167,8 @@ describe('VoiceChanger — falhas de preparo e de reprodução', () => {
   // Caminho real: renderiza -> abre -> converte a voz, parando com a prévia
   // convertida na tela (footer com "Usar esta voz").
   async function prepararComPrevia(onVoiceChanged = vi.fn()) {
-    render(<VoiceChanger audioBlob={new Blob(['audio'], { type: 'audio/webm' })} onVoiceChanged={onVoiceChanged} />);
+    const view = render(<VoiceChanger audioBlob={new Blob(['audio'], { type: 'audio/webm' })} onVoiceChanged={onVoiceChanged} />);
+    unmountFn = view.unmount;
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -233,5 +247,58 @@ describe('VoiceChanger — falhas de preparo e de reprodução', () => {
 
     expect(toastMock.error).toHaveBeenCalledWith(BLOQUEIO);
     expect(screen.getByLabelText('Ouvir prévia')).toBeInTheDocument();
+  });
+
+  it('recupera a prévia: depois da recusa na conversão, Ouvir prévia toca de novo', async () => {
+    // Recusa só na reprodução automática que segue a conversão.
+    audioState.modo = 'rejeitar';
+    await prepararComPrevia();
+
+    expect(toastMock.error).toHaveBeenCalledWith(BLOQUEIO);
+    // A recusa não pode descartar o áudio: o aviso manda tocar de novo.
+    expect(screen.getByLabelText('Ouvir prévia')).toBeInTheDocument();
+
+    // O navegador agora aceita: o botão tem de funcionar de verdade.
+    audioState.modo = 'ok';
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Ouvir prévia'));
+    });
+
+    expect(screen.getByLabelText('Pausar prévia')).toBeInTheDocument();
+  });
+
+  it('não anuncia conversão concluída quando a reprodução foi recusada', async () => {
+    audioState.modo = 'rejeitar';
+    await prepararComPrevia();
+
+    expect(toastMock.error).toHaveBeenCalledWith(BLOQUEIO);
+    // Sem "sucesso" contraditório depois do aviso de bloqueio.
+    expect(toastMock.success).not.toHaveBeenCalled();
+  });
+
+  it('anuncia a conversão quando a prévia toca normalmente', async () => {
+    await prepararComPrevia();
+
+    expect(toastMock.success).toHaveBeenCalledWith('Voz convertida para Voz Principal!');
+  });
+
+  it('não conclui o preparo nem atualiza estado depois de desmontar', async () => {
+    preparoPendente = true;
+    const onVoiceChanged = await prepararComPrevia();
+
+    // O preparo fica pendente (fetch do blob não resolve ainda).
+    act(() => {
+      fireEvent.click(botaoPorTexto('Usar esta voz'));
+    });
+    expect(onVoiceChanged).not.toHaveBeenCalled();
+
+    unmountFn?.();
+    await act(async () => {
+      preparoResolver?.();
+    });
+
+    // Regra 4: nada de entregar o blob / mexer em estado após o unmount.
+    expect(onVoiceChanged).not.toHaveBeenCalled();
+    expect(toastMock.error).not.toHaveBeenCalled();
   });
 });
