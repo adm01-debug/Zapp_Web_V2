@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Image, Video, Music, File } from 'lucide-react';
+import { FileText, Image, Video, Music, File, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { HighlightedText } from './HighlightedText';
@@ -22,7 +22,15 @@ interface ChatSearchResultsListProps {
 
 export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResultsListProps>(
   ({ results, activeIndex, debouncedQuery, onSelect }, ref) => {
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      if (!debouncedQuery.trim()) return null;
+      return (
+        <div role="status" data-testid="chat-search-empty" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-muted/30 text-xs text-muted-foreground">
+          <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
+          <span>Nenhum resultado para esta busca.</span>
+        </div>
+      );
+    }
 
     return (
       <div ref={ref} className="max-h-[140px] overflow-y-auto scrollbar-thin space-y-0.5 rounded-lg bg-muted/30 p-1">
@@ -55,7 +63,7 @@ export const ChatSearchResultsList = forwardRef<HTMLDivElement, ChatSearchResult
           );
         })}
         {results.length > 5 && (
-          <span className="text-3xs text-muted-foreground px-2.5 py-1 block">+{results.length - 5} resultados — use ↑↓ para navegar</span>
+          <span className="text-3xs text-muted-foreground px-2.5 py-1 block">+{results.length - 5} resultados. Use Enter e Shift+Enter para navegar.</span>
         )}
       </div>
     );
