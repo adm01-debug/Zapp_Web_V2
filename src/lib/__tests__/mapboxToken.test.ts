@@ -129,4 +129,32 @@ describe('classificação e telemetria', () => {
       { source: 'mapbox_picker', kind: 'timeout' },
     );
   });
+
+  it('sem detail loga só a taxonomia, sem objeto', () => {
+    reportMapboxFailure('timeout', 'picker');
+    const [mensagem, detail] = h.logError.mock.calls[0] as [string, unknown];
+    expect(mensagem).toContain('picker/timeout');
+    expect(detail).toBeUndefined();
+  });
+
+  it('nunca loga o objeto cru do Mapbox: reduz à taxonomia e redige o access_token', () => {
+    const cru = {
+      status: 401,
+      url: 'https://api.mapbox.com/styles/v1/x?access_token=pk.SEGREDO123&fresh=true',
+      message: 'Falha ao buscar https://api.mapbox.com/styles/v1/x?access_token=pk.SEGREDO123',
+    };
+
+    reportMapboxFailure('invalid_token', 'suggest', cru);
+
+    const [mensagem, detail] = h.logError.mock.calls[0] as [string, unknown];
+    expect(mensagem).toContain('suggest/invalid_token');
+    expect(detail).not.toBe(cru);
+    const texto = JSON.stringify(detail);
+    expect(texto).not.toContain('pk.SEGREDO123');
+    expect(texto).not.toContain('access_token=pk');
+    expect(detail).toEqual({
+      status: 401,
+      message: 'Falha ao buscar https://api.mapbox.com/styles/v1/x?access_token=[REDACTED]',
+    });
+  });
 });
