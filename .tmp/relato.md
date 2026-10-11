@@ -1,29 +1,35 @@
-# feat(tarefas): cards de KPI no nível da imagem 01 (subtítulos, anel do limite, tempo médio)
+# feat(tarefas): KPIs clicáveis, faixa compacta no Quadro, responsivo e contagem animada
 
-Especialista: Íris (area-front-componentes)
+Especialista: iris (area-front-componentes, telas e componentes)
 
 ## O que mudou e por quê
-- `src/components/tasks/shared/TasksKpiStrip.tsx`: os cinco cartões da faixa de KPIs passaram a ter o estado da imagem 01.
-  - **Atrasadas** (§3.1 linha 41, etapa 017): com >0 o tile é o de alerta (`bg-destructive/15`) e o subtítulo é "Requer atenção" em `text-destructive`; com 0 o tile fica **neutro** (`bg-muted`) e o subtítulo é "Tudo em dia".
-  - **Para hoje** (§3.1 linha 42, etapa 018): tile âmbar (`bg-kpi-yellow`, antes azul) e subtítulo "Vencem hoje"; com 0 o subtítulo é "Nada vence hoje" e o tile continua âmbar.
-  - **Fazendo** (§3.1 linha 43, etapa 019): o ícone deu lugar a um **anel SVG de progresso** (`data-testid="kpi-ring"`, `strokeDasharray/offset` = fração `doing/limite`) no tile azul (`bg-kpi-blue`, antes roxo); subtítulo "Em andamento" abaixo do limite e "Limite atingido" em `text-destructive` em `n >= limite` (o limite é lido de `WIP_LIMITS.doing.hard`, sem número à mão).
-  - **Concluídas · 7 dias** (§3.1 linha 44, etapa 020): o rótulo era "Concluídas (7d)"; agora traz o subtítulo "Últimos 7 dias" no tile verde.
-  - **Tempo médio** (§3.1 linha 45, etapas 021–022): deixou de mostrar `Math.round(avgCycleTimeDays)+'d'` (o ciclo) e passou a usar **`avgLeadTimeDays`** formatado por **`formatLeadTime`** do T03 — "1,4 dias" / "1 dia" / "—" (D13: da criação à conclusão), com o subtítulo "Da criação à conclusão" e o ícone de relógio no tile neutro.
-- `src/components/tasks/__tests__/kpiStripTarefas.test.tsx` (NOVO): prova de comportamento do cartão.
-- `src/components/tasks/__tests__/TasksModule.test.tsx`: o contrato antigo da faixa foi atualizado para o novo — rótulo "Concluídas · 7 dias", tile âmbar no "Para hoje", tile azul no "Fazendo" e o tamanho do valor (ver decisão abaixo). Nenhuma asserção foi removida; os subtítulos e o anel ganharam asserções novas.
-
-## Decisão declarada (escala do valor)
-A imagem 01 pede o valor dos KPIs em 26px, mas o guard-rail de tipografia do repo proíbe tamanho arbitrário acima de 16px — o teto é a escala do Tailwind. Mantive **24px (`text-2xl`)** nos quatro contadores e **20px (`text-xl`)** só no **Tempo médio**, porque "1,4 dias" é o único valor com unidade e estoura a coluna de ~80px em 360px (evita rolagem horizontal). É a menor mudança que cabe na escala e preserva a leitura.
+- `src/components/tasks/shared/TasksKpiStrip.tsx` — a faixa do T12 ganha as cinco etapas deste cartão:
+  - **023 (plano, linha 261):** "Atrasadas" e "Para hoje" viram `<button type="button">` de verdade (Enter/Espaço são o comportamento nativo — nenhum handler de teclado próprio), com `aria-pressed`, `aria-label` no formato "Rótulo: valor. Filtrar…/Remover o filtro" e o **chip "Filtrando"** dentro do rótulo quando o recorte está ativo; "Fazendo" leva ao Quadro (`onOpenBoard`). Sem `onToggleDue` nenhum card é botão: a faixa lê, não age.
+  - **025 (linha 263 + decisão D2, linha 192):** variante `density="compact"` — cinco leituras em UMA faixa flexível com separador de 1px entre os itens, sem os cards de 88px (item de `min-h-[44px]`); é a densidade que o `TasksModule` usa no Quadro.
+  - **026 (linha 264):** a grade confortável continua `grid-cols-2 / md:grid-cols-3 / xl:grid-cols-5` (2 colunas em 360px, 3 em 768px, 5 a partir de 1280px) e a compacta quebra em 2 linhas a 360px (`min-w-[104px]` + `flex-wrap`), sem rolagem horizontal.
+  - **027 (linha 265):** `TasksKpiStripSkeleton` exportado na MESMA grade da faixa (a classe do container é idêntica à dos cards reais — nenhum salto de layout), com caixas `motion-safe:animate-pulse`, `role="status"` e `aria-busy="true"`; tem as duas densidades.
+  - **028 (linha 266):** cada card tem a região viva `data-testid="kpi-live"` (`role="status"`, `aria-live="polite"`) que anuncia "Rótulo: valor" com o **valor final do dado** (não o quadro da mola); o contador anima com `zappSpring.soft` (o token de `src/lib/motion.ts` documentado como "número que conta", o mesmo caminho de `AnimatedNumber`/`DashboardKpiCard`) e **sem mola** em `useReducedMotion` — no primeiro render e em movimento reduzido o número entra seco e fecha no valor exato.
+- `src/components/tasks/TasksModule.tsx` — só o que o cartão autoriza: (a) o clique ligado ao filtro (`recortePrazo` derivado de `filtros.filters.due` + `alternarRecortePrazo` chamando `filtros.setDue(...)`; clicar de novo devolve `'all'`); (b) `densidadeKpis = mode === 'board' ? 'compact' : 'comfortable'`; (c) `isLoading` renderiza o esqueleto no lugar da faixa.
+- `src/hooks/tasks/useTasksFilters.ts` — **único arquivo fora da lista do cartão** (6 linhas): o escritor `setDue` (action `due` + case + setter). A etapa 024 (plano, linha 262, cartão pai T05) entregou o estado `due`, o parse/serialize na URL e o recorte, mas nenhum setter — sem ele o clique do KPI não tem como escrever no reducer. Não criei estado nem regra nova: exponho o `due` que já existia, para o clique usar o MESMO filtro da barra (nada de estado paralelo na tela).
+- `src/components/tasks/__tests__/kpiStripTarefas.test.tsx` e `.../TasksModule.test.tsx` — 13 casos novos listados na Prova; 1 linha de teste do T12 ajustada (abaixo). Nenhum `expect` foi removido do diff de testes.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/tasks/__tests__/kpiStripTarefas.test.tsx` → `Test Files 1 failed (1); Tests 11 failed (11)` (o card ainda mostrava `9d` do ciclo e não existia `kpi-subtitle`).
-- verde depois: `npx vitest run src/components/tasks/__tests__/kpiStripTarefas.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx` → `Test Files 2 passed (2); Tests 45 passed (45)`.
-- regressão da área: `npx vitest run src/components/tasks` → `Test Files 24 passed (24); Tests 259 passed | 1 todo (260)`.
-- typecheck/lint: `npx eslint <3 arquivos>` ESLINT=0 e `npx tsc --noEmit` TSC=0.
-- casos do teste novo (kpiStripTarefas.test.tsx): Atrasadas vermelho/"Requer atenção" com 1 e neutro/"Tudo em dia" com 0; Para hoje âmbar/"Vencem hoje" e "Nada vence hoje" com 0; Fazendo "3/3" com subtítulo destrutivo e anel com `offset = 0`, e "1/3" com "Em andamento" e `offset = c*2/3`; Concluídas · 7 dias com "Últimos 7 dias"; Tempo médio com `avgCycleTimeDays=9` e `avgLeadTimeDays=1.4` mostrando "1,4 dias" (e "—"/"1 dia"); e `axe` sem violações.
+- vermelho antes (fontes do base `716b98605`, testes deste cartão):
+  `npx vitest run src/components/tasks/__tests__/kpiStripTarefas.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx -t "023/"`
+  → `Test Files 2 failed (2)` · `Failed Tests 10` (023 clique/pressed/chip, 025 compacta, 027 esqueleto ×2, 028 narração ×2 e os 3 casos de integração do módulo).
+- verde depois (mesmo comando, com o commit deste cartão): → `Test Files 2 passed (2)` · `Tests 13 passed | 45 skipped (58)`. Os 3 dos 13 que já passavam no base são guardas de ausência/equivalência ("sem handler nenhum card é botão", "compacta e confortável leem os MESMOS números", axe); os 10 de comportamento novo são os que ficam vermelhos no base.
+- regressão da área: `npx vitest run src/components/tasks/ src/hooks/tasks/` → `Test Files 35 passed (35)` · `Tests 448 passed | 1 todo (449)`.
+- cartão: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (99s)` (`OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`).
+- nomes dos casos novos: strip — "023: Atrasadas e Para hoje publicam o recorte; os outros três não viram botão", "023: sem handler de recorte nenhum card é botão", "023: o card do recorte ativo fica pressionado, com selo, e o rótulo diz o que o clique faz", "025: a densidade compacta vira uma faixa em linha, com separador e sem os 88px", "025: compacta e confortável leem os MESMOS números", "027: o esqueleto repete a grade da faixa e a altura do card", "027: o esqueleto também tem a variante compacta da faixa", "028: cada card narra o valor FINAL numa região viva própria", "028: a região viva anuncia o texto do dado (não o quadro da mola) e o faz também no compacto", "axe: passa com os cards clicáveis (faixa cheia) e na faixa compacta"; módulo — "027: no primeiro render o topo é o esqueleto; os cards entram junto com o dado", "023: clicar em Atrasadas recorta a Lista, escreve due=overdue e o segundo clique desfaz", "023: \"Para hoje\" aplica o outro recorte e troca o card ativo (um recorte por vez)".
+
+## Critério de pronto
+1. **Número do KPI com o trabalho real (Fase F):** preservado — `{...kpiData, doingCount: doingReal}` continua igual; quem prova é `contagensReaisVsFiltradas.test.tsx` (M23/M24/M25: cabeçalho e card "Fazendo" contam o dado real `3/3`, os demais KPIs contam o recorte), verde no run de regressão.
+2. **Etapas × plano:** 023 = linha 261 · 025 = linha 263 (+ D2, linha 192) · 026 = linha 264 · 027 = linha 265 · 028 = linha 266; os 5 elementos da §3.1 (linhas 41–45, cards/anel/subtítulos/`1,4 dias`) seguem intactos e provados nos 11 casos do T12.
+3. **Testes próprios:** os 13 casos acima (vermelho→verde medido).
+4. **`zapp-verify . --rapido`:** verde.
 
 ## O que NÃO fiz e por quê
-- O aviso do juiz sobre arquivos fora da lista (TasksModule.tsx, primitivos de `shared/`: ContactAvatar, DateLabel, PriorityPill, StatusPill, TaskCheckbox, tasksUi) **não procede**: eles entram no diff porque o próprio cartão manda trazer a faixa dos pais não integrada (`DEPENDÊNCIA`: cherry-pick de `89d1048a4` e de `dia/2026-10-11..8f96fa5c7`). Foram cherry-picks, não edição minha; meu diff próprio é só TasksKpiStrip.tsx + os dois testes.
-- Não acrescentei clique/filtro (etapa 023), faixa compacta (025), esqueleto (027) nem animação com mola (028): são do cartão filho `t_0c220fdd`; o anel é SVG estático, sem `framer-motion`.
-- Não toquei em `src/components/tasks/TasksSeasonStrip.tsx` (t_173a1e12) nem em `TasksModule.tsx`.
-- Sem migration e sem dependência nova.
+- Ajuste de 1 teste existente: em `TasksModule.test.tsx` o caso "pinta os tiles por tipo…" esperava "os 5 cards existem desde o primeiro render (vazio)"; com a etapa 027 o primeiro render é o esqueleto, então ele passa a `await waitFor(() => expect(queryByTestId('tasks-kpi-strip-skeleton')).toBeNull())` antes de olhar cores — ficou mais estrito (espera o dado real), não mais frouxo.
+- Estados da tela: **carregando** = esqueleto (novo); **vazio** = faixa com zeros (T12, inalterado); **erro** = a tela de erro do módulo segue como estava, sem faixa (o módulo retorna antes da faixa).
+- Não mexi em `src/components/ui/*`, não usei cor literal, não criei dependência (framer-motion e `zappSpring` já existiam) e não há caminho novo de dado saindo do sistema (nada de exportar/baixar/imprimir).
+- Não toquei nas abas do Quadro: a etapa 100 (linha 359) também pede "faixa compacta" — deixo o aviso de hotspot no cartão para o integrador.
