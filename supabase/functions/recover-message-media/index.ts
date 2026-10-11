@@ -45,6 +45,7 @@ import {
 } from "../_shared/validation.ts";
 import { evoFetch, extractBase64Media } from "../_shared/evolution-send.ts";
 import { persistBase64Media } from "../_shared/evolution-media.ts";
+import type { EvolutionDbClient } from "../_shared/evolution-types.ts";
 
 // ─── Regras puras (testáveis sem rede/banco) ─────────────────────────────────
 
@@ -138,10 +139,8 @@ export interface RecoverDeps {
 const MESSAGE_SELECT =
   "id, contact_id, message_type, external_id, whatsapp_connection_id, media_url, is_deleted, media_meta";
 
-// deno-lint-ignore no-explicit-any
-function buildPorts(req: Request, deps: RecoverDeps, serviceClient?: any): RecoverPorts {
-  // deno-lint-ignore no-explicit-any
-  const service: any = serviceClient ?? createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
+function buildPorts(req: Request, deps: RecoverDeps): RecoverPorts {
+  const service = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
   return {
     async checkAccess(messageId) {
       // Fail-closed: qualquer erro na leitura autenticada nega acesso.
@@ -155,7 +154,7 @@ function buildPorts(req: Request, deps: RecoverDeps, serviceClient?: any): Recov
     },
     async loadMessage(messageId) {
       const { data } = await service.from("messages").select(MESSAGE_SELECT).eq("id", messageId).maybeSingle();
-      return (data as RecoveryRow | null) ?? null;
+      return (data as unknown as RecoveryRow | null) ?? null;
     },
     async resolveInstance(connectionId) {
       const { data } = await service.from("whatsapp_connections").select("instance_id").eq("id", connectionId).maybeSingle();
@@ -178,7 +177,7 @@ function buildPorts(req: Request, deps: RecoverDeps, serviceClient?: any): Recov
       return extractBase64Media(result);
     },
     persistMedia: (row, media) =>
-      persistBase64Media(service, media.base64, media.mimetype, row.message_type, row.id, row.contact_id ?? undefined),
+      persistBase64Media(service as unknown as EvolutionDbClient, media.base64, media.mimetype, row.message_type, row.id, row.contact_id ?? undefined),
     async markAttempt(messageId, mergedMeta) {
       await service.from("messages").update({ media_meta: mergedMeta }).eq("id", messageId);
     },
