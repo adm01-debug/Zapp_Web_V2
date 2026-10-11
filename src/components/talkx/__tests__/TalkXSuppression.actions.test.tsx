@@ -272,7 +272,12 @@ describe('X181 — ações de linha, seleção em massa e modais (TL-167)', () =
     escolher(within(dialog).getByRole('combobox', { name: 'Expiração' }), 'Em uma data');
     const input = within(dialog).getByLabelText('Data de expiração') as HTMLInputElement;
     expect(input.min).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    // "Ontem" tem de sair na MESMA data que o validador usa (`isPastDateInput`
+    // compara com o dia LOCAL). `toISOString()` devolve o dia em UTC: entre 21h
+    // e 0h (BRT) o dia UTC já é o de amanhã, o valor vira "hoje" e o toast de
+    // data passada nunca dispara — o teste falhava só de madrugada.
+    const ontem = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const yesterday = `${ontem.getFullYear()}-${String(ontem.getMonth() + 1).padStart(2, '0')}-${String(ontem.getDate()).padStart(2, '0')}`;
     fireEvent.change(input, { target: { value: yesterday } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
