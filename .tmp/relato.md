@@ -1,67 +1,35 @@
-Especialista: worker (geral)
+Especialista: iris (area-front-componentes)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- src/components/inbox/VoiceChanger.tsx: o preparo ("Usar esta voz") deixou de ser `void fetch(...).then(r => r.blob())` sem catch. Virou async com try/catch: falha de fetch ou de leitura do blob agora mostra aviso inline (ícone AlertCircle + "Tentar de novo") na própria prévia, com o motivo detalhado no tooltip e toast de erro; o popover continua aberto e utilizável, e o botão "Usar esta voz" ganhou estado "Preparando".
+- src/components/inbox/VoiceChanger.tsx e VoiceChangerPicker.tsx: `audio.play()` passou a ser aguardado dentro de try/catch. Quando o navegador recusa a reprodução, `isPlaying` volta a false (o botão não fica preso em "tocando"/"Pausar"), o áudio é desanexado do volume global e aparece o aviso "O navegador bloqueou a reprodução. Toque no botão de novo.".
+- src/components/inbox/VoiceChangerPicker.tsx: a transformação também ganhou aviso inline (ícone + "Tentar de novo", motivo detalhado no tooltip) além do toast, então dá para tentar de novo sem regravar; o botão de reprodução passou a ter largura fixa (w-28) e alterna Ouvir → Pausar → Carregando sem mudar o layout; "Transformar voz", "Enviar" e os botões de retry ficaram com alvo de 40 px (h-10).
+- Movimento: `useReducedMotion` respeitado nos dois componentes — com movimento reduzido nada se desloca (entrada só por opacidade) e as animações de escala (pulso da gravação e ponto piscando) somem; sem redução o aviso inline entra com mola curta (spring 220 ms).
+- src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx: uma linha no mock de framer-motion (`useReducedMotion: () => false`), que o componente agora consome. Nenhuma asserção do teste foi alterada ou afrouxada.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+Testes novos (critério do cartão): src/components/inbox/__tests__/VoiceChanger.falhas.test.tsx, VoiceChangerPicker.falhas.test.tsx e VoiceChanger.reduced-motion.test.tsx.
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
+## Prova
+- vermelho antes (componentes restaurados da base):
+  `git show <base>:src/components/inbox/VoiceChanger.tsx > .../VoiceChanger.tsx` (idem Picker) e
+  `npx vitest run VoiceChanger.falhas VoiceChanger.reduced-motion VoiceChangerPicker.falhas`
+  → `Test Files 3 failed (3)` / `Tests 9 failed (9)`; exemplos de falha: `Unable to find an element by: [data-testid="voz-erro-preparo"]`, `Unable to find an element by: [data-testid="voz-erro-transformacao"]`, `Unable to find an accessible element with the role "button" and name "Ouvir prévia"` (botão preso em "tocando" na base).
+- verde depois (mesmos testes, componentes corrigidos):
+  `npx vitest run VoiceChanger.falhas VoiceChanger.reduced-motion VoiceChangerPicker.falhas`
+  → `Test Files 3 passed (3)` / `Tests 9 passed (9)`.
+- regressão dos testes que já existiam no módulo + telas que renderizam estes componentes:
+  `npx vitest run VoiceChangerPicker.test.tsx VoiceChangerPicker.preview-send.test.tsx AudioRecorder.test.tsx team-chat-n182-a11y.test.tsx ChatInputArea.limite-enter.test.tsx`
+  → `Test Files 5 passed (5)` / `Tests 18 passed (18)` (roda junto com os 3 novos: nenhum teste existente foi apagado, pulado ou afrouxado).
+- typecheck: `npx tsc --noEmit` → sem saída, 0 erros.
 
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Critério de pronto, item a item
+- falha de fetch/blob avisa e o popover continua utilizável → VoiceChanger.falhas.test.tsx (aviso inline, retry que entrega o blob via `onVoiceChanged` e fecha só no sucesso).
+- reprodução recusada não deixa `isPlaying` verdadeiro e avisa → VoiceChanger.falhas.test.tsx e VoiceChangerPicker.falhas.test.tsx (o botão volta a "Ouvir").
+- aviso inline com ícone + "Tentar de novo" e motivo detalhado no tooltip → os dois componentes e os testes acima.
+- botão play/pausa/carregando sem mudar largura → VoiceChangerPicker.falhas.test.tsx (w-28 nos três estados).
+- movimento reduzido só com opacidade → VoiceChanger.reduced-motion.test.tsx (framer-motion real, só `useReducedMotion` controlado; com redução não há translate).
+- alvos de interação ≥40 px nos botões que o cartão mexeu → h-10.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não mexi em VoiceSelector.tsx nem em AudioRecorder.tsx (fora do cartão); só fui neles como consumidores, lendo o contrato.
+- O diff é grande porque o cartão pede tratamento de erro + movimento reduzido nos dois componentes e os três testes novos; nenhum arquivo de outro assunto entrou no commit.
