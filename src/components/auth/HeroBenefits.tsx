@@ -69,7 +69,7 @@ export function HeroBenefits() {
         initial={reduceMotion ? false : { opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: reduceMotion ? 0 : 0.8 }}
-        className="mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-bold text-transparent lg:mb-8 lg:text-3xl"
+        className="mb-4 bg-gradient-to-r from-primary to-[hsl(var(--primary-text))] bg-clip-text text-xl font-bold text-transparent lg:mb-8 lg:text-3xl"
       >
         atender com excelência
       </motion.p>

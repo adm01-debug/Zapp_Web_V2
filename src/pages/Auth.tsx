@@ -172,7 +172,7 @@ export default function Auth() {
                       </motion.div>
                       
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="pt-1">
-                        <RippleButton type="submit" variant="primary" className="group w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50" disabled={loading}>
+                        <RippleButton type="submit" variant="primary" className="group inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50" disabled={loading}>
                           {loading ? <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>Entrando...</motion.span> : <>Entrar<ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" /></>}
                         </RippleButton>
                       </motion.div>
