@@ -23,3 +23,9 @@ Causa: o teste NOVO que a entrega criou, `scripts/db-audit/anon-privileges-conta
 - Não mexi no `.test.sh` da entrega, na migration nem em `LIMITE_ESPELHO`: a causa é só o desalinhamento do documento; baixar o limite ou esconder o nome da tabela no teste seria afrouxar a medida.
 - Rodei também a suíte node inteira do espelho (`scripts/ci/*.unit.mjs`, `scripts/edge-deploy/*.unit.mjs`, `scripts/db-audit/*.test.mjs`, `scripts/talkx/*.unit.mjs`): saíram dos 3 do baseline (1 contrato + 2 Talk X) também 5 testes do `lint-ratchet.unit.mjs`, que falham aqui porque o HERMES-GUARD barra os `git` de escrita que eles usam dentro do teste — artefato do meu ambiente, não do diff (no ambiente do integrador, sem guarda, o baseline não os lista).
 - Não toquei `supabase/schema-manifest.json` nem `scripts/db-audit/grants-baseline.json` (retratos do banco oficial, regenerados na integração) — segue como pendência registrada pelo cartão pai.
+
+## Pontos do refazer (O QUE FAZER do cartão)
+- Ponto 1: parti do commit da entrega com `git cherry-pick` (7e1a91cbb + b6f5c02a5 -> dd633e7a3 + dbb12e45f) sobre a ponta de dia/2026-10-11 (616782983), sem recomeçar.
+- Ponto 2: reproduzi o vermelho no mesmo comando e corrigi a causa — `docs/DB-INVENTORY.md`, linha do `sicoob_contact_mapping`: `roadmap`/`—` -> `parcial`/`scripts/db-audit/anon-privileges-contact-messages.test.sh`; nenhuma asserção foi afrouxada.
+- Ponto 3: provei com `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` (15/15 `ok`, sem `not ok`) e `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO (101s)`. SHA dos commits: dd633e7a3 (cherry-pick da migration/teste), dbb12e45f (cherry-pick do db-guard) e 63c1d24b5 (a correção).
+
