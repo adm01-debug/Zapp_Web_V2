@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReactionMutations } from '../reactions/useReactionMutations';
+import { messageReactionsQueryKey, useReactionsBatch } from '../reactions/useBatchReactions';
 import { MessageReaction, UseMessageReactionsOptions } from '../reactions/types';
 
 // Re-export types and batch hook for consumers
@@ -14,6 +15,17 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const lastRefreshKeyRef = useRef(options?.refreshKey);
+
+  // Quando a conversa está dentro do `ReactionsBatchProvider`, o lote cobre
+  // todos os ids das mensagens numa consulta só; enquanto o lote não resolve
+  // ESTE id, a consulta por mensagem fica desligada (o lote semeia o cache).
+  // A trava é POR MENSAGEM e vale desde o passe em que o filho monta dentro
+  // do provider: id fora da lista do provider consulta sozinho na hora, e id
+  // já resolvido (semeado ou com fallback liberado) também. Sem provider
+  // (consumidor isolado) `batch` é `null` e nada muda.
+  const batch = useReactionsBatch();
+  const batchDefersMessage =
+    batch != null && batch.coveredIds.has(messageId) && !batch.settledIds.has(messageId);
 
   // Optional per-message realtime subscription (disabled in chat view to avoid one channel per bubble)
   useEffect(() => {
@@ -52,7 +64,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
   });
 
   const { data: reactions = [], isLoading, refetch } = useQuery({
-    queryKey: ['message-reactions', messageId],
+    queryKey: messageReactionsQueryKey(messageId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('message_reactions')
@@ -75,7 +87,7 @@ export function useMessageReactions(messageId: string, options?: UseMessageReact
         user_name: r.user_id ? usersMap.get(r.user_id) || 'Agente' : 'Cliente',
       })) as MessageReaction[];
     },
-    enabled: !!messageId,
+    enabled: !!messageId && !batchDefersMessage,
     staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });
