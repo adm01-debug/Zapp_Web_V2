@@ -1,23 +1,36 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Pontos da recusa
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Ponto 1: RuleValueInput.test.tsx — restaurei a cobertura do teste da base `número: grava o número sem máscara` como `it` próprio e mantive o teste adicional do botão desabilitado. Como `lead_score`/`risk_score` agora são intencionalmente `comingSoon` e a validação barra publicar, a prova do número sem máscara usa o caminho de compatibilidade de segmento já salvo: renderiza o `RuleRow` real com uma regra `lead_score`, edita o input `inputMode="decimal"` e confere que o valor cru `80` sobe no patch `{ value: '80' }`. Vermelho antes da correção final: o teste save-based chamava `Salvar`, mas falhava com `expected "vi.fn()" to be called at least once` porque publicar com `lead_score` agora é barrado. Verde depois: `bun run test src/components/talkx/__tests__/RuleValueInput.test.tsx src/components/talkx/__tests__/TalkXSegments.groups.test.tsx src/hooks/integrations/__tests__/useTalkXSegments.test.ts` → `Test Files 3 passed (3); Tests 35 passed (35)`.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+Ponto 2: TalkXSegments.groups.test.tsx — mantive a prova de que `lead_score` não entra pelo catálogo (botão `Lead score` com nome acessível está desabilitado, tem title "Em breve" e clicar não cria campo), sem perder a cobertura do tipo `number`. A prova do ícone `hash` fica em um `it` próprio com um segmento já salvo contendo regra `lead_score`; ele renderiza valor `50`, confere `svg.lucide-hash`, mantém `Lead score` selecionável para a própria regra e deixa `Risco de churn` desabilitado no seletor.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+Ponto 3: Relato — corrigi a narrativa que antes dizia que nenhum teste da base foi removido/afrouxado. O teste da base `número: grava o número sem máscara` não foi removido: foi restaurado como `it` próprio, mas o caminho de prova mudou de publicar o builder para editar um `RuleRow` de segmento já salvo porque publicar `lead_score` agora falha fechado. Em `TalkXSegments.groups.test.tsx`, a árvore principal fica com 5 nós porque `lead_score` não pode mais entrar pelo catálogo; a asserção do ícone `hash` não foi descartada, foi movida para a prova de regra já salva.
 
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+Ponto 4: Impacto em segmentos já salvos — comportamento intencional de falha fechada: regras antigas com `lead_score`/`risk_score` ainda são exibidas/descritas como completas e podem ser editadas no `RuleRow`, mas não entram em estimativa/PostgREST. `splitRules` as conta como incompletas para execução e `rulesToPostgrest` lança `Regra de segmento inválida`, então a validação barra publicar/usar o filtro morto até que o indicador seja realmente calculado.
+
+## Pedido original
+
+Cherry-pick aplicado da branch anterior (`0ad84df1a` e `372bcc8da`) e correção adicional no commit `892550b0b`. O defeito original fica coberto em `src/hooks/integrations/__tests__/useTalkXSegments.test.ts`: `isRuleComplete`/descrição continuam dizendo a verdade para `lead_score`/`risk_score`, enquanto `splitRules` + `rulesToPostgrest` impedem a execução do filtro morto.
+
+## Arquivos alterados
+
+src/components/talkx/__tests__/RuleValueInput.test.tsx
+src/components/talkx/__tests__/TalkXSegments.groups.test.tsx
+src/components/talkx/segments/RuleRow.tsx
+src/components/talkx/segments/TalkXSegmentBuilder.tsx
+src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+src/hooks/integrations/useTalkXSegments.ts
+
+## Verificação
+
+- `bun run test src/components/talkx/__tests__/RuleValueInput.test.tsx src/components/talkx/__tests__/TalkXSegments.groups.test.tsx src/hooks/integrations/__tests__/useTalkXSegments.test.ts` → `Test Files 3 passed (3); Tests 35 passed (35)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (76s)` com `db_guard`, `tipos`, `lint` e `migrations` OK; o banco local não foi verificado porque este cartão não tem migration nem conjunto de banco.
+- O comando do pedido original `bun run test src/segments/__tests__/segmentRules.test.ts` não existe mais nesta ponta: o runner retorna `No test files found` para esse caminho; a cobertura equivalente está no teste real de `useTalkXSegments` listado acima.
+
+## Autorrevisão
+
+- Diff restrito ao escopo talkx do cartão; nenhum arquivo de guarda/CI/manifesto/migration foi alterado.
+- Não removi nem pulei teste: o teste numérico foi preservado como `it` próprio e o teste de `hash` foi preservado em regra já salva.
+- Sem escrita assíncrona nova, sem chamada de banco/rede nova e sem tratamento de erro engolido; a mudança de produção é só bloqueio de filtro `comingSoon` e preservação visual/edição de regra já salva.
