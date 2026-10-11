@@ -195,24 +195,43 @@ export function useConversationActions() {
       toast.error('Erro ao adiar conversa. Tente novamente.');
       return;
     }
-    const idAnterior = anteriores?.[0]?.id ?? null;
+    // Sem índice único, o par (contact_id, snoozed_by) pode ter várias linhas:
+    // é preciso remover TODAS, como o delete original fazia.
+    const idsAnteriores = (anteriores ?? []).map((linha) => linha.id);
 
-    const { error } = await supabase
+    // O `.select('id')` devolve o id da linha nova para a reversão explícita
+    // abaixo (se a remoção das antigas falhar, a nova é apagada de volta).
+    const { data: inserido, error } = await supabase
       .from('conversation_snoozes')
       .insert({
         contact_id: contactId,
         snoozed_by: profileId,
         snooze_until: snoozeUntil.toISOString(),
-      });
+      })
+      .select('id')
+      .single();
     if (error) {
-      // Falha visível e adiamento anterior intacto (a linha antiga só é
-      // removida abaixo, depois do aceite).
+      // Falha visível e adiamento anterior intacto (as linhas antigas só são
+      // removidas abaixo, depois do aceite).
       toast.error('Erro ao adiar conversa. Tente novamente.');
       return;
     }
 
-    if (idAnterior) {
-      await supabase.from('conversation_snoozes').delete().eq('id', idAnterior);
+    if (idsAnteriores.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('conversation_snoozes')
+        .delete()
+        .in('id', idsAnteriores);
+      if (deleteError) {
+        // Sem a remoção, sobrariam duas linhas e a antiga (com vencimento
+        // mais tarde) poderia manter a conversa adiada além do novo prazo:
+        // reverte a linha nova em vez de sinalizar sucesso inconsistente.
+        if (inserido?.id) {
+          await supabase.from('conversation_snoozes').delete().eq('id', inserido.id);
+        }
+        toast.error('Erro ao adiar conversa. Tente novamente.');
+        return;
+      }
     }
 
     const until = snoozeUntil.getTime();
