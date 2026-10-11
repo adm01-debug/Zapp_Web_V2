@@ -3,8 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { undoToast } from '@/lib/undoToast';
 import { useChatMediaSending } from '@/components/inbox/useChatMediaSending';
-import { useEvolutionApiCore } from '@/hooks/evolution/useEvolutionApiCore';
-import { useEvolutionIntegrations } from '@/hooks/evolution/useEvolutionIntegrations';
+import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { ConversationContact } from '@/types/chat';
 
 const VIP_TAG = 'VIP';
@@ -61,8 +60,7 @@ export function useContactQuickActions(contact: ConversationContact) {
   // fallback para a conexão 'connected') e a mesma action da Evolution que o
   // menu de mensagem usa para bloquear de verdade.
   const { instanceName, resolveInstance } = useChatMediaSending(contact.id, contact.phone);
-  const { callApi, withToast } = useEvolutionApiCore();
-  const { updateBlockStatus } = useEvolutionIntegrations(callApi, withToast);
+  const { updateBlockStatus } = useEvolutionApi();
   const blockBusyRef = useRef(false);
 
   const resolveBlockTarget = async (): Promise<{ instance: string; jid: string } | null> => {

@@ -1,14 +1,13 @@
 /**
- * Testes de `src/hooks/evolution/useEvolutionIntegrations.ts`.
+ * Testes do adaptador de perfil/etiquetas/contatos/bloqueio da Evolution API.
  *
- * Escopo: SÓ teste novo. Nenhuma linha de produção foi alterada.
+ * SL-075 E43: este contrato era de um hook de integrações que foi deletado; os
+ * métodos que a Evolution GO suporta foram absorvidos por `useEvolutionApi`, e
+ * é essa a superfície provada aqui.
  *
- * Como se prova aqui: o hook é um adaptador — a interface que ele tem com o
- * resto do sistema são os DOIS parâmetros injetados (`callApi`/`withToast`), e
- * o que se prova é o payload que sai dele. Em vez de dublar esses parâmetros
- * (que seriam o próprio alvo), os testes montam o hook com o
- * `useEvolutionApiCore` REAL e dublam a FRONTEIRA de rede
- * (`supabase.functions.invoke`), que é o que o roteador da edge function
+ * Como se prova aqui: o orquestrador é um adaptador — a interface que ele tem
+ * com o resto do sistema é a FRONTEIRA de rede (`supabase.functions.invoke`),
+ * que é o que o roteador da edge function
  * (`supabase/functions/evolution-api/index.ts`) recebe de verdade:
  * `evolution-api/<action>` + `{ method: 'POST', body }`.
  *
@@ -31,17 +30,13 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { useEvolutionApiCore } from '@/hooks/evolution/useEvolutionApiCore';
-import { useEvolutionIntegrations } from '@/hooks/evolution/useEvolutionIntegrations';
+import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import type { PrivacySettings } from '@/hooks/integrations/evolutionApi.types';
 
-type Api = ReturnType<typeof useEvolutionIntegrations>;
+type Api = ReturnType<typeof useEvolutionApi>;
 
-function renderIntegrations() {
-  return renderHook(() => {
-    const core = useEvolutionApiCore();
-    return useEvolutionIntegrations(core.callApi, core.withToast);
-  });
+function renderApi() {
+  return renderHook(() => useEvolutionApi());
 }
 
 function deferred<T>() {
@@ -88,7 +83,7 @@ type Row = {
  * (Chatwoot, Typebot, OpenAI, Dify, Flowise, Evolution Bot, RabbitMQ/SQS,
  * templates, offerCall, catálogo/coleções de negócio, proxy, EvoAI, N8N,
  * Kafka/Nats/Pusher, findChats/findMessages/findStatusMessages) saíram daqui
- * junto com os métodos removidos de `useEvolutionIntegrations.ts` — não há
+ * junto com o hook de integrações que foi deletado — não há
  * mais o que testar neles nesta função.
  */
 const CASES: Row[] = [
@@ -124,7 +119,7 @@ afterEach(() => {
 
 describe('mapeamento ação -> payload da edge function', () => {
   it.each(CASES)('$name envia $action com o corpo do roteador', async (row) => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await row.run(result.current);
@@ -144,12 +139,68 @@ describe('mapeamento ação -> payload da edge function', () => {
     expect(h.toast.error).not.toHaveBeenCalled();
   });
 
+  /**
+   * Contrato do orquestrador (SL-075 E43): as funções absorvidas do antigo hook
+   * de integrações — perfil, etiquetas, contatos e bloqueio — têm de estar
+   * presentes e ser EXATAMENTE elas; e nada do que a Evolution GO não tem pode
+   * ter sobrado exposto. O conjunto "recomposto" abaixo são as chaves que o
+   * orquestrador apenas espalha dos sub-hooks (instância, mensagens, grupos) e
+   * que, por isso, não fazem parte do contrato absorvido.
+   */
   it('expõe exatamente as funções do contrato (nada a mais, nada a menos)', () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
+    const chaves = Object.keys(result.current);
 
-    expect(Object.keys(result.current).sort()).toEqual(
-      [...new Set(CASES.map((row) => row.name.replace(/\(.*\)$/, '')))].sort(),
-    );
+    const contrato = Array.from(new Set(CASES.map((row) => row.name.replace(/\(.*\)$/, '')))).sort();
+
+    const recompostas = [
+      'isLoading',
+      // useEvolutionInstance
+      'createInstance', 'createConnection', 'listInstances', 'connectInstance', 'getInstanceStatus',
+      'getInstanceInfo', 'restartInstance', 'disconnectInstance', 'deleteInstance', 'setPresence',
+      'setSettings', 'getSettings', 'setWebhook', 'getWebhook',
+      // useEvolutionMessaging
+      'sendTextMessage', 'sendMediaMessage', 'sendAudioMessage', 'sendStickerMessage',
+      'sendLocationMessage', 'sendContactMessage', 'sendReaction', 'sendPollMessage',
+      'sendListMessage', 'sendButtonsMessage', 'sendStatusMessage', 'sendTemplateMessage',
+      'sendPtvMessage', 'sendChatPresence', 'markMessageAsRead', 'markMessageAsUnread',
+      'archiveChat', 'deleteMessage', 'updateMessage', 'deleteMessageForEveryone', 'editMessage',
+      'pinChat', 'unpinChat', 'starMessage', 'clearChat', 'setDisappearingMessages',
+      'fetchContactProfile', 'muteChat',
+      // useEvolutionGroups
+      'createGroup', 'listGroups', 'getGroupInfo', 'getGroupParticipants', 'updateGroupName',
+      'updateGroupDescription', 'updateGroupParticipants', 'updateGroupSetting',
+      'getGroupInviteCode', 'revokeGroupInviteCode', 'getInviteInfo', 'acceptInvite',
+      'leaveGroup', 'updateGroupPicture', 'toggleEphemeral',
+    ];
+
+    // Nada a mais, nada a menos: fora do que vem dos sub-hooks, só o contrato.
+    const absorvidas = chaves.filter((k) => !recompostas.includes(k)).sort();
+    expect(absorvidas).toEqual(contrato);
+    for (const nome of contrato) {
+      expect(typeof (result.current as Record<string, unknown>)[nome]).toBe('function');
+    }
+
+    // Nenhuma ação sem equivalente na Evolution GO pode ter sobrado exposta.
+    const semEquivalenteNaGo = [
+      'findChats', 'findMessages', 'findStatusMessages',
+      'setChatwoot', 'getChatwoot', 'deleteChatwoot',
+      'setTypebot', 'getTypebot', 'deleteTypebot', 'getTypebotSessions', 'changeTypebotStatus', 'startTypebot',
+      'setOpenAI', 'getOpenAI', 'deleteOpenAI',
+      'setDify', 'getDify', 'deleteDify',
+      'setFlowise', 'getFlowise', 'deleteFlowise',
+      'setEvolutionBot', 'getEvolutionBot', 'deleteEvolutionBot',
+      'setRabbitMQ', 'getRabbitMQ', 'setSQS', 'getSQS',
+      'createTemplate', 'findTemplates', 'deleteTemplate',
+      'offerCall', 'getBusinessCatalog', 'getBusinessCollections',
+      'setProxy', 'getProxy',
+      'setEvoAI', 'getEvoAI', 'deleteEvoAI',
+      'setN8N', 'getN8N', 'deleteN8N',
+      'setKafka', 'getKafka', 'setNats', 'getNats', 'setPusher', 'getPusher',
+    ];
+    for (const fn of semEquivalenteNaGo) {
+      expect((result.current as Record<string, unknown>)[fn]).toBeUndefined();
+    }
   });
 });
 
@@ -157,7 +208,7 @@ describe('leitura devolve o dado da edge function', () => {
   it('findLabels devolve a lista recebida (passthrough, sem reembalar)', async () => {
     const labels = [{ id: 'lbl-1', name: 'vip' }];
     h.invoke.mockResolvedValue({ data: labels, error: null });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let out: unknown;
     await act(async () => {
@@ -170,7 +221,7 @@ describe('leitura devolve o dado da edge function', () => {
   it('getMediaBase64 devolve o objeto de mídia sem reembalar', async () => {
     const media = { base64: 'ZmFrZQ==', mimetype: 'image/png' };
     h.invoke.mockResolvedValue({ data: media, error: null });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let out: unknown;
     await act(async () => {
@@ -182,7 +233,7 @@ describe('leitura devolve o dado da edge function', () => {
 
   it('updateBlockStatus devolve o retorno da edge function e confirma no toast', async () => {
     h.invoke.mockResolvedValue({ data: { ok: true }, error: null });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let out: unknown;
     await act(async () => {
@@ -200,7 +251,7 @@ describe('erros', () => {
       data: { error: true, message: 'instance (instanceName) é obrigatório para esta ação.' },
       error: null,
     });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await expect(result.current.removeProfilePicture(instanceName)).rejects.toThrow(
@@ -216,7 +267,7 @@ describe('erros', () => {
       data: { error: true, message: 'Sem permissão para listar contatos.' },
       error: null,
     });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await expect(result.current.findContacts(instanceName)).rejects.toThrow('Sem permissão para listar contatos.');
@@ -228,7 +279,7 @@ describe('erros', () => {
 
   it('data.error precisa ser true (booleano): payload com error false resolve normalmente', async () => {
     h.invoke.mockResolvedValue({ data: { error: false, data: [{ id: 'lbl-1' }] }, error: null });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let out: unknown;
     await act(async () => {
@@ -240,7 +291,7 @@ describe('erros', () => {
 
   it('falha de rede sobe o erro e o item de mutação avisa no toast', async () => {
     h.invoke.mockResolvedValue({ data: null, error: new Error('network down') });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await expect(result.current.removeProfilePicture(instanceName)).rejects.toThrow('network down');
@@ -254,7 +305,7 @@ describe('erros', () => {
       data: null,
       error: functionsHttpError('Sem permissão para atualizar o nome desta conexão.', 403),
     });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await result.current
@@ -270,7 +321,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
   it('duas leituras iguais em voo viram UMA viagem e as duas recebem o mesmo resultado', async () => {
     const gate = deferred<{ data: unknown; error: unknown }>();
     h.invoke.mockReturnValueOnce(gate.promise);
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let p1!: Promise<unknown>;
     let p2!: Promise<unknown>;
@@ -295,7 +346,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
   });
 
   it('leituras iguais com argumentos DIFERENTES não são confundidas (paginação/offset entram na chave)', async () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await Promise.all([
@@ -311,7 +362,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
   it('mutação (POST) nunca deduplica: o mesmo handleLabel em voo vira duas viagens', async () => {
     const gate = deferred<{ data: unknown; error: unknown }>();
     h.invoke.mockReturnValueOnce(gate.promise).mockReturnValueOnce(gate.promise);
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let p1!: Promise<unknown>;
     let p2!: Promise<unknown>;
@@ -329,7 +380,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
   });
 
   it('a chave do dedupe é liberada ao terminar: a próxima leitura igual invoca de novo', async () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await result.current.findContacts(instanceName, 1, 0);
@@ -343,7 +394,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
     h.invoke
       .mockResolvedValueOnce({ data: null, error: new Error('rede caiu') })
       .mockResolvedValueOnce({ data: [{ id: 'c1' }], error: null });
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await expect(result.current.findLabels(instanceName)).rejects.toThrow('rede caiu');
@@ -356,7 +407,7 @@ describe('concorrência: dedupe só em leitura (method GET)', () => {
 
 describe('limites e dado malformado', () => {
   it('paginação no limite inferior (page 0, offset 0) é enviada como veio, sem arredondar', async () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await result.current.findContacts(instanceName, 0, 0);
@@ -370,7 +421,7 @@ describe('limites e dado malformado', () => {
   });
 
   it('checkWhatsAppNumbers com lista vazia ainda manda o corpo (sem filtrar no cliente)', async () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     await act(async () => {
       await result.current.checkWhatsAppNumbers(instanceName, []);
@@ -383,7 +434,7 @@ describe('limites e dado malformado', () => {
   });
 
   it('leitura com payload vazio (data null) resolve null, sem lançar', async () => {
-    const { result } = renderIntegrations();
+    const { result } = renderApi();
 
     let out: unknown = 'sentinela';
     await act(async () => {

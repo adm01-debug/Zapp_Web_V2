@@ -95,104 +95,9 @@ export interface PrivacySettings {
   groupadd?: string;
 }
 
-export interface TypebotConfig {
-  instanceName: string;
-  enabled?: boolean;
-  url: string;
-  typebot: string;
-  expire?: number;
-  keywordFinish?: string;
-  delayMessage?: number;
-  unknownMessage?: string;
-  listeningFromMe?: boolean;
-  stopBotFromMe?: boolean;
-  keepOpen?: boolean;
-  debounceTime?: number;
-  triggerType?: string;
-  triggerOperator?: string;
-  triggerValue?: string;
-}
-
-export interface OpenAIConfig {
-  instanceName: string;
-  enabled?: boolean;
-  openAiApiKey: string;
-  expire?: number;
-  keywordFinish?: string;
-  delayMessage?: number;
-  listeningFromMe?: boolean;
-  stopBotFromMe?: boolean;
-  speechToText?: boolean;
-  botType?: 'chatCompletion' | 'assistant';
-  assistantId?: string;
-  model?: string;
-  systemMessage?: string;
-  maxTokens?: number;
-  temperature?: number;
-  triggerType?: string;
-  triggerOperator?: string;
-  triggerValue?: string;
-  functionUrl?: string;
-}
-
-export interface DifyConfig {
-  instanceName: string;
-  enabled?: boolean;
-  apiUrl: string;
-  apiKey: string;
-  botType?: 'chatBot' | 'textGenerator' | 'agent' | 'workflow';
-  expire?: number;
-  triggerType?: string;
-  keywordFinish?: string;
-  listeningFromMe?: boolean;
-  stopBotFromMe?: boolean;
-  speechToText?: boolean;
-}
-
-export interface FlowiseConfig {
-  instanceName: string;
-  enabled?: boolean;
-  apiUrl: string;
-  apiKey?: string;
-  chatflowId: string;
-  expire?: number;
-  triggerType?: string;
-  triggerValue?: string;
-}
-
-export interface EvolutionBotConfig {
-  instanceName: string;
-  enabled?: boolean;
-  expire?: number;
-  keywordFinish?: string;
-  delayMessage?: number;
-  triggerType?: string;
-  triggerOperator?: string;
-  triggerValue?: string;
-  unknownMessage?: string;
-  listeningFromMe?: boolean;
-  stopBotFromMe?: boolean;
-  apiUrl: string;
-  apiKey?: string;
-}
-
-export interface ChatwootConfig {
-  instanceName: string;
-  enabled?: boolean;
-  accountId: string;
-  token: string;
-  url: string;
-  signMsg?: boolean;
-  reopenConversation?: boolean;
-  conversationPending?: boolean;
-  nameInbox?: string;
-  mergeBrazilContacts?: boolean;
-  importContacts?: boolean;
-  importMessages?: boolean;
-  daysLimitImportMessages?: number;
-  signDelimiter?: string;
-  autoCreate?: boolean;
-}
+// SL-075 E43: os tipos das integrações que a Evolution GO não suporta
+// (TypebotConfig, OpenAIConfig, DifyConfig, FlowiseConfig, EvolutionBotConfig,
+// ChatwootConfig) foram removidos junto com o hook que os usava.
 
 export interface CreateInstanceParams {
   instanceName: string;
@@ -204,8 +109,6 @@ export interface CreateInstanceParams {
   wabaId?: string;
   phoneNumberId?: string;
   webhook?: Partial<WebhookConfig>;
-  chatwoot?: Partial<ChatwootConfig>;
-  typebot?: Partial<TypebotConfig>;
 }
 
 // E11 (plano multi-conexão): substitui create-instance — cria a instância na
