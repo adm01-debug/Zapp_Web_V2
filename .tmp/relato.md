@@ -29,6 +29,13 @@ Especialista: iris (area-front-componentes)
   StatusChips.identidade-profile, ConversationListSidebar.test e src/hooks/inbox/__tests__) →
   `Test Files 23 passed (23)` · `Tests 132 passed | 1 expected fail (133)`.
 
+## Integração dos pais (não são alterações minhas)
+O cartão informa que H1 (t_2bcde689) e H2 (t_9637c51a) já estão prontos; os commits deles não são ancestrais da base do dia,
+então integrei-os por cherry-pick no início (452075a32, 16f60f5de, df5d7885e). Por isso o diff da branch aparece com
+src/hooks/inbox/useInboxFilters.ts, src/hooks/inbox/__tests__/chipCounts.test.ts e
+src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx: são arquivos dos pais, não meus, e não os editei. O único
+arquivo de hooks que editei foi chipCounts.ts (1 linha, guard `profileId != null` em isAttending), explicado acima.
+
 ## O que NÃO fiz e por quê
 - ContactDetails.tsx (item 3 do cartão): o comentário da linha ~67 diz que archiveContact "zera assigned_to"; conferi que
   o cartão E2 NÃO está no meu código (useConversationActions.archiveContact só faz update de assigned_to) → o comentário
