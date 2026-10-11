@@ -78,7 +78,7 @@ export function BoardColumn({
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" className="h-5 w-5 rounded flex items-center justify-center hover:bg-muted" aria-label="Política da coluna">
+            <button type="button" className="min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center hover:bg-muted" aria-label="Política da coluna">
               <Info className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           </TooltipTrigger>
