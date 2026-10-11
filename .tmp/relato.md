@@ -51,4 +51,16 @@ Especialista: worker (sql) (area-sql-banco)
   violacao nova.` → `EXIT=0`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (98s)` → `EXIT=0`;
   sha da ponta `d54d86c1c`.
 
+## Avisos do juiz automático (não são falha de verificação)
+- “não achei teste no diff”: o teste é a própria guarda de CI, que é o item do cartão —
+  `node scripts/db-audit/supabase-usage-guard.mjs` falha (EXIT=1) sobre a base com o pacote empilhado e passa
+  (EXIT=0) depois da correção; remover uma entrada obsoleta de `known` não tem unidade para um teste novo, e o
+  teste unitário da projeção da guarda (`scripts/ci/supabase-usage-guard-forward-projection.unit.mjs`) já existe e
+  passou.
+- “LOOP sem LIMIT nem teto por chamada” na migration do cherry-pick: não procede. Os 3 `LOOP` da migration têm
+  teto explícito ANTES do `FOR` — linhas 48-51 (`jsonb_array_length(p_weekdays) > 32` → RAISE), 197-201
+  (`jsonb_array_length(v_dnd_holidays) > 366` → RETURN) e 314-317 (`jsonb_array_length(... -> 'days') > 32` →
+  v_invalid := true) — e o de feriados ainda tem `EXIT` no `IF v_holiday = v_today`. Esse teto veio da própria
+  entrega (commits `e4550eb8d`/`9ef70ef18`); o aviso lê o `LOOP` e não o limite que o precede.
+
 CONCLUÍ.
