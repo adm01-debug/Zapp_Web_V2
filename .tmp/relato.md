@@ -1,33 +1,26 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-Etapa 069 (primitivos compartilhados) + etapa 124 (foto do contato no avatar). Uma implementação por peça, para Lista/Quadro/Agenda/painel/modal pararem de duplicar marcação:
+Cartão: cabeçalho do módulo de Tarefas (plano: linhas 251-253; imagem 05, linha 133).
 
-- `src/components/tasks/shared/TaskCheckbox.tsx` (novo) — checkbox CIRCULAR (D16, plano §3.3 linha 108: "checkbox circular em todos"). `<button>` nativo com `role="checkbox"`/`aria-checked`; nomes acessíveis iguais aos de hoje ("Concluir tarefa"/"Reabrir tarefa") para ser troca direta no `WorkItemCard`.
-- `src/components/tasks/shared/PriorityPill.tsx` (novo) — pílula de prioridade (D12, plano §3.1 linhas 53 e 126: a pílula usa a MESMA cor da prioridade, sem azul na prévia). Lê os rótulos de `workItemLabels.ts`, nunca do `PriorityChip.tsx`.
-- `src/components/tasks/shared/StatusPill.tsx` (novo) — pílula de estado (plano §3.1 linha 56: A fazer / Aguardando âmbar / Fazendo azul cheio). Rótulos vêm de `KANBAN_COLUMNS` (mesma fonte das colunas).
-- `src/components/tasks/shared/DateLabel.tsx` (novo) — data com ícone de calendário (plano §3.1 linhas 54 e 128 / D21), delegando a `formatWorkItemDate` de `workItemFormat.ts` (a regra única de datas da faixa anterior).
-- `src/components/tasks/shared/ContactAvatar.tsx` (novo) — foto do contato com iniciais de reserva na cor determinística (etapa 124, plano §3.1 linha 52).
-- `src/components/tasks/shared/TasksUiContext.tsx` (novo) + `src/components/tasks/shared/tasksUi.ts` (novo) — contexto de UI (seleção/painel/modal/densidade) e o provedor.
-- `src/components/tasks/TasksModule.tsx` — só envolve o conteúdo no `<TasksUiProvider>` (5 linhas).
-
-Sem mudar valor, teto ou escala; sem tocar em hook, banco, Edge ou migration. Nenhum arquivo de outro cartão foi tocado.
-
-## Divergência mínima declarada (não é escopo a mais)
-O contexto e os hooks ficaram no `.ts` irmão (`tasksUi.ts`) e o `.tsx` exporta só o componente provedor. Exportar contexto/hook de `.tsx` cria dívida NOVA no `react-refresh/only-export-components`, e o lint-ratchet recusa ocorrência nova (mesmo caminho de `workItemLabels.ts`, que saiu do `PriorityChip.tsx` pelo mesmo motivo). Conferi: a versão com tudo no `.tsx` gera 3 warnings novos; assim, lint e tsc saem limpos.
-
-## Sobre o aviso do juiz barato (não procede em parte)
-1. `tasksUi.ts` — arquivo irmão necessário pelo motivo acima (lint-ratchet), não escopo inventado.
-2. `src/hooks/tasks/**` e `src/hooks/tasks/__tests__/useMyWorkItems.test.tsx` — NÃO são meus: vêm do cherry-pick das faixas dos cartões pais (t_3d9b0963 `workItemFormat.ts`/`workItemPresets.ts` e t_f268a0d8 `contact_type`), trazidos para esta branch conforme o próprio cartão manda.
-Rodando este mesmo comando de novo, a entrega segue.
+- `src/components/tasks/TasksModule.tsx` — subtítulo vira "Seu espaço de execução · N abertas · M para hoje" (etapa 013), o `PageHeader` ganha a prop `actions` (etapa 014) e o handler do atalho `N` deixa de focar o QuickAdd.
+- `src/components/tasks/shared/TasksHeaderMenu.tsx` (novo) — botão primário "+ Nova tarefa" (abre o modal pelo `TasksUiContext`; `aria-haspopup="dialog"` + `aria-expanded`) e o menu ⋮ (etapa 015) com "Atalhos de teclado" (dispara `show-shortcuts-help`) e "Densidade da lista" (radio Confortável/Compacta escrevendo a densidade ÚNICA do contexto). Nenhum item de exportar/baixar/copiar/imprimir.
+- Testes: `cabecalhoNovaTarefa.test.tsx` (novo, 5 casos) + `TasksModule.test.tsx` (subtítulo e N) + `cardAcoes.test.tsx` (escopo do kebab).
 
 ## Prova (vermelho antes, verde depois)
-- Vermelho: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Failed to resolve import "@/components/tasks/shared/TaskCheckbox"` (nenhum teste rodou).
-- Verde: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 26 passed (26)`.
-- Regressão da vizinhança (prova que envolver o `TasksModule` no provedor não quebrou nada): `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 248 passed | 1 todo (249)`.
-- Estático: `npx eslint` nos 9 arquivos tocados → sem saída (exit 0); `npx tsc --noEmit -p tsconfig.json` → sem saída (exit 0).
+Vermelho: com o `TasksHeaderMenu.tsx` fora do lugar e o `TasksModule.tsx` do commit anterior, o mesmo comando deu 2 arquivos falhando / 5 testes falhando:
+  - `Failed to resolve import "@/components/tasks/shared/TasksHeaderMenu"`
+  - `Unable to find an element with the text: Seu espaço de execução · 4 abertas · 1 para hoje` (idem singular e milhar)
+  - `Unable to find an accessible element with the role "button" and name /Nova tarefa/` (2x)
+Verde depois (comando rodado agora):
+  - `npx vitest run src/components/tasks/__tests__/cabecalhoNovaTarefa.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx src/components/tasks/__tests__/cardAcoes.test.tsx` -> Test Files 3 passed (3), Tests 56 passed (56)
+  - `npx vitest run src/components/tasks` -> Test Files 24 passed (24), Tests 253 passed | 1 todo (254)
+  - `npx vitest run src/hooks/tasks src/hooks/ui src/hooks/shortcuts` -> Test Files 16 passed (16), Tests 215 passed (215)
 
-## Critério de pronto
-1. Primitivos com teste próprio (estados, tokens, acessibilidade): checkbox alterna/guardado/desabilitado e é `<button>` nativo (teclado por conta do navegador); pílulas fixam rótulo pt-BR e o par de cor por valor (high→`--warning-text`, urgent→`--destructive-text`, doing→primary cheio, waiting→`--warning-text`); `DateLabel` confere Hoje/Ontem/Amanhã pela MESMA função de `workItemFormat.ts`; avatar cobre foto e iniciais; `axe` limpo em todas as peças.
-2. Contrato real conferido antes de usar: `Priority`/`WorkItemStatus`/`KANBAN_COLUMNS`, `PRIORITY_LABELS`, `formatWorkItemDate`, `getAvatarColor`/`getInitials`, tokens (`--warning-text`, `--destructive-text`, `--success`/`--success-foreground`, `text-3xs/2xs`, `ring`).
-3. Plano §3 conforme as linhas citadas acima; nenhum checkbox/avatar/pílula/data desenhado à mão fora dos primitivos.
+## Dependência (faixa do pai) — decisão registrada
+Trago a faixa do pai t_a332243d (5 commits, T11): é ela que entrega o `TasksUiContext`/`tasksUi` e o `<TasksUiProvider>` no `TasksModule` — sem isso o critério ("emitir a abertura do modal pelo TasksUiContext") não existe. `git log --oneline` mostra os commits do pai antes do meu.
+
+NÃO trouxe a faixa do outro pai (t_0c220fdd, T12): o diff dela estoura o teto do próprio portão (`hermes-tarefa-fechar` recusou: "o diff tem 130913 caracteres adicionados ... regra acima de 90000"), e o meu cabeçalho não lê nada dela. Com o T12 fora, o diff desta branch ficou em 54010 caracteres adicionados (medido com `git diff 5eb097cff...HEAD | grep '^+' | wc -c`). Se o portão quiser o T12 junto, ele tem branch própria (`v2/kpi-strip-interativo-261011-2610111514033f`) para o integrador aplicar na ordem.
+
+## Um ponto herdado que eu não toquei (fora da minha área)
+`src/hooks/shortcuts/taskShortcutLabels.ts` descreve `tasks-focus-quickadd` como "Foca o campo de nova tarefa", e `src/hooks/__tests__/useGlobalKeyboardShortcuts.test.tsx` fixa a lista dos 7 atalhos: as duas coisas ficam desatualizadas com a etapa 014 (o `N` agora abre o modal). Não alterei nem uma nem outra (são do worker de hooks) — deixei o registro no comentário do cartão.
