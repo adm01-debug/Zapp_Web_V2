@@ -18,6 +18,7 @@ const integrations = [
     description: 'Automação de workflows via webhooks. Conecte eventos do sistema a fluxos n8n.',
     icon: Zap,
     color: 'bg-warning',
+    foreground: 'text-warning-foreground',
     // Tela de demonstração — ainda não há integração real com um servidor n8n.
     status: 'demo' as const,
   },
@@ -26,7 +27,8 @@ const integrations = [
     name: 'Sentry',
     description: 'Monitoramento de erros, performance e session replays em tempo real.',
     icon: Bug,
-    color: 'bg-[hsl(255_35%_27%)]',
+    color: 'bg-dash-tile-violet',
+    foreground: 'text-primary-foreground',
     // R2-API-047: tela de demonstração — não há SDK, validação de DSN nem API de métricas reais.
     status: 'demo' as const,
   },
@@ -35,7 +37,8 @@ const integrations = [
     name: 'Bitrix24',
     description: 'CRM completo com sincronização de leads, contatos, negócios e telefonia VoIP.',
     icon: Building2,
-    color: 'bg-[hsl(193_92%_58%)]',
+    color: 'bg-[hsl(var(--chart-10))]',
+    foreground: 'text-primary-foreground',
     status: 'available' as const,
   },
 ];
@@ -84,7 +87,7 @@ export function IntegrationsHub() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${integration.color}`}>
-                    <integration.icon className="w-5 h-5 text-primary-foreground" />
+                    <integration.icon className={`w-5 h-5 ${integration.foreground}`} />
                   </div>
                   <Badge variant={integration.status === 'demo' ? 'warning' : 'default'}>
                     {integration.status === 'demo' ? 'Demonstração' : 'Disponível'}

@@ -200,12 +200,16 @@ export function WhatsAppTemplatesManager() {
                   ))}
                 </div>
               )}
-              <div className="bg-[hsl(202_50%_8%)] rounded-xl p-4">
-                <div className="bg-whatsapp-dark rounded-lg p-3 max-w-[280px] ml-auto">
-                  {previewTemplate.header_text && <p className="text-primary-foreground font-bold text-sm mb-1">{renderPreviewContent(previewTemplate.header_text, previewVariables)}</p>}
-                  <p className="text-primary-foreground text-sm whitespace-pre-wrap">{renderPreviewContent(previewTemplate.content, previewVariables)}</p>
-                  {previewTemplate.footer_text && <p className="text-primary-foreground/60 text-xs mt-2">{renderPreviewContent(previewTemplate.footer_text, previewVariables)}</p>}
-                  <p className="text-primary-foreground/40 text-3xs text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+              {/* CT-38: prévia do template usa o primitivo `.catalog-phone`/tokens `--wa-*`
+                  (components.css) — fonte única da cor da bolha WhatsApp. */}
+              <div className="catalog-phone">
+                <div className="catalog-phone__body">
+                  <div className="catalog-phone__bubble">
+                    {previewTemplate.header_text && <p className="font-bold text-sm mb-1">{renderPreviewContent(previewTemplate.header_text, previewVariables)}</p>}
+                    <p className="text-sm whitespace-pre-wrap">{renderPreviewContent(previewTemplate.content, previewVariables)}</p>
+                    {previewTemplate.footer_text && <p className="opacity-60 text-xs mt-2">{renderPreviewContent(previewTemplate.footer_text, previewVariables)}</p>}
+                    <p className="opacity-40 text-3xs text-right mt-1">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
                 </div>
               </div>
             </div>

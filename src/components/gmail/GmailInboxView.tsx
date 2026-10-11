@@ -87,7 +87,7 @@ export default function GmailInboxView() {
       <div className="p-3 border-b space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 flex-1">
-            <Mail className="w-5 h-5 text-destructive shrink-0" /><h2 className="text-base font-semibold">Gmail</h2>
+            <Mail className="w-5 h-5 text-muted-foreground shrink-0" /><h2 className="text-base font-semibold">Gmail</h2>
             {unreadCount > 0 && <Badge variant="default" className="text-3xs px-1.5 py-0">{unreadCount} novo{unreadCount > 1 ? 's' : ''}</Badge>}
           </div>
           <Button variant="default" size="sm" onClick={() => setShowComposer(true)}><Pencil className="w-3.5 h-3.5 mr-1" />Compor</Button>
