@@ -377,12 +377,14 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     cleanup();
   });
 
-  it('26 (vermelho antes): clicar no card abre o Sheet com os dados do item', async () => {
+  it('26 (vermelho antes): clicar na linha da Lista abre o Sheet com os dados do item', async () => {
     window.history.replaceState(null, '', '/');
     renderModulo();
 
-    const card = await screen.findByTestId('work-item-card');
-    fireEvent.click(card.querySelector('[data-testid="work-item-open"]') ?? card);
+    // Etapa 050: a Lista virou TABELA — quem abre o Sheet pelo clique agora é a
+    // linha (`data-testid="task-row"`), o mesmo `onOpen` que o card usava.
+    const linha = await screen.findByTestId('task-row');
+    fireEvent.click(linha);
 
     const titulo = await screen.findByTestId('sheet-titulo');
     expect((titulo as HTMLInputElement).value).toBe('Ligar para o cliente');
