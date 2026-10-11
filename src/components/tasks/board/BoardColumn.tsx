@@ -84,11 +84,16 @@ export function BoardColumn({
     // Abaixo de 1048px de trilho, o flexbox não encolhe mais e o `overflow-x-auto` + snap
     // assume. As setas/‹› e os dots existem só no corte mobile de `pointerMedia.ts`
     // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
+    //
+    // Etapa 099: ABAIXO de 768px a coluna toma a largura inteira do trilho
+    // (`max-md:basis-full` + `max-md:shrink-0`) — o snap passa a mostrar UMA
+    // coluna por vez, que é o que o plano pede; o piso de 200px e o `flex-1`
+    // continuam valendo do `md` para cima (é a variante que vence no cascade).
     <div
       data-board-column={status}
       {...(realceEspera ? { 'data-testid': 'board-waiting-emphasis' } : {})}
       className={[
-        'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
+        'flex flex-col flex-1 min-w-[200px] max-md:basis-full max-md:shrink-0 h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
         // Etapa 093: recolhida, a coluna para de dividir a largura (`flex-none`)
         // e mantém o piso de 200px — o cabeçalho é o que sobra.
         colapsada ? 'flex-none w-[200px]' : '',

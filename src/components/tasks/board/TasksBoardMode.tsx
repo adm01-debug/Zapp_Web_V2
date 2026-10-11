@@ -96,12 +96,16 @@ export function TasksBoardMode({
     setColunaVisivel(indice);
   }, []);
 
-  /** Leva a faixa até a coluna pedida (setas e dots). */
+  /** Leva a faixa até a coluna pedida (setas, dots e abas). */
   const irParaColuna = useCallback((indice: number) => {
     const trilho = trilhoRef.current;
     if (!trilho) return;
     const alvo = trilho.children[indice] as HTMLElement | undefined;
     if (!alvo) return;
+    // Etapa 099: a escolha vale na hora — o indicador (aba ativa, dot e setas)
+    // não espera o evento de rolagem, que só chega depois do scroll (e que o
+    // jsdom, sem layout, nem emite).
+    setColunaVisivel(indice);
     const deslocamento = alvo.getBoundingClientRect().left - trilho.getBoundingClientRect().left;
     const destino = trilho.scrollLeft + deslocamento;
     // `scrollTo` anima no navegador; ambientes sem ele (jsdom) não podem quebrar o clique.
@@ -249,9 +253,38 @@ export function TasksBoardMode({
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="flex-1 min-w-0 truncate text-center text-[13px] font-semibold text-foreground">
-              {rotuloDaColuna(colunasVisiveis[Math.min(colunaVisivel, ultimaColuna)])}
-            </span>
+            {/* Etapas 099/100: ABAS das colunas. Na tela estreita (uma coluna
+                por vez) elas conduzem a faixa; o estilo do ativo é o D3 —
+                preenchido com a cor primária —, a mesma linguagem do seletor
+                de modos e do toggle ao lado. As setas e os dots de 081 seguem
+                valendo para quem navega por teclado ou por toque. */}
+            <div
+              role="tablist"
+              aria-label="Colunas do quadro"
+              data-testid="board-tabs"
+              className="flex flex-1 min-w-0 items-center gap-1 overflow-x-auto"
+            >
+              {colunasVisiveis.map((status, i) => {
+                const ativo = colunaVisivel === i;
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    role="tab"
+                    data-testid={`board-tab-${i}`}
+                    aria-selected={ativo}
+                    onClick={() => irParaColuna(i)}
+                    className={`h-8 shrink-0 rounded-lg px-3 text-xs font-medium transition-colors ${
+                      ativo
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {rotuloDaColuna(status)}
+                  </button>
+                );
+              })}
+            </div>
             <button
               type="button"
               data-testid="board-next"
