@@ -1,31 +1,26 @@
 Especialista: senior (area-front-hooks)
 
-## Contexto do refazer
-- Motivo da recusa: o `TalkXScheduleTimeline` comparava `editedStart !== savedStart`; isso marcava "alteração não salva" quando o mesmo instante vinha gravado como `+00:00` pelo PostgREST e a edição gerava `.000Z`.
-- Situação encontrada na base `dia/2026-10-11`: o código e o teste que corrigem este ponto já estavam presentes em `src/components/talkx/TalkXScheduleTimeline.tsx` e `src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx`. Não criei alteração artificial de código.
+## Resultado
+Concluído. O ponto recusado está coberto na base atual: `TalkXScheduleTimeline` compara o início salvo e o início editado pelo instante (`Date.parse`) e não pelo texto ISO, então `2026-11-27T12:00:00+00:00` e `2026-11-27T12:00:00.000Z` não geram falso "alteração não salva".
 
 ## Pontos da recusa
 - Ponto 1: comparar instantes, não texto ISO.
-  - Arquivo conferido: `src/components/talkx/TalkXScheduleTimeline.tsx` usa `Date.parse(editedStart) !== Date.parse(savedStart)` e mantém o rótulo "alteração não salva" só quando o instante realmente difere ou quando não existe início gravado.
-  - Teste que prova: `src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx`, caso `A11: gravado no formato do PostgREST (+00:00) com edição no mesmo instante não diz "alteração não salva"`.
-  - Vermelho antes: reverti temporariamente só a comparação para `editedStart !== savedStart` e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default`; falhou com `expected ... not to contain 'alteração não salva'` e `RED_EXIT=1`.
-  - Verde depois: restaurei o arquivo e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default`; resultado: `Test Files  2 passed (2)` e `Tests  15 passed (15)`.
+  - Código validado: `src/components/talkx/TalkXScheduleTimeline.tsx` usa `Date.parse(editedStart) !== Date.parse(savedStart)` no cálculo de `editedNotSaved`.
+  - Teste validado: `src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx`, caso `A11: gravado no formato do PostgREST (+00:00) com edição no mesmo instante não diz "alteração não salva"`.
+  - Vermelho antes: alterei temporariamente apenas essa linha para a comparação textual antiga (`editedStart !== savedStart`) e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default`. Resultado: 1 teste falhou com `expected ... not to contain 'alteração não salva'`.
+  - Verde depois: restaurei a comparação por instante e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default`. Resultado: `Test Files  2 passed (2)`; `Tests  15 passed (15)`; 0 failed.
 
 ## Arquivos do diff
-Saída de `git diff --name-only dia/2026-10-11...HEAD` antes do commit final de relato:
+Saída de `git diff --name-only dia/2026-10-11...HEAD` neste fechamento:
 
-(nenhum arquivo de código; base do dia já contém a correção exata e a prova de regressão)
+.tmp/relato.md
 
-Commit final contém somente este relato em `.tmp/relato.md`, para o `hermes-tarefa-fechar` aceitar árvore limpa.
+O diff final é só o relato porque a base `dia/2026-10-11` já contém o código correto e o teste de regressão do ponto recusado. O escopo de código foi conferido nos quatro arquivos do TL-150 e não há alteração pendente em produção de código.
 
 ## Verificações executadas
 - `bun install` — dependências instaladas no workspace.
-- `git show --stat --oneline 6bc8ac97f` — o trabalho anterior citado mexia só em `TalkXCampaignScheduled.tsx` e `TalkXCampaignScheduled.calendario.test.tsx`; a correção recusada está hoje na base via `TalkXScheduleTimeline.tsx`/teste.
-- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default` com a comparação textual temporariamente restaurada — falhou no caso da recusa.
-- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default` — `Test Files  2 passed (2)`; `Tests  15 passed (15)`.
-- `git status --short` antes de escrever/commitar o relato — sem alteração de código pendente.
-- `git diff --stat dia/2026-10-11...HEAD -- src/components/talkx/TalkXScheduleTimeline.tsx src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/TalkXCampaignScheduled.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` — sem diff de código.
-
-## O que não fiz e por quê
-- Não fiz cherry-pick de `6bc8ac97f` porque ele é anterior à correção da comparação por instante e sua aplicação sobre a base atual removeria cobertura/código já correto.
-- Não criei commit vazio nem comentário cosmético no código: o escopo do refazer já está resolvido na base e manter o código intacto evita introduzir mudança fora do título.
+- `git show --stat --oneline 6bc8ac97f` — trabalho anterior citado pelo cartão: 2 arquivos (`TalkXCampaignScheduled.tsx` e `TalkXCampaignScheduled.calendario.test.tsx`).
+- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default` com a comparação textual antiga aplicada temporariamente — 1 failed, provando o defeito original.
+- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default` — `Test Files  2 passed (2)`; `Tests  15 passed (15)`; 0 failed.
+- `git status --short` antes do relato — sem alteração de código pendente.
+- `git diff --stat dia/2026-10-11...HEAD -- src/components/talkx/TalkXScheduleTimeline.tsx src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/TalkXCampaignScheduled.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` — saída vazia, confirmando ausência de diff de código alheio.
