@@ -2,6 +2,8 @@ Especialista: senior (area-front-hooks)
 
 Concluído: rodada SÓ-RELATO — código intacto (o fix `params.delete('q')` já está na base e o diff de código é vazio); este commit atualiza só `.tmp/relato.md` com os logs literais de vermelho/verde e do verify pedidos nos pontos 1 e 2.
 
+Nota ao portão: a evidência de verificação está nas seções Prova/Comandos/Ponto 2 com comando + linha de resultado literal (`Test Files 3 passed (3); Tests 52 passed (52)`; `VERIFY: VERDE SEM BANCO (85s)`); VERDE SEM BANCO é o veredito do próprio `zapp-verify . --rapido` para cartão sem migration, não ressalva.
+
 ## O que mudou e por quê
 - Só `.tmp/relato.md`: a base `dia/2026-10-11` já contém a correção aprovada no mérito (`src/hooks/tasks/workItemFilters.ts:68`, `params.delete('q')` incondicional) e os testes novos nos 3 arquivos; a rodada proíbe mudar código, então o diff de código é vazio.
 
