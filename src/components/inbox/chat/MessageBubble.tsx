@@ -15,6 +15,7 @@ import { DocumentPreview, VideoPreview } from '../MediaPreview';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
+import { MessageBubbleUnsupported } from './MessageBubbleUnsupported';
 const LocationMessageDisplay = lazy(() =>
   import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
 );
@@ -287,6 +288,13 @@ export const MessageBubble = memo(function MessageBubble({
 
                 {message.type === 'location' && message.location && <Suspense fallback={<div className="w-full h-32 bg-muted animate-pulse rounded-lg" />}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
 
+                {message.type === 'unsupported' && (
+                  <MessageBubbleUnsupported
+                    kind={message.unsupportedKind ?? 'other'}
+                    content={message.content || undefined}
+                  />
+                )}
+
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">
                     <MessageImage src={message.mediaUrl} alt="Sticker" />
@@ -349,7 +357,7 @@ export const MessageBubble = memo(function MessageBubble({
                   </div>
                 )}
 
-                {message.content && message.type !== 'audio' && message.type !== 'location' && message.type !== 'video' && message.type !== 'document' && message.type !== 'sticker' && (
+                {message.content && message.type !== 'audio' && message.type !== 'location' && message.type !== 'video' && message.type !== 'document' && message.type !== 'sticker' && message.type !== 'unsupported' && (
                   <>
                   {message.link_preview && (
                     <LinkPreviewCard preview={message.link_preview} isSent={isSent} />
