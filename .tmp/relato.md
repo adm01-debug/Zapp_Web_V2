@@ -16,6 +16,10 @@ CONCLUÍ: arquivar conversa (individual, em massa e no genérico) grava `archive
 - regressão de área: `npx vitest run src/hooks src/components/inbox` → `Test Files 506 passed (506); Tests 4435 passed | 18 expected fail | 6 todo`, zero falhas
 - prova vermelho→verde feita no próprio workspace: as 3 fontes foram copiadas para `.tmp/`, `git checkout HEAD --` nas 3, vermelho rodado, fontes restauradas e verde rodado; `.tmp/` limpo depois (o lint ratchet varre o `.tmp/`).
 
+## Sobre o pai (`t_598cbd7d`) e a migration que saiu
+
+O cartão pai (`v2/ingest-inbound-reabre-conversa-2610111149a58e`, commit `8cb04ac79`) cria a migration `supabase/migrations/20261011145435_ingest_inbound_message_reabre_conversa.sql`. Eu a trouxe por `git cherry-pick` (como o cartão manda), mas o juiz do fechar acusou que este cartão diz "SEM DDL/migration" e o meu diff continha DDL. Como as minhas mudanças não dependem dela em código (a RPC `set_conversation_status` é da migration `20260930090000`, já na base), tirei o cherry-pick do meu branch (o arquivo não está no diff). Ela continua sendo entregue pelo PRÓPRIO cartão pai — nada se perde; o integrador a pega na branch dele.
+
 ## O que NÃO fiz e por quê
 
 - `src/components/inbox/chat/useChatPanelHandlers.ts:356` (case `'archive'` do slash/`/archive`) ainda grava `assigned_to = null` direto e não arquiva. O "O QUE FAZER 4" pede que ele passe pela função, mas o arquivo não está em ARQUIVOS QUE PODE TOCAR e é de outra área (`src/components/**`): registrei em `kanban_comment` (comment 9080) e não toquei. É o único chamador que não passa pelas funções alteradas.
