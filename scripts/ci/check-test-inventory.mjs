@@ -64,6 +64,11 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // R2-DB (11/10/2026): prova o log de tentativas de envio (public.message_attempts) em PG 17
+  // descartavel com papel real (authenticated/anon/service_role) e rollback executado. Passo de
+  // uma linha em db-guard.yml — `bash scripts/db-audit/message-attempts-log.test.sh` — a promover
+  // pelo dono do workflow (agente nao edita workflow).
+  'scripts/db-audit/message-attempts-log.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
