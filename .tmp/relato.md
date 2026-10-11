@@ -1,67 +1,21 @@
-Especialista: worker (geral)
+Especialista: worker (sql) (area-sql-banco)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- supabase/migrations/20261011154648_rls_scheduled_whisper_visibility.sql: fecha a lacuna de RLS achada pela auditoria de paridade V3->V2 (chat-2). O INSERT de public.scheduled_messages só exigia `created_by` = perfil do chamador (ou admin/supervisor); o UPDATE não tinha WITH CHECK; e o INSERT de public.whisper_messages só exigia `sender_id` = perfil do chamador. Nenhum olhava a visibilidade do CONTATO nem a permissão de envio. Como o enviador de agendadas (job AG2) roda com privilégio de serviço e NUNCA passa por RLS, um agente agendava (e o job entregava) para contato fora do alcance dele. A migration troca as 3 policies por versões que exigem `is_contact_visible_to_user(contact_id, auth.uid())` e `user_has_permission(auth.uid(),'send_messages')` — exatamente as duas guardas que a RPC `enqueue_outbound_message` (20260930200000) já usa no envio. Admin/supervisor continuam passando pelo ramo dos helpers. Aditiva e atômica: só DROP/CREATE das policies citadas, dentro de uma transação (BEGIN/COMMIT); nenhum DML, nenhum GRANT/ACL, SELECT e DELETE de scheduled_messages e a LEITURA de whisper_messages inalterados.
+- scripts/db-audit/scheduled-whisper-visibility-rls.test.sh: prova nova (PostgreSQL 17 descartável, sem credencial de produção). Monta o estado VIGENTE das policies e os helpers REAIS, prova a BRECHA (RED) antes, aplica o ARQUIVO de migration de verdade e prova o comportamento (GREEN) depois.
+- .github/workflows/db-guard.yml: passo do teste acima, para não ficar órfão (check-test-inventory exige registro em bloco `run:`). Teste novo que sobe container próprio e cria as roles anon/authenticated/service_role — por isso SKIP_DOCKER_SHIM=1, como os passos vizinhos.
+- src/integrations/supabase/types.ts: NÃO mudou, de propósito. Os tipos são gerados de tabelas/colunas/funções; RLS (policies) não entra neles, e esta migration não altera estrutura. `zapp-verify . --rapido` passa o passo `tipos` sem diff.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
-
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
-
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Prova
+- vermelho antes (dentro do próprio teste, com as policies antigas): `bash scripts/db-audit/scheduled-whisper-visibility-rls.test.sh` → `[PASS] RED: agente agenda para contato INVISÍVEL (a policy antiga aceita)`, `[PASS] RED: usuário SEM send_messages agenda (a policy antiga aceita)`, `[PASS] RED: sussurro em contato INVISÍVEL (a policy antiga aceita)`.
+- verde depois (mesmo run, após aplicar o arquivo de migration): `PASS=24 FAIL=0`, exit 0 — recusa contato invisível, recusa sem send_messages, recusa trocar `contact_id` para invisível e `created_by` para outro; supervisor agenda/sussurra em contato de outro; UPDATE legítimo do próprio agendamento passa; agente não vê agendamento nem sussurro de outro; anon não vê nenhum agendamento e é recusado no INSERT; linhas existentes (semeadas antes) seguem intactas em conteúdo/status/horário/dono.
+- asserção de recusa exige erro de RLS, não qualquer erro (evita falso-verde).
+- rollback de verdade: as 6 linhas `-- Rollback (SQL executável, na ordem)` foram EXECUTADAS no banco LOCAL (`DROP POLICY`x3 + `CREATE POLICY`x3, exit 0) e depois a migration foi reaplicada (`DROP`/`CREATE`x3 + `BEGIN`/`COMMIT`, exit 0) — o inverso roda e o estado final é o corrigido.
+- aplicação real: a migration foi aplicada no banco LOCAL da tarefa `v2-26101112373736` (`zapp-db-local psql`, saída `BEGIN/DROP POLICY/CREATE POLICY x3/COMMIT`), nunca em produção.
+- verificação: `zapp-verify . --rapido` → `OK dependencias/db_guard/tipos/lint/migrations` e `VERIFY: VERDE SEM BANCO (o banco NÃO foi verificado)` (sem nome de conjunto o banco é pulado, como o fechar chama). `node scripts/db-audit/check-migration-drift.mjs` → `arquivos validos em supabase/migrations: 817 ... exit 0`. `node scripts/ci/check-test-inventory.mjs` → `OK ... .test.sh verificados individualmente`.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não toquei SELECT nem DELETE de scheduled_messages e não mudei a LEITURA de whisper_messages (o cartão diz que a leitura já é restrita ao autor/destinatário/supervisor).
+- A visibilidade usada é a MESMA do envio (`is_contact_visible_to_user`), não a de SELECT de messages (que soma membro da fila). Quem só é membro da fila e não é o responsável já não podia ENVIAR (guarda da RPC), então também não agenda/sussurra — sem regressão de fluxo legítimo, e é o ponto do cartão. Registro aqui como efeito conhecido.
+- Nenhum GRANT, papel ou ACL alterado; nenhuma migration de dados; nenhum backfill.
+- Não criei teste novo de tela/CI além do passo do db-guard.yml do próprio teste.
