@@ -608,6 +608,15 @@ jobs:
           TALKX_CAMPAIGN_TRANSITIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-transitions.test.sh
 
+      # Recorrência de campanha Talk X (t_1dbea713, refazer 3): RPC
+      # schedule_next_talkx_recurrence — dedup anti-reenvio em 3 ocorrências,
+      # reentrada de failed/skipped/cancelled/pending, not_completed sem filha
+      # e idempotência already_scheduled.
+      - name: Simular recorrência de campanha Talk X (dedup + idempotência)
+        env:
+          TALKX_CAMPAIGN_RECURRENCE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-campaign-recurrence.test.sh
+
       # X010: trava por campanha (worker lease), start idempotente (sending ->
       # sending sem tocar started_at), fila do worker em RPC e segredo de cron
       # dedicado do Talk X.

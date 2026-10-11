@@ -469,3 +469,151 @@ Deno.test("N-102: p_at enviado à RPC é o relógio injetado, não o relógio re
     `p_at deve ser o relógio injetado ${injected.toISOString()}, foi ${String(call.args?.p_at)}`,
   );
 });
+
+// --------------------------------------------------------------------------- recorrência
+
+interface RecurrenceCall { rpc: string; args: Record<string, unknown> }
+
+/**
+ * Client falso só para o passo de recorrência: registra os filtros aplicados na
+ * consulta de campanhas 'completed' e as chamadas de RPC. As consultas de
+ * agendadas/pausadas voltam vazias.
+ */
+function makeRecurrenceClient(opts: {
+  completed?: CampaignRow[];
+  outcomes?: Record<string, { data?: unknown; error?: { message: string } | null }>;
+}): { client: unknown; filters: string[]; calls: RecurrenceCall[] } {
+  const filters: string[] = [];
+  const calls: RecurrenceCall[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function from(_table: string): any {
+    let status: string | null = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b: Record<string, any> = {};
+    b.select = () => b;
+    b.lte = () => b;
+    b.in = () => b;
+    b.limit = () => b;
+    b.eq = (col: string, val: unknown) => { if (col === "status") status = String(val); return b; };
+    b.not = (col: string, op: string, val: unknown) => { filters.push(`not:${col}:${op}:${val}`); return b; };
+    b.is = (col: string, val: unknown) => { filters.push(`is:${col}:${val}`); return b; };
+    const rows = () => ({ data: status === "completed" ? (opts.completed ?? []) : [], error: null });
+    b.then = (res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) => Promise.resolve(rows()).then(res, rej);
+    return b;
+  }
+  const rpc = (name: string, args: Record<string, unknown>) => {
+    calls.push({ rpc: name, args });
+    const configured = opts.outcomes?.[String(args.p_campaign_id)];
+    return Promise.resolve({ data: configured?.data ?? null, error: configured?.error ?? null });
+  };
+  return { client: { rpc, from }, filters, calls };
+}
+
+Deno.test("recorrência: só ocorrências 'completed' com frequência, sem sucessora e sem encerramento entram no passo", async () => {
+  const { client, filters } = makeRecurrenceClient({});
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  for (const expected of [
+    "not:recurrence_frequency:is:null",
+    "is:recurrence_next_campaign_id:null",
+    "is:recurrence_closed_at:null",
+  ]) {
+    assert(filters.includes(expected), `filtro ausente: ${expected}; aplicados: ${filters.join(", ")}`);
+  }
+});
+
+Deno.test("recorrência: cada ocorrência concluída chama a RPC uma vez e o tick reporta quantas foram agendadas", async () => {
+  const { client, calls } = makeRecurrenceClient({
+    completed: [{ id: "c-1" }, { id: "c-2" }],
+    outcomes: {
+      "c-1": { data: { scheduled: true, campaign_id: "n-1" } },
+      "c-2": { data: { scheduled: false, reason: "audience_exhausted" } },
+    },
+  });
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  const body = await res.json();
+  assert(calls.length === 2, `esperado 2 chamadas, recebido ${calls.length}`);
+  assert(calls.every((c) => c.rpc === "schedule_next_talkx_recurrence"), "RPC errada");
+  assert(calls.map((c) => c.args.p_campaign_id).join() === "c-1,c-2", "ids chamados fora do esperado");
+  assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
+});
+
+Deno.test("recorrência: falha da RPC numa série não derruba o tick nem impede as demais séries", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const { client, calls } = makeRecurrenceClient({
+      completed: [{ id: "c-1" }, { id: "c-2" }],
+      outcomes: {
+        "c-1": { error: { message: "boom" } },
+        "c-2": { data: { scheduled: true, campaign_id: "n-2" } },
+      },
+    });
+    const res = await handleTalkxScheduler(
+      makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+    );
+    const body = await res.json();
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(calls.length === 2, `a segunda série deveria ser tentada; chamadas: ${calls.length}`);
+    assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
+  } finally {
+    console.error = originalError;
+  }
+});
+
+Deno.test("recorrência: a nova ocorrência dispara pelo caminho normal (agendada vencida → talkx-send start)", async () => {
+  const { client } = makeClient({ due: [dueRow("occurrence-2")] });
+  const fetcher = makeFetch();
+  await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, fetch: fetcher.impl, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  assert(fetcher.posts.length === 1, `esperado 1 POST, recebido ${fetcher.posts.length}`);
+  assert(fetcher.posts[0]?.body.campaignId === "occurrence-2" && fetcher.posts[0]?.body.action === "start", "POST inesperado");
+});
+
+Deno.test("recorrência: falha da RPC é sinalizada em recurrence_errors sem mascarar o tick (refazer 2, Ponto 3)", async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const { client } = makeRecurrenceClient({
+      completed: [{ id: "c-1" }, { id: "c-2" }],
+      outcomes: {
+        "c-1": { error: { message: "boom" } },
+        "c-2": { data: { scheduled: true, campaign_id: "n-2" } },
+      },
+    });
+    const res = await handleTalkxScheduler(
+      makeRequest({ cronSecret: TEST_CRON_SECRET }),
+      makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+    );
+    const body = await res.json();
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
+    assert(body.recurrence_errors === 1, `recurrence_errors deveria ser 1 (erro real nao pode virar "0 recorrências"): ${JSON.stringify(body)}`);
+  } finally {
+    console.error = originalError;
+  }
+});
+
+Deno.test("recorrência: tick limpo devolve recurrence_errors 0", async () => {
+  const { client } = makeRecurrenceClient({
+    completed: [{ id: "c-1" }],
+    outcomes: { "c-1": { data: { scheduled: true, campaign_id: "n-1" } } },
+  });
+  const res = await handleTalkxScheduler(
+    makeRequest({ cronSecret: TEST_CRON_SECRET }),
+    makeDeps({ client, cronSecretValue: TEST_CRON_SECRET }),
+  );
+  const body = await res.json();
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  assert(body.recurrence_scheduled === 1, `recurrence_scheduled inesperado: ${JSON.stringify(body)}`);
+  assert(body.recurrence_errors === 0, `recurrence_errors deveria ser 0: ${JSON.stringify(body)}`);
+});

@@ -76,7 +76,20 @@ export interface TalkXCampaign {
   send_weekdays?: number[] | null;
   // N-102: respeitar a janela "não perturbe" (dnd_hours) do setting.
   respect_dnd?: boolean | null;
+  // Recorrência (migration 20261006232024). Opcionais até o types-sync canônico.
+  // `null` = não repete. Só diária/semanal existem; "Personalizado" é futuro.
+  recurrence_frequency?: TalkXRecurrenceFrequency | null;
+  // 0 = domingo … 6 = sábado (extract(dow)); obrigatório quando semanal.
+  recurrence_weekdays?: number[] | null;
+  recurrence_end_at?: string | null;
+  // Controle da série: gravado só pelo servidor, nunca enviado pelo front.
+  recurrence_series_id?: string | null;
+  recurrence_next_campaign_id?: string | null;
+  recurrence_closed_at?: string | null;
+  recurrence_closed_reason?: string | null;
 }
+
+export type TalkXRecurrenceFrequency = 'daily' | 'weekly';
 
 export interface TalkXRecipient {
   id: string;
@@ -124,6 +137,58 @@ function assertTalkXActionAccepted(data: unknown): asserts data is TalkXActionRe
 }
 
 type CampaignPayload = Omit<Partial<TalkXCampaign>, 'id' | 'created_at' | 'updated_at'>;
+
+/**
+ * Colunas gerenciadas pelo servidor da recorrência (refazer 2, Ponto 2): série,
+ * próximo elo e encerramento nunca saem do front — só a RPC de avanço os escreve.
+ */
+const RECURRENCE_MANAGED_KEYS = [
+  'recurrence_series_id',
+  'recurrence_next_campaign_id',
+  'recurrence_closed_at',
+  'recurrence_closed_reason',
+] as const;
+
+/** Colunas editáveis da recorrência (só existem depois da migration canônica). */
+const RECURRENCE_EDITABLE_KEYS = [
+  'recurrence_frequency',
+  'recurrence_weekdays',
+  'recurrence_end_at',
+] as const;
+
+/**
+ * Detecta erro de coluna de recorrência inexistente (migration canônica ainda
+ * não aplicada): PostgREST devolve PGRST204/"schema cache" e o PG direto
+ * "column ... does not exist". Qualquer erro citando `recurrence_*` indica
+ * exatamente isso, pois essas colunas só nascem na migration canônica.
+ */
+export function isMissingRecurrenceColumnError(error: unknown): boolean {
+  const message =
+    typeof error === 'string'
+      ? error
+      : error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : '';
+  return /recurrence_(frequency|weekdays|end_at|series_id|next_campaign_id|closed_at|closed_reason)/i.test(
+    message,
+  );
+}
+
+/** Remove do payload as colunas gerenciadas pelo servidor (nunca editadas no front). */
+export function stripRecurrenceManagedColumns<T extends Record<string, unknown>>(updates: T): T {
+  const clean = { ...updates };
+  for (const key of RECURRENCE_MANAGED_KEYS) delete clean[key as keyof T];
+  return clean;
+}
+
+/** Remove do payload todas as colunas de recorrência (fallback sem migration). */
+function stripAllRecurrenceColumns<T extends Record<string, unknown>>(updates: T): T {
+  const clean = stripRecurrenceManagedColumns(updates);
+  for (const key of RECURRENCE_EDITABLE_KEYS) delete clean[key as keyof T];
+  return clean;
+}
 
 export type TalkXDraftSaveResult = {
   campaignId: string;
@@ -261,11 +326,17 @@ export function useTalkX() {
 
   const updateCampaign = useMutation({
     mutationFn: async ({ id, ...updates }: CampaignPayload & { id: string }) => {
-      const { data, error } = await fromTable('talkx_campaigns')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      // Ponto 2: sem a migration canônica o update com recurrence_* falharia e
+      // derrubaria também o agendamento simples (mesma chamada). Tenta com
+      // recorrência; se o backend disser que a coluna não existe, retenta uma
+      // única vez sem nenhuma coluna de recorrência.
+      const payload = stripRecurrenceManagedColumns(updates);
+      const attempt = (body: typeof payload) =>
+        fromTable('talkx_campaigns').update(body).eq('id', id).select().single();
+      let { data, error } = await attempt(payload);
+      if (error && isMissingRecurrenceColumnError(error)) {
+        ({ data, error } = await attempt(stripAllRecurrenceColumns(payload)));
+      }
       if (error) throw error;
       return data as unknown as TalkXCampaign;
     },

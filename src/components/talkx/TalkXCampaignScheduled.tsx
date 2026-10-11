@@ -24,7 +24,7 @@ import { intervalForProfile } from './talkxLimits';
 import { campaignBlockingChecks, formatTalkXScheduleLabel } from './talkxScheduleStatus';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { TalkXScheduleTimeline } from './TalkXScheduleTimeline';
-import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkX, type TalkXCampaign, type TalkXRecurrenceFrequency } from '@/hooks/integrations/useTalkX';
 import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { toast } from 'sonner';
 
@@ -75,6 +75,17 @@ const TIMEZONES = [
   ['Europe/London', 'Europe/London'],
   ['Europe/Lisbon', 'Europe/Lisboa'],
   ['UTC', 'UTC'],
+] as const;
+
+/** 0 = domingo … 6 = sábado, a mesma numeração de `extract(dow)` no banco. */
+const WEEKDAYS = [
+  { value: 0, short: 'D', label: 'Domingo' },
+  { value: 1, short: 'S', label: 'Segunda' },
+  { value: 2, short: 'T', label: 'Terça' },
+  { value: 3, short: 'Q', label: 'Quarta' },
+  { value: 4, short: 'Q', label: 'Quinta' },
+  { value: 5, short: 'S', label: 'Sexta' },
+  { value: 6, short: 'S', label: 'Sábado' },
 ] as const;
 
 interface Props {
@@ -181,6 +192,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
   const [localTime, setLocalTime] = useState<string>(() => (
     campaign.scheduled_at ? utcToLocalInTimezone(campaign.scheduled_at, initialTimezone).split('T')[1] ?? '09:00' : '09:00'
   ));
+  // Repetição: 'none' = não repete. "Personalizado" aparece desabilitado no seletor.
+  const [repeat, setRepeat] = useState<'none' | TalkXRecurrenceFrequency>(campaign.recurrence_frequency ?? 'none');
+  const [repeatWeekdays, setRepeatWeekdays] = useState<number[]>(campaign.recurrence_weekdays ?? []);
+  const [repeatEndDate, setRepeatEndDate] = useState<string>(() => (
+    campaign.recurrence_end_at ? utcToLocalInTimezone(campaign.recurrence_end_at, initialTimezone).split('T')[0] ?? '' : ''
+  ));
   const [windowEnabled, setWindowEnabled] = useState<boolean>(!!campaign.send_window_start);
   const [windowStart, setWindowStart] = useState<string>(campaign.send_window_start?.slice(0, 5) ?? '08:00');
   const [windowEnd, setWindowEnd] = useState<string>(campaign.send_window_end?.slice(0, 5) ?? '18:00');
@@ -220,6 +237,21 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     }
   }, [localDate, localTime, localTz]);
 
+  const handleRepeatChange = useCallback((next: string) => {
+    const value = next as 'none' | TalkXRecurrenceFrequency;
+    setRepeat(value);
+    // Semanal sem dia escolhido parte do dia da semana da data de início.
+    if (value === 'weekly' && repeatWeekdays.length === 0 && localDate) {
+      setRepeatWeekdays([new Date(`${localDate}T12:00:00`).getDay()]);
+    }
+  }, [localDate, repeatWeekdays.length]);
+
+  const toggleWeekday = useCallback((day: number) => {
+    setRepeatWeekdays((current) => (
+      current.includes(day) ? current.filter((d) => d !== day) : [...current, day]
+    ));
+  }, []);
+
   const handleSpeedProfileChange = useCallback((next: string) => {
     const profile = next as 'slow' | 'moderate' | 'fast';
     setSpeedProfile(profile);
@@ -242,14 +274,34 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
       toast.error('O fim da janela de envio deve ser posterior ao início.');
       return;
     }
+    if (repeat === 'weekly' && repeatWeekdays.length === 0) {
+      toast.error('Escolha ao menos um dia da semana para repetir.');
+      return;
+    }
+    if (repeat !== 'none' && repeatEndDate && repeatEndDate < localDate) {
+      toast.error('A data de término da repetição deve ser igual ou posterior à data de início.');
+      return;
+    }
     setSaving(true);
     try {
       const scheduledAt = localToUTCInTimezone(`${localDate}T${localTime}`, localTz);
       if (new Date(scheduledAt).getTime() <= Date.now()) {
         throw new Error('O agendamento deve estar no futuro no fuso selecionado.');
       }
+      // Só envia as colunas de recorrência quando há o que gravar: salvar um
+      // agendamento simples não depende da migration de recorrência estar aplicada.
+      const recurrence = repeat === 'none' && !campaign.recurrence_frequency
+        ? {}
+        : {
+          recurrence_frequency: repeat === 'none' ? null : repeat,
+          recurrence_weekdays: repeat === 'weekly' ? [...repeatWeekdays].sort((a, b) => a - b) : null,
+          recurrence_end_at: repeat !== 'none' && repeatEndDate
+            ? localToUTCInTimezone(`${repeatEndDate}T23:59`, localTz)
+            : null,
+        };
       await updateCampaign.mutateAsync({
         id: campaign.id,
+        ...recurrence,
         scheduled_at: scheduledAt,
         schedule_timezone: localTz,
         send_window_start: windowEnabled ? `${windowStart}:00` : null,
@@ -267,7 +319,7 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     } finally {
       setSaving(false);
     }
-  }, [campaign, localDate, localTime, localTz, windowEnabled, windowStart, windowEnd, bizHours, speedProfile, sendInterval, respectSuppression, confirmConsent, updateCampaign, saving]);
+  }, [campaign, repeat, repeatWeekdays, repeatEndDate, localDate, localTime, localTz, windowEnabled, windowStart, windowEnd, bizHours, speedProfile, sendInterval, respectSuppression, confirmConsent, updateCampaign, saving]);
 
   const handleCancelSchedule = useCallback(async () => {
     setCancelOpen(false);
@@ -393,6 +445,66 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-3">
+              <div>
+                <Label htmlFor="talkx-repeat" className="text-2xs text-muted-foreground mb-1.5 block">Repetição</Label>
+                <Select value={repeat} onValueChange={handleRepeatChange}>
+                  <SelectTrigger id="talkx-repeat" className="h-9 bg-input/40 border-border/70 text-[13px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não repetir</SelectItem>
+                    <SelectItem value="daily">Diariamente</SelectItem>
+                    <SelectItem value="weekly">Semanalmente</SelectItem>
+                    <SelectItem value="custom" disabled>Personalizado (em breve)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {repeat === 'weekly' && (
+                <div role="group" aria-label="Dias da semana" className="flex gap-1.5">
+                  {WEEKDAYS.map((day) => {
+                    const active = repeatWeekdays.includes(day.value);
+                    return (
+                      <button
+                        key={day.value}
+                        type="button"
+                        aria-label={day.label}
+                        aria-pressed={active}
+                        onClick={() => toggleWeekday(day.value)}
+                        className={cn(
+                          'h-8 w-8 rounded-full border text-xs font-semibold',
+                          active
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border/70 bg-input/40 text-muted-foreground hover:bg-muted/50',
+                        )}
+                      >
+                        {day.short}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {repeat !== 'none' && (
+                <>
+                  <div>
+                    <Label htmlFor="talkx-repeat-end" className="text-2xs text-muted-foreground mb-1.5 block">Repetir até (opcional)</Label>
+                    <Input
+                      id="talkx-repeat-end"
+                      type="date"
+                      value={repeatEndDate}
+                      min={localDate || minimumDate}
+                      onChange={(e) => setRepeatEndDate(e.target.value)}
+                      className="h-9 bg-input/40 border-border/70 text-[13px]"
+                    />
+                  </div>
+                  <p className="text-2xs text-muted-foreground">
+                    Cada ocorrência usa os mesmos segmentos e não envia de novo para quem já recebeu em uma ocorrência anterior.
+                    Pausar ou cancelar a campanha interrompe a repetição.
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
