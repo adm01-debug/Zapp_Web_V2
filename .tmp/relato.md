@@ -1,26 +1,29 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-Cartão: cabeçalho do módulo de Tarefas (plano: linhas 251-253; imagem 05, linha 133).
+- `src/components/tasks/shared/TasksFilterBar.tsx`: a barra virou os controles das etapas 033–036/039 — busca com lupa, atalho `/`, botão de limpar e largura elástica; Prioridade e Contato com rótulo curto + contador quando ativos; botão Filtros (popover: Estado, Prazo, Com alarme, concluídas) com badge de ativos; chips removíveis abaixo da barra + "Limpar filtros". Só desenha os chips/botão quando algum filtro sai do padrão.
+- `src/components/tasks/shared/ModeSwitcher.tsx`: etapa 032 — ícones conforme o plano (List/Columns/Calendar), botão de 40px, foco visível e `aria-label` (o rótulo some em tela estreita; sem ele o botão ficava sem nome acessível). `data-testid="tasks-mode"`, `aria-pressed` e as teclas 1/2/3 seguem intactos.
+- `src/components/tasks/shared/ContactCombobox.tsx`: etapa 035 — prop opcional `extraOptions` para oferecer "Sem contato"/"Todos os contatos" no topo da lista, antes da busca.
+- `src/components/tasks/TasksModule.tsx`: 1 linha de fiação (passa `mode` e as portas `onStatus`/`onDue` para a barra). Nada além do cabeçalho da barra.
+- `src/hooks/tasks/useTasksFilters.ts`, `src/hooks/tasks/workItemFilters.ts`, `src/hooks/tasks/workItemAggregates.ts`: FORA DA MINHA ÁREA, mas indispensável, e é o mínimo possível — o recorte de estado/prazo já vinha do pai (t_15507eb6) só na leitura: faltava a porta de escrita (`setStatus`/`setDue`) para o popover existir, e um sentinela `SEM_CONTATO` (`contact=__none__`, uma regra explícita em `applyFilters`) para a opção "Sem contato" ter significado. Três mudanças aditivas, sem tocar no formato do `TasksFilters` nem na URL.
 
-- `src/components/tasks/TasksModule.tsx` — subtítulo vira "Seu espaço de execução · N abertas · M para hoje" (etapa 013), o `PageHeader` ganha a prop `actions` (etapa 014) e o handler do atalho `N` deixa de focar o QuickAdd.
-- `src/components/tasks/shared/TasksHeaderMenu.tsx` (novo) — botão primário "+ Nova tarefa" (abre o modal pelo `TasksUiContext`; `aria-haspopup="dialog"` + `aria-expanded`) e o menu ⋮ (etapa 015) com "Atalhos de teclado" (dispara `show-shortcuts-help`) e "Densidade da lista" (radio Confortável/Compacta escrevendo a densidade ÚNICA do contexto). Nenhum item de exportar/baixar/copiar/imprimir.
-- Testes: `cabecalhoNovaTarefa.test.tsx` (novo, 5 casos) + `TasksModule.test.tsx` (subtítulo e N) + `cardAcoes.test.tsx` (escopo do kebab).
+CRITÉRIO DE PRONTO, item por item:
+- 032 seletor de modos: `ModeSwitcher.tsx` (ícones, 40px, foco, aria-label) — teste `barraFiltros.test.tsx` › "oferece os três modos…".
+- 033 busca (lupa, limpar, `/`, largura elástica): `TasksFilterBar.tsx` — testes › "busca com lupa, botão de limpar e atalho /" (inclui a guarda: dentro de um campo o `/` não é sequestrado).
+- 034 Prioridade (dropdown + contador quando ativo): `TasksFilterBar.tsx` — testes › "prioridade ativa mostra contador no gatilho e chip removível".
+- 035 Contato (ContactCombobox reaproveitado + "Sem contato"): `ContactCombobox.tsx` + `TasksFilterBar.tsx` + `workItemFilters/aggregates` — testes › "oferece Sem contato no combobox…" e, no módulo inteiro, "Sem contato recorta as tarefas sem contato".
+- 036 botão Filtros (Estado, lembrete, prazo, concluídas, badge com o número de ativos): `TasksFilterBar.tsx` — teste › "abre o popover com estado, prazo, alarme e concluídas…".
+- 038 toggle de concluídas com rótulo por modo ("Concluídas" no Quadro, "Mostrar concluídas" na Lista/Agenda), um só estado: `TasksFilterBar.tsx` (`rotuloConcluidas`) — dois testes (um por rótulo).
+- 039 chips removíveis + "Limpar filtros": `TasksFilterBar.tsx` — testes › "chips listam os filtros ativos e o Limpar filtros chama o clear" e o chip de estado/prazo removendo pela URL no módulo.
 
-## Prova (vermelho antes, verde depois)
-Vermelho: com o `TasksHeaderMenu.tsx` fora do lugar e o `TasksModule.tsx` do commit anterior, o mesmo comando deu 2 arquivos falhando / 5 testes falhando:
-  - `Failed to resolve import "@/components/tasks/shared/TasksHeaderMenu"`
-  - `Unable to find an element with the text: Seu espaço de execução · 4 abertas · 1 para hoje` (idem singular e milhar)
-  - `Unable to find an accessible element with the role "button" and name /Nova tarefa/` (2x)
-Verde depois (comando rodado agora):
-  - `npx vitest run src/components/tasks/__tests__/cabecalhoNovaTarefa.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx src/components/tasks/__tests__/cardAcoes.test.tsx` -> Test Files 3 passed (3), Tests 56 passed (56)
-  - `npx vitest run src/components/tasks` -> Test Files 24 passed (24), Tests 253 passed | 1 todo (254)
-  - `npx vitest run src/hooks/tasks src/hooks/ui src/hooks/shortcuts` -> Test Files 16 passed (16), Tests 215 passed (215)
+## Prova
+- vermelho antes: `for f in $(git diff --name-only --diff-filter=MD ebeba3d71 HEAD -- src/components src/hooks); do git show ebeba3d71:$f > $f; done; npx vitest run …/barraFiltros.test.tsx …` → `Test Files 1 failed | 2 passed (3); Tests 11 failed | 55 passed (66)` — os 11 testes novos da barra falham na base do cartão e passam no meu commit.
+- verde depois: `npx vitest run src/components/tasks/__tests__/barraFiltros.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx src/components/tasks/__tests__/taskComponents.test.tsx` → `Test Files 3 passed (3); Tests 66 passed (66)`.
+- regressão do módulo inteiro: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 36 passed (36); Tests 428 passed | 1 todo (429)`.
+- Os 11 testes novos renderizam a barra REAL (não mockam o componente) e o popover/combobox reais; o único mock é o da busca de contatos do CRM (`useContactsSearch`, vazia) — o objeto do cartão é o filtro, não a busca de contatos.
 
-## Dependência (faixa do pai) — decisão registrada
-Trago a faixa do pai t_a332243d (5 commits, T11): é ela que entrega o `TasksUiContext`/`tasksUi` e o `<TasksUiProvider>` no `TasksModule` — sem isso o critério ("emitir a abertura do modal pelo TasksUiContext") não existe. `git log --oneline` mostra os commits do pai antes do meu.
-
-NÃO trouxe a faixa do outro pai (t_0c220fdd, T12): o diff dela estoura o teto do próprio portão (`hermes-tarefa-fechar` recusou: "o diff tem 130913 caracteres adicionados ... regra acima de 90000"), e o meu cabeçalho não lê nada dela. Com o T12 fora, o diff desta branch ficou em 54010 caracteres adicionados (medido com `git diff 5eb097cff...HEAD | grep '^+' | wc -c`). Se o portão quiser o T12 junto, ele tem branch própria (`v2/kpi-strip-interativo-261011-2610111514033f`) para o integrador aplicar na ordem.
-
-## Um ponto herdado que eu não toquei (fora da minha área)
-`src/hooks/shortcuts/taskShortcutLabels.ts` descreve `tasks-focus-quickadd` como "Foca o campo de nova tarefa", e `src/hooks/__tests__/useGlobalKeyboardShortcuts.test.tsx` fixa a lista dos 7 atalhos: as duas coisas ficam desatualizadas com a etapa 014 (o `N` agora abre o modal). Não alterei nem uma nem outra (são do worker de hooks) — deixei o registro no comentário do cartão.
+## O que NÃO fiz e por quê
+- NÃO FEITO: etapa 044 (disposição da barra, T16) — o próprio cartão diz que não é desta etapa.
+- NÃO FEITO: troca de vocabulário "Alarme" → "Lembrete" (linha 11 do plano: está no bloco de diferenças, sem número de etapa e fora de 032–039). O filtro continua "Com alarme", como estava na base.
+- Duas asserções existentes foram MOVIDAS para o novo DOM, sem perder força: em `TasksModule.test.tsx` o toggle de concluídas agora é conferido dentro do popover (aberto no teste) e o "Limpar" virou "Limpar filtros" nos chips (a ausência do botão sem filtro ativo continua afirmada); em `taskComponents.test.tsx` o invariante "contato sem nome"/"contato indisponível" passou do gatilho (que agora é o do ContactCombobox, reaproveitado — incoerência 7, rótulo curto) para o chip, que é quem nomeia o recorte.
+- Nenhum arquivo fora do módulo de Tarefas. O diff grande é o esperado pelo cartão (7 etapas da barra + testes).
