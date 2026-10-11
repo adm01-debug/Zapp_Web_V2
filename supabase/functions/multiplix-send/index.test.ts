@@ -1,6 +1,34 @@
 import { handleMultiplixSend, personalize } from './index.ts';
 import { resolveBlockContent } from '../_shared/multiplix-content.ts';
 
+// ── F60: hermeticidade de ambiente nos testes "zero rede" (Deno.env é processo-wide) ─
+// Outro arquivo da suíte (crm-integration) deixa SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY
+// setados para a URL de produção. O rate-limiter persistente (enforceRateLimit ->
+// consume_rate_limit) guarda o cliente Supabase numa promise de MÓDULO (validation.ts):
+// criado uma vez com a URL vazada, ele é reutilizado pelos testes seguintes e um deles
+// tenta rede real — o "zero rede" deixa de valer. Limpar só dentro do teste (helper
+// abaixo) não basta: um teste anterior DESTE arquivo já teria criado o cliente. A
+// limpeza no CARREGAMENTO do módulo garante que nenhum teste daqui o crie; o helper
+// mantém o mesmo isolamento dentro de cada teste e restaura o ambiente que encontrar.
+// É efeito no processo inteiro, mas a suíte Deno completa segue verde (ver relato).
+const F60_ENV_QUE_VAZA = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "EVOLUTION_API_FLAVOR"] as const;
+for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+
+/** F60: roda `rodar` com as variáveis acima LIMPAS e as restaura depois, seja qual for
+ *  o resultado — o teste prova o que diz sem depender da ordem da suíte. */
+async function comAmbienteHermetico<T>(rodar: () => Promise<T>): Promise<T> {
+  const anteriores = F60_ENV_QUE_VAZA.map((nome) => [nome, Deno.env.get(nome)] as const);
+  for (const nome of F60_ENV_QUE_VAZA) Deno.env.delete(nome);
+  try {
+    return await rodar();
+  } finally {
+    for (const [nome, valor] of anteriores) {
+      if (valor === undefined) Deno.env.delete(nome);
+      else Deno.env.set(nome, valor);
+    }
+  }
+}
+
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -1853,7 +1881,9 @@ Deno.test("F60: erro PERMANENTE no item marca a conexao em risco (o gatilho do w
   const ctx = newCtx(opts);
   const provider = stubProviderRejecting({ status: 400, error: { code: "400", message: "number not exists" } });
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(risco.length === 1, `esperava UMA marcacao de risco, veio ${risco.length}`);
     assert(
@@ -1881,7 +1911,9 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
   // 503 = indisponibilidade temporaria do provedor: o item falha, mas a conexao esta bem.
   const provider = stubProviderRejecting({ status: 503, error: { code: "503", message: "service unavailable" } }, 503);
   try {
-    await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    await comAmbienteHermetico(() =>
+      handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx))
+    );
     const risco = rpcs(ctx, "register_multiplix_connection_failure");
     assert(
       risco.length === 0,
