@@ -370,7 +370,7 @@ psql_file "$favorites_migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports')")" == '3' ]] || fail 'segunda aplicacao da migration quebrou as tabelas'
 
 # Rollback do cabecalho da migration roda e desfaz tudo (3 tabelas + 4 RPCs + funcao do gatilho)
-psql_sql "drop function if exists public.unpin_message(uuid); drop function if exists public.pin_message(uuid); drop function if exists public.report_message(uuid, text, text); drop function if exists public.toggle_message_favorite(uuid); drop function if exists public.message_pins_force_contact_id(); drop table if exists public.message_reports; drop table if exists public.message_pins; drop table if exists public.message_favorites;" >/dev/null
+psql_sql "drop trigger if exists message_pins_force_contact_id on public.message_pins; drop function if exists public.unpin_message(uuid); drop function if exists public.pin_message(uuid); drop function if exists public.report_message(uuid, text, text); drop function if exists public.toggle_message_favorite(uuid); drop function if exists public.message_pins_force_contact_id(); drop table if exists public.message_reports; drop table if exists public.message_pins; drop table if exists public.message_favorites;" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports');")" == '0' ]] || fail 'rollback nao removeu as 3 tabelas'
 [[ "$(psql_sql "SELECT count(*) FROM pg_proc WHERE proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message','message_pins_force_contact_id');")" == '0' ]] || fail 'rollback nao removeu as funcoes'
 psql_file "$favorites_migration" >/dev/null
