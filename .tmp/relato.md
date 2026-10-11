@@ -28,6 +28,20 @@ alterei o contrato existente — só uma coluna ADITIVA nullable.
 - src/adapters/evolutionAdapter.ts: 1 propriedade `whatsapp_group_id: null` no literal de
   `RealtimeMessage` (ripple de tipo exigido pelos tipos gerados; mínimo).
 
+## Arquivos no diff (5 no total, 1 de teste)
+1 migration nova + 1 suíte de teste (`scripts/db-audit/enqueue-connection-scope.test.sh`) +
+1 arquivo de tipos gerados + 1 adapter (ripple de compilação) + este relato (`.tmp/relato.md`).
+
+## Arquivos fora da lista do cartão (por que foram indispensáveis)
+- `scripts/db-audit/enqueue-connection-scope.test.sh`: é o arquivo do ASSUNTO já ligado ao
+  `db-guard.yml`. Um `.test.sh` NOVO viraria órfão (o workflow lista cada arquivo e o
+  `check-test-inventory.mjs` reprova), então estendi este. A prova do defeito exige aplicar a
+  migration REAL num Postgres descartável e chamar as RPCs como o papel real — só existe neste runner.
+- `src/adapters/evolutionAdapter.ts`: NÃO é escopo novo; é o ripple de compilação exigido pela
+  própria atualização dos tipos gerados que o cartão manda fazer neste cartão. Sem ele,
+  `zapp-verify . --rapido` (critério do cartão) fica VERMELHO em tipos. A mudança é 1 linha
+  (`whatsapp_group_id: null` num literal de `RealtimeMessage`).
+
 ## Prova
 - vermelho antes (SEM a migration), no próprio teste:
   `bash scripts/db-audit/enqueue-connection-scope.test.sh` → BLOCO C0:
