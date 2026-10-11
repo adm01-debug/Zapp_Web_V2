@@ -23,6 +23,7 @@ A imagem 01 pede o valor dos KPIs em 26px, mas o guard-rail de tipografia do rep
 - casos do teste novo (kpiStripTarefas.test.tsx): Atrasadas vermelho/"Requer atenção" com 1 e neutro/"Tudo em dia" com 0; Para hoje âmbar/"Vencem hoje" e "Nada vence hoje" com 0; Fazendo "3/3" com subtítulo destrutivo e anel com `offset = 0`, e "1/3" com "Em andamento" e `offset = c*2/3`; Concluídas · 7 dias com "Últimos 7 dias"; Tempo médio com `avgCycleTimeDays=9` e `avgLeadTimeDays=1.4` mostrando "1,4 dias" (e "—"/"1 dia"); e `axe` sem violações.
 
 ## O que NÃO fiz e por quê
+- O aviso do juiz sobre arquivos fora da lista (TasksModule.tsx, primitivos de `shared/`: ContactAvatar, DateLabel, PriorityPill, StatusPill, TaskCheckbox, tasksUi) **não procede**: eles entram no diff porque o próprio cartão manda trazer a faixa dos pais não integrada (`DEPENDÊNCIA`: cherry-pick de `89d1048a4` e de `dia/2026-10-11..8f96fa5c7`). Foram cherry-picks, não edição minha; meu diff próprio é só TasksKpiStrip.tsx + os dois testes.
 - Não acrescentei clique/filtro (etapa 023), faixa compacta (025), esqueleto (027) nem animação com mola (028): são do cartão filho `t_0c220fdd`; o anel é SVG estático, sem `framer-motion`.
 - Não toquei em `src/components/tasks/TasksSeasonStrip.tsx` (t_173a1e12) nem em `TasksModule.tsx`.
-- Sem migration, sem dependência nova, sem arquivo fora da lista do cartão.
+- Sem migration e sem dependência nova.
