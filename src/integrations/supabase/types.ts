@@ -10442,6 +10442,10 @@ export type Database = {
         Returns: number
       }
       apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
+      assume_conversation: {
+        Args: { p_contact_id: string }
+        Returns: Json
+      }
       attribute_multiplix_item_reply: {
         Args: {
           p_message_id: string
@@ -11944,6 +11948,10 @@ export type Database = {
       }
       retry_talkx_recipients: {
         Args: { p_campaign_id: string; p_recipient_ids: string[] }
+        Returns: Json
+      }
+      return_conversation_to_queue: {
+        Args: { p_contact_id: string; p_reason?: string }
         Returns: Json
       }
       save_talkx_campaign_draft: {
