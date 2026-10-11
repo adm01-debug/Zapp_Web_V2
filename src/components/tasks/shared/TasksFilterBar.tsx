@@ -148,7 +148,7 @@ export function TasksFilterBar({
               aria-label="Limpar busca"
               data-testid="tasks-search-clear"
               onClick={() => onSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex min-h-10 min-w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-4 w-4" />
             </button>
@@ -261,7 +261,7 @@ export function TasksFilterBar({
                 aria-label={`Remover filtro: ${c.label}`}
                 data-testid={`filter-chip-remove-${c.key}`}
                 onClick={c.remover}
-                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -271,7 +271,7 @@ export function TasksFilterBar({
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className="h-7 rounded-lg px-2 text-xs text-muted-foreground"
+            className="min-h-10 rounded-lg px-2 text-xs text-muted-foreground"
           >
             Limpar filtros
           </Button>

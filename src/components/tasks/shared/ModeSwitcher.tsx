@@ -32,8 +32,9 @@ export function ModeSwitcher({ mode, onChange }: Props) {
               key={m}
               type="button"
               onClick={() => onChange(m)}
-              // Etapa 032: o rótulo some em tela estreita — o nome acessível
-              // precisa continuar existindo para o `aria-pressed` ser útil.
+              // Etapa 032: em tela estreita o rótulo some (`hidden sm:inline`,
+              // logo abaixo) e sobra o ícone; o `aria-label` mantém o nome
+              // acessível para o `aria-pressed` continuar útil.
               aria-label={label}
               aria-pressed={active}
               className={[
