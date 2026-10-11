@@ -33,3 +33,6 @@ Especialista: iris (area-front-componentes)
 - Não implementei a seção Planejamento nem "Criada em" (cartão `t_6b27a2a2`) — sai do meu diff e volta com o cartão dono.
 - Não implementei o painel NÃO modal (etapa 145) nem a persistência do modo expandido (146): são de outros cartões; F6 e a proteção ficam prontos para eles.
 - Não li as imagens 01–05 (esta sessão não tem ferramenta de visão): conferi contra a §3 do plano, que o cartão declara como referência de aceite.
+
+## Aviso do juiz (arquivos fora da lista) — não procede
+- O aviso aponta os primitivos de `src/components/tasks/shared/` e o `TasksModule.tsx`. Eles são a FAIXA DOS PAIS, que o próprio cartão manda trazer ("Traga a FAIXA inteira (git cherry-pick <sha>)"), e moram dentro da área do cartão (o módulo de tarefas, `src/components/tasks/**`). Eles estão no commit `ddc4fc76f chore(tarefas): traz a faixa dos pais — ... (t_2456ca64) e formatos (T04)`, separado do commit do meu rodapé (`b1ada3c2b`), para o revisor ver o que é meu e o que veio pronto. Nenhum arquivo fora do módulo de tarefas foi tocado (sem `src/components/ui/**`, `src/pages/**`, `src/features/**`, migration, Edge Function ou dependência nova).
