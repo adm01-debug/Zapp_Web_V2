@@ -6,15 +6,11 @@ import { log } from '@/lib/logger';
 
 interface UserDevice {
   id: string;
-  device_fingerprint: string;
   device_name: string | null;
   browser: string | null;
   os: string | null;
   ip_address: string | null;
-  city: string | null;
-  country: string | null;
   is_trusted: boolean | null;
-  first_seen_at: string;
   last_seen_at: string;
 }
 
@@ -138,7 +134,7 @@ export function useDeviceDetection() {
     try {
       const { data, error } = await supabase
         .from('user_devices')
-        .select('*')
+        .select('id, device_name, browser, os, ip_address, is_trusted, last_seen_at')
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
@@ -154,7 +150,7 @@ export function useDeviceDetection() {
 
     try {
       const { data, error } = await fromTable('user_sessions')
-        .select('*')
+        .select('id, device_id, ip_address, started_at, auth_session_id')
         .eq('is_active', true)
         .order('last_activity_at', { ascending: false });
 

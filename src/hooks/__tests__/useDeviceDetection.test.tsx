@@ -4,6 +4,7 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 
 const mockFrom = vi.fn();
 const mockFunctionsInvoke = vi.fn();
+const selectCalls: string[][] = [];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -46,7 +47,10 @@ function makeBuilder(opts: {
   const maybeSingleResult = opts.maybeSingleResult ?? (() => Promise.resolve({ data: null, error: null }));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: any = {};
-  b.select = vi.fn(() => b);
+  b.select = vi.fn((...cols: unknown[]) => {
+    selectCalls.push(cols as string[]);
+    return b;
+  });
   b.eq = vi.fn(() => b);
   b.order = vi.fn(() => b);
   b.neq = vi.fn(() => b);
@@ -109,6 +113,7 @@ describe('useDeviceDetection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     events = [];
+    selectCalls.length = 0;
     setupDefaultMocks();
   });
 
@@ -152,6 +157,18 @@ describe('useDeviceDetection', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockFrom).toHaveBeenCalledWith('user_devices');
     expect(mockFrom).toHaveBeenCalledWith('user_sessions');
+  });
+
+  it('não usa select("*") — traz só as colunas necessárias de user_devices', async () => {
+    renderHook(() => useDeviceDetection());
+    await waitFor(() => expect(mockFrom).toHaveBeenCalledWith('user_devices'));
+    expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
+  });
+
+  it('não usa select("*") — traz só as colunas necessárias de user_sessions', async () => {
+    renderHook(() => useDeviceDetection());
+    await waitFor(() => expect(mockFrom).toHaveBeenCalledWith('user_sessions'));
+    expect(selectCalls.some((cols) => cols.includes('*'))).toBe(false);
   });
 
   // ─── Critério 3: encerrar uma revoga só a alvo (scope local) ───
