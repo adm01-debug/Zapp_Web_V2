@@ -281,7 +281,13 @@ M5='40000000-0000-0000-0000-000000000005'
 # P1 (refazer 2): endurecimento das 4 RPCs — search_path travado e EXECUTE só para authenticated/service_role
 [[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND p.proconfig::text LIKE '%search_path=pg_catalog, public%';")" == '4' ]] || fail 'RPC nova sem SET search_path = pg_catalog, public'
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee='authenticated';")" == '4' ]] || fail 'authenticated sem EXECUTE em alguma RPC nova'
-expect_failure 'anon sem EXECUTE nas RPCs novas' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');"
+expect_failure 'anon sem EXECUTE em toggle_message_favorite' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');"
+expect_failure 'anon sem EXECUTE em pin_message' "SET ROLE anon; SELECT public.pin_message('$M1');"
+expect_failure 'anon sem EXECUTE em unpin_message' "SET ROLE anon; SELECT public.unpin_message('$M1');"
+expect_failure 'anon sem EXECUTE em report_message' "SET ROLE anon; SELECT public.report_message('$M1','spam',NULL);"
+expect_failure 'anon sem SELECT em message_favorites' "SET ROLE anon; SELECT count(*) FROM public.message_favorites;"
+expect_failure 'anon sem SELECT em message_pins' "SET ROLE anon; SELECT count(*) FROM public.message_pins;"
+expect_failure 'anon sem SELECT em message_reports' "SET ROLE anon; SELECT count(*) FROM public.message_reports;"
 
 # ---- favoritar (toggle) ----
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.toggle_message_favorite('$M1');")" == 't' ]] || fail 'toggle deveria favoritar'
