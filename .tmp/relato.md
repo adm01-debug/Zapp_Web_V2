@@ -11,7 +11,9 @@ Especialista: worker (sql) (area-sql-banco)
 - `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (dependencias/db_guard/tipos/lint/migrations OK).
 
 ## Pontos do revisor (refazer)
-- Ponto 1: a quebra do ESPELHO DO CI era o inventário desalinhado ao teste da entrega. Corrigido em docs/DB-INVENTORY.md e provado vermelho->verde acima. Nenhuma asserção foi afrouxada: nenhum arquivo de guarda/teste foi tocado.
+- Ponto 1: parti do commit da entrega com cherry-pick, não recomecei. Apliquei 697fa256d -> 1dbe38ab4 e c68425913 -> 5490e3b9f; o conteúdo das 3 migrations e do `inbox-contact-authorization.test.sh` ficou idêntico ao da entrega original.
+- Ponto 2: reproduzi a quebra sobre a ponta de dia/2026-10-11 (vermelho colado acima) e corrigi a causa: docs/DB-INVENTORY.md, linha do `sicoob_contact_mapping` de `roadmap | —` para `parcial | scripts/db-audit/inbox-contact-authorization.test.sh`. Não afrouxei asserção nenhuma — o guard `scripts/ci/db-inventory-doc.unit.mjs` e o `.test.sh` da entrega não foram tocados; só a linha do documento mudou.
+- Ponto 3: o mesmo comando do item ficou VERDE (`node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` -> `# tests 15 / # pass 15 / # fail 0`) e `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO`. O sha do commit da correção é 237bad037.
 
 ## O que NÃO fiz e por quê
 - Não alterei as 3 migrations nem o `.test.sh` da entrega: a fixture precisa mesmo citar `sicoob_contact_mapping` (é uma das 17 tabelas do achado -05); reescrever o teste para esconder a citação seria afrouxar a prova.
