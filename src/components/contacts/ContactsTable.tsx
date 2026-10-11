@@ -133,7 +133,7 @@ export function ContactsTable({
                 transition={{ delay: index * 0.015 }}
                 className={cn(
                   "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
-                  selectedIds.includes(contact.id) && "bg-primary/5 border-l-2 border-l-primary"
+                  selectedIds.includes(contact.id) && "ring-1 ring-primary border-primary/60 bg-primary/5"
                 )}
                 onClick={() => onOpenDetails(contact.id)}
               >
