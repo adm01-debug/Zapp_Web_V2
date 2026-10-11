@@ -9300,6 +9300,9 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           source: string | null
           title: string
         }
@@ -9311,6 +9314,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           source?: string | null
           title: string
         }
@@ -9322,6 +9328,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           source?: string | null
           title?: string
         }
@@ -9336,6 +9345,20 @@ export type Database = {
           {
             foreignKeyName: "warroom_alerts_dismissed_by_fkey"
             columns: ["dismissed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warroom_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warroom_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
@@ -11938,6 +11961,10 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_warroom_alert: {
+        Args: { p_alert_id: string; p_note?: string }
+        Returns: Json
+      }
       retry_talkx_recipient: {
         Args: { p_recipient_id: string }
         Returns: boolean
@@ -12457,6 +12484,10 @@ export type Database = {
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
+      }
+      warroom_alerts_summary: {
+        Args: { p_periodo?: string }
+        Returns: Json
       }
     }
     Enums: {
