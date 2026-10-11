@@ -155,7 +155,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     expect(screen.queryByText(/0 abertas/)).toBeNull();
   });
 
-  it('a busca anda no campo na hora e vira filtro depois do debounce, já na URL', async () => {
+  it('a busca anda no campo na hora e vira filtro depois do debounce, fora da URL', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
     expect(await screen.findByText('Ligar')).toBeTruthy();
@@ -163,13 +163,14 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     const campo = screen.getByRole('searchbox', { name: 'Buscar tarefa' });
     fireEvent.change(campo, { target: { value: 'liga' } });
 
-    // o valor do campo é imediato; o recorte (e a URL) vêm com o debounce
+    // o valor do campo é imediato; o recorte (e a escrita da URL) vêm com o debounce
     expect((campo as HTMLInputElement).value).toBe('liga');
     // combina as duas asserções para garantir que o debounce (200ms) disparou
     // antes de checar window.location.search
     await waitFor(() => {
       expect(screen.queryByText('Feita')).toBeNull();
-      expect(window.location.search).toContain('q=liga');
+      // N-084: o texto da busca não viaja na URL — o recorte é o sinal do debounce.
+      expect(window.location.search).not.toContain('q=');
     });
   });
 });

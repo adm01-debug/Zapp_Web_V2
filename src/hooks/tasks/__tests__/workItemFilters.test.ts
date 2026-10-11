@@ -18,14 +18,14 @@ describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
     expect(filtersFromSearch('?prio=xxx&contact=')).toEqual(DEFAULT_FILTERS);
   });
 
-  it('escreve só o que difere do padrão e preserva o resto da URL (view)', () => {
-    const qs = searchWithFilters('?view=tasks&alarm=1', {
+  it('escreve só o que difere do padrão e preserva o resto da URL (view); q nao vai para a URL', () => {
+    const qs = searchWithFilters('?view=tasks&q=x&alarm=1', {
       ...DEFAULT_FILTERS, q: 'liga', prio: 'high', done: false,
     });
     const p = new URLSearchParams(qs);
 
     expect(p.get('view')).toBe('tasks');
-    expect(p.get('q')).toBe('liga');
+    expect(p.get('q')).toBeNull();
     expect(p.get('prio')).toBe('high');
     expect(p.get('done')).toBe('0');
     // o alarme saiu porque voltou ao padrão (desligado)
@@ -33,6 +33,8 @@ describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
   });
 
   it('"limpar" devolve a URL sem parâmetro de filtro', () => {
+    expect(searchWithFilters('?view=tasks&prio=low', DEFAULT_FILTERS)).toBe('?view=tasks');
+    // N-084: um `q` herdado (link antigo/favorito) também sai ao limpar.
     expect(searchWithFilters('?view=tasks&q=x&prio=low', DEFAULT_FILTERS)).toBe('?view=tasks');
   });
 
@@ -45,8 +47,23 @@ describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
     expect(isFilterActive({ ...DEFAULT_FILTERS, contact: 'c1' })).toBe(true);
   });
 
-  it('ida e volta: o que escreve, lê de volta', () => {
-    const filtros = { q: 'orçamento', prio: 'medium' as const, contact: 'c9', alarm: true, done: false };
-    expect(filtersFromSearch(searchWithFilters('', filtros))).toEqual(filtros);
+  it('ida e volta: o que escreve, lê de volta (q nao vai para a URL)', () => {
+    const filtros = { prio: 'medium' as const, contact: 'c9', alarm: true, done: false };
+    const comQ = { q: 'orçamento', ...filtros };
+    const resultado = filtersFromSearch(searchWithFilters('', comQ));
+    // q nao vai para a URL, entao nao e preservado no round-trip
+    expect(resultado.q).toBe('');
+    expect(resultado.prio).toBe('medium');
+    expect(resultado.contact).toBe('c9');
+    expect(resultado.alarm).toBe(true);
+    expect(resultado.done).toBe(false);
+  });
+
+  it('o texto de busca nao vai para a URL; demais filtros continuam espelhados', () => {
+    const qs = searchWithFilters('?view=tasks', { ...DEFAULT_FILTERS, q: 'liga', prio: 'high' });
+    const p = new URLSearchParams(qs);
+    expect(p.get('q')).toBeNull();
+    expect(p.get('prio')).toBe('high');
+    expect(p.get('view')).toBe('tasks');
   });
 });

@@ -62,7 +62,10 @@ const prioridadesValidas: Array<Priority | 'all'> = ['all', 'low', 'medium', 'hi
 export function searchWithFilters(search: string, f: TasksFilters): string {
   const params = new URLSearchParams(search);
 
-  if (f.q.trim() !== '') params.set('q', f.q); else params.delete('q');
+  // O texto da busca nunca viaja na URL, e um `q` herdado (link antigo ou
+  // favorito) precisa ser removido ao reescrever os filtros — senão o texto
+  // continuaria na barra de endereço.
+  params.delete('q');
   if (f.prio !== 'all') params.set('prio', f.prio); else params.delete('prio');
   if (f.contact) params.set('contact', f.contact); else params.delete('contact');
   if (f.alarm) params.set('alarm', '1'); else params.delete('alarm');
