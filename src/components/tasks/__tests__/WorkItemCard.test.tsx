@@ -353,6 +353,35 @@ describe('etapas 084–090 — card redesenhado', () => {
     expect(screen.getByText('Lembrete')).toBeTruthy();
   });
 
+  it('087 — o prazo de hoje sai no formato único ("Hoje, 14:00") e o lembrete traz o sino âmbar', () => {
+    // A recusa 1 pediu a MEDIDA, não só o rótulo. O prazo é montado em cima do
+    // relógio do teste (hoje às 14h) para casar com a regra "Hoje/Ontem/Amanhã"
+    // do `workItemFormat.ts` (T04) — a mesma que `DateLabel` exibe.
+    const hoje14 = new Date();
+    hoje14.setHours(14, 0, 0, 0);
+    const hoje12 = new Date();
+    hoje12.setHours(12, 0, 0, 0);
+
+    render(
+      <WorkItemCard
+        item={item({ status: 'doing', due_date: hoje14.toISOString(), remind_at: hoje12.toISOString() })}
+        mode="list"
+      />
+    );
+
+    // Texto do prazo no formato único do módulo.
+    expect(screen.getByTestId('date-label')).toHaveTextContent('Hoje, 14:00');
+
+    // Sino do lembrete: existe, é um SVG (o Bell do primitivo) e o ícone está
+    // tingido pelo par de texto de AVISO (`--warning-text`), no lugar da cor crua
+    // do primitivo — o wrapper é o único caminho porque o sino mora no RemindChip
+    // (primitivo T11), fora dos arquivos deste cartão.
+    const sino = screen.getByTestId('remind-chip');
+    expect(sino.querySelector('svg')).toBeTruthy();
+    const wrapper = sino.parentElement as HTMLElement;
+    expect(wrapper.className).toContain('[&_svg]:text-[hsl(var(--warning-text))]');
+  });
+
   it('088 — a descrição curta (2 linhas) só aparece em "Fazendo"/selecionado', () => {
     const desc = 'Cliente pediu retorno depois das 14h, com o orçamento revisado.';
     const { rerender } = render(<WorkItemCard item={item({ status: 'todo', description: desc })} mode="board" />);
@@ -401,5 +430,61 @@ describe('etapas 084–090 — card redesenhado', () => {
     fireEvent.click(screen.getByRole('button', { name: 'abrir painel' }));
     expect(card().getAttribute('data-selected')).toBe('true');
     expect(card().className).toContain('bg-primary/10');
+  });
+
+  it('090 — o card selecionado RECEBE FOCO quando a seleção do painel muda', () => {
+    function Abrir() {
+      const ui = useTasksUi();
+      return <button onClick={() => ui.openPanel('t1')}>abrir painel</button>;
+    }
+    render(
+      <TasksUiProvider>
+        <Abrir />
+        <WorkItemCard item={item({ id: 't1' })} mode="board" />
+      </TasksUiProvider>
+    );
+
+    const botao = screen.getByRole('button', { name: 'abrir painel' });
+    botao.focus();
+    expect(document.activeElement).toBe(botao);
+    expect(card().getAttribute('data-selected')).toBeNull();
+
+    // Seleção E FOCO sincronizados: o item passa a ser o aberto nos Detalhes e o
+    // foco vai para o PRÓPRIO card — o teclado volta ao mesmo item depois de ler
+    // o painel, em vez de ficar no controle que o abriu.
+    fireEvent.click(botao);
+    expect(card().getAttribute('data-selected')).toBe('true');
+    expect(document.activeElement).toBe(card());
+  });
+
+  it('090 — card que já NASCE selecionado (deep link ?task=) não rouba o foco da página', () => {
+    render(
+      <TasksUiProvider>
+        <button>fora</button>
+        <WorkItemCard item={item({ id: 't1' })} mode="board" isSelected />
+      </TasksUiProvider>
+    );
+
+    // O efeito só age na TRANSIÇÃO para selecionado: um card montado já
+    // selecionado não move o foco de quem abriu a página.
+    expect(card().getAttribute('data-selected')).toBe('true');
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('alvo ≥ 40 px: o checkbox mantém o círculo de 18 px e amplia o clique por pseudo-elemento', () => {
+    render(<WorkItemCard item={item()} mode="list" onToggleDone={vi.fn()} />);
+    const check = screen.getByTestId('task-checkbox');
+
+    // O círculo VISÍVEL não muda: segue 18 px (o visual do D16).
+    expect(check.className).toContain('h-[18px]');
+    expect(check.className).toContain('w-[18px]');
+
+    // O alvo é ampliado por um pseudo-elemento ancorado no próprio botão. O inset
+    // sai da CLASSE REAL (não de um número solto): 18 + 2·inset ≥ 40 px.
+    expect(check.className).toContain('relative');
+    const inset = /before:-inset-\[(\d+)px\]/.exec(check.className);
+    expect(inset).not.toBeNull();
+    expect(18 + 2 * Number(inset![1])).toBeGreaterThanOrEqual(40);
+    expect(check.className).toContain("before:content-['']");
   });
 });

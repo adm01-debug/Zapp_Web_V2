@@ -85,6 +85,18 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // prazo e o lembrete ganham rótulos em duas colunas e a descrição curta aparece.
   const detalhado = !isAgenda && (item.status === 'doing' || selecionado);
 
+  // Etapa 090 — seleção E FOCO sincronizados com o painel de detalhes. Quando o
+  // card passa a ser o item aberto nos Detalhes (prop `isSelected` ou o
+  // `selectedId` do provider), ele RECEBE FOCO: o teclado continua no mesmo item
+  // depois de abrir/ler o painel. Só na TRANSIÇÃO para selecionado — um card que
+  // já nasce selecionado (deep link `?task=`) não rouba o foco da página.
+  const cardRef = React.useRef<HTMLElement | null>(null);
+  const eraSelecionado = React.useRef(selecionado);
+  React.useEffect(() => {
+    if (selecionado && !eraSelecionado.current) cardRef.current?.focus();
+    eraSelecionado.current = selecionado;
+  }, [selecionado]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Só atalhos do PRÓPRIO card: teclas disparadas por filhos (checkbox, kebab)
     // não podem abrir/concluir o card — o Enter no kebab, por exemplo, abriria o
@@ -98,11 +110,15 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // Peças montadas uma vez e usadas nos dois layouts (nada de copiar JSX).
   // Etapa 084 (D16): checkbox CIRCULAR em todas as superfícies, pela mesma peça
   // (`TaskCheckbox`) da Lista, do Quadro, da Agenda, do painel e do modal.
+  // REGRA DE TELA (alvo ≥ 40 px): o círculo VISÍVEL segue com 18 px, mas o alvo
+  // clicável é ampliado a 40 px por um pseudo-elemento (`before:-inset-[11px]`:
+  // 18 + 11 + 11 = 40), sem mexer no layout nem no visual. O clique continua
+  // sendo do próprio botão (`stopPropagation`), então "marcar" não abre o card.
   const checkbox = (
     <TaskCheckbox
       done={isDone}
       onToggle={onToggleDone}
-      className={isAgenda ? 'shrink-0' : 'mt-0.5'}
+      className={`relative before:absolute before:-inset-[11px] before:content-[''] ${isAgenda ? 'shrink-0' : 'mt-0.5'}`}
     />
   );
 
@@ -130,14 +146,20 @@ export const WorkItemCard = React.memo(function WorkItemCard({
     </span>
   ) : null;
 
+  // Etapa 087: lembrete com SINO ÂMBAR. A cor mora no próprio chip (primitivo),
+  // mas o tom âmbar do ícone é desta superfície — o wrapper tinge só o <svg> do
+  // sino com o par de texto de aviso (`--warning-text`, claro/escuro/skins), sem
+  // tocar no texto da hora nem no popover de adiar.
   const lembrete = item.remind_at && lembreteElegivel ? (
-    <RemindChip
-      remindAt={item.remind_at}
-      notifiedAt={item.notified_at}
-      onSnooze={onSnooze}
-      onClearReminder={onClearReminder}
-      onOpenReminder={onOpenReminder}
-    />
+    <span className="inline-flex min-w-0 [&_svg]:text-[hsl(var(--warning-text))]">
+      <RemindChip
+        remindAt={item.remind_at}
+        notifiedAt={item.notified_at}
+        onSnooze={onSnooze}
+        onClearReminder={onClearReminder}
+        onOpenReminder={onOpenReminder}
+      />
+    </span>
   ) : null;
 
   // Etapa 089: em Aguardando, chip com ponto âmbar e o motivo curto, truncado
@@ -249,6 +271,7 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // por cima, o card segue article e a alça continua focável pelo tabIndex.
   return (
     <article
+      ref={cardRef}
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
