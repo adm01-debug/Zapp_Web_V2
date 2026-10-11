@@ -116,9 +116,15 @@ function senderFilterLabel(key: string, contactName: string, profiles: SenderPro
 interface FilesTabProps {
   contactId: string;
   contactName: string;
+  /**
+   * "Ver na conversa": entrega o `messageId` do arquivo (cada arquivo É uma linha de
+   * `messages`, então `item.id` é o id da mensagem) ao `ConversationTabContent`, que troca
+   * para a aba Chat e rola até a mensagem. Sem esta prop a ação não é oferecida.
+   */
+  onOpenInChat?: (messageId: string) => void;
 }
 
-export function FilesTab({ contactId, contactName }: FilesTabProps) {
+export function FilesTab({ contactId, contactName, onOpenInChat }: FilesTabProps) {
   const { user, profile } = useAuth();
   const view = useFilesViewState(user?.id, contactId);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -435,6 +441,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
         senderProfiles,
         currentUserId: profile?.id ?? null,
         downloadAllowed: canDownload,
+        onOpenInChat: onOpenInChat ? () => onOpenInChat(selected.id) : undefined,
         onClose: () => setSelected(null),
         onRequestDelete: setDeleteTarget,
       }
@@ -572,7 +579,7 @@ export function FilesTab({ contactId, contactName }: FilesTabProps) {
               downloadAllowed={canDownload}
               loading={showSkeleton}
               selection={{ mode: selection.selectionMode, selectedIds: selection.selectedIds, toggle: selection.toggle }}
-              actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget }}
+              actions={{ onPreview: setPreviewItem, onOpenDetails: setSelected, onForward: (item) => openForward([item]), onRequestDelete: setDeleteTarget, onOpenInChat: onOpenInChat ? (item) => onOpenInChat(item.id) : undefined }}
               sort={view.sort}
               onSortChange={view.setSort}
               selectedId={selected?.id ?? null}

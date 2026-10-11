@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Eye, Lock, Share2 } from 'lucide-react';
+import { Download, Eye, Lock, MessageSquare, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
@@ -36,6 +36,11 @@ interface FileCardProps {
   onPreview: () => void;
   onForward: () => void;
   onRequestDelete: (item: ContactMediaItem) => void;
+  /**
+   * "Ver na conversa": leva o operador até a mensagem deste arquivo na aba Chat. Opcional —
+   * sem ela o botão não é renderizado (nenhum botão morto).
+   */
+  onOpenInChat?: () => void;
 }
 
 export function FileCard({
@@ -52,6 +57,7 @@ export function FileCard({
   onToggleSelection,
   onPreview,
   onForward,
+  onOpenInChat,
   onRequestDelete,
 }: FileCardProps) {
   const [baixando, setBaixando] = useState(false);
@@ -173,6 +179,19 @@ export function FileCard({
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
         {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
         {item.type === 'audio' && <AudioPlayButton item={item} />}
+        {/* "Ver na conversa": leva à mensagem deste arquivo na aba Chat (só quando o pai
+            oferece a ação). */}
+        {onOpenInChat && (
+          <button
+            type="button"
+            aria-label="Ver na conversa"
+            title="Ver na conversa"
+            className={FILE_ACTION_BUTTON}
+            onClick={onOpenInChat}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
           type="button"
           aria-label="Visualizar"

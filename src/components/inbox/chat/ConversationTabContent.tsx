@@ -1,9 +1,24 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import {
+  lazy,
+  startTransition,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import type { Conversation, Message } from '@/types/chat';
 import type { ConversationTab } from './ConversationTabs';
 import { TabBanner } from '../tabs/TabBanner';
+import {
+  ChatMessageNavigationContext,
+  type ChatMessageNavigation,
+} from './chatMessageNavigation';
 
 const AiTab = lazy(() =>
   import('../tabs/AiTab').then((m) => ({ default: m.AiTab })));
@@ -57,8 +72,49 @@ export function ConversationTabContent({
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
+  // Ponte com o Chat: o painel registra o "rolar até a mensagem" (é ele quem conhece o
+  // virtualizador) e a aba Arquivos pede a abertura por aqui.
+  const scrollToMessageRef = useRef<((messageId: string) => void) | null>(null);
+  const navigation = useMemo<ChatMessageNavigation>(
+    () => ({
+      registerScrollToMessage: (handler) => {
+        scrollToMessageRef.current = handler;
+      },
+    }),
+    [],
+  );
+
+  const [pendingOpenId, setPendingOpenId] = useState<string | null>(null);
+
+  // "Ver na conversa" (aba Arquivos): valida a mensagem, troca para a aba Chat e guarda o
+  // alvo. A rolagem acontece DEPOIS que a aba Chat fica visível (o painel fica escondido nas
+  // demais abas), no efeito abaixo. Arquivo cuja mensagem não está mais carregada (apagada ou
+  // fora da janela) mostra aviso, em vez de trocar de aba e não fazer nada.
+  const handleOpenInChat = useCallback(
+    (messageId: string) => {
+      if (!messages.some((message) => message.id === messageId)) {
+        toast.error('Mensagem não encontrada', {
+          description: 'Este arquivo não está mais disponível na conversa.',
+        });
+        return;
+      }
+      setPendingOpenId(messageId);
+      onTabChange('chat');
+    },
+    [messages, onTabChange],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'chat' || !pendingOpenId) return;
+    const scrollToMessage = scrollToMessageRef.current;
+    if (!scrollToMessage) return;
+    startTransition(() => setPendingOpenId(null));
+    scrollToMessage(pendingOpenId);
+  }, [activeTab, pendingOpenId]);
+
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <ChatMessageNavigationContext.Provider value={navigation}>
+      <div className="flex-1 flex flex-col min-h-0">
       {/*
         A aba Chat fica sempre montada e só é escondida — desmontar perderia
         scroll, rascunho de mensagem, gravação de áudio e assinaturas realtime.
@@ -119,7 +175,12 @@ export function ConversationTabContent({
 
       {activeTab === 'files' && (
         <Panel name="Arquivos">
-          <FilesTab key={contactId} contactId={contactId} contactName={conversation.contact.name} />
+          <FilesTab
+            key={contactId}
+            contactId={contactId}
+            contactName={conversation.contact.name}
+            onOpenInChat={handleOpenInChat}
+          />
         </Panel>
       )}
 
@@ -128,6 +189,7 @@ export function ConversationTabContent({
           <JourneyTab contactId={contactId} />
         </Panel>
       )}
-    </div>
+      </div>
+    </ChatMessageNavigationContext.Provider>
   );
 }

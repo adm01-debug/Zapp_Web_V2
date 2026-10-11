@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Image, File, Play, Share2, Lock, Download, Trash2 } from 'lucide-react';
+import { X, Image, File, Play, Share2, Lock, Download, Trash2, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
@@ -35,6 +35,11 @@ export interface FileDetailContentProps {
   downloadAllowed?: boolean;
   /** S52: o MESMO handler do cartão (`openForward([item])` do `FilesTab`). */
   onForward: (item: ContactMediaItem) => void;
+  /**
+   * "Ver na conversa": leva o operador à mensagem deste arquivo na aba Chat. Opcional — sem
+   * ela o botão não é renderizado (nenhum botão morto).
+   */
+  onOpenInChat?: () => void;
   onClose: () => void;
   onRequestDelete: (item: ContactMediaItem) => void;
 }
@@ -46,6 +51,7 @@ export function FileDetailContent({
   currentUserId = null,
   downloadAllowed = false,
   onForward,
+  onOpenInChat,
   onClose,
   onRequestDelete,
 }: FileDetailContentProps) {
@@ -184,6 +190,13 @@ export function FileDetailContent({
         <Button size="sm" variant="outline" className="h-9" onClick={() => onForward(item)}>
           <Share2 className="w-3.5 h-3.5 mr-1.5" />Encaminhar
         </Button>
+        {/* "Ver na conversa": abre a mensagem deste arquivo na aba Chat (só quando o pai
+            oferece a ação). */}
+        {onOpenInChat && (
+          <Button size="sm" variant="outline" className="h-9" onClick={onOpenInChat}>
+            <MessageSquare className="w-3.5 h-3.5 mr-1.5" />Ver na conversa
+          </Button>
+        )}
         {item.sender === 'agent' && (
           <Button
             size="sm"

@@ -41,6 +41,11 @@ export interface FilesActions {
   onForward: (item: ContactMediaItem) => void;
   /** Etapa 35: pede a exclusao — quem abre o AlertDialog e chama o useFilesActions e o FilesTab. */
   onRequestDelete: (item: ContactMediaItem) => void;
+  /**
+   * "Ver na conversa": leva o operador para a mensagem do arquivo na aba Chat. Opcional —
+   * sem ela a ação não é oferecida (nenhum botão morto no cartão).
+   */
+  onOpenInChat?: (item: ContactMediaItem) => void;
 }
 
 export interface FilesContentSelection {
@@ -308,6 +313,7 @@ export function FilesContent({
           onToggleSelection={() => selection.toggle(item.id)}
           onPreview={() => actions.onPreview(item)}
           onForward={() => actions.onForward(item)}
+          onOpenInChat={actions.onOpenInChat ? () => actions.onOpenInChat?.(item) : undefined}
           onRequestDelete={actions.onRequestDelete}
         />
       ))}

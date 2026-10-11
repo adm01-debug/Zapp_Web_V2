@@ -26,6 +26,7 @@ import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
+import { useChatMessageNavigation } from './chat/chatMessageNavigation';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
@@ -292,6 +293,22 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const contactJid = useMemo(() => conversation.contact.phone ? `${conversation.contact.phone}@s.whatsapp.net` : '', [conversation.contact.phone]);
   const contactAvatar = conversation.contact.avatar || undefined;
   const handleScrollToMessage = useCallback((id: string) => messagesAreaRef.current?.scrollToMessage(id), []);
+
+  // Ponte com a aba Arquivos ("Ver na conversa"): quem conhece o virtualizador é este painel,
+  // então ele registra o próprio scroll. O destaque é o MESMO da busca do chat —
+  // `highlightedMessageIds`/`activeHighlightId` que o `MessageBubble` já usa (reusar, não
+  // inventar um destaque novo).
+  const chatNavigation = useChatMessageNavigation();
+  const handleOpenMessageFromFiles = useCallback((messageId: string) => {
+    handleScrollToMessage(messageId);
+    setHighlightedMessageIds(new Set([messageId]));
+    setActiveHighlightId(messageId);
+  }, [handleScrollToMessage]);
+  useEffect(() => {
+    if (!chatNavigation) return;
+    chatNavigation.registerScrollToMessage(handleOpenMessageFromFiles);
+    return () => chatNavigation.registerScrollToMessage(null);
+  }, [chatNavigation, handleOpenMessageFromFiles]);
 
   const handleQuickReply = (reply: { id: string; title: string; shortcut: string; content: string; category: string }) => {
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
