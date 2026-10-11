@@ -37,6 +37,9 @@ export function RuleRow({ rule, onChange, onRemove }: {
         <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs min-w-[160px] w-auto"><SelectValue /></SelectTrigger>
         <SelectContent>{RULE_FIELDS.map((f) => <SelectItem key={f.value} value={f.value} disabled={f.comingSoon && f.value !== rule.field}>{f.label}{f.comingSoon ? ' (em breve)' : ''}</SelectItem>)}</SelectContent>
       </Select>
+      {fieldDef?.comingSoon && (
+        <span role="note" className="text-2xs text-foreground-secondary">Em breve: este indicador ainda não é calculado e fica fora da estimativa.</span>
+      )}
       <Select value={rule.op} onValueChange={(v) => onChange({ op: v as never })}>
         <SelectTrigger className="h-9 bg-input/40 border-border/70 text-xs w-auto min-w-[140px]"><SelectValue /></SelectTrigger>
         <SelectContent>{ops.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>

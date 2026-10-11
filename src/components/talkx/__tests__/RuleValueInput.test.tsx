@@ -198,6 +198,17 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     });
   });
 
+  it('número "em breve" (lead_score): botão desabilitado e sem condição adicionada', async () => {
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+    // O botão continua visível com o MESMO nome acessível ("Lead score"), mas
+    // desabilitado: a coluna nunca é calculada e o filtro seria morto.
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+  });
+
   it('"em breve": Lead score e Risco de churn ficam desabilitados no catálogo', async () => {
     renderView();
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));

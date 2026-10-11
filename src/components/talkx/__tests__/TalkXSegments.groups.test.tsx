@@ -248,9 +248,16 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     const { container } = render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><TalkXSegments onUseCampaign={() => {}} /></QueryClientProvider>);
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
 
+    // lead_score/risk_score são "em breve" (coluna nunca calculada): o botão
+    // continua visível com o MESMO nome acessível, mas desabilitado — clicar
+    // não adiciona condição (filtro morto removido).
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    expect(leadScore).toHaveAttribute('title', expect.stringContaining('Em breve'));
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+
     // O catálogo de filtros adiciona a condição com o campo — e o campo traz o tipo.
-    // Lead score fica "em breve" (nada calcula a coluna): botão desabilitado, não adiciona condição.
-    expect(screen.getByRole('button', { name: /Lead score/ })).toBeDisabled();
     for (const filtro of ['Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
       fireEvent.click(screen.getByRole('button', { name: filtro }));
     }
