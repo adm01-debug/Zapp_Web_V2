@@ -155,9 +155,9 @@ export function TeamConversationList({
                     <AvatarImage src={conv.avatar_url ?? undefined} />
                     <AvatarFallback className={cn(
                       'text-xs font-semibold',
-                      conv.type === 'direct' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                      conv.department_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                      conv.type === 'direct' ? 'bg-primary/15 text-[hsl(var(--primary-text))]' :
+                      conv.department_id ? 'bg-dash-violet/15 text-[hsl(var(--dash-tile-violet))] dark:bg-dash-violet/10 dark:text-dash-violet' :
+                      'bg-success/15 text-success'
                     )}>
                       {conv.type === 'direct'
                         ? <MessageSquare className="w-4 h-4" />
