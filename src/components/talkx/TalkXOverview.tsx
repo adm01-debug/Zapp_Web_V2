@@ -12,10 +12,11 @@ import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES, TALKX_CHANNELS,
+  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
 
 const STORAGE_KEY = 'talkx.overview.filters';
@@ -170,19 +171,15 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
 
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totals = useMemo(() => {
-    const sent = noPeriodo.reduce((a, c) => a + c.sent_count, 0);
-    const failed = noPeriodo.reduce((a, c) => a + c.failed_count, 0);
-    return {
-      total: noPeriodo.length,
-      active: noPeriodo.filter((c) => c.status === 'sending' || c.status === 'paused').length,
-      completed: noPeriodo.filter((c) => c.status === 'completed').length,
-      successRate: sent + failed > 0 ? Math.round((sent / (sent + failed)) * 1000) / 10 : null,
-      reached: sent,
-      bars: barsByDay(noPeriodo.map((c) => c.created_at)),
-      barsCompleted: barsByDay(noPeriodo.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
-    };
-  }, [noPeriodo]);
+  // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
+  // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
+  const { data: stats } = useTalkXOverviewStats(period, periodRange);
+  const cur = stats?.current;
+  const prev = stats?.previous ?? null;
+  const rate = cur?.deliveryRatePct ?? null;
+  const rateLabel = rate === null ? null : `${rate.toLocaleString('pt-BR')}%`;
+  // Comparativo da taxa só com base: o período anterior precisa de pelo menos 50 enviados.
+  const prevRate = prev && (prev.sent ?? 0) >= 50 ? prev.deliveryRatePct : null;
 
   // X081 — o recorte de data vale para a lista, para os KPIs e para o rail
   // ("Últimas campanhas"): um filtro que só vale em uma parte da tela mostra
@@ -216,11 +213,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
-            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
-            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)} />
-            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
-            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
-            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} bars={stats?.dailySent} />
+            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={cur?.completed} comparison={{ previous: prev?.completed, kind: 'relative' }} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rateLabel} comparison={{ previous: prevRate, kind: 'points' }} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} />
           </div>
 
         {/* Filtros */}
@@ -387,8 +384,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           icon={Zap} title="Talk X"
           subtitle="Campanhas que geram conversas e resultados."
           metrics={[
-            { label: 'Mensagens enviadas', value: fmtInt(totals.reached) },
-            { label: 'Taxa de sucesso', value: totals.successRate === null ? '—' : `${totals.successRate}%` },
+            { label: 'Mensagens enviadas', value: cur?.sent == null ? '—' : fmtInt(cur.sent) },
+            { label: 'Taxa de sucesso', value: rateLabel ?? '—' },
             { label: 'Segmentos salvos', value: fmtInt(segments.length) },
           ]}
         />
