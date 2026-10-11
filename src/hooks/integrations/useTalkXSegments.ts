@@ -126,14 +126,15 @@ export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin =
  * exigem valor não vazio; número e data exigem valor numérico válido (dias > 0).
  * `is_set`/`is_empty` não pedem valor. Campo desconhecido nunca é completo — a
  * condição nasce em branco no construtor e não pode ir para o motor.
+ *
+ * Só a FORMA da regra é julgada aqui (é o que o construtor e a descrição legível
+ * enxergam). Indicador "em breve" (lead_score/risk_score) tem forma válida, mas
+ * não é calculado pelo banco: quem o exclui da estimativa é o `splitRules` e quem
+ * barra o filtro morto é o `ruleToFilter` (falha fechada). Ver `isFieldComingSoon`.
  */
 export function isRuleComplete(rule: SegmentRule): boolean {
   const def = RULE_FIELDS.find((f) => f.value === rule.field);
   if (!def) return false;
-  // Indicador "em breve" (lead_score/risk_score): nada calcula a coluna, então a
-  // condição nunca é utilizável — nem com valor zerado, nem via is_set/is_empty.
-  // Fica fora da estimativa e barra a publicação até o cálculo real existir.
-  if (def.comingSoon) return false;
   if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
   const value = rule.value.trim();
   if (!value) return false;
@@ -146,18 +147,30 @@ export function isRuleComplete(rule: SegmentRule): boolean {
 }
 
 /**
+ * Indicador "em breve" (lead_score/risk_score): nada calcula a coluna no banco,
+ * então qualquer filtro sobre ela seria morto (sempre 0/nulo). A regra tem forma
+ * válida e por isso é descrita normalmente, mas nunca entra na estimativa.
+ */
+function isFieldComingSoon(field: RuleField | string): boolean {
+  return RULE_FIELDS.find((f) => f.value === field)?.comingSoon === true;
+}
+
+/**
  * Separa as condições completas das incompletas. Só as completas podem ir para a
  * estimativa/PostgREST (uma regra vazia derrubaria o count para 0 e o botão para
  * de funcionar); as incompletas viram apenas a contagem que a tela exibe fora da
  * estimativa. Grupos que ficam sem nenhuma condição completa são descartados,
  * como já faz o `rulesToPostgrest`.
+ *
+ * Uma condição "em breve" conta como incompleta: a coluna não é calculada e o
+ * filtro seria morto (não pode ficar de fora nem entrar na estimativa).
  */
 export function splitRules(rules: SegmentRules | null | undefined): { complete: SegmentRules; incompleteCount: number } {
   let incompleteCount = 0;
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
-        if (isRuleComplete(rule)) return true;
+        if (isRuleComplete(rule) && !isFieldComingSoon(rule.field)) return true;
         incompleteCount += 1;
         return false;
       });
