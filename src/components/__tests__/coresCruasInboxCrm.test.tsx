@@ -45,6 +45,22 @@ import { TeamConversationList } from '@/components/team-chat/TeamConversationLis
 
 afterEach(() => cleanup());
 
+// ─── Regexes de CLASSE montadas por PEDAÇOS de propósito ──────────────────────
+// O Tailwind varre `src/**/*.{ts,tsx}` — testes inclusive. Um literal de classe
+// inteiro no fonte (prefixo + colchetes) vira CANDIDATO: o Tailwind emite a
+// regra e, com valor que não é cor/medida, o CSS sai inválido e o build do lote
+// quebra (lightningcss: `Delim('<')`). Montar o valor como pedaços de string
+// (`'text-' + '\\[hsl…'`) impede a extração, sem mudar o que a regex casa —
+// nem nos comentários pode sobrar o literal inteiro.
+const RE_ARB_HSL = '\\[hsl\\(var\\((--[a-z-]+)\\)\\)\\]';
+const RE_BADGE_TXT = new RegExp('(^| )text-' + RE_ARB_HSL);
+const RE_BADGE_TXT_DARK = new RegExp(' dark:text-' + RE_ARB_HSL);
+const RE_ARB_HSL_EXATO = new RegExp('^text-' + RE_ARB_HSL + '$');
+const RE_ARB_HSL_G = new RegExp(RE_ARB_HSL, 'g');
+const RE_DOTBG = new RegExp('^bg-' + '[a-z-]' + '+$');
+const RE_HSL_NUM = new RegExp('\\[' + 'hsl\\(\\d|rgba\\(');
+const RE_AVISO_GRUPO = new RegExp('bg-warning' + '\\/' + '(\\d+)' + "[^\"']*?" + 'text-' + RE_ARB_HSL);
+
 // ─── Medidor WCAG (HSL → sRGB → luminância relativa), igual ao da Telefonia ───
 type RGB = [number, number, number];
 function parseHsl(s: string): RGB {
@@ -171,10 +187,10 @@ describe('cor crua → token — nenhum literal cru volta (Inbox/CRM)', () => {
   it('os 6 tipos de contato usam token em color/dotBg/badgeClass', () => {
     for (const cfg of Object.values(CONTACT_TYPE_CONFIG)) {
       expect(cfg.color).toMatch(/^hsl\(var\(--[a-z-]+\)\)$/);
-      expect(cfg.dotBg).toMatch(/^bg-[a-z-]+$/);
-      expect(cfg.badgeClass).toMatch(/(^| )text-\[hsl\(var\(--[a-z-]+\)\)\]/);
-      expect(cfg.badgeClass).toMatch(/ dark:text-\[hsl\(var\(--[a-z-]+\)\)\]/);
-      expect(cfg.badgeClass).not.toMatch(/\[hsl\(\d|rgba\(/);
+      expect(cfg.dotBg).toMatch(RE_DOTBG);
+      expect(cfg.badgeClass).toMatch(RE_BADGE_TXT);
+      expect(cfg.badgeClass).toMatch(RE_BADGE_TXT_DARK);
+      expect(cfg.badgeClass).not.toMatch(RE_HSL_NUM);
       expect(cfg.gradient).not.toMatch(/hsl\(\d/);
     }
   });
@@ -204,7 +220,7 @@ function candidatosFgBg(classes: string, escuro: boolean): string[] {
 function fgDe(classes: string, escuro: boolean): string {
   for (const t of candidatosFgBg(classes, escuro)) {
     const c = t.replace(/^dark:/, '');
-    const arb = c.match(/^text-\[hsl\(var\((--[a-z-]+)\)\)\]$/);
+    const arb = c.match(RE_ARB_HSL_EXATO);
     if (arb) return arb[1];
     const nomeada = c.match(/^text-([a-z0-9-]+)$/);
     if (nomeada && PUBLICADOS.has(nomeada[1])) return `--${nomeada[1]}`;
@@ -253,7 +269,7 @@ function avataresDaFonte(): { nome: string; classes: string }[] {
 /** Aviso do GroupsView: `bg-warning/NN` + texto por token, direto da fonte. */
 function parAvisoDaFonte(): string {
   const groupsFonte = conteudo('src/components/groups/GroupsView.tsx');
-  const mAviso = groupsFonte.match(/bg-warning\/(\d+)[^"']*?text-\[hsl\(var\((--[a-z-]+)\)\)\]/);
+  const mAviso = groupsFonte.match(RE_AVISO_GRUPO);
   if (!mAviso) throw new Error('aviso do GroupsView sem bg-warning/NN + texto por token');
   return `${mAviso[2]} | --warning/${mAviso[1]}`;
 }
@@ -309,7 +325,7 @@ describe('cor crua → token — contraste medido nas classes reais', () => {
 
   it('o badge de todo tipo declara um token de texto que existe nos 4 temas', () => {
     for (const cfg of Object.values(CONTACT_TYPE_CONFIG)) {
-      const tokens = [...cfg.badgeClass.matchAll(/\[hsl\(var\((--[a-z-]+)\)\)\]/g)].map((m) => m[1]);
+      const tokens = [...cfg.badgeClass.matchAll(RE_ARB_HSL_G)].map((m) => m[1]);
       expect(tokens.length).toBeGreaterThanOrEqual(2); // claro + dark
       for (const t of tokens)
         for (const [nome, vars] of Object.entries(TEMAS))
