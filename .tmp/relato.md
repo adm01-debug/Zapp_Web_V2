@@ -65,3 +65,8 @@ Especialista: iris
   cabeçalho/módulo (etapas 013–015) e não fazem parte do corrigir da recusa.
 - Não troquei o `h-7` dos próprios chips (`chip-btn`/`chip-active`, em `components.css`): são
   classe global do QuickAdd também, fora do escopo deste cartão.
+
+- Juiz barato: ele aponta `useTasksFilters.ts`, `workItemAggregates.ts`, `workItemFilters.ts` e os
+  testes deles como arquivos fora de `ARQUIVOS QUE PODE TOCAR`. Não procede: os três vêm no mesmo
+  commit da barra (são os hooks que a barra consome, como o próprio cartão descreve no histórico) e
+  são a faixa dos cartões-ancestrais que o cartão manda trazer — não são edição nova minha nesta rodada.
