@@ -1,23 +1,51 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-testes-do-produto)
+
+## Pontos da recusa
+- Ponto 1: o relato agora não ignora a exigência do `ci_espelho`. Rodei o comando pedido (`bash ~/arquitetura-v2/integrador/ci_espelho.sh .`) neste workspace; a guarda Hermes bloqueou a execução porque o script tenta registrar pendência fora do workspace em `~/arquitetura-v2/integrador/registro-pendente.txt` quando `scripts/ci/check-test-inventory.mjs` encontra órfãos. Para não contornar a guarda, rodei a equivalência somente-leitura dos blocos do espelho e o resultado não contém mais a linha recusada `node: docs/COMPLETE_SYSTEM_FEATURES.md cobre as features de produto sem mentir` nem a linha nova que apareceu no meu primeiro ajuste (`node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`). A saída atual do espelho equivalente ficou restrita a pendências já fora do escopo deste cartão: `contrato: tests/contracts/sl059-ia010-provisionamento.contract.test.ts`, seis linhas `node:` de suites staged/Talk X e `pendente: scripts/ci/check-test-inventory.mjs`.
+- Ponto 2: mantive no diff apenas mudanças ligadas à remoção de Campanhas Clássicas e ao alinhamento dos testes/documentos que ainda referenciavam o módulo removido. Além do trabalho anterior, deletei os dois testes a11y remanescentes que importavam `CampaignABTesting`/`CampaignsView`, removi `campaigns` da lista esperada do E2E de navegação e alinhei `docs/DB-INVENTORY.md` para não apontar consumidores removidos.
+- Ponto 3: o comando de verificação rápido está verde. `zapp-verify . --rapido` retornou: `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO`.
+- Ponto 4: `.tmp/relato.md` foi reescrito só como handoff do fechamento; o conteúdo explica por que o comando exato do espelho não pode ser usado sem violar a guarda e lista a prova alternativa rodada agora.
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+- `src/components/campaigns/**` e `src/hooks/communication/useCampaigns.ts`: removidos os componentes, hook e testes de Campanhas Clássicas do trabalho anterior, pois Talk X é o sistema ativo.
+- `src/components/mobile/MobileHeader.tsx`, `src/components/mobile/MobileShell.tsx`, `src/pages/ViewRouter.tsx`, `src/pages/lazyViews.ts`, `src/services/navigation.service.ts`, `src/hooks/communication/index.ts`, `src/hooks/ui/usePrefetchOnHover.ts`: removidas as ligações de navegação, lazy-load e prefetch do módulo clássico.
+- `tests/contracts/no-campaigns-classicas.contract.test.ts`: contrato novo para impedir o retorno do item de menu/rota/lazy-view de Campanhas Clássicas.
+- `docs/COMPLETE_SYSTEM_FEATURES.md`: alinhado para não listar Campanhas Clássicas como feature ativa.
+- `docs/DB-INVENTORY.md` e `e2e/navegacao-modulos.spec.ts`: corrigidos nesta rodada para não manter referências ativas ao módulo clássico removido.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## Prova executada agora
+- `zapp-verify . --rapido` → verde: `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, `VERIFY: VERDE SEM BANCO`.
+- `node --test --test-reporter=spec scripts/ci/db-inventory-doc.unit.mjs` → verde: `pass 15`, `fail 0`.
+- `./node_modules/.bin/vitest run --config vitest.contracts.config.ts tests/contracts/no-campaigns-classicas.contract.test.ts --reporter=verbose` → verde: `Test Files 1 passed (1)`, `Tests 2 passed (2)`.
+- `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` → bloqueado pela guarda Hermes antes de completar, porque o script tenta escrever registro externo em `~/arquitetura-v2/integrador/registro-pendente.txt` quando encontra a pendência de inventário de testes. Não contornei a guarda.
+- Espelho somente-leitura equivalente → não há `node: docs/COMPLETE_SYSTEM_FEATURES.md cobre as features de produto sem mentir`; não há `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`; permanecem apenas pendências de `sl059-ia010-provisionamento`, suites staged/Talk X e `check-test-inventory.mjs` fora deste cartão.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+## Arquivos no diff
+```
+docs/COMPLETE_SYSTEM_FEATURES.md
+docs/DB-INVENTORY.md
+e2e/navegacao-modulos.spec.ts
+src/components/campaigns/CampaignABTesting.tsx
+src/components/campaigns/CampaignCreateDialog.tsx
+src/components/campaigns/CampaignsView.tsx
+src/components/campaigns/__tests__/CampaignABTesting.a11y.test.tsx
+src/components/campaigns/__tests__/CampaignCreateDialog.r2-mod-005.test.tsx
+src/components/campaigns/__tests__/CampaignsView.a11y-progress.test.tsx
+src/components/campaigns/__tests__/CampaignsView.audiencia.r2-mod-005.test.tsx
+src/components/campaigns/__tests__/CampaignsView.retomada.test.tsx
+src/components/campaigns/__tests__/CampaignsView.test.tsx
+src/components/mobile/MobileHeader.tsx
+src/components/mobile/MobileShell.tsx
+src/hooks/__tests__/useCampaigns.test.tsx
+src/hooks/communication/index.ts
+src/hooks/communication/useCampaigns.ts
+src/hooks/ui/usePrefetchOnHover.ts
+src/pages/ViewRouter.tsx
+src/pages/lazyViews.ts
+src/services/navigation.service.ts
+tests/contracts/axe-campaigns.contract.test.ts
+tests/contracts/no-campaigns-classicas.contract.test.ts
+```
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
-
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+## O que não fiz
+- Não alterei guardas, manifestos, workflows ou allowlists para fazer o `ci_espelho.sh` passar; a própria regra do projeto proíbe contornar guarda. A pendência de `check-test-inventory.mjs` não é deste módulo e fica registrada como externa ao escopo.
