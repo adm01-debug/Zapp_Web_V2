@@ -18,7 +18,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, act } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ReactNode, ComponentProps } from 'react';
 
 import { makeTaskRow, supabaseMock } from '@/test/mocks/tarefas';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -188,7 +188,10 @@ describe('Etapa 083 — soltar em Fazendo cheio treme a coluna, avisa e devolve 
     destination: { droppableId: para, index: paraIndex },
   });
 
-  function renderQuadro(onMove: ReturnType<typeof vi.fn>) {
+  type OnMoveProp = ComponentProps<typeof TasksBoardMode>['onMove'];
+  type OnMoveMock = ReturnType<typeof vi.fn>;
+
+  function renderQuadro(onMove: OnMoveMock) {
     return render(
       <TooltipProvider>
         <TasksBoardMode
@@ -198,7 +201,7 @@ describe('Etapa 083 — soltar em Fazendo cheio treme a coluna, avisa e devolve 
             waiting: [], done: [], cancelled: [],
           }}
           isLoading={false}
-          onMove={onMove}
+          onMove={onMove as unknown as OnMoveProp}
           onReorder={vi.fn()}
           onOpen={vi.fn()}
           onDelete={vi.fn()}
