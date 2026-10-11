@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -127,5 +128,33 @@ describe('SLAConfigurationManager', () => {
       const switches = screen.getAllByRole('switch');
       expect(switches.length).toBeGreaterThanOrEqual(2);
     });
+  });
+
+  it('botões e switches nomeados com aria-label por regra', async () => {
+    render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Editar SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Editar SLA SLA Padrão' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Ativar SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Ativar SLA SLA Padrão' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Excluir SLA SLA Crítico' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Excluir SLA SLA Padrão' })).toBeInTheDocument();
+    });
+  });
+
+  it('seletor de prioridade tem rótulo ligado via combobox nomeado', async () => {
+    render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    fireEvent.click(await screen.findByText('Novo SLA'));
+    expect(await screen.findByRole('combobox', { name: 'Prioridade' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'SLA padrão' })).toBeInTheDocument();
+  });
+
+  it('axe zerado no SLAConfigurationManager', async () => {
+    const { container } = render(<SLAConfigurationManager />, { wrapper: createWrapper() });
+    await waitFor(() => {
+      expect(screen.getByText('Configurações Globais de SLA')).toBeInTheDocument();
+    });
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(results).toHaveNoViolations();
   });
 });
