@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { TrendingDown, Users, AlertTriangle, Brain, RefreshCw, Loader2, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,8 @@ const computeStats = (list: ChurnRisk[]) => ({
 });
 
 export function ChurnPredictionDashboard() {
+  // CT-70 — com "reduzir movimento" ligado, a lista entra já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const [risks, setRisks] = useState<ChurnRisk[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -293,8 +295,8 @@ export function ChurnPredictionDashboard() {
                 risks.filter(r => r.riskScore > 20).slice(0, 50).map((risk) => (
                   <motion.div
                     key={risk.contactId}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, x: -10 }}
+                    animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
                     <Badge className={`${getRiskColor(risk.riskLevel)} text-xs shrink-0`}>

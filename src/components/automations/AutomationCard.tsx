@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Edit2, Trash2, Copy, Play, ArrowRight } from 'lucide-react';
 import { Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TRIGGER_TYPES, ACTION_TYPES } from './automationConstants';
 import type { AutomationRow } from './useAutomations';
@@ -22,14 +22,16 @@ interface AutomationCardProps {
 }
 
 export function AutomationCard({ automation, onToggle, onEdit, onDelete, onDuplicate }: AutomationCardProps) {
+  // CT-70 — com "reduzir movimento" ligado, o card entra já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const triggerInfo = TRIGGER_TYPES.find(t => t.type === automation.trigger_type);
   const TriggerIcon = triggerInfo?.icon || Zap;
   const actions = (Array.isArray(automation.actions) ? automation.actions : []) as unknown as AutomationAction[];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       className={cn(
         'p-4 rounded-lg border transition-all',
         automation.is_active ? 'bg-card border-primary/20' : 'bg-muted/30 border-border opacity-70'
