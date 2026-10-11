@@ -276,7 +276,7 @@ M5='40000000-0000-0000-0000-000000000005'
 [[ "$(psql_sql "SELECT has_function_privilege('authenticated','public.pin_message(uuid)','EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em pin_message'
 [[ "$(psql_sql "SELECT has_function_privilege('service_role','public.report_message(uuid,text,text)','EXECUTE')")" == 't' ]] || fail 'service_role sem EXECUTE em report_message'
 # P1 (refazer 2): endurecimento das 4 RPCs — search_path travado e EXECUTE só para authenticated/service_role
-[[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND p.proconfig::text LIKE '%search_path=public, pg_temp%';")" == '4' ]] || fail 'RPC nova sem SET search_path = public, pg_temp'
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND p.proconfig::text LIKE '%search_path=pg_catalog, public%';")" == '4' ]] || fail 'RPC nova sem SET search_path = pg_catalog, public'
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee='authenticated';")" == '4' ]] || fail 'authenticated sem EXECUTE em alguma RPC nova'
 expect_failure 'anon sem EXECUTE nas RPCs novas' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');"
 
@@ -330,6 +330,9 @@ expect_failure 'relatar mensagem de contato oculto' "SET ROLE authenticated; SET
 expect_failure 'escrita direta de relato sem RPC' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; INSERT INTO public.message_reports (message_id, reporter_id, reason) VALUES ('$M1','$U2','spam');"
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'autor nao viu o proprio relato'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_reports;")" == '0' ]] || fail 'terceiro viu relato alheio'
+# Juiz item 3: U5 e supervisor sem ser admin — prova dos papeis antes dos testes de SELECT/UPDATE
+[[ "$(psql_sql "SELECT public.is_admin('$U5');")" == 'f' ]] || fail 'U5 deveria nao ser admin'
+[[ "$(psql_sql "SELECT public.is_admin_or_supervisor('$U5');")" == 't' ]] || fail 'U5 deveria ser supervisor'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'admin nao viu o relato'
 
 # ---- status do relato: so admin, com carimbo do proprio revisor ----

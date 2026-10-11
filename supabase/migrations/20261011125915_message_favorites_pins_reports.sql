@@ -89,7 +89,7 @@ create or replace function public.message_pins_force_contact_id()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public
 as $$
 declare
   v_contact uuid;
@@ -121,7 +121,7 @@ create table if not exists public.message_reports (
   id          uuid primary key default gen_random_uuid(),
   message_id  uuid not null references public.messages(id) on delete cascade,
   reporter_id uuid not null references auth.users(id) on delete cascade,
-  reason      text not null check (reason in ('spam', 'conteudo_improprio', 'urgencia', 'outro')),
+  reason      text not null check (reason in ('spam', 'improprio', 'urgencia', 'outro')),
   note        text check (note is null or char_length(note) between 1 and 500),
   status      text not null default 'open' check (status in ('open', 'resolved', 'dismissed')),
   created_at  timestamptz not null default now(),
@@ -159,7 +159,7 @@ create or replace function public.toggle_message_favorite(p_message_id uuid)
 returns boolean
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public
 as $$
 declare
   v_user uuid := auth.uid();
@@ -197,7 +197,7 @@ create or replace function public.pin_message(p_message_id uuid)
 returns uuid
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public
 as $$
 declare
   v_user    uuid := auth.uid();
@@ -253,7 +253,7 @@ create or replace function public.unpin_message(p_message_id uuid)
 returns boolean
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public
 as $$
 declare
   v_user    uuid := auth.uid();
@@ -294,7 +294,7 @@ create or replace function public.report_message(
 returns uuid
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public
 as $$
 declare
   v_user    uuid := auth.uid();
@@ -306,7 +306,7 @@ begin
     raise exception 'not_authenticated' using errcode = '42501';
   end if;
 
-  if p_reason is null or p_reason not in ('spam', 'conteudo_improprio', 'urgencia', 'outro') then
+  if p_reason is null or p_reason not in ('spam', 'improprio', 'urgencia', 'outro') then
     raise exception 'invalid_report_reason' using errcode = '22023';
   end if;
 
