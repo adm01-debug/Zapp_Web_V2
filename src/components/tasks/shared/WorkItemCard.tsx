@@ -84,10 +84,25 @@ export const WorkItemCard = React.memo(function WorkItemCard({
     </button>
   ) : null;
 
+  // N-180: o título é um <button> nativo de abertura (foco + Enter/Espaço
+  // grátis), fora de qualquer outro controle. O keydown trata só x/X/Delete:
+  // Enter/Espaço caem no onClick nativo, e tratá-los aqui duplicaria o onOpen.
+  // O article segue clicável/focável por compatibilidade (TasksModule/Sheet
+  // usam foco e clique no card); sem role="button" não há botão-dentro-botão.
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') return;
+    handleKeyDown(e);
+  };
+
   const titulo = (
-    <span className={`flex-1 min-w-0 text-sm font-semibold leading-snug truncate ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+    <button
+      type="button"
+      data-testid="work-item-open"
+      onClick={(e) => { e.stopPropagation(); onOpen?.(); }}
+      onKeyDown={handleTitleKeyDown}
+      className={`flex-1 min-w-0 cursor-pointer rounded-sm text-left text-sm font-semibold leading-snug truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
       {item.title}
-    </span>
+    </button>
   );
 
   const contexto = (
@@ -183,13 +198,20 @@ export const WorkItemCard = React.memo(function WorkItemCard({
   // "tarefa arrastável" em vez do "button" cru da lib de DnD.
   const roleDescription = mode === 'board' ? { 'aria-roledescription': 'tarefa arrastável' } : {};
 
+  // N-180.4: o spread do dragHandleProps vem ANTES do role="article", então
+  // o card continua article mesmo quando a lib de DnD manda role="button"
+  // (sem botão-dentro-de-botão); tabIndex e dados de arrasto passam.
   return (
     <article
       data-testid="work-item-card"
       data-mode={mode}
       data-item-id={item.id}
-      tabIndex={0}
+      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       role="article"
+      // N-180: article focável em todos os modos (atalhos E/X/Delete acham o
+      // card via closest) e clicável por compatibilidade; o role article
+      // preservado (spread antes) evita botão-dentro-de-botão no quadro.
+      tabIndex={0}
       aria-label={[item.title, item.status, item.due_date ? 'prazo ' + item.due_date : ''].filter(Boolean).join(', ')}
       onKeyDown={handleKeyDown}
       onClick={onOpen}
@@ -206,7 +228,6 @@ export const WorkItemCard = React.memo(function WorkItemCard({
             ? 'border-border/40 opacity-60'
             : 'border-border/70 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_hsl(var(--primary)/.25)]',
       ].join(' ')}
-      {...(mode === 'board' && dragHandleProps ? dragHandleProps : {})}
       {...roleDescription}
     >
       {isAgenda ? (
@@ -258,7 +279,10 @@ export const WorkItemCard = React.memo(function WorkItemCard({
               // E16: nasce com `opacity-0` (sem `focus-visible:opacity-100` o Tab parava
               // num controle invisível — o anel de foco do `button:focus-visible` some
               // junto com o `opacity-0`, que apaga também a sombra).
-              className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-muted/80 hover:bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+              // E18: área mínima de toque de 44 px em mobile (WCAG 2.5.5).
+              // N-180.5: escondido ele não intercepta clique sobre o conteúdo
+              // (pointer-events-none); o mouse volta no hover e no foco.
+              className="absolute bottom-2 right-2 flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-md bg-muted/80 hover:bg-primary/20 opacity-0 pointer-events-none group-hover:pointer-events-auto focus-visible:pointer-events-auto group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               title="Abrir conversa"
               aria-label="Abrir conversa"
             >
