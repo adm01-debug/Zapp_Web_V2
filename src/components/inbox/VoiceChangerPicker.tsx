@@ -3,11 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { zappTransition } from '@/lib/motion';
+
+/** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
+const PLAYBACK_BLOCKED = 'O navegador bloqueou a reprodução. Toque no botão de novo.';
 
 const VOICE_PRESETS = [
   // Masculinas
@@ -54,7 +58,28 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const [transformedUrl, setTransformedUrl] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [transformError, setTransformError] = useState<string | null>(null);
+
+  const reduceMotion = useReducedMotion() ?? false;
+
+  // Com movimento reduzido nada se desloca: a entrada só muda opacidade. Sem
+  // redução, entra com deslocamento curto.
+  const entrada = (deslocamento: number) =>
+    reduceMotion
+      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+      : { initial: { opacity: 0, y: deslocamento }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: deslocamento } };
+
+  // Erro inline: mola curta (180–260 ms); com redução, só um fade.
+  const entradaErro = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: zappTransition.fast }
+    : {
+        initial: { opacity: 0, y: -6 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -6 },
+        transition: { type: 'spring' as const, duration: 0.22, bounce: 0.2 },
+      };
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -85,8 +110,10 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     setTransformedUrl(null);
     setIsRecording(false);
     setIsPlaying(false);
+    setIsPlayLoading(false);
     setIsTransforming(false);
     setIsSending(false);
+    setTransformError(null);
     chunksRef.current = [];
   }, [transformedUrl, releaseCapture]);
 
@@ -145,6 +172,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const transformVoice = useCallback(async () => {
     if (!recordedBlob) return;
     setIsTransforming(true);
+    setTransformError(null);
     if (transformedUrl) { URL.revokeObjectURL(transformedUrl); setTransformedUrl(null); }
 
     try {
@@ -176,27 +204,43 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       setTransformedUrl(url);
       toast.success('Voz transformada! 🎭');
     } catch (err) {
-      toast.error(`Erro ao transformar voz: ${err instanceof Error ? err.message : 'desconhecido'}`);
+      const msg = err instanceof Error ? err.message : 'desconhecido';
+      // Aviso inline (com "Tentar de novo") além do toast: o usuário não perde
+      // a gravação e recupera o fluxo sem regravar.
+      setTransformError(msg);
+      toast.error(`Erro ao transformar voz: ${msg}`);
     } finally {
       setIsTransforming(false);
     }
   }, [recordedBlob, selectedVoice, transformedUrl]);
 
-  const togglePlay = useCallback(() => {
-    if (!transformedUrl) return;
+  const togglePlay = useCallback(async () => {
+    if (!transformedUrl || isPlayLoading) return;
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
       return;
     }
+    setIsPlayLoading(true);
     const audio = new Audio(transformedUrl);
     // E36 — prévia de voice changer é mídia de conversa: respeita o volume global.
     const detachMediaVolume = attachMediaVolume(audio);
     audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
-    void audio.play();
     audioRef.current = audio;
-    setIsPlaying(true);
-  }, [transformedUrl, isPlaying]);
+    try {
+      await audio.play();
+      if (!mountedRef.current) return;
+      setIsPlaying(true);
+    } catch {
+      // Reprodução recusada: não deixa o botão preso em "Pausar".
+      detachMediaVolume();
+      audioRef.current = null;
+      if (mountedRef.current) setIsPlaying(false);
+      toast.error(PLAYBACK_BLOCKED);
+    } finally {
+      if (mountedRef.current) setIsPlayLoading(false);
+    }
+  }, [transformedUrl, isPlaying, isPlayLoading]);
 
   const handleSend = useCallback(async () => {
     if (!transformedUrl || isSending) return;
@@ -274,7 +318,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
             <div className="flex flex-col items-center gap-2 py-2">
               <AnimatePresence mode="wait">
                 {!recordedBlob && !isRecording && (
-                  <motion.div key="idle" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                  <motion.div key="idle" {...entrada(6)}>
                     <Button
                       onClick={startRecording}
                       size="lg"
@@ -287,8 +331,11 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                 )}
 
                 {isRecording && (
-                  <motion.div key="recording" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="flex flex-col items-center">
-                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>
+                  <motion.div key="recording" {...entrada(6)} className="flex flex-col items-center">
+                    <motion.div
+                      animate={reduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+                      transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1.2 }}
+                    >
                       <Button
                         onClick={stopRecording}
                         size="lg"
@@ -299,36 +346,80 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                       </Button>
                     </motion.div>
                     <div className="flex items-center gap-1.5 mt-2">
-                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 rounded-full bg-destructive" />
+                      <motion.div
+                        animate={reduceMotion ? undefined : { opacity: [0.4, 1, 0.4] }}
+                        transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1 }}
+                        className="w-2 h-2 rounded-full bg-destructive"
+                      />
                       <span className="text-xs text-destructive font-medium">Gravando...</span>
                     </div>
                   </motion.div>
                 )}
 
                 {recordedBlob && !isRecording && (
-                  <motion.div key="recorded" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-full space-y-2">
+                  <motion.div key="recorded" {...entrada(10)} className="w-full space-y-2">
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setRecordedBlob(null); setTransformedUrl(null); }}>
+                      <Button variant="outline" size="sm" className="h-10" onClick={() => { setRecordedBlob(null); setTransformedUrl(null); setTransformError(null); }}>
                         <X className="w-3.5 h-3.5 mr-1" />Regravar
                       </Button>
                       <Button
                         size="sm"
-                        onClick={transformVoice}
+                        onClick={() => void transformVoice()}
                         disabled={isTransforming}
-                        className="bg-primary"
+                        className="bg-primary h-10"
                       >
                         {isTransforming ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1" />}
                         {isTransforming ? 'Transformando...' : 'Transformar voz'}
                       </Button>
                     </div>
 
+                    {/* Erro de transformação inline: aviso curto + motivo detalhado no tooltip */}
+                    <AnimatePresence initial={false}>
+                      {transformError && (
+                        <motion.div
+                          key="transform-error"
+                          data-testid="voz-erro-transformacao"
+                          role="alert"
+                          {...entradaErro}
+                          className="flex items-center gap-2 px-1"
+                        >
+                          <AlertCircle className="w-4 h-4 text-destructive shrink-0" aria-hidden="true" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-xs text-destructive flex-1 cursor-help truncate">
+                                Falha ao transformar a voz
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" variant="error">{transformError}</TooltipContent>
+                          </Tooltip>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => void transformVoice()}
+                            disabled={isTransforming}
+                          >
+                            Tentar de novo
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {transformedUrl && (
-                      <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 pt-1">
-                        <Button variant="outline" size="sm" onClick={togglePlay}>
-                          {isPlaying ? <Pause className="w-3.5 h-3.5 mr-1" /> : <Play className="w-3.5 h-3.5 mr-1" />}
-                          {isPlaying ? 'Pausar' : 'Ouvir'}
+                      <motion.div {...entrada(5)} className="flex items-center justify-center gap-2 pt-1">
+                        {/* Largura fixa: alternar play/pausa/carregando não muda o layout */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-10 w-28 justify-center"
+                          aria-label={isPlayLoading ? 'Carregando prévia' : isPlaying ? 'Pausar prévia' : 'Ouvir prévia'}
+                          onClick={() => void togglePlay()}
+                          disabled={isPlayLoading}
+                        >
+                          {isPlayLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : isPlaying ? <Pause className="w-3.5 h-3.5 mr-1" /> : <Play className="w-3.5 h-3.5 mr-1" />}
+                          {isPlayLoading ? 'Carregando' : isPlaying ? 'Pausar' : 'Ouvir'}
                         </Button>
-                        <Button size="sm" onClick={handleSend} disabled={isSending} className="bg-primary hover:bg-primary/90">
+                        <Button size="sm" onClick={() => void handleSend()} disabled={isSending} className="bg-primary hover:bg-primary/90 h-10">
                           {isSending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />}
                           Enviar
                         </Button>
