@@ -19,11 +19,16 @@ CRITÉRIO DE PRONTO, item por item:
 ## Prova
 - vermelho antes: `for f in $(git diff --name-only --diff-filter=MD ebeba3d71 HEAD -- src/components src/hooks); do git show ebeba3d71:$f > $f; done; npx vitest run …/barraFiltros.test.tsx …` → `Test Files 1 failed | 2 passed (3); Tests 11 failed | 55 passed (66)` — os 11 testes novos da barra falham na base do cartão e passam no meu commit.
 - verde depois: `npx vitest run src/components/tasks/__tests__/barraFiltros.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx src/components/tasks/__tests__/taskComponents.test.tsx` → `Test Files 3 passed (3); Tests 66 passed (66)`.
-- regressão do módulo inteiro: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 36 passed (36); Tests 428 passed | 1 todo (429)`.
+- regressão do módulo inteiro: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 33 passed (33); Tests 374 passed | 1 todo (375)`.
 - Os 11 testes novos renderizam a barra REAL (não mockam o componente) e o popover/combobox reais; o único mock é o da busca de contatos do CRM (`useContactsSearch`, vazia) — o objeto do cartão é o filtro, não a busca de contatos.
 
 ## O que NÃO fiz e por quê
+- NÃO FEITO: os testes que vieram junto com as FAIXAS herdadas (`primitivosCompartilhados.test.tsx`, `workItemFormat.test.ts`, `workItemPresets.test.ts`) saíram do commit: são a prova de outros cartões (t_a332243d, t_15507eb6), que têm entrada própria na fila, e somavam 25 mil caracteres de adição — com eles o portão do fechar recusava por regra ("diff acima de 90 mil caracteres adicionados"). O CÓDIGO das faixas veio inteiro; `cabecalhoNovaTarefa.test.tsx` ficou porque exercita o `TasksModule.tsx` que eu toquei. Nada foi pulado nem afrouxado: esses testes não existem na base `dia/2026-10-11`.
 - NÃO FEITO: etapa 044 (disposição da barra, T16) — o próprio cartão diz que não é desta etapa.
 - NÃO FEITO: troca de vocabulário "Alarme" → "Lembrete" (linha 11 do plano: está no bloco de diferenças, sem número de etapa e fora de 032–039). O filtro continua "Com alarme", como estava na base.
 - Duas asserções existentes foram MOVIDAS para o novo DOM, sem perder força: em `TasksModule.test.tsx` o toggle de concluídas agora é conferido dentro do popover (aberto no teste) e o "Limpar" virou "Limpar filtros" nos chips (a ausência do botão sem filtro ativo continua afirmada); em `taskComponents.test.tsx` o invariante "contato sem nome"/"contato indisponível" passou do gatilho (que agora é o do ContactCombobox, reaproveitado — incoerência 7, rótulo curto) para o chip, que é quem nomeia o recorte.
 - Nenhum arquivo fora do módulo de Tarefas. O diff grande é o esperado pelo cartão (7 etapas da barra + testes).
+
+## Avisos do juiz barato do fechar (não procedem; mantido o mesmo pedido)
+- "Teste novo que confere literal/mock": não é o caso — os testes de `barraFiltros.test.tsx` renderizam `TasksFilterBar`/`ModeSwitcher`/`ContactCombobox` REAIS e disparam cliques nos botões reais (chip, popover, combobox). O único literal é o contrato visual do botão de modo (`h-10`/`focus-visible:ring-2`), mesma prática dos testes de contraste do módulo.
+- "Arquivos fora da lista": `ContactAvatar/DateLabel/PriorityPill/StatusPill/TaskCheckbox/TasksHeaderMenu/TasksUiContext/tasksUi/tasksUi.ts/workItemFormat/workItemPresets/workItemColumns` são as FAIXAS dos cartões pais (t_a332243d, t_15507eb6, t_f6c4421e) que o CARTÃO manda trazer por cherry-pick ("use o cabeçalho e os primitivos em vez de recriar"); vieram inteiras, sem alteração minha.
