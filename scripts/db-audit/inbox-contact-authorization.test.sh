@@ -337,8 +337,8 @@ expect_failure 'escrita direta de relato sem RPC' "SET ROLE authenticated; SET r
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'autor nao viu o proprio relato'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_reports;")" == '0' ]] || fail 'terceiro viu relato alheio'
 # Juiz item 3: U5 e supervisor sem ser admin — prova dos papeis antes dos testes de SELECT/UPDATE
-[[ "$(psql_sql "SELECT public.is_admin('$U5');")" == 'f' ]] || fail 'U5 deveria nao ser admin'
-[[ "$(psql_sql "SELECT public.is_admin_or_supervisor('$U5');")" == 't' ]] || fail 'U5 deveria ser supervisor'
+[[ "$(psql_sql "SELECT public.is_admin('$U5'::uuid);")" == 'f' ]] || fail 'U5 deveria nao ser admin'
+[[ "$(psql_sql "SELECT public.is_admin_or_supervisor('$U5'::uuid);")" == 't' ]] || fail 'U5 deveria ser supervisor'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'admin nao viu o relato'
 # Juiz item 1 (inserção real): reason 'improprio' do cartão entra de ponta a ponta (após as contagens acima)
 R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
