@@ -13,6 +13,7 @@ import { HeroBenefits } from '@/components/auth/HeroBenefits';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 import { GOOGLE_OAUTH_ENABLED } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import heroWorldmap from '@/assets/hero-worldmap.jpg';
 
 export default function Auth() {
   const {
@@ -28,17 +29,30 @@ export default function Auth() {
       aria-label="Acesso à plataforma"
       className="relative flex min-h-dvh overflow-x-hidden overflow-y-auto bg-background focus:outline-none"
     >
-      {/* Ambient background — subtle, never competes with content */}
-      <div className="pointer-events-none absolute inset-0">
+      {/* Ambient background — mapa-múndi sob véu de tokens, atrás do conteúdo */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        {/* Imagem do mapa: cobre a página, decorativa e sem captura de foco/clique.
+            Claro = discreta; escuro = bem visível (opacidade por classe dark:). */}
+        <img
+          src={heroWorldmap}
+          alt=""
+          draggable={false}
+          loading="eager"
+          decoding="async"
+          data-testid="auth-fundo-mapa"
+          className="h-full w-full object-cover object-center opacity-30 dark:opacity-70"
+        />
+        {/* Véu por token — contraste AA em claro e escuro, sem cor literal */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/60 to-background/90 dark:from-background/70 dark:via-background/50 dark:to-background/80" />
         <motion.div
           animate={{ opacity: [0.18, 0.28, 0.18] }}
           transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-48 -left-32 h-[34rem] w-[34rem] rounded-full bg-primary/25 blur-[120px]"
+          className="absolute -top-48 -left-32 h-[34rem] w-[34rem] rounded-full bg-primary/15 blur-[120px]"
         />
         <motion.div
           animate={{ opacity: [0.12, 0.22, 0.12] }}
           transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -bottom-40 right-1/3 h-[28rem] w-[28rem] rounded-full bg-secondary/20 blur-[120px]"
+          className="absolute -bottom-40 right-1/3 h-[28rem] w-[28rem] rounded-full bg-secondary/10 blur-[120px]"
         />
         <div
           className="absolute inset-0 opacity-[0.025]"
