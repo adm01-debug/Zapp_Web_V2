@@ -95,7 +95,7 @@ export function SendErrorBanner({ messages, onSendMessage, className }: SendErro
     <Button type="button" variant="outline" size="default" onClick={() => void reenviar()} disabled={reenvio === 'enviando'}>
       {reenvio === 'enviando' ? (
         <>
-          <Loader2 className="animate-spin" aria-hidden="true" />
+          <Loader2 className="motion-safe:animate-spin" aria-hidden="true" />
           Enviando…
         </>
       ) : reenvio === 'concluido' ? (
