@@ -45,6 +45,10 @@ BEGIN
   IF jsonb_typeof(p_weekdays) <> 'array' THEN
     RAISE EXCEPTION '%', p_error USING ERRCODE = '22023';
   END IF;
+  -- teto por chamada: nunca há mais de 7 dias válidos (0..6).
+  IF jsonb_array_length(p_weekdays) > 32 THEN
+    RAISE EXCEPTION '%', p_error USING ERRCODE = '22023';
+  END IF;
   FOR v_elem IN SELECT jsonb_array_elements_text(p_weekdays)
   LOOP
     BEGIN
@@ -301,6 +305,9 @@ BEGIN
                OR jsonb_typeof(v_bh_obj -> 'days') <> 'array' THEN
               v_invalid := true;
             ELSIF jsonb_array_length(v_bh_obj -> 'days') = 0 THEN
+              v_invalid := true;
+            ELSIF jsonb_array_length(v_bh_obj -> 'days') > 32 THEN
+              -- teto por chamada: nunca há mais de 7 dias válidos (0..6).
               v_invalid := true;
             ELSE
               FOR v_elem IN SELECT * FROM jsonb_array_elements(v_bh_obj -> 'days')
