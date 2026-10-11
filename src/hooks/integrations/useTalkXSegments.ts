@@ -130,10 +130,6 @@ export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin =
 export function isRuleComplete(rule: SegmentRule): boolean {
   const def = RULE_FIELDS.find((f) => f.value === rule.field);
   if (!def) return false;
-  // Indicador "em breve" (lead_score/risk_score): nada calcula a coluna, então a
-  // condição nunca é utilizável — nem com valor zerado, nem via is_set/is_empty.
-  // Fica fora da estimativa e barra a publicação até o cálculo real existir.
-  if (def.comingSoon) return false;
   if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
   const value = rule.value.trim();
   if (!value) return false;
@@ -157,6 +153,14 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
+        // "Em breve" (lead_score/risk_score): a regra é completa e bem descrita
+        // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
+        // calculada — então fica fora da estimativa/PostgREST e barra a
+        // publicação via validateSegment, sem quebrar o catálogo v2.
+        if (RULE_FIELDS.find((f) => f.value === rule.field)?.comingSoon) {
+          incompleteCount += 1;
+          return false;
+        }
         if (isRuleComplete(rule)) return true;
         incompleteCount += 1;
         return false;
