@@ -21,6 +21,8 @@ interface Props extends WorkItemCardActions {
   dragSourceStatus: WorkItemStatus | null;
   /** Etapa 81: ponteiro grosso desliga o arrasto — quem move é o `MoveToMenu`. */
   dragDisabled?: boolean;
+  /** Etapa 83: drop recusado por limite cheio dá um tranco curto na coluna de destino. */
+  shake?: boolean;
   onOpen: (item: WorkItem) => void;
   onMoveTo: (item: WorkItem, to: WorkItemStatus) => void;
   onDelete: (item: WorkItem) => void;
@@ -28,13 +30,16 @@ interface Props extends WorkItemCardActions {
 }
 
 export function BoardColumn({
-  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, onOpen, onMoveTo, onDelete, onCreate,
+  status, items, isLoading, doingCount, dragSourceStatus, dragDisabled = false, shake = false, onOpen, onMoveTo, onDelete, onCreate,
   onOpenContact, onRequestWaitingReason, onComplete, onReopen, onSnooze, onClearReminder, onOpenReminder,
 }: Props) {
   const col   = KANBAN_COLUMNS.find(c => c.status === status)!;
   const limit = WIP_LIMITS[status];
   const hardFull  = limit.hard != null && doingCount >= limit.hard;
   const softOver  = limit.soft != null && items.length > limit.soft;
+  // Etapa 082: o segmento visível nunca passa do teto — quem estourou o limite
+  // (dado real > hard) continua pintando a barra CHEIA, não uma barra maior.
+  const preenchidos = limit.hard != null ? Math.min(doingCount, limit.hard) : 0;
   // Etapa 52 (B8): a coluna cheia continua aceitando o que veio dela mesma
   // (reorganizar dentro de "Fazendo" com 3/3), e recusa o que vem de fora.
   // Etapa 81: em ponteiro grosso o arrasto não existe — nada entra por drop.
@@ -62,7 +67,12 @@ export function BoardColumn({
     // (`max-width: 767px`); em larguras intermediárias, a condução é o próprio scroll.
     <div
       data-board-column={status}
-      className="flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border border-border/70 bg-card overflow-hidden snap-start"
+      className={[
+        'flex flex-col flex-1 min-w-[200px] h-full min-h-0 rounded-[14px] border bg-card overflow-hidden snap-start',
+        // Etapa 83: recusa por limite cheio — a BORDA muda sempre (o aviso não
+        // depende de animação); o tranco curto só existe sem movimento reduzido.
+        shake ? 'border-destructive motion-safe:animate-wiggle' : 'border-border/70',
+      ].join(' ')}
     >
       {/* cabeçalho sticky */}
       <div className={[
@@ -70,9 +80,11 @@ export function BoardColumn({
         hardFull ? 'text-destructive' : softOver ? 'text-warning' : 'text-foreground',
         hardFull ? 'ring-1 ring-destructive/40' : '',
       ].join(' ')}>
-        <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">{col.label}</span>
+        <span className="min-w-0 shrink-0 truncate text-[13px] font-semibold">{col.label}</span>
+        {/* Etapa 080: o subtítulo curto fica à vista; a política longa continua no tooltip do ⓘ. */}
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{col.subtitle}</span>
         {headerCount && (
-          <span className={`text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
+          <span className={`shrink-0 text-xs font-bold tabular-nums ${hardFull ? 'text-destructive' : ''}`}>
             {headerCount}
           </span>
         )}
@@ -87,6 +99,28 @@ export function BoardColumn({
           </TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Etapa 082: barra de progresso segmentada do limite — azul (primária) até
+          encher, destrutiva quando cheia. Um segmento por vaga do limite duro. */}
+      {limit.hard != null && (
+        <div className="px-3 pt-2" data-testid={`col-limit-bar-${status}`}>
+          <div
+            className="flex gap-1"
+            role="progressbar"
+            aria-label={`Limite de ${col.label}`}
+            aria-valuemin={0}
+            aria-valuemax={limit.hard}
+            aria-valuenow={preenchidos}
+          >
+            {Array.from({ length: limit.hard }, (_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 flex-1 rounded-full ${i < preenchidos ? (hardFull ? 'bg-destructive' : 'bg-primary') : 'bg-muted'}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* QuickAdd na coluna Backlog */}
       {status === 'backlog' && onCreate && (
@@ -149,6 +183,17 @@ export function BoardColumn({
           </div>
         )}
       </Droppable>
+
+      {/* Etapa 082: rodapé do limite — a regra em palavras, não só o número. */}
+      {limit.hard != null && (
+        <div
+          data-testid={`col-limit-footer-${status}`}
+          className="flex items-center gap-1.5 border-t border-border/50 px-3 py-2 text-[11px] text-muted-foreground"
+        >
+          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>Seu limite é de {limit.hard} tarefas em execução.</span>
+        </div>
+      )}
     </div>
   );
 }
