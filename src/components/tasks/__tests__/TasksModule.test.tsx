@@ -126,7 +126,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
     // 4 das 5 colunas ficam vazias (backlog, fazendo, aguardando e concluído)
-    expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
+    expect(screen.getAllByTestId('board-column-empty')).toHaveLength(4);
     expect(window.location.search).toContain('done=0');
 
     fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
