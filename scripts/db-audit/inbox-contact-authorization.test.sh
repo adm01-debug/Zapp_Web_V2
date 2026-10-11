@@ -59,6 +59,12 @@ done
 psql_sql "
   CREATE EXTENSION IF NOT EXISTS pgcrypto;
   CREATE SCHEMA auth;
+  CREATE TABLE auth.users (id uuid PRIMARY KEY);
+  CREATE TABLE public.audit_logs (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid, action text NOT NULL, entity_type text, entity_id uuid,
+    details jsonb DEFAULT '{}'
+  );
   CREATE ROLE anon NOLOGIN;
   CREATE ROLE authenticated NOLOGIN;
   CREATE ROLE service_role NOLOGIN BYPASSRLS;
@@ -131,6 +137,13 @@ psql_sql "
     ('10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000006');
   INSERT INTO public.user_roles VALUES
     ('20000000-0000-0000-0000-000000000004','special_agent');
+  INSERT INTO auth.users (id) VALUES
+    ('20000000-0000-0000-0000-000000000001'),
+    ('20000000-0000-0000-0000-000000000002'),
+    ('20000000-0000-0000-0000-000000000003'),
+    ('20000000-0000-0000-0000-000000000004'),
+    ('20000000-0000-0000-0000-000000000005'),
+    ('20000000-0000-0000-0000-000000000006');
   INSERT INTO public.agent_visibility_grants VALUES
     ('10000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000001');
   INSERT INTO public.queues VALUES ('50000000-0000-0000-0000-000000000001');
@@ -230,5 +243,106 @@ expect_failure 'trigger bloqueia identidade mesmo com bypass RLS' "UPDATE public
 
 psql_file "$migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='contact_notes'")" == '4' ]] || fail 'segunda aplicacao nao foi idempotente'
+
+# =====================================================================================
+# Favoritar / fixar / reportar mensagem (message_favorites, message_pins, message_reports)
+# =====================================================================================
+favorites_migration="$repo_root/supabase/migrations/20261011125915_message_favorites_pins_reports.sql"
+[[ -f "$favorites_migration" ]] || fail 'migration de favoritos/fixar/reportar nao encontrada'
+
+# mais mensagens na MESMA conversa (contato A) para exercitar o teto de 3 fixos
+psql_sql "INSERT INTO public.messages (id, contact_id, media_url) VALUES
+  ('40000000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000001',NULL),
+  ('40000000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000001',NULL),
+  ('40000000-0000-0000-0000-000000000005','30000000-0000-0000-0000-000000000001',NULL);" >/dev/null
+
+psql_file "$favorites_migration" >/dev/null
+
+U1='20000000-0000-0000-0000-000000000001'   # dono do contato A
+U2='20000000-0000-0000-0000-000000000002'   # membro ativo da fila do contato A
+U3='20000000-0000-0000-0000-000000000003'   # estranho (sem acesso a A)
+U5='20000000-0000-0000-0000-000000000005'   # admin/supervisor
+CA='30000000-0000-0000-0000-000000000001'   # contato visivel
+CB='30000000-0000-0000-0000-000000000002'   # contato oculto
+M1='40000000-0000-0000-0000-000000000001'
+M2='40000000-0000-0000-0000-000000000002'
+M3='40000000-0000-0000-0000-000000000003'
+M4='40000000-0000-0000-0000-000000000004'
+M5='40000000-0000-0000-0000-000000000005'
+
+[[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports') AND relrowsecurity")" == '3' ]] || fail 'RLS nao esta habilitada nas 3 tabelas novas'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.table_privileges WHERE grantee='anon' AND table_name IN ('message_favorites','message_pins','message_reports')")" == '0' ]] || fail 'anon conservou privilegio de tabela'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee IN ('PUBLIC','anon')")" == '0' ]] || fail 'PUBLIC ou anon conservou EXECUTE nas RPCs novas'
+[[ "$(psql_sql "SELECT has_function_privilege('authenticated','public.pin_message(uuid)','EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em pin_message'
+[[ "$(psql_sql "SELECT has_function_privilege('service_role','public.report_message(uuid,text,text)','EXECUTE')")" == 't' ]] || fail 'service_role sem EXECUTE em report_message'
+
+# ---- favoritar (toggle) ----
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.toggle_message_favorite('$M1');")" == 't' ]] || fail 'toggle deveria favoritar'
+[[ "$(psql_sql "SELECT count(*) FROM public.message_favorites WHERE message_id='$M1'")" == '1' ]] || fail 'favorito nao foi gravado'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.toggle_message_favorite('$M1');")" == 'f' ]] || fail 'segundo toggle deveria desfavoritar'
+[[ "$(psql_sql "SELECT count(*) FROM public.message_favorites WHERE message_id='$M1'")" == '0' ]] || fail 'desfavoritar nao removeu a linha'
+expect_failure 'favoritar mensagem de contato oculto (42501)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.toggle_message_favorite('$M1');"
+expect_failure 'favoritar em nome de outro usuario (spoof de user_id)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; INSERT INTO public.message_favorites (user_id, message_id) VALUES ('$U2','$M1');"
+expect_failure 'RPC sem sessao autenticada' "SET ROLE authenticated; SELECT public.toggle_message_favorite('$M1');"
+
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; INSERT INTO public.message_favorites (user_id, message_id) VALUES ('$U2','$M1');" >/dev/null
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_favorites;")" == '1' ]] || fail 'autor nao viu o proprio favorito'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_favorites;")" == '0' ]] || fail 'usuario viu favorito de outro'
+
+# ---- fixar (teto de 3 por conversa) ----
+PIN1="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.pin_message('$M1');")"
+[[ "$PIN1" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "pin_message nao devolveu uuid (=$PIN1)"
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.pin_message('$M1');")" == "$PIN1" ]] || fail 'pin_message nao foi idempotente para a mesma mensagem'
+[[ "$(psql_sql "SELECT count(*) FROM public.message_pins WHERE contact_id='$CA'")" == '1' ]] || fail 'fixar duplicou a linha'
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.pin_message('$M3'); SELECT public.pin_message('$M4');" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM public.message_pins WHERE contact_id='$CA'")" == '3' ]] || fail 'nao chegou aos 3 fixos'
+expect_failure 'quarto fixo na conversa (pin_limit_reached)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.pin_message('$M5');"
+expect_failure 'fixar mensagem de contato oculto' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.pin_message('$M2');"
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'membro da fila nao viu os 3 fixos'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'dono do contato nao viu os fixos'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'admin nao viu os fixos'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT count(*) FROM public.message_pins;")" == '0' ]] || fail 'estranho viu fixos'
+expect_failure 'escrita direta em message_pins sem RPC' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; INSERT INTO public.message_pins (contact_id, message_id, pinned_by) VALUES ('$CA','$M5','$U2');"
+
+# gatilho deriva contact_id da mensagem (nao aceita contato forjado)
+psql_sql "INSERT INTO public.message_pins (contact_id, message_id, pinned_by) VALUES ('$CB','$M5','$U2');" >/dev/null
+[[ "$(psql_sql "SELECT contact_id FROM public.message_pins WHERE message_id='$M5'")" == "$CA" ]] || fail 'gatilho nao derivou contact_id da mensagem'
+psql_sql "DELETE FROM public.message_pins WHERE message_id='$M5';" >/dev/null
+
+# ---- desafixar ----
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.unpin_message('$M1');")" == 't' ]] || fail 'unpin deveria remover o fixo'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.unpin_message('$M1');")" == 'f' ]] || fail 'unpin de fixo inexistente deveria devolver false'
+[[ "$(psql_sql "SELECT count(*) FROM public.message_pins WHERE contact_id='$CA'")" == '2' ]] || fail 'unpin nao removeu o fixo'
+expect_failure 'desafixar mensagem de contato oculto' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.unpin_message('$M2');"
+
+# ---- reportar ----
+R1="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','spam','mensagem suspeita');")"
+[[ "$R1" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "report_message nao devolveu uuid (=$R1)"
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','spam','de novo');")" == "$R1" ]] || fail 'relato duplicado nao devolveu o id existente'
+[[ "$(psql_sql "SELECT count(*) FROM public.message_reports WHERE message_id='$M1'")" == '1' ]] || fail 'relato duplicou a linha do mesmo usuario'
+expect_failure 'relato com motivo invalido (22023)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','xingamento',NULL);"
+expect_failure 'relato com nota acima de 500 caracteres' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','outro',repeat('a',501));"
+expect_failure 'relatar mensagem de contato oculto' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.report_message('$M2','spam',NULL);"
+expect_failure 'escrita direta de relato sem RPC' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; INSERT INTO public.message_reports (message_id, reporter_id, reason) VALUES ('$M1','$U2','spam');"
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'autor nao viu o proprio relato'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_reports;")" == '0' ]] || fail 'terceiro viu relato alheio'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'admin nao viu o relato'
+
+# ---- status do relato: so admin, com carimbo do proprio revisor ----
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; WITH changed AS (UPDATE public.message_reports SET status='dismissed' WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'nao-admin alterou o status do relato'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; WITH changed AS (UPDATE public.message_reports SET status='resolved', resolved_by='$U5', resolved_at=now() WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '1' ]] || fail 'admin nao conseguiu resolver o relato'
+expect_failure 'resolver carimbando outro revisor' "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; UPDATE public.message_reports SET status='dismissed', resolved_by='$U1' WHERE id='$R1';"
+psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M1','urgencia',NULL);" >/dev/null
+expect_failure 'resolver sem carimbar resolved_by' "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; UPDATE public.message_reports SET status='resolved' WHERE reporter_id='$U1';"
+
+# ---- auditoria sem conteudo de mensagem ----
+[[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE action IN ('message_pinned','message_unpinned','message_reported')")" -ge '3' ]] || fail 'auditoria nao registrou fixar/desafixar/reportar'
+[[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE entity_type='message' AND entity_id IS NULL")" == '0' ]] || fail 'evento de auditoria sem id de mensagem'
+[[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE details::text LIKE '%object/path%' OR details::text LIKE '%mensagem suspeita%'")" == '0' ]] || fail 'auditoria guardou conteudo da mensagem ou da nota'
+[[ "$(psql_sql "SELECT count(*) FROM public.audit_logs WHERE action='message_reported' AND details->>'reason' IS NULL")" == '0' ]] || fail 'evento de relato sem motivo'
+
+# ---- reaplicar a migration continua idempotente ----
+psql_file "$favorites_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports')")" == '3' ]] || fail 'segunda aplicacao da migration quebrou as tabelas'
 
 printf 'Inbox contact authorization PostgreSQL 17 behavioral contract: PASS\n'
