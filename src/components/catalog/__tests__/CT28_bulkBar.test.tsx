@@ -1,8 +1,8 @@
 /**
  * CT-28 — barra de seleção em massa (CatalogBulkBar) ligada no catálogo do
- * chat (grade e lista), com "Exportar seleção" (CT-20 com os ids escolhidos),
- * "Favoritar N" e o limite por envio com mensagem clara.
- * Aceite do plano: selecionar 11 → aviso; exportar 3 → CSV com 3 linhas.
+ * chat (grade e lista), com "Favoritar N" e o limite por envio com mensagem
+ * clara.
+ * Aceite do plano: selecionar 11 → aviso; favoritar N → só os que faltam.
  *
  * CT-34 — a cor escolhida no detalhe (2º argumento do onSend) chega ao
  * `SendProductDialog` como `initialVariantColor`.
@@ -18,23 +18,9 @@ import { CatalogBulkBar } from '../CatalogBulkBar';
 import { ExternalProductCatalog } from '../ExternalProductCatalog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
-const toastSuccess = vi.hoisted(() => vi.fn());
-
-// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
 vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { success: toastSuccess, error: vi.fn() }),
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));
-
-const triggerCsvDownload = vi.hoisted(() => vi.fn());
-vi.mock('../catalogExport', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../catalogExport')>();
-  return { ...actual, triggerCsvDownload };
-});
 
 const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());
@@ -124,8 +110,6 @@ const selecionarPrimeiros = (n: number) => {
 beforeEach(() => {
   mockCatalog.mockReset();
   mockFavorites.mockReset();
-  triggerCsvDownload.mockReset();
-  toastSuccess.mockReset();
   mockCatalog.mockReturnValue(baseCatalog([product('p1'), product('p2'), product('p3')]));
   mockFavorites.mockReturnValue({
     favorites: [],
@@ -144,7 +128,6 @@ describe('CT-28 — CatalogBulkBar', () => {
     onToggleSelectAll: vi.fn(),
     onClear: vi.fn(),
     onSend: vi.fn(),
-    onExport: vi.fn(),
     onFavorite: vi.fn(),
   };
 
@@ -153,8 +136,7 @@ describe('CT-28 — CatalogBulkBar', () => {
 
     expect(screen.getByText('Máximo de 10 produtos por envio — envie em lotes.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar (11)' })).toBeDisabled();
-    // exportar e favoritar continuam liberados: o limite é só do envio
-    expect(screen.getByRole('button', { name: 'Exportar seleção' })).toBeEnabled();
+    // favoritar continua liberado: o limite é só do envio
     expect(screen.getByRole('button', { name: 'Favoritar 11' })).toBeEnabled();
   });
 
@@ -171,13 +153,11 @@ describe('CT-28 — CatalogBulkBar', () => {
     expect(screen.getByText('Máximo de 2 produtos por envio — envie em lotes.')).toBeInTheDocument();
   });
 
-  it('com 3 selecionados, exportar e favoritar chamam os handlers', () => {
+  it('com 3 selecionados, favoritar chama o handler', () => {
     render(<CatalogBulkBar {...props} count={3} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Exportar seleção' }));
     fireEvent.click(screen.getByRole('button', { name: 'Favoritar 3' }));
 
-    expect(props.onExport).toHaveBeenCalledTimes(1);
     expect(props.onFavorite).toHaveBeenCalledTimes(1);
   });
 });
@@ -193,14 +173,14 @@ describe('CT-28 — seleção em massa no catálogo do chat', () => {
     expect(screen.queryByRole('button', { name: 'Enviar (1)' })).not.toBeInTheDocument();
   });
 
-  it('modo grade: selecionar 3 abre a barra com "Exportar seleção" e "Favoritar 3"', () => {
+  it('modo grade: selecionar 3 abre a barra com "Favoritar 3"', () => {
     renderCatalog();
 
     selecionarPrimeiros(3);
 
     expect(screen.getByTestId('card-p1')).toHaveAttribute('data-selected', 'true');
-    expect(screen.getByRole('button', { name: 'Exportar seleção' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Favoritar 3' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Exportar seleção' })).not.toBeInTheDocument();
   });
 
   it('modo lista: a mesma barra aparece (grade e lista)', () => {
@@ -223,21 +203,6 @@ describe('CT-28 — seleção em massa no catálogo do chat', () => {
     expect(screen.getByTestId('card-p12')).toHaveAttribute('data-selected', 'true');
     expect(screen.getByText('Máximo de 10 produtos por envio — envie em lotes.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar (12)' })).toBeDisabled();
-  });
-
-  it('"Exportar seleção" baixa CSV com cabeçalho + as 3 linhas selecionadas', () => {
-    renderCatalog();
-
-    selecionarPrimeiros(3);
-    fireEvent.click(screen.getByRole('button', { name: 'Exportar seleção' }));
-
-    expect(triggerCsvDownload).toHaveBeenCalledTimes(1);
-    const [csv, filename] = triggerCsvDownload.mock.calls[0] as [string, string];
-    const linhas = csv.split('\n');
-    expect(linhas).toHaveLength(4); // cabeçalho + 3 produtos
-    expect(linhas[1]).toContain('SKU-p1');
-    expect(linhas[3]).toContain('SKU-p3');
-    expect(filename).toContain('selecao');
   });
 
   it('"Favoritar N" favorita só os selecionados que ainda não são favoritos', () => {

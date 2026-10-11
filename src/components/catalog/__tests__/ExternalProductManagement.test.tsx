@@ -58,16 +58,6 @@ vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   };
 });
 
-// CT-21/CT-28 — o "Exportar catálogo" do rail passa por exportCatalogCsv e o
-// "Exportar seleção" da barra desce até o download; ambos são observados sem
-// tocar na edge nem no DOM (buildCatalogCsv/catalogExportFilename seguem reais).
-const exportCatalogCsvMock = vi.hoisted(() => vi.fn());
-const triggerCsvDownloadMock = vi.hoisted(() => vi.fn());
-vi.mock('../catalogExport', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../catalogExport')>();
-  return { ...actual, exportCatalogCsv: exportCatalogCsvMock, triggerCsvDownload: triggerCsvDownloadMock };
-});
-
 function baseHookReturn(overrides: Record<string, unknown> = {}) {
   return {
     products: [mockProduct(), mockProduct({ id: 'p2', name: 'Caneta Vermelha', sku: 'CAN-002' })],
@@ -100,8 +90,6 @@ function renderManagement() {
 
 describe('ExternalProductManagement', () => {
   beforeEach(() => {
-    exportCatalogCsvMock.mockReset();
-    triggerCsvDownloadMock.mockReset();
     mockUseExternalCatalog.mockReset();
     mockUseExternalCatalog.mockReturnValue(baseHookReturn());
     mockUseAuth.mockReset();
@@ -212,83 +200,6 @@ describe('ExternalProductManagement', () => {
     const calls = (hookReturn.fetchProducts as ReturnType<typeof vi.fn>).mock.calls;
     const lastCall = calls[calls.length - 1][0] as Record<string, unknown>;
     expect(lastCall.low_stock).toBe(true);
-  });
-
-  it('CT-21: "Exportar catálogo" no rail exporta o filtro ativo (Em destaque → featured)', async () => {
-    const hookReturn = baseHookReturn();
-    mockUseExternalCatalog.mockReturnValue(hookReturn);
-    renderManagement();
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.click(within(screen.getByTestId('catalog-kpi-strip')).getByText('Em destaque'));
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
-
-    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
-    const options = exportCatalogCsvMock.mock.calls[0][0] as {
-      filterKey: string;
-      filters: Record<string, unknown>;
-    };
-    expect(options.filterKey).toBe('featured');
-    expect(options.filters).toEqual({ is_featured: true });
-  });
-
-  it('CT-21: sem filtro do rail ativo, o export sai como catálogo inteiro (todos)', async () => {
-    renderManagement();
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
-
-    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
-    const options = exportCatalogCsvMock.mock.calls[0][0] as {
-      filterKey: string;
-      filters: Record<string, unknown>;
-    };
-    expect(options.filterKey).toBe('todos');
-    expect(options.filters).toEqual({});
-  });
-
-  it('R2-MOD-041: "Exportar catálogo" leva a busca da listagem (não só o filtro do rail)', async () => {
-    renderManagement();
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.change(screen.getByPlaceholderText('Buscar por nome, SKU ou marca...'), {
-      target: { value: 'caneta' },
-    });
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
-
-    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
-    const options = exportCatalogCsvMock.mock.calls[0][0] as { filters: Record<string, unknown> };
-    expect(options.filters).toEqual({ search: 'caneta' });
-  });
-
-  it('R2-MOD-041: busca, categoria e estoque baixo chegam TODOS ao export', async () => {
-    // low_stock > 0 é o que faz o alerta (e o botão de filtro) existirem.
-    mockUseCatalogStats.mockReturnValue({
-      data: { total: 2, low_stock: 7, in_stock: 2, featured: 1, new_30d: 1, last_sync_at: new Date().toISOString() },
-      isLoading: false,
-      error: null,
-    });
-    renderManagement();
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.change(screen.getByPlaceholderText('Buscar por nome, SKU ou marca...'), {
-      target: { value: 'caneta' },
-    });
-    await new Promise((r) => setTimeout(r, 350));
-    fireEvent.click(screen.getByRole('button', { name: 'Canetas' }));
-    await new Promise((r) => setTimeout(r, 350));
-    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos com estoque baixo' }));
-    await new Promise((r) => setTimeout(r, 350));
-
-    fireEvent.click(screen.getByRole('button', { name: /Exportar catálogo/ }));
-
-    await waitFor(() => expect(exportCatalogCsvMock).toHaveBeenCalled());
-    const options = exportCatalogCsvMock.mock.calls[0][0] as { filters: Record<string, unknown> };
-    expect(options.filters).toEqual({ search: 'caneta', category_id: 'cat1', low_stock: true });
   });
 
   it('E34: clicar no chip de categoria aplica o filtro e reflete na URL', async () => {
@@ -603,28 +514,14 @@ describe('ExternalProductManagement', () => {
   describe('CT-28: barra de seleção em massa', () => {
     const abrirBarra = () => fireEvent.click(screen.getByRole('button', { name: 'Selecionar' }));
 
-    it('selecionar a página abre a barra com envio, "Exportar seleção" e "Favoritar N"', () => {
+    it('selecionar a página abre a barra com envio e "Favoritar N"', () => {
       renderManagement();
 
       abrirBarra();
 
       expect(screen.getByRole('button', { name: 'Enviar (2)' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Exportar seleção' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Exportar seleção' })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Favoritar 2' })).toBeInTheDocument();
-    });
-
-    it('"Exportar seleção" baixa CSV com cabeçalho + as linhas selecionadas', async () => {
-      renderManagement();
-      await new Promise((r) => setTimeout(r, 350));
-
-      abrirBarra();
-      fireEvent.click(screen.getByRole('button', { name: 'Exportar seleção' }));
-
-      expect(triggerCsvDownloadMock).toHaveBeenCalledTimes(1);
-      const [csv, filename] = triggerCsvDownloadMock.mock.calls[0] as [string, string];
-      expect(csv.split('\n')).toHaveLength(3); // cabeçalho + 2 produtos
-      expect(csv).toContain('CAN-001');
-      expect(filename).toContain('selecao');
     });
 
     it('"Favoritar N" favorita só os selecionados que ainda não são favoritos', () => {

@@ -4,11 +4,11 @@
  * Comportamento de seleção gerenciado por quem renderiza: hoje
  * ExternalProductManagement (tela de catálogo) e ExternalProductCatalog
  * (dialog do chat, modo seleção).
- * CT-28 — além do envio, a barra exporta a seleção em CSV (CT-20),
- * favorita os selecionados e impõe o limite de `CATALOG_BULK_SEND_MAX` por envio.
+ * CT-28 — além do envio, a barra favorita os selecionados e impõe o limite de
+ * `CATALOG_BULK_SEND_MAX` por envio.
  */
 import React from 'react';
-import { Send, X, CheckSquare, Square, Download, Heart } from 'lucide-react';
+import { Send, X, CheckSquare, Square, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -28,8 +28,6 @@ export interface CatalogBulkBarProps {
   onToggleSelectAll: () => void;
   onClear: () => void;
   onSend: () => void;
-  /** CT-28 — exporta a seleção em CSV (mesmos builders do CT-20). */
-  onExport?: () => void;
   /** CT-28 — favorita os selecionados que ainda não são favoritos. */
   onFavorite?: () => void;
   /** CT-28 — limite de produtos por envio (default `CATALOG_BULK_SEND_MAX`). */
@@ -43,7 +41,6 @@ export function CatalogBulkBar({
   onToggleSelectAll,
   onClear,
   onSend,
-  onExport,
   onFavorite,
   maxSend = CATALOG_BULK_SEND_MAX,
 }: CatalogBulkBarProps) {
@@ -85,14 +82,6 @@ export function CatalogBulkBar({
         <span role="status" className="text-xs font-medium text-amber-600 dark:text-amber-500">
           Máximo de {maxSend} produtos por envio — envie em lotes.
         </span>
-      )}
-
-      {/* CT-28 — exportar a seleção (CSV do CT-20 com os ids escolhidos) */}
-      {onExport && (
-        <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={onExport} disabled={count === 0}>
-          <Download className="w-3.5 h-3.5" />
-          Exportar seleção
-        </Button>
       )}
 
       {/* CT-28 — favoritar N (só os que ainda não são favoritos) */}

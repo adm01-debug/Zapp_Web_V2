@@ -8,8 +8,8 @@
  * arquivo sai como antes.
  *
  * Cobre:
- *  1. `triggerCsvDownload`/`exportCatalogCsv` (CSV de produtos — "Exportar
- *     catálogo" do rail e "Exportar seleção" das duas telas);
+ *  1. `triggerCsvDownload` (CSV do histórico de envios — a exportação de
+ *     catálogo/seleção saiu do produto);
  *  2. `downloadImageAsBlob` (fotos do produto — `SendProductDialog`);
  *  3. o disparo do CSV de histórico de envios (`ExternalProductManagement`).
  */
@@ -18,7 +18,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-import { exportCatalogCsv, triggerCsvDownload } from '../catalogExport';
+import { triggerCsvDownload } from '../catalogExport';
 import { downloadImageAsBlob } from '../sendProductUtils';
 import { SendProductDialog } from '../SendProductDialog';
 import type { ExternalProduct, ExternalProductVariant } from '@/hooks/integrations/useExternalCatalog';
@@ -78,7 +78,7 @@ const mockProduct = (o: Partial<ExternalProduct> = {}): ExternalProduct => ({
   ...o,
 });
 
-describe('Y29 — CSV do catálogo (triggerCsvDownload / exportCatalogCsv)', () => {
+describe('Y29 — CSV do histórico de envios (triggerCsvDownload)', () => {
   const createObjectURL = vi.fn(() => 'blob:y29-csv');
   const revokeObjectURL = vi.fn();
   const click = vi.fn();
@@ -100,7 +100,7 @@ describe('Y29 — CSV do catálogo (triggerCsvDownload / exportCatalogCsv)', () 
     vi.clearAllMocks();
   });
 
-  it('sem permissão o CSV do histórico/seleção não é gravado e o sucesso não é anunciado', () => {
+  it('sem permissão o CSV do histórico não é gravado e o sucesso não é anunciado', () => {
     const entregou = triggerCsvDownload('\uFEFFA,B\n1,2', 'catalogo_enviados_20261009.csv', false);
 
     expect(entregou).toBe(false);
@@ -116,28 +116,6 @@ describe('Y29 — CSV do catálogo (triggerCsvDownload / exportCatalogCsv)', () 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:y29-csv');
     expect(document.querySelector('a[download="catalogo_selecao_20261009.csv"]')).toBeNull();
-  });
-
-  it('exportCatalogCsv sem permissão não grava (downloaded: false) e não anuncia sucesso', async () => {
-    const fetchPage = vi.fn(async () => ({ data: [mockProduct()] }));
-
-    const resultado = await exportCatalogCsv({ filterKey: 'todos', fetchPage, canDownload: false });
-
-    expect(createObjectURL).not.toHaveBeenCalled();
-    expect(click).not.toHaveBeenCalled();
-    expect(resultado).toMatchObject({ ok: false, downloaded: false, error: 'download-blocked' });
-    expect(toastMock.success).not.toHaveBeenCalled();
-  });
-
-  it('exportCatalogCsv com permissão grava o CSV (mesmo comportamento de antes)', async () => {
-    const fetchPage = vi.fn(async () => ({ data: [mockProduct()] }));
-
-    const resultado = await exportCatalogCsv({ filterKey: 'todos', fetchPage, canDownload: true });
-
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalledTimes(1);
-    expect(resultado).toMatchObject({ ok: true, downloaded: true });
-    expect(toastMock.success).toHaveBeenCalledTimes(1);
   });
 });
 

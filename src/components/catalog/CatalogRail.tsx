@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Sparkles, BarChart3, PackageCheck, Star, Truck, Send, Flame, Zap, Download, ExternalLink } from 'lucide-react';
+import { Sparkles, BarChart3, PackageCheck, Star, Truck, Send, Flame, Zap, ExternalLink } from 'lucide-react';
 import { RailCard, RailAction, MetaRow, IconTile, RecentList, fmtInt, fmtAgo, AlertCard, TipCard } from '@/components/talkx/talkxShared';
 import type { PillTone, RecentItem } from '@/components/talkx/talkxShared';
 import type { CatalogSendEventRow, CatalogTopSent } from '@/hooks/integrations/useCatalogRecentSends';
@@ -20,8 +20,7 @@ import { ProductThumb, CATALOG_FOCUS_VISIBLE } from './catalogShared';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
-import { exportCatalogCsv, filterKeyToEdgeParams, PROMOGIFTS_BASE_URL } from './catalogExport';
-import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { PROMOGIFTS_BASE_URL } from './catalogExport';
 
 /** Texto do banner isolado numa constante (E51 item 4): trocar a copy não
  * exige mexer no componente. A marca "SUA MARCA AQUI" do mock NÃO entra —
@@ -43,7 +42,7 @@ export const CATALOG_RAIL_TIPS = [
   'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.',
   'O filtro "Novidades" mostra o que entrou nos últimos 30 dias — bom para prospecção.',
   'Estoque baixo aparece no rail: priorize esses brindes antes que acabem.',
-  'Exporte o catálogo filtrado em CSV para levar a seleção para fora do sistema.',
+  'Abra o produto pelo card para ver cores, prazo e quantidade mínima antes de enviar.',
 ] as const;
 
 /** Dias inteiros desde um instante ISO. Puro e exportado para teste; `nowMs`
@@ -115,16 +114,6 @@ export interface CatalogRailProps {
   /** Reabre o envio do mesmo produto — o pai resolve o produto completo
    * via fetchProduct(id), já que catalog_send_events guarda só id/nome. */
   onOpenProduct?: (productId: string) => void;
-  /** CT-21 — chave do filtro aplicado na listagem, usada por "Exportar
-   * catálogo" para nomear o arquivo e filtrar as páginas da edge. Opcional:
-   * sem ela o export sai com o catálogo inteiro (`catalogo_todos_*.csv`),
-   * que é o comportamento honesto enquanto o pai não passar o filtro. */
-  exportFilter?: CatalogRailFilterKey | null;
-  /** R2-MOD-041 — os demais filtros ATIVOS da listagem (busca, categoria,
-   * fornecedor, preço, cor, material, estoque baixo, bestseller). Sem eles o
-   * CSV saía só com o filtro do rail e perdia "quase todos os filtros" que o
-   * usuário vê na grade. Somam-se aos do `exportFilter` (nunca o substituem). */
-  exportFilters?: Record<string, unknown>;
   /** CT-23 — aplica o filtro de estoque baixo (1 a 10 unidades). Opcional de
    * propósito: sem este callback o alerta aparece SEM botão, em vez de um
    * botão que não faz nada (regra do plano: nada morto). */
@@ -340,11 +329,11 @@ function RailRecentSends({ recentSends, topSent, onOpenProduct }: Pick<CatalogRa
   );
 }
 
-/** CT-21 — "Ações rápidas" do rail. Duas ações, ambas vivas:
- * "Exportar catálogo" (CT-20) e "Gerenciar no PromoGifts" (link externo).
- * "Importar planilha" e "Gerenciar categorias" NÃO entram: não existe URL
- * pública confirmada para elas no repo (a regra do plano é nada morto). */
-function RailQuickActions({ exporting, onExport }: { exporting: boolean; onExport: () => void }) {
+/** CT-21 — "Ações rápidas" do rail. "Gerenciar no PromoGifts" abre o painel
+ * público em nova aba. "Importar planilha" e "Gerenciar categorias" NÃO entram:
+ * não existe URL pública confirmada para elas no repo (a regra do plano é nada
+ * morto). */
+function RailQuickActions() {
   // RailAction é um <button>: envolvê-lo num <a> aninharia dois interativos
   // (HTML inválido, ruim de teclado/leitor de tela). A nova aba abre por
   // window.open com noopener, na mesma URL pública já usada em
@@ -355,14 +344,6 @@ function RailQuickActions({ exporting, onExport }: { exporting: boolean; onExpor
   return (
     <RailCard icon={Zap} color="violet" title="Ações rápidas" subtitle="Atalhos do catálogo">
       <div className="space-y-2">
-        <RailAction
-          icon={Download}
-          color="green"
-          title="Exportar catálogo"
-          subtitle={`CSV do filtro atual · até ${fmtInt(1000)} produtos`}
-          onClick={onExport}
-          disabled={exporting}
-        />
         <RailAction
           icon={ExternalLink}
           color="violet"
@@ -435,7 +416,7 @@ function RailAlerts({ stats, nowMs, dismissed, onDismiss, onApplyLowStock }: {
   );
 }
 
-export function CatalogRail({ stats, loading, products, onApplyFilter, recentSends, topSent, onOpenProduct, exportFilter, exportFilters, onApplyLowStock }: CatalogRailProps) {
+export function CatalogRail({ stats, loading, products, onApplyFilter, recentSends, topSent, onOpenProduct, onApplyLowStock }: CatalogRailProps) {
   // Relógio capturado UMA vez, no inicializador de estado (nunca no corpo do
   // render): o alerta de sync não muda sozinho entre re-renders e o teste
   // controla o valor com data fixa.
@@ -444,10 +425,6 @@ export function CatalogRail({ stats, loading, products, onApplyFilter, recentSen
   // no corpo do render (`new Date()` a cada render trocaria a dica à toa).
   const [tipIndex] = useState(() => new Date().getDate() % CATALOG_RAIL_TIPS.length);
   const [dismissedAlerts, setDismissedAlerts] = useState(readDismissedAlerts);
-  const [exporting, setExporting] = useState(false);
-  // Y29 / SEC-SAIDAS_DE_INFORMACAO-01 — o export do rail é o único chamador de
-  // `exportCatalogCsv`; sem `can_download` ele não baixa o CSV do catálogo.
-  const { canDownload } = useDownloadPermission();
 
   const dismissAlert = (id: CatalogRailAlertId) => {
     const next = new Set(dismissedAlerts).add(id);
@@ -455,29 +432,10 @@ export function CatalogRail({ stats, loading, products, onApplyFilter, recentSen
     persistDismissedAlerts(next);
   };
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      // CT-20: o módulo mostra o toast de loading/sucesso/erro e só baixa o
-      // arquivo quando todas as páginas voltaram (sem CSV parcial).
-      // R2-MOD-041: o filtro do rail (exportFilter) e os filtros da listagem
-      // (exportFilters) SOMAM — antes só o do rail chegava à edge e o CSV
-      // saía quase inteiro (busca, categoria, preço, cor... ficavam de fora).
-      await exportCatalogCsv({
-        filterKey: exportFilter ?? 'todos',
-        filters: { ...filterKeyToEdgeParams(exportFilter), ...exportFilters },
-        // Y29 — o gate do download chega ao `triggerCsvDownload` por aqui.
-        canDownload,
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
     <div className="space-y-3">
       <RailBanner products={products} onApplyFilter={onApplyFilter} />
-      <RailQuickActions exporting={exporting} onExport={handleExport} />
+      <RailQuickActions />
       <RailAlerts
         stats={stats}
         nowMs={nowMs}

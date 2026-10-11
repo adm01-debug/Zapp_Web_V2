@@ -1,27 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CatalogRail, CATALOG_RAIL_COPY, CATALOG_RAIL_TIPS, daysSince } from '../CatalogRail';
-import { exportCatalogCsv, PROMOGIFTS_BASE_URL } from '../catalogExport';
+import { PROMOGIFTS_BASE_URL } from '../catalogExport';
 import type { CatalogStats } from '@/hooks/integrations/useExternalCatalog';
 import type { CatalogSendEventRow } from '@/hooks/integrations/useCatalogRecentSends';
-
-// CT-21: o clique em "Exportar catálogo" tem de chamar o builder do CT-20.
-// Mock parcial: só a orquestração (que fala com a edge) é substituída — os
-// builders puros e as constantes continuam os reais.
-
-// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
-vi.mock('../catalogExport', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../catalogExport')>();
-  return {
-    ...actual,
-    exportCatalogCsv: vi.fn(async () => ({ ok: true, rows: 1, filename: 'catalogo_todos_20261001.csv', downloaded: true })),
-  };
-});
 
 // recharts nao desenha em jsdom (ResponsiveContainer mede 0x0), entao os
 // testes do grafico cobrem o que e observavel: titulo, delta e skeleton.
@@ -198,51 +180,16 @@ describe('CatalogRail — CT-21 acoes rapidas', () => {
     vi.clearAllMocks();
   });
 
-  it('mostra as duas acoes rapidas (Exportar catalogo e Gerenciar no PromoGifts)', () => {
+  it('mostra so a ação rápida viva (Gerenciar no PromoGifts) e nenhum "Exportar catálogo"', () => {
     render(<CatalogRail stats={mockStats()} />);
     expect(screen.getByText('Ações rápidas')).toBeInTheDocument();
-    expect(screen.getByText('Exportar catálogo')).toBeInTheDocument();
+    expect(screen.queryByText('Exportar catálogo')).not.toBeInTheDocument();
     expect(screen.getByText('Gerenciar no PromoGifts')).toBeInTheDocument();
   });
 
   it('nao tem link morto (href="#")', () => {
     const { container } = render(<CatalogRail stats={mockStats()} />);
     expect(container.querySelectorAll('a[href="#"]')).toHaveLength(0);
-  });
-
-  it('Exportar catalogo chama o builder do CT-20 com o catalogo inteiro quando o pai nao passa o filtro', async () => {
-    render(<CatalogRail stats={mockStats()} />);
-    await act(async () => {
-      fireEvent.click(screen.getByText('Exportar catálogo'));
-    });
-    // Y29 — o gate do download (`profiles.can_download`) vai junto nas opções.
-    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'todos', filters: {}, canDownload: true });
-  });
-
-  it('Exportar catalogo usa o filtro atual quando recebe exportFilter', async () => {
-    render(<CatalogRail stats={mockStats()} exportFilter="in_stock" />);
-    await act(async () => {
-      fireEvent.click(screen.getByText('Exportar catálogo'));
-    });
-    expect(exportCatalogCsv).toHaveBeenCalledWith({ filterKey: 'in_stock', filters: { only_in_stock: true }, canDownload: true });
-  });
-
-  it('R2-MOD-041: exportFilter e exportFilters SOMAM (o filtro da listagem nao some)', async () => {
-    render(
-      <CatalogRail
-        stats={mockStats()}
-        exportFilter="in_stock"
-        exportFilters={{ search: 'caneta', category_id: 'cat1' }}
-      />,
-    );
-    await act(async () => {
-      fireEvent.click(screen.getByText('Exportar catálogo'));
-    });
-    expect(exportCatalogCsv).toHaveBeenCalledWith({
-      filterKey: 'in_stock',
-      filters: { only_in_stock: true, search: 'caneta', category_id: 'cat1' },
-      canDownload: true,
-    });
   });
 
   it('Gerenciar no PromoGifts abre a URL publica em nova aba', () => {

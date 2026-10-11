@@ -19,23 +19,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ExternalProductCatalog } from '../ExternalProductCatalog';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 
-const toastSuccess = vi.hoisted(() => vi.fn());
-
-// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
-// permissão é concedida para o teste observar o caminho de sempre.
-vi.mock('@/hooks/system/useDownloadPermission', () => ({
-  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
-}));
-
 vi.mock('sonner', () => ({
-  toast: Object.assign(vi.fn(), { success: toastSuccess, error: vi.fn(), warning: vi.fn() }),
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), warning: vi.fn() }),
 }));
-
-const triggerCsvDownload = vi.hoisted(() => vi.fn());
-vi.mock('../catalogExport', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../catalogExport')>();
-  return { ...actual, triggerCsvDownload };
-});
 
 const mockCatalog = vi.hoisted(() => vi.fn());
 const mockFavorites = vi.hoisted(() => vi.fn());
@@ -135,8 +121,6 @@ const favorito = (productId: string, sku: string, nome: string) => ({
 beforeEach(() => {
   mockCatalog.mockReset();
   mockFavorites.mockReset();
-  triggerCsvDownload.mockReset();
-  toastSuccess.mockReset();
   mockCatalog.mockReturnValue(baseCatalog([product('p1'), product('p2'), product('p3')]));
   mockFavorites.mockReturnValue({
     favorites: [],
@@ -170,26 +154,6 @@ describe('R2-MOD-010 — seleção persistente × filtro visível', () => {
     // CT-71 — o dialog entra por React.lazy: precisa aguardar o chunk.
     const dialog = await screen.findByTestId('bulk-send-dialog');
     expect(dialog).toHaveTextContent('p1,p2');
-  });
-
-  it('"Exportar seleção" leva o produto escondido pelo filtro (CSV com a contagem anunciada)', () => {
-    renderCatalog();
-    entrarNoModoSelecao();
-    selecionarCard('p1');
-
-    mockCatalog.mockReturnValue(baseCatalog([product('p2'), product('p3')]));
-    buscar('caneca');
-    selecionarCard('p2');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Exportar seleção' }));
-
-    expect(triggerCsvDownload).toHaveBeenCalledTimes(1);
-    const [csv] = triggerCsvDownload.mock.calls[0] as [string, string];
-    const linhas = csv.split('\n');
-    expect(linhas).toHaveLength(3); // cabeçalho + os 2 anunciados na barra
-    expect(linhas[1]).toContain('SKU-p1');
-    expect(linhas[2]).toContain('SKU-p2');
-    expect(toastSuccess).toHaveBeenCalledWith('2 produto(s) exportado(s) em CSV');
   });
 
   it('o chip "Meus favoritos" também mantém a seleção inteira no envio', async () => {
