@@ -1,35 +1,33 @@
 Especialista: iris (area-front-componentes)
 
 ## O que mudou e por quê
-- `src/components/tasks/shared/WorkItemSheet.tsx`: extraí a seção "Planejamento" para um componente próprio, liguei o componente e acrescentei o contador da descrição e a linha discreta "Criada em ...". O arquivo já estava acima de 500 linhas, que é o teto do ratchet do CI: ele só podia encolher, e passou de 626 para 549 linhas.
-- `src/components/tasks/shared/sheet/PlanejamentoSection.tsx` (novo): etapa 137 — dois cartões, Prazo ("Até quando concluir") e Lembrete ("Quando avisar você"), cada um com data ("Hoje, 11/10") e hora ("18:00") (§3.3, linha `"Planejamento": Prazo ("Até quando concluir") e Lembrete ("Quando avisar você") com data e hora | 137–138`); etapa 138 — os avisos do lembrete; etapa 139 — a linha "✓ Agendado · Adiar ▾ · Remover" (§3.3, linha `"✓ Agendado · Adiar ▾ · Remover" | 139`) ligada às mutations que já existiam (`onSnooze(item, ...)` e `onSetReminder(item, null)`), sem mutation nova.
-- `src/components/tasks/shared/sheet/planejamento.ts` (novo): regra única da validação do lembrete (`avaliarLembrete`) e do rótulo da data de criação (`formatCriadaEm`), fora do componente, para o teste unitário provar sem montar tela.
-- `src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` (novo): os testes das quatro etapas.
+- `src/components/tasks/shared/sheet/PainelRodape.tsx` (novo): etapas 141–142 — o rodapé do painel com o ESTADO DE EDIÇÃO (ponto âmbar "Alterações não salvas" + a dica "Ctrl+Enter para salvar"; quando limpo, "Tudo salvo"), o "Concluir" verde contorno, o "Salvar alterações" primary (desabilitado sem mudança) e o menu ⋮ (reabrir / copiar link interno / cancelar). Mora em `sheet/` para o `WorkItemSheet.tsx` não crescer mais.
+- `src/components/tasks/shared/sheet/rodape.ts` (novo): as duas regras puras do menu — `podeReabrir(status)` (só `done`/`cancelled`) e `linkInternoDaTarefa(id, {origin, pathname})` = `<origin><pathname>?view=tasks&task=<id>`, a MESMA URL que o `useWorkItemNotifications.openTask` grava. É navegação interna do próprio app; nenhum dado de cliente sai do sistema.
+- `src/components/tasks/shared/WorkItemSheet.tsx`: etapa 141 (o Ctrl+Enter salva de qualquer campo do painel — antes só funcionava com o foco no botão); etapa 143 (guarda de fechamento: `alteradoRef` + confirmação "Descartar alterações?" com "Continuar editando"/"Descartar", com o Esc, o clique fora no overlay e o X do `SheetContent` caindo na MESMA proteção; os fechamentos programáticos de Salvar/Concluir/Cancelar seguem passando direto); etapa 144 (o Esc fecha e devolve o foco ao cartão `[data-item-id]` da tarefa; o F6 alterna painel ↔ lista/quadro); o rodapé antigo de três botões virou `<PainelRodape>`.
+- `src/components/tasks/__tests__/WorkItemSheet.rodape.test.tsx` (novo): 12 casos das etapas 141–144.
+- `src/components/tasks/__tests__/WorkItemSheet.test.tsx`: o caso "25" passou a abrir o ⋮ antes de clicar "Cancelar tarefa" (a etapa 142 tirou esse botão do rodapé). A asserção é a mesma: `onCancel` chamado com o item.
 
-## Decisões declaradas
-- Etapa 138 com três tons, nenhum literal: verde `text-success` "Agendado" (lembrete antes do prazo, ou sem prazo); âmbar `hsl(var(--warning-text))` "Lembrete depois do prazo"; vermelho `hsl(var(--destructive-text))` "Lembrete no passado". Os dois tokens de TEXTO existem nos dois modos (`src/styles/tokens.css`), o mesmo par que o `DateLabel` já usa.
-- "Cada um com data e hora": a data fica no botão ("Hoje, 11/10") e a hora num campo `type="time"` separado ("18:00"), como na etapa 137. O primitivo `DateLabel` não atende aqui: ele só sabe `'day'` ("09 out.") ou `'datetime'` ("Hoje, 11/10 18:00", hora colada à data). O botão usa `formatWorkItemFieldDate`/`formatWorkItemField` do `workItemFormat.ts` (cartão T04), a MESMA regra única de datas — nada de data foi reimplementado.
-- Contador da descrição = número de caracteres (etapa 140 não define limite e o banco não tem `maxLength` para `description`), com singular/plural correto.
-- `src/hooks/tasks/workItemPresets.ts` (cartão T04) não existe no workspace: o cartão pai o tirou do branch (etapas 148/149/159/161 são de outros cartões). Os atalhos que a etapa 139 pede (15 min, 1 h, Amanhã 9h) já existiam nesta tela e seguem como estavam.
-- Alvos com 40 px (`h-10`) nos botões de data, campos de hora, "Adiar" e "Remover"; a linha de ações é `flex-wrap` e os cartões viram uma coluna abaixo de `sm` — sem rolagem horizontal em 360/768/1280.
-- Sem exportar, baixar ou imprimir: nada disso foi tocado.
+## Decisões declaradas (§3 do plano)
+- §3, linha `| Rodapé: ponto âmbar "Alterações não salvas", "Ctrl + Enter para salvar", "Concluir", "Salvar alterações", ⋮ | PARCIAL (Ctrl+Enter existe, resto não) | 141–142 |`: era exatamente o estado do código; o "resto" (estado de edição, botões e ⋮) agora existe.
+- Etapas 141, 142, 143 e 144 (§3, linhas 414–417 do plano).
+- §8-bis, linha `| Painel não modal (D14) muda o contrato de foco... | Etapas 144, 145 e 151 com teste de foco; bottom sheet modal no celular. |`: o painel de HOJE é o `Sheet` modal (a etapa 145 é do cartão T34, não deste), então a armadilha de foco do Radix é o "foco preso" que o bottom sheet pede. O handler do F6 já alterna as duas direções — provado no teste, com o painel e o cartão no DOM.
+- Só tokens do sistema, nenhuma cor literal: âmbar = fundo `bg-warning` + texto `text-[hsl(var(--warning-text))]` (definido em `src/styles/tokens.css`, claro e escuro); "Concluir" = `border-success/50 text-success`.
+- Alvos de 40 px (`h-10`) nos três controles do rodapé. "Copiar link interno" usa `navigator.clipboard` e NÃO cria exportar/baixar/imprimir: é a URL interna da tarefa que o próprio app já grava (`?view=tasks&task=<id>`).
+- Sem migration, Edge Function, dependência nova nem alteração em `src/components/ui/*`.
 
 ## Prova
-- vermelho antes: mutei a regra do lembrete no passado (`avaliarLembrete`, a checagem passou a `false &&`) e rodei `npx vitest run src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` → `Tests 2 failed | 12 passed (14)` (casos "138: lembrete no passado avisa em vermelho" e "138: lembrete no passado é vermelho").
-- verde depois: `npx vitest run src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` → `Test Files 1 passed (1); Tests 14 passed (14)`.
-- painel/sheet que já existiam: `npx vitest run src/components/tasks/__tests__/WorkItemSheet.test.tsx src/components/tasks/__tests__/WorkItemSheet.painel.test.tsx` → `Test Files 2 passed (2); Tests 32 passed (32)`.
-- área de Tarefas: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 34 passed (34); Tests 401 passed | 1 todo (402)`.
-- tipos: `npx tsc -b --force` → sem saída, exit 0. lint dos arquivos tocados: `npx eslint src/components/tasks/shared/WorkItemSheet.tsx src/components/tasks/shared/sheet/ src/components/tasks/__tests__/WorkItemSheet.planejamento.test.tsx` → exit 0.
-- acessibilidade: o axe do `WorkItemSheet.test.tsx` (caso "N-082") roda sobre o Sheet inteiro, agora com a seção nova, e passou na execução acima.
+- vermelho antes: mutei o guarda (`onMudouChange(false)`) em `WorkItemSheet.tsx` e rodei `npx vitest run src/components/tasks/__tests__/WorkItemSheet.rodape.test.tsx` → `Tests 2 failed | 10 passed (12)` (casos "143: com alteração, o Esc pede confirmação em vez de fechar" e "143: "Descartar" fecha o painel; clique fora também respeita a proteção"); revertido em seguida (`git diff` vazio).
+- verde depois: `npx vitest run src/components/tasks/__tests__/WorkItemSheet.rodape.test.tsx` → `Test Files 1 passed (1); Tests 12 passed (12)`.
+- área de Tarefas + hooks: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 35 passed (35); Tests 413 passed | 1 todo (414)`.
+- tipos: `npx tsc -b --force` → sem saída, exit 0. lint: `npx eslint src/components/tasks/shared/WorkItemSheet.tsx src/components/tasks/shared/sheet/PainelRodape.tsx src/components/tasks/shared/sheet/rodape.ts src/components/tasks/__tests__/WorkItemSheet.rodape.test.tsx` → exit 0.
 
-## Casos de teste deste cartão
-- 137: a seção "Planejamento" traz os dois cartões com os rótulos, o prazo em "Hoje, dd/MM" com a hora 18:00 e o lembrete em "Hoje, dd/MM" com a hora 19:00.
-- 138: lembrete no passado é vermelho; lembrete depois do prazo é âmbar; lembrete antes do prazo mostra "Agendado" verde; sem prazo e lembrete no futuro também mostra "Agendado".
-- 139: a linha do lembrete traz "Agendado", o "Adiar" com as três opções e o "Remover"; "Adiar → 15 min" chama `onSnooze`; "Remover" chama `onSetReminder(item, null)`.
-- 140: o contador da descrição acompanha a digitação; "Criada em 9 out. 2026" vem de `created_at`; a caixa de descrição é redimensionável (`resize-y`).
-- `avaliarLembrete` (unitário): sem lembrete não há aviso. `formatCriadaEm` (unitário): dia sem zero à esquerda e mês curto pt-BR.
+## Casos de teste deste cartão (WorkItemSheet.rodape.test.tsx)
+- 141: limpo mostra "Tudo salvo" e nenhuma dica; ao digitar no título aparece "Alterações não salvas" + "Ctrl+Enter para salvar"; o Ctrl+Enter no título chama `onSave(item, { title })`.
+- 142: "Salvar alterações" desabilitado sem mudança e habilitado com mudança; "Concluir" chama `onMove(item, 'done')` e fecha; o ⋮ traz "Reabrir tarefa" (só em `done`/`cancelled`, chama `onMove(item, 'todo')`), "Copiar link interno" (grava `?view=tasks&task=t1` no clipboard) e "Cancelar tarefa" (chama `onCancel`).
+- 143: com alteração o Esc mostra "Descartar alterações?" e NÃO fecha; "Continuar editando" fecha só o aviso; "Descartar" fecha (`onOpenChange(false)`); o clique fora no overlay também pede confirmação em vez de fechar; sem alteração o Esc fecha normal.
+- 144: o Esc devolve o foco ao cartão `[data-item-id="t1"]`; o F6 é consumido (`preventDefault`) e alterna o foco painel → cartão → painel; a ordem de tab do rodapé é Concluir → Salvar → ⋮.
 
 ## O que NÃO fiz e por quê
-- Não toquei em `src/components/ui/*`, não criei migration, Edge Function nem dependência.
-- Diferença de escopo: os arquivos de `shared/` e `hooks/tasks/` que aparecem no diff contra `dia/2026-10-11` vêm do cherry-pick da faixa do cartão pai (t_5f27cbe9) — não são edição deste cartão; o meu commit (`feat(tarefas): painel com secao Planejamento ...`) mexe só nos 4 arquivos listados acima.
-- Não li as imagens 03.png (não há ferramenta de visão nesta sessão): a conferência foi feita contra a §3.3 do plano (as três linhas citadas no "O que mudou") e as etapas 137–140, que são a referência de aceite do cartão.
+- Não implementei o painel NÃO modal (etapa 145) nem a persistência do modo expandido (etapa 146): são dos cartões T34/outro; o F6 e a proteção ficam prontos para eles.
+- Não li as imagens 01–05 (não há ferramenta de visão nesta sessão): a conferência foi contra a §3 do plano (linha do "Rodapé" e etapas 141–144), que é a referência de aceite.
+- Diferença de escopo: os commits `chore(tarefas): traz a faixa dos pais...` e o do painel de Planejamento vêm do cherry-pick da faixa do pai (`t_2456ca64`); o meu commit (`feat(tarefas): rodape do painel...`) mexe só nos 5 arquivos listados acima.
