@@ -7,6 +7,7 @@ Especialista: worker (sql) (area-sql-banco)
   `public.automations`, RLS + política explícita de leitura para staff, e os dois gatilhos de entrada.
 - `supabase/tests/automation_runtime_events.sql` (novo): T1..T10 + C1/C2 em Postgres descartável,
   aplicando o ARQUIVO REAL da migration e rodando como papel real (`authenticated`, `anon`, `service_role`).
+- Diff do cartão = 3 arquivos: a migration, o teste e ESTE `.tmp/relato.md` (1 arquivo de teste).
 
 Decisões de contrato (para o cartão do executor):
 - `trigger_type` segue o vocabulário JÁ existente em `public.automations.trigger_type` e no editor do
@@ -35,8 +36,16 @@ Decisões de contrato (para o cartão do executor):
 - Rollback: 7 linhas `--   drop ...;` do bloco `-- Rollback (SQL executável, na ordem):` (formato do
   modelo `20261006141643`), EXECUTADAS em C1 e com a migration reaplicada em C2. A migration foi
   aplicada no banco LOCAL da tarefa por `hermes-db-migrar` (`APLICADA no banco LOCAL 'v2-2610111602b52d'`,
-  COMMIT); produção não foi tocada. (O juiz barato apontou o formato do rollback na 1ª tentativa de
-  fechar; corrigi o cabeçalho e refiz a prova — T1..T10 + C1/C2 verdes de novo.)
+  COMMIT); produção não foi tocada.
+- Juiz barato, 1ª tentativa: (a) rollback fora do formato do modelo `20261006141643` → reescrevi o
+  cabeçalho com as 7 linhas `--   drop ...;` e refiz a prova; (b) avisou "LOOP sem teto" na meu gatilho de
+  tag → REMOVI o loop (agora um único `INSERT ... SELECT` sobre o diff de UMA linha de `contacts`); a
+  `grep -c LOOP` no arquivo dá 0 e T1..T10 + C1/C2 estão verdes de novo. O aviso de "números não batem"
+  era a contagem de arquivos do diff (agora o relato diz os 3).
+- Correção do corpo da função no banco LOCAL: como a versão já estava registrada em `APLICADA_LOCAL` (o
+  `hermes-db-migrar` recusa reaplicar o mesmo arquivo), apliquei o `CREATE OR REPLACE FUNCTION` corrigido
+  por `zapp-db-local psql . v2-2610111602b52d`; conferido: `position('LOOP' in prosrc) = 0`. A prova de
+  verdade roda o ARQUIVO REAL no Postgres descartável e está verde.
 
 ## Passada de efeito colateral
 1. Gatilhos das tabelas tocadas (conferido no banco local): `messages` já tem

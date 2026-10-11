@@ -222,8 +222,6 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $function$
-DECLARE
-  v_tag text;
 BEGIN
   -- Switch anti-laço (ação add_tag do próprio motor).
   IF current_setting('zapp.suppress_automation_events', true) IN ('on', 'true', '1') THEN
@@ -239,19 +237,18 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Só os valores ACRESCENTADOS (diferença OLD→NEW), sem diferenciar caixa.
-  FOR v_tag IN
-    SELECT DISTINCT t
-      FROM unnest(NEW.tags) AS t
-     WHERE NOT EXISTS (
+  -- Só os valores ACRESCENTADOS (diferença OLD→NEW), sem diferenciar caixa. Um INSERT ... SELECT
+  -- (sem loop): o conjunto é o diff de UMA linha de public.contacts, não uma varredura de tabela.
+  INSERT INTO public.automation_events (contact_id, trigger_type, trigger_ref, payload)
+  SELECT DISTINCT NEW.id, 'tag_added', lower(t), jsonb_build_object('tag', t)
+    FROM unnest(NEW.tags) AS t
+   WHERE t IS NOT NULL
+     AND btrim(t) <> ''
+     AND NOT EXISTS (
        SELECT 1 FROM unnest(COALESCE(OLD.tags, '{}'::text[])) AS o
         WHERE lower(o) = lower(t)
      )
-  LOOP
-    INSERT INTO public.automation_events (contact_id, trigger_type, trigger_ref, payload)
-    VALUES (NEW.id, 'tag_added', lower(v_tag), jsonb_build_object('tag', v_tag))
-    ON CONFLICT DO NOTHING;
-  END LOOP;
+  ON CONFLICT DO NOTHING;
 
   RETURN NEW;
 END;
