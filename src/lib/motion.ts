@@ -58,3 +58,26 @@ export const zappPopoverVariants: Variants = {
   visible: { opacity: 1, scale: 1, transition: zappTransition.fast },
   exit: { opacity: 0, scale: 0.98, transition: zappTransition.fast },
 };
+
+/**
+ * Molas do kit de microinterações do chat (acrescentado em 11/10/2026).
+ * Aditivo: nada acima mudou. Cada mola é nomeada pelo uso, não pela física:
+ *  - `soft`   — número que conta e entrada de item: acomoda sem estouro lento;
+ *  - `snappy` — indicador que desliza e realce curto: responde rápido;
+ *  - `pop`    — celebração (check/estrela): estouro contido, sem quicar demais.
+ * Quem anima por JS usa `useReducedMotion()` para entregar o estado final direto.
+ */
+export const zappSpring = {
+  soft: { type: 'spring', stiffness: 110, damping: 20, mass: 0.9 },
+  snappy: { type: 'spring', stiffness: 420, damping: 32, mass: 0.7 },
+  pop: { type: 'spring', stiffness: 520, damping: 22, mass: 0.8 },
+} satisfies Record<'soft' | 'snappy' | 'pop', Transition>;
+
+/**
+ * Escalonamento de entrada (fonte única do kit do chat): 60 ms por item, teto de
+ * 8 itens — do 9º em diante entra junto, senão a lista demora a ficar inteira.
+ */
+export const zappStagger = {
+  perItemSeconds: 0.06,
+  maxItems: 8,
+} as const;
