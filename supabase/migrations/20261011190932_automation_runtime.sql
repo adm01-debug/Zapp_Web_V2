@@ -238,7 +238,7 @@ BEGIN
   END IF;
 
   -- Só os valores ACRESCENTADOS (diferença OLD→NEW), sem diferenciar caixa. Um INSERT ... SELECT
-  -- (sem loop): o conjunto é o diff de UMA linha de public.contacts, não uma varredura de tabela.
+  -- resolve de uma vez: o conjunto é o diff de UMA linha de public.contacts, não uma varredura de tabela.
   INSERT INTO public.automation_events (contact_id, trigger_type, trigger_ref, payload)
   SELECT DISTINCT NEW.id, 'tag_added', lower(t), jsonb_build_object('tag', t)
     FROM unnest(NEW.tags) AS t

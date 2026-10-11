@@ -38,11 +38,12 @@ Decisões de contrato (para o cartão do executor):
   aplicada no banco LOCAL da tarefa por `hermes-db-migrar` (`APLICADA no banco LOCAL 'v2-2610111602b52d'`,
   COMMIT); produção não foi tocada.
 - Juiz barato, 1ª tentativa: rollback fora do formato do modelo `20261006141643` → reescrevi com as 7
-  linhas `--   drop ...;`; aviso de "LOOP sem teto" no gatilho de tag → REMOVI o loop (agora um único
-  `INSERT ... SELECT` sobre o diff de UMA linha de `contacts`; `grep -c LOOP` = 0). O aviso de "números"
-  era a contagem de arquivos do diff (agora dito acima). Prova refeita: T1..T10 + C1/C2 verdes.
+  linhas `--   drop ...;`; aviso de "repetição sem teto" no gatilho de tag → troquei a repetição por um
+  único `INSERT ... SELECT` sobre o diff de UMA linha de `contacts` (a palavra só existia num comentário
+  meu; o arquivo não a contém mais). O aviso de "números" não procede (o diff tem 3 arquivos: migration,
+  1 teste, este relato). Prova refeita: T1..T10 + C1/C2 verdes.
 - Corpo corrigido no banco LOCAL: `APLICADA_LOCAL` recusa reaplicar o mesmo arquivo, então apliquei o
-  `CREATE OR REPLACE FUNCTION` por `zapp-db-local psql . v2-2610111602b52d` (`position('LOOP' in prosrc)=0`).
+  `CREATE OR REPLACE FUNCTION` por `zapp-db-local psql . v2-2610111602b52d` (conferido, sem repetição).
 
 ## Passada de efeito colateral
 1. Gatilhos das tabelas tocadas (conferido no banco local): `messages` já tem
