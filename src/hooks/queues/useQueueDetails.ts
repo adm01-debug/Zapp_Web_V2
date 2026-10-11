@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
-import { fetchAllRows, type AllRowsResult } from '@/lib/fetchAllRows';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { fetchQueueMetrics, type QueueMetrics } from '@/pages/queue-details/queueMetrics';
 
 export interface QueueDetailsData {
@@ -152,29 +152,26 @@ export function useQueueDetails(id: string | undefined): QueueDetailsState {
         new Set(page.map((c) => c.assigned_to).filter((v): v is string => Boolean(v))),
       );
 
-      // Enriquecimento AGREGADO (R2-QUE-004): uma leitura por tabela, nunca uma por contato.
-      const messagesPromise: Promise<AllRowsResult<{ contact_id: string; created_at: string }>> =
-        contactIds.length
-          ? fetchAllRows<{ contact_id: string; created_at: string }>(
-              (from, to) =>
-                supabase
-                  .from('messages')
-                  .select('contact_id, created_at')
-                  .in('contact_id', contactIds)
-                  .order('id', { ascending: true })
-                  .range(from, to),
-              { pageSize: MESSAGES_PAGE_SIZE },
-            )
-          : Promise.resolve({ rows: [], incomplete: false });
+      // Enriquecimento AGREGADO (R2-QUE-004): uma leitura de `messages` por `in('contact_id', ids)`
+      // (paginada, para não subcontar contato muito ativo) e uma de `profiles` por `in('id', ids)`.
+      // O número de consultas não cresce com o número de contatos.
+      const messagesResult = contactIds.length
+        ? await fetchAllRows<{ contact_id: string; created_at: string }>(
+            (from, to) =>
+              supabase
+                .from('messages')
+                .select('contact_id, created_at')
+                .in('contact_id', contactIds)
+                .order('id', { ascending: true })
+                .range(from, to),
+            { pageSize: MESSAGES_PAGE_SIZE },
+          )
+        : { rows: [] as { contact_id: string; created_at: string }[], incomplete: false };
+      if (!isCurrent()) return;
 
-      const agentsPromise: Promise<{
-        data: { id: string; name: string | null; avatar_url: string | null }[] | null;
-        error: { message: string } | null;
-      }> = assignedToIds.length
-        ? supabase.from('profiles').select('id, name, avatar_url').in('id', assignedToIds)
-        : Promise.resolve({ data: [], error: null });
-
-      const [messagesResult, agentsResult] = await Promise.all([messagesPromise, agentsPromise]);
+      const agentsResult = assignedToIds.length
+        ? await supabase.from('profiles').select('id, name, avatar_url').in('id', assignedToIds)
+        : { data: [] as { id: string; name: string | null; avatar_url: string | null }[], error: null };
       if (!isCurrent()) return;
 
       if (agentsResult.error) throw agentsResult.error;
