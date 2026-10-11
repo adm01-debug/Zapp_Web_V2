@@ -1007,3 +1007,16 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # t_35d5aa82: paridade V3 -> V2 do remetente de grupo — public.messages ganha
+      # sender_participant_jid e sender_display_name (aditivas, anulaveis, sem backfill).
+      # Aplica as migrations REAIS do caminho de leitura + a desta tarefa num PostgreSQL 17
+      # descartavel e prova como PAPEL REAL (authenticated/anon) que a visibilidade de leitura
+      # nao muda, que outsider/anon seguem barrados e que o rollback derruba as colunas.
+      # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role
+      # (globais ao cluster) -> SKIP_DOCKER_SHIM="1", como os blocos vizinhos.
+      - name: Provar o remetente de grupo em messages (t_35d5aa82)
+        env:
+          MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/messages-group-sender.test.sh
