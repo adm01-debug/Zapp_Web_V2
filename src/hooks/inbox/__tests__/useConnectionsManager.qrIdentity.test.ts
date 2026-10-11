@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 
 // R2-API-039 / item 213 do BACKLOG_VERIFICADO:
 //   "Resposta e polling antigos misturam identidades no diálogo de QR Code".
@@ -97,6 +97,17 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+describe('useConnectionsManager — colunas explícitas', () => {
+  it('usa lista explícita de colunas em vez de select("*") — exclui qr_code e instance_token_secret_id', async () => {
+    const { result } = renderHook(() => useConnectionsManager());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const selectCall = mocks.select.mock.calls[0][0] as string;
+    expect(selectCall).not.toBe('*');
+    expect(selectCall).not.toContain('qr_code');
+    expect(selectCall).not.toContain('instance_token_secret_id');
+  });
 });
 
 describe('useConnectionsManager diálogo de QR (R2-API-039)', () => {
