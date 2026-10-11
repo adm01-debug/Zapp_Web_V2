@@ -1,26 +1,33 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-Cartão: cabeçalho do módulo de Tarefas (plano: linhas 251-253; imagem 05, linha 133).
+Cartão: etapas 154–158 do modal "Nova tarefa" (plano, linhas 434–438; imagem 04, seção 3.4 — linhas 110–117 da tabela de elementos).
 
-- `src/components/tasks/TasksModule.tsx` — subtítulo vira "Seu espaço de execução · N abertas · M para hoje" (etapa 013), o `PageHeader` ganha a prop `actions` (etapa 014) e o handler do atalho `N` deixa de focar o QuickAdd.
-- `src/components/tasks/shared/TasksHeaderMenu.tsx` (novo) — botão primário "+ Nova tarefa" (abre o modal pelo `TasksUiContext`; `aria-haspopup="dialog"` + `aria-expanded`) e o menu ⋮ (etapa 015) com "Atalhos de teclado" (dispara `show-shortcuts-help`) e "Densidade da lista" (radio Confortável/Compacta escrevendo a densidade ÚNICA do contexto). Nenhum item de exportar/baixar/copiar/imprimir.
-- Testes: `cabecalhoNovaTarefa.test.tsx` (novo, 5 casos) + `TasksModule.test.tsx` (subtítulo e N) + `cardAcoes.test.tsx` (escopo do kebab).
+- `src/components/tasks/shared/NewTaskDialog.tsx` (novo) — etapa 154: o Dialog do projeto, aberto pelo `TasksUiContext` (o MESMO estado do botão "+ Nova tarefa" e da tecla `N`); fecha por Esc, pelo X ("Close" do Dialog do projeto) e pelo overlay escrevendo `closeModal()`. Cabeçalho (etapa 155) com ícone, título "Nova tarefa" e subtítulo "Capture agora. Organize o próximo passo.".
+- `src/components/tasks/shared/new-task/TaskTitleField.tsx` (novo) — etapas 155/156: campo "Título da tarefa" em foco ao abrir, obrigatório, `maxLength` 200 com contador discreto do MESMO teto (20/200 anda junto do limite), erro inline "Informe o título da tarefa." só depois de tocar e sair vazio, com `role="alert"`, `aria-invalid` e `aria-describedby`.
+- `src/components/tasks/shared/new-task/PrioritySegment.tsx` (novo) — etapa 158: radiogroup real (tabindex móvel: só a escolhida é tabulável) com Baixa, Média (padrão), Alta e Urgente; as setas ←/→/↑/↓ andam e dão a volta no fim; cores só de token (`primary` na escolhida, `muted`/`border` nas demais — a cor POR prioridade é da `PriorityPill`, D12/etapa 170).
+- `src/components/tasks/shared/NewTaskDialog.tsx` + `TasksModule.tsx` — etapa 157: o campo "Contato" é o `ContactCombobox` já existente (avatar + nome quando há contato, "Sem contato" quando não há) e aceita `defaultContactId`/`defaultContact` para nascer pré-preenchido quando o modal vier de um contato.
+- `src/components/tasks/TasksModule.tsx` — única mudança no módulo: montar o modal SOB DEMANDA (`lazy()` + `Suspense` + `modalOpen`), como a linha 434 pede ("carregado sob demanda"). Nenhuma outra linha do módulo mudou.
+- Testes: `newTaskDialog.test.tsx` (novo, 7 casos) e `TasksModule.test.tsx` (+1 caso sob demanda).
 
 ## Prova (vermelho antes, verde depois)
-Vermelho: com o `TasksHeaderMenu.tsx` fora do lugar e o `TasksModule.tsx` do commit anterior, o mesmo comando deu 2 arquivos falhando / 5 testes falhando:
-  - `Failed to resolve import "@/components/tasks/shared/TasksHeaderMenu"`
-  - `Unable to find an element with the text: Seu espaço de execução · 4 abertas · 1 para hoje` (idem singular e milhar)
-  - `Unable to find an accessible element with the role "button" and name /Nova tarefa/` (2x)
-Verde depois (comando rodado agora):
-  - `npx vitest run src/components/tasks/__tests__/cabecalhoNovaTarefa.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx src/components/tasks/__tests__/cardAcoes.test.tsx` -> Test Files 3 passed (3), Tests 56 passed (56)
-  - `npx vitest run src/components/tasks` -> Test Files 24 passed (24), Tests 253 passed | 1 todo (254)
-  - `npx vitest run src/hooks/tasks src/hooks/ui src/hooks/shortcuts` -> Test Files 16 passed (16), Tests 215 passed (215)
+Vermelho antes: sem os arquivos novos (`NewTaskDialog.tsx` e `new-task/`), `npx vitest run src/components/tasks/__tests__/newTaskDialog.test.tsx` → `Failed to resolve import "@/components/tasks/shared/NewTaskDialog"`, `Test Files 1 failed (1)`, `Tests no tests`.
+Vermelho de comportamento: com o padrão da prioridade trocado de `medium` para `high`, o MESMO comando deu `Test Files 1 failed (1)`, `Tests 2 failed | 5 passed (7)`, com "etapa 158: Média é o padrão e as setas trocam o segmento escolhido" entre as falhas — a asserção morde o comportamento, não um mock.
+Verde depois (comandos rodados agora):
+- `npx vitest run src/components/tasks/__tests__/newTaskDialog.test.tsx` → `Test Files 1 passed (1)`, `Tests 7 passed (7)`
+- `npx vitest run src/components/tasks` → `Test Files 25 passed (25)`, `Tests 261 passed | 1 todo (262)`
+- `git commit`: pre-commit → `Lint ratchet (staged, 6 arquivo(s)): baseline=0, atual=0, mantidas=0, removidas=0, novas=0` / `OK: nenhuma nova divida de lint foi introduzida.`
 
-## Dependência (faixa do pai) — decisão registrada
-Trago a faixa do pai t_a332243d (5 commits, T11): é ela que entrega o `TasksUiContext`/`tasksUi` e o `<TasksUiProvider>` no `TasksModule` — sem isso o critério ("emitir a abertura do modal pelo TasksUiContext") não existe. `git log --oneline` mostra os commits do pai antes do meu.
+Acessibilidade (critério 3): o caso "sem violação de acessibilidade (axe)" roda `axe(document.body)` com o modal aberto → 0 violações; o foco inicial é conferido com `waitFor(() => expect(document.activeElement).toBe(campoTitulo()))`; o Esc é conferido pela sonda do contexto voltando a "fechado"; `getByLabelText('Título da tarefa')` prova que o `<Label htmlFor>` está ligado ao campo.
 
-NÃO trouxe a faixa do outro pai (t_0c220fdd, T12): o diff dela estoura o teto do próprio portão (`hermes-tarefa-fechar` recusou: "o diff tem 130913 caracteres adicionados ... regra acima de 90000"), e o meu cabeçalho não lê nada dela. Com o T12 fora, o diff desta branch ficou em 54010 caracteres adicionados (medido com `git diff 5eb097cff...HEAD | grep '^+' | wc -c`). Se o portão quiser o T12 junto, ele tem branch própria (`v2/kpi-strip-interativo-261011-2610111514033f`) para o integrador aplicar na ordem.
+## Contato (etapa 157) — serviço falso, componente real
+`@/hooks/crm/useContactsSearch` é trocado por um falso que devolve UMA linha ("Ana Souza"); o `ContactCombobox` REAL continua montado: o teste abre o popover, clica na opção e confere no chip o avatar (inicial determinística), o nome e o `aria-label` "Contato Ana Souza. Clique para trocar". O caminho pré-preenchido usa a prop nova com contato já conhecido (sem ir ao banco).
 
-## Um ponto herdado que eu não toquei (fora da minha área)
-`src/hooks/shortcuts/taskShortcutLabels.ts` descreve `tasks-focus-quickadd` como "Foca o campo de nova tarefa", e `src/hooks/__tests__/useGlobalKeyboardShortcuts.test.tsx` fixa a lista dos 7 atalhos: as duas coisas ficam desatualizadas com a etapa 014 (o `N` agora abre o modal). Não alterei nem uma nem outra (são do worker de hooks) — deixei o registro no comentário do cartão.
+## Dependência (faixas dos pais) — decisão registrada
+Trouxe aqui: `git cherry-pick $(git rev-list --reverse --no-merges dia/2026-10-11..2d12a0c60ea32850489ec3d41575c31d47de7045)` (7 commits). Essa faixa do pai t_f6c4421e já CONTÉM, na ordem, as faixas dos outros dois pais (t_3d9b0963 e t_a332243d) — por isso trouxe só ela, em vez de repetir os três cherry-picks e gerar commits vazios (o `--empty=drop` do cartão não existe no git 2.43 desta máquina). Sem a faixa o critério não existe: é ela que entrega `TasksUiContext`/`tasksUi`, `TasksHeaderMenu` e os primitivos (`PriorityPill` etc.) que o modal lê.
+
+## O que NÃO fiz e por quê
+- Rodapé ("Enter para criar", "Cancelar", "+ Criar tarefa", etapa 167), criação otimista (168), coluna de prévia (165) e a caixa informativa (166): são do cartão filho T36/T37 — não dupliquei escopo nem criei botão de criar sem o fluxo combinado.
+- Duas colunas: a segunda coluna é a prévia (etapa 165, T37). Hoje o modal é a coluna de formulário, sem área vazia na tela; quando o T37 montar a prévia, o grid entra lá.
+- Não toquei em `ContactCombobox.tsx`, `tasksUi.ts` nem `TasksUiContext.tsx` (faixa dos pais T04/T11) nem em qualquer arquivo fora da lista do cartão.
+- Nenhuma nova porta de exportar/importar/copiar/imprimir, nenhum campo novo de estado/destino (a tarefa nasce na Caixa de entrada, D10).
