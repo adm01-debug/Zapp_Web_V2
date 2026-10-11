@@ -73,9 +73,13 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-/** Seleciona o template "Boas-vindas" (o SEGUNDO da lista) clicando no cartão. */
+/**
+ * Seleciona o template "Boas-vindas" (o SEGUNDO da lista) clicando no cartão. O cartão
+ * é achado pelo `data-talkx-template-card`: desde o TL-175D ele não tem mais
+ * `role="button"` (os botões de ação vivem dentro dele — `nested-interactive`).
+ */
 const selecionarBoasVindas = () =>
-  fireEvent.click(screen.getByText('Olá {{nome}}').closest('[role="button"]') as HTMLElement);
+  fireEvent.click(screen.getByText('Olá {{nome}}').closest('[data-talkx-template-card]') as HTMLElement);
 
 /** Atalho "Duplicar template" do RailCard "Ações rápidas". */
 const clicarNoAtalhoDuplicar = () =>
