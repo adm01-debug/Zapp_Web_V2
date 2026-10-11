@@ -1,5 +1,6 @@
 -- whatsapp_default_connection_rpc_atomica
--- Rollback: DROP FUNCTION IF EXISTS public.set_default_whatsapp_connection(uuid);
+-- Rollback (SQL executavel, na ordem; funcao NOVA — DROP restaura tudo: corpo, grants e comment somem com ela):
+--   drop function if exists public.set_default_whatsapp_connection(uuid);
 
 -- ============================================================================
 -- TRA-004 / item 174 (P2, area migrations) — "Troca de conexao padrao nao e
