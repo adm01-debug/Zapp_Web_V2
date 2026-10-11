@@ -179,6 +179,11 @@ export function derivedToConversationContact(dc: DerivedContact): ConversationCo
     // IA, logo nao tem prioridade — 'medium' era valor fabricado (mascara de
     // ausencia na tela). A coluna e nullable no schema.
     ai_priority: null,
+    // Campos de prioridade MANUAL (contacts.manual_priority*) tambem sao nullable;
+    // contato derivado do WhatsApp nao tem prioridade definida por pessoa.
+    manual_priority: null,
+    manual_priority_by: null,
+    manual_priority_at: null,
     consent_status: 'opt_in',
     lead_origin: null,
     lead_score: 0,
