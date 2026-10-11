@@ -20,9 +20,13 @@
 ALTER TABLE public.talkx_recipients
   ADD COLUMN IF NOT EXISTS failed_at timestamptz;
 
+ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;
+
 UPDATE public.talkx_recipients
    SET failed_at = updated_at
  WHERE status = 'failed' AND failed_at IS NULL;
+
+ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
 
 CREATE OR REPLACE FUNCTION public.trg_talkx_recipients_failed_at()
 RETURNS trigger

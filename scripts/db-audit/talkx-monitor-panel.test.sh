@@ -29,6 +29,7 @@ declare -A CASES_SEEN=()
 declare -a CASES_EXPECTED=(
   series_total series_delivered_minute kpis stalled high_failure vs_yesterday_null
   vs_yesterday_value empty_campaign hour_bucket segment_filter failed_at_trigger
+  backfill_preserves_updated_at
   owner_ok admin_ok other_agent_denied missing_campaign_denied anon_denied
   no_profile_denied null_owner_denied
   invalid_args acl replay
@@ -120,6 +121,16 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER update_talkx_recipients_updated_at
+  BEFORE UPDATE ON public.talkx_recipients
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TABLE public.talkx_blacklist (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contact_id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -182,8 +193,8 @@ INSERT INTO public.talkx_campaigns (id, status, created_by, started_at, updated_
    now() - interval '1 hour', now() - interval '1 hour');
 INSERT INTO public.talkx_recipients (campaign_id, status, sent_at, delivered_at)
 SELECT '50000000-0000-0000-0000-00000000000c', 'delivered', public.m(2), public.m(1) FROM generate_series(1, 54);
-INSERT INTO public.talkx_recipients (campaign_id, status) -- falha entra pelo INSERT (trigger)
-SELECT '50000000-0000-0000-0000-00000000000c', 'failed' FROM generate_series(1, 6);
+INSERT INTO public.talkx_recipients (campaign_id, status, updated_at) -- backfill preserva updated_at antigo
+SELECT '50000000-0000-0000-0000-00000000000c', 'failed', now() - interval '4 days' FROM generate_series(1, 6);
 
 -- D: com envio ontem (3 envios, 1 resposta ontem) e hoje 2 respostas; pausada por motivo automatico.
 INSERT INTO public.talkx_campaigns (id, status, pause_reason, created_by, started_at, updated_at) VALUES
@@ -314,6 +325,9 @@ psql_q "UPDATE public.talkx_recipients SET status = 'failed' WHERE id = '$rid'" 
 expect 'failed_at nao e reescrito' "$(psql_q "SELECT failed_at < now() - interval '23 hours' FROM public.talkx_recipients WHERE id='$rid'")" 't'
 case_done failed_at_trigger
 pass '(8) failed_at preenchido no INSERT/UPDATE para failed e preservado'
+expect 'backfill nao regrava updated_at das falhas antigas' "$(psql_q "SELECT count(*) FROM public.talkx_recipients WHERE campaign_id='$(camp c)' AND status='failed' AND updated_at < now() - interval '3 days'")" 6
+case_done backfill_preserves_updated_at
+pass '(8b) backfill preserva updated_at mesmo com trigger BEFORE UPDATE ativo'
 
 # --- (9) autorizacao -----------------------------------------------------------
 expect 'dono' "$(psql_q "$owner SELECT public.talkx_monitor_panel('$(camp a)') IS NOT NULL")" 't'
