@@ -135,6 +135,39 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
   });
 });
 
+// Ponte Singu (recon t_0ed9b4f1): setor de atividade REAL (companies.ramo_atividade) e UF REAL
+// (company_addresses.estado is_primary) entram no catalogo como kind enum com igualdade EXATA.
+// O valor gravado e a string crua que a Edge leva ao Singu — por isso o campo NAO traz `options`
+// (a lista de ramos/UFs vem da RPC, nao de uma constante do front) e a UI cai na caixa de texto.
+// company/city/state continuam sendo texto livre: os segmentos ja salvos dependem deles.
+describe('RULE_FIELDS — setor e UF reais (ponte Singu)', () => {
+  const byField = Object.fromEntries(RULE_FIELDS.map((f) => [f.value, f]));
+
+  it('expoe real_sector e real_uf como kind enum na categoria basico', () => {
+    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico' });
+    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico' });
+    expect(byField.real_sector.label.length).toBeGreaterThan(0);
+    expect(byField.real_uf.label.length).toBeGreaterThan(0);
+  });
+
+  it('real_uf tem rotulo distinto do "UF" de texto livre (nao confunde os dois no seletor)', () => {
+    expect(byField.real_uf.label).not.toBe(byField.state.label);
+  });
+
+  it('os dois campos usam igualdade exata (enum: eq/neq/is_empty), nunca "contem"', () => {
+    const opsEnum = RULE_OPS.enum.map((o) => o.value);
+    expect(opsEnum).toEqual(expect.arrayContaining(['eq', 'neq', 'is_empty']));
+    expect(opsEnum).not.toContain('contains');
+    expect(opsEnum).not.toContain('not_contains');
+  });
+
+  it('nao muta os campos de texto livre usados por segmentos salvos', () => {
+    expect(byField.company).toMatchObject({ label: 'Empresa', kind: 'text', category: 'basico' });
+    expect(byField.city).toMatchObject({ label: 'Cidade', kind: 'text', category: 'basico' });
+    expect(byField.state).toMatchObject({ label: 'UF', kind: 'text', category: 'basico' });
+  });
+});
+
 // X008 — uma condição em branco precisa ficar de FORA da estimativa, sem derrubar
 // o count para 0 nem deixar passar valor inválido para o PostgREST.
 const regra = (field: string, op: string, value: string): SegmentRule =>

@@ -24,7 +24,8 @@ export type RuleField =
   | 'tags' | 'company' | 'contact_type' | 'conversation_status' | 'channel_type'
   | 'consent_status' | 'lead_score' | 'risk_score' | 'ai_priority' | 'ai_sentiment'
   | 'lead_origin' | 'updated_at' | 'created_at' | 'email'
-  | 'city' | 'state' | 'assigned_to' | 'group_category';
+  | 'city' | 'state' | 'assigned_to' | 'group_category'
+  | 'real_sector' | 'real_uf';
 export type RuleOp =
   | 'eq' | 'neq' | 'contains' | 'not_contains' | 'gt' | 'gte' | 'lt' | 'lte'
   | 'in_last_days' | 'not_in_last_days' | 'is_set' | 'is_empty';
@@ -65,6 +66,15 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
   { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
   { value: 'state', label: 'UF', kind: 'text', category: 'basico' },
+  // Setor de atividade e UF REAIS (ponte Singu): o valor vive em
+  // companies.ramo_atividade / company_addresses.estado (is_primary) e nao em
+  // public.contacts, entao nao vem de texto livre digitado no Zapp. kind enum
+  // com igualdade exata (eq/neq/is_empty); sem `options` fixas — a lista de
+  // ramos/UFs vem da RPC do Singu, e uma constante local ofereceria valor que a
+  // ponte pode recusar. Sem `category` nova: entram no grupo básico junto de
+  // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).
+  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico' },
+  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico' },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
