@@ -48,6 +48,11 @@ const ALLOWLIST = new Set([
   'scripts/db-audit/talkx-optout.test.sh',
   'scripts/db-audit/talkx-overview-stats.test.sh',
   'scripts/db-audit/talkx-campaign-segments.test.sh',
+  // N-118 (item t_f0720c47): versiona a prova SQL de talkx_campaign_window_open em PG 17
+  // descartável (docker local) contra a migration 20261011000003 — fuso da campanha,
+  // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/talkx-campaign-window-open.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
