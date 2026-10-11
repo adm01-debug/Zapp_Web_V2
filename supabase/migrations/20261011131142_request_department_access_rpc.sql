@@ -6,17 +6,9 @@
 --   alter table public.department_audit_logs drop constraint if exists department_audit_logs_action_check;
 --   alter table public.department_audit_logs add constraint department_audit_logs_action_check check (action in ('accept_invite','create_invite','join_department','leave_department','remove_member','update_settings','delete_department','create_department','update_role','kick_member','create_group','delete_group','whatsapp_updated'));
 --
--- Nota de rollback: sem corpo anterior — a funcao e NOVA (nenhuma migration do
--- repositorio criava public.request_department_access), portanto o rollback a
--- dropa sem recriar corpo; e sem GRANT a restaurar (no estado anterior ninguem
--- tinha EXECUTE nela).
--- Cartao N-071: RPC que cria notificacoes para admins/supervisores do departamento e linha access_requested na auditoria.
--- Estado anterior (meio de prova, arquivos reais do repositorio):
---   * a funcao NAO existia: nenhuma migration do repositorio cria public.request_department_access
---     (so este arquivo a menciona); por isso o rollback e DROP FUNCTION, sem recriar corpo nem GRANT;
---   * o CHECK anterior e o do F10 (supabase/migrations/20261006213734_team_chat_f10_department_whatsapp_safe_config.sql):
---     os mesmos 13 verbos, na mesma ordem; nenhum verbo antigo sai.
--- ACL: so authenticated executa. anon recebe permission denied do Postgres (sem oraculo de JSON).
+-- N-071. Funcao NOVA (nenhuma migration a criava) -> rollback so DROP, sem corpo/GRANT a restaurar.
+-- CHECK anterior = o do F10 (20261006213734_team_chat_f10_department_whatsapp_safe_config.sql): 13 verbos.
+-- ACL: so authenticated executa (anon = permission denied do Postgres).
 
 -- 1) Amplia o vocabulario de auditoria: 'access_requested' (nenhum verbo antigo sai).
 ALTER TABLE public.department_audit_logs DROP CONSTRAINT IF EXISTS department_audit_logs_action_check;
