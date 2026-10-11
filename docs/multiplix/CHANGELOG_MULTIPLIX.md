@@ -14,7 +14,7 @@ aberta, e publicação de documento não fecha etapa.
 
 - 2026-10-08 · Grafo do repositório regenerado no HEAD (E001 · F99) · receita `PYTHONHASHSEED=0 graphify update . --force` (sem custo de API); `graphify-out/GRAPH_REPORT.md` registra o commit de HEAD na seção "Graph Freshness". `graphify-out/` é gitignored (`.gitignore`), então o grafo é artefato LOCAL, regenerável a qualquer momento e **não versionado** — a ausência dele num checkout não prova código morto: o próprio manifesto de evidência do grafo declara o limite da extração AST em `docs/reconciliation/evidence/graphify_evidence_manifest.json` ("AST extraction does not establish dynamic runtime reachability or dead code").
 
-- 2026-10-08 · Superfície do módulo no app (tela, monitor e composer) · `src/components/multiplix/MultiplixView.tsx`, `src/components/multiplix/MultiplixMonitor.tsx`, `src/components/multiplix/MultiplixComposerDialog.tsx`.
+- 2026-10-08 · Superfície do módulo no app (tela com composição inline e monitor) · `src/components/multiplix/MultiplixView.tsx`, `src/components/multiplix/MultiplixMonitor.tsx`.
 
 - 2026-10-08 · Estado e elegibilidade no app · hooks de integração `src/hooks/integrations/useMultiplixDispatches.ts` e `src/hooks/integrations/useMultiplixAudience.ts`; regra de elegibilidade compartilhada em `src/lib/multiplix-eligibility.ts`.
 
