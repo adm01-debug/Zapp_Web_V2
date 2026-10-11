@@ -1,23 +1,21 @@
 Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- src/hooks/chat/useWhisperMessagesMutation.ts (novo): envio do sussurro como nota interna. Valida contato com UUID, resolve o PERFIL do remetente (auth.uid -> profiles.id, como a RLS "Users can insert own whisper messages" exige) e o RESPONSÁVEL atual (contacts.assigned_to), e grava em `whisper_messages` por `insert`. Devolve `{ ok }` ou `{ ok:false, motivo }` — nunca lança para o compositor. Avisa o contador local no sucesso.
+- src/components/inbox/chat/useChatPanelHandlers.ts: modo sussurro no compositor — estado `isWhisper`/`setIsWhisper`/`toggleWhisper` (default desligado) e, no `handleSend`, o ramo do sussurro RETORNA antes de qualquer caminho de canal: `onSendMessage` não é chamado nem no envio, nem no retry. Sucesso limpa o compositor e desliga o modo; falha MANTÉM o texto e avisa a causa (sem responsável / perfil não carregado / contato sem UUID / anexo pendente / erro). Escape desliga o modo.
+- src/hooks/chat/useWhisperCount.ts (novo): contador de sussurros da conversa para o selo do cabeçalho, com `count`/`head` (contagem no servidor, sem trazer conteúdo), restrito ao que a RLS já deixa visível.
+- src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx (novo): prova os caminhos acima com o hook REAL.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (ramo do sussurro desligado de propósito): `npx vitest run src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx` -> `Tests  5 failed | 3 passed (8)`; o texto "sussurrado" caía no canal (`expected vi.fn() not to be called ... Number of calls: 1`).
+- verde depois: mesmo comando -> `Test Files  1 passed (1); Tests  8 passed (8)`.
+- regressão da área: `npx vitest run src/components/inbox/chat/__tests__ src/components/inbox/__tests__/ChatPanel.*` -> `Test Files  33 passed (33); Tests  233 passed (233)`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Decisões que o cartão pedia para relatar
+- Destino do sussurro: `whisper_messages.target_agent_id` é NOT NULL com FK para `profiles(id)` (schema-catalog + migration 20260317214556, sem ALTER depois). Não existe perfil de "fila", então "à fila" NÃO é representável nessa tabela: o sussurro vai para o RESPONSÁVEL ATUAL da conversa (`contacts.assigned_to`) e, sem responsável, o envio é RECUSADO com aviso e o texto é preservado. Isso é o mesmo precedente do painel (WhisperMode exige destino escolhido).
+- Anexo: o compositor não guarda o anexo (ele vive no `FileUploader`); expus a checagem como opção opcional `temAnexoPendente` do handler, para a tela que monta o botão ligá-la. Sem ela, o sussurro é texto puro.
+- Trocar de conversa já zera o compositor: o `ChatPanel` é remontado por `key={conversation.id}` (RealtimeInboxView:334), então não precisei de reset no hook.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não toquei em ChatPanel.tsx / ChatInputArea.tsx / WhisperMode.tsx (tela): o botão de sussurro e o selo do cabeçalho são da área de componentes; o handler já EXPORTA `isWhisper`, `setIsWhisper` e `toggleWhisper` para essa tela ligar.
+- Nenhum DDL: a tabela e a RLS de `whisper_messages` já existem; não mexi em migration.
