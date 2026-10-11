@@ -310,6 +310,8 @@ describe('E62 — contraste do combobox de endereços nos temas', () => {
  *                   5,24:1 sobre --muted, 5,37:1 sobre --input
  *   escuro — sem regressão: continua 215 30% 78% (10,88:1 sobre --background)
  */
+
+
 describe('TL-175B — foreground-secondary legível no tema claro', () => {
   /** Fundos claros sobre os quais o Talk X pinta `text-foreground-secondary`. */
   const FUNDOS_CLAROS = ['background', 'card', 'popover', 'muted', 'input'] as const;
@@ -345,4 +347,85 @@ describe('TL-175B — foreground-secondary legível no tema claro', () => {
       luminancia(parede(ESCURO, 'foreground-secondary')),
     );
   });
+});
+
+/**
+ * TL-N029 — selos de SLA (Inbox): o texto de cada selo precisa de contraste ≥ 4,5:1
+ * contra o fundo real do próprio selo, nos dois temas.
+ *
+ * Este teste lê o mapa `statusStyles` de `src/components/inbox/SLAIndicator.tsx` (as classes de
+ * texto e de fundo que o componente realmente pinta), resolve cada classe no token de
+ * tokens.css e mede a razão WCAG 2.1. É o que prende o defeito: se o componente voltar a usar
+ * `text-warning` / `text-destructive` — as cores de PREENCHIMENTO — como texto, a classe deixa
+ * de ser `*-text`, o token resolvido muda e a razão cai abaixo de 4,5:1.
+ *
+ * Números medidos por este arquivo nos tokens atuais (fundo = alfa 0,1 do token sobre --card):
+ *   claro  — antes: `text-warning` sobre bg-warning/10 = 1,98:1 e
+ *            `text-destructive` sobre bg-destructive/10 = 3,32:1 (abaixo de 4,5);
+ *            depois: warning-text 5,02:1, destructive-text 6,00:1 e selo ok 4,92:1.
+ *   escuro — warning-text 8,22:1, destructive-text 5,33:1 e selo ok 6,59:1 (já fechavam AA).
+ */
+describe('TL-N029 — contraste dos selos SLA no Inbox', () => {
+  const SLA_FONTE = readFileSync('src/components/inbox/SLAIndicator.tsx', 'utf8');
+
+  /** Classes de `bg`/`text` de cada selo, lidas direto do mapa `statusStyles` do componente. */
+  function statusStylesDoComponente(): Record<string, { bg: string; text: string }> {
+    const mapa: Record<string, { bg: string; text: string }> = {};
+    for (const linha of Array.from(
+      SLA_FONTE.matchAll(/^\s*(ok|warning|breached):\s*\{([^}]*)\}/gm),
+    )) {
+      const corpo = linha[2];
+      const bg = corpo.match(/bg:\s*'([^']+)'/)?.[1];
+      const text = corpo.match(/text:\s*'([^']+)'/)?.[1];
+      if (!bg || !text) throw new Error(`statusStyles.${linha[1]} sem bg/text em SLAIndicator.tsx`);
+      mapa[linha[1]] = { bg, text };
+    }
+    return mapa;
+  }
+
+  /** `text-[hsl(var(--x))]` e `text-x` → nome do token `--x`. */
+  function tokenDoTexto(classe: string): string {
+    const comVar = classe.match(/^text-\[hsl\(var\(--([\w-]+)\)\)\]$/);
+    if (comVar) return comVar[1];
+    const simples = classe.match(/^text-([\w-]+)$/);
+    if (simples) return simples[1];
+    throw new Error(`classe de texto não reconhecida: ${classe}`);
+  }
+
+  /** `bg-x/10` → token `--x` e alfa 0,1. */
+  function tokenDoFundo(classe: string): { token: string; alfa: number } {
+    const m = classe.match(/^bg-([\w-]+)\/(\d+)$/);
+    if (!m) throw new Error(`classe de fundo não reconhecida: ${classe}`);
+    return { token: m[1], alfa: Number(m[2]) / 100 };
+  }
+
+  const SELOS = statusStylesDoComponente();
+
+  it('statusStyles do componente usa os tokens de texto, não as cores de preenchimento', () => {
+    expect(Object.keys(SELOS).sort(), 'statusStyles precisa ter os 3 selos').toEqual([
+      'breached',
+      'ok',
+      'warning',
+    ]);
+    expect(tokenDoTexto(SELOS.warning.text), "selo 'atenção'").toBe('warning-text');
+    expect(tokenDoTexto(SELOS.breached.text), "selo 'violado'").toBe('destructive-text');
+    expect(tokenDoTexto(SELOS.ok.text), "selo 'no prazo'").toBe('success');
+  });
+
+  for (const [nome, tokens, fundoBase] of [
+    ['claro', CLARO, parede(CLARO, 'card')],
+    ['escuro', ESCURO, parede(ESCURO, 'card')],
+  ] as const) {
+    for (const selo of ['ok', 'warning', 'breached'] as const) {
+      it(`${nome}: selo '${selo}' fecha 4,5:1 sobre o fundo que o componente pinta`, () => {
+        const { bg, text } = SELOS[selo];
+        const { token: tokenFundo, alfa } = tokenDoFundo(bg);
+        const fundo = compor(parede(tokens, tokenFundo), alfa, fundoBase);
+        const texto = parede(tokens, tokenDoTexto(text));
+        expect(razao(texto, fundo), `${nome}: ${text} sobre ${bg}`).toBeGreaterThanOrEqual(
+          LIMIAR_TEXTO,
+        );
+      });
+    }
+  }
 });

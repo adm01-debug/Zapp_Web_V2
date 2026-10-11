@@ -109,7 +109,7 @@ export function SLAIndicator({
                 <Timer className="w-3 h-3" />
                 <span className="font-medium">Primeira Resposta:</span>
                 {firstResponseAt ? (
-                  <span className={sla.firstResponse.breached ? 'text-destructive' : 'text-success'}>
+                  <span className={sla.firstResponse.breached ? 'text-[hsl(var(--destructive-text))]' : 'text-success'}>
                     {sla.firstResponse.breached ? 'Violado' : 'OK'}
                   </span>
                 ) : (
