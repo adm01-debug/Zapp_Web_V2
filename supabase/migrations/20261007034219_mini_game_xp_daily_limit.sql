@@ -46,14 +46,26 @@ DECLARE
   v_new_xp    bigint;
   v_new_level int;
   v_max       constant integer := 5;
+  v_actor     uuid := auth.uid();
+  v_role      text := nullif(auth.role(), '');
 BEGIN
-  IF auth.role() = 'anon' OR (
-    auth.uid() IS NOT NULL AND NOT (
-      p_profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-      OR is_admin_or_supervisor(auth.uid())
-    )
-  ) THEN
+  IF v_role = 'anon' THEN
     RAISE EXCEPTION 'permission denied';
+  END IF;
+
+  -- Chamadas autenticadas precisam carregar JWT de usuário e pertencer ao
+  -- próprio perfil (ou a admin/supervisor). Sem uid a proteção antiga ficava
+  -- opcional: qualquer sessão com role authenticated conseguia creditar outro
+  -- perfil. Chamadas administrativas locais/SQL sem JWT continuam permitidas
+  -- apenas para o dono da sessão postgres/supabase_admin; service_role também.
+  IF coalesce(v_role, '') <> 'service_role'
+     AND NOT (v_role IS NULL AND session_user IN ('postgres', 'supabase_admin')) THEN
+    IF v_actor IS NULL OR NOT (
+      p_profile_id IN (SELECT id FROM profiles WHERE user_id = v_actor)
+      OR is_admin_or_supervisor(v_actor)
+    ) THEN
+      RAISE EXCEPTION 'permission denied';
+    END IF;
   END IF;
 
   v_game_id := lower(btrim(coalesce(p_game_id, '')));

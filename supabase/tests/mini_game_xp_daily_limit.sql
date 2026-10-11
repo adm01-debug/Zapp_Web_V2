@@ -158,17 +158,17 @@ BEGIN
   END IF;
   RAISE NOTICE 'PASS|9|game_id desconhecido regex-valido recusado sem alterar xp';
 
-  -- 10. ramo de autorizacao real: authenticated com JWT de outro usuario nao
-  -- pode creditar XP no perfil-alvo. A chamada deve cair em permission denied.
+  -- 10. authenticated sem uid no JWT nao pode cair no caminho liberado.
+  -- Sem essa prova, a autorizacao ficava opcional quando auth.uid() era NULL.
   SELECT s.xp INTO v_xp_before FROM public.agent_stats s WHERE s.profile_id = v_profile;
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', v_other_user::text, 'role', 'authenticated')::text, true);
-  PERFORM set_config('request.jwt.claim.sub', v_other_user::text, true);
+  PERFORM set_config('request.jwt.claims', json_build_object('role', 'authenticated')::text, true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
   PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
   BEGIN
     EXECUTE 'SET LOCAL ROLE authenticated';
     PERFORM public.credit_agent_mini_game_xp(v_profile, 'speed-typing', 33);
     EXECUTE 'RESET ROLE';
-    RAISE EXCEPTION '10 FALHOU: outro usuario authenticated deveria receber permission denied';
+    RAISE EXCEPTION '10 FALHOU: authenticated sem uid deveria receber permission denied';
   EXCEPTION WHEN OTHERS THEN
     EXECUTE 'RESET ROLE';
     IF SQLERRM <> 'permission denied' THEN
@@ -180,25 +180,51 @@ BEGIN
   PERFORM set_config('request.jwt.claim.role', '', true);
   SELECT s.xp INTO v_xp FROM public.agent_stats s WHERE s.profile_id = v_profile;
   IF v_xp <> v_xp_before THEN
-    RAISE EXCEPTION '10 FALHOU: permission denied alterou xp, antes=% depois=%', v_xp_before, v_xp;
+    RAISE EXCEPTION '10 FALHOU: authenticated sem uid alterou xp, antes=% depois=%', v_xp_before, v_xp;
   END IF;
-  RAISE NOTICE 'PASS|10|authenticated de outro usuario recebe permission denied sem alterar xp';
+  RAISE NOTICE 'PASS|10|authenticated sem uid recebe permission denied sem alterar xp';
 
-  -- 11. ACL: anon sem EXECUTE; authenticated com EXECUTE; tabela fechada para
+  -- 11. ramo de autorizacao real: authenticated com JWT de outro usuario nao
+  -- pode creditar XP no perfil-alvo. A chamada deve cair em permission denied.
+  SELECT s.xp INTO v_xp_before FROM public.agent_stats s WHERE s.profile_id = v_profile;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', v_other_user::text, 'role', 'authenticated')::text, true);
+  PERFORM set_config('request.jwt.claim.sub', v_other_user::text, true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+  BEGIN
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    PERFORM public.credit_agent_mini_game_xp(v_profile, 'speed-typing', 33);
+    EXECUTE 'RESET ROLE';
+    RAISE EXCEPTION '11 FALHOU: outro usuario authenticated deveria receber permission denied';
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE 'RESET ROLE';
+    IF SQLERRM <> 'permission denied' THEN
+      RAISE;
+    END IF;
+  END;
+  PERFORM set_config('request.jwt.claims', '', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', '', true);
+  SELECT s.xp INTO v_xp FROM public.agent_stats s WHERE s.profile_id = v_profile;
+  IF v_xp <> v_xp_before THEN
+    RAISE EXCEPTION '11 FALHOU: permission denied alterou xp, antes=% depois=%', v_xp_before, v_xp;
+  END IF;
+  RAISE NOTICE 'PASS|11|authenticated de outro usuario recebe permission denied sem alterar xp';
+
+  -- 12. ACL: anon sem EXECUTE; authenticated com EXECUTE; tabela fechada para
   -- authenticated (sem SELECT/INSERT/UPDATE/DELETE).
   IF has_function_privilege('anon', 'public.credit_agent_mini_game_xp(uuid,text,integer)', 'EXECUTE') THEN
-    RAISE EXCEPTION '11 FALHOU: anon nao deveria ter EXECUTE na RPC';
+    RAISE EXCEPTION '12 FALHOU: anon nao deveria ter EXECUTE na RPC';
   END IF;
   IF NOT has_function_privilege('authenticated', 'public.credit_agent_mini_game_xp(uuid,text,integer)', 'EXECUTE') THEN
-    RAISE EXCEPTION '11 FALHOU: authenticated deveria ter EXECUTE na RPC';
+    RAISE EXCEPTION '12 FALHOU: authenticated deveria ter EXECUTE na RPC';
   END IF;
   IF has_table_privilege('authenticated', 'public.agent_mini_game_xp_daily', 'SELECT')
      OR has_table_privilege('authenticated', 'public.agent_mini_game_xp_daily', 'INSERT')
      OR has_table_privilege('authenticated', 'public.agent_mini_game_xp_daily', 'UPDATE')
      OR has_table_privilege('authenticated', 'public.agent_mini_game_xp_daily', 'DELETE') THEN
-    RAISE EXCEPTION '11 FALHOU: authenticated nao deveria ter privilegio na tabela';
+    RAISE EXCEPTION '12 FALHOU: authenticated nao deveria ter privilegio na tabela';
   END IF;
-  RAISE NOTICE 'PASS|11|ACL confere (anon sem EXECUTE, authenticated com EXECUTE, tabela fechada)';
+  RAISE NOTICE 'PASS|12|ACL confere (anon sem EXECUTE, authenticated com EXECUTE, tabela fechada)';
 
   RAISE NOTICE 'mini_game_xp_daily_limit: suite OK';
 END $$;
