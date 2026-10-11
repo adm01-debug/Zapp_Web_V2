@@ -25,6 +25,7 @@ function resultChain(result: Record<string, unknown>) {
   obj.eq = vi.fn(() => obj);
   obj.gt = vi.fn(() => obj);
   obj.order = vi.fn(() => obj);
+  obj.select = vi.fn(() => obj);
   obj.single = vi.fn(() => obj);
   obj.then = (resolve: (v: unknown) => void, reject?: (e: unknown) => void) =>
     Promise.resolve(result).then(resolve, reject);
