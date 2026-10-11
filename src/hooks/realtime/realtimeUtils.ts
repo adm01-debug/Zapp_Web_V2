@@ -1,8 +1,149 @@
 import { RealtimeMessage, ConversationContact, ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import type { UnsupportedMessageKind } from '@/types/chat';
 
-export function normalizeMessage(message: RealtimeMessage): RealtimeMessage {
+/** `message_type` canônico (o que a UI sabe renderizar) para os tipos crus do WhatsApp. */
+const RENDERABLE_MESSAGE_TYPES: Record<string, string> = {
+  text: 'text',
+  conversation: 'text',
+  extendedTextMessage: 'text',
+  image: 'image',
+  imageMessage: 'image',
+  video: 'video',
+  videoMessage: 'video',
+  audio: 'audio',
+  audioMessage: 'audio',
+  document: 'document',
+  documentMessage: 'document',
+  documentWithCaptionMessage: 'document',
+  sticker: 'sticker',
+  stickerMessage: 'sticker',
+  location: 'location',
+  locationMessage: 'location',
+  interactive: 'interactive',
+};
+
+const POLL_MESSAGE_TYPES = new Set([
+  'poll',
+  'pollCreationMessage',
+  'pollCreationMessageV2',
+  'pollCreationMessageV3',
+  'pollUpdateMessage',
+]);
+
+const VIEW_ONCE_MESSAGE_TYPES = new Set([
+  'view_once',
+  'viewOnce',
+  'viewOnceMessage',
+  'viewOnceMessageV2',
+  'viewOnceMessageV2Extension',
+]);
+
+const CONTACT_MESSAGE_TYPES = new Set([
+  'contact',
+  'contactMessage',
+  'contactsArrayMessage',
+]);
+
+/**
+ * Tipos de protocolo/controle: nunca viram balão. Se fossem traduzidos para
+ * 'unsupported' apareceria um balão para um evento que não é mensagem do usuário.
+ *
+ * Ficam aqui SÓ os tipos que nunca carregam conteúdo de usuário. `ephemeralMessage`
+ * NÃO entra: é o invólucro do modo temporário — por dentro há mensagem real do
+ * usuário (texto/mídia gravados em `content`/`media_url`). Tratar como controle
+ * engoliria esse conteúdo; com payload ele segue a regra do desconhecido e cai em
+ * 'unsupported'/'other'. `messageContextInfo` também não entra: é metadado de
+ * protocolo, mas se um dia chegar com conteúdo/mídia não pode sumir — a checagem
+ * abaixo só o trata como controle quando vem sem payload.
+ */
+const CONTROL_MESSAGE_TYPES = new Set([
+  'protocolMessage',
+  'senderKeyDistributionMessage',
+  'reactionMessage',
+  'reaction',
+  'stickerSyncRmrMessage',
+]);
+
+export interface MessageTypeClassification {
+  /** Valor de `message_type` depois da tradução. */
+  messageType: string;
+  /** Presente quando a mensagem deve cair no balão de fallback. */
+  unsupportedKind?: UnsupportedMessageKind;
+  /** Tipo de controle: fica fora da conversa, não gera balão. */
+  isControl: boolean;
+}
+
+/**
+ * Traduz o `message_type` cru (public.messages / evolution_messages) para o que a
+ * UI do Zapp Web V2 sabe renderizar.
+ *
+ * O webhook grava o nome cru (`poll`, `contact`, `pollCreationMessage`,
+ * `protocolMessage`…). Antes, quem não estava no mapa virava 'text' e um balão
+ * vazio: aqui a decisão fica num lugar só — enquete, visualização única e contato
+ * caem em 'unsupported' com o motivo; tipo desconhecido QUE TRAZ conteúdo/mídia
+ * também vira 'unsupported'/'other' (em vez de 'text' vazio); controle continua
+ * com o nome cru para não virar balão. Exceções: `ephemeralMessage` (invólucro do
+ * modo temporário, por dentro há mensagem real) nunca é controle; `messageContextInfo`
+ * só é controle quando vem sem payload — com conteúdo/mídia seguem a regra do
+ * desconhecido.
+ *
+ * @param hasPayload se a mensagem traz `content`/mídia (decide o destino do desconhecido).
+ */
+export function classifyMessageType(
+  rawType: string | null | undefined,
+  hasPayload: boolean,
+): MessageTypeClassification {
+  const raw = (rawType ?? '').trim();
+
+  if (CONTROL_MESSAGE_TYPES.has(raw)) {
+    return { messageType: raw, isControl: true };
+  }
+
+  // `messageContextInfo` é metadado de protocolo (nunca conteúdo do usuário), mas
+  // só pode ser tratado como controle quando vem SEM payload: se um dia chegar com
+  // conteúdo/mídia, engolir como controle sumiria com conteúdo real — nesse caso
+  // segue a regra do desconhecido abaixo ('unsupported'/'other').
+  if (raw === 'messageContextInfo' && !hasPayload) {
+    return { messageType: raw, isControl: true };
+  }
+
+  if (POLL_MESSAGE_TYPES.has(raw)) {
+    return { messageType: 'unsupported', unsupportedKind: 'poll', isControl: false };
+  }
+  if (VIEW_ONCE_MESSAGE_TYPES.has(raw)) {
+    return { messageType: 'unsupported', unsupportedKind: 'view_once', isControl: false };
+  }
+  if (CONTACT_MESSAGE_TYPES.has(raw)) {
+    return { messageType: 'unsupported', unsupportedKind: 'contact', isControl: false };
+  }
+
+  const renderable = RENDERABLE_MESSAGE_TYPES[raw];
+  if (renderable) {
+    return { messageType: renderable, isControl: false };
+  }
+
+  // Desconhecido: com conteúdo/mídia vira fallback visível; sem nada, mantém o
+  // nome cru para não inventar um balão para um evento vazio.
+  if (hasPayload) {
+    return { messageType: 'unsupported', unsupportedKind: 'other', isControl: false };
+  }
+  return { messageType: raw, isControl: false };
+}
+
+/** RealtimeMessage já normalizada; pode carregar o motivo do fallback. */
+export type NormalizedRealtimeMessage = RealtimeMessage & {
+  unsupportedKind?: UnsupportedMessageKind;
+};
+
+export function normalizeMessage(message: RealtimeMessage): NormalizedRealtimeMessage {
+  const classification = classifyMessageType(
+    message.message_type,
+    Boolean(message.content || message.media_url || message.caption),
+  );
   return {
     ...message,
+    message_type: classification.messageType,
+    ...(classification.unsupportedKind ? { unsupportedKind: classification.unsupportedKind } : {}),
     status: message.status ?? 'sent',
     status_updated_at: message.status_updated_at ?? null,
   };
