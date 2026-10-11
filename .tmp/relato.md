@@ -13,6 +13,13 @@ Concluído: rodada SÓ-RELATO — código intacto (o fix `params.delete('q')` j�
 ## Pontos do revisor
 - Ponto 1 (vermelho real, cenário código-base + testes-novos): as 5 falhas são do tipo pedido — 4× `AssertionError: expected 'liga' to be null` (useTasksFilters.test.tsx:113 F3; useTasksFilters.test.tsx:125; workItemFilters.test.ts:28; workItemFilters.test.ts:65) e 1× `AssertionError: expected 'orçamento' to be '' // Object.is equality` (workItemFilters.test.ts:55). Medido: `grep -c` em `.tmp/vermelho.log` retorna 4 e 1. O 3º arquivo (TasksModule, 34 testes) passa com base e com fix (34 passed nos dois estados, medido) — a prova do defeito está nos 2 arquivos de hook (5 falhas ↔ 0).
 - Ponto 2 (verde + verify literais): `Test Files 3 passed (3); Tests 52 passed (52)` e `VERIFY: VERDE SEM BANCO (85s)`, com logs em `.tmp/verde.log` / `.tmp/verify.log`.
+- Excertos literais colados (o revisor só vê relato + diff; os logs completos estão em `.tmp/vermelho.log` / `.tmp/verde.log` no workspace):
+  - vermelho, cabeça: `❯ src/hooks/tasks/__tests__/workItemFilters.test.ts (8 tests | 3 failed)` + `❯ src/hooks/tasks/__tests__/useTasksFilters.test.tsx (10 tests | 2 failed)` + `Failed Tests 5`
+  - vermelho, falha-tipo 1: `FAIL ... workItemFilters.test.ts > ... escreve só o que difere do padrão e preserva o resto da URL (view); q nao vai para a URL` / `AssertionError: expected 'liga' to be null` / `+ Received: "liga"`
+  - vermelho, falha-tipo 2: `FAIL ... workItemFilters.test.ts > ... ida e volta: o que escreve, lê de volta (q nao vai para a URL)` / `AssertionError: expected 'orçamento' to be '' // Object.is equality` / `+ orçamento`
+  - vermelho, rodapé: `Test Files 2 failed | 1 passed (3)` / `Tests 5 failed | 47 passed (52)` / `Start at 13:55:37`
+  - verde, rodapé: `Test Files 3 passed (3)` / `Tests 52 passed (52)` / `Start at 13:52:41`
+  - verify: `OK db_guard 0s` / `OK tipos 84s` / `OK lint 0s` / `OK migrations 1s` / `VERIFY: VERDE SEM BANCO (85s)`
 
 ## O que NÃO fiz e por quê
 - Não mudei código (proibido nesta rodada; `git diff dia/2026-10-11 -- src/` vazio).
