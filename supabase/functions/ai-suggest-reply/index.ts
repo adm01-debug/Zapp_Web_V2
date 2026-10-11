@@ -54,25 +54,34 @@ export async function handleAiSuggestReply(
     // IA-048: identidade da requisição, ecoada no corpo (só eco — sem efeito novo).
     const requestId = parsed.data.requestId ?? null;
 
-    // Fetch Knowledge Base articles for context
+    // Fetch Knowledge Base articles for context — only articles returned
+    // by search_knowledge_base para a última mensagem do cliente entram
+    // no prompt. Se retornar vazio, nenhum artigo entra.
     let knowledgeContext = '';
     try {
       const supabaseUrl = requireEnv("SUPABASE_URL");
       const supabaseKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      const { data: articles } = await supabase
-        .from('knowledge_base_articles')
-        .select('title, content, category')
-        .eq('is_published', true)
-        .limit(10);
+      const lastClientMessage = Array.isArray(messages)
+        ? [...messages].reverse().find((m) => m.sender !== 'agent')?.content
+        : null;
 
-      if (articles && articles.length > 0) {
-        knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
-          articles.map((a: { category: string | null; title: string; content: string }) =>
-            `[${a.category || 'Geral'}] ${a.title}: ${a.content.substring(0, 500)}`
-          ).join('\n---\n')
-        }`;
+      if (lastClientMessage) {
+        const { data: relevantArticles, error: kbError } = await supabase
+          .rpc('search_knowledge_base', { search_query: lastClientMessage, max_results: 5 });
+
+        // Erro no RPC: o contexto fica vazio de forma explícita — sem fallback
+        // para artigos publicados (removido neste cartão) e sem resto parcial.
+        if (kbError) {
+          knowledgeContext = '';
+        } else if (relevantArticles && relevantArticles.length > 0) {
+          knowledgeContext = `\n\nBASE DE CONHECIMENTO DA EMPRESA (use como referência para suas respostas):\n${
+            relevantArticles.map((a: { category?: string; title: string; content: string; rank: number }) =>
+              `[${a.category || 'Geral'}] ${a.title} (relevância: ${(a.rank * 100).toFixed(0)}%):\n${a.content.substring(0, 800)}`
+            ).join('\n---\n')
+          }`;
+        }
       }
 
       // Este client roda com service_role (bypassa RLS). Sem esta checagem,
