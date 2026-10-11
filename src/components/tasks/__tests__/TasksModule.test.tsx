@@ -480,6 +480,17 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
   });
 
+  it('etapa 154: o modal "Nova tarefa" não é montado com o contexto fechado (sob demanda)', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    // Fechado: o diálogo não está no DOM — nem o pedaço do import dinâmico.
+    // Na base atual `N` ainda foca o QuickAdd; quem chama `openModal()` (botão
+    // do cabeçalho, tecla N, menu das colunas) é outro cartão.
+    expect(screen.queryByTestId('new-task-dialog')).toBeNull();
+  });
+
   it('o atalho único de modo responde a 1, 2 e 3', async () => {
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();
