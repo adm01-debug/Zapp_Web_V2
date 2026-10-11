@@ -35,7 +35,7 @@ export function NotificationsPopover({ collapsed = false }: NotificationsPopover
         'relative flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',
         collapsed
           ? 'w-[38px] h-[38px] rounded-full border border-border/40 hover:border-border'
-          : 'w-[28px] h-[28px] rounded-md'
+          : 'w-[28px] h-[28px] rounded-md [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]'
       )}
     >
       <Bell className={collapsed ? 'w-[16px] h-[16px]' : 'w-[15px] h-[15px]'} />
