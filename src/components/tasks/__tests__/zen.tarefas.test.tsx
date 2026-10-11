@@ -146,7 +146,7 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
     expect(screen.getByTestId('quick-add-input')).toBeTruthy();
     expect(screen.getByTestId('tasks-filter-bar')).toBeTruthy();
     expect(screen.getByTestId('tasks-mode')).toBeTruthy();
-    expect(screen.getByTestId('work-item-card')).toBeTruthy();
+    expect(screen.getByTestId('task-row')).toBeTruthy();
   });
 
   it('sem zen (desktop): a sidebar está na tela e a trilha NÃO aparece — é o zen que a traz', async () => {
@@ -159,7 +159,7 @@ describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
     expect(trilha(container)).toBeNull();
     // o módulo é o mesmo nas duas situações: o zen só troca a casca e o topo.
     expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeTruthy();
-    expect(screen.getByTestId('work-item-card')).toBeTruthy();
+    expect(screen.getByTestId('task-row')).toBeTruthy();
   });
 
   it('Esc sai do zen: a sidebar volta, a trilha sai de cena e a preferência é gravada', async () => {
