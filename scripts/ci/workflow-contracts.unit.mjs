@@ -431,3 +431,101 @@ test('E67: todo job que roda bun install restaura o cache do Bun antes de instal
   assert.ok(jobsComInstall > 0, 'nenhum job com bun install encontrado: o extrator de jobs quebrou');
   assert.deepEqual(problemas, [], `job com bun install sem cache do Bun:\n${problemas.join('\n')}`);
 });
+
+// E69 (08/10/2026): o tempo de parede do ci.yml era a SOMA dos jobs porque
+// `test`, `security`, `e2e` e `mutation-mapa` tinham `needs: lint-and-typecheck`
+// — e nenhum deles precisa do lint para começar (cada um faz o próprio checkout
+// e `bun install`). Sem o `needs`, eles rodam em PARALELO com o lint; o `build`
+// continua atrás do lint E do `test`, que é o gate de fato. Um comentário no
+// YAML não impede ninguém de recolocar o `needs`: estes casos, sim.
+
+/** Grafo de `needs` do bloco `jobs:` (formas inline `[a, b]` e em lista `- a`). */
+function grafoDeNeeds(texto) {
+  const linhas = texto.split('\n');
+  const inicio = linhas.findIndex((l) => /^jobs:\s*$/.test(l));
+  const grafo = new Map();
+  if (inicio === -1) return grafo;
+
+  let job = null;
+  let dentroNeeds = false;
+  for (let i = inicio + 1; i < linhas.length; i += 1) {
+    const l = linhas[i];
+
+    // Corpo de `run: |` é shell, não YAML — não pode virar cabeçalho de job.
+    const mRun = /^(\s*)-?\s*run:\s*\|\s*$/.exec(l);
+    if (mRun) {
+      const recuo = mRun[1].length;
+      while (i + 1 < linhas.length) {
+        const prox = linhas[i + 1];
+        if (prox.trim() && prox.length - prox.trimStart().length <= recuo) break;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (/^\S/.test(l)) break; // saiu do bloco jobs
+    const mJob = /^  ([A-Za-z0-9_-]+):\s*$/.exec(l);
+    if (mJob) {
+      job = mJob[1];
+      grafo.set(job, []);
+      dentroNeeds = false;
+      continue;
+    }
+    if (job === null) continue;
+
+    const mInline = /^    needs:\s*(\S.*)$/.exec(l);
+    if (mInline) {
+      const bruto = mInline[1].trim().replace(/^\[|\]$/g, '');
+      for (const p of bruto.split(',').map((s) => s.trim()).filter(Boolean)) {
+        grafo.get(job).push(p);
+      }
+      dentroNeeds = false;
+      continue;
+    }
+    if (/^    needs:\s*$/.test(l)) {
+      dentroNeeds = true;
+      continue;
+    }
+    if (dentroNeeds) {
+      const mItem = /^\s+-\s*(\S+)\s*$/.exec(l);
+      if (mItem) {
+        grafo.get(job).push(mItem[1]);
+        continue;
+      }
+      dentroNeeds = false;
+    }
+  }
+  return grafo;
+}
+
+/** Ancestrais de `job` no grafo: o que tem de terminar antes dele. */
+function ancestrais(grafo, job) {
+  const vistos = new Set();
+  const pilha = [...(grafo.get(job) ?? [])];
+  while (pilha.length) {
+    const atual = pilha.pop();
+    if (vistos.has(atual)) continue;
+    vistos.add(atual);
+    for (const p of grafo.get(atual) ?? []) pilha.push(p);
+  }
+  return vistos;
+}
+
+test('E69: test/security/e2e/mutation-mapa não esperam o lint (rodam em paralelo)', () => {
+  const grafo = grafoDeNeeds(wf['ci.yml']);
+  for (const job of ['test', 'security', 'e2e', 'mutation-mapa']) {
+    assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
+    const anc = [...ancestrais(grafo, job)];
+    assert.deepEqual(
+      anc,
+      [],
+      `${job} volta a esperar ${anc.join(', ')} — o job vira série em vez de rodar em paralelo`,
+    );
+  }
+});
+
+test('E69: o build continua atrás do lint E do test', () => {
+  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
+  assert.ok(anc.has('lint-and-typecheck'), 'build deixou de esperar o lint');
+  assert.ok(anc.has('test'), 'build deixou de esperar o test');
+});
