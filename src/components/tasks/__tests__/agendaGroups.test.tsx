@@ -176,7 +176,7 @@ describe('TasksAgendaMode — etapa 55', () => {
     expect(card.className).toContain('h-11');
     expect(card.className).toContain('flex-row');
     // checkbox presente na Agenda (na Lista ele já era; no Quadro não)
-    expect(within(card).getByRole('button', { name: 'Concluir tarefa' })).toBeTruthy();
+    expect(within(card).getByRole('checkbox', { name: 'Concluir tarefa' })).toBeTruthy();
     // nada de motivo de espera na linha
     expect(screen.queryByText('cliente vai responder')).toBeNull();
     // o kebab continua acessível (não fica escondido atrás do hover na Agenda)
