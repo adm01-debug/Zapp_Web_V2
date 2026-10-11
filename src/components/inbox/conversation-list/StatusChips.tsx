@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import { countByChip } from '@/hooks/inbox/chipCounts';
 
 export type MainTab = 'open' | 'resolved' | 'search';
 export type SubTab = 'attending' | 'waiting';
@@ -13,6 +14,12 @@ interface StatusChipsProps {
   conversations: ConversationWithMessages[];
   chipTab: ChipTab;
   onChipTabChange: (tab: ChipTab) => void;
+  /** Adiamentos vigentes (R2-INB-029): a lista e o contador os excluem igual. */
+  snoozedIds?: Set<string> | null;
+  /** "Mostrar todos" da lista: Em atendimento passa a acompanhar Todas. */
+  showAll?: boolean;
+  /** Fila selecionada; a lista aplica por cima dos chips abertos e de Arquivadas. */
+  selectedQueueId?: string | null;
 }
 
 const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
@@ -24,39 +31,18 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
   archived: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
 };
 
-export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusChipsProps) {
-  // R2-INB-056 (#349): contacts.assigned_to é FK para public.profiles(id), que
-  // é um id DIFERENTE do auth.users.id exposto em `user`. Comparar o
-  // responsável com o auth id zerava "Em atendimento" (e divergia do filtro da
-  // lista, que usa profileId em useInboxFilters).
+export function StatusChips({ conversations, chipTab, onChipTabChange, snoozedIds, showAll, selectedQueueId }: StatusChipsProps) {
   const { profile } = useAuth();
 
-  const counts = useMemo(() => {
-    const profileId = profile?.id;
-    // Arquivadas saem dos contadores de lista ativa: o status persiste em
-    // contacts.conversation_status ('archived'), não no proxy "sem mensagens".
-    const openConversations = conversations.filter(
-      c => c.messages.length > 0 && c.contact.conversation_status !== 'archived'
-    );
-
-    const attending = openConversations.filter(c => profileId != null && c.contact.assigned_to === profileId);
-    const waiting = openConversations.filter(c => !c.contact.assigned_to);
-    const unread = openConversations.filter(c => {
-      const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
-      return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
-    });
-    const resolved = conversations.filter(c => c.messages.length === 0);
-    const archived = conversations.filter(c => c.contact.conversation_status === 'archived');
-
-    return {
-      all: openConversations.length,
-      unread: unread.length,
-      attending: attending.length,
-      waiting: waiting.length,
-      resolved: resolved.length,
-      archived: archived.length,
-    };
-  }, [conversations, profile?.id]);
+  // Contadores pelas MESMAS regras da lista (src/hooks/inbox/chipCounts.ts), que
+  // useInboxFilters aplica em filteredConversations: o número do chip é o length
+  // que a lista mostra ao clicar nele. As regras antigas (Resolvidas = sem
+  // mensagem carregada, Aguardando = sem responsável) davam número divergente do
+  // estado persistido `contacts.conversation_status`.
+  const counts = useMemo(
+    () => countByChip(conversations, profile?.id, { snoozedIds, showAll, selectedQueueId }),
+    [conversations, profile?.id, snoozedIds, showAll, selectedQueueId],
+  );
 
   const chips: { id: ChipTab; label: string; count: number; icon?: LucideIcon }[] = [
     { id: 'all', label: 'Todas', count: counts.all },
