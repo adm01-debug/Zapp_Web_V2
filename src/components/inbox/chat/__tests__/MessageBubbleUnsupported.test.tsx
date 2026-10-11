@@ -4,13 +4,14 @@
  * O defeito: com `message.type === 'unsupported'` (contrato criado pelo cartão pai em
  * `src/types/chat.ts`, campos `type` e `unsupportedKind`) o `MessageBubble` não tinha ramo
  * nenhum — o balão ficava vazio. A prova RENDERIZA o `MessageBubble` REAL e lê o que aparece
- * na tela: o texto certo por `unsupportedKind`, o `role="note"` com o rótulo acessível, o
- * conteúdo preservado quando existe, e que a mensagem de texto comum continua idêntica.
+ * na tela: o texto certo por `unsupportedKind`, o glifo PRÓPRIO de cada tipo com o movimento
+ * próprio, o `role="note"` com o rótulo acessível, o conteúdo preservado quando existe, o
+ * brilho diagonal do hover e que a mensagem de texto comum continua idêntica.
  */
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageBubble } from '../MessageBubble';
-import { Message } from '@/types/chat';
+import { Message, type UnsupportedMessageKind } from '@/types/chat';
 
 const reduced = vi.hoisted(() => ({ value: false }));
 
@@ -152,24 +153,65 @@ describe('MessageBubble — fallback de mensagem não suportada', () => {
     expect(container.textContent).not.toContain('não suportado');
   });
 
-  it('com movimento reduzido o ícone não oscila (só opacidade/cor)', () => {
+  // --- Glifo próprio de cada tipo (variação pedida na direção de design) ---
+
+  const CASOS: Array<[UnsupportedMessageKind, string]> = [
+    ['poll', 'poll-bars'],
+    ['view_once', 'view-once-ring'],
+    ['contact', 'contact-card'],
+    ['other', 'static'],
+  ];
+
+  it.each(CASOS)('%s desenha o glifo próprio (%s) e só ele', (kind, glifo) => {
+    const { container } = renderBubble({ unsupportedKind: kind });
+    const alvo = container.querySelector(`[data-anim="${glifo}"]`);
+    expect(alvo).not.toBeNull();
+    // exatamente um glifo por cartão — não há "um pulso para todos"
+    expect(container.querySelectorAll('[data-anim]')).toHaveLength(1);
+  });
+
+  // --- Movimento por tipo e movimento reduzido ---
+
+  it('com movimento permitido o glifo do tipo está ativo', () => {
+    const { container } = renderBubble({ unsupportedKind: 'view_once' });
+    const anel = container.querySelector('[data-anim="view-once-ring"]');
+    expect(anel?.getAttribute('data-anim-active')).toBe('true');
+  });
+
+  it('com movimento reduzido nada anima e o cartão se declara reduzido', () => {
     reduced.value = true;
     try {
       const { container } = renderBubble({ unsupportedKind: 'poll' });
-      const icone = container.querySelector('[data-testid="message-unsupported"] svg');
-      expect(icone).not.toBeNull();
-      // O nome da utilidade é montado em partes porque o literal de animação no arquivo
-      // dispara o portão de movimento (falso positivo: aqui é justamente a ausência dele).
-      const oscilacao = ['animate', 'pulse'].join('-');
-      const classes = (icone?.getAttribute('class') ?? '').split(/\s+/);
-      expect(classes.some((c) => c.endsWith(oscilacao))).toBe(false);
+      expect(
+        container.querySelector('[data-testid="message-unsupported"]')?.getAttribute('data-motion'),
+      ).toBe('reduced');
+      const animados = container.querySelectorAll('[data-anim]');
+      expect(animados.length).toBeGreaterThan(0);
+      animados.forEach((el) => {
+        expect(el.getAttribute('data-anim-active')).toBe('false');
+        // nenhuma utilidade de animação do Tailwind sobra no elemento
+        expect(el.getAttribute('class') ?? '').not.toMatch(/(^|\s)animate-/);
+      });
     } finally {
       reduced.value = false;
     }
-    // Contraste: sem movimento reduzido, a oscilação leve existe (a asserção acima não é vazia).
+  });
+
+  it('o tipo estático (other) nunca anima, mesmo com movimento permitido', () => {
+    const { container } = renderBubble({ unsupportedKind: 'other' });
+    expect(container.querySelector('[data-anim="static"]')?.getAttribute('data-anim-active')).toBe('false');
+  });
+
+  // --- Brilho diagonal do hover ---
+
+  it('o brilho diagonal é uma camada com group-hover e motion-safe', () => {
     const { container } = renderBubble({ unsupportedKind: 'poll' });
-    const icone = container.querySelector('[data-testid="message-unsupported"] svg');
-    const segura = `motion-safe:${['animate', 'pulse'].join('-')}`;
-    expect((icone?.getAttribute('class') ?? '').split(/\s+/)).toContain(segura);
+    const brilho = container.querySelector('[data-testid="unsupported-glow"]');
+    expect(brilho).not.toBeNull();
+    const classes = brilho?.getAttribute('class') ?? '';
+    expect(classes).toContain('group-hover/unsupported');
+    expect(classes).toContain('motion-safe:');
+    // começa invisível e só aparece no hover
+    expect(classes).toContain('opacity-0');
   });
 });
