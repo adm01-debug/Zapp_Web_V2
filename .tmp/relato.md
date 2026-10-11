@@ -1,67 +1,24 @@
-Especialista: worker (geral)
+Especialista: senior (ci/guarda + banco; sem skill de área dedicada — o cartão traz a causa e a receita)
 
-## O que este cartão entrega
-Só relato (área docs): nenhuma linha de código, teste ou migration muda neste cartão. O
-`.tmp/relato.md` foi reescrito para registrar, com a saída real colada, que a lacuna
-conexão-escopo no enfileiramento (L7 da matriz) **já está fechada** pela migration
-`20260930200000`. A conclusão do trabalho anterior é reaproveitada; o texto é novo.
+## O que mudou e por quê
+- `.github/workflows/db-guard.yml`: etapa nova "Simular pedido anônimo de recuperação de senha (item 72)" que executa o teste da entrega via `retry-disposable-postgres-test.sh`, com `RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE` vinda de `env.POSTGRES_TEST_IMAGE` (padrão das demais etapas; sem `SKIP_DOCKER_SHIM` porque o teste usa só `docker run/exec/rm` + psql num único banco, sem `docker logs` nem asserção de `current_database`). É a causa do vermelho: a entrega trouxe o `.test.sh` sem o registro no CI.
+- `scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh` + `supabase/migrations/20261006221242_recuperacao_anonima_pedido_reset.sql`: trazidos da entrega recusada (`abb0d3116`) por `cherry-pick -n`, sem alteração — são o conteúdo do título do cartão.
 
-## Caminho real auditado (arquivo:linha)
-- `supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql:16` repõe
-  `CREATE OR REPLACE FUNCTION public.enqueue_outbound_message(...)`. A guarda de escopo de conexão
-  por fila está em `:115-131`: fora de `public.is_admin_or_supervisor(auth.uid())`, quando a conexão
-  resolvida (`v_connection_id`) é diferente da conexão atribuída ao contato e existe vínculo em
-  `public.whatsapp_connection_queues`, exige membro ativo de uma das filas vinculadas; caso contrário
-  `RAISE EXCEPTION 'whatsapp_connection_out_of_scope' USING ERRCODE = '42501'` (`:130`).
-- É a última definição da RPC por timestamp: `git grep` em `supabase/migrations` mostra `CREATE OR
-  REPLACE` só em `20260909220000`, `20260909250000`, `20260930190000` e `20260930200000`; nenhuma
-  migration posterior (há várias de 2026-10) repõe a função.
-- Único caminho de envio no navegador: `src/services/outbound-message.service.ts:110-111`
-  (`rpcClient.rpc('enqueue_outbound_message', {...})`).
+## Prova
+- vermelho antes (só com o cherry-pick, sem a etapa): `node scripts/ci/check-test-inventory.mjs` → `check-test-inventory: FALHOU — testes no disco sem correspondente no CI YAML: scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh (não encontrado em db-guard.yml). Total: 1 teste(s) órfão(s).`
+- verde depois (com a etapa): `node scripts/ci/check-test-inventory.mjs` → `check-test-inventory: OK — ci.yml usa glob (supabase/functions/**/*.test.ts); 149 suite(s) Node cobertas por bloco run: (8 na allowlist); .test.sh verificados individualmente`
+- a etapa registrada executa de verdade (mesmo comando do YAML, imagem fixada do `env.POSTGRES_TEST_IMAGE`): `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh` → blocos A e B todos `[PASS]`, linha final `PASS: R2-AUTH-006 — o pedido anonimo de recuperacao persiste como solicitacao pendente ...`
+- `python3 -c yaml.safe_load(db-guard.yml)` → `YAML valido`
 
-## Prova — saída real (rodada agora)
-Comando: `bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/enqueue-connection-scope.test.sh`
-
-    -- BLOCO A: ANTES da migration (o defeito) ------------------------------------------
-    [PASS] A1 DORA (fora da fila) envia pela conexao DA FILA num contato de OUTRA conexao -- defeito do L7
-    [PASS] A2 a mensagem saiu pela conexao da fila
-
-    -- Aplicando a migration ------------------------------------------------------------
-
-    -- BLOCO B: DEPOIS da migration ----------------------------------------------------
-    [PASS] B1 DORA (fora da fila) e recusada com 42501 whatsapp_connection_out_of_scope
-    [PASS] B2 nada foi gravado por DORA
-    [PASS] B3 CARLA (membro da fila) enviando pela conexao da fila -- permitido
-    [PASS] B4 ADM (admin/supervisor) escolhe a conexao da fila -- permitido
-    [PASS] B5 DORA usa a conexao SEM vinculo de fila -- permitido (inerte por construcao)
-    [PASS] B6 DORA envia SEM informar conexao e o contato esta na conexao da fila -- permitido pela atribuicao do contato
-    [PASS] B7 a guarda de permissao do L9 continua valendo (quem nao tem send_messages e recusado)
-    [PASS] B8 total de mensagens gravadas: 4 permitidas, 0 das recusadas
-
-    [OK] contrato de escopo de conexao no enfileiramento verificado
-    EXIT=0
-
-Resultado: **10 PASS / 0 FAIL**, exit 0 (PostgreSQL 17 descartável via Docker).
-
-## Ponto 3 (vermelho→verde) — N/A justificado
-N/A: a lacuna já estava fechada pela migration `20260930200000` na ponta `dia/2026-10-08` e nenhum
-código é alterado neste cartão, então não há mudança para virar vermelho→verde. O vermelho→verde já
-é interno à própria suíte: o BLOCO A prova o envio de quem está fora da fila **passando antes** da
-migration (o defeito) e o BLOCO B prova a recusa **42501 whatsapp_connection_out_of_scope depois**
-dela, com B3 (membro da fila) e B4 (admin/supervisor) permitidos.
-
-## Pontos do revisor ([refazer 2])
-- Ponto 1 (alegava sem prova que a lacuna já está fechada): agora o relato cita `arquivo:linha` da
-  migration (`20260930200000:115-131`, erro em `:130`) e cola a saída real da suíte que prova o
-  comportamento antes/depois.
-- Ponto 2 (não descrevia o caminho real auditado): descrito acima — migration `20260930200000` repõe
-  `public.enqueue_outbound_message` com a guarda, e o único chamador no navegador é
-  `src/services/outbound-message.service.ts:110-111`.
-- Ponto 3 (teste de fumaça fora dos artefatos; conclusão dependeria de migration fora do diff não
-  inspecionada): a saída real da suíte está colada neste relato e o trecho exato da migration é
-  citado por linha.
+## Pontos do revisor
+- Ponto 1 (o órfão que quebra o ESPELHO DO CI quando empilhado): resolvido — o caminho `scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh` agora aparece num bloco `run:` real do `db-guard.yml`, que é exatamente o que a regex do inventário procura; inventário verde acima. Não usei ALLOWLIST (seria afrouxar a asserção) nem comentário citando o caminho (o inventário conta, mas o teste não rodaria — maquiar o espelho, vedado pelo cartão).
+- Ponto 2 (instrução de reproduzir sobre a ponta atual com cherry-pick): cumprido — `cherry-pick -n abb0d3116` sobre a ponta de `dia/2026-10-11`, vermelho reproduzido antes da correção.
 
 ## O que NÃO fiz e por quê
-- Não alterei código, teste nem migration: o cartão pede só o relato e a lacuna já está fechada.
-- Não conferi a contagem de vínculos fila↔conexão em produção (regra R1: agente não acessa produção);
-  a guarda é inerte por construção enquanto `whatsapp_connection_queues` estiver vazia (`:9-11`).
+- Não alterei o teste nem a migration da entrega: o teste passa integralmente no container descartável (prova acima); mexer neles seria escopo fora da recusa.
+- Não toquei em `check-test-inventory.mjs` nem na ALLOWLIST: a guarda está certa, a entrega é que estava incompleta.
+
+## Arquivos do diff contra a base
+- `.github/workflows/db-guard.yml` (etapa nova, 8 linhas)
+- `scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh` (da entrega, inalterado)
+- `supabase/migrations/20261006221242_recuperacao_anonima_pedido_reset.sql` (da entrega, inalterado)
