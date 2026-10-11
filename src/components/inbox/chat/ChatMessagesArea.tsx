@@ -1,7 +1,7 @@
 import { useRef, forwardRef, useImperativeHandle, useCallback, useMemo, memo, useEffect, useLayoutEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, MessageCircle } from 'lucide-react';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('ChatMessagesArea');
@@ -62,6 +62,12 @@ interface ChatMessagesAreaProps {
    * apenas consumimos o contrato — nenhuma consulta e feita neste componente.
    */
   onLoadOlderMessages?: () => void | Promise<void>;
+  /**
+   * Carregamento inicial das mensagens em andamento. Com `true` o estado vazio
+   * ("Nenhuma mensagem ainda") nao aparece: a lista ainda esta sendo buscada.
+   * Omitido = consumidor antigo, tratado como "nao carregando".
+   */
+  isLoading?: boolean;
 }
 
 export interface ChatMessagesAreaRef {
@@ -88,7 +94,8 @@ export interface ChatMessagesAreaRef {
  *  altura minima para que a troca de uma pela outra nao empurre as mensagens. */
 const OLDER_ROW_CLASS = 'flex min-h-[2.75rem] items-center justify-center py-1';
 
-/** P2 #320 (R2-INB-025): distancia do fim (px) que ainda conta como "seguindo a
+/**
+ * P2 #320 (R2-INB-025): distancia do fim (px) que ainda conta como "seguindo a
  *  conversa". Dentro dela a lista acompanha o fim; acima dela o usuario esta
  *  lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */
 const BOTTOM_FOLLOW_THRESHOLD_PX = 100;
@@ -96,17 +103,39 @@ const BOTTOM_FOLLOW_THRESHOLD_PX = 100;
 /** Selo "Nova mensagem enviada": fica visivel por 1 s depois do envio. */
 const SELO_ENVIADA_MS = 1000;
 
+/** Distancia do fim (px) acima da qual a conversa conta como "o usuario rolou
+ *  para ler o historico" e o botao flutuante "Rolar para o final" aparece. */
+const SCROLL_TO_BOTTOM_THRESHOLD_PX = 300;
+
 function isNearBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_FOLLOW_THRESHOLD_PX;
+}
+
+function distanceFromBottom(el: HTMLElement): number {
+  return el.scrollHeight - el.scrollTop - el.clientHeight;
+}
+
+/**
+ * Foca o compositor da conversa. O compositor e irmao desta area (vive no
+ * ChatPanel), entao o foco vai pelo DOM — mesmo caminho ja usado pelo atalho da
+ * aba Tarefas (`focarQuickAdd` em RealtimeInboxView). Sem compositor montado
+ * (area usada isolada), a acao e um no-op silencioso.
+ */
+function focusComposer(): void {
+  const composer = document.querySelector<HTMLTextAreaElement>(
+    'textarea[aria-label="Digite sua mensagem"], textarea[aria-label="Escrever mensagem"]',
+  );
+  composer?.focus();
 }
 
 export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ 
   messages, isContactTyping, isColleagueTyping = false, typingUserName, ttsLoading, ttsPlaying, ttsMessageId,
   instanceName, conversationId, contactJid, contactAvatar, onSpeak, onStop, onReply, onForward, onCopy,
   onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,
-  hasOlderMessages, loadingOlderMessages, onLoadOlderMessages,
+  hasOlderMessages, loadingOlderMessages, onLoadOlderMessages, isLoading = false,
 }, ref) => {
   const queryClient = useQueryClient();
+  const reduceMotion = useReducedMotion();
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   // Bloco de itens virtualizados: e a origem das coordenadas de `virtualizer.*`.
@@ -118,10 +147,26 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // empurrou o fim para longe — o usuario que estava no fim apareceria como
   // "lendo o historico" e a lista deixaria de acompanhar a conversa.
   const isNearBottomRef = useRef(true);
+
+  // Estado proprio do botao "Rolar para o final" (nada a ver com o realce da
+  // busca nem com o acompanhamento do fim): `true` quando o usuario esta a mais
+  // de SCROLL_TO_BOTTOM_THRESHOLD_PX do fim. O ref espelha o estado para o
+  // handler nao depender de re-render, e `baselineRef` guarda quantas mensagens
+  // existiam quando o usuario rolou para cima — a diferenca vira o selo.
+  const showScrollToBottomRef = useRef(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const unseenBaselineRef = useRef(0);
+
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     isNearBottomRef.current = isNearBottom(el);
+    const shouldShow = distanceFromBottom(el) > SCROLL_TO_BOTTOM_THRESHOLD_PX;
+    if (shouldShow !== showScrollToBottomRef.current) {
+      showScrollToBottomRef.current = shouldShow;
+      if (shouldShow) unseenBaselineRef.current = messagesRef.current.length;
+      setShowScrollToBottom(shouldShow);
+    }
   }, []);
 
   const handleMessageDeleted = useCallback(async (messageId: string) => {
@@ -281,6 +326,20 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     return 0;
   }, [messages]);
 
+  /** Rolagem ate o fim sem o guard de acompanhamento: e o que o botao flutuante
+   *  precisa (o usuario esta justamente longe do fim quando o usa). */
+  const scrollToBottomCore = useCallback(() => {
+    if (!scrollContainerRef.current || messages.length === 0) return;
+    virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+  }, [messages.length, virtualizer]);
+
+  const handleScrollToBottomClick = useCallback(() => {
+    isNearBottomRef.current = true;
+    showScrollToBottomRef.current = false;
+    setShowScrollToBottom(false);
+    scrollToBottomCore();
+  }, [scrollToBottomCore]);
+
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
@@ -288,8 +347,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       // lista ao fim se o usuario ja estava nele. Quem rolou para ler o
       // historico fica onde esta.
       if (!isNearBottomRef.current) return;
-      // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
-      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+      scrollToBottomCore();
     },
     scrollToBottomAfterSend: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
@@ -307,7 +365,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
         virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
-  }), [messages, virtualizer, acenderSeloEnviada]);
+  }), [messages, virtualizer, scrollToBottomCore, acenderSeloEnviada]);
 
   // conversationId é o id do contato: estável por toda a vida da conversa e
   // presente mesmo sem telefone. contactJid vem depois só por compatibilidade;
@@ -343,9 +401,18 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
 
   const showLoadOlder = typeof onLoadOlderMessages === 'function' && hasOlderMessages === true && messages.length > 0;
   const showHistoryStart = hasOlderMessages === false && messages.length > 0;
+  // Conversa sem mensagens (e sem carga em andamento): superficie propria no
+  // lugar da lista vazia.
+  const isEmpty = messages.length === 0 && !isLoading;
+  // Quantas mensagens chegaram desde que o usuario rolou para cima (0 = sem
+  // novidade; o selo so aparece quando ha algo a mostrar).
+  const unseenCount = showScrollToBottom
+    ? Math.max(0, messages.length - unseenBaselineRef.current)
+    : 0;
 
   return (
     <ReactionsBatchProvider messageIds={reactionMessageIds}>
+    <div className="relative flex flex-1 min-h-0 min-w-0 flex-col">
     <div ref={scrollContainerRef} onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
       {showLoadOlder && (
         <div className={cn(OLDER_ROW_CLASS, 'sticky top-0 z-10')} data-testid="older-messages-control">
@@ -373,6 +440,47 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
           <p role="status" data-testid="history-start" className="text-2xs uppercase tracking-wider font-semibold text-muted-foreground/80 bg-muted/50 backdrop-blur-sm px-3 py-1 rounded-full border border-border/30">
             Início do histórico da conversa
           </p>
+        </div>
+      )}
+      {isEmpty && (
+        <div
+          data-testid="chat-empty-state"
+          className="flex min-h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center"
+        >
+          <motion.div
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={reduceMotion ? { duration: 0 } : zappTransition.normal}
+            className="relative flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm"
+            aria-hidden="true"
+          >
+            <MessageCircle className="h-7 w-7" />
+            <span className="absolute -bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full border border-border bg-card-elevated px-2 py-1 shadow-sm">
+              {[0, 1, 2].map((dot) => (
+                <motion.span
+                  key={dot}
+                  className="h-1 w-1 rounded-full bg-primary"
+                  animate={reduceMotion ? { opacity: 0.7 } : { opacity: [0.3, 1, 0.3] }}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: dot * 0.04 }
+                  }
+                />
+              ))}
+            </span>
+          </motion.div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Nenhuma mensagem ainda</p>
+            <p className="text-xs text-muted-foreground">Envie a primeira mensagem para começar.</p>
+          </div>
+          <button
+            type="button"
+            onClick={focusComposer}
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-card-elevated hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            Dizer olá
+          </button>
         </div>
       )}
       <div
@@ -475,6 +583,38 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       <div className="flex justify-start pl-10 mt-4">
         <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />
       </div>
+      </div>
+      <AnimatePresence>
+        {showScrollToBottom && (
+          <motion.div
+            key="scroll-to-bottom"
+            data-testid="scroll-to-bottom-wrap"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.9 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.9 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', duration: 0.22, bounce: 0.25 }}
+            className="pointer-events-none absolute bottom-4 right-4 z-20 md:right-6"
+          >
+            <button
+              type="button"
+              aria-label="Rolar para o final"
+              title="Rolar para o final"
+              onClick={handleScrollToBottomClick}
+              className="pointer-events-auto relative flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-[box-shadow,background-color,color] hover:bg-card-elevated hover:text-primary hover:shadow-lg hover:shadow-glow-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 motion-safe:hover:-translate-y-0.5"
+            >
+              <ChevronDown className="h-5 w-5" aria-hidden="true" />
+              {unseenCount > 0 && (
+                <span
+                  data-testid="scroll-to-bottom-badge"
+                  className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-3xs font-semibold text-primary-foreground shadow-sm"
+                >
+                  {unseenCount}
+                </span>
+              )}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     </ReactionsBatchProvider>
   );
