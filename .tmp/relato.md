@@ -1,23 +1,31 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+## Contexto do refazer
+- Motivo da recusa: o `TalkXScheduleTimeline` comparava `editedStart !== savedStart`; isso marcava "alteração não salva" quando o mesmo instante vinha gravado como `+00:00` pelo PostgREST e a edição gerava `.000Z`.
+- Situação encontrada na base `dia/2026-10-11`: o código e o teste que corrigem este ponto já estavam presentes em `src/components/talkx/TalkXScheduleTimeline.tsx` e `src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx`. Não criei alteração artificial de código.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## Pontos da recusa
+- Ponto 1: comparar instantes, não texto ISO.
+  - Arquivo conferido: `src/components/talkx/TalkXScheduleTimeline.tsx` usa `Date.parse(editedStart) !== Date.parse(savedStart)` e mantém o rótulo "alteração não salva" só quando o instante realmente difere ou quando não existe início gravado.
+  - Teste que prova: `src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx`, caso `A11: gravado no formato do PostgREST (+00:00) com edição no mesmo instante não diz "alteração não salva"`.
+  - Vermelho antes: reverti temporariamente só a comparação para `editedStart !== savedStart` e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default`; falhou com `expected ... not to contain 'alteração não salva'` e `RED_EXIT=1`.
+  - Verde depois: restaurei o arquivo e rodei `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default`; resultado: `Test Files  2 passed (2)` e `Tests  15 passed (15)`.
 
-## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+## Arquivos do diff
+Saída de `git diff --name-only dia/2026-10-11...HEAD` antes do commit final de relato:
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+(nenhum arquivo de código; base do dia já contém a correção exata e a prova de regressão)
 
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+Commit final contém somente este relato em `.tmp/relato.md`, para o `hermes-tarefa-fechar` aceitar árvore limpa.
+
+## Verificações executadas
+- `bun install` — dependências instaladas no workspace.
+- `git show --stat --oneline 6bc8ac97f` — o trabalho anterior citado mexia só em `TalkXCampaignScheduled.tsx` e `TalkXCampaignScheduled.calendario.test.tsx`; a correção recusada está hoje na base via `TalkXScheduleTimeline.tsx`/teste.
+- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx -t 'PostgREST' --reporter=default` com a comparação textual temporariamente restaurada — falhou no caso da recusa.
+- `bunx vitest run src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx --reporter=default` — `Test Files  2 passed (2)`; `Tests  15 passed (15)`.
+- `git status --short` antes de escrever/commitar o relato — sem alteração de código pendente.
+- `git diff --stat dia/2026-10-11...HEAD -- src/components/talkx/TalkXScheduleTimeline.tsx src/components/talkx/__tests__/TalkXScheduleTimeline.test.tsx src/components/talkx/TalkXCampaignScheduled.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` — sem diff de código.
+
+## O que não fiz e por quê
+- Não fiz cherry-pick de `6bc8ac97f` porque ele é anterior à correção da comparação por instante e sua aplicação sobre a base atual removeria cobertura/código já correto.
+- Não criei commit vazio nem comentário cosmético no código: o escopo do refazer já está resolvido na base e manter o código intacto evita introduzir mudança fora do título.
