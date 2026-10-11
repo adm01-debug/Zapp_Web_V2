@@ -38,13 +38,14 @@ describe('StatusChips', () => {
     makeConversation({ id: 'c4', hasMessages: false }),
   ];
 
-  it('renders the 5 chips (no Spam — não existe no modelo)', () => {
+  it('renders the 6 chips (no Spam — não existe no modelo)', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-all')).toBeInTheDocument();
     expect(screen.getByTestId('status-chip-unread')).toBeInTheDocument();
     expect(screen.getByTestId('status-chip-attending')).toBeInTheDocument();
     expect(screen.getByTestId('status-chip-waiting')).toBeInTheDocument();
     expect(screen.getByTestId('status-chip-resolved')).toBeInTheDocument();
+    expect(screen.getByTestId('status-chip-archived')).toBeInTheDocument();
     expect(screen.queryByTestId('status-chip-spam')).not.toBeInTheDocument();
   });
 
@@ -82,5 +83,33 @@ describe('StatusChips', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={onChipTabChange} />);
     fireEvent.click(screen.getByTestId('status-chip-resolved'));
     expect(onChipTabChange).toHaveBeenCalledWith('resolved');
+  });
+
+  it('conta "Arquivadas" pelo conversation_status real e as exclui da lista ativa', () => {
+    // Arquivada NÃO é "sem mensagens": o status persistido em
+    // contacts.conversation_status é a fonte. c2 tem mensagens e não lidas, e
+    // ainda assim sai de Todas/Não lidas/Em atendimento; c3 está sem responsável
+    // e não entra em Aguardando. Todas são contadas em Arquivadas.
+    const withArchived: ConversationWithMessages[] = [
+      makeConversation({ id: 'c1', assigned_to: CURRENT_PROFILE_ID, unreadCount: 2 }),
+      makeConversation({ id: 'c2', assigned_to: CURRENT_PROFILE_ID, unreadCount: 1, conversation_status: 'archived' }),
+      makeConversation({ id: 'c3', assigned_to: null, conversation_status: 'archived' }),
+      makeConversation({ id: 'c4', hasMessages: false, conversation_status: 'archived' }),
+    ];
+    render(<StatusChips conversations={withArchived} chipTab="all" onChipTabChange={() => {}} />);
+
+    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('3');
+    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('1');
+    expect(screen.getByTestId('status-chip-unread')).toHaveTextContent('1');
+    expect(screen.getByTestId('status-chip-attending')).toHaveTextContent('1');
+    expect(screen.getByTestId('status-chip-waiting')).toHaveTextContent('0');
+  });
+
+  it('mostra o ícone Archive apenas no chip Arquivadas', () => {
+    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+    const archiveIcon = screen.getByTestId('status-chip-archived').querySelector('svg');
+    expect(archiveIcon).not.toBeNull();
+    expect(archiveIcon).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('status-chip-all').querySelector('svg')).toBeNull();
   });
 });
