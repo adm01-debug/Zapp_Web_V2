@@ -196,7 +196,7 @@ Deno.test('message delivery em 5xx enfileira reconciliação e grava failed_fina
 Deno.test('message delivery não vaza PII do provedor no log da tentativa', async () => {
   Deno.env.set('EVOLUTION_API_FLAVOR', 'v2');
   const { service, calls } = makeService();
-  const raw = 'falha para 5511999999999: seu pedido saiu para entrega (token=sk-live-SUPERSEGREDO1234567890)';
+  const raw = 'falha para 5511999999999: seu pedido saiu para entrega (token=chave-falsa-de-teste-0000)';
   const res = await deliverClaimedMessage(
     attemptClaim(),
     deliverDeps(service, jsonFetcher(400, raw)),
@@ -208,7 +208,7 @@ Deno.test('message delivery não vaza PII do provedor no log da tentativa', asyn
   const serialized = JSON.stringify({ m: failed.p_error_message, r: failed.p_provider_response });
   if (serialized.includes('5511999999999')) throw new Error('telefone vazou no log');
   if (serialized.includes('seu pedido saiu para entrega')) throw new Error('texto da mensagem vazou no log');
-  if (serialized.includes('SUPERSEGREDO')) throw new Error('token vazou no log');
+  if (serialized.includes('chave-falsa-de-teste-0000')) throw new Error('token vazou no log');
 });
 
 Deno.test('falha ao gravar a tentativa NÃO muda o resultado do envio', async () => {
