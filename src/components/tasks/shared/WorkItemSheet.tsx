@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, CalendarIcon, CheckCircle2, Maximize2, Minimize2, PauseCircle, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpRight, CalendarIcon, Maximize2, Minimize2, PauseCircle } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -29,6 +29,7 @@ import { comporLocal, diaLocal, horaLocal, mesmoInstante } from './localDateTime
 import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 import { PlanejamentoSection } from './sheet/PlanejamentoSection';
 import { formatCriadaEm } from './sheet/planejamento';
+import { PainelRodape } from './sheet/PainelRodape';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
@@ -91,7 +92,11 @@ interface SheetProps {
   contactOptions: Array<{ id: string; name: string }>;
   doingCount: number;
   /** Etapa 28 (B2): o DnD/kebab abre o Sheet já pedindo o motivo.
-   *  Etapa 31: "Lembrar-me → Escolher…" abre no campo alarme. */
+   *  Etapa 31: "Lembrar-me → Escolher…" abre no campo alarme.
+   *  Etapa 144 / D14: o `Esc` fecha e devolve o foco ao cartão da tarefa; o F6
+   *  (alternar painel ↔ lista/quadro, do painel não modal da etapa 145) já está
+   *  ligado — enquanto o painel for modal, a armadilha de foco do Radix prende o
+   *  foco dentro dele, como o bottom sheet pede. */
   focusField?: 'waiting_reason' | 'remind_at';
 }
 
@@ -101,10 +106,78 @@ export function WorkItemSheet(props: SheetProps) {
   // Etapa 132: "expandir" do cabeçalho alarga o painel no desktop. Persistir a
   // escolha é da etapa 146 (outro cartão) — aqui é só o controle.
   const [expandido, setExpandido] = useState(false);
+  const conteudoRef = useRef<HTMLDivElement>(null);
+  // Etapa 143: a mudança pendente vive no formulário; o guarda mora aqui para
+  // que Esc, o clique fora e o X do SheetContent caiam na MESMA proteção.
+  const alteradoRef = useRef(false);
+  // Guarda o id (e não só um booleano): trocar de tarefa no painel limpa a
+  // confirmação sozinho, sem setState dentro de efeito.
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
+  const confirmando = item !== null && confirmandoId === item.id;
+
+  const sincronizarMudanca = useCallback((mudou: boolean) => {
+    alteradoRef.current = mudou;
+  }, []);
+
+  const pedirConfirmacao = useCallback(() => {
+    setConfirmandoId(item?.id ?? null);
+  }, [item?.id]);
+
+  const descartar = useCallback(() => {
+    setConfirmandoId(null);
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  /** Etapa 144: fecha e devolve o foco ao card da tarefa na lista/quadro. */
+  const fecharDevolvendoFoco = useCallback(() => {
+    const id = item?.id;
+    onOpenChange(false);
+    if (!id) return;
+    // Depois do unmount do painel o Radix ainda repõe o foco no gatilho — este
+    // agendamento roda por último e devolve o foco ao item.
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-item-id="${id}"]`)?.focus?.();
+    }, 0);
+  }, [item?.id, onOpenChange]);
+
+  /** Etapa 144: F6 alterna painel ↔ lista/quadro (o não modal chega na etapa 145). */
+  useEffect(() => {
+    if (!open) return;
+    function aoTeclar(event: KeyboardEvent) {
+      if (event.key !== 'F6') return;
+      event.preventDefault();
+      const dentro = conteudoRef.current?.contains(document.activeElement) ?? false;
+      if (dentro) {
+        const id = item?.id;
+        const alvo =
+          (id ? document.querySelector<HTMLElement>(`[data-item-id="${id}"]`) : null) ??
+          document.querySelector<HTMLElement>('[data-item-id]');
+        alvo?.focus?.();
+        return;
+      }
+      conteudoRef.current?.focus?.();
+    }
+    document.addEventListener('keydown', aoTeclar);
+    return () => document.removeEventListener('keydown', aoTeclar);
+  }, [open, item?.id]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={open}
+      onOpenChange={(proximo) => {
+        // Etapa 143: o X do SheetContent (e qualquer fechamento do próprio
+        // Radix) passa por aqui — com edição pendente, pede confirmação em vez
+        // de fechar. Os fechamentos programáticos (Salvar/Concluir/Cancelar)
+        // usam o `onOpenChange` cru recebido pelo formulário.
+        if (!proximo && alteradoRef.current) {
+          pedirConfirmacao();
+          return;
+        }
+        onOpenChange(proximo);
+      }}
+    >
       <SheetContent
+        ref={conteudoRef}
         side={narrow ? 'bottom' : 'right'}
         data-testid="work-item-sheet"
         className={
@@ -112,7 +185,24 @@ export function WorkItemSheet(props: SheetProps) {
             ? 'h-[90vh] overflow-y-auto'
             : `overflow-y-auto ${expandido ? 'w-[min(720px,90vw)] sm:max-w-[720px]' : 'w-[420px] sm:max-w-[420px]'}`
         }
-        onEscapeKeyDown={() => onOpenChange(false)}
+        onEscapeKeyDown={(event) => {
+          if (alteradoRef.current) {
+            // Etapa 143: com edição pendente o Esc não fecha — pede confirmação.
+            event.preventDefault();
+            pedirConfirmacao();
+            return;
+          }
+          fecharDevolvendoFoco();
+        }}
+        onInteractOutside={(event) => {
+          // O menu ⋮ abre em portal: clicar nele não é "clicar fora".
+          const alvo = event.target as HTMLElement | null;
+          if (alvo?.closest?.('[data-radix-popper-content-wrapper]')) return;
+          if (alteradoRef.current) {
+            event.preventDefault();
+            pedirConfirmacao();
+          }
+        }}
       >
         {item && (
           <Formulario
@@ -120,9 +210,47 @@ export function WorkItemSheet(props: SheetProps) {
             {...props}
             item={item}
             onOpenChange={onOpenChange}
+            onMudouChange={sincronizarMudanca}
             expandido={expandido}
             onAlternarExpansao={() => setExpandido((v) => !v)}
           />
+        )}
+
+        {confirmando && (
+          <div
+            data-testid="sheet-descartar"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="sheet-descartar-titulo"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/95 p-6 text-center"
+          >
+            <p id="sheet-descartar-titulo" className="text-sm font-semibold">
+              Descartar alterações?
+            </p>
+            <p className="text-2xs text-muted-foreground">
+              As alterações não salvas serão perdidas.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="sheet-descartar-continuar"
+                onClick={() => setConfirmandoId(null)}
+                className="h-10"
+              >
+                Continuar editando
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                data-testid="sheet-descartar-confirmar"
+                onClick={descartar}
+                className="h-10"
+              >
+                Descartar
+              </Button>
+            </div>
+          </div>
         )}
       </SheetContent>
     </Sheet>
@@ -133,6 +261,8 @@ type FormProps = Omit<SheetProps, 'item' | 'open'> & {
   item: WorkItem;
   expandido: boolean;
   onAlternarExpansao: () => void;
+  /** Etapa 143: avisa o painel se há edição pendente (guarda do fechamento). */
+  onMudouChange: (mudou: boolean) => void;
 };
 
 function Formulario({
@@ -148,6 +278,7 @@ function Formulario({
   focusField,
   expandido,
   onAlternarExpansao,
+  onMudouChange,
 }: FormProps) {
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.description ?? '');
@@ -202,6 +333,11 @@ function Formulario({
     title, description, prioridade, contactId, status, motivo,
     dia, hora, alarmeDia, alarmeHora, item,
   ]);
+
+  // Etapa 143: mantém o guarda do painel em sincronia com o rascunho.
+  useEffect(() => {
+    onMudouChange(mudou);
+  }, [mudou, onMudouChange]);
 
   /** Etapa 65: adia e reflete o novo alarme no Sheet. */
   function adiar(minutes: number | 'tomorrow9') {
@@ -268,7 +404,17 @@ function Formulario({
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div
+      className="flex flex-col gap-4 h-full"
+      // Etapa 141/142: o Ctrl+Enter salva de qualquer campo do painel (a dica
+      // do rodapé aponta para cá) — o botão só recebia a tecla em foco.
+      onKeyDown={(event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          if (mudou && !salvando) void salvar();
+        }
+      }}
+    >
       {/* Etapa 132: cabeçalho — ícone calendário em quadrado primary, "Detalhes
           da tarefa" e expandir. O fechar é o X que o próprio SheetContent já
           posiciona no topo-direito (alvo de 40 px, rótulo acessível). */}
@@ -506,37 +652,18 @@ function Formulario({
         </p>
       )}
 
-      <SheetFooter className="mt-auto flex-col gap-2 sm:flex-row">
-        <Button
-          type="button"
-          variant="ghost"
-          data-testid="sheet-concluir"
-          onClick={() => { onMove(item, 'done'); onOpenChange(false); }}
-          className="bg-success/15 text-success hover:bg-success/25"
-        >
-          <CheckCircle2 className="mr-2 h-4 w-4" /> Concluir
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          data-testid="sheet-cancelar"
-          onClick={() => { onCancel(item); onOpenChange(false); }}
-          className="text-destructive hover:bg-destructive/10"
-        >
-          <X className="mr-2 h-4 w-4" /> Cancelar tarefa
-        </Button>
-        <Button
-          type="button"
-          data-testid="sheet-salvar"
-          disabled={!mudou || salvando}
-          aria-busy={salvando}
-          onClick={() => { void salvar(); }}
-          className="sm:ml-auto bg-primary"
-          title="Ctrl+Enter salva"
-          onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') void salvar(); }}
-        >
-          Salvar
-        </Button>
+      {/* Etapas 141–142: estado de edição e ações do rodapé moram em
+          `sheet/PainelRodape.tsx` para este arquivo não crescer mais. */}
+      <SheetFooter className="mt-auto flex-col gap-2">
+        <PainelRodape
+          item={item}
+          mudou={mudou}
+          salvando={salvando}
+          onConcluir={() => { onMove(item, 'done'); onOpenChange(false); }}
+          onSalvar={() => { void salvar(); }}
+          onCancelar={() => { onCancel(item); onOpenChange(false); }}
+          onReabrir={() => { onMove(item, 'todo'); onOpenChange(false); }}
+        />
       </SheetFooter>
 
       {motivoObrigatorio && (
