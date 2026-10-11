@@ -259,6 +259,16 @@ jobs:
           SECDEF_EXEC_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-secdef-public-execute.test.sh
 
+      # M-DB-05 / item 474: as 13 SECURITY DEFINER de public executaveis por qualquer
+      # usuario logado sem checagem do chamador vazam papel/permissao/config. A prova
+      # aplica o arquivo inteiro da migration 20261007004545 no PostgreSQL descartavel;
+      # a guarda acima (M-DB-02) so olha EXECUTE para PUBLIC/anon,
+      # que nao cobre `authenticated`.
+      - name: Simular chamador ausente nas SECURITY DEFINER expostas
+        env:
+          SECD_CALLER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/secd-caller-check.test.sh
+
       - name: Provar remoção do token legado da API pública
         env:
           PUBLIC_API_DISABLE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
