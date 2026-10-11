@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { addHours, startOfTomorrow, addDays, setHours } from 'date-fns';
 import { undoToast } from '@/lib/undoToast';
+import { snoozeDurationToDate } from '@/hooks/chat/snoozeDurations';
 
 // Bus de sincronização de favoritos — múltiplas instâncias do hook ficam em sync
 const _favBus = new EventTarget();
@@ -178,21 +178,24 @@ export function useConversationActions() {
 
   const snoozeConversation = useCallback(async (contactId: string, duration: string) => {
     if (!profileId) return;
-    let snoozeUntil: Date;
-    const now = new Date();
-    switch (duration) {
-      case '1h': snoozeUntil = addHours(now, 1); break;
-      case '3h': snoozeUntil = addHours(now, 3); break;
-      case 'tomorrow': snoozeUntil = setHours(startOfTomorrow(), 9); break;
-      case 'nextweek': snoozeUntil = setHours(addDays(now, 7 - now.getDay() + 1), 9); break;
-      default: snoozeUntil = addHours(now, 1);
-    }
+    // A regra de "próxima semana" (e de amanhã às 9h) mora em snoozeDurations,
+    // compartilhada com quem mais adia — uma versão só do cálculo.
+    const snoozeUntil = snoozeDurationToDate(duration);
 
-    await supabase
+    // Gravação que PRESERVA o adiamento anterior em caso de falha: a nova linha
+    // é inserida ANTES de a antiga ser removida. Antes o delete vinha primeiro e
+    // uma inserção recusada (RLS/rede) apagava o adiamento que já existia — a
+    // conversa sumia do adiamento por causa de uma gravação que falhou.
+    const { data: anteriores, error: selectError } = await supabase
       .from('conversation_snoozes')
-      .delete()
+      .select('id')
       .eq('contact_id', contactId)
       .eq('snoozed_by', profileId);
+    if (selectError) {
+      toast.error('Erro ao adiar conversa. Tente novamente.');
+      return;
+    }
+    const idAnterior = anteriores?.[0]?.id ?? null;
 
     const { error } = await supabase
       .from('conversation_snoozes')
@@ -201,17 +204,26 @@ export function useConversationActions() {
         snoozed_by: profileId,
         snooze_until: snoozeUntil.toISOString(),
       });
-    if (!error) {
-      const until = snoozeUntil.getTime();
-      setSnoozes((prev) => {
-        const next = new Map(prev);
-        next.set(contactId, until);
-        return next;
-      });
-      setAgora(Date.now());
-      _snoozeBus.dispatchEvent(new CustomEvent<SnoozeChange>('change', { detail: { contactId, until } }));
-      toast.success('Conversa adiada');
+    if (error) {
+      // Falha visível e adiamento anterior intacto (a linha antiga só é
+      // removida abaixo, depois do aceite).
+      toast.error('Erro ao adiar conversa. Tente novamente.');
+      return;
     }
+
+    if (idAnterior) {
+      await supabase.from('conversation_snoozes').delete().eq('id', idAnterior);
+    }
+
+    const until = snoozeUntil.getTime();
+    setSnoozes((prev) => {
+      const next = new Map(prev);
+      next.set(contactId, until);
+      return next;
+    });
+    setAgora(Date.now());
+    _snoozeBus.dispatchEvent(new CustomEvent<SnoozeChange>('change', { detail: { contactId, until } }));
+    toast.success('Conversa adiada');
   }, [profileId]);
 
   const archiveContact = useCallback(async (contactId: string) => {
