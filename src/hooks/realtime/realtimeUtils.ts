@@ -47,14 +47,20 @@ const CONTACT_MESSAGE_TYPES = new Set([
 /**
  * Tipos de protocolo/controle: nunca viram balão. Se fossem traduzidos para
  * 'unsupported' apareceria um balão para um evento que não é mensagem do usuário.
+ *
+ * Ficam aqui SÓ os tipos que nunca carregam conteúdo de usuário. `ephemeralMessage`
+ * NÃO entra: é o invólucro do modo temporário — por dentro há mensagem real do
+ * usuário (texto/mídia gravados em `content`/`media_url`). Tratar como controle
+ * engoliria esse conteúdo; com payload ele segue a regra do desconhecido e cai em
+ * 'unsupported'/'other'. `messageContextInfo` também não entra: é metadado de
+ * protocolo, mas se um dia chegar com conteúdo/mídia não pode sumir — a checagem
+ * abaixo só o trata como controle quando vem sem payload.
  */
 const CONTROL_MESSAGE_TYPES = new Set([
   'protocolMessage',
   'senderKeyDistributionMessage',
   'reactionMessage',
   'reaction',
-  'ephemeralMessage',
-  'messageContextInfo',
   'stickerSyncRmrMessage',
 ]);
 
@@ -76,7 +82,10 @@ export interface MessageTypeClassification {
  * vazio: aqui a decisão fica num lugar só — enquete, visualização única e contato
  * caem em 'unsupported' com o motivo; tipo desconhecido QUE TRAZ conteúdo/mídia
  * também vira 'unsupported'/'other' (em vez de 'text' vazio); controle continua
- * com o nome cru para não virar balão.
+ * com o nome cru para não virar balão. Exceções: `ephemeralMessage` (invólucro do
+ * modo temporário, por dentro há mensagem real) nunca é controle; `messageContextInfo`
+ * só é controle quando vem sem payload — com conteúdo/mídia seguem a regra do
+ * desconhecido.
  *
  * @param hasPayload se a mensagem traz `content`/mídia (decide o destino do desconhecido).
  */
@@ -87,6 +96,14 @@ export function classifyMessageType(
   const raw = (rawType ?? '').trim();
 
   if (CONTROL_MESSAGE_TYPES.has(raw)) {
+    return { messageType: raw, isControl: true };
+  }
+
+  // `messageContextInfo` é metadado de protocolo (nunca conteúdo do usuário), mas
+  // só pode ser tratado como controle quando vem SEM payload: se um dia chegar com
+  // conteúdo/mídia, engolir como controle sumiria com conteúdo real — nesse caso
+  // segue a regra do desconhecido abaixo ('unsupported'/'other').
+  if (raw === 'messageContextInfo' && !hasPayload) {
     return { messageType: raw, isControl: true };
   }
 

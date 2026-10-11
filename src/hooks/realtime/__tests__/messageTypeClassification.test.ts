@@ -86,6 +86,37 @@ describe('classifyMessageType', () => {
     });
   });
 
+  it('ephemeralMessage com conteúdo NÃO é controle: cai em unsupported/other', () => {
+    // Recusa rodada 1: ephemeralMessage é o invólucro do modo temporário — por
+    // dentro há mensagem real do usuário. Tratar como controle engolia o conteúdo.
+    expect(classifyMessageType('ephemeralMessage', true)).toEqual({
+      messageType: 'unsupported',
+      unsupportedKind: 'other',
+      isControl: false,
+    });
+  });
+
+  it('ephemeralMessage sem payload mantém o nome cru (não inventa balão)', () => {
+    expect(classifyMessageType('ephemeralMessage', false)).toEqual({
+      messageType: 'ephemeralMessage',
+      isControl: false,
+    });
+  });
+
+  it('messageContextInfo sem payload é controle; com conteúdo vira unsupported/other', () => {
+    // Mesmo critério do ephemeralMessage: metadado de protocolo só fica como
+    // controle quando nunca carrega conteúdo de usuário.
+    expect(classifyMessageType('messageContextInfo', false)).toEqual({
+      messageType: 'messageContextInfo',
+      isControl: true,
+    });
+    expect(classifyMessageType('messageContextInfo', true)).toEqual({
+      messageType: 'unsupported',
+      unsupportedKind: 'other',
+      isControl: false,
+    });
+  });
+
   it('desconhecido sem conteúdo mantém o nome cru (não inventa balão vazio)', () => {
     expect(classifyMessageType('algumEventoInterno', false)).toEqual({
       messageType: 'algumEventoInterno',
@@ -100,6 +131,29 @@ describe('normalizeMessage (caminho real public.messages → UI)', () => {
     expect(out.message_type).toBe('unsupported');
     expect(out.unsupportedKind).toBe('poll');
     expect(out.content).toBe('Reunião?');
+  });
+
+  it('ephemeralMessage normalizada NÃO some: vira unsupported/other com content preservado', () => {
+    const out = normalizeMessage(realtimeMessage('ephemeralMessage', 'Oi, modo temporário'));
+    expect(out.message_type).toBe('unsupported');
+    expect(out.unsupportedKind).toBe('other');
+    expect(out.content).toBe('Oi, modo temporário');
+  });
+
+  it('tipo desconhecido só com mídia (content vazio) vira unsupported/other', () => {
+    const out = normalizeMessage({
+      ...realtimeMessage('algumTipoNovo', ''),
+      media_url: 'https://cdn.exemplo/x.bin',
+    });
+    expect(out.message_type).toBe('unsupported');
+    expect(out.unsupportedKind).toBe('other');
+  });
+
+  it('messageContextInfo com conteúdo vira unsupported/other (não some como controle)', () => {
+    const out = normalizeMessage(realtimeMessage('messageContextInfo', 'dado real'));
+    expect(out.message_type).toBe('unsupported');
+    expect(out.unsupportedKind).toBe('other');
+    expect(out.content).toBe('dado real');
   });
 
   it('contato chega como unsupported/contact', () => {
