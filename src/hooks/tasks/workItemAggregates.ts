@@ -97,8 +97,9 @@ function normalizarBusca(texto: string): string {
 
 /**
  * Casa o prazo de um item com o recorte escolhido (etapa 024/037).
- * `today`/`week` usam o MESMO veredito de `bucketByDue` (nada de "hoje" que já
- * é atraso). `week` é a janela dos próximos 7 dias, a mesma do D7 (hoje→+6).
+ * `today` segue o veredito de `bucketByDue`: é o prazo de hoje SEM contar o que
+ * já venceu. `week` é a janela dos próximos 7 dias (do começo de hoje até +7);
+ * em nenhum dos dois o atrasado entra.
  */
 function casaPrazo(item: WorkItem, filtro: DueFilter, now: Date): boolean {
   if (filtro === 'none') return item.due_date == null;
