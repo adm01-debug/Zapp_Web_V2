@@ -72,7 +72,7 @@ export function ContactGroupedList({
                   <Building className="w-3.5 h-3.5 text-primary" />
                 )}
               </div>
-              <span className="text-sm font-semibold text-foreground flex-1 text-left truncate">
+              <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1 text-left truncate">
                 {company}
               </span>
               <Badge variant="secondary" className="text-3xs h-5 px-2 font-medium">
