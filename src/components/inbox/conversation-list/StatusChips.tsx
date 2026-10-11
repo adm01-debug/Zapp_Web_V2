@@ -1,25 +1,22 @@
-import { useMemo } from 'react';
 import { Archive } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
-import { countByChip } from '@/hooks/inbox/chipCounts';
+import type { ChipCounts } from '@/hooks/inbox/chipCounts';
 
 export type MainTab = 'open' | 'resolved' | 'search';
 export type SubTab = 'attending' | 'waiting';
 export type ChipTab = 'all' | 'unread' | 'attending' | 'waiting' | 'resolved' | 'archived';
 
 interface StatusChipsProps {
-  conversations: ConversationWithMessages[];
+  /**
+   * Números já recortados pela busca e pelos filtros da lista
+   * (`useInboxFilters.chipCounts`). O componente só os exibe — quem conta é
+   * `countByChip`, com as mesmas regras que `filteredConversations` aplica,
+   * para o número do chip bater com o que a lista mostra ao clicar nele.
+   */
+  counts: ChipCounts;
   chipTab: ChipTab;
   onChipTabChange: (tab: ChipTab) => void;
-  /** Adiamentos vigentes (R2-INB-029): a lista e o contador os excluem igual. */
-  snoozedIds?: Set<string> | null;
-  /** "Mostrar todos" da lista: Em atendimento passa a acompanhar Todas. */
-  showAll?: boolean;
-  /** Fila selecionada; a lista aplica por cima dos chips abertos e de Arquivadas. */
-  selectedQueueId?: string | null;
 }
 
 const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
@@ -31,19 +28,12 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
   archived: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
 };
 
-export function StatusChips({ conversations, chipTab, onChipTabChange, snoozedIds, showAll, selectedQueueId }: StatusChipsProps) {
-  const { profile } = useAuth();
+/** Nome acessível do chip: o número filtrado entra no rótulo (singular/plural). */
+function chipAriaLabel(label: string, count: number): string {
+  return `${label}, ${count} ${count === 1 ? 'conversa' : 'conversas'}`;
+}
 
-  // Contadores pelas MESMAS regras da lista (src/hooks/inbox/chipCounts.ts), que
-  // useInboxFilters aplica em filteredConversations: o número do chip é o length
-  // que a lista mostra ao clicar nele. As regras antigas (Resolvidas = sem
-  // mensagem carregada, Aguardando = sem responsável) davam número divergente do
-  // estado persistido `contacts.conversation_status`.
-  const counts = useMemo(
-    () => countByChip(conversations, profile?.id, { snoozedIds, showAll, selectedQueueId }),
-    [conversations, profile?.id, snoozedIds, showAll, selectedQueueId],
-  );
-
+export function StatusChips({ counts, chipTab, onChipTabChange }: StatusChipsProps) {
   const chips: { id: ChipTab; label: string; count: number; icon?: LucideIcon }[] = [
     { id: 'all', label: 'Todas', count: counts.all },
     { id: 'unread', label: 'Não lidas', count: counts.unread },
@@ -62,6 +52,7 @@ export function StatusChips({ conversations, chipTab, onChipTabChange, snoozedId
           <button
             key={chip.id}
             data-testid={`status-chip-${chip.id}`}
+            aria-label={chipAriaLabel(chip.label, chip.count)}
             onClick={() => onChipTabChange(chip.id)}
             className={cn(
               'h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center',
