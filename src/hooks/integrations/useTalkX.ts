@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { toast } from 'sonner';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
+import { TALKX_OVERVIEW_STATS_KEY } from './useTalkXOverviewStats';
 
 // A função é introduzida pela migration desta mesma mudança. O types-sync gera
 // a assinatura canônica somente depois que o banco canônico receber a migration.
@@ -184,6 +185,7 @@ export function useTalkX() {
             if (pending.size === 0) return;
             // Novo mapa: eventos que chegarem durante o flush formam o próximo lote.
             pendingUpdatesRef.current = new Map();
+            queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
             queryClient.setQueryData<TalkXCampaign[]>(['talkx-campaigns'], (old) => {
               if (!old) return old;
               return old.map((c) => {
@@ -199,6 +201,7 @@ export function useTalkX() {
         { event: 'INSERT', schema: 'public', table: 'talkx_campaigns' },
         () => {
           queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+          queryClient.invalidateQueries({ queryKey: [TALKX_OVERVIEW_STATS_KEY] });
         }
       )
       .subscribe((status) => {
