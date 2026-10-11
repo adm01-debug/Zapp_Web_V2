@@ -1,12 +1,42 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 
-Deno.serve(async (req) => {
+/**
+ * Valores canônicos de `conversation_tasks.status` (módulo Tarefas:
+ * src/hooks/tasks/workItem.types.ts + o CHECK da coluna no banco). Qualquer
+ * outro valor é recusado — o copiloto não inventa status.
+ */
+export const TASK_STATUSES = ['backlog', 'todo', 'doing', 'waiting', 'done', 'cancelled'] as const;
+
+/**
+ * Sinônimos de "tarefa em aberto" na fala do usuário ("minhas tarefas abertas"):
+ * tudo menos `done`/`cancelled`. Não é um status da coluna — é um atalho de
+ * linguagem natural que o copiloto traduz para o filtro equivalente.
+ */
+const OPEN_TASK_STATUS_ALIASES = new Set(['aberta', 'abertas', 'aberto', 'abertos', 'open', 'em aberto']);
+
+/** Injeção de dependências para o teste rodar o handler real sem rede nem env. */
+export interface VoiceCopilotDeps {
+  /** Autenticação; por padrão usa `requireAuth(req)` (JWT + política de rede). */
+  authorize?: (req: Request) => Promise<{ userId: string } | Response>;
+  /** Client service_role; por padrão criado com as envs. */
+  supabase?: SupabaseClient;
+  /** Client com o JWT do caller (RLS real); por padrão `createAuthedClient(req)`. */
+  authedClient?: SupabaseClient;
+  /** Leitura de env; por padrão `requireEnv`. */
+  env?: (key: string) => string;
+}
+
+export async function handleVoiceCopilotAction(
+  req: Request,
+  deps: VoiceCopilotDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
-  const authCheck = await requireAuth(req);
+
+  const authCheck = deps.authorize ? await deps.authorize(req) : await requireAuth(req);
   if (authCheck instanceof Response) return authCheck;
   const __uid = (authCheck as { userId: string }).userId;
 
@@ -15,14 +45,15 @@ Deno.serve(async (req) => {
   try {
     const { action, params } = await req.json();
 
-    const supabaseUrl = requireEnv('SUPABASE_URL');
-    const supabaseKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const readEnv = deps.env ?? ((key: string) => requireEnv(key));
+    const supabaseUrl = readEnv('SUPABASE_URL');
+    const supabaseKey = readEnv('SUPABASE_SERVICE_ROLE_KEY');
+    const supabase = deps.supabase ?? createClient(supabaseUrl, supabaseKey);
     // Client autenticado como o caller: usado nas leituras abaixo para que a
-    // RLS real de `contacts`/`profiles` filtre por auth.uid(), em vez do
-    // client service_role (que bypassa RLS e vazaria PII/dashboard para
-    // qualquer usuário autenticado do app, não só agentes).
-    const authedClient = await createAuthedClient(req);
+    // RLS real de `contacts`/`profiles`/`conversation_tasks` filtre por
+    // auth.uid(), em vez do client service_role (que bypassa RLS e vazaria
+    // PII/dashboard para qualquer usuário autenticado do app, não só agentes).
+    const authedClient = deps.authedClient ?? await createAuthedClient(req);
 
     log.info("Processing voice action", { action });
 
@@ -45,6 +76,55 @@ Deno.serve(async (req) => {
           .limit(5);
         if (error) throw error;
         result = data;
+        break;
+      }
+
+      case 'search_tasks': {
+        // Tarefas PESSOAIS do módulo Tarefas (src/components/tasks/). A leitura
+        // sai pelo authedClient: a RLS real de `conversation_tasks` decide o
+        // que o chamador enxerga — o copiloto só devolve o que o próprio
+        // usuário já vê no módulo. O service_role bypassaria a RLS e vazaria
+        // tarefa de outra pessoa.
+        const { query, status } = params ?? {};
+        // Mesma sanitização do search_contacts: remove curingas/escape do
+        // PostgREST (a gramática do `.or()` não tem escape automático).
+        const sanitized = String(query || '').replace(/[%_\\]/g, '').trim();
+
+        // Status é validado ANTES de tocar o banco: valor fora do vocabulário
+        // não vira consulta — recusa em vez de devolver lixo.
+        const statusFilter = typeof status === 'string' ? status.trim().toLowerCase() : '';
+        let statusFilterValue: string | null = null;
+        let statusExcluded: string | null = null;
+        if (statusFilter) {
+          if ((TASK_STATUSES as readonly string[]).includes(statusFilter)) {
+            statusFilterValue = statusFilter;
+          } else if (OPEN_TASK_STATUS_ALIASES.has(statusFilter)) {
+            statusExcluded = '(done,cancelled)';
+          } else {
+            result = [];
+            break;
+          }
+        }
+
+        let q = authedClient
+          .from('conversation_tasks')
+          .select('id, title, description, status, priority, due_date, assigned_to, created_by, contact_id')
+          // Ordem determinística e útil por voz: prazo mais próximo primeiro e,
+          // no empate, a criada por último.
+          .order('due_date', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (sanitized) {
+          const like = escapeOrFilterValue(`%${sanitized}%`);
+          q = q.or(`title.ilike.${like},description.ilike.${like}`);
+        }
+        if (statusFilterValue) q = q.eq('status', statusFilterValue);
+        if (statusExcluded) q = q.not('status', 'in', statusExcluded);
+
+        const { data, error } = await q;
+        if (error) throw error;
+        result = data ?? [];
         break;
       }
 
@@ -235,4 +315,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve((req) => handleVoiceCopilotAction(req));
+}
