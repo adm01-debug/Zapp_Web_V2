@@ -4,24 +4,26 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer } from 'recharts';
 import { CHART_TICK_FONT_SIZE, CHART_TOOLTIP_FONT_SIZE } from '@/lib/chart-theme';
 import {
-  Users, ChevronLeft, RefreshCw, Activity, Send,
+  Users, ChevronLeft, RefreshCw, Activity, Send, Search,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTalkXResumeChecklist, type TalkXResumeChecklistItemKey } from '@/hooks/integrations/useTalkXResumeChecklist';
 import { TalkXResumeChecklist } from './tracking/TalkXResumeChecklist';
-import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
+import { IconTile, RailCard, MetaRow, fmtInt, fmtDateTime, InsightCard, TalkXQueryBoundary, TalkXSkeletonRows, type TalkXQueryLike } from './talkxShared';
 import { msToSeconds } from './talkxLimits';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { supabase } from '@/lib/supabaseHelpers';
 import { talkXMessageSnapshotDisplay } from './talkxMessageSnapshot';
-import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish } from './talkxRunningHistory';
+import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish, type MinuteBucket } from './talkxRunningHistory';
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
 import {
@@ -93,10 +95,31 @@ function DonutChart({ sent, delivered, failed, outcomeUnknown, total }: { sent: 
   );
 }
 
+// Pico de Respostas — heurística simples e explícita: compara as RESPOSTAS recebidas nos
+// últimos 10 min com as dos 10 min anteriores. Só vira card quando o aumento é relevante
+// (limiar abaixo). Sem respostas no período anterior não existe % honesto → null (o card
+// não aparece; nunca se inventa número).
+const INSIGHT_REPLY_GROWTH_MIN = 30;
+function replyGrowthPct(replyTimes: string[], now: number): number | null {
+  const recentFloor = now - 10 * 60_000;
+  const previousFloor = now - 20 * 60_000;
+  let recent = 0;
+  let previous = 0;
+  for (const ts of replyTimes) {
+    const t = new Date(ts).getTime();
+    if (Number.isNaN(t)) continue;
+    if (t > recentFloor && t <= now) recent++;
+    else if (t > previousFloor && t <= recentFloor) previous++;
+  }
+  if (previous <= 0) return null;
+  return Math.round(((recent - previous) / previous) * 100);
+}
+
 // ─── Tab: Visão Geral ──────────────────────────────────────────────────────────
-function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
+function TabOverview({ c, chartData, replyGrowthPct, historyQuery, onRetryHistory }: {
   c: TalkXCampaign;
   chartData: { time: string; Enviadas: number; Entregues: number }[];
+  replyGrowthPct: number | null;
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
 }) {
@@ -123,6 +146,17 @@ function TabOverview({ c, chartData, historyQuery, onRetryHistory }: {
           },
         }}
       />
+      {/* Pico de Respostas — heurística explícita (mesmo padrão "Heurístico" do kit):
+          só aparece quando as respostas dos últimos 10 min crescem de forma relevante
+          sobre os 10 min anteriores. O % é o calculado; sem base anterior, não aparece. */}
+      {replyGrowthPct !== null && replyGrowthPct > INSIGHT_REPLY_GROWTH_MIN && (
+        <InsightCard
+          type="reactivation"
+          title="Pico de Respostas"
+          description={`+${fmtInt(replyGrowthPct)}% nas respostas nos últimos 10 min vs. os 10 min anteriores.`}
+          priority="high"
+        />
+      )}
       {/* Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RailCard title="Progresso da Campanha" subtitle={`${fmtInt(processed)} de ${fmtInt(c.total_recipients)} processados`} color="blue" icon={Activity}>
@@ -204,16 +238,52 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
-type RecipRow = { status: string; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
+type RecipRow = { status: string; segment_id: string | null; sent_at: string | null; delivered_at: string | null; error_message: string | null; contacts: { name: string; phone: string } | null };
 const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
+/** Opções do filtro de status dos destinatários (mesma ordem do rótulo da coluna). */
+const RECIPIENT_STATUS_OPTIONS: { value: string; label: string }[] = ['pending', 'sent', 'delivered', 'failed', 'outcome_unknown']
+  .map((value) => ({ value, label: STATUS_LABEL[value] }));
 
-function TabRecipients({ campaignId }: { campaignId: string }) {
+type SegmentNameResolver = (id: string | null) => string | null;
+
+function ListFilters({ search, onSearch, status, onStatus, options = RECIPIENT_STATUS_OPTIONS }: {
+  search: string; onSearch: (v: string) => void; status: string; onStatus: (v: string) => void;
+  options?: { value: string; label: string }[];
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Buscar por nome ou telefone"
+          aria-label="Buscar por nome ou telefone"
+          className="h-9 pl-8 pr-3 w-56 text-xs bg-input/40 border-border/70 rounded-lg"
+        />
+      </div>
+      <Select value={status} onValueChange={onStatus}>
+        <SelectTrigger aria-label="Filtrar por status" className="h-9 w-auto bg-input/40 border-border/70 text-xs min-w-[150px]">
+          <SelectValue placeholder="Todos os status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos os status</SelectItem>
+          {options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function TabRecipients({ campaignId, segmentName }: { campaignId: string; segmentName: SegmentNameResolver }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const { data: recips, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['talkx-running-recipients', campaignId],
     queryFn: async () => {
       const { data, error } = await fromTable('talkx_recipients')
-        .select('status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
+        .select('status, segment_id, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       // X047: sem isto a falha virava lista vazia (o `data ?? []` engolia o erro).
       if (error) throw error;
@@ -222,6 +292,16 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
     refetchInterval: 15_000,
     staleTime: 10_000,
   });
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (recips ?? []).filter((r) => {
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (!term) return true;
+      return (r.contacts?.name?.toLowerCase() ?? '').includes(term)
+        || (r.contacts?.phone?.toLowerCase() ?? '').includes(term);
+    });
+  }, [recips, statusFilter, search]);
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 overflow-hidden">
@@ -239,22 +319,29 @@ function TabRecipients({ campaignId }: { campaignId: string }) {
           </div>
         )}
       >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13px] font-bold text-foreground">Destinatários</p>
-          <p className="text-xs text-foreground-secondary">{`Mostrando ${recips?.length ?? 0} recentes`}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <ListFilters search={search} onSearch={setSearch} status={statusFilter} onStatus={setStatusFilter} />
+            <p className="text-xs text-foreground-secondary">{`Mostrando ${filtered.length} de ${recips?.length ?? 0}`}</p>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[540px] border-collapse">
             <thead><tr>
-              {['Contato', 'Telefone', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
+              {['Contato', 'Telefone', 'Segmento', 'Status', 'Enviada em', 'Entregue em'].map((h) => (
                 <th key={h} className="text-left text-2xs font-semibold text-foreground-secondary px-4 py-2">{h}</th>
               ))}
             </tr></thead>
             <tbody>
-              {(recips ?? []).map((r, i) => (
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-6 text-center text-xs text-foreground-secondary">Nenhum destinatário para os filtros aplicados.</td></tr>
+              )}
+              {filtered.map((r, i) => (
                 <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
                   <td className="px-4 py-2.5 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>
                   <td className="px-4 py-2.5 text-xs text-foreground-secondary font-mono">{r.contacts?.phone ?? '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-foreground-secondary truncate max-w-[160px]">{segmentName(r.segment_id) ?? '—'}</td>
                   <td className={`px-4 py-2.5 text-xs font-semibold ${STATUS_TONE[r.status] ?? 'text-foreground-secondary'}`}>{STATUS_LABEL[r.status] ?? r.status}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.sent_at ? new Date(r.sent_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                   <td className="px-4 py-2.5 text-2xs text-muted-foreground">{r.delivered_at ? new Date(r.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
@@ -378,13 +465,18 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
-type LogEvent = { id: string; contact: string; phone: string; status: string; ts: string; error?: string | null };
+type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
 const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-primary' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
+/** Status possíveis nos logs (a consulta exclui só `pending`). */
+const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
+  .map((value) => ({ value, label: STATUS_LABEL[value] ?? value }));
 
-function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }) {
+function TabLogs({ campaignId, active, segmentName }: { campaignId: string; active: boolean; segmentName: SegmentNameResolver }) {
   const queryClient = useQueryClient();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   // X047: a carga inicial dos logs engolia o erro (`if (data)`) — uma falha virava
   // "Aguardando eventos de envio…". Agora é uma consulta de verdade, com
@@ -393,7 +485,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
     queryKey: ['talkx-running-logs', campaignId],
     queryFn: async () => {
       const { data: rows, error: queryError } = await fromTable('talkx_recipients')
-        .select('id, status, updated_at, error_message, contacts:contact_id(name, phone)')
+        .select('id, segment_id, status, updated_at, error_message, contacts:contact_id(name, phone)')
         .eq('campaign_id', campaignId)
         .not('status', 'eq', 'pending')
         .order('updated_at', { ascending: false })
@@ -403,6 +495,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
         id: r.id as string,
         contact: (r.contacts as { name: string } | null)?.name ?? '—',
         phone: (r.contacts as { phone: string } | null)?.phone ?? '—',
+        segmentId: (r.segment_id as string | null) ?? null,
         status: r.status as string,
         ts: r.updated_at as string,
         error: r.error_message as string | null,
@@ -411,7 +504,16 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
     enabled: active && !!campaignId,
   });
 
-  const events = data ?? [];
+  const events = useMemo<LogEvent[]>(() => data ?? [], [data]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return events.filter((ev) => {
+      if (statusFilter !== 'all' && ev.status !== statusFilter) return false;
+      if (!term) return true;
+      return ev.contact.toLowerCase().includes(term) || ev.phone.toLowerCase().includes(term);
+    });
+  }, [events, statusFilter, search]);
 
   useEffect(() => {
     if (!active || !campaignId) return;
@@ -431,6 +533,7 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
           id: r.id as string,
           contact: '—', // sem join em realtime; enriquece se ja temos o contato
           phone: '—',
+          segmentId: (r.segment_id as string | null) ?? null,
           status: r.status as string,
           ts: r.updated_at as string,
           error: r.error_message as string | null,
@@ -456,19 +559,26 @@ function TabLogs({ campaignId, active }: { campaignId: string; active: boolean }
         isEmpty={events.length === 0}
         empty={<p className="text-xs text-muted-foreground text-center p-8">Aguardando eventos de envio…</p>}
       >
-        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-border/40 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13px] font-bold text-foreground">Logs em Tempo Real</p>
-          <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
-            <span className="w-2 h-2 rounded-full bg-dash-green animate-pulse" />Ao vivo
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <ListFilters search={search} onSearch={setSearch} status={statusFilter} onStatus={setStatusFilter} options={LOG_STATUS_OPTIONS} />
+            <span className="inline-flex items-center gap-1.5 text-2xs font-medium text-dash-green">
+              <span className="w-2 h-2 rounded-full bg-dash-green motion-safe:animate-pulse" />Ao vivo
+            </span>
+          </div>
         </div>
         <div className="divide-y divide-border/30 max-h-[480px] overflow-y-auto">
-          {events.map((ev) => (
+          {filtered.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center p-8">Nenhum evento para os filtros aplicados.</p>
+          )}
+          {filtered.map((ev) => (
             <div key={`${ev.id}-${ev.ts}`} className="flex items-start gap-3 px-4 py-2.5 hover:bg-muted/10">
               <span className={`text-[15px] leading-none mt-0.5 ${LOG_TONE[ev.status] ?? 'text-muted-foreground'}`}>{LOG_ICON[ev.status] ?? '●'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-foreground truncate">{ev.contact} <span className="text-muted-foreground font-normal">{ev.phone}</span></p>
+                  <span className="text-2xs text-foreground-secondary truncate shrink-0 max-w-[130px]">{segmentName(ev.segmentId) ?? '—'}</span>
                   <span className={`text-2xs font-semibold ml-auto shrink-0 ${LOG_TONE[ev.status] ?? 'text-foreground-secondary'}`}>{ev.status}</span>
                 </div>
                 {ev.error && <p className="text-2xs text-dash-red mt-0.5 truncate">{ev.error}</p>}
@@ -628,29 +738,45 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
   // Histórico de envios para gráfico AreaChart (últimos 20 pontos por minuto)
   const { data: sentHistory, isLoading: historyLoading, isFetching: historyFetching, isError: historyIsError, error: historyError, refetch: refetchHistory } = useQuery({
     queryKey: ['talkx-running-history', selectedId],
-    queryFn: async () => {
-      if (!selectedId) return [];
+    queryFn: async (): Promise<{ buckets: MinuteBucket[]; replyGrowthPct: number | null }> => {
+      if (!selectedId) return { buckets: [], replyGrowthPct: null };
       // Ordem decrescente: o teto de 2000 guarda os envios MAIS RECENTES. Com ordem
       // crescente, o envio 2001+ ficava de fora e a série congelava no passado.
       const { data, error } = await fromTable('talkx_recipients')
-        .select('sent_at, delivered_at')
+        .select('sent_at, delivered_at, replied_at')
         .eq('campaign_id', selectedId)
         .not('sent_at', 'is', null)
         .order('sent_at', { ascending: false })
         .limit(2000);
-      // X047: sem isto a falha virava "sem envios" (o `if (!data?.length) return []` engolia o erro).
+      // X047: sem isto a falha virava "sem envios" (o `if (!data?.length)` curto engolia o erro).
       if (error) throw error;
-      if (!data?.length) return [];
+      if (!data?.length) return { buckets: [], replyGrowthPct: null };
+      const rows = data as { sent_at: string; delivered_at: string | null; replied_at: string | null }[];
       // Buckets de minuto consecutivos (zeros incluídos), terminando no minuto atual.
-      return recentMinuteSeries(
-        data as { sent_at: string; delivered_at: string | null }[],
-        { minutes: 20 },
-      );
+      const buckets = recentMinuteSeries(rows, { minutes: 20 });
+      // Pico de Respostas: heurística explícita sobre as respostas do período —
+      // últimos 10 min vs. os 10 min anteriores (ver replyGrowthPct).
+      const replyTimes = rows.map((r) => r.replied_at).filter((t): t is string => !!t);
+      return { buckets, replyGrowthPct: replyGrowthPct(replyTimes, Date.now()) };
     },
     enabled: !!selectedId,
     refetchInterval: 30_000,
     staleTime: 20_000,
   });
+
+  // Nome dos segmentos para a coluna "Segmento" (Destinatários/Logs). talkx_recipients.segment_id
+  // não tem FK no banco, então não dá para embutir no select — busca-se o mapa id->nome aqui.
+  const { data: segments } = useQuery({
+    queryKey: ['talkx-running-segments'],
+    queryFn: async () => {
+      const { data, error } = await fromTable('talkx_segments').select('id, name');
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+    staleTime: 5 * 60_000,
+  });
+  const segmentNames = useMemo(() => new Map((segments ?? []).map((s) => [s.id, s.name])), [segments]);
+  const segmentName = useCallback((id: string | null) => (id ? segmentNames.get(id) ?? null : null), [segmentNames]);
 
   const historyQuery: TalkXQueryLike = {
     isLoading: historyLoading,
@@ -824,14 +950,14 @@ export function TalkXCampaignRunning({ onBack, onViewMonitor, initialCampaignId 
                       className="mb-4"
                     />
                   )}
-                  <TabOverview c={campaign} chartData={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
+                  <TabOverview c={campaign} chartData={sentHistory?.buckets ?? []} replyGrowthPct={sentHistory?.replyGrowthPct ?? null} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />
                 </>
               )}
               {activeTab === 'config' && <TabConfig c={campaign} connection={connection ?? null} />}
-              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} />}
+              {activeTab === 'recipients' && <TabRecipients campaignId={campaign.id} segmentName={segmentName} />}
               {activeTab === 'messages' && <TabMessages campaignId={campaign.id} />}
-              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
-              {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} />}
+              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRetryHistory} />}
+              {activeTab === 'logs' && <TabLogs campaignId={campaign.id} active={activeTab === 'logs'} segmentName={segmentName} />}
             </div>
 
             {/* Card Ações + Configurações Atuais (X154) */}
