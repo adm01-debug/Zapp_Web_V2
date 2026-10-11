@@ -60,7 +60,7 @@ interface TicketQueueRpc {
   rpc: (
     name: 'assume_conversation' | 'return_conversation_to_queue',
     args: { p_contact_id: string; p_reason?: string | null },
-  ) => Promise<{ data: TicketMutationResult | null; error: { message: string } | null }>;
+  ) => Promise<{ data: { ok?: boolean; assigned_to?: string | null; conversation_status?: string } | null; error: { message: string } | null }>;
 }
 
 export function translateTicketActionError(message?: string | null): string {
