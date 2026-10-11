@@ -56,7 +56,7 @@ export function HeroBenefits() {
           className="font-display text-4xl font-bold leading-[1.05] tracking-tight text-foreground lg:text-[clamp(2.75rem,4.5vw,4.25rem)]"
         >
           O centro de comando do{' '}
-          <span className="bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary via-primary to-[hsl(var(--primary-text))] bg-clip-text text-transparent">
             atendimento moderno.
           </span>
         </motion.h1>
