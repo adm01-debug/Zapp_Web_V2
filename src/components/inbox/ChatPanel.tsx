@@ -26,6 +26,9 @@ import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
+import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary';
+import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
+import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
@@ -293,6 +296,36 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const contactAvatar = conversation.contact.avatar || undefined;
   const handleScrollToMessage = useCallback((id: string) => messagesAreaRef.current?.scrollToMessage(id), []);
 
+  // Pílulas de entrega: rolar até a primeira mensagem do estado e realçar com anel por 1,2 s.
+  // O realce e PROPRIO (`deliveryFocusId`) e visual: nunca toca no realce da busca
+  // (`highlightedMessageIds`/`activeHighlightId`) — a area recebe a uniao dos dois.
+  const [deliveryFocusId, setDeliveryFocusId] = useState<string | null>(null);
+  // `useMemo` para nao quebrar a memoizacao da area com um Set novo a cada render.
+  const realceCombinado = useMemo(
+    () => (deliveryFocusId ? new Set([...highlightedMessageIds, deliveryFocusId]) : highlightedMessageIds),
+    [highlightedMessageIds, deliveryFocusId],
+  );
+  const ativoCombinado = deliveryFocusId ?? activeHighlightId;
+  const destaqueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleFocusDeliveryState = useCallback((estado: EstadoDeEnvio) => {
+    const alvo = messages.find((m) => m.sender === 'agent' && estadoDeEnvio(m) === estado);
+    if (!alvo) return;
+    if (destaqueTimerRef.current) {
+      clearTimeout(destaqueTimerRef.current);
+      destaqueTimerRef.current = null;
+    }
+    setDeliveryFocusId(alvo.id);
+    messagesAreaRef.current?.scrollToMessage(alvo.id);
+    destaqueTimerRef.current = setTimeout(() => {
+      destaqueTimerRef.current = null;
+      setDeliveryFocusId(null);
+    }, 1200);
+  }, [messages]);
+
+  useEffect(() => () => {
+    if (destaqueTimerRef.current) clearTimeout(destaqueTimerRef.current);
+  }, []);
+
   const handleQuickReply = (reply: { id: string; title: string; shortcut: string; content: string; category: string }) => {
     handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
@@ -390,7 +423,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
           conversationId={conversation.id} contactJid={contactJid} contactAvatar={contactAvatar}
           onSpeak={speak} onStop={stop} onReply={handlers.handleReplyToMessage} onForward={handlers.handleForwardMessage} onCopy={handlers.handleCopyMessage}
           onScrollToMessage={handleScrollToMessage} onInteractiveButtonClick={handlers.handleInteractiveButtonClick} onEditStart={handlers.handleEditStart}
-          highlightedMessageIds={highlightedMessageIds} activeHighlightId={activeHighlightId} searchQuery={searchQuery}
+          highlightedMessageIds={realceCombinado} activeHighlightId={ativoCombinado} searchQuery={searchQuery}
           hasOlderMessages={hasOlderMessages} loadingOlderMessages={loadingOlderMessages} onLoadOlderMessages={onLoadOlderMessages} />
 
         <ChatQuickRepliesPopover show={dialogs.quickReplies} replies={filteredQuickReplies} onSelect={handleQuickReply} onClose={() => closeDialog('quickReplies')} />
