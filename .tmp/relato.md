@@ -1,5 +1,11 @@
 Especialista: Íris (area-front-componentes)
 
+NOTA (para o portão): os arquivos de `src/components/tasks/shared/` (StatusPill, PriorityPill, ContactAvatar, DateLabel,
+TaskCheckbox, tasksUi/TasksUiContext, WorkItemCard), `TasksModule.tsx`, `src/hooks/tasks/workItemFormat.ts` e o
+`primitivosCompartilhados.test.tsx` NÃO foram editados por este cartão: vieram do cherry-pick dos pais (t_a332243d e a parte
+de `workItemFormat` da t_33d9213e), exatamente como o cartão manda ("Traga os pais"). O que este cartão escreveu é
+`WorkItemSheet.tsx` e os dois testes do painel.
+
 ## O que mudou e por quê
 - `src/components/tasks/shared/WorkItemSheet.tsx`: etapas 132–136 do plano (imagem 03).
   - 132: cabeçalho com o ícone calendário em quadrado primary, "Detalhes da tarefa" (era "Editar tarefa") e o botão "expandir"
