@@ -20,6 +20,12 @@ vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () =
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
 vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
   TalkXCampaignWizard: ({ campaign, initial, onClose }: { campaign: { id?: string } | null; initial?: { step?: number }; onClose: () => void }) => (
     <section data-testid="wizard" data-campaign-id={campaign?.id ?? 'new'} data-step={initial?.step}>

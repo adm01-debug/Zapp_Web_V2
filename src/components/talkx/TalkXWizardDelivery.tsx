@@ -13,7 +13,9 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
+import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 
@@ -159,6 +161,41 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
 /* Passo 4 — Revisão final                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * T09 — CTA do template na prévia da revisão.
+ *
+ * Extrai o `interactive` que o template carrega para o formato simples que a
+ * prévia entende (`TalkXPreviewInteractive`): botões viram rótulos (a forma
+ * rica do X096 — `{ type, label, url? }` — ou `string[]`), enquete vira
+ * pergunta + opções. Só passa adiante texto não vazio; sem `interactive` no
+ * template devolve `null` e a prévia não inventa botão nenhum.
+ */
+function templatePreviewInteractive(template: unknown): TalkXPreviewInteractive | null {
+  if (!template || typeof template !== 'object') return null;
+  const raw = (template as { interactive?: unknown }).interactive;
+  if (!raw || typeof raw !== 'object') return null;
+  const { buttons, poll } = raw as { buttons?: unknown; poll?: unknown };
+  const labels = Array.isArray(buttons)
+    ? buttons
+      .map((button) => typeof button === 'string' ? button : (button as { label?: unknown } | null)?.label)
+      .filter((label): label is string => typeof label === 'string' && label.trim().length > 0)
+      .map((label) => label.trim())
+    : [];
+  let pollPreview: TalkXPreviewInteractive['poll'];
+  if (poll && typeof poll === 'object') {
+    const { question, options } = poll as { question?: unknown; options?: unknown };
+    const cleanQuestion = typeof question === 'string' ? question.trim() : '';
+    const cleanOptions = Array.isArray(options)
+      ? options
+        .filter((option): option is string => typeof option === 'string' && option.trim().length > 0)
+        .map((option) => option.trim())
+      : [];
+    if (cleanQuestion) pollPreview = { question: cleanQuestion, ...(cleanOptions.length > 0 ? { options: cleanOptions } : {}) };
+  }
+  if (labels.length === 0 && !pollPreview) return null;
+  return { ...(labels.length > 0 ? { buttons: labels } : {}), ...(pollPreview ? { poll: pollPreview } : {}) };
+}
+
 const Row = ({ icon, label, value, sub, ok, step, onEditStep }: { icon: React.ElementType; label: string; value: React.ReactNode; sub?: React.ReactNode; ok?: boolean; step: 1 | 2 | 3; onEditStep?: (step: 1 | 2 | 3) => void }) => (
     <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <IconTile icon={icon as never} size={36} color={ok === false ? 'red' : 'blue'} />
@@ -205,6 +242,13 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
   const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
+  // T09 — CTA do template na prévia: só o que o template carrega (nunca inventado).
+  const templateInteractive = templatePreviewInteractive(ed.selectedTemplate);
+  // T09 — 2 recomendações REAIS do motor (horário ideal + template campeão).
+  // O motor se abstém sem dados (buildInsights devolve []); sem dado não há card.
+  const { data: insights } = useTalkXInsights();
+  const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
+  const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
 
   const launch = async () => {
     if (!launchAllowed) return;
@@ -237,7 +281,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
       </Section>
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
-        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} />
+        <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} interactive={templateInteractive} />
       </Section>
 
       <div className="space-y-4 min-w-0">
@@ -247,6 +291,19 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           <MetaRow icon={Ban} label="Suprimidos" value={<span><b className="text-[15px]">{fmtInt(ed.suppressedCount)}</b> <span className="text-foreground-secondary font-normal">{fmtPct(ed.suppressedCount, ed.audienceTotal)}</span></span>} />
           <MetaRow icon={MessageSquare} label="Taxa de resposta projetada" value={<span className="text-foreground-secondary font-normal">{responses ?? 'sem histórico suficiente'}</span>} />
         </RailCard>
+
+        {/* T09 — 2 recomendações REAIS do motor (`useTalkXInsights`, o mesmo das
+            telas Resumo/Análise): horário ideal + template campeão, com o selo
+            honesto "Heurístico" do `InsightCard`. Sem dado no motor não há card
+            (o 3º — reativação/opt-out — fica de fora, como manda o cartão). */}
+        {(timingInsight || templateInsight) && (
+          <RailCard icon={MessageSquare} title="Recomendações" subtitle="Sinais do histórico da conta.">
+            <div className="space-y-2">
+              {timingInsight && <InsightCard key={timingInsight.id} {...timingInsight} />}
+              {templateInsight && <InsightCard key={templateInsight.id} {...templateInsight} />}
+            </div>
+          </RailCard>
+        )}
 
         <RailCard icon={ShieldAlert} color="amber" title="Confirmações obrigatórias" subtitle="Marque para habilitar o lançamento.">
           {[

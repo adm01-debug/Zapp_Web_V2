@@ -5,6 +5,13 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
 
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+
 import { TalkXMessageEditor } from '../TalkXMessageEditor';
 import { TalkXWizardReview } from '../TalkXWizardDelivery';
 import { personalizePreview } from '../talkxShared';
