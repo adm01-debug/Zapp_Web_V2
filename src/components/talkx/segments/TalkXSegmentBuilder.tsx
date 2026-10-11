@@ -77,6 +77,9 @@ export function TalkXSegmentBuilder({
     return rules.groups[rules.groups.length - 1]?.id ?? null;
   };
   const addFieldToGroup = (field: RuleField) => {
+    // "Em breve" não adiciona condição por nenhum caminho (clique ou arrasto):
+    // a coluna não é calculada e o filtro seria morto.
+    if (RULE_FIELDS.find((f) => f.value === field)?.comingSoon) return;
     const gid = resolveGroupId();
     if (!gid) return;
     dispatch({ type: 'addRule', groupId: gid, rule: ruleFromField(field) });
@@ -155,7 +158,7 @@ export function TalkXSegmentBuilder({
                   onDrop={(e) => {
                     e.preventDefault();
                     const dropped = RULE_FIELDS.find((x) => x.value === e.dataTransfer.getData('text/plain'));
-                    if (dropped) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.value) });
+                    if (dropped && !dropped.comingSoon) dispatch({ type: 'addRule', groupId: g.id, rule: ruleFromField(dropped.value) });
                     setDragOverGroupId(null); setDraggingField(null);
                   }}
                 >
@@ -225,13 +228,15 @@ export function TalkXSegmentBuilder({
                 <button
                   key={f.value}
                   type="button"
-                  draggable
+                  draggable={!f.comingSoon}
+                  disabled={f.comingSoon}
+                  title={f.comingSoon ? 'Em breve: este indicador ainda não é calculado' : undefined}
                   onDragStart={(e) => { setDraggingField(f.value); e.dataTransfer.setData('text/plain', f.value); e.dataTransfer.effectAllowed = 'copy'; }}
                   onDragEnd={() => { setDraggingField(null); setDragOverGroupId(null); }}
                   onClick={() => addFieldToGroup(f.value)}
-                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab')}
+                  className={cn('h-8 px-2.5 rounded-lg text-xs font-medium border bg-muted/30 flex items-start gap-1.5 w-full text-left transition-colors', draggingField === f.value ? 'border-primary/60 bg-primary/15 text-primary-glow cursor-grabbing opacity-75' : 'border-border/60 text-foreground-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary-glow cursor-grab', f.comingSoon && 'opacity-50 cursor-not-allowed hover:border-border/60 hover:bg-muted/30 hover:text-foreground-secondary')}
                 >
-                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}
+                  <Plus className="w-3 h-3 mt-0.5 shrink-0" />{f.label}{f.comingSoon ? <span aria-hidden="true"> (em breve)</span> : null}
                 </button>
               ))}
             </div>

@@ -160,16 +160,14 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     });
   });
 
-  it('número: grava o número sem máscara', async () => {
-    const publicar = await condicaoPeloCatalogo('Lead score', 'Alto valor');
-
-    fireEvent.change(screen.getByLabelText('Valor da condição'), { target: { value: '80' } });
-    fireEvent.click(publicar);
-
-    expect(await regraGravada()).toMatchObject({
-      field: 'lead_score',
-      op: 'eq',
-      value: '80',
-    });
+  it('número "em breve" (lead_score): botão desabilitado e sem condição adicionada', async () => {
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+    // O botão continua visível com o MESMO nome acessível ("Lead score"), mas
+    // desabilitado: a coluna nunca é calculada e o filtro seria morto.
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
   });
 });
