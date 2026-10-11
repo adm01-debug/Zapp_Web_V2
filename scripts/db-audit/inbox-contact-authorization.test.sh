@@ -249,6 +249,8 @@ psql_file "$migration" >/dev/null
 # =====================================================================================
 favorites_migration="$repo_root/supabase/migrations/20261011125915_message_favorites_pins_reports.sql"
 [[ -f "$favorites_migration" ]] || fail 'migration de favoritos/fixar/reportar nao encontrada'
+fix_migration="$repo_root/supabase/migrations/20261011151736_message_reports_reason_searchpath_fix.sql"
+[[ -f "$fix_migration" ]] || fail 'migration corretiva de reason/search_path nao encontrada'
 
 # mais mensagens na MESMA conversa (contato A) para exercitar o teto de 3 fixos
 psql_sql "INSERT INTO public.messages (id, contact_id, media_url) VALUES
@@ -257,6 +259,7 @@ psql_sql "INSERT INTO public.messages (id, contact_id, media_url) VALUES
   ('40000000-0000-0000-0000-000000000005','30000000-0000-0000-0000-000000000001',NULL);" >/dev/null
 
 psql_file "$favorites_migration" >/dev/null
+psql_file "$fix_migration" >/dev/null
 
 U1='20000000-0000-0000-0000-000000000001'   # dono do contato A
 U2='20000000-0000-0000-0000-000000000002'   # membro ativo da fila do contato A
@@ -323,6 +326,11 @@ expect_failure 'desafixar mensagem de contato oculto' "SET ROLE authenticated; S
 R1="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','spam','mensagem suspeita');")"
 [[ "$R1" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "report_message nao devolveu uuid (=$R1)"
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','spam','de novo');")" == "$R1" ]] || fail 'relato duplicado nao devolveu o id existente'
+# Juiz item 1: reason com os valores do cartao ('spam','improprio','urgencia','outro')
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND table_name='message_reports';")" == '3' ]] || fail 'CHECKs de message_reports duplicados ou ausentes (reason, note, status)'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.check_constraints WHERE constraint_schema='public' AND table_name='message_reports' AND check_clause LIKE '%improprio%';")" == '1' ]] || fail 'CHECK de reason sem os valores do cartao'
+R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
+[[ "$R_IMP" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "reason 'improprio' do cartao foi rejeitado (=$R_IMP)"
 [[ "$(psql_sql "SELECT count(*) FROM public.message_reports WHERE message_id='$M1'")" == '1' ]] || fail 'relato duplicou a linha do mesmo usuario'
 expect_failure 'relato com motivo invalido (22023)' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','xingamento',NULL);"
 expect_failure 'relato com nota acima de 500 caracteres' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.report_message('$M1','outro',repeat('a',501));"
@@ -370,6 +378,7 @@ expect_same_failure 'oraculo do report' "SET ROLE authenticated; SET request.jwt
 
 # ---- reaplicar a migration continua idempotente ----
 psql_file "$favorites_migration" >/dev/null
+psql_file "$fix_migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports')")" == '3' ]] || fail 'segunda aplicacao da migration quebrou as tabelas'
 
 # Rollback do cabecalho da migration roda e desfaz tudo (3 tabelas + 4 RPCs + funcao do gatilho)
@@ -377,6 +386,7 @@ psql_sql "drop trigger if exists message_pins_force_contact_id on public.message
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports');")" == '0' ]] || fail 'rollback nao removeu as 3 tabelas'
 [[ "$(psql_sql "SELECT count(*) FROM pg_proc WHERE proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message','message_pins_force_contact_id');")" == '0' ]] || fail 'rollback nao removeu as funcoes'
 psql_file "$favorites_migration" >/dev/null
+psql_file "$fix_migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_class WHERE relname IN ('message_favorites','message_pins','message_reports');")" == '3' ]] || fail 'reaplicacao pos-rollback quebrou as tabelas'
 
 printf 'Inbox contact authorization PostgreSQL 17 behavioral contract: PASS\n'
