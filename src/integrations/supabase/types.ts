@@ -3865,6 +3865,48 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_api_calls: {
+        Row: {
+          attempt: number
+          created_at: string
+          endpoint: string
+          error_code: string | null
+          id: string
+          instance: string | null
+          latency_ms: number | null
+          method: string
+          ok: boolean
+          retry_reason: string | null
+          status_code: number | null
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          endpoint: string
+          error_code?: string | null
+          id?: string
+          instance?: string | null
+          latency_ms?: number | null
+          method: string
+          ok: boolean
+          retry_reason?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          endpoint?: string
+          error_code?: string | null
+          id?: string
+          instance?: string | null
+          latency_ms?: number | null
+          method?: string
+          ok?: boolean
+          retry_reason?: string | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
       favorite_contacts: {
         Row: {
           contact_id: string
@@ -9369,6 +9411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events_log: {
+        Row: {
+          error_code: string | null
+          event_type: string
+          id: string
+          instance: string | null
+          latency_ms: number | null
+          message_type: string | null
+          processing_status: string
+          received_at: string
+        }
+        Insert: {
+          error_code?: string | null
+          event_type: string
+          id?: string
+          instance?: string | null
+          latency_ms?: number | null
+          message_type?: string | null
+          processing_status: string
+          received_at?: string
+        }
+        Update: {
+          error_code?: string | null
+          event_type?: string
+          id?: string
+          instance?: string | null
+          latency_ms?: number | null
+          message_type?: string | null
+          processing_status?: string
+          received_at?: string
+        }
+        Relationships: []
+      }
       webhook_failures: {
         Row: {
           endpoint: string
@@ -11091,6 +11166,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      evolution_api_calls_overview: {
+        Args: { p_window_hours?: number }
+        Returns: Json
+      }
+      evolution_observability_retention: {
+        Args: { p_days?: number }
+        Returns: number
+      }
       expire_stale_agent_presence: { Args: never; Returns: undefined }
       fail_crm_sync_outbox: {
         Args: { p_error_code: string; p_id: string; p_lease_token: string }
@@ -12457,6 +12540,10 @@ export type Database = {
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
+      }
+      webhook_events_overview: {
+        Args: { p_window_hours?: number }
+        Returns: Json
       }
     }
     Enums: {

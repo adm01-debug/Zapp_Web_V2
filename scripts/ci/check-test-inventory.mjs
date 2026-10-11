@@ -60,6 +60,12 @@ const ALLOWLIST = new Set([
   // modalidade declarada antes continua declarada quando o `audio_stt` entra. Passo de uma linha em
   // db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/ia131-audio-stt-cadeia.test.sh',
+  // Evolucao/observabilidade (migration 20261011184530, t_069395b8): prova em PG 17 descartavel
+  // (docker local) que evolution_api_calls e webhook_events_log nascem com RLS, ACL de leitura so
+  // admin (authenticated) e escrita so service_role, agregacao por janela restrita ao admin,
+  // retencao de 30 dias agendada por pg_cron e rollback real. Passo de uma linha em db-guard.yml —
+  // promover pelo dono do workflow.
+  'scripts/db-audit/evolution-observability.test.sh',
   // --- .test.sh OFFLINE (sem docker, sem banco): roda em qualquer runner. O passo no
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
