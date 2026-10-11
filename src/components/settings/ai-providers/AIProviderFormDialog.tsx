@@ -94,7 +94,7 @@ export function AIProviderFormDialog({
               value={form.provider_type}
               onValueChange={v => setForm(p => ({ ...p, provider_type: v as ProviderType }))}
             >
-              <SelectTrigger className="rounded-xl">
+              <SelectTrigger aria-label="Tipo de Provedor" className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -183,6 +183,7 @@ export function AIProviderFormDialog({
           <div className="flex items-center gap-6 pt-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <Switch
+                aria-label="Ativo"
                 checked={form.is_active}
                 onCheckedChange={v => setForm(p => ({ ...p, is_active: v }))}
               />
@@ -190,6 +191,7 @@ export function AIProviderFormDialog({
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <Switch
+                aria-label="Provedor Padrão"
                 checked={form.is_default}
                 onCheckedChange={v => setForm(p => ({ ...p, is_default: v }))}
               />
