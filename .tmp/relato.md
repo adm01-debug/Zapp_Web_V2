@@ -1,63 +1,23 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- src/hooks/tasks/workItemFilters.ts (etapas 024/037): `TasksFilters` ganhou `status` (WorkItemStatus | 'all') e `due` ('all'|'overdue'|'today'|'week'|'none'). `filtersFromSearch` lê os dois da URL (`?status=`, `?due=`), ignora valor fora da lista (cai em 'all') e mantém o `q` herdado; `searchWithFilters` grava só o que difere do padrão e preserva os params alheios (`view`, `task`); `isFilterActive` conta os dois como filtro ativo. Como `useTasksFilters.clear()` aplica `DEFAULT_FILTERS` sobre a URL corrente, "Limpar tudo" zera `status` e `due` (e o `q` da correção do cartão pai não volta).
+- src/hooks/tasks/workItemAggregates.ts (etapas 024/037): `applyFilters` passou a RECORTAR por estado e prazo, com `now` injetável (default `new Date()`). `today` segue o veredito de `bucketByDue` (prazo de hoje SEM contar o já vencido); `week` é a janela dos próximos 7 dias; `none` é o sem prazo. Um estado escolhido manda no lugar do toggle "concluídas" (`done`): `status=doing&done=0` devolve a coluna, não vazio.
+- src/hooks/tasks/workItem.types.ts (etapa 081): `KANBAN_COLUMNS` ganhou `subtitle` curto — "A organizar", "Próximas ações", "Conclua uma para iniciar outra", "Dependências externas", "Últimos 7 dias" — e a `policy` longa continua intacta.
+- Testes: `workItemColumns.test.ts` (novo); `workItemFilters.test.ts` (+4 casos de URL round-trip); `useTasksFilters.test.tsx` (+1); `workItemAggregates.test.ts` (+7 de recorte); `QuickAdd.test.tsx` (etapa 041: Ctrl+2 e o caso "sem linguagem natural").
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Prova
+- vermelho antes (só os testes novos, com os 3 arquivos de src revertidos por `git stash push`): `npx vitest run <os 5 arquivos>` -> `Test Files 4 failed (4); Tests 15 failed | 65 passed (80)`.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemFilters.test.ts src/hooks/tasks/__tests__/workItemColumns.test.ts src/hooks/tasks/__tests__/workItemAggregates.test.ts src/hooks/tasks/__tests__/useTasksFilters.test.tsx src/components/tasks/__tests__/QuickAdd.test.tsx` -> `Test Files 5 passed (5); Tests 93 passed (93)`.
+- regressão do módulo: `npx vitest run src/hooks/tasks src/components/tasks` -> `Test Files 31 passed (31); Tests 356 passed | 1 todo (357)`.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Etapa 041 (revisão, sem reescrever o componente)
+O parser do QuickAdd já cumpria a decisão G-5: Ctrl+1/2/3 (Hoje/Amanhã/Próx. semana), Ctrl+L (lembrete) e Ctrl+@ (contato), todos documentados no `title` do campo, sem NLP. Não alterei `QuickAdd.tsx`; provei em teste que o texto "amanhã às 9h ligar para o cliente" entra CRU (título inteiro, prazo e lembrete nulos) e que Ctrl+2 marca amanhã.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Escopo
+- `applyFilters` mora em `src/hooks/tasks/workItemAggregates.ts`, que o cartão não lista mas é o recorte único dos três modos (hooks/dados, minha área). Estendi ali porque sem isso o filtro ficaria só na URL, sem efeito. A regra do toggle ficou comentada no código.
+- `status`/`due` são opcionais em `TasksFilters` para não quebrar objetos montados à mão (ex.: `TasksBoardMode.test.tsx`, do iris). Ausentes são lidos como 'all'.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não mexi na UI (TasksFilterBar / popover) — é do iris (cartões 036/038).
+- Não toquei banco, migration nem Edge.
