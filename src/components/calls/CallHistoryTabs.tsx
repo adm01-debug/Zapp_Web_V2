@@ -44,14 +44,14 @@ export function CallHistoryTabs({ canal, onCanalChange }: CallHistoryTabsProps) 
       // filtro sem canal nenhum não existe, então o valor vazio é ignorado.
       onValueChange={(valor) => valor && onCanalChange(valor)}
       aria-label="Canal das ligações"
-      className="h-10 w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0 px-4"
+      className="h-11 md:h-10 w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0 px-4"
     >
       {ABAS.map((aba) => (
         <ToggleGroupItem
           key={aba.valor}
           value={aba.valor}
           data-testid="tel-channel-tab"
-          className="h-10 rounded-none border-b-2 border-b-transparent px-3 text-xs font-medium hover:bg-transparent hover:text-foreground/80 data-[state=on]:border-b-primary data-[state=on]:bg-transparent data-[state=on]:text-foreground data-[state=on]:shadow-none"
+          className="h-11 md:h-10 rounded-none border-b-2 border-b-transparent px-3 text-xs font-medium hover:bg-transparent hover:text-foreground/80 data-[state=on]:border-b-primary data-[state=on]:bg-transparent data-[state=on]:text-foreground data-[state=on]:shadow-none"
         >
           {aba.rotulo}
         </ToggleGroupItem>

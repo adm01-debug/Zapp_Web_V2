@@ -30,14 +30,14 @@ export function TelefoniaTopActions({ period, onPeriodChange }: TelefoniaTopActi
   ] as const;
 
   return (
-    <div className="flex items-center gap-2 h-10" data-testid="tel-top-actions">
+    <div className="flex items-center gap-2 h-11 md:h-10" data-testid="tel-top-actions">
       {canais.map((c) => (
         <TooltipProvider key={c.chave} delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
               <span
                 data-testid={`tel-chip-${c.chave}`}
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs font-medium"
+                className="inline-flex h-11 md:h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs font-medium"
               >
                 <span
                   aria-hidden
