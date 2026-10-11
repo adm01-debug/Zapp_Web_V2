@@ -69,6 +69,12 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // t_4e49a6dc (paridade V3 -> V2, faixa C): contrato das RPCs aditivas
+  // assume_conversation / return_conversation_to_queue em PG 17 descartável (docker):
+  // permissoes por papel, portoes de fila/dono, auditoria sem PII, corrida real entre
+  // dois processos, rollback extraido do proprio arquivo e 5 mutacoes. Passo de uma
+  // linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/assume-return-conversation.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
