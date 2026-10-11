@@ -55,6 +55,10 @@ Especialista: worker (sql) (area-sql-banco)
 - `npx tsc -b --force` → TSC_EXIT=0.
 
 ## O que NÃO fiz e por quê
+- O aviso "código alterado sem teste" aponta src/integrations/supabase/types.ts como código: é
+  arquivo GERADO que acompanha a migration, e o teste novo do MESMO commit é
+  supabase/tests/sla_alert_events_and_preferences.sql (prova vermelho→verde acima). O detector
+  não reconhece suite .sql de banco — é alarme falso, não falta de teste.
 - Não toquei script de CI/workflow nem ALLOWLIST: o teste é .sql em supabase/tests/ (fora do
   check-test-inventory, que continua vermelho só pelos 2 órfãos pré-existentes
   department-invite e team-chat-media — não são meus).
