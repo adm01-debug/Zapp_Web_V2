@@ -14,6 +14,7 @@ import { ContactFormDialog } from './ContactFormDialog';
 import { DataExplorerTable } from './DataExplorerTable';
 import { TABS } from './crm360TabsConfig';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export function CRM360ExplorerView() {
   const { isSupervisor, loading: roleLoading } = useUserRole();
@@ -67,13 +68,12 @@ export function CRM360ExplorerView() {
 
   return (
     <div className="space-y-4 h-full flex flex-col w-full min-w-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" />CRM 360° Explorer</h1>
-          <p className="text-sm text-muted-foreground mt-1">Acesso completo a todas as tabelas do banco de dados CRM externo</p>
-        </div>
-        <Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>
-      </div>
+      <PageHeader
+        title="CRM 360° Explorer"
+        subtitle="Acesso completo a todas as tabelas do banco de dados CRM externo"
+        breadcrumbs={[{ label: 'Gestão' }, { label: 'CRM 360°' }]}
+        topRight={<Badge variant="outline" className="text-xs">{TABS.length} tabelas</Badge>}
+      />
 
       <CRM360StatsCards />
 

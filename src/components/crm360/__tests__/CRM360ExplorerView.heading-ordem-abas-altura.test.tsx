@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'vitest-axe';
 import { CRM360ExplorerView } from '../CRM360ExplorerView';
 
@@ -27,9 +28,22 @@ vi.mock('@/components/crm360/DataExplorerTable', () => ({
   DataExplorerTable: () => <div data-testid="data-table" />,
 }));
 
+// O cabeçalho da tela é o PageHeader compartilhado, que usa useNavigate/useLocation
+// (src/components/layout/PageHeader.tsx:51-52). Sem Router o React Router lança
+// "useNavigate() may be used only in the context of a <Router> component".
+// Mesmo padrão adotado pelos testes irmãos do grupo Gestão (ContactsView.v2Flags,
+// ScheduleCalendarView.agenda, SecurityView.a11y): monta dentro de MemoryRouter.
+function montarTela() {
+  return render(
+    <MemoryRouter>
+      <CRM360ExplorerView />
+    </MemoryRouter>,
+  );
+}
+
 describe('CRM360ExplorerView — hierarquia de títulos e altura de toque das abas', () => {
   it('usa h1 para o título da página e h2 para o título de seção da tabela, em ordem h1 → h2', () => {
-    const { container } = render(<CRM360ExplorerView />);
+    const { container } = montarTela();
 
     // Título da página é h1
     const h1 = container.querySelector('h1');
@@ -52,7 +66,7 @@ describe('CRM360ExplorerView — hierarquia de títulos e altura de toque das ab
   });
 
   it('TabsTrigger tem min-h-[44px] para alvo de toque mínimo no celular', () => {
-    const { container } = render(<CRM360ExplorerView />);
+    const { container } = montarTela();
 
     // Encontra o trigger da aba "Empresas" dentro da tablist
     const tablist = container.querySelector('[role="tablist"]');
@@ -64,7 +78,7 @@ describe('CRM360ExplorerView — hierarquia de títulos e altura de toque das ab
   });
 
   it('o axe não acusa heading-order na tela (h1 → h2)', async () => {
-    render(<CRM360ExplorerView />);
+    montarTela();
 
     // Mesmo padrão do repo (EvolutionDisconnectBanner, NotificationsPanel):
     // varre o document.body com color-contrast desligado (jsdom não tem layout)
