@@ -83,6 +83,20 @@ async function abrirEstado() {
   return screen.findByRole('listbox');
 }
 
+/** Etapa 134: Prioridade passou de botões para o select irmão do Estado. */
+async function abrirPrioridade() {
+  const trigger = screen.getByTestId('sheet-prioridade');
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: 'ArrowDown', code: 'ArrowDown' });
+  return screen.findByRole('listbox');
+}
+
+/** Etapa 142: o ⋮ do rodapé abre no pointerdown (Radix). */
+async function abrirMenuRodape() {
+  fireEvent.pointerDown(screen.getByTestId('sheet-menu'), { button: 0 });
+  return screen.findByRole('menu');
+}
+
 describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
   beforeEach(() => cleanup());
   afterEach(() => cleanup());
@@ -93,7 +107,7 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
 
     expect(screen.getByTestId('sheet-titulo')).toBeTruthy();
     expect(screen.getByTestId('sheet-estado')).toBeTruthy();
-    expect(screen.getByTestId('sheet-prio-medium')).toBeTruthy();
+    expect(screen.getByTestId('sheet-prioridade')).toBeTruthy();
     expect(screen.getByTestId('sheet-contato')).toBeTruthy();
     expect(screen.getByTestId('sheet-prazo')).toBeTruthy();
     expect(screen.getByTestId('sheet-alarme')).toBeTruthy();
@@ -154,13 +168,15 @@ describe('WorkItemSheet — FASE C (etapas 23–25)', () => {
     expect(fazendo.getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('25: Concluir move para done e Cancelar tarefa chama onCancel', () => {
+  it('25: Concluir move para done e Cancelar tarefa (no menu ⋮) chama onCancel', async () => {
     const p = props();
     render(<WorkItemSheet {...p} />);
 
     fireEvent.click(screen.getByTestId('sheet-concluir'));
     expect(p.onMove).toHaveBeenCalledWith(base, 'done');
 
+    // Etapa 142: "Cancelar tarefa" saiu do rodapé e entrou no menu ⋮.
+    await abrirMenuRodape();
     fireEvent.click(screen.getByTestId('sheet-cancelar'));
     expect(p.onCancel).toHaveBeenCalledWith(base);
   });
@@ -297,14 +313,15 @@ describe('WorkItemSheet — R2-MOD-051 (Salvar espera a escrita)', () => {
     render(<WorkItemSheet {...p} />);
 
     fireEvent.change(screen.getByTestId('sheet-titulo'), { target: { value: 'Outro título' } });
-    fireEvent.click(screen.getByTestId('sheet-prio-urgent'));
+    await abrirPrioridade();
+    fireEvent.click(await screen.findByRole('option', { name: 'Urgente' }));
     fireEvent.click(screen.getByTestId('sheet-salvar'));
 
     expect(await screen.findByTestId('sheet-erro-salvar')).toBeTruthy();
     expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
     // O rascunho continua na tela para a retentativa.
     expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Outro título');
-    expect(screen.getByTestId('sheet-prio-urgent').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('sheet-prioridade').getAttribute('data-priority')).toBe('urgent');
   });
 
   it('estado e campos não saem em duas escritas concorrentes', async () => {
