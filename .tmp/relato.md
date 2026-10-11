@@ -1,23 +1,26 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: workersql (area-sql-banco)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql (NOVO, aditiva):
+  * gatilho `trg_contacts_assignment_status_sync` (BEFORE UPDATE OF assigned_to, WHEN `OLD.assigned_to IS DISTINCT FROM NEW.assigned_to`) chama `public.sync_conversation_status_with_assignment()` (SECURITY DEFINER, `search_path = public, pg_temp`), atrás da flag `inbox.status-fsm`: tirar o responsável de um contato `open` -> `waiting`; atribuir responsável a um `waiting` -> `open`; os dois carimbam `conversation_status_changed_at`. Estados terminais (`resolved`/`archived`) não são tocados. A mudança é PROPOSTA no mesmo UPDATE e o gatilho FSM existente valida (ambas as transições são válidas).
+  * INSERT da chave `inbox.status-fsm` (`enabled=true`, `ON CONFLICT (key) DO NOTHING`). Sem a linha o gatilho ficaria permanentemente inerte; mesmo padrão da migration do `inbox.talk-me` (20260930290000). Preserva o valor vigente se a chave já existir (no banco local a seed traz `enabled=true`, então o INSERT foi 0 linha).
+  * backfill idempotente: contatos `open` + sem responsável + com >=1 mensagem -> `waiting`; desliga `update_contacts_updated_at` só durante o UPDATE para NÃO reescrever `updated_at` de linhas existentes (o FSM segue ligado).
+  * `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` na função do gatilho.
+- supabase/tests/contacts_waiting_por_atribuicao.sql (NOVO): suíte no banco LOCAL, 5 casos, com o papel real.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (arquivo final, sem o gatilho): `zapp-db-local psql . v2-26101114412bb4 -v ON_ERROR_STOP=1 < supabase/tests/contacts_waiting_por_atribuicao.sql` -> `ERROR:  C2 FALHOU: esperava waiting e veio open`
+- verde depois: mesmo comando -> `NOTICE:  contacts_waiting_por_atribuicao: suite OK (C1 flag off, C2 tira responsavel, C3 atribui, C4 terminal, C5 backfill idempotente) -- 5 grupo(s) verificado(s)` seguido de `DO` / `ROLLBACK`
+- papel real: os UPDATE rodam como `authenticated` (admin sintético com JWT em `request.jwt.claims`), nunca como postgres.
+- confirmação do "hoje nada sincroniza / backfill não aplicado" no banco local: `pg_trigger` de contacts tinha 12 gatilhos e NENHUM de sincronização de atribuição; contagem antes `waiting=0, open=13, alvo_backfill=2`.
+- backfill antes/depois: apliquei com `hermes-db-migrar` -> `UPDATE 2`; depois `waiting=2, alvo_backfill=0, updated_at_preservado=2` (as 2 linhas mantiveram `updated_at`).
+- rollback de verdade: executei o bloco `-- Rollback (SQL executável, na ordem)` -> `DROP TRIGGER / DROP FUNCTION / UPDATE 2 / DELETE 1`; conferido `gatilho=0, funcao=0, flag=0, voltaram_open=2`; reapliquei a migration e a suíte voltou ao verde.
+- verificação rápida: `zapp-verify . --rapido` -> `OK dependencias; OK db_guard; OK tipos 110s; OK lint; OK migrations; VERIFY: VERDE SEM BANCO` (o fechar não passa o nome do conjunto e o banco_local é pulado; a suíte de banco foi rodada à parte, como acima).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Efeito esperado em produção (não medido aqui)
+Estático: no dia em que a migration for promovida, contatos com `conversation_status='open'`, `assigned_to IS NULL` e ao menos uma mensagem passam a `waiting`. O ~315 do cartão é a expectativa sobre o banco real; não executo nada em produção.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não toquei o front: a lista e os chips já leem `conversation_status` (fora do meu escopo, o cartão diz isso).
+- Não forcei a flag ligada: se a chave existir desligada em produção, o valor vigente é preservado e o gatilho fica inerte até o operador ligar (ADR-005 rollout, passo 3 "ligar a flag por padrão").
+- Não adicionei passo de CI: nenhum workflow referencia `supabase/tests/*.sql`; as 9 suítes existentes rodam por `zapp-db-local`, como esta.
