@@ -103,7 +103,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     });
   });
 
-  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
+  it('traz os controles da barra e só mostra "Limpar filtros" quando um filtro sai do padrão', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
 
@@ -111,17 +111,21 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
     expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
     expect(within(barra).getByLabelText('Contato')).toBeTruthy();
-    expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
-    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
-    expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
+    // Etapa 036: alarme e concluídas passaram para dentro do popover "Filtros".
+    expect(within(barra).getByRole('button', { name: 'Filtros' })).toBeTruthy();
+    expect(within(barra).queryByTestId('filters-badge')).toBeNull();
+    // Etapa 039: sem filtro fora do padrão não há faixa de chips.
+    expect(screen.queryByTestId('tasks-filter-chips')).toBeNull();
   });
 
-  it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
+  it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar filtros" desfaz', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
     expect(await screen.findByText('Feita')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('switch', { name: 'Mostrar concluídas' }));
+    // Etapa 038: no Quadro o toggle mora no popover e se chama "Concluídas".
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+    fireEvent.click(await screen.findByRole('switch', { name: 'Concluídas' }));
 
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
@@ -129,7 +133,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
     expect(window.location.search).toContain('done=0');
 
-    fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
+    fireEvent.click(within(screen.getByTestId('tasks-filter-chips')).getByRole('button', { name: 'Limpar filtros' }));
 
     await waitFor(() => expect(screen.getByText('Feita')).toBeTruthy());
     expect(window.location.search).toBe('');
@@ -141,8 +145,11 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
+    const aviso = await screen.findByText('Nenhuma tarefa com esse filtro');
+    // O vazio do filtro (etapa 45) E a faixa de chips da barra (etapa 039)
+    // oferecem a saída — as duas portas continuam valendo.
+    expect(within(aviso.parentElement as HTMLElement).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
+    expect(within(screen.getByTestId('tasks-filter-chips')).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 
   it('Fase F: o cabeçalho conta a lista REAL, não o recorte do filtro', async () => {

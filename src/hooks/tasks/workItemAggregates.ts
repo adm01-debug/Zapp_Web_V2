@@ -2,6 +2,7 @@ import { isBefore, startOfDay, addDays, format, formatDistanceToNowStrict } from
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
 import type { TasksFilters, DueFilter } from './workItemFilters';
+import { SEM_CONTATO } from './workItemFilters';
 import { localDayKey } from '@/lib/localDay';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
@@ -148,7 +149,11 @@ export function applyFilters(items: WorkItem[], f: TasksFilters, now: Date = new
     }
     if (dueFiltro !== 'all' && !casaPrazo(item, dueFiltro, now)) return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
-    if (f.contact !== null && item.contact?.id !== f.contact) return false;
+    // Etapa 035: "Sem contato" é um recorte próprio — o sentinela não casa com
+    // id nenhum, então cai na regra explícita (e não na comparação por id).
+    if (f.contact === SEM_CONTATO) {
+      if (item.contact) return false;
+    } else if (f.contact !== null && item.contact?.id !== f.contact) return false;
     if (f.alarm && item.remind_at === null) return false;
     if (termo !== '' && !normalizarBusca(item.title).includes(termo)) return false;
     return true;
