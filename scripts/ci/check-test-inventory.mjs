@@ -64,6 +64,12 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // Paridade V3 (alerta de atraso de ENTREGA): prova em PG 17 descartável (docker local) a
+  // migration 20261011140925_sla_delivery_rules.sql — colunas/CHECKs, RLS ligada, leitura por
+  // authenticated, escrita só admin/supervisor, anon barrado, seed idempotente, a resolução
+  // contato>global>30/60 e o rollback executável. Passo de uma linha em db-guard.yml — promover
+  // pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/sla-delivery-rules.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
