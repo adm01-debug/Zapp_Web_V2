@@ -1,23 +1,20 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: Íris (area-front-componentes) — cartão de acompanhamento da remoção do módulo de pagamentos (pai 430802478)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- docs/DB-INVENTORY.md: a linha do objeto `payment_links` saiu de `ativo` (com 2 consumidores) para `parcial` (1 consumidor: `scripts/db-audit/global-guards-regression.test.mjs`). Depois da remoção do módulo, nenhum código de produto cita a tabela e o `src/hooks/payments/usePaymentLinks.ts` citado deixou de existir — a doc mentia nos três pontos que o teste acusa.
+- docs/COMPLETE_SYSTEM_FEATURES.md: a seção 40 "Links de Pagamento" deixou de citar os arquivos removidos (`src/components/payments/PaymentLinksView.tsx` e `src/hooks/payments/usePaymentLinks.ts`) e a tela removida, mantendo o título da seção e registrando a remoção com a data.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` → `not ok 3 - docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` / `"payment_links" está como "ativo", mas o repositório diz "parcial"` + `lista "src/hooks/payments/usePaymentLinks.ts", que não existe no repositório`
+- vermelho antes: `node --test --test-reporter=tap scripts/ci/complete-system-features-doc.unit.mjs` → `not ok 7 - COMPLETE_SYSTEM_FEATURES.md não cita arquivo de código que não existe` / `o documento cita arquivos que não existem: src/components/payments/PaymentLinksView.tsx, src/hooks/payments/usePaymentLinks.ts`
+- verde depois: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs scripts/ci/complete-system-features-doc.unit.mjs` → `# pass 22` `# fail 0`
+- verde depois: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (87s)`
+- verde depois: `npx vitest run src/services/__tests__/navigation.service.test.ts` → `Test Files 1 passed (1); Tests 15 passed (15)` (confere que o empilhamento do pai segue verde)
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Pontos do revisor
+- Ponto 1: a entrega do pai (430802478) deixou o ESPELHO DO CI reprovando `node: docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir`, por apontar `payment_links` como `ativo` e citar `usePaymentLinks.ts`, removido. Corrigido em `docs/DB-INVENTORY.md` (status `parcial`, consumidor existente). A mesma remoção derrubava `COMPLETE_SYSTEM_FEATURES.md não cita arquivo de código que não existe` (seção 40 citava os dois arquivos removidos): corrigido no mesmo commit. Nenhuma asserção de teste foi tocada.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não rodei `~/arquitetura-v2/integrador/ci_espelho.sh`: a guarda bloqueia executar script de `~/arquitetura-v2` a partir deste workspace (`HERMES-GUARD: mexer nas guardas/ferramentas do Hermes…`). Rodei o mesmo comando `node --test` do espelho direto (linha dos testes node do espião).
+- Restam 8 falhas nesse comando, todas anteriores/ambientais e sem ligação com a entrega (`grep -c 'payment|ViewRouter|lazyViews|navigation.service'` = 0 nos três arquivos): 6 do `scripts/ci/lint-ratchet.unit.mjs` porque a guarda bloqueia o `git init` que o próprio fixture do teste roda (`HERMES-GUARD (git): git init é proibido nesta sessão`), e 2 do contrato `scripts/db-audit/talkx-schedule-timezone-contract.test.mjs` (janela de entrega do Talk X, assunto de outra área). Nenhuma nasceu deste diff.
+- Não toquei nos documentos históricos de auditoria que ainda citam o módulo (`docs/audits/…`, `docs/plans/…`, `docs/handoffs/…`, relatórios datados e JSONs de reconciliação): são recortes datados, fora do escopo do título e não cobertos por guarda de CI. Registrado em comentário no cartão.
