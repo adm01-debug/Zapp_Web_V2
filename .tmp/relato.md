@@ -13,6 +13,14 @@ Causa: o teste NOVO que a entrega criou, `scripts/db-audit/anon-privileges-conta
 ## O que mudou e por quê
 - `docs/DB-INVENTORY.md` (linha do `sicoob_contact_mapping`): `roadmap` / `—` -> `parcial` / `scripts/db-audit/anon-privileges-contact-messages.test.sh`. É a aplicação da regra do próprio documento ao novo consumidor de ferramental; `parcial` significa exatamente "só `scripts/`/`tests/`/`e2e/`/`.github/` citam". Nenhum objeto do banco foi criado ou alterado.
 
+## Arquivos no diff (5 arquivos — a contagem/soma exata vem no bloco FATOS MEDIDOS PELO FECHAR)
+- `docs/DB-INVENTORY.md` — única mudança DESTA rodada (revisa a linha do `sicoob_contact_mapping`).
+- `supabase/migrations/20261011003020_revoke_anon_privileges_contact_messages.sql` — cherry-pick da entrega (7e1a91cbb), intocado.
+- `scripts/db-audit/anon-privileges-contact-messages.test.sh` — cherry-pick da entrega (7e1a91cbb), intocado; é o teste `.sh` que passou a citar `sicoob_contact_mapping` e causou o desalinhamento.
+- `.github/workflows/db-guard.yml` — cherry-pick da entrega (b6f5c02a5), intocado.
+- `.tmp/relato.md` — este relato (arquivo versionado no branch do dia).
+Os 4 primeiros vêm do cherry-pick; só o `docs/DB-INVENTORY.md` é escrito nesta rodada.
+
 ## Prova
 - vermelho antes: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` (sem a mudança) -> `not ok 3 - docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir` + `"sicoob_contact_mapping" está como "roadmap", mas o repositório diz "parcial"`
 - verde depois: `node --test --test-reporter=tap scripts/ci/db-inventory-doc.unit.mjs` -> nenhum `not ok` (15/15 `ok`, item 3 incluído)
