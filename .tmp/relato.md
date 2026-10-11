@@ -1,25 +1,29 @@
-Especialista: Íris (area-front-componentes)
+Especialista: Hugo (area-front-hooks)
+
+Concluí o que o cartão pede: as etapas 21 (tempo médio da criação à conclusão, com formato pt-BR), 52 (subtítulo de data dos grupos), 112/117 (contagens por tipo no dia da Agenda) e 126 (Agenda só com os itens já carregados, 7 dias, com o teste da virada), e o relatório de lacunas da etapa 8. Tudo em `workItemAggregates.ts` (funções puras) + os testes do próprio módulo; nenhuma consulta nova.
 
 ## O que mudou e por quê
-- `shared/QuickAdd.tsx`: contêiner do campo em `h-12` (48 px), placeholder `Capturar uma tarefa…` e dica `Enter para criar` à direita, que some ao digitar — etapa 040 (plano linha 285; imagem 01, linha 48).
-- `shared/QuickAdd.tsx` (chips): a fileira nasce escondida e aparece AO FOCAR o campo (ou quando já há escolha/popover aberto) — etapa 042 (plano linha 287). Ordem do plano: Hoje, Amanhã, Data, Lembrete, Prioridade, Contato; `Lembrar` virou `Lembrete` e Prioridade passou a vir antes de Contato. Mantive o preset `Próx. semana` (já existia; o atalho `Ctrl+3` é do parser, cartão 041 do Hugo).
-- `shared/QuickAdd.tsx` (foco): depois de criar, o foco volta ao campo — etapa 043 (plano linha 288), a parte de captura.
-- `shared/TasksFilterBar.tsx` (**fora da lista do cartão — ver nota**): props `prioContatoNaBarra` (false = Prioridade e Contato descem para o popover "Filtros") e `toggleConcluidas` (false = o popover não repete o toggle de concluídas). Padrão `true` = comportamento de hoje (quem renderiza a barra direto, como `barraFiltros.test`, não muda).
-- `TasksModule.tsx`: modos à ESQUERDA e busca/Prioridade/Contato/Filtros à DIREITA; toggle "Mostrar concluídas" ("Concluídas" no Quadro) na MESMA linha da captura; `recolherPrioContato = mode === 'board' || narrowViewport` (abaixo de `md`, mesmo corte do Sheet) — etapa 044 (plano linha 289; imagem 01/02 linha 62; imagem 05 linha 152). Na Agenda, sem linha de captura, o toggle segue no popover.
-- `TasksEmptyState.tsx`: variante `filter` com ícone, título `Nenhum resultado`, microcopy e botão `Limpar filtros` — etapa 045 (plano linha 290); `all` e `column` intactas.
-- Testes: novo `barraCapturaDisposicao.test.tsx` (040/043/045); `QuickAdd.test.tsx` trocou "chips visíveis antes de digitar" por "chips aparecem ao focar" (o comportamento foi trocado pela etapa 042); `TasksModule.test.tsx` exige Prioridade/Contato dentro do popover no Quadro, o toggle na captura e a cópia nova do vazio; `TasksListMode.test.tsx` idem cópia.
-
-Nota (arquivo fora da lista): `TasksFilterBar.tsx` é literalmente "a barra" do título. Sem ele não se cumpre a etapa 044 nas duas metades (recolher no Quadro/telas estreitas E um só controle de "Mostrar concluídas", agora na captura). As props novas preservam o comportamento atual por padrão.
-
-Teto do portão: o diff da faixa (base→HEAD) passava de 90000 caracteres com os testes herdados; removi `__tests__/cabecalhoNovaTarefa.test.tsx` (teste do cartão herdado do cabeçalho), como o cartão anterior já fez com os testes dos cartões herdados.
+- `src/hooks/tasks/workItemAggregates.ts`:
+  - `kpis()` passa a devolver `avgLeadTimeDays` (etapa 21/D13): média de `completed_at − created_at` das concluídas dos últimos 7 dias. `avgCycleTimeDays` (started_at → completed_at) continua calculado e no mesmo campo — é o contrato que `TasksKpiStrip.tsx` já lê hoje.
+  - `formatLeadTime(days)` nova, pura e exportada: pt-BR com uma casa decimal e vírgula (`1,4 dias`), singular em 1 (`1 dia`) e `—` quando não há dados (null/NaN).
+  - `daySubtitle(date)` nova, pura: dia por extenso em pt-BR no fuso local — `Domingo, 11 de outubro`; data inválida devolve `''` em vez de derrubar a tela (etapa 52).
+  - `DayGroup` ganhou `subtitle` e `dateKey`, preenchidos por `groupUpcomingByDay` (etapa 52).
+  - `agendaDayCounts(day, atrasadas)` e `agendaDayAriaLabel(day, atrasadas)` novas, puras (etapas 112/117): contagens por tipo (`prazos`, `lembretes`, `atrasadas`, `semHora`, `total`) e o texto do `aria-label`. A tarefa com prazo E alarme aparece nas duas seções mas conta UMA vez no `total`. O `agendaDayDots` fica intacto (ver "O que NÃO fiz").
+- `src/hooks/tasks/__tests__/workItemAggregates.test.ts`: 4 describes novos (etapas 21, 52, 112/117 e 126) com os casos que provam o comportamento; nenhum teste existente foi alterado.
 
 ## Prova
-- vermelho antes: `npx vitest run src/components/tasks/__tests__/barraCapturaDisposicao.test.tsx` (com `QuickAdd`/`TasksEmptyState` da base) → `Tests 3 failed | 1 passed (4)`: `expected 'Adicionar tarefa… (Enter para criar)' to be 'Capturar uma tarefa…'`; `expected <body>… to be <input…>` (foco); vazio sem "Nenhum resultado".
-- vermelho antes (chips): `npx vitest run src/components/tasks/__tests__/QuickAdd.test.tsx` (com o `QuickAdd` da base) → `Tests 1 failed | 12 passed (13)` no caso "chips da captura aparecem ao focar (etapa 042)".
-- verde depois: `npx vitest run src/components/tasks src/hooks/tasks` → `Test Files 34 passed (34); Tests 379 passed | 1 todo (380)`, zero pulado.
-- verificação: `zapp-verify . --rapido` → `OK db_guard 0s; OK tipos 119s; OK lint 5s; OK migrations 1s` → `VERIFY: VERDE SEM BANCO (125s)`.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` com `kpis()` na regra antiga (só o tempo de ciclo, sem `avgLeadTimeDays`) → `AssertionError: expected null to be 4` e `Tests 1 failed | 60 passed (61)` — a concluída que nasceu 7 dias antes de terminar e só entrou em "Fazendo" no último dia dava ciclo 1 e lead time 4.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 1 passed (1)` / `Tests 61 passed (61)`.
+- regressão dos consumidores (hook, telas de tarefas e a aba do Inbox): `npx vitest run src/hooks/tasks src/components/tasks src/components/inbox/tabs` → `Test Files 76 passed (76)` / `Tests 809 passed | 2 todo (811)`.
+
+## Etapa 8 — lacunas de dados do que a UI nova precisa (sem banco novo, sem consulta nova)
+- Resumo do dia (`N tarefas com prazo · M lembretes`) e `aria-label` da faixa: NÃO existia contagem por tipo — o `agendaDayDots` só devolvia cores (no máximo 3). Resolvido: `agendaDayCounts`/`agendaDayAriaLabel`.
+- Tempo médio decimal: existia só a métrica de ciclo, e nenhum formato pt-BR; o rótulo "Da criação à conclusão" não tinha número correspondente. Resolvido: `avgLeadTimeDays` + `formatLeadTime`.
+- Janela de 30 dias: já coberta pela query única B13 (`DONE_WINDOW_DAYS` + `.or('status.neq.done,completed_at.is.null,completed_at.gte.<cutoff>')` em `useMyWorkItems`); os recortes de 7 dias da Agenda são locais (`splitDoneByRecency`/`weekBuckets`). Nada a criar.
+- Progresso do limite: os limites estão em `WIP_LIMITS` (hard/soft por status) e a contagem por status em `bucketByStatus` — o dado existe; falta só a apresentação (tela).
 
 ## O que NÃO fiz e por quê
-- CONCLUÍ 040, 042, 044, 045 e a metade de captura da 043 (foco volta ao campo).
-- NÃO CONCLUÍ o realce de 1,2 s do item ao entrar na Caixa de entrada (2ª metade da etapa 043): mora na Lista/`WorkItemCard`, fora dos arquivos do cartão — e o cartão pede "sem reinventar a criação". Comentado no cartão.
-- Não mexi em hook/parser (`workItemPresets`, `useMyWorkItems`): criação otimista é do worker (hooks).
+- Não mudei a assinatura de `agendaDayDots`. O único consumidor é `src/components/tasks/agenda/TasksAgendaMode.tsx`, que tipa o retorno como `string[]` (cores) e não está nos arquivos deste cartão: trocar o retorno para contagens quebraria a tela agora. As contagens entraram como funções novas que o mesmo componente consome sem mexer no contrato atual.
+- Não liguei o rótulo "Da criação à conclusão" ao número novo: quem desenha é `src/components/tasks/shared/TasksKpiStrip.tsx` (linha 68 ainda usa `avgCycleTimeDays` com `Math.round(...)+'d'`), que é tela — `area-front-componentes` (Íris). Deixei o dado pronto (`avgLeadTimeDays` + `formatLeadTime`).
+- Lacuna conhecida, documentada no JSDoc de `groupUpcomingByDay`: o rótulo "Semana que vem" reúne mais de um dia no MESMO grupo (comportamento da etapa 49, mantido de propósito); nesse grupo `subtitle`/`dateKey` apontam para o dia mais cedo. Separar por dia dentro dele mudaria o rótulo e os testes da etapa 49.
+- Nenhuma consulta nova: tudo aqui é agregação pura sobre os `items` já carregados (B13 preservado).
