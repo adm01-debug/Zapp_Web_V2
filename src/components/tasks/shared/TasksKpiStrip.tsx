@@ -30,9 +30,10 @@ import type { TasksDensity } from './tasksUi';
  *
  *  Chegaram aqui as etapas 023 e 025–028 (cartão T13, 11/10/2026):
  *    · 023 KPIs clicáveis — Atrasadas e Para hoje viram BOTÕES de recorte de
- *          prazo (`aria-pressed`, chip visível, clicar de novo remove); Fazendo
- *          leva ao Quadro, onde o limite de WIP se resolve. Quem escreve no
- *          filtro é o módulo (o card só publica `onToggleDue`/`onOpenBoard`).
+ *          prazo (`aria-pressed` e chip visível, clicar de novo remove); Fazendo
+ *          leva ao Quadro, onde o limite de WIP se resolve, e por isso NÃO emite
+ *          `aria-pressed` — navegar não é alternar. Quem escreve no filtro é o
+ *          módulo (o card só publica `onToggleDue`/`onOpenBoard`).
  *    · 025 Faixa compacta — a variante da imagem 05 (5 leituras em uma linha com
  *          separadores, rótulo acima do valor) que o Quadro usa para ganhar
  *          altura. A densidade vem do MODO (D2), por prop — não é estado novo.
@@ -143,8 +144,13 @@ interface KpiCardProps {
   density?: TasksDensity;
   /** Etapa 028: número por trás do texto; a mola conta até ele. */
   contagem?: { valor: number; formatar: (n: number) => string };
-  /** Etapa 023: quando existe, o card vira botão que aplica/remove o recorte. */
-  action?: { onClick: () => void; pressed: boolean; label: string; chip: string };
+  /**
+   * Etapa 023: quando existe, o card vira botão.
+   * `pressed` só nos cards de RECORTE (Atrasadas e Para hoje): é ele que emite o
+   * `aria-pressed`. Quem só NAVEGA (Fazendo → Quadro) deixa o campo de fora, e
+   * aí o leitor de tela não anuncia uma alternância que não existe.
+   */
+  action?: { onClick: () => void; pressed?: boolean; label: string; chip: string };
 }
 
 /** Anel de progresso do limite de WIP — SVG estático (sem animação, portanto
@@ -368,8 +374,8 @@ export function TasksKpiStrip({
       icon={Loader}
       ring={{ value: kpis.doingCount, max: wipHard }}
       action={onOpenBoard && {
+        // Sem `pressed`: naviga para o Quadro, não alterna recorte nenhum.
         onClick: onOpenBoard,
-        pressed: false,
         label: `Fazendo: ${formatarInteiro(kpis.doingCount)} de ${wipHard}. Abrir o Quadro`,
         chip: '',
       }}

@@ -1,13 +1,12 @@
-import type { Priority, WorkItemStatus } from './workItem.types';
+import type { Priority } from './workItem.types';
 
 /**
  * Etapa 45: estado da barra de filtros do módulo de Tarefas.
- * Etapa 024/037: recorte por estado (coluna) e por prazo, ao lado dos filtros
- * que já existiam.
+ * Etapa 024: recorte por prazo, ao lado dos filtros que já existiam.
  *
  * Vive fora do componente de propósito: o parse/serialize da URL e as regras de
  * "tem filtro ativo" são puros e testáveis sem React. O nome dos parâmetros é o
- * do plano (`q`, `prio`, `contact`, `alarm`, `status`, `due`); só o `done` fica
+ * do plano (`q`, `prio`, `contact`, `alarm`, `due`); só o `done` fica
  * invertido — ver `searchWithFilters`.
  */
 
@@ -23,13 +22,7 @@ export interface TasksFilters {
   alarm: boolean;
   /** mostrar as concluídas — o padrão do módulo é mostrar (etapas 48 e 51). */
   done: boolean;
-  /**
-   * Etapa 037: recorte por estado/coluna. `all` = sem recorte.
-   * Opcional para os consumidores antigos que montam o objeto à mão (ex.: o
-   * filtro literal do teste do Quadro); ausente é lido como `all`.
-   */
-  status?: WorkItemStatus | 'all';
-  /** Etapa 024/037: recorte por prazo. Ausente é lido como `all`. */
+  /** Etapa 024: recorte por prazo. Ausente é lido como `all`. */
   due?: DueFilter;
 }
 
@@ -39,7 +32,6 @@ export const DEFAULT_FILTERS: TasksFilters = {
   contact: null,
   alarm: false,
   done: true,
-  status: 'all',
   due: 'all',
 };
 
@@ -51,7 +43,6 @@ export function isFilterActive(f: TasksFilters): boolean {
     f.contact !== null ||
     f.alarm ||
     !f.done ||
-    (f.status ?? 'all') !== 'all' ||
     (f.due ?? 'all') !== 'all'
   );
 }
@@ -61,7 +52,6 @@ export function filtersFromSearch(search: string): TasksFilters {
   const params = new URLSearchParams(search);
   const prio = params.get('prio');
   const contact = params.get('contact');
-  const status = params.get('status');
   const due = params.get('due');
 
   return {
@@ -72,14 +62,11 @@ export function filtersFromSearch(search: string): TasksFilters {
     // `done` é `true` por padrão: só a exceção (esconder) precisa viajar na URL.
     done: params.get('done') !== '0',
     // Um valor fora da lista cai no padrão (`all`), como a prioridade.
-    status: statusesValidos.includes(status as WorkItemStatus) ? (status as WorkItemStatus) : 'all',
     due: prazosValidos.includes(due as DueFilter) ? (due as DueFilter) : 'all',
   };
 }
 
 const prioridadesValidas: Array<Priority | 'all'> = ['all', 'low', 'medium', 'high', 'urgent'];
-
-const statusesValidos: WorkItemStatus[] = ['backlog', 'todo', 'doing', 'waiting', 'done', 'cancelled'];
 
 const prazosValidos: DueFilter[] = ['all', 'overdue', 'today', 'week', 'none'];
 
@@ -92,7 +79,7 @@ const prazosValidos: DueFilter[] = ['all', 'overdue', 'today', 'week', 'none'];
  * módulo, o que vale escrever é a exceção (`done=0`) — senão a URL nasceria
  * "suja" e o "Limpar" nunca apareceria.
  *
- * `status`/`due`: `all` é o padrão, então só o valor escolhido é escrito.
+ * `due`: `all` é o padrão, então só o valor escolhido é escrito.
  */
 export function searchWithFilters(search: string, f: TasksFilters): string {
   const params = new URLSearchParams(search);
@@ -105,8 +92,6 @@ export function searchWithFilters(search: string, f: TasksFilters): string {
   if (f.contact) params.set('contact', f.contact); else params.delete('contact');
   if (f.alarm) params.set('alarm', '1'); else params.delete('alarm');
   if (f.done) params.delete('done'); else params.set('done', '0');
-  const status = f.status ?? 'all';
-  if (status !== 'all') params.set('status', status); else params.delete('status');
   const due = f.due ?? 'all';
   if (due !== 'all') params.set('due', due); else params.delete('due');
 

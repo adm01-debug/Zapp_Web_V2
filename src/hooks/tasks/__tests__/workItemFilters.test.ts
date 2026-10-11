@@ -6,7 +6,7 @@ import { DEFAULT_FILTERS, filtersFromSearch, isFilterActive, searchWithFilters }
 describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
   it('lê os parâmetros do plano da query string', () => {
     expect(filtersFromSearch('?q=liga&prio=urgent&contact=c1&alarm=1&done=0')).toEqual({
-      q: 'liga', prio: 'urgent', contact: 'c1', alarm: true, done: false,
+      q: 'liga', prio: 'urgent', contact: 'c1', alarm: true, done: false, due: 'all',
     });
   });
 

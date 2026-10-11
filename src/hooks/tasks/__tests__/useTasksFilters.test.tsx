@@ -29,7 +29,7 @@ describe('etapa 45 — useTasksFilters', () => {
 
   it('nasce dos parâmetros da URL', () => {
     const { result } = renderFiltros('?q=liga&prio=high&alarm=1&done=0');
-    expect(result.current.filters).toEqual({ q: 'liga', prio: 'high', contact: null, alarm: true, done: false });
+    expect(result.current.filters).toEqual({ q: 'liga', prio: 'high', contact: null, alarm: true, done: false, due: 'all' });
     expect(result.current.isActive).toBe(true);
   });
 
@@ -53,7 +53,7 @@ describe('etapa 45 — useTasksFilters', () => {
     act(() => { result.current.toggleAlarm(); });
     act(() => { result.current.toggleDone(); });
 
-    expect(result.current.filters).toEqual({ q: '', prio: 'urgent', contact: 'c7', alarm: true, done: false });
+    expect(result.current.filters).toEqual({ q: '', prio: 'urgent', contact: 'c7', alarm: true, done: false, due: 'all' });
 
     const url = new URLSearchParams(window.location.search);
     expect(url.get('prio')).toBe('urgent');

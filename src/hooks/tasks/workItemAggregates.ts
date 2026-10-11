@@ -1,4 +1,4 @@
-import { isBefore, startOfDay, addDays, format, formatDistanceToNowStrict } from 'date-fns';
+import { isBefore, startOfDay, addDays, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
 import type { TasksFilters, DueFilter } from './workItemFilters';
@@ -123,29 +123,18 @@ function casaPrazo(item: WorkItem, filtro: DueFilter, now: Date): boolean {
  * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
  * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
  *
- * `done` é um dos filtros que olham o estado terminal do item; `status`
- * (etapa 037) recorta a coluna e, quando escolhido, manda no lugar do toggle
- * `done` — pedir `status=done` traz só as concluídas mesmo com o toggle
- * desligado. `q` casa só o título (o mesmo recorte que a busca sempre fez,
- * agora sem acento).
+ * `done` é o filtro que olha o estado terminal do item. `q` casa só o título
+ * (o mesmo recorte que a busca sempre fez, agora sem acento).
  *
  * @param now âncora do recorte de prazo (injetável para o teste).
  */
 export function applyFilters(items: WorkItem[], f: TasksFilters, now: Date = new Date()): WorkItem[] {
   const termo = normalizarBusca(f.q).trim();
   const base  = items ?? [];
-  const statusFiltro = f.status ?? 'all';
-  const dueFiltro    = f.due ?? 'all';
+  const dueFiltro = f.due ?? 'all';
 
   return base.filter(item => {
-    // Um estado escolhido é o recorte — o toggle "mostrar concluídas" só vale
-    // quando nenhum estado foi pedido (`all`), senão `status=done&done=0`
-    // devolveria vazio, contrariando o próprio filtro.
-    if (statusFiltro !== 'all') {
-      if (item.status !== statusFiltro) return false;
-    } else if (!f.done && item.status === 'done') {
-      return false;
-    }
+    if (!f.done && item.status === 'done') return false;
     if (dueFiltro !== 'all' && !casaPrazo(item, dueFiltro, now)) return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
     if (f.contact !== null && item.contact?.id !== f.contact) return false;
@@ -211,56 +200,6 @@ export function groupAgendaDay(day: { reminders: WorkItem[]; dueTasks: WorkItem[
     prazos:  day.dueTasks.filter(t => temHora(t.due_date)).sort(porPrazo),
     semHora: day.dueTasks.filter(t => !temHora(t.due_date)),
   };
-}
-
-export interface AgendaDayCounts {
-  /** Prazos do dia (`due_date` no dia) — com hora marcada e de dia inteiro. */
-  prazos: number;
-  /** Lembretes do dia (`remind_at` no dia). */
-  lembretes: number;
-  /** Atrasadas anteriores ao dia — o bloco vermelho do topo. */
-  atrasadas: number;
-  /** Prazos de dia inteiro: a seção "Sem hora". */
-  semHora: number;
-  /** Linhas do dia: a tarefa com prazo E alarme conta UMA vez. */
-  total: number;
-}
-
-/**
- * Etapa 112: as CONTAGENS do dia, por tipo. A faixa só desenha até 3 pontos
- * (`agendaDayDots`), então o `aria-label` e o resumo do dia ("N tarefas com
- * prazo · M lembretes") não podem sair do número de pontos — saem daqui.
- */
-export function agendaDayCounts(
-  day: { reminders: WorkItem[]; dueTasks: WorkItem[] },
-  atrasadas = 0,
-): AgendaDayCounts {
-  const grupos = groupAgendaDay(day);
-  const total = new Set([...grupos.alarmes, ...grupos.prazos, ...grupos.semHora].map(i => i.id)).size;
-  return {
-    prazos: day.dueTasks.length,
-    lembretes: day.reminders.length,
-    atrasadas,
-    semHora: grupos.semHora.length,
-    total,
-  };
-}
-
-/**
- * Etapa 112: `aria-label` do cartão do dia com as contagens por tipo —
- * "2 lembretes, 1 prazo" (a ordem e o texto da etapa 111). Sem nada no dia,
- * "Nenhum compromisso".
- */
-export function agendaDayAriaLabel(
-  day: { reminders: WorkItem[]; dueTasks: WorkItem[] },
-  atrasadas = 0,
-): string {
-  const { prazos, lembretes, atrasadas: atras } = agendaDayCounts(day, atrasadas);
-  const partes: string[] = [];
-  if (atras > 0) partes.push(`${atras} atrasada${atras === 1 ? '' : 's'}`);
-  if (lembretes > 0) partes.push(`${lembretes} lembrete${lembretes === 1 ? '' : 's'}`);
-  if (prazos > 0) partes.push(`${prazos} prazo${prazos === 1 ? '' : 's'}`);
-  return partes.length > 0 ? partes.join(', ') : 'Nenhum compromisso';
 }
 
 export function bucketByStatus(items: WorkItem[]): Record<WorkItemStatus, WorkItem[]> {
@@ -365,22 +304,6 @@ export function weekBuckets(
 export interface DayGroup {
   label: string;
   items: WorkItem[];
-  /** Etapa 52: o dia do grupo em pt-BR — "Domingo, 11 de outubro". */
-  subtitle: string;
-  /** `localDayKey` do dia do grupo (`yyyy-MM-dd`) — chave estável para seleção/URL. */
-  dateKey: string | null;
-}
-
-/**
- * Etapa 52: subtítulo de data do grupo, em pt-BR e hora LOCAL —
- * "Domingo, 11 de outubro". Data inválida devolve '' (o grupo fica só com o
- * rótulo curto, sem derrubar a tela).
- */
-export function daySubtitle(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(d.getTime())) return '';
-  const texto = format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 /**
@@ -405,11 +328,7 @@ export function dayGroupLabel(dueDate: string, now: Date = new Date()): string {
   return dayName.charAt(0).toUpperCase() + dayName.slice(1) + ' ' + dayMonth;
 }
 
-/** Etapa 49: agrupa as "Proximas" por dia, na ordem prazo → prioridade.
- *  Etapa 52: cada grupo leva o subtítulo do dia (`subtitle`) e a chave local
- *  (`dateKey`). Um grupo "Semana que vem" reúne mais de um dia no MESMO rótulo
- *  (comportamento da etapa 49, mantido): nesse caso os dois campos apontam para
- *  o dia mais cedo do grupo — a lista só separa por dia dentro dos 7 dias. */
+/** Etapa 49: agrupa as "Proximas" por dia, na ordem prazo → prioridade. */
 export function groupUpcomingByDay(items: WorkItem[], now: Date = new Date()): DayGroup[] {
   const ordered = items
     .filter(i => i.due_date != null)
@@ -424,12 +343,7 @@ export function groupUpcomingByDay(items: WorkItem[], now: Date = new Date()): D
     const label = dayGroupLabel(item.due_date!, now);
     const last  = groups[groups.length - 1];
     if (last && last.label === label) last.items.push(item);
-    else groups.push({
-      label,
-      items: [item],
-      subtitle: daySubtitle(item.due_date!),
-      dateKey: localDayKey(item.due_date!),
-    });
+    else groups.push({ label, items: [item] });
   }
   return groups;
 }

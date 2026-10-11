@@ -12,15 +12,31 @@
  *   · 022 Tempo médio — usa `avgLeadTimeDays` (D13) com a formatação de
  *     `formatLeadTime` ("1,4 dias" / "1 dia" / "—") e NÃO o tempo de ciclo.
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen, cleanup, fireEvent, within } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, within, waitFor } from '@testing-library/react';
 
 import { TasksKpiStrip, TasksKpiStripSkeleton } from '@/components/tasks/shared/TasksKpiStrip';
 import { WIP_LIMITS } from '@/hooks/tasks/workItem.types';
 import type { KpiSnapshot } from '@/hooks/tasks/workItemAggregates';
 
 afterEach(() => cleanup());
+
+/**
+ * `useReducedMotion` lê um singleton inicializado uma única vez; trocar o
+ * matchMedia no meio do arquivo não surte efeito. Aqui só o hook é substituído —
+ * o resto do framer-motion segue real, então a mola da etapa 028 é a de verdade.
+ */
+const reduceMotion = { value: false };
+
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return { ...actual, useReducedMotion: () => reduceMotion.value };
+});
+
+beforeEach(() => {
+  reduceMotion.value = false;
+});
 
 /** 2 atrasadas · 4 para hoje · 3 fazendo (no limite) · 5 concluídas · 1,4 dias. */
 const CHEIO: KpiSnapshot = {
@@ -164,6 +180,8 @@ describe('TasksKpiStrip — acessibilidade', () => {
 describe('TasksKpiStrip — etapas 023/025/027/028 (interativo, densidade, esqueleto, narração)', () => {
   const cardDe = (label: string): HTMLElement =>
     screen.getByText(label).closest('[data-testid="kpi-card"]') as HTMLElement;
+  const anuncio = (label: string): string =>
+    cardDe(label).querySelector('[data-testid="kpi-live"]')?.textContent ?? '';
 
   it('023: Atrasadas e Para hoje publicam o recorte; os outros três não viram botão', () => {
     const recortes: string[] = [];
@@ -208,8 +226,11 @@ describe('TasksKpiStrip — etapas 023/025/027/028 (interativo, densidade, esque
     // o selo não vaza para o vizinho, que segue só com o convite de filtrar
     expect(within(cardDe('Para hoje')).queryByTestId('kpi-chip')).toBeNull();
     expect(within(cardDe('Para hoje')).getByTestId('kpi-acao').getAttribute('aria-label')).toMatch(/vencem hoje/);
-    // e o "Fazendo" leva ao Quadro (onde o limite de WIP se resolve)
-    expect(within(cardDe('Fazendo')).getByTestId('kpi-acao').getAttribute('aria-label')).toMatch(/Abrir o Quadro/);
+    // e o "Fazendo" leva ao Quadro (onde o limite de WIP se resolve) SEM
+    // anunciar alternância: só os cards de RECORTE emitem `aria-pressed`.
+    const fazendo = within(cardDe('Fazendo')).getByTestId('kpi-acao');
+    expect(fazendo.getAttribute('aria-label')).toMatch(/Abrir o Quadro/);
+    expect(fazendo.hasAttribute('aria-pressed')).toBe(false);
   });
 
   it('025: a densidade compacta vira uma faixa em linha, com separador e sem os 88px', () => {
@@ -296,17 +317,42 @@ describe('TasksKpiStrip — etapas 023/025/027/028 (interativo, densidade, esque
     expect(anuncio('Tempo médio')).toBe('Tempo médio: 1,4 dias');
   });
 
-  it('028: a região viva anuncia o texto do dado (não o quadro da mola) e o faz também no compacto', async () => {
+  it('028: a região viva anuncia o texto do dado (não o quadro da mola) e o faz também no compacto', () => {
     const { unmount } = render(<TasksKpiStrip kpis={CHEIO} />);
     // o texto exibido é o valor exato já no primeiro render: o dado chegou
     // pronto do esqueleto e a mola é para o que MUDA depois.
-    expect(screen.getByText('Atrasadas').closest('[data-testid="kpi-card"]')
-      ?.querySelector('[data-testid="kpi-value"]')?.textContent).toBe('2');
-    expect(screen.getAllByTestId('kpi-live')[0].textContent).toBe('Atrasadas: 2');
+    expect(valor('Atrasadas')).toBe('2');
+    expect(anuncio('Atrasadas')).toBe('Atrasadas: 2');
     unmount();
 
     render(<TasksKpiStrip kpis={CHEIO} density="compact" />);
     expect(screen.getAllByTestId('kpi-live')).toHaveLength(5);
+  });
+
+  it('028: com o movimento permitido a mola CONTA do valor antigo ao novo e fecha no valor exato', async () => {
+    const { rerender } = render(<TasksKpiStrip kpis={CHEIO} />);
+    expect(valor('Atrasadas')).toBe('2');
+
+    rerender(<TasksKpiStrip kpis={{ ...CHEIO, overdue: 7 }} />);
+    // a região viva narra o valor FINAL no mesmo render da mudança (o dado,
+    // não o quadro da mola)…
+    expect(anuncio('Atrasadas')).toBe('Atrasadas: 7');
+    // …e o número visível NÃO salta para o alvo: quem leva até ele é a mola.
+    expect(valor('Atrasadas')).not.toBe('7');
+
+    await waitFor(() => expect(valor('Atrasadas')).toBe('7'));
+    expect(anuncio('Atrasadas')).toBe('Atrasadas: 7');
+  });
+
+  it('028: com movimento reduzido o valor novo entra no MESMO render (sem mola)', () => {
+    reduceMotion.value = true;
+    const { rerender } = render(<TasksKpiStrip kpis={CHEIO} />);
+    expect(valor('Atrasadas')).toBe('2');
+
+    rerender(<TasksKpiStrip kpis={{ ...CHEIO, overdue: 7 }} />);
+    // nada de quadro intermediário: o valor final já está na tela neste render.
+    expect(valor('Atrasadas')).toBe('7');
+    expect(anuncio('Atrasadas')).toBe('Atrasadas: 7');
   });
 
   it('axe: passa com os cards clicáveis (faixa cheia) e na faixa compacta', async () => {
