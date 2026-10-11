@@ -12,7 +12,7 @@ estado da captura visual "antes" (003). Atualizado em 11/10/2026 (worker (testes
 - 2 atrasadas e 4 com prazo para hoje (KPIs Atrasadas/Hoje);
 - 4 Aguardando com motivo preenchido; 4 contatos (2 com foto, 2 sem foto, 2 do tipo cliente);
 - datas carimbadas (`created_at`, `started_at`, `completed_at`, `status_changed_at`) para o
-  tempo médio (started_at → completed_at) dar 1,4 dia.
+  tempo médio (created_at → completed_at, D13) das concluídas dos últimos 7 dias dar 1,4 dia.
 
 Como rodar (banco local da tarefa):
 

@@ -12,8 +12,8 @@
  * (`created_by` = perfil dele):
  *   14 tarefas abertas  (3 caixa de entrada + 4 a fazer + 3 fazendo + 4 aguardando),
  *    2 delas atrasadas e 4 para hoje;
- *   5 tarefas concluídas — `started_at`→`completed_at` = 1,4 dia em cada uma, para
- *   o tempo médio do KPI dar exatamente 1,4 dia;
+ *   5 tarefas concluídas nos últimos 7 dias — a MÉDIA de `completed_at`−`created_at`
+ *   dá exatamente 1,4 dia (D13: tempo médio = da criação à conclusão);
  *   contatos com foto, sem foto e do tipo `cliente`.
  *
  * Idempotente: ids fixos + `on conflict`. Rodar duas vezes produz o mesmo estado.
@@ -95,6 +95,8 @@ type Tarefa = {
   /** Dias que a tarefa está "fazendo" (started_at) ou concluída (completed_at). */
   iniciadaHa?: number;
   concluidaHa?: number;
+  /** D13: dias de `created_at`→`completed_at` (média das concluídas = 1,4 dia). */
+  cicloDias?: number;
   motivoEspera?: string;
   contato?: string;
 };
@@ -115,15 +117,16 @@ const TAREFAS: Tarefa[] = [
   { n: '112', titulo: 'Aguardar nota fiscal do fornecedor', status: 'waiting', prioridade: 'medium', prazo: -2, motivoEspera: 'Fornecedor vai emitir a nota', contato: '0c3' },
   { n: '113', titulo: 'Aguardar aprovação da arte', status: 'waiting', prioridade: 'medium', prazo: 1, diaInteiro: true, motivoEspera: 'Cliente vai aprovar a arte' },
   { n: '114', titulo: 'Aguardar peças do estoque', status: 'waiting', prioridade: 'low', prazo: 6, motivoEspera: 'Estoque vai repor as peças', contato: '0c4' },
-  // Concluídas: iniciada→concluída = 1,4 dia em cada (tempo médio = 1,4 dia).
-  { n: '115', titulo: 'Confirmar endereço de entrega', status: 'done', prioridade: 'medium', prazo: null, concluidaHa: 1, contato: '0c1' },
-  { n: '116', titulo: 'Responder e-mail do cliente', status: 'done', prioridade: 'low', prazo: null, concluidaHa: 2, contato: '0c2' },
-  { n: '117', titulo: 'Atualizar planilha de preços', status: 'done', prioridade: 'medium', prazo: null, concluidaHa: 3 },
-  { n: '118', titulo: 'Agendar reunião com equipe', status: 'done', prioridade: 'high', prazo: null, concluidaHa: 4, contato: '0c4' },
-  { n: '119', titulo: 'Arquivar conversa antiga', status: 'done', prioridade: 'low', prazo: null, concluidaHa: 5 },
+  // Concluídas nos últimos 7 dias: ciclos created→completed {1,0;1,2;1,4;1,6;1,8}
+  // cuja MÉDIA é 1,4 dia (D13: da criação à conclusão). started_at fica no meio.
+  { n: '115', titulo: 'Confirmar endereço de entrega', status: 'done', prioridade: 'medium', prazo: null, concluidaHa: 1, cicloDias: 1.0, contato: '0c1' },
+  { n: '116', titulo: 'Responder e-mail do cliente', status: 'done', prioridade: 'low', prazo: null, concluidaHa: 2, cicloDias: 1.2, contato: '0c2' },
+  { n: '117', titulo: 'Atualizar planilha de preços', status: 'done', prioridade: 'medium', prazo: null, concluidaHa: 3, cicloDias: 1.4 },
+  { n: '118', titulo: 'Agendar reunião com equipe', status: 'done', prioridade: 'high', prazo: null, concluidaHa: 4, cicloDias: 1.6, contato: '0c4' },
+  { n: '119', titulo: 'Arquivar conversa antiga', status: 'done', prioridade: 'low', prazo: null, concluidaHa: 5, cicloDias: 1.8 },
 ];
 
-/** 1,4 dia = 33,6 horas. `started_at` → `completed_at` em cada concluída. */
+/** D13: média esperada de `completed_at` − `created_at` nas concluídas = 1,4 dia. */
 const DIAS_CICLO = 1.4;
 
 async function remover(db: SqlCliente): Promise<void> {
@@ -205,14 +208,16 @@ async function criar(db: SqlCliente): Promise<void> {
       const t = TAREFAS[i];
       const position = i;
       const contatoId = t.contato ? id(t.contato) : null;
-      // created_at base: bem antes do ciclo, para o cartão não parecer recém-criado.
-      const criadaAtras = t.status === 'done' ? 20 : 10 + i;
+      const cicloDias = t.cicloDias ?? DIAS_CICLO;
+      // created_at: nas concluídas, recua o ciclo (created→completed) da tarefa.
+      const criadaAtras = t.status === 'done' ? (t.concluidaHa ?? 0) + cicloDias : 10 + i;
       const statusChangedSegs = (t.status === 'done' ? t.concluidaHa ?? 0 : criadaAtras) * 86400;
       const startedSegs =
         t.status === 'doing'
           ? (t.iniciadaHa ?? 0) * 86400
           : t.status === 'done'
-            ? ((t.concluidaHa ?? 0) + DIAS_CICLO) * 86400
+            // started_at no meio do ciclo: created_at <= started_at <= completed_at.
+            ? ((t.concluidaHa ?? 0) + cicloDias / 2) * 86400
             : 0;
       const completedSegs = (t.concluidaHa ?? 0) * 86400;
       const temPrazo = t.prazo !== null;
@@ -280,11 +285,13 @@ async function conferir(db: SqlCliente): Promise<void> {
     }
   }
 
+  // D13: tempo médio = da CRIAÇÃO à conclusão, nas concluídas dos últimos 7 dias.
   const [ciclo] = await db`
-    select avg(extract(epoch from (completed_at - started_at)) / 86400)::float as dias
+    select avg(extract(epoch from (completed_at - created_at)) / 86400)::float as dias
     from conversation_tasks
     where id::text like ${PREFIXO + '%'} and status = 'done'
-      and started_at is not null and completed_at is not null`;
+      and created_at is not null and completed_at is not null
+      and completed_at >= now() - interval '7 days'`;
   const dias = Math.round((ciclo.dias as number) * 10) / 10;
   if (dias !== DIAS_CICLO) {
     throw new Error(`seed tarefas-local: tempo médio esperado ${DIAS_CICLO} dia, encontrado ${dias}`);
@@ -303,7 +310,7 @@ async function conferir(db: SqlCliente): Promise<void> {
       `  usuário ${USUARIO.email} (id ${USUARIO.id})`,
       `  tarefas: ${c.abertas} abertas (${c.backlog} entrada + ${c.todo} a fazer + ${c.doing} fazendo + ${c.waiting} aguardando), ` +
         `${c.concluidas} concluídas, ${c.atrasadas} atrasadas, ${c.hoje} para hoje`,
-      `  tempo médio (started_at→completed_at) = ${dias} dia`,
+      `  tempo médio (created_at→completed_at) = ${dias} dia`,
       `  contatos: ${contatos.total} (${contatos.com_foto} com foto, ${contatos.sem_foto} sem foto, ${contatos.clientes} cliente)`,
       '',
     ].join('\n'),
