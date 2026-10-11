@@ -1,5 +1,14 @@
 Especialista: worker (docs)
 
+Nota de escopo (arquivos dos pais, indispensável): o cartão não lista
+`src/hooks/inbox/chipCounts.ts`, `src/hooks/inbox/useInboxFilters.ts` nem
+`src/hooks/inbox/__tests__/chipCounts.test.ts` porque eles são a entrega dos pais deste cartão
+(t_74bee242 e t_7d4d9088), que NÃO estavam na base do meu workspace (`5eb097cff`, ponta de
+`dia/2026-10-11`): `src/hooks/inbox/chipCounts.ts` nem existia. O cartão manda `git cherry-pick <sha>`
+nesse caso, e foi o que fiz: os commits 5098b4a3e, ff219637f, 877949f00 e 444fabbea são dos pais,
+commitados por eles, não reescritos por mim. Sem eles `inboxFilters.chipCounts` não existiria e o
+StatusChips não teria de onde receber o número.
+
 ## O que mudou e por quê
 - ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
 - ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
