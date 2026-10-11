@@ -156,7 +156,7 @@ export function useQueueDetails(id: string | undefined): QueueDetailsState {
       // (paginada, para não subcontar contato muito ativo) e uma de `profiles` por `in('id', ids)`.
       // O número de consultas não cresce com o número de contatos.
       const messagesResult = contactIds.length
-        ? await fetchAllRows<{ contact_id: string; created_at: string }>(
+        ? await fetchAllRows<{ contact_id: string | null; created_at: string }>(
             (from, to) =>
               supabase
                 .from('messages')
@@ -166,7 +166,7 @@ export function useQueueDetails(id: string | undefined): QueueDetailsState {
                 .range(from, to),
             { pageSize: MESSAGES_PAGE_SIZE },
           )
-        : { rows: [] as { contact_id: string; created_at: string }[], incomplete: false };
+        : { rows: [] as { contact_id: string | null; created_at: string }[], incomplete: false };
       if (!isCurrent()) return;
 
       const agentsResult = assignedToIds.length
@@ -184,6 +184,7 @@ export function useQueueDetails(id: string | undefined): QueueDetailsState {
       const countMap = new Map<string, number>();
       const lastMessageMap = new Map<string, string>();
       for (const msg of messages) {
+        if (!msg.contact_id) continue;
         countMap.set(msg.contact_id, (countMap.get(msg.contact_id) ?? 0) + 1);
         const prev = lastMessageMap.get(msg.contact_id);
         if (!prev || msg.created_at > prev) lastMessageMap.set(msg.contact_id, msg.created_at);
