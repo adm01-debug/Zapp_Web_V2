@@ -30,6 +30,12 @@ import { aceitaLembrete, MOTIVO_SEM_LEMBRETE } from './cardActions';
 import { PlanejamentoSection } from './sheet/PlanejamentoSection';
 import { formatCriadaEm } from './sheet/planejamento';
 import { PainelRodape } from './sheet/PainelRodape';
+import {
+  classeDeLargura,
+  gravarExpandidoArmazenado,
+  lerExpandidoArmazenado,
+  painelNaoModal,
+} from './sheet/painel';
 import type { Priority, WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 
@@ -94,18 +100,21 @@ interface SheetProps {
   /** Etapa 28 (B2): o DnD/kebab abre o Sheet já pedindo o motivo.
    *  Etapa 31: "Lembrar-me → Escolher…" abre no campo alarme.
    *  Etapa 144 / D14: o `Esc` fecha e devolve o foco ao cartão da tarefa; o F6
-   *  (alternar painel ↔ lista/quadro, do painel não modal da etapa 145) já está
-   *  ligado — enquanto o painel for modal, a armadilha de foco do Radix prende o
-   *  foco dentro dele, como o bottom sheet pede. */
+   *  alterna painel ↔ lista/quadro. Etapa 145: no desktop o painel é não modal,
+   *  então não há armadilha de foco — no bottom sheet do celular segue modal e
+   *  o Radix prende o foco dentro dele. */
   focusField?: 'waiting_reason' | 'remind_at';
 }
 
 export function WorkItemSheet(props: SheetProps) {
   const { item, open, onOpenChange, focusField } = props;
   const narrow = useNarrowViewport();
-  // Etapa 132: "expandir" do cabeçalho alarga o painel no desktop. Persistir a
-  // escolha é da etapa 146 (outro cartão) — aqui é só o controle.
-  const [expandido, setExpandido] = useState(false);
+  // Etapa 145 (D14): de `md` para cima o painel é NÃO modal — sem overlay, com
+  // o Quadro visível e clicável; abaixo disso segue o bottom sheet modal.
+  const naoModal = painelNaoModal(narrow);
+  // Etapa 146: o "expandir" do cabeçalho alarga o painel (≈70% da janela) e a
+  // escolha é lembrada pelo navegador (D11). Lida uma vez, na montagem.
+  const [expandido, setExpandido] = useState(lerExpandidoArmazenado);
   const conteudoRef = useRef<HTMLDivElement>(null);
   // Etapa 143: a mudança pendente vive no formulário; o guarda mora aqui para
   // que Esc, o clique fora e o X do SheetContent caiam na MESMA proteção.
@@ -140,7 +149,7 @@ export function WorkItemSheet(props: SheetProps) {
     }, 0);
   }, [item?.id, onOpenChange]);
 
-  /** Etapa 144: F6 alterna painel ↔ lista/quadro (o não modal chega na etapa 145). */
+  /** Etapa 144: F6 alterna painel ↔ lista/quadro (vale nos dois modos da 145). */
   useEffect(() => {
     if (!open) return;
     function aoTeclar(event: KeyboardEvent) {
@@ -164,6 +173,9 @@ export function WorkItemSheet(props: SheetProps) {
   return (
     <Sheet
       open={open}
+      // Etapa 145: não modal no desktop (sem overlay e sem armadilha de foco; o
+      // Quadro continua clicável atrás) e modal no bottom sheet do celular.
+      modal={!naoModal}
       onOpenChange={(proximo) => {
         // Etapa 143: o X do SheetContent (e qualquer fechamento do próprio
         // Radix) passa por aqui — com edição pendente, pede confirmação em vez
@@ -180,10 +192,11 @@ export function WorkItemSheet(props: SheetProps) {
         ref={conteudoRef}
         side={narrow ? 'bottom' : 'right'}
         data-testid="work-item-sheet"
+        data-nao-modal={naoModal ? 'true' : 'false'}
         className={
           narrow
             ? 'h-[90vh] overflow-y-auto'
-            : `overflow-y-auto ${expandido ? 'w-[min(720px,90vw)] sm:max-w-[720px]' : 'w-[420px] sm:max-w-[420px]'}`
+            : `overflow-y-auto ${classeDeLargura(expandido)}`
         }
         onEscapeKeyDown={(event) => {
           if (alteradoRef.current) {
@@ -198,6 +211,15 @@ export function WorkItemSheet(props: SheetProps) {
           // O menu ⋮ abre em portal: clicar nele não é "clicar fora".
           const alvo = event.target as HTMLElement | null;
           if (alvo?.closest?.('[data-radix-popper-content-wrapper]')) return;
+          // Etapa 145: no painel não modal o clique fora NÃO fecha o painel — é
+          // exatamente assim que se troca de tarefa: clicar em outro cartão do
+          // Quadro troca o item do painel (D14). Sem overlay, também não existe
+          // "clique fora" que jogue edição fora; a proteção da etapa 143 segue
+          // no Esc, no X e em qualquer fechamento pedido pelo próprio painel.
+          if (naoModal) {
+            event.preventDefault();
+            return;
+          }
           if (alteradoRef.current) {
             event.preventDefault();
             pedirConfirmacao();
@@ -212,7 +234,12 @@ export function WorkItemSheet(props: SheetProps) {
             onOpenChange={onOpenChange}
             onMudouChange={sincronizarMudanca}
             expandido={expandido}
-            onAlternarExpansao={() => setExpandido((v) => !v)}
+            onAlternarExpansao={() => {
+              // Etapa 146: alterna e grava a preferência (D11).
+              const proximo = !expandido;
+              setExpandido(proximo);
+              gravarExpandidoArmazenado(proximo);
+            }}
           />
         )}
 
