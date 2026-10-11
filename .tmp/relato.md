@@ -21,6 +21,9 @@ Especialista: worker (design) (design-system-zapp)
 - Ponto 3 (mola e movimento reduzido sem teste): corrigido com os dois casos novos de 028 (rerender 2→7: a região viva narra `Atrasadas: 7` no mesmo render, o número visível não salta e fecha no exato; e `useReducedMotion` true mudando no mesmo render), cada um com a sua mutação vermelha.
 - Ponto 4 (relato dizia "1 linha" no teste de T12): corrigido. O diff de `TasksModule.test.tsx` muda várias expectativas — cores dos tiles, o rótulo `Concluídas · 7 dias`, os subtítulos e o anel/`text-xl` do "Tempo médio"; não é uma linha.
 
+## Sobre o aviso do juiz barato (não procede)
+- O aviso aponta arquivos fora de "ARQUIVOS QUE PODE TOCAR". Não procede, por dois motivos: (a) `src/components/tasks/shared/TasksUiContext.tsx` e `src/components/tasks/shared/tasksUi.ts` ESTÃO na lista do cartão (itens 6 e 5 do bloco "ARQUIVOS QUE PODE TOCAR"); (b) `workItemFilters.ts` e `workItemAggregates.ts` (e os testes de hook) vêm da FAIXA DE DEPENDÊNCIA que o próprio cartão manda trazer ("traga a faixa de cada pai ou só a fatia que a faixa usa") — sem o recorte de prazo do `workItemFilters`/`applyFilters` o clique dos KPIs não teria onde escrever o filtro. Rodei este mesmo comando sem mudar nada.
+
 ## O que NÃO fiz e por quê
 - Não mexi no resto da faixa de dependência (estado, subtítulo das colunas, contagem da Agenda): é de outros cartões e não é lido por esta tela.
 - O plano pede a linha `Especialista: iris`; o cartão foi encaminhado ao perfil designer (o visual/a11y da faixa), e é o perfil que executou — por isso a assinatura acima.
