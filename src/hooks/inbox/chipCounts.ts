@@ -62,7 +62,7 @@ export const isOpenActive = (c: ConversationWithMessages): boolean =>
 
 /** Em atendimento = responsável é o perfil do usuário. */
 export const isAttending = (c: ConversationWithMessages, profileId: string | undefined): boolean =>
-  c.contact.assigned_to === profileId;
+  profileId != null && c.contact.assigned_to === profileId;
 
 /** Aguardando = estado persistido 'waiting' (não mais "sem responsável"). */
 export const isWaiting = (c: ConversationWithMessages): boolean =>
