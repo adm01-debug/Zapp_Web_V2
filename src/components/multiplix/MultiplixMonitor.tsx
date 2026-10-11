@@ -363,7 +363,14 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{r.company_name_snapshot || 'Empresa'}</p>
                   <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
-                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}</div>
+                  {r.error_message && <p className="text-2xs text-dash-red truncate">{r.error_message}</p>}
+                  {((r.attempt_count ?? 0) > 0 || r.external_id) && (
+                    <p className="text-3xs text-muted-foreground truncate">
+                      {(r.attempt_count ?? 0) > 0 && <span data-testid="recipient-attempts">{r.attempt_count} {r.attempt_count === 1 ? 'tentativa' : 'tentativas'}</span>}
+                      {(r.attempt_count ?? 0) > 0 && r.external_id && ' · '}
+                      {r.external_id && <span data-testid="recipient-external-id">ID {r.external_id}</span>}
+                    </p>
+                  )}</div>
                 <StatusPill status={r.status} map={RECIPIENT_STATUS} />
                 {r.sent_at && <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.sent_at)}</span>}
               </div>

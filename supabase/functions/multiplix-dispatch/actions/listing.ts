@@ -69,7 +69,8 @@ const DISPATCH_LIST_COLUMNS =
 /** Colunas de `multiplix_recipients` (todas confirmadas na migration F31). */
 const RECIPIENT_LIST_COLUMNS =
   'id,dispatch_id,company_id,company_name_snapshot,destino_e164,singu_contact_id,' +
-  'eligibility,eligibility_reason,inclusion_reason,status,sent_at,delivered_at,created_at';
+  'eligibility,eligibility_reason,inclusion_reason,status,sent_at,delivered_at,created_at,' +
+  'attempt_count,external_id,error_message';
 
 type Result<T> = { data: T; error: { message?: string } | null };
 

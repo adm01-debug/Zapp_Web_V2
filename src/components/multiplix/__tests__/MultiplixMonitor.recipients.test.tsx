@@ -110,3 +110,24 @@ describe('MultiplixMonitor — falha x vazio na lista de destinatarios (R2-MOD-0
     expect(screen.getByText(/amostra/i)).toBeInTheDocument();
   });
 });
+
+describe('MultiplixMonitor — tentativas e id externo por destinatario (TL-042)', () => {
+  it('mostra attempt_count, external_id e o erro legivel de cada destinatario', () => {
+    h.recipients = {
+      rows: [
+        { ...recipientRow('r1'), attempt_count: 3, external_id: 'wamid.ABC', error_message: 'numero invalido' },
+        { ...recipientRow('r2'), status: 'pending', attempt_count: 0, external_id: null },
+      ],
+      total: 2,
+      truncated: false,
+    };
+
+    renderMonitor();
+
+    expect(screen.getByText('3 tentativas')).toBeInTheDocument();
+    expect(screen.getByText('ID wamid.ABC')).toBeInTheDocument();
+    expect(screen.getByText('numero invalido')).toBeInTheDocument();
+    // sem tentativa nem id, nada e inventado
+    expect(screen.getAllByTestId('recipient-attempts')).toHaveLength(1);
+  });
+});

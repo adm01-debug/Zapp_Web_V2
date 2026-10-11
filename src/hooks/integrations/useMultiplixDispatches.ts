@@ -43,6 +43,10 @@ export interface MultiplixRecipientRow {
   sent_at: string | null;
   error_message: string | null;
   personalized_message: string | null;
+  /** Tentativas de envio ja gastas neste destinatario (`recipients.list`). */
+  attempt_count: number | null;
+  /** Id da mensagem no provedor, quando o envio foi aceito (`recipients.list`). */
+  external_id: string | null;
 }
 
 // ---------------------------------------------------------------------------
