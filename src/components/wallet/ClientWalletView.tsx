@@ -30,9 +30,7 @@ export function ClientWalletView() {
         actions={
           <Dialog open={w.isAddDialogOpen} onOpenChange={w.setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
-              </motion.div>
+              <Button className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Nova Regra</Button>
             </DialogTrigger>
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Criar Regra de Carteira</DialogTitle></DialogHeader>
@@ -44,14 +42,14 @@ export function ClientWalletView() {
                 <div className="space-y-2">
                   <Label>Vendedor</Label>
                   <Select value={w.newRule.agent_id} onValueChange={(v) => w.setNewRule({ ...w.newRule, agent_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecione um vendedor" /></SelectTrigger>
+                    <SelectTrigger aria-label="Vendedor"><SelectValue placeholder="Selecione um vendedor" /></SelectTrigger>
                     <SelectContent>{w.agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Conexão WhatsApp (opcional)</Label>
                   <Select value={w.newRule.whatsapp_connection_id} onValueChange={(v) => w.setNewRule({ ...w.newRule, whatsapp_connection_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Todas as conexões" /></SelectTrigger>
+                    <SelectTrigger aria-label="Conexão WhatsApp (opcional)"><SelectValue placeholder="Todas as conexões" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todas as conexões</SelectItem>
                       {w.connections.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number})</SelectItem>)}
@@ -112,8 +110,8 @@ export function ClientWalletView() {
                     <TableCell>{rule.agent?.name || '-'}</TableCell>
                     <TableCell>{rule.connection ? <div className="flex items-center gap-1"><Phone className="w-3 h-3" />{rule.connection.name}</div> : <span className="text-muted-foreground">Todas</span>}</TableCell>
                     <TableCell><Badge variant="outline">{rule.priority}</Badge></TableCell>
-                    <TableCell><Switch checked={rule.is_active} onCheckedChange={(checked) => w.handleToggleActive(rule.id, checked)} /></TableCell>
-                    <TableCell className="text-right"><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => w.handleDeleteRule(rule.id)}><Trash2 className="w-4 h-4" /></Button></TableCell>
+                    <TableCell><Switch checked={rule.is_active} onCheckedChange={(checked) => w.handleToggleActive(rule.id, checked)} aria-label={`Ativar regra ${rule.name}`} /></TableCell>
+                    <TableCell className="text-right"><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" aria-label={`Excluir regra ${rule.name}`} onClick={() => w.handleDeleteRule(rule.id)}><Trash2 className="w-4 h-4" /></Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
