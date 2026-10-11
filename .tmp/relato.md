@@ -12,9 +12,9 @@ Especialista: senior (area-sql-banco)
 - `hermes-db-migrar` aplicou as duas migrations no banco local da tarefa (produção não tocada).
 
 ## Pontos do revisor (recusa do refazer 1)
-1. P1 — search_path + REVOKE/GRANT ausentes no banco aplicado: as 5 funções têm `SET search_path = pg_catalog, public` (valor das REGRAS DE BANCO do cartão) e `REVOKE ... FROM public, anon, authenticated` + `GRANT EXECUTE` só a authenticated/service_role; as duas migrations foram aplicadas no banco local, então arquivo e banco aplicado coincidem. Prova: asserções de proconfig (4/4), routine_privileges (PUBLIC/anon zerados, authenticated 4/4) e `anon sem EXECUTE` comportamental.
-2. P2 — sem oráculo: bloco `expect_same_failure` compara o texto integral do erro entre mensagem existente-mas-oculta (M1 para o estranho U3) e inexistente (UUID fantasma) nas 4 RPCs, exigindo igualdade byte a byte e `message_not_visible` nos dois.
-3. P3 — inventário/ledger: nenhum `.test.sh` novo (o atual já está no `db-guard.yml`, verificado), logo nada a registrar; ledger da migration nova feito pelo fluxo local (hermes-db-migrar). Nada pendente.
+Ponto 1 (P1 — search_path + REVOKE/GRANT ausentes no banco aplicado): as 5 funções têm `SET search_path = pg_catalog, public` (valor das REGRAS DE BANCO do cartão) e `REVOKE ... FROM public, anon, authenticated` + `GRANT EXECUTE` só a authenticated/service_role; as duas migrations foram aplicadas no banco local, então arquivo e banco aplicado coincidem. Prova: asserções de proconfig (4/4), routine_privileges (PUBLIC/anon zerados, authenticated 4/4) e `anon sem EXECUTE` comportamental.
+Ponto 2 (P2 — sem oráculo): bloco `expect_same_failure` compara o texto integral do erro entre mensagem existente-mas-oculta (M1 para o estranho U3) e inexistente (UUID fantasma) nas 4 RPCs, exigindo igualdade byte a byte e `message_not_visible` nos dois.
+Ponto 3 (P3 — inventário/ledger): nenhum `.test.sh` novo (o atual já está no `db-guard.yml`, verificado), logo nada a registrar; ledger da migration nova feito pelo fluxo local (hermes-db-migrar). Nada pendente.
 
 ## Juiz do fechar (itens 1–5, todos tratados)
 1. reason fora do cartão: procedia em 1 valor — trocado `conteudo_improprio` por `improprio` no CHECK e na validação (agora exatamente `spam,improprio,urgencia,outro`); desvio declarado aqui. Prova: CHECKs pelos nomes exatos + inserção real com `improprio` de ponta a ponta.
