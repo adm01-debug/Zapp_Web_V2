@@ -378,11 +378,11 @@
          violeta (265°) — nota, insight, conteúdo gerado por IA;
          teal    (190°) — transferência, handoff, encaminhamento de conversa;
          rosa    (335°) — categoria de alta visibilidade (destaque de tipo).
-       Cada cor tem par completo: --{nome} (preenchimento), --{nome}-foreground
-       (texto SOBRE o preenchimento) e --{nome}-text (a cor como TEXTO sobre fundo
+       Cada cor tem par completo: --NOME (preenchimento), --NOME-foreground
+       (texto SOBRE o preenchimento) e --NOME-text (a cor como TEXTO sobre fundo
        claro — mesmo caso de --primary-text/--warning-text/--destructive-text).
        Contraste WCAG 2.1 medido (fórmula do tests/contracts/contraste-aa-*):
-         claro  — {-text} sobre card/popover: violeta 11,2 / teal 6,2 / rosa 7,6:1;
+         claro  — sufixo -text sobre card/popover: violeta 11,2 / teal 6,2 / rosa 7,6:1;
                   branco sobre o preenchimento: 7,1 / 5,6 / 4,6:1;
                   preenchimento sobre o card: 7,1 / 5,6 / 4,6:1 (≥3 p/ componente).
        Reconciliação do roxo: --dash-violet (282°) e --kpi-tile-purple (258°) são
@@ -564,7 +564,7 @@
        No escuro o preenchimento clareia (L ~72-74) e o texto sobre ele é o tom
        escuro da própria matiz — mesmo padrão do --destructive/--warning do escuro.
        Contraste WCAG 2.1 medido:
-         {-text} sobre card/popover: violeta 7,2 / teal 12,1 / rosa 8,1:1;
+         sufixo -text sobre card/popover: violeta 7,2 / teal 12,1 / rosa 8,1:1;
          foreground escuro sobre o preenchimento: 6,7 / 10,7 / 7,4:1;
          preenchimento sobre o card: 6,5 / 11,6 / 7,5:1.
     */
