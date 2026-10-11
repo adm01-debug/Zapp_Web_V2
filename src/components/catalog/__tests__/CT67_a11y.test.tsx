@@ -35,10 +35,11 @@
  * `ResizeObserver`, que o jsdom não implementa.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ContactSelectionStep } from '../ContactSelectionStep';
 import { CatalogProductCard } from '../CatalogProductCard';
 import { CatalogAdvancedFilters } from '../CatalogAdvancedFilters';
@@ -214,6 +215,42 @@ beforeEach(() => {
 describe('CT-67 — acessibilidade (axe) dos componentes do catálogo', () => {
   it('CatalogProductCard não tem violações sérias', async () => {
     const { container } = render(<CatalogProductCard product={product()} onSend={vi.fn()} />);
+    await audit(container, 'CatalogProductCard');
+  });
+
+  it('CatalogProductCard: botões de ícone têm aria-label com o nome do produto', async () => {
+    const onSend = vi.fn();
+    const onToggleFavorite = vi.fn();
+    const { container } = render(
+      <CatalogProductCard
+        product={product()}
+        onSend={onSend}
+        onToggleFavorite={onToggleFavorite}
+        mode="list"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Ver detalhes de Caneta Bambu' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar Caneta Bambu' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Favoritar Caneta Bambu' })).toBeInTheDocument();
+
+    await audit(container, 'CatalogProductCard');
+  });
+
+  it('CatalogProductCard: botão Enviar desabilitado (estoque zero) também tem aria-label', async () => {
+    const onSend = vi.fn();
+    const { container } = render(
+      <TooltipProvider>
+        <CatalogProductCard
+          product={{ ...product(), is_stockout: true }}
+          onSend={onSend}
+          mode="list"
+        />
+      </TooltipProvider>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Enviar Caneta Bambu' })).toBeDisabled();
+
     await audit(container, 'CatalogProductCard');
   });
 
