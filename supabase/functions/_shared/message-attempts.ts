@@ -53,7 +53,7 @@ function redactKnownValue(text: string, value: string | null | undefined, marker
 }
 
 function redactPhones(text: string): string {
-  return text.replace(/(\+?\d[\d\s().\-]{6,}\d)/g, (match) => {
+  return text.replace(/(\+?\d[\d\s().-]{6,}\d)/g, (match) => {
     const digits = match.replace(/\D/g, '');
     return digits.length >= 8 && digits.length <= 15 ? PHONE_REDACTION : match;
   });

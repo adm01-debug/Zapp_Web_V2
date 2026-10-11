@@ -245,10 +245,17 @@ async function enqueueDeliveryReconciliation(
  * profundos e a checagem estrutural estoura em TS2589.
  */
 interface DeliveryServiceClient {
-  // deno-lint-ignore no-explicit-any
-  rpc: (fn: string, args?: any) => any;
-  // deno-lint-ignore no-explicit-any
-  from: (table: string) => any;
+  rpc: (fn: string, args?: Record<string, unknown>) => PromiseLike<{
+    data: unknown;
+    error: { code?: string } | null;
+  }>;
+  from: (table: string) => {
+    select: (columns?: string) => {
+      eq: (column: string, value: unknown) => {
+        maybeSingle: () => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
+      };
+    };
+  };
 }
 
 /** Assinador mínimo aceito por `resolvePrivateBucketUrl` (evita tipos fundos). */
@@ -311,12 +318,12 @@ export async function deliverClaimedMessage(claim: Claim, deps: OutboundDelivery
       : null;
     let richPayload: Record<string, unknown> | null = null;
     if (claim.message_type === 'poll' || claim.message_type === 'contact') {
-      const { data: messageMetadata, error: metadataError } = await service
+      const { data: metadataRow, error: metadataError } = await service
         .from('messages')
         .select('media_meta')
         .eq('id', claim.message_id)
         .maybeSingle();
-      const meta = asRecord(messageMetadata?.media_meta);
+      const meta = asRecord((metadataRow as { media_meta?: unknown } | null)?.media_meta);
       richPayload = asRecord(meta?.outbound_delivery_payload);
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
@@ -364,12 +371,13 @@ export async function deliverClaimedMessage(claim: Claim, deps: OutboundDelivery
       return errorResponse('Message provider returned an invalid delivery receipt', 502, req);
     }
 
-    const { data: completed, error: completeError } = await service.rpc('complete_outbound_message', {
+    const { data: completedData, error: completeError } = await service.rpc('complete_outbound_message', {
       p_message_id: claim.message_id,
       p_claim_token: claim.claim_token,
       p_external_id: externalId,
       p_delivery_status: 'sent',
     });
+    const completed = completedData as { id: string; status: string } | null;
     if (completeError || !completed?.id) {
       // Evolution may have accepted the send even though its receipt could not
       // be persisted. Make this terminal so an expired lease can never resend
@@ -504,7 +512,9 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   // Entrega (claim já em mãos): registra a tentativa, chama o provedor e fecha
   // em sent/failed_final. Ver `deliverClaimedMessage`.
   return await deliverClaimedMessage(claim, {
-    service,
+    // O client do supabase-js carrega generics profundos; cast via unknown evita
+    // o estouro de instanciação (TS2589) sem recorrer a `any`.
+    service: service as unknown as OutboundDeliveryDeps['service'],
     caller,
     supabaseUrl,
     evolutionUrl,

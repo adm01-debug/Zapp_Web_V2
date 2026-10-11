@@ -1,4 +1,4 @@
-import { deliverClaimedMessage, handleMessageDeliveryRequest, providerPayload, type Claim } from './index.ts';
+import { deliverClaimedMessage, handleMessageDeliveryRequest, providerPayload, type Claim, type OutboundDeliveryDeps } from './index.ts';
 
 function assertStatus(actual: number, expected: number) {
   if (actual !== expected) throw new Error(`expected HTTP ${expected}, got ${actual}`);
@@ -115,10 +115,9 @@ function jsonFetcher(status: number, body: unknown): FetchFn {
   };
 }
 
-// deno-lint-ignore no-explicit-any
-function deliverDeps(service: unknown, fetcher: FetchFn): any {
+function deliverDeps(service: unknown, fetcher: FetchFn): OutboundDeliveryDeps {
   return {
-    service,
+    service: service as OutboundDeliveryDeps['service'],
     caller: { storage: { from: () => ({ createSignedUrl: () => Promise.resolve({ data: { signedUrl: 'x' }, error: null }) }) } },
     supabaseUrl: 'https://proj.supabase.co',
     evolutionUrl: 'https://evo.local',
