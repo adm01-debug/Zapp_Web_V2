@@ -152,8 +152,8 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     const alvo = item({ id: 'k1', title: 'Concluir sem abrir' });
     const { onToggleDone, onOpen } = renderLista(buckets({ noDue: [alvo] }));
 
-    const card = screen.getByRole('article');
-    fireEvent.click(within(card).getByRole('button', { name: 'Concluir tarefa' }));
+    const linha = screen.getByTestId('task-row');
+    fireEvent.click(within(linha).getByRole('checkbox', { name: 'Concluir tarefa' }));
 
     expect(onToggleDone).toHaveBeenCalledWith(alvo);
     expect(onOpen).not.toHaveBeenCalled();
@@ -164,8 +164,8 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     const { onToggleDone } = renderLista(buckets({ done7d: [feita] }));
 
     fireEvent.click(screen.getByText('Concluídas (7 dias)'));
-    const card = screen.getByRole('article');
-    fireEvent.click(within(card).getByRole('button', { name: 'Reabrir tarefa' }));
+    const linha = screen.getByTestId('task-row');
+    fireEvent.click(within(linha).getByRole('checkbox', { name: 'Reabrir tarefa' }));
 
     expect(onToggleDone).toHaveBeenCalledWith(feita);
   });
