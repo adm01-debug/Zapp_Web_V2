@@ -6,7 +6,7 @@
 # Contrato num PostgreSQL 17 descartavel, no mesmo formato dos testes irmaos
 # (scripts/db-audit/talkx-role-gates.test.sh, scripts/db-audit/talkx-campaign-worker-lease.test.sh).
 #
-# Prova, contra a MIGRATION REAL do repo (20261002391230), sobre um schema minimo com as
+# Prova, contra as MIGRATIONS REAIS do repo (20261002391230 + 20261011003026), sobre um schema minimo com as
 # colunas que as RPCs tocam e uma fixture de 12 contatos:
 #   (a) count: matched=12, eligible=6, suppressed=2, invalid_phone=1, legacy_or_deleted=3;
 #   (b) page com limite 4 percorre os 6 elegiveis em 2 paginas, sem repeticao;
@@ -15,12 +15,16 @@
 #       lt, lte, in_last_days, not_in_last_days) + casos extras de uuid eq e number eq;
 #   (d) operador/campo fora da whitelist -> 22023; modo invalido -> 22023;
 #   (e) agente (authenticated sem papel) -> 42501; anon sem EXECUTE;
-#   (f) a funcao interna respeita p_respect_suppression e a uniao por p_segment_ids.
+#   (f) a funcao interna respeita p_respect_suppression e a uniao por p_segment_ids;
+#   (g) p_contact_ids (atividade real ramo/UF pre-resolvida fora do banco): retrocompativel
+#       (NULL/omitido), restringe aos ids, nao fura elegibilidade/supressao, array vazio = 0
+#       e intersecta as regras.
 
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc.sql"
+migration_contact_ids="$repo_root/supabase/migrations/20261011003026_talkx_audience_contact_ids_pre_resolvidos.sql"
 postgres_image="${TALKX_AUDIENCE_RPC_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-audience-rpc-test-$$"
 test_password="talkx_audience_rpc_test_only"
@@ -272,6 +276,13 @@ psql_test < "$migration" >/dev/null
 psql_test < "$migration" >/dev/null
 pass 'migration X016 aplica e e replayavel'
 
+# A migration nova troca a RPC de 5 por 6 argumentos (ganha p_contact_ids): aplica e
+# garante que o replay (re-execucao) tambem passa.
+[[ -f "$migration_contact_ids" ]] || fail "migration ausente: $migration_contact_ids"
+psql_test < "$migration_contact_ids" >/dev/null
+psql_test < "$migration_contact_ids" >/dev/null
+pass 'migration p_contact_ids aplica e e replayavel'
+
 admin_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$admin_uid';"
 supervisor_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$supervisor_uid';"
 agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$agent_uid';"
@@ -280,8 +291,9 @@ agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated
 # ACL: anon sem EXECUTE na RPC; authenticated com EXECUTE; a funcao interna e
 # interna (nem authenticated pode chamar direto).
 # ---------------------------------------------------------------------------
-[[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)', 'EXECUTE')")" == 'f' ]] || fail 'anon com EXECUTE em talkx_resolve_audience'
-[[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)', 'EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 'f' ]] || fail 'anon com EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('service_role', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 't' ]] || fail 'service_role sem EXECUTE em talkx_resolve_audience'
 [[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_audience_query(jsonb,uuid[],boolean)', 'EXECUTE')")" == 'f' ]] || fail 'authenticated com EXECUTE na funcao interna talkx_audience_query'
 pass 'ACL: anon sem EXECUTE, authenticated com EXECUTE na RPC e sem EXECUTE na funcao interna'
 
@@ -410,4 +422,55 @@ segment_union="$(psql_q "$admin_session SELECT string_agg(r->>'id', ',' ORDER BY
 [[ "$segment_union" == "$c01,$c02,$c03,$c06" ]] || fail "(f) uniao por segmentos inesperada [obtido: $segment_union]"
 pass '(f) p_segment_ids une as regras dos segmentos salvos (Acme + Beta -> c01,c02,c03,c06)'
 
-printf 'PASS: X016 audience RPC — elegibilidade, supressao, paginacao keyset, whitelist de regras e gate de papel\n'
+# ---------------------------------------------------------------------------
+# (g) p_contact_ids: a atividade real (ramo/UF) e resolvida FORA do banco (ponte Singu) e
+#     chega como lista de contatos. O parametro e opcional: sem ele o comportamento e o de
+#     antes; array vazio zera a audiencia (fail-closed, nunca "sem restricao").
+# ---------------------------------------------------------------------------
+# (g.1) assinatura: a RPC agora tem 6 argumentos (o 5-arg saiu, para o PostgREST nao ficar ambiguo).
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])') IS NOT NULL")" == 't' ]] || fail '(g) RPC de 6 argumentos ausente'
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)') IS NULL")" == 't' ]] || fail '(g) overload antigo de 5 argumentos ainda existe'
+pass '(g) assinatura: RPC de 6 argumentos presente e o overload de 5 saiu'
+
+# (g.2) retrocompatibilidade: 5 args (omitido) e p_contact_ids NULL dao a mesma contagem de antes.
+compat_omit="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL) ->> 'eligible';")"
+[[ "$compat_omit" == '6' ]] || fail "(g) chamada antiga (5 args) mudou: eligible=$compat_omit [esperado 6]"
+compat_null="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, NULL) ->> 'eligible';")"
+[[ "$compat_null" == '6' ]] || fail "(g) p_contact_ids NULL deveria equivaler a omitido: eligible=$compat_null"
+pass '(g) retrocompativel: 5 args e p_contact_ids NULL -> eligible=6'
+
+# (g.3) restricao por contact_ids: so os ids resolvidos entram.
+subset="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, ARRAY['$c01'::uuid, '$c03'::uuid, '$c05'::uuid]) -> 'rows') AS r) x;")"
+[[ "$subset" == "$c01,$c03,$c05" ]] || fail "(g) p_contact_ids nao restringiu [obtido: $subset | esperado: $c01,$c03,$c05]"
+subset_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, ARRAY['$c01'::uuid, '$c03'::uuid, '$c05'::uuid]) ->> 'eligible';")"
+[[ "$subset_count" == '3' ]] || fail "(g) count com p_contact_ids deveria ser 3 [obtido: $subset_count]"
+pass '(g) p_contact_ids restringe a audiencia aos ids resolvidos (c01,c03,c05; eligible=3)'
+
+# (g.4) p_contact_ids nao fura elegibilidade/supressao: c09 e LID legado, c11 esta suprimido.
+c09='30000000-0000-0000-0000-000000000009'
+guarded="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, ARRAY['$c09'::uuid, '$c11'::uuid]) -> 'rows') AS r) x;")"
+[[ "$guarded" == '' ]] || fail "(g) inelegivel/suprimido vazou por p_contact_ids [obtido: $guarded]"
+pass '(g) p_contact_ids respeita elegibilidade/supressao (c09 LID e c11 suprimido ficam fora)'
+
+# (g.5) array vazio = nenhum contato (fail-closed, e nao "sem restricao").
+empty_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, ARRAY[]::uuid[]) ->> 'eligible';")"
+[[ "$empty_count" == '0' ]] || fail "(g) array vazio deveria zerar a audiencia [obtido: $empty_count]"
+pass '(g) p_contact_ids vazio zera a audiencia (fail-closed)'
+
+# (g.6) p_contact_ids intersecta as regras: Acme ∩ {c01,c02} = c01.
+intersect="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"company\",\"op\":\"eq\",\"value\":\"Acme\"}]}]}'::jsonb, NULL, 'page', 100, NULL, ARRAY['$c01'::uuid, '$c02'::uuid]) -> 'rows') AS r) x;")"
+[[ "$intersect" == "$c01" ]] || fail "(g) p_contact_ids deve intersectar as regras [obtido: $intersect | esperado: $c01]"
+pass '(g) p_contact_ids intersecta as regras (company eq Acme ∩ {c01,c02} = c01)'
+
+# ---------------------------------------------------------------------------
+# (h) rollback de verdade: as linhas executaveis do cabecalho da migration, rodadas na
+#     ordem, restauram a RPC de 5 argumentos e removem a de 6 (nada de rollback de fachada).
+# ---------------------------------------------------------------------------
+rollback_sql="$(sed -n 's/^--   //p' "$migration_contact_ids")"
+[[ -n "$rollback_sql" ]] || fail '(h) cabecalho da migration sem linhas de rollback executaveis'
+printf '%s\n' "$rollback_sql" | psql_test >/dev/null
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)') IS NOT NULL")" == 't' ]] || fail '(h) rollback nao restaurou a RPC de 5 argumentos'
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])') IS NULL")" == 't' ]] || fail '(h) rollback nao removeu a RPC de 6 argumentos'
+pass '(h) rollback executavel do cabecalho restaura a RPC de 5 e remove a de 6'
+
+printf 'PASS: X016 audience RPC — elegibilidade, supressao, paginacao keyset, whitelist de regras, gate de papel e p_contact_ids (atividade real pre-resolvida) reutilizando a funcao interna\n'
