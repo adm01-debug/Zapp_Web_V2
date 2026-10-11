@@ -960,6 +960,12 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/department-whatsapp-mode-rpc.test.sh
 
+      - name: Provar o rollout gradual de feature_flags (V3 etapa 5) — percentual, papéis, listas e RLS
+        env:
+          FEATURE_FLAGS_ROLLOUT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/feature-flags-rollout.test.sh
+
       # t_138a15f0 (PR 1890): os dois testes abaixo existiam no disco sem passo
       # no CI e o check-test-inventory os reprovava como orfaos. Ambos iniciam
       # containers Docker proprios incompativeis com o docker-shim do E47 —

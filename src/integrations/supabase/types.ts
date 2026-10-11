@@ -3896,23 +3896,41 @@ export type Database = {
       }
       feature_flags: {
         Row: {
+          allowed_roles: string[]
+          allowed_user_ids: string[]
+          blocked_user_ids: string[]
           description: string | null
           enabled: boolean
+          expires_at: string | null
           key: string
+          metadata: Json
+          rollout_percentage: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          allowed_roles?: string[]
+          allowed_user_ids?: string[]
+          blocked_user_ids?: string[]
           description?: string | null
           enabled?: boolean
+          expires_at?: string | null
           key: string
+          metadata?: Json
+          rollout_percentage?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          allowed_roles?: string[]
+          allowed_user_ids?: string[]
+          blocked_user_ids?: string[]
           description?: string | null
           enabled?: boolean
+          expires_at?: string | null
           key?: string
+          metadata?: Json
+          rollout_percentage?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -11091,6 +11109,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      evaluate_feature_flags: { Args: never; Returns: string[] }
       expire_stale_agent_presence: { Args: never; Returns: undefined }
       fail_crm_sync_outbox: {
         Args: { p_error_code: string; p_id: string; p_lease_token: string }
