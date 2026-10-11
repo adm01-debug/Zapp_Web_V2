@@ -1,5 +1,14 @@
 Especialista: Íris (area-front-componentes)
 
+Nota de escopo (arquivos dos pais, indispensável): o cartão não lista
+`src/hooks/inbox/chipCounts.ts`, `src/hooks/inbox/useInboxFilters.ts` nem
+`src/hooks/inbox/__tests__/chipCounts.test.ts` porque eles são a entrega dos pais deste cartão
+(t_74bee242 e t_7d4d9088), que NÃO estavam na base do meu workspace (`5eb097cff`, ponta de
+`dia/2026-10-11`): `src/hooks/inbox/chipCounts.ts` nem existia. O cartão manda `git cherry-pick <sha>`
+nesse caso, e foi o que fiz: os commits 5098b4a3e, ff219637f, 877949f00 e 444fabbea são dos pais,
+commitados por eles, não reescritos por mim. Sem eles `inboxFilters.chipCounts` não existiria e o
+StatusChips não teria de onde receber o número.
+
 ## O que mudou e por quê
 - `src/components/inbox/conversation-list/StatusChips.tsx`: o componente deixou de contar
   (`countByChip` + `useMemo` + `useAuth` saíram) e passou a receber `counts: ChipCounts` por prop;
