@@ -1,23 +1,19 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- supabase/migrations/20261011200753_admin_email_accounts_health.sql (novo): cria a RPC public.admin_email_accounts_health() — visão de saúde das contas de e-mail para o painel admin (paridade V3 -> V2, 11/10/2026). Devolve, por conta: conta (email_address), dono (user_id + nome/e-mail do public.profiles), status do token derivado (sem_token/expirado/expirando/valido) + validade + booleanos de presença (tem_access_token/tem_refresh_token), último sincronismo (last_sync_at), falhas recentes (last_error + em_falha), última validação (updated_at) e watch_expiration. Nunca devolve os tokens cifrados. SECURITY DEFINER com search_path fixo (pg_catalog, public); a guarda é DENTRO da função — `if not public.is_admin(auth.uid()) then raise ... errcode 42501`. Admin ESTRITO (não supervisor), como o cartão pede "só admin". ACL: revoke de PUBLIC/anon, grant execute só para authenticated.
+- supabase/tests/admin_email_accounts_health.sql (novo): prova em Postgres local com papéis reais. Roda via `zapp-db-local psql . v2-26101117016dff` (banco descartável do cartão; produção intocada), em uma transação com ROLLBACK — as fixtures não ficam no banco.
+- tests/contracts/admin-email-health-rpc.contract.test.ts (novo): contrato que trava SECURITY DEFINER + search_path, guarda 42501, ACL sem PUBLIC/anon, ausência de bytea/token no retorno e a paridade com src/integrations/supabase/types.ts.
+- src/integrations/supabase/types.ts: adiciona a entrada admin_email_accounts_health (Args: never; Returns com os 17 campos) — a paridade com o retorno da migration é verificada pelo contrato.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (banco, guarda ausente): `zapp-db-local psql . v2-26101117016dff -v ON_ERROR_STOP=1 < supabase/tests/admin_email_accounts_health.sql` → `EXIT=3` e `T3b authenticated nao-admin e recusado pela guarda | FAIL | conseguiu: vazou para nao-admin` (a versão sem RAISE deixava o não-admin passar). Comando rodado sobre a versão anterior da função na base local.
+- verde depois (banco): mesmo comando → `EXIT=0` e `NOTICE: admin_email_accounts_health: 23 assertivas, todas PASS` (23 linhas PASS; T3a anon negado pela ACL, T3b não-admin 42501, T3c admin lê global n=4).
+- verde depois (contrato): `npx vitest run --config vitest.contracts.config.ts tests/contracts/admin-email-health-rpc.contract.test.ts` → `Test Files 1 passed (1); Tests 7 passed (7)`.
+- banco local aplicado com `hermes-db-migrar supabase/migrations/20261011200753_admin_email_accounts_health.sql` → `APLICADA no banco LOCAL 'v2-26101117016dff' (produção não foi tocada)`. `node scripts/db-audit/check-migration-drift.mjs` → `arquivos validos em supabase/migrations: 822` (EXIT=0).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
-
-## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+## Decisões e limites
+- Cartão sem caminho de leitura no V2: o painel admin não tinha como listar a saúde das contas (a RLS de public.gmail_accounts é "cada um vê a própria"). A RPC abre a visão global só para admin.
+- Semântica dos campos ambíguos do cartão, documentada no cabeçalho da migration: "falhas recentes" = last_error (última falha do sync; NULL = sem falha) + em_falha (sync_status='error'); "última validação" = updated_at (última renovação do registro: refresh de token/watch/sync). watch_expiration vai cru para a tela mostrar a validade do push. Não há tabela de eventos de sync/falha no banco; são esses os sinais persistidos.
+- Efeito colateral: nenhum — função só de leitura, sem INSERT/UPDATE/DELETE, sem trigger, sem GRANT/papel existente alterado. Rollback = drop function (o DROP também remove os grants).
+- Não mexi em RLS de public.gmail_accounts nem na view gmail_accounts_safe: fora do escopo do cartão.
