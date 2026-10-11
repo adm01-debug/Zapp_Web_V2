@@ -194,6 +194,11 @@ BEGIN
           RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
           RETURN;
         END IF;
+        -- teto por chamada: um ano de feriados basta; acima disso fecha.
+        IF jsonb_array_length(v_dnd_holidays) > 366 THEN
+          RETURN QUERY SELECT false, 'dnd', NULL::timestamptz;
+          RETURN;
+        END IF;
         v_today := to_char(v_local_ts, 'YYYY-MM-DD');
         FOR v_holiday IN SELECT jsonb_array_elements_text(v_dnd_holidays)
         LOOP
