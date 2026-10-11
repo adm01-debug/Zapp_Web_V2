@@ -77,6 +77,18 @@ function useLatest<T>(value: T) {
   return ref;
 }
 
+/** Janela (em minutos) em que uma mensagem já enviada ainda pode ser editada. */
+const EDIT_WINDOW_MINUTES = 15;
+
+/**
+ * Mensagem ainda dentro da janela de edição. Checado ao ABRIR a edição e de novo no
+ * ENVIO — com o editor aberto, o prazo pode vencer antes de o usuário salvar, e o
+ * WhatsApp já recusaria a edição.
+ */
+function dentroDaJanelaDeEdicao(message: Message, agora: number = Date.now()): boolean {
+  return (agora - message.timestamp.getTime()) / 60000 <= EDIT_WINDOW_MINUTES;
+}
+
 export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const {
     contactPhone, instanceName, onSendMessage, contactId,
@@ -113,11 +125,8 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   const replyToMessageRef = useLatest(replyToMessage);
   const forwardMessageRef = useLatest(forwardMessage);
 
-  const EDIT_WINDOW_MINUTES = 15;
-
   const handleEditStart = useCallback((message: Message) => {
-    const minutesAgo = (Date.now() - message.timestamp.getTime()) / 60000;
-    if (minutesAgo > EDIT_WINDOW_MINUTES) {
+    if (!dentroDaJanelaDeEdicao(message)) {
       toast({ title: 'Tempo expirado', description: `Você só pode editar mensagens nos primeiros ${EDIT_WINDOW_MINUTES} minutos.`, variant: 'destructive' });
       return;
     }
@@ -164,17 +173,41 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
     if (currentEditing) {
       const externalId = currentEditing.external_id;
       const contactJid = contactPhone ? `${contactPhone}@s.whatsapp.net` : '';
+      // R2-INB-014: sem instância, id externo ou JID NÃO existe edição a transportar — o
+      // cliente continuaria vendo o texto antigo. Nada é gravado e o editor permanece aberto.
+      if (!instanceName || !externalId || !contactJid) {
+        toast({
+          title: 'Edição indisponível',
+          description: 'Esta mensagem ainda não foi confirmada pelo WhatsApp, tente editar em instantes.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (!dentroDaJanelaDeEdicao(currentEditing)) {
+        toast({ title: 'Tempo expirado', description: `Você só pode editar mensagens nos primeiros ${EDIT_WINDOW_MINUTES} minutos.`, variant: 'destructive' });
+        return;
+      }
       setIsSending(true);
       try {
-        if (instanceName && externalId && contactJid) {
-          await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
-        }
-        // R2-INB-014: o PostgREST não lança exceção — o builder resolve em `{ error }`. Sucesso
-        // só existe quando a atualização local volta sem erro; sem esta checagem a UI anunciava
-        // "Mensagem editada", limpava o editor e encerrava o fluxo como êxito com a gravação
-        // recusada (RLS/permission denied).
-        const { error } = await supabase.from('messages').update({ content: currentInput.trim(), updated_at: new Date().toISOString() }).eq('id', currentEditing.id);
+        // WhatsApp primeiro: só depois do aceite do transporte o espelho local é atualizado.
+        await editMessageApi(instanceName, { number: contactJid, messageId: externalId, text: currentInput.trim() });
+        // R2-INB-014: o PostgREST não lança exceção — o builder resolve em `{ error }`. O
+        // `.select('id')` devolve as linhas afetadas: `{ error }` OU 0 linhas (RLS/registro
+        // removido) NÃO são sucesso e não podem virar "Mensagem editada".
+        const { data, error } = await supabase
+          .from('messages')
+          .update({ content: currentInput.trim(), updated_at: new Date().toISOString() })
+          .eq('id', currentEditing.id)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length === 0) {
+          toast({
+            title: 'Edição não registrada',
+            description: 'A mensagem foi alterada no WhatsApp, mas o registro local não pôde ser atualizado.',
+            variant: 'destructive',
+          });
+          return;
+        }
         toast({ title: '✏️ Mensagem editada', description: 'A mensagem foi atualizada com sucesso.' });
         // Só o sucesso sai do modo de edição — na falha o texto permanece no editor para retry.
         setEditingMessage(null); setInputValue('');
@@ -214,7 +247,21 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
   }, [contactPhone, instanceName, editMessageApi, applySignature, onSendMessage, handleTypingStop, editingMessageRef, inputValueRef, isSendingRef, replyToMessageRef, recusarAcimaDoLimite]);
 
   const handleReplyToMessage = useCallback((message: Message) => { setReplyToMessage(message); inputRef.current?.focus(); }, []);
-  const handleCopyMessage = useCallback((content: string) => { void navigator.clipboard.writeText(content); toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' }); }, []);
+  // R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem
+  // aguardar e tratar o erro, o toast "Copiado!" era incondicional e a V2 mentia.
+  const handleCopyMessage = useCallback(async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({ title: 'Copiado!', description: 'Mensagem copiada para a área de transferência.' });
+    } catch (err) {
+      log.error('Failed to copy message:', err);
+      toast({
+        title: 'Não foi possível copiar',
+        description: 'Selecione o texto e copie manualmente.',
+        variant: 'destructive',
+      });
+    }
+  }, []);
 
   // R2-INB-002: um novo encaminhamento começa com estado limpo — o retry dentro do
   // diálogo reusa o MESMO estado (pares concluídos), mas um encaminhamento novo não herda.
@@ -326,7 +373,11 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       // anunciava "adicionar nota" e "adicionar/remover tag" sem nenhum editor
       // de nota ou seletor de tag atrás. Comando volta quando o destino existir.
       case 'priority': {
-        if (!subCommand) break;
+        // Sem argumento o comando terminava em silêncio: avisa o formato esperado.
+        if (!subCommand) {
+          toast({ title: '⚡ Definir prioridade', description: 'Use /priority alta, /priority média ou /priority baixa.' });
+          break;
+        }
         const labels: Record<string, string> = { high: 'Alta', medium: 'Média', low: 'Baixa' };
         const priorityValue = normalizeOperationalPriority(subCommand).value;
         if (!priorityValue) {
@@ -350,12 +401,26 @@ export function useChatPanelHandlers(opts: UseChatPanelHandlersOptions) {
       }
       case 'assign': openDialog('transferDialog'); break;
       // useConversationActions.snoozeConversation já grava em conversation_snoozes e mostra o toast.
-      case 'snooze': if (subCommand) snoozeConversation(contactId, subCommand); break;
+      // Sem argumento, o comando terminava em silêncio: avisa o formato esperado.
+      case 'snooze': {
+        if (!subCommand) {
+          toast({ title: '⏰ Adiar conversa', description: 'Use /snooze 1h, /snooze 3h, /snooze amanhã ou /snooze próxima semana.' });
+          break;
+        }
+        snoozeConversation(contactId, subCommand);
+        break;
+      }
       // useConversationActions já grava em favorite_contacts e mostra o toast.
       case 'star': (isFavorite(contactId) ? unfavoriteContact : favoriteContact)(contactId); break;
       case 'archive': {
         void (async () => {
-          const { error } = await supabase.from('contacts').update({ assigned_to: null }).eq('id', contactId);
+          // ADR-005: arquivar conversa é o estado de FSM em `conversation_status` — o MESMO que
+          // o arquivamento em massa usa. `assigned_to = null` devolvia à fila e não arquivava,
+          // então o aviso "Conversa Arquivada" era falso.
+          const { error } = await supabase
+            .from('contacts')
+            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+            .eq('id', contactId);
           if (error) {
             log.error('Failed to archive contact:', error);
             toast({ title: 'Erro ao arquivar', description: 'Não foi possível arquivar a conversa.', variant: 'destructive' });
