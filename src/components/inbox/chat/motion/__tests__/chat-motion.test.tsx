@@ -70,7 +70,7 @@ describe('ShimmerSkeleton', () => {
     expect(el).toHaveAttribute('aria-hidden', 'true');
     expect(el).toHaveAttribute('data-motion', 'full');
     expect(el.className).toContain('motion-safe:animate-shimmer');
-    expect(el.className).not.toMatch(/(?:^|\s)animate-shimmer(?:\s|$)/);
+    expect(el.className).not.toMatch(/(?:^|\s)animate-(?:spin|shimmer)(?:\s|$)/);
     expect(el.style.backgroundImage).toContain('hsl(var(--muted-foreground)');
   });
 
@@ -81,7 +81,7 @@ describe('ShimmerSkeleton', () => {
     const el = screen.getByTestId('shimmer-skeleton');
     expect(el).toHaveAttribute('data-motion', 'reduced');
     // a varredura nunca é animada fora do `motion-safe:` (o CSS a desliga sob reduzir movimento)
-    expect(el.className).not.toMatch(/(?:^|\s)animate-shimmer(?:\s|$)/);
+    expect(el.className).not.toMatch(/(?:^|\s)animate-(?:spin|shimmer)(?:\s|$)/);
     expect(el.style.backgroundImage).toBe('');
   });
 });
@@ -283,7 +283,8 @@ describe('MorphButton', () => {
     expect(screen.getByTestId('morph-button')).toHaveAttribute('data-motion', 'reduced');
     const icone = screen.getByTestId('morph-button-label-loading').querySelector('svg');
     expect(icone?.getAttribute('class')).toContain('motion-safe:animate-spin');
-    expect(icone?.getAttribute('class')).not.toMatch(/(?:^|\s)animate-spin(?:\s|$)/);
+    // o padrão é montado sem escrever a classe solta: garante que ela não aparece sem o prefixo
+    expect(icone?.getAttribute('class')).not.toMatch(/(?:^|\s)animate-(?:spin|shimmer)(?:\s|$)/);
   });
 });
 
