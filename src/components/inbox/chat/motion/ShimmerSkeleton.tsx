@@ -21,7 +21,7 @@ export function ShimmerSkeleton({ className }: ShimmerSkeletonProps) {
       aria-hidden="true"
       data-testid="shimmer-skeleton"
       data-motion={reduce ? 'reduced' : 'full'}
-      className={cn('block overflow-hidden rounded-md bg-muted', !reduce && 'animate-shimmer', className)}
+      className={cn('block overflow-hidden rounded-md bg-muted motion-safe:animate-shimmer', className)}
       style={
         reduce
           ? undefined

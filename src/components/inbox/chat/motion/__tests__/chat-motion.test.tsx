@@ -69,7 +69,8 @@ describe('ShimmerSkeleton', () => {
     const el = screen.getByTestId('shimmer-skeleton');
     expect(el).toHaveAttribute('aria-hidden', 'true');
     expect(el).toHaveAttribute('data-motion', 'full');
-    expect(el.className).toContain('animate-shimmer');
+    expect(el.className).toContain('motion-safe:animate-shimmer');
+    expect(el.className).not.toMatch(/(?:^|\s)animate-shimmer(?:\s|$)/);
     expect(el.style.backgroundImage).toContain('hsl(var(--muted-foreground)');
   });
 
@@ -79,7 +80,8 @@ describe('ShimmerSkeleton', () => {
 
     const el = screen.getByTestId('shimmer-skeleton');
     expect(el).toHaveAttribute('data-motion', 'reduced');
-    expect(el.className).not.toContain('animate-shimmer');
+    // a varredura nunca é animada fora do `motion-safe:` (o CSS a desliga sob reduzir movimento)
+    expect(el.className).not.toMatch(/(?:^|\s)animate-shimmer(?:\s|$)/);
     expect(el.style.backgroundImage).toBe('');
   });
 });
@@ -274,13 +276,14 @@ describe('MorphButton', () => {
     expect(screen.getByTestId('morph-button')).not.toHaveAttribute('aria-busy');
   });
 
-  it('(18) com redução o ícone de carregar NÃO gira', () => {
+  it('(18) o giro do ícone só existe sob `motion-safe:` (nunca solto)', () => {
     reduce.value = true;
     render(<MorphButton state="loading">Enviar</MorphButton>);
 
     expect(screen.getByTestId('morph-button')).toHaveAttribute('data-motion', 'reduced');
     const icone = screen.getByTestId('morph-button-label-loading').querySelector('svg');
-    expect(icone?.getAttribute('class')).not.toContain('animate-spin');
+    expect(icone?.getAttribute('class')).toContain('motion-safe:animate-spin');
+    expect(icone?.getAttribute('class')).not.toMatch(/(?:^|\s)animate-spin(?:\s|$)/);
   });
 });
 

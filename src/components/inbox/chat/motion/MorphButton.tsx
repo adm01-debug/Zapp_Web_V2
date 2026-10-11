@@ -8,7 +8,8 @@
  *
  * Acessibilidade: `aria-busy` enquanto carrega, `disabled` nesse estado, e um
  * `role="status"` que anuncia o rótulo novo quando o estado muda ("Enviado",
- * "Falhou…"). Com movimento reduzido o ícone de carregar NÃO gira.
+ * "Falhou…"). O giro do ícone de carregar usa `motion-safe:animate-spin`, então o
+ * `prefers-reduced-motion: reduce` do sistema já o desliga sem nenhum JS.
  */
 import { useReducedMotion } from 'framer-motion';
 import { AlertTriangle, Check, Loader2, type LucideIcon } from 'lucide-react';
@@ -59,7 +60,7 @@ export function MorphButton({
 
   const cells: { key: MorphState; label: string; Icon?: LucideIcon; iconClass?: string }[] = [
     { key: 'idle', label: children },
-    { key: 'loading', label: loadingLabel, Icon: Loader2, iconClass: cn(!reduce && 'animate-spin') },
+    { key: 'loading', label: loadingLabel, Icon: Loader2, iconClass: 'motion-safe:animate-spin' },
     { key: 'success', label: successLabel, Icon: Check, iconClass: toneClasses(tone).text },
     { key: 'error', label: errorLabel, Icon: AlertTriangle, iconClass: toneClasses(errorTone).text },
   ];

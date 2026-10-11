@@ -22,6 +22,9 @@ lista carregou) com movimento **sutil**, sempre desligável e sem inventar cor.
 - Movimento nunca é a única informação: realces e celebrações são decorativos
   (`aria-hidden`, `pointer-events-none`) e a confirmação para leitor de tela vem
   por texto (`role="status"`).
+- **Animação declarada em CSS (giro do ícone de carregar, varredura do brilho)
+  sempre com o prefixo `motion-safe:`** — nunca a classe solta. Assim o próprio
+  CSS desliga o efeito sob `prefers-reduced-motion: reduce`, sem depender de JS.
 
 ## Regra de cor
 
