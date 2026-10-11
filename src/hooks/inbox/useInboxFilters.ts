@@ -6,6 +6,17 @@ import { filterByContactType } from '@/components/inbox/ContactTypeFilter';
 import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { localDayKey } from '@/lib/localDay';
 import { MainTab, SubTab, ChipTab } from '@/components/inbox/TicketTabs';
+import {
+  hasContact,
+  isSnoozed,
+  isUnread,
+  isOpenActive,
+  isAttending,
+  isWaiting,
+  isResolved,
+  isArchived,
+  isInQueue,
+} from './chipCounts';
 
 interface UseInboxFiltersProps {
   conversations: ConversationWithMessages[];
@@ -72,19 +83,18 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   }, [setUrlFilters]);
 
   const filteredConversations = useMemo(() => {
-    let result = conversations.filter(c => c && c.contact && c.contact.id);
+    let result = conversations.filter(hasContact);
 
     // Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer.
     // `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de
     // origem a remove do conjunto e ela volta a aparecer sem recarregar a lista.
-    if (snoozedIds && snoozedIds.size > 0) {
-      result = result.filter(c => !snoozedIds.has(c.contact.id));
-    }
+    result = result.filter(c => !isSnoozed(c, snoozedIds));
 
     // Tab-based filtering — ADR-005 (passo 3): o estado da conversa vem do campo
     // persistido `contacts.conversation_status`, e não mais da derivação por
     // `messages.length` (que mostrava como "aberta" toda conversa com mensagem e
     // como "resolvida" apenas a que nunca teve nenhuma).
+    // As regras de cada chip vivem em ./chipCounts (as mesmas que contam os chips).
     if (chipTab === 'archived') {
       // Chip "Arquivadas" (B2): a lista obedece o estado persistido
       // `conversation_status === 'archived'`, independente de mainTab/subTab
@@ -92,37 +102,31 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       // estado). Busca, fila e tipo de contato seguem aplicados por cima,
       // abaixo — por isso só o filtro de fila, que hoje vive no ramo 'open',
       // é replicado aqui.
-      result = result.filter(c => c.contact.conversation_status === 'archived');
+      result = result.filter(isArchived);
       if (selectedQueueId) {
-        result = result.filter(c => c.contact.queue_id === selectedQueueId);
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'open') {
       // Ativas = open|waiting. O `messages.length > 0` abaixo não decide estado:
       // é o guarda de atividade que mantém fora da inbox o contato histórico que
       // nunca conversou (buildConversation sintetiza 1 mensagem quando há agregado).
-      result = result.filter(c =>
-        (c.contact.conversation_status === 'open' || c.contact.conversation_status === 'waiting')
-        && c.messages.length > 0
-      );
+      result = result.filter(isOpenActive);
       if (subTab === 'attending') {
         if (!showAll) {
-          result = result.filter(c => c.contact.assigned_to === profileId);
+          result = result.filter(c => isAttending(c, profileId));
         }
       } else if (subTab === 'waiting') {
-        result = result.filter(c => c.contact.conversation_status === 'waiting');
+        result = result.filter(isWaiting);
       }
       if (selectedQueueId) {
-        result = result.filter(c => c.contact.queue_id === selectedQueueId);
+        result = result.filter(c => isInQueue(c, selectedQueueId));
       }
     } else if (mainTab === 'resolved') {
-      result = result.filter(c => c.contact.conversation_status === 'resolved');
+      result = result.filter(isResolved);
     }
 
     if (chipTab === 'unread') {
-      result = result.filter(c => {
-        const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
-        return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
-      });
+      result = result.filter(isUnread);
     }
     // 'all' não filtra por assigned_to (subTab já vem null) — mostra todas abertas
     // attending e waiting já são tratados pelo subTab derivado
