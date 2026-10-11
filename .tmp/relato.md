@@ -48,4 +48,8 @@ Rodada 2 de 2: a recusa diz que o CÓDIGO do painel não modal (145–146) está
 - Não escrevi teste novo para a abertura por notificação: o cartão não pede e a recusa mandou corrigir só o relato; registrei a lacuna no Ponto 3.
 - Não restaurei `WorkItemSheet.rodape.test.tsx`: é teste do cartão 141–144, ausente na base, e a recusa pediu esclarecer a remoção, não desfazê-la.
 
+## Aviso do juiz barato (Jev) — os 2 pontos, respondidos
+1. "Esclareça a remoção de `WorkItemSheet.rodape.test.tsx`" — é o **Ponto 4** acima: o teste é do cartão 141–144, foi removido por `b5556c3ac` ("tira do diff … o teste do rodape de outro cartao") e NÃO existe na base `dia/2026-10-11`; não está no diff deste cartão. Cobertura dos 5 arquivos está listada item a item no Ponto 4.
+2. Arquivos "que o cartão não lista em ARQUIVOS QUE PODE TOCAR" (`ContactAvatar.tsx`, `PriorityPill.tsx`, `StatusPill.tsx`, `useMyWorkItems.ts`, `workItem.types.ts`, `workItemFormat.ts`): eles NÃO são edição minha — vieram inteiros na faixa dos pais pelo `git cherry-pick` que o próprio cartão manda fazer ("trague a FAIXA inteira … na ordem dos pais") e são os primitivos do cartão T11/T04 que o cartão manda USAR em vez de reimplementar (`ContactAvatar`, `PriorityPill`, `StatusPill`, `workItemFormat.ts`). A minha mudança própria é só em `WorkItemSheet.tsx` + `sheet/` + `__tests__/`. Reverter seria descartar a dependência que o cartão exige.
+
 NÃO CONCLUÍ nada além do relato: o código já estava pronto e aprovado no mérito; entreguei o relato corrigido nos 4 pontos.
