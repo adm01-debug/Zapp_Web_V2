@@ -30,6 +30,7 @@ Especialista: Íris (area-front-componentes)
 - Não abri 01.png–05.png: não há ferramenta de visão nesta sessão; li o plano em texto (linhas citadas) e o `docs/tarefas/ESPECIFICACOES.md` (cartão T01) não existe na minha cópia.
 
 ## O que NÃO fiz e por quê
+- O aviso do juiz cita arquivos que o cartão não lista (`TasksModule.tsx`, `ContactAvatar.tsx`, `DateLabel.tsx`, `PriorityPill.tsx`, `StatusPill.tsx`, `TaskCheckbox.tsx` e outros): nenhum está no meu commit — `git show --stat 5a06b4908` traz só os 5 arquivos acima. Eles vêm do cherry-pick da FAIXA DOS PAIS que o próprio cartão manda trazer (`8c4f970be`, `3549a8720`, `4eb3d2f9e`, `1ed088ada`, `7febb5f2e`): o fechar compara a branch inteira com a base do dia.
 - Não criei menu de ações no cabeçalho do Concluído: o plano não define nenhuma ação para ele; o "ícone de menu" da linha 147 é o ⁙ da etapa 093.
 - Não toquei em `WorkItemCard.tsx` nem em `TasksEmptyState.tsx` (fora da lista de arquivos do cartão): o check+data saem do `BoardColumn` e a microcopy do vazio veio para o `BoardColumn` (o variant `column` do `TasksEmptyState` fica sem uso).
 - Não mexi no `QuickAdd.tsx`: o modo compacto já criava no Enter; o cartão tracejado e a dica são do `BoardColumn`.
