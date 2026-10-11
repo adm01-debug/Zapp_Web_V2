@@ -82,6 +82,7 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 });
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
+import { TalkXSegmentBuilder } from '@/components/talkx/segments/TalkXSegmentBuilder';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 
 function renderView() {
@@ -160,16 +161,60 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
     });
   });
 
-  it('número: grava o número sem máscara', async () => {
-    const publicar = await condicaoPeloCatalogo('Lead score', 'Alto valor');
+  it('número: grava o número sem máscara (X106, via regra já salva de lead_score)', async () => {
+    // A entrega põe lead_score/risk_score "em breve" no catálogo (nada calcula a
+    // coluna), e RULE_FIELDS só tem esses dois como kind 'number'. A cobertura do
+    // tipo número do X106 segue viva pelo caminho que a entrega preserva: a regra
+    // JÁ SALVA, cujo campo continua selecionável e editável (RuleRow).
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <TalkXSegmentBuilder
+          initial={{
+            name: 'Alto valor',
+            description: '',
+            rules: { groups: [{ id: 'g1', match: 'and', rules: [{ id: 'r1', field: 'lead_score', op: 'gt', value: '' }] }] },
+          }}
+          isNew={false}
+          saving={false}
+          onSave={f.create}
+          onCancel={() => {}}
+        />
+      </QueryClientProvider>,
+    );
 
-    fireEvent.change(screen.getByLabelText('Valor da condição'), { target: { value: '80' } });
-    fireEvent.click(publicar);
+    const valor = screen.getByLabelText('Valor da condição') as HTMLInputElement;
+    // Caixa numérica de verdade (inputMode decimal), não a caixa de texto.
+    expect(valor).toHaveAttribute('inputMode', 'decimal');
+
+    fireEvent.change(valor, { target: { value: '80' } });
+    expect(valor.value).toBe('80');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await regraGravada()).toMatchObject({
       field: 'lead_score',
-      op: 'eq',
+      op: 'gt',
       value: '80',
     });
+  });
+
+  it('"em breve": Lead score e Risco de churn ficam desabilitados no catálogo', async () => {
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+
+    // Os dois indicadores que ninguém calcula seguem VISÍVEIS com o nome do campo,
+    // marcados "(em breve)" e desabilitados: não há como criar um filtro morto.
+    const leadScore = screen.getByRole('button', { name: /Lead score/ });
+    const risco = screen.getByRole('button', { name: /Risco de churn/ });
+    expect(leadScore).toBeDisabled();
+    expect(risco).toBeDisabled();
+    expect(leadScore).toHaveTextContent('em breve');
+    expect(risco).toHaveTextContent('em breve');
+    // Nem por arrasto: o cartão não é mais arrastável rumo a um grupo.
+    expect(leadScore).toHaveAttribute('draggable', 'false');
+
+    // E clicar num deles não adiciona condição nenhuma.
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
   });
 });

@@ -126,6 +126,10 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
     expect(byField.group_category.options).toEqual(['orcamentos', 'aprovacao', 'os', 'acerto']);
   });
 
+  it('lead_score e risk_score ficam "em breve": nada calcula essas colunas e o filtro seria morto', () => {
+    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_score', 'risk_score']);
+  });
+
   it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
     const opsUuid = (RULE_OPS.uuid ?? []).map((o) => o.value);
     expect(opsUuid).toContain('eq');
