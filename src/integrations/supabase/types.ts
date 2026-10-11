@@ -10888,6 +10888,15 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: string
       }
+      dispatch_scheduled_messages: {
+        Args: { p_limit?: number }
+        Returns: {
+          failure_reason: string | null
+          message_id: string | null
+          outcome: string
+          scheduled_message_id: string
+        }[]
+      }
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: {
