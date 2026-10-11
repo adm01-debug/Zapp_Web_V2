@@ -269,7 +269,7 @@ export function VoiceChanger({ audioBlob, onVoiceChanged, disabled }: VoiceChang
                   disabled={isPlayLoading}
                 >
                   {isPlayLoading
-                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ? <Loader2 className="w-3.5 h-3.5 motion-safe:animate-spin" />
                     : isPlaying
                       ? <Square className="w-3.5 h-3.5" />
                       : <Play className="w-3.5 h-3.5" />}
