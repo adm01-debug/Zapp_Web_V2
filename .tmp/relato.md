@@ -1,20 +1,25 @@
 Especialista: worker (design) (design-system-zapp)
 
-## O que mudou e por quê
-- src/components/inbox/conversation-list/StatusChips.tsx: chip agora é pílula — h-11 (44px de área tocável), px-4, rounded-full, text-[15px] font-medium, border 1px; inativo `bg-muted/40 border-border text-foreground` + `hover:bg-muted/70`; ativo `bg-accent border-primary text-foreground` + anel por token `ring-2 ring-primary/40`; badge do contador `rounded-full h-7 min-w-7 px-2 text-sm font-bold` (tons do COUNTER_TONE inalterados); ícone Archive `h-4 w-4`; container `gap-2 px-4 pt-3 pb-3`; `aria-pressed={isActive}`; foco visível por token `focus-visible:ring-2 focus-visible:ring-primary/50`; `transition-colors` no lugar de `transition-all`. Motivo: design do dono 11/10 (pílula grande + badge redondo).
-- src/components/inbox/__tests__/StatusChips.test.tsx: 7 testes novos — forma do chip e do badge pelas classes realmente renderizadas, `aria-pressed`, `transition-colors` sem `transition-all`, anel/foco por token e ícone `h-4 w-4`.
+CONCLUÍ — critério de pronto cumprido nos 5 itens: (1) tamanho/forma, (2) aria-pressed, (3) contraste AA pelos testes existentes, (4) zapp-verify verde, (5) relato por classe.
 
-## Prova
-- vermelho antes (componente ainda antigo): `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` → `Tests  7 failed | 9 passed (16)` (ex.: `expected '... h-7 px-2.5 rounded-lg ...' to contain 'h-11'`; `expected 'lucide lucide-archive h-3 w-3 mr-1' to contain 'h-4'`).
+## Antes → depois, por classe (StatusChips.tsx)
+- chip: `h-7 px-2.5 rounded-lg text-xs font-medium border transition-all flex items-center` → `h-11 px-4 rounded-full text-[15px] font-medium border transition-colors flex items-center` (44px de área tocável).
+- chip inativo: `bg-muted/40 border-border text-muted-foreground hover:bg-muted/70` → `bg-muted/40 border-border text-foreground hover:bg-muted/70`.
+- chip ativo: `status-chip-active bg-accent border-primary/50 text-foreground` → `status-chip-active bg-accent border-primary ring-2 ring-primary/40 text-foreground`.
+- foco (novo, por token): `focus-visible:ring-2 focus-visible:ring-primary/50`.
+- badge do contador: `ml-1.5 h-[18px] min-w-[18px] px-1 rounded-md text-2xs font-bold flex items-center justify-center` → `ml-1.5 h-7 min-w-7 px-2 rounded-full text-sm font-bold flex items-center justify-center` (tons do COUNTER_TONE inalterados).
+- ícone Archive: `h-3 w-3 mr-1` → `h-4 w-4 mr-1`.
+- container: `flex flex-wrap gap-1.5 px-4 pb-3` → `flex flex-wrap gap-2 px-4 pt-3 pb-3`.
+- acessibilidade: `aria-pressed={isActive}` em cada <button> (não existia).
+- StatusChips.test.tsx: 7 testes novos — forma do chip e do badge pelas classes realmente renderizadas, aria-pressed, transition-colors, anel/foco por token e ícone h-4 w-4.
+
+## Prova (comandos rodados agora)
+- vermelho antes (componente ainda antigo): `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx` → `Tests  7 failed | 9 passed (16)`.
 - verde depois: `npx vitest run src/components/inbox/__tests__/StatusChips.test.tsx src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx src/components/inbox/__tests__/StatusChips.identidade-profile.test.tsx` → `Test Files  3 passed (3); Tests  27 passed (27)`.
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` (tipos OK, lint OK, db_guard OK, migrations OK; banco não verificado porque o cartão não traz migration).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (109s)` — tipos OK, lint OK, db_guard OK, migrations OK (sem migration neste cartão).
 
-## Contraste (AA, critério 3)
-O par auditado do chip ATIVO continua o mesmo (`bg-accent` × `text-foreground`); o teste StatusChips.contrasteChipAtendendo, que lê as classes REAIS do chip e mede a razão WCAG nos 4 temas (claro, escuro, alto contraste, alto contraste escuro), segue verde. Não alterei a semântica de cores do COUNTER_TONE.
+## Contraste AA
+O par do chip ativo segue `bg-accent` × `text-foreground` nos dois temas; StatusChips.contrasteChipAtendendo lê as classes REAIS e mede a razão WCAG nos 4 temas (claro, escuro, alto contraste, alto contraste escuro) — verde. A regra de alto contraste em src/styles/accessibility.css (`.status-chip-active`) continua aplicável, pois a classe foi mantida no chip ativo.
 
-## O que NÃO fiz e por quê
-- Não medi geometria em navegador real: o jsdom não aplica o CSS do Tailwind, então a prova de forma é sobre as classes que o componente REALMENTE renderiza (h-11 = 44px, rounded-full = pílula), como o comentário do teste explica. A régua medida de verdade (contraste) é a do teste existente.
-- Não toquei ConversationListSidebar.tsx (cartão irmão da Íris) nem InboxFilters.tsx — proibidos pelo cartão.
-
-## Arquivos tocados x ARQUIVOS QUE PODE TOCAR
-- Os dois arquivos alterados SÃO os listados pelo cartão: `src/components/inbox/conversation-list/StatusChips.tsx` e `src/components/inbox/__tests__/StatusChips.test.tsx` (o cartão cita "os testes src/components/inbox/__tests__/StatusChips*.test.tsx"). Nenhum arquivo fora da lista foi tocado (`git diff --name-only` do cartão = estes dois).
+## Arquivos
+Os dois arquivos alterados são exatamente os citados em ARQUIVOS QUE PODE TOCAR (`StatusChips.tsx` e `StatusChips.test.tsx`, que casa com `StatusChips*.test.tsx`).
