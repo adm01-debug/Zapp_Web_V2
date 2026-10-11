@@ -31,7 +31,7 @@ declare -a CASES_EXPECTED=(
   vs_yesterday_value empty_campaign hour_bucket segment_filter failed_at_trigger
   owner_ok admin_ok other_agent_denied missing_campaign_denied anon_denied
   no_profile_denied null_owner_denied
-  invalid_args acl replay
+  invalid_args acl replay backfill_preserves_updated_at
 )
 case_done() { CASES_SEEN["$1"]=1; }
 
@@ -126,6 +126,16 @@ CREATE TABLE public.talkx_blacklist (
   campaign_id uuid REFERENCES public.talkx_campaigns(id) ON DELETE SET NULL,
   origin text NOT NULL DEFAULT 'manual'
 );
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END
+$$;
+CREATE TRIGGER update_talkx_recipients_updated_at
+  BEFORE UPDATE ON public.talkx_recipients
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Perfis: p1 admin, p2 dono das campanhas, p3 outro agente.
 INSERT INTO public.profiles (id, user_id) VALUES
@@ -203,6 +213,13 @@ INSERT INTO public.talkx_campaigns (id, status, created_by) VALUES
 -- F: campanha sem dono (created_by NULL): so admin/supervisor pode ler.
 INSERT INTO public.talkx_campaigns (id, status, created_by) VALUES
   ('50000000-0000-0000-0000-00000000000f', 'sending', NULL);
+
+-- G: falha antiga para provar que o backfill de failed_at nao regrava updated_at.
+INSERT INTO public.talkx_campaigns (id, status, created_by) VALUES
+  ('50000000-0000-0000-0000-0000000000aa', 'completed', '10000000-0000-0000-0000-000000000002');
+INSERT INTO public.talkx_recipients (id, campaign_id, status, updated_at) VALUES
+  ('70000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-0000000000aa', 'failed',
+   timestamptz '2024-01-02 03:04:05+00');
 SQL
 
 if [[ "${TALKX_MONITOR_PANEL_RED:-0}" != '1' ]]; then
@@ -222,6 +239,9 @@ panel() { # <sessao> <campanha letra> [args extras]
 expect() { # <rotulo> <obtido> <esperado>
   [[ "$2" == "$3" ]] || fail "$1 [esperado: $3 | obtido: $2]"
 }
+
+expect 'backfill preserva updated_at da falha existente' "$(psql_q "SELECT updated_at = timestamptz '2024-01-02 03:04:05+00' AND failed_at = timestamptz '2024-01-02 03:04:05+00' FROM public.talkx_recipients WHERE id = '70000000-0000-0000-0000-000000000001'")" 't'
+case_done backfill_preserves_updated_at
 
 # --- (1) serie de 15 min: 15 pontos, soma 12, entrega no minuto do delivered_at ----
 res="$(panel "$owner" a "15, 'minute'")"

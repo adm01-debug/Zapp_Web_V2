@@ -20,9 +20,35 @@
 ALTER TABLE public.talkx_recipients
   ADD COLUMN IF NOT EXISTS failed_at timestamptz;
 
-UPDATE public.talkx_recipients
-   SET failed_at = updated_at
- WHERE status = 'failed' AND failed_at IS NULL;
+DO $do$
+DECLARE
+  v_disable_updated_at boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgrelid = 'public.talkx_recipients'::regclass
+       AND tgname = 'update_talkx_recipients_updated_at'
+       AND NOT tgisinternal
+  ) INTO v_disable_updated_at;
+
+  IF v_disable_updated_at THEN
+    ALTER TABLE public.talkx_recipients DISABLE TRIGGER update_talkx_recipients_updated_at;
+  END IF;
+
+  UPDATE public.talkx_recipients
+     SET failed_at = updated_at
+   WHERE status = 'failed' AND failed_at IS NULL;
+
+  IF v_disable_updated_at THEN
+    ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  IF v_disable_updated_at THEN
+    ALTER TABLE public.talkx_recipients ENABLE TRIGGER update_talkx_recipients_updated_at;
+  END IF;
+  RAISE;
+END
+$do$;
 
 CREATE OR REPLACE FUNCTION public.trg_talkx_recipients_failed_at()
 RETURNS trigger
