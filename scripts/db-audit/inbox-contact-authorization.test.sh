@@ -5,6 +5,9 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 runtime_contract="$repo_root/scripts/db-audit/inbox-contact-authorization-runtime.sql"
+reminders_unify_migration="$repo_root/supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql"
+tasks_cron_migration="$repo_root/supabase/migrations/20260928140100_tasks_notify_due_cron.sql"
+remind_message_migration="$repo_root/supabase/migrations/20261011130000_remind_me_about_message.sql"
 postgres_image="${INBOX_AUTHZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-inbox-authz-test-$$"
 
@@ -91,8 +94,46 @@ psql_sql "
   CREATE TABLE public.conversation_tasks (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     contact_id uuid NOT NULL REFERENCES public.contacts(id),
-    status text
+    title text,
+    description text,
+    assigned_to uuid,
+    created_by uuid,
+    due_date timestamptz,
+    priority text NOT NULL DEFAULT 'medium',
+    status text,
+    completed_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
   );
+  ALTER TABLE public.conversation_tasks ENABLE ROW LEVEL SECURITY;
+  CREATE TABLE public.reminders (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    contact_id uuid REFERENCES public.contacts(id) ON DELETE SET NULL,
+    profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    description text,
+    remind_at timestamptz NOT NULL,
+    is_dismissed boolean NOT NULL DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    notified_at timestamptz
+  );
+  CREATE TABLE public.notifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid,
+    type text NOT NULL,
+    title text,
+    message text,
+    metadata jsonb,
+    is_read boolean NOT NULL DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE SCHEMA cron;
+  CREATE TABLE cron.job (jobid bigserial PRIMARY KEY, jobname text UNIQUE);
+  CREATE FUNCTION cron.schedule(job_name text, schedule text, command text)
+    RETURNS bigint LANGUAGE sql AS \$\$ SELECT 1::bigint \$\$;
+  CREATE FUNCTION cron.unschedule(job_name text)
+    RETURNS boolean LANGUAGE sql AS \$\$ SELECT true \$\$;
+  CREATE PUBLICATION supabase_realtime;
   CREATE TABLE public.contact_notes (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     contact_id uuid NOT NULL REFERENCES public.contacts(id),
@@ -227,6 +268,57 @@ expect_failure 'trigger bloqueia identidade mesmo com bypass RLS' "UPDATE public
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000003'; WITH changed AS (UPDATE public.contact_notes SET content='tampered' WHERE author_id='10000000-0000-0000-0000-000000000001' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'outsider alterou nota de outro autor'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000003'; WITH removed AS (DELETE FROM public.contact_notes WHERE author_id='10000000-0000-0000-0000-000000000001' RETURNING 1) SELECT count(*) FROM removed;")" == '0' ]] || fail 'outsider removeu nota de outro autor'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='20000000-0000-0000-0000-000000000002'; WITH removed AS (DELETE FROM public.contact_notes WHERE author_id='10000000-0000-0000-0000-000000000002' RETURNING 1) SELECT count(*) FROM removed;")" == '1' ]] || fail 'autor nao conseguiu remover a propria nota'
+
+# ── Lembrete de mensagem ("Responder depois") ───────────────────────────────
+# Caminho de entrega REAL da V2: os lembretes foram unificados em
+# conversation_tasks (20260928140000) e o cron tasks-notify-due chama
+# notify_due_tasks() (20260928140100) -> public.notifications. Aplica-se tambem a
+# migration do cartao e prova-se, como papel real, quem cria, quem e recusado e
+# como o lembrete chega ao dono.
+psql_file "$reminders_unify_migration" >/dev/null
+psql_file "$tasks_cron_migration" >/dev/null
+psql_file "$remind_message_migration" >/dev/null
+
+message_visible='40000000-0000-0000-0000-000000000001'
+message_hidden='40000000-0000-0000-0000-000000000002'
+message_missing='40000000-0000-0000-0000-0000000000ff'
+contact_visible='30000000-0000-0000-0000-000000000001'
+user_owner='20000000-0000-0000-0000-000000000001'
+profile_owner='10000000-0000-0000-0000-000000000001'
+user_outsider='20000000-0000-0000-0000-000000000003'
+remind_rpc='public.remind_me_about_message(uuid,timestamptz,text)'
+
+[[ "$(psql_sql "SELECT has_function_privilege('anon','$remind_rpc','EXECUTE')")" == 'f' ]] || fail 'anon pode executar remind_me_about_message'
+[[ "$(psql_sql "SELECT has_function_privilege('authenticated','$remind_rpc','EXECUTE')")" == 't' ]] || fail 'authenticated nao pode executar remind_me_about_message'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_schema='public' AND routine_name='remind_me_about_message' AND grantee IN ('PUBLIC','anon')")" == '0' ]] || fail 'PUBLIC ou anon conservou EXECUTE na RPC'
+
+task_id="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour', 'Falar com o cliente');")"
+[[ -n "$task_id" ]] || fail 'RPC nao retornou o id da tarefa'
+[[ "$(psql_sql "SELECT created_by FROM public.conversation_tasks WHERE id='$task_id'")" == "$profile_owner" ]] || fail 'dono do lembrete nao e o chamador'
+[[ "$(psql_sql "SELECT message_id FROM public.conversation_tasks WHERE id='$task_id'")" == "$message_visible" ]] || fail 'lembrete nao ficou ligado a mensagem'
+[[ "$(psql_sql "SELECT contact_id FROM public.conversation_tasks WHERE id='$task_id'")" == "$contact_visible" ]] || fail 'lembrete nao herdou o contato da mensagem'
+[[ "$(psql_sql "SELECT status FROM public.conversation_tasks WHERE id='$task_id'")" == 'todo' ]] || fail 'lembrete nao nasceu como tarefa todo'
+
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT count(*) FROM public.conversation_tasks WHERE id='$task_id';")" == '1' ]] || fail 'dono nao ve o proprio lembrete'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT count(*) FROM public.conversation_tasks WHERE id='$task_id';")" == '0' ]] || fail 'outsider ve o lembrete de outro dono'
+
+expect_failure 'lembrete no passado recusado' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() - interval '1 minute');"
+expect_failure 'lembrete acima de 90 dias recusado' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() + interval '91 days');"
+expect_failure 'mensagem sem acesso recusada' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour');"
+expect_failure 'mensagem inexistente recusada' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_missing', now() + interval '1 hour');"
+expect_failure 'anon nao cria lembrete' "SET ROLE anon; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour');"
+
+hidden_err="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT public.remind_me_about_message('$message_hidden', now() + interval '1 hour');" 2>&1 || true)"
+missing_err="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_missing', now() + interval '1 hour');" 2>&1 || true)"
+[[ "$hidden_err" == *message_not_visible* ]] || fail "sem acesso nao respondeu message_not_visible: $hidden_err"
+[[ "$missing_err" == *message_not_visible* ]] || fail "inexistente nao respondeu message_not_visible: $missing_err"
+
+psql_sql "UPDATE public.conversation_tasks SET remind_at = now() - interval '1 minute' WHERE id='$task_id';" >/dev/null
+notified="$(psql_sql "SET ROLE service_role; SELECT public.notify_due_tasks();")"
+[[ "$notified" == '1' ]] || fail "notify_due_tasks nao entregou o lembrete (retornou '$notified')"
+[[ "$(psql_sql "SELECT count(*) FROM public.notifications WHERE type='reminder_due' AND user_id='$user_owner' AND metadata->>'task_id'='$task_id'")" == '1' ]] || fail 'notificacao do lembrete nao chegou ao dono'
+
+printf 'Message reply-reminder PostgreSQL 17 behavioral contract: PASS\n'
 
 psql_file "$migration" >/dev/null
 [[ "$(psql_sql "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='contact_notes'")" == '4' ]] || fail 'segunda aplicacao nao foi idempotente'

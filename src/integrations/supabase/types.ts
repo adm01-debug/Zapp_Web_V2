@@ -2824,6 +2824,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          message_id: string | null
           notified_at: string | null
           position: number
           priority: string
@@ -2845,6 +2846,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          message_id?: string | null
           notified_at?: string | null
           position?: number
           priority?: string
@@ -2866,6 +2868,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          message_id?: string | null
           notified_at?: string | null
           position?: number
           priority?: string
@@ -2911,6 +2914,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_tasks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -11864,6 +11874,10 @@ export type Database = {
       release_talkx_recipient_claim: {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
+      }
+      remind_me_about_message: {
+        Args: { p_message_id: string; p_note?: string | null; p_remind_at: string }
+        Returns: string
       }
       remove_team_member: {
         Args: { p_conversation_id: string; p_profile_id: string }
