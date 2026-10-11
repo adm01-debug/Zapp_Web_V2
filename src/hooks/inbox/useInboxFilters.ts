@@ -58,10 +58,8 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     },
   }), [urlFilters]);
 
-  const search = urlFilters.search;
-  const setSearch = useCallback((value: string) => {
-    setUrlFilters({ search: value });
-  }, [setUrlFilters]);
+  // Busca só em memória: telefone/nome digitado não pode ir para a URL.
+  const [search, setSearch] = useState('');
 
   const setFilters = useCallback((newFilters: InboxFiltersState) => {
     setUrlFilters({
