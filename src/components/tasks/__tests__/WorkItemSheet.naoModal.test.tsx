@@ -136,8 +136,9 @@ describe('WorkItemSheet — etapas 145–146 (painel não modal e largura lembra
     expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
-  it('145: no desktop, clicar em outro cartão troca a tarefa do painel sem fechá-lo', () => {
+  it('145: no desktop, clicar em outro cartão troca a tarefa do painel sem fechá-lo', async () => {
     telaDe(false);
+    const onOpenChange = vi.fn();
 
     function Cenario() {
       const [id, setId] = React.useState('t1');
@@ -147,18 +148,24 @@ describe('WorkItemSheet — etapas 145–146 (painel não modal e largura lembra
           <button type="button" data-item-id="t2" onClick={() => setId('t2')}>
             outro cartão
           </button>
-          <WorkItemSheet {...props({ item })} />
+          <WorkItemSheet {...props({ item, onOpenChange })} />
         </>
       );
     }
 
     render(<Cenario />);
+    await umTick();
     expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Ligar para o cliente');
 
-    fireEvent.click(screen.getByText('outro cartão'));
+    // O gesto real do Quadro: pointerdown+click no cartão de baixo. No painel
+    // modal isso é "clicar fora" e o Radix fecharia o painel no mesmo clique.
+    const cartao = screen.getByText('outro cartão');
+    fireEvent.pointerDown(cartao, { button: 0 });
+    fireEvent.click(cartao);
 
     expect((screen.getByTestId('sheet-titulo') as HTMLInputElement).value).toBe('Segunda tarefa');
-    expect(screen.getByTestId('work-item-sheet')).toBeTruthy();
+    expect(screen.getByTestId('work-item-sheet')).toHaveAttribute('data-state', 'open');
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
   it('145: no celular o painel continua bottom sheet MODAL (overlay + proteção ao clicar fora)', async () => {
