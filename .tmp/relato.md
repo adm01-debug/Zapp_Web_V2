@@ -30,6 +30,7 @@ Especialista: senior (area-sql-banco)
 - `src/integrations/supabase/types.ts` é saída gerada do schema (mesmas 3 tabelas e 4 RPCs das migrations, sem lógica): não há teste unitário cabível para código gerado; a prova é o teste comportamental que aplica as migrations reais no PostgreSQL 17 descartável, mais o typecheck do `zapp-verify --rapido` no fechar.
 
 ## Arquivos (`git diff --name-only dia/2026-10-11...HEAD`)
+.tmp/relato.md
 scripts/db-audit/inbox-contact-authorization.test.sh
 src/integrations/supabase/types.ts
 supabase/migrations/20261011125915_message_favorites_pins_reports.sql
