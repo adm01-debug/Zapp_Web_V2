@@ -17,12 +17,19 @@ export interface TypeConfig {
   badgeClass: string;
 }
 
-// Tailwind aqui não compila o modificador de opacidade (`/NN`) sobre valores
-// arbitrários, nem `hsl(..._/_0.NN)` embutido — `bg-[hsl(...)]/15` e
-// `bg-[hsl(..._/_.15)]` nunca viram CSS (confirmado no bundle gerado, zero
-// ocorrências). `rgba(r,g,b,a)` literal com vírgulas funciona (o JIT converte
-// para hex+alfa), por isso border/bg usam rgba() e só o texto (sem alfa) usa hsl().
-// O texto do badge é escuro no tema claro e claro no escuro (`dark:`).
+// Cores dos tipos de contato: SEMPRE token do `tokens.css` (nunca HSL/hex solto).
+// Cada `color` é um valor CSS (`hsl(var(--...))`) usado em `style`/`color-mix`;
+// `dotBg`/`badgeClass` são classes nomeadas/anônimas — o Tailwind compila o
+// modificador de opacidade (`/NN`) só em cor NOMEADA (`bg-primary/15`), nunca em
+// `bg-[hsl(...)]/15` (zero ocorrências no bundle). Por isso border/bg usam a
+// classe nomeada com `/NN` e só o texto usa classe arbitrária sobre o token
+// `--X-text` (ex.: `hsl(var(--primary-text))`).
+// O texto do badge sai de um token `-text` (ou do próprio tom de preenchimento,
+// onde não há `-text`): o token já muda entre claro/escuro, então o `dark:` é a
+// MESMA referência, mantido porque a tranca `contactTypeConfig.test.ts` exige
+// cor de texto declarada para os dois temas. Os tons violeta (fornecedor) e
+// âmbar (transportadora) reaproveitam o par `--dash-*` até o `t_f3f17002`
+// publicar `--violet`/`--teal`/`--rosa`; trocar então.
 const CONFIG = {
   cliente: {
     label: 'Cliente',
@@ -30,10 +37,10 @@ const CONFIG = {
     icon: '👤',
     Icon: Users,
     iconNode: <Users className="w-3 h-3" />,
-    color: 'hsl(217 100% 54%)',
-    gradient: 'bg-gradient-to-r from-[hsl(217_100%_54%)] to-[hsl(217_100%_40%)]',
-    dotBg: 'bg-[hsl(217_100%_54%)]',
-    badgeClass: 'border-[rgba(20,110,255,0.6)] text-[hsl(217_100%_35%)] dark:text-[hsl(217_100%_80%)] bg-[rgba(20,110,255,0.15)]',
+    color: 'hsl(var(--primary))',
+    gradient: 'bg-gradient-to-r from-primary to-primary/80',
+    dotBg: 'bg-primary',
+    badgeClass: 'border-primary/60 bg-primary/15 text-[hsl(var(--primary-text))] dark:text-[hsl(var(--primary-text))]',
   },
   fornecedor: {
     label: 'Fornecedor',
@@ -41,10 +48,10 @@ const CONFIG = {
     icon: '🚛',
     Icon: Truck,
     iconNode: <Truck className="w-3 h-3" />,
-    color: 'hsl(270 60% 60%)',
-    gradient: 'bg-gradient-to-r from-[hsl(270_60%_60%)] to-[hsl(270_60%_45%)]',
-    dotBg: 'bg-[hsl(270_60%_60%)]',
-    badgeClass: 'border-[rgba(153,92,214,0.6)] text-[hsl(270_60%_38%)] dark:text-[hsl(270_60%_80%)] bg-[rgba(153,92,214,0.15)]',
+    color: 'hsl(var(--dash-violet))',
+    gradient: 'bg-gradient-to-r from-dash-violet to-dash-violet/80',
+    dotBg: 'bg-dash-violet',
+    badgeClass: 'border-dash-violet/60 bg-dash-violet/15 dark:bg-dash-violet/10 text-[hsl(var(--dash-tile-violet))] dark:text-[hsl(var(--dash-violet))]',
   },
   transportadora: {
     label: 'Transportadora',
@@ -52,10 +59,10 @@ const CONFIG = {
     icon: '📦',
     Icon: Package,
     iconNode: <Package className="w-3 h-3" />,
-    color: 'hsl(25 90% 50%)',
-    gradient: 'bg-gradient-to-r from-[hsl(25_90%_50%)] to-[hsl(25_90%_38%)]',
-    dotBg: 'bg-[hsl(25_90%_50%)]',
-    badgeClass: 'border-[rgba(230,120,20,0.6)] text-[hsl(25_90%_28%)] dark:text-[hsl(25_90%_80%)] bg-[rgba(230,120,20,0.15)]',
+    color: 'hsl(var(--dash-amber))',
+    gradient: 'bg-gradient-to-r from-dash-amber to-dash-amber/80',
+    dotBg: 'bg-dash-amber',
+    badgeClass: 'border-dash-amber/60 bg-dash-amber/15 text-[hsl(var(--dash-tile-amber))] dark:text-[hsl(var(--dash-amber))]',
   },
   colaborador: {
     label: 'Colaborador',
@@ -63,10 +70,10 @@ const CONFIG = {
     icon: '✓',
     Icon: UserCheck,
     iconNode: <UserCheck className="w-3 h-3" />,
-    color: 'hsl(142 71% 45%)',
-    gradient: 'bg-gradient-to-r from-[hsl(142_71%_45%)] to-[hsl(142_71%_35%)]',
-    dotBg: 'bg-[hsl(142_71%_45%)]',
-    badgeClass: 'border-[rgba(33,196,93,0.6)] text-[hsl(142_71%_24%)] dark:text-[hsl(142_71%_80%)] bg-[rgba(33,196,93,0.15)]',
+    color: 'hsl(var(--success))',
+    gradient: 'bg-gradient-to-r from-success to-success/80',
+    dotBg: 'bg-success',
+    badgeClass: 'border-success/60 bg-success/15 text-[hsl(var(--success))] dark:text-[hsl(var(--success))]',
   },
   prestador_servico: {
     label: 'Prestador',
@@ -74,10 +81,10 @@ const CONFIG = {
     icon: '🔧',
     Icon: Wrench,
     iconNode: <Wrench className="w-3 h-3" />,
-    color: 'hsl(38 92% 50%)',
-    gradient: 'bg-gradient-to-r from-[hsl(38_92%_50%)] to-[hsl(38_92%_40%)]',
-    dotBg: 'bg-[hsl(38_92%_50%)]',
-    badgeClass: 'border-[rgba(245,159,10,0.6)] text-[hsl(38_92%_25%)] dark:text-[hsl(38_92%_80%)] bg-[rgba(245,159,10,0.15)]',
+    color: 'hsl(var(--warning))',
+    gradient: 'bg-gradient-to-r from-warning to-warning/80',
+    dotBg: 'bg-warning',
+    badgeClass: 'border-warning/60 bg-warning/15 text-[hsl(var(--warning-text))] dark:text-[hsl(var(--warning-text))]',
   },
   parceiro: {
     label: 'Parceiro',
@@ -85,10 +92,10 @@ const CONFIG = {
     icon: '🤝',
     Icon: Handshake,
     iconNode: <Handshake className="w-3 h-3" />,
-    color: 'hsl(0 72% 51%)',
-    gradient: 'bg-gradient-to-r from-[hsl(0_72%_51%)] to-[hsl(0_72%_40%)]',
-    dotBg: 'bg-[hsl(0_72%_51%)]',
-    badgeClass: 'border-[rgba(220,40,40,0.6)] text-[hsl(0_72%_36%)] dark:text-[hsl(0_72%_80%)] bg-[rgba(220,40,40,0.15)]',
+    color: 'hsl(var(--destructive))',
+    gradient: 'bg-gradient-to-r from-destructive to-destructive/80',
+    dotBg: 'bg-destructive',
+    badgeClass: 'border-destructive/60 bg-destructive/15 text-[hsl(var(--destructive-text))] dark:text-[hsl(var(--destructive-text))]',
   },
 } satisfies Record<ContactType, TypeConfig>;
 

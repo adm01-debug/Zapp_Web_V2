@@ -225,7 +225,7 @@ export function AgentsView() {
                               style={{ 
                                 borderColor: queue.color, 
                                 color: queue.color,
-                                backgroundColor: `${queue.color}15`
+                                backgroundColor: `color-mix(in srgb, ${queue.color} 15%, transparent)`
                               }}
                             >
                               {queue.name}
