@@ -158,6 +158,12 @@ checa_contrato() { # fase
 
   reset_estado
 
+  # Prova do gatilho de updated_at (recusa real de 06/10: backfill reescrevia a data
+  # de TODAS as linhas). Aqui o UPDATE e por PK (1 linha); so ela pode mudar updated_at.
+  local t_wait_before t_take_before
+  t_wait_before="$(psql_q -c "SELECT updated_at FROM public.contacts WHERE id='$C_WAIT'")"
+  t_take_before="$(psql_q -c "SELECT updated_at FROM public.contacts WHERE id='$C_TAKE'")"
+
   assert_eq "$fase" 'admin assume contato na fila' "true|$P_ADMIN|open" \
     "$(assume_fields "$pref_admin" "$C_WAIT")" || return 1
   assert_eq "$fase" 'estado apos admin assumir (open + responsavel)' "$P_ADMIN|open" \
@@ -166,6 +172,8 @@ checa_contrato() { # fase
     "$(psql_q -c "SELECT count(*) FROM public.audit_logs WHERE entity_id='$C_WAIT' AND action='conversation_assumed'")" || return 1
   assert_eq "$fase" 'auditoria sem chave de dado pessoal' '0' \
     "$(psql_q -c "SELECT count(*) FROM jsonb_object_keys((SELECT details FROM public.audit_logs WHERE entity_id='$C_WAIT' AND action='conversation_assumed')) k WHERE k NOT IN ('queue_id','previous_assigned_to','assigned_to','previous_status','status')")" || return 1
+  assert_eq "$fase" 'updated_at avanca so na linha tocada (1 linha por PK)' 'true|true' \
+    "$(psql_q -c "SELECT ((SELECT updated_at FROM public.contacts WHERE id='$C_WAIT') > '$t_wait_before')::text||'|'||((SELECT updated_at FROM public.contacts WHERE id='$C_TAKE') = '$t_take_before')::text")" || return 1
 
   assert_eq "$fase" 'membro da fila assume contato livre' "true|$P_M1|open" \
     "$(assume_fields "$pref_m1" "$C_TAKE")" || return 1
@@ -355,6 +363,17 @@ END;
 CREATE TRIGGER trg_contacts_fsm_transition BEFORE UPDATE ON public.contacts
   FOR EACH ROW WHEN (OLD.conversation_status IS DISTINCT FROM NEW.conversation_status)
   EXECUTE FUNCTION public.enforce_conversation_status_transition();
+
+-- Gatilho real de updated_at (20251215024517): regrava updated_at em toda linha
+-- tocada -- o teste prova que o UPDATE e por PK, entao so a linha alvo muda.
+CREATE FUNCTION public.update_updated_at_column() RETURNS TRIGGER AS \$\$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+\$\$ LANGUAGE plpgsql SET search_path = public;
+CREATE TRIGGER update_contacts_updated_at BEFORE UPDATE ON public.contacts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE FUNCTION public.prevent_contact_assignee_hijack() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS \$\$
