@@ -4,7 +4,7 @@ import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import { openContactChat }  from '@/components/catalog/useSendProduct';
-import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
+import { memoizedApplyFilters, memoizedBucketByDue, memoizedBucketByStatus, memoizedKpis } from '@/hooks/tasks/workItemAggregates';
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
@@ -55,18 +55,22 @@ export function TasksModule() {
   // recorte aplicado UMA vez, sobre os itens que a query única já carregou —
   // nenhum modo nem filtro dispara request novo (B13 continua valendo).
   const filtros = useTasksFilters();
-  const items = applyFilters(hook.items, filtros.filters);
-  const byDue = bucketByDue(items);
-  const byStatus = bucketByStatus(items);
-  const kpiData = kpis(items);
+  // Etapa 185: versões memorizadas — a MESMA lista e os MESMOS filtros devolvem
+  // a MESMA referência, então trocar de modo não refaz o recorte nem os baldes.
+  const items = memoizedApplyFilters(hook.items, filtros.filters);
+  const byDue = memoizedBucketByDue(items);
+  const byStatus = memoizedBucketByStatus(items);
+  const kpiData = memoizedKpis(items);
 
   // Fase F (auditoria): o filtro é recorte de TELA. O que descreve o trabalho
   // real — contagem do cabeçalho, card "Fazendo" e a trava de WIP do Quadro —
   // olha a lista completa; senão a tela anuncia "1/3" com 3 reais e aceita um
   // drop que o próprio hook recusa (rollback com toast).
-  const kpiReal      = kpis(hook.items);
+  // Etapa 185: `hook.kpis`/`hook.byStatus` JÁ são o resultado sobre `hook.items`
+  // (memoizados no hook) — reusar evita o mesmo cálculo duas vezes por render.
+  const kpiReal      = hook.kpis;
   const doingReal    = countDoing(hook.items);
-  const byStatusReal = bucketByStatus(hook.items);
+  const byStatusReal = hook.byStatus;
 
   // Contatos que aparecem nas tarefas carregadas: fonte local, sem query nova.
   const contactOptions = Array.from(
