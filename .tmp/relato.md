@@ -1,19 +1,26 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo — area-front-hooks
 
 ## O que mudou e por quê
-- src/hooks/tasks/useWorkItemDraft.ts (novo): rascunho do painel "Detalhes da tarefa" sobre as mutations que já existem (`update`/`move` de `useMyWorkItems`) — sem tabela, coluna ou query nova. Controle de alterações com base (limpar um campo volta a valer como "sem alteração"); `buildMinimalPatch` manda no `update` só o campo que mudou e deixa o estado fora do patch (quem move é o `move`); aviso "Esta tarefa mudou" quando a versão do cache/realtime muda enquanto há edição pendente, sem descartar o rascunho; `save()` pré-valida a troca de estado com `canTransition` (limite de Fazendo = 3 e motivo obrigatório em Aguardando) ANTES de qualquer escrita — bloqueado, o estado anterior fica intacto e sai toast com a mesma mensagem que o módulo já usa; erro de escrita não avança a base (o rascunho continua sujo e pode ser reenviado, o item volta pelo rollback otimista das mutations). Coerência prazo × lembrete (etapa 162) exposta em `coherence` para a tela avisar (etapa 138), sem bloquear o save.
-- Lint do React Compiler (react-hooks/refs, preserve-manual-memoization): a primeira versão escrevia no ref do relógio durante o render; troquei por um `now` estável lido no memo — `npx eslint src/hooks/tasks/useWorkItemDraft.ts` sai sem nenhuma ocorrência.
-- src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx (novo): 23 casos — patch mínimo (só o campo alterado), limpar campo = sem alteração, limpar prazo manda `null`, bloqueio por motivo e por limite sem NENHUMA escrita, troca de estado com motivo via `move`, erro devolvendo o rascunho sujo, atualização remota suja x limpa, aceitar/dispensar remoto, a própria escrita não vira "mudou", troca de tarefa e coerência do lembrete.
-- useMyWorkItems.ts NÃO precisou de ajuste: o `update` já aceita `Partial<WorkItemInput>` e o patch mínimo passa direto por ele.
+- src/hooks/tasks/workItemFormat.ts (novo): regra ÚNICA de datas (etapa 058 / D21), pura e no fuso local. `formatWorkItemDate` devolve "Ontem, 17:00" / "Hoje, 14:00" / "Amanhã, 10:00" / "13 out., 15:00"; `format: 'day'` devolve só o dia ("Hoje", "Ontem", "09 out."), o caso das concluídas; `formatWorkItemFieldDate`/`formatWorkItemField` dão "Hoje, 11/10" + hora separada para painel/modal. Nenhum formato traz o dia da semana (o "Seg, 09/09, 14:20" da imagem 04 não é reproduzível). Dias comparados por `localDayKey`/`parseDayKey` de `src/lib/localDay` (import, não editei lá): a virada do dia manda, não a distância em horas. Valor ausente/inválido -> `null`.
+- src/hooks/tasks/workItemPresets.ts (novo): presets de prazo (`duePresetDate`/`duePresetISO`: hoje, amanhã, próxima semana, às 23:59 locais) e de lembrete (`remindPresetDate`/`remindPresetISO`: em 1 h, amanhã 9h, próxima segunda 9h) — etapa 161. A aritmética de prazo é de CALENDÁRIO (`setDate` sobre a meia-noite local), então um preset criado às 23:30 cai no dia seguinte e não no mesmo dia; `remindPresetDate('tomorrow9')` REAPROVEITA `tomorrowAtNine` importado de `useMyWorkItems`. `checkRemindCoherence` (etapa 162) devolve `{ state, message }` com `ok` / `in_past` / `after_due` / `no_due`: lembrete tem de estar no futuro e ANTES do prazo (igual ao prazo conta como `after_due`); sem lembrete devolve `ok` com mensagem vazia.
+- src/hooks/tasks/__tests__/workItemFormat.test.ts e workItemPresets.test.ts (novos): os testes unitários do cartão.
+
+Etapa 058/161/162 conferidas antes contra o código ATUAL: não existiam (o QuickAdd faz os presets inline, em `src/components/tasks/shared/QuickAdd.tsx`, arquivo fora do escopo deste cartão) — por isso as funções nasceram como módulos novos, sem uso na tela (critério 3: as superfícies adotam nos cartões seguintes).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` com o hook ausente → `Test Files 1 failed (1) / Tests no tests` (falha ao resolver o import de `@/hooks/tasks/useWorkItemDraft`).
-- verde depois: `npx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` → `Test Files 1 passed (1); Tests 23 passed (23)`.
-- sem regressão na área: `npx vitest run src/hooks/tasks` → `Test Files 11 passed (11); Tests 170 passed (170)`.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Error: Failed to resolve import "@/hooks/tasks/workItemPresets" ... Test Files 2 failed (2); Tests no tests` (os módulos ainda não existiam).
+- verde depois: mesmo comando -> `Test Files 2 passed (2); Tests 28 passed (28)`.
 
-## Dependência
-- O cartão depende de t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) que ainda não estava na base local: `git cherry-pick -x 74c5c89f5` no meu workspace (banda vazia de conflito).
+## Casos de teste (nome de cada um)
+workItemFormat.test.ts (11 casos): rotula Hoje/Ontem/Amanhã pelo dia LOCAL; fora de Hoje/Ontem/Amanhã usa "dd mês." em pt-BR; com hora compõe "Ontem, 17:00"/"Hoje, 14:00"/"Amanhã, 10:00"/"13 out., 15:00"; concluída mostra SÓ o dia; nunca inclui o dia da semana; fuso local (23:30 não vira o dia seguinte, com Date e com ISO); virada do dia (00:05 é "Amanhã", 23:55 é "Ontem"); campos do painel/modal "Hoje, 11/10" + hora à parte; hora separada null; valor ausente/inválido -> null; aceita ISO com offset.
+workItemPresets.test.ts (17 casos): presets de prazo (hoje 23:59; amanhã às 23:30 -> dia seguinte; próxima semana +7 dias; ISO = Date); presets de lembrete (em 1 h = +3.600.000 ms; amanhã 9h reaproveita `tomorrowAtNine`; próxima segunda 9h a partir de domingo; próxima segunda na PRÓPRIA segunda não devolve o mesmo dia; ISO = Date); coerência (sem lembrete; futuro antes do prazo confirma; no passado, inclusive igual ao agora; depois do prazo; igual ao prazo não é "antes"; sem prazo; in_past tem prioridade sobre after_due; aceita ISO com offset).
+
+## Borda do enunciado (virada do dia, fim de semana, UTC-3, horário de verão)
+- Virada do dia: coberta nos dois arquivos (23:30/23:55/00:05 e o preset criado às 23:30).
+- Fim de semana: `nextMondayAtNine` a partir de domingo (11/10 -> 12/10) e na própria segunda (12/10 -> 19/10).
+- UTC-3: as datas dos testes são construídas no relógio LOCAL (`new Date(2026, 9, 11, 14, 0)`), então os rótulos valem com qualquer fuso do processo; o caso "23:30 não vira o dia seguinte" também cobre o ISO que o banco devolve.
+- Horário de verão: o diff de dias é por dia de CALENDÁRIO (via `localDayKey`/`parseDayKey`), não por 24 h — é o caminho que sobrevive ao dia de 23/25 h; a aritmética dos presets usa `setDate`, não `+86_400_000`.
 
 ## O que NÃO fiz e por quê
-- Não criei toast próprio para erro de rede: `update`/`move` já mostram o toast no `onError`; o bloqueio que eu mesmo detecto antes de escrever tem toast aqui para não haver escrita parcial.
-- Não alterei telas nem o modal: o cartão é do hook; a tela que usa este hook é de outra trilha.
+- Não toquei nas telas nem no QuickAdd: fora dos arquivos que o cartão permite (as superfícies adotam nos cartões seguintes).
+- Sem migration, Edge Function, dependência nova ou exportação de dado.
