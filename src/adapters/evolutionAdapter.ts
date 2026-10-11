@@ -4,10 +4,10 @@
  */
 import type { EvolutionMessage, DerivedContact } from '@/types/evolutionExternal';
 import type {
-  RealtimeMessage,
   ConversationContact,
   ConversationWithMessages,
 } from '@/hooks/chat/useRealtimeMessages';
+import { classifyMessageType, type NormalizedRealtimeMessage } from '@/hooks/realtime/realtimeUtils';
 
 /**
  * Extract phone number from remote_jid (e.g. "5511999990001@s.whatsapp.net" → "5511999990001")
@@ -17,16 +17,25 @@ export function jidToPhone(jid: string): string {
 }
 
 /**
- * Convert an EvolutionMessage into the frontend's RealtimeMessage shape
+ * Convert an EvolutionMessage into the frontend's RealtimeMessage shape.
+ *
+ * O `message_type` cru vem do banco externo (enquete, visualização única, contato,
+ * protocolo…). A tradução é a mesma do caminho real (classifyMessageType): os tipos
+ * que a V2 não renderiza viram 'unsupported' com o motivo, em vez de 'text' vazio.
  */
-export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessage {
+export function evolutionToRealtimeMessage(evo: EvolutionMessage): NormalizedRealtimeMessage {
+  const classification = classifyMessageType(
+    evo.message_type,
+    Boolean(evo.content || evo.caption || evo.media_url),
+  );
   return {
     id: evo.id,
     contact_id: evo.contact_id || evo.remote_jid, // use remote_jid as fallback ID
     agent_id: evo.from_me ? 'system' : null,
     content: evo.content || evo.caption || '',
     sender: evo.from_me || evo.direction === 'outbound' ? 'agent' : 'contact',
-    message_type: mapMessageType(evo.message_type),
+    message_type: classification.messageType,
+    ...(classification.unsupportedKind ? { unsupportedKind: classification.unsupportedKind } : {}),
     media_url: evo.media_url,
     is_read: evo.status === 'read',
     status: mapStatus(evo.status),
@@ -59,26 +68,6 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): RealtimeMessa
     ptt: null,
     reply_to_id: null,
   };
-}
-
-function mapMessageType(evoType: string): string {
-  const mapping: Record<string, string> = {
-    conversation: 'text',
-    extendedTextMessage: 'text',
-    imageMessage: 'image',
-    videoMessage: 'video',
-    audioMessage: 'audio',
-    documentMessage: 'document',
-    stickerMessage: 'sticker',
-    locationMessage: 'location',
-    contactMessage: 'text',
-    text: 'text',
-    image: 'image',
-    video: 'video',
-    audio: 'audio',
-    document: 'document',
-  };
-  return mapping[evoType] || 'text';
 }
 
 function mapStatus(evoStatus: string): 'sent' | 'delivered' | 'read' | 'failed' | null {
