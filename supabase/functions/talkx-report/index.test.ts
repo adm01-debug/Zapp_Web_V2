@@ -250,3 +250,39 @@ Deno.test("sem RESEND_API_KEY devolve 503 e não envia e-mail", async () => {
     spie.restaurar();
   }
 });
+
+// ─── Resend 4xx não expõe detail ao cliente ──────────────────────────────
+Deno.test("Resend 4xx devolve reason e code, sem detail no corpo", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    if (url.includes("api.resend.com")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ error: "Account not found", detail: "Invalid API key" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    throw new Error(`fetch inesperado: ${url}`);
+  }) as typeof fetch;
+
+  try {
+    const { client } = makeFakeSupabase({
+      campaign: { ...CAMPANHA_BASE, total_recipients: 1, sent_count: 0, delivered_count: 0, failed_count: 0 },
+      profile: PERFIL_CRIADOR,
+      callerId: "user-1",
+      recipients: ["sent"],
+    });
+    const res = await handleTalkxReport(pedido(), { supabase: client, env: envComResend() });
+
+    assert(res.status === 502, `status ${res.status} != 502`);
+    const body = await res.json() as { ok?: boolean; reason?: string; code?: number; detail?: unknown };
+    assert(body.ok === false, `ok deveria ser false`);
+    assert(body.reason === "resend_error", `reason errado: ${JSON.stringify(body)}`);
+    assert(body.code === 401, `code deveria ser 401, veio ${body.code}`);
+    assert(body.detail === undefined, `detail não deveria estar presente no corpo`);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

@@ -214,7 +214,7 @@ export async function handleTalkxReport(req: Request, deps: TalkxReportDeps): Pr
     if (!emailRes.ok) {
       const body = await emailRes.text();
       log.error('Resend error', { status: emailRes.status, body });
-      return jsonErr(req, { ok: false, reason: 'resend_error', detail: body }, 502);
+      return jsonErr(req, { ok: false, reason: 'resend_error', code: emailRes.status }, 502);
     }
 
     log.info('Report sent', { campaignId, to: recipientEmail });
