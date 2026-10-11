@@ -1,6 +1,5 @@
 // Como rodar: node --test scripts/verify-crm-integration-doc.test.mjs
-// (teste node:test; nao esta ligado a workflow do CI — o cartao nao cita
-// config/workflow, entao o comando acima e a forma de executa-lo).
+// Tambem roda no CI pelo passo "Test CI and Edge deployment guards" em .github/workflows/ci.yml.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
