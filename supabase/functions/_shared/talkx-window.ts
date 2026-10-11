@@ -22,6 +22,11 @@
  * o OBJETO `{ start, end, tz, days }`, e a versão anterior só aceitava string
  * JSON, então o sender ignorava o valor salvo (caía no default) e o scheduler
  * nem lia a configuração. Ver parseBusinessHours/deliveryWindowStatus abaixo.
+ *
+ * N-118: dias de envio (`send_weekdays`, 0=dom..6=sáb) e "não perturbe"
+ * (`dnd_hours` de talkx_settings, com opt-in por campanha via `respect_dnd`).
+ * Ausente/vazio = irrestrito; DND inválido ou fora do contrato fecha com
+ * reason "dnd"; `respect_dnd = false` ignora o DND.
  */
 
 export const DEFAULT_SCHEDULE_TIMEZONE = "America/Sao_Paulo";
@@ -31,6 +36,10 @@ export type ScheduleGuardCampaign = {
   send_window_start?: string | null;
   send_window_end?: string | null;
   business_hours_only?: boolean | null;
+  // N-118: dias de envio 0..6. Ausente/vazio = todos os dias.
+  send_weekdays?: number[] | null;
+  // N-118: respeitar dnd_hours. Ausente = true (opt-out explícito com false).
+  respect_dnd?: boolean | null;
 };
 
 export type LocalClock = { hour: number; minute: number; weekday: number };
@@ -154,6 +163,116 @@ export function localClockInTimezone(timeZone: string, now = new Date()): LocalC
     return null;
   }
 }
+
+// ── N-118: dias de envio (send_weekdays) e "não perturbe" (dnd_hours) ─────────
+
+// N-118: janela "não perturbe" (dnd_hours de talkx_settings).
+export type DndSetting = {
+  start: string;
+  end: string;
+  sundays: boolean;
+  holidays: string[];
+  // Fora do contrato → fecha com reason "dnd".
+  invalid?: true;
+  invalidReason?: string;
+};
+
+// N-118: dias de envio ([]/ausente/fora de 0..6 = irrestrito; duplicatas
+// ignoradas). Os valores vêm do banco (validados no save), então filtrar
+// aqui é só defesa — nunca fecha sozinho.
+function normalizeSendWeekdays(value: unknown): number[] | null {
+  if (!Array.isArray(value)) return null;
+  const days: number[] = [];
+  for (const entry of value) {
+    if (
+      typeof entry === "number" &&
+      Number.isInteger(entry) &&
+      entry >= 0 &&
+      entry <= 6 &&
+      !days.includes(entry)
+    ) {
+      days.push(entry);
+    }
+  }
+  return days.length > 0 ? days : null;
+}
+
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+// N-118: "hoje" (YYYY-MM-DD) no fuso da campanha — para os feriados do DND.
+function localDateIsoInTimezone(timeZone: string, now: Date): string | null {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const iso = fmt.format(now);
+    return isIsoDate(iso) ? iso : null;
+  } catch {
+    return null;
+  }
+}
+
+function invalidDnd(reason: string): DndSetting {
+  return { start: "", end: "", sundays: false, holidays: [], invalid: true, invalidReason: reason };
+}
+
+// N-118: dnd_hours → null se ausente; fora do contrato → { invalid: true } (fecha).
+export function parseDndHours(value: unknown): DndSetting | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "string") {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return normalizeDndHours(parsed);
+    } catch {
+      // String presente mas não é JSON: fora do contrato → fecha, não some.
+      return normalizeDndHours(value);
+    }
+  }
+  return normalizeDndHours(value);
+}
+
+export function normalizeDndHours(value: unknown): DndSetting | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return invalidDnd("dnd_hours não é objeto");
+  }
+  const raw = value as Record<string, unknown>;
+  const start = typeof raw.start === "string" ? raw.start.trim() : "";
+  const end = typeof raw.end === "string" ? raw.end.trim() : "";
+  if (minutesOfDay(start) === null || minutesOfDay(end) === null) {
+    return invalidDnd("dnd_hours.start/end fora de HH:MM");
+  }
+  if (raw.sundays !== undefined && typeof raw.sundays !== "boolean") {
+    return invalidDnd("dnd_hours.sundays não-booleano");
+  }
+  if (raw.holidays !== undefined && !Array.isArray(raw.holidays)) {
+    return invalidDnd("dnd_hours.holidays não é array");
+  }
+  const holidays: string[] = [];
+  if (Array.isArray(raw.holidays)) {
+    for (const entry of raw.holidays) {
+      if (typeof entry !== "string" || !isIsoDate(entry)) {
+        return invalidDnd(`feriado fora de YYYY-MM-DD: ${String(entry).slice(0, 32)}`);
+      }
+      holidays.push(entry.trim());
+    }
+  }
+  return {
+    start,
+    end,
+    sundays: raw.sundays === true,
+    holidays,
+  };
+}
 /**
  * Retorna se o envio/retomada é permitido agora.
  *   - `send_window_*` é avaliado no fuso da CAMPANHA (`schedule_timezone`) — sem mudança;
@@ -163,11 +282,14 @@ export function localClockInTimezone(timeZone: string, now = new Date()): LocalC
  *   - fecha (recusa) em qualquer entrada inválida: fuso desconhecido,
  *     send_window_start/end presentes mas não-parseáveis como HH:MM, ou
  *     business_hours presente e fora do contrato.
+ *   - N-118: `send_weekdays` fora da lista fecha com "outside_weekdays";
+ *     DND (opt-in via `respect_dnd`, default true) fecha com "dnd".
  */
 export function deliveryWindowStatus(
   campaign: ScheduleGuardCampaign,
   now = new Date(),
   businessHours?: BusinessHours | null,
+  dndSetting?: DndSetting | null,
 ): { allowed: true } | { allowed: false; reason: string; next_window?: string } {
   const timeZone = typeof campaign.schedule_timezone === "string"
     ? campaign.schedule_timezone
@@ -176,6 +298,13 @@ export function deliveryWindowStatus(
   if (!clock) return { allowed: false, reason: "invalid_schedule_timezone" };
 
   const currentMinutes = clock.hour * 60 + clock.minute;
+
+  // N-118: dias de envio (fora da lista = fora da janela).
+  const sendDays = normalizeSendWeekdays(campaign.send_weekdays);
+  if (sendDays !== null && !sendDays.includes(clock.weekday)) {
+    return { allowed: false, reason: "outside_weekdays" };
+  }
+
   if (campaign.send_window_start && campaign.send_window_end) {
     const [startHour, startMinute] = campaign.send_window_start.split(":").map(Number);
     const [endHour, endMinute] = campaign.send_window_end.split(":").map(Number);
@@ -218,5 +347,39 @@ export function deliveryWindowStatus(
       };
     }
   }
+
+  // N-118: DND só com opt-in (respect_dnd ≠ false); hora, dia e feriados no
+  // fuso da campanha. DND que vira a meia-noite (start > end) cobre os dois
+  // lados; o fim é exclusivo.
+  if (campaign.respect_dnd !== false) {
+    if (dndSetting?.invalid === true) {
+      return { allowed: false, reason: "dnd" };
+    }
+    if (dndSetting) {
+      const dndStart = minutesOfDay(dndSetting.start);
+      const dndEnd = minutesOfDay(dndSetting.end);
+      if (dndStart === null || dndEnd === null) {
+        return { allowed: false, reason: "dnd" };
+      }
+      const todayIso = localDateIsoInTimezone(timeZone, now);
+      if (todayIso === null) {
+        return { allowed: false, reason: "dnd" };
+      }
+      if (dndSetting.sundays && clock.weekday === 0) {
+        return { allowed: false, reason: "dnd" };
+      }
+      if (dndSetting.holidays.includes(todayIso)) {
+        return { allowed: false, reason: "dnd" };
+      }
+      const dndAtivo =
+        dndStart <= dndEnd
+          ? currentMinutes >= dndStart && currentMinutes < dndEnd
+          : currentMinutes >= dndStart || currentMinutes < dndEnd;
+      if (dndAtivo) {
+        return { allowed: false, reason: "dnd" };
+      }
+    }
+  }
+
   return { allowed: true };
 }
