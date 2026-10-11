@@ -46,5 +46,10 @@ Especialista: worker (design) (design-system-zapp) — rota jev: designer
   limpa no fechar, reabre no F5) e em `useWorkItemNotifications.openTask()`;
   é o mesmo `abrirSheet` nas quatro entradas e é provada pelos testes do tasks
   que passaram acima.
+- O juiz aponta como "fora da lista" ContactAvatar.tsx, PriorityPill.tsx,
+  StatusPill.tsx, useMyWorkItems.ts, workItem.types.ts e workItemFormat.ts:
+  são os arquivos da faixa dos cartões pai (primitivos T11 e formatos T04) que
+  o próprio cartão manda trazer; eu não os editei e o cartão não manda
+  revertê-los — por isso entram no diff contra a base do dia.
 - A seção Planejamento e o rodapé vêm dos cartões pai (faixa que o cartão manda
   trazer) e seguem no commit; não são deste cartão.
