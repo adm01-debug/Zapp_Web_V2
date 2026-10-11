@@ -42,11 +42,37 @@ grava `conversation_closures` e a negociação por falta de permissão não deix
 fechamento; T7 única sobrecarga `(uuid,text,text)`, `anon` sem EXECUTE e barrado,
 `authenticated/service_role/postgres` com EXECUTE.
 
+## Passada de efeito colateral (skill area-sql-banco)
+1. **Gatilhos:** a RPC só faz `UPDATE public.contacts` (a coluna de status) e o
+   `INSERT` em `conversation_closures` ao resolver. O gatilho `BEFORE UPDATE` de
+   `contacts` regrava `updated_at` — efeito esperado e restrito à linha alvo; a suíte
+   prova que um vizinho NÃO tocado (`c_wait2`) mantém o `updated_at` intacto
+   (`v_upd_viz_dep IS DISTINCT FROM v_upd_viz_ant` falha o teste), e que o alvo
+   avança. Não há backfill nem UPDATE em massa.
+2. **Tudo ou nada:** a RPC é uma operação atômica (`FOR UPDATE` na linha, autorização,
+   então o `UPDATE`). Falha de autorização/transição levanta ANTES de qualquer
+   escrita (T2/T6b provam estado e `closures` intactos). Não alterei o corpo: isso é
+   comportamento do vigente, preservado.
+3. **Sem oráculo:** a autorização (`require_contact_edit_permission`) roda ANTES do
+   no-op, então o erro é o mesmo para contato existente e inexistente sem permissão —
+   o ramo de contrato não mudou.
+4. **Permissão só a pedida:** `git diff` da migration não adiciona/remove GRANT, RLS
+   nem policy além do REVOKE/GRANT já reemitidos iguais ao vigente. Nenhum papel novo.
+5. **Entrada inválida:** transições inválidas (`archived -> waiting`, `archived ->
+   resolved`) e chamador `anon` têm teste (T5/T7). O cartão é uma transição nova, não
+   um novo parser de entrada.
+6. **Teste robusto:** a prova usa comportamento com o papel real, não deparse de
+   `pg_policies`/`pg_get_functiondef`.
+
+## Rollback
+`-- Rollback:` na 1ª linha + bloco `-- Rollback (SQL executável, na ordem):` com
+`CREATE OR REPLACE FUNCTION` do corpo anterior e os 4 REVOKE/GRANT; as linhas
+`--   <stmt>;` foram extraídas e executadas no banco local (ver Prova).
+
 ## O que NÃO fiz e por quê
 - Não editei a migration original (`20260930090000`): correção = migration nova.
 - Não criei `scripts/db-audit/*.test.sh` novo (evita `.test.sh` órfão sem passo em
-  `.github/workflows/db-guard.yml`). O contrato de autorização já tem cobertura
-  versionada em `scripts/db-audit/wa-tag-and-status-authorization.test.sh`, que roda
-  antes e depois no Postgres descartável; a prova nova do cartão ficou em
-  `supabase/tests/`, como o cartão pede.
+  `.github/workflows/db-guard.yml`). A prova nova do cartão ficou em
+  `supabase/tests/`, como o cartão pede; `supabase/tests/*.sql` rodam no passo
+  DASH-ACCEPTANCE-001 do db-guard.
 - Não toquei nada fora de banco (nenhuma tela/hook/Edge altera o status por esta RPC).

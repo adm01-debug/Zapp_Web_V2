@@ -44,6 +44,10 @@ DECLARE
   v_old_ts       timestamptz := '2026-10-01T00:00:00Z';
   v_ts_before    timestamptz;
   v_ts_after     timestamptz;
+  v_upd_ant      timestamptz; -- updated_at do alvo, antes
+  v_upd_dep      timestamptz; -- updated_at do alvo, depois
+  v_upd_viz_ant  timestamptz; -- updated_at de um vizinho NAO tocado, antes
+  v_upd_viz_dep  timestamptz; -- updated_at de um vizinho NAO tocado, depois
   v_status       text;
   v_closures     bigint;
   v_errcode      text;
@@ -66,13 +70,16 @@ BEGIN
     RAISE EXCEPTION 'fixture invalida: perfil sintetico nao encontrado (% / %)', v_profile_a, v_profile_b;
   END IF;
 
-  INSERT INTO public.contacts (id, name, phone, assigned_to, conversation_status) VALUES
-    (v_c_wait,  'Contato A waiting',  '5511900000a1', v_profile_a, 'waiting'),
-    (v_c_wait2, 'Contato A waiting2', '5511900000a2', v_profile_a, 'waiting'),
-    (v_c_open,  'Contato A open',     '5511900000a3', v_profile_a, 'open'),
-    (v_c_arch,  'Contato A archived', '5511900000a4', v_profile_a, 'archived'),
-    (v_c_arch2, 'Contato A archived2','5511900000a5', v_profile_a, 'archived'),
-    (v_c_trig,  'Contato A gatilho',  '5511900000a6', v_profile_a, 'waiting');
+  INSERT INTO public.contacts
+    (id, name, phone, assigned_to, conversation_status,
+     conversation_status_changed_at, updated_at)
+  VALUES
+    (v_c_wait,  'Contato A waiting',  '551190000001', v_profile_a, 'waiting',  v_old_ts, v_old_ts),
+    (v_c_wait2, 'Contato A waiting2', '551190000002', v_profile_a, 'waiting',  v_old_ts, v_old_ts),
+    (v_c_open,  'Contato A open',     '551190000003', v_profile_a, 'open',     v_old_ts, v_old_ts),
+    (v_c_arch,  'Contato A archived', '551190000004', v_profile_a, 'archived', v_old_ts, v_old_ts),
+    (v_c_arch2, 'Contato A archived2','551190000005', v_profile_a, 'archived', v_old_ts, v_old_ts),
+    (v_c_trig,  'Contato A gatilho',  '551190000006', v_profile_a, 'waiting',  v_old_ts, v_old_ts);
 
   -- ---------------------------------------------------------------- T0 (gatilho aceita)
   -- UPDATE direto (sem a RPC): o gatilho FSM tem de aceitar waiting -> archived.
@@ -83,8 +90,11 @@ BEGIN
   END IF;
   v_ok := v_ok + 1;
 
-  -- carimba o changed_at do c_wait no passado para provar que a RPC o atualiza
-  UPDATE public.contacts SET conversation_status_changed_at = v_old_ts WHERE id = v_c_wait;
+  -- baseline: c_wait (alvo) e c_wait2 (vizinho NAO tocado) nasceram com updated_at no
+  -- passado. Numa transacao NOW() e o inicio dela, entao provamos o avanco contra esse
+  -- valor do passado; se a RPC tocasse o vizinho, o updated_at dele tambem avancaria.
+  v_upd_ant     := v_old_ts;
+  v_upd_viz_ant := v_old_ts;
 
   -- ---------------------------------------------------------------- T1 (waiting -> archived)
   PERFORM set_config('request.jwt.claims',
@@ -111,6 +121,18 @@ BEGIN
   IF v_ts_before IS NULL OR v_ts_before <= v_old_ts THEN
     RAISE EXCEPTION 'T1 FALHOU: conversation_status_changed_at nao avancou (antes=%, depois=%)',
       v_old_ts, v_ts_before;
+  END IF;
+  -- updated_at (gatilho BEFORE UPDATE de contacts): so a linha alvo muda; o vizinho
+  -- intocado fica com o mesmo carimbo — prova de que nao ha reescrita em massa.
+  SELECT updated_at INTO v_upd_dep FROM public.contacts WHERE id = v_c_wait;
+  SELECT updated_at INTO v_upd_viz_dep FROM public.contacts WHERE id = v_c_wait2;
+  IF v_upd_dep <= v_upd_ant THEN
+    RAISE EXCEPTION 'T1 FALHOU: updated_at do alvo nao avancou (antes=%, depois=%)',
+      v_upd_ant, v_upd_dep;
+  END IF;
+  IF v_upd_viz_dep IS DISTINCT FROM v_upd_viz_ant THEN
+    RAISE EXCEPTION 'T1 FALHOU: updated_at de contato NAO tocado mudou (antes=%, depois=%)',
+      v_upd_viz_ant, v_upd_viz_dep;
   END IF;
   v_ok := v_ok + 1;
 
