@@ -109,13 +109,43 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
 
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
-    expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
-    expect(within(barra).getByLabelText('Contato')).toBeTruthy();
-    // Etapa 036: alarme e concluídas passaram para dentro do popover "Filtros".
+    // Etapa 044: no Quadro Prioridade e Contato saem da linha (imagem 05) e
+    // entram no popover "Filtros" — a barra fica só com busca + Filtros.
+    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
+    expect(within(barra).queryByLabelText('Contato')).toBeNull();
     expect(within(barra).getByRole('button', { name: 'Filtros' })).toBeTruthy();
     expect(within(barra).queryByTestId('filters-badge')).toBeNull();
+
+    fireEvent.click(within(barra).getByRole('button', { name: 'Filtros' }));
+    const painel = await screen.findByTestId('tasks-filters-popover');
+    expect(within(painel).getByLabelText('Prioridade')).toBeTruthy();
+    expect(within(painel).getByTestId('tasks-contact-filter')).toBeTruthy();
+    // Etapa 044: o toggle de concluídas vive na linha da captura, não aqui.
+    expect(within(painel).queryByRole('switch', { name: 'Concluídas' })).toBeNull();
     // Etapa 039: sem filtro fora do padrão não há faixa de chips.
     expect(screen.queryByTestId('tasks-filter-chips')).toBeNull();
+  });
+
+  it('etapa 044: modos à esquerda, barra à direita e o toggle na linha da captura', async () => {
+    localStorage.setItem(MODE_STORAGE_KEY, 'list');
+    renderModule();
+
+    const barra = await screen.findByTestId('tasks-filter-bar');
+    // Na Lista Prioridade e Contato ficam na barra (só o Quadro os recolhe).
+    expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
+    expect(within(barra).getByLabelText('Contato')).toBeTruthy();
+
+    // Modos vêm ANTES da barra na ordem do DOM (modos à esquerda, filtros à
+    // direita — imagens 01 e 02).
+    const modos = screen.getByTestId('tasks-mode');
+    expect(modos.compareDocumentPosition(barra) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // O toggle "Mostrar concluídas" vive na MESMA linha da captura e sai do
+    // popover (um só controle para um só estado).
+    const captura = screen.getByTestId('quick-add');
+    const toggle = screen.getByRole('switch', { name: 'Mostrar concluídas' });
+    expect(captura.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(barra).queryByRole('switch', { name: 'Mostrar concluídas' })).toBeNull();
   });
 
   it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar filtros" desfaz', async () => {
@@ -123,9 +153,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     renderModule();
     expect(await screen.findByText('Feita')).toBeTruthy();
 
-    // Etapa 038: no Quadro o toggle mora no popover e se chama "Concluídas".
-    fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
-    fireEvent.click(await screen.findByRole('switch', { name: 'Concluídas' }));
+    // Etapa 044: no Quadro o toggle vive na linha da captura e se chama "Concluídas".
+    fireEvent.click(screen.getByRole('switch', { name: 'Concluídas' }));
 
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
@@ -145,10 +174,11 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    const aviso = await screen.findByText('Nenhuma tarefa com esse filtro');
-    // O vazio do filtro (etapa 45) E a faixa de chips da barra (etapa 039)
+    const aviso = await screen.findByText('Nenhum resultado');
+    // O vazio do filtro (etapa 045) E a faixa de chips da barra (etapa 039)
     // oferecem a saída — as duas portas continuam valendo.
-    expect(within(aviso.parentElement as HTMLElement).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
+    expect(aviso).toBeTruthy();
+    expect(within(screen.getByTestId('tasks-empty-filter')).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
     expect(within(screen.getByTestId('tasks-filter-chips')).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 

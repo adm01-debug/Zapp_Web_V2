@@ -35,6 +35,18 @@ interface Props {
   contactOptions: Array<{ id: string; name: string }>;
   /** Modo corrente: só muda o rótulo do toggle de concluídas (etapa 038). */
   mode?: TaskMode;
+  /**
+   * Etapa 044 — no Quadro e em telas estreitas, Prioridade e Contato saem da
+   * linha e entram no popover "Filtros" (imagem 05). Padrão `true` = como na
+   * Lista/Agenda.
+   */
+  prioContatoNaBarra?: boolean;
+  /**
+   * Etapa 044 — o toggle "Mostrar concluídas" passou a viver na MESMA linha da
+   * captura; quem o hospeda é o `TasksModule`. `false` evita dois controles do
+   * mesmo estado. Na Agenda (que não tem linha de captura) ele fica aqui.
+   */
+  toggleConcluidas?: boolean;
   onSearch: (value: string) => void;
   onPrio: (value: Priority | 'all') => void;
   onContact: (value: string | null) => void;
@@ -83,6 +95,7 @@ function Contador({ testId, children }: { testId: string; children: React.ReactN
 
 export function TasksFilterBar({
   filters, searchText, contactOptions, mode = 'list',
+  prioContatoNaBarra = true, toggleConcluidas = true,
   onSearch, onPrio, onContact, onStatus, onDue, onToggleAlarm, onToggleDone, onClear, isActive,
 }: Props) {
   const [filtrosAberto, setFiltrosAberto] = useState(false);
@@ -127,11 +140,59 @@ export function TasksFilterBar({
   if (statusAtual !== 'all') chips.push({ key: 'status', label: `Estado: ${rotuloEstado(statusAtual)}`, remover: () => onStatus('all') });
   if (dueAtual !== 'all') chips.push({ key: 'due', label: `Prazo: ${PRAZO_LABELS[dueAtual]}`, remover: () => onDue('all') });
 
+  // Etapa 044 — os mesmos dois controles servem à linha da barra (Lista/Agenda)
+  // e ao popover "Filtros" (Quadro e telas estreitas): um só código, dois lugares.
+  const controlesPrioContato = (
+    <>
+      {/* Etapa 034: Prioridade (o chevron é do próprio Select) */}
+      <Select value={filters.prio} onValueChange={v => onPrio(v as Priority | 'all')}>
+        <SelectTrigger aria-label="Prioridade" className="h-11 w-[150px] rounded-xl">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate">
+              {filters.prio === 'all' ? 'Prioridade' : PRIORITY_LABELS[filters.prio]}
+            </span>
+            {filters.prio !== 'all' && <Contador testId="prio-count">1</Contador>}
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas as prioridades</SelectItem>
+          {(['urgent', 'high', 'medium', 'low'] as Priority[]).map(p => (
+            <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Etapa 035: Contato pelo combobox com busca interna + "Sem contato" */}
+      <div className="flex items-center gap-1">
+        <ContactCombobox
+          value={filters.contact}
+          onChange={onContact}
+          // O gatilho do combobox não repete o valor escolhido (incoerência 7,
+          // rótulo curto com contador); quem nomeia o recorte é o chip abaixo.
+          // O lookup por id fica desligado (`selectedContact` nunca é null com
+          // contato escolhido): não queremos query nova nem id cru na tela.
+          selectedContact={
+            filters.contact === null
+              ? undefined
+              : { id: filters.contact, name: rotuloContato(filters.contact, contatoAtual) }
+          }
+          placeholder="Contato"
+          testId="tasks-contact-filter"
+          extraOptions={[
+            { value: 'todos', label: 'Todos os contatos', selected: filters.contact === null, onSelect: () => onContact(null) },
+            { value: 'sem', label: 'Sem contato', selected: filters.contact === SEM_CONTATO, onSelect: () => onContact(SEM_CONTATO) },
+          ]}
+        />
+        {filters.contact !== null && <Contador testId="contact-count">1</Contador>}
+      </div>
+    </>
+  );
+
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
-      <div data-testid="tasks-filter-bar" className="flex items-center gap-2 flex-wrap">
+      <div data-testid="tasks-filter-bar" className="flex items-center gap-2 flex-wrap md:justify-end">
         {/* Etapa 033: lupa, botão de limpar e largura flexível */}
-        <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+        <div className="relative w-full min-w-0 max-w-[320px] md:w-[260px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             ref={campoBusca}
@@ -155,47 +216,9 @@ export function TasksFilterBar({
           )}
         </div>
 
-        {/* Etapa 034: Prioridade (o chevron é do próprio Select) */}
-        <Select value={filters.prio} onValueChange={v => onPrio(v as Priority | 'all')}>
-          <SelectTrigger aria-label="Prioridade" className="h-11 w-[150px] rounded-xl">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate">
-                {filters.prio === 'all' ? 'Prioridade' : PRIORITY_LABELS[filters.prio]}
-              </span>
-              {filters.prio !== 'all' && <Contador testId="prio-count">1</Contador>}
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as prioridades</SelectItem>
-            {(['urgent', 'high', 'medium', 'low'] as Priority[]).map(p => (
-              <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Etapa 035: Contato pelo combobox com busca interna + "Sem contato" */}
-        <div className="flex items-center gap-1">
-          <ContactCombobox
-            value={filters.contact}
-            onChange={onContact}
-            // O gatilho do combobox não repete o valor escolhido (incoerência 7,
-            // rótulo curto com contador); quem nomeia o recorte é o chip abaixo.
-            // O lookup por id fica desligado (`selectedContact` nunca é null com
-            // contato escolhido): não queremos query nova nem id cru na tela.
-            selectedContact={
-              filters.contact === null
-                ? undefined
-                : { id: filters.contact, name: rotuloContato(filters.contact, contatoAtual) }
-            }
-            placeholder="Contato"
-            testId="tasks-contact-filter"
-            extraOptions={[
-              { value: 'todos', label: 'Todos os contatos', selected: filters.contact === null, onSelect: () => onContact(null) },
-              { value: 'sem', label: 'Sem contato', selected: filters.contact === SEM_CONTATO, onSelect: () => onContact(SEM_CONTATO) },
-            ]}
-          />
-          {filters.contact !== null && <Contador testId="contact-count">1</Contador>}
-        </div>
+        {/* Etapa 044: no Quadro e em telas estreitas Prioridade e Contato vão
+            para o popover "Filtros" (imagem 05); na Lista/Agenda ficam aqui. */}
+        {prioContatoNaBarra && controlesPrioContato}
 
         {/* Etapa 036: popover com estado, lembrete, prazo e concluídas */}
         <Popover open={filtrosAberto} onOpenChange={setFiltrosAberto}>
@@ -236,16 +259,28 @@ export function TasksFilterBar({
               </Select>
             </div>
 
+            {/* Etapa 044 — Quadro e telas estreitas: Prioridade e Contato descem
+                para dentro do popover (imagem 05), com os mesmos controles. */}
+            {!prioContatoNaBarra && (
+              <div className="space-y-1" data-testid="tasks-filters-prio-contato">
+                <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Prioridade e contato</span>
+                <div className="flex flex-wrap items-center gap-2">{controlesPrioContato}</div>
+              </div>
+            )}
+
             <label className="flex items-center justify-between gap-2 text-sm">
               <span>Com alarme</span>
               <Switch checked={filters.alarm} onCheckedChange={onToggleAlarm} aria-label="Com alarme" />
             </label>
 
-            {/* Etapa 038: mesmo estado, rótulo do plano por modo */}
-            <label className="flex items-center justify-between gap-2 text-sm">
-              <span>{rotuloConcluidas}</span>
-              <Switch checked={filters.done} onCheckedChange={onToggleDone} aria-label={rotuloConcluidas} />
-            </label>
+            {/* Etapa 038: mesmo estado, rótulo do plano por modo. Etapa 044: com
+                o toggle na linha da captura, aqui ele sai (um só controle). */}
+            {toggleConcluidas && (
+              <label className="flex items-center justify-between gap-2 text-sm">
+                <span>{rotuloConcluidas}</span>
+                <Switch checked={filters.done} onCheckedChange={onToggleDone} aria-label={rotuloConcluidas} />
+              </label>
+            )}
           </PopoverContent>
         </Popover>
       </div>

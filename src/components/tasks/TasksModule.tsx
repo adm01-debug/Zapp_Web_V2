@@ -23,6 +23,8 @@ import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
 import { TasksHeaderMenu }  from './shared/TasksHeaderMenu';
+import { Switch }            from '@/components/ui/switch';
+import { useNarrowViewport } from './shared/pointerMedia';
 
 const STORAGE_KEY = 'tasks-mode';
 
@@ -54,6 +56,13 @@ export function TasksModule() {
   // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
+
+  // Etapa 044 — rótulo único do toggle (o plano nomeia "Concluídas" no Quadro) e
+  // a regra de recolher Prioridade/Contato no popover: no Quadro (imagem 05) e em
+  // telas estreitas (abaixo de `md`, o mesmo corte do Sheet).
+  const narrowViewport = useNarrowViewport();
+  const recolherPrioContato = mode === 'board' || narrowViewport;
+  const rotuloConcluidas = mode === 'board' ? 'Concluídas' : 'Mostrar concluídas';
   const { isLoading, isError, create, move, reorder, complete, reopen, snooze, setReminder, deleteItem } = hook;
 
   // Etapa 45/46: a barra de filtros (estado no reducer, espelhado na URL) e o
@@ -294,16 +303,37 @@ export function TasksModule() {
         />
       )}
 
-      {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
-      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}
+      {/* Etapa 044 — captura com o toggle "Mostrar concluídas" na MESMA linha
+          (imagens 01 e 02). Na Agenda (que traz a captura própria, com o dia
+          selecionado) o toggle continua no popover da barra. */}
+      {mode !== 'agenda' && (
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />
+          </div>
+          <label className="flex shrink-0 items-center gap-2 pt-3.5 text-sm text-muted-foreground">
+            <span>{rotuloConcluidas}</span>
+            <Switch
+              checked={filtros.filters.done}
+              onCheckedChange={filtros.toggleDone}
+              aria-label={rotuloConcluidas}
+            />
+          </label>
+        </div>
+      )}
 
-      {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
+      {/* Toolbar (etapa 044, imagem 01): modos à ESQUERDA; busca, Prioridade,
+          Contato e Filtros à direita. No Quadro e em telas estreitas Prioridade e
+          Contato descem para o popover "Filtros" (imagem 05). */}
       <div className="flex items-center gap-3 flex-wrap">
+        <ModeSwitcher mode={mode} onChange={setMode} />
         <TasksFilterBar
           filters={filtros.filters}
           searchText={filtros.textoDaBusca}
           contactOptions={contactOptions}
           mode={mode}
+          prioContatoNaBarra={!recolherPrioContato}
+          toggleConcluidas={mode === 'agenda'}
           onSearch={filtros.setSearch}
           onPrio={filtros.setPrio}
           onContact={filtros.setContact}
@@ -314,9 +344,6 @@ export function TasksModule() {
           onClear={filtros.clear}
           isActive={filtros.isActive}
         />
-        <div className="ml-auto">
-          <ModeSwitcher mode={mode} onChange={setMode} />
-        </div>
       </div>
 
       {/* Conteúdo com troca de modo */}
