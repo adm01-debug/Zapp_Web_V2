@@ -1,22 +1,29 @@
 Especialista: Hugo (area-front-hooks)
 
-## Aviso do juiz — arquivo fora da lista do cartão (indispensável)
-- `src/hooks/tasks/workItemAggregates.ts` não está em ARQUIVOS QUE PODE TOCAR, mas é INDISPENSÁVEL: `applyFilters` é o único recorte dos três modos (Lista, Quadro, Agenda) e é onde um filtro vira efeito. Sem estendê-lo, `status`/`due` ficariam só na URL e não recortariam nada — o filtro prometeria o que o código não faz. O arquivo é de hooks/dados, minha área. A mudança é aditiva (só `now` opcional e os dois novos ramos); o comportamento antigo segue coberto pelos testes existentes, que passam.
+Concluí o que o cartão pede: as etapas 21 (tempo médio da criação à conclusão, com formato pt-BR), 52 (subtítulo de data dos grupos), 112/117 (contagens por tipo no dia da Agenda) e 126 (Agenda só com os itens já carregados, 7 dias, com o teste da virada), e o relatório de lacunas da etapa 8. Tudo em `workItemAggregates.ts` (funções puras) + os testes do próprio módulo; nenhuma consulta nova.
 
 ## O que mudou e por quê
-- src/hooks/tasks/workItemFilters.ts (etapas 024/037): `TasksFilters` ganhou `status` (WorkItemStatus | 'all') e `due` ('all'|'overdue'|'today'|'week'|'none'). `filtersFromSearch` lê os dois da URL (`?status=`, `?due=`), ignora valor fora da lista (cai em 'all') e mantém o `q` herdado; `searchWithFilters` grava só o que difere do padrão e preserva os params alheios (`view`, `task`); `isFilterActive` conta os dois como filtro ativo. Como `useTasksFilters.clear()` aplica `DEFAULT_FILTERS` sobre a URL corrente, "Limpar tudo" zera `status` e `due` (e o `q` da correção do cartão pai não volta).
-- src/hooks/tasks/workItemAggregates.ts (etapas 024/037): `applyFilters` passou a RECORTAR por estado e prazo, com `now` injetável (default `new Date()`). `today` segue o veredito de `bucketByDue` (prazo de hoje SEM contar o já vencido); `week` é a janela dos próximos 7 dias; `none` é o sem prazo. Um estado escolhido manda no lugar do toggle "concluídas" (`done`): `status=doing&done=0` devolve a coluna, não vazio.
-- src/hooks/tasks/workItem.types.ts (etapa 081): `KANBAN_COLUMNS` ganhou `subtitle` curto — "A organizar", "Próximas ações", "Conclua uma para iniciar outra", "Dependências externas", "Últimos 7 dias" — e a `policy` longa continua intacta.
-- Testes: `workItemColumns.test.ts` (novo); `workItemFilters.test.ts` (+4 casos de URL round-trip); `useTasksFilters.test.tsx` (+1); `workItemAggregates.test.ts` (+7 de recorte); `QuickAdd.test.tsx` (etapa 041: Ctrl+2 e o caso "sem linguagem natural").
+- `src/hooks/tasks/workItemAggregates.ts`:
+  - `kpis()` passa a devolver `avgLeadTimeDays` (etapa 21/D13): média de `completed_at − created_at` das concluídas dos últimos 7 dias. `avgCycleTimeDays` (started_at → completed_at) continua calculado e no mesmo campo — é o contrato que `TasksKpiStrip.tsx` já lê hoje.
+  - `formatLeadTime(days)` nova, pura e exportada: pt-BR com uma casa decimal e vírgula (`1,4 dias`), singular em 1 (`1 dia`) e `—` quando não há dados (null/NaN).
+  - `daySubtitle(date)` nova, pura: dia por extenso em pt-BR no fuso local — `Domingo, 11 de outubro`; data inválida devolve `''` em vez de derrubar a tela (etapa 52).
+  - `DayGroup` ganhou `subtitle` e `dateKey`, preenchidos por `groupUpcomingByDay` (etapa 52).
+  - `agendaDayCounts(day, atrasadas)` e `agendaDayAriaLabel(day, atrasadas)` novas, puras (etapas 112/117): contagens por tipo (`prazos`, `lembretes`, `atrasadas`, `semHora`, `total`) e o texto do `aria-label`. A tarefa com prazo E alarme aparece nas duas seções mas conta UMA vez no `total`. O `agendaDayDots` fica intacto (ver "O que NÃO fiz").
+- `src/hooks/tasks/__tests__/workItemAggregates.test.ts`: 4 describes novos (etapas 21, 52, 112/117 e 126) com os casos que provam o comportamento; nenhum teste existente foi alterado.
 
 ## Prova
-- vermelho antes (só os testes novos, com os 3 arquivos de src revertidos por `git stash push`): `npx vitest run <os 5 arquivos>` -> `Test Files 4 failed (4); Tests 15 failed | 65 passed (80)`.
-- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemFilters.test.ts src/hooks/tasks/__tests__/workItemColumns.test.ts src/hooks/tasks/__tests__/workItemAggregates.test.ts src/hooks/tasks/__tests__/useTasksFilters.test.tsx src/components/tasks/__tests__/QuickAdd.test.tsx` -> `Test Files 5 passed (5); Tests 93 passed (93)` — zero falhas, zero pulados.
-- regressão do módulo: `npx vitest run src/hooks/tasks src/components/tasks` -> `Test Files 31 passed (31); Tests 356 passed | 1 todo (357)` — zero falhas.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` com `kpis()` na regra antiga (só o tempo de ciclo, sem `avgLeadTimeDays`) → `AssertionError: expected null to be 4` e `Tests 1 failed | 60 passed (61)` — a concluída que nasceu 7 dias antes de terminar e só entrou em "Fazendo" no último dia dava ciclo 1 e lead time 4.
+- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 1 passed (1)` / `Tests 61 passed (61)`.
+- regressão dos consumidores (hook, telas de tarefas e a aba do Inbox): `npx vitest run src/hooks/tasks src/components/tasks src/components/inbox/tabs` → `Test Files 76 passed (76)` / `Tests 809 passed | 2 todo (811)`.
 
-## Etapa 041 (revisão, sem reescrever o componente)
-O parser do QuickAdd já cumpria a decisão G-5: Ctrl+1/2/3 (Hoje/Amanhã/Próx. semana), Ctrl+L (lembrete) e Ctrl+@ (contato), todos documentados no `title` do campo, sem NLP. Não alterei `QuickAdd.tsx`; provei em teste que o texto "amanhã às 9h ligar para o cliente" entra CRU (título inteiro, prazo e lembrete nulos) e que Ctrl+2 marca amanhã.
+## Etapa 8 — lacunas de dados do que a UI nova precisa (sem banco novo, sem consulta nova)
+- Resumo do dia (`N tarefas com prazo · M lembretes`) e `aria-label` da faixa: NÃO existia contagem por tipo — o `agendaDayDots` só devolvia cores (no máximo 3). Resolvido: `agendaDayCounts`/`agendaDayAriaLabel`.
+- Tempo médio decimal: existia só a métrica de ciclo, e nenhum formato pt-BR; o rótulo "Da criação à conclusão" não tinha número correspondente. Resolvido: `avgLeadTimeDays` + `formatLeadTime`.
+- Janela de 30 dias: já coberta pela query única B13 (`DONE_WINDOW_DAYS` + `.or('status.neq.done,completed_at.is.null,completed_at.gte.<cutoff>')` em `useMyWorkItems`); os recortes de 7 dias da Agenda são locais (`splitDoneByRecency`/`weekBuckets`). Nada a criar.
+- Progresso do limite: os limites estão em `WIP_LIMITS` (hard/soft por status) e a contagem por status em `bucketByStatus` — o dado existe; falta só a apresentação (tela).
 
 ## O que NÃO fiz e por quê
-- Não mexi na UI (TasksFilterBar / popover) — é do iris (cartões 036/038).
-- Não toquei banco, migration nem Edge.
+- Não mudei a assinatura de `agendaDayDots`. O único consumidor é `src/components/tasks/agenda/TasksAgendaMode.tsx`, que tipa o retorno como `string[]` (cores) e não está nos arquivos deste cartão: trocar o retorno para contagens quebraria a tela agora. As contagens entraram como funções novas que o mesmo componente consome sem mexer no contrato atual.
+- Não liguei o rótulo "Da criação à conclusão" ao número novo: quem desenha é `src/components/tasks/shared/TasksKpiStrip.tsx` (linha 68 ainda usa `avgCycleTimeDays` com `Math.round(...)+'d'`), que é tela — `area-front-componentes` (Íris). Deixei o dado pronto (`avgLeadTimeDays` + `formatLeadTime`).
+- Lacuna conhecida, documentada no JSDoc de `groupUpcomingByDay`: o rótulo "Semana que vem" reúne mais de um dia no MESMO grupo (comportamento da etapa 49, mantido de propósito); nesse grupo `subtitle`/`dateKey` apontam para o dia mais cedo. Separar por dia dentro dele mudaria o rótulo e os testes da etapa 49.
+- Nenhuma consulta nova: tudo aqui é agregação pura sobre os `items` já carregados (B13 preservado).
