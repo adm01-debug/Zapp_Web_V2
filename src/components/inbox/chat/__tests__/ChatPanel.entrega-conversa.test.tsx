@@ -6,7 +6,7 @@
  * Só as dependências ao redor viram fachadas — `ConversationDeliverySummary` e `SendErrorBanner`
  * são os componentes REAIS.
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Conversation, Message } from '@/types/chat';
@@ -101,8 +101,62 @@ vi.mock('@/hooks/chat/useMessageSignature', () => ({
 vi.mock('@/hooks/ui/useAmbientColor', () => ({ useAmbientColor: () => ({ className: '', bgTint: undefined }) }));
 vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
 vi.mock('@/components/inbox/chat/MessageBubble', () => ({
-  MessageBubble: ({ message }: { message: { id: string } }) => <div data-testid="bubble" data-message-id={message.id} />,
+  MessageBubble: ({ message, highlightedMessageIds, activeHighlightId }: {
+    message: { id: string };
+    highlightedMessageIds?: Set<string>;
+    activeHighlightId?: string | null;
+  }) => (
+    <div
+      data-testid="bubble"
+      data-message-id={message.id}
+      data-realce={
+        activeHighlightId === message.id
+          ? 'ativo'
+          : highlightedMessageIds?.has(message.id)
+            ? 'sim'
+            : undefined
+      }
+    />
+  ),
 }));
+const areaCtrl = vi.hoisted(() => ({ scrollToMessage: vi.fn(), scrollToBottom: vi.fn() }));
+
+// A área de mensagens não é o objeto do cartão: vira fachada (com ref imperativa real) e expõe o
+// realce que o painel manda para cada bolha. Assim prova-se o caminho pílula -> scroll + anel.
+vi.mock('@/components/inbox/chat/ChatMessagesArea', async () => {
+  const React = await import('react');
+  type Props = {
+    messages: Array<{ id: string }>;
+    highlightedMessageIds?: Set<string>;
+    activeHighlightId?: string | null;
+  };
+  const Fachada = React.forwardRef<{ scrollToMessage: (id: string) => void; scrollToBottom: () => void }, Props>(
+    ({ messages, highlightedMessageIds, activeHighlightId }, ref) => {
+      React.useImperativeHandle(ref, () => ({ scrollToMessage: areaCtrl.scrollToMessage, scrollToBottom: areaCtrl.scrollToBottom }), []);
+      return (
+        <div data-testid="area-mensagens">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              data-testid="bubble"
+              data-message-id={m.id}
+              data-realce={
+                activeHighlightId === m.id
+                  ? 'ativo'
+                  : highlightedMessageIds?.has(m.id)
+                    ? 'sim'
+                    : undefined
+              }
+            />
+          ))}
+        </div>
+      );
+    },
+  );
+  Fachada.displayName = 'ChatMessagesAreaFachada';
+  return { ChatMessagesArea: Fachada };
+});
+
 vi.mock('@/components/inbox/TypingIndicator', () => ({ TypingIndicator: () => null }));
 vi.mock('@/services/realtime.service', () => ({
   RealtimeService: { subscribeToReactions: vi.fn(() => ({})), removeChannel: vi.fn() },
@@ -150,7 +204,7 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
     expect(screen.queryByTestId('send-error-banner')).toBeNull();
   });
 
-  it('com fila e falhas mostra os dois e "Enviar de novo" chama onSendMessage com o texto', () => {
+  it('com fila e falhas mostra os dois e "Enviar de novo" chama onSendMessage com o texto', async () => {
     const onSendMessage = vi.fn();
     renderPanel(
       [
@@ -162,12 +216,26 @@ describe('ChatPanel — resumo de entrega e aviso de não enviada (paridade V3)'
       onSendMessage,
     );
 
-    expect(screen.getByText('1 na fila')).toBeInTheDocument();
-    expect(screen.getByText('2 com falha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /1 na fila/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2 com falha/ })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('2 mensagens não foram enviadas');
 
     fireEvent.click(screen.getByRole('button', { name: 'Enviar de novo' }));
-    expect(onSendMessage).toHaveBeenCalledWith('segunda');
+    await waitFor(() => expect(onSendMessage).toHaveBeenCalledWith('segunda'));
+  });
+
+  it('clicar na pílula de falha realça a primeira mensagem naquele estado', () => {
+    renderPanel([
+      msg({ id: 'f1', status: 'failed', content: 'primeira', created_at: '2026-10-11T10:00:01.000Z' }),
+      msg({ id: 'f2', status: 'failed', content: 'segunda', created_at: '2026-10-11T10:00:02.000Z' }),
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: '2 com falha' }));
+
+    expect(areaCtrl.scrollToMessage).toHaveBeenCalledWith('f1');
+    const bolha = (id: string) => screen.getAllByTestId('bubble').find((b) => b.getAttribute('data-message-id') === id);
+    expect(bolha('f1')?.getAttribute('data-realce')).toBe('ativo');
+    expect(bolha('f2')?.getAttribute('data-realce')).not.toBe('ativo');
   });
 
   it('"Dispensar" esconde o aviso mas mantém o resumo da fila', () => {
