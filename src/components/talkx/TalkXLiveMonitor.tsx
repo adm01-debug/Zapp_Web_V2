@@ -21,11 +21,13 @@ import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectio
 import { IconTile, RailCard, MetaRow, StatusPill, CAMPAIGN_STATUS, RECIPIENT_STATUS, fmtInt, pct, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXLiveKpiRow } from './tracking/TalkXLiveKpiRow';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
-interface Props { campaignId: string; onBack?: () => void }
+import { TalkXHealthCard } from './tracking/TalkXHealthCard';
+import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
+interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
+export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
   // X047: cada bloco assíncrono deste Monitor declara o próprio estado (carga/erro/vazio)
@@ -36,6 +38,12 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const [tab, setTab] = useState<MonitorTab>('overview');
   const [statusFilter, setStatusFilter] = useState('all');
   const [elapsedSec, setElapsedSec] = useState(0);
+  // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
+  // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
+  // mais um diálogo local — por isso sobe por `onOpenHelp` (o pai é quem sabe
+  // navegar para `?screen=help`), em vez de um estado de dialog aqui. O
+  // pause/cancel/resume do rodapé também não tem mais estado próprio aqui —
+  // vive no controlador único `useTalkXLifecycle`/`TalkXLifecycleDialog` (TL-054/X050).
 
   const {
     data: campaign,
@@ -102,9 +110,29 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
   const outcomeUnknown = campaign?.outcome_unknown_count ?? 0;
   const processed = campaign ? campaign.sent_count + campaign.failed_count + outcomeUnknown : 0;
   const progress = campaign && campaign.total_recipients > 0 ? pct(processed, campaign.total_recipients) : 0;
+  // X148/TL-157 — "pendentes" para a Saúde da Campanha: mesma fórmula do cálculo
+  // pré-refactor (total menos o que já foi processado), usando o `processed` que
+  // o X051 já mantém nesta função.
+  const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
   // Real rate data from hook (E02) — replaced Math.random with actual DB data
   const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter);
+
+  // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
+  // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
+  // medir saúde com ela mostraria "Envio parado" só porque o operador filtrou "falhas"
+  // (mesmo motivo pelo qual o gráfico de ritmo também não deve receber esse filtro).
+  // Com o filtro em "Todos" as duas consultas usam a MESMA chave e o React Query faz um
+  // único pedido.
+  const {
+    recipients: healthRecipients,
+    isLoading: healthLoading,
+    isError: healthError,
+  } = useTalkXMonitor(campaignId);
+  const healthSentAts = useMemo(() => (healthRecipients ?? []).map((r) => r.sent_at), [healthRecipients]);
+  // Sem a medida (consulta carregando ou falhou) o card NÃO acusa "Envio parado": erro de
+  // consulta não é o mesmo que campanha parada. Ele mostra o estado pelo status e "—" na taxa.
+  const healthMeasured = !healthLoading && !healthError;
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o
@@ -214,11 +242,19 @@ export function TalkXLiveMonitor({ campaignId, onBack }: Props) {
               </ResponsiveContainer>
             </TalkXQueryBoundary>
           </section>
-          <RailCard icon={Activity} title="Saúde da Campanha" right={<Pill label={isRunning?'Em andamento':isPaused?'Pausada':'Concluída'} tone={isRunning?'info':isPaused?'warning':'success'} dot/>}>
-            <MetaRow label="Status" value={isRunning?'Enviando normalmente':isPaused?'Envio pausado':campaign.status}/>
-            <MetaRow label="Conexão WA" value={connStatusLabel ?? '—'}/>
-            <MetaRow label="Iniciado em" value={campaign.started_at?fmtDateTime(campaign.started_at):'—'}/>
-          </RailCard>
+          <TalkXHealthCard
+            status={campaign.status}
+            pauseReason={campaignPauseReason(campaign)}
+            // Sem nenhum envio ainda, a atividade de referência é o próprio início da
+            // campanha: parada é não enviar desde que começou.
+            lastActivityAt={healthMeasured ? (talkxLastSentAt(healthSentAts) ?? campaign.started_at) : null}
+            pending={remaining}
+            stalledAfterMs={talkxStallWindowMs(campaign.send_interval_max, campaign.typing_delay_max)}
+            connectionLabel={connStatusLabel}
+            ratePerMinute={healthMeasured ? talkxRatePerMinute(healthSentAts) : null}
+            startedAt={campaign.started_at}
+            onOpenHelp={onOpenHelp}
+          />
         </div>
       )}
 
