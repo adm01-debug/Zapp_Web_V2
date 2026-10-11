@@ -492,6 +492,22 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     expect(document.activeElement).not.toBe(screen.getByTestId('quick-add-input'));
   });
 
+  it('etapa 154: o modal "Nova tarefa" só é montado com o contexto aberto (sob demanda)', async () => {
+    setSelectResult({ data: [makeTaskRow()], error: null });
+    renderModule();
+    await screen.findByTestId('work-item-card');
+
+    // Fechado: o diálogo não está no DOM — nem o pedaço do import dinâmico.
+    expect(screen.queryByTestId('new-task-dialog')).toBeNull();
+
+    comandar('tasks-focus-quickadd');
+
+    // O mesmo comando do botão "+ Nova tarefa"/tecla N monta o modal de verdade.
+    const dialogo = await screen.findByTestId('new-task-dialog');
+    expect(within(dialogo).getByRole('heading', { name: 'Nova tarefa' })).toBeTruthy();
+    expect(within(dialogo).getByLabelText('Título da tarefa')).toBeTruthy();
+  });
+
   it('o atalho único de modo responde a 1, 2 e 3', async () => {
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();

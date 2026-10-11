@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,8 +22,33 @@ import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
 import { TasksHeaderMenu }  from './shared/TasksHeaderMenu';
+import { useTasksUi }       from './shared/tasksUi';
 
 const STORAGE_KEY = 'tasks-mode';
+
+/**
+ * Etapa 154 (plano, linha 434) — o modal "Nova tarefa" entra no bundle só
+ * quando abre (`import()` dinâmico): a Lista/Quadro/Agenda não pagam por um
+ * diálogo que quase nunca está na tela. Enquanto o pedaço chega, o fallback é
+ * `null` — o clique já mudou o estado e a superfície de trás continua viva.
+ */
+const NewTaskDialog = lazy(() =>
+  import('./shared/NewTaskDialog').then((m) => ({ default: m.NewTaskDialog })),
+);
+
+/**
+ * O modal lê o `TasksUiContext` (mesma fonte do botão do cabeçalho e da tecla
+ * `N`) e só existe montado com `modalOpen` — abrir de novo reabre limpo.
+ */
+function NewTaskModal() {
+  const { modalOpen } = useTasksUi();
+  if (!modalOpen) return null;
+  return (
+    <Suspense fallback={null}>
+      <NewTaskDialog />
+    </Suspense>
+  );
+}
 
 export function TasksModule() {
   const savedMode = (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) as TaskMode) || 'list';
@@ -405,6 +430,11 @@ export function TasksModule() {
         doingCount={doingReal}
         focusField={focusField}
       />
+
+      {/* Etapa 154: modal "Nova tarefa" — montado sob demanda quando
+          `modalOpen`, aberto pelo botão do cabeçalho, pela tecla N e (adiante)
+          pelo menu das colunas. */}
+      <NewTaskModal />
     </div>
     </TasksUiProvider>
   );
