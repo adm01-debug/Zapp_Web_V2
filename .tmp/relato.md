@@ -1,23 +1,26 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: hugo — area-front-hooks
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+- src/hooks/tasks/workItemFormat.ts (novo): regra ÚNICA de datas (etapa 058 / D21), pura e no fuso local. `formatWorkItemDate` devolve "Ontem, 17:00" / "Hoje, 14:00" / "Amanhã, 10:00" / "13 out., 15:00"; `format: 'day'` devolve só o dia ("Hoje", "Ontem", "09 out."), o caso das concluídas; `formatWorkItemFieldDate`/`formatWorkItemField` dão "Hoje, 11/10" + hora separada para painel/modal. Nenhum formato traz o dia da semana (o "Seg, 09/09, 14:20" da imagem 04 não é reproduzível). Dias comparados por `localDayKey`/`parseDayKey` de `src/lib/localDay` (import, não editei lá): a virada do dia manda, não a distância em horas. Valor ausente/inválido -> `null`.
+- src/hooks/tasks/workItemPresets.ts (novo): presets de prazo (`duePresetDate`/`duePresetISO`: hoje, amanhã, próxima semana, às 23:59 locais) e de lembrete (`remindPresetDate`/`remindPresetISO`: em 1 h, amanhã 9h, próxima segunda 9h) — etapa 161. A aritmética de prazo é de CALENDÁRIO (`setDate` sobre a meia-noite local), então um preset criado às 23:30 cai no dia seguinte e não no mesmo dia; `remindPresetDate('tomorrow9')` REAPROVEITA `tomorrowAtNine` importado de `useMyWorkItems`. `checkRemindCoherence` (etapa 162) devolve `{ state, message }` com `ok` / `in_past` / `after_due` / `no_due`: lembrete tem de estar no futuro e ANTES do prazo (igual ao prazo conta como `after_due`); sem lembrete devolve `ok` com mensagem vazia.
+- src/hooks/tasks/__tests__/workItemFormat.test.ts e workItemPresets.test.ts (novos): os testes unitários do cartão.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Etapa 058/161/162 conferidas antes contra o código ATUAL: não existiam (o QuickAdd faz os presets inline, em `src/components/tasks/shared/QuickAdd.tsx`, arquivo fora do escopo deste cartão) — por isso as funções nasceram como módulos novos, sem uso na tela (critério 3: as superfícies adotam nos cartões seguintes).
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Error: Failed to resolve import "@/hooks/tasks/workItemPresets" ... Test Files 2 failed (2); Tests no tests` (os módulos ainda não existiam).
+- verde depois: mesmo comando -> `Test Files 2 passed (2); Tests 28 passed (28)`.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Casos de teste (nome de cada um)
+workItemFormat.test.ts (11 casos): rotula Hoje/Ontem/Amanhã pelo dia LOCAL; fora de Hoje/Ontem/Amanhã usa "dd mês." em pt-BR; com hora compõe "Ontem, 17:00"/"Hoje, 14:00"/"Amanhã, 10:00"/"13 out., 15:00"; concluída mostra SÓ o dia; nunca inclui o dia da semana; fuso local (23:30 não vira o dia seguinte, com Date e com ISO); virada do dia (00:05 é "Amanhã", 23:55 é "Ontem"); campos do painel/modal "Hoje, 11/10" + hora à parte; hora separada null; valor ausente/inválido -> null; aceita ISO com offset.
+workItemPresets.test.ts (17 casos): presets de prazo (hoje 23:59; amanhã às 23:30 -> dia seguinte; próxima semana +7 dias; ISO = Date); presets de lembrete (em 1 h = +3.600.000 ms; amanhã 9h reaproveita `tomorrowAtNine`; próxima segunda 9h a partir de domingo; próxima segunda na PRÓPRIA segunda não devolve o mesmo dia; ISO = Date); coerência (sem lembrete; futuro antes do prazo confirma; no passado, inclusive igual ao agora; depois do prazo; igual ao prazo não é "antes"; sem prazo; in_past tem prioridade sobre after_due; aceita ISO com offset).
+
+## Borda do enunciado (virada do dia, fim de semana, UTC-3, horário de verão)
+- Virada do dia: coberta nos dois arquivos (23:30/23:55/00:05 e o preset criado às 23:30).
+- Fim de semana: `nextMondayAtNine` a partir de domingo (11/10 -> 12/10) e na própria segunda (12/10 -> 19/10).
+- UTC-3: as datas dos testes são construídas no relógio LOCAL (`new Date(2026, 9, 11, 14, 0)`), então os rótulos valem com qualquer fuso do processo; o caso "23:30 não vira o dia seguinte" também cobre o ISO que o banco devolve.
+- Horário de verão: o diff de dias é por dia de CALENDÁRIO (via `localDayKey`/`parseDayKey`), não por 24 h — é o caminho que sobrevive ao dia de 23/25 h; a aritmética dos presets usa `setDate`, não `+86_400_000`.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não toquei nas telas nem no QuickAdd: fora dos arquivos que o cartão permite (as superfícies adotam nos cartões seguintes).
+- Sem migration, Edge Function, dependência nova ou exportação de dado.
