@@ -191,6 +191,11 @@ export function ConversationListSidebar({
           conversations={inbox.conversations}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
+          // Mesmas opções que useInboxFilters aplica na lista, para o número do
+          // chip bater com o que a lista mostra ao clicar nele.
+          snoozedIds={conversationActions?.snoozedIds}
+          showAll={inboxFilters.showAll}
+          selectedQueueId={inboxFilters.selectedQueueId}
         />
       </div>
 
