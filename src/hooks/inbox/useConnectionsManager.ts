@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react
 import { log } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 
 export interface WhatsAppConnection {
@@ -280,9 +281,8 @@ export function useConnectionsManager() {
     }
   };
 
-  const handleCopyId = (id: string) => {
-    void navigator.clipboard.writeText(id);
-    toast({ title: 'ID copiado!', description: 'O ID da conexão foi copiado para a área de transferência.' });
+  const handleCopyId = async (id: string) => {
+    avisarCopia(await copiarTexto(id));
   };
 
   const handleReconnect = (connection: WhatsAppConnection) => handleShowQrCode(connection);

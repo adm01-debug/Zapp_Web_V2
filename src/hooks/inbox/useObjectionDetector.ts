@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { type ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
@@ -197,10 +198,11 @@ Se não houver objeções, retorne []`,
     toast.success('Resposta inserida no chat!');
   }, []);
 
-  const handleCopy = useCallback((text: string, idx: number) => {
-    void navigator.clipboard.writeText(text);
+  const handleCopy = useCallback(async (text: string, idx: number) => {
+    const ok = await copiarTexto(text);
+    avisarCopia(ok);
+    if (!ok) return;
     setCopiedIdx(idx);
-    toast.success('Copiado!');
     setTimeout(() => setCopiedIdx(null), 2000);
   }, []);
 
