@@ -12,11 +12,9 @@ interface Props {
  *
  * Envolve a árvore do módulo (`TasksModule`) e é o único lugar que guarda
  * seleção/painel/modal/densidade; as superfícies leem por `useTasksUi()`
- * (`./tasksUi`). O contexto e os hooks ficam no `.ts` irmão de propósito:
- * exportar contexto/hook de arquivo `.tsx` conta dívida NOVA no
- * `react-refresh/only-export-components`, e o lint-ratchet recusa ocorrência
- * nova (mesmo padrão de `workItemLabels.ts`, que saiu do `PriorityChip.tsx`
- * pelo mesmo motivo).
+ * (`./tasksUi`). O contexto e os hooks ficam num `.ts` separado de propósito:
+ * exportar hook de arquivo com JSX conta dívida nova no
+ * `react-refresh/only-export-components`.
  */
 export function TasksUiProvider({ children, initialDensity = 'comfortable' }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);

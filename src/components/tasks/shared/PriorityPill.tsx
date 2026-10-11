@@ -28,11 +28,6 @@ interface Props {
  *
  * Prioridade nula ou fora do mapa cai no padrão do banco (`medium`) em vez de
  * derrubar o card ou imprimir "undefined".
- *
- * No modo compacto o `<span>` mostra só a inicial, então o nome completo vai
- * pelo `aria-label` com `role="img"`: `aria-label` em elemento genérico (sem
- * papel) é IGNORADO por leitores de tela — com o papel de imagem, "Média" vira
- * o nome acessível.
  */
 export function PriorityPill({ priority, compact = false, className = '' }: Props) {
   const p: Priority = priority != null && PRIORITY_LABELS[priority] ? priority : 'medium';
@@ -43,7 +38,7 @@ export function PriorityPill({ priority, compact = false, className = '' }: Prop
       data-testid="priority-pill"
       data-priority={p}
       title={`Prioridade: ${texto}`}
-      {...(compact ? { role: 'img', 'aria-label': texto } : {})}
+      {...(compact ? { 'aria-label': texto } : {})}
       className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-2xs font-semibold leading-none ${PRIORITY_STYLES[p]} ${className}`}
     >
       {compact ? texto[0] : texto}
