@@ -20,7 +20,7 @@ import {
   GitBranch, Clock, ArrowRight, Loader2, Settings, BarChart3,
   HelpCircle, Tag, Users, Send, ChevronRight, Activity,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -37,6 +37,8 @@ const triggerLabels: Record<string, { label: string; icon: React.ComponentType<{
 };
 
 export function ChatbotFlowsView() {
+  // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const { flows, isLoading, createFlow, updateFlow, deleteFlow, toggleFlow } = useChatbotFlows();
   const [showCreate, setShowCreate] = useState(false);
   const [editingFlow, setEditingFlow] = useState<ChatbotFlow | null>(null);
@@ -170,9 +172,9 @@ export function ChatbotFlowsView() {
                   <motion.div
                     key={flow.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                    animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
                   >
                     <Card className={cn(
                       'border-secondary/30 hover:border-primary/30 transition-all',

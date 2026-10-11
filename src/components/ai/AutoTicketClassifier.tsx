@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Tag, Brain, RefreshCw, Loader2, CheckCircle, Filter, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,6 +108,8 @@ function countByCategory(list: ClassifiedTicket[]): Record<string, number> {
 }
 
 export function AutoTicketClassifier() {
+  // CT-70 — com "reduzir movimento" ligado, a lista entra já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const [autoClassify, setAutoClassify] = useState(true);
   const [tickets, setTickets] = useState<ClassifiedTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -309,8 +311,8 @@ export function AutoTicketClassifier() {
                   return (
                     <motion.div
                       key={ticket.contactId}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      initial={prefersReducedMotion ? false : { opacity: 0 }}
+                      animate={prefersReducedMotion ? undefined : { opacity: 1 }}
                       className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
                       <div className={`p-2 rounded-lg ${catInfo.color}`}>

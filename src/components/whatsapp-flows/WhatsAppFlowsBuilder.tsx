@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/ui/use-toast';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,8 @@ const COMPONENT_TYPES = [
 ] as const;
 
 export function WhatsAppFlowsBuilder() {
+  // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
+  const prefersReducedMotion = useReducedMotion();
   const [flows, setFlows] = useState<WhatsAppFlow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFlow, setSelectedFlow] = useState<WhatsAppFlow | null>(null);
@@ -162,7 +164,7 @@ export function WhatsAppFlowsBuilder() {
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {flows.map((flow) => (
-              <motion.div key={flow.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div key={flow.id} initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }} animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}>
                 <Card className="bg-card/50 border-border/30 hover:border-secondary/30 transition-all cursor-pointer group"
                   onClick={() => { setSelectedFlow(flow); setEditingScreen(0); }}>
                   <CardContent className="p-4">
