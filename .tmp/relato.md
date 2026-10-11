@@ -1,29 +1,102 @@
-Especialista: Hugo (area-front-hooks)
-
-Concluí o que o cartão pede: as etapas 21 (tempo médio da criação à conclusão, com formato pt-BR), 52 (subtítulo de data dos grupos), 112/117 (contagens por tipo no dia da Agenda) e 126 (Agenda só com os itens já carregados, 7 dias, com o teste da virada), e o relatório de lacunas da etapa 8. Tudo em `workItemAggregates.ts` (funções puras) + os testes do próprio módulo; nenhuma consulta nova.
+Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- `src/hooks/tasks/workItemAggregates.ts`:
-  - `kpis()` passa a devolver `avgLeadTimeDays` (etapa 21/D13): média de `completed_at − created_at` das concluídas dos últimos 7 dias. `avgCycleTimeDays` (started_at → completed_at) continua calculado e no mesmo campo — é o contrato que `TasksKpiStrip.tsx` já lê hoje.
-  - `formatLeadTime(days)` nova, pura e exportada: pt-BR com uma casa decimal e vírgula (`1,4 dias`), singular em 1 (`1 dia`) e `—` quando não há dados (null/NaN).
-  - `daySubtitle(date)` nova, pura: dia por extenso em pt-BR no fuso local — `Domingo, 11 de outubro`; data inválida devolve `''` em vez de derrubar a tela (etapa 52).
-  - `DayGroup` ganhou `subtitle` e `dateKey`, preenchidos por `groupUpcomingByDay` (etapa 52).
-  - `agendaDayCounts(day, atrasadas)` e `agendaDayAriaLabel(day, atrasadas)` novas, puras (etapas 112/117): contagens por tipo (`prazos`, `lembretes`, `atrasadas`, `semHora`, `total`) e o texto do `aria-label`. A tarefa com prazo E alarme aparece nas duas seções mas conta UMA vez no `total`. O `agendaDayDots` fica intacto (ver "O que NÃO fiz").
-- `src/hooks/tasks/__tests__/workItemAggregates.test.ts`: 4 describes novos (etapas 21, 52, 112/117 e 126) com os casos que provam o comportamento; nenhum teste existente foi alterado.
+
+- `src/components/tasks/list/TasksListTable.tsx` (NOVO): a Lista vira `<table>`.
+  `<colgroup>` com as 6 colunas do contrato (plano 301/302: Tarefa, Contato,
+  Prioridade, Prazo, Lembrete, Estado), `<thead>` fixo (`sticky top-0`) e grupos
+  como LINHAS de seção (`<th scope="colgroup">`).
+- Etapa 051: cada grupo tem bloco circular com ícone, título e CONTADOR, na ordem
+  Atrasadas (destrutivo, `AlertTriangle`) · Hoje (relógio, âmbar) · Amanhã ·
+  Próximas (com subcabeçalho por dia) · Sem prazo · Concluídas 7 dias (com o
+  rodapé "ver mais (30 dias)" das concluídas de 8 a 30 dias). O contador conta as
+  linhas REALMENTE desenhadas (inclui as antigas quando reveladas).
+- Etapa 051: "Hoje" mostra `daySubtitle(ancora)` de `workItemAggregates`
+  ("Domingo, 11 de outubro"), com `now` injetável no teste; "Próximas" continua
+  separada por dia por `groupUpcomingByDay` (052, do Hugo).
+- Etapa 053: célula Tarefa = `TaskCheckbox` (primitiva de T11) + título em uma
+  linha com tooltip + o motivo em âmbar quando `status === 'waiting'`.
+- Etapa 054: célula Contato = `ContactAvatar` + nome; o nome é `<button>` quando
+  há `onOpenContact` (abre a conversa) e texto simples quando não há; sem contato
+  mostra "Sem contato". Checkbox e contato fazem `stopPropagation` — quem abre os
+  detalhes é o clique na LINHA (o `onOpen` que os cartões usavam).
+- As 4 colunas de 056–060 (Prioridade, Prazo, Lembrete, Estado) já existem no
+  cabeçalho e nas linhas como células vazias (`data-testid="list-cell-pendente"`).
+- `src/components/tasks/list/TasksListMode.tsx`: passa a renderizar
+  `TasksListTable`; esqueleto e os dois vazios seguem no modo, e a montagem no
+  `TasksModule` não mudou.
+- Testes existentes que falavam com a Lista de CARTÕES foram re-apontados, sem
+  afrouxar asserção nenhuma:
+  - `TasksListMode.test.tsx`: `getByRole('article')` → `getByTestId('task-row')`;
+    `getByRole('button', { name: 'Concluir tarefa' })` → `getByRole('checkbox',
+    { name: 'Concluir tarefa' })` (a primitiva marca `role="checkbox"`, que é o
+    papel correto do controle).
+  - `TasksModule.entrada.test.tsx` e `zen.tarefas.test.tsx`: o marcador de "carga
+    desenhada" na Lista passou a ser `task-row`.
+  - `WorkItemSheet.test.tsx` (caso 26): quem abre o Sheet pela Lista agora é o
+    clique na linha — o mesmo `onOpen`.
+  - `cardAcoes.test.tsx` (casos 29/32) e `TasksModule.test.tsx` (etapas 77/78,
+    "card em foco", kebab e DnD): o card, o kebab e o `contact-chip` vivem no
+    Quadro agora; o modo de fundo virou `board` (e `agenda` no caso "fora do
+    Quadro o card não se diz arrastável", com prazo de hoje para o card existir).
+    Duas exceções continuam na Lista em tabela: o QuickAdd do topo e o caso
+    "N abre o modal" (no Quadro cada coluna tem o seu QuickAdd, e o seletor
+    ficaria ambíguo).
 
 ## Prova
-- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` com `kpis()` na regra antiga (só o tempo de ciclo, sem `avgLeadTimeDays`) → `AssertionError: expected null to be 4` e `Tests 1 failed | 60 passed (61)` — a concluída que nasceu 7 dias antes de terminar e só entrou em "Fazendo" no último dia dava ciclo 1 e lead time 4.
-- verde depois: `npx vitest run src/hooks/tasks/__tests__/workItemAggregates.test.ts` → `Test Files 1 passed (1)` / `Tests 61 passed (61)`.
-- regressão dos consumidores (hook, telas de tarefas e a aba do Inbox): `npx vitest run src/hooks/tasks src/components/tasks src/components/inbox/tabs` → `Test Files 76 passed (76)` / `Tests 809 passed | 2 todo (811)`.
 
-## Etapa 8 — lacunas de dados do que a UI nova precisa (sem banco novo, sem consulta nova)
-- Resumo do dia (`N tarefas com prazo · M lembretes`) e `aria-label` da faixa: NÃO existia contagem por tipo — o `agendaDayDots` só devolvia cores (no máximo 3). Resolvido: `agendaDayCounts`/`agendaDayAriaLabel`.
-- Tempo médio decimal: existia só a métrica de ciclo, e nenhum formato pt-BR; o rótulo "Da criação à conclusão" não tinha número correspondente. Resolvido: `avgLeadTimeDays` + `formatLeadTime`.
-- Janela de 30 dias: já coberta pela query única B13 (`DONE_WINDOW_DAYS` + `.or('status.neq.done,completed_at.is.null,completed_at.gte.<cutoff>')` em `useMyWorkItems`); os recortes de 7 dias da Agenda são locais (`splitDoneByRecency`/`weekBuckets`). Nada a criar.
-- Progresso do limite: os limites estão em `WIP_LIMITS` (hard/soft por status) e a contagem por status em `bucketByStatus` — o dado existe; falta só a apresentação (tela).
+- VERMELHO ANTES (a Lista antiga, de cartões, restaurada com
+  `git show HEAD:src/components/tasks/list/TasksListMode.tsx > src/components/tasks/list/TasksListMode.tsx`):
+  `npx vitest run src/components/tasks/__tests__/TasksListTable.test.tsx src/components/tasks/__tests__/TasksListMode.test.tsx`
+  → `× o checkbox conclui sem abrir o card (onToggleDone sem onOpen)`;
+  `× na seção "Concluídas" o checkbox é o de reabrir e desfaz pelo onToggleDone`;
+  `× 3) o modo Lista passa a renderizar a tabela, com a linha do item dentro dela`;
+  `Test Files 2 failed (2)` / `Tests 3 failed | 13 passed (16)`.
+- VERDE DEPOIS (mesmo comando, código novo): `Test Files 2 passed (2)` /
+  `Tests 17 passed (17)`.
+- VERDE DEPOIS (área inteira, `npx vitest run src/components/tasks src/hooks/tasks`):
+  `Test Files 34 passed (34)` / `Tests 395 passed | 1 todo (396)`. Sem o meu
+  trabalho a mesma seleção dava `Test Files 33 passed (33)` /
+  `Tests 386 passed | 1 todo (387)` — nenhuma regressão, e as 9 provas novas de
+  `TasksListTable.test.tsx` entraram na conta (387 + 9 = 396).
+- `npx tsc --noEmit -p tsconfig.app.json` → saída vazia (0 erros).
+- `npx eslint` nos 2 arquivos de `list/` e nos 7 arquivos de teste tocados →
+  saída vazia (0 problemas).
+
+## CRITÉRIO DE PRONTO do cartão, item por item
+
+- "Etapa 050, tabela com cabeçalho fixo e grupos como linhas de seção" — plano
+  linhas 302 e 50 (seção 3: "Tabela: colunas Tarefa, Contato, Prioridade, Prazo,
+  Lembrete, Estado"). Testes: `1) desenha as 6 colunas do contrato na ordem, num
+  cabeçalho fixo` (com `role="columnheader"` e `sticky` em cada `<th>`).
+- "Etapa 051, linha de grupo com ícone circular, contador e subtítulo em Hoje" —
+  plano linha 303. Testes: `2) a linha de grupo traz ícone circular, contador e o
+  subtítulo de data no "Hoje"` (Atrasadas com ícone+contador 2, Hoje com
+  "Domingo, 11 de outubro") e `2b) "Próximas" sai separada por dia, com o
+  subcabeçalho de cada dia` (2 dias distintos, 2 linhas de dia, 2 itens).
+- "Etapa 053, célula Tarefa" — plano linha 305. Testes: `4) a célula Tarefa
+  conclui pelo checkbox sem abrir a linha e mostra o motivo âmbar` (motivo
+  "Aguardando aprovação do cliente", `onToggleDone` chamado, `onOpen` não) e
+  `4b) a linha VENCIDA/concluída usa o checkbox de reabrir`.
+- "Etapa 054, célula Contato" — plano linha 306. Testes: `5) a célula Contato
+  mostra avatar e nome e abre a conversa sem abrir os detalhes` (nome "Ana
+  Souza" é `<button>`, `onOpenContact` chamado, `onOpen` não) e `5b) sem contato
+  a célula diz "Sem contato" e não é acionável` (nem botão).
+- "estrutura + clique na linha abre os detalhes + as 4 colunas seguintes já no
+  lugar" — testes: `3) o modo Lista passa a renderizar a tabela, com a linha do
+  item dentro dela` (a tabela existe dentro do modo e o contato do item real
+  também foi passado ao modo) e `6) as colunas 056–060 já existem como célula (a
+  preencher em cartão próprio)` (6 células por linha, 4 `list-cell-pendente`).
+- "zapp-verify . --rapido verde": quem roda é o `hermes-tarefa-fechar`.
 
 ## O que NÃO fiz e por quê
-- Não mudei a assinatura de `agendaDayDots`. O único consumidor é `src/components/tasks/agenda/TasksAgendaMode.tsx`, que tipa o retorno como `string[]` (cores) e não está nos arquivos deste cartão: trocar o retorno para contagens quebraria a tela agora. As contagens entraram como funções novas que o mesmo componente consome sem mexer no contrato atual.
-- Não liguei o rótulo "Da criação à conclusão" ao número novo: quem desenha é `src/components/tasks/shared/TasksKpiStrip.tsx` (linha 68 ainda usa `avgCycleTimeDays` com `Math.round(...)+'d'`), que é tela — `area-front-componentes` (Íris). Deixei o dado pronto (`avgLeadTimeDays` + `formatLeadTime`).
-- Lacuna conhecida, documentada no JSDoc de `groupUpcomingByDay`: o rótulo "Semana que vem" reúne mais de um dia no MESMO grupo (comportamento da etapa 49, mantido de propósito); nesse grupo `subtitle`/`dateKey` apontam para o dia mais cedo. Separar por dia dentro dele mudaria o rótulo e os testes da etapa 49.
-- Nenhuma consulta nova: tudo aqui é agregação pura sobre os `items` já carregados (B13 preservado).
+
+- Prioridade, Prazo, Lembrete e Estado continuam vazias: o miolo delas é das
+  etapas 056–060, fora deste cartão; a estrutura que este cartão promete está
+  provada no teste `6`.
+- Não criei o kebab/rolo de ações da linha: é a etapa 060+ (o card que os tinha
+  vive no Quadro e na Agenda).
+- Não mexi em hook, agregador, banco, Edge nem no `TasksModule`: a montagem do
+  modo não muda.
+- Não toquei em `workItemAggregates.test.ts` nesta etapa (ele só entrou no
+  histórico linear por causa dos commits que o cartão mandava trazer).
