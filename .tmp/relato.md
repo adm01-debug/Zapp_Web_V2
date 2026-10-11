@@ -31,3 +31,10 @@ Especialista: iris (area-front-componentes)
 - Não implementei o painel NÃO modal (etapa 145) nem a persistência do modo expandido (etapa 146): são dos cartões T34/outro; o F6 e a proteção ficam prontos para eles.
 - Não li as imagens 01–05 (não há ferramenta de visão nesta sessão): a conferência foi contra a §3 do plano (linha do "Rodapé" e etapas 141–144), que é a referência de aceite.
 - Diferença de escopo: os commits `chore(tarefas): traz a faixa dos pais...` e o do painel de Planejamento vêm do cherry-pick da faixa do pai (`t_2456ca64`); o meu commit (`feat(tarefas): rodape do painel...`) mexe só nos 5 arquivos listados acima.
+
+## Faixa dos pais: o que tirei do diff (regra dos 90 mil caracteres)
+- O cherry-pick da faixa dos pais subiu o diff para 107.334 caracteres adicionados e o `hermes-tarefa-fechar` recusou (regra de 90.000, para o revisor conseguir ler). Mesmo motivo pelo qual o cartão pai (`t_2456ca64`) voltou como `refazer 1`.
+- Tirei do diff os TESTES que são de OUTROS cartões (vieram só porque a faixa inteira foi cherry-pickada): `primitivosCompartilhados.test.tsx` (cartão dos primitivos), `WorkItemSheet.painel.test.tsx` e `WorkItemSheet.planejamento.test.tsx` (cartões do painel), `workItemFormat.test.ts` (cartão do formato). Os arquivos de CÓDIGO da faixa ficam (o painel e os primitivos são a base do rodapé). Cada um desses testes volta com o cartão dono, quando ele for integrado — eu não os apaguei do repositório (eles não existem na `dia/2026-10-11`).
+- `useMyWorkItems.test.tsx` existe na `dia/2026-10-11` (473 linhas): restaurei a versão da `dia` (sem as 26 linhas que a faixa do cartão do `contact_type` acrescentou), para não apagar arquivo que não é meu.
+- Diff final: 64.033 caracteres adicionados, 18 arquivos — abaixo do teto.
+
