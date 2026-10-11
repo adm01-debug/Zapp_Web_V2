@@ -112,6 +112,18 @@ describe('ModeSwitcher — etapa 032', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Agenda' }));
     expect(onChange).toHaveBeenCalledWith('agenda');
   });
+
+  it('esconde o rótulo do modo em tela estreita e mantém o nome acessível', () => {
+    render(<ModeSwitcher mode="list" onChange={vi.fn()} />);
+    const lista = screen.getByRole('button', { name: 'Lista' });
+
+    // Comentário do componente: o rótulo some abaixo de `sm` (`hidden sm:inline`)
+    // e sobra o ícone — o `aria-label` é quem sustenta o nome acessível.
+    const rotulo = within(lista).getByText('Lista');
+    expect(rotulo.className).toContain('hidden');
+    expect(rotulo.className).toContain('sm:inline');
+    expect(lista.getAttribute('aria-label')).toBe('Lista');
+  });
 });
 
 describe('TasksFilterBar — etapa 033 (busca)', () => {
@@ -276,6 +288,34 @@ describe('TasksModule — integração da barra (etapas 035, 036 e 039)', () => 
     expect(await screen.findByText('Tarefa solta')).toBeTruthy();
     expect(screen.queryByText('Falar com a Ana')).toBeNull();
     expect(screen.getByText('Contato: Sem contato')).toBeTruthy();
+  });
+});
+
+describe('TasksFilterBar — alvos de toque de 40 px (regra de tela do cartão)', () => {
+  beforeEach(() => limparTela());
+
+  it('busca, chip, "Limpar filtros", itens e "x" do combobox têm 40 px de área', () => {
+    renderBarra({ q: 'liga', prio: 'urgent', contact: SEM_CONTATO }, { searchText: 'liga' });
+
+    const limparBusca = screen.getByTestId('tasks-search-clear');
+    expect(limparBusca.className).toContain('min-h-10');
+    expect(limparBusca.className).toContain('min-w-10');
+
+    const removerChip = screen.getByTestId('filter-chip-remove-prio');
+    expect(removerChip.className).toContain('min-h-10');
+    expect(removerChip.className).toContain('min-w-10');
+
+    const limparFiltros = screen.getByRole('button', { name: 'Limpar filtros' });
+    expect(limparFiltros.className).toContain('min-h-10');
+
+    // Os itens extras e o "x" do combobox só existem com o popover aberto/valor.
+    fireEvent.click(screen.getByTestId('tasks-contact-filter'));
+    expect(screen.getByTestId('contact-combobox-extra-sem').className).toContain('min-h-10');
+    expect(screen.getByTestId('contact-combobox-extra-todos').className).toContain('min-h-10');
+
+    const limparContato = screen.getByTestId('contact-combobox-clear');
+    expect(limparContato.className).toContain('min-h-10');
+    expect(limparContato.className).toContain('min-w-10');
   });
 });
 
