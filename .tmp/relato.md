@@ -1,4 +1,10 @@
-Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão sensível.
+Especialista: Edgar (area-edge-api).
+
+Sensibilidade: o diff empilhado (herdado de t_bb810a9e) toca `service_role` e RLS na migration
+novidade `supabase/migrations/20261009120000_talkx_test_sends.sql` (REVOKE de anon/authenticated,
+GRANT só para `service_role`, policies de leitura por dono/admin). Eu NÃO alterei esse arquivo nem
+afrouxei proteção nenhuma; a minha mudança é uma linha de documento (`ESTADO.md`, número da
+âncora). Nada de produção, nenhum segredo, nenhuma referência ao banco de produção.
 
 ## O que mudou e por quê
 - `ESTADO.md` (linha da tabela do grupo B, edge `talkx-link`): a âncora
@@ -40,13 +46,20 @@ Especialista: Edgar (area-edge-api) — cartão de CI/doc, sem tocar em padrão 
   → `# pass 11` · `# fail 0`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (131s)`;
   sha do commit da correção: `8dc79b7b4`.
 
-## Aviso do juiz barato (ANTES DE ENTREGAR)
-O aviso aponta "código alterado sem teste neste commit" (`useTalkX.ts`, `talkx-send/index.ts`,
-`_test-utils.ts`). Não procede: esses são os commits empilhados da entrega (não meus) e o diff
-`ebf1b4314..HEAD` inclui `supabase/functions/talkx-send/index.test.ts` (+116 linhas). O meu
-commit é doc-only (só a âncora do `ESTADO.md`), e o defeito que ele fecha é provado pelo teste
-JÁ EXISTENTE `scripts/ci/docs-estado-registry-convention.unit.mjs` (item 2 do `ci_espelho.sh`):
-vermelho antes, verde depois — não há teste novo a escrever para uma correção de documento.
+## Avisos do juiz barato (ANTES DE ENTREGAR)
+- "código alterado sem teste neste commit" (`useTalkX.ts`, `talkx-send/index.ts`,
+  `_test-utils.ts`). Não procede: esses são os commits empilhados da entrega (não meus) e o
+  diff `ebf1b4314..HEAD` inclui `supabase/functions/talkx-send/index.test.ts` (+116 linhas).
+  O meu commit é doc-only (só a âncora do `ESTADO.md`), e o defeito que ele fecha é provado
+  pelo teste JÁ EXISTENTE `scripts/ci/docs-estado-registry-convention.unit.mjs` (item 2 do
+  `ci_espelho.sh`): vermelho antes, verde depois.
+- "a migration muda permissão/RLS". Também não procede para mim: o
+  `REVOKE ... / GRANT ... TO service_role` e as policies estão em
+  `supabase/migrations/20261009120000_talkx_test_sends.sql`, arquivo da entrega de t_bb810a9e
+  que o cartão mandou cherry-pickar (passo 1 do O QUE FAZER). Não alterei esse arquivo — meu
+  único commit de conteúdo muda uma linha do `ESTADO.md` (número da âncora). A prova de papel
+  real (tabela trancada para anon/authenticated, escrita só por `service_role`) pertence ao
+  cartão de origem e já foi coberta lá; aqui o escopo é destravar o ESPELHO DO CI.
 
 ## O que NÃO fiz e por quê
 - Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o `HERMES-GUARD` bloqueia
