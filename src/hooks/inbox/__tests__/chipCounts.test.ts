@@ -301,7 +301,7 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
     const { result } = montarMatriz();
     aplicarCombo(result, { nome: 'acento', search: 'JOSÉ' });
     act(() => result.current.setChipTab('waiting'));
-    expect(result.current.filteredConversations.map((c) => c.id)).toEqual(['jose']);
+    expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['jose']);
     expect(result.current.chipCounts.waiting).toBe(1);
     // 'Todas' cobre abertas (open|waiting): a busca casou só 'jose', que é waiting.
     expect(result.current.chipCounts.all).toBe(1);
@@ -311,7 +311,7 @@ describe('contador com busca/filtros/tipo — matriz de combinações', () => {
     const { result } = montarMatriz();
     aplicarCombo(result, { nome: 'telefone', search: '1203630-555' });
     act(() => result.current.setChipTab('all'));
-    expect(result.current.filteredConversations.map((c) => c.id)).toEqual(['grupo']);
+    expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['grupo']);
     expect(result.current.chipCounts.all).toBe(1);
   });
 
