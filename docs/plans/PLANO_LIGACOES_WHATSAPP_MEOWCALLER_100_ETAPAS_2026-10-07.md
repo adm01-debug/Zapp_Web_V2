@@ -74,11 +74,11 @@ Donos: **Dono** (Joaquim), **Claude** (verificações e infraestrutura que eu co
 - **E001** [Dono] **Número reserva.** Um número WhatsApp (de preferência Business, num chip dedicado) só para o laboratório e o piloto. *Aceite:* número informado; nunca o `551146375517`.
 - **E002** [Dono] **Aceite de risco por escrito.** O dono registra que entende o risco de banimento e a violação dos termos do WhatsApp. *Aceite:* texto em `docs/` assinado por commit do dono.
 - **E003** [Dono] **Parecer jurídico.** Conversa com o advogado sobre engenharia reversa do protocolo/codec do WhatsApp e uso de biblioteca de pesquisa. *Aceite:* resposta registrada (não é parecer deste documento).
-- **E004** [Claude] **ADR-0xx "motor de chamadas do WhatsApp".** Registra a decisão, as alternativas (API oficial da Meta, Wavoip, manter só eventos) e o critério de troca. *Aceite:* `docs/adr/` commitado.
+- **E004** [Claude] **ADR-0xx "motor de chamadas do WhatsApp".** Registra a decisão, as alternativas (API oficial da Meta, Wavoip, manter só eventos) e o critério de troca. *Aceite:* `docs/adr/` commitado. — **✅ feito** (2026-10-10): `docs/adr/ADR-008-motor-de-chamadas-whatsapp.md` (as 4 alternativas: A, B, B', C).
 - **E005** [Claude] **Contrato de transporte.** Define as interfaces `WhatsAppCallEngine` (dial/answer/hangup/reject/eventos) e `MediaTransport` (abrir/fechar/enviar quadro/receber quadro/estatísticas), para o motor ser trocável. *Aceite:* interfaces e testes de contrato escritos antes de qualquer implementação.
 - **E006** [Dono] **Onde roda a Evolution GO hoje.** Servidor, versão, como é implantada, quem tem acesso. *Aceite:* resposta registrada; define quem executa as etapas *Infra*.
-- **E007** [Claude] **Métricas de sucesso.** Taxa de chamadas com áudio bidirecional, atraso, falhas por 100 chamadas, restrições do número. *Aceite:* painel/planilha definidos.
-- **E008** [Claude] **Registro de riscos** (seção 7) com dono e plano de resposta para cada um. *Aceite:* no documento.
+- **E007** [Claude] **Métricas de sucesso.** Taxa de chamadas com áudio bidirecional, atraso, falhas por 100 chamadas, restrições do número. *Aceite:* painel/planilha definidos. — **✅ feito** (2026-10-10): definidas por escrito no `ADR-008`, seção "Métricas de sucesso (E007)", ligadas ao critério de G1; o painel em si ainda não foi construído (fora do escopo deste cartão).
+- **E008** [Claude] **Registro de riscos** (seção 7) com dono e plano de resposta para cada um. *Aceite:* no documento. — **✅ feito** (2026-10-10): seção 7 completada com coluna **Dono** e plano de resposta por risco.
 - **E009** [Dono] **Quem atende e quem liga.** Perfis de usuário autorizados (hoje há a razão `whatsapp_restrito_supervisores`). *Aceite:* lista de papéis.
 - **E010** [Claude] **Gate G0.** Confere E001–E009 e libera a F1. *Aceite:* G0 registrado.
 
@@ -229,17 +229,22 @@ Vídeo e chamada em grupo (a biblioteca os tem, mas são experimentais); URA/DTM
 
 ## 7. Registro de riscos
 
-| Risco | Prob. | Impacto | Resposta |
-|---|---|---|---|
-| Banimento do número | Média | **Alto** | Número reserva; limites; pausa automática; kill-switch; G4 |
-| Biblioteca instável / sem áudio em alguns cenários | **Alta** | Alto | Laboratório (F1) e G1; fixar SHA; motor trocável (E005) |
-| WhatsApp muda o protocolo e a chamada quebra | Média | Alto | Fork com política de atualização; kill-switch; plano B = API oficial |
-| Vazamento da chave da instância | Baixa | Alto | Gateway + ticket; chave só no servidor (E028, E036) |
-| Violação da LGPD (gravação sem consentimento) | Média | Alto | Gravação desligada por padrão; consentimento tocado (E086–E090) |
-| Atraso de áudio alto no caminho navegador → gateway → motor | Média | Médio | Binário no navegador; medir no F1; jitter buffer curto |
-| Eco e má qualidade sem fone | Alta | Médio | Constraints do navegador; aviso de fone; indicador de qualidade |
-| Questão jurídica / propriedade intelectual | Média | Alto | Parecer (E003) antes de G0 |
-| Dependência de um fork nosso | Alta | Médio | Política de atualização; interface de motor trocável |
+Cada risco tem **dono** e **plano de resposta**. Donos conforme o mapa da seção 4: **Dono** = Joaquim, **Claude**, e os agentes da fábrica.
+
+| Risco | Prob. | Impacto | Dono | Plano de resposta |
+|---|---|---|---|---|
+| Banimento do número | Média | **Alto** | Dono | Número reserva (E001); limites diários (E045/E082); pausa automática (E084); kill-switch (E085); número principal só no G4 |
+| Violação dos termos do WhatsApp (protocolo não oficial — caminhos B e B') | **Alta** | **Alto** | Dono | Só laboratório em número reserva; aceite de risco por escrito (E002); parecer jurídico (E003); produção pelo caminho A (API oficial); G0/G1 |
+| Biblioteca instável / sem áudio em alguns cenários | **Alta** | Alto | Claude | Laboratório (F1) e G1; fixar o SHA do PR #141 (E012); motor trocável (E005) |
+| Projeto de pesquisa sem versão publicada (`meowcaller` só pseudo-versão) | **Alta** | Médio | Claude | Fixar SHA e pseudo-versão, nunca `@latest` (E012); fork próprio com política de atualização (E023); rodar a matriz de cenários a cada atualização |
+| Issues abertas do `meowcaller`: áudio de entrada ausente (#36/#37/#40) e Coexistência não atende (#35) | **Alta** | Alto | Claude | Cruzar issues × cenários (E020); Coexistência fica fora do caminho de produção (o caminho A não depende de aparelho vinculado); se reproduzir no nosso cenário, **G1 falha** e o plano para |
+| WhatsApp muda o protocolo e a chamada quebra | Média | Alto | Claude | Fork com política de atualização; kill-switch; plano B = API oficial |
+| Vazamento da chave da instância | Baixa | Alto | workerauth | Gateway + ticket de uso único (E036); chave só no servidor (E028); navegador nunca vê a chave |
+| Violação da LGPD (gravação sem consentimento) | Média | Alto | workerauth | Gravação desligada por padrão; consentimento tocado (E086–E090) |
+| Atraso de áudio alto no caminho navegador → gateway → motor | Média | Médio | Claude | Binário no navegador (E037); medir no F1 (E018); jitter buffer curto (E058) |
+| Eco e má qualidade sem fone | Alta | Médio | hugo | Constraints do navegador (E055); aviso de fone; indicador de qualidade (E064) |
+| Questão jurídica / propriedade intelectual | Média | Alto | Dono | Parecer (E003) antes de G0 |
+| Dependência de um fork nosso | Alta | Médio | Claude | Política de atualização (E023); interface de motor trocável (E005) |
 
 ## 8. Critérios de aceite do conjunto
 1. Ligar e atender pelo WhatsApp dentro do sistema, com áudio nos dois sentidos, no número reserva.
@@ -250,4 +255,4 @@ Vídeo e chamada em grupo (a biblioteca os tem, mas são experimentais); URA/DTM
 6. Trocar o motor (por exemplo, para a API oficial da Meta) não exige refazer estado, histórico nem interface.
 
 ## 9. Estado de execução
-_A preencher ao longo da execução. Nenhuma etapa foi iniciada._
+**Fase 0:** E004, E007 e E008 **feitas** (2026-10-10) — `docs/adr/ADR-008-motor-de-chamadas-whatsapp.md`, métricas de sucesso e registro de riscos da seção 7. E005 (contrato de transporte) e E010 (G0) pendentes; E001/E002/E003/E006/E009 pendentes do dono (número reserva, aceite de risco, parecer jurídico, acesso à Evolution GO, papéis). **Nenhuma etapa de execução (F1 em diante) iniciada.**
