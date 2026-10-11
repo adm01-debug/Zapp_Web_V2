@@ -19,6 +19,7 @@ Especialista: senior (area-sql-banco)
 - Não mexi em `.github/workflows/db-guard.yml` nem em inventário/ledger: proibir edição de workflow continua valendo e nada novo precisa de registro (Ponto 3 detalha).
 - Não reescrevi a migration como arquivo novo: ela nunca foi integrada à base, então o acerto (REVOKE + linha do `DROP TRIGGER` no rollback) foi no próprio arquivo ainda-não-integrado, mantendo um único arquivo novo no diff.
 - Não toquei em frontend/Edge: o cartão é só banco + prova.
+- `src/integrations/supabase/types.ts` é saída gerada do schema (mesmas 3 tabelas e 4 RPCs da migration, sem lógica): não há teste unitário cabível para código gerado; a prova é o teste comportamental que aplica a migration real no PostgreSQL 17 descartável, mais o typecheck do `zapp-verify --rapido` no fechar.
 
 ## Arquivos (`git diff --name-only dia/2026-10-11...HEAD`)
 scripts/db-audit/inbox-contact-authorization.test.sh
