@@ -1,6 +1,7 @@
 -- message_favorites_pins_reports
 -- Rollback: dropa as 4 RPCs, o gatilho de pin e as 3 tabelas, na ordem inversa.
 -- Rollback (SQL executável, na ordem):
+--   drop trigger if exists message_pins_force_contact_id on public.message_pins;
 --   drop function if exists public.unpin_message(uuid);
 --   drop function if exists public.pin_message(uuid);
 --   drop function if exists public.report_message(uuid, text, text);
