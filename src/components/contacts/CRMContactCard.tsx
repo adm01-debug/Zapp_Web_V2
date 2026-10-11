@@ -45,7 +45,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {contact.cliente_ativado !== null && (
-            <Badge variant="outline" className={cn('text-[9px] py-0', contact.cliente_ativado ? 'bg-success/10 text-success border-success/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
+            <Badge variant="outline" className={cn('text-3xs py-0', contact.cliente_ativado ? 'bg-success/10 text-success border-success/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
               {contact.cliente_ativado ? 'Ativo' : 'Inativo'}
             </Badge>
           )}
@@ -54,7 +54,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
               {contact.relationship_score}
             </Badge>
           )}
-          {contact.is_whatsapp && <Badge variant="outline" className="text-[9px] py-0 bg-success/10 text-success border-success/30">💬 WhatsApp</Badge>}
+          {contact.is_whatsapp && <Badge variant="outline" className="text-3xs py-0 bg-success/10 text-success border-success/30">💬 WhatsApp</Badge>}
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
         <div className="flex items-center gap-2 mb-1.5">
           {contact.company_logo ? <img src={contact.company_logo} alt="" className="w-5 h-5 rounded object-contain bg-background border border-border/20" /> : <Building className="w-4 h-4 text-muted-foreground shrink-0" />}
           <span className="text-xs truncate">{contact.company_name}</span>
-          {contact.company_estado && <Badge variant="outline" className="text-[9px] py-0 px-1 ml-auto shrink-0">{contact.company_estado}</Badge>}
+          {contact.company_estado && <Badge variant="outline" className="text-3xs py-0 px-1 ml-auto shrink-0">{contact.company_estado}</Badge>}
         </div>
       )}
 
@@ -70,7 +70,7 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
         {contact.vendedor_nome && <span className="flex items-center gap-1"><User className="w-3 h-3" />{contact.vendedor_nome.split(' ').slice(0, 2).join(' ')}</span>}
         {contact.total_pedidos != null && contact.total_pedidos > 0 && <span className="flex items-center gap-1"><ShoppingCart className="w-3 h-3" />{contact.total_pedidos} ped.</span>}
         {contact.valor_total_compras != null && contact.valor_total_compras > 0 && <span className="flex items-center gap-1 text-success">{formatCurrency(contact.valor_total_compras)}</span>}
-        {contact.rfm_segment && <Badge variant="outline" className={cn('text-[9px] py-0 px-1', rfmColors[contact.rfm_segment] || '')}>{contact.rfm_segment}</Badge>}
+        {contact.rfm_segment && <Badge variant="outline" className={cn('text-3xs py-0 px-1', rfmColors[contact.rfm_segment] || '')}>{contact.rfm_segment}</Badge>}
       </div>
 
       <div className="flex items-center gap-3 mt-1.5 text-2xs text-muted-foreground">
@@ -80,8 +80,8 @@ export function CRMContactCard({ contact, onSelect }: CRMContactCardProps) {
 
       {contact.tags && contact.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1.5">
-          {contact.tags.slice(0, 4).map(tag => <Badge key={tag} variant="secondary" className="text-[9px] py-0 px-1.5">{tag}</Badge>)}
-          {contact.tags.length > 4 && <Badge variant="secondary" className="text-[9px] py-0 px-1.5">+{contact.tags.length - 4}</Badge>}
+          {contact.tags.slice(0, 4).map(tag => <Badge key={tag} variant="secondary" className="text-3xs py-0 px-1.5">{tag}</Badge>)}
+          {contact.tags.length > 4 && <Badge variant="secondary" className="text-3xs py-0 px-1.5">+{contact.tags.length - 4}</Badge>}
         </div>
       )}
     </motion.div>

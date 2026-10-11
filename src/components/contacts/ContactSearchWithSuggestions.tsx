@@ -178,7 +178,7 @@ export function ContactSearchWithSuggestions({
                     >
                       <Icon className="w-3 h-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-foreground">{item.label}</span>
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1 ml-auto shrink-0">
+                      <Badge variant="secondary" className="text-3xs h-4 px-1 ml-auto shrink-0">
                         {item.type === 'company' ? 'Empresa' : 'Tag'}
                       </Badge>
                     </button>

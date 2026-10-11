@@ -150,7 +150,7 @@ export function ContactCatalogSendHistory({ contactId }: { contactId: string }) 
                   {row.variant_label && <p className="text-caption">{row.variant_label}</p>}
                 </div>
                 {row.status && (
-                  <Badge variant="secondary" className="text-[9px] h-4 px-1.5 shrink-0">
+                  <Badge variant="secondary" className="text-3xs h-4 px-1.5 shrink-0">
                     {SEND_STATUS_LABEL[row.status] || row.status}
                   </Badge>
                 )}

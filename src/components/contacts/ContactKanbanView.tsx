@@ -247,7 +247,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
                                     {contact.tags && contact.tags.length > 0 && (
                                       <div className="flex flex-wrap gap-1 mt-2 ml-6">
                                         {contact.tags.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="secondary" className="text-[9px] h-4 px-1">
+                                          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1">
                                             {tag}
                                           </Badge>
                                         ))}
