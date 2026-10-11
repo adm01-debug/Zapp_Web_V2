@@ -124,7 +124,8 @@ CREATE TABLE public.contacts (
   id uuid PRIMARY KEY,
   queue_id uuid REFERENCES public.queues(id),
   assigned_to uuid REFERENCES public.profiles(id),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE public.conversation_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -168,6 +169,14 @@ GRANT EXECUTE ON FUNCTION public.skill_based_assign(uuid) TO authenticated;
 CREATE TRIGGER on_contact_queue_auto_assign
   BEFORE INSERT OR UPDATE OF queue_id ON public.contacts
   FOR EACH ROW EXECUTE FUNCTION public.auto_assign_to_queue_agent();
+
+-- Gatilho de updated_at REAL do projeto (update_contacts_updated_at) — para provar que o
+-- transbordo toca UMA linha e nao reescreve a data de todas
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$;
+CREATE TRIGGER update_contacts_updated_at
+  BEFORE UPDATE ON public.contacts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Logger real de conversation_events (copiado de 20260409100431) — prova do registro do transbordo
 CREATE FUNCTION public.log_assignment_change() RETURNS trigger
@@ -328,6 +337,7 @@ expect_value 'skill: so o agente que cumpre o requisito (a1), nao o mais livre' 
   "SELECT assigned_to FROM public.contacts WHERE id='40000000-0000-0000-0000-000000000008'"
 
 # ---------- 7) transbordo + registro ----------
+t0="$(psql_sql "SELECT clock_timestamp()::text")"
 docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres \
   -c "INSERT INTO public.contacts (id, queue_id) VALUES ('40000000-0000-0000-0000-000000000009','20000000-0000-0000-0000-000000000010');" >/dev/null
 expect_value 'transbordo: contato sem atendente vai para a fila de overflow' \
@@ -339,6 +349,12 @@ expect_value 'transbordo: contato e atribuido na fila de overflow (d1)' \
 expect_value 'transbordo: registrado em conversation_events (queue_transfer origem->overflow)' \
   '1' \
   "SELECT count(*) FROM public.conversation_events WHERE contact_id='40000000-0000-0000-0000-000000000009' AND event_type='queue_transfer' AND from_queue_id='20000000-0000-0000-0000-000000000010' AND to_queue_id='20000000-0000-0000-0000-000000000011'"
+expect_value 'transbordo: toca UMA linha de contacts (so o contato movido, sem backfill de updated_at)' \
+  '1' \
+  "SELECT count(*) FROM public.contacts WHERE updated_at >= '$t0'"
+expect_value 'transbordo: contato intocado mantem updated_at antigo' \
+  '1' \
+  "SELECT count(*) FROM public.contacts WHERE id='40000000-0000-0000-0000-000000000008' AND updated_at < '$t0'"
 
 # ---------- 8) fila default pula a pausada ----------
 psql_sql "INSERT INTO public.contacts (id) VALUES ('40000000-0000-0000-0000-00000000000a');" >/dev/null
