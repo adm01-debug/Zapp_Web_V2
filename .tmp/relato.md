@@ -1,7 +1,7 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/components/inbox/WhisperMode.tsx: seletor de destinatário (avatares + anel de presença success quando online) com teclado completo (setas, Enter, Esc, Tab) e mola curta do kit; o alvo do INSERT passa a vir do responsável atual da conversa por padrão e da escolha no seletor; falha do INSERT não limpa mais o campo — mantém o texto, mostra o motivo em pt-BR ("sem permissão", "contato inacessível") numa faixa destructive com "Tentar de novo"; botão de envio desabilitado sem destino válido, com tooltip explicando; estados carregando (skeleton com shimmer) e vazio; movimento reduzido respeitado (nada se desloca, só cor/opacidade).
+- src/components/inbox/WhisperMode.tsx: seletor de destinatário (avatares + anel de presença success quando online) com teclado completo (setas, Enter, Esc, Tab) e mola curta do kit; o alvo do INSERT passa a vir do responsável atual da conversa por padrão e da escolha no seletor; falha do INSERT não limpa mais o campo — mantém o texto, mostra o motivo em pt-BR ("sem permissão", "contato inacessível") numa faixa destructive com "Tentar de novo"; botão de envio desabilitado sem destino válido, com tooltip explicando; estados carregando (skeleton com shimmer) e vazio; movimento reduzido respeitado (nada se desloca, só cor/opacidade); spinner do envio com motion-safe:animate-spin.
 - src/components/inbox/ChatPanel.tsx: uma linha — passa targetAgentId={conversation.assignedTo?.id} ao WhisperMode, para o sussurro já nascer endereçado ao responsável da conversa.
 - src/components/inbox/__tests__/WhisperMode.destino.test.tsx (novo): prova o destino do INSERT, o bloqueio sem destino, a falha que preserva o texto e o comportamento com movimento reduzido.
 
