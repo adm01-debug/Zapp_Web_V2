@@ -1,23 +1,31 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+- src/hooks/chat/useConversationActions.ts: `snoozeConversation` agora guarda TODOS os ids anteriores e apaga com `.delete().in('id', ids)` depois do insert aceito (antes apagava só o primeiro); o insert usa `.select('id').single()` para obter o id da linha nova; se o delete pós-insert falha, a linha nova é apagada de volta (reversão explícita), com toast de erro e sem toast de sucesso nem atualização de estado.
+- src/hooks/chat/__tests__/useConversationActions.snooze.test.ts: mock do delete com `.in` e fila de resultados por chamada; teste com 3 linhas anteriores (todas removidas) e teste com falha no delete (reversão + erro visível + sem sucesso); asserção do teste de sucesso atualizada para `.in`.
+- src/hooks/chat/__tests__/useConversationActions.test.ts: mock `resultChain` com `.select`/`.in` (só o dublê, nenhuma asserção afrouxada) — o insert com `.select('id')` quebrava 5 testes antigos.
+- (trazidos do trabalho anterior via cherry-pick cb8700801) src/hooks/chat/snoozeDurations.ts + snoozeDurations.test.ts: cálculo de `nextweek`/`tomorrow` já aprovado pelo revisor, sem alteração.
+- useChatPanelHandlers.ts fora do diff: a base dia/2026-10-11 já avisa no `/snooze` sem argumento (outro cartão); mantive a versão da base no conflito do cherry-pick.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+## Pontos do revisor
+- Ponto 1 (apagava só a primeira linha antiga): `idsAnteriores` com todos os ids + `.in('id', ids)` em useConversationActions.ts — prova: `várias linhas anteriores: remove TODAS após o insert aceito` (vermelho antes: recebia `[{ id: 'snooze-a' }]` em vez de `[{ 'in:id': ['snooze-a','snooze-b','snooze-c'] }]`; verde depois).
+- Ponto 2 (erro do delete descartado): `deleteError` tratado com reversão da linha nova + `toast.error` + `return` antes do sucesso em useConversationActions.ts — prova: `falha no delete pós-insert: reverte a linha nova, avisa erro e não mostra sucesso` (vermelho antes: `writeOrder` era `['insert','delete']`, sem reversão; verde depois: `['insert','delete','delete']`, sem `toast.success`, `isSnoozed` false).
+- Ponto 3 (testes com 2+ linhas e com falha no delete): os dois testes acima, em src/hooks/chat/__tests__/useConversationActions.snooze.test.ts.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (testes novos contra o código do cherry-pick, sem a correção): `npx vitest run src/hooks/chat/__tests__/useConversationActions.snooze.test.ts` → `Tests 3 failed | 2 passed (5)`.
+- verde depois: `npx vitest run src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts` → `Test Files 2 passed (2); Tests 13 passed (13)`.
+- regressão da pasta: `npx vitest run src/hooks/chat` → `Test Files 32 passed (32); Tests 312 passed | 2 expected fail | 1 todo (315)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (97s)` (sem migration no cartão; tipos, lint e migrations OK).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Arquivos (git diff --name-only dia/2026-10-11...HEAD)
+- src/hooks/chat/__tests__/snoozeDurations.test.ts
+- src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
+- src/hooks/chat/__tests__/useConversationActions.test.ts
+- src/hooks/chat/snoozeDurations.ts
+- src/hooks/chat/useConversationActions.ts
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não mexi em VirtualizedRealtimeList.tsx nem no QuickAdd de tarefas: fora dos 3 pontos da recusa (a recusa aprovou o cálculo e cobrou só a gravação).
+- Não alterei useChatPanelHandlers.ts: o aviso do `/snooze` sem argumento já existe na base.
+- Não converti o delete+insert em upsert/RPC única: a recusa mandou explicitamente insert-antes + `.in('id', ids)` depois do aceite; segui a prescrição.
