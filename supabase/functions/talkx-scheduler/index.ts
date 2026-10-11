@@ -274,6 +274,26 @@ export async function handleTalkxScheduler(
 
     for (const campaign of allCampaigns) {
       try {
+        // N-102: verifica a janela de envio (send_weekdays + dnd_hours) na RPC
+        // talkx_campaign_window_open, criada no cartao-irmao de banco (N-118).
+        // DEPENDENCIA DE ORDEM: este cartao so pode entrar DEPOIS do irmao
+        // (migration que cria a RPC + catalogo). Se o scheduler for ao ar antes
+        // dela, a chamada falha e TODA campanha cai em outside_send_window
+        // (falha fechada: nada e despachado).
+        const { data: windowOpen, error: winErr } = await supabase.rpc(
+          "talkx_campaign_window_open",
+          { p_campaign_id: campaign.id, p_at: nowIso },
+        );
+        if (winErr || windowOpen !== true) {
+          log.info(`Campanha fora da janela de envio: ${campaign.name} (${campaign.id})`, {
+            campaignId: campaign.id,
+            windowOpen,
+            winErr: winErr?.message,
+          });
+          results.push({ campaignId: campaign.id, name: campaign.name, success: false, reason: 'outside_send_window' });
+          continue;
+        }
+
         const response = await fetchWithTimeout(
           doFetch,
           `${supabaseUrl}/functions/v1/talkx-send`,
