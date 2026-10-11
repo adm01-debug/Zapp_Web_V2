@@ -12,6 +12,11 @@ Especialista: worker (geral)
 - `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (51s)` (tipos, lint, migrations, dependências e db_guard OK).
 - O item do espelho é um teste node; rodei a mesma porção node do `ci_espelho.sh` (`node --test --test-reporter=tap scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs scripts/db-audit/*.test.mjs scripts/talkx/*.unit.mjs`): `# tests 1319 / # pass 1309 / # fail 9 / # skipped 1` e `node: ESTADO.md cita só âncoras reais...` NÃO aparece entre os 9 (são falhas de base: fixtures do lint-ratchet e 2 do Talk X, que o `ci_espelho` desconta por já falharem na base).
 
+## Pontos do revisor (corrigir do cartão)
+- Ponto 1: parti do commit da entrega — cherry-pick de `2e674b5da` sobre a ponta de dia/2026-10-11 (commit `ea2f2eecc` na branch, seguido de `c9911d117` e `a5f46c0b6`); não recomecei.
+- Ponto 2: reproduzi o item sobre a ponta atual (`TOTAL ANCORAS RUINS: 12` com o doc da entrega) e corrigi a causa — reposicionei as âncoras no ESTADO.md e alinhei TESTING_CONVENTION.md/guarda à quarentena real; o critério da guarda não foi tocado nem afrouxado (continua `arquivo:linha` com a edge na linha citada).
+- Ponto 3: provei verde — `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11 / pass 11 / fail 0` e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`; fecho citando o sha.
+
 ## O que NÃO fiz e por quê
 - Não rodei `bash ~/arquitetura-v2/integrador/ci_espelho.sh .` direto: o HERMES-GUARD bloqueou a chamada duas vezes ("mexer nas guardas/ferramentas do Hermes"); não contornei a guarda — repliquei a porção node, que é exatamente onde está o item.
 - Não mudei o critério da guarda nem removi asserção: o teste continua exigindo `arquivo:linha` com a edge na linha citada e comparando grupo/totais/órfãs com o código; só reposicionei os números no documento.
