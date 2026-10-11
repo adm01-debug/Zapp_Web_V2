@@ -39,6 +39,12 @@ verify_jwt = false
 [functions.auth-login]
 verify_jwt = false
 
+# Pedido público de redefinição de senha (/forgot-password): visitante deslogado,
+# sem JWT. Lookup do usuário e insert em password_reset_requests acontecem com
+# service role DENTRO da função; resposta sempre genérica (anti-enumeração).
+[functions.request-password-reset]
+verify_jwt = false
+
 # Catálogo de produtos — edge-only; endpoint e service role via Supabase Secrets.
 # verify_jwt=true é o default do CLI; declarado aqui para documentação explícita.
 [functions.promogifts-catalog]
