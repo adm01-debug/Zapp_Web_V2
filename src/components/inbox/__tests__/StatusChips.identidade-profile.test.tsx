@@ -11,10 +11,18 @@
  * Identidade correta do usuário logado para comparar com `assigned_to`:
  * `profile.id`. Este teste usa UUIDs DISTINTOS para `user.id` e `profile.id`
  * para que a troca fique visível: com a comparação errada ele fica vermelho.
+ *
+ * Os números dos chips agora nascem em `useInboxFilters.chipCounts` (contados
+ * por `countByChip` com o `profileId` que vem do AuthProvider, como
+ * RealtimeInboxView faz) e o StatusChips só os exibe — por isso o caminho
+ * testado aqui é AuthProvider → useInboxFilters → StatusChips, o mesmo de
+ * produção.
  */
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { StatusChips } from '../conversation-list/StatusChips';
+import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import type { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
 
 const AUTH_USER_ID = 'auth-user-1111-aaaa'; // auth.users.id  → user.id
@@ -32,6 +40,8 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => authState.current,
 }));
 
+import { useAuth } from '@/hooks/auth/useAuth';
+
 function makeConversation(
   overrides: Partial<ConversationWithMessages['contact']> & { hasMessages?: boolean; unreadCount?: number }
 ): ConversationWithMessages {
@@ -46,6 +56,13 @@ function makeConversation(
     unreadCount,
     lastMessage: null,
   };
+}
+
+/** Mesmo encanamento do inbox: profileId sai do AuthProvider, chips leem chipCounts. */
+function ChipsComoNoInbox({ conversations }: { conversations: ConversationWithMessages[] }) {
+  const { profile } = useAuth();
+  const inboxFilters = useInboxFilters({ conversations, profileId: profile?.id });
+  return <StatusChips counts={inboxFilters.chipCounts} chipTab="all" onChipTabChange={() => {}} />;
 }
 
 describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)', () => {
@@ -63,7 +80,7 @@ describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)',
       makeConversation({ id: 'sem-dono', assigned_to: null, conversation_status: 'waiting' }),
     ];
 
-    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+    render(<ChipsComoNoInbox conversations={conversations} />, { wrapper: MemoryRouter });
 
     // Só a conversa com assigned_to = profile.id do logado entra no contador.
     // "Aguardando" segue o status persistido (contacts.conversation_status),
@@ -75,7 +92,7 @@ describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)',
   it('NÃO conta a conversa cujo assigned_to coincide com o AUTH id (auth id não é profile id)', () => {
     const conversations = [makeConversation({ id: 'auth-nao-e-profile', assigned_to: AUTH_USER_ID, conversation_status: 'open' })];
 
-    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+    render(<ChipsComoNoInbox conversations={conversations} />, { wrapper: MemoryRouter });
 
     // assigned_to guarda profiles.id; bater com o auth id não pode virar "meu atendimento".
     expect(screen.getByTestId('status-chip-attending')).toHaveTextContent('0');
@@ -91,7 +108,7 @@ describe('StatusChips — identidade do contador "Em atendimento" (R2-INB-056)',
     };
     const conversations = [makeConversation({ id: 'sem-profile-id', assigned_to: undefined, conversation_status: 'waiting' })];
 
-    render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
+    render(<ChipsComoNoInbox conversations={conversations} />, { wrapper: MemoryRouter });
 
     // Sem o guard `profileId != null`, undefined === undefined faria a conversa
     // sem responsável entrar indevidamente em "Em atendimento".
