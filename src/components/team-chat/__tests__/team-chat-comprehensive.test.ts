@@ -316,7 +316,7 @@ describe('Team Chat — renderização de mídia', () => {
     const img = screen.getByAltText('Imagem enviada');
     expect(img).toHaveAttribute('src', 'https://exemplo.test/foto.png');
     fireEvent.click(img);
-    expect(abrir).toHaveBeenCalledWith('https://exemplo.test/foto.png', '_blank');
+    expect(abrir).toHaveBeenCalledWith('https://exemplo.test/foto.png', '_blank', 'noopener,noreferrer');
     abrir.mockRestore();
   });
 

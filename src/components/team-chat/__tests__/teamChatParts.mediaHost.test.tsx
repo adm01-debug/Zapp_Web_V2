@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SUPABASE_URL } from '@/config/supabase';
@@ -52,5 +52,30 @@ describe('SEC-FE-01 — mídia do chat de equipe aponta para o host canônico', 
 
     expect(capturado.source).toBe(`${SUPABASE_URL}/storage/v1/object/equipe/chat/foto.jpg`);
     expect(capturado.source).not.toContain('projeto-interno');
+  });
+});
+
+describe('SEC-FE-04 — abrir mídia em nova aba usa noopener e noreferrer', () => {
+  let openSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
+  });
+
+  it('window.open é chamado com _blank e noopener,noreferrer ao clicar na imagem', () => {
+    render(<MediaContent msg={mensagem} />);
+
+    const img = screen.getByRole('img', { name: 'Imagem enviada' });
+    fireEvent.click(img);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      '_blank',
+      'noopener,noreferrer',
+    );
   });
 });
