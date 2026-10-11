@@ -1,23 +1,58 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: worker (design) (design-system-zapp) — o pedido original era do especialista iris; o jev-entrada roteou este cartão ao designer (conf 0.75).
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- `src/components/ui/VolumeDial.tsx`: o arraste agora guarda o ângulo da amostra anterior e recusa a
+  travessia da abertura inferior (o vão de 90° entre as duas pontas do arco) — o valor fica preso na ponta,
+  sem saltar 100 ↔ 0. Novos helpers `posicaoNoArco`/`menorVarredura`/`cruzaVao`; `anguloAnterior` é zerado no
+  pointerdown/up/cancel.
+- `src/components/ui/VolumeDial.tsx`: tirei `transition-transform` do knob (não há mais transição CSS; o
+  deslocamento é do framer-motion ou instantâneo com movimento reduzido) e o knob passou a ter a largura/altura
+  calculadas de `size`.
+- `src/components/ui/VolumeDial.tsx`: o knob e o número do centro agora são proporcionais ao prop `size`
+  (14 px/24 px no padrão 96), o número via `--volume-dial-fonte` aplicado no `style` do dial e consumido pela
+  classe real `text-[length:var(--volume-dial-fonte)]`; o knob via `width`/`height` inline.
+- `src/components/ui/VolumeDial.tsx`: a segunda parada do `linearGradient` saiu de `--primary-glow` e passou a
+  derivar do próprio `--primary` (`stopColor="hsl(var(--primary))"` com `stopOpacity={0.55}`), então acompanha as
+  skins, que redefinem `--primary`.
+- `src/components/ui/VolumeDial.tsx`: `porPonteiro` ignora o ponteiro a menos de 60% do raio do anel
+  (`RAIO_MINIMO_ARRASTE`), então clicar no número do centro não muda o valor.
+- `src/components/ui/__tests__/VolumeDial.test.tsx`: testes novos para cada um dos cinco pontos (dois de
+  travessia do vão, um de centro ignorado, dois de tamanho proporcional, um de gradiente e um de knob sem
+  transição com movimento reduzido) mais um de arraste com `setPointerCapture`.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (componente original, commit `cfb8e736f`): `npx vitest run src/components/ui/__tests__/VolumeDial.test.tsx`
+  → `Tests 6 failed | 12 passed (18)`; falhas: "não salta de 100 para 0 ao cruzar a abertura inferior do arco",
+  "não salta de 0 para 100 ao cruzar a abertura no sentido inverso", "ignora o pointerdown no centro (raio
+  abaixo de 60% do raio do anel)", "no size padrão (96) mantém knob de 14px e número de 24px", "escala knob e
+  número junto com o prop size (192 → 28px / 48px)" e "com movimento reduzido o knob não tem transição CSS e
+  vai direto à posição".
+- verde depois: `npx vitest run src/components/ui/__tests__/VolumeDial.test.tsx`
+  → `Test Files 1 passed (1)` / `Tests 19 passed (19)`, 0 falhas e 0 pulados.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (119s)` (os `tipos` passaram em 116s, `lint` 3s).
+- CSS gerado (o tamanho proporcional chega ao elemento, não é classe órfã): `npx tailwindcss -i src/index.css -o ../tw-check.css`
+  gerou `.text-\[length\:var\(--volume-dial-fonte\)\] { font-size: var(--volume-dial-fonte); }` (linha 10870 do
+  CSS de saída).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Pontos do revisor
+- Ponto 1 (salto 100 ↔ 0 no vão): `cruzaVao` recusa a amostra que atravessa a abertura; travado na ponta nos dois
+  sentidos. Testes "não salta de 100 para 0..." e "não salta de 0 para 100...".
+- Ponto 2 (movimento reduzido deslizando): removi `transition-transform` do knob; com movimento reduzido o knob
+  recebe `style.transform` direto. Teste "com movimento reduzido o knob não tem transição CSS e vai direto à
+  posição".
+- Ponto 3 (gradiente não segue as skins): as duas paradas usam `hsl(var(--primary))`, a segunda com
+  `stopOpacity={0.55}`. Teste "deriva as duas paradas do próprio primary (acompanha as skins)".
+- Ponto 4 (tamanho não proporcional): knob e font-size do centro calculados de `size`. Testes "no size padrão (96)
+  mantém knob de 14px e número de 24px" e "escala knob e número junto com o prop size (192 → 28px / 48px)".
+- Ponto 5 (pointerdown no centro mudava o valor): `RAIO_MINIMO_ARRASTE = 0.6` ignora o ponteiro perto do centro.
+  Teste "ignora o pointerdown no centro (raio abaixo de 60% do raio do anel)".
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não medi cor/contraste no navegador: jsdom não calcula cor e não há projeto Playwright para este componente.
+  O ponto 3 é provado pelo atributo real do `stop` no DOM renderizado e pelo CSS gerado, não por leitura do `.tsx`.
+- A guarda de tipografia isolada (`node scripts/qa/medir-tipografia.cjs --check`) acusa dívida PRÉ-EXISTENTE na
+  base: `tsxFontFamilyLiteral: 4 (teto 1)` em `src/components/email/EmailFullViewDialog.tsx:33` e
+  `src/styles/__tests__/cp1FidelidadeCarvao.test.ts:279/280/284`, e `tsxFontSizeInline: 1 (teto 1)` em
+  `src/components/catalog/catalogShared.tsx:140`. Nenhuma vem dos meus dois arquivos (contribuição 0); não os
+  toquei.
+- Não alterei lógica de volume, stores, persistência, migration, Edge Function nem dependências.
