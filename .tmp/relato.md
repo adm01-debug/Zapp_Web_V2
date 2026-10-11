@@ -39,4 +39,16 @@ Especialista: worker (sql) (area-sql-banco)
 - Não alterei a migration nem a edge function: a causa era só a entrada obsoleta do baseline.
 - SHA da ponta: `d54d86c1c` (branch `v2/refazer-talkx-campaign-window-cast-jsonb-26101117058513`).
 
+## Pontos do revisor
+- Ponto 1: parti do commit da entrega com `git cherry-pick 34d28aa08^..3e83d2e68` (os 3 commits da branch da
+  entrega, na ordem; o `3e83d2e68` sozinho depende dos 2 anteriores) — viraram `e5aff764f`, `e4550eb8d`,
+  `9ef70ef18`; não recomecei nada.
+- Ponto 2: reproduzi sobre a ponta atual de `dia/2026-10-11` e a causa era a entrada obsoleta do baseline:
+  `node scripts/db-audit/supabase-usage-guard.mjs` → `Entradas obsoletas no baseline ... rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts` → `EXIT=1`.
+  Corrigi em `scripts/db-audit/known-violations.json` (chave removida de `known`, movida para `_resolvido`),
+  sem afrouxar asserção nenhuma; a outra chave de baseline continua em `known`.
+- Ponto 3: provei o mesmo comando VERDE (`node scripts/db-audit/supabase-usage-guard.mjs` → `OK: nenhuma
+  violacao nova.` → `EXIT=0`) e `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (98s)` → `EXIT=0`;
+  sha da ponta `d54d86c1c`.
+
 CONCLUÍ.
