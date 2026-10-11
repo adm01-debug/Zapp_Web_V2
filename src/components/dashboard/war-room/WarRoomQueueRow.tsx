@@ -29,7 +29,9 @@ export function WarRoomQueueRow({ queue, onClick }: QueueRowProps) {
         </div>
         <div className="flex items-center gap-2">
           {queue.slaBreaches > 0 && <Badge variant="destructive" className="animate-pulse">{queue.slaBreaches} violações</Badge>}
-          {(queue.slaWarnings ?? 0) > 0 && <Badge variant="secondary" className="bg-warning/20 text-warning">{queue.slaWarnings} em risco</Badge>}
+          {/* Y17-5 (achado 04): fundo com alfa + o par de TEXTO do sistema —
+              `text-warning` (preenchimento) sobre `bg-warning/10` media 1,97:1. */}
+          {(queue.slaWarnings ?? 0) > 0 && <Badge variant="secondary" className="bg-warning/20 text-[hsl(var(--warning-text))]">{queue.slaWarnings} em risco</Badge>}
         </div>
       </div>
       <div className="grid grid-cols-4 gap-4 text-sm">

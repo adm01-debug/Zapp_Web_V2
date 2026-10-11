@@ -202,7 +202,9 @@ function RailMonthlyChart({ stats, loading }: Pick<CatalogRailProps, 'stats' | '
       glow
       right={
         delta != null ? (
-          <span className={`text-xs font-semibold tabular-nums ${delta >= 0 ? 'text-success' : 'text-destructive'}`}>
+          /* Y17-5 (achado 04): o vermelho de preenchimento como TEXTO media
+             3,78:1 sobre o card; o par de texto é `--destructive-text`. */
+          <span className={`text-xs font-semibold tabular-nums ${delta >= 0 ? 'text-success' : 'text-[hsl(var(--destructive-text))]'}`}>
             {delta >= 0 ? '+' : ''}{delta}%
           </span>
         ) : undefined
