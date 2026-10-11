@@ -889,6 +889,18 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/l11-departments-acl-escrita.test.sh
 
+      # departments-admin-gestao (V3 DepartmentsPage): a tabela departments tinha escrita ampla
+      # (admin OU supervisor) e DELETE de TABELA para authenticated — o admin apagava a linha
+      # direto e o ON DELETE CASCADE de team_conversations apagava conversas sem checagem.
+      # O bloco ANTES mede o defeito; o DEPOIS aplica a migration e prova escrita so-admin,
+      # DELETE revogado, RPC delete_department (recusa com contagens / move+apaga+audita) e
+      # departments_overview; as mutacoes quebram o REVOKE e o portao de papel; o rollback roda.
+      - name: Simular gestao de departamentos pelo admin
+        env:
+          DEPARTMENTS_ADMIN_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/departments-admin-management.test.sh
+
       # Auditoria Onda 3, achado 2: a RPC de recibo de leitura e SECURITY DEFINER e nao checava
       # vinculo — gravava recibo cross-team por RPC enquanto o insert direto era barrado pela RLS.
       # Bloco A prova o defeito no mesmo container, aplica a migration e o bloco B prova a correcao.
