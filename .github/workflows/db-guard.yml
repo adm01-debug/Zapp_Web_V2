@@ -1017,3 +1017,15 @@ jobs:
       # o banco de producao e confere que os arquivos citados existem no repo.
       - name: Provar o runbook de recriacao do banco local (N-136)
         run: bash scripts/db-audit/recriar-banco-local.test.sh
+
+      # t_ac2fa555 (P1 · banco, painel admin de cron jobs): as RPCs admin_list_cron_jobs e
+      # admin_toggle_cron_job nao existiam no V2. O contrato aplica o ARQUIVO real num
+      # PostgreSQL 17 descartavel e prova, com papel real: guarda is_admin(auth.uid()),
+      # allow-list fechada (manutencao/limpeza fora), ACL negando anon e service_role,
+      # jobid preservado via cron.alter_job (sem DML direto) e auditoria em audit_logs.
+      # Cria roles anon/authenticated/service_role -> colide com o docker-shim do E47.
+      - name: Provar as RPCs do painel admin de cron jobs (t_ac2fa555)
+        env:
+          ADMIN_CRON_JOBS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/admin-cron-jobs-rpc.test.sh
