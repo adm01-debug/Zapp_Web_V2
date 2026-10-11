@@ -1,23 +1,25 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: iris (area-front-componentes)
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
+- src/components/reports/AutoExportManager.tsx: removido o componente (git rm) — regra do Joaquim (07/10): nenhuma informação sai do sistema; o Zapp não exporta.
+- src/pages/lazyViews.ts: removido o lazy `AutoExportManager` (import dinâmico do componente).
+- src/pages/ViewRouter.tsx: removida a entrada `'auto-export'` do VIEW_MAP.
+- src/services/navigation.service.ts: removido o item `{ id: 'auto-export', label: 'Export Auto' }` do menu avançado e o ícone `ClipboardList` do import (ficou sem uso só por causa desse item).
+- src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx: teste novo que prova a remoção.
 
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+Comportamento do link antigo: com o item fora da nav, `NavigationService.canAccess('auto-export', ...)` cai no `if (!item) return false` (linha ~197) → deep link `?view=auto-export` vira view desconhecida e é negado (RestrictedView "Acesso restrito"), o mesmo padrão de qualquer id não mapeado.
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes: `npx vitest run src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx` (sem a mudança) → `Tests 3 failed (3)`: `expected [ 'audit-logs', 'auto-export', …(8) ] to not include 'auto-export'` e `expected true to be false` em `canAccess('auto-export', ['admin'])`.
+- verde depois: `npx vitest run src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx src/services/__tests__/navigation.service.test.ts src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx src/hooks/ui/__tests__/useNavShortcuts.test.tsx src/components/layout/__tests__/shellLayout.contrato.test.tsx` → `Test Files 5 passed (5); Tests 34 passed (34)`.
+- critério de pronto: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (64s)` (tipos OK, lint OK).
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Varredura (O QUE FAZER item 1)
+- `git grep -n "AutoExportManager\|auto-export" -- src` → só as 4 ocorrências removidas; nenhuma sobrou.
+- Hooks/serviços usados SÓ por ele: nenhum. O componente importava apenas `Card/CardContent` e o ícone `ShieldAlert` (nada de hook/service).
+- Edge Function/tabela usados só por ele: nenhum. `git grep -n "auto-export\|auto_export" -- supabase` → vazio (sem Edge `zapp-auto-export`, sem tabela `auto_export_jobs` no V2). Portanto NÃO há cartão de banco/edge pendente para este item.
+- Referências restantes a "AutoExportManager"/"auto-export" estão só em documentos históricos (docs/audits, docs/plans, docs/reconciliation) — fora do escopo do cartão (ARQUIVOS QUE PODE TOCAR limita a src/pages, src/services, src/components/reports); não toquei.
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não mexi em docs/* (planos e auditorias históricas mencionam a view): escopo do cartão é remover a tela do app, não reescrever histórico.
+- Não removi nada de banco/Edge: não existe Edge ou tabela exclusiva desta view no V2 (ver varredura).
