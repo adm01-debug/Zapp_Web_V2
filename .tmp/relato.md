@@ -1,23 +1,37 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
+
+[refazer 1] — reações da conversa em uma consulta: corrigidos ponto a ponto os 4 itens da recusa, sem mudar o desenho (lote em blocos de 100 + fallback solo na falha).
 
 ## O que mudou e por quê
-- src/hooks/inbox/useInboxFilters.ts: o `useMemo` de `filteredConversations` ganhou um ramo `chipTab === 'archived'` ANTES do ramo `mainTab === 'open'`. O chip deriva `mainTab 'open' | subTab null` (setChipTab), e esse ramo exige `conversation_status open|waiting` — sem o ramo novo a lista de Arquivadas ficava vazia. O ramo novo filtra `contact.conversation_status === 'archived'` e, como busca/tipo de contato/status/tags/agente/data são aplicados depois, mantém esses filtros por cima; o filtro de fila (`selectedQueueId`), que hoje só existe no ramo 'open', foi replicado nele.
-- src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx (novo): 5 testes chamando o hook REAL via renderHook — Arquivadas lista só arquivadas; arquivadas ausentes de Todas/Não lidas/Em atendimento/Aguardando/Resolvidas; busca dentro de Arquivadas; fila dentro de Arquivadas; e lista vazia sem erro quando não há arquivadas.
-
-## O que conferi no código atual (dia/2026-10-11)
-- Item 2 (arquivadas fora dos outros chips): os chips Todas/Não lidas/Em atendimento/Aguardando derivam `mainTab 'open'` (status open|waiting) e Resolvidas usa `mainTab 'resolved'` — nenhum deles conhece 'archived', então já excluíam as arquivadas; o teste cobre os cinco chips e confirma. Não havia ramo vazando arquivadas para os chips.
-- Item 3 (persistência): `chipTab` é `useState` local (useInboxFilters.ts:19), não é persistido em URL/storage (só `search`, `type` e os `filters` vão para a URL). Logo o comportamento de 'archived' ao trocar de chip e voltar é o mesmo dos outros chips (reinicia), e não há valor guardado que possa quebrar a lista. Nada a mudar.
-- Item 4 (estado vazio): com o chip ativo e nenhuma arquivada, `filteredConversations` fica vazio e a sidebar cai no estado vazio com a microcopy neutra "Sem conversas" (ConversationListSidebar.tsx:251 — fallback, não é "sem conversas abertas"). Já é coerente; não alterei o arquivo (está fora dos caminhos permitidos do cartão e a mudança seria visual, que é do B1).
+- src/hooks/reactions/useBatchReactions.ts: nomes dos autores agora num ÚNICO `.in('id', …)` com a união dos user_ids de todos os blocos, ANTES de semear; contexto trocou `isBatchPending` global por `coveredIds`/`settledIds` por mensagem; `settled` marca SÓ o que foi resolvido (semeado ou falhado — nunca cancelado/superado/erro de nomes); guarda anti-sobrescrita do realtime com `>=`.
+- src/hooks/chat/useMessageReactions.ts: trava `enabled:false` por mensagem (coberta e não resolvida); id fora da lista ou sem provider consulta sozinho como antes.
+- src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx: mock conta `.in` de profiles e falha seletiva por bloco; +3 testes (união de nomes, id fora da lista, fallback parcial por bloco).
+- src/components/inbox/chat/ChatMessagesArea.tsx: mantido do trabalho anterior (memo dos ids + provider envolvendo a lista).
 
 ## Prova
-- vermelho antes (só o teste novo, sem a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx` → `Tests 4 failed | 1 passed (5)` (Arquivadas devolvia 'aberta' etc.).
-- verde depois (com a correção): `npx vitest run src/hooks/inbox/__tests__/useInboxFilters.arquivadas.test.tsx src/hooks/inbox/__tests__/useInboxFilters.fsm-padrao.test.tsx src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 3 passed (3); Tests 10 passed (10)`.
-- regressão da pasta inteira: `npx vitest run src/hooks/inbox` → `Test Files 19 passed (19); Tests 92 passed | 1 expected fail (93)`.
+- vermelho antes (código anterior + teste novo): `npx vitest run src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx` → `Tests 2 failed | 7 passed (9)` (falham exatamente `nomes dos autores: UM .in() com a união…` e `id fora da lista do provider consulta sozinho…`, ambos por asserção de contagem de consulta).
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 9 passed (9)`.
+- regressão ao lado: + `src/hooks/__tests__/useMessageReactions.test.tsx` e `src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx` → `Test Files 3 passed (3); Tests 17 passed (17)`.
+- `npx tsc -b --force` → saída vazia, `TSC-EXIT=0`.
+- O arquivo `.test.tsx` É descoberto pela suite: `vitest.config.ts` tem `include: ["src/**/*.{test,spec}.{ts,tsx}"]` e a execução acima rodou 9 testes dele; o repo tem dezenas de `.test.tsx` executados do mesmo jeito.
 
-## Sobre o aviso do juiz (arquivo fora de 'ARQUIVOS QUE PODE TOCAR')
-- `src/components/inbox/__tests__/StatusChips.test.tsx` (e `StatusChips.tsx`) aparecem no diff da branch porque o cartão PAI t_2bcde689 não estava em `dia/2026-10-11`: segui a instrução do próprio cartão ("traga com git cherry-pick <sha>") e apliquei `git cherry-pick -x 452075a32` (commit f14f8de63). Não editei esses arquivos — são 100% do B1 e indispensáveis aqui porque o chip `archived` (tipo `ChipTab`) vem deles. Meu diff de código é só em `useInboxFilters.ts` + teste novo.
+## Pontos do revisor
+- Ponto 1 (teste fora da suite): cumprido por demonstração — o nome já está no padrão que a suite descobre (`src/**/*.{test,spec}.{ts,tsx}` no vitest.config.ts) e a prova é a execução real acima (`Test Files 1 passed (1); Tests 9 passed (9)` no próprio arquivo). Renomear para `.test.ts` quebraria o JSX do teste.
+- Ponto 2 (N+1 de profiles): o lote agora acumula as reações de todos os blocos, busca os nomes com UM `.in('id', união)` e só então semeia (`src/hooks/reactions/useBatchReactions.ts`, `load` em duas fases + `fetchReactionUserNames` sem fatiar). Teste que prova: `nomes dos autores: UM .in() com a união dos user_ids de todos os blocos` (150 ids = 2 `.in` de reações + 1 de nomes; falhava antes com 2 chamadas de nomes).
+- Ponto 3 (N consultas antes de semear): trava agora é por mensagem — filho dentro do provider com id coberto e não resolvido fica `enabled:false` desde o primeiro passe; id fora da lista consulta sozinho na hora (`useMessageReactions.ts`, `batchDefersMessage`). Teste que prova: `id fora da lista do provider consulta sozinho sem esperar o lote` (antes: `eqCalls` ficava `[]`, travado pelo pendente global).
+- Ponto 4 (lote apaga realtime / settled sem semear): `settled` só marca ids resolvidos (semeados ou com falha liberando fallback); execução cancelada/superada não marca nada (a nova cobre); guarda de semeadura com `>=` cobre o caso do mesmo milissegundo. Testes que provam: `bloco que falha libera fallback solo sem travar o bloco que passou` + os já existentes (`stale` do realtime, mensagem nova, falha total com fallback).
 
 ## O que NÃO fiz e por quê
-- Não mexi em archiveContact/bulkArchive/useBulkActions (proibido pelo cartão), nem em migration/banco/Edge.
-- Não alterei a microcopy de lista vazia nem o StatusChips: fora dos caminhos permitidos e é do B1.
-- Não apliquei exclusão de arquivadas no ramo `mainTab 'search'` (deep-link de contato pendente de RealtimeInboxView, que não é chip): mudar ali sairia do escopo dos cinco chips e poderia quebrar o deep-link; o cartão lista os chips Todas/Não lidas/Em atendimento/Aguardando, cobertos.
+- Não renomeei o teste para `.test.ts`: `.ts` não aceita o JSX do teste e `.test.tsx` já é descoberto e executado pela suite (prova acima).
+- Não toquei em migration, manifesto, CI, `schema-manifest` ou telas: fora dos 4 pontos da recusa.
+
+## Arquivos (`git diff --name-only HEAD~1...HEAD`, colado)
+- src/components/inbox/chat/ChatMessagesArea.tsx
+- src/hooks/chat/useMessageReactions.ts
+- src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx
+- src/hooks/reactions/useBatchReactions.ts
+
+## Comandos de verificação (resultado real)
+- `npx vitest run src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx` → `Test Files 1 passed (1); Tests 9 passed (9)`
+- `npx vitest run <arquivo acima> src/hooks/__tests__/useMessageReactions.test.tsx src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx` → `Test Files 3 passed (3); Tests 17 passed (17)`
+- `npx tsc -b --force` → sem saída, exit 0
