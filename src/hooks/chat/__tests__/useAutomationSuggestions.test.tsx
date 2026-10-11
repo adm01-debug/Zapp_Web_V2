@@ -248,6 +248,30 @@ describe('useAutomationSuggestions', () => {
     expect(hook.result.current.loading).toBe(false);
   });
 
+  it('dispensa de outra montagem alcançada por rerender continua escondida (sem loading preso)', async () => {
+    h.invoke.mockResolvedValue(ok([{ text: 'Oi' }]));
+
+    const other = render(CONTACT, 'm2');
+    await act(async () => {
+      other.result.current.dismiss();
+    });
+    other.unmount();
+
+    const hook = render(CONTACT, 'm1');
+    await afterDebounce();
+    const callsAfterM1 = h.invoke.mock.calls.length;
+
+    await act(async () => {
+      hook.rerender({ c: CONTACT, m: 'm2' });
+    });
+    await afterDebounce();
+
+    expect(hook.result.current.isDismissed).toBe(true);
+    expect(hook.result.current.suggestions).toEqual([]);
+    expect(hook.result.current.loading).toBe(false);
+    expect(h.invoke.mock.calls.length).toBe(callsAfterM1);
+  });
+
   it('mutação do array devolvido não contamina o cache entre montagens', async () => {
     h.invoke.mockResolvedValueOnce(ok([{ text: 'Oi' }]));
 

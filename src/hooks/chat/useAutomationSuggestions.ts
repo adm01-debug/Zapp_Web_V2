@@ -162,7 +162,10 @@ export function useAutomationSuggestions(
   });
 
   const entry = messageId ? entries[messageId] : undefined;
-  const isDismissed = !!messageId && dismissedIds.has(messageId);
+  // A dispensa é global (outra montagem pode ter dispensado este id e esta
+  // montagem só chega nele por rerender): o conjunto local sozinho deixaria
+  // a barra reaparecer — ou o `loading` preso, pois o efeito não busca dispensa.
+  const isDismissed = !!messageId && (dismissedIds.has(messageId) || dismissedMessages.has(messageId));
 
   const suggestions = isDismissed ? [] : (entry?.suggestions ?? []);
   const error = isDismissed ? null : (entry?.error ?? null);
