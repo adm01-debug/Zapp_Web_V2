@@ -264,7 +264,7 @@ psql_file "$fix_migration" >/dev/null
 U1='20000000-0000-0000-0000-000000000001'   # dono do contato A
 U2='20000000-0000-0000-0000-000000000002'   # membro ativo da fila do contato A
 U3='20000000-0000-0000-0000-000000000003'   # estranho (sem acesso a A)
-U5='20000000-0000-0000-0000-000000000005'   # admin/supervisor
+U5='20000000-0000-0000-0000-000000000005'   # supervisor (sem role admin)
 CA='30000000-0000-0000-0000-000000000001'   # contato visivel
 CB='30000000-0000-0000-0000-000000000002'   # contato oculto
 M1='40000000-0000-0000-0000-000000000001'
@@ -307,7 +307,7 @@ expect_failure 'quarto fixo na conversa (pin_limit_reached)' "SET ROLE authentic
 expect_failure 'fixar mensagem de contato oculto' "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT public.pin_message('$M2');"
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'membro da fila nao viu os 3 fixos'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'dono do contato nao viu os fixos'
-[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'admin nao viu os fixos'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_pins;")" == '3' ]] || fail 'supervisor nao viu os fixos'
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U3'; SELECT count(*) FROM public.message_pins;")" == '0' ]] || fail 'estranho viu fixos'
 expect_failure 'escrita direta em message_pins sem RPC' "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; INSERT INTO public.message_pins (contact_id, message_id, pinned_by) VALUES ('$CA','$M5','$U2');"
 
@@ -339,14 +339,14 @@ expect_failure 'escrita direta de relato sem RPC' "SET ROLE authenticated; SET r
 # Juiz item 3: U5 e supervisor sem ser admin — sem linha 'admin' em user_roles e dentro do conjunto supervisor
 [[ "$(psql_sql "SELECT count(*) FROM public.user_roles WHERE user_id='$U5' AND role='admin';")" == '0' ]] || fail 'U5 tem papel admin (deveria ser so supervisor)'
 [[ "$(psql_sql "SELECT public.is_admin_or_supervisor('$U5'::uuid);")" == 't' ]] || fail 'U5 deveria ser supervisor'
-[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'admin nao viu o relato'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; SELECT count(*) FROM public.message_reports;")" == '1' ]] || fail 'supervisor nao viu o relato'
 # Juiz item 1 (inserção real): reason 'improprio' do cartão entra de ponta a ponta (após as contagens acima)
 R_IMP="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M3','improprio',NULL);")"
 [[ "$R_IMP" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || fail "reason 'improprio' do cartao foi rejeitado (=$R_IMP)"
 
-# ---- status do relato: so admin, com carimbo do proprio revisor ----
+# ---- status do relato: so admin/supervisor, com carimbo do proprio revisor ----
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; WITH changed AS (UPDATE public.message_reports SET status='dismissed' WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '0' ]] || fail 'nao-admin alterou o status do relato'
-[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; WITH changed AS (UPDATE public.message_reports SET status='resolved', resolved_by='$U5', resolved_at=now() WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '1' ]] || fail 'admin nao conseguiu resolver o relato'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; WITH changed AS (UPDATE public.message_reports SET status='resolved', resolved_by='$U5', resolved_at=now() WHERE id='$R1' RETURNING 1) SELECT count(*) FROM changed;")" == '1' ]] || fail 'supervisor nao conseguiu resolver o relato'
 expect_failure 'resolver carimbando outro revisor' "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; UPDATE public.message_reports SET status='dismissed', resolved_by='$U1' WHERE id='$R1';"
 psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U1'; SELECT public.report_message('$M1','urgencia',NULL);" >/dev/null
 expect_failure 'resolver sem carimbar resolved_by' "SET ROLE authenticated; SET request.jwt.claim.sub='$U5'; UPDATE public.message_reports SET status='resolved' WHERE reporter_id='$U1';"
