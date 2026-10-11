@@ -15,7 +15,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 import {
   useAutomationSuggestions,
   resetAutomationSuggestionsMemory,
-  classifyAutomationSuggestionFailure,
   AUTOMATION_SUGGESTIONS_DEBOUNCE_MS,
 } from '@/hooks/chat/useAutomationSuggestions';
 
@@ -245,11 +244,31 @@ describe('useAutomationSuggestions', () => {
     expect(hook.result.current.loading).toBe(false);
   });
 
-  it('classifica 429 como limite e rede como falha de rede (sem confundir com erro inesperado)', () => {
-    expect(classifyAutomationSuggestionFailure({ context: { status: 429 } })).toBe('quota');
-    expect(classifyAutomationSuggestionFailure({ status: 429 })).toBe('quota');
-    expect(classifyAutomationSuggestionFailure({ name: 'FunctionsFetchError' })).toBe('network');
-    expect(classifyAutomationSuggestionFailure({ name: 'FunctionsHttpError', context: { status: 500 } })).toBe('other');
-    expect(classifyAutomationSuggestionFailure(undefined)).toBe('other');
+  it('reconhece o 429 pelo status no topo do erro (não só em context.status)', async () => {
+    h.invoke.mockResolvedValueOnce({
+      data: null,
+      error: { name: 'FunctionsHttpError', status: 429, message: 'Too many requests' },
+    });
+
+    const hook = render(CONTACT, 'm1');
+    await afterDebounce();
+
+    expect(hook.result.current.suggestions).toEqual([]);
+    expect(hook.result.current.error).toBeNull();
+    expect(hook.result.current.loading).toBe(false);
+  });
+
+  it('reconhece falha de rede pela mensagem do erro, mesmo sem nome conhecido', async () => {
+    h.invoke.mockResolvedValueOnce({
+      data: null,
+      error: { name: 'FunctionsRelayError', message: 'Failed to fetch' },
+    });
+
+    const hook = render(CONTACT, 'm1');
+    await afterDebounce();
+
+    expect(hook.result.current.suggestions).toEqual([]);
+    expect(hook.result.current.error).toBeNull();
+    expect(hook.result.current.loading).toBe(false);
   });
 });
