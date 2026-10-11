@@ -2,13 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { DEFAULT_FILTERS, filtersFromSearch, isFilterActive, searchWithFilters } from '../workItemFilters';
 
 /** Etapa 45: o estado da barra de filtros mora na URL — estas são as regras do
- *  parse e do serialize, provadas sem React.
- *  Etapas 024/037: ao recorte por prazo (`due`) e por estado (`status`). */
+ *  parse e do serialize, provadas sem React. */
 describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
   it('lê os parâmetros do plano da query string', () => {
     expect(filtersFromSearch('?q=liga&prio=urgent&contact=c1&alarm=1&done=0')).toEqual({
       q: 'liga', prio: 'urgent', contact: 'c1', alarm: true, done: false,
-      status: 'all', due: 'all',
     });
   });
 
@@ -67,38 +65,5 @@ describe('etapa 45 — filtros: URL e "tem filtro ativo"', () => {
     expect(p.get('q')).toBeNull();
     expect(p.get('prio')).toBe('high');
     expect(p.get('view')).toBe('tasks');
-  });
-});
-
-/** Etapas 024/037: o filtro de prazo e o de estado também viajam na URL. */
-describe('etapas 024/037 — estado e prazo na URL', () => {
-  it('lê status e due; valor fora da lista cai no padrão', () => {
-    expect(filtersFromSearch('?status=doing&due=overdue')).toMatchObject({ status: 'doing', due: 'overdue' });
-    // "ontem" e "voando" não existem: nada de filtro ativo por engano.
-    expect(filtersFromSearch('?status=voando&due=ontem')).toMatchObject({ status: 'all', due: 'all' });
-  });
-
-  it('serializa status/due escolhidos e preserva a view; o padrão não vai para a URL', () => {
-    const p = new URLSearchParams(searchWithFilters('?view=tasks', {
-      ...DEFAULT_FILTERS, status: 'waiting', due: 'today',
-    }));
-    expect(p.get('view')).toBe('tasks');
-    expect(p.get('status')).toBe('waiting');
-    expect(p.get('due')).toBe('today');
-    expect(p.get('prio')).toBeNull();
-  });
-
-  it('ida e volta com status/due; o "Limpar tudo" tira os dois da URL', () => {
-    const escolhidos = { ...DEFAULT_FILTERS, status: 'doing' as const, due: 'week' as const };
-    const lido = filtersFromSearch(searchWithFilters('?view=tasks', escolhidos));
-    expect(lido.status).toBe('doing');
-    expect(lido.due).toBe('week');
-    expect(searchWithFilters('?view=tasks&status=doing&due=week', DEFAULT_FILTERS)).toBe('?view=tasks');
-  });
-
-  it('isFilterActive conta status e due como filtros ativos', () => {
-    expect(isFilterActive({ ...DEFAULT_FILTERS, status: 'done' })).toBe(true);
-    expect(isFilterActive({ ...DEFAULT_FILTERS, due: 'overdue' })).toBe(true);
-    expect(isFilterActive({ ...DEFAULT_FILTERS, status: 'all', due: 'all' })).toBe(false);
   });
 });
