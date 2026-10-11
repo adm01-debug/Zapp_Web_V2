@@ -55,16 +55,23 @@ export const MINIMO_CONVERSA_LONGA = 200;
 /** Mensagens da conversa longa provisionada por departamento. */
 export const MENSAGENS_CONVERSA_LONGA = 216;
 
-/** Paleta já existente no sistema (src/components/queues/CreateQueueDialog.tsx). */
+/**
+ * Paleta de cor de fila que o sistema já tem — a fonte única é
+ * `src/components/queues/queueColors.ts` (o `CreateQueueDialog` só a importa).
+ * São tokens do `tokens.css`, não hex: depois da troca hex→token (t_954aa88a) o
+ * seletor não oferece mais hex solto, e o ensaio tem de gravar a MESMA cor que a
+ * UI grava — senão a fila de ensaio nasceria com uma cor que o sistema não
+ * oferece. O contrato SL-059 confere a igualdade com `QUEUE_COLORS`.
+ */
 export const PALETA_FILAS = [
-  '#3B82F6',
-  '#10B981',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#EC4899',
-  '#06B6D4',
-  '#84CC16',
+  'hsl(var(--primary))',      // azul
+  'hsl(var(--success))',      // verde
+  'hsl(var(--warning))',      // âmbar
+  'hsl(var(--destructive))',  // vermelho
+  'hsl(var(--dash-violet))',  // violeta
+  'hsl(var(--dash-red))',     // rosa
+  'hsl(var(--info))',         // ciano
+  'hsl(var(--dash-green))',   // lima
 ];
 
 /** Departamentos do ensaio (IA-010 §2). */

@@ -47,6 +47,8 @@ const MANIFESTO = resolve(RAIZ, 'supabase/schema-manifest.json');
 const DOC_IA010 = resolve(RAIZ, 'docs/ia/IA-010-ambiente-de-ensaio.md');
 const README_IA = resolve(RAIZ, 'docs/ia/README.md');
 const CRIAR_FILA = resolve(RAIZ, 'src/components/queues/CreateQueueDialog.tsx');
+/** A fonte ÚNICA das cores do seletor de fila (tokens do `tokens.css`). */
+const FONTE_CORES_FILA = resolve(RAIZ, 'src/components/queues/queueColors.ts');
 
 const plano = planoDeEnsaio();
 const SQL = sqlDeProvisionamento(plano);
@@ -216,10 +218,21 @@ describe('SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produ�
   });
 
   it('as filas usam só cores que o sistema já tem', () => {
-    const paleta = readFileSync(CRIAR_FILA, 'utf8');
-    for (const cor of PALETA_FILAS) {
-      expect(paleta).toContain(cor);
-    }
+    // A paleta do sistema virou tokens (`queueColors.ts`) depois da troca
+    // hex→token (t_954aa88a): o seletor de fila apenas a importa, sem hex solto.
+    const seletor = readFileSync(CRIAR_FILA, 'utf8');
+    expect(seletor).toContain("from './queueColors'");
+    expect(seletor).not.toMatch(/#[0-9a-fA-F]{6}/u);
+
+    const doSistema = [
+      ...readFileSync(FONTE_CORES_FILA, 'utf8').matchAll(/'(hsl\(var\(--[a-z-]+\)\))'/gu),
+    ].map((m) => m[1]!);
+    expect(doSistema.length).toBeGreaterThanOrEqual(8);
+
+    // O ensaio oferece EXATAMENTE as cores do seletor do sistema...
+    expect(PALETA_FILAS).toEqual(doSistema);
+
+    // ...e os departamentos só usam cores dessa paleta.
     const usadas = plano.departamentos.map((d) => d.fila.cor);
     expect(usadas).toHaveLength(6);
     for (const cor of usadas) {

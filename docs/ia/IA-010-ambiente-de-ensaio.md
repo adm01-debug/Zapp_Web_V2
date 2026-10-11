@@ -120,7 +120,8 @@ real do sistema).
 
 **Propriedades travadas pelo contrato:** todo nome/fila/contato nasce com o prefixo `ENSAIO-`; todo
 e-mail é do domínio de teste; telefone fora de faixa real; nenhum CPF/CNPJ; cores de fila restritas à
-paleta que o sistema já tem (`src/components/queues/CreateQueueDialog.tsx`); todo `insert` traz
+paleta que o sistema já tem (`src/components/queues/queueColors.ts` — a fonte única dos tokens do
+seletor de cor de fila, que o `CreateQueueDialog` apenas importa); todo `insert` traz
 `on conflict`; toda remoção (`--remover`) filtra por prefixo; **a reversão apaga só tabelas que o
 provisionamento escreve** (paridade, com lista de exceções deliberadas vazia); o DML não menciona
 `conversation_analyses` nem `conversation_memory` (os casos "conversa sem análise" e "contato sem
