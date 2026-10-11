@@ -15,3 +15,6 @@ O par auditado do chip ATIVO continua o mesmo (`bg-accent` × `text-foreground`)
 ## O que NÃO fiz e por quê
 - Não medi geometria em navegador real: o jsdom não aplica o CSS do Tailwind, então a prova de forma é sobre as classes que o componente REALMENTE renderiza (h-11 = 44px, rounded-full = pílula), como o comentário do teste explica. A régua medida de verdade (contraste) é a do teste existente.
 - Não toquei ConversationListSidebar.tsx (cartão irmão da Íris) nem InboxFilters.tsx — proibidos pelo cartão.
+
+## Arquivos tocados x ARQUIVOS QUE PODE TOCAR
+- Os dois arquivos alterados SÃO os listados pelo cartão: `src/components/inbox/conversation-list/StatusChips.tsx` e `src/components/inbox/__tests__/StatusChips.test.tsx` (o cartão cita "os testes src/components/inbox/__tests__/StatusChips*.test.tsx"). Nenhum arquivo fora da lista foi tocado (`git diff --name-only` do cartão = estes dois).
