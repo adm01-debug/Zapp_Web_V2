@@ -2,6 +2,11 @@ Especialista: worker (sql) (area-sql-banco)
 
 # fix(sql): permite waiting -> archived em set_conversation_status
 
+## Arquivos alterados (3 no diff)
+1. `supabase/migrations/20261011162528_set_conversation_status_waiting_para_archived.sql` (novo, código)
+2. `supabase/tests/set_conversation_status_waiting_para_archived.sql` (novo, teste)
+3. `.tmp/relato.md` (este relato)
+
 ## O que mudou e por quê
 - `supabase/migrations/20261011162528_set_conversation_status_waiting_para_archived.sql`
   (nova): `CREATE OR REPLACE FUNCTION public.set_conversation_status` com o corpo
@@ -43,12 +48,14 @@ fechamento; T7 única sobrecarga `(uuid,text,text)`, `anon` sem EXECUTE e barrad
 `authenticated/service_role/postgres` com EXECUTE.
 
 ## Passada de efeito colateral (skill area-sql-banco)
-1. **Gatilhos:** a RPC só faz `UPDATE public.contacts` (a coluna de status) e o
-   `INSERT` em `conversation_closures` ao resolver. O gatilho `BEFORE UPDATE` de
-   `contacts` regrava `updated_at` — efeito esperado e restrito à linha alvo; a suíte
-   prova que um vizinho NÃO tocado (`c_wait2`) mantém o `updated_at` intacto
-   (`v_upd_viz_dep IS DISTINCT FROM v_upd_viz_ant` falha o teste), e que o alvo
-   avança. Não há backfill nem UPDATE em massa.
+1. **Gatilhos:** a RPC só faz `UPDATE public.contacts` da linha ALVO (uma por chamada,
+   por `WHERE id = p_contact_id`), não faz backfill nem UPDATE em massa. O gatilho
+   `BEFORE UPDATE` de `contacts` regrava `updated_at` — é exatamente o efeito
+   desejado ao mudar o status desta linha; por isso ele é MANTIDO ligado (nada de
+   `ALTER TABLE ... DISABLE TRIGGER`). A suíte prova que o vizinho NÃO tocado
+   (`c_wait2`) mantém o `updated_at` intacto (`v_upd_viz_dep IS DISTINCT FROM
+   v_upd_viz_ant` falha o teste) e que o alvo avança — a recusa de 06/10 foi um
+   UPDATE em TODAS as linhas, que não é o caso aqui.
 2. **Tudo ou nada:** a RPC é uma operação atômica (`FOR UPDATE` na linha, autorização,
    então o `UPDATE`). Falha de autorização/transição levanta ANTES de qualquer
    escrita (T2/T6b provam estado e `closures` intactos). Não alterei o corpo: isso é
