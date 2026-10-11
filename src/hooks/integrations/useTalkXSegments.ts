@@ -60,7 +60,7 @@ export interface TalkXSegment {
   creator?: { name: string | null } | null;
 }
 
-export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[] }[] = [
+export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' | 'comercial' | 'lgpd'; options?: string[]; comingSoon?: boolean }[] = [
   { value: 'tags', label: 'Tags', kind: 'array', category: 'basico' },
   { value: 'company', label: 'Empresa', kind: 'text', category: 'basico' },
   { value: 'city', label: 'Cidade', kind: 'text', category: 'basico' },
@@ -77,8 +77,10 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   // extintos, e omitia 3 dos 6 tipos reais).
   { value: 'contact_type', label: 'Tipo do contato', kind: 'enum', category: 'comercial', options: CONTACT_TYPES.map((t) => t.value) },
   { value: 'conversation_status', label: 'Status da conversa', kind: 'enum', category: 'comportamento', options: [...CONVERSATION_STATUSES] },
-  { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial' },
-  { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento' },
+  // Nada calcula contacts.lead_score/risk_score (sempre 0/nulo): filtrar por eles nunca muda o
+  // resultado. Ficam "em breve" (nao selecionaveis) ate existir calculo real a partir de dado do banco.
+  { value: 'lead_score', label: 'Lead score', kind: 'number', category: 'comercial', comingSoon: true },
+  { value: 'risk_score', label: 'Risco de churn', kind: 'number', category: 'comportamento', comingSoon: true },
   // Opções vindas do vocabulário canônico (IA-021/IA-022): sentimento em pt-BR
   // e prioridade na escala EN do front. Uma regra de segmento nunca pode
   // oferecer valor que o banco não guarda.
@@ -128,6 +130,10 @@ export const rulesJoin = (rules: SegmentRules | null | undefined): SegmentJoin =
 export function isRuleComplete(rule: SegmentRule): boolean {
   const def = RULE_FIELDS.find((f) => f.value === rule.field);
   if (!def) return false;
+  // Indicador "em breve" (lead_score/risk_score): nada calcula a coluna, então a
+  // condição nunca é utilizável — nem com valor zerado, nem via is_set/is_empty.
+  // Fica fora da estimativa e barra a publicação até o cálculo real existir.
+  if (def.comingSoon) return false;
   if (rule.op === 'is_set' || rule.op === 'is_empty') return true;
   const value = rule.value.trim();
   if (!value) return false;
@@ -174,6 +180,9 @@ const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
   if (!def) return null;
+  // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
+  // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
+  if (def.comingSoon) return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;

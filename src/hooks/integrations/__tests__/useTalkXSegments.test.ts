@@ -152,7 +152,9 @@ describe('isRuleComplete — por tipo de campo', () => {
   });
 
   it('número e data exigem valor numérico válido', () => {
-    expect(isRuleComplete(regra('lead_score', 'gt', '50'))).toBe(true);
+    // lead_score/risk_score são "em breve" (coluna nunca calculada): nunca são
+    // completos, nem com valor válido — o filtro morto fica fora da estimativa.
+    expect(isRuleComplete(regra('lead_score', 'gt', '50'))).toBe(false);
     expect(isRuleComplete(regra('lead_score', 'gt', ''))).toBe(false);
     expect(isRuleComplete(regra('lead_score', 'gt', 'abc'))).toBe(false);
     expect(isRuleComplete(regra('created_at', 'in_last_days', '7'))).toBe(true);
@@ -164,6 +166,30 @@ describe('isRuleComplete — por tipo de campo', () => {
     expect(isRuleComplete(regra('email', 'is_set', ''))).toBe(true);
     expect(isRuleComplete(regra('email', 'is_empty', ''))).toBe(true);
     expect(isRuleComplete(regra('unknown_field', 'eq', 'x'))).toBe(false);
+    // "Em breve" não pode ser burlado com is_set/is_empty nem valor zerado: a
+    // coluna nunca é calculada, então o filtro seria morto em qualquer op.
+    expect(isRuleComplete(regra('lead_score', 'is_set', ''))).toBe(false);
+    expect(isRuleComplete(regra('lead_score', 'is_empty', ''))).toBe(false);
+    expect(isRuleComplete(regra('lead_score', 'eq', '0'))).toBe(false);
+    expect(isRuleComplete(regra('risk_score', 'is_set', ''))).toBe(false);
+    expect(isRuleComplete(regra('risk_score', 'eq', '0'))).toBe(false);
+  });
+
+  it('lead_score/risk_score são "em breve" e nunca geram filtro PostgREST (falha fechada)', () => {
+    expect(RULE_FIELDS.find((f) => f.value === 'lead_score')?.comingSoon).toBe(true);
+    expect(RULE_FIELDS.find((f) => f.value === 'risk_score')?.comingSoon).toBe(true);
+    expect(() => rulesToPostgrest({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_score', op: 'eq', value: '80' },
+      ] }],
+    } as never)).toThrow('Regra de segmento inválida');
+    const { complete, incompleteCount } = splitRules({
+      groups: [{ id: 'g', match: 'and', rules: [
+        { id: 'r1', field: 'lead_score', op: 'eq', value: '80' },
+      ] }],
+    });
+    expect(incompleteCount).toBe(1);
+    expect(rulesToPostgrest(complete)).toBeNull();
   });
 });
 
