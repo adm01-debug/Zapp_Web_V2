@@ -179,8 +179,9 @@ const defaultNow = () => new Date();
 export function useWorkItemDraft(opts: UseWorkItemDraftOpts): UseWorkItemDraft {
   const { item, items, update, move } = opts;
 
-  const clockRef = useRef<() => Date>(opts.now ?? defaultNow);
-  clockRef.current = opts.now ?? defaultNow;
+  // Relógio do render: `defaultNow` é estável, então o memo só recalcula quando
+  // o chamador troca de relógio (testes) ou muda prazo/lembrete.
+  const now = opts.now ?? defaultNow;
 
   const [draft, setDraft] = useState<WorkItemDraftFields | null>(() =>
     item ? fieldsFromItem(item) : null,
@@ -257,8 +258,8 @@ export function useWorkItemDraft(opts: UseWorkItemDraftOpts): UseWorkItemDraft {
   }, [draft, item]);
 
   const coherence = useMemo(
-    () => checkRemindCoherence(draft?.remindAt, draft?.dueDate, clockRef.current()),
-    [draft?.remindAt, draft?.dueDate],
+    () => checkRemindCoherence(draft?.remindAt, draft?.dueDate, now()),
+    [draft?.remindAt, draft?.dueDate, now],
   );
 
   const setField = useCallback(
