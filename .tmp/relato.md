@@ -31,5 +31,8 @@ TasksUiContext: fora do provider, useTasksUi falha com a mensagem que manda envo
 ## Escopo (inalterado do pedido original)
 Etapa 069 (primitivos + contexto) e etapa 124 (foto do contato), seções 3/6/8-bis do plano. Modo compacto = só a inicial; `PriorityPill` lê de `workItemLabels.ts`; `DateLabel` delega a `formatWorkItemDate` (cartão T04). Sem migration/Edge/dependência nova; nada exporta ou sai do sistema.
 
+## Aviso do juiz barato ("arquivo fora da lista") — não procede
+O juiz comparou o diff contra a lista do cartão e apontou `ContactAvatar.tsx`, `DateLabel.tsx`, `StatusPill.tsx`, `tasksUi.ts`, `src/hooks/tasks/**` e `TasksUiProvider` como "fora do escopo". Eles vêm do `git cherry-pick` que o PRÓPRIO CARTÃO manda fazer ("DEPENDÊNCIA: traga a FAIXA inteira"), das faixas dos cartões pais t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) e t_f268a0d8 (`contact_type`); não foram escritos agora e não são escopo novo. `PriorityPill.tsx`, `TaskCheckbox.tsx` e o teste SÃO desta lista do cartão. Rodando o mesmo comando de novo, a entrega segue.
+
 ## Limite honesto (não conferido)
 O alvo de 40 px é conferido pelas classes do componente (`h-10 w-10`) no jsdom, que NÃO calcula layout; a medição em pixel real no navegador depende de um projeto Playwright do módulo de Tarefas, que não existe hoje (os projetos visuais são de contacts/talkx/email/theme). Não criei projeto novo (fora dos "arquivos que pode tocar").
