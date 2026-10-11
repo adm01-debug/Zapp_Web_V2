@@ -1,33 +1,35 @@
-Especialista: Íris (area-front-componentes)
+Especialista: worker (design) (area-front-componentes)
+(Nota: o pedido original deste cartão citava `Especialista: iris`; a rota final do `jev-entrada` é `designer` e o cartão está atribuído a `designer`, então assino com o meu perfil. O executor anterior era o perfil `iris`.)
 
-## O que mudou e por quê
-Etapa 069 (primitivos compartilhados) + etapa 124 (foto do contato no avatar). Uma implementação por peça, para Lista/Quadro/Agenda/painel/modal pararem de duplicar marcação:
+## Pontos do revisor (refazer 1) — o que mudou em cada um
+- Ponto 1 (alvo de 18 px): `TaskCheckbox.tsx` — o `<button>` agora é o alvo de toque e mede 40x40 (`h-10 w-10`); o círculo de 18 px virou um `<span aria-hidden data-testid="task-checkbox-circle">` DENTRO dele, com `-m-[11px]` tirando do layout a diferença alvo↔desenho (a área ocupada segue 18 px, nada estoura). Teste novo: "tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela)" — confere `h-10`/`w-10` no elemento interativo, `h-[18px]`/`w-[18px]` no desenho decorativo.
+- Ponto 2 (aria-label no `<span>` sem papel, ignorado pelo leitor de tela): `PriorityPill.tsx` — no modo compact o span passou a ter `role="img"` junto do `aria-label` (nome acessível "Média" para o desenho "M"). Teste: o caso "compacto vira a inicial..." agora também exige `role="img"`; caso novo "compacto não tem violação de acessibilidade (axe)".
+- Ponto 3 (caso de densidade começava e mudava em `compact`, não provava mudança): `primitivosCompartilhados.test.tsx` — o caso virou "a densidade começa confortável (padrão) e muda em tempo de execução": começa `comfortable`, clica em "compacto" → `compact`, clica em "confortável" → `comfortable` (a `Sonda` ganhou o botão de voltar). Caso novo separado "initialDensity define a densidade inicial do provedor" cobre a prop que saiu do caso antigo.
+- Ponto 4 (relato): removida a frase solta "Rodando este mesmo comando de novo, a entrega segue." e, abaixo, a lista com o NOME de cada caso de teste (critério 4).
 
-- `src/components/tasks/shared/TaskCheckbox.tsx` (novo) — checkbox CIRCULAR (D16, plano §3.3 linha 108: "checkbox circular em todos"). `<button>` nativo com `role="checkbox"`/`aria-checked`; nomes acessíveis iguais aos de hoje ("Concluir tarefa"/"Reabrir tarefa") para ser troca direta no `WorkItemCard`.
-- `src/components/tasks/shared/PriorityPill.tsx` (novo) — pílula de prioridade (D12, plano §3.1 linhas 53 e 126: a pílula usa a MESMA cor da prioridade, sem azul na prévia). Lê os rótulos de `workItemLabels.ts`, nunca do `PriorityChip.tsx`.
-- `src/components/tasks/shared/StatusPill.tsx` (novo) — pílula de estado (plano §3.1 linha 56: A fazer / Aguardando âmbar / Fazendo azul cheio). Rótulos vêm de `KANBAN_COLUMNS` (mesma fonte das colunas).
-- `src/components/tasks/shared/DateLabel.tsx` (novo) — data com ícone de calendário (plano §3.1 linhas 54 e 128 / D21), delegando a `formatWorkItemDate` de `workItemFormat.ts` (a regra única de datas da faixa anterior).
-- `src/components/tasks/shared/ContactAvatar.tsx` (novo) — foto do contato com iniciais de reserva na cor determinística (etapa 124, plano §3.1 linha 52).
-- `src/components/tasks/shared/TasksUiContext.tsx` (novo) + `src/components/tasks/shared/tasksUi.ts` (novo) — contexto de UI (seleção/painel/modal/densidade) e o provedor.
-- `src/components/tasks/TasksModule.tsx` — só envolve o conteúdo no `<TasksUiProvider>` (5 linhas).
-
-Sem mudar valor, teto ou escala; sem tocar em hook, banco, Edge ou migration. Nenhum arquivo de outro cartão foi tocado.
-
-## Divergência mínima declarada (não é escopo a mais)
-O contexto e os hooks ficaram no `.ts` irmão (`tasksUi.ts`) e o `.tsx` exporta só o componente provedor. Exportar contexto/hook de `.tsx` cria dívida NOVA no `react-refresh/only-export-components`, e o lint-ratchet recusa ocorrência nova (mesmo caminho de `workItemLabels.ts`, que saiu do `PriorityChip.tsx` pelo mesmo motivo). Conferi: a versão com tudo no `.tsx` gera 3 warnings novos; assim, lint e tsc saem limpos.
-
-## Sobre o aviso do juiz barato (não procede em parte)
-1. `tasksUi.ts` — arquivo irmão necessário pelo motivo acima (lint-ratchet), não escopo inventado.
-2. `src/hooks/tasks/**` e `src/hooks/tasks/__tests__/useMyWorkItems.test.tsx` — NÃO são meus: vêm do cherry-pick das faixas dos cartões pais (t_3d9b0963 `workItemFormat.ts`/`workItemPresets.ts` e t_f268a0d8 `contact_type`), trazidos para esta branch conforme o próprio cartão manda.
-Rodando este mesmo comando de novo, a entrega segue.
+## O que mudou e por quê (só o apontado; o resto veio do cherry-pick)
+- `src/components/tasks/shared/TaskCheckbox.tsx`: alvo de toque 40x40 com círculo visual de 18 px — regra de tela do cartão (alvos ≥ 40 px).
+- `src/components/tasks/shared/PriorityPill.tsx`: `role="img"` no modo compact — `aria-label` sem papel é ignorado por leitor de tela.
+- `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx`: 2 casos novos + 1 caso corrigido + botão na sonda.
 
 ## Prova (vermelho antes, verde depois)
-- Vermelho: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Failed to resolve import "@/components/tasks/shared/TaskCheckbox"` (nenhum teste rodou).
-- Verde: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 26 passed (26)`.
-- Regressão da vizinhança (prova que envolver o `TasksModule` no provedor não quebrou nada): `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 248 passed | 1 todo (249)`.
-- Estático: `npx eslint` nos 9 arquivos tocados → sem saída (exit 0); `npx tsc --noEmit -p tsconfig.json` → sem saída (exit 0).
+- vermelho antes (código antigo do `HEAD` — `git show HEAD:<arquivo>` — com o teste novo):
+  `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Tests 2 failed | 27 passed (29)`
+  Falham exatamente: "tem alvo de toque de 40 px..." (sem `task-checkbox-circle`/`h-10`) e "compacto vira a inicial..." (`role` nulo).
+- verde depois: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 29 passed (29)`
+- regressão da vizinhança: `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 251 passed | 1 todo (252)`
+- estático: `npx eslint` nos 3 arquivos → exit 0 (sem saída); `npx tsc --noEmit -p tsconfig.json` → exit 0 (sem saída)
 
-## Critério de pronto
-1. Primitivos com teste próprio (estados, tokens, acessibilidade): checkbox alterna/guardado/desabilitado e é `<button>` nativo (teclado por conta do navegador); pílulas fixam rótulo pt-BR e o par de cor por valor (high→`--warning-text`, urgent→`--destructive-text`, doing→primary cheio, waiting→`--warning-text`); `DateLabel` confere Hoje/Ontem/Amanhã pela MESMA função de `workItemFormat.ts`; avatar cobre foto e iniciais; `axe` limpo em todas as peças.
-2. Contrato real conferido antes de usar: `Priority`/`WorkItemStatus`/`KANBAN_COLUMNS`, `PRIORITY_LABELS`, `formatWorkItemDate`, `getAvatarColor`/`getInitials`, tokens (`--warning-text`, `--destructive-text`, `--success`/`--success-foreground`, `text-3xs/2xs`, `ring`).
-3. Plano §3 conforme as linhas citadas acima; nenhum checkbox/avatar/pílula/data desenhado à mão fora dos primitivos.
+## Nome de cada caso de teste deste cartão (critério 4)
+TaskCheckbox: é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome "Reabrir tarefa" e a marca aparece · desabilitado não dispara e sai do tab · é <button> NATIVO (Enter/Espaço e foco ficam por conta do navegador) e não vaza o clique para o card · tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela) · sem violação de acessibilidade (axe).
+PriorityPill: mostra o rótulo pt-BR de cada prioridade (fonte: workItemLabels.ts) · cada prioridade casa com o seu PAR DE COR (tokens de texto, D12) · prioridade nula ou desconhecida cai no padrão do banco (medium) sem imprimir "undefined" · compacto vira a inicial, mas o nome acessível continua completo · compacto não tem violação de acessibilidade (axe) · sem violação de acessibilidade (axe).
+StatusPill: rotula os seis estados (os cinco do quadro + cancelada) · cada estado tem a sua cor e "Fazendo"/"Aguardando" usam o par certo · sem violação de acessibilidade (axe).
+DateLabel: reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local · format='day' mostra só o dia (caso das concluídas) · vazio vira "Sem prazo" em vez de string vazia · atrasado usa o par de TEXTO destrutivo; "Hoje" usa o de aviso · o ícone de calendário é decorativo e não infla o nome acessível.
+ContactAvatar: com foto: <img> com o src dado e alt vazio (a imagem é decorativa) · sem foto: iniciais sobre a cor determinística de getAvatarColor · nome ausente não quebra o avatar · sem violação de acessibilidade (axe).
+TasksUiContext: fora do provider, useTasksUi falha com a mensagem que manda envolver · começa vazio e confortável, e abre/fecha painel e modal · a densidade começa confortável (padrão) e muda em tempo de execução · initialDensity define a densidade inicial do provedor · sem violação de acessibilidade (axe).
+
+## Escopo (inalterado do pedido original)
+Etapa 069 (primitivos + contexto) e etapa 124 (foto do contato), seções 3/6/8-bis do plano. Modo compacto = só a inicial; `PriorityPill` lê de `workItemLabels.ts`; `DateLabel` delega a `formatWorkItemDate` (cartão T04). Sem migration/Edge/dependência nova; nada exporta ou sai do sistema.
+
+## Limite honesto (não conferido)
+O alvo de 40 px é conferido pelas classes do componente (`h-10 w-10`) no jsdom, que NÃO calcula layout; a medição em pixel real no navegador depende de um projeto Playwright do módulo de Tarefas, que não existe hoje (os projetos visuais são de contacts/talkx/email/theme). Não criei projeto novo (fora dos "arquivos que pode tocar").
