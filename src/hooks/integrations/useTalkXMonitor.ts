@@ -25,6 +25,16 @@ export function isSentStatus(status: string): boolean {
   return SENT_STATUSES.has(status);
 }
 
+/**
+ * Status de entrega incerta: o envio saiu da fila, só falta a confirmação.
+ * Não conta como "Enviadas" nem como restante.
+ */
+export const UNCERTAIN_STATUS = 'outcome_unknown';
+
+export function isUncertainStatus(status: string): boolean {
+  return status === UNCERTAIN_STATUS;
+}
+
 /** Uma linha da Fila por Segmento (T11-046..052). */
 export interface SegmentQueueRow {
   segmentId: string | null;
@@ -37,6 +47,13 @@ export interface SegmentQueueRow {
 
 interface RateInput { sent_at: string | null; delivered_at: string | null }
 
+/** "YYYY-MM-DDTHH:mm:ss" ou epoch ms → ms; inválido/nulo → null. */
+function toMs(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const t = typeof value === 'number' ? value : new Date(value).getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
 function inWindow(sentAt: string | null, now: number): number | null {
   if (!sentAt) return null;
   const t = new Date(sentAt).getTime();
@@ -44,57 +61,71 @@ function inWindow(sentAt: string | null, now: number): number | null {
   return t;
 }
 
-/**
- * Minutos efetivamente decorridos na janela, do primeiro envio até agora.
- * Nunca menos de 1 (senão a divisão por zero transformaria 1 envio em taxa infinita)
- * e nunca mais de 60 (o teto da janela).
- */
-function windowSpanMinutes(firstTs: number, now: number): number {
-  return Math.min(RATE_WINDOW_MINUTES, Math.max(1, (now - firstTs) / 60_000));
+/** Timestamps válidos de envio de TODA a campanha (sem corte de janela). */
+function sentTimestamps(data: RateInput[]): number[] {
+  const out: number[] = [];
+  for (const r of data) {
+    const t = toMs(r.sent_at);
+    if (t !== null) out.push(t);
+  }
+  return out;
 }
 
 /**
- * Taxa de envio medida (mensagens por minuto): envios da janela divididos pelos
- * minutos decorridos desde o primeiro envio da janela. Sem envios na janela → 0.
+ * Minutos decorridos da âncora até agora, nunca menos de 1 (senão a divisão
+ * por zero transformaria 1 envio em taxa infinita). Sem teto: campanha longa
+ * divide pelo tempo real desde o início.
  */
-export function measureRatePerMinute(data: RateInput[], now = Date.now()): number {
-  let total = 0;
-  let firstTs = Number.POSITIVE_INFINITY;
-  for (const r of data) {
-    const t = inWindow(r.sent_at, now);
-    if (t === null) continue;
-    total += 1;
-    if (t < firstTs) firstTs = t;
-  }
-  if (total === 0) return 0;
-  return total / windowSpanMinutes(firstTs, now);
+function elapsedMinutesSince(anchorMs: number, now: number): number {
+  return Math.max(1, (now - anchorMs) / 60_000);
+}
+
+/**
+ * Taxa média de envio (mensagens por minuto): envios TOTAIS da campanha
+ * divididos pelos minutos desde o início — o `started_at` da campanha, com
+ * fallback para o primeiro envio quando ele falta ou é inválido.
+ * Sem envios → 0.
+ */
+export function measureRatePerMinute(
+  data: RateInput[],
+  now = Date.now(),
+  startedAt: string | number | null = null,
+): number {
+  const timestamps = sentTimestamps(data);
+  if (timestamps.length === 0) return 0;
+  const anchor = toMs(startedAt) ?? Math.min(...timestamps);
+  return timestamps.length / elapsedMinutesSince(anchor, now);
+}
+
+export interface RateOptions {
+  throttlePerMinute?: number | null;
+  /** talkx_campaigns.started_at: âncora da média; sem ele, o primeiro envio. */
+  startedAt?: string | number | null;
+  /** "Agora" injetável (testes); padrão Date.now(). */
+  now?: number;
 }
 
 /**
  * Ritmo de entrega por minuto (últimos 60 min).
  *
- * `Previsto` é a projeção simples da etapa: a taxa média medida na janela,
- * projetada para a frente como uma linha de referência. Quando a campanha tem
- * teto configurado (`max_per_minute`), a projeção é limitada por ele — o
- * previsto nunca promete mais do que o próprio throttle da campanha permite.
+ * `Previsto` é a projeção simples da etapa: a taxa MÉDIA da campanha (total
+ * de envios ÷ minutos desde o `started_at`, ou desde o primeiro envio),
+ * projetada para a frente como uma linha de referência e arredondada para
+ * 1 casa. Quando a campanha tem teto configurado (`max_per_minute`), a
+ * projeção é limitada por ele — o previsto nunca promete mais do que o
+ * próprio throttle da campanha permite. Sem teto (null/0/ausente), o
+ * Previsto usa o ritmo medido.
  */
-export function buildRateByMinute(
-  data: RateInput[],
-  opts?: { throttlePerMinute?: number | null },
-): RatePoint[] {
+export function buildRateByMinute(data: RateInput[], opts?: RateOptions): RatePoint[] {
   if (!data.length) return [];
-  const now = Date.now();
+  const now = opts?.now ?? Date.now();
   const buckets = new Map<string, { sent: number; delivered: number }>();
-  let total = 0;
-  let firstTs = Number.POSITIVE_INFINITY;
 
   for (const r of data) {
     const t = inWindow(r.sent_at, now);
     if (t === null) continue;
-    total += 1;
-    if (t < firstTs) firstTs = t;
     const d = new Date(t);
-    const key = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const key = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
     const b = buckets.get(key) ?? { sent: 0, delivered: 0 };
     b.sent += 1;
     if (r.delivered_at) b.delivered += 1;
@@ -102,9 +133,12 @@ export function buildRateByMinute(
   }
   if (buckets.size === 0) return [];
 
-  const measured = total / windowSpanMinutes(firstTs, now);
+  const timestamps = sentTimestamps(data);
+  const anchor = toMs(opts?.startedAt) ?? Math.min(...timestamps);
+  const measured = timestamps.length / elapsedMinutesSince(anchor, now);
   const throttle = opts?.throttlePerMinute;
-  const expected = throttle && throttle > 0 ? Math.min(measured, throttle) : measured;
+  const hasCap = typeof throttle === 'number' && Number.isFinite(throttle) && throttle > 0;
+  const expected = hasCap ? Math.min(measured, throttle as number) : measured;
   const previsto = Math.round(expected * 10) / 10;
 
   return Array.from(buckets.entries())
@@ -116,30 +150,40 @@ export function buildRateByMinute(
  * Fila por segmento (T11-046..052): agrupa os destinatários da campanha por
  * `segment_id` e devolve total/enviadas/restante/progresso por segmento.
  * Destinatário sem segmento (seleção manual, ou campanha anterior ao snapshot
- * por segmento) entra na linha "Sem segmento".
+ * por segmento) entra na linha "Sem segmento". Entrega incerta
+ * (`outcome_unknown`) saiu da fila: não conta como restante.
  */
 export function buildSegmentQueue(
   recipients: { segment_id: string | null; status: string }[],
   names?: Map<string, string>,
 ): SegmentQueueRow[] {
-  const grouped = new Map<string, { total: number; sent: number }>();
+  const grouped = new Map<string, { total: number; sent: number; uncertain: number }>();
   for (const r of recipients) {
     const key = r.segment_id ?? '';
-    const b = grouped.get(key) ?? { total: 0, sent: 0 };
+    const b = grouped.get(key) ?? { total: 0, sent: 0, uncertain: 0 };
     b.total += 1;
     if (isSentStatus(r.status)) b.sent += 1;
+    else if (isUncertainStatus(r.status)) b.uncertain += 1;
     grouped.set(key, b);
   }
   return Array.from(grouped.entries())
-    .map(([key, { total, sent }]) => ({
+    .map(([key, { total, sent, uncertain }]) => ({
       segmentId: key === '' ? null : key,
       name: key === '' ? 'Sem segmento' : (names?.get(key) ?? key.slice(0, 8)),
       total,
       sent,
-      remaining: total - sent,
+      remaining: total - sent - uncertain,
       progress: total > 0 ? Math.round((sent / total) * 100) : 0,
     }))
     .sort((a, b) => (a.segmentId === null ? 1 : b.segmentId === null ? -1 : b.total - a.total));
+}
+
+/**
+ * Restante real (base do término estimado): o que ainda não saiu E não está
+ * em entrega incerta (`outcome_unknown` saiu da fila, só falta a confirmação).
+ */
+export function countRemaining(recipients: { status: string }[]): number {
+  return recipients.filter((r) => !isSentStatus(r.status) && !isUncertainStatus(r.status)).length;
 }
 
 /**
@@ -152,7 +196,11 @@ export function estimateFinishMinutes(remaining: number, ratePerMinute: number):
   return remaining / ratePerMinute;
 }
 
-export function useTalkXMonitor(campaignId: string | null, throttlePerMinute: number | null = null) {
+export function useTalkXMonitor(
+  campaignId: string | null,
+  throttlePerMinute: number | null = null,
+  startedAt: string | number | null = null,
+) {
   const query = useQuery({
     queryKey: ['talkx-monitor-recipients', campaignId],
     queryFn: async () => {
@@ -187,14 +235,15 @@ export function useTalkXMonitor(campaignId: string | null, throttlePerMinute: nu
   });
 
   const names = namesQuery.data;
-  const remaining = recipients.filter((r) => !isSentStatus(r.status)).length;
-  const ratePerMinute = measureRatePerMinute(recipients);
+  const now = Date.now();
+  const remaining = countRemaining(recipients);
+  const ratePerMinute = measureRatePerMinute(recipients, now, startedAt);
 
   return {
     recipients,
     isLoading: query.isLoading,
     isError: query.isError,
-    rateByMinute: buildRateByMinute(recipients, { throttlePerMinute }),
+    rateByMinute: buildRateByMinute(recipients, { throttlePerMinute, startedAt, now }),
     ratePerMinute,
     remaining,
     finishMinutes: estimateFinishMinutes(remaining, ratePerMinute),
