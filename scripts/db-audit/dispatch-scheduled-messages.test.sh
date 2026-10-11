@@ -141,7 +141,7 @@ CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid)
   RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
   AS $$ SELECT _user_id = '99999999-9999-9999-9999-999999999999'::uuid $$;
 
-CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid NOT NULL UNIQUE, is_active boolean NOT NULL DEFAULT true);
+CREATE TABLE public.profiles (id uuid PRIMARY KEY, user_id uuid NOT NULL UNIQUE, is_active boolean NOT NULL DEFAULT true, name text, job_title text);
 CREATE TABLE public.whatsapp_connections (
   id uuid PRIMARY KEY, name text, status text NOT NULL, instance_id text, is_default boolean DEFAULT false,
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -158,7 +158,9 @@ CREATE TABLE public.contacts (
   id uuid PRIMARY KEY,
   whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id),
   assigned_to uuid REFERENCES public.profiles(id),
-  is_active boolean DEFAULT true
+  is_active boolean DEFAULT true,
+  conversation_status text NOT NULL DEFAULT 'open',
+  deleted_at timestamptz
 );
 CREATE TABLE public.messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -184,6 +186,7 @@ CREATE TABLE public.scheduled_messages (
   scheduled_at timestamptz NOT NULL,
   status text NOT NULL DEFAULT 'pending',
   sent_at timestamptz,
+  message_id uuid,
   error_message text,
   created_by uuid REFERENCES public.profiles(id),
   whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id),
@@ -228,7 +231,12 @@ INSERT INTO public.contacts (id, whatsapp_connection_id, assigned_to, is_active)
   ('c0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', NULL, true),
   ('c0000000-0000-0000-0000-000000000002', NULL, NULL, true),
   ('c0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', NULL, true),
-  ('c0000000-0000-0000-0000-000000000009', 'e0000000-0000-0000-0000-000000000001', NULL, true);
+  ('c0000000-0000-0000-0000-000000000009', 'e0000000-0000-0000-0000-000000000001', NULL, true),
+  ('c0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0000-000000000001', NULL, true);
+UPDATE public.contacts SET conversation_status = 'archived'
+  WHERE id = 'c0000000-0000-0000-0000-000000000004';
+UPDATE public.profiles SET name = 'Carla Souza', job_title = 'Vendedora'
+  WHERE id = 'aa000000-0000-0000-0000-000000000001';
 SQL
 
 psql_file "$tmp_dir/pre.sql"
@@ -239,10 +247,13 @@ psql_file "$tmp_dir/seed.sql"
 carla='aa000000-0000-0000-0000-000000000001'
 bob='bb000000-0000-0000-0000-000000000001'
 inativo='dd000000-0000-0000-0000-000000000001'
+admin='cc000000-0000-0000-0000-000000000001'
 c1='c0000000-0000-0000-0000-000000000001'
 c2='c0000000-0000-0000-0000-000000000002'
 c9='c0000000-0000-0000-0000-000000000009'
+c4='c0000000-0000-0000-0000-000000000004'
 e1='e0000000-0000-0000-0000-000000000001'
+e2='e0000000-0000-0000-0000-000000000002'
 CARLA='{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}'
 SERVICE='"role":"service_role"'
 
@@ -273,21 +284,33 @@ expect_value 'B1b so a vencida pendente mudou de estado (sent|pending|cancelled|
   "SELECT string_agg(status, '|' ORDER BY id) FROM public.scheduled_messages"
 
 expect_value 'B2 a mensagem foi enfileirada pelo dono, com conexao e status sending' \
-  "1|agent|sending|$e1|$carla|texto agendado" \
+  "1|agent|sending|$e1|$carla|*Carla - Vendedora:*<NL>texto agendado" \
   "SELECT count(*)::text || '|' || min(sender) || '|' || min(status) || '|' || min(whatsapp_connection_id::text) \
-        || '|' || min(agent_id::text) || '|' || min(content) \
+        || '|' || min(agent_id::text) || '|' || replace(min(content), chr(10), '<NL>') \
    FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000001'"
 expect_value 'B2b o client_message_id da mensagem e o id do agendamento' '1' \
   "SELECT count(*) FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000001'"
 
-expect_value 'B3 sent_at preenchido e error_message nulo na enviada' 'true|NULO' \
-  "SELECT (sent_at IS NOT NULL)::text || '|' || coalesce(error_message, 'NULO') \
+expect_value 'B3 sent_at e message_id preenchidos e error_message nulo na enviada' 'true|NULO' \
+  "SELECT (sent_at IS NOT NULL AND message_id IS NOT NULL)::text || '|' || coalesce(error_message, 'NULO') \
    FROM public.scheduled_messages WHERE id = 'd0000000-0000-0000-0000-000000000001'"
+expect_value 'B3b a coluna message_id da agendada e o id da mensagem criada' 'true' \
+  "SELECT (message_id = (SELECT id FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000001'))::text \
+   FROM public.scheduled_messages WHERE id = 'd0000000-0000-0000-0000-000000000001'"
+
+# B3c — o message_id DEVOLVIDO pelo despacho e igual ao messages.id (ponto 1/3 da recusa).
+# As duas consultas rodam na mesma sessao: a primeira guarda o message_id devolvido
+# numa TEMP, a segunda compara com a linha criada (mesma sessao enxerga o INSERT).
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
+  ('d0000000-0000-0000-0000-000000000020','$c1','confere retorno','text', now() - interval '5 min','pending','$carla');" >/dev/null
+expect_value 'B3c o message_id devolvido e igual ao messages.id da mensagem criada' 'true' \
+  "$(svc "SELECT message_id::text INTO TEMP t_ret FROM public.dispatch_scheduled_messages(); SELECT ((SELECT message_id FROM t_ret) = (SELECT id::text FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000020'))::text;")"
 
 expect_value 'B4 reprocessar nao reenvia (0 linhas no lote)' '0' \
   "$(svc "SELECT count(*) FROM public.dispatch_scheduled_messages()")"
 expect_value 'B4b nenhuma mensagem nova foi criada (segue 1)' '1' \
-  "SELECT count(*) FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000001'"
+  "SELECT count(*) FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000020'"
 
 # B5 — contato legado sem conexao atribuida usa o fallback
 limpar
@@ -316,15 +339,15 @@ psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, messag
   ('d0000000-0000-0000-0000-000000000007','$c1','texto do bob','text', now() - interval '5 min','pending','$bob');" >/dev/null
 expect_value 'B7 dono sem send_messages: o item falha' "failed" \
   "$(svc "SELECT outcome FROM public.dispatch_scheduled_messages()")"
-expect_value 'B7b o agendamento ficou failed com o motivo da permissao' 'true' \
-  "SELECT (status = 'failed' AND error_message LIKE '%send_messages_permission_required%')::text \
+expect_value 'B7b o agendamento ficou failed sem_permissao com message_id nulo' 'true' \
+  "SELECT (status = 'failed' AND error_message = 'sem_permissao' AND message_id IS NULL)::text \
    FROM public.scheduled_messages WHERE id = 'd0000000-0000-0000-0000-000000000007'"
 expect_value 'B7c nada foi enfileirado pelo dono sem permissao' '0' \
   "SELECT count(*) FROM public.messages"
 expect_value 'B7d falha auditada com motivo, sem telefone nem conteudo' 'true' \
   "SELECT (action = 'scheduled_message_dispatch_failed' \
            AND entity_id = 'd0000000-0000-0000-0000-000000000007' \
-           AND (details->>'reason') LIKE '%send_messages_permission_required%' \
+           AND (details->>'reason') = 'sem_permissao' \
            AND details::text NOT LIKE '%texto do bob%')::text \
    FROM public.audit_logs WHERE entity_id = 'd0000000-0000-0000-0000-000000000007'"
 
@@ -332,7 +355,7 @@ expect_value 'B7d falha auditada com motivo, sem telefone nem conteudo' 'true' \
 limpar
 psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
   ('d0000000-0000-0000-0000-000000000008','$c1','inativo','text', now() - interval '5 min','pending','$inativo');" >/dev/null
-expect_value 'B8 remetente inativo: failed com sender_unavailable' "sender_unavailable" \
+expect_value 'B8 remetente inativo: failed com autor_inativo' "autor_inativo" \
   "$(svc "SELECT failure_reason FROM public.dispatch_scheduled_messages()")"
 expect_value 'B8b auditado' '1' \
   "SELECT count(*) FROM public.audit_logs WHERE entity_id = 'd0000000-0000-0000-0000-000000000008'"
@@ -342,22 +365,22 @@ limpar
 psql_sql "UPDATE public.whatsapp_connections SET status = 'disconnected' WHERE id = '$e1';
   INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
   ('d0000000-0000-0000-0000-000000000009','$c1','sem conexao','text', now() - interval '5 min','pending','$carla');" >/dev/null
-expect_value 'B9 sem conexao conectada: failed com no_connected_whatsapp_connection' 'true' \
-  "$(svc "SELECT (outcome = 'failed' AND failure_reason LIKE '%no_connected_whatsapp_connection%')::text FROM public.dispatch_scheduled_messages()")"
+expect_value 'B9 sem conexao conectada: failed com conexao_invalida' 'true' \
+  "$(svc "SELECT (outcome = 'failed' AND failure_reason = 'conexao_invalida')::text FROM public.dispatch_scheduled_messages()")"
 psql_sql "UPDATE public.whatsapp_connections SET status = 'connected' WHERE id = '$e1';" >/dev/null
 
 # B10 — contato invisivel para o dono
 limpar
 psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
   ('d0000000-0000-0000-0000-000000000010','$c9','invisivel','text', now() - interval '5 min','pending','$carla');" >/dev/null
-expect_value 'B10 contato invisivel: failed com message_contact_not_authorized' 'true' \
-  "$(svc "SELECT (outcome = 'failed' AND failure_reason LIKE '%message_contact_not_authorized%')::text FROM public.dispatch_scheduled_messages()")"
+expect_value 'B10 contato invisivel: failed com contato_invalido' 'true' \
+  "$(svc "SELECT (outcome = 'failed' AND failure_reason = 'contato_invalido')::text FROM public.dispatch_scheduled_messages()")"
 
 # B11 — lote obedece ao p_limit
 limpar
 psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
-  ('d0000000-0000-0000-0000-000000000011','$c1','lote 1','text', now() - interval '30 min','pending','$carla'),
-  ('d0000000-0000-0000-0000-000000000012','$c1','lote 2','text', now() - interval '20 min','pending','$carla'),
+  ('d0000000-0000-0000-0000-000000000011','$c1','lote 1','text', now() - interval '14 min','pending','$carla'),
+  ('d0000000-0000-0000-0000-000000000012','$c1','lote 2','text', now() - interval '12 min','pending','$carla'),
   ('d0000000-0000-0000-0000-000000000013','$c1','lote 3','text', now() - interval '10 min','pending','$carla');" >/dev/null
 expect_value 'B11 o lote respeita o p_limit (2 de 3)' '2' \
   "$(svc "SELECT count(*) FROM public.dispatch_scheduled_messages(2)")"
@@ -371,7 +394,7 @@ expect_value 'B11c nenhuma pendente sobrou' '0' \
 # B12 — falha de um item nao cancela os outros
 limpar
 psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
-  ('d0000000-0000-0000-0000-000000000014','$c1','falha primeiro','text', now() - interval '20 min','pending','$bob'),
+  ('d0000000-0000-0000-0000-000000000014','$c1','falha primeiro','text', now() - interval '12 min','pending','$bob'),
   ('d0000000-0000-0000-0000-000000000015','$c1','ok depois','text', now() - interval '10 min','pending','$carla');" >/dev/null
 expect_value 'B12 os dois itens foram processados, na ordem (failed|sent)' '2|failed|sent' \
   "$(svc "WITH d AS (SELECT * FROM public.dispatch_scheduled_messages()) \
@@ -389,6 +412,59 @@ psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, messag
 expect_value 'B13 sem vencidas pendentes o lote e vazio e nada e gravado' '0|0' \
   "$(svc "SELECT (SELECT count(*) FROM public.dispatch_scheduled_messages())::text || '|' \
               || (SELECT count(*) FROM public.messages)::text")"
+
+# B15 — atraso de 10 min ainda envia (limite de 15 min tolerado)
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
+  ('d0000000-0000-0000-0000-000000000030','$c1','dez minutos','text', now() - interval '10 min','pending','$carla');" >/dev/null
+psql_sql "$(svc "SELECT count(*) FROM public.dispatch_scheduled_messages()")" >/dev/null
+expect_value 'B15 atraso de 10 min: enviado normalmente' 'sent|1' \
+  "SELECT (SELECT status FROM public.scheduled_messages WHERE id = 'd0000000-0000-0000-0000-000000000030') || '|' || (SELECT count(*) FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000030')"
+
+# B16 — atraso de 20 min expira: nada e enfileirado, nao volta a processar
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
+  ('d0000000-0000-0000-0000-000000000031','$c1','vinte minutos','text', now() - interval '20 min','pending','$carla');" >/dev/null
+expect_value 'B16 atraso de 20 min: outcome expired com a mensagem certa' 'expired|expirada: atraso acima de 15 min' \
+  "$(svc "SELECT outcome || '|' || failure_reason FROM public.dispatch_scheduled_messages()")"
+expect_value 'B16b expirada: status e erro gravados, message_id nulo, nada enfileirado' 'expired|expirada: atraso acima de 15 min|NULO|0' \
+  "SELECT status || '|' || error_message || '|' || coalesce(message_id::text, 'NULO') || '|' || (SELECT count(*) FROM public.messages)::text \
+   FROM public.scheduled_messages WHERE id = 'd0000000-0000-0000-0000-000000000031'"
+expect_value 'B16c expirada nao volta ao lote (0 linhas)' '0' \
+  "$(svc "SELECT count(*) FROM public.dispatch_scheduled_messages()")"
+
+# B17 — conexao explicita desconectada vira failed conexao_invalida
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by, whatsapp_connection_id) VALUES
+  ('d0000000-0000-0000-0000-000000000032','$c1','conn explicita','text', now() - interval '5 min','pending','$carla','$e2');" >/dev/null
+expect_value 'B17 conexao explicita desconectada: failed conexao_invalida' 'failed|conexao_invalida' \
+  "$(svc "SELECT outcome || '|' || failure_reason FROM public.dispatch_scheduled_messages()")"
+expect_value 'B17b nada foi enfileirado' '0' \
+  "SELECT count(*) FROM public.messages"
+
+# B18 — contato arquivado vira failed contato_bloqueado
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
+  ('d0000000-0000-0000-0000-000000000033','$c4','arquivado','text', now() - interval '5 min','pending','$carla');" >/dev/null
+expect_value 'B18 contato arquivado: failed contato_bloqueado' 'failed|contato_bloqueado' \
+  "$(svc "SELECT outcome || '|' || failure_reason FROM public.dispatch_scheduled_messages()")"
+expect_value 'B18b nada foi enfileirado' '0' \
+  "SELECT count(*) FROM public.messages"
+
+# B19 — dono sem nome no perfil: envia sem assinatura, conteudo intacto
+limpar
+psql_sql "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by) VALUES
+  ('d0000000-0000-0000-0000-000000000034','$c1','sem assinatura aqui','text', now() - interval '5 min','pending','$admin');" >/dev/null
+psql_sql "$(svc "SELECT count(*) FROM public.dispatch_scheduled_messages()")" >/dev/null
+expect_value 'B19 sem nome no perfil: conteudo sai intacto, sem assinatura' '1|sem assinatura aqui' \
+  "SELECT count(*)::text || '|' || min(content) FROM public.messages WHERE client_message_id = 'd0000000-0000-0000-0000-000000000034'"
+
+# B20 — sem CHECK de maximo: agendar daqui a 1 ano e permitido
+limpar
+expect_value 'B20 agendar com 1 ano de antecedencia e permitido (sem teto)' '1' \
+  "INSERT INTO public.scheduled_messages (id, contact_id, content, message_type, scheduled_at, status, created_by)
+   VALUES ('d0000000-0000-0000-0000-000000000035','$c1','longe','text', now() + interval '1 year','pending','$carla')
+   RETURNING 1"
 
 # B14 — ACL: quem pode e quem nao pode
 expect_value 'B14 EXECUTE negado para authenticated/anon e concedido a service_role' 'false|false|true' \

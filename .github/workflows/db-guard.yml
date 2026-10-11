@@ -380,7 +380,10 @@ jobs:
       # real de dispatch_scheduled_messages da migration versionada, executa em PostgreSQL
       # 17 descartavel junto com o enqueue canonico extraido de
       # 20260930200000_enforce_enqueue_connection_scope.sql e prova: so vencidas pendentes,
-      # enfileiramento como o dono, sent_at/error_message, idempotencia, fallback de contato
+      # enfileiramento como o dono, message_id devolvido e gravado (nulo no failed),
+      # sent_at/error_message, idempotencia, expiracao apos 15 min, motivos estaveis
+      # (sem_permissao, contato_invalido, conexao_invalida, autor_inativo,
+      # contato_bloqueado), assinatura do dono, fallback de contato
       # legado, midia preservada, sem permissao/remetente inativo/sem conexao/contato
       # invisivel viram failed com motivo e auditoria sem conteudo, lote pelo p_limit,
       # isolamento por item, ACL (authenticated/anon negados, service_role concedido) e o
