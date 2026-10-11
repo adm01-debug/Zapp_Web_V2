@@ -26,6 +26,8 @@ import { ChatInputArea } from './chat/ChatInputArea';
 import { ChatDragOverlay } from './chat/ChatDragOverlay';
 import { ChatQuickRepliesPopover } from './chat/ChatQuickRepliesPopover';
 import { ChatSearchBar } from './chat/ChatSearchBar';
+import { ConversationDeliverySummary } from './chat/ConversationDeliverySummary';
+import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
@@ -383,6 +385,11 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
         <Suspense fallback={null}>
           <NextBestActionEngine contactId={conversation.contact.id} contactName={conversation.contact.name} />
         </Suspense>
+
+        {/* Entrega da conversa (paridade V3): chips de fila/falha e o aviso de não enviada.
+            Silenciosos quando não há pendência — não mexem no scroll nem no envio. */}
+        <ConversationDeliverySummary messages={messages} />
+        <SendErrorBanner messages={messages} onSendMessage={onSendMessage} />
 
         <ChatMessagesArea ref={messagesAreaRef} messages={messages} isContactTyping={isContactTyping} isColleagueTyping={isColleagueTyping}
           typingUserName={isContactTyping ? conversation.contact.name : (typingUsers[0]?.name || conversation.contact.name)}
