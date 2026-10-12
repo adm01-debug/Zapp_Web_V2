@@ -255,9 +255,16 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     const { container } = render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><TalkXSegments onUseCampaign={() => {}} /></QueryClientProvider>);
     fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
 
+    // lead_score/risk_score são "em breve" (coluna nunca calculada): o botão
+    // continua visível com o MESMO nome acessível, mas desabilitado — clicar
+    // não adiciona condição (filtro morto removido).
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    expect(leadScore).toHaveAttribute('title', expect.stringContaining('Em breve'));
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
+
     // O catálogo de filtros adiciona a condição com o campo — e o campo traz o tipo.
-    // Lead score fica "em breve" (nada calcula a coluna): botão desabilitado, não adiciona condição.
-    expect(screen.getByRole('button', { name: /Lead score/ })).toBeDisabled();
     for (const filtro of ['Empresa', 'Data de cadastro', 'Responsável', 'Tipo do contato']) {
       fireEvent.click(screen.getByRole('button', { name: filtro }));
     }
@@ -311,5 +318,38 @@ describe('TalkXSegments · grupos E/OU do construtor (X105)', () => {
     const risco = await screen.findByRole('option', { name: /Risco de churn/ });
     expect(risco).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('option', { name: /Lead score/ })).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('segmento salvo com lead_score 50 mantém hash e bloqueia só risk_score', async () => {
+    const regras: SegmentRules = {
+      groups: [{
+        id: 'g-hash', match: 'and',
+        rules: [{ id: 'r-hash', field: 'lead_score', op: 'gte', value: '50' }],
+      }],
+    };
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <TalkXSegmentBuilder
+          initial={{ name: 'Lead salvo', description: '', rules: regras }}
+          isNew={false}
+          saving={false}
+          onSave={() => {}}
+          onCancel={() => {}}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByDisplayValue('50')).toBeTruthy();
+    expect(container.querySelector('svg.lucide-hash')).not.toBeNull();
+
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+    window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+    const [campo] = screen.getAllByRole('combobox');
+    fireEvent.pointerDown(campo, { button: 0, ctrlKey: false });
+    fireEvent.click(campo);
+
+    expect(screen.getByRole('option', { name: /Lead score/ })).not.toHaveAttribute('aria-disabled', 'true');
+    expect(await screen.findByRole('option', { name: /Risco de churn/ })).toHaveAttribute('aria-disabled', 'true');
   });
 });

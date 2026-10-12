@@ -163,6 +163,14 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
+        // "Em breve" (lead_score/risk_score): a regra é completa e bem descrita
+        // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
+        // calculada — então fica fora da estimativa/PostgREST e barra a
+        // publicação via validateSegment, sem quebrar o catálogo v2.
+        if (RULE_FIELDS.find((f) => f.value === rule.field)?.comingSoon) {
+          incompleteCount += 1;
+          return false;
+        }
         if (isRuleComplete(rule)) return true;
         incompleteCount += 1;
         return false;
@@ -186,6 +194,9 @@ const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
   if (!def) return null;
+  // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
+  // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
+  if (def.comingSoon) return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;

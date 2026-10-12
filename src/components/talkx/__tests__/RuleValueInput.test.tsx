@@ -82,7 +82,8 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
 });
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
-import { TalkXSegmentBuilder } from '@/components/talkx/segments/TalkXSegmentBuilder';
+import { RuleRow } from '@/components/talkx/segments/RuleRow';
+import type { SegmentRule } from '@/hooks/integrations/useTalkXSegments';
 import { CONTACT_TYPES } from '@/utils/whatsappFileTypes';
 
 function renderView() {
@@ -162,25 +163,24 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
   });
 
   it('número: grava o número sem máscara (X106, via regra já salva de lead_score)', async () => {
-    // A entrega põe lead_score/risk_score "em breve" no catálogo (nada calcula a
-    // coluna), e RULE_FIELDS só tem esses dois como kind 'number'. A cobertura do
-    // tipo número do X106 segue viva pelo caminho que a entrega preserva: a regra
-    // JÁ SALVA, cujo campo continua selecionável e editável (RuleRow).
-    render(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-        <TalkXSegmentBuilder
-          initial={{
-            name: 'Alto valor',
-            description: '',
-            rules: { groups: [{ id: 'g1', match: 'and', rules: [{ id: 'r1', field: 'lead_score', op: 'gt', value: '' }] }] },
+    // lead_score/risk_score saíram do catálogo porque são "em breve"; a cobertura
+    // do tipo number continua pelo caminho de compatibilidade de segmento JÁ
+    // SALVO: RuleRow mantém a regra existente editável e emite o valor cru.
+    function LinhaNumericaSalva() {
+      const [rule, setRule] = React.useState<SegmentRule>({ id: 'r1', field: 'lead_score', op: 'gt', value: '' });
+      return (
+        <RuleRow
+          rule={rule}
+          onChange={(patch) => {
+            f.update(patch);
+            setRule((current) => ({ ...current, ...patch }));
           }}
-          isNew={false}
-          saving={false}
-          onSave={f.create}
-          onCancel={() => {}}
+          onRemove={() => {}}
         />
-      </QueryClientProvider>,
-    );
+      );
+    }
+
+    render(<LinhaNumericaSalva />);
 
     const valor = screen.getByLabelText('Valor da condição') as HTMLInputElement;
     // Caixa numérica de verdade (inputMode decimal), não a caixa de texto.
@@ -188,14 +188,18 @@ describe('TalkXSegments · campo de valor por tipo (X106)', () => {
 
     fireEvent.change(valor, { target: { value: '80' } });
     expect(valor.value).toBe('80');
+    expect(f.update).toHaveBeenLastCalledWith({ value: '80' });
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
-
-    expect(await regraGravada()).toMatchObject({
-      field: 'lead_score',
-      op: 'gt',
-      value: '80',
-    });
+  it('número "em breve" (lead_score): botão desabilitado e sem condição adicionada', async () => {
+    renderView();
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo segmento' }));
+    // O botão continua visível com o MESMO nome acessível ("Lead score"), mas
+    // desabilitado: a coluna nunca é calculada e o filtro seria morto.
+    const leadScore = screen.getByRole('button', { name: 'Lead score' });
+    expect(leadScore).toBeDisabled();
+    fireEvent.click(leadScore);
+    expect(screen.queryByLabelText('Valor da condição')).toBeNull();
   });
 
   it('"em breve": Lead score e Risco de churn ficam desabilitados no catálogo', async () => {
