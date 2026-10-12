@@ -1,47 +1,65 @@
-Especialista: complexo (area-testes-do-produto)
+# feat(tarefas): menu da linha, seleção, clique seguro e teclado da tabela (061-064)
 
-## Resultado: fecho SEM commit de código — o estado exigido já está integrado no dia
-Um commit só com este relato; nenhum arquivo de código muda. O que este cartão
-exige (spec 3 regiões + valores reais + tela na base) entrou no dia por commits
-já revisados/integrados:
-- spec reescrito: commit 72893dc63 `test(e2e): [refazer 2] multiplix-e2e-3-regioes`
-  (cartão V2 2610102039c029), presente em `dia/2026-10-12`;
-- tela 3 regiões: commits 3a50dd8ea, af9a275cd, 7fb708c41 em `dia/2026-10-12`
-  (`MultiplixComposerDialog.tsx` ausente na base).
-Reescrever o spec nesta branch (base `dia/2026-10-10`, spec da era do diálogo)
-duplicaria o 72893dc63 — artefato repetido; por isso não há diff de código.
+Especialista: Íris (area-front-componentes)
 
-## Prova (playwright de verdade, contra o conteúdo do dia)
-`CI=1 node_modules/.bin/playwright test --project=chromium-multiplix
-e2e/multiplix.spec.ts --reporter=line` → `4 passed (46.1s)` (log `.tmp/pw.log`):
-seleção persiste (L401); composição inline N×M + AlertDialog (L458); prévia
-região 03 (L534); monitor (L556). Para rodar como agente criei o projeto
-dedicado temporário (a guarda bloqueia `chromium-authenticated` e a R1 proíbe
-credenciais no `setup`); ele não entra na entrega e vira sugestão de follow-up.
-- Tentativas sem prova afirmada: sem flag o run parou no `setup`
-  (`E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas`, proposital);
-  com `--no-deps` a guarda recusou o projeto authenticated.
-- `zapp-verify . --rapido` (executor): VERDE SEM BANCO (`db_guard`, tipos,
-  lint, migrations OK; sem conjunto de banco neste e2e).
+## O que mudou e por quê
 
-## Pontos da recusa
-- Ponto 1 (playwright de verdade, saída colada): acima, `4 passed (46.1s)`.
-- Ponto 2 (tela de 3 regiões na base): `dia/2026-10-12` tem `aria-label`
-  "01 Público", "02 Composição", "03 Prévia e revisão" e não tem o diálogo.
-  Nada trazido por merge/cherry-pick para esta entrega.
-- Ponto 3 (destino_e164 real): bytes confirmados (`od -c` nas 2 linhas do
-  spec do dia mostram o valor da base); o valor mascarado do rejeitado
-  183068b86 não entra em lugar nenhum.
-- Ponto 4 (sem afirmação sem saída): tudo acima veio de comando rodado agora.
+- `src/components/tasks/list/taskRowMenu.tsx` (novo): o menu ⋮ da linha com os
+  mesmos cinco grupos do kebab do card (Abrir · Concluir/Reabrir · Lembrar-me ▸ ·
+  Mover para ▸ · Cancelar) — etapa 061. Não inventa ação: chama as ações que o
+  `TasksModule` já entrega ao modo Lista; o submenu "Mover para" reusa o
+  `MoveTargets` (mesmas regras de coluna atual/WIP) e "Lembrar-me" respeita
+  `aceitaLembrete` (estado terminal desabilita com o motivo, como no card).
+- `src/components/tasks/list/TasksListTable.tsx`: a linha virou a superfície de
+  seleção — `tabIndex={0}`, `data-selected`, fundo `bg-primary/10` e a barra
+  esquerda de 3 px como elemento próprio (não muda a largura das colunas) —
+  etapa 062. A linha lê/escreve o MESMO estado de UI do painel pelo
+  `TasksUiContext` (`useTasksUiOptional`: `selectedId` marca, `openPanel` abre os
+  detalhes junto com o `onOpen`), então clique e teclado caem no mesmo lugar.
+  Clique seguro (etapa 063): o `onClick` da linha é ignorado quando o alvo está
+  dentro de controle (`button/a/input/select/textarea/[role=menuitem]/[role=menu]`)
+  e o conteúdo do menu faz `stopPropagation` — checkbox, contato, menu ⋮ e
+  popovers não abrem os detalhes; o clique no vazio FORA de linha não tem handler.
+  Teclado da tabela (etapa 064): ↑/↓ movem o foco entre as linhas montadas da
+  tabela (sem sair da tabela nas pontas), Enter abre, Espaço e o `X` herdado
+  concluem, `E` edita (o detalhe é a superfície de edição, o mesmo `E` do card) e
+  Delete cancela; teclas de dentro do checkbox/menu não são tratadas (`e.target
+  !== e.currentTarget`).
+- `src/components/tasks/list/TasksListMode.tsx`: passa `onComplete`/`onReopen`/
+  `onDelete` (que já estavam no contrato `WorkItemCardActions`) para a tabela.
+- `src/components/tasks/__tests__/TasksListAcoes.test.tsx` (novo): a suíte das
+  quatro etapas (ver Prova).
+- `src/components/tasks/__tests__/TasksModule.test.tsx` e `cardAcoes.test.tsx`:
+  dois ajustes das provas herdadas que a faixa do cartão pai mexeu — as
+  asserções do recorte de KPI na Lista passaram a contar LINHAS da tabela
+  (`task-row`) em vez de cards, e o teste do kebab do card busca o botão DENTRO
+  do card (no Quadro o QuickAdd do topo também é "Mais opções"). Nenhum teste foi
+  pulado, removido ou afrouxado: as asserções continuam as mesmas, mudou só o
+  elemento que o modo Lista agora renderiza.
 
-## Erro meu, corrigido
-Atualizei a branch com fast-forward para `dia/2026-10-12` para rodar a prova;
-o fechar mediu diff de 2251758 caracteres (166 commits do dia, não meus) e
-recusou por regra de 90000. Reverti com `git reset --hard 03db8d720`
-(volta ao estado exato da criação, confirmado pelo reflog) e fecho sem código.
+Faixa herdada (instrução do integrador no cartão): confirmei
+`git merge-base --is-ancestor 89624767e HEAD` → ausente e trouxe por cherry-pick
+os dois commits que tocam `src/components/tasks/list/`
+(`d850da4ad` lista em tabela; `ed04a9529` células 056-060), resolvendo 1 conflito
+em `TasksModule.test.tsx` (ficou a versão da faixa, que é a que descreve a tabela).
+
+## Prova
+
+- vermelho antes: `npx vitest run src/components/tasks/__tests__/TasksListAcoes.test.tsx`
+  → `Tests 9 failed (9)` (`Unable to find an accessible element with the role "button" and name "Mais opções"`, `expected null to be 'false'`, `expected 'nada' to be 's2'`) — o teste novo entrou antes do código.
+- verde depois: `npx vitest run src/components/tasks/__tests__/TasksListAcoes.test.tsx`
+  → `Test Files 1 passed (1); Tests 9 passed (9)`.
+- sem regressão: `npx vitest run src/components/tasks`
+  → `Test Files 30 passed (30); Tests 344 passed | 1 todo (345)`.
+- `npx tsc -b --force` → exit 0.
+- `npx eslint` nos 4 arquivos tocados → exit 0.
 
 ## O que NÃO fiz e por quê
-- Sem código: duplicaria o 72893dc63 já integrado.
-- Não toquei `.github/`, produção, credenciais ou `e2e/.auth/*`.
-- Código do delta foi escrito pelo Claude Code (2 chamadas); prova, revert,
-  este relato e a decisão de fechar sem código são meus.
+
+- Sem migration, sem Edge Function, sem dependência nova (critério 2): só a pasta
+  `src/components/tasks/list/` e a suíte de testes deste módulo.
+- Não toquei `TaskCheckbox`, `WorkItemCard`, `MoveToMenu` nem `TasksModule`: o
+  contrato que a linha precisa já existe (`onOpen`, `onToggleDone`, `onDelete`,
+  `cardActions`, `MoveTargets` e `TasksUiContext`).
+  "E edita" cai no painel de detalhes porque é ele a superfície de edição — não
+  existe modo de edição inline na Lista em tabela.
