@@ -1971,6 +1971,42 @@ export type Database = {
           },
         ]
       }
+      contact_block_audit: {
+        Row: {
+          blocked_at_from: string | null
+          blocked_at_to: string | null
+          contact_id: string
+          id: string
+          operation: string
+          performed_at: string
+          performed_by: string | null
+          performed_by_db_role: string
+          performed_by_profile: string | null
+        }
+        Insert: {
+          blocked_at_from?: string | null
+          blocked_at_to?: string | null
+          contact_id: string
+          id?: string
+          operation: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Update: {
+          blocked_at_from?: string | null
+          blocked_at_to?: string | null
+          contact_id?: string
+          id?: string
+          operation?: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_db_role?: string
+          performed_by_profile?: string | null
+        }
+        Relationships: []
+      }
       contact_deletion_audit: {
         Row: {
           contact_id: string
@@ -2177,6 +2213,8 @@ export type Database = {
           assigned_to: string | null
           avatar_fetch_attempted_at: string | null
           avatar_url: string | null
+          blocked_at: string | null
+          blocked_by: string | null
           channel_connection_id: string | null
           channel_type: string | null
           city: string | null
@@ -2221,6 +2259,8 @@ export type Database = {
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           city?: string | null
@@ -2265,6 +2305,8 @@ export type Database = {
           assigned_to?: string | null
           avatar_fetch_attempted_at?: string | null
           avatar_url?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
           channel_connection_id?: string | null
           channel_type?: string | null
           city?: string | null
@@ -12066,6 +12108,10 @@ export type Database = {
       set_contact_vip: {
         Args: { p_contact_id: string; p_is_vip: boolean }
         Returns: boolean
+      }
+      set_contact_blocked: {
+        Args: { p_blocked: boolean; p_contact_id: string }
+        Returns: string
       }
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
