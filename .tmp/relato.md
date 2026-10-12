@@ -1,18 +1,31 @@
-Especialista: worker (docs)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+Concluído: corrigi os pontos da recusa adicionando prova de horário de verão real, UTC-3 e virada de dia nos testes de datas/presets de Tarefas.
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Pontos da recusa
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+Ponto 1: `src/hooks/tasks/__tests__/workItemFormat.test.ts` precisava provar calendário local em horário de verão/UTC-3.
+O que mudei: adicionei `withTimeZone('America/Sao_Paulo')` com 04/11/2018 (dia de 23h) e 17/02/2019 (dia de 25h), um ISO em Z que cai no dia local anterior em UTC-3 e o nome do caso de hora separada explicitando ausência versus horário escolhido.
+Prova vermelha: com mutação local temporária trocando a regra por janela de 24h, o teste `formatWorkItemDay atravessa horário de verão real em America/Sao_Paulo por calendário local` falhou com `Expected: "Amanhã, 01:05" / Received: "Hoje, 01:05"`.
+Prova verde final: `bunx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Test Files 2 passed (2)` e `Tests 31 passed (31)`.
 
-## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+Ponto 2: `src/hooks/tasks/__tests__/workItemPresets.test.ts` precisava provar presets por dia civil em DST/virada.
+O que mudei: adicionei casos para `duePresetDate('tomorrow')` em 04/11/2018 às 23:59, `duePresetDate('nextWeek')` em 17/02/2019 às 23:59, `remindPresetDate('tomorrow9')` reaproveitando `tomorrowAtNine` e `nextMondayAtNine` mantendo 09:00 local ao atravessar a mudança de fuso.
+Prova vermelha: com mutação local temporária trocando `setDate` por `+86_400_000`, os testes `presets de prazo atravessam horário de verão real em America/Sao_Paulo por dia de calendário` e `"amanhã 9h" e "próxima segunda 9h" atravessam DST real...` falharam com `Expected: 4 / Received: 5`.
+Prova verde final: `bunx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Test Files 2 passed (2)` e `Tests 31 passed (31)`.
+
+Ponto 3: escopo do refazer.
+O que mudei: o commit contém somente o relato, `workItemFormat.ts`, `workItemPresets.ts` e os dois testes desses módulos. Telas, QuickAdd, banco, Edge, CI, migrations, exportação/importação, edição em massa, deploy, push e dependências ficaram fora do diff.
+Verificação: `git diff --stat 972ab38ad985b846ae663d2f8af774e5402c418c...HEAD` lista apenas os 5 arquivos abaixo; `zapp-verify . --rapido` saiu com código 0 e linhas `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`.
+
+## Arquivos do diff
+.tmp/relato.md
+src/hooks/tasks/__tests__/workItemFormat.test.ts
+src/hooks/tasks/__tests__/workItemPresets.test.ts
+src/hooks/tasks/workItemFormat.ts
+src/hooks/tasks/workItemPresets.ts
+
+## Verificações executadas
+- `bun test src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` com mutação local temporária -> `26 pass`, `5 fail`, `73 expect() calls`, `Ran 31 tests across 2 files`.
+- `bunx vitest run src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` -> `Test Files 2 passed (2)` e `Tests 31 passed (31)`.
+- `zapp-verify . --rapido` -> `OK dependencias`, `OK db_guard`, `OK tipos`, `OK lint`, `OK migrations`, exit 0.
