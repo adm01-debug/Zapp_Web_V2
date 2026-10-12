@@ -675,10 +675,11 @@ Deno.test("token do teste == token real do talkx-send (contrato único)", async 
     assert(real === mirror, `contrato divergiu para ${uuid}: real=${real} espelho=${mirror}`);
   }
 });
-// O token é válido (MAC passa) mas o recipient pertence a camp-2 e o link é
-// da camp-1: o clique segue anônimo, nunca atribuído à campanha errada.
+
 // ── [refazer 2.2] token de OUTRA campanha: p_recipient null ──────────────────
 Deno.test("GET com token de outra campanha NÃO atribui (p_recipient null)", async () => {
+  // O token é válido (MAC passa) mas o recipient pertence a camp-2 e o link é
+  // da camp-1: o clique segue anônimo, nunca atribuído à campanha errada.
   const token = await trackingTokenForTest(TRACKING_SECRET, TOKEN_UUID_B);
   const { supabase, seen } = makeTokenFake({
     link: tokenLinkRow(),

@@ -339,7 +339,6 @@ async function resolveTalkxLinkToken(params: {
   return recipientId;
 }
 
-
 async function hashIp(ip: string, salt: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + salt);

@@ -31,17 +31,36 @@ test('Talk X {{link}} resolves to a real per-recipient tracking URL at the real 
   // que ser passado na chamada real (nao a de teste/dummy do preview).
   assert.match(sender, /from\("talkx_links"\)/);
   assert.match(sender, /order\("created_at", \{ ascending: true \}\)/);
-  assert.match(sender, /const trackingUrlFor = \(recipientId: string\)/);
-  // X022: a base vem de TALKX_LINK_BASE_URL (domínio próprio, rewrite /l/:slug no
-  // vercel.json) ou, sem o secret, do caminho direto da edge (?s=slug&r=recipient).
+  // [refazer 1] o token novo e assincrono: a prova estrutural segue o
+  // call site real, mas agora exige r=<token opaco de 32 chars>, nunca o
+  // recipient_id cru nem codificado. Sem segredo, o helper devolve undefined
+  // e personalize() cai no placeholder [link] em vez de vazar id.
+  assert.match(sender, /const trackingUrlFor = async \(recipientId: string\): Promise<string \| undefined> =>/);
+  assert.match(sender, /oldestSlug \? await urlFor\(oldestSlug, recipientId\) : undefined/);
+  assert.match(sender, /const linksByLabelFor = async \(recipientId: string\): Promise<Record<string, string>>/);
+  assert.match(sender, /const url = await urlFor\(slug, recipientId\)/);
+  assert.match(sender, /TALKX_CONVERT_SECRET/);
+  assert.match(sender, /const token = await hmacTokenForRecipient\(params\.recipientId, params\.secret\)/);
+  assert.match(sender, /if \(!token\) return undefined/);
+  assert.match(sender, /const rParam = encodeURIComponent\(token\)/);
   assert.match(sender, /TALKX_LINK_BASE_URL/);
   assert.match(sender, /functions\/v1\/talkx-link/);
-  assert.match(sender, /\/l\/\$\{encodeURIComponent\(slug\)\}\?r=\$\{encodeURIComponent\(recipientId\)\}/);
-  assert.match(sender, /\?s=\$\{encodeURIComponent\(slug\)\}&r=\$\{encodeURIComponent\(recipientId\)\}/);
+  assert.match(sender, /\/l\/\$\{encodeURIComponent\(params\.slug\)\}\?r=\$\{rParam\}/);
+  assert.match(sender, /\?s=\$\{encodeURIComponent\(params\.slug\)\}&r=\$\{rParam\}/);
+  assert.doesNotMatch(sender, /r=\$\{encodeURIComponent\((?:recipientId|params\.recipientId)\)\}/);
+  const trackingLookupIdx = recipientProcessor.indexOf('const recipientTrackingUrl = await trackingUrlFor(recipient.id as string)');
+  const linksLookupIdx = recipientProcessor.indexOf('const recipientLinksByLabel = await linksByLabelFor(recipient.id as string)');
   const realCallIdx = recipientProcessor.indexOf('const personalized = personalize(');
-  const trackingArgIdx = recipientProcessor.indexOf('trackingUrlFor(recipient.id as string)');
-  assert.ok(realCallIdx > -1 && trackingArgIdx > -1, 'o call site real de personalize() e o argumento trackingUrlFor devem existir');
-  assert.ok(trackingArgIdx > realCallIdx && trackingArgIdx - realCallIdx < 600, 'trackingUrlFor deve ser o argumento do call site real (nao do preview de teste)');
+  const trackingArgIdx = recipientProcessor.indexOf('recipientTrackingUrl,', realCallIdx);
+  const linksArgIdx = recipientProcessor.indexOf('recipientLinksByLabel,', realCallIdx);
+  assert.ok(
+    trackingLookupIdx > -1 && linksLookupIdx > trackingLookupIdx && realCallIdx > linksLookupIdx,
+    'o envio real deve resolver trackingUrlFor/linksByLabelFor antes de chamar personalize()',
+  );
+  assert.ok(
+    trackingArgIdx > realCallIdx && linksArgIdx > trackingArgIdx && linksArgIdx - realCallIdx < 700,
+    'personalize() deve receber a URL principal e o mapa link:rotulo do destinatario real',
+  );
 });
 
 test('Talk X personalize() resolves every placeholder in a single pass over the original template', () => {
