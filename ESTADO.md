@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-11`. 80 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-11`. 81 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -41,8 +41,8 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 16 |
-| **total** | **80** |
+| E | 17 |
+| **total** | **81** |
 
 ## Tabela
 
@@ -108,6 +108,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:201` · `supabase/config.toml:44` |
 | `public-api` | D | `supabase/config.toml:35` |
 | `recover-corrupted-audios` | E | — sem chamador no repositório — |
+| `recover-message-media` | E | — sem chamador no repositório — |
 | `revoke-auth-sessions` | A | `src/hooks/ui/useDeviceDetection.ts:196` · `src/hooks/ui/useDeviceDetection.ts:227` · `src/hooks/ui/useDeviceDetection.ts:238` · `src/components/admin/ForceLogoutButton.tsx:39` |
 | `searchbox-budget-alert` | C | `supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql:70` · `supabase/config.toml:68` |
 | `send-email` | A | `src/components/agents/InviteAgentDialog.tsx:40` |
@@ -129,7 +130,7 @@ Sem nenhum chamador, o grupo é **E** — e a guarda prova a ausência nas quatr
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:78` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (16) — GATE B
+## Órfãs (17) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
@@ -148,6 +149,7 @@ mantém a lista honesta.
 - `metrics`
 - `multiplix-voices`
 - `recover-corrupted-audios`
+- `recover-message-media`
 - `send-rate-limit-alert`
 - `status`
 - `talkx-report`
