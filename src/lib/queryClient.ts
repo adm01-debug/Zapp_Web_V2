@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { shouldRetryQuery } from './queryRetry';
 
 /**
  * Singleton QueryClient — criado uma vez no modulo para todas as instancias
@@ -11,7 +12,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
-      retry: 2,
+      retry: shouldRetryQuery,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
       refetchOnWindowFocus: false,
       refetchOnReconnect: 'always',
