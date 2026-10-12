@@ -1,7 +1,7 @@
 Especialista: Íris (area-front-componentes)
 
 ## O que mudou e por quê
-- `src/components/ui/phone-input.tsx` (novo): campo de telefone com máscara `+55 XX XXXXX-XXXX` (celular) e `+55 XX XXXX-XXXX` (fixo), aceita internacional sem formatar, só dígitos, e `onChange` devolve `(formatado, bruto)` — comportamento portado do `PhoneInput` da V3.
+- `src/components/ui/phone-input.tsx` (novo): campo de telefone com máscara `+55 XX XXXXX-XXXX` (celular) e `+55 XX XXXX-XXXX` (fixo), aceita internacional sem formatar, só dígitos, e `onChange` devolve `(formatado, bruto)` — comportamento portado do `PhoneInput` da V3. O valor exibido é derivado do `value` controlado com `useMemo` (sem `setState` em effect), o que também evita a ocorrência nova do ratchet de lint `react-hooks/set-state-in-effect`.
 - `src/components/connections/ConnectionsView.tsx` (só o diálogo de nova conexão): troca o `Input` livre pelo `PhoneInput`; o valor que sobe para `handleAddConnection` continua formatado, como o fluxo atual já recebia. Mostra a mensagem de erro DENTRO do diálogo com `role=alert` (`data-testid="add-connection-error"`) e NÃO fecha o diálogo no erro.
 - `src/hooks/inbox/useConnectionsManager.ts`: expõe `addConnectionError` — a MESMA mensagem que já ia para o toast, preenchida nos mesmos pontos (validação e catch), sem mudar lógica nem segurança. Necessário para o erro de borda/banco ter de onde ser lido pelo diálogo. Fronteira registrada em `kanban_comment`: arquivo é da área de hooks, toque mínimo.
 

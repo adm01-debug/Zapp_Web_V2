@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,7 @@ interface PhoneInputProps {
 
 /**
  * Formata uma string de dígitos em telefone brasileiro:
- *   +55 XX XXXXX-XXXX  (celular, 11 dígitos após o DDD)
+ *   +55 XX XXXXX-XXXX  (celular, 11 dígitos no total)
  *   +55 XX XXXX-XXXX   (fixo, 10)
  *   +CC XXXXXXXXX      (internacional/incompleto — passthrough)
  * Comportamento portado do `PhoneInput` da V3.
@@ -58,24 +58,12 @@ function extractDigits(value: string): string {
  * - `onChange` devolve (formatado, bruto)
  */
 export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000', className, disabled }: PhoneInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [displayValue, setDisplayValue] = useState(() => {
-    const digits = extractDigits(value);
-    return digits ? formatPhone(digits) : '';
-  });
-
-  // Sincroniza mudanças externas de `value`.
-  useEffect(() => {
-    const digits = extractDigits(value);
-    const formatted = digits ? formatPhone(digits) : '';
-    if (formatted !== displayValue) {
-      setDisplayValue(formatted);
-    }
-  }, [value, displayValue]);
+  // O valor exibido é DERIVADO do `value` controlado (sem effect): o que sobe
+  // pelo onChange já vem formatado, então formatar de novo é idempotente.
+  const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    let digits = extractDigits(raw);
+    let digits = extractDigits(e.target.value);
 
     // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
     if (digits.length >= 2 && !digits.startsWith('55')) {
@@ -88,23 +76,18 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     // Teto de 13 dígitos (55 + 2 DDD + 9 número).
     if (digits.length > 13) digits = digits.slice(0, 13);
 
-    const formatted = formatPhone(digits);
-    setDisplayValue(formatted);
-    onChange(formatted, digits);
+    onChange(formatPhone(digits), digits);
   }, [onChange]);
 
   const handleFocus = useCallback(() => {
     // Vazio: pré-preenche com +55.
-    if (!displayValue) {
-      const formatted = '+55 ';
-      setDisplayValue(formatted);
-      onChange(formatted, '55');
+    if (!extractDigits(value)) {
+      onChange('+55', '55');
     }
-  }, [displayValue, onChange]);
+  }, [value, onChange]);
 
   return (
     <Input
-      ref={inputRef}
       type="tel"
       inputMode="tel"
       autoComplete="tel"
