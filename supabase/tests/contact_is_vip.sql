@@ -1,5 +1,5 @@
 -- contact_is_vip.sql
--- Prova de contrato da migration 20261012214235_contact_is_vip (cartao t_84b84230).
+-- Prova de contrato da migration 20261012223017_contact_is_vip (cartao t_84b84230).
 --
 -- Roda como postgres no banco local da tarefa:
 --   zapp-db-local psql <copia> <conjunto> < supabase/tests/contact_is_vip.sql
@@ -16,10 +16,11 @@
 --   T4  autenticado SEM permissao: exception, contato intacto, sem auditoria;
 --   T5  anon NAO le nem muda is_vip (privilegio negado / policy de UPDATE so para authenticated);
 --   T6  authenticated AUTORIZADO muda is_vip pela policy de UPDATE (e audita);
---   T7  ACL: EXECUTE das RPCs so para authenticated/service_role, nunca anon/PUBLIC;
---   T8  list_contacts_vip devolve o conjunto completo (sem paginacao) no escopo do chamador,
---       ignora contatos excluidos (deleted_at) e nao vaza para quem nao tem permissao;
---   T9  rollback executavel (mesmo bloco do cabecalho da migration): os objetos somem.
+--   T7  ACL: EXECUTE da RPC so para authenticated/service_role, nunca anon/PUBLIC;
+--   T8  rollback executavel (mesmo bloco do cabecalho da migration): os objetos somem.
+--
+-- Nota: nao existe RPC de LEITURA de VIP. A coluna is_vip vem no proprio carregamento do
+-- contato (a consulta que ja existe), entao nao ha funcao de listagem a provar aqui.
 
 \set ON_ERROR_STOP on
 
@@ -302,82 +303,40 @@ begin
   raise notice 'T6 OK: authenticated autorizado muda is_vip e a mudanca e auditada';
 end $$;
 
--- ===== T7: ACL das RPCs =====================================================
+-- ===== T7: ACL da RPC =======================================================
 do $$
 begin
   if has_function_privilege('anon', 'public.set_contact_vip(uuid,boolean)', 'EXECUTE')
-     or has_function_privilege('anon', 'public.list_contacts_vip()', 'EXECUTE')
      or exists (select 1 from pg_proc p, aclexplode(p.proacl) g
-                 where p.oid = 'public.set_contact_vip(uuid,boolean)'::regprocedure and g.grantee = 0)
-     or exists (select 1 from pg_proc p, aclexplode(p.proacl) g
-                 where p.oid = 'public.list_contacts_vip()'::regprocedure and g.grantee = 0) then
+                 where p.oid = 'public.set_contact_vip(uuid,boolean)'::regprocedure and g.grantee = 0) then
     raise exception 'T7 FALHOU: EXECUTE aberto para anon/PUBLIC';
   end if;
   if not has_function_privilege('authenticated', 'public.set_contact_vip(uuid,boolean)', 'EXECUTE')
-     or not has_function_privilege('authenticated', 'public.list_contacts_vip()', 'EXECUTE')
-     or not has_function_privilege('service_role', 'public.set_contact_vip(uuid,boolean)', 'EXECUTE')
-     or not has_function_privilege('service_role', 'public.list_contacts_vip()', 'EXECUTE') then
+     or not has_function_privilege('service_role', 'public.set_contact_vip(uuid,boolean)', 'EXECUTE') then
     raise exception 'T7 FALHOU: EXECUTE faltando para authenticated/service_role';
   end if;
   raise notice 'T7 OK: EXECUTE restrito a authenticated + service_role';
 end $$;
 
--- ===== T8: list_contacts_vip — conjunto completo, sem paginacao ==============
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a001","role":"authenticated"}';
-do $$
-declare v_n integer; v_total integer; v_vip boolean; v_tem_excluido boolean;
-begin
-  select count(*) into v_n from public.list_contacts_vip();
-  select count(*) into v_total from public.contacts where deleted_at is null;
-  if v_n <> v_total or v_n < 6 then
-    raise exception 'T8 FALHOU: conjunto incompleto (% de %)', v_n, v_total;
-  end if;
-
-  select c.is_vip into v_vip from public.list_contacts_vip() c
-   where c.id = '00000000-0000-0000-0000-00000000e005';
-  if v_vip is not true then
-    raise exception 'T8 FALHOU: is_vip nao veio no conjunto';
-  end if;
-
-  select exists(select 1 from public.list_contacts_vip() c where c.id = '00000000-0000-0000-0000-00000000e011')
-    into v_tem_excluido;
-  if v_tem_excluido then
-    raise exception 'T8 FALHOU: contato excluido apareceu no conjunto';
-  end if;
-  raise notice 'T8a OK: conjunto completo (%) com is_vip, sem excluidos', v_n;
-end $$;
-
-set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000c003","role":"authenticated"}';
-do $$
-declare v_n integer;
-begin
-  select count(*) into v_n from public.list_contacts_vip();
-  if v_n <> 0 then
-    raise exception 'T8 FALHOU: sem permissao viu % contatos', v_n;
-  end if;
-  raise notice 'T8b OK: sem permissao o conjunto vem vazio';
-end $$;
-
--- ===== T9: rollback executavel (mesmo bloco do cabecalho) ===================
+-- ===== T8: rollback executavel (mesmo bloco do cabecalho) ===================
 do $$
 declare v_col integer; v_fn integer;
 begin
   drop trigger if exists trg_audit_contact_vip_change on public.contacts;
   drop function if exists public.audit_contact_vip_change();
-  drop function if exists public.list_contacts_vip();
   drop function if exists public.set_contact_vip(uuid, boolean);
   alter table public.contacts drop column if exists is_vip;
 
   select count(*) into v_col from information_schema.columns
    where table_schema = 'public' and table_name = 'contacts' and column_name = 'is_vip';
   select count(*) into v_fn from pg_proc p
-   where p.proname in ('set_contact_vip','list_contacts_vip','audit_contact_vip_change')
+   where p.proname in ('set_contact_vip','audit_contact_vip_change')
      and p.pronamespace = 'public'::regnamespace;
   if v_col <> 0 or v_fn <> 0 then
-    raise exception 'T9 FALHOU: rollback deixou objetos (coluna=%, funcoes=%)', v_col, v_fn;
+    raise exception 'T8 FALHOU: rollback deixou objetos (coluna=%, funcoes=%)', v_col, v_fn;
   end if;
-  raise notice 'T9 OK: rollback do cabecalho derruba coluna, RPCs e auditoria';
+  raise notice 'T8 OK: rollback do cabecalho derruba coluna, RPC e auditoria';
 end $$;
 
 rollback;
--- Nada persiste: fixtures e o T9 (executado dentro da transacao) voltam ao estado aplicado.
+-- Nada persiste: fixtures e o T8 (executado dentro da transacao) voltam ao estado aplicado.
