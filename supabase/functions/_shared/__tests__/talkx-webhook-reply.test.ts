@@ -1,3 +1,17 @@
+/**
+ * X028 — contrato executável da ATRIBUIÇÃO DE RESPOSTA do Talk X.
+ *
+ * O que fica travado:
+ *   1. uma resposta de contato chama a RPC `attribute_talkx_reply` com o
+ *      `contact_id` E o telefone resolvido (`p_phone`) — sem o telefone, o
+ *      contato que chegou por outro contact_id (LID/duplicado) não seria casado;
+ *   2. o handler AGUARDA a RPC: só resolve depois que ela termina (antes era
+ *      `void`, fire-and-forget, e o efeito podia se perder no congelamento);
+ *   3. resposta que é palavra de opt-out não chama a atribuição.
+ *
+ * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
+ */
+
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleIncomingMessage } from "../evolution-webhook-messages.ts";
 import { translateGoPayload } from "../evolution-go-adapter.ts";

@@ -1,3 +1,25 @@
+/**
+ * X030 — contrato executável do OPT-OUT no webhook de mensagens.
+ *
+ * O que fica travado:
+ *   1. "PARE" casa em `talkx_optout_keywords` (mesma normalização da RPC),
+ *      chama `talkx_suppress_contact` UMA vez e envia a autoresposta com o
+ *      texto de `talkx_settings.optout_autoreply`;
+ *   2. a autoresposta sai pelo token da instância (`get_instance_token`) e a
+ *      campanha NÃO é resolvida na edge (sem `p_campaign_id`);
+ *   3. repetição (supressão idempotente, RPC devolve NULL) NÃO reenvia a
+ *      autoresposta;
+ *   4. contato sem envio Talk X nos últimos 30 dias não gera nada;
+ *   5. a mensagem de opt-out NÃO chama `attribute_talkx_reply`;
+ *   6. resposta de botão/lista com id `talkx_optout` (X064) também é opt-out;
+ *   7. as palavras ativas são lidas com cache (uma leitura serve vários eventos);
+ *   8. R2-API-008 — a confirmação só é anunciada como enviada quando o provedor
+ *      ACEITA (HTTP 2xx); 4xx/5xx e queda de transporte não podem ser logadas
+ *      como envio bem-sucedido.
+ *
+ * Payloads GO anonimizados em fixture (sem telefone/CPF reais).
+ */
+
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   handleIncomingMessage,

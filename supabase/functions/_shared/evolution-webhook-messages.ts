@@ -451,6 +451,9 @@ export async function handleIncomingMessage(
   const messageCreatedAt = (data.messageTimestamp as number)
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
+  // X030: as palavras de opt-out vêm de talkx_optout_keywords (mesma normalização
+  // da RPC) e o botão/lista `talkx_optout` (X064) também vira opt-out. Mensagem
+  // nossa (`fromMe`) nunca pode acionar esse fluxo nem contar como resposta.
   let optOutKeyword: string | null = null;
   if (key.fromMe !== true) {
     optOutKeyword = interactiveResponseId === TALKX_OPTOUT_BUTTON_ID
@@ -497,6 +500,9 @@ export async function handleIncomingMessage(
     }
   }
 
+  // E57/X028/F62: a RPC drena a outbox transacional criada no ingest. Assim o
+  // handler AGUARDA supressão/atribuição antes de responder ao webhook, mas um
+  // replay/stale de mensagem nossa fica drenado sem executar efeito de contato.
   // O drain delega o Multiplix para attribute_multiplix_item_reply: linked usa
   // multiplix_delivery_items.external_id; inferred cruza multiplix_delivery_items
   // com multiplix_recipients.destino_e164 (conforme migration F62b/DB inventory).
@@ -530,6 +536,8 @@ export async function handleIncomingMessage(
     }
   }
 
+  // E57: opt-out automático por palavra-chave/botão só chega aqui quando a RPC
+  // aplicou a supressão depois do gate de campanha recente (30 dias).
   if (drain?.suppression_id) {
     const resolvedPhone = phone ?? ((key.remoteJid ?? '').split('@')[0].replace(/\D/g, ''));
     console.warn('[OPT-OUT] ' + resolvedPhone + ' adicionado a talkx_blacklist (' + optOutKeyword + ')');
@@ -543,6 +551,8 @@ export async function handleIncomingMessage(
         if (!instanceToken) {
           console.warn('[OPT-OUT] Token da instancia ausente — confirmacao nao enviada (' + instance + ')');
         } else {
+          // R2-API-008/E59: a confirmação só é registrada como enviada depois
+          // de o provedor aceitar HTTP 2xx; rejeição e timeout ficam explícitos.
           const resp = await evoFetch(evolutionUrl, evolutionKey, '/message/sendText/' + instance, {
             number: resolvedPhone,
             text: autoReply,
@@ -573,6 +583,8 @@ export async function handleIncomingMessage(
     console.warn('[OPT-OUT] Ignorado (sem campanha recente) para ', phone);
   }
 
+  // X028: Talk X é atribuído pela RPC drenada (com telefone resolvido), não por
+  // fire-and-forget; opt-out não vira engajamento.
   if (drain?.talkx_reply?.attributed === true) {
     console.warn(`[E88] Resposta atribuida (${drain.talkx_reply.attribution}): recipient=${drain.talkx_reply.recipient_id} campaign=${drain.talkx_reply.campaign_id}`);
   }
