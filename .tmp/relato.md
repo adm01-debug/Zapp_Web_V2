@@ -11,6 +11,13 @@ fora da trava de entrega e deixava maquiar o SLA de primeira resposta (o trigger
 GRANT e pela remoção da policy órfã; UPDATE passa a ser por coluna (só as que o front escreve
 de fato); e uma trigger recusa `status`/`status_updated_at` como defesa em profundidade.
 
+## Arquivos alterados (3, sendo 1 de teste)
+
+- `supabase/migrations/20261012151936_messages_sem_escrita_direta_do_cliente.sql` — migration
+  nova (REVOKE/GRANT + trigger + bloco de rollback).
+- `scripts/db-audit/messages-sem-escrita-direta-cliente.test.sh` — teste de banco novo (o 1 de teste).
+- `.tmp/relato.md` — este relato.
+
 ## Tipo de Mudança
 
 - [x] 🔒 Segurança (bug de autorização — escrita direta do cliente em `messages`)
@@ -93,6 +100,13 @@ No topo da migration, bloco `-- Rollback (SQL executável, na ordem)`: devolve
 
 ## Notas para Reviewer
 
+- Arquivo fora da lista `ARQUIVOS QUE PODE TOCAR` (`scripts/db-audit/...test.sh`) — ele é
+  INDISPENSÁVEL para a prova que o próprio cartão exige ("papel real authenticated/anon/
+  service_role"): as suítes `supabase/tests/*.sql` (a área de teste que o cartão lista) rodam
+  como `service_role` (BYPASSRLS) e por contrato nunca provam enforcement — é o que diz o
+  comentário em `.github/workflows/db-guard.yml:334`. Só o harness `scripts/db-audit/*.test.sh`
+  executa sob papéis reais em Postgres descartável. Por isso a prova vive lá (o `supabase/tests/`
+  do cartão não tem runner que prove permissão).
 - Não existe coluna `error_*` em `public.messages` (o erro de entrega não é exposto na
   tabela); por isso o gatilho cobre `status`/`status_updated_at`. `sender`, `external_id`,
   `agent_id`, `media_url` e `contact_id` já são bloqueados pela trigger de proveniência
