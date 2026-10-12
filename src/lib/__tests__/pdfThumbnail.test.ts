@@ -422,31 +422,90 @@ describe('renderPdfThumbnail — AbortSignal', () => {
     expect(contarMiniaturasPdfEmCache()).toBe(0);
   });
 
-  it('abortar quem está na FILA resolve null na hora, sem baixar e sem ocupar vaga', async () => {
+  it('abortar enquanto ESPERA a vaga tira a chamada da fila e não ocupa vaga', async () => {
     const cargas = instalarPdf({ automatico: false });
     const controlador = new AbortController();
+    const url1 = urlPdf('a.pdf');
+    const url2 = urlPdf('b.pdf');
+    const url3 = urlPdf('c.pdf');
+    const url4 = urlPdf('d.pdf');
 
-    const primeiro = renderPdfThumbnail(urlPdf('a.pdf'));
-    const segundo = renderPdfThumbnail(urlPdf('b.pdf'));
-    const terceiro = renderPdfThumbnail(urlPdf('c.pdf'), { sinal: controlador.signal });
+    const primeiro = renderPdfThumbnail(url1);
+    const segundo = renderPdfThumbnail(url2);
+    // A TERCEIRA não acha vaga: fica em `espera` (as duas primeiras estão em voo).
+    const terceiro = renderPdfThumbnail(url3, { sinal: controlador.signal });
 
-    // 1 e 2 pegaram as vagas; 3 está parado em `espera` (nunca chamou o fetch).
-    await vi.waitFor(() => expect(cargas).toHaveLength(2));
-    expect(fetchMock.mock.calls.map((chamada) => chamada[0])).toEqual([urlPdf('a.pdf'), urlPdf('b.pdf')]);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls.map((chamada) => chamada[0])).toEqual([url1, url2]);
+    expect(cargas).toHaveLength(2);
 
     controlador.abort();
 
-    // A terceira resolve SEM que ninguém tenha liberado vaga (as duas primeiras seguem em voo).
+    // Resolve na hora, sem esperar vaga futura (nada foi liberado até aqui) e sem baixar nada.
     await expect(terceiro).resolves.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(cargas).toHaveLength(2);
 
+    // A quarta entra atrás na fila e recebe a vaga quando a primeira termina.
+    const quarto = renderPdfThumbnail(url4);
     cargas[0].abrir();
+    await vi.waitFor(() => expect(cargas).toHaveLength(3));
+    expect(fetchMock.mock.calls.map((chamada) => chamada[0])).toEqual([url1, url2, url4]);
+
     cargas[1].abrir();
-    const [resultadoPrimeiro, resultadoSegundo] = await Promise.all([primeiro, segundo]);
+    cargas[2].abrir();
+
+    const [resultadoPrimeiro, resultadoSegundo, resultadoQuarto] = await Promise.all([primeiro, segundo, quarto]);
     expect(resultadoPrimeiro).toBeInstanceOf(Blob);
     expect(resultadoSegundo).toBeInstanceOf(Blob);
-    // As vagas liberadas não acordam trabalho fantasma: nada mais entrou na fila.
-    expect(cargas).toHaveLength(2);
+    expect(resultadoQuarto).toBeInstanceOf(Blob);
+  });
+
+  it('o prazo de 15 s aborta o fetch pendurado: null, sinal do fetch abortado, sem getDocument e com a vaga de volta', async () => {
+    // Aquece o import dinâmico com timers reais; depois o teste usa fake timers só para o prazo.
+    instalarPdf();
+    await renderPdfThumbnail(urlPdf('aquecimento.pdf'));
+    limparCacheMiniaturasPdf();
+
+    vi.useFakeTimers();
+    // A contagem de `getDocument` tem de começar do zero: o aquecimento acima abriu um documento.
+    pdfjsMock.getDocument.mockReset();
+    instalarPdf();
+    const chamadas: Array<{ url: string; sinal?: AbortSignal }> = [];
+    const pendentes: Array<() => void> = [];
+    fetchMock.mockImplementation((url: string, opcoes: { signal?: AbortSignal }) => {
+      chamadas.push({ url, sinal: opcoes?.signal });
+      // Download que nunca responde: o único jeito de sair é o prazo abortar o sinal.
+      return new Promise((resolve) => {
+        pendentes.push(() => resolve(respostaOk()));
+      });
+    });
+
+    const travada = renderPdfThumbnail(urlPdf('travado.pdf'));
+    await vi.waitFor(() => expect(chamadas).toHaveLength(1), { timeout: 2000, interval: 1 });
+    expect(chamadas[0].url).toBe(urlPdf('travado.pdf'));
+    expect(chamadas[0].sinal).toBeInstanceOf(AbortSignal);
+    expect(chamadas[0].sinal?.aborted).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(PDF_THUMBNAIL_TIMEOUT_MS);
+
+    await expect(travada).resolves.toBeNull();
+    // O fetch recebeu o sinal INTERNO e ele foi abortado: o download morre de verdade.
+    expect(chamadas[0].sinal?.aborted).toBe(true);
+    // Sem bytes não há parse: nenhum documento foi aberto.
+    expect(pdfjsMock.getDocument).not.toHaveBeenCalled();
+    expect(contarMiniaturasPdfEmCache()).toBe(0);
+
+    // A vaga voltou: DUAS miniaturas novas baixam ao mesmo tempo. Se a vaga da travada tivesse
+    // ficado presa, a segunda continuaria parada na fila e este `Promise.all` não resolveria.
+    const depois = [renderPdfThumbnail(urlPdf('depois-1.pdf')), renderPdfThumbnail(urlPdf('depois-2.pdf'))];
+    await vi.waitFor(() => expect(chamadas).toHaveLength(3), { timeout: 2000, interval: 1 });
+
+    pendentes[1]();
+    pendentes[2]();
+
+    const miniaturas = await Promise.all(depois);
+    expect(miniaturas.every((blob) => blob instanceof Blob)).toBe(true);
   });
 });
 
