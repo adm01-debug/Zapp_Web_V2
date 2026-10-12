@@ -289,9 +289,11 @@ export default function TalkXView() {
     }
   }, [duplicateCampaignMutation, writeWizardRoute]);
 
-  const onWizardStepChange = useCallback((step: WizardStep, replace = false) => {
+  const onWizardStepChange = useCallback((step: WizardStep, replace = false, returnTo?: WizardStep) => {
     if (!wizardRoute) return;
-    writeWizardRoute({ ...wizardRoute, step }, replace);
+    // O destino de volta é explícito: qualquer navegação que não venha do
+    // "Editar" da revisão limpa o `return` da rota.
+    writeWizardRoute({ campaignId: wizardRoute.campaignId, step, returnTo }, replace);
   }, [wizardRoute, writeWizardRoute]);
 
   const onDraftIdentity = useCallback((campaignId: string) => {
@@ -376,6 +378,7 @@ export default function TalkXView() {
           }}
           initial={{ ...wizardInitial, step: wizardRoute?.step }}
           routeStep={wizardRoute?.step}
+          routeReturnTo={wizardRoute?.returnTo}
           onRouteStepChange={onWizardStepChange}
           onDraftIdentity={onDraftIdentity}
         />

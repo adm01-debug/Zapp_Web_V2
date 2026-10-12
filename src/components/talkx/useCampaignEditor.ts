@@ -207,6 +207,58 @@ export function localToUTCInTimezone(localStr: string, tz: string): string {
   return new Date(candidates[0]).toISOString();
 }
 
+/** "5 minutos" / "2 horas" / "3 dias", no singular quando é 1. */
+function pluralize(value: number, singular: string, plural: string): string {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+/**
+ * X134 — a revisão mostra o agendamento no fuso da campanha com o relativo do
+ * mock 09 ("Hoje, 16:12 · Em 5 minutos"). O "hoje/ontem" é o dia da CAMPANHA,
+ * não o do navegador, e um horário já vencido é anunciado como "Há N …" — nunca
+ * "Em N …", que prometeria um envio que não vai acontecer.
+ *
+ * `nowMs` é injetável para o teste; no uso real vem do relógio do navegador.
+ */
+export function formatScheduleRelative(
+  localDateTime: string,
+  timezone: string,
+  nowMs: number = Date.now(),
+): { when: string; relative: string } | null {
+  if (!localDateTime) return null;
+  let instantMs: number;
+  try {
+    instantMs = new Date(localToUTCInTimezone(localDateTime, timezone)).getTime();
+  } catch {
+    // Horário inexistente ou ambíguo naquele fuso (virada de horário de verão).
+    return null;
+  }
+  if (!Number.isFinite(instantMs)) return null;
+
+  const [datePart = '', timePart = ''] = localDateTime.split('T');
+  const todayLocal = utcToLocalInTimezone(new Date(nowMs).toISOString(), timezone).split('T')[0] ?? '';
+  const yesterdayLocal = utcToLocalInTimezone(new Date(nowMs - 86_400_000).toISOString(), timezone).split('T')[0] ?? '';
+  const [year = '', month = '', day = ''] = datePart.split('-');
+  const when = datePart === todayLocal
+    ? `Hoje, ${timePart}`
+    : datePart === yesterdayLocal
+      ? `Ontem, ${timePart}`
+      : `${day}/${month}/${year} ${timePart}`;
+
+  const deltaMinutes = Math.round((instantMs - nowMs) / 60_000);
+  const abs = Math.abs(deltaMinutes);
+  const prefix = deltaMinutes >= 0 ? 'Em' : 'Há';
+  const relative = abs < 1
+    ? 'Agora'
+    : abs < 60
+      ? `${prefix} ${pluralize(abs, 'minuto', 'minutos')}`
+      : abs < 1440
+        ? `${prefix} ${pluralize(Math.round(abs / 60), 'hora', 'horas')}`
+        : `${prefix} ${pluralize(Math.round(abs / 1440), 'dia', 'dias')}`;
+
+  return { when, relative };
+}
+
 /* ------------------------------------------------------------------ */
 /* V24 — filtros de audiência como regras (motor dos segmentos)        */
 /* ------------------------------------------------------------------ */

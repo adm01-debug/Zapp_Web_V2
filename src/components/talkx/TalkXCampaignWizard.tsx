@@ -45,13 +45,18 @@ interface Props {
   initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep };
   /** URL state is owned by TalkXView; this component only requests transitions. */
   routeStep?: WizardStep;
-  onRouteStepChange?: (step: WizardStep, replace?: boolean) => void;
+  /**
+   * X134 — quando o passo atual foi aberto pelo "Editar" da revisão, a rota
+   * carrega `return=N`; é para esse passo que o botão principal volta.
+   */
+  routeReturnTo?: WizardStep;
+  onRouteStepChange?: (step: WizardStep, replace?: boolean, returnTo?: WizardStep) => void;
   onDraftIdentity?: (campaignId: string) => void;
 }
 
 export type WizardState = ReturnType<typeof useCampaignEditor>;
 
-export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, onRouteStepChange, onDraftIdentity }: Props) {
+export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, routeStep, routeReturnTo, onRouteStepChange, onDraftIdentity }: Props) {
   const ed = useCampaignEditor(campaign, onClose, initial);
   const { hasUnsavedChanges } = ed;
 
@@ -80,10 +85,10 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     return 4;
   })() as WizardStep;
 
-  const requestStep = (requestedStep: WizardStep, replace = false) => {
+  const requestStep = (requestedStep: WizardStep, replace = false, returnTo?: WizardStep) => {
     const safeStep = Math.min(requestedStep, maximumAllowedStep) as WizardStep;
     ed.setStep(safeStep);
-    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep);
+    onRouteStepChange?.(safeStep, replace || safeStep !== requestedStep, returnTo);
   };
 
   // TL-138 — o stepper passa a ser navegável por teclado: as setas andam entre os
@@ -102,6 +107,13 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
     stepButtonRefs.current[targetIndex]?.focus();
     requestStep(STEPS[targetIndex].n);
   };
+
+  // X134 — "Editar" da revisão: abre o passo pedido deixando na rota o destino
+  // de volta (`step=N&return=4`), em vez de trocar só o estado local.
+  const openStepFromReview = (target: 1 | 2 | 3, returnTo: 4) => requestStep(target, false, returnTo);
+
+  /** O passo atual foi aberto pela revisão e o botão principal volta para lá. */
+  const returnTo = step < 4 ? routeReturnTo : undefined;
 
   // O estado da URL pode mudar por histórico do navegador ou por um link
   // copiado. Nunca aceita salto acima do último pré-requisito válido.
@@ -209,7 +221,7 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
           {step === 1 && <StepAudience ed={ed} />}
           {step === 2 && <StepMessage ed={ed} />}
           {step === 3 && <TalkXWizardDelivery ed={ed} />}
-          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={requestStep} />}
+          {step === 4 && <TalkXWizardReview ed={ed} campaign={campaign} onLaunched={(id, status) => onLaunched?.(id, status)} onEditStep={openStepFromReview} />}
 
           {/* TL-138: rodapé fixo — Voltar / Salvar rascunho / Continuar sempre à vista */}
           <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 flex-wrap rounded-xl border border-border/70 bg-background/95 px-3 py-2.5 backdrop-blur">
@@ -235,9 +247,15 @@ export function TalkXCampaignWizard({ campaign, onClose, onLaunched, initial, ro
               )}
             </div>
             {step < 4 && (
-              <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
-                Continuar <ArrowRight className="w-4 h-4" />
-              </PrimaryButton>
+              returnTo ? (
+                <PrimaryButton size="lg" icon={ArrowLeft} onClick={() => requestStep(returnTo)} disabled={ed.saving}>
+                  Voltar à revisão
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton size="lg" onClick={next} disabled={!ed.canProceed[step] || ed.saving}>
+                  Continuar <ArrowRight className="w-4 h-4" />
+                </PrimaryButton>
+              )
             )}
           </div>
         </div>

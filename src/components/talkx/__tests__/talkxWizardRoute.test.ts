@@ -37,4 +37,33 @@ describe('Talk X wizard route contract', () => {
     const source = new URL('https://zapp.example/?view=talkx&wizard=draft_1&step=4&tab=overview');
     expect(formatTalkXWizardRoute(source, null)).toBe('/?view=talkx&tab=overview');
   });
+
+  // X134 — `step=N&return=4` é o endereço que o "Editar" da revisão produz: o
+  // passo N abre com o destino de volta registrado na URL.
+  it('round-trips the "return" step of the review shortcut', () => {
+    const source = new URL('https://zapp.example/?view=talkx');
+    const path = formatTalkXWizardRoute(source, { campaignId: 'draft_1', step: 1, returnTo: 4 });
+
+    expect(path).toBe('/?view=talkx&wizard=draft_1&step=1&return=4');
+    expect(parseTalkXWizardRoute(new URL(path, source).search)).toEqual({
+      route: { campaignId: 'draft_1', step: 1, returnTo: 4 },
+      needsNormalization: false,
+    });
+  });
+
+  it('drops and normalizes a duplicated or invalid "return" instead of guessing', () => {
+    expect(parseTalkXWizardRoute('?view=talkx&wizard=draft_1&step=1&return=9')).toEqual({
+      route: { campaignId: 'draft_1', step: 1 }, needsNormalization: true,
+    });
+    expect(parseTalkXWizardRoute('?view=talkx&wizard=draft_1&step=1&return=4&return=2')).toEqual({
+      route: { campaignId: 'draft_1', step: 1 }, needsNormalization: true,
+    });
+  });
+
+  it('clears a stray "return" even when the wizard route is gone', () => {
+    expect(parseTalkXWizardRoute('?view=talkx&return=4')).toEqual({ route: null, needsNormalization: true });
+    const source = new URL('https://zapp.example/?view=talkx&wizard=draft_1&step=4&return=4&tab=overview');
+    expect(formatTalkXWizardRoute(source, { campaignId: 'draft_1', step: 4 })).toBe('/?view=talkx&wizard=draft_1&step=4&tab=overview');
+    expect(formatTalkXWizardRoute(source, null)).toBe('/?view=talkx&tab=overview');
+  });
 });

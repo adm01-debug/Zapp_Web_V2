@@ -35,13 +35,13 @@ export const RECIPIENT_STATUS: Record<string, { label: string; tone: PillTone }>
  * rótulo e que a revisão exibe na linha "Objetivo" (T09-012: "Vendas ·
  * Gerar mais vendas e conversões").
  */
-export const OBJECTIVES: { value: string; label: string; icon: LucideIcon; description: string }[] = [
-  { value: 'vendas', label: 'Vendas', icon: BadgeDollarSign, description: 'Gerar mais vendas e conversões' },
-  { value: 'engajamento', label: 'Engajamento', icon: MousePointerClick, description: 'Aumentar interação e respostas dos contatos' },
-  { value: 'reativacao', label: 'Reativação', icon: RefreshCw, description: 'Trazer de volta clientes inativos' },
-  { value: 'relacionamento', label: 'Relacionamento', icon: Users, description: 'Fortalecer o relacionamento com a base' },
-  { value: 'pesquisa', label: 'Pesquisa', icon: Search, description: 'Coletar opiniões e feedbacks' },
-  { value: 'institucional', label: 'Institucional', icon: Building2, description: 'Comunicar avisos e novidades da empresa' },
+export const OBJECTIVES: { value: string; label: string; description: string; icon: LucideIcon }[] = [
+  { value: 'vendas', label: 'Vendas', description: 'Gerar mais vendas e conversões', icon: BadgeDollarSign },
+  { value: 'engajamento', label: 'Engajamento', description: 'Aumentar interação e cliques', icon: MousePointerClick },
+  { value: 'reativacao', label: 'Reativação', description: 'Trazer de volta clientes inativos', icon: RefreshCw },
+  { value: 'relacionamento', label: 'Relacionamento', description: 'Manter o contato próximo com os clientes', icon: Users },
+  { value: 'pesquisa', label: 'Pesquisa', description: 'Coletar opiniões e feedbacks dos clientes', icon: Search },
+  { value: 'institucional', label: 'Institucional', description: 'Divulgar avisos e novidades da empresa', icon: Building2 },
 ];
 
 /** Perfis de velocidade → intervalo entre envios (segundos). Digitação fica com o editor. */
