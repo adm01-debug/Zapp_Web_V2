@@ -15,6 +15,8 @@ Especialista: worker (ci) (area-verificacao-ci)
 - `scripts/db-audit/check-replay-allowlist-ratchet.test.sh` (novo): o teste unitário do cartão.
 - `scripts/ci/check-test-inventory.mjs`: registra o teste novo na ALLOWLIST (achado do inventario de
   CI quando nasce um `.test.sh` em `scripts/db-audit`), com a justificativa de ser offline.
+- `.tmp/relato.md`: este relato (arquivo versionado neste repositorio, como nos cartoes anteriores)
+  — e o sexto arquivo do diff; os cinco de codigo/guarda sao os de cima.
 
 ## Prova (vermelho antes, verde depois)
 - vermelho antes: `bash scripts/db-audit/check-replay-allowlist-ratchet.test.sh` com o verificador
