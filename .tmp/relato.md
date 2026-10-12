@@ -30,3 +30,6 @@ TRUNCATE/DELETE de teste e troca de assinatura ocorreram SÓ em banco descartáv
 - Não regenerei/versionei supabase/deployment-manifest.json: `--check` já OK (medido), sem drift.
 - Não toquei a edge nem os testes ts do #69: fora da lista de arquivos deste cartão; a base é do t_1accb485 (comentário + aviso acima).
 - check-test-inventory.mjs já reprova na ponta por 6 órfãos de OUTROS cartões; o teste deste cartão não está entre eles.
+
+## Sobre o aviso "SEM DDL/migration" do fechar (falso positivo)
+O fechar acusou "o cartão diz SEM DDL/migration e o seu diff cria a migration ...". É falso positivo: o rodapé REGRAS PERMANENTES colado no corpo do cartão traz a frase de regra de front "Plano de front não traz DDL, Edge Function, migration". Este é um cartão de BANCO (worker sql) cujo entregável É exatamente a migration do outbox inbound #69 — o critério 1..3 do cartão pede a migration com rollback executável. Nada foi tirado; repito o MESMO comando.
