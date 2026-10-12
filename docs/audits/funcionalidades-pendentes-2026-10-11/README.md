@@ -58,6 +58,8 @@ O quadro geral tem quatro mensagens.
    - Relatório agendado por e-mail nunca sai.
    - A pesquisa CSAT não é coletada.
    - Vários botões gravam em tabela ou função que não existe, ou mostram sucesso sem ter feito nada (§3).
+   - Por enquanto o defeito é latente: em 12/10 as tabelas de mensagens agendadas, campanhas clássicas, relatórios
+     agendados, automações e chatbot estavam vazias em produção. Ninguém usou ainda; o primeiro uso falha em silêncio.
 2. **Os motores de envio em massa não têm prova de funcionamento em produção.**
    - Não há registro de envio real do Talk X: o ensaio interno (X035) está bloqueado. Um teste manual feito fora do
      repositório não estaria visível nesta varredura.
@@ -122,9 +124,13 @@ divergente, substituído, cancelado ou não aplicável. Em cada linha, as seis c
 
 Leituras rápidas do placar:
 
-- **Quase prontos (≥ 90%):** Contatos 100, Tarefas, Mapa, Redesign de contatos e do Dashboard Navy, Volume de mídia.
-- **No meio do caminho:** Telefonia (78%), Catálogo (77%), Talk Me (72%), Skins (64%), Multiplix (54%) e Etiquetas
-  (54%).
+Percentual = concluído ÷ total de cada plano. As linhas que somam dois planos no placar aparecem aqui separadas.
+
+- **Quase prontos (≥ 90%):** Tarefas — finalização (98%), Contatos 100 (97%), Dashboard Navy (97%), Mapa (95%),
+  Volume de mídia (94%) e redesign de Contatos (100%).
+- **No meio do caminho:** Arquivos — redesign (88%), Controles de volume (82%), Talk Me — refinamento (78%), Telefonia
+  (78%), Catálogo (77%), Talk Me 100 (69%), Skins (64%), Fusão Quadro→Tarefas (60%), Cartão de arquivo (58%),
+  Multiplix (54%) e Etiquetas (54%).
 - **Muito atrás:** IA (25%), Talk X (18,5%), Dashboard 100 (19%), Team Chat (22%), Multi-conexão GO (38%), Contatos
   por jornada (2%) e Journey histórico (28%, só camada interna, nada visível ainda).
 - **Parados por decisão:** Ligações WhatsApp `meowcaller` (90 bloqueados nos gates G0/G1) e Banco Único (175
@@ -135,9 +141,14 @@ Leituras rápidas do placar:
 São botões, telas e promessas que existem na interface (ou na documentação entregue ao usuário) e não entregam o
 que mostram. **É a lista que mais afeta a confiança de quem usa o sistema.**
 
+Os itens 1 a 7 foram conferidos também no banco de produção em 12/10, só com leitura (`SELECT`). Nenhum dos 13 jobs
+agendados do `pg_cron` cuida deles, e nenhuma função do banco lê `scheduled_messages`. As tabelas
+`scheduled_messages`, `campaigns`, `scheduled_report_configs`, `automations` e `chatbot_flows` estavam vazias, ou
+seja, ninguém usou esses recursos ainda. Workflows do N8N e outros chamadores externos não foram conferidos.
+
 | # | O que o usuário vê | O que acontece de fato | Evidência | Anexo |
 |---|---|---|---|---|
-| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e **nada envia**; nenhuma Edge Function, cron ou trigger do repositório consome `scheduled_messages` | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
+| 1 | Agendar mensagem pelo chat ou calendário | Grava como `pending` e nada processa: não há Edge Function, cron ou trigger no repositório, nem job no `pg_cron` de produção, que consuma `scheduled_messages`. A tabela está vazia em produção: ninguém agendou ainda, e o primeiro agendamento não sairá | `src/hooks/chat/useScheduledMessages.ts` (só a tela lê e grava) | 08 (L-01) |
 | 2 | Chatbot e Chatbot L1 configurados | Mensagem recebida não aciona fluxo; `chatbot-l1` só é chamado pelo botão "testar conexão" | `src/components/settings/ChatbotL1Config.tsx:234` | 08 (L-04), 02 |
 | 3 | Automações, sequências de follow-up, mensagem de ausência, boas-vindas e encerramento | Regras são salvas e nenhum executor versionado roda; a própria tela admite | `src/components/settings/MessagesSettings.tsx:41` | 08 (L-05 a L-08) |
 | 4 | "Iniciar" em Campanhas Clássicas | Só muda o status para "enviando", que fica assim para sempre | `src/components/campaigns/CampaignsView.tsx:175` | 08 (L-11) |
@@ -189,9 +200,9 @@ A ordem cruza impacto no negócio, risco e esforço. "Destravar" indica quando o
 
 | # | Lacuna | Prio | Destravar | Anexo |
 |---|---|---|---|---|
-| 1 | Mensagens agendadas sem processador de envio | P0 | — | 08 |
-| 2 | Multiplix não envia pela tela (MX01) | P0 | — | 01 |
-| 3 | Teto diário por número ignora o Multiplix (MX04): risco de bloqueio do WhatsApp | P0 | — | 01 |
+| 1 | Multiplix não envia pela tela (MX01) | P0 | — | 01 |
+| 2 | Teto diário por número ignora o Multiplix (MX04): risco de bloqueio do WhatsApp | P0 | — | 01 |
+| 3 | Mensagens agendadas sem processador de envio (latente: ninguém agendou ainda; falha no primeiro uso) | P0 antes de divulgar o recurso | — | 08 |
 | 4 | CRM externo com `EXECUTE` para a chave pública (GATE C): conferir as checagens internas das 5 funções e revogar `anon` | P0 até a conferência | Admin do CRM | 04 |
 | 5 | 7 achados P0/P1 de segurança de 07/10 + 3 P1 de RLS de contatos (Y24) | P0/P1 | — | 07, 04 |
 | 6 | E2E com login real cancelado há mais de uma semana, sem alerta | P0 | — | 07 |
@@ -313,10 +324,12 @@ errada. Lista completa: seção 4 de cada anexo (146 divergências).
   migration, teste). O estado vale a partir do código, não do checkbox do plano.
 - **Critério de "concluído":** artefato presente e ligado a quem o usa. Componente pronto sem tela que o monte
   conta como **parcial**.
-- **O que não foi feito:** nenhuma consulta ao banco de produção, nenhum deploy, nenhum navegador logado. Por isso
-  "aplicado em produção", "funciona com login" e aceite humano aparecem como **bloqueado** ou **não verificável**.
-  Executores que podem existir fora do repositório (cron criado à mão, workflow N8N) ficam como "não verificável em
-  produção". É o caso das mensagens agendadas e do auto-fechamento.
+- **O que não foi feito:** nenhum deploy, nenhum navegador logado e nenhuma escrita em banco. Por isso "aplicado em
+  produção", "funciona com login" e aceite humano aparecem como **bloqueado** ou **não verificável**.
+- **Leitura em produção (12/10, depois da primeira versão):** consultas só `SELECT` no banco oficial, para responder à
+  revisão da PR. Foram lidos os jobs do `pg_cron` (só nome, horário e a quais recursos se referem; o comando não foi
+  exibido), as funções e gatilhos ligados a `scheduled_messages` e a contagem de linhas de cinco tabelas. Workflows do
+  N8N e outros chamadores externos continuam sem conferência.
 - **Leituras externas:** a frente 07 fez só leituras GET na API do GitHub (runs, checks, issues, alertas) e uma
   leitura do workflow N8N do dispatcher. A frente 08 listou as issues abertas.
 - **Histórico:** o clone tem 50 commits (desde 03/10). O que veio antes foi confrontado com os ledgers de

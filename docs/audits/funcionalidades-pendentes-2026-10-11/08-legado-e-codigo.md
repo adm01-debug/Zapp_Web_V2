@@ -87,7 +87,7 @@ Colunas: ID | funcionalidade | estado | planejado | existe hoje (evidência) | f
 
 | ID | funcionalidade | estado | planejado | existe hoje | falta | impacto | prio | dep. |
 |---|---|---|---|---|---|---|---|---|
-| L-01 | Envio de mensagem agendada | PARCIAL | CSF 21.1/21.6 e IMPROVEMENT P1.10 ✅ "agendar para envio futuro" | UI grava `scheduled_messages` status `pending` (`src/components/inbox/ChatPanel.tsx:222`, `src/hooks/chat/useScheduledMessages.ts:48,72`); calendário lista/cancela (`ScheduleCalendarView.tsx:62`). **Nenhuma** Edge, cron ou trigger lê a tabela para enviar (grep em supabase/functions e migrations: 0 consumidores; reconciliação 03/10 já anotou `docs/reconciliation/reaudit/2026-10-03/reports/database/report.md:1153`) | processador (cron + Edge) que envie, marque `sent/failed` e trate anexos | O atendente agenda e o cliente **não recebe**; a agenda mostra mensagens que nunca saem | P0 | confirmar se existe pg_cron externo em produção (não verificável aqui) |
+| L-01 | Envio de mensagem agendada | PARCIAL | CSF 21.1/21.6 e IMPROVEMENT P1.10 ✅ "agendar para envio futuro" | UI grava `scheduled_messages` status `pending` (`src/components/inbox/ChatPanel.tsx:222`, `src/hooks/chat/useScheduledMessages.ts:48,72`); calendário lista/cancela (`ScheduleCalendarView.tsx:62`). **Nenhuma** Edge, cron ou trigger lê a tabela para enviar (grep em supabase/functions e migrations: 0 consumidores; reconciliação 03/10 já anotou `docs/reconciliation/reaudit/2026-10-03/reports/database/report.md:1153`) | processador (cron + Edge) que envie, marque `sent/failed` e trate anexos | O atendente agenda e o cliente **não recebe**; a agenda mostra mensagens que nunca saem | P0 antes de divulgar o recurso (latente) | conferido em 12/10 (só leitura): nenhum job do `pg_cron` de produção nem função do banco processa a tabela, e ela está vazia (ninguém agendou ainda); N8N não conferido |
 | L-02 | Mensagens interativas (botões/listas) | DIVERGENTE | IMPROVEMENT P2.6 ✅; CSF lista botões/listas na Evolution | Builder abre (`ChatDialogs.tsx:9`), Edge tem rotas `send-list`/`send-buttons` (`supabase/functions/evolution-api/index.ts:861-862`, `_shared/evolution-go-routes.ts:129-139`), mas o handler **sempre lança** `ENVIO_INTERATIVO_INDISPONIVEL` (`src/components/inbox/chat/useChatPanelHandlers.ts:74-75,421`); clique em botão só faz toast (`:424-425`) | publicar o transporte (handler → Edge) e tratar resposta de botão | Vendedor não consegue mandar menu/botões ao cliente | P1 | validar suporte de botões na Evolution GO |
 
 ### 3.2 Automação, chatbot e atendimento automático
@@ -269,7 +269,7 @@ Não verificado (registrado para outra área): flags `contacts.v2.*` caem para *
 
 ## 6. Top 10 da área
 
-1. **Mensagens agendadas nunca são enviadas** — UI e calendário prontos, nenhum processador no repositório (L-01, P0).
+1. **Mensagens agendadas não têm quem as envie** — UI e calendário prontos, nenhum processador no repositório nem no `pg_cron` de produção; latente porque a tabela está vazia (L-01).
 2. **Chatbot / Chatbot L1 não disparam em mensagem recebida** — só existe o botão de teste (L-04).
 3. **CSAT não é coletado** — pesquisa removida, nada envia nem lê nota; KPI do POP e dashboards sem dado (L-12).
 4. **Campanhas Clássicas "Iniciar" não envia nada** — status fica "enviando" para sempre; motor real é o Talk X (L-11).
