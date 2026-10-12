@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -114,6 +114,7 @@ export function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route path="/multiplix" element={<Navigate to="/?view=multiplix" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </PageTransitionProvider>
