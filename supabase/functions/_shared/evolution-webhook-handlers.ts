@@ -247,6 +247,23 @@ export async function handleChatsUpdate(supabase: EvolutionDbClient, instance: s
   }
 }
 
+/**
+ * labels.edit / labels.association: as etiquetas de CONTATO foram removidas
+ * (decisão D-T2). Os eventos continuam sendo recebidos (seguem em
+ * WEBHOOK_EVENTS) e são ignorados com log — nada é espelhado em `contacts.tags`
+ * e nenhuma RPC de label é chamada.
+ */
+export async function handleLabelsEdit(_supabase: EvolutionDbClient, instance: string, data: unknown) {
+  const labelData = isRecord(data) ? data : {};
+  console.warn(`labels.edit ignorado (etiquetas de contato removidas): instance=${instance} label=${String(labelData.id ?? '?')}`);
+}
+
+// deno-lint-ignore no-explicit-any
+export async function handleLabelsAssociation(_supabase: EvolutionDbClient, instance: string, data: unknown) {
+  const assocData = isRecord(data) ? data : {};
+  console.warn(`labels.association ignorado (etiquetas de contato removidas): instance=${instance} label=${String(assocData.labelId ?? '?')}`);
+}
+
 // deno-lint-ignore no-explicit-any
 export async function handleCallEvent(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const callData = isRecord(data) ? data : {};
