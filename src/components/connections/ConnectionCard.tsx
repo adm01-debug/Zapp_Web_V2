@@ -15,7 +15,10 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { motion } from 'framer-motion';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import { BusinessHoursIndicator } from './BusinessHoursIndicator';
+import { ConnectionDisconnectDialog } from './ConnectionDisconnectDialog';
+import { ConnectionDeleteDialog } from './ConnectionDeleteDialog';
 import type { WhatsAppConnection } from '@/hooks/inbox/useConnectionsManager';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Wifi }> = {
@@ -47,6 +50,13 @@ export function ConnectionCard({
 }: ConnectionCardProps) {
   const status = statusConfig[connection.status] || statusConfig.disconnected;
   const StatusIcon = status.icon;
+
+  // Exclusão de conexão é destrutiva (apaga a instância na Evolution e o
+  // vínculo local): só admin vê o item. As duas ações destrutivas passam por
+  // confirmação — nada executa no primeiro clique.
+  const { isAdmin } = useUserRole();
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px hsl(var(--primary) / 0.1)' }}>
@@ -128,7 +138,7 @@ export function ConnectionCard({
               )}
               {connection.status === 'connected' && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="outline" size="sm" onClick={() => onDisconnect(connection)}><WifiOff className="w-4 h-4 mr-2" />Desconectar</Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmDisconnect(true)}><WifiOff className="w-4 h-4 mr-2" />Desconectar</Button>
                 </motion.div>
               )}
 
@@ -152,14 +162,34 @@ export function ConnectionCard({
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(connection)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDelete(true)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <ConnectionDisconnectDialog
+        open={confirmDisconnect}
+        onOpenChange={setConfirmDisconnect}
+        connectionName={connection.name}
+        phoneNumber={connection.phone_number}
+        onConfirm={() => onDisconnect(connection)}
+      />
+      {isAdmin && (
+        <ConnectionDeleteDialog
+          open={confirmDelete}
+          onOpenChange={setConfirmDelete}
+          connectionName={connection.name}
+          onConfirm={() => onDelete(connection)}
+        />
+      )}
     </motion.div>
   );
 }

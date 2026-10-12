@@ -17,6 +17,11 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenuSeparator: () => <hr />,
 }));
 vi.mock('../BusinessHoursIndicator', () => ({ BusinessHoursIndicator: () => null }));
+// t_a369905d: o item "Excluir" passou a ser exclusivo de admin; este teste
+// valida o menu de um admin (o gate por supervisor é coberto em ConnectionCard.confirmacao.test.tsx).
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, roles: ['admin'], loading: false }),
+}));
 
 import { ConnectionCard } from '../ConnectionCard';
 
