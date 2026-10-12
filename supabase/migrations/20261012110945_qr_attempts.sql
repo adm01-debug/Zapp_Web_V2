@@ -17,7 +17,8 @@
 --       conexão   -> `connection_id` (FK para `whatsapp_connections`, ON DELETE CASCADE: apagar
 --                    a conexão leva junto o histórico de QR dela, que deixou de ter sentido);
 --       criado_em -> `created_at` (default now());
---       expira_em -> `expires_at`;
+--       expira_em -> `expires_at` (default now() + 60 s; CHECK trava o clamp 15-300 s do QR da V3,
+--                    já que a GO não devolve count/ttl e o produtor usa o padrão);
 --       status    -> `status`, domínio fechado ('pendente','conectado','expirado','erro');
 --       motivo    -> `reason` (texto livre, explica por que a tentativa virou 'expirado'/'erro').
 --   * índice de leitura pela conexão (`connection_id, created_at desc`) e índice por `created_at`
@@ -45,10 +46,16 @@ create table if not exists public.qr_attempts (
   id            uuid primary key default gen_random_uuid(),
   connection_id uuid not null references public.whatsapp_connections(id) on delete cascade,
   created_at    timestamptz not null default now(),
-  expires_at    timestamptz not null,
+  expires_at    timestamptz not null default (now() + interval '60 seconds'),
   status        text not null default 'pendente',
   reason        text,
-  constraint qr_attempts_status_check check (status in ('pendente', 'conectado', 'expirado', 'erro'))
+  constraint qr_attempts_status_check check (status in ('pendente', 'conectado', 'expirado', 'erro')),
+  -- TTL do QR (V3 whatsappConnectionService.detectQrTtlMs): padrão 60 s, clamp 15-300 s. A GO não
+  -- devolve count/ttl, então o produtor usa o padrão; o banco garante que ninguém grave fora da janela.
+  constraint qr_attempts_ttl_check check (
+    expires_at >= created_at + interval '15 seconds'
+    and expires_at <= created_at + interval '300 seconds'
+  )
 );
 
 -- Leitura pela conexão (o painel abre pelo histórico de QR de uma conexão).
@@ -82,7 +89,7 @@ create or replace function public.qr_attempts_purge()
 returns integer
 language sql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
   with removed as (
     delete from public.qr_attempts as q

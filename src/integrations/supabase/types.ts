@@ -6359,6 +6359,62 @@ export type Database = {
           },
         ]
       }
+      qr_attempts: {
+        Row: {
+          connection_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          status?: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_attempts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_attempts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_agent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_attempts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_attempts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       queues: {
         Row: {
           color: string
@@ -11710,6 +11766,7 @@ export type Database = {
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
+      qr_attempts_purge: { Args: never; Returns: number }
       reap_ai_jobs: { Args: never; Returns: number }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }

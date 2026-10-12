@@ -98,11 +98,6 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
-  // t_7af815d8: prova o contrato de public.qr_attempts (contrato de colunas, FK ON DELETE CASCADE
-  // para whatsapp_connections, domínio de status, RLS staff-only contra usuário comum/anon e retenção
-  // de 30 dias por service_role) em PG 17 descartável (docker local). Passo de uma linha em
-  // db-guard.yml — promover pelo dono do workflow.
-  'scripts/db-audit/qr-attempts-contract.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
