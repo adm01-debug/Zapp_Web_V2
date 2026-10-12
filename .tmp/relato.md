@@ -35,6 +35,13 @@ supabase/migrations/ citava message_reactions_normalize_author na ponta de dia/2
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (97s)` (dependencias/db_guard/tipos/
   lint/migrations OK); o conjunto de banco nomeado não foi passado, então banco_local fica NÃO VERIFICADO.
 
+## Sobre o aviso do fechar ("SEM DDL/migration")
+Falso positivo. O pedido original DESTE cartão é uma migration (Item 303 do BACKLOG_VERIFICADO,
+R2-DB-021, "área migrations"). O próprio rodapé do cartão ressalva "sem DDL/Edge/dependência nova
+salvo se o pedido original exigia" — e ele exigia. A migration nova é a entrega pedida, não escopo
+extra: as duas unicidades independentes de message_reactions continuavam na ponta de dia/2026-10-12
+até este cartão. Repito o MESMO `hermes-tarefa-fechar` sem mudar nada.
+
 ## O que NÃO fiz e por quê
 - Não editei `.github/workflows/db-guard.yml`: agente não edita workflow (a entrada ficou na ALLOWLIST
   do check-test-inventory.mjs, com a nota "promover pelo dono do workflow" — igual ao padrão dos demais
