@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  MessageSquare, Pencil, Trash2, MoreVertical, Phone, Mail, Clock,
+  MessageSquare, Pencil, Trash2, MoreVertical, Phone, Mail, Clock, Briefcase,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -123,9 +123,30 @@ export function ContactCard({
             {contact.nickname && (
               <span className="text-xs text-muted-foreground truncate">({contact.nickname})</span>
             )}
+            {/* Tags — mesmo padrão do ContactListItem: até 2 + contador do resto */}
+            {contact.tags && contact.tags.length > 0 && (
+              <>
+                {contact.tags.slice(0, 2).map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">
+                    {tag}
+                  </Badge>
+                ))}
+                {contact.tags.length > 2 && (
+                  <Badge variant="secondary" className="text-3xs h-5 px-1.5">
+                    +{contact.tags.length - 2}
+                  </Badge>
+                )}
+              </>
+            )}
           </div>
           {company && (
             <p className="text-sm text-muted-foreground truncate mt-1">{company}</p>
+          )}
+          {contact.job_title && (
+            <p className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
+              <Briefcase className="w-3 h-3 shrink-0" />
+              {contact.job_title}
+            </p>
           )}
         </div>
       </div>
