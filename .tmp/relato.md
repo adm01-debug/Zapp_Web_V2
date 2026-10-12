@@ -1,29 +1,58 @@
-Especialista: senior (area-front-hooks)
+# retomar conflito: alerta de rate limit não pode apagar bloqueio permanente (R2-API-056)
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+Especialista: Edgar (area-edge-api)
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+## Situação
+O cartão mandava reaplicar a entrega original (commit 14613a9b, também na branch
+mentada 775420344) que ficou em conflito ao rebasear sobre dia/2026-10-11. Conferindo
+o código ATUAL da base dia/2026-10-11, o defeito JÁ ESTÁ CORRIGIDO: uma correção
+equivalente entrou no histórico pelo commit 5a371a96b ("fix(edge): alerta de rate limit
+preserva bloqueio permanente", 07/10 22:22), que é ancestral do HEAD de hoje.
+
+## O que já está no código (nenhuma mudança feita nesta tarefa)
+- supabase/functions/send-rate-limit-alert/index.ts, bloco `if (blocked)`:
+  - upsert com `{ onConflict: "ip_address", ignoreDuplicates: true }` → ON CONFLICT DO
+    NOTHING, cria o bloqueio temporário só quando o IP não tem linha; nunca toca numa
+    linha existente, então não apaga bloqueio administrativo permanente.
+  - update compare-and-swap `.eq("is_permanent", false).lt("expires_at", expiresAt)` →
+    só estende o prazo de linha temporária e mais curta; bloqueio permanente
+    (is_permanent=true) e expires_at NULL não casam os filtros e não são tocados.
+- supabase/functions/send-rate-limit-alert/index.test.ts: os 3 testes de R2-API-056 da
+  entrega original estão presentes — bloqueio permanente preservado, prazo temporário
+  mais longo não reduzido, e IP sem linha cria bloqueio temporário de ~15min.
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- diff desta tarefa: vazio (nada modificado) — o cartão manda fechar sem commit quando
+  já resolvido.
+- verde: `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/send-rate-limit-alert/index.test.ts`
+  → `ok | 10 passed | 0 failed (57ms)`, incluindo os 3 testes que provam o defeito:
+  "blocked_ips: alerta NÃO sobrescreve bloqueio permanente (motivo/autoria preservados) ... ok",
+  "blocked_ips: alerta NÃO reduz prazo de bloqueio temporário mais longo ... ok",
+  "blocked_ips: sem linha → alerta cria bloqueio temporário de ~15min ... ok".
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Caminhos do mesmo defeito e como cada conflito ficou
+- supabase/functions/send-rate-limit-alert/index.ts (ramo `if (blocked)`, o upsert
+  incondicional que sobrescrevia o bloqueio permanente): já corrigido na base atual —
+  upsert `ignoreDuplicates:true` (linhas 97-107) + update compare-and-swap (linhas 114-124).
+- supabase/functions/send-rate-limit-alert/index.test.ts (o arquivo que apareceu como
+  "em conflito hoje"): já traz os 3 testes de R2-API-056 a partir da linha 229, sem
+  marcador de conflito. Nada a resolver: a base atual já contém a intenção da entrega.
+- vermelho-antes: não se aplica — não há mudança nesta tarefa (o estado corrigido já é o
+  da base); por isso nenhum commit de código.
+
+## Sensibilidade
+- Toca rate limit e service_role, mas nesta tarefa NÃO alterei nenhum arquivo (diff
+  vazio): nenhuma proteção foi afrouxada.
+- Prova do caso NEGADO (o defeito): o teste "alerta NÃO sobrescreve bloqueio permanente"
+  passa com a semântica ON CONFLICT DO NOTHING + CAS; um upsert incondicional reprovaria
+  is_permanent, expires_at, reason, blocked_at.
+- Nenhuma referência a banco/endpoint de produção; os testes usam fake PostgREST em memória.
+- Para quem chama: nada muda — a função segue respondendo 200 em sucesso e o comportamento
+  de bloqueio já é o corrigido.
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não commitei código: o defeito já está corrigido na base atual; reaplicar o commit
+  original duplicaria a correção e o diff não teria o que mudar.
+
+Concluí: o defeito R2-API-056 não existe mais no código atual; a correção equivalente já
+está integrada (5a371a96b) e é provada pelos testes verdes.
