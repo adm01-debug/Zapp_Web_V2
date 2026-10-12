@@ -242,18 +242,37 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
 
     // Definido aqui (escopo de módulo) para que connect/status/disconnect/delete-instance
     // possam usar sem depender de criar-connection ter rodado antes.
-    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey'];
+    const TOKEN_KEYS = ['token', 'Token', 'apikey', 'apiKey', 'hash'];
     const TOKEN_CONTAINER_KEYS = ['data', 'hash', 'instance'];
     const stripInstanceToken = (value: unknown): unknown => {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      // Listas de instância (ex.: GET /instance/fetchInstances devolve array de
+      // objetos) precisam ser percorridas — sem isso o token do item escaparia.
+      if (Array.isArray(value)) return value.map(stripInstanceToken);
+      if (!value || typeof value !== 'object') return value;
       const clone: Record<string, unknown> = { ...(value as Record<string, unknown>) };
       for (const key of TOKEN_KEYS) delete clone[key];
       for (const key of TOKEN_CONTAINER_KEYS) {
-        if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
-          clone[key] = stripInstanceToken(clone[key]);
-        }
+        if (clone[key] !== undefined) clone[key] = stripInstanceToken(clone[key]);
       }
       return clone;
+    };
+
+    // R2EXT-AGENDA: higieniza o corpo de leitura de instância (instance-info /
+    // list-instances) em QUALQUER variante (GO e v2). O proxy só limpa a rota
+    // GO /instance/all; a variante v2 e a rota /instance/info passariam o
+    // token/hash adiante (com ele + a URL pública da GO se opera a instância
+    // fora do app). Resposta não-JSON é devolvida intacta.
+    const sanitizeInstanceResponse = async (response: Response): Promise<Response> => {
+      let body: unknown;
+      try {
+        body = await response.json();
+      } catch {
+        return response;
+      }
+      return new Response(JSON.stringify(stripInstanceToken(body)), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     };
 
     // ─── E10: backfill do token da PRINCIPAL (secret global → Vault) ───
@@ -485,7 +504,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       });
     }
 
-    if (action === 'list-instances') return await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET');
+    if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
@@ -788,9 +807,9 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
         if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        return await proxy(`/instance/info/${goId}`, 'GET');
+        return await sanitizeInstanceResponse(await proxy(`/instance/info/${goId}`, 'GET'));
       }
-      return await proxy(`/instance/info/${instance}`, 'GET');
+      return await sanitizeInstanceResponse(await proxy(`/instance/info/${instance}`, 'GET'));
     }
     if (action === 'restart-instance') return await proxy(`/instance/restart/${instance}`, 'PUT');
 
