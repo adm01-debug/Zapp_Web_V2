@@ -1,29 +1,22 @@
-Especialista: senior (area-front-hooks)
+Especialista: Íris (area-front-componentes)
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+## O que encontrei (defeito já resolvido no código atual)
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+O cartão pede para conferir se as ações rápidas da busca embutida executam a intenção e, se já resolvido, fechar sem commit de código. Conferi e o defeito NÃO existe mais na base do dia: a entrega anterior entrou por merge do PR #314.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+Evidências de que a correção está presente:
+- `git log --oneline -1 94b243954` → `fix(inbox): ações rápidas e busca embutida executam intenção (#314)`; o stat do commit lista exatamente os arquivos do defeito (GlobalSearch.tsx, RealtimeInboxView.tsx, ChatPanel.tsx, chat/ChatDialogs.tsx e os testes da busca).
+- `git diff --stat f0b03bb56 HEAD -- src/components/inbox/GlobalSearch.tsx` → saída VAZIA: o GlobalSearch.tsx da base do dia é idêntico ao da entrega de 07/10 (f0b03bb56, extras/refazer). O conteúdo do pedido já está na árvore atual.
+- `git grep -n "onNewConversation" HEAD -- src/components/inbox/` → GlobalSearch.tsx declara e usa `onNewConversation`, e RealtimeInboxView.tsx:231 passa `onNewConversation={() => inbox.setShowNewConversation(true)}`; ChatDialogs.tsx:67 passa `onManageQuickReplies={() => openDialog('quickReplies')}`. As ações rápidas chamam a intenção em vez de ficar inertes.
+- `git grep -n "onSelectConversation" HEAD -- src/components/inbox/chat/ChatDialogs.tsx` → linha 66 `onSelectResult={(result) => { if (result.contactId) onSelectConversation?.(result.contactId); }}` e ChatPanel.tsx:455 `onSelectConversation={onSelectPinned}`: a seleção de resultado também executa a intenção, nos dois caminhos (busca embutida no chat e popup).
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Prova (verde, rodado agora)
+
+- `npx vitest run src/components/inbox/__tests__/GlobalSearch.r2-inb-018.test.tsx src/components/inbox/__tests__/GlobalSearch.navigation.test.tsx`
+  → `Test Files  2 passed (2)` / `Tests  8 passed (8)` — inclui o teste de regressão R2-INB-018 criado na entrega original.
+- Nenhum arquivo de código mudou: o único arquivo do diff desta tarefa é este `.tmp/relato.md` (o repositório rastreia o relato). Variação de `git diff --stat HEAD` = só `.tmp/relato.md`.
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+
+- Não commitei código e não criei "controle novo": o cartão manda fechar sem commit de código quando o defeito do pedido já foi corrigido no código atual.
+- Não toquei em nenhum arquivo de código: as mudanças do pedido já estão na base do dia (commit 94b243954). O diff desta tarefa não tem código, só o próprio relato.
