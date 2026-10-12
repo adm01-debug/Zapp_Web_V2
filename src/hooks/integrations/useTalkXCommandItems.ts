@@ -4,6 +4,7 @@ import { Megaphone, Users, FileText } from 'lucide-react';
 import React from 'react';
 import type { CommandItem } from '@/components/ui/command-palette-data';
 import type { TalkXCampaign } from './useTalkX';
+import { replaceTalkXOpenRoute, replaceTalkXRoute, replaceTalkXTabRoute } from '@/components/talkx/talkxRoute';
 
 interface TalkXSegment { id: string; name: string }
 interface TalkXTemplate { id: string; name: string }
@@ -12,6 +13,19 @@ const STATUS_LABEL: Record<string, string> = {
   draft: 'Rascunho', scheduled: 'Agendada', running: 'Em andamento',
   paused: 'Pausada', completed: 'Concluída', cancelled: 'Cancelada',
 };
+
+/**
+ * Grava o endereço do item (campanha → tela da campanha; segmento/template → a aba
+ * deles) ANTES de trocar de módulo: o TalkXView lê a URL ao montar, então o item certo
+ * abre direto, sem passar pela Visão geral. Com o módulo já aberto, o popstate faz o
+ * TalkXView reler o endereço.
+ */
+function openTalkXItem(onNavigate: ((view: string) => void) | undefined, route: () => void) {
+  const jaNoTalkX = new URLSearchParams(window.location.search).get('view') === 'talkx';
+  route();
+  onNavigate?.('talkx');
+  if (jaNoTalkX) window.dispatchEvent(new PopStateEvent('popstate'));
+}
 
 export function useTalkXCommandItems(onNavigate?: (view: string) => void): CommandItem[] {
   const queryClient = useQueryClient();
@@ -34,7 +48,7 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       category: 'talkx' as const,
       keywords: ['campanha', 'talkx', 'disparos', c.status],
       badge: STATUS_LABEL[c.status],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => replaceTalkXRoute({ campaignId: c.id })),
     }));
 
     const segmentItems: CommandItem[] = segments.map((s) => ({
@@ -44,7 +58,10 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       icon: React.createElement(Users, { className: 'h-4 w-4' }),
       category: 'talkx' as const,
       keywords: ['segmento', 'talkx', 'público'],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => {
+        replaceTalkXOpenRoute(null);
+        replaceTalkXTabRoute({ tab: 'segments' });
+      }),
     }));
 
     const templateItems: CommandItem[] = templates.map((t) => ({
@@ -54,7 +71,10 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void): Comma
       icon: React.createElement(FileText, { className: 'h-4 w-4' }),
       category: 'talkx' as const,
       keywords: ['template', 'talkx', 'mensagem', 'modelo'],
-      action: () => onNavigate?.('talkx'),
+      action: () => openTalkXItem(onNavigate, () => {
+        replaceTalkXOpenRoute(null);
+        replaceTalkXTabRoute({ tab: 'templates' });
+      }),
     }));
 
     return [...campaignItems, ...segmentItems, ...templateItems];

@@ -1,13 +1,15 @@
+import { useEffect } from 'react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MobileShell } from '@/components/mobile/MobileShell';
-import { CommandPalette } from '@/components/CommandPalette';
+import { GlobalKeyboardProvider, useGlobalKeyboard } from '@/components/keyboard/GlobalKeyboardProvider';
 
 // R2-PLAT-010: o botão "Buscar" do cabeçalho mobile só ligava um estado local do
 // MobileShell (`mobileSearchOpen`) que ninguém lia — nenhuma superfície de busca
-// abria. A prova monta o shell mobile REAL e a paleta de comandos REAL na mesma
-// composição do app (`src/pages/Index.tsx` renderiza o CommandPalette como irmão
-// do AppShell: `document.addEventListener('open-global-search', …)`) e clica no
+// abria. A prova monta o shell mobile REAL e a paleta única REAL (X054: o
+// GlobalKeyboardProvider escuta `open-global-search` e hospeda a paleta) e clica no
 // botão como o usuário mobile clica.
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
@@ -36,27 +38,47 @@ vi.mock('@/hooks/system/useNotifications', () => ({
   }),
 }));
 
-const PLACEHOLDER = 'Buscar módulo… (ex: tarefas, chatbot)';
+// O host da paleta consulta o catálogo; nenhum produto é buscado aqui.
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) } },
+}));
 
-// O cmdk chama scrollIntoView no item ativo; o jsdom não implementa a função.
+const PLACEHOLDER = /Buscar ou digitar comando/;
+
+// O jsdom não implementa scrollIntoView.
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
+/** Faz o papel de Index.tsx: registra o handler de navegação do shell. */
+function ShellFalso({ onNavigate }: { onNavigate: (view: string) => void }) {
+  const { registerNavigationHandler, unregisterNavigationHandler } = useGlobalKeyboard();
+  useEffect(() => {
+    registerNavigationHandler(onNavigate);
+    return () => unregisterNavigationHandler();
+  }, [registerNavigationHandler, unregisterNavigationHandler, onNavigate]);
+  return null;
+}
+
 function renderShell() {
   const onNavigate = vi.fn();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <>
-      <MobileShell
-        currentView="inbox"
-        setCurrentView={vi.fn()}
-        profile={{ name: 'Ana Souza', avatar_url: null }}
-        userEmail="ana@exemplo.com"
-        signOut={vi.fn()}
-        unreadNotifications={0}
-      />
-      <CommandPalette onNavigate={onNavigate} />
-    </>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>
+        <GlobalKeyboardProvider>
+          <ShellFalso onNavigate={onNavigate} />
+          <MobileShell
+            currentView="inbox"
+            setCurrentView={vi.fn()}
+            profile={{ name: 'Ana Souza', avatar_url: null }}
+            userEmail="ana@exemplo.com"
+            signOut={vi.fn()}
+            unreadNotifications={0}
+          />
+        </GlobalKeyboardProvider>
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
   return { onNavigate };
 }
@@ -71,7 +93,7 @@ describe('MobileShell — botão Buscar do cabeçalho (R2-PLAT-010)', () => {
 
     const input = await screen.findByPlaceholderText(PLACEHOLDER);
     expect(input).toBeInTheDocument();
-    expect(document.activeElement).toBe(input);
+    await waitFor(() => expect(document.activeElement).toBe(input));
   });
 
   it('mostra resultado, navega e fecha a busca ao escolher um módulo', async () => {
@@ -82,7 +104,14 @@ describe('MobileShell — botão Buscar do cabeçalho (R2-PLAT-010)', () => {
 
     fireEvent.change(input, { target: { value: 'Tarefas' } });
 
-    const item = await screen.findByText('Tarefas');
+    // O título vem com letras casadas em <span>: localiza pelo texto do botão.
+    const item = await waitFor(() => {
+      const found = Array.from(document.querySelectorAll<HTMLElement>('button')).find((b) =>
+        b.textContent?.startsWith('Tarefas'),
+      );
+      if (!found) throw new Error('Tarefas não está na paleta');
+      return found;
+    });
     fireEvent.click(item);
 
     expect(onNavigate).toHaveBeenCalledWith('tasks');

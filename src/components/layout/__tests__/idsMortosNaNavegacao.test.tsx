@@ -3,22 +3,21 @@
  *
  * Ao remover a porta de entrada "Quadro" (id `pipeline`), ids que morreram ficam
  * gravados no `localStorage` de quem já usava o app antes da fusão — em
- * `sidebar-favorites`, `zapp-recent-modules` e `mobile-drawer-recents`. Nenhum dos
- * três é migrado (plano, seção 1.4): cada um resolve o id contra a lista de módulos
- * viva e descarta o que não existe mais.
+ * `sidebar-favorites` e `mobile-drawer-recents`. Nenhum dos dois é migrado (plano,
+ * seção 1.4): cada um resolve o id contra a lista de módulos viva e descarta o que
+ * não existe mais. (A paleta ⌘K única, X054, não guarda recentes de módulos.)
  *
  *   - Sidebar            → `favoriteItems` (allNavItems.find + filter(Boolean))
- *   - CommandPalette     → `recentItems`   (allItems.find + filter(Boolean))
  *   - MobileDrawerMenu   → `recentItems`   (allItems.find + filter(Boolean))
  *
- * Este teste trava esse comportamento nos TRÊS lugares, com um id morto de verdade
+ * Este teste trava esse comportamento nos DOIS lugares, com um id morto de verdade
  * (`quadro-legado`, que nunca existiu no menu) e um módulo vivo (`chatbot`): o id
  * morto não aparece e não lança; o vivo continua acessível. Sem o filtro, o
  * `.find()` devolve `undefined` e o primeiro acesso a `item.icon` / `item.id` estoura.
  * Os componentes são renderizados de verdade (nada de replicar o filtro no teste).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -67,7 +66,6 @@ vi.mock('@/components/theme/HighContrastToggle', async (importOriginal) => ({
 // `useSidebarFavorites` NÃO é mockado de propósito: o ponto do cartão é justamente
 // o hook real lendo `sidebar-favorites` do localStorage.
 import { Sidebar } from '@/components/layout/Sidebar';
-import { CommandPalette } from '@/components/CommandPalette';
 import { MobileDrawerMenu } from '@/components/mobile/MobileDrawerMenu';
 
 function renderSidebar() {
@@ -79,21 +77,6 @@ function renderSidebar() {
       </TooltipProvider>
     </QueryClientProvider>,
   );
-}
-
-/** Abre a paleta pelo atalho real (Ctrl+K) e devolve o grupo "Recentes" renderizado. */
-function grupoDeRecentesDaPaleta(): HTMLElement | null {
-  const heading = Array.from(document.querySelectorAll('[cmdk-group-heading]')).find(
-    (h) => h.textContent?.trim() === 'Recentes',
-  );
-  return heading ? (heading.closest('[cmdk-group]') as HTMLElement) : null;
-}
-
-async function renderPaleta() {
-  render(<CommandPalette onNavigate={vi.fn()} />);
-  fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-  // O CommandDialog renderiza em portal: a espera é no documento, não no `container`.
-  return screen.findByPlaceholderText(/Buscar módulo/);
 }
 
 /** O bloco "Recentes" do menu mobile (o `<div>` que envolve o rótulo). */
@@ -143,31 +126,6 @@ describe('E17 — Sidebar: favoritos gravados (sidebar-favorites) ignoram id mor
 
     expect(screen.queryByText('Favoritos')).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Favoritos' })).toBeNull();
-  });
-});
-
-describe('E17 — Paleta de comandos: recentes gravados (zapp-recent-modules) ignoram id morto', () => {
-  it('mostra só o módulo vivo na lista de Recentes', async () => {
-    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO, ID_VIVO]));
-
-    await renderPaleta();
-
-    const grupo = grupoDeRecentesDaPaleta();
-    expect(grupo).not.toBeNull();
-    const itens = Array.from(grupo!.querySelectorAll('[cmdk-item]')).map((i) => i.textContent);
-    expect(itens).toHaveLength(1);
-    expect(itens[0]).toContain('Chatbot');
-    expect(grupo!.textContent).not.toContain(ID_MORTO);
-  });
-
-  it('não renderiza o grupo Recentes (e não lança) quando só o id morto está gravado', async () => {
-    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO]));
-
-    await renderPaleta();
-
-    expect(grupoDeRecentesDaPaleta()).toBeNull();
-    expect(screen.queryByText('Recentes')).toBeNull();
-    expect(document.body.textContent).not.toContain(ID_MORTO);
   });
 });
 

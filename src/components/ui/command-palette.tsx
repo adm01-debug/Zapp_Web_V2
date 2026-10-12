@@ -23,13 +23,15 @@ interface CommandPaletteProps {
   onRecentSearchSelect?: (query: string) => void;
   onClearRecent?: () => void;
   customCommands?: CommandItem[];
+  /** Substitui a lista fixa de navegação (ex.: módulos já filtrados pelo papel do usuário). */
+  navigationCommands?: CommandItem[];
 }
 
 export function CommandPalette({
   open, onOpenChange, onNavigate, onSearch,
   placeholder = 'Buscar ou digitar comando...',
   recentSearches = [], onRecentSearchSelect, onClearRecent,
-  customCommands = [],
+  customCommands = [], navigationCommands = defaultNavigationCommands,
 }: CommandPaletteProps) {
   const [query, setQuery] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
@@ -37,7 +39,7 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const allCommands = React.useMemo(() => [...defaultNavigationCommands, ...defaultActionCommands, ...customCommands], [customCommands]);
+  const allCommands = React.useMemo(() => [...navigationCommands, ...defaultActionCommands, ...customCommands], [navigationCommands, customCommands]);
 
   const filteredCommands = React.useMemo(() => {
     if (!query) return [];
@@ -63,8 +65,8 @@ export function CommandPalette({
   // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
   // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
   const quickAccessItems = React.useMemo(
-    () => (query ? [] : defaultNavigationCommands.slice(0, 5)),
-    [query]
+    () => (query ? [] : navigationCommands.slice(0, 5)),
+    [query, navigationCommands]
   );
 
   const allItems = React.useMemo(

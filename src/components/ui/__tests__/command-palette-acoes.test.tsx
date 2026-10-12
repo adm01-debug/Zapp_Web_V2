@@ -11,6 +11,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) } },
 }));
 
+// O host da paleta filtra os módulos pelo papel do usuário (X054); o papel não é o foco aqui.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ roles: ['admin'], permissions: [], loading: false, permissionsLoading: false }),
+}));
+
 /**
  * R2-INF-033 (#378) — três ações padrão da paleta (⌘K) eram exibidas sem executor:
  * "Nova conversa", "Respostas rápidas" e "Atalhos de teclado" não tinham `action` nem
