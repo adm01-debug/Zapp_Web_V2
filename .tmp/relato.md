@@ -45,6 +45,15 @@ ajuste de `docs/DB-INVENTORY.md`) e ajustei só a documentação de inventário.
   → `tests 18 / pass 18 / fail 0`.
 - `zapp-verify full .` → `OK testes`, `OK build`, `VERIFY: VERDE SEM BANCO` (exit 0).
 
+## Arquivos fora de "ARQUIVOS QUE PODE TOCAR" e por que foram indispensáveis
+O MOTIVO REGISTRADO desta retomada é exatamente estes três testes de CI vermelhos:
+`docs/COMPLETE_SYSTEM_FEATURES.md` citando arquivo apagado e `FEATURE_REGISTRY.md` listando a
+view `payments` removida. Sem editar esses dois documentos a verificação não fica verde e o
+cartão não fecha — por isso são indispensáveis aqui:
+- `docs/COMPLETE_SYSTEM_FEATURES.md` — a guarda `complete-system-features-doc.unit.mjs` cita o arquivo apagado; única forma de verde é remover a citação do §40 (mantendo o título da seção, que é exigido).
+- `FEATURE_REGISTRY.md` — a guarda `docs-estado-registry-convention.unit.mjs` recalcula as views do `ViewRouter`; a linha `payments` e os totais têm de sair para bater com o código.
+- `docs/DB-INVENTORY.md` — veio no commit `c992848d1` da entrega anterior (cherry-pick), ajustando `payment_links` de `ativo` para `parcial` após a remoção do hook que era sua evidência de uso.
+
 ## O que NÃO fiz e por quê
 - Não toquei na tabela `payment_links` nem em `meta_capi_events` (fora de escopo, decisão separada).
 - Não toquei no módulo "Meta CAPI" nem no "Calendário" (fora de escopo).
