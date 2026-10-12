@@ -196,8 +196,8 @@ check_access 'B.5'
 
 printf '\n============ BLOCO C — o Rollback do arquivo devolve o texto anterior ============\n'
 [[ -f "$migration" ]] || fail 'C.0 migration do cartao ausente'
-sed -n 's/^-- Rollback: //p' "$migration" | head -n1 > "$tmp_dir/rollback.sql"
-[[ -s "$tmp_dir/rollback.sql" ]] || fail 'C.0 nao consegui extrair a linha -- Rollback:'
+sed -n 's/^--   //p' "$migration" > "$tmp_dir/rollback.sql"
+[[ -s "$tmp_dir/rollback.sql" ]] || fail 'C.0 nao consegui extrair o bloco -- Rollback (SQL executavel):'
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 expect_value 'C.1 rollback rodou: as 4 policies citam is_admin_or_supervisor de novo' '4' "$POLICIES_COM_RAMO"
 check_access 'C.2'
