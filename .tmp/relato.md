@@ -1,29 +1,30 @@
-Especialista: senior (area-front-hooks)
+Especialista: senior
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+## Pontos do revisor
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+Ponto 1.1: B19 não provava o bypass pedido.
+- O que mudei: `scripts/db-audit/edit-message-authorization.test.sh:311-315` agora divide o B19 em dois passos no mesmo alvo editável (`$M_SENT`): B19a exige que `UPDATE public.messages SET content = ...` por `authenticated` falhe com `message_content_edit_requires_rpc`; B19b chama a RPC real `public.edit_message($M_SENT, ...)` e exige o conteúdo retornado pela própria RPC.
+- Prova vermelha: rodei uma cópia temporária do teste com `DROP TRIGGER IF EXISTS trg_guard_message_immutable_columns ON public.messages` imediatamente antes do B19. Resultado: `mutation_exit=1` e `[FAIL] B19a bypass da RPC: UPDATE direto no mesmo alvo editavel pela RPC e recusado: deveria falhar, mas passou`.
+- Prova verde: `bash scripts/db-audit/edit-message-authorization.test.sh` passou em Postgres descartável, incluindo `[PASS] B19a bypass da RPC: UPDATE direto no mesmo alvo editavel pela RPC e recusado`, `[PASS] B19b bypass da RPC: RPC edit_message edita o mesmo alvo que o UPDATE direto recusou`, `[PASS] B21 authenticated nao desfaz soft delete (message_undelete_forbidden)` e `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+Ponto 1.2: o passo novo do CI passava uma variável que o teste ignorava.
+- O que mudei: não trouxe o arquivo `.github/workflows/db-guard.yml` do commit anterior; portanto o diff final remove o passo novo de CI que passava `EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE`. O teste de banco continua aceitando a variável que ele realmente lê (`EDIT_MESSAGE_TEST_POSTGRES_IMAGE`) em `scripts/db-audit/edit-message-authorization.test.sh:28`, sem criar novo passo de workflow.
+- Prova: `git diff --name-only dia/2026-10-12...HEAD` lista só os três arquivos permitidos abaixo, e a checagem `git diff --cached --name-only | grep -c '^\.github/'` antes do commit retornou `0`.
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+Ponto 2: diff final só com trabalho deste cartão.
+- O que mudei: reapliquei do commit 1836d103f665 somente a migration, o teste de banco e o tipo gerado; deixei fora `.github/workflows/db-guard.yml` e `.tmp/relato.md` do commit anterior. O commit final é `bab15c048 fix(db): prova bypass da edicao de mensagem`.
+- Prova: `git diff --stat dia/2026-10-12...HEAD` mostra apenas `scripts/db-audit/edit-message-authorization.test.sh`, `src/integrations/supabase/types.ts` e `supabase/migrations/20261011151650_edit_message_rpc.sql`; conferi antes do commit que o identificador do banco real não aparece no diff.
 
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+## Arquivos no diff
+
+```
+scripts/db-audit/edit-message-authorization.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011151650_edit_message_rpc.sql
+```
+
+## Verificações executadas
+
+- `bash scripts/db-audit/edit-message-authorization.test.sh` → `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
+- Mutação temporária do B19 sem a guarda → `mutation_exit=1` e falha em B19a porque o UPDATE direto passou.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (169s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/95591f259354`.
