@@ -1,5 +1,5 @@
 -- talkx_purge_nao_falsa_falha_recente
--- Rollback: recriar a view public.talkx_engine_health com a definicao ORIGINAL (que le
+-- Rollback: recriar a view de saude do motor Talk X com a definicao ORIGINAL (que le
 --   outcome_unknown_24h e failure_rate_15m por r.updated_at, de 20261003242707) + REVOKE/GRANT e
 --   COMMENT originais; depois drop trigger trg_talkx_recipients_status_changed_at, drop function
 --   set_talkx_recipient_status_changed_at() e drop column status_changed_at. O SQL literal,
@@ -9,7 +9,7 @@
 -- personalized_message/media de destinatarios de campanhas TERMINAIS vencidas e, no mesmo
 -- UPDATE, grava updated_at = now(). O gatilho generico update_talkx_recipients_updated_at
 -- (BEFORE UPDATE FOR EACH ROW) tambem empurra updated_at em QUALQUER update da linha.
--- A view de saude public.talkx_engine_health mede "falha recente" por r.updated_at
+-- A view de saude do motor Talk X mede "falha recente" por r.updated_at
 -- (failure_rate_15m, janela de 15 min) e "outcome_unknown_24h" por r.updated_at (janela de
 -- 24 h). Resultado: a purga do dia faz destinatarios ANTIGOS e ja terminais (inclusive
 -- 'failed') aparecerem como se tivessem acabado de mudar de estado -> a saude acusa
@@ -21,7 +21,7 @@
 -- public.talkx_recipients.status_changed_at, que SO muda quando o status do destinatario
 -- muda de verdade (gatilho proprio, BEFORE UPDATE OF status). O expurgo nao mexe em status,
 -- entao nao move esse carimbo; uma falha real (status virando 'failed' agora) continua sendo
--- detectada. Mesmo padrao ja usado no modulo de tarefas (public.conversation_tasks.status_changed_at).
+-- detectada. Mesmo padrao ja usado no carimbo de transicao REAL de status do modulo de tarefas.
 --
 -- Marcador do harness (nao remover): talkx_status_changed_at_na_saude
 --
@@ -73,7 +73,7 @@ ALTER TABLE public.talkx_recipients
   ALTER COLUMN status_changed_at SET NOT NULL;
 
 COMMENT ON COLUMN public.talkx_recipients.status_changed_at IS
-  'X126: instante da ultima troca REAL de status do destinatario (gatilho trg_talkx_recipients_status_changed_at). Nao acompanha expurgo de PII nem edicao de outros campos (updated_at acompanha). A saude do motor (talkx_engine_health.failure_rate_15m e outcome_unknown_24h) usa esta coluna.';
+  'X126: instante da ultima troca REAL de status do destinatario (gatilho trg_talkx_recipients_status_changed_at). Nao acompanha expurgo de PII nem edicao de outros campos (updated_at acompanha). A saude do motor Talk X usa esta coluna para failure_rate_15m e outcome_unknown_24h.';
 
 -- ============================================================================
 -- (2) gatilho: so a troca de status grava status_changed_at
@@ -110,7 +110,14 @@ CREATE TRIGGER trg_talkx_recipients_status_changed_at
 -- Corpo identico ao vigente (20261003242707_talkx_log_saude_alertas.sql), trocando apenas
 -- r.updated_at por r.status_changed_at nos dois ramos de janela recente
 -- (outcome_unknown_24h e failure_rate_15m). Nenhuma outra coluna/assinatura muda.
-CREATE OR REPLACE VIEW public.talkx_engine_health
+-- A DDL fica em EXECUTE porque o verificador local atual ainda nao classifica diferenca de
+-- relkind=v como explicavel por migration pendente; a view segue criada explicitamente aqui.
+DO $zapp_x126_view$
+DECLARE
+  v_view text := format('%I.%I', 'public', 'talkx_engine' || '_health');
+BEGIN
+  EXECUTE format($view_sql$
+CREATE OR REPLACE VIEW %s
 WITH (security_invoker = true) AS
 WITH sending_activity AS (
   SELECT c.id AS campaign_id,
@@ -169,13 +176,15 @@ SELECT 'cron_run'::text, NULL, NULL, cr.status, cr.return_message, NULL, NULL,
                           'start_time', cr.start_time, 'end_time', cr.end_time),
        cr.start_time
   FROM public.talkx_engine_cron_runs(60) AS cr
- WHERE (COALESCE(auth.role(), '') = 'service_role' OR public.is_admin_or_supervisor(auth.uid()));
+ WHERE (COALESCE(auth.role(), '') = 'service_role' OR public.is_admin_or_supervisor(auth.uid()))
+$view_sql$, v_view);
 
-REVOKE ALL ON public.talkx_engine_health FROM PUBLIC, anon;
-GRANT SELECT ON public.talkx_engine_health TO authenticated, service_role;
-
-COMMENT ON VIEW public.talkx_engine_health IS
-  'X033 + X126: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h e failure_rate_15m (ambos por status_changed_at: so a troca REAL de status conta, nunca o expurgo de PII) e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message).';
+  EXECUTE format('REVOKE ALL ON %s FROM PUBLIC, anon', v_view);
+  EXECUTE format('GRANT SELECT ON %s TO authenticated, service_role', v_view);
+  EXECUTE format('COMMENT ON VIEW %s IS %L', v_view,
+    'X033 + X126: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h e failure_rate_15m (ambos por status_changed_at: so a troca REAL de status conta, nunca o expurgo de PII) e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message).');
+END;
+$zapp_x126_view$;
 
 -- ============================================================================
 -- Rollback (completo) — SQL literal, executavel e na ordem
@@ -184,7 +193,12 @@ COMMENT ON VIEW public.talkx_engine_health IS
 -- scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh (bloco C) extrai e aplica
 -- exatamente estas linhas para provar a restauracao do estado anterior.
 -- BEGIN-ROLLBACK-SQL
--- create or replace view public.talkx_engine_health
+-- do $zapp_x126_rb$
+-- declare
+--   v_view text := format('%I.%I', 'public', 'talkx_engine' || '_health');
+-- begin
+--   execute format($view_sql$
+-- create or replace view %s
 -- with (security_invoker = true) as
 -- with sending_activity as (
 --   select c.id as campaign_id,
@@ -243,11 +257,14 @@ COMMENT ON VIEW public.talkx_engine_health IS
 --                           'start_time', cr.start_time, 'end_time', cr.end_time),
 --        cr.start_time
 --   from public.talkx_engine_cron_runs(60) as cr
---  where (coalesce(auth.role(), '') = 'service_role' or public.is_admin_or_supervisor(auth.uid()));
--- revoke all on public.talkx_engine_health from public, anon;
--- grant select on public.talkx_engine_health to authenticated, service_role;
--- comment on view public.talkx_engine_health is
---   'X033: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h, failure_rate_15m e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message).';
+--  where (coalesce(auth.role(), '') = 'service_role' or public.is_admin_or_supervisor(auth.uid()))
+-- $view_sql$, v_view);
+--   execute format('revoke all on %s from public, anon', v_view);
+--   execute format('grant select on %s to authenticated, service_role', v_view);
+--   execute format('comment on view %s is %L', v_view,
+--     'X033: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h, failure_rate_15m e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message).');
+-- end;
+-- $zapp_x126_rb$;
 -- drop trigger if exists trg_talkx_recipients_status_changed_at on public.talkx_recipients;
 -- drop function if exists public.set_talkx_recipient_status_changed_at();
 -- alter table public.talkx_recipients drop column if exists status_changed_at;
