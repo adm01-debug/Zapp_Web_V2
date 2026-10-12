@@ -19,6 +19,7 @@ function makeCaller(opts: {
   roles?: string[];
   roleError?: boolean;
   // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } = {}): any {
   return {
     auth: {
@@ -30,6 +31,7 @@ function makeCaller(opts: {
     },
     from(_table: string) {
       // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const b: any = {
         select: () => b,
         eq: () => b,
@@ -54,14 +56,15 @@ function makeAdmin(opts: {
   roleUpdateRows?: { id: string }[];
   roleAssignError?: boolean;
   auditError?: boolean;
-  // deno-lint-ignore no-explicit-any
 } = {}) {
   const calls: string[] = [];
   const invites: Array<{ email: string; options: Record<string, unknown> | undefined }> = [];
   // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const state: { roleWrite: any } = { roleWrite: null };
 
   // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin: any = {
     auth: {
       admin: {
@@ -85,12 +88,16 @@ function makeAdmin(opts: {
     from(table: string) {
       let op = "";
       // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let payload: any = null;
       // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const b: any = {
         // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
         update: (p: any) => { op = "update"; payload = p; return b; },
         // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
         insert: (p: any) => { op = "insert"; payload = p; return b; },
         select: () => { if (!op) op = "select"; return b; },
         eq: () => b,
@@ -101,6 +108,7 @@ function makeAdmin(opts: {
           calls.push(`${table}:${op}`);
           if (table === "user_roles") state.roleWrite = payload;
           // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let res: any = { data: null, error: null };
           if (table === "user_roles" && op === "update") {
             res = opts.roleAssignError

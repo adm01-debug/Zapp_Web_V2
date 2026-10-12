@@ -23,6 +23,7 @@ export interface InviteUserCallerClient {
     getUser: () => PromiseLike<{ data: { user: { id: string } | null }; error: unknown }>;
   };
   // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
 }
 
@@ -42,6 +43,7 @@ export interface InviteUserAdminClient {
     };
   };
   // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
 }
 
