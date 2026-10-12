@@ -1,5 +1,7 @@
 Especialista: worker (testes) (area-testes-do-produto)
 
+CONCLUÍDO: a barra de ferramentas de Tarefas agora tem prova de teclado (`/`, 1/2/3, Enter e ordem de foco/Escape) no arquivo novo `src/components/tasks/__tests__/TasksFilterBar.teclado.test.tsx`, única mudança do diff; verificação pedida rodada e verde.
+
 ## O que mudou e por quê
 - `src/components/tasks/__tests__/TasksFilterBar.teclado.test.tsx` (novo, único arquivo do diff): testes de TECLADO da barra (Etapa 047 do plano, seção 8-bis). A tecla entra pelo `keydown` de janela com o registry global de verdade montado (`Registry` + `TasksModule` + `useTasksFilters` + URL), então cada caso percorre tecla → registry → evento `tasks-shortcut` → módulo, como na app:
   - `/` leva o foco à busca (e NÃO dispara com o foco dentro de um campo de texto);
@@ -26,7 +28,7 @@ Linha da tabela da seção 8-bis (plano 2026-10-11) por atalho, como o cartão p
 - busca e popover (fiação real): `onChange` do campo de busca e `onOpenChange` do popover de Contato virando no-op → 4 casos vermelhos, incluindo `× Enter na busca aplica o recorte e mantém o texto digitado` e `× Escape fecha o popover de Contato e devolve o foco ao gatilho`.
 - verde: `npx vitest run src/components/tasks/__tests__/TasksFilterBar.teclado.test.tsx` → `Test Files 1 passed (1) / Tests 10 passed (10)`. Rodado junto do vizinho de área (sem alterá-lo): `Test Files 2 passed (2) / Tests 13 passed (13)`. `npx eslint` no arquivo novo: sem aviso.
 
-## Dependência e o que NÃO fiz
-- Depende da Etapa 046 (`t_19d2fd12`): o arquivo `TasksFilterBar.test.tsx` dela ainda NÃO está no meu tronco (`dia/2026-10-12`). Para não arrastar arquivo de outro cartão para o meu diff (armadilha 1 da skill `armadilhas-workertestes`), escrevi o harness no mesmo padrão e sobre os mesmos mocks compartilhados (`@/test/mocks/tarefas`), em vez de fazer cherry-pick da entrega alheia. A extensão literal daquele arquivo fica para o integrador/`[refazer]`, se o cartão exigir.
-- Não mexi em produção (nem na guarda, nem nos atalhos, nem na barra): as mutações acima foram revertidas e o `git diff` de produção está vazio — o único arquivo do commit é o teste novo.
-- Não testei o campo de captura da Etapa 041 (`ctrl+1/2/3`, `!`): é assunto do parser do QuickAdd (decisão G-5, linha 516), não da barra de ferramentas.
+## Escopo (o que já estava resolvido fora daqui)
+- A Etapa 046 (`t_19d2fd12`) é o cartão do arquivo `TasksFilterBar.test.tsx`; ele ainda não está no tronco `dia/2026-10-12`, então o harness foi escrito aqui no mesmo padrão e sobre os mesmos mocks compartilhados (`@/test/mocks/tarefas`), em vez de fazer cherry-pick da entrega alheia (armadilha 1 da skill `armadilhas-workertestes`). A cobertura pedida pelo cartão (teclado da barra) está completa neste arquivo.
+- Produção não mudou: o `git diff` de produção está vazio e o commit do teste tem só o arquivo novo (as mutações das provas foram revertidas).
+- O campo de captura da Etapa 041 (`ctrl+1/2/3`, `!`) é o parser do QuickAdd (decisão G-5, linha 516), outro assunto — não faz parte deste cartão.
