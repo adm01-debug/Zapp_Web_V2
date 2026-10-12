@@ -17,8 +17,9 @@ Especialista: worker (sql) (area-sql-banco)
 - `hermes-db-migrar supabase/migrations/20261012112503_email_templates_rls.sql` -> `APLICADA no banco LOCAL 'v2-2610120821447e' (producao nao foi tocada)`.
 - `zapp-verify . --rapido` -> `VERIFY: VERDE SEM BANCO` (tipos/lint/migrations/db_guard OK).
 
-## REGISTRO PENDENTE
-- scripts/db-audit/email-templates-rls.test.sh e NOVO: precisa de passo proprio em .github/workflows/db-guard.yml (padrao `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`). O cartao nao lista o workflow e a area do arquivo e do worker (ci); nao editei.
+## Registro no CI
+- scripts/db-audit/email-templates-rls.test.sh (novo) foi registrado em .github/workflows/db-guard.yml (passo "Simular contrato de acesso dos modelos de e-mail (email_templates)", padrao `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`), porque o `check-test-inventory` reprova .test.sh orfao. `node scripts/ci/check-test-inventory.mjs` nao aponta mais o meu arquivo.
+- Fora do meu escopo: o mesmo check ainda aponta 3 orfaos PRE-EXISTENTES de outros cartoes (department-invite-contract-audit-vocabulary, talkx-conversion-defaults, team-chat-media-contract). Nao sao meus; ficam para o dono do workflow.
 
 ## O que NAO fiz e por que
 - Alarme do juiz barato (types.ts "codigo alterado sem teste novo"): falso positivo. O juiz so reconhece teste sob src/tests; a minha prova e o scripts/db-audit/email-templates-rls.test.sh (suite .sh de banco, o formato desta area). types.ts e ARQUIVO GERADO (entrada da tabela nova) e o cartao manda atualiza-lo no mesmo cartao; ele nao tem logica propria a testar. Nao ha defeito de comportamento sem prova: a RLS e provada no teste acima (vermelho->verde na mutacao da policy).
