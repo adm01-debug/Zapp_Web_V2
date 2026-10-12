@@ -1,4 +1,4 @@
- import { type ComponentType, ReactNode, useEffect, useState } from 'react';
+ import { type ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
  import { Navigate, useLocation } from 'react-router-dom';
  import { Loader2 } from 'lucide-react';
  import { useAuth } from '@/hooks/auth/useAuth';
@@ -6,7 +6,7 @@
  import { RoleService } from '@/services/role.service';
  import { AuthService } from '@/services/auth.service';
  import { log } from '@/lib/logger';
-
+ import { logAudit } from '@/lib/audit';
  interface ProtectedRouteProps {
    children: ReactNode;
    requiredRoles?: ('admin' | 'supervisor' | 'agent')[];
@@ -118,6 +118,38 @@
       };
     }, [loading, user]);
 
+    const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
+    const isPermissioned = !requiredPermission || hasPermission;
+    // Só decide acesso quando saiu da verificação: sem isso o registro dispararia
+    // enquanto ainda estamos buscando permissão/MFA (o conteúdo segue fail closed).
+    const podeDecidirAcesso =
+      Boolean(user) && !loading && gate === 'ok' && !(requiredPermission && hasPermission === null);
+    const semAcesso = podeDecidirAcesso && (!isAuthorized || !isPermissioned);
+    // Com `fallback` o ramo é do chamador: não redireciona e não registra.
+    const deveRegistrarNegado = semAcesso && !fallback;
+    const rotaNegada = `${location.pathname}|${requiredPermission ?? ''}|${(requiredRoles ?? []).join(',')}`;
+    const registroNegado = useRef<string | null>(null);
+
+    /**
+     * R2: acesso negado registrado UMA vez por navegação, sem dado pessoal —
+     * só a rota tentada e o papel/permissão exigidos. `rotaNegada` muda quando a
+     * rota ou a exigência muda, então cada negação nova é registrada.
+     */
+    useEffect(() => {
+      if (!deveRegistrarNegado || !user) return;
+      if (registroNegado.current === rotaNegada) return;
+      registroNegado.current = rotaNegada;
+      void logAudit({
+        action: 'unauthorized_access',
+        entityType: 'route',
+        entityId: location.pathname,
+        details: {
+          required: requiredPermission ? [requiredPermission] : (requiredRoles ?? []),
+          method: 'NAVIGATE',
+        },
+      });
+    }, [deveRegistrarNegado, user, rotaNegada, location.pathname, requiredPermission, requiredRoles]);
+
     useEffect(() => {
       if (!loading && user && requiredPermission) {
         log.debug('[ProtectedRoute] Checking permission:', requiredPermission);
@@ -194,28 +226,13 @@
       );
     }
 
-    const isAuthorized = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
-    const isPermissioned = !requiredPermission || hasPermission;
+    const isAuthorizedRoute = !requiredRoles?.length || requiredRoles.some(role => hasRole(role));
+    const isPermissionedRoute = !requiredPermission || hasPermission;
 
-    if (!isAuthorized || !isPermissioned) {
+    if (!isAuthorizedRoute || !isPermissionedRoute) {
       if (fallback) return <>{fallback}</>;
-      if (location.pathname !== "/") {
-        return <Navigate to="/" replace />;
-      }
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">
-          <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-            <p className="text-muted-foreground">Você não tem permissão para acessar esta área.</p>
-            <button
-              onClick={() => window.location.href = '/auth'}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-            >
-              Voltar para Login
-            </button>
-          </div>
-        </div>
-      );
+      // Explica e registra (efeito acima) em vez de devolver a '/' em silêncio.
+      return <Navigate to="/access-denied" state={{ from: location }} replace />;
     }
 
    return <>{children}</>;
