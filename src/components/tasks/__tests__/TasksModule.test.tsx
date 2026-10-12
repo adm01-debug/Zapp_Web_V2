@@ -351,11 +351,26 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     expect(tiles).toHaveLength(5);
     for (const tile of tiles) expect(tile.className).toContain('h-11 w-11');
 
-    // valor 700 + tabular (o tamanho fica no token da escala: text-2xl)
+    // valor 700 + tabular, no token da escala: 24px (text-2xl) nos quatro
+    // contadores e 20px (text-xl) no Tempo médio — o "1,4 dias" é o único com
+    // unidade e estoura a coluna em 360px (etapa 022).
+    const strip = within(screen.getByTestId('tasks-kpi-strip'));
+    const valorDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-value"]')?.className ?? '';
+
     for (const valor of screen.getAllByTestId('kpi-value')) {
       expect(valor.className).toContain('font-bold');
       expect(valor.className).toContain('tabular-nums');
-      expect(valor.className).toContain('text-2xl');
+    }
+    for (const label of ['Atrasadas', 'Para hoje', 'Fazendo', 'Concluídas · 7 dias']) {
+      expect(valorDe(label)).toContain('text-2xl');
+    }
+    expect(valorDe('Tempo médio')).toContain('text-xl');
+
+    // todo card tem subtítulo (etapas 017–022)
+    for (const sub of screen.getAllByTestId('kpi-subtitle')) {
+      expect(sub.textContent?.length ?? 0).toBeGreaterThan(0);
     }
   });
 
@@ -374,17 +389,32 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
       strip.getByText(label).closest('[data-testid="kpi-card"]')
         ?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '';
 
-    // com 1 atrasada o tile vira o de alerta; sem atrasadas seria o amarelo
+    // etapa 017: com 1 atrasada o tile vira o de alerta; sem atrasadas seria o
+    // neutro ("Tudo em dia", §3.1 linha 41 + etapa 017).
     expect(tileDe('Atrasadas')).toContain('bg-destructive/15');
-    expect(tileDe('Para hoje')).toContain('bg-kpi-blue');
-    expect(tileDe('Fazendo')).toContain('bg-kpi-purple');
-    expect(tileDe('Concluídas (7d)')).toContain('bg-kpi-green');
+    // etapas 018/019/020: âmbar no dia, anel azul no limite, verde no concluído.
+    expect(tileDe('Para hoje')).toContain('bg-kpi-yellow');
+    expect(tileDe('Fazendo')).toContain('bg-kpi-blue');
+    expect(tileDe('Concluídas · 7 dias')).toContain('bg-kpi-green');
     expect(tileDe('Tempo médio')).toContain('bg-muted');
 
     expect(valorDe('Fazendo')).toBe('2/3');
     expect(valorDe('Atrasadas')).toBe('1');
     expect(valorDe('Para hoje')).toBe('1');
-    expect(valorDe('Concluídas (7d)')).toBe('1');
+    expect(valorDe('Concluídas · 7 dias')).toBe('1');
+
+    // os subtítulos das etapas 017–020 vêm com o estado
+    const subtituloDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-subtitle"]')?.textContent ?? '';
+    expect(subtituloDe('Atrasadas')).toBe('Requer atenção');
+    expect(subtituloDe('Para hoje')).toBe('Vencem hoje');
+    expect(subtituloDe('Fazendo')).toBe('Em andamento');
+    expect(subtituloDe('Concluídas · 7 dias')).toBe('Últimos 7 dias');
+
+    // etapa 019: o anel do limite é um SVG no tile do Fazendo
+    expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
+      ?.querySelector('[data-testid="kpi-ring"]')).toBeTruthy();
   });
 
   it('o grid tem os 3 breakpoints (2 / 3 / 5 colunas)', async () => {

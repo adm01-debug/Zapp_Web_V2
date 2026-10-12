@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { startOfDay } from 'date-fns';
-import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue } from '../workItemAggregates';
+import { bucketByDue, bucketByStatus, kpis, dueLabel, weekBuckets, dayGroupLabel, groupUpcomingByDay, splitDoneByRecency, applyFilters, temHora, agendaDayDots, groupAgendaDay, isOverdue, formatLeadTime } from '../workItemAggregates';
 import { DEFAULT_FILTERS } from '../workItemFilters';
 import type { WorkItem } from '../workItem.types';
 
@@ -271,6 +271,35 @@ describe('kpis', () => {
   it('avgCycleTimeDays null sem dados', () => {
     const k = kpis([], now);
     expect(k.avgCycleTimeDays).toBeNull();
+  });
+
+  it('avgLeadTimeDays mede criação -> conclusão mesmo sem started_at', () => {
+    const items = [
+      makeItem({
+        status: 'done',
+        created_at: '2026-10-01T00:00:00Z',
+        started_at: '2026-10-02T00:00:00Z',
+        completed_at: '2026-10-03T00:00:00Z',
+      }),
+      makeItem({
+        status: 'done',
+        created_at: '2026-10-02T00:00:00Z',
+        started_at: null,
+        completed_at: '2026-10-03T00:00:00Z',
+      }),
+    ];
+
+    const result = kpis(items, now);
+
+    expect(result.avgCycleTimeDays).toBe(1);
+    expect(result.avgLeadTimeDays).toBe(1.5);
+  });
+
+  it('formatLeadTime escreve dias em pt-BR com uma casa decimal', () => {
+    expect(formatLeadTime(null)).toBe('—');
+    expect(formatLeadTime(1)).toBe('1 dia');
+    expect(formatLeadTime(1.44)).toBe('1,4 dias');
+    expect(formatLeadTime(2)).toBe('2 dias');
   });
 });
 

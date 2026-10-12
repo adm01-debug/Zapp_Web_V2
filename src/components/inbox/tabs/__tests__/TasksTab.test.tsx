@@ -31,7 +31,7 @@ function makeHook(over: { byStatus?: Partial<ByStatus>; done7d?: WorkItem[] } = 
     byStatus,
     byDue: { overdue: [], today: [], tomorrow: [], upcoming: [], noDue: [], done7d, doneOlder: [] },
     items: [],
-    kpis: { overdue: 0, dueToday: 0, doingCount: byStatus.doing.length, done7d: done7d.length, avgCycleTimeDays: null },
+    kpis: { overdue: 0, dueToday: 0, doingCount: byStatus.doing.length, done7d: done7d.length, avgCycleTimeDays: null, avgLeadTimeDays: null },
     create: vi.fn().mockResolvedValue(undefined),
     complete: vi.fn().mockResolvedValue(undefined),
     deleteItem: vi.fn().mockResolvedValue(undefined),
