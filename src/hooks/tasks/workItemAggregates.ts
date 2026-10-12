@@ -23,7 +23,10 @@ export interface KpiSnapshot {
   dueToday: number;
   doingCount: number;
   done7d: number;
+  /** Tempo de ciclo (`started_at` → `completed_at`) — mantido para quem já lê hoje. */
   avgCycleTimeDays: number | null;
+  /** Tempo médio da criação à conclusão (`created_at` → `completed_at`) das concluídas dos últimos 7 dias. */
+  avgLeadTimeDays: number | null;
 }
 
 /**
@@ -196,6 +199,9 @@ export function kpis(items: WorkItem[], now: Date = new Date()): KpiSnapshot {
   const cycleTimes = done7d
     .filter(i => i.started_at && i.completed_at)
     .map(i => (new Date(i.completed_at!).getTime() - new Date(i.started_at!).getTime()) / 86_400_000);
+  const leadTimes = done7d
+    .filter(i => i.completed_at)
+    .map(i => (new Date(i.completed_at!).getTime() - new Date(i.created_at).getTime()) / 86_400_000);
   return {
     overdue: overdue.length,
     dueToday: today.length,
@@ -204,7 +210,18 @@ export function kpis(items: WorkItem[], now: Date = new Date()): KpiSnapshot {
     avgCycleTimeDays: cycleTimes.length > 0
       ? cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length
       : null,
+    avgLeadTimeDays: leadTimes.length > 0
+      ? leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length
+      : null,
   };
+}
+
+export function formatLeadTime(days: number | null | undefined): string {
+  if (days == null || !Number.isFinite(days)) return '—';
+  const rounded = Math.round(days * 10) / 10;
+  if (rounded === 1) return '1 dia';
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return text.replace('.', ',') + ' dias';
 }
 
 export function dueLabel(
