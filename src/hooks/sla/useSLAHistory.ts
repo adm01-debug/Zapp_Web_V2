@@ -9,6 +9,12 @@ import {
   tallyFirstResponse,
   type FirstResponseTally,
 } from './slaFirstResponse';
+import {
+  resolutionRatePctOrZero,
+  sumResolutionTallies,
+  tallyResolution,
+  type ResolutionTally,
+} from './slaResolution';
 
 export type HistoryPeriod = '7d' | '14d' | '30d' | '90d';
 
@@ -25,6 +31,14 @@ interface DailyViolation {
   pendingConversations: number;
   /** Taxa sobre as avaliadas; dia sem nenhuma avaliada é 0 — nunca 100 (R2-SLA-001). */
   slaRate: number;
+  /** Violações de resolução do dia (campo `resolution_breached`). */
+  resolutionBreaches: number;
+  /** Conversas do dia com desfecho de resolução — o denominador da taxa. */
+  resolutionEvaluated: number;
+  /** Conversas do dia ainda sem resolução: não contam como "no prazo". */
+  resolutionPending: number;
+  /** Taxa de resolução no prazo; dia sem nenhuma avaliada é 0 — nunca 100. */
+  resolutionRate: number;
 }
 
 interface ViolationTrend {
@@ -43,6 +57,12 @@ interface SLAHistoryData {
     /** `false` quando o período não tem nenhuma conversa avaliada (a taxa não existe). */
     hasSample: boolean;
     overallSLARate: number;
+    /** Violações de resolução do período. */
+    resolutionBreaches: number;
+    /** Conversas do período com desfecho de resolução — denominador da taxa de resolução. */
+    resolutionEvaluated: number;
+    /** Conversas do período ainda sem desfecho de resolução. */
+    resolutionPending: number;
   };
   trends: {
     firstResponse: ViolationTrend;
@@ -65,6 +85,8 @@ interface SLAHistoryRow {
   created_at: string;
   first_response_at: string | null;
   first_response_breached: boolean | null;
+  resolved_at: string | null;
+  resolution_breached: boolean | null;
 }
 
 /**
@@ -104,7 +126,7 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
     (from, to) =>
       supabase
         .from('conversation_sla')
-        .select('id, created_at, first_response_at, first_response_breached')
+        .select('id, created_at, first_response_at, first_response_breached, resolved_at, resolution_breached')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true })
         .order('id', { ascending: true })
@@ -130,6 +152,10 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
       evaluatedConversations: 0,
       pendingConversations: 0,
       slaRate: 0,
+      resolutionBreaches: 0,
+      resolutionEvaluated: 0,
+      resolutionPending: 0,
+      resolutionRate: 0,
     });
   });
 
@@ -145,9 +171,11 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
   }
 
   const tallyByDay = new Map<string, FirstResponseTally>();
+  const resolutionTallyByDay = new Map<string, ResolutionTally>();
 
   dailyMap.forEach((day, dateKey) => {
-    const tally = tallyFirstResponse(rowsByDay.get(dateKey) ?? []);
+    const rows = rowsByDay.get(dateKey) ?? [];
+    const tally = tallyFirstResponse(rows);
     tallyByDay.set(dateKey, tally);
 
     day.evaluatedConversations = tally.evaluated;
@@ -158,11 +186,20 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
     // Dia sem nenhuma conversa avaliada fica com taxa 0 — nunca 100 (desempenho perfeito sem
     // resposta avaliada). Quem precisa distinguir o caso olha `evaluatedConversations`.
     day.slaRate = firstResponseRatePctOrZero(tally);
+
+    // Resolução do dia — mesma amostra, no desfecho de resolução da MESMA linha.
+    const resolutionTally = tallyResolution(rows);
+    resolutionTallyByDay.set(dateKey, resolutionTally);
+    day.resolutionEvaluated = resolutionTally.evaluated;
+    day.resolutionPending = resolutionTally.pending;
+    day.resolutionBreaches = resolutionTally.breached;
+    day.resolutionRate = resolutionRatePctOrZero(resolutionTally);
   });
 
   const dailyData = Array.from(dailyMap.values());
 
   const totalTally = sumFirstResponseTallies(Array.from(tallyByDay.values()));
+  const totalResolutionTally = sumResolutionTallies(Array.from(resolutionTallyByDay.values()));
 
   const totals = {
     firstResponseBreaches: totalTally.breached,
@@ -172,6 +209,9 @@ async function fetchSLAHistory(period: HistoryPeriod): Promise<SLAHistoryData> {
     pendingConversations: totalTally.pending,
     hasSample: totalTally.evaluated > 0,
     overallSLARate: firstResponseRatePctOrZero(totalTally),
+    resolutionBreaches: totalResolutionTally.breached,
+    resolutionEvaluated: totalResolutionTally.evaluated,
+    resolutionPending: totalResolutionTally.pending,
   };
 
   const midpoint = Math.floor(dailyData.length / 2);

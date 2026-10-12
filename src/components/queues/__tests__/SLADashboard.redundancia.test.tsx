@@ -22,6 +22,7 @@ vi.mock('@/hooks/sla/useSLAMetrics', () => ({
     data: {
       overall: {
         firstResponse: { total: 40, onTime: 34, breached: 6, pending: 9, rate: 85 },
+        resolution: { total: 12, onTime: 10, breached: 2, pending: 3, rate: 83.3 },
         totalConversations: 49,
         hasSample: true,
         overallRate: 85,

@@ -22,6 +22,7 @@ export const SLADashboard = () => {
 
   // Extract sparkline data from 7-day history
   const sparkFR = historyData?.dailyData.map(d => d.totalConversations > 0 ? 100 - (d.firstResponseBreaches / d.totalConversations) * 100 : 100) || [];
+  const sparkRes = historyData?.dailyData.map(d => d.resolutionRate) || [];
   const sparkOverall = historyData?.dailyData.map(d => d.slaRate) || [];
   const sparkConversations = historyData?.dailyData.map(d => d.totalConversations) || [];
 
@@ -58,8 +59,8 @@ export const SLADashboard = () => {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-64" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -110,7 +111,7 @@ export const SLADashboard = () => {
         <div>
           <h2 className="text-2xl font-bold">Dashboard de SLA</h2>
           <p className="text-muted-foreground">
-            Métricas de tempo de primeira resposta
+            Métricas de tempo de primeira resposta e de resolução
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -146,6 +147,7 @@ export const SLADashboard = () => {
         periodLabel={periodLabels[period]}
         sparkOverall={sparkOverall}
         sparkFR={sparkFR}
+        sparkRes={sparkRes}
         sparkConversations={sparkConversations}
       />
 
@@ -159,18 +161,28 @@ export const SLADashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Base do cálculo de 1ª resposta
+            Base do cálculo de SLA
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl bg-muted/50 border border-border">
             <p className="text-sm text-muted-foreground">Conversas avaliadas</p>
             <p className="text-2xl font-bold text-foreground">{data.overall.firstResponse.total}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">no prazo + atrasadas — denominador da taxa</p>
+            <p className="text-xs text-muted-foreground mt-0.5">no prazo + atrasadas — denominador da taxa de 1ª resposta</p>
           </div>
           <div className="p-4 rounded-xl bg-muted/50 border border-border">
             <p className="text-sm text-muted-foreground">Pendentes de 1ª resposta</p>
             <p className="text-2xl font-bold text-foreground">{data.overall.firstResponse.pending}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">ainda sem desfecho — não entram na taxa</p>
+          </div>
+          <div className="p-4 rounded-xl bg-muted/50 border border-border">
+            <p className="text-sm text-muted-foreground">Resoluções avaliadas</p>
+            <p className="text-2xl font-bold text-foreground">{data.overall.resolution.total}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">no prazo + atrasadas — denominador da taxa de resolução</p>
+          </div>
+          <div className="p-4 rounded-xl bg-muted/50 border border-border">
+            <p className="text-sm text-muted-foreground">Pendentes de resolução</p>
+            <p className="text-2xl font-bold text-foreground">{data.overall.resolution.pending}</p>
             <p className="text-xs text-muted-foreground mt-0.5">ainda sem desfecho — não entram na taxa</p>
           </div>
         </CardContent>

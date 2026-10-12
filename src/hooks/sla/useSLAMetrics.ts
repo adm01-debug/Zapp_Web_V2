@@ -8,6 +8,12 @@ import {
   type FirstResponseFields,
   type FirstResponseTally,
 } from './slaFirstResponse';
+import {
+  resolutionRatePctOrZero,
+  tallyResolution,
+  type ResolutionFields,
+  type ResolutionTally,
+} from './slaResolution';
 
 export type PeriodFilter = 'today' | 'week' | 'month' | 'all';
 
@@ -27,12 +33,15 @@ interface AgentSLAMetric {
   agentName: string;
   avatarUrl?: string;
   firstResponse: SLAMetric;
+  resolution: SLAMetric;
   overallRate: number;
 }
 
 export interface SLADashboardData {
   overall: {
     firstResponse: SLAMetric;
+    /** Resolução no prazo — mesmo critério da 1ª resposta (colunas `resolution_*`). */
+    resolution: SLAMetric;
     /** Conversas com SLA no período: avaliadas + pendentes. */
     totalConversations: number;
     /** `false` quando o período não tem nenhuma conversa avaliada (a taxa não existe). */
@@ -43,10 +52,13 @@ export interface SLADashboardData {
 }
 
 /** Linhas de `conversation_sla` usadas no cálculo (o join traz o agente dono do contato). */
-interface SLAMetricsRow extends FirstResponseFields {
+interface SLAMetricsRow extends FirstResponseFields, ResolutionFields {
   id: string;
   contacts: { assigned_to: string | null } | null;
 }
+
+/** Forma comum dos tallies de 1ª resposta e resolução (denominador + desfechos). */
+type CountTally = Pick<FirstResponseTally, 'evaluated' | 'onTime' | 'breached' | 'pending'>;
 
 /** Tamanho de página da leitura (o teto do PostgREST por requisição é 1000). */
 const SLA_PAGE_SIZE = 1000;
@@ -66,16 +78,16 @@ export function getPeriodStart(period: PeriodFilter, now: Date = new Date()): Da
 }
 
 /**
- * Métrica de 1ª resposta a partir do MESMO tally que o histórico usa (R2-SLA-001): o denominador é
- * sempre `no prazo + violadas` e a pendente não entra em nenhum dos dois lados da conta.
+ * Métrica a partir de um tally, com a taxa já resolvida pelo módulo dono do
+ * cálculo (1ª resposta ou resolução) — mesma forma para os dois.
  */
-function buildMetric(tally: FirstResponseTally): SLAMetric {
+function buildMetric(tally: CountTally, rate: number): SLAMetric {
   return {
     total: tally.evaluated,
     onTime: tally.onTime,
     breached: tally.breached,
     pending: tally.pending,
-    rate: firstResponseRatePctOrZero(tally),
+    rate,
   };
 }
 
@@ -111,11 +123,15 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
 
   // Overall — uma conta só, a mesma que o histórico usa (R2-SLA-001).
   const tallyOverall = tallyFirstResponse(slaData);
-  const firstResponse = buildMetric(tallyOverall);
+  const firstResponse = buildMetric(tallyOverall, firstResponseRatePctOrZero(tallyOverall));
+  // Resolução — mesmo critério de amostra, nos campos `resolution_*` da mesma linha.
+  const tallyResolutionOverall = tallyResolution(slaData);
+  const resolution = buildMetric(tallyResolutionOverall, resolutionRatePctOrZero(tallyResolutionOverall));
   const totalConversations = slaData.length;
 
   const overall = {
     firstResponse,
+    resolution,
     totalConversations,
     hasSample: tallyOverall.evaluated > 0,
     overallRate: firstResponse.rate,
@@ -136,12 +152,15 @@ async function fetchSLAMetrics(period: PeriodFilter): Promise<SLADashboardData> 
   const byAgent: AgentSLAMetric[] = Array.from(rowsByAgent.entries())
     .map(([agentId, rows]) => {
       const profile = profiles.find(p => p.id === agentId);
-      const fr = buildMetric(tallyFirstResponse(rows));
+      const tallyFR = tallyFirstResponse(rows);
+      const tallyRes = tallyResolution(rows);
+      const fr = buildMetric(tallyFR, firstResponseRatePctOrZero(tallyFR));
       return {
         agentId,
         agentName: profile?.name || 'Agente',
         avatarUrl: profile?.avatar_url || undefined,
         firstResponse: fr,
+        resolution: buildMetric(tallyRes, resolutionRatePctOrZero(tallyRes)),
         overallRate: fr.rate,
       };
     })
