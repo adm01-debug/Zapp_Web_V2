@@ -10,16 +10,20 @@
 # prevent_profile_privilege_escalation tambem nao cobre o campo. O consumidor
 # (useDownloadPermission -> ImagePreview) le profiles.can_download como autoridade.
 #
+# A correcao e um trigger dedicado prevent_can_download_escalation sobre public.profiles,
+# que levanta excecao quando um NAO-admin/supervisor muda can_download. Ele NAO reconstroi
+# a policy RESTRICTIVE vigente (que segue intacta) e vale para qualquer caminho de UPDATE.
+#
 # BLOCO A (ANTES): aplica as migrations REAIS que deixaram a policy restritiva
 #   vigente (20260401000858 + 20260401001655 + 20260405230710) e prova o DEFEITO:
 #   um authenticated nao-admin liga can_download no proprio perfil, a coluna vira
 #   true e o proprio dono LE true (o consumidor passaria a liberar o download).
 # BLOCO B (DEPOIS): aplica a migration REAL da correcao e prova, sob papeis reais
 #   (authenticated com claims de JWT, anon), que o mesmo UPDATE nao muda mais a coluna,
-#   que o dono segue editando campo nao sensivel (full_name) e que admin/supervisor
-#   segue liberando can_download de outro usuario.
-# BLOCO C (MUTACAO): reaplica uma COPIA temporaria da migration da correcao SEM a linha
-#   do can_download (o arquivo do repo nao e editado — o proprio teste confere) e exige
+#   que o dono segue editando campo nao sensivel (full_name), que a policy restritiva
+#   vigente segue intacta e que admin/supervisor segue liberando can_download de outro usuario.
+# BLOCO C (MUTACAO): reaplica uma COPIA temporaria da migration da correcao SEM a linha que
+#   calcula a escalada (o arquivo do repo nao e editado — o proprio teste confere) e exige
 #   que a assercao do BLOCO B FALHE. Sem isso o BLOCO B nao estaria provando nada.
 #
 # FIXTURES DECLARADAS (nao sao o objeto sob teste): pre.sql monta a superficie minima
@@ -47,8 +51,8 @@ else
   exit 1
 fi
 
-fix_migration="$(ls "$migrations_dir"/*_profiles_can_download_escalation.sql 2>/dev/null || true)"
-[[ -n "$fix_migration" ]] || { echo '[FAIL] migration da correcao (*_profiles_can_download_escalation.sql) nao encontrada' >&2; exit 1; }
+fix_migration="$(ls "$migrations_dir"/*_profiles_can_download_trigger.sql 2>/dev/null || true)"
+[[ -n "$fix_migration" ]] || { echo '[FAIL] migration da correcao (*_profiles_can_download_trigger.sql) nao encontrada' >&2; exit 1; }
 
 # Estado ANTES: as migrations REAIS que criaram as policies de SELECT e a policy
 # restritiva de UPDATE vigentes em producao (nesta ordem).
@@ -86,7 +90,7 @@ assert_eq() {
 # Valor de uma coluna lida como postgres (dono da tabela: ignora RLS de proposito).
 valor() { psql_sql "$1" | tail -n1; }
 
-# Roda o ataque e guarda stdout+stderr e o codigo de saida (o RLS recusa com erro).
+# Roda o ataque e guarda stdout+stderr e o codigo de saida (o RLS/trigger recusa com erro).
 TENTATIVA_OUT=""
 TENTATIVA_RC=0
 tenta() {
@@ -248,7 +252,9 @@ reset_alice
 echo
 echo '── Aplicando a migration da correcao ──────────────────────────────────────────────'
 psql_file "$fix_migration"
-assert_eq 'B0 policy restritiva reconstruida com a mesma identidade' '1' \
+assert_eq 'B0 trigger prevent_can_download_escalation criado, BEFORE UPDATE em profiles' '1' \
+  "$(valor "SELECT count(*) FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid WHERE c.relname = 'profiles' AND tg.tgname = 'prevent_can_download_escalation' AND tg.tgenabled = 'O' AND (tg.tgtype & 2) = 2 AND (tg.tgtype & 16) = 16 AND NOT tg.tgisinternal")"
+assert_eq 'B0b policy restritiva vigente segue intacta (nao foi reconstruida)' '1' \
   "$(valor "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'Block sensitive field changes by non-admins'")"
 
 echo
@@ -258,10 +264,10 @@ if retornou_true; then
   fail "B1 o dono ainda liga o proprio can_download (codigo $TENTATIVA_RC, saida: $TENTATIVA_OUT)"
 fi
 if (( TENTATIVA_RC == 0 )); then
-  fail 'B1 esperava erro do RLS; a tentativa terminou com sucesso e sem mudar a coluna'
+  fail 'B1 esperava erro do trigger; a tentativa terminou com sucesso e sem mudar a coluna'
 fi
 printf '[EVIDENCIA] recusa crua do Postgres: %s\n' "$(tr '\n' ' ' <<< "$TENTATIVA_OUT" | tr -s ' ')"
-ok 'B1 authenticated nao-admin NAO liga mais o proprio can_download (recusado)'
+ok 'B1 authenticated nao-admin NAO liga mais o proprio can_download (recusado pelo trigger)'
 assert_eq 'B2 can_download do dono segue false' 'f' \
   "$(valor "SELECT can_download FROM public.profiles WHERE user_id = '$ALICE_UID'")"
 
@@ -287,27 +293,27 @@ assert_eq 'B6 can_download do alvo virou true (admin)' 't' \
 echo
 echo '── BLOCO C: MUTACAO (prova que o BLOCO B nao e vazio) ─────────────────────────────'
 mutada="$tmp_dir/migration-mutada.sql"
-grep -v 'AND can_download = ' "$fix_migration" > "$mutada"
+grep -v 'v_escalada :=' "$fix_migration" > "$mutada"
 if cmp -s "$fix_migration" "$mutada"; then
-  fail 'C1 a mutacao nao mudou a copia (a clausula do can_download mudou de forma?)'
+  fail 'C1 a mutacao nao mudou a copia (a linha que calcula a escalada mudou de forma?)'
 fi
-if grep -q 'AND can_download = ' "$mutada"; then
-  fail 'C1 a copia mutada ainda tem a clausula do can_download'
+if grep -q 'v_escalada :=' "$mutada"; then
+  fail 'C1 a copia mutada ainda calcula a escalada'
 fi
-ok 'C1 copia temporaria da migration sem a clausula do can_download'
+ok 'C1 copia temporaria da migration sem o calculo da escalada'
 
 reset_alice
 psql_file "$mutada"
 tenta "$(alice_escala_sql)"
 if ! retornou_true; then
-  fail "C2 com a clausula removida o ataque deveria voltar a passar (codigo $TENTATIVA_RC, saida: $TENTATIVA_OUT)"
+  fail "C2 sem o calculo da escalada o ataque deveria voltar a passar (codigo $TENTATIVA_RC, saida: $TENTATIVA_OUT)"
 fi
-printf '[EVIDENCIA] sem a clausula, o mesmo UPDATE retorna can_download=true — a assercao do BLOCO B e real\n'
-assert_eq 'C2 sem a clausula o ataque volta a funcionar (BLOCO B nao e tautologico)' 't' \
+printf '[EVIDENCIA] sem o calculo da escalada, o mesmo UPDATE retorna can_download=true — a assercao do BLOCO B e real\n'
+assert_eq 'C2 sem o calculo da escalada o ataque volta a funcionar (BLOCO B nao e tautologico)' 't' \
   "$(valor "SELECT can_download FROM public.profiles WHERE user_id = '$ALICE_UID'")"
 reset_alice
 
-grep -q 'AND can_download = ' "$fix_migration" || fail 'C3 o arquivo do repo foi alterado pela mutacao'
+grep -q 'v_escalada :=' "$fix_migration" || fail 'C3 o arquivo do repo foi alterado pela mutacao'
 ok 'C3 o arquivo versionado da migration segue intacto'
 
 printf '\n[OK] R2-AUTH-027: can_download do proprio perfil nao sobe sem admin\n'
