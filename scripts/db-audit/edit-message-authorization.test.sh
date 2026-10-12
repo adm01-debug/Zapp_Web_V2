@@ -25,7 +25,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261011151650_edit_message_rpc.sql"
-postgres_image="${EDIT_MESSAGE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE:-${EDIT_MESSAGE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}}"
 container_name="zapp-v2-edit-message-test-$$"
 
 cleanup() {
