@@ -55,3 +55,6 @@ Especialista: iris
   testes deles como arquivos fora de `ARQUIVOS QUE PODE TOCAR`. Não procede: os três vêm no mesmo
   commit da barra (são os hooks que a barra consome) e são a faixa dos cartões-ancestrais que este
   cartão manda trazer — não são edição nova minha nesta rodada.
+- Juiz barato no fechamento atual: os avisos sobre o ponto 1 e o ponto 2 não procedem porque o
+  delta desde a entrega anterior (`755aa9632..HEAD`) é só `.tmp/relato.md`, com a troca de 69376
+  para 69483 e sem tocar código/testes; a primeira linha segue exatamente `Especialista: iris`.
