@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   CalendarDays, Clock, ArrowLeft, Play, XCircle, Pencil, Save,
-  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge,
+  Users, MessageSquare, Zap, Send, ShieldCheck, Timer, CheckCircle2, Gauge, AlertTriangle,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -17,13 +17,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { GhostButton, PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
-import { IconTile, RailCard, MetaRow, fmtDateTime, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
+import { IconTile, RailCard, MetaRow, fmtInt, WhatsAppBubble, SPEED_PROFILES } from './talkxShared';
 import { TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows } from './kit/states';
 import { DEFAULT_SCHEDULE_TIMEZONE, localToUTCInTimezone, utcToLocalInTimezone } from './useCampaignEditor';
 import { intervalForProfile } from './talkxLimits';
+import { campaignBlockingChecks, formatTalkXScheduleLabel } from './talkxScheduleStatus';
 import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 import { TalkXScheduleTimeline } from './TalkXScheduleTimeline';
 import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';
+import { useTalkXConnectionStatus } from '@/hooks/integrations/useTalkXConnectionStatus';
 import { toast } from 'sonner';
 
 /**
@@ -153,6 +155,14 @@ function fmtIntervalRange(intervalMs: [number, number]): string {
 
 function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEditorProps) {
   const { updateCampaign } = useTalkX();
+  // X120: estado real da linha (nada de stub — lê whatsapp_connections).
+  const { status: connectionStatus, loading: connectionLoading } = useTalkXConnectionStatus(
+    campaign.whatsapp_connection_id,
+  );
+  const blockers = useMemo(
+    () => campaignBlockingChecks(campaign, connectionStatus, connectionLoading),
+    [campaign, connectionStatus, connectionLoading],
+  );
   // X051: o disparo ("Iniciar agora") sai dos handlers próprios e passa pelo
   // controlador único do ciclo de vida. O "Cancelar agendamento" (devolve a
   // campanha para Rascunhos) NÃO passa por aqui: o hook não expõe essa ação —
@@ -268,9 +278,13 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
     }
   }, [campaign, updateCampaign, onBack]);
 
-  const scheduledLabel = campaign?.scheduled_at
-    ? fmtDateTime(campaign.scheduled_at)
-    : localDate && localTime ? fmtDateTime(localToUTCInTimezone(`${localDate}T${localTime}`, localTz)) : '—';
+  const scheduledLabel = formatTalkXScheduleLabel(
+    campaign?.scheduled_at
+      ? utcToLocalInTimezone(campaign.scheduled_at, campaign.schedule_timezone ?? DEFAULT_SCHEDULE_TIMEZONE)
+      : localDate && localTime
+        ? utcToLocalInTimezone(localToUTCInTimezone(`${localDate}T${localTime}`, localTz), localTz)
+        : '',
+  );
 
   return (
     <div className="min-h-full bg-background p-3 md:p-4 lg:p-6 space-y-4">
@@ -283,8 +297,12 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         >
           <ArrowLeft className="w-4 h-4" />Voltar às campanhas
         </button>
-        <span className="text-2xs text-muted-foreground hidden sm:inline">
-          Campanhas / <span className="text-foreground">{campaign.name}</span>
+        <span className="text-2xs hidden sm:inline">
+          <span className="text-primary hover:underline cursor-pointer">Campanhas</span>
+          <span className="text-muted-foreground"> › </span>
+          <span className="text-primary hover:underline cursor-pointer">Talk X</span>
+          <span className="text-muted-foreground"> › </span>
+          <span className="text-foreground">Campanha Agendada</span>
         </span>
       </div>
 
@@ -293,9 +311,14 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         <div className="flex items-center gap-3">
           <IconTile icon={CalendarDays as never} size={40} className="bg-success/15 border-success/30 text-success" />
           <div>
-            <p className="text-[13px] font-semibold text-foreground">Talk X · Agendamento de campanha</p>
-            <p className="text-2xs text-muted-foreground">{campaign.name}</p>
+            <p className="text-[13px] font-semibold text-foreground">Campanha Agendada • {campaign.name}</p>
+            {campaign.description ? (
+              <p className="text-2xs text-muted-foreground">{campaign.description}</p>
+            ) : null}
           </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-info/15 text-info border border-info/30 font-medium hidden sm:inline">
+            Talk X · Agendamento de campanha
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <GhostButton icon={Pencil} onClick={() => onEdit(campaign)}>Editar no wizard</GhostButton>
@@ -303,14 +326,31 @@ function TalkXCampaignScheduledEditor({ campaign, onBack, onEdit }: ScheduledEdi
         </div>
       </div>
 
-      {/* Status pill */}
-      <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
-        <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-        <p className="text-[13px] text-foreground">
-          <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
-          {' '}— Campanha pronta para ser enviada.
-        </p>
-      </div>
+      {/* Status pill — X120: "pronta" só aparece sem bloqueio real */}
+      {blockers.length === 0 ? (
+        <div className="rounded-xl border border-success/30 bg-success/8 px-4 py-3 flex items-center gap-3">
+          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+          <p className="text-[13px] text-foreground">
+            <span className="font-semibold text-success">Agendada para {scheduledLabel}</span>
+            {' '}— Campanha pronta para ser enviada.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-warning/30 bg-warning/8 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[13px] text-foreground">
+              <span className="font-semibold text-warning">Agendada para {scheduledLabel}</span>
+              {' '}— {blockers.length === 1 ? '1 pendência antes do envio' : `${blockers.length} pendências antes do envio`}:
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {blockers.map((b) => (
+                <li key={b} className="text-xs text-foreground-secondary">• {b}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 3 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
