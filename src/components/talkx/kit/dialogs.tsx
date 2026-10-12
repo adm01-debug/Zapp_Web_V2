@@ -118,6 +118,9 @@ export function TalkXConfirmDialog({
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const cancelRef = React.useRef<HTMLButtonElement>(null);
+  // Trava síncrona: `pending` só existe no próximo render, então dois cliques no
+  // mesmo turno leriam `pending` falso. O ref fecha essa janela durante o await.
+  const awaiting = React.useRef(false);
 
   const checksOk = checks.length === 0 || checks.every(c => checked.has(c.id));
   const reasonOk = !reasonField?.required || reason.trim().length > 0;
@@ -135,10 +138,10 @@ export function TalkXConfirmDialog({
 
   // Reset ao fechar
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  React.useEffect(() => { if (!open) { setChecked(new Set()); setReason(''); setError(null); setPending(false); } }, [open]);
+  React.useEffect(() => { if (!open) { setChecked(new Set()); setReason(''); setError(null); setPending(false); awaiting.current = false; } }, [open]);
 
   const handleConfirm = async () => {
-    if (!allChecked || loading) return;
+    if (!allChecked || loading || awaiting.current) return;
     setError(null);
     let result: unknown | Promise<unknown>;
     try {
@@ -148,6 +151,7 @@ export function TalkXConfirmDialog({
       return;
     }
     if (result && typeof (result as Promise<unknown>).then === 'function') {
+      awaiting.current = true;
       setPending(true);
       try {
         const value = await result;
@@ -155,6 +159,7 @@ export function TalkXConfirmDialog({
       } catch (e) {
         setError(errorMessage(e));
       } finally {
+        awaiting.current = false;
         setPending(false);
       }
       return;

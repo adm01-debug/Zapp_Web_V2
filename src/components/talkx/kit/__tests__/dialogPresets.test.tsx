@@ -206,6 +206,25 @@ describe('X049 — espera da ação', () => {
     expect(screen.getByRole('button', { name: 'Excluir' })).toBeEnabled();
   });
 
+  it('enquanto a ação pende, o botão fica desabilitado e um 2º clique não dispara outra chamada', async () => {
+    const onConfirm = vi.fn(() => new Promise<void>(() => { /* fica pendente de propósito */ }));
+    const onClose = vi.fn();
+    renderConfirm('excluirCampanha', { onConfirm, onClose });
+
+    const botao = screen.getByRole('button', { name: 'Excluir' });
+    // dois cliques no mesmo turno: sem a trava por ref, ambos leem o estado
+    // `pending` ainda falso e a ação dispara duas vezes.
+    await act(async () => {
+      fireEvent.click(botao);
+      fireEvent.click(botao);
+    });
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+  });
+
   it('abre com o foco no "Cancelar" nos destrutivos', async () => {
     renderConfirm('excluirCampanha');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus());
