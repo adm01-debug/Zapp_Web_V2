@@ -1,18 +1,45 @@
-Especialista: worker (docs)
+Especialista: edgar
+
+## Pontos da recusa
+
+Ponto 1: restringir a Edge `webhook-hmac-selftest` a admin, não admin+supervisor.
+- O que mudei: em `supabase/functions/webhook-hmac-selftest/index.ts`, removi `is_admin_or_supervisor`/`decideControlAuthz` e passei o gate para `callerClient.rpc('is_admin', { _user_id: user.id })`; erro da RPC ou `data !== true` agora retorna 403 com mensagem de admin. O acesso continua pelo JWT (`auth.getUser`) e deny-by-default.
+- Teste que prova: `supervisor sem admin: 403 e nenhuma sonda disparada` chama o handler real com `is_admin=false` e `is_admin_or_supervisor=true`; com a implementação antiga ele falha (`Actual 200 / Expected 403`), com a correção ele passa.
+
+Ponto 2: provar que supervisor sem admin recebe 403, sem sonda e sem auditoria.
+- O que mudei: em `supabase/functions/webhook-hmac-selftest/index.test.ts`, acrescentei o caso `supervisor sem admin: 403 e nenhuma sonda disparada` e adaptei o mock do caller para diferenciar `is_admin` de `is_admin_or_supervisor`.
+- Teste que prova: o caso novo verifica `res.status === 403`, `dispatched === 0` e `auditoria === 0`.
+
+Ponto 3: atualizar relato e comentário do config para “só admin” e começar o relato com a linha exata pedida.
+- O que mudei: `supabase/config.toml` agora documenta “exige admin pelo JWT”; este relato começa com `Especialista: edgar`.
+- Teste/prova: conferido no diff e coberto pelo fechamento; não há mudança de runtime no comentário.
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- `supabase/functions/webhook-hmac-selftest/index.ts`: gate administrativo agora exige admin pelo JWT via RPC `is_admin`; supervisor sem admin não passa.
+- `supabase/functions/webhook-hmac-selftest/index.test.ts`: adicionado o caso de supervisor sem admin e mantidos os testes do fluxo assinado/sem assinatura, sem sessão, sem segredo e `selftest` no webhook real.
+- `supabase/config.toml`: comentário ajustado para “só admin”.
+- `supabase/functions/evolution-webhook/index.ts`: mantido do trabalho anterior; evento reservado `selftest` só responde depois do gate de autenticidade e antes de qualquer efeito.
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Prova vermelho → verde
+- Vermelho antes (índice `webhook-hmac-selftest/index.ts` restaurado temporariamente para o commit anterior, mantendo o teste novo):
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 --filter "supervisor sem admin" supabase/functions/webhook-hmac-selftest/index.test.ts`
+  → `FAILED | 0 passed | 1 failed` com `Actual 200 / Expected 403`.
+- Verde depois:
+  `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/webhook-hmac-selftest/index.test.ts`
+  → `ok | 6 passed | 0 failed (22ms)`.
+- Verificação rápida:
+  `zapp-verify . --rapido`
+  → `VERIFY: VERDE SEM BANCO (57s)`; `dependencias`, `db_guard`, `tipos`, `lint` e `migrations` OK. Aviso esperado: banco local não verificado porque não foi passado nome de conjunto.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+## Arquivos no diff
+```
+.tmp/relato.md
+supabase/config.toml
+supabase/functions/evolution-webhook/index.ts
+supabase/functions/webhook-hmac-selftest/index.test.ts
+supabase/functions/webhook-hmac-selftest/index.ts
+```
 
-## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+## O que NÃO fiz
+- Não incluí supervisor: a recusa diz que isso exigiria decisão do dono.
+- Não toquei em manifesto/deploy, secrets, produção, tela ou integração externa.
