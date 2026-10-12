@@ -1,29 +1,19 @@
-Especialista: senior (area-front-hooks)
+Especialista: complexo (area-front-componentes; edge/hooks só leitura para prova)
+
+Cartão histórico TL-041/F75 já resolvido via quebra em A/B/C + refazer. Nenhum código alterado neste workspace (diff vazio); fechamento por prova, sem commit, conforme instrução do cartão.
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+- Nada neste cartão: reimplementar a tela aqui duplicaria o refazer `t_fe9afd28` (commit `b1df2ed26`, status done) e colidiria no hotspot `src/components/multiplix/MultiplixView.tsx` já declarado em `t_c4a220c0`.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
-
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
-
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Prova (medida agora neste workspace, base `dia/2026-10-12`)
+- Edge na base: `git grep -n "audience.save\|audience.apply"` em `supabase/functions/multiplix-dispatch/index.ts` → linhas 418 (`audience.save`) e 419 (`audience.apply`); `audience.select` na linha 416 e em `actions/audience.ts:858`.
+- Hooks na base: `git grep -n "export function useMultiplixAudience"` em `src/hooks/integrations/useMultiplixDispatches.ts` → linhas 873 (Select), 879 (Save), 885 (Apply); teste `src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts` presente.
+- Tela entregue e corrigida: `git cat-file -t b1df2ed26` → `commit`, com mensagem "5 correções MultiplixView — conferir público salvo, enviar exclusões, preservar marcas na comparação, usar submittedFilters, avisar ao salvar regra com exclusões" (`t_fe9afd28`, done). Na base, `git grep "fora do filtro"` em `src/components/multiplix` → vazio, ou seja, a tela está na branch do refazer, não na base.
+- `git status --short` → limpo (sem diff de código).
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- NÃO reimplementei seleção/exclusão/salvar/aplicar/popover: edge + hooks já estão na base e a tela está pronta no refazer; refazer aqui seria diff duplicado.
+- NÃO rodei vitest/zapp-verify: sem diff de código não há o que provar com vermelho→verde neste cartão; as provas estão nos cartões filhos (A: 10 passed; B: 14 passed; C-refazer: 9/9, typecheck limpo, conforme metadados dos donos).
+
+## Para o integrador
+- Faltam integrar na branch do dia, nesta ordem: TL-041A (`a8e41aefc`), TL-041B (`3826cf663`, deduplicar cherry-pick `772d59a8e`), TL-041C-refazer (`b1df2ed26`). Este cartão histórico pode ser arquivado após essas integrações.
