@@ -93,6 +93,12 @@ const ALLOWLIST = new Set([
   // db-guard.yml e uma linha — `bash scripts/db-audit/replay-classify.test.sh` — e cabe
   // junto de gen-types.test.sh; promover pelo dono do workflow.
   'scripts/db-audit/replay-classify.test.sh',
+  // R3-SEC (item do banco, familia "authenticated sem papel"): prova, em PG 17 descartavel (docker
+  // local), que as 27 politicas de SELECT de configuracao/operacao deixam de ser USING(true) para
+  // authenticated e passam a exigir papel em public.user_roles — agente/admin/supervisor e
+  // service_role mantem o acesso; anon nao le; Rollback do cabecalho devolve o estado anterior.
+  // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/authenticated-sem-papel-nao-le.test.sh',
   // R2-INF-014 (item 361): harness do replay-local.sh com um `docker` de mentira no PATH
   // (offline, sem docker daemon e sem banco). Prova nome unico por run + rotulo de posse, o
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
