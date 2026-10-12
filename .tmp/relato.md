@@ -1,29 +1,31 @@
-Especialista: senior (area-front-hooks)
+Especialista: senior (componentes Talk X; refazer)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+- Reempilhei a correção da tela agendada sobre a ponta atual de `dia/2026-10-11`, trazendo só os commits efetivos de código/teste do refazer anterior (`38a426c83` e `1841641d7`; o topo `3f3d6539f` era apenas relato). O commit final deste refazer é `52758f6c8`.
+- `src/components/talkx/TalkXCampaignScheduled.tsx`: a Tela 10 volta a importar e usar `useTalkXConnectionStatus` e a função pura `campaignBlockingChecks`, então o selo "pronta" só aparece quando linha, público e mensagem estão válidos; mantém a correção do calendário/linha do tempo que o pedido original exigia.
+- `src/components/talkx/talkxScheduleStatus.ts`: centralizei `formatTalkXScheduleLabel` e `campaignBlockingChecks` para os ramos da tela e dos testes chamarem a mesma regra real.
+- Testes Talk X: mantive as asserções do calendário e acrescentei cobertura do status real em `TalkXCampaignScheduled.test.tsx`, além de alinhar os mocks de conexão nos demais testes da tela agendada. Não removi, pulei nem afrouxei teste.
 
 ## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- Ponto 1: reproduzir a falha. Sobre a base atual, apliquei o commit original recusado `f33b8d141` com `git cherry-pick -n -X theirs f33b8d141` e rodei `bun run test src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` → vermelho: `Test Files 1 failed (1)` / `Tests 7 failed (7)` com `ReferenceError: useTalkXConnectionStatus is not defined` em `TalkXCampaignScheduled.tsx:158`.
+- Ponto 2: corrigir sem recomeçar. Reapliquei a correção restrita (`git cherry-pick -n c350a2896`, equivalente aos commits de código `38a426c83` + `1841641d7`) e deixei o diff só nos 6 arquivos Talk X da entrega original/refazer; nada de Contacts, CI, migration ou manifesto entrou no commit.
+- Ponto 3: provar verde. O mesmo teste do pedido passou depois da correção, o teste de Contacts citado na recusa atual também passou empilhado com os testes Talk X, e `zapp-verify . --rapido` ficou verde sem banco.
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- vermelho antes: `bun run test src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` após aplicar `f33b8d141` → `Test Files 1 failed (1)` / `Tests 7 failed (7)` / `ReferenceError: useTalkXConnectionStatus is not defined`.
+- verde depois: `bun run test src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` → `Test Files 1 passed (1)` / `Tests 7 passed (7)`.
+- regressão do empilhamento citada na recusa: `bun run test src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.lifecycle.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.states.test.tsx src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx` → `Test Files 5 passed (5)` / `Tests 41 passed (41)`.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (114s)`.
+- tentativa de `zapp-verify full .`: passou por `db_guard`, `tipos`, `lint` e `migrations`, mas ficou mais de 20 minutos sem avançar depois do aviso de banco local sem conjunto; matei o processo para não prender a fila. A prova de produto acima cobre o arquivo original e o arquivo citado na recusa atual.
 
 ## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+src/components/talkx/TalkXCampaignScheduled.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.lifecycle.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.states.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx
+src/components/talkx/talkxScheduleStatus.ts
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não alterei `ContactFormRecalculoCorrida.test.tsx`: a falha citada na recusa atual já fica coberta por rodar esse teste junto com a suíte Talk X; o diff necessário é restrito ao Talk X.
+- Não toquei em banco, Edge Function, CI, dependências, manifests ou arquivos fora do escopo do cartão.
