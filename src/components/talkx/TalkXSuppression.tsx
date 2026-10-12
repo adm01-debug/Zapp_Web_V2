@@ -88,8 +88,8 @@ export function TalkXSuppression() {
   ], []);
 
   const editReasonOptions = useMemo(() => {
-    const currentReason = editing?.reason ?? '';
-    return currentReason ? (REASONS.includes(currentReason) ? REASONS : [...REASONS, currentReason]) : REASONS;
+    const currentReason = editing?.reason?.trim();
+    return currentReason && !REASONS.includes(currentReason) ? [...REASONS, currentReason] : REASONS;
   }, [editing]);
   const [editReason, setEditReason] = useState('');
   const [editOrigin, setEditOrigin] = useState<'manual' | 'lgpd'>('manual');

@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const inserted: Record<string, unknown>[] = [];
 const updated: Record<string, unknown>[] = [];
 const getUser = vi.fn();
+let rowReason: string | null = 'Manual';
 
 vi.mock('@/integrations/supabase/client', () => {
   const chain = (data: unknown[]) => {
@@ -53,7 +54,7 @@ vi.mock('@/integrations/supabase/client', () => {
             id: 'bl-1',
             contact_id: 'c1',
             phone: null,
-            reason: 'Manual',
+            reason: rowReason,
             reason_code: 'manual',
             blocked_by: 'profile-1',
             created_at: '2026-09-01T10:00:00.000Z',
@@ -130,6 +131,20 @@ describe('TalkXSuppression · autoria (V04)', () => {
     inserted.length = 0;
     updated.length = 0;
     getUser.mockClear();
+    rowReason = 'Manual';
+  });
+
+  it('abre e salva a edição de um registro sem motivo (reason nulo) sem quebrar o Select', async () => {
+    rowReason = null;
+    renderView();
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /Editar/i }))[0]);
+    expect(await screen.findByText('Editar supressão')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Salvar$/i }));
+
+    await waitFor(() => expect(updated).toHaveLength(1));
+    // Sem motivo, o modal parte do primeiro motivo da lista — nunca de '' (item vazio do Radix quebra).
+    expect(updated[0]).toMatchObject({ reason: 'Opt-out solicitado' });
   });
 
   it('grava blocked_by com o id do perfil ativo, nunca com o id do auth', async () => {

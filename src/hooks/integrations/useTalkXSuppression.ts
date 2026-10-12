@@ -61,14 +61,13 @@ export interface SuppressionRow {
 }
 
 /** Chaves de ordenação aceitas pela listagem (viram coluna do servidor). */
-export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason' | 'status';
+export type SuppressionOrderKey = 'created_at' | 'origin' | 'reason';
 
-/** Mapeia chaves de ordenação da UI para colunas reais do banco. */
+/** Mapeia chaves de ordenação da UI para colunas reais do banco (`status` é derivado, não ordena). */
 const ORDER_KEY_MAP: Record<SuppressionOrderKey, string> = {
   created_at: 'created_at',
   origin: 'origin',
   reason: 'reason',
-  status: 'removed_at',
 };
 
 export interface SuppressionListParams {
@@ -125,7 +124,7 @@ export const SUPPRESSION_OPT_OUT_DAYS = 30;
 
 /** Colunas pedidas na listagem — inclui o contato e o nome da campanha. */
 const LIST_COLUMNS =
-  'id,contact_id!inner(name,email,phone),phone,reason,reason_code,origin,campaign_id,blocked_by,removed_at,removed_by,expires_at,created_at,'
+  'id,contact_id,phone,reason,reason_code,origin,campaign_id,blocked_by,removed_at,removed_by,expires_at,created_at,'
   + 'contacts:contact_id(name,phone,email,company,avatar_url),'
   // campaign_id tem DUAS FKs (talkx_campaigns e talkx_campaign_metrics): sem o
   // nome da restrição o PostgREST recusa o embed por ambiguidade.
@@ -203,17 +202,22 @@ export async function fetchSuppressionPage(params: SuppressionListParams): Promi
   const from = (Math.max(1, page) - 1) * pageSize;
   const to = from + pageSize - 1;
 
+  const term = search?.trim();
+  // Busca por contato: `!inner` faz o embed restringir as linhas do pai (sem
+  // ele o PostgREST só anula o embed). Só entra com busca, para o bloqueio só
+  // por telefone (sem contato) continuar na listagem sem filtro.
+  const columns = term ? LIST_COLUMNS.replace('contacts:contact_id(', 'contacts:contact_id!inner(') : LIST_COLUMNS;
   let query = supabase
     .from('talkx_blacklist')
-    .select(LIST_COLUMNS, { count: 'exact' })
+    .select(columns, { count: 'exact' })
     .is('removed_at', null);
   if (origin && origin !== 'all') query = query.eq('origin', origin);
   if (reason && reason !== 'all') query = query.ilike('reason', `%${reason}%`);
-  if (search && search.trim()) {
-    const term = escapeOrFilterValue(`%${search.trim()}%`);
-    query = query
-      .or(`phone.ilike.${term},reason.ilike.${term}`)
-      .or(`contacts.name.ilike.${term},contacts.email.ilike.${term},contacts.phone.ilike.${term}`);
+  if (term) {
+    // Um único `.or()`, só nos campos do embed (`referencedTable`): misturar
+    // colunas do pai com as do contato no mesmo `.or()` não restringe o pai.
+    const pattern = escapeOrFilterValue(`%${term}%`);
+    query = query.or(`name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`, { referencedTable: 'contacts' });
   }
   // Ordernação determinística: a chave pedida + `id` como desempate, para a
   // paginação por offset não repetir nem pular linha empatada.

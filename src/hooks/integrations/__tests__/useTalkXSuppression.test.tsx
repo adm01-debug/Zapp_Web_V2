@@ -1,44 +1,34 @@
 /**
- * TL-165 · Talk X — testes de integração para `fetchSuppressionPage` e
- * `fetchSuppressionContactOptions`.
+ * TL-165 · Talk X — testes de `fetchSuppressionPage` e `fetchSuppressionContactOptions`.
  *
- * Cada teste constrói um mock encadeável do cliente Supabase que registra
- * todas as chamadas (`is`, `eq`, `or`/`ilike`, `order`, `range`) e afirma
- * diretamente que a query gerada contém os filtros e a ordenação corretos.
- *
- * O mock é criado com `vi.hoisted` para que as funções importem a instância
- * mockada antes de qualquer teste.
+ * Cada teste usa um mock encadeável do cliente Supabase que registra as
+ * chamadas (`select`, `is`, `eq`, `ilike`, `or`, `order`, `range`) e afirma
+ * diretamente que a consulta gerada contém os filtros e a ordenação corretos.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockChain = vi.hoisted(() => {
-  const calls: {
-    is: [string, unknown][];
-    eq: [string, unknown][];
-    ilike: [string, unknown][];
-    or: [string][];
-    order: [string, { ascending?: boolean } | undefined][];
-    range: [number, number][];
-  } = {
-    is: [],
-    eq: [],
-    ilike: [],
-    or: [],
-    order: [],
-    range: [],
+  const calls = {
+    select: [] as [string, unknown][],
+    is: [] as [string, unknown][],
+    eq: [] as [string, unknown][],
+    ilike: [] as [string, unknown][],
+    or: [] as [string, unknown][],
+    order: [] as [string, { ascending?: boolean } | undefined][],
+    range: [] as [number, number][],
   };
   const state: { table: string; results: Record<string, unknown> } = { table: '', results: {} };
   const chain = {
+    select: vi.fn((cols: string, opts?: unknown) => { calls.select.push([cols, opts]); return chain; }),
     is: vi.fn((col: string, val: unknown) => { calls.is.push([col, val]); return chain; }),
     eq: vi.fn((col: string, val: unknown) => { calls.eq.push([col, val]); return chain; }),
     ilike: vi.fn((col: string, val: unknown) => { calls.ilike.push([col, val]); return chain; }),
-    or: vi.fn((filter: string) => { calls.or.push([filter]); return chain; }),
+    or: vi.fn((filter: string, opts?: unknown) => { calls.or.push([filter, opts]); return chain; }),
     order: vi.fn((col: string, opts?: { ascending?: boolean }) => { calls.order.push([col, opts]); return chain; }),
     range: vi.fn((from: number, to: number) => { calls.range.push([from, to]); return chain; }),
     not: vi.fn(() => chain),
     in: vi.fn(() => chain),
     limit: vi.fn(() => chain),
-    select: vi.fn(() => chain),
     from: vi.fn((table: string) => { state.table = table; return chain; }),
     // A cadeia é "awaitable": cada tabela resolve com o resultado configurado no teste.
     then: (resolve: (value: unknown) => unknown) =>
@@ -53,85 +43,87 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { fetchSuppressionContactOptions, fetchSuppressionPage } from '@/hooks/integrations/useTalkXSuppression';
 
+beforeEach(() => {
+  for (const list of Object.values(mockChain.calls)) list.length = 0;
+  mockChain.state.results = {};
+});
+
 describe('fetchSuppressionPage', () => {
   it('filtra removidos com .is(removed_at, null) — falha sem ele', async () => {
-    const { calls } = mockChain;
-    calls.is.length = 0;
     await fetchSuppressionPage({ page: 1, pageSize: 10 });
-    expect(calls.is).toContainEqual(['removed_at', null]);
+    expect(mockChain.calls.is).toContainEqual(['removed_at', null]);
   });
 
   it('aplica eq(origin, valor) quando origin é diferente de all', async () => {
-    const { calls } = mockChain;
-    calls.eq.length = 0;
     await fetchSuppressionPage({ page: 1, pageSize: 10, origin: 'lgpd' });
-    expect(calls.eq).toContainEqual(['origin', 'lgpd']);
+    expect(mockChain.calls.eq).toContainEqual(['origin', 'lgpd']);
+  });
+
+  it('não filtra origem nem motivo com all', async () => {
+    await fetchSuppressionPage({ page: 1, pageSize: 10, origin: 'all', reason: 'all' });
+    expect(mockChain.calls.eq).toEqual([]);
+    expect(mockChain.calls.ilike).toEqual([]);
   });
 
   it('aplica ilike(reason, valor) quando reason é diferente de all', async () => {
-    const { calls } = mockChain;
-    calls.ilike.length = 0;
     await fetchSuppressionPage({ page: 1, pageSize: 10, reason: 'spam' });
-    expect(calls.ilike).toContainEqual(['reason', '%spam%']);
+    expect(mockChain.calls.ilike).toContainEqual(['reason', '%spam%']);
   });
 
-  it('ordena pela coluna mapeada e desempata por id na mesma direção', async () => {
-    const { calls } = mockChain;
-    calls.order.length = 0;
+  it('ordena pela coluna pedida e desempata por id na direção descendente', async () => {
     await fetchSuppressionPage({ page: 1, pageSize: 10, order: 'created_at', dir: 'desc' });
-    expect(calls.order).toEqual([
+    expect(mockChain.calls.order).toEqual([
       ['created_at', { ascending: false }],
       ['id', { ascending: false }],
     ]);
   });
 
-  it('ordena pela coluna mapeada e desempata por id na direção ascendente', async () => {
-    const { calls } = mockChain;
-    calls.order.length = 0;
+  it('ordena pela coluna pedida e desempata por id na direção ascendente', async () => {
     await fetchSuppressionPage({ page: 1, pageSize: 10, order: 'origin', dir: 'asc' });
-    expect(calls.order).toEqual([
+    expect(mockChain.calls.order).toEqual([
       ['origin', { ascending: true }],
       ['id', { ascending: true }],
     ]);
   });
 
   it('aplica range com os offsets corretos da página', async () => {
-    const { calls } = mockChain;
-    calls.range.length = 0;
     await fetchSuppressionPage({ page: 2, pageSize: 10 });
-    expect(calls.range).toEqual([[10, 19]]);
+    expect(mockChain.calls.range).toEqual([[10, 19]]);
   });
 
-  it('chamada de busca com search gera dois .or() — pai e embed separados', async () => {
-    const { calls } = mockChain;
-    calls.or.length = 0;
+  it('sem busca: embed sem !inner e nenhum .or()', async () => {
+    await fetchSuppressionPage({ page: 1, pageSize: 10, search: '   ' });
+    expect(mockChain.calls.select[0][0]).not.toContain('!inner');
+    expect(mockChain.calls.or).toEqual([]);
+  });
+
+  it('com busca: embed contacts!inner e um único .or() restrito ao embed por referencedTable', async () => {
     await fetchSuppressionPage({ page: 1, pageSize: 10, search: '119' });
-    expect(calls.or).toHaveLength(2);
-    const pai = calls.or[0][0] as string;
-    const embed = calls.or[1][0] as string;
-    expect(pai).toContain('phone.ilike');
-    expect(pai).toContain('reason.ilike');
-    expect(embed).toContain('contacts.name.ilike');
-    expect(embed).toContain('contacts.email.ilike');
-    expect(embed).toContain('contacts.phone.ilike');
+    expect(mockChain.calls.select[0][0]).toContain('contacts:contact_id!inner(');
+    expect(mockChain.calls.or).toHaveLength(1);
+    const [filter, opts] = mockChain.calls.or[0];
+    expect(opts).toEqual({ referencedTable: 'contacts' });
+    expect(filter).toContain('name.ilike."%119%"');
+    expect(filter).toContain('email.ilike."%119%"');
+    expect(filter).toContain('phone.ilike."%119%"');
+    // Nada de coluna do pai nem prefixo de embed misturado no mesmo .or().
+    expect(filter).not.toContain('reason.');
+    expect(filter).not.toContain('contacts.');
   });
 });
 
 describe('fetchSuppressionContactOptions', () => {
   it('propaga o erro da consulta de bloqueados — falha sem o `error` desestruturado', async () => {
-    const { state } = mockChain;
-    state.results = {
+    mockChain.state.results = {
       contacts: { data: [{ id: 'c1', name: 'Ana', phone: '11999990000', company: null }], error: null },
       talkx_blacklist: { data: null, error: new Error('falha ao ler bloqueados') },
     };
     // Sem o `throw`, o contato já bloqueado voltaria como disponível (falha aberta).
     await expect(fetchSuppressionContactOptions('ana')).rejects.toThrow('falha ao ler bloqueados');
-    state.results = {};
   });
 
   it('remove da lista quem já está bloqueado', async () => {
-    const { state } = mockChain;
-    state.results = {
+    mockChain.state.results = {
       contacts: {
         data: [
           { id: 'c1', name: 'Ana', phone: '11999990000', company: null },
@@ -143,6 +135,5 @@ describe('fetchSuppressionContactOptions', () => {
     };
     const options = await fetchSuppressionContactOptions('');
     expect(options.map((o) => o.id)).toEqual(['c2']);
-    state.results = {};
   });
 });
