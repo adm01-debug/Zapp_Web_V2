@@ -5,6 +5,8 @@
 #   - fromMe=true nao enfileira efeitos;
 #   - replay/stale effect de mensagem propria (sender=agent) nao toca contadores;
 #   - opt-out chama talkx_suppress_contact com reason_code/origin/mensagem;
+#   - gate real de 30 dias impede supressao sem envio recente;
+#   - outcome updated preserva conteudo/media_url da mensagem canonica;
 #   - o bloco -- Rollback: da migration executa e remove a superficie nova.
 set -euo pipefail
 
@@ -169,6 +171,20 @@ SELECT public.drain_inbound_message_effects('$conn', 'contact-msg-1');
 SQL
 assert_eq 'fromMe=false drena talkx e multiplix' 'multiplix,talkx' "$(psql_val "SELECT string_agg(kind, ',' ORDER BY kind) FROM public.effect_audit WHERE kind IN ('talkx','multiplix')")"
 
+updated_outcome="$(psql_val "SET request.jwt.claim.role = 'service_role'; SELECT outcome FROM public.ingest_inbound_message('$conn', '5511999998888', 'Contato', 'conteudo editado', 'image', 'https://cdn.local/editada.jpg', 'contact-msg-1', statement_timestamp(), false, NULL, 'quoted-1')")"
+assert_eq 'reentrega com dados novos retorna updated' 'updated' "$updated_outcome"
+assert_eq 'outcome updated preserva conteudo/media_url canonicos' 'conteudo editado|image|https://cdn.local/editada.jpg' "$(psql_val "SELECT content || '|' || message_type || '|' || coalesce(media_url, '') FROM public.messages WHERE whatsapp_connection_id = '$conn' AND external_id = 'contact-msg-1' AND sender = 'contact'")"
+
+deleted_msg='30000000-0000-0000-0000-000000000099'
+psql_exec >/dev/null <<SQL
+SET request.jwt.claim.role = 'service_role';
+INSERT INTO public.messages(id, contact_id, whatsapp_connection_id, content, message_type, media_url, sender, external_id, status)
+VALUES ('$deleted_msg', '$contact', '$conn', '[Mensagem apagada]', 'text', NULL, 'contact', 'deleted-msg-1', 'deleted');
+SQL
+deleted_outcome="$(psql_val "SET request.jwt.claim.role = 'service_role'; SELECT outcome FROM public.ingest_inbound_message('$conn', '5511999998888', 'Contato', 'texto que nao deve voltar', 'image', 'https://cdn.local/deleted.jpg', 'deleted-msg-1', statement_timestamp(), false, NULL, NULL)")"
+assert_eq 'mensagem apagada reprocessada retorna updated' 'updated' "$deleted_outcome"
+assert_eq 'mensagem apagada preserva conteudo e atualiza media_url sem reviver texto' '[Mensagem apagada]|deleted|image|https://cdn.local/deleted.jpg' "$(psql_val "SELECT content || '|' || status || '|' || message_type || '|' || coalesce(media_url, '') FROM public.messages WHERE id = '$deleted_msg'")"
+
 psql_exec >/dev/null <<SQL
 SET request.jwt.claim.role = 'service_role';
 TRUNCATE public.effect_audit;
@@ -205,6 +221,16 @@ SELECT * FROM public.ingest_inbound_message(
 SELECT public.drain_inbound_message_effects('$conn', 'optout-msg-1');
 SQL
 assert_eq 'opt-out usa assinatura correta da RPC' 'Opt-out via mensagem: SAIR|opt_out|auto_optout|1' "$(psql_val "SELECT reason || '|' || reason_code || '|' || origin || '|' || (message_id IS NOT NULL)::int FROM public.effect_audit WHERE kind = 'suppress'")"
+
+psql_exec >/dev/null <<SQL
+SET request.jwt.claim.role = 'service_role';
+TRUNCATE public.effect_audit;
+SELECT * FROM public.ingest_inbound_message(
+  '$conn', '551188887777', 'Sem Janela', 'SAIR', 'text', NULL,
+  'optout-sem-envio', statement_timestamp(), false, 'SAIR', NULL
+);
+SQL
+assert_eq 'opt-out sem envio em 30 dias nao suprime' 'no_recent_send|0' "$(psql_val "SET request.jwt.claim.role = 'service_role'; SELECT (public.drain_inbound_message_effects('$conn', 'optout-sem-envio') ->> 'optout_status') || '|' || (SELECT count(*) FROM public.effect_audit WHERE kind = 'suppress')")"
 
 rollback_sql="$(python3 - "$migration" <<'PY'
 from pathlib import Path
