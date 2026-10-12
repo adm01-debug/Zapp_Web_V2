@@ -8,6 +8,8 @@ import { useContactSidebar } from '@/hooks/crm/useContactSidebar';
 import { ProfessionalSection } from './ProfessionalSection';
 import { PersonalSection } from './PersonalSection';
 import { SinguProfileSection } from './SinguProfileSection';
+import { KnowledgeBaseSearchPanel } from '../KnowledgeBaseSearchPanel';
+import { requestComposerInsert } from '../composerInsert';
 import type { ConversationContact as Contact } from '@/types/chat';
 import type { EnrichedContactData } from '@/hooks/crm/useContactEnrichedData';
 
@@ -60,6 +62,10 @@ export function ContactSidebarSections({ contact, enrichedData, onQuickAction }:
         index={2} status={sidebar.status} data={sidebar.data}
         onBuscarCRM={buscarCRM} onRetry={() => sidebar.refetch()}
       />
+      {/* Base de Conhecimento (paridade com a V3): o trecho do artigo vai para o
+          rascunho do compositor pela ponte `composerInsert` — o ChatPanel é quem
+          registra o escritor do input, este painel só pede. */}
+      <KnowledgeBaseSearchPanel onInsertText={requestComposerInsert} />
       {sidebar.status !== 'disabled' && (
         <ContactCRMDialog
           open={crmDialogOpen}

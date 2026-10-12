@@ -1,13 +1,17 @@
 /**
- * Config das 3 seções do novo sidebar "Detalhes do Contato" (plano
+ * Config das seções do sidebar "Detalhes do Contato" (plano
  * PLANO_SIDEBAR_CONTATO_3_SECOES_100_ETAPAS_2026-10-02.md, etapa 44).
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova
- * `contact-sidebar-accordion-state@v2`: só os valores que existem nas 3
- * seções novas sobrevivem; sobra vazia → default (as 3 abertas).
+ * `contact-sidebar-accordion-state@v2`: só os valores que existem nas seções
+ * conhecidas sobrevivem; sobra vazia → default.
+ *
+ * `knowledge` (Base de Conhecimento) entra como seção CONHECIDA mas fora do
+ * default: nasce recolhida, então a abertura vira escolha do atendente e a
+ * preferência antiga de quem já usava o painel continua valendo.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'knowledge'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu'];

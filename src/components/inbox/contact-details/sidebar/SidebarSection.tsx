@@ -8,9 +8,10 @@ const TONE_CLASSES: Record<SidebarSectionTone, string> = {
   blue: 'bg-kpi-blue text-kpi-blue-fg',
   purple: 'bg-kpi-purple text-kpi-purple-fg',
   green: 'bg-kpi-green text-kpi-green-fg',
+  yellow: 'bg-kpi-yellow text-kpi-yellow-fg',
 };
 
-export type SidebarSectionTone = 'blue' | 'purple' | 'green';
+export type SidebarSectionTone = 'blue' | 'purple' | 'green' | 'yellow';
 
 interface SidebarSectionProps {
   index: number;
