@@ -753,20 +753,23 @@ export const ExternalProductManagement: React.FC = () => {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
-      <TabsList className="mb-4 h-9">
-        <TabsTrigger value="produtos" className="gap-1.5 text-xs">
+      {/* N-058 — alvo de toque: no celular cada aba tem no mínimo 44 px
+          (min-h-11); a partir de sm o `sm:h-9`/`sm:min-h-0` devolve a altura
+          original, então o visual no desktop não muda. */}
+      <TabsList className="mb-4 h-auto sm:h-9">
+        <TabsTrigger value="produtos" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Package className="w-3.5 h-3.5" />
           Produtos
           <TabCount value={totalProducts} />
         </TabsTrigger>
-        <TabsTrigger value="favoritos" className="gap-1.5 text-xs">
+        <TabsTrigger value="favoritos" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Heart className="w-3.5 h-3.5" />
           Favoritos
           <TabCount value={favorites.length} />
         </TabsTrigger>
         {/* CT-57 — envios do agente logado (admin/supervisor veem a equipe):
             o recorte é a RLS de catalog_send_events, não um filtro da tela. */}
-        <TabsTrigger value="enviados" className="gap-1.5 text-xs">
+        <TabsTrigger value="enviados" className="gap-1.5 text-xs min-h-11 sm:min-h-0">
           <Send className="w-3.5 h-3.5" />
           Enviados
           <TabCount value={sendHistoryRows.length} />
@@ -1193,17 +1196,18 @@ export const ExternalProductManagement: React.FC = () => {
                 placeholder="Buscar por produto, SKU, contato ou agente..."
                 value={sentSearch}
                 onChange={(e) => handleSentSearch(e.target.value)}
+                aria-label="Buscar envios"
                 className="pl-9"
               />
               {sentSearch && (
-                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => handleSentSearch('')}>
+                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" aria-label="Limpar busca de enviados" onClick={() => handleSentSearch('')}>
                   <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
 
             <Select value={sentStatus} onValueChange={handleSentStatus}>
-              <SelectTrigger className="w-[170px]">
+              <SelectTrigger className="w-[170px]" aria-label="Filtrar envios por status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
