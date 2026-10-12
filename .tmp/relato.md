@@ -44,6 +44,11 @@ Especialista: worker (sql) (area-sql-banco)
 
 ## O que NÃO fiz e por quê
 
+- O fechar apontou "há código alterado sem nenhum teste novo" por causa de
+  src/integrations/supabase/types.ts: é arquivo GERADO (só declarações de tipo, sem
+  comportamento para exercitar). O filtro do fechar só considera teste em src/ ou tests/,
+  então o teste de banco em scripts/db-audit/auto-reconnect-logs.test.sh não entra na conta.
+  A prova deste cartão é o teste de banco (vermelho→verde no bloco A/B) acima.
 - Não rodei `hermes-db-migrar`: este cartão não tem banco local de tarefa (nenhum
   `v2-26101209546aae` na pasta de stacks) e subir/replayar a stack custa ~14 min. A prova de
   banco é o teste descartável acima, que aplica o arquivo REAL em postgres:17 com os papéis
