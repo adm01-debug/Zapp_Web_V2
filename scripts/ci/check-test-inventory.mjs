@@ -108,6 +108,11 @@ const ALLOWLIST = new Set([
   // nao-destrutivo em container alheio, o digest fixado, o aborto em bootstrap falho e o trap.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/replay-local-harness.test.sh',
+  // E44 (F6): prova que o REVOKE de grants de `whatsapp_connections` (anon na tabela
+  // e nas 3 views; authenticated em TRUNCATE/TRIGGER/REFERENCES) vale como o PAPEL
+  // real e que a linha `-- Rollback:` da migration restaura — Postgres 17
+  // descartável (docker). Passo de YAML a promover em db-guard.yml pelo dono do workflow.
+  'scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh',
 ]);
 
 // Suites Node (scripts/**/*.test.mjs, *.unit.mjs, *.integration.mjs) que hoje não têm passo em
