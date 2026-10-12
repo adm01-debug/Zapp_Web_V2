@@ -1933,6 +1933,64 @@ export type Database = {
           },
         ]
       }
+      contact_consents: {
+        Row: {
+          base_legal: string | null
+          canal: string
+          concedido: boolean
+          contact_id: string
+          finalidade: string
+          id: string
+          registrado_em: string
+          registrado_por: string | null
+          seq: number
+        }
+        Insert: {
+          base_legal?: string | null
+          canal: string
+          concedido: boolean
+          contact_id: string
+          finalidade: string
+          id?: string
+          registrado_em?: string
+          registrado_por?: string | null
+          seq?: never
+        }
+        Update: {
+          base_legal?: string | null
+          canal?: string
+          concedido?: boolean
+          contact_id?: string
+          finalidade?: string
+          id?: string
+          registrado_em?: string
+          registrado_por?: string | null
+          seq?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_consents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_custom_fields: {
         Row: {
           contact_id: string
@@ -10364,6 +10422,43 @@ export type Database = {
         ]
       }
     }
+
+      contact_consents_current: {
+        Row: {
+          base_legal: string | null
+          canal: string | null
+          concedido: boolean | null
+          contact_id: string | null
+          finalidade: string | null
+          id: string | null
+          registrado_em: string | null
+          registrado_por: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_consents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_consents_registrado_por_fkey"
+            columns: ["registrado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+
     Functions: {
       accept_department_invite: { Args: { p_code: string }; Returns: Json }
       add_agent_xp: {
@@ -11410,6 +11505,19 @@ export type Database = {
           p_xp_reward: number
         }
         Returns: Json
+      }
+      grant_contact_consent: {
+        Args: {
+          p_base_legal: string
+          p_canal: string
+          p_contact_id: string
+          p_finalidade: string
+        }
+        Returns: string
+      }
+      revoke_contact_consent: {
+        Args: { p_canal: string; p_contact_id: string; p_finalidade: string }
+        Returns: string
       }
       has_role: {
         Args: {
