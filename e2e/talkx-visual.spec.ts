@@ -37,6 +37,10 @@ declare global {
 
 const OUT = join(import.meta.dirname, 'talkx-visual');
 
+// Abrir uma tela dispara a compilação sob demanda do chunk do Talk X no dev server
+// (vite frio): o default de 5s do expect estoura antes de o módulo montar.
+const ABRIR_TIMEOUT = 60_000;
+
 type Tela = {
   n: string;
   nome: string;
@@ -46,7 +50,7 @@ type Tela = {
 
 async function abrirTalkX(page: Page) {
   await page.goto('/?view=talkx');
-  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: ABRIR_TIMEOUT });
 }
 
 // Após X007, "Segmentos", "Templates", "Analytics" e "Configurações" deixaram de ser
@@ -64,7 +68,7 @@ const TAB_URL: Record<string, string> = {
 
 async function abrirTab(page: Page, tab: string) {
   await page.goto(TAB_URL[tab] ?? '/?view=talkx');
-  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: ABRIR_TIMEOUT });
 }
 
 // Clicar no nome de uma campanha (coluna "Campanha" da tabela) dispara o
@@ -73,7 +77,7 @@ async function abrirTab(page: Page, tab: string) {
 async function abrirCampanha(page: Page, nome: string) {
   await abrirTalkX(page);
   await page.getByText(nome, { exact: false }).first().click();
-  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeHidden();
+  await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeHidden({ timeout: ABRIR_TIMEOUT });
 }
 
 async function abrirAjuda(page: Page) {
@@ -95,8 +99,8 @@ const TELAS: Tela[] = [
   { n: '05', nome: 'Templates — criar/editar', existe: true, abrir: async (p) => { await abrirTab(p, 'Templates'); await p.getByRole('button', { name: 'Novo Template' }).click(); } },
   { n: '06', nome: 'Lista de supressão', existe: true, abrir: (p) => abrirTab(p, 'Lista de supressão') },
   { n: '07', nome: 'Analytics', existe: true, abrir: (p) => abrirTab(p, 'Analytics') },
-  { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
-  { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
+  { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: ABRIR_TIMEOUT }); } },
+  { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: ABRIR_TIMEOUT }); } },
   { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Black Friday - VIP') },
   { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
   { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
@@ -113,6 +117,8 @@ const TELAS: Tela[] = [
 // watchdog apaga o #root e a tela vira "⚠️ Falha ao inicializar o app" em vez do
 // componente — falha de captura sem relação com o produto.
 test.beforeEach(async ({ page }) => {
+  // O teste inclui a compilação fria do chunk no dev server (ver ABRIR_TIMEOUT).
+  test.setTimeout(120_000);
   await page.addInitScript(() => {
     window.__BOOT_DEADLINE_MS = 60000;
   });
@@ -498,7 +504,7 @@ async function alcancarPorTab(page: Page, alvo: RegExp, max = 60): Promise<numbe
 
 const abrirWizard = (step: number) => async (p: Page) => {
   await p.goto(`/?view=talkx&wizard=new&step=${step}`);
-  await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible();
+  await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: ABRIR_TIMEOUT });
 };
 
 test.describe('teclado — Talk X', () => {
