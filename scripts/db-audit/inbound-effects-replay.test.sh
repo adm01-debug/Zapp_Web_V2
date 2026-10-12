@@ -20,6 +20,11 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
+require_migration_text() {
+  local label="$1" needle="$2"
+  grep -Fq "$needle" "$migration" || fail "$label: migration nao cita '$needle'"
+  printf '[PASS] %s\n' "$label"
+}
 
 psql_sql() { docker exec "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$1"; }
 psql_file() { docker exec -i "$container_name" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres; }
@@ -46,6 +51,8 @@ expect_error_service() { expect_error "$1" service_role "$2" "$3"; }
 
 docker info >/dev/null 2>&1 || fail 'Docker indisponivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+require_migration_text 'P.1 migration explica o constraint que o banco_local reporta' 'inbound_message_effects_effect_check'
+require_migration_text 'P.2 rollback cita o trigger de provenance sem tocar em manifesto/guardas' 'trg_guard_message_provenance_fields'
 
 printf '== container: %s (imagem %s) ==\n' "$container_name" "$postgres_image"
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null

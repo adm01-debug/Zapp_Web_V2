@@ -37,6 +37,7 @@
 --           REVOKE EXECUTE ON FUNCTION public.ingest_inbound_message(uuid, text, text, text, text, text, text, timestamptz) FROM PUBLIC, anon, authenticated;
 --           GRANT EXECUTE ON FUNCTION public.ingest_inbound_message(uuid, text, text, text, text, text, text, timestamptz) TO service_role;
 --           COMMENT ON FUNCTION public.ingest_inbound_message(uuid, text, text, text, text, text, text, timestamptz) IS 'Transacao atomica do inbound do webhook: find-or-create de contato (variantes do 9o digito, relink de conexao) + upsert idempotente da mensagem (ux_messages_dedup). outcome = inserted | updated | duplicate. Chamada apenas por service_role (edge evolution-webhook).';
+--           -- Mantem intocado messages.trg_guard_message_provenance_fields (20261006114108).
 --           DROP TABLE IF EXISTS public.inbound_message_effects;
 
 -- R2-API-006 (#69): opt-out e atribuicao se perdiam apos o ingest (efeitos em
@@ -50,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.inbound_message_effects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   whatsapp_connection_id uuid NOT NULL,
   external_id text NOT NULL,
-  effect text NOT NULL CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply')),
+  effect text NOT NULL CONSTRAINT inbound_message_effects_effect_check CHECK (effect IN ('optout_suppress', 'talkx_reply', 'multiplix_reply')),
   payload jsonb NOT NULL DEFAULT '{}'::jsonb,
   attempts integer NOT NULL DEFAULT 0,
   applied_at timestamptz,
