@@ -1,18 +1,46 @@
-Especialista: worker (docs)
+Especialista: workersql
+Executor do refazer: senior (area-sql-banco)
 
 ## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+- `supabase/migrations/20261011151650_edit_message_rpc.sql`: o gatilho `trg_guard_message_immutable_columns` agora observa também `is_deleted` e a função `guard_message_immutable_columns()` recusa `is_deleted=true -> false` por cliente autenticado com erro 42501 `message_undelete_forbidden`. `postgres` e `service_role` não foram bloqueados, preservando RPC e fluxos de dono/Edge.
+- `scripts/db-audit/edit-message-authorization.test.sh`: adicionei a prova real do undelete recusado, ajustei o teste do soft delete com texto forjado para usar mensagem RECEBIDA e conferi que a definição do trigger contém `is_deleted`.
+- `.github/workflows/db-guard.yml`: registrei o teste novo no DB Guard offline; foi indispensável porque o juiz barato bloqueou o fechamento com “.test.sh novo sem passo no CI”.
+- `src/integrations/supabase/types.ts`: mantive só o tipo gerado da nova RPC `edit_message`, sem regredir funções já existentes da base atual.
+- `.tmp/relato.md`: reescrevi o relato do refazer com os pontos da recusa e as provas executadas.
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Pontos da recusa
+- Ponto 1: reversão `is_deleted true -> false` por authenticated agora é barrada. Arquivo: `supabase/migrations/20261011151650_edit_message_rpc.sql`. Prova: `scripts/db-audit/edit-message-authorization.test.sh`, caso B21.
+  - Vermelho antes, com a migration anterior `a3579a91a`: `[FAIL] B21 authenticated nao desfaz soft delete (message_undelete_forbidden): deveria falhar, mas passou`.
+  - Verde depois: `[PASS] B21 authenticated nao desfaz soft delete (message_undelete_forbidden)`.
+- Ponto 2: o teste (c) foi adicionado e o teste (a) de soft delete forjado agora usa mensagem recebida (`M_RECV`) com `UPDATE content='HACKEADO', is_deleted=true`. Prova: `scripts/db-audit/edit-message-authorization.test.sh`, casos B19 e B21.
+  - Verde depois: `[PASS] B19 soft delete nao vira atalho para reescrever texto arbitrario em mensagem RECEBIDA` e `[PASS] B21 authenticated nao desfaz soft delete (message_undelete_forbidden)`.
+- Ponto 3: comentários da migration e cabeçalho do teste foram reescritos para a regra nova: só tombstone exato na primeira transição para apagada, sem reversão por cliente, e edição de conteúdo só pela RPC.
+  - Prova no diff: alterações nos comentários de `supabase/migrations/20261011151650_edit_message_rpc.sql` e `scripts/db-audit/edit-message-authorization.test.sh`.
+- Ponto 4: relato refeito só com os quatro itens reais da recusa: bypass do soft delete, reversão de `is_deleted`, testes (a) a (d) e comentário.
+  - Testes (a) a (d): B19 prova texto forjado no soft delete; B21 prova undelete recusado; B18/B22/B23 provam fluxos legítimos preservados; B24 prova `service_role` preservado.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+## Por que toquei arquivos fora da lista curta do cartão
+- `scripts/db-audit/edit-message-authorization.test.sh` foi indispensável porque a recusa pediu explicitamente testes (a) a (d) e prova vermelho/verde; sem ele a correção SQL não ficaria provada.
+- `.github/workflows/db-guard.yml` foi indispensável porque o juiz barato recusou o fechamento quando o teste novo ficou órfão de CI. A alteração é só o passo que executa `scripts/db-audit/edit-message-authorization.test.sh`, sem afrouxar guarda.
 
-## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+## Prova executada
+- Vermelho antes: rodei `scripts/db-audit/edit-message-authorization.test.sh` com a migration anterior `a3579a91a`; saída relevante em `.tmp/edit-message-red.log`: `[FAIL] B21 authenticated nao desfaz soft delete (message_undelete_forbidden): deveria falhar, mas passou`.
+- Verde depois: `scripts/db-audit/edit-message-authorization.test.sh > .tmp/edit-message-green.log 2>&1` terminou com exit 0 e a linha final `[OK] contrato de autorizacao da edicao de mensagem (edit_message) verificado`.
+- `bun run db:guard` terminou com exit 0: `OK: nenhuma violacao nova.` e `DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.`
+- `zapp-verify . --rapido` terminou com exit 0: `VERIFY: VERDE SEM BANCO (8s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/65390ad7016e`.
+- `git diff HEAD --check` terminou com exit 0.
+- `node scripts/ci/check-test-inventory.mjs` foi rodado depois de registrar o teste no workflow: não lista `scripts/db-audit/edit-message-authorization.test.sh`; ainda falha por 3 órfãos preexistentes de outros cartões (`department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`, `team-chat-media-contract`). Não corrigi esses órfãos por estarem fora deste refazer.
+
+## Arquivos do diff
+Diff final medido: 5 arquivos, 1 teste novo/alterado.
+```text
+.github/workflows/db-guard.yml
+.tmp/relato.md
+scripts/db-audit/edit-message-authorization.test.sh
+src/integrations/supabase/types.ts
+supabase/migrations/20261011151650_edit_message_rpc.sql
+```
+
+## O que não fiz
+- Não toquei em tela, Edge Function, política existente nem manifesto.
+- Não rodei banco local integrado no `zapp-verify` porque o próprio comando retornou `VERDE SEM BANCO`; a prova SQL real deste cartão foi o teste descartável de Postgres em `scripts/db-audit/edit-message-authorization.test.sh`, incluindo rollback C1-C3.

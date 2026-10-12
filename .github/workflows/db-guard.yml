@@ -368,6 +368,11 @@ jobs:
           SEND_MESSAGES_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/send-messages-permission-authorization.test.sh
 
+      - name: Simular autorização da edição de mensagens
+        env:
+          EDIT_MESSAGE_AUTHZ_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/edit-message-authorization.test.sh
+
       - name: Simular escopo de fila na escolha da conexao de envio (L7)
         env:
           ENQUEUE_SCOPE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

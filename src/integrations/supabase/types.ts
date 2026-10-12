@@ -10959,6 +10959,54 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      edit_message: {
+        Args: { p_message_id: string; p_new_content: string }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       effective_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
