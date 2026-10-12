@@ -147,6 +147,7 @@ export function useTalkXLiveChannel(campaignId: string | null | undefined): Talk
         .subscribe((subscribeStatus) => {
           if (disposed || channel !== nextChannel) return;
           if (subscribeStatus === 'SUBSCRIBED') {
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             attempt = 0;
             setSubscription({ campaignId, status: 'live' });
             return;

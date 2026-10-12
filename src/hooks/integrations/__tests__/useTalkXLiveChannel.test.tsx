@@ -169,6 +169,32 @@ describe('useTalkXLiveChannel — tempo real e modo degradado (X144)', () => {
     expect(result.current.panelPollMs).toBeNull();
   });
 
+  it('limpa o reconnectTimer quando SUBSCRIBED volta antes do timer disparar', async () => {
+    const { result } = renderHook(() => useTalkXLiveChannel('camp-1'), { wrapper });
+
+    act(() => {
+      emitSubscribe('CHANNEL_ERROR');
+    });
+    expect(result.current.status).toBe('degraded');
+
+    // O timer de reconexão foi armado para 1 s. Antes de ele disparar,
+    // o canal volta a SUBSCRIBED — o timer deve ser cancelado.
+    act(() => {
+      emitSubscribe('SUBSCRIBED');
+    });
+    expect(result.current.status).toBe('live');
+
+    // Avança 3 s: o timer já teria disparado e feito um novo connect()
+    // se não tivesse sido limpo.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    // Só a conexão inicial; nenhuma reconexão e nenhum removeChannel.
+    expect(h.supabase.channel).toHaveBeenCalledTimes(1);
+    expect(h.supabase.removeChannel).toHaveBeenCalledTimes(0);
+  });
+
   it('remove o canal anterior antes de reconectar e ignora callbacks velhos', async () => {
     const invalidateSpy = vi.spyOn(client, 'invalidateQueries');
     const { result } = renderHook(() => useTalkXLiveChannel('camp-1'), { wrapper });
