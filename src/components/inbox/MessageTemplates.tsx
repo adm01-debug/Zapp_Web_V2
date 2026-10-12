@@ -78,7 +78,7 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-4 p-4 border border-border rounded-lg bg-muted/30">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium">{editingTemplate ? 'Editar Template' : 'Novo Template'}</h4>
-                  <Button variant="ghost" size="icon" onClick={() => { setShowAddForm(false); setEditingTemplate(null); }}><X className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" aria-label="Fechar formulário" onClick={() => { setShowAddForm(false); setEditingTemplate(null); }}><X className="h-4 w-4" /></Button>
                 </div>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -117,8 +117,8 @@ export function MessageTemplates({ onSelectTemplate }: MessageTemplatesProps) {
                       <span className="text-3xs text-muted-foreground mt-1 block">Usado {template.use_count}x</span>
                     </button>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingTemplate(template)}><Edit2 className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteTemplate(template.id)}><Trash2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Editar template: ${template.title}`} onClick={() => setEditingTemplate(template)}><Edit2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" aria-label={`Excluir template: ${template.title}`} onClick={() => deleteTemplate(template.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </div>
                 </motion.div>

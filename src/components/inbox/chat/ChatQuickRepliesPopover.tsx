@@ -37,6 +37,7 @@ export function ChatQuickRepliesPopover({ show, replies, onSelect, onClose }: Ch
                 variant="ghost"
                 size="icon"
                 className="w-5 h-5"
+                aria-label="Fechar respostas rápidas"
                 onClick={onClose}
               >
                 <X className="w-3 h-3" />
