@@ -15,8 +15,8 @@
 #   funciona; a visibilidade de leitura por papel NAO muda; nenhuma policy nova; a
 #   reaplicacao e idempotente; o rollback do cabecalho derruba as colunas.
 #
-# REGISTRO PENDENTE (teste novo): falta o passo correspondente em
-#   .github/workflows/db-guard.yml (arquivo de CI) — ver relato do cartao.
+# REGISTRO: o passo deste teste ja consta em .github/workflows/db-guard.yml
+#   (job de db-guard, "Provar o remetente de grupo em messages (t_35d5aa82)").
 
 set -Eeuo pipefail
 
