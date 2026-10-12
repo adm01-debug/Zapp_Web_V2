@@ -11,6 +11,7 @@ O pedido era: o teste de conexão Bitrix nomeia o PORTAL testado (o webhook conf
 Esse código veio no commit `bdfea4785665f19f1ec55188f6e1006dae31a445` ("fix(bitrix-api): teste de conexão nomeia portal testado (#222)"), que é ancestral do HEAD (`git merge-base --is-ancestor bdfea4785 HEAD` → SIM). A entrega original desta tentativa (commit `9a021bb58`) usava injeção de dependências (`BitrixDeps`); a versão integrada resolve o mesmo problema com `globalThis.fetch` roteirizado no teste, cobrindo os mesmos critérios.
 
 ## Prova
+Verificação executada agora, 0 falhas e 0 pulados: `ok | 13 passed | 0 failed (102ms)`.
 - vermelho antes (teste ATUAL contra o código pré-fix `bdfea4785^`):
   `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/bitrix-api/index.test.ts`
   → `R2-API-048: resposta de teste nomeia o portal configurado ... FAILED` (e mais 3 dos R2-API-048) → `FAILED | 9 passed | 4 failed`
