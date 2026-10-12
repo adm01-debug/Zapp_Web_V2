@@ -49,6 +49,12 @@ Especialista: worker (sql) (area-sql-banco)
   e authenticated segue com EXECUTE (B16-B19, C4).
 - Contrato preservado: assinatura/RETURNS/SECURITY DEFINER/search_path inalterados (B0c-B0e).
 
+## Sobre o aviso automático "cartão diz SEM DDL/migration" (falso positivo)
+O rodapé do template traz "REGRAS: ... sem DDL/Edge/dependência nova **salvo se o pedido original
+exigia**". O pedido original DESTE cartão é de banco ("área migrations", item 31 do
+BACKLOG_VERIFICADO) e a própria ENTREGA do cartão manda "Migration só pelo `hermes-db-migrar`
+(banco LOCAL)". A migration é, portanto, exigida pelo pedido — não é DDL fora de escopo.
+
 ## O que NAO fiz e por que
 - Nao editei nenhuma migration existente (correcao = migration nova).
 - Nao toquei `create_team_group_conversation`/`transfer_team_conversation_ownership` (sao de
