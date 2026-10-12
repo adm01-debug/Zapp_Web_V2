@@ -140,10 +140,10 @@ export function TranscriptionsHistoryView() {
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar em transcrições..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
-          {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')}><X className="w-3 h-3" /></Button>}
+          {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')} aria-label="Limpar busca"><X className="w-3 h-3" /></Button>}
         </div>
         <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-          <SelectTrigger className="w-[160px]"><Calendar className="w-4 h-4 mr-2" /><SelectValue placeholder="Período" /></SelectTrigger>
+          <SelectTrigger className="w-[160px]" aria-label="Filtrar período"><Calendar className="w-4 h-4 mr-2" /><SelectValue placeholder="Período" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todo período</SelectItem>
             <SelectItem value="today">Hoje</SelectItem>
