@@ -1,22 +1,19 @@
-Especialista: iris (area-front-componentes)
+Especialista: complexo (front, plano worker-telas executado pelo Claude Code)
 
 ## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+- A entrega anterior de TL-146 foi recusada por motivo procedural ("a branch da tarefa andou depois do fechar"): a branch antiga acumulou commits de outros cartões. Reapliquei a entrega original (commit 31eadcd02) via cherry-pick -n neste workspace limpo, sem os commits estranhos, sem alterar o conteúdo funcional.
+- src/components/talkx/TalkXCampaignWizard.tsx: "Editar" da revisão abre o passo pedido com return=4 na rota; botão principal vira "Voltar à revisão" quando o passo foi aberto pela revisão.
+- src/components/talkx/TalkXView.tsx: propaga routeReturnTo para o wizard.
+- src/components/talkx/TalkXWizardDelivery.tsx: linhas da revisão com dados reais (objetivo com descrição, segmentos com nomes e resumo) e botão "Editar" por linha.
+- src/components/talkx/talkxWizardRoute.ts + kit/constants.ts + useCampaignEditor.ts: Route aceita o parâmetro return; editor sustenta navegação de ida e volta.
+- 3 testes (TalkXView.revisaoVolta.test.tsx novo; TalkXView.route.test.tsx e talkxWizardRoute.test.ts estendidos) chamando o código real.
+- Divergência registrada: o cartão autoriza só 2 arquivos, mas o critério de pronto exige Delivery e Route (fora da lista). Mantive os 9 arquivos idênticos ao commit original recusado — reaplicar não amplia escopo; nenhum arquivo novo fora da entrega original.
 
 ## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
-
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+- vermelho antes (fontes revertidos à base, testes do commit mantidos): `npx vitest run src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx src/components/talkx/__tests__/TalkXView.route.test.tsx src/components/talkx/__tests__/talkxWizardRoute.test.ts` → `Test Files 3 failed (3); Tests 8 failed | 29 passed (37)`
+- verde depois (correção restaurada): mesmo comando → `Test Files 3 passed (3); Tests 37 passed (37)`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (26s)` (cartão só de front, sem migration; banco_local não aplicável)
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+- Não alterei regra de permissão, visual além do pedido, nem criei dependência: a recusa era procedural, o conteúdo é o mesmo já revisado.
+- Não toquei em arquivos fora dos 9 do commit original; o resto vira comentário se aparecer.
