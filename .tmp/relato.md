@@ -1,63 +1,46 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: worker (sql) (area-sql-banco)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+Restaurei na ponta de dia/2026-10-12 o trabalho já aprovado do cartão anterior (branch
+v2/refazer-reactions-emoji-contato-t-f23448-26100907574162, commit 01d6a22d9), que tinha
+ficado de fora por conflito com a base. Cherry-pickei os DOIS commits da branch:
+- 07c58c990 "fix(migrações): torna rollback de reactions resiliente a conflito" →
+  - supabase/migrations/20261007001008_message_reactions_agente_sem_chave_de_contato.sql (nova): gatilho
+    message_reactions_normalize_author que zera contact_id quando há user_id (autoria agente x cliente),
+    tabela de apoio do rollback e backfill das reações de agente legadas.
+  - scripts/db-audit/message-reactions-author-model.test.sh (nova): prova em Postgres 17 descartável
+    (docker) do defeito (2ª reação de agente ao mesmo emoji colide em 23505 na chave do contato),
+    migration, rollback executável extraído do próprio arquivo, idempotência e RLS como authenticated.
+  - scripts/ci/check-test-inventory.mjs: entrada na ALLOWLIST para o novo .test.sh.
+- 01d6a22d9 "fix(db): explicita rollback de reações" → move o rollback da migration para o formato
+  executável (prosa + bloco `-- Rollback (SQL executável, na ordem):`) e ajusta a extração no teste.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+Único conflito do cherry-pick: scripts/ci/check-test-inventory.mjs (a base já tinha duas entradas
+novas na ALLOWLIST de outro cartão: ia131-audio-stt-cadeia e multiplix-completion-item-queue).
+Resolvi MANTENDO as duas entradas da base E a entrada nova (message-reactions-author-model), sem
+remover nada — não reescrevi trabalho de outro cartão.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+Confirmei que o defeito ainda existia na base antes de mexer: nenhuma migration em
+supabase/migrations/ citava message_reactions_normalize_author na ponta de dia/2026-10-12.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Prova
+- verde: `bash scripts/db-audit/message-reactions-author-model.test.sh` →
+  `[OK] R2-DB-021: modelo de autoria de reacao provado (defeito vermelho -> verde -> rollback -> idempotente)`
+  (todos os [PASS] dos blocos A/B/ROLLBACK/C; EXIT=0)
+- vermelho dentro do próprio roteiro (bloco A, estado anterior): `[PASS] A: 2o agente no mesmo emoji
+  colide na chave do contato` e `[PASS] A: reacao de cliente colide com a de agente` — o defeito 23505
+  é reproduzido antes da migration e o mesmo INSERT passa depois (bloco C).
+- banco local: `hermes-db-migrar supabase/migrations/20261007001008_...sql` →
+  `APLICADA no banco LOCAL 'v2-2610121722c913' (produção não foi tocada).`
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (97s)` (dependencias/db_guard/tipos/
+  lint/migrations OK); o conjunto de banco nomeado não foi passado, então banco_local fica NÃO VERIFICADO.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não editei `.github/workflows/db-guard.yml`: agente não edita workflow (a entrada ficou na ALLOWLIST
+  do check-test-inventory.mjs, com a nota "promover pelo dono do workflow" — igual ao padrão dos demais
+  .test.sh de container). Registro em uma linha: passo pendente `bash scripts/db-audit/message-reactions-author-model.test.sh`.
+- Não mexi no edge (supabase/functions/**) nem no src/**: fora da minha área.
+- `check-test-inventory.mjs` reprova 6 órfãos (department-invite-contract-audit-vocabulary, ia-usage-outbox-duravel,
+  talkx-conversion-defaults, team-chat-department-transfer-guards, team-chat-media-contract,
+  team-direct-conversation-race) — todos já existem na ponta de dia/2026-10-12 e não estão na ALLOWLIST de base:
+  falha PRÉ-EXISTENTE, não introduzida por este cartão (o arquivo novo NÃO aparece como órfão).
