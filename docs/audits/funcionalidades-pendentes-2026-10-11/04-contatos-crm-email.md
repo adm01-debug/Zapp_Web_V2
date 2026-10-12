@@ -311,7 +311,7 @@ Implementado (#1812, #1846, #1855, lote 1 `4dcc5984`): contexto empresarial com 
 
 ## 6. Top 10 da área
 
-1. **GATE C aberto (P0):** 5 RPCs do CRM externo com `EXECUTE` para `anon` — a anon key pública lê ~57k empresas/48k clientes; revogar no `pgxfvjmuubtbowutlide` depende do admin.
+1. **GATE C aberto (P0 até a conferência):** 5 RPCs do CRM externo com `EXECUTE` para `anon`. Sem checagem interna (`auth.jwt()`/`auth.role()`), a anon key pública leria ~57k empresas/48k clientes; o corpo das funções está no banco do CRM e não foi lido aqui. Conferir e revogar no `pgxfvjmuubtbowutlide` depende do admin.
 2. **Integração Singu/CRM apagada em produção** (`VITE_CRM_INTEGRATION_ENABLED=false`, flag `crm.integration=false`): sidebar Perfil Singu, contexto de empresa no E-mail e CRM 360° não aparecem; RPC `get_contact_sidebar_by_phone` no Singu não comprovada.
 3. **Sincronização Zapp→CRM parada**: `crm-sync-worker` só manual, `CRM_SYNC_WORKER_ENABLED` nunca ligado — atendimentos encerrados não chegam ao CRM.
 4. **Visibilidade de contatos (CT-021) não implementada**: todo vendedor da fila vê ~3.098 de 3.106 contatos; regra "só os seus" decidida e não aplicada.

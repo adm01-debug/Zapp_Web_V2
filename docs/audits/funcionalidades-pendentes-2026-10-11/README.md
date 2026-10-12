@@ -58,12 +58,14 @@ O quadro geral tem quatro mensagens.
    - Relatório agendado por e-mail nunca sai.
    - A pesquisa CSAT não é coletada.
    - Vários botões gravam em tabela ou função que não existe, ou mostram sucesso sem ter feito nada (§3).
-2. **Os motores de envio em massa nunca foram provados em produção.**
-   - O Talk X nunca enviou de verdade: o ensaio interno está bloqueado.
+2. **Os motores de envio em massa não têm prova de funcionamento em produção.**
+   - Não há registro de envio real do Talk X: o ensaio interno (X035) está bloqueado. Um teste manual feito fora do
+     repositório não estaria visível nesta varredura.
    - O teto diário por número não conta os envios do Multiplix, o que arrisca o bloqueio do chip da empresa.
    - O envio de produto pelo catálogo também nunca foi provado em produção.
 3. **Segurança e LGPD têm pendências P0/P1 concretas** (§4).
-   - O CRM externo aceita a chave pública e expõe cerca de 57 mil empresas e 48 mil clientes.
+   - O CRM externo dá `EXECUTE` à chave pública em 5 funções. Se elas não tiverem checagem interna (não confirmado
+     aqui), ficam expostos cerca de 57 mil empresas e 48 mil clientes.
    - 7 dos 12 achados P0/P1 de segurança de 07/10 seguem abertos.
    - Não há expurgo nem exportação de dados ao titular.
    - Não existe prova de que o backup restaura.
@@ -79,41 +81,44 @@ O quadro geral tem quatro mensagens.
 "Concluído" = o artefato existe no código e está ligado a quem o usa. **Nada aqui é prova de funcionamento em
 produção**: banco, deploy e telas logadas não foram exercitados.
 
-| Módulo | Plano vigente | Total | Concluído | Parcial | Não iniciado | Bloqueado | Anexo |
-|---|---|---:|---:|---:|---:|---:|---|
-| Talk X | V4 `X001–X200` (01/10) | 200 | 37 | 114 | 42 | 7 | 01 |
-| Talk X | 17 telas do mock | 17 | 0 | 15 | 2 (Relatório, Importação CRM) | 0 | 01 |
-| Multiplix | Finalização `F01–F100` (29/09) | 100 | 54 | 27 | 11 | 7 | 01 |
-| IA | Plano IA 200 etapas (29/09) | 200 | 50 | 88 | 53 | 9 | 02 |
-| Dashboard | Plano Dashboard 100 (30/09) | 100 | 19 | 36 | 35 | 4 | 02 |
-| Dashboard | Prompt Mestre WIDE 24" (08/10) | 11 | 0 | 0 | 11 | 0 | 02 |
-| Telefonia | Finalização `T01–T100` | 100 | 78 | 7 | 8 | 6 | 03 |
-| Telefonia | Ligações WhatsApp `meowcaller` E001–E100 | 100 | 0 | 6 | 4 | 90 | 03 |
-| Team Chat | Plano F `F01–F100` (ledger de fato) | 100 | 22 | 32 | 41 | 3 | 03 |
-| Contatos | Contatos 100 (29/09) | 100 | 97 | 1 | 0 | 1 | 04 |
-| Contatos | Contatos por jornada `CT-001–CT-130` (08/10) | 130 | 3 | 21 | 105 | 1 | 04 |
-| Contatos | Sidebar do contato em 3 seções | 100 | 60 | 2 | 9 | 4 (+25 no repo Singu) | 04 |
-| Journey | SalesView + Journey 50 | 50 | 42 | 7 | 0 | 0 | 04 |
-| Journey | Histórico completo `S001–S100` + fase K | 111 | 28 | 8 | 75 | 0 | 04 |
-| E-mail | Sidebar `ES-01–ES-50` / alertas `U01–U12` / link `E01–E14` | 76 | 49 | 6 | 11 | 2 | 04 |
-| Tarefas | Finalização 100 / Fusão Quadro→Tarefas 50 | 150 | 128 | 1 | 4 | 2 | 05 |
-| Catálogo | Finalização `CT` 100 | 100 | 77 | 7 | 2 | 13 | 05 |
-| Mapa | Finalização 100 | 100 | 95 | 2 | 1 | 2 | 05 |
-| Etiquetas | Remoção 100 | 100 | 54 | 2 | 1 | 7 (+32 só com evidência histórica) | 05 |
-| WhatsApp | Multi-conexão Evolution GO 50 | 50 | 19 | 10 | 7 | 7 | 05 |
-| Atendimento | Distribuição (DOC-DIST-001) + escalonamento de SLA (DOC-CRON-001) | 13 | 0 | 2 | 11 | 0 | 05 |
-| Arquivos | Redesign 50 / Cartão = mockup 60 | 110 | 79 (25 sem consumidor) | 8 | 17 | 1 | 06 |
-| Mídia | Controles de volume 50 / Volume de mídia 50 | 100 | 88 | 2 | 5 | 1 | 06 |
-| Talk Me | Plano 100 / Refinamento 50 | 150 | 108 | 28 | 0 | 6 | 06 |
-| Visual | Skins Opera GX 100 | 100 | 64 | 8 | 0 | 20 (QA logado) | 06 |
-| Visual | Auditoria de fontes 100 / Correção de layout 30 | 130 | 69 | 30 | 8 | 3 | 06 |
-| CI | GitHub Actions 100 (01/10) | 100 | 67 | 9 | 9 | 12 | 07 |
-| Banco | Banco Único 201 | 201 | 0 | 0 | 0 | 175 (plano se declara não executável) | 07 |
-| Engenharia | Paridade V1/V3 100 | 100 | 2 | 71 | 21 | 6 | 07 |
-| Segurança | Achados P0/P1 de 07/10 | 12 | 5 | 0 | 7 | 0 | 07 |
-| LGPD / Backup | Checklists da política e da estratégia | 21 | 0 | 1 | 13 | 2 | 07 |
-| Fábrica de agentes | Ferramentas `AT-001–018` + `GM-001–006` | 24 | 3 | 0 | 0 | 18 | 07 |
-| Legado | `COMPLETE_SYSTEM_FEATURES`, `IMPROVEMENT_PLAN`, `FORGOTTEN_FEATURES`, README, POP etc. | — | ver anexo | 46 | 16 | 6 | 08 |
+"Não verificável" = depende de banco vivo, deploy, navegador logado, outro repositório ou aceite humano. "Outros" =
+divergente, substituído, cancelado ou não aplicável. Em cada linha, as seis colunas somam o total.
+
+| Módulo | Plano vigente | Total | Concluído | Parcial | Não iniciado | Bloqueado | Não verificável | Outros | Anexo |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Talk X | V4 `X001–X200` (01/10) | 200 | 37 | 114 | 42 | 7 | 0 | 0 | 01 |
+| Talk X | 17 telas do mock | 17 | 0 | 15 | 2 (Relatório, Importação CRM) | 0 | 0 | 0 | 01 |
+| Multiplix | Finalização `F01–F100` (29/09) | 100 | 54 | 27 | 11 | 7 | 1 | 0 | 01 |
+| IA | Plano IA 200 etapas (29/09) | 200 | 50 | 88 | 53 | 9 | 0 | 0 | 02 |
+| Dashboard | Plano Dashboard 100 (30/09) | 100 | 19 | 36 | 35 | 4 | 6 | 0 | 02 |
+| Dashboard | Prompt Mestre WIDE 24" (08/10) | 11 | 0 | 0 | 11 | 0 | 0 | 0 | 02 |
+| Telefonia | Finalização `T01–T100` | 100 | 78 | 7 | 8 | 6 | 1 | 0 | 03 |
+| Telefonia | Ligações WhatsApp `meowcaller` E001–E100 | 100 | 0 | 6 | 4 | 90 | 0 | 0 | 03 |
+| Team Chat | Plano F `F01–F100` (ledger de fato) | 100 | 22 | 32 | 41 | 3 | 2 | 0 | 03 |
+| Contatos | Contatos 100 (29/09) | 100 | 97 | 1 | 0 | 1 | 0 | 1 (divergente) | 04 |
+| Contatos | Contatos por jornada `CT-001–CT-130` (08/10) | 130 | 3 | 21 | 105 | 1 | 0 | 0 | 04 |
+| Contatos | Sidebar do contato em 3 seções | 100 | 60 | 2 | 9 | 4 | 25 (repo Singu) | 0 | 04 |
+| Journey | SalesView + Journey 50 | 50 | 42 | 7 | 0 | 0 | 1 | 0 | 04 |
+| Journey | Histórico completo `S001–S100` + fase K | 111 | 28 | 8 | 75 | 0 | 0 | 0 | 04 |
+| E-mail | Sidebar `ES-01–ES-50` / alertas `U01–U12` / link `E01–E14` | 76 | 49 | 6 | 11 | 2 | 8 | 0 | 04 |
+| Tarefas | Finalização 100 / Fusão Quadro→Tarefas 50 | 150 | 128 | 1 | 4 | 2 | 15 (portões manuais) | 0 | 05 |
+| Catálogo | Finalização `CT` 100 | 100 | 77 | 7 | 2 | 13 | 0 | 1 (divergente) | 05 |
+| Mapa | Finalização 100 | 100 | 95 | 2 | 1 | 2 | 0 | 0 | 05 |
+| Etiquetas | Remoção 100 | 100 | 54 | 2 | 1 | 7 | 32 (só evidência histórica) | 4 (substituídos/n.a.) | 05 |
+| WhatsApp | Multi-conexão Evolution GO 50 | 50 | 19 | 10 | 7 | 7 | 7 | 0 | 05 |
+| Atendimento | Distribuição (DOC-DIST-001) + escalonamento de SLA (DOC-CRON-001) | 13 | 0 | 2 | 11 | 0 | 0 | 0 | 05 |
+| Arquivos | Redesign 50 / Cartão = mockup 60 | 110 | 79 (25 sem consumidor) | 8 | 17 | 1 | 3 | 2 (cancelados) | 06 |
+| Mídia | Controles de volume 50 / Volume de mídia 50 | 100 | 88 | 2 | 5 | 1 | 4 | 0 | 06 |
+| Talk Me | Plano 100 / Refinamento 50 | 150 | 108 | 28 | 0 | 6 | 7 | 1 (substituído) | 06 |
+| Visual | Skins Opera GX 100 | 100 | 64 | 8 | 0 | 20 (QA logado) | 6 | 2 (n.a.) | 06 |
+| Visual | Auditoria de fontes 100 / Correção de layout 30 | 130 | 69 | 30 | 8 | 3 | 14 | 6 (n.a./substituídos) | 06 |
+| CI | GitHub Actions 100 (01/10) | 100 | 67 | 9 | 9 | 12 | 3 | 0 | 07 |
+| Banco | Banco Único 201 | 201 | 0 | 0 | 0 | 175 (plano se declara não executável) | 18 (entregas do Singu) | 8 (obsoletos) | 07 |
+| Engenharia | Paridade V1/V3 100 | 100 | 2 | 71 | 21 | 6 | 0 | 0 | 07 |
+| Segurança | Achados P0/P1 de 07/10 | 12 | 5 | 0 | 7 | 0 | 0 | 0 | 07 |
+| LGPD / Backup | Checklists da política e da estratégia | 21 | 0 | 1 | 13 | 2 | 5 | 0 | 07 |
+| Fábrica de agentes | Ferramentas `AT-001–018` + `GM-001–006` | 24 | 3 | 0 | 0 | 18 | 3 | 0 | 07 |
+| Legado | `COMPLETE_SYSTEM_FEATURES`, `IMPROVEMENT_PLAN`, `FORGOTTEN_FEATURES`, README, POP etc. | — | ver anexo | 46 | 16 | 6 | — | 16 (divergentes) | 08 |
 
 Leituras rápidas do placar:
 
@@ -164,7 +169,7 @@ que mostram. **É a lista que mais afeta a confiança de quem usa o sistema.**
 
 | Risco | Situação | Prioridade | Quem destrava | Anexo |
 |---|---|---|---|---|
-| **CRM externo aberto à chave pública (GATE C)** | 5 funções do banco de CRM `pgxfvjmuubtbowutlide` têm `EXECUTE` para `anon`: quem tem a chave pública lê ~57 mil empresas e ~48 mil clientes (`docs/crm-external-grants.md:23-25`) | P0 | Administrador do CRM | 04 |
+| **CRM externo aberto à chave pública (GATE C) — exposição não confirmada** | 5 funções do banco de CRM `pgxfvjmuubtbowutlide` têm `EXECUTE` para `anon`. Segundo `docs/crm-external-grants.md:23-31`, sem checagem interna (`auth.jwt()`/`auth.role()`) quem tem a chave pública lê ~57 mil empresas e ~48 mil clientes. O corpo das funções está no banco do CRM, fora deste repositório, e não foi lido: o primeiro passo é conferir essas checagens | P0 até a conferência | Administrador do CRM | 04 |
 | **7 de 12 achados P0/P1 de segurança de 07/10 abertos** | Histórico gravado em negócio ou contato fora do alcance (`SEC-RLS_TAREFAS-01`); download e CSV com dado pessoal sem checagem de permissão (`SEC-SAIDAS-01/02`); mensagem "do cliente" forjável e descoberta de IDs de contatos alheios (`SEC-RLS_CONTATOS-01/02/03`); mídia privada legível via `media_url` (`SEC-DEFINER-01`) | P0/P1 | Equipe (migrations + front) | 07, 04 |
 | **Visibilidade de contatos** | A regra "cada vendedor vê só os seus" (CT-021) foi decidida e não aplicada: um vendedor vê 3.098 de 3.106 contatos. Máscara, registro de quem revelou e limite por hora (CT-091 a CT-110) não começaram | P1 | Equipe | 04 |
 | **LGPD só no papel** | Sem expurgo nem anonimização por prazo (só o Talk X tem), sem exportação ao titular, sem DPO definido; checklist 0/14 com o documento marcado "Aprovado". Notas internas e dados pessoais vão ao provedor de IA sem mascarar CPF | P1 | Dono (DPO) + equipe | 07, 02, 08 |
@@ -172,7 +177,7 @@ que mostram. **É a lista que mais afeta a confiança de quem usa o sistema.**
 | **Sem observabilidade de produção** | Sem Sentry e sem monitor externo de disponibilidade. O deploy de Edge Functions ficou **automático** no push desde 07/10, sem alerta de falha. O `settings-guard` dá falso alarme a cada 6 h | P1 | Equipe | 07 |
 | **Testes com login real mortos** | Os últimos 60 runs do `e2e-logado` foram cancelados por timeout de 15 min; o alerta usa `if: failure()` e não dispara em cancelamento (`.github/workflows/e2e-logado.yml:49,221`) | P0 | Equipe | 07 |
 | **Teto diário por número subconta o Multiplix** | O limite lê `multiplix_recipients`, mas o worker novo grava em `multiplix_delivery_items`. Talk X e Multiplix no mesmo chip podem passar do teto (MX04) | P0 | Equipe | 01 |
-| **Motor de campanhas nunca ensaiado** | O ensaio X035 com números da equipe está bloqueado; o primeiro envio real seria para cliente | P0 | Dono (números e chip — N04) | 01 |
+| **Motor de campanhas sem ensaio registrado** | O ensaio X035 com números da equipe está bloqueado e não há registro de envio real no repositório; se nada foi testado fora dele, o primeiro envio real seria para cliente | P0 | Dono (números e chip — N04) | 01 |
 | **Custo de IA pode sumir** | A fila "durável" grava em `ai_usage_outbox`/`outbox_events`, que não existem em nenhuma migration. O alerta de consumo anômalo é só projeto. A cota libera o gasto quando o banco falha | P1 | Equipe | 02 |
 | **Credenciais pendentes de rotação** | Evolution, service_role, Bearer Lovable, token do TL-099; uma credencial de infraestrutura guardada sem cofre num workflow N8N inativo; `departments.whatsapp_api_key` em texto puro fora do Vault | P1 | Dono | 07 |
 | **Code Scanning** | 8 alertas abertos, inclusive XSS de severidade alta no Talk X | P1 | Equipe | 07 |
@@ -187,7 +192,7 @@ A ordem cruza impacto no negócio, risco e esforço. "Destravar" indica quando o
 | 1 | Mensagens agendadas sem processador de envio | P0 | — | 08 |
 | 2 | Multiplix não envia pela tela (MX01) | P0 | — | 01 |
 | 3 | Teto diário por número ignora o Multiplix (MX04): risco de bloqueio do WhatsApp | P0 | — | 01 |
-| 4 | CRM externo exposto à chave pública (GATE C) | P0 | Admin do CRM | 04 |
+| 4 | CRM externo com `EXECUTE` para a chave pública (GATE C): conferir as checagens internas das 5 funções e revogar `anon` | P0 até a conferência | Admin do CRM | 04 |
 | 5 | 7 achados P0/P1 de segurança de 07/10 + 3 P1 de RLS de contatos (Y24) | P0/P1 | — | 07, 04 |
 | 6 | E2E com login real cancelado há mais de uma semana, sem alerta | P0 | — | 07 |
 | 7 | Talk X sem ensaio real antes do primeiro cliente (X035) | P0 | Dono (N04) | 01 |
@@ -227,7 +232,7 @@ Itens que nenhum agente consegue fechar sozinho. Cada um destrava um bloco de pe
 | Ratificar o plano do Team Chat (F ou TC). Os dois se dizem vigentes e todo o trabalho real segue o F | Ordem e contagem do Team Chat | 03 |
 | Gates G0/G1 das ligações WhatsApp: número reserva, aceite de risco, parecer jurídico. Ou decidir pela API oficial da Meta | 90 etapas do `meowcaller` | 03 |
 | Cadastrar `SIP_PASSWORD`, `BITRIX_WEBHOOK_URL` e o agendamento das gravações | VoIP e gravações | 03 |
-| Pedir ao admin do CRM a revogação de `anon` (GATE C) | Fecha a exposição de dados do CRM | 04 |
+| Pedir ao admin do CRM que confira as checagens internas das 5 funções e revogue `anon` (GATE C) | Confirma ou descarta a exposição de dados do CRM e a fecha | 04 |
 | Ligar `VITE_CRM_INTEGRATION_ENABLED`/`crm.integration` e `CRM_SYNC_WORKER_ENABLED` | Painel do contato, contexto de empresa, CRM 360° e sincronização | 04 |
 | Política de envio de relatório para e-mail externo (conflito com "nenhuma informação sai do sistema") | Relatórios agendados | 02 |
 | Nomear o DPO e aprovar os prazos de retenção | Trilha LGPD | 07 |

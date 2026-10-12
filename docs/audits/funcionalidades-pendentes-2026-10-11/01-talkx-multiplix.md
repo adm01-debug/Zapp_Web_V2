@@ -8,7 +8,7 @@ reverificado no código. Nenhum SQL foi executado; "aplicado em produção" foi 
 regenerado do banco (commits `chore(db): sincronizar artefatos derivados`).
 
 **Critério de "concluído" usado aqui:** o delta da etapa existe no repositório (código + teste versionado) e está
-ligado a quem usa. **Nenhum** item está provado em execução real: o Talk X nunca enviou em produção, não há ensaio
+ligado a quem usa. **Nenhum** item está provado em execução real: não há registro de envio do Talk X em produção, não há ensaio
 (X035), nem aceite visual do dono (X198). Componente que existe mas não é montado em tela conta como PARCIAL.
 
 ---
@@ -101,7 +101,7 @@ em `useCampaignEditor.ts:765`).
 
 | ID | Funcionalidade | Estado | Planejado | Existe hoje | Falta | Impacto | Prio | Dependência |
 |---|---|---|---|---|---|---|---|---|
-| X035 | Ensaio real com ≥ 50 números da equipe e queda proposital | BLOQUEADO | Campanha interna real antes de qualquer cliente | Nada: sem `docs/talkx/recovery/ENSAIO_MOTOR.md`; `docs/talkx/recovery/evidence/` só tem X023 | Executar o ensaio | O motor nunca enviou em produção; o primeiro envio real seria para cliente | P0 | N04 (números e chip do ensaio) |
+| X035 | Ensaio real com ≥ 50 números da equipe e queda proposital | BLOQUEADO | Campanha interna real antes de qualquer cliente | Nada: sem `docs/talkx/recovery/ENSAIO_MOTOR.md`; `docs/talkx/recovery/evidence/` só tem X023 | Executar o ensaio | Não há registro de envio do motor em produção; se nada foi testado fora do repositório, o primeiro envio real seria para cliente | P0 | N04 (números e chip do ensaio) |
 
 ### 3.5 Talk X — Fase 4 · Dados comerciais e vínculo CRM (X036–X041: 0 concluídos)
 
@@ -466,7 +466,7 @@ Concluídos em código (54): F01–F09, F11–F16, F19–F26, F28–F43, F45–F
 ## 6. Top 10 da área
 
 1. **Multiplix não envia pela tela** — "Iniciar agora" conclui com zero envios e "Iniciar" do monitor falha por falta de bloco/conexão (MX01; F10/F44/F51/F55). P0.
-2. **Talk X nunca foi ensaiado nem usado em produção** — X035 bloqueado por N04; o primeiro envio real seria para cliente. P0.
+2. **Talk X sem ensaio nem envio real registrado** — X035 bloqueado por N04; se nada foi testado fora do repositório, o primeiro envio real seria para cliente. P0.
 3. **Teto por número subconta o Multiplix** (MX04: X018/X019/F17) — dois módulos no mesmo chip podem estourar o limite e bloquear o WhatsApp da empresa. P0.
 4. **Sem dados comerciais** (X036–X041, X056) — filtros de empresa/cidade/vendedor/funil/RFM vazios e nenhuma receita/ROI por campanha (N36 trava as vendas). P1.
 5. **Relatório de campanha concluída não existe** (tela 14, X161–X169) — campanha concluída abre o monitor. P1.
