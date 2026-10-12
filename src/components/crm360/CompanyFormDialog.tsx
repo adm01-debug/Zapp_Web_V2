@@ -175,9 +175,9 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
 
             {/* Status */}
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label htmlFor="status">Status</Label>
               <Select value={form.status} onValueChange={v => handleChange('status', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger id="status"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map(s => (
                     <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
@@ -188,9 +188,9 @@ export function CompanyFormDialog({ open, onOpenChange, company, onSuccess }: Co
 
             {/* Porte */}
             <div className="space-y-1.5">
-              <Label>Porte RF</Label>
+              <Label htmlFor="porte_rf">Porte RF</Label>
               <Select value={form.porte_rf} onValueChange={v => handleChange('porte_rf', v)}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger id="porte_rf"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {PORTE_OPTIONS.map(p => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
