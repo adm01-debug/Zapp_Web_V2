@@ -20,3 +20,5 @@ Especialista: iris (executado pelo perfil designer — worker design, skill desi
 - Não toquei em `src/components/ui/*` nem em nenhum arquivo fora dos três do cartão.
 - Não mexi no botão ⓘ "Política da coluna" do cabeçalho: ele não é controle deste cartão e tem decisão própria na base (área de 24 px, 44 no celular).
 - Não adicionei migration, Edge Function ou dependência.
+
+- Nota sobre o aviso do juiz: os arquivos que o cartão não lista no diff (TasksModule.tsx, shared/ContactAvatar.tsx, DateLabel.tsx, PriorityPill.tsx, StatusPill.tsx, TaskCheckbox.tsx, TasksUiContext.tsx, tasksUi.ts, SharedWorkItemCard/WorkItemCard.tsx, hooks/tasks/workItemFormat.ts e workItem.types.ts/useMyWorkItems.ts) NÃO foram editados à mão aqui: entram pela FAIXA DOS PAIS trazida por `git cherry-pick` (commits `0c0868a01`, `f7c4d40e1`), que é a dependência declarada no cartão. Os únicos arquivos tocados por este refazer estão em "O que mudou".
