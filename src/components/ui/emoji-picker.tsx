@@ -78,7 +78,7 @@ export function EmojiPicker({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon" className={cn('h-9 w-9', className)}>
+          <Button variant="ghost" size="icon" aria-label="Inserir emoji" className={cn('h-9 w-9', className)}>
             <Smile className="h-5 w-5" />
           </Button>
         )}
@@ -295,6 +295,7 @@ export function QuickReactionPicker({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            aria-label="Inserir emoji"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted"
           >
             <Smile className="h-4 w-4 text-muted-foreground" />
