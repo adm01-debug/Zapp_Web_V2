@@ -1,63 +1,56 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: worker (sql) (area-sql-banco)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## Como resolvi o motivo da retomada (conflito com a ponta dia/2026-10-12)
+- Trabalho anterior recuperado por `git cherry-pick 06360db40` (branch
+  `v2/rpcs-saida-remocao-coluna-role-t-c5c23f5-261009090416d7`).
+- Conflito UNICO: `.github/workflows/db-guard.yml` — a ponta de hoje tinha, no mesmo ponto,
+  o passo novo TC-009 (`team-receipts-reactions-conversation-id.test.sh`). Resolvi PRESERVANDO
+  os DOIS passos: o TC-009 da ponta ficou intacto e o passo TC-004 desta entrega entrou logo
+  abaixo. Nada que ja estava na ponta foi removido.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## O defeito ainda existe no codigo ATUAL?
+- Sim. A ultima definicao de `leave_team_group`/`remove_team_member` antes da correcao e
+  20261003272707_reconcile_local_replay_with_canonical.sql (linhas 996-1049 e 1292-1344), que
+  usa a coluna INEXISTENTE `tcm.role`; a coluna real e `member_role`. Nenhuma migration
+  posterior a 20261006170426 redefine essas RPCs (varri o diretorio; resultado vazio).
+- Provado no codigo real: BLOCO A do contrato extrai o corpo VIGENTE verbatim do repo e
+  reproduz o erro 42703 no caminho feliz.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## O que mudou
+- `supabase/migrations/20261006170426_fix_member_role_leave_remove_rpcs.sql` (nova): mesmos
+  assinatura/RETURNS jsonb/SECURITY DEFINER/search_path e mesmas guardas das RPCs; unica
+  mudanca e ler/gravar `member_role` (a promocao do proximo dono passou de `SET role` para
+  `SET member_role`). `-- Rollback:` executavel no topo (SQL comentado, na ordem, restaurando
+  os dois corpos anteriores com `tcm.role`).
+- `scripts/db-audit/team-member-role-rpcs.test.sh` (novo contrato): BLOCO A = defeito no corpo
+  vigente, BLOCO B = correcao aplicada, BLOCO C = executa o rollback real; roda como os papeis
+  reais (`authenticated`/`anon`). Usa Docker real (cria roles globais).
+- `.github/workflows/db-guard.yml`: passo `TC-004` registrado (o inventario do CI reprova
+  `.test.sh` sem passo) — preservando o passo TC-009 da ponta.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+## Prova (PostgreSQL 17 descartavel, migrations reais, papel real)
+- vermelho antes: `TEAM_MEMBER_ROLE_TEST_MIGRATIONS_DIR=$PWD/supabase/migrations bash scripts/db-audit/team-member-role-rpcs.test.sh`
+  → `[PASS] A1 (defeito) leave_team_group estoura no caminho feliz: column tcm.role does not exist`
+  e `[PASS] A2 (defeito) remove_team_member estoura no caminho feliz: column tcm.role does not exist`
+- verde depois: mesma execucao →
+  `[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)`
+  (todos os PASS, incluindo `B2b a promocao gravou member_role=owner (coluna real)` e
+  `C5/C6 rollback executado: ... voltou ao erro anterior em tcm.role`)
+- `hermes-db-migrar supabase/migrations/20261006170426_...` →
+  `APLICADA no banco LOCAL 'v2-261012170456d0' (producao nao foi tocada)`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (82s)` (dependencias/db_guard/tipos/lint/migrations OK)
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
+## Passada de efeito colateral
+- Gatilhos: a migration nao toca dados (so `CREATE OR REPLACE FUNCTION`), nenhum backfill.
+- Atomica: migration aplica em uma transacao; qualquer erro desfaz tudo.
+- Sem oraculo: as guardas de erro continuam identicas (not_authenticated/not_a_member/
+  actor_not_a_member/target_not_a_member/not_authorized/cannot_remove_owner/cannot_remove_self).
+- Permissao: nenhum GRANT/REVOKE/policy alterado — `test.sh` confere que anon segue sem EXECUTE
+  e authenticated segue com EXECUTE (B16-B19, C4).
+- Contrato preservado: assinatura/RETURNS/SECURITY DEFINER/search_path inalterados (B0c-B0e).
 
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
-
-## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## O que NAO fiz e por que
+- Nao editei nenhuma migration existente (correcao = migration nova).
+- Nao toquei `create_team_group_conversation`/`transfer_team_conversation_ownership` (sao de
+  outro cartao, ja corrigidos na ponta).
+- Nao editei o passo TC-009 da ponta.
