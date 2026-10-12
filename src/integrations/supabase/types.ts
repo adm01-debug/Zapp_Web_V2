@@ -11514,16 +11514,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      list_contacts_vip: {
-        Args: never
-        Returns: {
-          id: string
-          is_vip: boolean
-          name: string
-          surname: string
-          updated_at: string
-        }[]
-      }
       list_multiplix_claimable_items: {
         Args: { p_dispatch_id: string; p_limit?: number }
         Returns: {

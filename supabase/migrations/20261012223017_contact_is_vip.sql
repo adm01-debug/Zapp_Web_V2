@@ -1,23 +1,21 @@
 -- contact_is_vip
--- Rollback: desfaz a coluna is_vip, as duas RPCs de VIP e a trilha de auditoria do VIP. A
--- etiqueta de origem (o elemento 'vip' em contacts.tags) NUNCA e tocada por esta migration,
--- entao nenhum dado se perde: reaplicar recria o mesmo backfill.
--- Rollback (SQL executavel, na ordem inversa):
---   DROP TRIGGER IF EXISTS trg_audit_contact_vip_change ON public.contacts;
---   DROP FUNCTION IF EXISTS public.audit_contact_vip_change();
---   DROP FUNCTION IF EXISTS public.list_contacts_vip();
---   DROP FUNCTION IF EXISTS public.set_contact_vip(uuid, boolean);
---   ALTER TABLE public.contacts DROP COLUMN IF EXISTS is_vip;
-
+-- Rollback: desfaz a coluna is_vip, a RPC set_contact_vip e a trilha de auditoria do VIP; a etiqueta de origem (o elemento 'vip' em contacts.tags) NUNCA e tocada, entao nenhum dado se perde ao reverter.
+-- Rollback (SQL executável, na ordem):
+--   drop trigger if exists trg_audit_contact_vip_change on public.contacts;
+--   drop function if exists public.audit_contact_vip_change();
+--   drop function if exists public.set_contact_vip(uuid, boolean);
+--   alter table public.contacts drop column if exists is_vip;
+--
 -- CONTEXTO
 -- O selo VIP do inbox vinha da ETIQUETA 'vip' gravada em contacts.tags
 -- (src/components/inbox/VirtualizedRealtimeList.tsx:355:
 --  tags.some(t => t.toLowerCase() === 'vip')). A remocao das etiquetas (cartao t_b7b5d9f3)
 -- apaga essa origem; o campo proprio contacts.is_vip preserva o estado.
--- Esta migration roda ANTES da remocao de tags (versao 20261012214235 e anterior a versao
+-- Esta migration roda ANTES da remocao de tags (versao 20261012223017 e anterior a versao
 -- que a remocao vai reservar), portanto o backfill ainda encontra a etiqueta na base.
 -- Fonte unica do backfill = contacts.tags, exatamente o que o front lia (case-insensitive,
--- sem trim: lower(t) = 'vip').
+-- sem trim: lower(t) = 'vip'). Quem le is_vip no front e o mesmo carregamento do contato
+-- (a coluna vem na consulta que ja existe), por isso nao ha RPC de leitura.
 
 -- ── 1) Coluna propria -----------------------------------------------------------
 ALTER TABLE public.contacts
@@ -41,7 +39,7 @@ UPDATE public.contacts c
 
 ALTER TABLE public.contacts ENABLE TRIGGER update_contacts_updated_at;
 
--- ── 3) RPCs de VIP --------------------------------------------------------------
+-- ── 3) RPC de alternar VIP ------------------------------------------------------
 -- Alternar (ligar/desligar): mesma autorizacao do UPDATE da RLS (can_edit_contact) — quem
 -- pode editar o contato muda o VIP. anon nao executa (ACL no bloco 5).
 -- Devolve o valor resultante.
@@ -79,24 +77,6 @@ AS $function$ DECLARE v_value boolean; BEGIN
 END;
 $function$;
 
--- Ler o conjunto completo (SEM paginacao): todos os contatos vivos no escopo do chamador,
--- com o estado de VIP e a idade. Ordena VIP primeiro, depois nome.
-CREATE OR REPLACE FUNCTION public.list_contacts_vip()
- RETURNS TABLE(id uuid, name text, surname text, is_vip boolean, updated_at timestamp with time zone)
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-  SELECT c.id, c.name, c.surname, c.is_vip, c.updated_at
-  FROM public.contacts c
-  WHERE c.deleted_at IS NULL
-    AND public.can_edit_contact(c.assigned_to, c.queue_id,
-          (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v),
-          (SELECT public.get_profile_id_for_user(auth.uid())),
-          (SELECT public.is_admin_or_supervisor(auth.uid())))
-  ORDER BY c.is_vip DESC, c.name ASC NULLS LAST, c.id ASC
-$function$;
-
 -- ── 4) Auditoria de cada mudanca de VIP -----------------------------------------
 -- Mesmo padrao de audit_contact_address_change (20260929150000): AFTER UPDATE OF is_vip, so
 -- registra quando o valor REALMENTE mudou. Sem PII — apenas o id do contato e o valor novo.
@@ -131,8 +111,6 @@ EXECUTE FUNCTION public.audit_contact_vip_change();
 
 -- ── 5) ACL: fechar por padrao (funcao nova nasce com EXECUTE para PUBLIC) --------
 REVOKE EXECUTE ON FUNCTION public.set_contact_vip(uuid, boolean) FROM PUBLIC, anon;
-REVOKE EXECUTE ON FUNCTION public.list_contacts_vip() FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.audit_contact_vip_change() FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION public.set_contact_vip(uuid, boolean) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.list_contacts_vip() TO authenticated, service_role;
