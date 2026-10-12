@@ -29,6 +29,9 @@ function read(rel) {
 
 // Testes conhecidos ainda fora do CI; remover linha quando a etapa correspondente mergear.
 const ALLOWLIST = new Set([
+  // SL-079: prova em container descartável da reabertura de conversa em ingest_inbound_message;
+  // passo de YAML a promover em db-guard.yml pelo dono do workflow (agente não edita workflow).
+  'scripts/db-audit/ingest-inbound-reopen-conversation.test.sh',
   // --- .test.sh — TalkX features em andamento; registrar em db-guard.yml quando prontas ---
   // X034: harness de integração do motor com o provedor falso (Postgres descartável + PostgREST +
   // fake-evolution). Roda no passo Deno/harness da Fase 3; promover em db-guard.yml quando maduro.
