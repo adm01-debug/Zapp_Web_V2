@@ -103,16 +103,20 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     });
   });
 
-  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
+  it('traz o toggle de concluídas na linha de captura e deixa a barra sem duplicar', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
+
+    const captura = await screen.findByTestId('tasks-capture-row');
+    expect(within(captura).getByTestId('quick-add')).toBeTruthy();
+    expect(within(captura).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
 
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
     expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
     expect(within(barra).getByLabelText('Contato')).toBeTruthy();
     expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
-    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+    expect(within(barra).queryByRole('switch', { name: 'Mostrar concluídas' })).toBeNull();
     expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
   });
 
@@ -141,7 +145,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(await screen.findByText('Nenhum resultado')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 

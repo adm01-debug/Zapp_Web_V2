@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Filter, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Switch } from '@/components/ui/switch';
 import { useMyWorkItems }   from '@/hooks/tasks/useMyWorkItems';
 import { openContactChat }  from '@/components/catalog/useSendProduct';
 import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/workItemAggregates';
@@ -255,10 +256,21 @@ export function TasksModule() {
       <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
-      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}
+      {mode !== 'agenda' && (
+        <div data-testid="tasks-capture-row" className="flex flex-col gap-2 xl:flex-row xl:items-start">
+          <div className="min-w-0 flex-1">
+            <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />
+          </div>
+          <label className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-border bg-input px-3 text-[13px]">
+            <Switch checked={filtros.filters.done} onCheckedChange={filtros.toggleDone} aria-label="Mostrar concluídas" />
+            Mostrar concluídas
+          </label>
+        </div>
+      )}
 
-      {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
+      {/* Toolbar: troca de modo à esquerda + barra de filtros (etapa 45) */}
       <div className="flex items-center gap-3 flex-wrap">
+        <ModeSwitcher mode={mode} onChange={setMode} />
         <TasksFilterBar
           filters={filtros.filters}
           searchText={filtros.textoDaBusca}
@@ -270,10 +282,8 @@ export function TasksModule() {
           onToggleDone={filtros.toggleDone}
           onClear={filtros.clear}
           isActive={filtros.isActive}
+          showDoneToggle={mode === 'agenda'}
         />
-        <div className="ml-auto">
-          <ModeSwitcher mode={mode} onChange={setMode} />
-        </div>
       </div>
 
       {/* Conteúdo com troca de modo */}

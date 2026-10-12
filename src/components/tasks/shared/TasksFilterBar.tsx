@@ -27,6 +27,7 @@ interface Props {
   onToggleDone: () => void;
   onClear: () => void;
   isActive: boolean;
+  showDoneToggle?: boolean;
 }
 
 /** Fase F (auditoria): nome vazio não pode virar gatilho em branco, e um contato
@@ -41,6 +42,7 @@ function rotuloContato(contactId: string | null, contato: { id: string; name: st
 export function TasksFilterBar({
   filters, searchText, contactOptions,
   onSearch, onPrio, onContact, onToggleAlarm, onToggleDone, onClear, isActive,
+  showDoneToggle = true,
 }: Props) {
   const [contatoAberto, setContatoAberto] = useState(false);
   const contatoAtual = contactOptions.find(c => c.id === filters.contact) ?? null;
@@ -108,10 +110,12 @@ export function TasksFilterBar({
         Com alarme
       </label>
 
-      <label className="flex items-center gap-2 h-11 px-3 rounded-xl border border-border bg-input text-[13px]">
-        <Switch checked={filters.done} onCheckedChange={onToggleDone} aria-label="Mostrar concluídas" />
-        Mostrar concluídas
-      </label>
+      {showDoneToggle && (
+        <label className="flex items-center gap-2 h-11 px-3 rounded-xl border border-border bg-input text-[13px]">
+          <Switch checked={filters.done} onCheckedChange={onToggleDone} aria-label="Mostrar concluídas" />
+          Mostrar concluídas
+        </label>
+      )}
 
       {isActive && (
         <Button

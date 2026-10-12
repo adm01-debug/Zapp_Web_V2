@@ -141,7 +141,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
   it('com filtro ativo o vazio é o "filter" e "Limpar filtros" desfaz', () => {
     const { onClearFilter } = renderLista(buckets(), { filtersActive: true });
 
-    expect(screen.getByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(screen.getByText('Nenhum resultado')).toBeTruthy();
     expect(screen.queryByText('Nada por aqui')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
