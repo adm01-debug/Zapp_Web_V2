@@ -168,7 +168,7 @@ describe('X049 — presets do mock 17', () => {
     renderConfirm('removerSupressao');
 
     const botao = screen.getByRole('button', { name: 'Remover' });
-    expect(botao.className).toContain('bg-violet-600');
+    expect(botao.className).toContain('bg-violeta');
     expect(botao.className).not.toContain('bg-primary');
   });
 });

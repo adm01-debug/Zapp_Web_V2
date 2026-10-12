@@ -165,7 +165,7 @@ export function TalkXSegmentBuilder({
                         um 2º grupo AND e "G" para o 3º grupo, qualquer que fosse o match. */}
                     <span
                       aria-label={`Grupo ${gi + 1}: ${g.match === 'and' ? 'E (AND)' : 'OU (OR)'}`}
-                      className={cn('min-w-7 h-7 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center shrink-0', g.match === 'and' ? 'bg-primary/20 text-primary-glow' : 'bg-dash-violet/15 text-dash-violet')}
+                      className={cn('min-w-7 h-7 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center shrink-0', g.match === 'and' ? 'bg-primary/20 text-primary-glow' : 'bg-violeta/15 text-[hsl(var(--violeta-text))]')}
                     >{g.match === 'and' ? 'E' : 'OU'}</span>
                     <p className="text-[13px] font-semibold text-foreground flex-1">Grupo {gi + 1}  <span className="text-2xs font-normal text-foreground-secondary ml-1">— {g.match === 'and' ? 'Todas as condições devem ser atendidas (AND)' : 'Pelo menos uma condição deve ser atendida (OR)'}</span></p>
                     <DropdownMenu>

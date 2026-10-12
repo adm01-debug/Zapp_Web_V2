@@ -218,7 +218,7 @@ const ACTIVITY_STYLE: Record<SuppressionActivityAction | 'other', string> = {
   remove: 'bg-dash-red/10 text-dash-red',
   update: 'bg-dash-amber/10 text-dash-amber',
   import: 'bg-primary/10 text-primary',
-  export: 'bg-dash-violet/15 text-dash-violet',
+  export: 'bg-violeta/15 text-[hsl(var(--violeta-text))]',
   other: 'bg-muted/40 text-foreground-secondary',
 };
 

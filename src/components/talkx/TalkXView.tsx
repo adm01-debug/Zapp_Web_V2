@@ -387,7 +387,7 @@ export default function TalkXView() {
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
         <div className="flex items-center gap-3 mb-4">
-          <button type="button" onClick={backToList} className="h9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bv-muted/50">
+          <button type="button" onClick={backToList} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
@@ -403,6 +403,12 @@ export default function TalkXView() {
       </div>
     );
   }
+
+  // Onde estou: os dropdowns de navegação (Analytics/Segmentos e Templates) não são
+  // TabsTrigger, então não recebiam estado ativo. Aqui eles refletem a aba corrente.
+  const analyticsActive = activeTab === 'analytics' || activeTab === 'segments';
+  const templatesActive = activeTab === 'templates';
+  const navDropdownClass = (active: boolean) => `talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 ${active ? 'bg-primary/12 border-primary/40 text-foreground' : 'bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border'}`;
 
   return (
     <div className="min-h-full w-full min-w-0 bg-background space-y-5">
@@ -450,7 +456,7 @@ export default function TalkXView() {
           </TabsList>
             <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                            <button type="button" className={navDropdownClass(analyticsActive)}>
                               <BarChart3 className="w-4 h-4 shrink-0" />Analytics <span className="text-2xs text-muted-foreground">▾</span>
                             </button>
                           </DropdownMenuTrigger>
@@ -463,7 +469,7 @@ export default function TalkXView() {
                         </DropdownMenu>
             <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
+                            <button type="button" className={navDropdownClass(templatesActive)}>
                               <FileText className="w-4 h-4 shrink-0" />Templates <span className="text-2xs text-muted-foreground">▾</span>
                             </button>
                           </DropdownMenuTrigger>

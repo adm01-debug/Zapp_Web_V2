@@ -164,7 +164,7 @@ describe('AnalyticsFunnel — degraus proporcionais (X186)', () => {
     { key: 'sent', label: 'Enviadas', value: 18742, token: 'primary' },
     { key: 'delivered', label: 'Entregues', value: 18075, token: 'dash-green' },
     { key: 'read', label: 'Lidas', value: null, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: 3748, token: 'dash-violet' },
+    { key: 'replied', label: 'Respostas', value: 3748, token: 'violeta' },
     { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
   ];
 

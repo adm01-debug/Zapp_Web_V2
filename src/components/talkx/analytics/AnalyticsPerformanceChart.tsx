@@ -49,7 +49,7 @@ interface SeriesDef {
 const SERIES: SeriesDef[] = [
   { key: 'sent', label: 'Enviadas', token: 'primary', origin: 'carimbo de envio de cada destinatário' },
   { key: 'delivered', label: 'Entregues', token: 'dash-green', origin: 'confirmação de entrega devolvida pelo provedor' },
-  { key: 'replied', label: 'Respostas', token: 'dash-violet', origin: 'carimbo de resposta de cada destinatário' },
+  { key: 'replied', label: 'Respostas', token: 'violeta', origin: 'carimbo de resposta de cada destinatário' },
   { key: 'conversions', label: 'Conversões', token: 'dash-amber', origin: 'vendas registradas nos links da campanha' },
 ];
 

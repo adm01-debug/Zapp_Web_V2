@@ -18,7 +18,7 @@ import type { TalkXTimelineItem } from '@/hooks/integrations/useTalkXCampaignTim
  * tela, e chave desconhecida é ignorada em vez de virar `{"before":...}`.
  *
  * As cores são só as que o sistema já tem (primary/dash-green/dash-amber/dash-red/
- * dash-violet/foreground-secondary).
+ * violeta/foreground-secondary).
  */
 
 export interface TalkXTimelineCopy {
@@ -113,8 +113,8 @@ function contactSentence(item: TalkXTimelineItem, phrase: (name: string, phone: 
 const TIMELINE_COPY_DO_CICLO: Record<TalkXEventType, TalkXTimelineCopy> = {
   created: { title: 'Campanha criada', icon: Sparkles, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   updated: { title: 'Campanha editada', icon: Pencil, tone: 'text-foreground-secondary', detail: (i) => readableMessage(i.message) },
-  scheduled: { title: 'Campanha agendada', icon: CalendarClock, tone: 'text-dash-violet', detail: (i) => readableMessage(i.message) },
-  scheduled_updated: { title: 'Agendamento alterado', icon: CalendarClock, tone: 'text-dash-violet', detail: (i) => readableMessage(i.message) },
+  scheduled: { title: 'Campanha agendada', icon: CalendarClock, tone: 'text-[hsl(var(--violeta-text))]', detail: (i) => readableMessage(i.message) },
+  scheduled_updated: { title: 'Agendamento alterado', icon: CalendarClock, tone: 'text-[hsl(var(--violeta-text))]', detail: (i) => readableMessage(i.message) },
   started: { title: 'Campanha iniciada', icon: Play, tone: 'text-dash-green' },
   paused: {
     title: 'Campanha pausada',

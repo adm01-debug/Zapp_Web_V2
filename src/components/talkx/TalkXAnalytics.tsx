@@ -206,9 +206,9 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
   const funnelSteps = useMemo<FunnelStep[]>(() => ([
     { key: 'sent', label: 'Enviadas', value: stats.sent, token: 'primary' },
     { key: 'delivered', label: 'Entregues', value: stats.delivered, token: 'dash-green' },
-    { key: 'read', label: 'Lidas', value: stats.read, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'dash-violet' },
-    { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
+    { key: 'read', label: 'Lidas', value: stats.read, token: 'teal' },
+    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'violeta' },
+    { key: 'conversions', label: 'Conversões', value: null, token: 'rosa' },
   ]), [stats, repliedTotal]);
 
   // X186: série diária do gráfico de performance. O período é o do seletor próprio do
