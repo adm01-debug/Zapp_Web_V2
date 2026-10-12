@@ -10,18 +10,25 @@ function renderStyle(id: string, config: ChartConfig): string {
 }
 
 describe('ChartStyle', () => {
-  it('mantém as cores reais do design system (hsl(var(--...)))', () => {
+  // Cores usadas em ChartConfig hoje no projeto (grep): hsl(var(--primary)),
+  // hsl(var(--success)), hsl(var(--destructive)) em AIStatsWidget. O teste cobre
+  // também os formatos citados no cartão (#fff e oklch), que passam intactos.
+  it('mantém intactas as cores reais do design system', () => {
     const css = renderStyle('chart-1', {
       score: { label: 'Sentimento', color: 'hsl(var(--primary))' },
       positive: { label: 'Positivo', color: 'hsl(var(--success))' },
+      hex: { label: 'Hex', color: '#fff' },
+      modern: { label: 'oklch', color: 'oklch(0.7 0.15 250)' },
     });
 
     expect(css).toContain('--color-score: hsl(var(--primary));');
     expect(css).toContain('--color-positive: hsl(var(--success));');
+    expect(css).toContain('--color-hex: #fff;');
+    expect(css).toContain('--color-modern: oklch(0.7 0.15 250);');
     expect(css).toContain('[data-chart=chart-1]');
   });
 
-  it('não deixa o id do gráfico quebrar o seletor de atributo', () => {
+  it('não deixa o id com aspas quebrar o seletor de atributo', () => {
     const css = renderStyle('chart"]}body{color:red}', {
       a: { label: 'a', color: 'hsl(var(--primary))' },
     });
@@ -33,20 +40,22 @@ describe('ChartStyle', () => {
 
   it('não deixa a chave do config injetar regra CSS', () => {
     const css = renderStyle('c', {
-      'a:b}; body{background:url(x)': { label: 'a', color: 'hsl(var(--primary))' },
+      ';}body{display:none}': { label: 'a', color: 'hsl(var(--primary))' },
     });
 
-    expect(css).not.toContain('body{');
-    expect(css).not.toContain('url(');
-    expect(css).toContain('--color-abbodybackgroundurlx:');
+    expect(css).not.toContain('body{display:none}');
+    expect(css).not.toContain(';}');
+    expect(css).toContain('--color-bodydisplaynone:');
   });
 
-  it('não deixa o valor da cor escapar da propriedade', () => {
+  it('não deixa o valor da cor escapar com url(javascript:)', () => {
     const css = renderStyle('c', {
-      a: { label: 'a', color: 'hsl(var(--primary))}</style><script>alert(1)</script>' },
+      a: { label: 'a', color: 'url(javascript:alert(1))}</style><script>alert(1)</script>' },
     });
 
     expect(css).not.toContain('<script>');
     expect(css).not.toContain('</style>');
+    expect(css).not.toContain('javascript:');
   });
 });
+
