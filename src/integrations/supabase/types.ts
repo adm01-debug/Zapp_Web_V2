@@ -3741,6 +3741,36 @@ export type Database = {
           },
         ]
       }
+      email_signatures: {
+        Row: {
+          created_at: string
+          html: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          html?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          html?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_threads: {
         Row: {
           assigned_to: string | null
