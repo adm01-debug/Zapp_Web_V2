@@ -27,3 +27,4 @@ Não escondi nome nenhum nem mexi em comentário para mudar o que o classificado
 - Não toquei em `.tmp/classif.py` nem nos internos do `zapp-verify` (barrado pelo auditor). O arquivo nem existe mais no workspace.
 - Não criei lista de aceite: não está na lista de arquivos do cartão.
 - Não ampliei escopo: só a migration e a prova.
+- Falso alarme do fechar: o portão acusou `o cartão diz SEM DDL/migration e o seu diff cria/altera supabase/migrations/20261006193547_...`. Não procede: este cartão é de BANCO e a lista ARQUIVOS QUE PODE TOCAR cita a migration 20261006193547_talkx_purge_nao_falsa_falha_recente.sql (e o check-test-inventory.mjs); o rodapé "sem DDL/migration" é do template e não se aplica. Rodei o MESMO comando de fechar de novo, sem mudar nada.
