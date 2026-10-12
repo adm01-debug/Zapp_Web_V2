@@ -18,6 +18,7 @@ import {
   saveThemeConfig,
   STORAGE_KEY,
 } from '../presets';
+import type { ThemeModeColors } from '../presets';
 
 // ─── HSL → sRGB → luminância relativa → contraste WCAG (sem lib nova) ──────
 function parseHsl(s: string): [number, number, number] {
@@ -379,12 +380,11 @@ describe('§11.5 Diversity', () => {
   });
 
   it('gradient-success sobrescrito (verde→azul pride), diferente do grupo C padrão', () => {
-    // 'gradient-success' é token do grupo C: fica FORA de ThemeModeColors de propósito
-    // (presets.ts: "NÃO entram em ThemeModeColors") e o preset o sobrescreve por assert.
-    // Leio o valor aplicado pelo mesmo caminho, num mapa de strings.
-    const aplicados = diversity.light as unknown as Record<string, string>;
-    expect(aplicados['gradient-success']).toContain('130 70% 45%');
-    expect(aplicados['gradient-success']).toContain('210 80% 55%');
+    // `gradient-success` é token fixo (`FIXED_TOKENS`), fora de `ThemeModeColors`: o preset
+    // `diversity` guarda o valor além do contrato da interface, daí a leitura tipada local.
+    const light = diversity.light as ThemeModeColors & { 'gradient-success': string };
+    expect(light['gradient-success']).toContain('130 70% 45%');
+    expect(light['gradient-success']).toContain('210 80% 55%');
   });
 
   // O token é FIXO (grupo C) e fica fora de CSS_VARS_TO_APPLY: o teste acima lê o
@@ -394,7 +394,8 @@ describe('§11.5 Diversity', () => {
     applyThemePreset('diversity', mode);
     const aplicado = document.documentElement.style.getPropertyValue('--gradient-success');
     // valor exato do preset (e não o verde fixo de tokens.css:246/486)
-    expect(aplicado).toBe(diversity[mode]['gradient-success']);
+    const esperado = diversity[mode] as ThemeModeColors & { 'gradient-success': string };
+    expect(aplicado).toBe(esperado['gradient-success']);
     expect(aplicado).toContain('130 70% 45%');
     expect(aplicado).toContain('210 80% 55%');
   });
