@@ -1,47 +1,24 @@
-Especialista: complexo (area-testes-do-produto)
+Especialista: worker (geral)
 
-## Resultado: fecho SEM commit de código — o estado exigido já está integrado no dia
-Um commit só com este relato; nenhum arquivo de código muda. O que este cartão
-exige (spec 3 regiões + valores reais + tela na base) entrou no dia por commits
-já revisados/integrados:
-- spec reescrito: commit 72893dc63 `test(e2e): [refazer 2] multiplix-e2e-3-regioes`
-  (cartão V2 2610102039c029), presente em `dia/2026-10-12`;
-- tela 3 regiões: commits 3a50dd8ea, af9a275cd, 7fb708c41 em `dia/2026-10-12`
-  (`MultiplixComposerDialog.tsx` ausente na base).
-Reescrever o spec nesta branch (base `dia/2026-10-10`, spec da era do diálogo)
-duplicaria o 72893dc63 — artefato repetido; por isso não há diff de código.
+## O que mudou e por quê
+- `supabase/functions/talkx-send/x020-variavel-distribuicao.test.ts` (novo): fixa, por comportamento, o que o teste de precedência (`x020-variavel-precedencia.test.ts`) não cobria em `pickVariant()` — a proporção dos pesos, as fronteiras de peso e os caminhos de vazio/último recurso. Motivo: o cartão pede prova executável da proporção e das fronteiras do sorteio A/B.
+- Nenhuma mudança de produção no diff (o único item é o arquivo de teste novo).
 
-## Prova (playwright de verdade, contra o conteúdo do dia)
-`CI=1 node_modules/.bin/playwright test --project=chromium-multiplix
-e2e/multiplix.spec.ts --reporter=line` → `4 passed (46.1s)` (log `.tmp/pw.log`):
-seleção persiste (L401); composição inline N×M + AlertDialog (L458); prévia
-região 03 (L534); monitor (L556). Para rodar como agente criei o projeto
-dedicado temporário (a guarda bloqueia `chromium-authenticated` e a R1 proíbe
-credenciais no `setup`); ele não entra na entrega e vira sugestão de follow-up.
-- Tentativas sem prova afirmada: sem flag o run parou no `setup`
-  (`E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas`, proposital);
-  com `--no-deps` a guarda recusou o projeto authenticated.
-- `zapp-verify . --rapido` (executor): VERDE SEM BANCO (`db_guard`, tipos,
-  lint, migrations OK; sem conjunto de banco neste e2e).
+Testes (o que cada um trava):
+- proporção 1:2:3 em 6.000 e em 100.000 destinatários distintos: cada variante dentro da faixa (0,03 e 0,01) da fração esperada.
+- dominância 99:1 em 20.000 destinatários: peso 99 sai em ≥ 0,985 das vezes e o peso 1 ainda sai.
+- estabilidade: 500 destinatários lidos duas vezes e um mesmo id lido 100 vezes devolvem sempre a mesma variante.
+- fronteira de peso: variante com peso 0 ou negativo nunca é sorteada (3.000 ids por cenário).
+- último recurso: soma de pesos ≤ 0 devolve a última variante ordenada por id (pesos [0,0] e [0,-5]).
+- vazio: lista vazia e `data: null` devolvem null.
+- não-finito: peso NaN nunca é sorteado e o total NaN colapsa a decisão na última variante.
 
-## Pontos da recusa
-- Ponto 1 (playwright de verdade, saída colada): acima, `4 passed (46.1s)`.
-- Ponto 2 (tela de 3 regiões na base): `dia/2026-10-12` tem `aria-label`
-  "01 Público", "02 Composição", "03 Prévia e revisão" e não tem o diálogo.
-  Nada trazido por merge/cherry-pick para esta entrega.
-- Ponto 3 (destino_e164 real): bytes confirmados (`od -c` nas 2 linhas do
-  spec do dia mostram o valor da base); o valor mascarado do rejeitado
-  183068b86 não entra em lugar nenhum.
-- Ponto 4 (sem afirmação sem saída): tudo acima veio de comando rodado agora.
-
-## Erro meu, corrigido
-Atualizei a branch com fast-forward para `dia/2026-10-12` para rodar a prova;
-o fechar mediu diff de 2251758 caracteres (166 commits do dia, não meus) e
-recusou por regra de 90000. Reverti com `git reset --hard 03db8d720`
-(volta ao estado exato da criação, confirmado pelo reflog) e fecho sem código.
+## Prova
+- vermelho antes (mutação local, revertida): em `supabase/functions/talkx-send/process-recipient.ts:170` troquei `stableVariantHash(recipientId) % total` por `stableVariantHash(recipientId) % 1` → `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 supabase/functions/talkx-send/x020-variavel-distribuicao.test.ts` → `FAILED | 4 passed | 4 failed`, com os testes de proporção 1:2:3 (6.000 e 100.000), dominância e fronteira de peso vermelhos. Mutação revertida por patch e conferida: `git diff --stat` vazio, `git status --short` só com o arquivo de teste novo.
+- verde depois (mesmo comando, sem a mutação): `ok | 8 passed | 0 failed (158ms)`.
+- suíte do módulo junto com o teste de precedência que já existia: `ok | 13 passed | 0 failed (502ms)`.
 
 ## O que NÃO fiz e por quê
-- Sem código: duplicaria o 72893dc63 já integrado.
-- Não toquei `.github/`, produção, credenciais ou `e2e/.auth/*`.
-- Código do delta foi escrito pelo Claude Code (2 chamadas); prova, revert,
-  este relato e a decisão de fechar sem código são meus.
+- Não deixei nenhuma alteração de código de produção no diff (o cartão proíbe). Defeito aberto encontrado e relatado, NÃO corrigido: com peso não-finito, `total` (`process-recipient.ts:167`) vira NaN, `!(total > 0)` (`:168`) é verdadeiro e a função devolve sempre `ordered[last]`, ou seja, o sorteio deixa de distribuir para todo destinatário. O teste do NaN fixa esse comportamento atual e aponta as duas linhas; se a coluna `weight` for `integer not null`, o caminho é inalcançável hoje e o teste vira trava caso o tipo relaxe.
+- Não toquei no teste existente `x020-variavel-precedencia.test.ts` (roda junto e segue verde).
+- Assinatura: o corpo do cartão declara o especialista `workertestes`, mas o roteador entregou o cartão ao perfil `worker` (evento `assigned: from workertestes to worker`); assino pelo perfil que executou.
