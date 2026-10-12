@@ -16,7 +16,7 @@ import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
 import { QuickAdd }         from './shared/QuickAdd';
 import { TasksFilterBar }   from './shared/TasksFilterBar';
-import { TasksKpiStrip }    from './shared/TasksKpiStrip';
+import { TasksKpiStrip, TasksKpiStripSkeleton, type KpiDueRecorte, type TasksDensity } from './shared/TasksKpiStrip';
 import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
@@ -70,6 +70,20 @@ export function TasksModule() {
   const kpiReal      = kpis(hook.items);
   const doingReal    = countDoing(hook.items);
   const byStatusReal = bucketByStatus(hook.items);
+
+  // Etapa 023 (cartão T13): o KPI "Atrasadas"/"Para hoje" é um BOTÃO de
+  // recorte de prazo. Ele escreve no MESMO filtro da barra (`setDue`) — nada de
+  // estado paralelo na tela — e clicar de novo devolve o recorte para 'all'.
+  const recortePrazo: KpiDueRecorte | null =
+    filtros.filters.due === 'overdue' || filtros.filters.due === 'today'
+      ? filtros.filters.due
+      : null;
+  const alternarRecortePrazo = (due: KpiDueRecorte) =>
+    filtros.setDue(recortePrazo === due ? 'all' : due);
+
+  // Etapa 025 (D2): a densidade da FAIXA acompanha o modo — no Quadro ela é a
+  // faixa compacta da imagem 05 (ganha altura para as colunas).
+  const densidadeKpis: TasksDensity = mode === 'board' ? 'compact' : 'comfortable';
 
   // Contatos que aparecem nas tarefas carregadas: fonte local, sem query nova.
   const contactOptions = Array.from(
@@ -255,8 +269,20 @@ export function TasksModule() {
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
-      {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
-      <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
+      {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard; etapa 023:
+          clicáveis; etapa 025: faixa compacta no Quadro; etapa 027: esqueleto
+          com a mesma grade enquanto o dado não chega) */}
+      {isLoading ? (
+        <TasksKpiStripSkeleton density={densidadeKpis} />
+      ) : (
+        <TasksKpiStrip
+          kpis={{ ...kpiData, doingCount: doingReal }}
+          density={densidadeKpis}
+          activeDue={recortePrazo}
+          onToggleDue={alternarRecortePrazo}
+          onOpenBoard={() => setMode('board')}
+        />
+      )}
 
       {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
       {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}

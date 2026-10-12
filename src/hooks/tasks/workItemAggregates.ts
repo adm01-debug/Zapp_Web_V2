@@ -1,7 +1,7 @@
 import { isBefore, startOfDay, addDays, format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { WorkItem, WorkItemStatus } from './workItem.types';
-import type { TasksFilters } from './workItemFilters';
+import type { TasksFilters, DueFilter } from './workItemFilters';
 import { localDayKey } from '@/lib/localDay';
 
 /** Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */
@@ -103,19 +103,39 @@ function normalizarBusca(texto: string): string {
 }
 
 /**
+ * Casa o prazo de um item com o recorte escolhido (etapa 024/037).
+ * `today` segue o veredito de `bucketByDue`: é o prazo de hoje SEM contar o que
+ * já venceu. `week` é a janela dos próximos 7 dias (do começo de hoje até +7);
+ * em nenhum dos dois o atrasado entra.
+ */
+function casaPrazo(item: WorkItem, filtro: DueFilter, now: Date): boolean {
+  if (filtro === 'none') return item.due_date == null;
+  if (item.due_date == null) return false;
+  if (filtro === 'overdue') return isOverdue(item.due_date, now);
+  if (isOverdue(item.due_date, now)) return false;
+  const due = new Date(item.due_date);
+  if (filtro === 'today') return due < startOfDay(addDays(now, 1));
+  return due < startOfDay(addDays(now, 7)); // filtro === 'week'
+}
+
+/**
  * Etapa 45/46: o recorte da barra de filtros, aplicado nos três modos (Lista,
  * Quadro e Agenda). Função pura: recebe os itens que a query única já carregou e
  * devolve o subconjunto — nenhum modo, e nenhum filtro, gera request novo.
  *
- * `done` é o único filtro que olha o estado terminal do item; `q` casa só o
- * título (o mesmo recorte que a busca sempre fez, agora sem acento).
+ * `done` é o filtro que olha o estado terminal do item. `q` casa só o título
+ * (o mesmo recorte que a busca sempre fez, agora sem acento).
+ *
+ * @param now âncora do recorte de prazo (injetável para o teste).
  */
-export function applyFilters(items: WorkItem[], f: TasksFilters): WorkItem[] {
+export function applyFilters(items: WorkItem[], f: TasksFilters, now: Date = new Date()): WorkItem[] {
   const termo = normalizarBusca(f.q).trim();
   const base  = items ?? [];
+  const dueFiltro = f.due ?? 'all';
 
   return base.filter(item => {
     if (!f.done && item.status === 'done') return false;
+    if (dueFiltro !== 'all' && !casaPrazo(item, dueFiltro, now)) return false;
     if (f.prio !== 'all' && item.priority !== f.prio) return false;
     if (f.contact !== null && item.contact?.id !== f.contact) return false;
     if (f.alarm && item.remind_at === null) return false;

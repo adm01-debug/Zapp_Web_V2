@@ -351,18 +351,34 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     expect(tiles).toHaveLength(5);
     for (const tile of tiles) expect(tile.className).toContain('h-11 w-11');
 
-    // valor 700 + tabular (o tamanho fica no token da escala: text-2xl)
+    // valor 700 + tabular, no token da escala: 24px (text-2xl) nos quatro
+    // contadores e 20px (text-xl) no Tempo médio — o "1,4 dias" é o único com
+    // unidade e estoura a coluna em 360px (etapa 022).
+    const strip = within(screen.getByTestId('tasks-kpi-strip'));
+    const valorDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-value"]')?.className ?? '';
+
     for (const valor of screen.getAllByTestId('kpi-value')) {
       expect(valor.className).toContain('font-bold');
       expect(valor.className).toContain('tabular-nums');
-      expect(valor.className).toContain('text-2xl');
+    }
+    for (const label of ['Atrasadas', 'Para hoje', 'Fazendo', 'Concluídas · 7 dias']) {
+      expect(valorDe(label)).toContain('text-2xl');
+    }
+    expect(valorDe('Tempo médio')).toContain('text-xl');
+
+    // todo card tem subtítulo (etapas 017–022)
+    for (const sub of screen.getAllByTestId('kpi-subtitle')) {
+      expect(sub.textContent?.length ?? 0).toBeGreaterThan(0);
     }
   });
 
   it('pinta os tiles por tipo e mostra o WIP "n/3" no Fazendo', async () => {
     renderComKpis();
-    // os 5 cards existem desde o primeiro render (vazio): espera os numeros
-    // reais chegarem antes de olhar as cores
+    // etapa 027: no primeiro render (carregando) o topo é o ESQUELETO — os 5
+    // cards entram quando o dado chega (antes eram 5 zeros já montados).
+    await waitFor(() => expect(screen.queryByTestId('tasks-kpi-strip-skeleton')).toBeNull());
     const strip = within(screen.getByTestId('tasks-kpi-strip'));
     await waitFor(() => expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
       ?.querySelector('[data-testid="kpi-value"]')?.textContent).toBe('2/3'));
@@ -374,17 +390,32 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
       strip.getByText(label).closest('[data-testid="kpi-card"]')
         ?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '';
 
-    // com 1 atrasada o tile vira o de alerta; sem atrasadas seria o amarelo
+    // etapa 017: com 1 atrasada o tile vira o de alerta; sem atrasadas seria o
+    // neutro ("Tudo em dia", §3.1 linha 41 + etapa 017).
     expect(tileDe('Atrasadas')).toContain('bg-destructive/15');
-    expect(tileDe('Para hoje')).toContain('bg-kpi-blue');
-    expect(tileDe('Fazendo')).toContain('bg-kpi-purple');
-    expect(tileDe('Concluídas (7d)')).toContain('bg-kpi-green');
+    // etapas 018/019/020: âmbar no dia, anel azul no limite, verde no concluído.
+    expect(tileDe('Para hoje')).toContain('bg-kpi-yellow');
+    expect(tileDe('Fazendo')).toContain('bg-kpi-blue');
+    expect(tileDe('Concluídas · 7 dias')).toContain('bg-kpi-green');
     expect(tileDe('Tempo médio')).toContain('bg-muted');
 
     expect(valorDe('Fazendo')).toBe('2/3');
     expect(valorDe('Atrasadas')).toBe('1');
     expect(valorDe('Para hoje')).toBe('1');
-    expect(valorDe('Concluídas (7d)')).toBe('1');
+    expect(valorDe('Concluídas · 7 dias')).toBe('1');
+
+    // os subtítulos das etapas 017–020 vêm com o estado
+    const subtituloDe = (label: string) =>
+      strip.getByText(label).closest('[data-testid="kpi-card"]')
+        ?.querySelector('[data-testid="kpi-subtitle"]')?.textContent ?? '';
+    expect(subtituloDe('Atrasadas')).toBe('Requer atenção');
+    expect(subtituloDe('Para hoje')).toBe('Vencem hoje');
+    expect(subtituloDe('Fazendo')).toBe('Em andamento');
+    expect(subtituloDe('Concluídas · 7 dias')).toBe('Últimos 7 dias');
+
+    // etapa 019: o anel do limite é um SVG no tile do Fazendo
+    expect(strip.getByText('Fazendo').closest('[data-testid="kpi-card"]')
+      ?.querySelector('[data-testid="kpi-ring"]')).toBeTruthy();
   });
 
   it('o grid tem os 3 breakpoints (2 / 3 / 5 colunas)', async () => {
@@ -650,5 +681,95 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
 
     expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
     expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
+  });
+});
+
+/**
+ * Etapas 023 e 027 (cartão T13, 11/10/2026) — o KPI como ATALHO do recorte de
+ * prazo, fechado de ponta a ponta: o clique escreve no MESMO filtro da barra
+ * (nenhum estado paralelo na tela), a Lista recorta, a URL espelha e clicar de
+ * novo devolve o recorte pela ação de limpar. A etapa 027 entra por aqui
+ * também: enquanto o dado não chega o topo é o ESQUELETO, não 5 zeros.
+ */
+describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetSupabaseMock();
+    localStorage.clear();
+    window.history.replaceState(null, '', '/');
+    const ontem = new Date(Date.now() - 86_400_000).toISOString();
+    setSelectResult({
+      data: [
+        makeTaskRow({ id: 'o1', status: 'todo', due_date: ontem }),
+        makeTaskRow({ id: 'h1', status: 'todo', due_date: hojeFimDoDia() }),
+        makeTaskRow({ id: 'f1', status: 'doing' }),
+      ],
+      error: null,
+    });
+  });
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    cleanup();
+  });
+
+  const kpi = (label: string): HTMLElement =>
+    within(screen.getByTestId('tasks-kpi-strip'))
+      .getByText(label)
+      .closest('[data-testid="kpi-card"]') as HTMLElement;
+
+  it('027: no primeiro render o topo é o esqueleto; os cards entram junto com o dado', async () => {
+    renderModule();
+
+    // antes do dado: esqueleto (mesma grade), NENHUM valor de mentira na tela
+    expect(screen.getByTestId('tasks-kpi-strip-skeleton')).toBeTruthy();
+    expect(screen.queryByTestId('tasks-kpi-strip')).toBeNull();
+    expect(screen.queryAllByTestId('kpi-value')).toHaveLength(0);
+
+    await waitFor(() => expect(screen.queryByTestId('tasks-kpi-strip-skeleton')).toBeNull());
+    expect(screen.getAllByTestId('kpi-card')).toHaveLength(5);
+  });
+
+  it('023: clicar em Atrasadas recorta a Lista, escreve due=overdue e o segundo clique desfaz', async () => {
+    renderModule();
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+
+    const acao = () => within(kpi('Atrasadas')).getByTestId('kpi-acao');
+    expect(acao().getAttribute('aria-pressed')).toBe('false');
+    expect(screen.queryByRole('button', { name: /Limpar/ })).toBeNull();
+
+    fireEvent.click(acao());
+
+    // 1) o recorte vale para a TELA: a Lista mostra só a atrasada
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(1));
+    // 2) o MESMO estado espelha na URL — é o filtro da barra, não um paralelo
+    await waitFor(() => expect(window.location.search).toContain('due=overdue'));
+    // 3) o card se diz pressionado, ganha o selo e a barra passa a oferecer o Limpar
+    await waitFor(() => expect(acao().getAttribute('aria-pressed')).toBe('true'));
+    expect(within(kpi('Atrasadas')).getByTestId('kpi-chip')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Limpar/ })).toBeTruthy();
+
+    fireEvent.click(acao());
+
+    // clicar DE NOVO devolve o recorte: Lista inteira de volta, URL sem `due=`
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+    expect(window.location.search).not.toContain('due=');
+    await waitFor(() => expect(acao().getAttribute('aria-pressed')).toBe('false'));
+    expect(within(kpi('Atrasadas')).queryByTestId('kpi-chip')).toBeNull();
+  });
+
+  it('023: "Para hoje" aplica o outro recorte e troca o card ativo (um recorte por vez)', async () => {
+    renderModule();
+    await waitFor(() => expect(screen.getAllByTestId('work-item-card')).toHaveLength(3));
+
+    fireEvent.click(within(kpi('Atrasadas')).getByTestId('kpi-acao'));
+    await waitFor(() => expect(window.location.search).toContain('due=overdue'));
+
+    fireEvent.click(within(kpi('Para hoje')).getByTestId('kpi-acao'));
+
+    await waitFor(() => expect(window.location.search).toContain('due=today'));
+    await waitFor(() => expect(within(kpi('Para hoje')).getByTestId('kpi-acao').getAttribute('aria-pressed')).toBe('true'));
+    // o recorte anterior saiu: só um selo na faixa
+    expect(within(kpi('Atrasadas')).queryByTestId('kpi-chip')).toBeNull();
+    expect(screen.getAllByTestId('kpi-chip')).toHaveLength(1);
   });
 });
