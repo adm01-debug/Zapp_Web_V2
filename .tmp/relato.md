@@ -1,22 +1,52 @@
-Especialista: iris (area-front-componentes)
+Especialista: worker (ci) (area-verificacao-ci)
 
-## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+## O que mudou e por quê (cartão N-020 — RD-1 / W3-2)
+- `scripts/db-audit/check-replay-allowlist-ratchet.py` (novo): o verificador do ratchet. Le a lista
+  de aceitas (`replay-known-failures.json`, chave `esperadas`) e o teto
+  (`replay-allowlist-baseline.json`, chave `aceitas`) e so aceita lista SUBCONJUNTO do teto. Entrada
+  nova -> exit 1 nomeando a entrada; entrada removida -> exit 0; teto/lista ausente, ilegivel ou sem
+  a chave -> exit 2 (nao medi, nunca verde). Diferença exata de CONJUNTO, nao faixa nem contagem.
+- `scripts/db-audit/replay-allowlist-baseline.json` (novo): o teto de hoje, uma linha por falha ja
+  medida no canonico. E a única forma de acrescentar falha nova: baixar o teto no mesmo commit (ato
+  explicito, auditavel) — sem isso o replay nem sobe.
+- `scripts/db-audit/replay-local.sh`: chama o ratchet ANTES de subir o container (fail-closed cedo,
+  sem gastar o setup) e propaga o codigo (1 = lista acima do teto; 2 = nao medi). Cabecalho de
+  codigos de saida atualizado.
+- `scripts/db-audit/check-replay-allowlist-ratchet.test.sh` (novo): o teste unitário do cartão.
+- `scripts/ci/check-test-inventory.mjs`: registra o teste novo na ALLOWLIST (achado do inventario de
+  CI quando nasce um `.test.sh` em `scripts/db-audit`), com a justificativa de ser offline.
 
-## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
-
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+## Prova (vermelho antes, verde depois)
+- vermelho antes: `bash scripts/db-audit/check-replay-allowlist-ratchet.test.sh` com o verificador
+  ausente (estado da base, sem a correção) -> `FALHA: 2: entrada nova -> exit 1 (esperado '1',
+  obtido '2')` ... `REPROVOU` / `EXIT=1`. Foi a mutação do caso 2 (entrada nova em
+  `replay-known-failures.json`) que discriminou: sem o ratchet ela nao derruba.
+- verde depois: `bash scripts/db-audit/check-replay-allowlist-ratchet.test.sh` ->
+  `ok : 2: entrada nova -> exit 1`, `ok : 2: nomeia a entrada nova`, `ok : 3: remover entrada passa
+  (exit 0)`, `ok : 7: lista real dentro do teto real -> exit 0`,
+  `PASSOU: a lista de falhas esperadas do replay so pode diminuir` / `EXIT=0` (19 checagens `ok`).
+- casos do teste: 1 lista igual ao teto (0); 2 MUTAÇÃO entrada nova sem baixar o teto (1, e sem
+  acusar a entrada ja aceita); 3 entrada removida/reparada (0); 4 lista vazia (0); 5 teto fechado +
+  1 aceita (1); 6a-6e fail-closed — lista ausente, teto ausente, JSON quebrado, chave `esperadas`
+  faltando, nome vazio do teto (todos 2); 7 os arquivos REAIS do repositorio, sem argumento (0 — o
+  teto cobre a lista do dia, nao e vacuo).
+- nao quebrei os vizinhos: `bash scripts/db-audit/replay-local-harness.test.sh` -> `PASSOU` (13 ok;
+  A exit 0, B exit 2, C SIGTERM, inclui o `docker` de mentira) e
+  `bash scripts/db-audit/replay-classify.test.sh` -> `PASSOU: 4 casos` (o classificador nao foi
+  tocado).
+- `node --test scripts/ci/check-test-inventory.unit.mjs` -> `pass 7`, `fail 0`; e
+  `node scripts/ci/check-test-inventory.mjs` nao lista mais o teste novo como orfao (delta vs base:
+  os mesmos 4 orfaos pre-existentes, ver abaixo).
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+- Não editei `.github/workflows/db-guard.yml`: promover o passo é do dono do workflow (o mesmo
+  caminho que o cartão N-016 seguiu para o próprio replay). A entrada na ALLOWLIST do inventário
+  deixa o teste rastreado e a promoção de uma linha.
+- `node scripts/ci/check-test-inventory.mjs` já FALHA na base desta branch, por 4 testes órfãos que
+  não são deste cartão (`department-invite-contract-audit-vocabulary`, `talkx-conversion-defaults`,
+  `team-chat-media-contract`, `team-direct-conversation-race` — nenhum em db-guard.yml nem na
+  ALLOWLIST). Provei o antes/depois com `git stash` no meu diff e a lista se repete; não mexi neles
+  (assunto de outro cartão) e deixo registrado em comentário no cartão.
+- O passo de replay no db-guard.yml do cartão N-016 não está nesta base (a branch
+  `v2/n-016-replay-db-guard-2610121133c45a` não foi integrada ainda); o ratchet é chamado pelo
+  `replay-local.sh`, então vale assim que o passo dele entrar, sem depender daquele merge.
