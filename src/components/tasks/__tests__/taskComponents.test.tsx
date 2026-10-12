@@ -555,7 +555,9 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
     renderLista(buckets({ noDue: [item({ id: 'n1', title: 'Sem prazo aqui' })] }));
 
-    expect(screen.getByText('Sem prazo')).toBeTruthy();
+    // O cabeçalho é botão; a célula Prazo (etapa 057) também escreve "Sem prazo"
+    // nas linhas, então a busca do cabeçalho é por papel.
+    expect(screen.getByRole('button', { name: /^Sem prazo/ })).toBeTruthy();
     expect(screen.queryByText('Concluídas (7 dias)')).toBeNull();
   });
 
@@ -582,7 +584,7 @@ describe('Tarefas — componentes dos três modos', () => {
     renderLista(buckets({
       noDue: Array.from({ length: 10 }, (_, i) => item({ id: `d${i}`, title: `Sem prazo ${i}` })),
     }));
-    expect(screen.getByText('Sem prazo')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Sem prazo/ })).toBeTruthy();
     expect(screen.getByText('Sem prazo 0')).toBeTruthy();
 
     cleanup();
@@ -592,7 +594,7 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByText('11')).toBeTruthy();       // o contador segue visivel
     expect(screen.queryByText('Sem prazo 0')).toBeNull();  // mas os itens nascem escondidos
 
-    fireEvent.click(screen.getByText('Sem prazo'));
+    fireEvent.click(screen.getByRole('button', { name: /^Sem prazo/ }));
     expect(screen.getByText('Sem prazo 0')).toBeTruthy();
   });
 
