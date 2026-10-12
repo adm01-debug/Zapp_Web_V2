@@ -14,6 +14,7 @@ import { TypingIndicator } from '../TypingIndicator';
 import { isSameDay } from 'date-fns';
 import { formatDateSeparator } from './messageUtils';
 import { MessageBubble } from './MessageBubble';
+import { ReactionsBatchProvider } from '@/hooks/reactions/useBatchReactions';
 
 interface ChatMessagesAreaProps {
   messages: Message[];
@@ -259,10 +260,14 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   // messages[0]?.id é último recurso porque muda em prepend e causa churn.
   const subscriptionKey = conversationId || contactJid || messages[0]?.id;
   const messageIdsSetRef = useRef<Set<string>>(new Set());
-  messageIdsSetRef.current = useMemo(
-    () => new Set(messages.map((message) => message.id).filter(Boolean)),
+
+  // Ids da conversa cobertos pelo lote de reações: uma consulta só para todas
+  // as mensagens, semeando o cache por mensagem (em vez de um GET por balão).
+  const reactionMessageIds = useMemo(
+    () => messages.map((message) => message.id).filter(Boolean),
     [messages],
   );
+  messageIdsSetRef.current = useMemo(() => new Set(reactionMessageIds), [reactionMessageIds]);
 
   // O canal é por conversa (ancorado em contactJid). O filtro de ids fica em
   // ref para que cada mensagem nova não derrube e recrie a subscription.
@@ -286,6 +291,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
   const showHistoryStart = hasOlderMessages === false && messages.length > 0;
 
   return (
+    <ReactionsBatchProvider messageIds={reactionMessageIds}>
     <div ref={scrollContainerRef} onScroll={handleScroll} role="log" aria-label="Mensagens da conversa" aria-live="polite" className="flex-1 min-h-0 min-w-0 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin bg-transparent relative">
       {showLoadOlder && (
         <div className={cn(OLDER_ROW_CLASS, 'sticky top-0 z-10')} data-testid="older-messages-control">
@@ -387,6 +393,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
         <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />
       </div>
     </div>
+    </ReactionsBatchProvider>
   );
 }));
 
