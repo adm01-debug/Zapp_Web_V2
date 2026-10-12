@@ -1,63 +1,61 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: hugo
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+- `src/hooks/system/useSupabaseConnectivity.ts` (novo): sonda periódica de
+  disponibilidade do backend Supabase. Estados `checking | online | degraded |
+  offline`; intervalo base de 30 s; recuo exponencial a cada falha (dobra o
+  intervalo, teto de 5 min); pausa com a aba oculta (`visibilitychange`) e
+  retomada com sonda imediata; reage a `online`/`offline` do navegador;
+  descarta resposta obsoleta (corrida) por geração; `retryNow()` força sonda
+  imediata; timer e respostas em voo limpos no desmonte.
+- Sonda leve: `supabase.functions.invoke('health', { method: 'GET', signal })`
+  no cliente existente (`src/integrations/supabase/client.ts`). O endpoint `health`
+  é a Edge de saúde do projeto (paridade do `health-check` do V3: um HEAD/select de
+  banco). NÃO consulta tabela de dados de usuário. `FunctionsFetchError` (nada
+  respondeu: rede/DNS/timeout) = inacessível; qualquer outra resposta — inclusive
+  HTTP não-2xx — prova que o backend está de pé e conta como alcançável.
+- Por que NÃO `connection-health-check`: apesar de ser o endpoint que a V2 já usa no
+  painel de diagnóstico, ele é job de cron/admin que chama a Evolution API por
+  conexão e grava em `connection_health_logs`/`warroom_alerts` — carga e efeitos
+  colaterais incompatíveis com a regra "a sonda não pode gerar carga relevante" e com
+  o intervalo de 30 s. Deixei o porquê escrito no próprio docstring do hook.
+- `src/hooks/system/__tests__/useSupabaseConnectivity.test.ts` (novo): 11 casos com
+  temporizadores falsos, exercitando o hook REAL junto do `useNetworkStatus` REAL
+  (só o cliente Supabase é dublado). Nomes dos casos:
+  1. parte em checking e marca online quando o backend responde (sonda leve, sem tabela de usuário)
+  2. resposta HTTP não-2xx (servidor respondeu) ainda conta como online
+  3. uma falha marca degraded e a próxima tentativa espera o dobro do intervalo (recuo)
+  4. três falhas seguidas marcam offline
+  5. resposta lenta (acima do limite) marca degraded mesmo com sucesso
+  6. pausa o ciclo com a aba oculta e sonda de novo ao voltar
+  7. navegador offline fica offline sem sondar e volta a sondar ao reconectar
+  8. retryNow força uma sonda imediata e zera as falhas
+  9. descarta a resposta de uma sonda obsoleta (corrida) sem apagar o estado novo
+  10. não sonda mais depois de desmontar
+  11. nextBackoffDelay dobra por falha e respeita o teto
+- Lacuna confirmada no código ATUAL (ponta `dia/2026-10-12`): `git grep -i connectivity -- src`
+  não devolve nenhum hook/sonda (só uma menção não relacionada em
+  `src/components/inbox/LocationPicker.tsx`); existia apenas o `useNetworkStatus`
+  (navegador online/offline), sem detecção de backend fora com navegador online.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+- vermelho antes (hook renomeado para fora do caminho, teste intacto):
+  `npx vitest run src/hooks/system/__tests__/useSupabaseConnectivity.test.ts` →
+  `Test Files 1 failed (1)` / `Tests no tests` (falha ao importar
+  `@/hooks/system/useSupabaseConnectivity`).
+- verde depois: `npx vitest run src/hooks/system/__tests__/useSupabaseConnectivity.test.ts`
+  → `Test Files 1 passed (1)` / `Tests 11 passed (11)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos, lint e
+  migrations OK).
 
 ## O que NÃO fiz e por quê
 
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não exportei o hook no barril `src/hooks/system/index.ts`: os arquivos que o
+  cartão autoriza são só o hook e o teste; o consumidor (banner, `t_bc279fb5`)
+  pode importar direto do caminho. Se o barril for desejado, entra em outro cartão.
+- Não toquei no `connection-health-check`, em nenhuma Edge Function, migration,
+  guarda, `useNetworkStatus` nem em qualquer teste existente.
+- Não usei banco remoto, credencial real, sessão salva nem chamada de rede real:
+  o cliente Supabase é dublado nos testes.
