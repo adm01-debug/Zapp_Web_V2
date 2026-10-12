@@ -6470,6 +6470,62 @@ export type Database = {
         }
         Relationships: []
       }
+      reconnection_logs: {
+        Row: {
+          attempt: number
+          connection_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          result: string
+        }
+        Insert: {
+          attempt: number
+          connection_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          result: string
+        }
+        Update: {
+          attempt?: number
+          connection_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_agent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconnection_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           contact_id: string | null
@@ -9497,12 +9553,14 @@ export type Database = {
       }
       whatsapp_connections: {
         Row: {
+          auto_reconnect_enabled: boolean
           battery_level: number | null
           capabilities: Json
           created_at: string
           created_by: string | null
           farewell_enabled: boolean | null
           farewell_message: string | null
+          health_reason: string | null
           health_response_ms: number | null
           health_status: string | null
           id: string
@@ -9515,17 +9573,21 @@ export type Database = {
           name: string
           phone_number: string
           qr_code: string | null
+          reconnect_interval_seconds: number
+          reconnect_max_attempts: number
           retry_count: number | null
           status: string | null
           updated_at: string
         }
         Insert: {
+          auto_reconnect_enabled?: boolean
           battery_level?: number | null
           capabilities?: Json
           created_at?: string
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string
@@ -9538,17 +9600,21 @@ export type Database = {
           name: string
           phone_number: string
           qr_code?: string | null
+          reconnect_interval_seconds?: number
+          reconnect_max_attempts?: number
           retry_count?: number | null
           status?: string | null
           updated_at?: string
         }
         Update: {
+          auto_reconnect_enabled?: boolean
           battery_level?: number | null
           capabilities?: Json
           created_at?: string
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string
@@ -9561,6 +9627,8 @@ export type Database = {
           name?: string
           phone_number?: string
           qr_code?: string | null
+          reconnect_interval_seconds?: number
+          reconnect_max_attempts?: number
           retry_count?: number | null
           status?: string | null
           updated_at?: string
@@ -10289,6 +10357,7 @@ export type Database = {
           created_by: string | null
           farewell_enabled: boolean | null
           farewell_message: string | null
+          health_reason: string | null
           health_response_ms: number | null
           health_status: string | null
           id: string | null
@@ -10310,6 +10379,7 @@ export type Database = {
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string | null
@@ -10331,6 +10401,7 @@ export type Database = {
           created_by?: string | null
           farewell_enabled?: boolean | null
           farewell_message?: string | null
+          health_reason?: string | null
           health_response_ms?: number | null
           health_status?: string | null
           id?: string | null
