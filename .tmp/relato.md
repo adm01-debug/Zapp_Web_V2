@@ -1,63 +1,20 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: iris
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- `src/components/tasks/shared/NewTaskDialog.tsx` (novo): modal "Nova tarefa" — etapas 154 (Dialog sob demanda via `modalOpen` do `TasksUiContext`) e 155 (título "Nova tarefa", subtítulo "Capture agora. Organize o próximo passo.", fechar, foco inicial no título).
+- `src/components/tasks/shared/new-task/TaskTitleField.tsx` (novo): etapa 156 — campo Título obrigatório, 200 caracteres, contador discreto, erro inline após blur.
+- `src/components/tasks/shared/ContactCombobox` (reuso, via prop `selectedContact`): etapa 157 — "Sem contato" ou avatar + nome; `defaultContactId`/`defaultContact` pré-preenchem quando o modal nasce de um contato.
+- `src/components/tasks/shared/new-task/PrioritySegment.tsx` (novo): etapa 158 — Baixa/Média (padrão)/Alta/Urgente com setas, cores por token.
+- `src/components/tasks/TasksModule.tsx`: SOMENTE monta o modal sob demanda (`lazy` + `Suspense`, `NewTaskModal` quando `modalOpen`) — sem trazer `TasksHeaderMenu` nem commits dos pais.
+- `src/components/tasks/__tests__/newTaskDialog.test.tsx` (novo) e `TasksModule.test.tsx` (1 caso): cobertura das etapas 154–158 + axe.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Prova
+- vermelho antes: `npx vitest run src/components/tasks/__tests__/newTaskDialog.test.tsx` com os 3 fontes novos movidos para `.tmp/redproof` → `Test Files 1 failed (1); Tests no tests` (falha de import: o teste chama o código real).
+- verde depois: `npx vitest run src/components/tasks/__tests__/newTaskDialog.test.tsx src/components/tasks/__tests__/TasksModule.test.tsx` → `Test Files 2 passed (2); Tests 42 passed (42)`.
+- `zapp-verify . --rapido` pós-commit → `VERIFY: VERDE SEM BANCO (11s)` (cartão só de front, sem migration; banco não verificado por não passar nome de conjunto).
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
-
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Pontos do revisor
+- Ponto 1 (diff de 102528 caracteres): não procede mais — trouxe SÓ o commit da fatia própria `c17bdd86c` via `git cherry-pick` (virou `04597d0e0` após resolver o conflito de imports em `TasksModule.tsx`); os commits dos pais ficaram de fora porque a base `dia/2026-10-12` já contém os primitivos equivalentes. Diff agora só nos 6 arquivos do cartão.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não liguei botão do cabeçalho, tecla `N` nem menu das colunas ao `openModal()`: nada na base atual chama `openModal()` e o cartão só permite tocar `TasksModule.tsx` para montar o modal — o acionamento é escopo dos cartões donos (cabeçalho/menu). O modal abre via `modalOpen` do `TasksUiContext`, mesma fonte que esses acionadores usarão.
