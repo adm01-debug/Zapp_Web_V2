@@ -1,43 +1,56 @@
-Especialista: senior (refazer de relato)
-(Nota: este refazer 2 altera só `.tmp/relato.md`; o trabalho anterior veio por `git cherry-pick` da entrega recusada.)
+# feat(followup): runtime de follow-ups — fila de execuções e pendentes com conclusão
 
-## Ponto único do revisor (refazer 2) — relato
-- Ponto 1 (frase residual no fim do relato): `.tmp/relato.md` — removi a frase recusada da seção "Aviso do juiz barato" e também retirei a citação dela no ponto 4, para a frase não aparecer em nenhum lugar do relato.
-- Prova deste refazer: `git diff --name-only c19265932..HEAD` → `.tmp/relato.md`; busca no relato pela frase recusada → `presente=False` e `rodando_entrega_matches=False`.
-- Não mexi em código nem testes neste refazer; por isso não criei teste novo de produto. A prova cabível é o diff restrito ao relato e a busca negativa pela frase.
+Especialista: worker (sql) (area-sql-banco)
 
-## Pontos do revisor (refazer 1) — o que mudou em cada um
-- Ponto 1 (alvo de 18 px): `TaskCheckbox.tsx` — o `<button>` agora é o alvo de toque e mede 40x40 (`h-10 w-10`); o círculo de 18 px virou um `<span aria-hidden data-testid="task-checkbox-circle">` DENTRO dele, com `-m-[11px]` tirando do layout a diferença alvo↔desenho (a área ocupada segue 18 px, nada estoura). Teste novo: "tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela)" — confere `h-10`/`w-10` no elemento interativo, `h-[18px]`/`w-[18px]` no desenho decorativo.
-- Ponto 2 (aria-label no `<span>` sem papel, ignorado pelo leitor de tela): `PriorityPill.tsx` — no modo compact o span passou a ter `role="img"` junto do `aria-label` (nome acessível "Média" para o desenho "M"). Teste: o caso "compacto vira a inicial..." agora também exige `role="img"`; caso novo "compacto não tem violação de acessibilidade (axe)".
-- Ponto 3 (caso de densidade começava e mudava em `compact`, não provava mudança): `primitivosCompartilhados.test.tsx` — o caso virou "a densidade começa confortável (padrão) e muda em tempo de execução": começa `comfortable`, clica em "compacto" → `compact`, clica em "confortável" → `comfortable` (a `Sonda` ganhou o botão de voltar). Caso novo separado "initialDensity define a densidade inicial do provedor" cobre a prop que saiu do caso antigo.
-- Ponto 4 (relato): removida a frase solta no fim da seção "Aviso do juiz barato" e mantida, abaixo, a lista com o NOME de cada caso de teste (critério 4).
+## O que mudou e por quê
+- `supabase/migrations/20261012124904_followup_runtime_fila_execucoes.sql` (novo):
+  - `followup_executions.reason` (motivo) + `CHECK followup_executions_status_check`
+    com o vocabulário `('pendente','enviado','concluido','cancelado','erro')` e default
+    `'pendente'`; backfill idempotente do legado (`pending/active/paused/scheduled -> pendente`,
+    `sent/delivered -> enviado`, `completed -> concluido`, `cancelled -> cancelado`,
+    `failed/error -> erro`) preservando o valor antigo em `reason='status_legado:<valor>'`
+    para o Rollback ser exato; índice parcial `idx_followup_executions_status_next_step`.
+  - RLS: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` + policy de SELECT por
+    `is_admin_or_supervisor(auth.uid()) OR is_contact_visible_to_user(contact_id, auth.uid())`
+    (staff OU atendente do contato) — sem `USING (true)`.
+  - RPCs `enroll_followup(contato, sequencia)`, `complete_followup(id)`, `cancel_followup(id, motivo)`
+    (authenticated/service_role, autorização por visibilidade de contato) e
+    `due_followups(limite)` (SOMENTE service_role); ACL por assinatura exata, negando anon/PUBLIC.
+  - Gatilho `trg_followup_cancel_on_inbound` em `public.messages`: mensagem recebida
+    (`sender='contact'`) cancela as execuções `pendente` daquele contato (`reason='resposta_do_contato'`).
+- `scripts/db-audit/followup-runtime.test.sh` (novo): contrato em Postgres descartável, dois blocos
+  no mesmo run — BLOCO A estado anterior (defeito), BLOCO B migration aplicada, BLOCO C a linha
+  `-- Rollback:` executada — rodando como papel real (`set role authenticated/anon/service_role` +
+  `request.jwt.claims`), nunca como postgres.
+- `src/integrations/supabase/types.ts`: tipos gerados acompanham a migration (coluna `reason` e as
+  4 funções novas).
 
-## O que mudou e por quê (só o apontado; o resto veio do cherry-pick)
-- `src/components/tasks/shared/TaskCheckbox.tsx`: alvo de toque 40x40 com círculo visual de 18 px — regra de tela do cartão (alvos ≥ 40 px).
-- `src/components/tasks/shared/PriorityPill.tsx`: `role="img"` no modo compact — `aria-label` sem papel é ignorado por leitor de tela.
-- `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx`: 2 casos novos + 1 caso corrigido + botão na sonda.
+## Prova
+- vermelho antes (BLOCO A): `bash scripts/db-audit/followup-runtime.test.sh` →
+  `[PASS] A.1 (DEFEITO) enroll_followup nao existe: nao ha fila de execucoes` /
+  `[PASS] A.2 (DEFEITO) due_followups nao existe` /
+  `[PASS] A.3 (DEFEITO) admin grava status invalido: nao ha CHECK de vocabulario` /
+  `[PASS] A.5 (DEFEITO) nao existe a coluna reason (motivo)`.
+- verde depois (BLOCO B/C, mesmo comando, mesma execução):
+  `PASS: followup-runtime — fila de execucoes (enroll/complete/cancel/due) com autorizacao`
+  seguido de `[PASS] B.10 o atendente do contato ve a execucao`, `[PASS] B.11 outro agente NAO ve`,
+  `[PASS] B.13 anon NAO ve execucao nenhuma (RLS nega por padrao)`, `[PASS] B.15 authenticated NAO
+  consome due_followups`, `[PASS] B.29 resposta do CONTATO cancela o follow-up do contato`,
+  `[PASS] B.30 o follow-up de OUTRO contato segue pendente`, `[PASS] C.1..C.6` (rollback: RPCs/coluna/
+  CHECK/gatilho removidos, default `pending` e policy antiga restaurados). Fim: `set -Eeuo pipefail`
+  sem falha.
+- banco real (local): `hermes-db-migrar supabase/migrations/20261012124904_followup_runtime_fila_execucoes.sql`
+  → `APLICADA no banco LOCAL 'v2-261012094200b8' (produção não foi tocada)`.
+- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (68s)` (tipos/db_guard/lint/migrations OK).
 
-## Prova (vermelho antes, verde depois)
-- vermelho antes (código antigo do `HEAD` — `git show HEAD:<arquivo>` — com o teste novo):
-  `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Tests 2 failed | 27 passed (29)`
-  Falham exatamente: "tem alvo de toque de 40 px..." (sem `task-checkbox-circle`/`h-10`) e "compacto vira a inicial..." (`role` nulo).
-- verde depois: `npx vitest run src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` → `Test Files 1 passed (1); Tests 29 passed (29)`
-- regressão da vizinhança: `npx vitest run src/components/tasks` → `Test Files 23 passed (23); Tests 251 passed | 1 todo (252)`
-- estático: `npx eslint` nos 3 arquivos → exit 0 (sem saída); `npx tsc --noEmit -p tsconfig.json` → exit 0 (sem saída)
+## O que NÃO fiz e por quê
+- Não toquei `src/**` além de `types.ts`: a tela `FollowUpExecutionsHistory.tsx` hoje mapeia status em
+  inglês (`active/completed/cancelled/paused`) e cai no fallback. Deixo o aviso em `kanban_comment`
+  para o worker de telas ajustar o rótulo ao vocabulário novo (mudança de contrato do banco avisada, tela não é minha área).
+- Não avancei o passo da sequência dentro de `complete_followup`: o cartão pede 4 funções; `complete_followup`
+  conclui a execução e o avanço para o próximo passo é do runner (Edge), fora do escopo deste cartão.
+- `scripts/db-audit/followup-runtime.test.sh` é `.test.sh` NOVO e o registro no workflow `db-guard.yml`
+  (área CI) não está no meu escopo — REGISTRO PENDENTE: scripts/db-audit/followup-runtime.test.sh.
 
-## Nome de cada caso de teste deste cartão (critério 4)
-TaskCheckbox: é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome "Reabrir tarefa" e a marca aparece · desabilitado não dispara e sai do tab · é <button> NATIVO (Enter/Espaço e foco ficam por conta do navegador) e não vaza o clique para o card · tem alvo de toque de 40 px com o círculo visual de 18 px dentro (regra de tela) · sem violação de acessibilidade (axe).
-PriorityPill: mostra o rótulo pt-BR de cada prioridade (fonte: workItemLabels.ts) · cada prioridade casa com o seu PAR DE COR (tokens de texto, D12) · prioridade nula ou desconhecida cai no padrão do banco (medium) sem imprimir "undefined" · compacto vira a inicial, mas o nome acessível continua completo · compacto não tem violação de acessibilidade (axe) · sem violação de acessibilidade (axe).
-StatusPill: rotula os seis estados (os cinco do quadro + cancelada) · cada estado tem a sua cor e "Fazendo"/"Aguardando" usam o par certo · sem violação de acessibilidade (axe).
-DateLabel: reusa formatWorkItemDate: Hoje/Ontem/Amanhã com hora, no fuso local · format='day' mostra só o dia (caso das concluídas) · vazio vira "Sem prazo" em vez de string vazia · atrasado usa o par de TEXTO destrutivo; "Hoje" usa o de aviso · o ícone de calendário é decorativo e não infla o nome acessível.
-ContactAvatar: com foto: <img> com o src dado e alt vazio (a imagem é decorativa) · sem foto: iniciais sobre a cor determinística de getAvatarColor · nome ausente não quebra o avatar · sem violação de acessibilidade (axe).
-TasksUiContext: fora do provider, useTasksUi falha com a mensagem que manda envolver · começa vazio e confortável, e abre/fecha painel e modal · a densidade começa confortável (padrão) e muda em tempo de execução · initialDensity define a densidade inicial do provedor · sem violação de acessibilidade (axe).
-
-## Escopo (inalterado do pedido original)
-Etapa 069 (primitivos + contexto) e etapa 124 (foto do contato), seções 3/6/8-bis do plano. Modo compacto = só a inicial; `PriorityPill` lê de `workItemLabels.ts`; `DateLabel` delega a `formatWorkItemDate` (cartão T04). Sem migration/Edge/dependência nova; nada exporta ou sai do sistema.
-
-## Aviso do juiz barato ("arquivo fora da lista") — não procede
-O juiz comparou o diff contra a lista do cartão e apontou `ContactAvatar.tsx`, `DateLabel.tsx`, `StatusPill.tsx`, `tasksUi.ts`, `src/hooks/tasks/**` e `TasksUiProvider` como "fora do escopo". Eles vêm do `git cherry-pick` que o PRÓPRIO CARTÃO manda fazer ("DEPENDÊNCIA: traga a FAIXA inteira"), das faixas dos cartões pais t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) e t_f268a0d8 (`contact_type`); não foram escritos agora e não são escopo novo. `PriorityPill.tsx`, `TaskCheckbox.tsx` e o teste SÃO desta lista do cartão.
-
-## Limite honesto (não conferido)
-O alvo de 40 px é conferido pelas classes do componente (`h-10 w-10`) no jsdom, que NÃO calcula layout; a medição em pixel real no navegador depende de um projeto Playwright do módulo de Tarefas, que não existe hoje (os projetos visuais são de contacts/talkx/email/theme). Não criei projeto novo (fora dos "arquivos que pode tocar").
+Concluí o escopo do cartão (migration + RLS + RPCs + gatilho + contrato + tipos), com prova verde e
+rollback executado.
