@@ -1,63 +1,22 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: Íris (area-front-componentes)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+UI-08 (paridade V3): a paleta do ⌘K volta a oferecer "Nova conversa" e "Respostas rápidas" — mas agora cada comando tem executor de verdade, ligado ao dono do fluxo (o defeito do R2-INF-033 era justamente anunciar sem executor). O próprio comentário removido em command-palette-data.tsx dizia que nenhum dos dois fluxos tinha gatilho global; em vez de reexibir botões mortos, criei os dois gatilhos seguindo o padrão já aceito no app (`inbox-open-tasks-tab`, `open-transfer-dialog`).
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+- `src/components/ui/command-palette-data.tsx`: as duas entradas em `defaultActionCommands`, cada uma com `action` que publica um evento global (`open-new-conversation` / `open-quick-replies`) — mesmo padrão do `action-keyboard` que já existia ali.
+- `src/components/inbox/RealtimeInboxView.tsx`: listener de `open-new-conversation` abre o `NewConversationModal` (`setShowNewConversation(true)`), igual ao listener vizinho de `inbox-open-tasks-tab`.
+- `src/components/inbox/ChatPanel.tsx`: listener de `open-quick-replies` abre o seletor de respostas rápidas do compositor (`openDialog('quickReplies')`), igual ao listener vizinho de `open-transfer-dialog`.
+- Testes: `src/components/ui/__tests__/command-palette-acoes.test.tsx` (os dois casos que exigiam ausência agora provam presença + disparo do evento + fechamento da paleta), `src/components/inbox/__tests__/RealtimeInboxView.mobile-nova-conversa.test.tsx` (case novo: o evento abre o modal) e o novo `src/components/inbox/__tests__/ChatPanel.paleta-respostas-rapidas.test.tsx` (monta o ChatPanel REAL e prova o seletor abrir).
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Prova
+- vermelho antes: `npx vitest run src/components/ui/__tests__/command-palette-acoes.test.tsx src/components/inbox/__tests__/RealtimeInboxView.mobile-nova-conversa.test.tsx src/components/inbox/__tests__/ChatPanel.paleta-respostas-rapidas.test.tsx` → `Test Files 3 failed (3); Tests 4 failed | 9 passed (13)` (as 2 entradas não existiam; os 2 listeners não existiam).
+- verde depois (mesmo comando) → `Test Files 3 passed (3); Tests 13 passed (13)`.
+- suíte do entorno (inbox + ui): `npx vitest run src/components/inbox/__tests__/ src/components/ui/__tests__/` → `Test Files 90 passed (90); Tests 546 passed (546)`.
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` com `OK tipos`, `OK lint`, `OK migrations`, `OK db_guard` (sem banco: o cartão não toca migration).
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Por que toquei arquivos além dos 3 citados no cartão
+O cartão citava `command-palette-data.tsx`, `CommandPaletteHost.tsx (só a execução das ações)` e o teste — mas os dois fluxos não tinham gatilho global nenhum (é o que o comentário do R2-INF-033, removido neste diff, registrava). Sem um listener no dono, os comandos voltariam a só fechar a paleta. Os dois donos (`RealtimeInboxView`, `ChatPanel`) são de `src/components/**`, a minha área, e cada listener é de 5 linhas no mesmo padrão dos vizinhos. `CommandPaletteHost.tsx` não precisou mudar: a `action` vive no item (como a de "Atalhos de teclado").
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não adicionei atalho de teclado `N` para "Nova conversa": `defaultShortcuts.ts` já reserva o `n` puro para `tasks-focus-quickadd` (escopo `TASKS_VIEWS`) e o `Ctrl+N` para `new-message`; sem binding global real o campo `shortcut` da paleta viraria só um selo de tecla que não funciona. Registrado em comentário no cartão.
+- Não criei tela nova nem toquei configurações: "Respostas rápidas" abre o seletor real do compositor, não uma tela inventada.
