@@ -1,19 +1,41 @@
-Especialista: Hugo (area-front-hooks)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- src/hooks/tasks/useWorkItemDraft.ts (novo): rascunho do painel "Detalhes da tarefa" sobre as mutations que já existem (`update`/`move` de `useMyWorkItems`) — sem tabela, coluna ou query nova. Controle de alterações com base (limpar um campo volta a valer como "sem alteração"); `buildMinimalPatch` manda no `update` só o campo que mudou e deixa o estado fora do patch (quem move é o `move`); aviso "Esta tarefa mudou" quando a versão do cache/realtime muda enquanto há edição pendente, sem descartar o rascunho; `save()` pré-valida a troca de estado com `canTransition` (limite de Fazendo = 3 e motivo obrigatório em Aguardando) ANTES de qualquer escrita — bloqueado, o estado anterior fica intacto e sai toast com a mesma mensagem que o módulo já usa; erro de escrita não avança a base (o rascunho continua sujo e pode ser reenviado, o item volta pelo rollback otimista das mutations). Coerência prazo × lembrete (etapa 162) exposta em `coherence` para a tela avisar (etapa 138), sem bloquear o save.
-- Lint do React Compiler (react-hooks/refs, preserve-manual-memoization): a primeira versão escrevia no ref do relógio durante o render; troquei por um `now` estável lido no memo — `npx eslint src/hooks/tasks/useWorkItemDraft.ts` sai sem nenhuma ocorrência.
-- src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx (novo): 23 casos — patch mínimo (só o campo alterado), limpar campo = sem alteração, limpar prazo manda `null`, bloqueio por motivo e por limite sem NENHUMA escrita, troca de estado com motivo via `move`, erro devolvendo o rascunho sujo, atualização remota suja x limpa, aceitar/dispensar remoto, a própria escrita não vira "mudou", troca de tarefa e coerência do lembrete.
-- useMyWorkItems.ts NÃO precisou de ajuste: o `update` já aceita `Partial<WorkItemInput>` e o patch mínimo passa direto por ele.
+Ponto 1 — patch mínimo precisava comparar contra a base local, não contra o item remoto atual.
+O que mudei: em `src/hooks/tasks/useWorkItemDraft.ts`, `buildMinimalPatch` passou a receber `WorkItemDraftFields` da base e `changedFields/save` usam `base`; quando o remoto muda enquanto há rascunho sujo, salvar manda só os campos realmente editados e preserva o campo remoto não editado. Também ajustei a base pós-save para mesclar o `item` atual com o patch salvo, sem transformar alteração remota em gravação local.
+Teste que prova: `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — `salvar com aviso remoto não reverte campo remoto não editado`.
+Vermelho antes da correção: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` falhou nesse teste porque o resultado vinha com `moved: true` e `move` era chamado.
+Verde depois: o mesmo comando passou com `3 passed | 22 skipped`; o full focused passou com `3 files / 53 tests`.
 
-## Prova
-- vermelho antes: `npx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` com o hook ausente → `Test Files 1 failed (1) / Tests no tests` (falha ao resolver o import de `@/hooks/tasks/useWorkItemDraft`).
-- verde depois: `npx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` → `Test Files 1 passed (1); Tests 23 passed (23)`.
-- sem regressão na área: `npx vitest run src/hooks/tasks` → `Test Files 11 passed (11); Tests 170 passed (170)`.
+Ponto 2 — quando `update` grava e `move` falha depois, a base não podia continuar totalmente antiga nem esconder o parcial.
+O que mudei: em `src/hooks/tasks/useWorkItemDraft.ts`, `DraftSaveOutcome` ganhou `partialSaved`; se `update` concluiu e `move` rejeitou, o hook avança a base só com os campos gravados pelo update e mantém o status sujo para reenvio, expondo `partialSaved: true` no retorno.
+Teste que prova: `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — `se update gravou e move falhou, avança só a base dos campos salvos`.
+Vermelho antes da correção: o mesmo comando vermelho acima falhou porque o retorno não tinha `partialSaved: true` e a base ainda incluía o título como alteração pendente.
+Verde depois: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` passou (`3 passed | 22 skipped`).
 
-## Dependência
-- O cartão depende de t_3d9b0963 (`workItemFormat.ts`/`workItemPresets.ts`) que ainda não estava na base local: `git cherry-pick -x 74c5c89f5` no meu workspace (banda vazia de conflito).
+Ponto 3 — `waitingReason` precisava ser normalizado antes de validar e de chamar `move`.
+O que mudei: em `src/hooks/tasks/useWorkItemDraft.ts`, `save` calcula `waitingReason = normNullableText(draft.waitingReason)` uma vez e usa esse valor tanto no `canTransition` quanto no `move`. Isso evita enviar motivo com espaços extras e mantém motivo em branco como bloqueio.
+Teste que prova: `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` — `mover para Aguardando COM motivo leva o motivo normalizado no move`.
+Vermelho antes da correção: o comando vermelho falhou mostrando `waitingReason: "  Retorno da transportadora  "` recebido pelo `move`.
+Verde depois: o mesmo teste passou e confirmou `waitingReason: "Retorno da transportadora"`.
 
-## O que NÃO fiz e por quê
-- Não criei toast próprio para erro de rede: `update`/`move` já mostram o toast no `onError`; o bloqueio que eu mesmo detecto antes de escrever tem toast aqui para não haver escrita parcial.
-- Não alterei telas nem o modal: o cartão é do hook; a tela que usa este hook é de outra trilha.
+Ponto 4 — relato anterior dizia mais do que o diff provava sobre mensagens iguais.
+O que mudei: corrigi este relato: não afirmo que extraí uma fonte compartilhada de mensagens. O diff mantém `DRAFT_BLOCK_MESSAGES` com o mesmo texto usado pelo módulo existente e os testes verificam os textos pelo contrato do hook; não fiz refatoração compartilhada para não ampliar escopo.
+Teste que prova: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` passou com `3 files / 53 tests`.
+
+Arquivos alterados (`git diff --name-only dia/2026-10-11...HEAD`):
+.tmp/relato.md
+src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx
+src/hooks/tasks/__tests__/workItemFormat.test.ts
+src/hooks/tasks/__tests__/workItemPresets.test.ts
+src/hooks/tasks/useWorkItemDraft.ts
+src/hooks/tasks/workItemFormat.ts
+src/hooks/tasks/workItemPresets.ts
+
+Diff final: `git diff dia/2026-10-11...HEAD | wc -c` = 58095 bytes (< 90000).
+
+Verificações executadas:
+- Vermelho antes da correção: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` com o código anterior falhou em 3 testes: patch remoto gerava `moved: true`, parcial não expunha `partialSaved: true`, e `waitingReason` chegava com espaços.
+- Verde focado: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx -t "salvar com aviso remoto|se update gravou|Aguardando COM motivo"` — `1 file passed; 3 passed | 22 skipped`.
+- Verde do conjunto do hook: `bunx vitest run src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` — `3 files passed; 53 tests passed`.
+- Typecheck: `bun run typecheck` — `tsc -b --force`, exit 0.
+- Lint focado: `bunx eslint src/hooks/tasks/useWorkItemDraft.ts src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx src/hooks/tasks/workItemFormat.ts src/hooks/tasks/workItemPresets.ts src/hooks/tasks/__tests__/workItemFormat.test.ts src/hooks/tasks/__tests__/workItemPresets.test.ts` — exit 0.
