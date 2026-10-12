@@ -519,6 +519,31 @@ else
 fi
 
 echo
+echo '── MUTACAO D: copia com SQLSTATE errado no conflito de move ────────────────'
+mut_d="$tmp_dir/departments_admin_mut_wrong_sqlstate.sql"
+python3 - "$migration" "$mut_d" <<'MUT_D_PY'
+from pathlib import Path
+import sys
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+s = src.read_text()
+old = "RAISE EXCEPTION 'move_target_already_has_department_conversation' USING ERRCODE = '22023';"
+new = "RAISE EXCEPTION 'move_target_already_has_department_conversation' USING ERRCODE = 'P0001';"
+if old not in s:
+    raise SystemExit('MUTACAO D: nao encontrou o erro de conflito 22023')
+dst.write_text(s.replace(old, new))
+MUT_D_PY
+ok 'MUTACAO D: copia com mesma mensagem e SQLSTATE errado (copia em TMPDIR da tarefa)'
+reseed
+q1 "DROP FUNCTION IF EXISTS public.delete_department(uuid, uuid); DROP FUNCTION IF EXISTS public.departments_overview();" >/dev/null
+psql_file "$mut_d" >/dev/null
+if exige_falha_do_contrato 'MUTACAO D'; then
+  ok 'MUTACAO D: mesma mensagem com SQLSTATE errado FALHA como esperado'
+else
+  fail 'MUTACAO D: deveria falhar quando a mensagem bate mas o SQLSTATE muda'
+fi
+
+echo
 echo '── ROLLBACK: o bloco do arquivo devolve o estado anterior ─────────────────'
 q1 "DROP FUNCTION IF EXISTS public.delete_department(uuid, uuid); DROP FUNCTION IF EXISTS public.departments_overview();" >/dev/null
 psql_file "$migration" >/dev/null   # estado final real
