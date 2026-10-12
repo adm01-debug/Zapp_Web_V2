@@ -1,19 +1,54 @@
-Especialista: worker (sql) (area-sql-banco)
+Especialista: workersql
 
-## O que mudou e por quê
-- supabase/migrations/20261012134705_qr_attempts.sql: cria `public.qr_attempts` (uma linha por tentativa de pareamento por QR), com `connection_id` FK -> `whatsapp_connections` ON DELETE CASCADE, `created_at` default now(), `expires_at`, `status` com domínio FECHADO ('pendente','conectado','expirado','erro', default 'pendente') e `reason`; índice (`connection_id, created_at desc`) e índice por `created_at` (retenção); RLS LIGADA com uma policy FOR ALL para STAFF (`is_admin_or_supervisor`), `revoke` de `anon`, grants para `authenticated` e `service_role`; função `public.qr_attempts_purge()` (security definer, 30 dias, só `service_role`). Sem isso não há onde auditar o QR (scan, tentativas, motivo da falha) nem onde fechar o ciclo do pareamento no banco.
-- scripts/db-audit/qr-attempts-contract.test.sh: prova o defeito (ausência) e o contrato, com papel real (`SET ROLE authenticated`/`anon`), nunca como `postgres`.
-- scripts/ci/check-test-inventory.mjs: registra o teste novo na ALLOWLIST (o passo de uma linha em `db-guard.yml` é promovido pelo dono do workflow) — sem isso o check-test-inventory reprova o teste como órfão.
+## O que fiz e por quê
+O QR de pareamento não tinha onde ser auditado no banco: nenhuma linha por tentativa, sem como saber se o QR expirou, se o pareamento conectou ou por que falhou. Esta migration cria `public.qr_attempts`, uma linha por tentativa de pareamento.
 
-## Prova
-- vermelho antes: BLOCO A (`bash scripts/db-audit/qr-attempts-contract.test.sh`) -> `[PASS] A.1 (DEFEITO) public.qr_attempts NAO existe: nao ha onde auditar um QR` (o defeito é ausência: nada de QR auditável no banco).
-- verde depois: `bash scripts/db-audit/qr-attempts-contract.test.sh` -> `A.1` + `B.1..B.23` + `C.1..C.2` todos `[PASS]`, linha final `PASS: TC qr_attempts — tabela com contrato do cartao, FK CASCADE, dominio de status fechado, RLS staff-only (usuario comum e anon barrados), retencao de 30 dias so por service_role, e rollback executavel.` Container `postgres:17-alpine` descartável.
-- Bloco A versa o mesmo script em container novo com a migration real `supabase/migrations/20261012134705_qr_attempts.sql`; a migration também foi aplicada no banco LOCAL da tarefa: `hermes-db-migrar supabase/migrations/20261012134705_qr_attempts.sql` -> `APLICADA no banco LOCAL`.
-- rollback EXECUTADO (BLOCO C): as duas instruções `--   drop ...` da 1ª linha do arquivo rodam de verdade e, ao fim, tabela e função não existem (`to_regclass`/`to_regprocedure` NULL).
+- supabase/migrations/20261012110945_qr_attempts.sql — cria `public.qr_attempts` com:
+  - `connection_id` FK → `public.whatsapp_connections(id)` ON DELETE CASCADE (apagar a conexão leva o histórico dela);
+  - `created_at` (default now()), `expires_at` (default now() + 60 s), `status`
+    ('pendente'|'conectado'|'expirado'|'erro', default 'pendente') e `reason` (motivo da falha);
+  - CHECK do domínio de status e CHECK do TTL (clamp 15-300 s do QR da V3; a GO não devolve
+    count/ttl, então o produtor usa o default de 60 s);
+  - índices `(connection_id, created_at desc)` e `(created_at)`;
+  - RLS LIGADA com uma policy FOR ALL para staff (`is_admin_or_supervisor(auth.uid())`), REVOKE de
+    anon, GRANT para authenticated e service_role;
+  - `public.qr_attempts_purge()` (SECURITY DEFINER, `search_path = pg_catalog, public`) que apaga
+    tentativas com `created_at < now() - 30 dias`; EXECUTE só para service_role (retenção de 30 dias).
+- supabase/tests/qr_attempts.sql — teste de aceitação/contrato (detalhe na prova).
+- src/integrations/supabase/types.ts — tipos gerados: tabela `qr_attempts` (+ 4 relações para
+  whatsapp_connections e suas views) e a função `qr_attempts_purge`.
 
-O que o teste cobre: B.2 contrato do cartão (conexão/criado_em/expira_em/status/motivo); B.3/B.4 FK ON DELETE CASCADE; B.5 `connection_id` NOT NULL; B.6 RLS ligada; B.7 status fora do domínio recusado; B.8 default 'pendente'; B.9 `reason` NULL; B.10/B.11 staff (admin via user_roles) lê e escreve; B.12/B.13 usuário comum não lê e não escreve; B.14/B.15 `anon` sem grant; B.16-B.18 CASCADE leva o histórico ao apagar a conexão; B.19-B.21 retenção de 30 dias apaga a antiga (31 dias) e PRESERVA a recente; B.22/B.23 só `service_role` executa a purga.
+Nada foi persistido do QR em si: a tabela só guarda tentativa, status e motivo — nenhum payload/base64.
+Diff desta entrega (vs base): os 4 arquivos acima mais .tmp/relato.md.
+
+## Prova (vermelho antes, verde depois)
+Teste em Postgres 17 descartável (docker local), aplicando as migrations REAIS via `\i` e rodando
+como os papéis REAIS (SET LOCAL ROLE authenticated/anon/service_role), nunca como postgres:
+
+- VERDE: `psql -X -v ON_ERROR_STOP=1 -f supabase/tests/qr_attempts.sql` → exit 0, 30 asserções PASS
+  (T0..T10d) e a linha final `PASS: TC qr_attempts — ...`.
+- VERMELHO (a guarda ausente): mesmo arquivo com `-v sem_guarda=1` (desliga a RLS dentro da
+  transação) → `ERROR: t_7af815d8 FALHOU [T6 usuario comum NAO insere (RLS)]: esperava erro SQLSTATE
+  42501, veio: OK 1`, exit 3. Ou seja, o teste é sensível à proteção.
+- Rollback de verdade: as duas instruções do bloco `-- Rollback (SQL executável, na ordem):` rodam de
+  fato (T10/T10b) e a tabela e a função somem (T10c/T10d).
+- Migration aplicada no banco local da tarefa: `hermes-db-migrar
+  supabase/migrations/20261012110945_qr_attempts.sql` → `APLICADA no banco LOCAL` (produção intocada).
+
+O que o teste cobre: T0/T0d a barreira é a RLS e não a ACL (authenticated TEM o GRANT; anon não tem);
+T1-T3 contrato de colunas, FK CASCADE e default de status; T4/T4b/T4c domínio de status e clamp de TTL
+recusados; T4d/T4e TTL default de 60 s; T5/T5b/T5c staff insere e lê; T6/T6b usuário comum não insere e
+lê zero; T7/T7b anon barrado; T8/T8b/T8c CASCADE; T9..T9e a purga de 30 dias preserva a recente e só
+service_role executa; T10..T10d o rollback.
+
+Verificação do repositório: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO` (db_guard, tipos,
+lint e migrations OK; banco_local pulado por falta do nome do conjunto, como o fechar chama).
 
 ## O que NÃO fiz e por quê
-- `src/integrations/supabase/types.ts`: fora da minha área (`src/`). A tabela é nova e não mudei RETURNS existente; quem consumir (Edge/front, cartões próprios) regenera os tipos.
-- Agendamento do cron da retenção (`cron.schedule`): aqui fica o mecanismo (`qr_attempts_purge`); o agendamento é do dono da infra/workflow, não deste cartão (documentado no COMMENT da função).
-- `node scripts/ci/check-test-inventory.mjs` ainda acusa 4 testes órfãos PRÉ-EXISTENTES (department-invite-contract-audit-vocabulary, talkx-conversion-defaults, team-chat-media-contract, team-direct-conversation-race) — são de outros cartões, não deste diff; não os toquei (meu teste não aparece na lista).
+- Agendamento do cron da retenção (`cron.schedule`) e qualquer deploy: fora do cartão; o mecanismo
+  (`qr_attempts_purge()`) fica pronto, o agendamento é de quem opera a infra.
+- Produtor do QR (Edge/front) e qualquer tela: não é a minha área; a tabela e o contrato de TTL/status
+  ficam prontos para esses cartões consumirem (os tipos já estão em types.ts).
+- Numa primeira tentativa eu criei um `scripts/db-audit/*.test.sh` e mexi em
+  `scripts/ci/check-test-inventory.mjs`; o juiz apontou que esses arquivos não estão na lista do
+  cartão, então reverti ambos — o teste ficou só em supabase/tests/, como o cartão pede.
