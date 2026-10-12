@@ -39,7 +39,9 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 }));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
-vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+vi.mock('@/hooks/system/useDownloadPermission', () => ({ useDownloadPermission: () => ({ canDownload: false, isLoading: false }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false }) }));
+vi.mock('@/hooks/crm/useTeamProfiles',() => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/components/talkx/TalkXHelp', () => ({ TalkXHelp: () => <div /> }));
 vi.mock('@/components/talkx/TalkXOverview', () => ({ TalkXOverview: () => <div data-testid="overview" /> }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({ TalkXCampaignWizard: () => <div /> }));

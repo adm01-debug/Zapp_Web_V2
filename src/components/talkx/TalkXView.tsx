@@ -2,10 +2,14 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, HelpCircle,
+  LayoutDashboard, HelpCircle, Download,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { useUserRole } from '@/hooks/system/useUserRole';
+import { downloadFileWithPermission } from '@/lib/downloadFile';
+import { talkxCsvBlob } from '@/lib/talkxCsv';
 import { useTalkX, TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useTeamProfiles } from '@/hooks/crm/useTeamProfiles';
 import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
@@ -42,6 +46,70 @@ import {
 import type { WizardStep } from './useCampaignEditor';
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+
+const EXPORT_HEADERS = ['Campanha', 'Situação', 'Destinatários', 'Enviadas', 'Entregues', 'Respostas', 'Falhas', 'Criada em'];
+
+function campaignExportRows(campaigns: TalkXCampaign[]) {
+  return campaigns.map((c) => [
+    c.name, c.status, c.total_recipients, c.sent_count, c.delivered_count, c.replied_count ?? 0, c.failed_count, c.created_at,
+  ]);
+}
+
+/**
+ * X168 — "Exportar relatório": só admin/supervisor com `can_download`; a gravação
+ * passa pela porta única `downloadFileWithPermission`. Usa os dados já em tela
+ * (campanhas); a trilha em banco (`report_exported`) é de outra leva.
+ */
+function TalkXExportMenu({ campaigns }: { campaigns: TalkXCampaign[] }) {
+  const { canDownload } = useDownloadPermission();
+  const { isSupervisor } = useUserRole();
+  if (!canDownload || !isSupervisor) return null;
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const exportCsv = () => {
+    downloadFileWithPermission(talkxCsvBlob(EXPORT_HEADERS, campaignExportRows(campaigns)), `talkx-campanhas-${stamp}.csv`, { canDownload });
+  };
+  const exportPdf = async () => {
+    const controller = new AbortController();
+    const toastId = toast.loading('Gerando PDF…', { cancel: { label: 'Cancelar', onClick: () => controller.abort() } });
+    try {
+      const { buildTalkXReportPdf } = await import('@/lib/talkxReportPdf');
+      const blob = await buildTalkXReportPdf({
+        title: 'Relatório de campanhas — Talk X',
+        subtitle: new Date().toLocaleString('pt-BR'),
+        kpis: [
+          { label: 'Campanhas', value: String(campaigns.length) },
+          { label: 'Enviadas', value: String(campaigns.reduce((n, c) => n + c.sent_count, 0)) },
+          { label: 'Entregues', value: String(campaigns.reduce((n, c) => n + c.delivered_count, 0)) },
+          { label: 'Respostas', value: String(campaigns.reduce((n, c) => n + (c.replied_count ?? 0), 0)) },
+        ],
+        sections: [{ title: 'Campanhas', headers: EXPORT_HEADERS, rows: campaignExportRows(campaigns) }],
+      }, controller.signal);
+      if (downloadFileWithPermission(blob, `talkx-relatorio-${stamp}.pdf`, { canDownload })) toast.success('PDF exportado', { id: toastId });
+      else toast.dismiss(toastId);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') toast.info('Exportação cancelada', { id: toastId });
+      else toast.error('Erro ao gerar PDF', { id: toastId });
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
+        >
+          <Download className="w-4 h-4" />Exportar relatório
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => { void exportPdf(); }}>PDF do relatório</DropdownMenuItem>
+        <DropdownMenuItem onSelect={exportCsv}>CSV de campanhas</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function TalkXView() {
   const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
@@ -418,6 +486,7 @@ export default function TalkXView() {
                 Ao vivo
               </span>
             )}
+            <TalkXExportMenu campaigns={campaigns} />
             <button
               type="button" onClick={() => changeHelpRoute({})}
               className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"

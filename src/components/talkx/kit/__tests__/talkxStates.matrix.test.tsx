@@ -355,7 +355,9 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'user-matriz', full_name: 'Matriz X047' }, user: { id: 'user-matriz' }, session: null, loading: false }),
 }));
 
-vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+vi.mock('@/hooks/system/useDownloadPermission', () => ({ useDownloadPermission: () => ({ canDownload: false, isLoading: false }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false }) }));
+vi.mock('@/hooks/crm/useTeamProfiles',() => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
 
 vi.mock('recharts', () => {

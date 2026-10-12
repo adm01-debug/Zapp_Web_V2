@@ -53,7 +53,9 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
   }),
 }));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
-vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+vi.mock('@/hooks/system/useDownloadPermission', () => ({ useDownloadPermission: () => ({ canDownload: false, isLoading: false }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false }) }));
+vi.mock('@/hooks/crm/useTeamProfiles',() => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
 
 // O wizard de campanha fica marcado por um data-testid: o ponto do cartão é que ele NÃO

@@ -58,7 +58,10 @@ vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
 
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({ useTalkXTemplates: () => ({ templates: [] }) }));
-vi.mock('@/hooks/crm/useTeamProfiles', () => ({ useTeamProfiles: () => ({ data: [] }) }));
+// X168 — o menu "Exportar relatório" do cabeçalho consulta permissão e papel.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({ useDownloadPermission: () => ({ canDownload: false, isLoading: false }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false }) }));
+vi.mock('@/hooks/crm/useTeamProfiles',() => ({ useTeamProfiles: () => ({ data: [] }) }));
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: () => ({ fields: [] }) }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({
   TalkXCampaignWizard: ({ campaign }: { campaign?: { id?: string } | null }) => (
