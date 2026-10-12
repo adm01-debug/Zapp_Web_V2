@@ -1,18 +1,38 @@
-Especialista: worker (docs)
+Especialista: senior (area-front-hooks)
 
-## O que mudou e por quê
-- ESTADO.md: âncoras `arquivo:linha` reprojetadas para a ponta de dia/2026-10-11 — chips de empilhamento moveram linhas nos arquivos citados e a guarda exige que a linha citada contenha o nome da própria edge. Ajustadas: ai-churn-analysis (ChurnPredictionDashboard.tsx:179→182), ai-classify-tickets (AutoTicketClassifier.tsx:202→204), ai-proxy (useObjectionDetector.ts:89→90 e :163→164), chatbot-l1 (ChatbotL1Config.tsx:234→235), multiplix-send (useMultiplixDispatches.ts:316→397), talkx-link (talkx-send/index.ts:442→455), talkx-send (useTalkX.ts:442→450 · :458→466 · :467→475) e talkx-send no agendador (talkx-scheduler/index.ts:279→294).
-- ESTADO.md: remoção da âncora `src/components/catalog/catalogExport.ts:13` de `promogifts-catalog` — o commit 436dec0a2 (CT-20) tirou a exportação de CSV do catálogo e o arquivo não cita mais a edge; a edge segue comprovada por `useCatalogQuickSearch.ts:12` e `useExternalCatalog.ts:201`.
-- ESTADO.md: cabeçalho passa a declarar `Base: dia/2026-10-11` (estava dia/2026-10-09).
-- scripts/ci/docs-estado-registry-convention.unit.mjs: trazido pelo `git cherry-pick 51c6dac8d` (guarda dos três documentos); eu NÃO alterei o teste.
+## Pontos da recusa
 
-## Prova
-- vermelho antes: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `✖ ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge` / `AssertionError: âncora desatualizada: src/components/ai/ChurnPredictionDashboard.tsx:179 não cita \`ai-churn-analysis\`` (fail 1).
-- verde depois: `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11` / `pass 11` / `fail 0`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+Ponto 1: a entrega anterior trazia 97.630 caracteres e apagava o módulo inteiro. Corrigi reduzindo o refazer ao que é necessário para tirar Campanhas Clássicas do app roteado e manter documentação/inventário sincronizados com o CI.
+- `src/pages/ViewRouter.tsx` e `src/pages/lazyViews.ts`: retirei a rota pública `campaigns`.
+- `src/services/navigation.service.ts`, `src/components/mobile/MobileHeader.tsx`, `src/components/mobile/MobileShell.tsx`, `src/hooks/ui/usePrefetchOnHover.ts` e `src/hooks/communication/index.ts`: retirei menu, atalhos, prefetch e export que levavam para `campaigns`.
+- `e2e/navegacao-modulos.spec.ts`: ajustei a lista esperada porque o pedido original retira esse módulo; a cobertura ficou no contrato novo `tests/contracts/no-campaigns-classicas.contract.test.ts`, que falha se menu, rota, prefetch, FAB móvel, barrel export ou registro voltarem a expor `campaigns`.
+- `FEATURE_REGISTRY.md` e `docs/COMPLETE_SYSTEM_FEATURES.md`: sincronizei o inventário para o estado real; Talk X é a rota ativa de Campanhas e o registro deixou de listar `campaigns`.
+- Escopo deliberadamente pequeno: os arquivos legados de `src/components/campaigns/**` seguem fora do app roteado, evitando repetir o diff enorme recusado.
 
-## Como resolvi o motivo da recusa
-- Motivo registrado: "quebra o ESPELHO DO CI no empilhamento (node: ESTADO.md cita só âncoras reais, e cada âncora contém a própria edge)". Causa: o empilhamento de cards deslocou linhas nos arquivos-fonte, e as âncoras publicadas deixaram de apontar a linha do chamador. Reprojetei cada âncora contra o código da ponta (varredura da tabela inteira do ESTADO.md: 0 desatualizadas de 80 linhas) e restaurei o verde sem mexer no critério do teste.
+Teste que prova:
+- Vermelho antes: `bunx vitest run --config vitest.contracts.config.ts tests/contracts/no-campaigns-classicas.contract.test.ts` com o código antigo → `Test Files 1 failed (1); Tests 2 failed (2)` em `.tmp/no-campaigns-red-final.log`.
+- Verde depois: o mesmo comando → `Test Files 1 passed (1); Tests 2 passed (2)`.
 
-## O que NÃO fiz e por quê
-- Não afrouxei a guarda: a regra "a linha citada contém a própria edge" foi mantida intacta — só as evidências do documento foram atualizadas. Nenhum arquivo fora da lista do cartão foi tocado; nenhum DDL/Edge/dependência nova.
+## Arquivos do diff
+
+.tmp/relato.md
+FEATURE_REGISTRY.md
+docs/COMPLETE_SYSTEM_FEATURES.md
+e2e/navegacao-modulos.spec.ts
+src/components/mobile/MobileHeader.tsx
+src/components/mobile/MobileShell.tsx
+src/hooks/communication/index.ts
+src/hooks/ui/usePrefetchOnHover.ts
+src/pages/ViewRouter.tsx
+src/pages/lazyViews.ts
+src/services/navigation.service.ts
+tests/contracts/no-campaigns-classicas.contract.test.ts
+
+## Verificações executadas com resultado limpo
+
+- `git diff --stat dia/2026-10-11...HEAD` → 12 files changed, 68 insertions(+), 32 deletions(-).
+- `git diff dia/2026-10-11...HEAD | wc -c` → 15748.
+- `git diff --check dia/2026-10-11...HEAD` → saída vazia.
+- `bunx vitest run --config vitest.contracts.config.ts tests/contracts/no-campaigns-classicas.contract.test.ts` → `Test Files 1 passed (1); Tests 2 passed (2)`.
+- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` → `tests 11; pass 11; fail 0`.
+- `node --test scripts/ci/complete-system-features-doc.unit.mjs` → `tests 7; pass 7; fail 0`.
