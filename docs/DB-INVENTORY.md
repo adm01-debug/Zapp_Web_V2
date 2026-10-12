@@ -158,7 +158,7 @@ arquivos do repositório, pela regra da seção anterior — cada linha carrega 
 | `number_reputation` | Reputação do número por conexão (saúde, envios, falhas e reclamações) | ativo | `src/components/connections/NumberReputationMonitor.tsx`, `src/components/connections/__tests__/NumberReputationMonitor.test.tsx` |
 | `passkey_credentials` | Credenciais WebAuthn (passkeys) do usuário | ativo | `src/hooks/auth/useWebAuthn.ts`, `supabase/functions/webauthn/index.ts` |
 | `password_reset_requests` | Pedidos de redefinição de senha (motivo, estado e revisor) | ativo | `src/pages/ForgotPassword.tsx`, `supabase/functions/approve-password-reset/index.ts` |
-| `payment_links` | Links de pagamento (valor, moeda e estado) | ativo | `src/hooks/payments/usePaymentLinks.ts`, `scripts/db-audit/global-guards-regression.test.mjs` |
+| `payment_links` | Links de pagamento (valor, moeda e estado) | parcial | `scripts/db-audit/global-guards-regression.test.mjs` |
 | `performance_snapshots` | Amostras de performance da tela (FCP, TTFB e tempos de carga) | ativo | `src/hooks/analytics/__tests__/usePerformanceSnapshots.limpeza.test.tsx`, `src/hooks/analytics/usePerformanceSnapshots.ts` |
 | `permissions` | Permissões do sistema (nome, categoria e descrição) | ativo | `src/__tests__/security-and-performance.test.ts`, `src/components/CommandPalette.tsx`, `src/components/a11y/__tests__/CustomModalFocus.test.tsx` … |
 | `pinned_conversations` | Conversas fixadas pelo usuário, com posição | ativo | `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts`, `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` … |

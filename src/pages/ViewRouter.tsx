@@ -65,7 +65,6 @@ const VIEW_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<Rec
   'privacy': Views.LGPDComplianceView,
   'tasks': Views.TasksModule as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, never>>>,
   'knowledge': Views.KnowledgeBaseView,
-  'payments': Views.PaymentLinksView,
   'wa-flows': Views.WhatsAppFlowsBuilder,
   'meta-capi': Views.MetaCAPIView,
   'diagnostics': Views.DiagnosticsView,

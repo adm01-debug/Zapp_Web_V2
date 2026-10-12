@@ -29,7 +29,6 @@ const viewLabels: Record<string, string> = {
   tasks: 'Tarefas',
   wallet: 'Carteira',
   catalog: 'Catálogo',
-  payments: 'Pagamentos',
 knowledge: 'Base de Conhecimento',
   automations: 'Automações',
   reports: 'Relatórios',

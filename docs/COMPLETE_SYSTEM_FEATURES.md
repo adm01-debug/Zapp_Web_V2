@@ -869,12 +869,12 @@
 
 | Item | Valor |
 |------|-------|
-| Rota | `?view=payments` → `PaymentLinksView` |
-| Componente | `src/components/payments/PaymentLinksView.tsx` |
-| Hook | `src/hooks/payments/usePaymentLinks.ts` |
+| Rota | removida do `ViewRouter` |
+| Componente | removido do código |
+| Hook | removido do código |
 | Tabela | `payment_links` |
 
-**Funcionalidades:** CRUD de links de pagamento, métodos PIX e Cartão, valores, status (pending/paid/expired/cancelled), copiar link e enviar ao contato.
+**Estado atual:** o módulo de links de pagamento foi removido da navegação e do código. A tabela `payment_links` permanece no banco como registro legado, sem tela/hook ativo nesta versão.
 
 ---
 
