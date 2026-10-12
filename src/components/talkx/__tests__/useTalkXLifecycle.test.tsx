@@ -139,6 +139,39 @@ describe('useTalkXLifecycle — controlador único (X050)', () => {
     expect(result.current.intent).toBeNull();
   });
 
+  // Recusa literal do [refazer 1]: `scheduled_at: current.scheduledAt ?? null`
+  // gravava `status: 'scheduled'` com data nula quando a tela não passava a data.
+  const AGENDAMENTO_SEM_DATA: Array<[string, string | null | undefined]> = [
+    ['ausente', undefined],
+    ['nulo', null],
+    ['vazio', ''],
+    ['só espaços', '   '],
+    ['inválido', 'não é data'],
+  ];
+
+  it.each(AGENDAMENTO_SEM_DATA)(
+    'agendar com data %s não chama a mutação e mantém o erro com a intenção aberta',
+    async (_rotulo, scheduledAt) => {
+      const { result } = renderHook(() => useTalkXLifecycle());
+
+      act(() => {
+        result.current.request({
+          kind: 'schedule',
+          target: TARGET,
+          scheduledAt: scheduledAt as string,
+        });
+      });
+      await act(async () => {
+        await result.current.confirm();
+      });
+
+      expect(talkx.updateCampaign.mutateAsync).not.toHaveBeenCalled();
+      expect(result.current.error).toBe('Escolha a data e hora do agendamento.');
+      expect(result.current.intent?.kind).toBe('schedule');
+      expect(result.current.isPending).toBe(false);
+    },
+  );
+
   it('enquanto a ação está pendente não aceita nova ação nem fecha', async () => {
     const pending = deferred<boolean>();
     talkx.startCampaign.mockReturnValue(pending.promise);
@@ -379,6 +412,20 @@ describe('TalkXLifecycleDialog — diálogo único ligado ao controlador', () =>
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('A campanha já foi encerrada.');
     expect(screen.getByText(talkXLifecycleCopy.pause.title)).toBeInTheDocument();
+  });
+
+  it('agendar sem data mantém o diálogo aberto com o aviso e sem chamar a mutação', async () => {
+    render(<Harness kind="schedule" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'abrir' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: talkXLifecycleCopy.schedule.confirmLabel }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Escolha a data e hora do agendamento.');
+    expect(screen.getByText(talkXLifecycleCopy.schedule.title)).toBeInTheDocument();
+    expect(talkx.updateCampaign.mutateAsync).not.toHaveBeenCalled();
   });
 
   it('cada ação do ciclo tem rótulo próprio no diálogo único', () => {
