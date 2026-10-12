@@ -27,6 +27,9 @@ Também entrou `scripts/db-audit/sec-y25-01-insert-alvo.test.sh` e o passo corre
 - conjunto: `bash scripts/db-audit/sec-y25-01-insert-alvo.test.sh` → `[OK] SEC-Y25-01: INSERT de deal_activities, calls e conversation_tasks amarrado ao alvo` (exit 0).
 - verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (93s)`.
 
+## Ressalva ao aviso automático "SEM DDL/migration" do fechar
+Não procede. O cartão termina com a linha de regras permanentes ("sem DDL/Edge/dependência nova salvo se o pedido original exigia"), e o PEDIDO ORIGINAL deste cartão é exatamente uma migration de banco: "Uma migration nova (com ROLLBACK documentado conforme o padrão do repo)" que corrige as policies de INSERT. A migration está no escopo declarado em ARQUIVOS QUE PODE TOCAR ("uma migration nova em supabase/migrations/"). Repito o MESMO comando de fechar sem alterar o diff.
+
 ## O que NÃO fiz e por quê
 - Não apliquei nada em produção (regra permanente: migration só no repositório).
 - Não editei as migrations antigas das policies (correção = migration nova).
