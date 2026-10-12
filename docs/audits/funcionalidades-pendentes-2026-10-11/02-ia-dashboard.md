@@ -2,6 +2,10 @@
 
 Varredura de leitura em `adm01-debug/Zapp_Web_V2`, HEAD `99aa53f` (main de 09–11/10/2026). Ponto de partida: reconciliação de 03/10 (baseline `2e7cf81`, `docs/reconciliation/evidence/assessment-telefonia_ia_dashboard.json.gz`) e inventário de 07/10 (`docs/audits/INVENTARIO_MELHORIAS_2026-10-07.tsv`). Todo estado abaixo foi **re-verificado no código do HEAD** (os lotes de 04/10 a 09/10 — #1890, #1897, #1900, #1902, #1905, #1908, #1911 — mexeram muito nas duas áreas). Nada foi alterado no repositório, nenhum banco consultado.
 
+> **Adendo de 12/10 (revisão da PR #1914):** depois da primeira versão foram feitas leituras só `SELECT` no banco de
+> produção e lido o JavaScript público do site. Os itens que citam "em produção" e "12/10" usam esse dado. O resto continua
+> sendo inferido do código. Segredos das Edge Functions e painéis não foram conferidos; do N8N, só nomes e descrições.
+
 Convenção de estado: **CONCLUÍDO** = código + teste presentes no HEAD (inclui "implementado aguardando prova de runtime/produção"); **PARCIAL** = parte da correção/capacidade pedida existe; **NAO_INICIADO** = a correção/capacidade pedida não começou (ainda que o componente afetado exista); **BLOQUEADO** = depende de dono/credencial/terceiro; **DIVERGENTE** = doc × código discordam (marcado também em §4); **NV** = não verificável/não verificado.
 
 ---
@@ -286,7 +290,7 @@ Concluídos (19, não listados): DASH-003, 011, 015, 037, 041, 042, 044, 045, 04
 | DASH-080 | Semântica dos heatmaps | NAO_INICIADO | messages/conversations/resolutions com fontes próprias | Sempre `messages` (`ActivityHeatmap.tsx:57-63,149`) | Fontes por métrica | Trocar métrica só muda o rótulo | P3 | — |
 | DASH-081 | Validar configuração de relatório | PARCIAL | Nome/tipo/frequência/destinatários validados no front e back | Parse simples de e-mails no front | Validação no banco | — | P3 | — |
 | DASH-082 | Frequência apresentada | PARCIAL | Calendário real por opção | Tile "Personalizada — Sob demanda" grava `custom` (`src/components/dashboard/ScheduledReportsManager.tsx:49`) sem nenhum executor | Remover ou implementar | Promessa "sob demanda" sem botão de envio | P2 | DASH-083 |
-| DASH-083 | Cadeia de execução dos relatórios | NAO_INICIADO (DIVERGENTE) | Agendador → geração → envio → retorno | Aba diz "relatórios automáticos enviados por email" (`ScheduledReportsManager.tsx:94`); **nenhum código lê `scheduled_report_configs` para enviar** (só `useScheduledReportConfigs.ts:24-56`); `send-scheduled-report` lê **outra tabela** `scheduled_reports` (`supabase/functions/send-scheduled-report/index.ts:106,228`), não tem cron em nenhuma migration e usa tipos diferentes (`dashboard_summary`… × `performance/sla/conversations/satisfaction`) | Executor + cron + unificar tabela/tipos | Gestor cadastra relatório e **nunca recebe e-mail** | P0 | Resend (`RESEND_API_KEY`) + `CRON_SECRET` |
+| DASH-083 | Cadeia de execução dos relatórios | NAO_INICIADO (DIVERGENTE) | Agendador → geração → envio → retorno | Aba diz "relatórios automáticos enviados por email" (`ScheduledReportsManager.tsx:94`); **nenhum código lê `scheduled_report_configs` para enviar** (só `useScheduledReportConfigs.ts:24-56`); `send-scheduled-report` lê **outra tabela** `scheduled_reports` (`supabase/functions/send-scheduled-report/index.ts:106,228`), não tem cron em nenhuma migration e usa tipos diferentes (`dashboard_summary`… × `performance/sla/conversations/satisfaction`) | Executor + cron + unificar tabela/tipos | Pelo que existe no código, no `pg_cron` de produção e nos nomes dos workflows do N8N, o gestor cadastra o relatório e não recebe e-mail. O envio real não foi testado: a tabela estava vazia em 12/10 e o conteúdo dos workflows do N8N não foi aberto | P0 se não houver chamador externo (latente: sem uso hoje) | Resend (`RESEND_API_KEY`) + `CRON_SECRET` |
 | DASH-084 | Execução idempotente | NAO_INICIADO | Chave por ocorrência | Nada para `scheduled_report_configs` | — | Envio duplicado quando existir | P1 | DASH-083 |
 | DASH-085 | Controle de entrega/acesso | PARCIAL | Estados de envio, revalidar permissão | Edge distingue sent/partial/failed (`send-scheduled-report/index.ts:186-266`), mas inalcançável | Ligar ao fluxo real | — | P1 | DASH-083 |
 | DASH-086 | Relatório = Dashboard | NAO_INICIADO | Mesmos contratos | Edge recalcula com `|| 50`/`|| 3` (`send-scheduled-report/index.ts:153-154`) e leituras sem paginação | Reusar RPCs | Relatório e tela divergem | P2 | DASH-083 |
@@ -392,7 +396,7 @@ Concluídos (19, não listados): DASH-003, 011, 015, 037, 041, 042, 044, 045, 04
 
 ## 6. Top 10 da área
 
-1. **Relatórios agendados nunca são enviados**: a aba Relatórios promete e-mail automático, mas nada lê `scheduled_report_configs`; a edge de envio usa outra tabela, sem cron e com tipos incompatíveis (DASH-083/084/086).
+1. **Relatórios agendados sem quem os envie**: a aba Relatórios promete e-mail automático, mas nada no repositório nem no `pg_cron` de produção lê `scheduled_report_configs` (tabela vazia em 12/10; conteúdo dos workflows do N8N não aberto); a edge de envio usa outra tabela, sem cron e com tipos incompatíveis (DASH-083/084/086).
 2. **Chatbot L1 desconectado e sem freio**: não há gatilho no fluxo de mensagens recebidas no repo, a "transferência para humano" é só uma flag, e o caminho de webhook ignora kill switch/cota (IA-107/108/110, IA-009).
 3. **Custo de IA pode sumir e não gera alerta**: outbox "durável" grava em tabelas inexistentes, alerta de consumo anômalo é só projeto, quota conta linhas e falha aberta (IA-049/058/054).
 4. **Aba Analytics e cards com números truncados/falsos**: heatmap e previsão sobre 1.000 linhas, "intervalo de confiança de 95%" e capacidade fixa 35 (DASH-035/075/078/079/080).

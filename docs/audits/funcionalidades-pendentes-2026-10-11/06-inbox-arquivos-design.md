@@ -64,7 +64,7 @@ navegador quando o aceite era só de código; aceite humano/visual/produção va
 | Arquivos — redesign 50 etapas (01/10) | 50 | 44 | 4 (19, 39, 47, 49) | 1 (50) | 1 (01) | 0 (*42/39: apply em produção não verificado) |
 | Arquivos — "Próximos passos" do mesmo plano | 4 | 1 (forward do chat) | 0 | 3 | 0 | 0 |
 | Arquivos — plano Codex 50 | 50 | — substituído — | | | | |
-| Cartão de arquivo = mockup (60) | 60 | 35 (25 deles são fundação **sem consumidor**) | 4 | 16 | 0 | 3 (+2 canceladas por decisão) |
+| Cartão de arquivo = mockup (60) | 60 | 10 | 29 (25 são fundação pronta **sem consumidor**, ver R01–R03) | 16 | 0 | 3 (+2 canceladas por decisão) |
 | Miniaturas e figurinhas (M01–M07) | 7 | 6 | 0 | 1 (M07) | 0 | 0 (+6 verificações finais n/v) |
 | Filtro por data (F01–F08, F10) | 9 | 7 | 0 | 1 (F10) | 0 | 1 (F08) |
 | Janela de arquivo menor (V01–V02) | 2 | 1 | 0 | 0 | 0 | 1 |

@@ -55,7 +55,7 @@ O quadro geral tem quatro mensagens.
    - Chatbot, automações, follow-up e mensagem de ausência são salvos e nunca executados.
    - "Iniciar" da campanha clássica não envia nada.
    - "Iniciar agora" do Multiplix termina como "Concluído" com zero envios.
-   - Relatório agendado por e-mail nunca sai.
+   - Relatório agendado por e-mail não tem quem o envie: nada no código nem no `pg_cron` de produção lê a configuração.
    - A pesquisa CSAT não é coletada.
    - Vários botões gravam em tabela ou função que não existe, ou mostram sucesso sem ter feito nada (§3).
    - Por enquanto o defeito é latente: em 12/10 as tabelas de mensagens agendadas, campanhas clássicas, relatórios
@@ -110,7 +110,7 @@ divergente, substituído, cancelado ou não aplicável. Em cada linha, as seis c
 | Etiquetas | Remoção 100 | 100 | 54 | 2 | 1 | 7 | 32 (só evidência histórica) | 4 (substituídos/n.a.) | 05 |
 | WhatsApp | Multi-conexão Evolution GO 50 | 50 | 19 | 10 | 7 | 7 | 7 | 0 | 05 |
 | Atendimento | Distribuição (DOC-DIST-001) + escalonamento de SLA (DOC-CRON-001) | 13 | 0 | 2 | 11 | 0 | 0 | 0 | 05 |
-| Arquivos | Redesign 50 / Cartão = mockup 60 | 110 | 79 (25 sem consumidor) | 8 | 17 | 1 | 3 | 2 (cancelados) | 06 |
+| Arquivos | Redesign 50 / Cartão = mockup 60 | 110 | 54 | 33 (25 prontos sem consumidor) | 17 | 1 | 3 | 2 (cancelados) | 06 |
 | Mídia | Controles de volume 50 / Volume de mídia 50 | 100 | 88 | 2 | 5 | 1 | 4 | 0 | 06 |
 | Talk Me | Plano 100 / Refinamento 50 | 150 | 108 | 28 | 0 | 6 | 7 | 1 (substituído) | 06 |
 | Visual | Skins Opera GX 100 | 100 | 64 | 8 | 0 | 20 (QA logado) | 6 | 2 (n.a.) | 06 |
@@ -130,10 +130,11 @@ Percentual = concluído ÷ total de cada plano. As linhas que somam dois planos 
 - **Quase prontos (≥ 90%):** Tarefas — finalização (98%), Contatos 100 (97%), Dashboard Navy (97%), Mapa (95%),
   Volume de mídia (94%) e redesign de Contatos (100%).
 - **No meio do caminho:** Arquivos — redesign (88%), Controles de volume (82%), Talk Me — refinamento (78%), Telefonia
-  (78%), Catálogo (77%), Talk Me 100 (69%), Skins (64%), Fusão Quadro→Tarefas (60%), Cartão de arquivo (58%),
-  Multiplix (54%) e Etiquetas (54%).
-- **Muito atrás:** IA (25%), Talk X (18,5%), Dashboard 100 (19%), Team Chat (22%), Multi-conexão GO (38%), Contatos
-  por jornada (2%) e Journey histórico (28%, só camada interna, nada visível ainda).
+  (78%), Catálogo (77%), Talk Me 100 (69%), Skins (64%), Fusão Quadro→Tarefas (60%), Multiplix (54%) e Etiquetas
+  (54%).
+- **Muito atrás:** IA (25%), Talk X (18,5%), Dashboard 100 (19%), Cartão de arquivo (17%; 25 etapas prontas sem tela
+  que as use), Team Chat (22%), Multi-conexão GO (38%), Contatos por jornada (2%) e Journey histórico (28%, só camada
+  interna, nada visível ainda).
 - **Parados por decisão:** Ligações WhatsApp `meowcaller` (90 bloqueados nos gates G0/G1) e Banco Único (175
   dependem do dono).
 
