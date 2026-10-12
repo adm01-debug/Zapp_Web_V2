@@ -45,15 +45,43 @@ describe('MiniChatPiP', () => {
     expect(screen.getByText('Toque para responder')).toBeInTheDocument();
   });
 
-  it('calls onDismiss when X is clicked', () => {
+  it('calls onDismiss when Fechar is clicked', () => {
     render(<MiniChatPiP {...defaultProps} />);
-    // Find the X button (dismiss)
-    const buttons = screen.getAllByRole('button');
-    const dismissBtn = buttons.find(b => b.querySelector('.lucide-x'));
-    if (dismissBtn) {
-      fireEvent.click(dismissBtn);
-      expect(defaultProps.onDismiss).toHaveBeenCalled();
-    }
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(defaultProps.onDismiss).toHaveBeenCalled();
+  });
+
+  // N-043: o controle de expandir da versão minimizada era uma div com onClick
+  // (não focável, sem nome acessível). Precisa ser um botão real e anunciado.
+  it('o controle de expandir da versão minimizada é botão focável com nome acessível', () => {
+    render(<MiniChatPiP {...defaultProps} />);
+    const expandir = screen.getByRole('button', { name: /restaurar|expandir/i });
+    expect(expandir.tagName).toBe('BUTTON');
+    expandir.focus();
+    expect(expandir).toHaveFocus();
+    fireEvent.click(expandir);
+    expect(defaultProps.onExpand).toHaveBeenCalled();
+  });
+
+  it('the minimize button has aria-label "Recolher"', () => {
+    render(<MiniChatPiP {...defaultProps} />);
+    // Expand the PiP first — the minimize button only appears in expanded state
+    fireEvent.click(screen.getByText('Toque para responder'));
+    expect(screen.getByRole('button', { name: 'Recolher' })).toBeInTheDocument();
+  });
+
+  it('the send button has aria-label "Enviar"', () => {
+    render(<MiniChatPiP {...defaultProps} />);
+    // Expand first to show the send button
+    fireEvent.click(screen.getByText('Toque para responder'));
+    expect(screen.getByRole('button', { name: 'Enviar' })).toBeInTheDocument();
+  });
+
+  it('the open full chat button has aria-label "Abrir conversa"', () => {
+    render(<MiniChatPiP {...defaultProps} />);
+    // Expand first to show the open full chat button
+    fireEvent.click(screen.getByText('Toque para responder'));
+    expect(screen.getByRole('button', { name: 'Abrir conversa' })).toBeInTheDocument();
   });
 
   it('expands when "Toque para responder" is clicked', () => {
