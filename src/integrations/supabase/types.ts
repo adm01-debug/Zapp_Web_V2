@@ -6731,6 +6731,7 @@ export type Database = {
           error_message: string | null
           id: string
           media_url: string | null
+          message_id: string | null
           message_type: string
           scheduled_at: string
           sent_at: string | null
@@ -6746,6 +6747,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           media_url?: string | null
+          message_id?: string | null
           message_type?: string
           scheduled_at: string
           sent_at?: string | null
@@ -6761,6 +6763,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           media_url?: string | null
+          message_id?: string | null
           message_type?: string
           scheduled_at?: string
           sent_at?: string | null
