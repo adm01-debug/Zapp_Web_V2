@@ -1,22 +1,20 @@
-Especialista: iris (area-front-componentes)
+Especialista: complexo (area-sql-banco)
+# N-016 — CI replay migrations no db-guard
 
 ## O que mudou e por quê
-- src/components/connections/ConnectionDeleteDialog.tsx (novo): confirmação em duas etapas da exclusão — etapa 1 abrir o diálogo, etapa 2 digitar o nome exato da conexão para liberar o botão; o texto diz que apaga a instância na Evolution e o vínculo local e que não pode ser desfeito.
-- src/components/connections/ConnectionDisconnectDialog.tsx (novo): confirmação simples do "Desconectar", mostrando o nome e o número mascarado (só DDI + 4 últimos dígitos via `maskPhoneNumber`); cancelar/Esc fecham sem chamar nada.
-- src/components/connections/ConnectionCard.tsx: o botão "Desconectar" e o item "Excluir" do menu deixaram de chamar o handler no primeiro clique — passaram a abrir o diálogo (`state` local `confirmDisconnect`/`confirmDelete`). O item "Excluir" só é renderizado quando `useUserRole().isAdmin` (com o separador, que só existe com o item); o "Desconectar" continua para todos.
-- src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx (novo): renderiza o `ConnectionCard` REAL e prova: supervisor não vê "Excluir"; "Excluir" bloqueado sem o nome e com o nome errado, executado uma vez com o nome exato; "Desconectar" mostra o número mascarado e só executa ao confirmar; cancelar não chama nenhum handler.
-- src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx: acrescentada UMA linha de mock (`useUserRole` → admin), porque o cartão agora consulta o papel; as asserções do teste (sem "Integrações (IA/Bots)", aria-label do menu, axe) seguem idênticas — nenhuma asserção foi removida nem afrouxada.
-- src/hooks/inbox/useConnectionsManager.ts NÃO foi tocado: a confirmação é puramente de tela (`onDelete`/`onDisconnect` continuam iguais).
+- `.github/workflows/db-guard.yml`: passo novo "Replay de todas as migrations no db-guard (N-016)" que roda `bash scripts/db-audit/replay-local.sh` com `SKIP_DOCKER_SHIM=1` num Postgres descartável; exit 0 = verde, 1 = drift novo (falha fora do allowlist), 2 = setup indisponível. É o critério 1 do cartão.
+- `scripts/db-audit/replay-local-ci.test.sh` (novo): prova que o passo existe no workflow, roda replay-local.sh, e que o harness de docker falso cobre exit 0/1/2; confere que replay-classify.py e replay-known-failures.json existem. É o critério 2 do cartão.
+- `scripts/ci/check-test-inventory.mjs`: entrada do teste novo na ALLOWLIST com justificativa N-016 (convenção obrigatória do repositório para .test.sh sem bloco run próprio; o passo de CI do teste fica para o dono do workflow).
+
+Origem: o passo e o teste já existiam na entrega anterior (branch v2/n-016-ci-replay-migrations-db-guard-26100918336e34); a base dia/2026-10-12 não os contém, então reapliquei por cherry-pick com resolução de conflito (a base ganhou o passo N-136 no mesmo ponto — mantive os dois) e somei a entrada da ALLOWLIST. O comando fixo do cartão (devin) não foi usado: Devin está sem crédito; nenhum código novo foi escrito além da resolução e da linha de ALLOWLIST.
 
 ## Prova
-- vermelho antes (sem a correção, `ConnectionCard.tsx` da base via `git show HEAD:`): `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx` → `Tests 4 failed | 1 passed (5)`.
-- verde depois: `npx vitest run src/components/connections/__tests__/ConnectionCard.confirmacao.test.tsx src/components/connections/__tests__/ConnectionCard.sem-integracoes.test.tsx` → `Test Files 2 passed (2); Tests 8 passed (8)`.
-- `zapp-verify . --rapido` verde (no bloco FATOS MEDIDOS do fechar). A confirmação usa o `AlertDialog` do projeto; nenhum `window.confirm` foi adicionado, como o cartão exige.
-
-## Critério de pronto
-1. Nenhuma ação destrutiva de conexão sem confirmação — "Desconectar" e "Excluir" só executam depois do diálogo (provado no teste novo); "Excluir" só para admin (provado com supervisor).
-2. zapp-verify . --rapido verde — no bloco FATOS MEDIDOS do fechar.
+- vermelho antes (workflow da base, sem o passo): `bash scripts/db-audit/replay-local-ci.test.sh` → `FALHA: 1: passo de replay existe em db-guard.yml (nao achei 'Replay de todas as migrations' em .github/workflows/db-guard.yml)` + `FALHA: 1: passo roda replay-local.sh (...)` → `REPROVOU`, exit 1.
+- verde depois (com o passo): mesmo comando → 13 linhas `ok`, `PASSOU: passo de replay existe em db-guard.yml, harness cobre exit 0/1/2, e o allowlist protege contra drift novo`, exit 0.
+- `python3 -c yaml.safe_load(db-guard.yml)` → `YAML-OK` (resolução do conflito não quebrou o YAML).
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (108s)` (OK dependencias, db_guard, tipos, lint, migrations; banco_local não verificado — sem nome de conjunto; sem DDL no diff, nada a migrar).
+- Diff contra a base: só N-016 nas linhas adicionadas; sem GRANT/REVOKE/policy/RPC.
 
 ## O que NÃO fiz e por quê
-- Não mexi em `ConnectionsView.tsx` (o papel vem de `useUserRole()` dentro do próprio cartão, que é o escopo de arquivos do cartão).
-- Não mexi no banco/RLS de `whatsapp_connections`: o gate de admin aqui é de tela, como o cartão pede; eventual trava no servidor é de outro perfil (worker (sql)).
+- Não executei o replay completo (todas as migrations em Postgres real): exige docker daemon e dezenas de minutos; o cartão aceita o harness com docker falso como cobertura de exit 0/1/2, e o passo do CI roda o script real no runner.
+- Não registrei os outros 4 órfãos do `check-test-inventory` (department-invite, talkx-conversion-defaults, team-chat-media-contract, team-direct-conversation-race): já existem na árvore da base dia/2026-10-12 (conferido via `git cat-file -e dia/2026-10-12:<arquivo>`), fora do título deste cartão.
