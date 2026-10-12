@@ -107,11 +107,23 @@ function trilha(container: HTMLElement) {
   return container.querySelector<HTMLElement>('nav[aria-label="breadcrumb"]');
 }
 
+/**
+ * Etapas 065/067 — os grupos da Lista nascem recolhidos; a preferência do
+ * navegador (localStorage) entra com tudo aberto para a prova ver as linhas.
+ */
+function semearGruposAbertos() {
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
+}
+
 describe('modo zen — módulo de Tarefas (CP-H / etapa 83)', () => {
   beforeEach(() => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     setSelectResult({ data: [makeTaskRow()], error: null });
   });

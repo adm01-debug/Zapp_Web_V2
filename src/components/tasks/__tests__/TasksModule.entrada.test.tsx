@@ -58,11 +58,23 @@ function modoAtual() {
   return screen.getByTestId('tasks-mode').getAttribute('data-mode');
 }
 
+/**
+ * Etapas 065/067 — os grupos da Lista nascem recolhidos; a preferência do
+ * navegador (localStorage) entra com tudo aberto para a prova ver as linhas.
+ */
+function semearGruposAbertos() {
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
+}
+
 describe('TasksModule — E19 (deep link `?task=<id>` abre a folha em qualquer modo)', () => {
   beforeEach(() => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente' })], error: null });
   });

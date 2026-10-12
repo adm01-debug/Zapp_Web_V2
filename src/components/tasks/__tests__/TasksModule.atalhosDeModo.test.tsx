@@ -84,11 +84,23 @@ async function montar() {
   await waitFor(() => expect(modoAtual()).toBeTruthy());
 }
 
+/**
+ * Etapas 065/067 — os grupos da Lista nascem recolhidos; a preferência do
+ * navegador (localStorage) entra com tudo aberto para a prova ver as linhas.
+ */
+function semearGruposAbertos() {
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
+}
+
 describe('TasksModule — E20 (atalhos 1/2/3 do modo e a preferência salva)', () => {
   beforeEach(() => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     // a view canônica em que os 7 atalhos do módulo valem (escopo do registry)
     window.history.replaceState(null, '', '/?view=tasks');
     setSelectResult({ data: [makeTaskRow()], error: null });

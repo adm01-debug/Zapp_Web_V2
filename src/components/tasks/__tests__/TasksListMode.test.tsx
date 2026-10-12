@@ -68,9 +68,20 @@ function renderLista(byDue: BucketsByDue, over: Opcoes = {}) {
   return { ...view, ...acoes };
 }
 
+/**
+ * Etapa 067 — "Amanhã", "Próximas", "Sem prazo" e "Concluídas" nascem
+ * recolhidos. Abre o grupo pelo cabeçalho antes de olhar os itens.
+ */
+function abrirGrupo(titulo: string) {
+  fireEvent.click(screen.getByRole('button', { name: (nome: string) => nome.startsWith(titulo) }));
+}
+
 describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () => {
   beforeEach(() => {
     cleanup();
+    // Etapa 065/067: o grupo aberto/recolhido agora é lembrado no navegador —
+    // cada teste começa do zero, sem herdar a escolha do anterior.
+    window.localStorage.clear();
     window.history.replaceState(null, '', '/');
   });
 
@@ -87,7 +98,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     // Os itens não têm prazo, então "Hoje"/"Amanhã" só podem ser o cabeçalho da
     // seção. O cabeçalho é um <button> (o "Sem prazo" da célula Prazo, etapa 057,
     // não é botão) — por isso a busca é por papel, não por texto solto.
-    const cabecalhos = ['Atrasadas', 'Hoje', 'Amanhã', 'Próximas', 'Sem prazo', 'Concluídas (7 dias)']
+    const cabecalhos = ['Atrasadas', 'Hoje', 'Amanhã', 'Próximas', 'Sem prazo', 'Concluídas · últimos 7 dias']
       .map(titulo => screen.getByRole('button', { name: (nome: string) => nome.startsWith(titulo) }));
     expect(cabecalhos).toHaveLength(6);
 
@@ -97,16 +108,16 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     }
   });
 
-  it('a seção "Concluídas (7 dias)" recebe done7d e nasce recolhida (abre no clique)', () => {
+  it('a seção "Concluídas · últimos 7 dias" recebe done7d e nasce recolhida (abre no clique)', () => {
     renderLista(buckets({
       done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done', completed_at: new Date().toISOString() })],
     }));
 
     // O cabeçalho está na tela, mas o item da semana ainda não (seção recolhida).
-    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+    expect(screen.getByText('Concluídas · últimos 7 dias')).toBeTruthy();
     expect(screen.queryByText('Feita ontem')).toBeNull();
 
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    abrirGrupo('Concluídas');
 
     expect(screen.getByText('Feita ontem')).toBeTruthy();
   });
@@ -121,6 +132,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
         item({ id: 'u3', title: 'Mais adiante', due_date: semanaQueVem }),
       ],
     }));
+    abrirGrupo('Próximas');
 
     expect(screen.getByText('Primeira do dia')).toBeTruthy();
     expect(screen.getByText('Segunda do dia')).toBeTruthy();
@@ -153,6 +165,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
   it('o checkbox conclui sem abrir o card (onToggleDone sem onOpen)', () => {
     const alvo = item({ id: 'k1', title: 'Concluir sem abrir' });
     const { onToggleDone, onOpen } = renderLista(buckets({ noDue: [alvo] }));
+    abrirGrupo('Sem prazo');
 
     const linha = screen.getByTestId('task-row');
     fireEvent.click(within(linha).getByRole('checkbox', { name: 'Concluir tarefa' }));
@@ -165,7 +178,7 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
     const feita = item({ id: 'c1', title: 'Já foi', status: 'done', completed_at: new Date().toISOString() });
     const { onToggleDone } = renderLista(buckets({ done7d: [feita] }));
 
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    abrirGrupo('Concluídas');
     const linha = screen.getByTestId('task-row');
     fireEvent.click(within(linha).getByRole('checkbox', { name: 'Reabrir tarefa' }));
 

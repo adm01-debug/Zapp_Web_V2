@@ -124,6 +124,8 @@ function renderLista(byDue: BucketsByDue) {
 describe('Tarefas — componentes dos três modos', () => {
   beforeEach(() => {
     resetSupabaseMock();
+    // Etapa 065: a escolha do grupo é lembrada no navegador — zera a cada teste.
+    window.localStorage.clear();
     dnd.onDragEnd = undefined;
     dnd.onDragStart = undefined;
     dnd.droppables = {};
@@ -139,7 +141,7 @@ describe('Tarefas — componentes dos três modos', () => {
     // A `Section` só renderiza com itens, por isso cada bucket tem um item acima.
     expect(screen.getByText('Amanhã')).toBeTruthy();
     expect(screen.getByText('Próximas')).toBeTruthy();
-    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+    expect(screen.getByText('Concluídas · últimos 7 dias')).toBeTruthy();
     expect(screen.queryByText('Amanha')).toBeNull();
     expect(screen.queryByText('Proximas')).toBeNull();
     expect(screen.queryByText('Concluidas')).toBeNull();
@@ -493,7 +495,7 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(raiz?.className).not.toContain('100vh-280px');
   });
 
-  it('etapa 48 (B4): "Concluídas (7 dias)" recolhida e "ver mais (30 dias)" revela as antigas', async () => {
+  it('etapa 66 (B4): "Concluídas · últimos 7 dias" nasce recolhida e o "Ver até 30 dias" do cabeçalho revela as antigas', async () => {
     cleanup();
     renderLista(buckets({
       done7d: [item({ id: 'c', title: 'Feita ontem', status: 'done' })],
@@ -501,27 +503,25 @@ describe('Tarefas — componentes dos três modos', () => {
     }));
 
     // Nasce recolhida: nem a concluida da semana nem a antiga aparecem.
-    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+    expect(screen.getByText('Concluídas · últimos 7 dias')).toBeTruthy();
     expect(screen.queryByText('Feita ontem')).toBeNull();
     expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
 
-    // Abrir a secao mostra a de 7 dias; a antiga segue atras do "ver mais (30 dias)".
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    // Etapa 066/067 — o "Ver até 30 dias" vive no CABEÇALHO do grupo (não mais no
+    // rodapé); ele abre a seção e revela, de uma vez, a janela de 30 dias.
+    expect(screen.getByTestId('list-group-ver-mais')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('list-group-ver-mais'));
     expect(screen.getByText('Feita ontem')).toBeTruthy();
-    expect(screen.queryByText('Feita duas semanas atras')).toBeNull();
-
-    // O rodape revela a janela de 30 dias e oferece voltar.
-    fireEvent.click(screen.getByText('ver mais (30 dias)'));
     expect(screen.getByText('Feita duas semanas atras')).toBeTruthy();
-    expect(screen.getByText('ver menos')).toBeTruthy();
+    expect(screen.getByText('Ver menos')).toBeTruthy();
 
-    fireEvent.click(screen.getByText('ver menos'));
-    // Etapa 50: o item fica montado durante a animacao de saida (fade 200ms),
-    // por isso a saida de cena e observada com waitFor.
+    fireEvent.click(screen.getByText('Ver menos'));
+    // Etapa 50: o item fica montado durante a animacao de saida (fade), por isso
+    // a saida de cena e observada com waitFor.
     await waitFor(() => expect(screen.queryByText('Feita duas semanas atras')).toBeNull());
   });
 
-  it('etapa 51: sem concluídas nos 7 dias, a seção e o "ver mais (30 dias)" seguem alcançáveis', () => {
+  it('etapa 51: sem concluídas nos 7 dias, a seção e o "Ver até 30 dias" seguem alcançáveis', () => {
     cleanup();
     renderLista(buckets({
       doneOlder: [
@@ -530,25 +530,20 @@ describe('Tarefas — componentes dos três modos', () => {
       ],
     }));
 
-    // O defeito: com a janela de 7 dias vazia, a secao — e com ela o rodape, unica
-    // entrada para as antigas — desaparecia da tela.
-    const cabecalho = screen.getByText('Concluídas (7 dias)');
-    expect(cabecalho).toBeTruthy();
+    // O defeito: com a janela de 7 dias vazia, a secao — e com ela a unica entrada
+    // para as antigas — desaparecia da tela.
+    expect(screen.getByText('Concluídas · últimos 7 dias')).toBeTruthy();
     // O contador nao mente: recolhida, nada esta renderizado na secao.
     expect(screen.getByText('0')).toBeTruthy();
     expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
 
-    // Abrir a secao confirma o vazio de 7 dias e mantem o rodape a mao.
-    fireEvent.click(cabecalho);
-    expect(screen.getByText('ver mais (30 dias)')).toBeTruthy();
-    expect(screen.queryByText('Feita ha duas semanas')).toBeNull();
-
-    // O rodape revela as duas antigas e o contador passa a contar o que esta na tela.
-    fireEvent.click(screen.getByText('ver mais (30 dias)'));
+    // O "Ver até 30 dias" do cabeçalho revela as duas antigas e o contador passa a
+    // contar o que esta na tela.
+    fireEvent.click(screen.getByTestId('list-group-ver-mais'));
     expect(screen.getByText('Feita ha duas semanas')).toBeTruthy();
     expect(screen.getByText('Feita ha tres semanas')).toBeTruthy();
     expect(screen.getByText('2')).toBeTruthy();
-    expect(screen.getByText('ver menos')).toBeTruthy();
+    expect(screen.getByText('Ver menos')).toBeTruthy();
   });
 
   it('etapa 51: sem concluída nenhuma, a seção não aparece', () => {
@@ -558,7 +553,7 @@ describe('Tarefas — componentes dos três modos', () => {
     // O cabeçalho é botão; a célula Prazo (etapa 057) também escreve "Sem prazo"
     // nas linhas, então a busca do cabeçalho é por papel.
     expect(screen.getByRole('button', { name: /^Sem prazo/ })).toBeTruthy();
-    expect(screen.queryByText('Concluídas (7 dias)')).toBeNull();
+    expect(screen.queryByText('Concluídas · últimos 7 dias')).toBeNull();
   });
 
   it('etapa 49: "Próximas" agrupa por dia e joga o que passa de 7 dias em "Semana que vem"', () => {
@@ -571,6 +566,8 @@ describe('Tarefas — componentes dos três modos', () => {
         item({ id: 'u2', title: 'Daqui a 10 dias', due_date: em10Dias }),
       ],
     }));
+    // Etapa 067: "Próximas" nasce recolhida — abre pelo cabeçalho.
+    fireEvent.click(screen.getByRole('button', { name: /^Próximas/ }));
 
     expect(screen.getByText('Daqui a 2 dias')).toBeTruthy();
     expect(screen.getByText('Daqui a 10 dias')).toBeTruthy();
@@ -579,20 +576,15 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByText('Semana que vem')).toBeTruthy();
   });
 
-  it('etapa 49: "Sem prazo" abre com 10 itens e nasce recolhida com 11', () => {
+  it('etapa 67: "Sem prazo" nasce recolhido com qualquer contagem (só o contador)', () => {
     cleanup();
     renderLista(buckets({
       noDue: Array.from({ length: 10 }, (_, i) => item({ id: `d${i}`, title: `Sem prazo ${i}` })),
     }));
+    // Etapa 067: recolhido também com 10 itens (antes a seção abria até 10).
     expect(screen.getByRole('button', { name: /^Sem prazo/ })).toBeTruthy();
-    expect(screen.getByText('Sem prazo 0')).toBeTruthy();
-
-    cleanup();
-    renderLista(buckets({
-      noDue: Array.from({ length: 11 }, (_, i) => item({ id: `m${i}`, title: `Sem prazo ${i}` })),
-    }));
-    expect(screen.getByText('11')).toBeTruthy();       // o contador segue visivel
-    expect(screen.queryByText('Sem prazo 0')).toBeNull();  // mas os itens nascem escondidos
+    expect(screen.getByText('10')).toBeTruthy();
+    expect(screen.queryByText('Sem prazo 0')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /^Sem prazo/ }));
     expect(screen.getByText('Sem prazo 0')).toBeTruthy();
@@ -607,11 +599,13 @@ describe('Tarefas — componentes dos três modos', () => {
     expect(screen.getByLabelText('Ordenado por prazo, depois prioridade')).toBeTruthy();
   });
 
-  it('etapa 50: concluir deixa o item montado durante a saída e ele reaparece em "Concluídas (7 dias)"', async () => {
+  it('etapa 50: concluir deixa o item montado durante a saída e ele reaparece em "Concluídas · últimos 7 dias"', async () => {
     cleanup();
     const { renderBuckets } = renderLista(buckets({
       noDue: [item({ id: 'k1', title: 'Concluir agora' }), item({ id: 'k2', title: 'Fica aqui' })],
     }));
+    // Etapa 067: "Sem prazo" nasce recolhido — abre para ver as duas tarefas.
+    fireEvent.click(screen.getByRole('button', { name: /^Sem prazo/ }));
     expect(screen.getByText('Concluir agora')).toBeTruthy();
 
     // A tarefa sai de "Sem prazo" e passa a "Concluidas (7 dias)"; a secao segue
@@ -625,7 +619,7 @@ describe('Tarefas — componentes dos três modos', () => {
     // o item sumiria no mesmo instante, e este getByText falharia).
     expect(screen.getByText('Fica aqui')).toBeTruthy();
     expect(screen.getByText('Concluir agora')).toBeTruthy();
-    expect(screen.getByText('Concluídas (7 dias)')).toBeTruthy();
+    expect(screen.getByText('Concluídas · últimos 7 dias')).toBeTruthy();
 
     // O fade de 200ms nao acaba num piscar: 60ms depois o item ainda esta em cena
     // (com saida instantanea ele ja teria saido — é o que pina a duracao).

@@ -82,6 +82,12 @@ async function abrirMenu(el: HTMLElement) {
 }
 
 beforeEach(() => {
+  // Etapas 065/067 — os grupos nascem recolhidos; aqui a prova quer as linhas na
+  // tela, então a preferência do usuário (localStorage) entra já com tudo aberto.
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};
@@ -166,8 +172,6 @@ describe('057 — célula Prazo', () => {
   it('concluída mostra só o dia e nunca em vermelho', () => {
     const feita = item({ id: 'd2', status: 'done', completed_at: AGORA.toISOString(), due_date: ONTEM });
     renderCom(buckets({ done7d: [feita] }), mocks(), AGORA);
-    // A seção "Concluídas" nasce recolhida: o item só existe depois de abrir.
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
     const label = within(screen.getByTestId('task-row')).getByTestId('date-label');
     expect(label.textContent).toBe('Ontem');
     expect(label.className).not.toContain('--destructive-text');
@@ -226,7 +230,6 @@ describe('059 — célula Lembrete', () => {
   it('em estado terminal explica o motivo em vez de oferecer um adiamento que não dispara', async () => {
     const feita = item({ id: 'r4', status: 'done', completed_at: AGORA.toISOString(), remind_at: HOJE_1330 });
     renderCom(buckets({ done7d: [feita] }), mocks(), AGORA);
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
 
     fireEvent.click(within(screen.getByTestId('task-row')).getByTestId('remind-cell'));
     await waitFor(() => expect(screen.getByText(/reabra a tarefa/i)).toBeTruthy());

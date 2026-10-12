@@ -56,12 +56,23 @@ function mocks() {
 
 type Acoes = ReturnType<typeof mocks>;
 
+/**
+ * Etapa 067 — "Amanhã", "Próximas", "Sem prazo" e "Concluídas" nascem
+ * recolhidos: abre todos os grupos para a prova enxergar as linhas.
+ */
+function abrirTodosOsGrupos() {
+  for (const linha of screen.getAllByTestId('list-group-row')) {
+    fireEvent.click(within(linha).getAllByRole('button')[0]);
+  }
+}
+
 function renderCom(byDue: BucketsByDue, acoes: Acoes) {
   render(
     <TooltipProvider delayDuration={0}>
       <TasksListTable byDue={byDue} now={AGORA} hasMounted={temMontado} {...acoes} />
     </TooltipProvider>
   );
+  abrirTodosOsGrupos();
   return acoes;
 }
 
@@ -81,6 +92,7 @@ function renderSelecao(alvo: WorkItem) {
       </TooltipProvider>
     </TasksUiProvider>
   );
+  abrirTodosOsGrupos();
   return acoes;
 }
 
@@ -96,6 +108,8 @@ async function abrirMenu(el: HTMLElement) {
 }
 
 beforeEach(() => {
+  // Etapa 065: a escolha do grupo é lembrada no navegador — zera a cada teste.
+  window.localStorage.clear();
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};
@@ -138,7 +152,6 @@ describe('061 — menu ⋮ da linha', () => {
     const feita = item({ id: 'm2', status: 'done', completed_at: new Date().toISOString() });
     const acoes = renderCom(buckets({ done7d: [feita] }), mocks());
 
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
     await abrirMenu(within(screen.getByTestId('task-row')).getByRole('button', { name: 'Mais opções' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Reabrir' }));
 

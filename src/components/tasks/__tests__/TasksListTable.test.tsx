@@ -67,8 +67,17 @@ function renderTabela(byDue: BucketsByDue, now?: Date): Acoes {
   return acoes;
 }
 
+/** Etapa 067: "Amanhã", "Próximas", "Sem prazo" e "Concluídas" nascem recolhidos. */
+function abrirGrupo(titulo: string) {
+  fireEvent.click(screen.getByRole('button', { name: (nome: string) => nome.startsWith(titulo) }));
+}
+
 describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas células)', () => {
-  beforeEach(() => cleanup());
+  beforeEach(() => {
+    cleanup();
+    // Etapa 065: a escolha do grupo é lembrada no navegador — zera a cada teste.
+    window.localStorage.clear();
+  });
 
   it('1) desenha as 6 colunas do contrato na ordem, num cabeçalho fixo', () => {
     const { container } = render(
@@ -131,6 +140,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
       }),
       new Date(2026, 9, 11, 10, 0)
     );
+    abrirGrupo('Próximas');
 
     const dias = screen.getAllByTestId('list-day-row');
     expect(dias).toHaveLength(2);
@@ -148,6 +158,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
       waiting_reason: 'Aguardando aprovação do cliente',
     });
     const acoes = renderTabela(buckets({ noDue: [alvo] }));
+    abrirGrupo('Sem prazo');
 
     const linha = screen.getByTestId('task-row');
     expect(within(linha).getByText('Ligar para o cliente')).toBeTruthy();
@@ -165,7 +176,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
 
     // A seção "Concluídas" nasce recolhida: o item só existe depois de abrir.
     expect(screen.queryByTestId('task-row')).toBeNull();
-    fireEvent.click(screen.getByText('Concluídas (7 dias)'));
+    abrirGrupo('Concluídas');
     fireEvent.click(within(screen.getByTestId('task-row')).getByRole('checkbox', { name: 'Reabrir tarefa' }));
 
     expect(acoes.onToggleDone).toHaveBeenCalledWith(feita);
@@ -178,6 +189,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
       contact: { id: 'ct1', name: 'Maria Souza', phone: null, avatar_url: null },
     });
     const acoes = renderTabela(buckets({ noDue: [comContato] }));
+    abrirGrupo('Sem prazo');
 
     const linha = screen.getByTestId('task-row');
     const botao = within(linha).getByRole('button', { name: /Maria Souza/ });
@@ -190,6 +202,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
 
   it('5b) sem contato a célula diz "Sem contato" e não é acionável', () => {
     renderTabela(buckets({ noDue: [item({ id: 's1', title: 'Sem vínculo', contact: null })] }));
+    abrirGrupo('Sem prazo');
 
     const linha = screen.getByTestId('task-row');
     expect(within(linha).getByText('Sem contato')).toBeTruthy();
@@ -198,6 +211,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
 
   it('6) as células 056–060 estão preenchidas na linha (prioridade, prazo, lembrete e estado)', () => {
     renderTabela(buckets({ noDue: [item({ id: 'n1' })] }));
+    abrirGrupo('Sem prazo');
 
     const linha = screen.getByTestId('task-row');
     expect(within(linha).getAllByRole('cell')).toHaveLength(6);
@@ -227,6 +241,7 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
 
     expect(screen.getByTestId('tasks-list-table')).toBeTruthy();
     expect(screen.getByRole('table')).toBeTruthy();
+    abrirGrupo('Sem prazo');
     expect(screen.getByTestId('task-row').getAttribute('data-item-id')).toBe('n1');
     expect(screen.getByText('Na tabela')).toBeTruthy();
   });

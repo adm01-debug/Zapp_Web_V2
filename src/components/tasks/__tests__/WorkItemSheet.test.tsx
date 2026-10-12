@@ -25,6 +25,17 @@ import { WorkItemSheet } from '@/components/tasks/shared/WorkItemSheet';
 import { TasksModule } from '@/components/tasks/TasksModule';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
+/**
+ * Etapas 065/067 — os grupos da Lista nascem recolhidos; a preferência do
+ * navegador (localStorage) entra com tudo aberto para a prova ver as linhas.
+ */
+function semearGruposAbertos() {
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
+}
+
 // jsdom não implementa as APIs de captura de ponteiro que o Radix Select usa.
 beforeEach(() => {
   if (!Element.prototype.hasPointerCapture) {
@@ -35,6 +46,8 @@ beforeEach(() => {
   if (!Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = () => {};
   }
+  window.localStorage.clear();
+  semearGruposAbertos();
 });
 
 const base: WorkItem = {
@@ -367,6 +380,7 @@ describe('TasksModule — FASE C (etapas 26 e 27): o Sheet abre pelo card e pelo
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     setSelectResult({
       data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente', status: 'todo' })],
       error: null,

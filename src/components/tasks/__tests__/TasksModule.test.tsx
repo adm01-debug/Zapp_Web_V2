@@ -67,11 +67,23 @@ function hojeFimDoDia() {
  * teste do hook. O que este arquivo prova é a integração: barra na tela, filtro
  * recortando os modos e URL refletindo o estado.
  */
+/**
+ * Etapas 065/067 — os grupos da Lista nascem recolhidos; a preferência do
+ * navegador (localStorage) entra com tudo aberto para a prova ver as linhas.
+ */
+function semearGruposAbertos() {
+  window.localStorage.setItem(
+    'tasks-list-groups',
+    JSON.stringify({ atrasadas: true, hoje: true, amanha: true, proximas: true, 'sem-prazo': true, concluidas: true })
+  );
+}
+
 describe('TasksModule — etapa 57 (QuickAdd da Agenda)', () => {
   beforeEach(() => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     setSelectResult({ data: [makeTaskRow()], error: null });
   });
@@ -93,6 +105,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     setSelectResult({
       data: [
@@ -180,6 +193,7 @@ describe('TasksModule — B13 (uma query para os tres modos)', () => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     setSelectResult({ data: [makeTaskRow()], error: null });
   });
 
@@ -225,6 +239,7 @@ describe('TasksModule — modo inicial: preferência salva (tasks-mode) × Lista
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     setSelectResult({ data: [makeTaskRow()], error: null });
   });
 
@@ -265,6 +280,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
   });
 
   it('mostra abertas e para hoje com os números da carga', async () => {
@@ -320,6 +336,7 @@ describe('TasksModule — etapa 44 (KPIs no padrão ContactKpiCard)', () => {
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
   });
 
   /** 1 atrasada · 1 para hoje · 2 fazendo · 1 concluída hoje. */
@@ -441,6 +458,7 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     // Etapa 050: a Lista (modo padrão) virou TABELA — as etapas 77/78 exercem
     // atalhos sobre o CARD EM FOCO, e card só existe no Quadro agora. O Quadro
     // entra como pano de fundo; nenhuma asserção destes casos foi afrouxada.
@@ -615,7 +633,7 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
 
   it('reabrir anuncia "Desfeito"', async () => {
     // No Quadro a tarefa concluída fica na coluna Concluído (na Lista a seção
-    // "Concluídas (7 dias)" nasce fechada — o card só existe depois do clique).
+    // "Concluídas · últimos 7 dias" nasce fechada — o card só existe depois do clique).
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar', status: 'done', completed_at: new Date().toISOString() })], error: null });
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
@@ -639,6 +657,7 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     setSelectResult({ data: [makeTaskRow({ id: 't1', title: 'Ligar para o cliente' })], error: null });
   });
@@ -712,6 +731,7 @@ describe('TasksModule — etapas 023/027 (KPI aplica o recorte de prazo)', () =>
     cleanup();
     resetSupabaseMock();
     localStorage.clear();
+    semearGruposAbertos();
     window.history.replaceState(null, '', '/');
     const ontem = new Date(Date.now() - 86_400_000).toISOString();
     setSelectResult({
