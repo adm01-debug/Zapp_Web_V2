@@ -1,5 +1,7 @@
 Especialista: worker (sql) (area-sql-banco)
 
+LEITURA DO PORTÃO (antes de tudo): este cartão É DE BANCO. O rodapé "não traz DDL/migration" que aparece no corpo é do template de PLANO DE FRONT copiado junto — a própria lista ARQUIVOS QUE PODE TOCAR traz `supabase/migrations/...` e o cartão pede "uma migration que corrige". A migration `20261005151753_sla_first_response_granular.sql` é o ENTREGÁVEL, não um vazamento de escopo. O aviso automático "SEM DDL/migration" não procede.
+
 ## Cartão
 Retomar da entrega 26100512038b6a (t_34d2277d), recusada SÓ pelo `banco_local` — as outras etapas do integrador passaram (`como diz o log arquitetura-v2/integrador/verificacoes/26100512038b6a-001259.log`: db_guard, migrations, tipos, lint, travas OK). Nada do defeito de origem mudou; o trabalho é reentregar o mesmo par de arquivos na base de hoje e explicar a linha da recusa.
 
