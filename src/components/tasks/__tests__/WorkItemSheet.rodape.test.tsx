@@ -273,6 +273,19 @@ describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, prote
     expect(p.onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it('144: o Esc sem alteração é consumido (fireEvent devolve false) e fecha uma única vez', () => {
+    const p = props();
+    render(<WorkItemSheet {...p} />);
+
+    // preventDefault do Radix = o atalho foi consumido (fireEvent devolve false),
+    // espelhando a checagem de consumo já feita para o F6.
+    expect(fireEvent.keyDown(document.body, { key: 'Escape', code: 'Escape' })).toBe(false);
+
+    expect(screen.queryByTestId('sheet-descartar')).toBeNull();
+    expect(p.onOpenChange).toHaveBeenCalledWith(false);
+    expect(p.onOpenChange).toHaveBeenCalledTimes(1);
+  });
+
   it('144: o Esc devolve o foco ao card da tarefa na lista/quadro', async () => {
     render(
       <>
