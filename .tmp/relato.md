@@ -1,29 +1,50 @@
-Especialista: senior (area-front-hooks)
+Especialista: senior (area-edge-api)
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+## Refazer: motivo da recusa
+Ponto 1: a entrega anterior criava a edge `recover-message-media`, mas deixava os inventários derivados fora de sincronia no empilhamento do CI: `ESTADO.md` não listava a edge e `supabase/deployment-manifest.json` ficava stale.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+## O que mudei
+- `ESTADO.md`: incluí `recover-message-media` como edge órfã (grupo E), atualizei o total do cabeçalho, o total por grupo, a linha da tabela e a lista de órfãs.
+- `supabase/deployment-manifest.json`: regenerei pelo gerador oficial `node scripts/edge-deploy/generate-manifest.mjs`, acrescentando a função, o source file, os totais e o hash do manifesto.
+- Mantive o código de produção e os testes da entrega anterior (`supabase/functions/recover-message-media/index.ts` e `index.test.ts`) sem mudança semântica.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Prova por ponto
+Ponto 1 — vermelho antes:
+- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` no estado da entrega anterior falhou com:
+  - `AssertionError [ERR_ASSERTION]: ESTADO.md não tem linha para a edge \`recover-message-media\` (rode a guarda de novo)`
+  - `80 !== 81` em `total de edges do cabeçalho do ESTADO.md bate com a tabela`
+- `node scripts/edge-deploy/generate-manifest.mjs --check` no estado da entrega anterior falhou com:
+  - `Deployment manifest is stale: supabase/deployment-manifest.json. Run generate-manifest.mjs.`
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+Ponto 1 — verde depois:
+- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` -> `tests 11`, `pass 11`, `fail 0`, `duration_ms 36586.685077`.
+- `node scripts/edge-deploy/generate-manifest.mjs --check` -> `Edge manifest OK: 81 functions, 161 source files, sha256=9f7ef3cd192d2a993a85abcc467a927065fc95e7cae563b7315d0a238e038287`.
+- `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read supabase/functions/recover-message-media/index.test.ts` -> `ok | 19 passed | 0 failed (51ms)`.
+- `zapp-verify full .` com a correção aplicada -> `VERIFY: VERDE SEM BANCO (942s) — o banco NÃO foi verificado; registros em /home/joaquim_ataides/.local/state/zapp-verify/7326c84ba336`.
 
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+Observação de reprodução do `full`: eu também reverti localmente apenas o commit de inventários (`git revert --no-commit e0bc3979f`) para tentar cumprir literalmente o vermelho via `zapp-verify full .`; neste runner local o comando retornou verde mesmo no estado sem a correção (`VERIFY: VERDE SEM BANCO (1632s)`). Por isso a falha foi reproduzida no espelho de CI específico citado na recusa (`scripts/ci/docs-estado-registry-convention.unit.mjs`) e no check do manifesto, e o `full` fica registrado como prova verde final.
+
+## Arquivos no diff
+```
+ESTADO.md
+supabase/deployment-manifest.json
+supabase/functions/recover-message-media/index.test.ts
+supabase/functions/recover-message-media/index.ts
+```
+
+## Commits
+```
+84b5b3de7 fix(edge): trata falhas em recover-message-media
+e0bc3979f fix(edge): sincroniza inventarios da recover-message-media
+```
+
+## Verificações executadas
+- `node --test scripts/ci/docs-estado-registry-convention.unit.mjs` -> verde (`pass 11`, `fail 0`).
+- `node scripts/edge-deploy/generate-manifest.mjs --check` -> verde (`Edge manifest OK: 81 functions, 161 source files`).
+- `deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read supabase/functions/recover-message-media/index.test.ts` -> verde (`ok | 19 passed | 0 failed`).
+- `zapp-verify full .` -> verde sem banco (`VERIFY: VERDE SEM BANCO (942s)`).
+- `git diff --stat dia/2026-10-11...HEAD` -> 4 arquivos: `ESTADO.md`, `supabase/deployment-manifest.json`, `supabase/functions/recover-message-media/index.test.ts`, `supabase/functions/recover-message-media/index.ts`.
+
+## O que não fiz
+- Não alterei regras de negócio da edge além do commit anterior reaplicado por cherry-pick.
+- Não mexi em banco, production, deploy, push ou PR.
