@@ -1,5 +1,17 @@
 # Bloco 18 do Plano IA 200 Etapas — estado REAL das etapas IA-171 a IA-180
 
+> **STATUS REAL (10/10/2026): a maior parte NÃO está construída.** Das dez etapas,
+> **1 está implementada** (IA-177), **4 são parciais** (IA-172, IA-175, IA-176, IA-179)
+> e **5 não têm qualquer caminho no repositório** (IA-171, IA-173, IA-174, IA-178, IA-180).
+> **Este documento é evidência, não entrega:** o bloco **não deve ser lido como "entregue"**.
+>
+> O cartão do kanban ligado a este plano que aparece como **"done" foi uma AUDITORIA** que
+> **confirmou a lacuna** — não um cartão de entrega da feature. Nenhum cartão entregou a camada
+> de agentes especializados (catálogo de ferramentas, executor determinístico, aprovação vinculada
+> ao efeito, caixa de propostas).
+>
+> Achado do relatório de auditoria de IA de 10/10: `docs/ia/AUDITORIA_FUNCIONALIDADES_IA_2026-10-10.md`.
+
 > Fonte: [`docs/audits/PLANO_IA_200_ETAPAS_2026-09-29.md`](../audits/PLANO_IA_200_ETAPAS_2026-09-29.md)
 > §"Bloco 18 — Agentes especializados e ações supervisionadas (171–180)".
 > Item do inventário: `docs/audits/INVENTARIO_MELHORIAS_2026-10-07.tsv` linha `Bloco 18 (171-180)`
