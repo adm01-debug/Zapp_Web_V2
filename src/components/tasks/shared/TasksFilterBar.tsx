@@ -210,7 +210,7 @@ export function TasksFilterBar({
             <div className="space-y-1">
               <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Estado</span>
               <Select value={statusAtual} onValueChange={v => onStatus(v as WorkItemStatus | 'all')}>
-                <SelectTrigger aria-label="Estado" className="h-9 rounded-lg">
+                <SelectTrigger aria-label="Estado" className="h-10 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -225,7 +225,7 @@ export function TasksFilterBar({
             <div className="space-y-1">
               <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Prazo</span>
               <Select value={dueAtual} onValueChange={v => onDue(v as DueFilter)}>
-                <SelectTrigger aria-label="Prazo" className="h-9 rounded-lg">
+                <SelectTrigger aria-label="Prazo" className="h-10 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

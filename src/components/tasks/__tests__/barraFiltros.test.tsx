@@ -294,7 +294,7 @@ describe('TasksModule — integração da barra (etapas 035, 036 e 039)', () => 
 describe('TasksFilterBar — alvos de toque de 40 px (regra de tela do cartão)', () => {
   beforeEach(() => limparTela());
 
-  it('busca, chip, "Limpar filtros", itens e "x" do combobox têm 40 px de área', () => {
+  it('busca, chip, "Limpar filtros", selects do popover, itens e "x" do combobox têm 40 px de área', () => {
     renderBarra({ q: 'liga', prio: 'urgent', contact: SEM_CONTATO }, { searchText: 'liga' });
 
     const limparBusca = screen.getByTestId('tasks-search-clear');
@@ -307,6 +307,15 @@ describe('TasksFilterBar — alvos de toque de 40 px (regra de tela do cartão)'
 
     const limparFiltros = screen.getByRole('button', { name: 'Limpar filtros' });
     expect(limparFiltros.className).toContain('min-h-10');
+
+    // Os selects de Estado e Prazo do popover de Filtros têm o mesmo alvo de 40 px.
+    fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+    const painelFiltros = screen.getByTestId('tasks-filters-popover');
+    for (const rotulo of ['Estado', 'Prazo']) {
+      const gatilho = within(painelFiltros).getByLabelText(rotulo);
+      expect(gatilho.className).toContain('h-10');
+      expect(gatilho.className).not.toContain('h-9');
+    }
 
     // Os itens extras e o "x" do combobox só existem com o popover aberto/valor.
     fireEvent.click(screen.getByTestId('tasks-contact-filter'));
