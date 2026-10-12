@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -7,11 +7,16 @@ import { useMFA } from '@/hooks/auth/useMFA';
 import { MFAVerify } from '@/components/mfa/MFAVerify';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 
 type MfaStatus = 'checking' | 'verify' | 'done' | 'error';
 
 export default function TwoFactorAuth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // A tela pedida veio no state.from (o ProtectedRoute a repassa ao /2fa);
+  // concluido o desafio, o usuario volta para ela, nao para '/'.
+  const destinoPosLogin = resolverDestinoPosLogin(location);
   const { user, loading: authLoading } = useAuth();
   const { getAssuranceLevel } = useMFA();
   const [status, setStatus] = useState<MfaStatus>('checking');
@@ -43,7 +48,7 @@ export default function TwoFactorAuth() {
 
   // aal2 já verificado ou aal1 sem fator pendente — nada a desafiar aqui.
   if (status === 'done') {
-    return <Navigate to="/" replace />;
+    return <Navigate to={destinoPosLogin} replace />;
   }
 
   if (status === 'error') {
@@ -99,7 +104,7 @@ export default function TwoFactorAuth() {
         <MFAVerify
           title="Verificação Necessária"
           description="Para continuar, verifique sua identidade com 2FA"
-          onSuccess={() => navigate('/')}
+          onSuccess={() => navigate(destinoPosLogin)}
           onCancel={() => {
             // Sign out and go back to login
             supabase.auth.signOut().then(() => navigate('/auth'));

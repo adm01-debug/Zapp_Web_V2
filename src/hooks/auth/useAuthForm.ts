@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useWebAuthn } from '@/hooks/auth/useWebAuthn';
 import { toast } from '@/hooks/ui/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
+import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -20,6 +21,10 @@ export interface LockStatus {
 
 export function useAuthForm() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Destino pedido antes do login: ?next= (link direto) ou state.from (o
+  // ProtectedRoute devolve a rota que expirou). Sem destino seguro, '/'.
+  const destinoPosLogin = resolverDestinoPosLogin(location);
   const { user, signIn } = useAuth();
   const { isSupported, isPlatformAuthenticatorAvailable, authenticateWithPasskey, loading: passkeyLoading } = useWebAuthn();
   const [loading, setLoading] = useState(false);
@@ -37,9 +42,9 @@ export function useAuthForm() {
 
   useEffect(() => {
     if (user && window.location.pathname === '/auth') {
-      navigate('/');
+      navigate(destinoPosLogin);
     }
-  }, [user, navigate]);
+  }, [user, navigate, destinoPosLogin]);
 
   useEffect(() => {
     // BUG-F3 FIX: guard against setState after unmount when the
@@ -171,7 +176,7 @@ export function useAuthForm() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user?.id && session.user.id === result.userId) {
       toast({ title: 'Autenticado com Passkey!', description: 'Redirecionando...' });
-      navigate('/');
+      navigate(destinoPosLogin);
     } else {
       toast({ title: 'Passkey verificada', description: 'Enviamos um link de acesso para o seu email. Abra o link para entrar.' });
     }

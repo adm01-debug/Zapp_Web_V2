@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { resolverDestinoPosLogin } from '@/lib/postLoginRedirect';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -28,6 +29,9 @@ function sanitizeAuthError(raw: string | null | undefined): string {
 
 export default function SSOCallback() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Destino pedido antes do SSO (?next= ou state.from); '/' como padrao.
+  const destinoPosLogin = resolverDestinoPosLogin(location);
   const rawUrlError = getUrlError();
   const initialError = rawUrlError ? sanitizeAuthError(rawUrlError) : null;
   const [status, setStatus] = useState<CallbackStatus>(initialError ? 'error' : 'loading');
@@ -49,7 +53,7 @@ export default function SSOCallback() {
         statusRef.current = 'success';
         setStatus('success');
         toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate('/'), 1500);
+        setTimeout(() => navigate(destinoPosLogin), 1500);
       } else if (event === 'SIGNED_OUT') {
         statusRef.current = 'error';
         setStatus('error');
@@ -70,7 +74,7 @@ export default function SSOCallback() {
         statusRef.current = 'success';
         setStatus('success');
         toast.success('Login realizado com sucesso!');
-        setTimeout(() => navigate('/'), 1500);
+        setTimeout(() => navigate(destinoPosLogin), 1500);
       }
     });
 
@@ -88,7 +92,7 @@ export default function SSOCallback() {
       clearTimeout(timer);
       authData.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, destinoPosLogin]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
