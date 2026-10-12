@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-09`. 56 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -24,9 +24,9 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | Estado | Views |
 |---|---|
 | Full | 43 |
-| Partial | 12 |
+| Partial | 13 |
 | Suggested | 0 |
-| **total** | **55** |
+| **total** | **56** |
 
 ## Tabela
 
@@ -84,6 +84,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
 | `talkx` | `TalkXView` | `src/components/talkx/TalkXView.tsx` | Full | `src/hooks/integrations/useTalkX.ts` |
+| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |
 | `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
 | `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
 | `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |
