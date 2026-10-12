@@ -3,6 +3,7 @@ Especialista: workersql
 O codigo ja estava certo: conclui o que o cartao pediu (o relato) e reproduzi/corrigi um defeito real no TESTE — vermelho antes, verde depois. Ponto a ponto.
 
 ## O que mudou e por que (diff desta rodada)
+Arquivos no diff (base do dia → HEAD): `supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql`, `supabase/tests/contacts_waiting_por_atribuicao.sql` e `.tmp/relato.md` — 3 arquivos, 1 de teste (a suite `.sql`).
 - supabase/tests/contacts_waiting_por_atribuicao.sql: o bloco C0 agora REMOVE a chave (`DELETE FROM public.feature_flags WHERE key = 'inbox.status-fsm';`) e reexecuta a migration real (`\i /tmp/20261011174630_contacts_waiting_por_atribuicao.sql`) ANTES de conferir. A chave ja existe no banco local (o seed local a insere LIGADA) e o contrato em prova e o da MIGRATION: chave AUSENTE nasce DESLIGADA. Sem isso o C0 leria a chave do seed e a suite fica VERMELHA em qualquer banco local de pe (reproduzido abaixo).
 - supabase/migrations/20261011174630_contacts_waiting_por_atribuicao.sql: uma linha nova, `ALTER TABLE public._rb_contacts_waiting_por_atribuicao ENABLE ROW LEVEL SECURITY;` (item 5, que autoriza). Nada mais na migration.
 - O resto do diff da branch e o backfill com flag segura, do refazer anterior.
