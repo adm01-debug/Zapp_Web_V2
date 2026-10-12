@@ -22,8 +22,8 @@ export interface TypeConfig {
 // `dotBg`/`badgeClass` são classes nomeadas/anônimas — o Tailwind compila o
 // modificador de opacidade (`/NN`) só em cor NOMEADA (`bg-primary/15`), nunca em
 // `bg-[hsl(...)]/15` (zero ocorrências no bundle). Por isso border/bg usam a
-// classe nomeada com `/NN` e só o texto usa classe arbitrária sobre o token
-// `--X-text` (ex.: `hsl(var(--primary-text))`).
+// classe nomeada com `/NN` e só o texto usa valor arbitrário com o token
+// `-text` (prefixo de cor de texto + `hsl(var(...))`, ex. `--primary-text`).
 // O texto do badge sai de um token `-text` (ou do próprio tom de preenchimento,
 // onde não há `-text`): o token já muda entre claro/escuro, então o `dark:` é a
 // MESMA referência, mantido porque a tranca `contactTypeConfig.test.ts` exige

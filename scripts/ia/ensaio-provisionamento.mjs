@@ -55,16 +55,16 @@ export const MINIMO_CONVERSA_LONGA = 200;
 /** Mensagens da conversa longa provisionada por departamento. */
 export const MENSAGENS_CONVERSA_LONGA = 216;
 
-/** Paleta já existente no sistema (src/components/queues/CreateQueueDialog.tsx). */
+/** Paleta já existente no sistema (src/components/queues/queueColors.ts). */
 export const PALETA_FILAS = [
-  '#3B82F6',
-  '#10B981',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#EC4899',
-  '#06B6D4',
-  '#84CC16',
+  'hsl(var(--primary))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(var(--destructive))',
+  'hsl(var(--dash-violet))',
+  'hsl(var(--dash-red))',
+  'hsl(var(--info))',
+  'hsl(var(--dash-green))',
 ];
 
 /** Departamentos do ensaio (IA-010 §2). */

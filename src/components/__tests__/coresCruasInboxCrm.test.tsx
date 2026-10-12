@@ -154,6 +154,17 @@ const PROIBIDOS: Record<string, string[]> = {
   ],
 };
 
+/**
+ * O Tailwind v4 varre TODOS os arquivos (inclusive este teste) atras de
+ * candidatos a classe: o literal colado de `text-` com `[hsl(var(` (mesmo
+ * escapado dentro de regex) vira classe invalida e quebra o build
+ * (`lightningcss: Unexpected token Delim('<')`). Por isso os padroes abaixo
+ * sao montados por concatenacao em `new RegExp` — o fonte nunca contem o
+ * trecho colado.
+ */
+const ARB_INI = 'text-' + '\\[hsl\\(var\\(';
+const ARB_FIM = '\\)\\)\\]';
+
 describe('cor crua → token — nenhum literal cru volta (Inbox/CRM)', () => {
   for (const [arquivo, marcas] of Object.entries(PROIBIDOS)) {
     it(`${arquivo} não reintroduz cor crua`, () => {
@@ -172,8 +183,8 @@ describe('cor crua → token — nenhum literal cru volta (Inbox/CRM)', () => {
     for (const cfg of Object.values(CONTACT_TYPE_CONFIG)) {
       expect(cfg.color).toMatch(/^hsl\(var\(--[a-z-]+\)\)$/);
       expect(cfg.dotBg).toMatch(/^bg-[a-z-]+$/);
-      expect(cfg.badgeClass).toMatch(/(^| )text-\[hsl\(var\(--[a-z-]+\)\)\]/);
-      expect(cfg.badgeClass).toMatch(/ dark:text-\[hsl\(var\(--[a-z-]+\)\)\]/);
+      expect(cfg.badgeClass).toMatch(new RegExp('(^| )' + ARB_INI + '--[a-z-]+' + ARB_FIM));
+      expect(cfg.badgeClass).toMatch(new RegExp(' dark:' + ARB_INI + '--[a-z-]+' + ARB_FIM));
       expect(cfg.badgeClass).not.toMatch(/\[hsl\(\d|rgba\(/);
       expect(cfg.gradient).not.toMatch(/hsl\(\d/);
     }
@@ -204,7 +215,7 @@ function candidatosFgBg(classes: string, escuro: boolean): string[] {
 function fgDe(classes: string, escuro: boolean): string {
   for (const t of candidatosFgBg(classes, escuro)) {
     const c = t.replace(/^dark:/, '');
-    const arb = c.match(/^text-\[hsl\(var\((--[a-z-]+)\)\)\]$/);
+    const arb = c.match(new RegExp('^' + ARB_INI + '(--[a-z-]+)' + ARB_FIM + '$'));
     if (arb) return arb[1];
     const nomeada = c.match(/^text-([a-z0-9-]+)$/);
     if (nomeada && PUBLICADOS.has(nomeada[1])) return `--${nomeada[1]}`;
@@ -253,7 +264,7 @@ function avataresDaFonte(): { nome: string; classes: string }[] {
 /** Aviso do GroupsView: `bg-warning/NN` + texto por token, direto da fonte. */
 function parAvisoDaFonte(): string {
   const groupsFonte = conteudo('src/components/groups/GroupsView.tsx');
-  const mAviso = groupsFonte.match(/bg-warning\/(\d+)[^"']*?text-\[hsl\(var\((--[a-z-]+)\)\)\]/);
+  const mAviso = groupsFonte.match(new RegExp("bg-warning/(\\d+)[^\"']*?" + ARB_INI + '(--[a-z-]+)' + ARB_FIM));
   if (!mAviso) throw new Error('aviso do GroupsView sem bg-warning/NN + texto por token');
   return `${mAviso[2]} | --warning/${mAviso[1]}`;
 }
