@@ -8,7 +8,7 @@ Especialista: complexo (area-front-hooks)
 - `src/components/keyboard/CommandPaletteHost.tsx`: injeta os módulos como `navigationCommands` da paleta única.
 - `src/components/ui/command-palette.tsx`: nova prop opcional `navigationCommands` (padrão mantém a lista antiga; outros usos não mudam).
 - `src/hooks/integrations/useTalkXCommandItems.ts`: campanha grava `?campaign=<id>`; segmento/template levam à aba deles e só então navegam ao módulo (com `popstate` se já estiver no Talk X).
-- Testes: `src/components/keyboard/__tests__/paleta-unica.test.tsx` (novo, 6 casos); ajustados `MobileShellSearch.test.tsx` (usa a paleta única), `idsMortosNaNavegacao.test.tsx` (saiu o bloco da paleta antiga), `Index.keyboard-dashboard-view.test.tsx` e `command-palette-acoes.test.tsx`.
+- Testes: `src/components/keyboard/__tests__/paleta-unica.test.tsx` (novo, 6 casos); ajustados `MobileShellSearch.test.tsx` (usa a paleta única), `idsMortosNaNavegacao.test.tsx` (saiu o bloco da paleta antiga — o código testado, `src/components/CommandPalette.tsx`, foi removido junto neste mesmo diff, por isso o bloco saiu em vez de ser mantido), `Index.keyboard-dashboard-view.test.tsx` e `command-palette-acoes.test.tsx`. Nenhum teste foi pulado; nenhuma asserção foi afrouxada.
 
 ## Prova
 - vermelho antes (executor, sem o ouvinte `open-global-search` e sem a injeção de módulos): `npx vitest run src/components/keyboard/__tests__/paleta-unica.test.tsx` → `5 failed | 1 passed`.
