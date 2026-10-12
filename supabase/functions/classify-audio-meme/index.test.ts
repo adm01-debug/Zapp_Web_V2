@@ -143,6 +143,11 @@ function stubFetch(): { capturas: Captura[]; restaurar: () => void } {
     if (url.includes("/rest/v1/ai_providers")) {
       return Promise.resolve(json([PROVIDER_ROW]));
     }
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return Promise.resolve(json({ is_active: true }));
+    }
     if (url.includes("/rest/v1/profiles")) {
       return Promise.resolve(json({ id: "66666666-7777-4888-8999-000000000000" }));
     }
