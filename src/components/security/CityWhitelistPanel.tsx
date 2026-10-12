@@ -98,7 +98,7 @@ export function CityWhitelistPanel() {
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <Loader2 className="w-6 h-6 motion-safe:animate-spin text-muted-foreground" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -169,7 +169,7 @@ export function CityWhitelistPanel() {
               Cancelar
             </Button>
             <Button onClick={() => void handleAddCity(newCity)} disabled={updating}>
-              {updating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {updating && <Loader2 className="w-4 h-4 motion-safe:animate-spin mr-2" />}
               Adicionar
             </Button>
           </DialogFooter>
@@ -187,7 +187,7 @@ export function CityWhitelistPanel() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={updating}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleRemoveCity()} disabled={updating}>
-              {updating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {updating && <Loader2 className="w-4 h-4 motion-safe:animate-spin mr-2" />}
               Remover
             </AlertDialogAction>
           </AlertDialogFooter>
