@@ -51,8 +51,10 @@ Especialista: worker (sql) (area-sql-banco)
   conclui a execução e o avanço para o próximo passo é do runner (Edge), fora do escopo deste cartão.
 - `src/integrations/supabase/types.ts` é arquivo GERADO (reflexo do schema). Não cabe teste unitário de tipo;
   a prova do banco é `scripts/db-audit/followup-runtime.test.sh` (vermelho antes / verde depois, no commit).
-- `scripts/db-audit/followup-runtime.test.sh` é `.test.sh` NOVO e o registro no workflow `db-guard.yml`
-  (área CI) não está no meu escopo — REGISTRO PENDENTE: scripts/db-audit/followup-runtime.test.sh.
+- `scripts/db-audit/followup-runtime.test.sh` é `.test.sh` NOVO: registrei na ALLOWLIST de
+  `scripts/ci/check-test-inventory.mjs` (o mecanismo previsto para prova em container descartável; o
+  passo de uma linha em `db-guard.yml` é do dono do workflow — área CI). `node scripts/ci/check-test-inventory.mjs`
+  não aponta mais este arquivo como órfão (restam 3 órfãos pré-existentes de outros cartões).
 
 Concluí o escopo do cartão (migration + RLS + RPCs + gatilho + contrato + tipos), com prova verde e
 rollback executado.

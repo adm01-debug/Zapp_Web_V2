@@ -53,6 +53,12 @@ const ALLOWLIST = new Set([
   // meia-noite no DND, business_hours com days, fail-closed e autorização sob roles reais.
   // Passo de uma linha em db-guard.yml — promover pelo dono do workflow.
   'scripts/db-audit/talkx-campaign-window-open.test.sh',
+  // Follow-up runtime (cartão t_f949da13): fila de execuções de follow-up em PG 17 descartável
+  // aplicando a migration real — RLS de SELECT por papel real (atendente do contato/staff/anon),
+  // autorização de enroll/complete/cancel por visibilidade do contato, due_followups só service_role,
+  // gatilho de resposta do contato, backfill do legado e Rollback executado. Passo de uma linha em
+  // db-guard.yml — promover pelo dono do workflow.
+  'scripts/db-audit/followup-runtime.test.sh',
   // #464 (CAIXA-7eb1): mede a divergência de replay do E27 (publicação supabase_realtime) nos
   // próprios arquivos, em PG 17 descartável — a mesma receita do talkx-settings-replay-idempotent.
   'scripts/db-audit/talkx-e27-replay-divergence.test.sh',
