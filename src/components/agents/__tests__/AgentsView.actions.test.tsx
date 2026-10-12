@@ -45,6 +45,17 @@ vi.mock('@/hooks/crm/useAgents', () => ({
   }),
 }));
 
+// t_2939f5e5: o AgentsView passou a consumir também a carga por atendente (pendentes +
+// último envio). Estes mocks preservam o contrato do teste — a tela continua provada com
+// o componente real, sem tocar a rede (que a guarda de teste bloqueia).
+vi.mock('@/hooks/agents/useAgentPendingCounts', () => ({
+  useAgentPendingCounts: () => ({ pendingCounts: {}, isLoading: false, error: null, refetch: vi.fn() }),
+}));
+
+vi.mock('@/hooks/agents/useAgentRecentSends', () => ({
+  useAgentRecentSends: () => ({ recentSends: {}, isLoading: false, error: null, refetch: vi.fn() }),
+}));
+
 import { AgentsView } from '../AgentsView';
 
 // PageHeader usa useNavigate/useLocation: a tela precisa de um Router.

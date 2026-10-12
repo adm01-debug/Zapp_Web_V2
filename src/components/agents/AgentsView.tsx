@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { EmptyState } from '@/components/ui/empty-state';
 import { AgentsEmptyState } from '@/components/ui/contextual-empty-states';
 import { InviteAgentDialog } from '@/components/agents/InviteAgentDialog';
 import { ConfigurePermissionsDialog } from '@/components/agents/ConfigurePermissionsDialog';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useAgents } from '@/hooks/crm/useAgents';
+import { useAgentPendingCounts } from '@/hooks/agents/useAgentPendingCounts';
+import { useAgentRecentSends } from '@/hooks/agents/useAgentRecentSends';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,19 +24,42 @@ import {
   Plus,
   MessageSquare,
   RefreshCw,
+  Clock,
+  SendHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 
 export function AgentsView() {
   const { agents, stats, isLoading, refetch } = useAgents();
+  // Carga de cada atendente (pendentes + último envio) numa consulta agregada para TODA a
+  // equipe — nunca uma consulta por atendente. O supervisor vê a sobrecarga sem procurar.
+  const { pendingCounts, isLoading: pendingLoading, error: pendingError, refetch: refetchPending } = useAgentPendingCounts();
+  const { recentSends, isLoading: sendsLoading, error: sendsError, refetch: refetchSends } = useAgentRecentSends();
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [permissionsOpen, setPermissionsOpen] = useState(false);
-  const filteredAgents = agents.filter((agent) =>
-    agent.name.toLowerCase().includes(search.toLowerCase()) ||
-    (agent.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
+
+  // Ordenação por pendências: quem tem mais conversas aguardando aparece primeiro.
+  // Empate desempata por nome para a ordem não oscilar entre renders.
+  const filteredAgents = useMemo(
+    () => agents
+      .filter((agent) =>
+        agent.name.toLowerCase().includes(search.toLowerCase()) ||
+        (agent.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
+      )
+      .sort((a, b) =>
+        (pendingCounts[b.id] ?? 0) - (pendingCounts[a.id] ?? 0) ||
+        a.name.localeCompare(b.name, 'pt-BR')
+      ),
+    [agents, pendingCounts, search]
   );
+
+  const handleRefresh = () => {
+    refetch();
+    refetchPending();
+    refetchSends();
+  };
 
   const statsData = [
     { label: 'Online', value: stats.onlineCount, color: 'bg-status-online', icon: undefined as React.ElementType | undefined },
@@ -41,7 +68,7 @@ export function AgentsView() {
     { label: 'Chats Ativos', value: stats.totalActiveChats, color: undefined as string | undefined, icon: MessageSquare as React.ElementType },
   ];
 
-  if (isLoading) {
+  if (isLoading || pendingLoading || sendsLoading) {
     return (
       <div className="space-y-6 relative bg-background w-full min-w-0">
         <AuroraBorealis />
@@ -77,7 +104,7 @@ export function AgentsView() {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => refetch()} className="border-secondary/30">
+            <Button variant="outline" onClick={handleRefresh} className="border-secondary/30">
               <RefreshCw className="w-4 h-4 mr-2" />
               Atualizar
             </Button>
@@ -154,6 +181,8 @@ export function AgentsView() {
           {filteredAgents.map((agent) => {
             const maxChats = agent.max_chats || 5;
             const capacityPercent = (agent.activeChats / maxChats) * 100;
+            const pending = pendingCounts[agent.id] ?? 0;
+            const lastSend = recentSends[agent.id] ?? null;
 
             return (
               <StaggeredItem key={agent.id}>
@@ -210,6 +239,44 @@ export function AgentsView() {
                           capacityPercent > 80 && '[&>div]:bg-destructive'
                         )}
                       />
+                    </div>
+
+                    {/* Carga: pendentes e último envio (o supervisor vê a sobrecarga de cada atendente) */}
+                    <div className="space-y-1.5 mb-4 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                          Pendentes
+                        </span>
+                        <span
+                          className={cn('font-medium', pending > 0 && !pendingError ? 'text-warning' : 'text-muted-foreground')}
+                          title={pendingError ? 'Não foi possível carregar as pendências' : undefined}
+                        >
+                          {pendingError ? '—' : `${pending} ${pending === 1 ? 'conversa' : 'conversas'}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <SendHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                          Último envio
+                        </span>
+                        <span
+                          className="font-medium text-foreground"
+                          title={
+                            sendsError
+                              ? 'Não foi possível carregar os envios'
+                              : lastSend
+                                ? new Date(lastSend).toLocaleString('pt-BR')
+                                : undefined
+                          }
+                        >
+                          {sendsError
+                            ? '—'
+                            : lastSend
+                              ? formatDistanceToNow(new Date(lastSend), { addSuffix: true, locale: ptBR })
+                              : 'Sem envio recente'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Queues */}

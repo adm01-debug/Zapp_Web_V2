@@ -71,6 +71,7 @@ const h = vi.hoisted(() => {
       not: (...a: unknown[]) => { filters.push(['not', ...a]); return q; },
       is: (...a: unknown[]) => { filters.push(['is', ...a]); return q; },
       in: (...a: unknown[]) => { filters.push(['in', ...a]); return q; },
+      gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return q; },
       order: () => q,
       range: (f: number, t: number) => { from = f; to = t; return q; },
       then: (resolve: (v: unknown) => unknown) => {
