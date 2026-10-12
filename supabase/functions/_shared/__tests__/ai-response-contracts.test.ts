@@ -14,7 +14,6 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { SENTIMENT_VALUES, URGENCY_VALUES } from "../ai-vocabulary.ts";
 import {
-  AutoTagOutput,
   buildAiEnvelope,
   ConversationAnalysisOutput,
   ConversationSummaryOutput,
@@ -277,40 +276,7 @@ Deno.test("respostas sugeridas: texto vazio é rejeitado com path achatado", () 
   );
 });
 
-// ─── 9. AutoTagOutput ────────────────────────────────────────
-Deno.test("auto-tag válido passa", () => {
-  const result = parseModelOutput(AutoTagOutput, {
-    tags: [
-      { name: "suporte", confidence: 0.9 },
-      { name: "financeiro", confidence: 0.4 },
-    ],
-  });
-  assert(result.ok, `tags válidas devem passar: ${!result.ok ? JSON.stringify(result.errors) : ""}`);
-  assertEquals(result.data.tags.length, 2);
-  assertEquals(result.data.tags[0].confidence, 0.9);
-});
-
-Deno.test("auto-tag: confiança fora de 0-1 é rejeitada (path achatado)", () => {
-  const result = parseModelOutput(AutoTagOutput, {
-    tags: [
-      { name: "ok", confidence: 0.5 },
-      { name: "suspeita", confidence: 1.5 },
-    ],
-  });
-  assert(!result.ok, "confidence 1.5 deve ser rejeitada (não é % )");
-  assert(
-    result.errors.some((e) => e.path === "tags.1.confidence"),
-    `esperava path achatado 'tags.1.confidence': ${JSON.stringify(result.errors)}`,
-  );
-});
-
-Deno.test("auto-tag: nome vazio é rejeitado", () => {
-  const result = parseModelOutput(AutoTagOutput, { tags: [{ name: "", confidence: 0.5 }] });
-  assert(!result.ok, "tag sem nome não serve");
-  assert(result.errors.some((e) => e.path === "tags.0.name"), JSON.stringify(result.errors));
-});
-
-// ─── 10. Envelope comum ──────────────────────────────────────
+// ─── 9. Envelope comum ──────────────────────────────────────
 Deno.test("envelope não inclui chaves undefined", () => {
   const envelope = buildAiEnvelope({
     capability: "conversation_analysis",
@@ -329,9 +295,9 @@ Deno.test("envelope não inclui chaves undefined", () => {
 
 Deno.test("envelope de erro carrega o erro e omite os demais opcionais", () => {
   const envelope = buildAiEnvelope({
-    capability: "auto_tag",
+    capability: "conversation_analysis",
     status: "error",
-    error: [{ path: "tags.1.confidence", message: "fora de 0-1" }],
+    error: [{ path: "sentimentScore", message: "fora de 0-100" }],
   });
 
   assertEquals(envelope.status, "error");

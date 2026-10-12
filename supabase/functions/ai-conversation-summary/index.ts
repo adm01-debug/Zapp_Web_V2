@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         contactId: visibleContactId,
         // IA-061/IA-065: o resumo precisa do MESMO contexto profissional da
         // análise — `contact_type` (papel do interlocutor) sai daqui.
-        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
+        contactColumns: 'name, company, ai_priority, ai_sentiment, notes, contact_type',
         analysisColumns: 'sentiment, summary, created_at',
       });
 

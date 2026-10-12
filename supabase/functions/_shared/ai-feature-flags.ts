@@ -37,9 +37,7 @@ export type AiCapability =
   | "enhance_message"
   | "summary"
   | "conversation_analysis"
-  | "auto_tag"
   | "churn"
-  | "classify_tickets"
   | "transcribe_audio"
   | "voice"
   | "chatbot_l1";
@@ -59,9 +57,7 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, AiCapability>> =
   "ai-enhance-message": "enhance_message",
   "ai-conversation-summary": "summary",
   "ai-conversation-analysis": "conversation_analysis",
-  "ai-auto-tag": "auto_tag",
   "ai-churn-analysis": "churn",
-  "ai-classify-tickets": "classify_tickets",
   "ai-transcribe-audio": "transcribe_audio",
   "voice-agent": "voice",
   "chatbot-l1": "chatbot_l1",

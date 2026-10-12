@@ -34,7 +34,7 @@ const SENTIMENT_KNOWN: Array<[unknown, Sentiment]> = [
   ["neutro", "neutro"],
   ["negativo", "negativo"],
   ["critico", "critico"],
-  // legado EN escrito por ai-auto-tag / chatbot-l1
+  // legado EN escrito por chatbot-l1
   ["positive", "positivo"],
   ["neutral", "neutro"],
   ["negative", "negativo"],
@@ -174,7 +174,7 @@ const PRIORITY_KNOWN: Array<[unknown, OperationalPriority]> = [
   ["high", "high"],
   ["urgent", "urgent"],
   // legados reais do repo
-  ["normal", "medium"], // ai-auto-tag grava 'normal'
+  ["normal", "medium"], // valor legado de contacts.ai_priority
   ["alta", "high"], // urgência pt-BR gravada em ai_priority
   ["media", "medium"],
   ["baixa", "low"],

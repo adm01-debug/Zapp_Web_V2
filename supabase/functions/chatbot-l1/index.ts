@@ -155,7 +155,7 @@ export async function handleChatbotL1Request(req: Request): Promise<Response> {
     let contactContext = '';
     const { data: contact } = await supabase
       .from('contacts')
-      .select('name, company, tags, ai_priority, ai_sentiment')
+      .select('name, company, ai_priority, ai_sentiment')
       .eq('id', contactId)
       .maybeSingle();
 
@@ -168,7 +168,6 @@ export async function handleChatbotL1Request(req: Request): Promise<Response> {
       const linhas = [
         `- Nome: ${contact.name || 'Desconhecido'}`,
         `- Empresa: ${contact.company || 'N/A'}`,
-        `- Tags: ${contact.tags?.join(', ') || 'Nenhuma'}`,
       ];
       if (previousPriority.value) linhas.push(`- Prioridade: ${previousPriority.value}`);
       if (previousSentiment.value) linhas.push(`- Sentimento: ${previousSentiment.value}`);
@@ -294,7 +293,7 @@ Responda em JSON:
     log.error("Error in chatbot-l1", { error: error instanceof Error ? error.message : String(error) });
     // errorResponse (nao jsonResponse) para status 500: sanitiza a mensagem
     // antes de expor ao cliente — mesmo padrao das demais edges (ai-proxy,
-    // ai-auto-tag, etc). O jsonResponse direto vazava error.message
+    // etc). O jsonResponse direto vazava error.message
     // (js/stack-trace-exposure).
     return errorResponse(error instanceof Error ? error.message : "Unknown error", 500, req);
   }

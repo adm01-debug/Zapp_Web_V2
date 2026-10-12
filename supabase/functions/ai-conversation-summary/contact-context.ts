@@ -33,7 +33,6 @@ import { normalizeSentiment } from "../_shared/ai-vocabulary.ts";
 export interface SummaryContactFields {
   name?: string | null;
   company?: string | null;
-  tags?: string[] | null;
   /** Papel do interlocutor (IA-065): 'cliente', 'fornecedor', 'colaborador'… */
   contact_type?: string | null;
 }
@@ -74,7 +73,6 @@ export function buildSummaryContactContext(input: SummaryContextInput = {}): str
       `Contexto: ${contact.name || "Cliente"}`,
       `Empresa: ${contact.company || "N/A"}`,
       `Tipo: ${contact.contact_type || "não informado"}`,
-      `Tags: ${contact.tags && contact.tags.length > 0 ? contact.tags.join(", ") : "Nenhuma"}`,
     ].join(", ");
     parts.push(line);
   }

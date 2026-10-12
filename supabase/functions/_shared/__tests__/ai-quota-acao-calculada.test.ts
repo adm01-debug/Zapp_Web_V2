@@ -1,7 +1,7 @@
 // IA-QUOTA-001 — ação, tentativa e cobrança ligadas à quota REAL.
 //
 // Defeito do cartão (item 42): os handlers calculados `ai-churn-analysis` e
-// `ai-classify-tickets` passavam pelo `enforceAiGuards` — cuja quota diária
+// `ai-churn-analysis` (e o antigo `ai-classify-tickets`) passavam pelo `enforceAiGuards` — cuja quota diária
 // CONTA linhas de `ai_usage_logs` por (user_id, function_name) — sem jamais
 // gravar a linha. Ação admitida, consumo nunca registrado: a quota dessas duas
 // funções era decorativa.
@@ -120,9 +120,9 @@ Deno.test("registrarAcaoCalculada: resposta de erro também conta (ação falhou
 
   try {
     await registrarAcaoCalculada({
-      functionName: "ai-classify-tickets",
+      functionName: "ai-conversation-analysis",
       userId: USUARIO,
-      req: new Request("https://exemplo.test/functions/v1/ai-classify-tickets", { method: "POST" }),
+      req: new Request("https://exemplo.test/functions/v1/ai-conversation-analysis", { method: "POST" }),
       resposta: new Response("{}", { status: 500 }),
       inicio: Date.now(),
     });
@@ -221,7 +221,6 @@ Deno.test("a linha da ação calculada reconcilia como tentativa sem cobrança d
 // ---------------------------------------------------------------------------
 const HANDLERS: Array<{ slug: string; arquivo: string }> = [
   { slug: "ai-churn-analysis", arquivo: "../../ai-churn-analysis/index.ts" },
-  { slug: "ai-classify-tickets", arquivo: "../../ai-classify-tickets/index.ts" },
 ];
 
 for (const { slug, arquivo } of HANDLERS) {

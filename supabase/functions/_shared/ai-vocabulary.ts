@@ -54,7 +54,7 @@ function hasOwn<T>(table: Readonly<Record<string, T>>, key: string): boolean {
 
 const SENTIMENT_SET: ReadonlySet<string> = new Set<string>(SENTIMENT_VALUES);
 
-// Legados em inglês ainda gravados por `ai-auto-tag`/`chatbot-l1`. Traduzimos só
+// Legados em inglês ainda gravados por `chatbot-l1`. Traduzimos só
 // na LEITURA, para o mesmo sentimento significar a mesma coisa em análise,
 // contato, churn, alerta e CRM (aceite de IA-021).
 // `very_positive`/`very_negative` ficam de fora: não existe intensidade na escala
@@ -85,7 +85,7 @@ export function normalizeSentiment(raw: unknown): VocabularyMatch<Sentiment> {
 
 const URGENCY_SET: ReadonlySet<string> = new Set<string>(URGENCY_VALUES);
 
-// Legados: `ai-auto-tag`/`chatbot-l1` gravam em inglês e o irmão
+// Legados: `chatbot-l1` grava em inglês e o irmão
 // `ai-conversation-summary` chega a comparar com `'critical'` (defeito B11).
 // `high`, `critical` e `urgent` são o mesmo topo da escala — aqui a tradução
 // recoloca todos na urgência canônica pt-BR. `normal` NÃO entra: não é urgência,
@@ -129,7 +129,7 @@ export function urgencyToOperationalPriority(u: Urgency | null): OperationalPrio
 const OPERATIONAL_PRIORITY_SET: ReadonlySet<string> = new Set<string>(OPERATIONAL_PRIORITY_VALUES);
 
 // Legados reais de `contacts.ai_priority`:
-//   - `normal`: o que `ai-auto-tag` grava como "média" (não existe na escala do front);
+//   - `normal`: valor legado de `contacts.ai_priority` (não existe na escala do front);
 //   - `alta`/`media`/`baixa`/`critica`: a urgência pt-BR que as funções de análise
 //     gravam na MESMA coluna do front — traduzimos para a escala EN na leitura.
 const OPERATIONAL_PRIORITY_ALIASES: Readonly<Record<string, OperationalPriority>> = {

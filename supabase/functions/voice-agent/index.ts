@@ -11,7 +11,7 @@ const VALID_ACTIONS = new Set(['search', 'filter', 'navigate', 'sort', 'clear', 
 const VALID_ROUTES = new Set([
   'inbox', 'dashboard', 'contacts', 'campaigns', 'team', 'settings',
   'sentiment-alerts', 'chatbot-builder', 'queues', 'knowledge-base',
-  'calls', 'automations', 'groups', 'tags', 'wallet', 'crm360',
+  'calls', 'automations', 'groups', 'wallet', 'crm360',
   'reports', 'security',
 ]);
 const VALID_SORT = new Set(['newest', 'oldest', 'name', 'priority']);
@@ -44,7 +44,6 @@ ROTAS DISPONÍVEIS PARA NAVEGAÇÃO (use exatamente o valor da rota):
 - calls (chamadas, VoIP, telefone)
 - automations (automações, regras automáticas)
 - groups (grupos, grupos de WhatsApp)
-- tags (tags, etiquetas, marcadores)
 - wallet (carteira, wallet, carteira de clientes)
 - crm360 (CRM, CRM 360, visão 360)
 - reports (relatórios, reports, análises)

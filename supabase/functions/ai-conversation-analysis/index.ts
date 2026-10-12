@@ -62,14 +62,13 @@ Deno.serve(async (req) => {
       const { contact, recentAnalyses } = await loadContactPromptContext({
         supabase,
         contactId: visibleContactId,
-        contactColumns: 'name, company, tags, ai_priority, ai_sentiment, notes, contact_type',
+        contactColumns: 'name, company, ai_priority, ai_sentiment, notes, contact_type',
         analysisColumns: 'sentiment, sentiment_score, summary, urgency, created_at',
       });
 
       if (contact) {
         contactContext = `\nContexto do cliente: ${contact.name || 'Cliente'}`;
         if (contact.company) contactContext += `, Empresa: ${contact.company}`;
-        if (contact.tags?.length) contactContext += `, Tags: ${contact.tags.join(', ')}`;
         if (contact.contact_type) contactContext += `, Tipo: ${contact.contact_type}`;
         // O sentimento anterior entra no prompt já no vocabulário CANÔNICO
         // (IA-021): antes o modelo recebia o valor cru, que podia estar em inglês.

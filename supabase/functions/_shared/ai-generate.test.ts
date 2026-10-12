@@ -56,7 +56,7 @@ function fnv1aHex(input: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-const FUNCAO = "ai-auto-tag";
+const FUNCAO = "ai-conversation-summary";
 const DONO = "user-teste";
 const MODELO = "modelo-teste";
 const MAX_TOKENS = 10;

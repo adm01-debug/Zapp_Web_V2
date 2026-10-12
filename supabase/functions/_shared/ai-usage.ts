@@ -1194,7 +1194,7 @@ export function reconciliarConsumo(linhas: LinhaDeConsumo[]): ReconciliacaoDeCon
  *
  * O defeito que isto fecha: `enforceAiGuards` mede a quota diária CONTANDO
  * linhas de `ai_usage_logs` por (user_id, function_name) — mas os handlers
- * calculados (`ai-churn-analysis`, `ai-classify-tickets`) respondiam por regras
+ * calculados (`ai-churn-analysis`, e o antigo `ai-classify-tickets`) respondiam por regras
  * próprias e nunca gravavam a linha. A ação passava pela guarda e era invisível
  * para a quota: ação, tentativa e cobrança existiam no modelo (regras 1–5
  * acima), só não estavam ligadas ao contador real.

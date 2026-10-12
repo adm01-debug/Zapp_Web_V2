@@ -113,7 +113,6 @@ function chamadas(fonte: string, nome: string): string[] {
 
 const CONSUMIDORES_MIGRADOS: readonly string[] = [
   'supabase/functions/chatbot-l1/index.ts',
-  'supabase/functions/ai-auto-tag/index.ts',
   'supabase/functions/ai-suggest-reply/index.ts',
   'supabase/functions/ai-enhance-message/index.ts',
   'supabase/functions/_shared/ai-conversation-pipeline.ts',

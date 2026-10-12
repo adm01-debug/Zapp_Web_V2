@@ -178,7 +178,6 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
       id: CONTATO,
       name: "Cliente Teste",
       company: "ACME",
-      tags: ["vip"],
       ai_priority: null,
       ai_sentiment: null,
     }],

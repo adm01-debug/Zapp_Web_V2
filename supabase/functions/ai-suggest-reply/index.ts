@@ -7,7 +7,7 @@ import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { SuggestedRepliesEnvelope, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 
 /**
- * Seam de teste (mesmo padrão do `ai-auto-tag`): o handler exportado recebe os
+ * Seam de teste (mesmo padrão das demais funções de IA): o handler exportado recebe os
  * poucos pontos que o teste offline precisa substituir. Em produção nada é
  * injetado e as implementações reais valem — por isso o teste chama o handler
  * REAL. Sem este seam, o defeito de contrato do `ai-suggest-reply` não teria
