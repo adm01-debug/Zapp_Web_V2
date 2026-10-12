@@ -9,8 +9,7 @@
 --   drop table if exists public.email_templates;
 --
 -- feat(db): modelos de e-mail (email_templates) com RLS — paridade V3->V2
--- (auditoria docs/audits/AUDITORIA_PARIDADE_V3_FEATURES_BATCH1_PARTE8_2026-10-12.md,
---  EmailTemplatesManager da V3). Migration ADITIVA: cria a tabela e o contrato de acesso.
+-- (EmailTemplatesManager da V3). Migration ADITIVA: cria a tabela e o contrato de acesso.
 -- Nenhuma linha existe antes; nada de backfill.
 --
 -- DECISOES MEDIDAS NO REPO (nao assumidas):
