@@ -11,6 +11,11 @@ import { ContactActionButtons } from '../ContactActionButtons';
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
+// U04 — o selo de e-mails não lidos vem do hook U02; mockado (contagem 0 aqui)
+// para nenhum teste falar com o Supabase real.
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({
+  useContactUnreadEmails: () => ({ count: 0, status: 'ok' }),
+}));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
   useSyncToCRM: () => ({ syncConversationAsync: vi.fn(), isSyncing: false, isConfigured: false }),

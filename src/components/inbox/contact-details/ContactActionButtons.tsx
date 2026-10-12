@@ -17,6 +17,7 @@ import { RealtimeCollaboration } from '../RealtimeCollaboration';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { dispatchStartCall } from '@/lib/calls/events';
 import { useFeatureFlag } from '@/hooks/system/useFeatureFlag';
+import { useContactUnreadEmails } from '@/hooks/gmail/useContactUnreadEmails';
 
 interface ContactActionButtonsProps {
   contact: { id: string; name: string; phone: string; email?: string; avatar?: string | null };
@@ -59,12 +60,19 @@ function CrmSyncMenuItem({ conversation }: { conversation: Conversation }) {
 
 type TileProps = React.ComponentPropsWithoutRef<'button'> & {
   icon: React.ReactNode; label: string; testId?: string; hoverColorClass?: string;
+  /** U04 — contagem no canto do tile (selo de e-mails não lidos); 0/ausente = sem selo. */
+  badgeCount?: number;
 };
+
+/** Acima de 99 o selo vira `99+` (mesma regra do selo da sidebar — D01). */
+function textoDoSelo(count: number): string {
+  return count > 99 ? '99+' : String(count);
+}
 
 const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
   // `title` é consumido pelo Radix Tooltip e nunca vai para o DOM: evita o tooltip
   // nativo duplicado e mantém o texto contextual (ex.: “Sem e-mail” quando disabled).
-  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: tooltipLabel, disabled, ...rest }, ref,
+  { icon, label, testId, hoverColorClass = 'hover:text-primary', className, title: tooltipLabel, disabled, badgeCount, ...rest }, ref,
 ) {
   const tooltipText = tooltipLabel ?? label;
   const button = (
@@ -76,13 +84,25 @@ const Tile = React.forwardRef<HTMLButtonElement, TileProps>(function Tile(
       disabled={disabled}
       {...rest}
       className={cn(
-        'h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
+        'relative h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground',
         'hover:bg-muted/50 transition-colors disabled:opacity-40 disabled:pointer-events-none',
         hoverColorClass,
         className,
       )}
     >
       {icon}
+      {/* U04 — selo de e-mails não lidos do contato (D02/D03). Mesmos tokens do
+          selo da sidebar (`bg-primary`/`text-primary-foreground`); `aria-hidden`
+          porque o número já entra no nome acessível do botão. */}
+      {badgeCount != null && badgeCount > 0 && (
+        <span
+          data-testid="contact-email-unread-badge"
+          aria-hidden="true"
+          className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-2xs font-bold leading-none bg-primary text-primary-foreground"
+        >
+          {textoDoSelo(badgeCount)}
+        </span>
+      )}
     </button>
   );
 
@@ -110,6 +130,14 @@ export function ContactActionButtons({
 }: ContactActionButtonsProps) {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
   const videoCallEnabled = useFeatureFlag('video_call', false);
+  // U04 — e-mails recebidos e ainda não lidos do contato (hook U02, D02/D03). O
+  // número vira selo no ícone de E-mail e entra no nome acessível do botão. Só
+  // consulta quando há e-mail cadastrado: sem e-mail o tile fica desabilitado e
+  // não há conversa para abrir; o hook recebe null e fica ocioso.
+  const { count: unreadEmails } = useContactUnreadEmails(contact.email ? contact.id : null);
+  // Sem e-mail cadastrado o tile fica desabilitado: não mostra selo nem muda o nome acessível.
+  const emailUnread = contact.email ? unreadEmails : 0;
+  const emailLabel = emailUnread > 0 ? `E-mail, ${emailUnread} não lidos` : 'E-mail';
   const handleTransfer = () => {
     window.dispatchEvent(new CustomEvent('open-transfer-dialog', { detail: { contactId: contact.id } }));
   };
@@ -150,9 +178,10 @@ export function ContactActionButtons({
 
         <Tile
           icon={<Mail className="w-[18px] h-[18px]" />}
-          label="E-mail"
+          label={emailLabel}
           title={contact.email ? 'Abrir e-mail' : 'Sem e-mail'}
           disabled={!contact.email}
+          badgeCount={emailUnread}
           onClick={() => { if (contact.email) navigateToView('email-chat', { emailContact: contact.id, emailTo: contact.email }); }}
         />
 

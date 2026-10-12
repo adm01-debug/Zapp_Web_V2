@@ -6,6 +6,15 @@ import { ContactActionButtons } from '../ContactActionButtons';
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }));
+// U04 — o selo de e-mails não lidos vem do hook U02; mockado aqui para o teste
+// controlar a contagem e para nenhum teste falar com o Supabase real.
+const unreadEmailsMock = vi.hoisted(() => ({ count: 0, status: 'ok' as 'ok' | 'erro' | 'idle' | 'loading', lastContactId: null as string | null }));
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({
+  useContactUnreadEmails: (contactId: string | null) => {
+    unreadEmailsMock.lastContactId = contactId;
+    return unreadEmailsMock;
+  },
+}));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/integrations/useSyncToCRM', () => ({
   useSyncToCRM: () => ({ syncConversationAsync: vi.fn(), isSyncing: false, isConfigured: false }),
@@ -33,10 +42,16 @@ function openViaPointer(el: Element) {
   fireEvent.click(el);
 }
 
+/** Localiza o Tile de e-mail pelo ícone (o <button> real que carrega o selo U04). */
+function emailTile() {
+  return screen.getAllByTestId('contact-action-tile').find(t => t.querySelector('svg.lucide-mail'))!;
+}
+
 describe('ContactActionButtons', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     videoCallFlag = false;
+    unreadEmailsMock.count = 0;
   });
 
   it('abre o dropdown de "Ligar" com as opções de chamada', () => {
@@ -185,5 +200,43 @@ describe('ContactActionButtons', () => {
     render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
     const tiles = screen.getAllByTestId('contact-action-tile');
     expect(tiles.find(t => t.querySelector('svg.lucide-video'))).toBeDefined();
+  });
+
+  // ===== U04 — selo de e-mails não lidos no ícone de E-mail (D02/D03) =====
+  it('U04 — mostra o selo com a contagem e o nome acessível com o número', () => {
+    unreadEmailsMock.count = 3;
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.getByTestId('contact-email-unread-badge')).toHaveTextContent('3');
+    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail, 3 não lidos');
+    expect(emailTile()).toHaveAccessibleName('E-mail, 3 não lidos');
+  });
+
+  it('U04 — sem e-mails não lidos (count 0) o selo some e o nome acessível volta a "E-mail"', () => {
+    unreadEmailsMock.count = 0;
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.queryByTestId('contact-email-unread-badge')).not.toBeInTheDocument();
+    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail');
+  });
+
+  it('U04 — acima de 99 o selo mostra "99+" mas o nome acessível leva o número real', () => {
+    unreadEmailsMock.count = 150;
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.getByTestId('contact-email-unread-badge')).toHaveTextContent('99+');
+    expect(emailTile()).toHaveAccessibleName('E-mail, 150 não lidos');
+  });
+
+  it('U04 — o selo aparece só no ícone de E-mail, não nos outros tiles', () => {
+    unreadEmailsMock.count = 2;
+    render(<ContactActionButtons contact={baseContact} onStartCall={onStartCall} />);
+    expect(screen.getAllByTestId('contact-email-unread-badge')).toHaveLength(1);
+    expect(emailTile().querySelector('[data-testid="contact-email-unread-badge"]')).not.toBeNull();
+  });
+
+  it('U04 — contato sem e-mail cadastrado: hook ocioso (contactId null) e nenhum selo', () => {
+    unreadEmailsMock.count = 4;
+    render(<ContactActionButtons contact={{ ...baseContact, email: undefined }} onStartCall={onStartCall} />);
+    expect(unreadEmailsMock.lastContactId).toBeNull();
+    expect(screen.queryByTestId('contact-email-unread-badge')).not.toBeInTheDocument();
+    expect(emailTile()).toHaveAttribute('aria-label', 'E-mail');
   });
 });
