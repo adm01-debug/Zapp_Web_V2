@@ -82,3 +82,9 @@ verify_jwt = true
 # verify_jwt=true e o default do CLI; declarado aqui para documentacao explicita.
 [functions.talkx-ai]
 verify_jwt = true
+
+# Convite de usuario por e-mail (paridade V3). Admin convida qualquer papel;
+# supervisor so convida 'agent'. verify_jwt=true e o default do CLI; o front
+# chama via supabase.functions.invoke, que ja manda o JWT da sessao.
+[functions.invite-user]
+verify_jwt = true
