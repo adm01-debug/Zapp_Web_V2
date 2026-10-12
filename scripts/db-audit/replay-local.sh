@@ -11,7 +11,8 @@
 # Codigos de saida, DISTINTOS de proposito (R2-INF-014): o exit code precisa dizer a quem chama
 # SE o replay chegou a medir as migrations.
 #   0 = verde (nenhuma falha inesperada)
-#   1 = drift novo (falha fora do allowlist) - ver replay-classify.py
+#   1 = drift novo (falha fora do allowlist) - ver replay-classify.py - OU a lista de aceitas
+#       cresceu (ratchet do allowlist) - ver check-replay-allowlist-ratchet.py
 #   2 = SETUP indisponivel (docker run, prontidao do postgres, bootstrap, trava de DNS ou do
 #       agendador). O replay NAO mediu as migrations: nao e "verde" e nao e "drift".
 #
@@ -58,6 +59,19 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 : > "$LOG"; : > "$ERROS"
+
+# Ratchet do allowlist ANTES de subir o container: a lista de falhas esperadas so pode DIMINUIR. Se
+# alguem "resolve" uma falha nova acrescentando uma linha em replay-known-failures.json, o teto
+# (replay-allowlist-baseline.json) tem de ser baixado no mesmo commit; sem isso o replay ja para
+# aqui, sem gastar o setup. Teto ilegivel = nao medi (2), que nao vira "verde".
+echo "verificando o teto da lista de falhas esperadas (ratchet)" | tee -a "$LOG"
+python3 "$(dirname "$0")/check-replay-allowlist-ratchet.py" \
+  "$(dirname "$0")/replay-known-failures.json" "$(dirname "$0")/replay-allowlist-baseline.json" | tee -a "$LOG"
+RC_RATCHET=${PIPESTATUS[0]}
+if [ "$RC_RATCHET" -ne 0 ]; then
+  echo "FALHA: lista de aceitas fora do teto (ratchet); abortando antes de subir o container" | tee -a "$LOG"
+  exit "$RC_RATCHET"
+fi
 
 echo "subindo $NOME na porta $PORTA (imagem fixada por digest)" | tee -a "$LOG"
 if ! docker run -d --name "$NOME" --label "$ROTULO_CHAVE=$ROTULO_VALOR" -e POSTGRES_PASSWORD=replay \
