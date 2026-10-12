@@ -7,22 +7,9 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { clearLoginAttempts, formatLockTime } from '@/lib/loginAttempts';
 
-const passwordSchema = z.string()
-  .min(8, 'Senha deve ter no mínimo 8 caracteres')
-  .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
-  .regex(/[a-z]/, 'Deve conter pelo menos uma letra minúscula')
-  .regex(/[0-9]/, 'Deve conter pelo menos um número')
-  .regex(/[^A-Za-z0-9]/, 'Deve conter pelo menos um caractere especial');
-
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'Senha é obrigatória'),
-});
-
-const signupSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
-  email: z.string().email('Email inválido').max(255, 'Email muito longo'),
-  password: passwordSchema,
 });
 
 export interface LockStatus {
@@ -33,10 +20,9 @@ export interface LockStatus {
 
 export function useAuthForm() {
   const navigate = useNavigate();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn } = useAuth();
   const { isSupported, isPlatformAuthenticatorAvailable, authenticateWithPasskey, loading: passkeyLoading } = useWebAuthn();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [lockStatus, setLockStatus] = useState<LockStatus>({
     isLocked: false,
@@ -44,7 +30,6 @@ export function useAuthForm() {
     attempts: 0
   });
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
   });
@@ -159,33 +144,6 @@ export function useAuthForm() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    
-    const result = signupSchema.safeParse(formData);
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.name);
-    setLoading(false);
-
-    if (error) {
-      const errorMessage = error.message.includes('already registered') ? 'Este email já está cadastrado' : error.message;
-      toast({ title: 'Erro ao criar conta', description: errorMessage, variant: 'destructive' });
-    } else {
-      toast({ title: 'Conta criada!', description: 'Você já pode fazer login.' });
-      navigate('/');
-    }
-  };
-
   const handlePasskeyLogin = async () => {
     const result = await authenticateWithPasskey(formData.email || undefined);
     if (!result.success || !result.userId) {
@@ -238,8 +196,6 @@ export function useAuthForm() {
 
   return {
     loading,
-    activeTab,
-    setActiveTab,
     passkeyAvailable,
     passkeyLoading,
     lockStatus,
@@ -247,7 +203,6 @@ export function useAuthForm() {
     setFormData,
     errors,
     handleLogin,
-    handleSignUp,
     handlePasskeyLogin,
     handleGoogleLogin,
   };
