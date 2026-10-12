@@ -132,9 +132,12 @@ describe('etapa 55 — Agenda: pontos do dia e os 3 grupos', () => {
     expect(temHora(new Date(2026, 9, 3, 14, 30).toISOString())).toBe(true);
   });
 
-  it('dots: prazo, alarme e atrasada — no máximo 3', () => {
+  it('dots: azul = lembrete, âmbar = prazo, vermelho = atrasada (cada cor com o seu significado)', () => {
     const vazio = { reminders: [], dueTasks: [] };
     expect(agendaDayDots(vazio, 0)).toEqual([]);
+    expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [] }, 0)).toEqual(['bg-primary']);
+    expect(agendaDayDots({ reminders: [], dueTasks: [makeItem({})] }, 0)).toEqual(['bg-warning']);
+    expect(agendaDayDots(vazio, 1)).toEqual(['bg-destructive']);
     expect(agendaDayDots({ reminders: [makeItem({}), ], dueTasks: [makeItem({})] }, 0))
       .toEqual(['bg-primary', 'bg-warning']);
     expect(agendaDayDots({ reminders: [makeItem({})], dueTasks: [makeItem({})] }, 2))

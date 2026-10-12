@@ -162,16 +162,17 @@ export function temHora(iso: string | null): boolean {
 }
 
 /**
- * Até 3 pontos do dia na faixa da Agenda (etapa 55), na ordem do plano:
- * prazo (`primary`), alarme (`warning`) e atrasada (`destructive`).
+ * Até 3 pontos do dia na faixa da Agenda (etapas 55 e 111), um por TIPO, na
+ * ordem da legenda: lembrete (`primary`, azul), prazo (`warning`, âmbar) e
+ * atrasada (`destructive`, vermelho).
  */
 export function agendaDayDots(
   day: { reminders: WorkItem[]; dueTasks: WorkItem[] },
   atrasadas: number,
 ): string[] {
   const dots: string[] = [];
-  if (day.dueTasks.length > 0) dots.push('bg-primary');
-  if (day.reminders.length > 0) dots.push('bg-warning');
+  if (day.reminders.length > 0) dots.push('bg-primary');
+  if (day.dueTasks.length > 0) dots.push('bg-warning');
   if (atrasadas > 0) dots.push('bg-destructive');
   return dots.slice(0, 3);
 }
