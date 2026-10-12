@@ -12467,6 +12467,14 @@ export type Database = {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
       }
+      warroom_agent_today: {
+        Args: { p_date?: string }
+        Returns: Json
+      }
+      warroom_queue_stats: {
+        Args: never
+        Returns: Json
+      }
     }
     Enums: {
       ai_provider_type:
