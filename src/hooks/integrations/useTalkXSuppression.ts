@@ -271,8 +271,9 @@ export async function fetchSuppressionContactOptions(term: string): Promise<Supp
   const contacts = (data ?? []) as SuppressionContactOption[];
   if (contacts.length === 0) return contacts;
   const ids = contacts.map((c) => c.id);
-  const { data: blocked } = await supabase.from('talkx_blacklist').select('contact_id')
+  const { data: blocked, error: blockedError } = await supabase.from('talkx_blacklist').select('contact_id')
     .is('removed_at', null).in('contact_id', ids);
+  if (blockedError) throw blockedError;
   const blockedIds = new Set(((blocked ?? []) as { contact_id: string | null }[]).map((r) => r.contact_id));
   return contacts.filter((c) => !blockedIds.has(c.id));
 }
