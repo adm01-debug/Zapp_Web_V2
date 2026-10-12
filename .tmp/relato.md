@@ -1,5 +1,8 @@
 Especialista: worker (auth) (area-auth-seguranca) + worker (edge) (area-edge-api)
 
+## Números do diff (4 arquivos, 1 de teste, 12 casos Deno.test novos)
+.tmp/relato.md (este relato), supabase/config.toml, supabase/functions/invite-user/index.ts, supabase/functions/invite-user/index.test.ts.
+
 ## O que mudou e por quê
 - `supabase/functions/invite-user/index.ts` (novo): handler `handleInviteUserRequest` que convida por e-mail (`auth.admin.inviteUserByEmail`) com papel definido, em paridade com o V3. Autorização fechada: 401 sem JWT / JWT inválido; o papel do chamador é lido de `user_roles` com o cliente de escopo do próprio usuário (nunca com a service role) e consulta com erro FECHA (403); quem não é `admin` nem `supervisor` recebe 403; supervisor só convida `agent`, qualquer outro papel exige admin. O papel do convidado é **garantido pelo caminho de serviço** (update/insert em `user_roles` com service_role), sem depender de `handle_new_user_role` — que só cria `agent` para domínio confiável. Se a atribuição de papel falhar, a conta recém-criada é desfeita (`auth.admin.deleteUser`) e a resposta é erro. A auditoria registra quem convidou (`audit_logs`, `invited_by: caller.id`). A resposta não carrega link de convite.
 - `supabase/functions/invite-user/index.test.ts` (novo): prova os caminhos padrão e os NEGADOS — sem Authorization, JWT inválido, usuário sem papel, consulta de papel com erro, supervisor pedindo papel privilegiado, corpo com campo extra (schema `.strict()`); e os caminhos de sucesso: supervisor→agent, admin→supervisor, domínio fora da empresa com papel ainda garantido, resposta sem link, falha do GoTrue (400 sem escrita de papel) e falha na atribuição (conta desfeita + 500).
