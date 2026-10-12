@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -32,6 +32,10 @@ export function ContactCard({
   // segue revelado no hover e no foco de teclado (`focus-within`).
   const ponteiroGrosso = usePointerCoarse();
 
+  // Sem telefone nem e-mail o bloco do meio nasce vazio: sem altura mínima fixa
+  // o card encolhe e não sobra vão (o rodapé mt-auto só empurra quando há folga).
+  const hasContactInfo = !!(contact.phone || contact.email);
+
   // "Último contato em" quando há mensagem real; fallback para data de cadastro
   const footerLabel = contact.last_message_at
     ? `Último contato em ${format(new Date(contact.last_message_at), 'dd MMM yyyy', { locale: ptBR })}`
@@ -41,8 +45,9 @@ export function ContactCard({
     <div
       data-testid="contact-card"
       className={cn(
-        "card-lift card-glow group relative flex flex-col min-h-[164px] rounded-[14px] bg-card p-4 cursor-pointer",
+        "card-lift card-glow group relative flex flex-col rounded-[14px] bg-card p-4 cursor-pointer",
         "transition-[transform,border-color,box-shadow] duration-150",
+        hasContactInfo ? "min-h-[164px]" : "min-h-[120px]",
         isSelected
           ? "ring-1 ring-primary border-primary/60 bg-primary/5"
           : "border-border/70"
@@ -65,37 +70,30 @@ export function ContactCard({
         />
       </div>
 
-      {/* Actions dropdown */}
-      <div
-        className="absolute top-3 right-3 z-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted" aria-label={`Ações do contato ${contact.name}`}>
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onOpenChat(contact.id)}>
-              <MessageSquare className="w-3.5 h-3.5 mr-2" />Conversar
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(contact)}>
-              <Pencil className="w-3.5 h-3.5 mr-2" />Editar
-            </DropdownMenuItem>
-            {/* Mesmo gate do ContactListItem: o item só aparece quando o banco confirma
-                que o usuário pode excluir este contato (`contact.can_delete`). */}
-            {canDeleteContact(contact) && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-                  <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Menu "⋮": só o que é exclusivo dele (Excluir). "Conversar" e "Editar"
+          ficam num único lugar — o rodapé abaixo — para não haver 4 alvos de
+          clique pras mesmas 2 ações. Sem permissão de exclusão o menu não tem
+          item nenhum, então o botão nem aparece (o gate continua sendo o
+          `contact.can_delete` confirmado pelo banco). */}
+      {canDeleteContact(contact) && (
+        <div
+          className="absolute top-3 right-3 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted" aria-label={`Ações do contato ${contact.name}`}>
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
+                <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       {/* Avatar + Name row */}
       <div className="flex items-start gap-3">

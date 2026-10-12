@@ -35,8 +35,8 @@ export function ContactListItem({
     <div
       data-testid="contact-list-item"
       className={cn(
-        "group flex items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card",
-        "hover:bg-muted/40 hover:border-primary/30 transition-all duration-150 cursor-pointer",
+        "group flex items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card card-lift card-glow",
+        "cursor-pointer",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
       onClick={() => onOpenDetails(contact.id)}
