@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
+import { EmailUnreadChip } from './EmailUnreadChip';
 import type { ReactNode } from 'react';
 
 export type ConversationTab = 'chat' | 'ia' | 'crm' | 'orders' | 'tasks' | 'notes' | 'files' | 'history';
@@ -33,11 +34,17 @@ interface ConversationTabsProps {
   counts: ConversationTabCounts;
   /** Badges resolvidos fora da RPC get_conversation_tab_counts (client-side). */
   extraCounts?: { orders?: number };
+  /**
+   * Alerta client-side de e-mails não lidos do contato (U03). Só com `count > 0` o
+   * chip aparece — mesmo canal fora da RPC usado por `extraCounts`. É uma ação
+   * (abre o módulo E-mail), não uma aba: fica fora do `role="tablist"`.
+   */
+  emailUnread?: { count: number; onOpen: () => void };
   /** Ação fixa no extremo direito da barra, fora da navegação por abas. */
   trailingAction?: ReactNode;
 }
 
-export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, trailingAction }: ConversationTabsProps) {
+export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, emailUnread, trailingAction }: ConversationTabsProps) {
   const reduceMotion = useReducedMotion() ?? false;
 
   return (
@@ -102,6 +109,11 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, 
           })}
         </LayoutGroup>
       </div>
+      {emailUnread && emailUnread.count > 0 && (
+        <div className="shrink-0 pl-1">
+          <EmailUnreadChip count={emailUnread.count} onOpen={emailUnread.onOpen} />
+        </div>
+      )}
       {trailingAction && <div className="shrink-0 px-2 sm:px-3">{trailingAction}</div>}
     </div>
   );

@@ -20,6 +20,8 @@ import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs'
 import { ConversationTabContent } from './chat/ConversationTabContent';
 import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
+import { useContactUnreadEmails } from '@/hooks/gmail/useContactUnreadEmails';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { useTalkMeQueue } from '@/features/talk-me/useTalkMeQueue';
 import { TalkMeView } from '@/features/talk-me/TalkMeView';
 import { LiquidMetalButton } from '@/components/ui/liquid-metal-button';
@@ -146,6 +148,16 @@ export function RealtimeInboxView() {
   const tabExtraCounts = {
     orders: (crm360ForOrdersBadge?.purchases.length ?? 0) + (crm360ForOrdersBadge?.openDeals.length ?? 0),
   };
+  // U03 — e-mails não lidos do contato (client-side, hook U02). O chip da barra de
+  // abas só aparece com count > 0; o clique abre o módulo E-mail na conversa do
+  // contato, pelo MESMO link do C03 (`emailContact`/`emailTo`). Erro de consulta
+  // vira count 0 no hook → nenhum chip (sem alerta falso).
+  const { count: unreadEmails } = useContactUnreadEmails(inbox.selectedContactId);
+  const abrirEmailDoContato = useCallback(() => {
+    const contato = inbox.legacyConversation?.contact;
+    if (!contato) return;
+    navigateToView('email-chat', { emailContact: contato.id, emailTo: contato.email ?? '' });
+  }, [inbox.legacyConversation]);
 
   // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
@@ -297,6 +309,7 @@ export function RealtimeInboxView() {
                   onTabChange={setActiveTab}
                   counts={tabCounts}
                   extraCounts={tabExtraCounts}
+                  emailUnread={{ count: unreadEmails, onOpen: abrirEmailDoContato }}
                   trailingAction={talkMeEnabled ? (
                     <TalkMeHeaderButton
                       testId="talk-me-button"
