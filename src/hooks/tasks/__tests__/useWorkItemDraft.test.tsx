@@ -143,7 +143,7 @@ describe('useWorkItemDraft — rascunho e patch mínimo (148/149)', () => {
   it('buildMinimalPatch não inclui status no patch do update', () => {
     const item = makeItem();
     const draft = { ...fieldsFromItem(item), status: 'doing' as const };
-    const { fields, statusChanged } = buildMinimalPatch(draft, item);
+    const { fields, statusChanged } = buildMinimalPatch(draft, fieldsFromItem(item));
     expect(statusChanged).toBe(true);
     expect(fields).toEqual({});
   });
@@ -214,10 +214,10 @@ describe('useWorkItemDraft — limite e motivo (149)', () => {
     expect(result.current.isDirty).toBe(false);
   });
 
-  it('mover para Aguardando COM motivo leva o motivo no move', async () => {
+  it('mover para Aguardando COM motivo leva o motivo normalizado no move', async () => {
     const { result, move } = setup(makeItem());
     act(() => result.current.setField('status', 'waiting'));
-    act(() => result.current.setField('waitingReason', 'Retorno da transportadora'));
+    act(() => result.current.setField('waitingReason', '  Retorno da transportadora  '));
 
     await save({ result });
 
@@ -258,6 +258,27 @@ describe('useWorkItemDraft — erro devolve o estado anterior (149)', () => {
     });
 
     expect(out?.reason).toBe('wip_full');
+    expect(result.current.isDirty).toBe(true);
+  });
+
+  it('se update gravou e move falhou, avança só a base dos campos salvos', async () => {
+    const { result, update, move } = setup(makeItem(), { items: [] });
+    move.mockRejectedValueOnce(Object.assign(new Error('wip_full'), { blocked: 'wip_full' }));
+    act(() => result.current.setField('title', 'Título já gravado'));
+    act(() => result.current.setField('status', 'doing'));
+
+    let out: Awaited<ReturnType<typeof result.current.save>> | undefined;
+    await act(async () => {
+      out = await result.current.save();
+    });
+
+    expect(update).toHaveBeenCalledWith('t1', { title: 'Título já gravado' });
+    expect(move).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }), 'doing', {
+      waitingReason: undefined,
+    });
+    expect(out).toMatchObject({ ok: false, partialSaved: true, reason: 'wip_full' });
+    expect(result.current.changedFields).toEqual(['status']);
+    expect(result.current.draft?.title).toBe('Título já gravado');
     expect(result.current.isDirty).toBe(true);
   });
 });
@@ -302,6 +323,26 @@ describe('useWorkItemDraft — aviso "Esta tarefa mudou" (148)', () => {
     expect(result.current.remoteChanged).toBe(false);
     expect(result.current.draft?.title).toBe('Meu título');
     expect(result.current.isDirty).toBe(true);
+  });
+
+  it('salvar com aviso remoto não reverte campo remoto não editado', async () => {
+    const base = makeItem();
+    const { result, update, move, rerender } = setup(base);
+    act(() => result.current.setField('title', 'Meu título'));
+
+    rerender({ item: { ...base, status: 'doing' }, update, move });
+    expect(result.current.remoteChanged).toBe(true);
+
+    let out: Awaited<ReturnType<typeof result.current.save>> | undefined;
+    await act(async () => {
+      out = await result.current.save();
+    });
+
+    expect(out).toMatchObject({ ok: true, moved: false, patch: { title: 'Meu título' } });
+    expect(update).toHaveBeenCalledWith('t1', { title: 'Meu título' });
+    expect(move).not.toHaveBeenCalled();
+    expect(result.current.draft).toMatchObject({ title: 'Meu título', status: 'doing' });
+    expect(result.current.isDirty).toBe(false);
   });
 
   it('com rascunho limpo, a atualização remota é adotada sem avisar', () => {

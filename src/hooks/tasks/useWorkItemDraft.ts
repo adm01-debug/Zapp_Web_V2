@@ -63,6 +63,8 @@ export interface DraftSaveOutcome {
   patch: Partial<WorkItemInput>;
   /** `true` quando o estado também mudou (o `move` foi chamado). */
   moved: boolean;
+  /** `true` quando o `update` gravou campos, mas o `move` falhou depois. */
+  partialSaved: boolean;
   /** Bloqueio de transição, erro da escrita, ou `null` no sucesso. */
   reason: TransitionBlockReason | 'error' | null;
 }
@@ -145,30 +147,50 @@ export function signatureOf(fields: WorkItemDraftFields): string {
  */
 export function buildMinimalPatch(
   draft: WorkItemDraftFields,
-  item: WorkItem,
+  base: WorkItemDraftFields,
 ): { fields: Partial<WorkItemInput>; statusChanged: boolean } {
   const fields: Partial<WorkItemInput> = {};
 
-  if (draft.title !== item.title) fields.title = draft.title;
+  if (draft.title !== base.title) fields.title = draft.title;
 
   const description = normNullableText(draft.description);
-  if (description !== normNullableText(item.description)) fields.description = description;
+  if (description !== normNullableText(base.description)) fields.description = description;
 
-  if (draft.priority !== item.priority) fields.priority = draft.priority;
+  if (draft.priority !== base.priority) fields.priority = draft.priority;
 
   const dueDate = draft.dueDate ?? null;
-  if (dueDate !== (item.due_date ?? null)) fields.dueDate = dueDate;
+  if (dueDate !== (base.dueDate ?? null)) fields.dueDate = dueDate;
 
   const remindAt = draft.remindAt ?? null;
-  if (remindAt !== (item.remind_at ?? null)) fields.remindAt = remindAt;
+  if (remindAt !== (base.remindAt ?? null)) fields.remindAt = remindAt;
 
   const waitingReason = normNullableText(draft.waitingReason);
-  if (waitingReason !== normNullableText(item.waiting_reason)) fields.waitingReason = waitingReason;
+  if (waitingReason !== normNullableText(base.waitingReason)) fields.waitingReason = waitingReason;
 
-  const statusChanged = draft.status !== item.status;
+  const statusChanged = draft.status !== base.status;
   if (statusChanged) delete fields.waitingReason;
 
   return { fields, statusChanged };
+}
+
+function applySavedFields(
+  item: WorkItem,
+  patch: Partial<WorkItemInput>,
+  status: WorkItemStatus,
+  waitingReason: string | null,
+): WorkItemDraftFields {
+  return {
+    ...fieldsFromItem(item),
+    ...(patch.title !== undefined ? { title: patch.title } : {}),
+    ...(patch.description !== undefined ? { description: patch.description } : {}),
+    ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+    ...(patch.dueDate !== undefined ? { dueDate: patch.dueDate } : {}),
+    ...(patch.remindAt !== undefined ? { remindAt: patch.remindAt } : {}),
+    ...(patch.waitingReason !== undefined ? { waitingReason: patch.waitingReason } : {}),
+    status,
+    ...(status === 'waiting' ? { waitingReason } : {}),
+    ...(status !== 'waiting' ? { waitingReason: null } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -250,12 +272,12 @@ export function useWorkItemDraft(opts: UseWorkItemDraftOpts): UseWorkItemDraft {
   );
 
   const changedFields = useMemo(() => {
-    if (!item || !draft) return [];
-    const { fields, statusChanged } = buildMinimalPatch(draft, item);
+    if (!base || !draft) return [];
+    const { fields, statusChanged } = buildMinimalPatch(draft, base);
     const nomes = Object.keys(fields);
     if (statusChanged) nomes.push('status');
     return nomes;
-  }, [draft, item]);
+  }, [draft, base]);
 
   const coherence = useMemo(
     () => checkRemindCoherence(draft?.remindAt, draft?.dueDate, now()),
@@ -287,60 +309,71 @@ export function useWorkItemDraft(opts: UseWorkItemDraftOpts): UseWorkItemDraft {
   const dismissRemote = useCallback(() => setRemoteChanged(false), []);
 
   const save = useCallback(async (): Promise<DraftSaveOutcome> => {
-    if (!item || !draft) {
-      return { ok: true, patch: {}, moved: false, reason: null };
+    if (!item || !draft || !base) {
+      return { ok: true, patch: {}, moved: false, partialSaved: false, reason: null };
     }
 
-    const { fields, statusChanged } = buildMinimalPatch(draft, item);
+    const { fields, statusChanged } = buildMinimalPatch(draft, base);
     const patch = { ...fields };
     if (!statusChanged && Object.keys(fields).length === 0) {
-      return { ok: true, patch: {}, moved: false, reason: null };
+      return { ok: true, patch: {}, moved: false, partialSaved: false, reason: null };
     }
+    const waitingReason = normNullableText(draft.waitingReason);
 
     // Limite e motivo (etapa 149) são conferidos ANTES de qualquer escrita: o
     // bloqueio não deixa o item pela metade — "estado anterior" intacto.
     if (statusChanged) {
       const result = canTransition(item.status, draft.status, {
         doingCount: countDoing(items ?? []),
-        waitingReason: draft.waitingReason ?? undefined,
+        waitingReason: waitingReason ?? undefined,
       });
       if (!result.ok) {
         toast.error(DRAFT_BLOCK_MESSAGES[result.reason]);
         setSaveError(result.reason);
-        return { ok: false, patch, moved: false, reason: result.reason };
+        return { ok: false, patch, moved: false, partialSaved: false, reason: result.reason };
       }
     }
 
     setSaveError(null);
     setIsSaving(true);
     savingRef.current = true;
+    let updateSaved = false;
     try {
       // Patch mínimo primeiro; a transição de estado por último (o `move` grava
       // status/completed_at e cuida do `waiting_reason`).
-      if (Object.keys(fields).length > 0) await update(item.id, fields);
+      if (Object.keys(fields).length > 0) {
+        await update(item.id, fields);
+        updateSaved = true;
+      }
       if (statusChanged) {
         await move(item, draft.status, {
-          waitingReason: draft.waitingReason ?? undefined,
+          waitingReason: waitingReason ?? undefined,
         });
       }
       // Salvo: a base passa a ser o rascunho e a assinatura remota esperada
       // também, para que a nossa PRÓPRIA escrita não seja lida como "mudou".
-      setBase(draft);
-      lastSigRef.current = signatureOf(draft);
+      const saved = applySavedFields(item, patch, statusChanged ? draft.status : item.status, waitingReason);
+      setDraft(saved);
+      setBase(saved);
+      lastSigRef.current = signatureOf(saved);
       setRemoteChanged(false);
-      return { ok: true, patch, moved: statusChanged, reason: null };
+      return { ok: true, patch, moved: statusChanged, partialSaved: false, reason: null };
     } catch (err) {
       // Falha na escrita: a base NÃO avança, então o rascunho continua sujo e
       // pode ser reenviado; o item volta ao valor anterior pelo rollback
       // otimista das mutations do módulo (que também mostram o toast).
       const reason = (err as { blocked?: TransitionBlockReason })?.blocked ?? 'error';
+      if (updateSaved) {
+        const saved = applySavedFields(item, patch, item.status, normNullableText(item.waiting_reason));
+        setBase(saved);
+      }
       setSaveError(reason);
-      return { ok: false, patch, moved: false, reason };
+      return { ok: false, patch, moved: false, partialSaved: updateSaved, reason };
     } finally {
       savingRef.current = false;
       setIsSaving(false);
     }
-  }, [item, items, draft, update, move]);
+  }, [item, items, draft, base, update, move]);
 
   return {
     draft,
