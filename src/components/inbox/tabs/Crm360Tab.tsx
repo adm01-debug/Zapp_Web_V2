@@ -8,7 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { formatBRL, formatRelativeTime } from '@/lib/formatters';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { useContactCrm360, useContactLeadScore, useAdvanceDealStage } from '@/hooks/crm/useContactCrm360';
+import { useContactCrm360, useContactLeadScore, useAdvanceDealStage, nextActiveStage } from '@/hooks/crm/useContactCrm360';
 import { useContactEnrichedQuery } from '@/hooks/crm/useContactEnrichedData';
 import { useNextBestAction } from '@/hooks/chat/useNextBestAction';
 import { useMyWorkItems } from '@/hooks/tasks/useMyWorkItems';
@@ -79,9 +79,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
 
   const nextStage = useMemo(() => {
     if (!crm360?.currentDeal || !crm360.currentStage) return null;
-    const sorted = crm360.stages;
-    const idx = sorted.findIndex((s) => s.id === crm360.currentStage!.id);
-    return idx >= 0 && idx < sorted.length - 1 ? sorted[idx + 1] : null;
+    return nextActiveStage(crm360.stages, crm360.currentStage.id);
   }, [crm360]);
 
   const pipelineTotal = crm360
@@ -165,7 +163,7 @@ export function Crm360Tab({ conversation, messages, onTabChange }: Crm360TabProp
                     type="button"
                     className="text-primary font-medium hover:underline disabled:opacity-50"
                     disabled={advanceStage.isPending}
-                    onClick={() => advanceStage.mutate({ dealId: crm360.currentDeal!.id, nextStageId: nextStage.id, nextStageName: nextStage.name })}
+                    onClick={() => advanceStage.mutate({ dealId: crm360.currentDeal!.id, nextStageId: nextStage.id, nextStageName: nextStage.name, currentStageId: crm360.currentDeal!.stage_id })}
                   >
                     Avançar etapa →
                   </button>

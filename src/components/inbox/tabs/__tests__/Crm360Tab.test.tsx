@@ -25,11 +25,15 @@ vi.mock('../../contact-details/EditContactDialog', () => ({
   ),
 }));
 
-vi.mock('@/hooks/crm/useContactCrm360', () => ({
-  useContactCrm360: (...args: unknown[]) => mockUseContactCrm360(...args),
-  useContactLeadScore: (...args: unknown[]) => mockUseContactLeadScore(...args),
-  useAdvanceDealStage: () => ({ mutate: mockAdvanceMutate, isPending: false }),
-}));
+vi.mock('@/hooks/crm/useContactCrm360', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/crm/useContactCrm360')>();
+  return {
+    ...actual,
+    useContactCrm360: (...args: unknown[]) => mockUseContactCrm360(...args),
+    useContactLeadScore: (...args: unknown[]) => mockUseContactLeadScore(...args),
+    useAdvanceDealStage: () => ({ mutate: mockAdvanceMutate, isPending: false }),
+  };
+});
 
 // Controle da ação sugerida: o card "Próxima melhor ação" só renderiza o botão
 // "Criar tarefa →" quando existe uma ação — sem isso o 3º link não entra no teste.

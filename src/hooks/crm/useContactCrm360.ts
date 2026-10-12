@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { log } from '@/lib/logger';
 
 export interface Crm360Purchase {
   id: string;
@@ -74,6 +77,15 @@ export interface Crm360Result {
 const COMPLETED_STATUSES = ['completed', 'approved'];
 const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;
 
+/**
+ * Bloco "Propostas" do pipeline. `sales_pipeline_stages` não tem coluna que
+ * marque a etapa como proposta (só `name`/`position`/`is_active`), então a
+ * classificação continua pelo nome — agora concentrada nesta constante única em
+ * vez de um literal solto. Trocar por campo dedicado exigiria migration (fora
+ * do escopo deste cartão).
+ */
+export const PROPOSAL_STAGE_NAME_MARKER = 'propost';
+
 /** Agregações puras do CRM 360 — sem I/O, testável com dataset sintético. */
 export function aggregateCrm360(
   input: {
@@ -110,7 +122,7 @@ export function aggregateCrm360(
 
   const interesses = [...new Set(tagNames)].slice(0, 3);
 
-  const propostasStages = new Set(sortedStages.filter((s) => s.name.toLowerCase().includes('propost')).map((s) => s.id));
+  const propostasStages = new Set(sortedStages.filter((s) => s.name.toLowerCase().includes(PROPOSAL_STAGE_NAME_MARKER)).map((s) => s.id));
   const propostas = openDeals.filter((d) => d.stage_id && propostasStages.has(d.stage_id));
   const negociacao = openDeals.filter((d) => !(d.stage_id && propostasStages.has(d.stage_id)));
   const ganhos = deals.filter((d) => d.status === 'won');
@@ -238,21 +250,67 @@ export function useContactLeadScore(contactId: string | null | undefined) {
   });
 }
 
-/** Avança um deal aberto para a próxima etapa do funil — mesma mutação usada pelo Pipeline (moveDeal). */
+/**
+ * Próxima etapa ATIVA do funil, a partir da etapa atual. Pula estágios inativos
+ * (`is_active === false`) e usa `position` como ordem — com `id` como desempate
+ * para ser determinístico. A tabela não tem coluna de tipo, então "próximo" é
+ * sempre pela posição.
+ */
+export function nextActiveStage(
+  stages: Crm360Stage[],
+  currentStageId: string | null | undefined,
+): Crm360Stage | null {
+  if (!currentStageId) return null;
+  const current = stages.find((s) => s.id === currentStageId);
+  if (!current) return null;
+  const following = [...stages]
+    .filter((s) => s.is_active !== false && s.position > current.position)
+    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+  return following[0] ?? null;
+}
+
+/**
+ * Avança um deal aberto para a próxima etapa do funil — mesma mutação usada pelo Pipeline (moveDeal).
+ *
+ * - `performed_by` = perfil do usuário logado: sem isso a política de INSERT de `deal_activities`
+ *   (`performed_by IN (perfis do usuário) OR is_admin_or_supervisor`, e a versão apertada que exige
+ *   `deal_id` de negócio do próprio agente) nega a escrita e o deal avançaria sem histórico.
+ * - o erro do INSERT é verificado: se falhar, a mutação rejeita e o `onError` avisa o usuário.
+ * - se `currentStageId` já for o destino, nada é disparado (nem UPDATE nem INSERT).
+ */
 export function useAdvanceDealStage(contactId: string | null | undefined) {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
   return useMutation({
-    mutationFn: async ({ dealId, nextStageId, nextStageName }: { dealId: string; nextStageId: string; nextStageName: string }) => {
-      const { error } = await supabase.from('sales_deals').update({ stage_id: nextStageId }).eq('id', dealId);
-      if (error) throw error;
-      await supabase.from('deal_activities').insert({
+    mutationFn: async ({
+      dealId,
+      nextStageId,
+      nextStageName,
+      currentStageId,
+    }: { dealId: string; nextStageId: string; nextStageName: string; currentStageId?: string | null }) => {
+      if (currentStageId && currentStageId === nextStageId) return;
+      const performedBy = profile?.id ?? null;
+      if (!performedBy) throw new Error('Usuário sem perfil para registrar a atividade');
+
+      const { error: updateError } = await supabase.from('sales_deals').update({ stage_id: nextStageId }).eq('id', dealId);
+      if (updateError) throw updateError;
+
+      const { error: activityError } = await supabase.from('deal_activities').insert({
         deal_id: dealId,
         activity_type: 'stage_change',
         description: `Movido para ${nextStageName}`,
+        performed_by: performedBy,
       });
+      if (activityError) throw activityError;
     },
     onSuccess: () => {
       if (contactId) queryClient.invalidateQueries({ queryKey: contactCrm360Key(contactId) });
+    },
+    onError: () => {
+      // Sem PII: só o evento, nunca nome/telefone do contato.
+      log.error('[useAdvanceDealStage] falha ao avançar a etapa do negócio');
+      toast.error('Não foi possível avançar a etapa do negócio');
     },
   });
 }
