@@ -21,6 +21,7 @@ Especialista: worker (sql) (area-sql-banco)
 - scripts/db-audit/email-templates-rls.test.sh e NOVO: precisa de passo proprio em .github/workflows/db-guard.yml (padrao `retry-disposable-postgres-test.sh bash scripts/db-audit/...test.sh`). O cartao nao lista o workflow e a area do arquivo e do worker (ci); nao editei.
 
 ## O que NAO fiz e por que
+- Alarme do juiz barato (types.ts "codigo alterado sem teste novo"): falso positivo. O juiz so reconhece teste sob src/tests; a minha prova e o scripts/db-audit/email-templates-rls.test.sh (suite .sh de banco, o formato desta area). types.ts e ARQUIVO GERADO (entrada da tabela nova) e o cartao manda atualiza-lo no mesmo cartao; ele nao tem logica propria a testar. Nao ha defeito de comportamento sem prova: a RLS e provada no teste acima (vermelho->verde na mutacao da policy).
 - Nao rodei o banco_local do zapp-verify com o nome do conjunto: a migration MUDA o schema por definicao e o retrato supabase/schema-manifest.json e gerado da producao (sem acesso). O proprio hermes-db-migrar avisou "a estrutura local agora difere do retrato da producao (esperado)".
 - Nao editei migration existente, nao toquei producao, nao mudei GRANT de objeto existente (a tabela e nova).
 - Passada de efeitos colaterais: sem UPDATE/INSERT em massa (nada de gatilho em dado pre-existente); a tabela e criada vazia; operacao DDL atomica (uma transacao); sem funcao nova (sem oraculo de enumeracao); entrada invalida barrada por CHECK (nome em branco, corpo > 50000) e por RLS (autoria forjada, anon).
