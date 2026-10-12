@@ -17,7 +17,7 @@ import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-libra
 import type { ReactNode } from 'react';
 
 // Importa o harness ANTES dos módulos sob teste (ele registra os `vi.mock`).
-import { makeTaskRow, makeQueryClient, makeWrapper, resetSupabaseMock } from '@/test/mocks/tarefas';
+import { makeTaskRow, resetSupabaseMock } from '@/test/mocks/tarefas';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TasksListMode } from '@/components/tasks/list/TasksListMode';
@@ -330,48 +330,39 @@ describe('Tarefas — componentes dos três modos', () => {
     cleanup();
     const comuns = {
       searchText: '',
-      mode: 'list' as const,
       onSearch: vi.fn(),
       onPrio: vi.fn(),
       onContact: vi.fn(),
-      onStatus: vi.fn(),
-      onDue: vi.fn(),
       onToggleAlarm: vi.fn(),
       onToggleDone: vi.fn(),
       onClear: vi.fn(),
     };
 
-    const Wrapper = makeWrapper(makeQueryClient());
     const { rerender } = render(
-      <Wrapper>
-        <TooltipProvider>
-          <TasksFilterBar
-            {...comuns}
-            filters={{ q: '', prio: 'all', contact: 'c1', alarm: false, done: true }}
-            contactOptions={[{ id: 'c1', name: '' }]}
-            isActive
-          />
-        </TooltipProvider>
-      </Wrapper>
+      <TooltipProvider>
+        <TasksFilterBar
+          {...comuns}
+          filters={{ q: '', prio: 'all', contact: 'c1', alarm: false, done: true }}
+          contactOptions={[{ id: 'c1', name: '' }]}
+          isActive
+        />
+      </TooltipProvider>
     );
-    // Antes: o gatilho ficava em BRANCO ('' não casa com o `??`). Etapa 039: quem
-    // nomeia o recorte é o chip; o gatilho do combobox segue curto ("Contato").
-    expect(screen.getByText('Contato: Sem nome')).toBeTruthy();
+    // Antes: o gatilho ficava em BRANCO ('' não casa com o `??`).
+    expect(screen.getByLabelText('Contato').textContent).toBe('Sem nome');
 
     rerender(
-      <Wrapper>
-        <TooltipProvider>
-          <TasksFilterBar
-            {...comuns}
-            filters={{ q: '', prio: 'all', contact: 'c9', alarm: false, done: true }}
-            contactOptions={[{ id: 'c1', name: '' }]}
-            isActive
-          />
-        </TooltipProvider>
-      </Wrapper>
+      <TooltipProvider>
+        <TasksFilterBar
+          {...comuns}
+          filters={{ q: '', prio: 'all', contact: 'c9', alarm: false, done: true }}
+          contactOptions={[{ id: 'c1', name: '' }]}
+          isActive
+        />
+      </TooltipProvider>
     );
     // Antes: id desconhecido se passava por "Todos os contatos".
-    expect(screen.getByText('Contato: Contato indisponível')).toBeTruthy();
+    expect(screen.getByLabelText('Contato').textContent).toBe('Contato indisponível');
   });
 
   it('F2 (auditoria): PriorityChip com prioridade nula/desconhecida cai no padrão e não imprime "undefined"', () => {

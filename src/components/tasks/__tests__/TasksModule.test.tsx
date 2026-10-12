@@ -103,58 +103,25 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     });
   });
 
-  it('traz os controles da barra e só mostra "Limpar filtros" quando um filtro sai do padrão', async () => {
+  it('traz os 5 controles e só mostra "Limpar" quando um filtro sai do padrão', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
 
     const barra = await screen.findByTestId('tasks-filter-bar');
     expect(within(barra).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeTruthy();
-    // Etapa 044: no Quadro Prioridade e Contato saem da linha (imagem 05) e
-    // entram no popover "Filtros" — a barra fica só com busca + Filtros.
-    expect(within(barra).queryByLabelText('Prioridade')).toBeNull();
-    expect(within(barra).queryByLabelText('Contato')).toBeNull();
-    expect(within(barra).getByRole('button', { name: 'Filtros' })).toBeTruthy();
-    expect(within(barra).queryByTestId('filters-badge')).toBeNull();
-
-    fireEvent.click(within(barra).getByRole('button', { name: 'Filtros' }));
-    const painel = await screen.findByTestId('tasks-filters-popover');
-    expect(within(painel).getByLabelText('Prioridade')).toBeTruthy();
-    expect(within(painel).getByTestId('tasks-contact-filter')).toBeTruthy();
-    // Etapa 044: o toggle de concluídas vive na linha da captura, não aqui.
-    expect(within(painel).queryByRole('switch', { name: 'Concluídas' })).toBeNull();
-    // Etapa 039: sem filtro fora do padrão não há faixa de chips.
-    expect(screen.queryByTestId('tasks-filter-chips')).toBeNull();
-  });
-
-  it('etapa 044: modos à esquerda, barra à direita e o toggle na linha da captura', async () => {
-    localStorage.setItem(MODE_STORAGE_KEY, 'list');
-    renderModule();
-
-    const barra = await screen.findByTestId('tasks-filter-bar');
-    // Na Lista Prioridade e Contato ficam na barra (só o Quadro os recolhe).
     expect(within(barra).getByLabelText('Prioridade')).toBeTruthy();
     expect(within(barra).getByLabelText('Contato')).toBeTruthy();
-
-    // Modos vêm ANTES da barra na ordem do DOM (modos à esquerda, filtros à
-    // direita — imagens 01 e 02).
-    const modos = screen.getByTestId('tasks-mode');
-    expect(modos.compareDocumentPosition(barra) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-
-    // O toggle "Mostrar concluídas" vive na MESMA linha da captura e sai do
-    // popover (um só controle para um só estado).
-    const captura = screen.getByTestId('quick-add');
-    const toggle = screen.getByRole('switch', { name: 'Mostrar concluídas' });
-    expect(captura.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(barra).queryByRole('switch', { name: 'Mostrar concluídas' })).toBeNull();
+    expect(within(barra).getByRole('switch', { name: 'Com alarme' })).toBeTruthy();
+    expect(within(barra).getByRole('switch', { name: 'Mostrar concluídas' })).toBeTruthy();
+    expect(within(barra).queryByRole('button', { name: /Limpar/ })).toBeNull();
   });
 
-  it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar filtros" desfaz', async () => {
+  it('esconder as concluídas recorta o Quadro, escreve done=0 e o "Limpar" desfaz', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'board');
     renderModule();
     expect(await screen.findByText('Feita')).toBeTruthy();
 
-    // Etapa 044: no Quadro o toggle vive na linha da captura e se chama "Concluídas".
-    fireEvent.click(screen.getByRole('switch', { name: 'Concluídas' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Mostrar concluídas' }));
 
     await waitFor(() => expect(screen.queryByText('Feita')).toBeNull());
     // a coluna vazia do Quadro entra no lugar (etapa 46); Fase F: asserção EXATA —
@@ -162,7 +129,7 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     expect(screen.getAllByText('Coluna vazia')).toHaveLength(4);
     expect(window.location.search).toContain('done=0');
 
-    fireEvent.click(within(screen.getByTestId('tasks-filter-chips')).getByRole('button', { name: 'Limpar filtros' }));
+    fireEvent.click(screen.getByRole('button', { name: /Limpar/ }));
 
     await waitFor(() => expect(screen.getByText('Feita')).toBeTruthy());
     expect(window.location.search).toBe('');
@@ -174,12 +141,8 @@ describe('TasksModule — etapa 45 (barra de filtros)', () => {
     window.history.replaceState(null, '', '/?prio=urgent');
     renderModule();
 
-    const aviso = await screen.findByText('Nenhum resultado');
-    // O vazio do filtro (etapa 045) E a faixa de chips da barra (etapa 039)
-    // oferecem a saída — as duas portas continuam valendo.
-    expect(aviso).toBeTruthy();
-    expect(within(screen.getByTestId('tasks-empty-filter')).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
-    expect(within(screen.getByTestId('tasks-filter-chips')).getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
+    expect(await screen.findByText('Nenhuma tarefa com esse filtro')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeTruthy();
   });
 
   it('Fase F: o cabeçalho conta a lista REAL, não o recorte do filtro', async () => {
@@ -319,9 +282,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
     renderModule();
 
     // 4 nao concluidas (a, b, c, d) e 1 delas vence hoje; a concluida nao conta
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 4 abertas · 1 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('4 abertas · 1 para hoje')).toBeTruthy());
   });
 
   it('usa singular com uma única tarefa aberta', async () => {
@@ -332,9 +293,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 1 aberta · 1 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('1 aberta · 1 para hoje')).toBeTruthy());
   });
 
   it('formata milhar em pt-BR (1.234, não 1234)', async () => {
@@ -345,9 +304,7 @@ describe('TasksModule — etapa 43 (subtítulo com contagens reais)', () => {
 
     renderModule();
 
-    await waitFor(() =>
-      expect(screen.getByText('Seu espaço de execução · 1.234 abertas · 0 para hoje')).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText('1.234 abertas · 0 para hoje')).toBeTruthy());
   });
 });
 
@@ -486,23 +443,16 @@ describe('TasksModule — etapas 77/78 (atalhos do registry + aria-live)', () =>
     expect(regiao.textContent).toBe('');
   });
 
-  it('N abre o modal de criação pelo contexto (etapa 014)', async () => {
-    // Etapa 050: na Lista (agora tabela) a carga se prova pela linha; o QuickAdd
-    // do topo é único aqui (no Quadro cada coluna tem o seu).
+  it('N foca o QuickAdd', async () => {
+    // Etapa 050: QuickAdd do topo (único) sobre a Lista em tabela; no Quadro cada coluna tem o seu.
     localStorage.setItem(MODE_STORAGE_KEY, 'list');
     setSelectResult({ data: [makeTaskRow()], error: null });
     renderModule();
     await screen.findByTestId('task-row');
 
-    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
-    expect(botao.getAttribute('aria-expanded')).toBe('false');
-
     comandar('tasks-focus-quickadd');
 
-    // O mesmo estado que o modal (T35) consumirá: o botão que o abre sabe que
-    // está aberto, e o foco não sobra no QuickAdd (que ficaria atrás do modal).
-    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
-    expect(document.activeElement).not.toBe(screen.getByTestId('quick-add-input'));
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
   });
 
   it('o atalho único de modo responde a 1, 2 e 3', async () => {
@@ -704,19 +654,16 @@ describe('TasksModule — etapa 86 (modo padrão, deep-link e atalho N)', () => 
     expect(screen.queryByTestId('work-item-sheet')).toBeNull();
   });
 
-  it('o atalho N abre o modal também na Agenda (o cabeçalho não muda com a visão)', async () => {
+  it('o atalho N na Agenda leva o foco ao QuickAdd do dia (único da tela)', async () => {
     localStorage.setItem(MODE_STORAGE_KEY, 'agenda');
     renderModule();
     await screen.findAllByTestId('agenda-day-dots');
-
-    const botao = screen.getByRole('button', { name: /Nova tarefa/ });
 
     act(() => {
       document.dispatchEvent(new CustomEvent('tasks-shortcut', { detail: { id: 'tasks-focus-quickadd' } }));
     });
 
-    await waitFor(() => expect(botao.getAttribute('aria-expanded')).toBe('true'));
-    // o QuickAdd do dia continua sendo o único da tela (nada de campo paralelo)
     expect(screen.getAllByTestId('quick-add')).toHaveLength(1);
+    expect(document.activeElement).toBe(screen.getByTestId('quick-add-input'));
   });
 });
