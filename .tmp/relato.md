@@ -1,63 +1,70 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: complexo (area-sql-banco)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- supabase/migrations/20261005151753_sla_first_response_granular.sql: novo resolvedor
+  public.resolve_applicable_first_response_minutes(uuid) com a mesma precedência da UI
+  (contact > company > job_title > contact_type > queue > agent; fallback
+  sla_configurations is_default ativa; padrão 5 min); register_first_response_internal
+  passa a persistir first_response_breached contra esse prazo em vez do fixo de 5 min.
+  Motivo: regra ativa de 2 min com resposta aos 3 min ficava persistida como dentro do prazo.
+- scripts/db-audit/sla-granular-contract.test.mjs: contrato em PostgreSQL 17 descartável
+  (node --test) que extrai a ÚLTIMA definição de cada função das migrations reais —
+  nada de SQL copiado nem regex sobre texto.
+- Rebase: 2e263f76d + 10ac1ed6c (conteúdo idêntico a c7f27e3c8 + 95b38f0aa do workersql)
+  sobre a ponta dia/2026-10-12 (15929a99c). `git diff dia/2026-10-12..HEAD --stat`
+  mostra SÓ esses 2 arquivos, só inserções.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Prova
+- vermelho antes (migration fora de supabase/migrations):
+  `node --test scripts/db-audit/sla-granular-contract.test.mjs` →
+  `ERROR: function public.resolve_applicable_first_response_minutes(unknown) does not exist`
+  e `AssertionError: 20260903233000_sla_base_only_valid_messages.sql nao usa o resolvedor granular de prazo`
+- verde depois (migration restaurada), mesmo comando, todos ✔ nenhum ✖:
+  `✔ regra ATIVA de 2 min (nivel contact) classifica resposta aos 3 min como breach`
+  `✔ sem regra nem configuracao: padrao do sistema (5 min) segue valendo`
+  `✔ fallback intermediario: sla_configurations is_default aplica antes do padrao de 5 min`
+  `✔ precedencia: contact vence company e queue; company vence queue`
+  `✔ nivel job_title vence contact_type, queue e agent como no resolveHierarchy da UI`
+  `✔ nivel contact_type vence queue e agent como no resolveHierarchy da UI`
+  `✔ nivel agent aplica quando nenhum nivel superior casa`
+  `✔ regra company+queue com company divergente casa no nivel queue, igual a UI`
+  `✔ migration que define o registro conserva o contrato (estatico)`
+- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (44s)`
+  (`OK db_guard`, `OK tipos 42s`, `OK lint`, `OK migrations`;
+  `AVISO banco_local NÃO VERIFICADO: sem nome de conjunto` — o comando fixo do cartão
+  não passa conjunto, mesma condição da tentativa anterior).
+- Sem sobreposição com a migration 20261006211248 (ela só redefine o trigger
+  messages_sla_first_response_trigger; esta só register + resolvedor novo). Chamadores
+  são só internos (trigger); REVOKE sem GRANT repete o padrão das duas migrations
+  anteriores; db-guard.yml da ponta já cobre `node --test scripts/db-audit/*.test.mjs`
+  via glob em bloco `run:` — sem mudança de inventário.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
-
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Pontos do refazer
+- Ponto 1 (coordenador: rebase + cherry-pick c7f27e3c8 + 95b38f0aa sobre dia/2026-10-12):
+  feito verbatim — 2e263f76d + 10ac1ed6c; diff contra o dia só os 2 arquivos do cartão.
+- Ponto 2 (bloqueio b_6162bba2: retrato sem o trigger, banco_local reprovava):
+  causa raiz localizada fora do cartão e já resolvida no main — o retrato canônico
+  regenerado é 2026-10-09T16:18:59Z com `messages.trg_guard_message_provenance_fields`
+  (commit 99aa53ff7 #1913, ancestral de origin). A branch dia/2026-10-12 (merge-base
+  com origin em 04/10) ainda não contém o #1913; regenerar o retrato ou sincronizar
+  o dia está fora dos ARQUIVOS QUE PODE TOCAR. Nenhuma linha deste cartão depende
+  daquele trigger.
+- Observação ao revisor (não bloqueia o critério de pronto): o `-- Rollback:` da
+  migration aponta o corpo anterior ("com o corpo de 20260903233000...") em vez de
+  embuti-lo. Não converti em SQL embutido porque migration existente não se edita
+  (o CI recusa) e a correção exigiria migration nova fora do pedido; se o revisor
+  exigir, vira ponto de um refazer com migration complementar própria.
 
 ## O que NÃO fiz e por quê
+- Não chamei o Claude Code com o comando fixo: a implementação já existia verbatim
+  (ordem do coordenador era cherry-pick) e o que faltava era rebase — operação git
+  fora do allowlist do executor; após o rebase, só verificação, executada acima.
+  (Orçamento de plano compartilhado com o revisor preservado.)
+- Não regenerei supabase/schema-manifest.json nem toquei em workflow/inventário:
+  fora do escopo; o glob do db-guard.yml já cobre o teste novo.
+- Não executei o check de banco_local com conjunto: reproduziria o falso-positivo
+  documentado na tentativa anterior (migration cita `messages` e não cita o trigger),
+  cuja causa (retrato do dia) está fora do escopo — registrado acima com a saída.
 
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+Concluí: critério de pronto atendido (caso 2min/3min persiste breach=true, fallback
+provado com SQL de verdade, teste falha sem a correção, rapido verde).
