@@ -30,6 +30,7 @@ export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTab
       </header>
 
       <SectionCard
+        headingLevel="h3"
         icon={CircleDollarSign}
         title="Resumo comercial"
         tone="blue"
@@ -38,11 +39,11 @@ export function SalesViewTab({ contactId, profileId, onTabChange }: SalesViewTab
         <CommercialSummaryStrip contactId={contactId} />
       </SectionCard>
 
-      <SectionCard icon={ShoppingBag} title="Compras e propostas" tone="blue">
+      <SectionCard headingLevel="h3" icon={ShoppingBag} title="Compras e propostas" tone="blue">
         <ContactPurchasesPanel contactId={contactId} profileId={profileId} />
       </SectionCard>
 
-      <SectionCard icon={FileText} title="Propostas em aberto" tone="blue">
+      <SectionCard headingLevel="h3" icon={FileText} title="Propostas em aberto" tone="blue">
         {isLoading ? (
           <div className="space-y-2 animate-pulse">{[0, 1].map(i => <div key={i} className="h-11 rounded-lg bg-muted/20" />)}</div>
         ) : (

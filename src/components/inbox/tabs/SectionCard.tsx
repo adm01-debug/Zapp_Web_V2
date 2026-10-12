@@ -11,20 +11,23 @@ const TONE_CLASS: Record<KpiTone, string> = {
   red: 'bg-destructive/15 text-destructive',
 };
 
+type HeadingLevel = 'h2' | 'h3' | 'h4';
+
 interface SectionCardProps {
   icon: LucideIcon;
   title: string;
   count?: number;
   action?: { label: string; onClick: () => void; variant?: 'link' | 'pill' };
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   tone?: KpiTone;
   subtitle?: string;
   headerRight?: ReactNode;
+  headingLevel?: HeadingLevel;
 }
 
 /** Card de seção reaproveitado nas abas CRM 360°, Arquivos, IA, Notas etc. (Apêndice B). */
-export function SectionCard({ icon: Icon, title, count, action, className, children, tone, subtitle, headerRight }: SectionCardProps) {
+export function SectionCard({ icon: Icon, title, count, action, className, children, tone, subtitle, headerRight, headingLevel: Heading = 'h2' }: SectionCardProps) {
   return (
     <section className={cn('rounded-xl border border-border bg-card p-4 flex flex-col gap-3', className)}>
       <header className="flex items-center justify-between gap-2">
@@ -34,7 +37,7 @@ export function SectionCard({ icon: Icon, title, count, action, className, child
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-semibold truncate">{title}</h3>
+              <Heading className="text-sm font-semibold truncate">{title}</Heading>
               {typeof count === 'number' && count > 0 && (
                 <span className="text-xs text-muted-foreground shrink-0">({count})</span>
               )}
@@ -49,7 +52,7 @@ export function SectionCard({ icon: Icon, title, count, action, className, child
               <button
                 type="button"
                 onClick={action.onClick}
-                className="h-7 px-3 rounded-lg bg-primary/15 text-primary text-xs font-semibold hover:bg-primary/25 transition-colors"
+                className="h-7 px-3 rounded-lg bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-semibold hover:bg-primary/25 transition-colors"
               >
                 {action.label}
               </button>
