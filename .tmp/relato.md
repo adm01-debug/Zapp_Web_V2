@@ -1,63 +1,23 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: worker (sql) (area-sql-banco)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+Cartão de retomada: trazer para a base `dia/2026-10-12` os dois commits da entrega anterior #31 (TC-004) e resolver o conflito do rebase, sem perder o que a ponta tem.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+- **Defeito ainda existe na base:** `git grep -n "tcm\.role" -- supabase/` acha 4 referências vivas em `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` (linhas 1017, 1023, 1313, 1322) — `leave_team_group` e `remove_team_member` leem a coluna inexistente `tcm.role`; a coluna real é `member_role` (a tabela `team_conversation_members` não tem `role`, confirmado por `zapp-esquema`). Em runtime as duas RPCs estouram 42703 e SAIR DO GRUPO / REMOVER MEMBRO ficam quebrados. Como o defeito continua vivo, o cartão não é o caso "já corrigido": os commits anteriores foram trazidos.
+- `supabase/migrations/20261006170426_fix_member_role_leave_remove_rpcs.sql` (trazido de 3cfce43ae, sem alteração): recria os corpos das duas RPCs lendo `member_role` em vez de `tcm.role`, preservando assinatura, `RETURNS jsonb`, `SECURITY DEFINER`, `search_path = public` e ACL (só `authenticated` executa; anon continua sem EXECUTE). Primeira linha é o `-- Rollback:` com o SQL de restauração comentado, extraído e EXECUTADO pelo teste.
+- `scripts/db-audit/team-member-role-rpcs.test.sh` (trazido de 3cfce43ae, sem alteração): contrato RED→GREEN→rollback no PostgreSQL 17 descartável, em 3 blocos — bloco A roda o corpo VIGENTE extraído do repo (estoura em `tcm.role`), bloco B aplica a migration (as duas RPCs respondem, contrato e autorização iguais, promovido grava `member_role='owner'`, EXECUTE de anon fechado), bloco C executa o rollback e prova que os corpos anteriores voltam.
+- `.github/workflows/db-guard.yml` (trazido de b2fcaaf6f, COM resolução de conflito): o rebase conflitou só nesse arquivo. Resolvi mantendo os dois lados — o passo TC-009 / R2-DB-011 (`team-receipts-reactions-conversation-id.test.sh`, que já estava na ponta `dia/2026-10-12`) e o passo TC-004 (`team-member-role-rpcs.test.sh`, da entrega anterior). Nenhum passo existente foi removido ou reescrito; o diff é puramente aditivo. O passo é necessário porque todo `.test.sh` novo precisa de registro no `db-guard.yml`, senão o `check-test-inventory.mjs` reprova órfão.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+## Prova
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+- vermelho antes (bloco A do contrato, rodado agora): `bash scripts/db-audit/team-member-role-rpcs.test.sh` → `[PASS] A1 (defeito) leave_team_group estoura no caminho feliz: column tcm.role does not exist` e `[PASS] A2 (defeito) remove_team_member estoura no caminho feliz: column tcm.role does not exist`
+- verde depois (bloco B/C do mesmo contrato, rodado agora): `[PASS] B1 membro comum sai do grupo (left=true, grupo permanece)` … `[PASS] C6 rollback executado: remove_team_member voltou ao erro anterior em tcm.role` e a linha final `[OK] member_role nas RPCs e rollback executavel verificados no PostgreSQL local (A=antes, B=correcao, C=rollback)` (exit 0, 55 linhas, `.tmp/prova-member-role.log`).
+- Conflito do rebase: a resolução manteve os 2 passos; `git diff --stat` da entrega mostra só os 2 arquivos novos da #31 + o passo adicionado no `db-guard.yml`.
 
 ## O que NÃO fiz e por quê
 
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- Não criei migration nova nem reescrevi a existente: o cartão manda trazer os commits anteriores, e a migration `20261006170426` não existe na base, então ela entra como está.
+- Não toquei em `src/**` (`useTeamMembers`): o defeito é do corpo das RPCs no banco, provado em Postgres local; contrato de retorno (`jsonb`) é o mesmo de antes, então nenhuma tela precisa mudar.
+- Não apliquei a migration no banco de produção nem no banco local da tarefa por `hermes-db-migrar`: a prova é o contrato descartável acima, e produção exige autorização do Joaquim.
+- Duplicidade a registrar para o integrador: a branch da retomada anterior (`v2/retomar-rpcs-member-role-261012170456d0`, commit e91c8eeb6) contém a MESMA migration `20261006170426_fix_member_role_leave_remove_rpcs.sql` e a MESMA suíte com bytes idênticos (verificado com `git diff --stat 3cfce43ae e91c8eeb6` nos dois arquivos: sem diferença). Se as duas branches entrarem, o integrador deve ficar com uma só — a migration é `CREATE OR REPLACE` (idempotente), mas o passo do `db-guard.yml` ficaria duplicado.
