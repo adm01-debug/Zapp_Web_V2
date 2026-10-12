@@ -111,7 +111,7 @@ export function TalkXSegmentBuilder({
             <Input value={description} onChange={(e) => dispatch({ type: 'description', value: e.target.value })} placeholder="Adicione uma descrição para este segmento…" aria-invalid={showErrors && !!errors.description} className="text-[13px] border-0 bg-transparent p-0 h-auto mt-0.5 focus-visible:ring-0 text-foreground-secondary placeholder:text-muted-foreground/40" />
             <div className="flex items-center justify-between gap-2">
               {showErrors && errors.name
-                ? <p role="alert" className="text-2xs text-dash-red">{errors.name}</p>
+                ? <p role="alert" className="text-2xs text-[hsl(var(--destructive-text))]">{errors.name}</p>
                 : <span />}
               <p className="text-2xs text-muted-foreground tabular-nums shrink-0">{descriptionCounter(description)}</p>
             </div>
@@ -181,7 +181,7 @@ export function TalkXSegmentBuilder({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem disabled={gi === 0} onClick={() => dispatch({ type: 'moveGroup', id: g.id, delta: -1 })}><ChevronUp className="w-4 h-4 mr-2" />Mover para cima</DropdownMenuItem>
                         <DropdownMenuItem disabled={gi === rules.groups.length - 1} onClick={() => dispatch({ type: 'moveGroup', id: g.id, delta: 1 })}><ChevronDown className="w-4 h-4 mr-2" />Mover para baixo</DropdownMenuItem>
-                        <DropdownMenuItem disabled={rules.groups.length === 1} className="text-dash-red" onClick={() => dispatch({ type: 'removeGroup', id: g.id })}><Trash2 className="w-4 h-4 mr-2" />Remover grupo</DropdownMenuItem>
+                        <DropdownMenuItem disabled={rules.groups.length === 1} className="text-[hsl(var(--destructive-text))]" onClick={() => dispatch({ type: 'removeGroup', id: g.id })}><Trash2 className="w-4 h-4 mr-2" />Remover grupo</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -251,7 +251,7 @@ export function TalkXSegmentBuilder({
           <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
           {incompleteCount > 0 && (
-            <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
+            <p className="text-2xs text-[hsl(var(--warning-text))] mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>
           )}
           {est?.sample && est.sample.length > 0 && (
             <div className="mt-3">

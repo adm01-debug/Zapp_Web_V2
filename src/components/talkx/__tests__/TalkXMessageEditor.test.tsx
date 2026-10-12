@@ -111,6 +111,6 @@ describe('TalkXMessageEditor (V26)', () => {
 
   it('marca em âmbar a variável desconhecida no overlay', () => {
     const { container } = render(<TalkXMessageEditor value="{{cargo}}" onChange={() => {}} knownVariables={['{{nome}}']} />);
-    expect(container.querySelector('pre')?.innerHTML).toContain('text-dash-amber');
+    expect(container.querySelector('pre')?.innerHTML).toContain('text-[hsl(var(--warning-text))]');
   });
 });

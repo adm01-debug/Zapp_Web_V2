@@ -47,7 +47,7 @@ export function RuleRow({ rule, onChange, onRemove }: {
       {needsValue && (
         <RuleValueInput field={rule.field} op={rule.op} value={rule.value} onChange={(v) => onChange({ value: v })} />
       )}
-      <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-dash-red shrink-0"><X className="w-4 h-4" /></button>
+      <button type="button" onClick={onRemove} aria-label="Remover condição" className="h-9 w-9 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:text-[hsl(var(--destructive-text))] shrink-0"><X className="w-4 h-4" /></button>
     </div>
   );
 }

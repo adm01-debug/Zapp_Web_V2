@@ -214,9 +214,9 @@ const ACTIVITY_ICON: Record<SuppressionActivityAction | 'other', LucideIcon> = {
   add: UserPlus, remove: UserMinus, update: PencilLine, import: FileInput, export: FileOutput, other: Activity,
 };
 const ACTIVITY_STYLE: Record<SuppressionActivityAction | 'other', string> = {
-  add: 'bg-dash-green/10 text-dash-green',
-  remove: 'bg-dash-red/10 text-dash-red',
-  update: 'bg-dash-amber/10 text-dash-amber',
+  add: 'bg-dash-green/10 text-success',
+  remove: 'bg-dash-red/10 text-[hsl(var(--destructive-text))]',
+  update: 'bg-dash-amber/10 text-[hsl(var(--warning-text))]',
   import: 'bg-primary/10 text-primary',
   export: 'bg-violeta/15 text-[hsl(var(--violeta-text))]',
   other: 'bg-muted/40 text-foreground-secondary',
@@ -629,7 +629,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
                         <Td><input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleOne(b.id)} aria-label={`Selecionar ${name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Td>
                         <Td>
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-dash-red shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
+                            <div className="w-8 h-8 rounded-full bg-dash-red/10 flex items-center justify-center text-xs font-bold text-[hsl(var(--destructive-text))] shrink-0">{b.contacts?.avatar_url ? <img src={b.contacts.avatar_url} alt="" className="w-full h-full rounded-full object-cover" loading="lazy" decoding="async" /> : (b.contacts?.name || '?')[0].toUpperCase()}</div>
                             <div className="min-w-0"><p className="text-[13px] font-medium text-foreground truncate">{b.contacts?.name ?? 'Sem contato vinculado'}</p><p className="text-2xs text-foreground-secondary truncate">{b.contacts?.company}</p></div>
                           </div>
                         </Td>
@@ -681,7 +681,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
           </div>
         </RailCard>
         <div className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 p-3 flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <AlertTriangle className="w-4 h-4 text-[hsl(var(--warning-text))] shrink-0 mt-0.5" />
           <p className="text-xs text-foreground-secondary">Contatos suprimidos são automaticamente excluídos de <b className="text-foreground">todos</b> os envios de campanhas, segmentos e automações. <a href="#" className="text-[hsl(var(--primary-text))] underline">Saiba mais →</a></p>
         </div>
 

@@ -14,10 +14,10 @@ import { useExternalContact360Batch, type CRMBatchResult } from '@/hooks/crm/use
 const RFM_SEGMENT_COLORS: Record<string, string> = {
   Champions: 'bg-success/15 text-success border-success/30',
   'Loyal Customers': 'bg-info/15 text-info border-info/30',
-  'At Risk': 'bg-destructive/15 text-destructive border-destructive/30',
+  'At Risk': 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/30',
   Hibernating: 'bg-muted text-muted-foreground border-border',
   Lost: 'bg-muted/50 text-muted-foreground border-border/50',
-  "Can't Lose Them": 'bg-destructive/15 text-destructive border-destructive/30',
+  "Can't Lose Them": 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/30',
   'Need Attention': 'bg-warning/15 text-warning border-warning/30',
   Promising: 'bg-secondary/15 text-secondary border-secondary/30',
 };

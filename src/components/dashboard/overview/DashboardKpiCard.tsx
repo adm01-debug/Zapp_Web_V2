@@ -192,7 +192,7 @@ function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSiz
   }
   if ('text' in delta) {
     return (
-      <p className={cn(textCls, 'font-semibold', delta.tone === 'success' ? 'text-dash-green' : 'text-muted-foreground')}>
+      <p className={cn(textCls, 'font-semibold', delta.tone === 'success' ? 'text-success' : 'text-muted-foreground')}>
         {delta.text}
       </p>
     );
@@ -200,10 +200,10 @@ function DeltaLine({ delta, size = 'compact' }: { delta: KpiDelta; size?: KpiSiz
   const positive = delta.pct >= 0;
   const good = delta.invert ? !positive : positive;
   const Arrow = positive ? TrendingUp : TrendingDown;
-  const tone = good ? 'text-dash-green' : 'text-dash-red';
+  const tone = good ? 'text-success' : 'text-[hsl(var(--destructive-text))]';
   if (hero && delta.pill) {
     return (
-      <span className={cn('inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs font-semibold', good ? 'bg-dash-green/15 text-dash-green' : 'bg-dash-red/15 text-dash-red')}>
+      <span className={cn('inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs font-semibold', good ? 'bg-dash-green/15 text-success' : 'bg-dash-red/15 text-[hsl(var(--destructive-text))]')}>
         <Arrow className="w-3.5 h-3.5" />
         {positive ? '+' : ''}{delta.pct}%
       </span>

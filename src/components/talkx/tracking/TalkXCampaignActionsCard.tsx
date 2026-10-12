@@ -47,7 +47,7 @@ export function TalkXCampaignActionsCard({
           <button
             type="button"
             onClick={onPause}
-            className={`${ACTION_BUTTON} border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20`}
+            className={`${ACTION_BUTTON} border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] hover:bg-dash-amber/20`}
           >
             <Pause className="w-4 h-4" />Pausar
           </button>
@@ -65,7 +65,7 @@ export function TalkXCampaignActionsCard({
         <button
           type="button"
           onClick={onCancel}
-          className={`${ACTION_BUTTON} border-dash-red/40 bg-dash-red/10 text-dash-red hover:bg-dash-red/20`}
+          className={`${ACTION_BUTTON} border-dash-red/40 bg-dash-red/10 text-[hsl(var(--destructive-text))] hover:bg-dash-red/20`}
         >
           <Square className="w-4 h-4" />Cancelar campanha
         </button>

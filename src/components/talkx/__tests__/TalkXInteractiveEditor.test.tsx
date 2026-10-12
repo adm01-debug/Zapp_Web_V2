@@ -109,7 +109,7 @@ describe('TalkXInteractiveEditor (X096)', () => {
     fireEvent.change(screen.getByLabelText('Tipo do botão 1'), { target: { value: 'link' } });
 
     expect(screen.getByTestId('talkx-interactive-errors')).toHaveClass('text-warning');
-    expect(screen.getByTestId('talkx-interactive-errors')).not.toHaveClass('text-dash-amber');
+    expect(screen.getByTestId('talkx-interactive-errors')).not.toHaveClass('text-[hsl(var(--warning-text))]');
     expect(screen.getByRole('button', { name: 'Nenhum' })).toHaveClass('motion-safe:transition-colors');
     expect(screen.getByRole('button', { name: 'Nenhum' })).not.toHaveClass('transition-colors');
   });

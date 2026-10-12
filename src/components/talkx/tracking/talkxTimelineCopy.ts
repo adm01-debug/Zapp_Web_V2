@@ -115,24 +115,24 @@ const TIMELINE_COPY_DO_CICLO: Record<TalkXEventType, TalkXTimelineCopy> = {
   updated: { title: 'Campanha editada', icon: Pencil, tone: 'text-foreground-secondary', detail: (i) => readableMessage(i.message) },
   scheduled: { title: 'Campanha agendada', icon: CalendarClock, tone: 'text-[hsl(var(--violeta-text))]', detail: (i) => readableMessage(i.message) },
   scheduled_updated: { title: 'Agendamento alterado', icon: CalendarClock, tone: 'text-[hsl(var(--violeta-text))]', detail: (i) => readableMessage(i.message) },
-  started: { title: 'Campanha iniciada', icon: Play, tone: 'text-dash-green' },
+  started: { title: 'Campanha iniciada', icon: Play, tone: 'text-success' },
   paused: {
     title: 'Campanha pausada',
     icon: Pause,
-    tone: 'text-dash-amber',
+    tone: 'text-[hsl(var(--warning-text))]',
     detail: (i) => { const motivo = readableMessage(i.message); return motivo ? `Motivo: ${motivo}` : null; },
   },
-  resumed: { title: 'Retomada após pausa', icon: Play, tone: 'text-dash-green' },
-  resumed_auto: { title: 'Retomada automática', icon: RotateCw, tone: 'text-dash-green', detail: (i) => readableMessage(i.message) },
-  cancelled: { title: 'Campanha cancelada', icon: Square, tone: 'text-dash-red' },
-  completed: { title: 'Campanha concluída', icon: CheckCircle2, tone: 'text-dash-green', detail: (i) => readableMessage(i.message) },
+  resumed: { title: 'Retomada após pausa', icon: Play, tone: 'text-success' },
+  resumed_auto: { title: 'Retomada automática', icon: RotateCw, tone: 'text-success', detail: (i) => readableMessage(i.message) },
+  cancelled: { title: 'Campanha cancelada', icon: Square, tone: 'text-[hsl(var(--destructive-text))]' },
+  completed: { title: 'Campanha concluída', icon: CheckCircle2, tone: 'text-success', detail: (i) => readableMessage(i.message) },
   note: { title: 'Observação', icon: StickyNote, tone: 'text-foreground-secondary', detail: (i) => readableMessage(i.message) },
-  limits_updated: { title: 'Limites alterados', icon: Settings2, tone: 'text-dash-amber', detail: (i) => describeLimitsChange(i.message) },
-  connection_failed: { title: 'Falha de conexão', icon: AlertTriangle, tone: 'text-dash-red', detail: (i) => readableMessage(i.message) },
-  skipped_suppressed: { title: 'Contatos suprimidos pulados', icon: ShieldOff, tone: 'text-dash-amber', detail: (i) => readableMessage(i.message) },
-  suppression_add: { title: 'Contato suprimido', icon: UserMinus, tone: 'text-dash-amber', detail: (i) => readableMessage(i.message) },
-  suppression_remove: { title: 'Contato liberado da supressão', icon: UserPlus, tone: 'text-dash-green', detail: (i) => readableMessage(i.message) },
-  suppression_update: { title: 'Supressão alterada', icon: Pencil, tone: 'text-dash-amber', detail: (i) => readableMessage(i.message) },
+  limits_updated: { title: 'Limites alterados', icon: Settings2, tone: 'text-[hsl(var(--warning-text))]', detail: (i) => describeLimitsChange(i.message) },
+  connection_failed: { title: 'Falha de conexão', icon: AlertTriangle, tone: 'text-[hsl(var(--destructive-text))]', detail: (i) => readableMessage(i.message) },
+  skipped_suppressed: { title: 'Contatos suprimidos pulados', icon: ShieldOff, tone: 'text-[hsl(var(--warning-text))]', detail: (i) => readableMessage(i.message) },
+  suppression_add: { title: 'Contato suprimido', icon: UserMinus, tone: 'text-[hsl(var(--warning-text))]', detail: (i) => readableMessage(i.message) },
+  suppression_remove: { title: 'Contato liberado da supressão', icon: UserPlus, tone: 'text-success', detail: (i) => readableMessage(i.message) },
+  suppression_update: { title: 'Supressão alterada', icon: Pencil, tone: 'text-[hsl(var(--warning-text))]', detail: (i) => readableMessage(i.message) },
   segments_reviewed: { title: 'Segmentos revisados', icon: ListChecks, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   checklist: { title: 'Checklist de lançamento', icon: ClipboardCheck, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
 };
@@ -147,11 +147,11 @@ const TIMELINE_COPY_DO_CICLO: Record<TalkXEventType, TalkXTimelineCopy> = {
 const TIMELINE_COPY_FORA_DO_CICLO: Record<string, TalkXTimelineCopy> = {
   link_created: { title: 'Link de rastreio criado', icon: Link2, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   link_updated: { title: 'Link de rastreio editado', icon: Link2, tone: 'text-foreground-secondary', detail: (i) => readableMessage(i.message) },
-  link_deleted: { title: 'Link de rastreio removido', icon: Link2, tone: 'text-dash-red', detail: (i) => readableMessage(i.message) },
+  link_deleted: { title: 'Link de rastreio removido', icon: Link2, tone: 'text-[hsl(var(--destructive-text))]', detail: (i) => readableMessage(i.message) },
   investment_updated: {
     title: 'Investimento atualizado',
     icon: TrendingUp,
-    tone: 'text-dash-green',
+    tone: 'text-success',
     detail: (i) => {
       const raw = (i.message ?? '').trim();
       const value = Number(raw.replace(',', '.'));
@@ -162,7 +162,7 @@ const TIMELINE_COPY_FORA_DO_CICLO: Record<string, TalkXTimelineCopy> = {
   report_exported: { title: 'Relatório gerado', icon: FileText, tone: 'text-foreground-secondary', detail: (i) => readableMessage(i.message) },
   report_shared: { title: 'Relatório compartilhado', icon: Send, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
   import_created: { title: 'Importação iniciada', icon: Upload, tone: 'text-primary', detail: (i) => readableMessage(i.message) },
-  import_completed: { title: 'Importação concluída', icon: CheckCircle2, tone: 'text-dash-green', detail: (i) => readableMessage(i.message) },
+  import_completed: { title: 'Importação concluída', icon: CheckCircle2, tone: 'text-success', detail: (i) => readableMessage(i.message) },
 };
 
 /** Tipo fora do mapa: título neutro + a mensagem legível, nunca o tipo cru. */

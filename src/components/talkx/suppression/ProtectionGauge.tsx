@@ -50,7 +50,7 @@ export function ProtectionGauge({ protectedCount, totalStarted, className }: Pro
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <ShieldCheck className="w-6 h-6 text-dash-green" />
+        <ShieldCheck className="w-6 h-6 text-success" />
       </div>
     </div>
   );

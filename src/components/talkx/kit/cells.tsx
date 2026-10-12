@@ -103,7 +103,7 @@ export function ChannelCell({ size = 18, label = 'WhatsApp', className }: {
   size?: number; label?: string; className?: string;
 }) {
   return (
-    <span className={cn('inline-flex items-center justify-center text-whatsapp', className)} title={label}>
+    <span className={cn('inline-flex items-center justify-center text-success', className)} title={label}>
       <svg
         role="img"
         aria-label={label}

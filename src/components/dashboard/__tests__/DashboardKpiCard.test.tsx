@@ -23,7 +23,7 @@ describe('DashboardKpiCard', () => {
 
   it('delta { pct, invert } inverte a semântica de cor (negativo = bom)', () => {
     const { container } = render(<DashboardKpiCard label="Tempo de Resposta" value="2m 41s" delta={{ pct: -15, invert: true }} tile="green" icon={MessageSquare} bars={null} barsColor="green" />);
-    expect(container.querySelector('.text-dash-green')).not.toBeNull();
+    expect(container.querySelector('.text-success')).not.toBeNull();
   });
 
   it('delta { text, tone } renderiza o texto customizado', () => {

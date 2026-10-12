@@ -29,7 +29,7 @@ export interface CampaignRowAction {
   id: CampaignRowActionId;
   label: string;
   icon: LucideIcon;
-  /** Vermelho do sistema (`text-dash-red`): a ação encerra ou remove a campanha. */
+  /** Vermelho do sistema (`text-[hsl(var(--destructive-text))]`): a ação encerra ou remove a campanha. */
   destructive?: boolean;
 }
 

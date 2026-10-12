@@ -221,13 +221,13 @@ export function TalkXLiveKpiRow({ panel, variant, onFilterOutcomeUnknown }: Talk
 /** "N a confirmar" — clique quando a tela tiver tabela para filtrar; senão é só o número. */
 function outcomeUnknownFooter(n: number, onFilter?: () => void): ReactNode {
   if (!onFilter) {
-    return <p className="text-xs font-semibold text-dash-amber">{`${fmtInt(n)} a confirmar`}</p>;
+    return <p className="text-xs font-semibold text-[hsl(var(--warning-text))]">{`${fmtInt(n)} a confirmar`}</p>;
   }
   return (
     <button
       type="button"
       onClick={onFilter}
-      className="text-xs font-semibold text-dash-amber hover:underline"
+      className="text-xs font-semibold text-[hsl(var(--warning-text))] hover:underline"
     >
       {`${fmtInt(n)} a confirmar`}
     </button>

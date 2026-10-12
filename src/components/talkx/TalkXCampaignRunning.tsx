@@ -240,7 +240,7 @@ function TabConfig({ c, connection }: { c: TalkXCampaignWithRules; connection: T
 
 // ─── Tab: Destinatários ────────────────────────────────────────────────────────────────
 type RecipRow = { id: string; campaign_id: string; contact_id: string; personalized_message: string | null; status: string; segment_id: string | null; sent_at: string | null; delivered_at: string | null; error_message: string | null; manual_retry_count: number | null; created_at: string; contacts: { name: string; phone: string } | null };
-const STATUS_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', pending: 'text-foreground-secondary', outcome_unknown: 'text-dash-amber' };
+const STATUS_TONE: Record<string, string> = { sent: 'text-success', failed: 'text-[hsl(var(--destructive-text))]', pending: 'text-foreground-secondary', outcome_unknown: 'text-[hsl(var(--warning-text))]' };
 const STATUS_LABEL: Record<string, string> = { sent: 'Enviado', failed: 'Falha', pending: 'Pendente', delivered: 'Entregue', outcome_unknown: 'Confirmação pendente' };
 /** Opções do filtro de status dos destinatários (mesma ordem do rótulo da coluna). */
 const RECIPIENT_STATUS_OPTIONS: { value: string; label: string }[] = ['pending', 'sent', 'delivered', 'failed', 'outcome_unknown']
@@ -471,7 +471,7 @@ function TabMessages({ campaignId }: { campaignId: string }) {
 
 // ─── Tab: Logs em Tempo Real (E80) ──────────────────────────────────────
 type LogEvent = { id: string; contact: string; phone: string; segmentId: string | null; status: string; ts: string; error?: string | null };
-const LOG_TONE: Record<string, string> = { sent: 'text-dash-green', failed: 'text-dash-red', skipped: 'text-foreground-secondary', delivered: 'text-[hsl(var(--primary-text))]' };
+const LOG_TONE: Record<string, string> = { sent: 'text-success', failed: 'text-[hsl(var(--destructive-text))]', skipped: 'text-foreground-secondary', delivered: 'text-[hsl(var(--primary-text))]' };
 const LOG_ICON: Record<string, string> = { sent: '✔', failed: '✘', skipped: '‒', delivered: '✔✔' };
 /** Status possíveis nos logs (a consulta exclui só `pending`). */
 const LOG_STATUS_OPTIONS: { value: string; label: string }[] = ['sent', 'delivered', 'failed', 'outcome_unknown', 'skipped']
