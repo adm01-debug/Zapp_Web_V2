@@ -1,63 +1,48 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: iris
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## O que mudou e por quê
+- `src/components/inbox/VirtualizedRealtimeList.tsx`: a linha da lista de conversas
+  passou a ser envolvida pelo `QuickPeek` (que existia em `src/components/ui/` e não era
+  usado por ninguém), com `delay=500`, `enabled` falso na conversa ABERTA e a
+  pré-visualização montada só com dados que a linha JÁ recebe (nome, última mensagem,
+  não lidas e `contacts.conversation_status`) — nenhuma consulta nova.
+- `src/components/ui/quick-peek.tsx`: (a) balão em portal para `document.body`, com
+  posição calculada uma única vez na abertura — sem isso a linha do virtualizador
+  (que tem `transform` e vive em containers `overflow-hidden`/`overflow-x-hidden`)
+  cortava o balão e ele nunca aparecia, mesmo motivo já documentado no
+  `TooltipContent` de `ui/tooltip.tsx`; (b) desligado em tela de toque
+  (`(pointer: coarse)`, lido no hover, sem estado nem re-render da linha);
+  (c) entram/saem sem movimento quando o sistema pede menos movimento
+  (`useReducedMotion`), mantendo só opacidade; (d) o wrapper repassa `style`/`data-*`
+  para o elemento raiz (a linha do virtualizador precisa passar o posicionamento
+  absoluto e o `data-testid` dela).
+- `src/components/inbox/__tests__/VirtualizedRealtimeList.quickPeek.test.tsx` (novo):
+  prova o balão com o componente REAL renderizado (sem mock do QuickPeek).
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
-
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
-
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
-
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
+## Prova
+- vermelho antes (as duas fontes restauradas para a base, `git checkout --`, teste novo
+  mantido no lugar): `npx vitest run src/components/inbox/__tests__/VirtualizedRealtimeList.quickPeek.test.tsx` →
+  `Test Files 1 failed (1); Tests 5 failed | 2 passed (7)`, erro `Unable to find an
+  element by: [data-testid="quick-peek"]`.
+- verde depois: mesmo comando → `Test Files 1 passed (1); Tests 7 passed (7)`.
+- sem regressão nos vizinhos: `npx vitest run src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx VirtualizedRealtimeList.displayName.test.tsx VirtualizedRealtimeList.identidade-profile.test.tsx RealtimeContactUpdateE2E.test.tsx` →
+  `Test Files 4 passed (4); Tests 27 passed (27)`.
+- lint: `npx eslint` nos 3 arquivos → saída vazia (0 problemas); ratchet do pre-commit passou.
+- tipos: `npx tsc --noEmit -p tsconfig.app.json` → saída vazia (0 erros).
+- grep da área depois do commit: `git grep -n "quick-peek\|QuickPeek"` → só o componente,
+  o import/uso na linha e o teste novo.
 
 ## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+- **Teclado: o balão é só complemento** (opção que o cartão dá). Ele repete dados que a
+  própria linha já mostra (nome, última mensagem, contagem de não lidas e estado
+  acessíveis na linha), o wrapper não recebe `tabIndex` nem tratador de teclado — o foco
+  e o Enter na linha continuam como estavam. O teste "foco na linha não abre o balão"
+  fixa isso.
+- Não toquei em hooks nem em `src/hooks/**`: a contagem de não lidas e a última mensagem
+  vêm do objeto que a linha já recebia.
+- Não mexi nas classes do card nem no `overflow-clip` da linha (o balão sai por portal);
+  `text-2xs`, `line-clamp-4`, `bg-popover`, `border-border` e `z-50` já existem no
+  projeto.
+- Estado da conversa: valor desconhecido em `contacts.conversation_status` NÃO vira
+  rótulo inventado — o balão só omite o estado (mesma regra do sentimento na linha).
+  Há teste para isso.
