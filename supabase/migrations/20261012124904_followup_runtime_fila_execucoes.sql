@@ -1,5 +1,19 @@
 -- followup_runtime_fila_execucoes
--- Rollback: DROP TRIGGER IF EXISTS trg_followup_cancel_on_inbound ON public.messages; DROP FUNCTION IF EXISTS public.followup_cancel_on_inbound_message(); DROP FUNCTION IF EXISTS public.due_followups(integer); DROP FUNCTION IF EXISTS public.cancel_followup(uuid, text); DROP FUNCTION IF EXISTS public.complete_followup(uuid); DROP FUNCTION IF EXISTS public.enroll_followup(uuid, uuid); DROP POLICY IF EXISTS "Authenticated can view followup executions" ON public.followup_executions; CREATE POLICY "Authenticated can view followup executions" ON public.followup_executions FOR SELECT TO authenticated USING (contact_id IN (SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid())) OR public.is_admin_or_supervisor(auth.uid())); ALTER TABLE public.followup_executions DROP CONSTRAINT IF EXISTS followup_executions_status_check; UPDATE public.followup_executions SET status = replace(reason, 'status_legado:', ''), reason = NULL WHERE reason LIKE 'status_legado:%'; ALTER TABLE public.followup_executions ALTER COLUMN status SET DEFAULT 'pending'; DROP INDEX IF EXISTS public.idx_followup_executions_status_next_step; ALTER TABLE public.followup_executions DROP COLUMN IF EXISTS reason;
+-- Rollback: remove os objetos criados (gatilho, 4 RPCs, índice, CHECK, policy nova), restaura o default 'pending' e a policy ANTERIOR, e reverte o backfill usando o valor legado guardado em reason ('status_legado:<valor>').
+-- Rollback (SQL executável, na ordem):
+--   drop trigger if exists trg_followup_cancel_on_inbound on public.messages;
+--   drop function if exists public.followup_cancel_on_inbound_message();
+--   drop function if exists public.due_followups(integer);
+--   drop function if exists public.cancel_followup(uuid, text);
+--   drop function if exists public.complete_followup(uuid);
+--   drop function if exists public.enroll_followup(uuid, uuid);
+--   drop policy if exists "Authenticated can view followup executions" on public.followup_executions;
+--   create policy "Authenticated can view followup executions" on public.followup_executions for select to authenticated using (contact_id in (select c.id from public.contacts c where c.assigned_to in (select p.id from public.profiles p where p.user_id = auth.uid())) or public.is_admin_or_supervisor(auth.uid()));
+--   alter table public.followup_executions drop constraint if exists followup_executions_status_check;
+--   update public.followup_executions set status = replace(reason, 'status_legado:', ''), reason = null where reason like 'status_legado:%';
+--   alter table public.followup_executions alter column status set default 'pending';
+--   drop index if exists public.idx_followup_executions_status_next_step;
+--   alter table public.followup_executions drop column if exists reason;
 --
 -- Card t_f949da13 (auditoria Follow-ups, área banco): "sequências existem, mas
 -- não há registro de quem está em qual passo". Esta migration entrega o RUNTIME:

@@ -419,8 +419,8 @@ expect_value 'B.32 due_followups negado a authenticated e concedido a service_ro
   "SELECT (SELECT count(*) FROM information_schema.routine_privileges WHERE grantee='service_role' AND routine_name='due_followups')||'|'||(SELECT count(*) FROM information_schema.routine_privileges WHERE grantee='authenticated' AND routine_name='due_followups');"
 
 printf '\n============ BLOCO C — o Rollback da migration EXECUTA ============\n'
-rollback_sql="$(sed -n '2p' "$migration" | sed 's/^-- Rollback: //')"
-[[ -n "$rollback_sql" ]] || fail 'C.0 linha -- Rollback: vazia'
+rollback_sql="$(awk '/^-- Rollback \(SQL executável, na ordem\):/{f=1;next} f&&/^--$/{exit} f{sub(/^--   /,"");print}' "$migration")"
+[[ -n "$rollback_sql" ]] || fail 'C.0 bloco -- Rollback (SQL executável, na ordem): vazio'
 psql_sql "$rollback_sql" >/dev/null
 expect_value 'C.1 as 4 RPCs sumiram no rollback' '0' \
   "SELECT count(*) FROM pg_proc WHERE proname IN ('enroll_followup','complete_followup','cancel_followup','due_followups');"
