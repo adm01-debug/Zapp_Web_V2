@@ -15,9 +15,10 @@ import type { LucideIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TaskCheckbox } from '../shared/TaskCheckbox';
 import { ContactAvatar } from '../shared/ContactAvatar';
+import { DueCell, PriorityCell, RemindCell, StatusCell } from './taskRowCells';
 import { daySubtitle, groupUpcomingByDay } from '@/hooks/tasks/workItemAggregates';
 import type { BucketsByDue, DayGroup } from '@/hooks/tasks/workItemAggregates';
-import type { WorkItem, WorkItemContact } from '@/hooks/tasks/workItem.types';
+import type { WorkItem, WorkItemContact, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 
 /**
  * Etapa 049: a ordem CONTRATADA das colunas da Lista. O designer especifica as
@@ -48,9 +49,9 @@ const TONS = {
  * subtítulo do dia em pt-BR ("Domingo, 11 de outubro", a regra única do
  * `daySubtitle`), e "Próximas" continua separada por dia (`groupUpcomingByDay`).
  *
- * Só a célula Tarefa (053) e a célula Contato (054) estão preenchidas aqui — as
- * quatro colunas restantes (Prioridade, Prazo, Lembrete e Estado) já existem no
- * cabeçalho e saem como células vazias, que é o entregável de 056–060.
+ * Só a célula Tarefa (053) e a célula Contato (054) nasceram com este cartão; as
+ * quatro colunas da direita — Prioridade, Prazo, Lembrete e Estado (056–060) —
+ * são as células de `taskRowCells.tsx`.
  *
  * Semântica e teclado: as linhas são `<tr>`; o que é acionável é `<button>`
  * nativo (checkbox, cabeçalho do grupo, contato), então Enter/Espaço, foco e o
@@ -65,6 +66,16 @@ export interface TasksListTableProps {
   onToggleDone: (item: WorkItem) => void;
   /** Etapa 054: clique no contato abre a conversa no inbox. */
   onOpenContact?: (item: WorkItem) => void;
+  /** Etapa 060: o menu da pílula de estado move o item (regras do `MoveTargets`). */
+  onMoveTo?: (item: WorkItem, to: WorkItemStatus) => void;
+  /** Etapa 060: contagem REAL de "Fazendo" (trava a coluna com 3/3). */
+  doingCount?: number;
+  /** Etapa 060: "Aguardando" sem motivo abre o detalhe no campo do motivo. */
+  onRequestWaitingReason?: (item: WorkItem) => void;
+  /** Etapa 059: popover do lembrete (adiar · remover · escolher). */
+  onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
+  onClearReminder?: (item: WorkItem) => void;
+  onOpenReminder?: (item: WorkItem) => void;
   /** A primeira renderização não anima a entrada das linhas (etapa 072). */
   hasMounted: MutableRefObject<boolean>;
 }
@@ -146,21 +157,35 @@ function GroupRow({
   );
 }
 
-/** Linha de item: Tarefa (053), Contato (054) e as 4 colunas ainda vazias. */
+/** Linha de item: Tarefa (053), Contato (054) e as quatro células (056–060). */
 function ItemRow({
   item,
   index,
+  now,
   hasMounted,
   onOpen,
   onToggleDone,
   onOpenContact,
+  onMoveTo,
+  doingCount,
+  onRequestWaitingReason,
+  onSnooze,
+  onClearReminder,
+  onOpenReminder,
 }: {
   item: WorkItem;
   index: number;
+  now?: Date;
   hasMounted: MutableRefObject<boolean>;
   onOpen: (item: WorkItem) => void;
   onToggleDone: (item: WorkItem) => void;
   onOpenContact?: (item: WorkItem) => void;
+  onMoveTo?: (item: WorkItem, to: WorkItemStatus) => void;
+  doingCount?: number;
+  onRequestWaitingReason?: (item: WorkItem) => void;
+  onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
+  onClearReminder?: (item: WorkItem) => void;
+  onOpenReminder?: (item: WorkItem) => void;
 }) {
   const reduceMotion = useReducedMotion() ?? false;
   const nome = item.contact ? nomeDoContato(item.contact) : null;
@@ -220,11 +245,26 @@ function ItemRow({
         )}
       </td>
 
-      {/* Prioridade, Prazo, Lembrete e Estado — etapas 056–060 (células ainda vazias). */}
-      <td data-testid="list-cell-pendente" className="px-3 align-middle" />
-      <td data-testid="list-cell-pendente" className="px-3 align-middle" />
-      <td data-testid="list-cell-pendente" className="px-3 align-middle" />
-      <td data-testid="list-cell-pendente" className="px-3 align-middle" />
+      {/* Etapas 056–060 — Prioridade, Prazo, Lembrete e Estado. */}
+      <td className="px-3 align-middle"><PriorityCell priority={item.priority} /></td>
+      <td className="px-3 align-middle"><DueCell dueDate={item.due_date} status={item.status} now={now} /></td>
+      <td className="px-3 align-middle">
+        <RemindCell
+          item={item}
+          now={now}
+          onSnooze={onSnooze}
+          onClearReminder={onClearReminder}
+          onOpenReminder={onOpenReminder}
+        />
+      </td>
+      <td className="px-3 align-middle">
+        <StatusCell
+          item={item}
+          doingCount={doingCount}
+          onMoveTo={onMoveTo}
+          onRequestWaitingReason={onRequestWaitingReason}
+        />
+      </td>
     </motion.tr>
   );
 }
@@ -232,16 +272,30 @@ function ItemRow({
 /** Uma seção/grupo da tabela: cabeçalho de grupo e, aberto, as linhas dele. */
 function SectionRows({
   section,
+  now,
   hasMounted,
   onOpen,
   onToggleDone,
   onOpenContact,
+  onMoveTo,
+  doingCount,
+  onRequestWaitingReason,
+  onSnooze,
+  onClearReminder,
+  onOpenReminder,
 }: {
   section: ListSection;
+  now?: Date;
   hasMounted: MutableRefObject<boolean>;
   onOpen: (item: WorkItem) => void;
   onToggleDone: (item: WorkItem) => void;
   onOpenContact?: (item: WorkItem) => void;
+  onMoveTo?: (item: WorkItem, to: WorkItemStatus) => void;
+  doingCount?: number;
+  onRequestWaitingReason?: (item: WorkItem) => void;
+  onSnooze?: (item: WorkItem, minutes: number | 'tomorrow9') => void;
+  onClearReminder?: (item: WorkItem) => void;
+  onOpenReminder?: (item: WorkItem) => void;
 }) {
   const [open, setOpen] = useState(section.defaultOpen ?? true);
   const [showOlder, setShowOlder] = useState(false);
@@ -259,10 +313,17 @@ function SectionRows({
       key={item.id}
       item={item}
       index={index}
+      now={now}
       hasMounted={hasMounted}
       onOpen={onOpen}
       onToggleDone={onToggleDone}
       onOpenContact={onOpenContact}
+      onMoveTo={onMoveTo}
+      doingCount={doingCount}
+      onRequestWaitingReason={onRequestWaitingReason}
+      onSnooze={onSnooze}
+      onClearReminder={onClearReminder}
+      onOpenReminder={onOpenReminder}
     />
   );
 
@@ -306,7 +367,20 @@ function SectionRows({
   );
 }
 
-export function TasksListTable({ byDue, now, onOpen, onToggleDone, onOpenContact, hasMounted }: TasksListTableProps) {
+export function TasksListTable({
+  byDue,
+  now,
+  onOpen,
+  onToggleDone,
+  onOpenContact,
+  onMoveTo,
+  doingCount,
+  onRequestWaitingReason,
+  onSnooze,
+  onClearReminder,
+  onOpenReminder,
+  hasMounted,
+}: TasksListTableProps) {
   const ancora = useMemo(() => now ?? new Date(), [now]);
 
   const secoes: ListSection[] = [
@@ -390,10 +464,17 @@ export function TasksListTable({ byDue, now, onOpen, onToggleDone, onOpenContact
             <SectionRows
               key={secao.key}
               section={secao}
+              now={now}
               hasMounted={hasMounted}
               onOpen={onOpen}
               onToggleDone={onToggleDone}
               onOpenContact={onOpenContact}
+              onMoveTo={onMoveTo}
+              doingCount={doingCount}
+              onRequestWaitingReason={onRequestWaitingReason}
+              onSnooze={onSnooze}
+              onClearReminder={onClearReminder}
+              onOpenReminder={onOpenReminder}
             />
           ))}
         </tbody>

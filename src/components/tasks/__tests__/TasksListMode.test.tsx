@@ -84,9 +84,11 @@ describe('TasksListMode — etapa 86 (seções, vazios e portas do card)', () =>
       done7d: [item({ id: 'c', title: 'Concluída', status: 'done' })],
     }));
 
-    // Os itens não têm prazo, então "Hoje"/"Amanhã" só podem ser o cabeçalho da seção.
+    // Os itens não têm prazo, então "Hoje"/"Amanhã" só podem ser o cabeçalho da
+    // seção. O cabeçalho é um <button> (o "Sem prazo" da célula Prazo, etapa 057,
+    // não é botão) — por isso a busca é por papel, não por texto solto.
     const cabecalhos = ['Atrasadas', 'Hoje', 'Amanhã', 'Próximas', 'Sem prazo', 'Concluídas (7 dias)']
-      .map(titulo => screen.getByText(titulo));
+      .map(titulo => screen.getByRole('button', { name: (nome: string) => nome.startsWith(titulo) }));
     expect(cabecalhos).toHaveLength(6);
 
     for (let i = 1; i < cabecalhos.length; i++) {
