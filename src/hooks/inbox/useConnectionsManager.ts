@@ -47,6 +47,10 @@ export function useConnectionsManager() {
   const [qrCodeDialog, setQrCodeDialog] = useState<QrCodeDialogState>(INITIAL_QR_STATE);
   const [newConnection, setNewConnection] = useState({ name: '', phone_number: '' });
   const [isCreating, setIsCreating] = useState(false);
+  // Mensagem de erro da última tentativa de criar conexão, exibida DENTRO do
+  // diálogo (role=alert) além do toast — paridade V3→V2 (UI-07). Sem isso o
+  // diálogo só avisava por toast, fora do formulário.
+  const [addConnectionError, setAddConnectionError] = useState<string | null>(null);
   const [syncingHistory, setSyncingHistory] = useState<string | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -155,8 +159,11 @@ export function useConnectionsManager() {
     '_' + Date.now().toString().slice(-6);
 
   const handleAddConnection = async () => {
+    setAddConnectionError(null);
     if (!newConnection.name || !newConnection.phone_number) {
-      toast({ title: 'Erro', description: 'Preencha o nome e o número do telefone.', variant: 'destructive' });
+      const message = 'Preencha o nome e o número do telefone.';
+      setAddConnectionError(message);
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
       return;
     }
     setIsCreating(true);
@@ -173,12 +180,14 @@ export function useConnectionsManager() {
         is_default: connections.length === 0,
       });
       toast({ title: 'Conexão criada!', description: 'Agora conecte escaneando o QR Code.' });
+      setAddConnectionError(null);
       setIsAddDialogOpen(false);
       setNewConnection({ name: '', phone_number: '' });
       if (result?.connection) void handleShowQrCode(result.connection as unknown as WhatsAppConnection);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       log.error('Error creating connection:', error);
+      setAddConnectionError(errorMessage);
       toast({ title: 'Erro ao criar conexão', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsCreating(false);
@@ -379,6 +388,7 @@ export function useConnectionsManager() {
     qrCodeDialog,
     newConnection, setNewConnection,
     isCreating,
+    addConnectionError,
     syncingHistory, setSyncingHistory,
     evolutionLoading,
     handleAddConnection,
