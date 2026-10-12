@@ -14,6 +14,7 @@ Especialista: hugo (CI/devops)
 - suíte completa com `VITEST_MAX_WORKERS=10` → `Test Files 1217 passed (1217); Tests 11044 passed | 25 expected fail | 14 todo (11083)`, `Duration 315.48s`.
 
 ## O que NÃO fiz e por quê
+- Sem teste de unidade no diff: a mudança é de configuração e a prova é de execução (os counts de worker e a resolução das duas configs nos três casos, acima). Um teste que importasse o `vitest.config.ts` arrastaria os tipos de `@vitejs/plugin-react`/`vite`, que não resolvem sob o `moduleResolution` do projeto (erro TS2307) e deixariam o typecheck do `zapp-verify` VERMELHO; a alternativa que eu tentei (`resolveConfig` dentro do teste) tinha o mesmo problema de tipos e ainda exigia `import.meta`, que o `module` do projeto recusa (TS1343). Nenhum arquivo de teste ficou no diff.
 - Não usei a variável de detecção de agente que o cartão original pedia: a guarda do Hermes recusa qualquer menção ao nome dela (3 tentativas barradas na rodada anterior). Segui o plano revisto do coordenador, que troca a detecção de agente pelo caso "sem variável e fora do CI".
 - Não defini `maxWorkers` no CI nem no integrador além do que o cartão pede (a variável manda).
-- Escrita não versionada: rodei `bun install` no workspace porque o `zapp-verify` exige o TypeScript local e o workspace veio sem `node_modules` — nenhum arquivo versionado mudou (`git status --short` limpo).
+- Escrita não versionada: rodei `bun install` no workspace porque o `zapp-verify` exige o TypeScript local e o workspace veio sem `node_modules` — nenhum arquivo versionado mudou pela instalação.
