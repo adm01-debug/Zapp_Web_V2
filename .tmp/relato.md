@@ -1,63 +1,29 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: senior (area-edge-api)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## Resultado: conflito resolvido SEM commit de código
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+O trabalho anterior (`8df0cba55`) foi tentado sobre a ponta atual `dia/2026-10-12` com `git cherry-pick -n` e conflitou só em:
+- `supabase/functions/multiplix-send/index.ts`
+- `supabase/functions/multiplix-send/index.test.ts`
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+Resolvi mantendo a versão atual da dia, porque ela já contém a intenção funcional do commit recusado: o fim da passada chama `complete_multiplix_dispatch_if_items_drained`, e os testes MX03 já provam que o worker drena pela fila por ITEM, não pela fila antiga de `recipients`. Reaplicar o trecho do commit antigo só duplicaria/retrocederia comentários e teste.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+## Pontos da recusa
+- Ponto 1: conflito do cherry-pick contra a dia atual resolvido. Mantive a versão atual dos dois arquivos de produção/teste e não recriei a implementação antiga, conforme o pedido de preservar mudança mais nova quando ela já cobre a intenção.
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
+## Prova vermelho → verde
+- Vermelho antes (mutação local temporária, trocando só a RPC de produção para `complete_multiplix_dispatch_if_drained`): `deno test --allow-all --filter MX03 supabase/functions/multiplix-send/index.test.ts` → `FAILED | 0 passed | 2 failed | 85 filtered out`; erros: `o worker tem de concluir pela drenagem POR ITEM` e `o worker tem de consultar a drenagem POR ITEM mesmo quando a fila nao esta vazia`.
+- Verde depois (arquivo restaurado para a versão da dia): `deno test --allow-all --filter MX03 supabase/functions/multiplix-send/index.test.ts` → `ok | 2 passed | 0 failed | 85 filtered out`.
+- Regressão do arquivo inteiro: `deno test --allow-all supabase/functions/multiplix-send/index.test.ts` → `ok | 87 passed | 0 failed`.
 
-## Prova (executada agora, nesta ponta)
+## Arquivos do diff de código
+Saída de `git diff --name-only dia/2026-10-12...HEAD -- ':(exclude).tmp/relato.md'`: vazia.
 
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
+## Verificações
+- `git show --stat --oneline 8df0cba55` → o trabalho recusado tocava só os dois arquivos acima.
+- `git cherry-pick -n 8df0cba55` → conflito só nesses dois arquivos; resolução feita mantendo `HEAD`.
+- `git diff --stat dia/2026-10-12...HEAD -- ':(exclude).tmp/relato.md'` → vazio.
+- `git diff dia/2026-10-12...HEAD -- ':(exclude).tmp/relato.md' | wc -c` → `0`.
 
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
-
-## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## O que NÃO fiz
+- Não gerei alteração cosmética em código nem trouxe diff alheio. O único arquivo versionado deste fechamento é `.tmp/relato.md`, seguindo o padrão dos cartões de conflito já resolvido na ponta da dia.
