@@ -94,7 +94,6 @@ export function MobileShell({
         <MobileFAB
           onNewConversation={() => setCurrentView('inbox')}
           onNewContact={() => setCurrentView('contacts')}
-          onNewCampaign={() => setCurrentView('campaigns')}
         />
       )}
 
