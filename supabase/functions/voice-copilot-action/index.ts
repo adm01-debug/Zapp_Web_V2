@@ -1,7 +1,78 @@
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient } from "../_shared/validation.ts";
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, markDegraded } from "../_shared/validation.ts";
 import { decideReassignConversation, REASSIGN_DENIED_MESSAGE } from "../_shared/voice-copilot-authz.ts";
 import { escapeOrFilterValue } from "../_shared/postgrest-filters.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+
+/**
+ * Busca de produtos por voz: reusa a MESMA edge que o CmdK já chama
+ * (`useCatalogQuickSearch` -> promogifts-catalog), em vez de reescrever a
+ * busca aqui. Assim RLS, limite por ação e cota continuam num único lugar
+ * (lá); o serviço de voz só repassa o JWT do chamador como Authorization e
+ * usa a anon key como `apikey` do gateway (nunca a service_role).
+ */
+const CATALOG_FUNCTION_NAME = "promogifts-catalog";
+/** Mesmo tamanho de página do CmdK (useCatalogQuickSearch: limit 8). */
+const CATALOG_SEARCH_LIMIT = 8;
+const CATALOG_SEARCH_MAX_QUERY = 200;
+
+export interface CatalogSearchOptions {
+  supabaseUrl: string;
+  /** anon key — vai só como `apikey` do gateway, nunca como Authorization. */
+  apikey: string;
+  /** JWT do chamador já validado por requireAuth. */
+  authHeader: string;
+  fetchImpl?: typeof fetch;
+}
+
+export interface CatalogSearchResult {
+  products: unknown[];
+  total: number;
+  /** true quando o catálogo respondeu erro — o consumidor distingue
+   * "sem resultado" de "catálogo indisponível" (nada de fail-open silencioso). */
+  failed?: boolean;
+}
+
+/**
+ * POST para a edge de catálogo com os MESMOS parâmetros que o CmdK envia.
+ * A resposta de promogifts-catalog é `{ data: products[], meta: { total } }`.
+ */
+export async function searchCatalogProducts(
+  query: unknown,
+  options: CatalogSearchOptions,
+): Promise<CatalogSearchResult> {
+  const search = String(query ?? "").trim().slice(0, CATALOG_SEARCH_MAX_QUERY);
+  if (!search) return { products: [], total: 0 };
+
+  const fetcher = options.fetchImpl ?? fetch;
+  const response = await fetcher(`${options.supabaseUrl}/functions/v1/${CATALOG_FUNCTION_NAME}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // O JWT do chamador é repassado (não a service key): a authz real do
+      // catálogo continua sendo dele.
+      Authorization: options.authHeader,
+      apikey: options.apikey,
+    },
+    body: JSON.stringify({
+      action: "list_products",
+      search,
+      limit: CATALOG_SEARCH_LIMIT,
+      compact: true,
+    }),
+  });
+
+  if (!response.ok) {
+    markDegraded("catalog_search_unavailable");
+    return { products: [], total: 0, failed: true };
+  }
+
+  const payload = await response.json().catch(() => null) as
+    | { data?: unknown; meta?: { total?: unknown } }
+    | null;
+  const products = Array.isArray(payload?.data) ? payload.data as unknown[] : [];
+  const total = typeof payload?.meta?.total === "number" ? payload.meta.total : products.length;
+  return { products, total };
+}
 
 /**
  * Valores canônicos de `conversation_tasks.status` (módulo Tarefas:
@@ -27,6 +98,8 @@ export interface VoiceCopilotDeps {
   authedClient?: SupabaseClient;
   /** Leitura de env; por padrão `requireEnv`. */
   env?: (key: string) => string;
+  /** Substitui o POST para a edge de catálogo (`search_catalog_products`); por padrão `fetch`. */
+  catalogFetch?: typeof fetch;
 }
 
 export async function handleVoiceCopilotAction(
@@ -125,6 +198,27 @@ export async function handleVoiceCopilotAction(
         const { data, error } = await q;
         if (error) throw error;
         result = data ?? [];
+        break;
+      }
+
+      case 'search_catalog_products': {
+        const { query } = params;
+        // Mesma edge e mesmos parâmetros do CmdK; a resposta tem o conteúdo
+        // de produto (id, nome, sku, preço, imagem principal) que a voz lê.
+        // A authz real do catálogo continua sendo o JWT do chamador: sem ele,
+        // 401 sem nem chamar o catálogo (nada de fallback para '').
+        const authHeader =
+          req.headers.get('Authorization') ?? req.headers.get('authorization');
+        if (!authHeader) {
+          return errorResponse('Missing Authorization bearer token', 401, req);
+        }
+        const anonKey = readEnv('SUPABASE_ANON_KEY');
+        result = await searchCatalogProducts(query, {
+          supabaseUrl,
+          apikey: anonKey,
+          authHeader,
+          fetchImpl: deps.catalogFetch,
+        });
         break;
       }
 
