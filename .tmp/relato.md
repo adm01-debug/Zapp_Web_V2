@@ -15,6 +15,7 @@ O que torna ESSA linha vermelha e não as outras ~120: o explicador do `zapp-ver
 O mesmo sintoma derrubou o cartão 26100712208b41 (migrations `20261005213751/20261005231504`, mesma janela de versão) em 2026-10-11T22:52, depois de integrar, com a base verde — confirma que o mecanismo é o acima, e não "cherry-pick de base antiga".
 
 ## O que NÃO fiz e por quê (o que falta para a integração passar)
+- O aviso automático "o cartão diz SEM DDL/migration e o seu diff cria/altera a migration …" não procede: é o rodapé genérico de REGRAS PERMANENTES colado no corpo do cartão; o pedido do cartão É uma migration de banco (`fix(db): persiste breach com o prazo SLA granular`, arquivos do cartão citam justamente `supabase/migrations/20261005151753_sla_first_response_granular.sql`). Tirar a migration deixaria o cartão sem entrega.
 - NÃO adicionei ao diff qualquer comentário/teste citando `trg_guard_message_provenance_fields` para "explicar" a linha: seria contornar o conferidor, e o pedido do cartão proíbe.
 - NÃO toquei no gatilho nem em `guard_message_provenance_fields()`: a correção do cartão é o SLA granular; o gatilho está fora do escopo e intacto.
 - O desbloqueio real exige UMA das duas ações, nenhuma delas do cartão:
