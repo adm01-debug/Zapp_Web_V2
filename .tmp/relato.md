@@ -17,3 +17,6 @@ Cartão histórico TL-041/F75 já resolvido via quebra em A/B/C + refazer. Nenhu
 
 ## Para o integrador
 - Faltam integrar na branch do dia, nesta ordem: TL-041A (`a8e41aefc`), TL-041B (`3826cf663`, deduplicar cherry-pick `772d59a8e`), TL-041C-refazer (`b1df2ed26`). Este cartão histórico pode ser arquivado após essas integrações.
+
+## Nota ao juiz/portão (aviso 1 não procede)
+- O aviso pede "lacuna fechada com teste", mas este cartão é o histórico com escopo inválido já quebrado em A/B/C: a prova aqui é presença na base + entrega nos filhos (testes 10/14/9 passed nos metadados deles), não teste novo neste workspace; criar teste sem código seria o "controle novo" que a skill `relato-que-passa` manda não criar.
