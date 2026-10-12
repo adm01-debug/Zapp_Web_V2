@@ -115,7 +115,10 @@ const ORIGIN_PATTERNS = [
   /^http:\/\/127\.0\.0\.1(?::\d{1,5})?$/,
 ];
 
-function isAllowedOrigin(origin: string): boolean {
+/** Origens do projeto (canônica + padrões de preview/local). Exportado para que
+ * edge functions que precisam montar um `redirectTo` do GoTrue usem a MESMA
+ * allow-list do CORS, em vez de repetí-la (open-redirect por origem do chamador). */
+export function isAllowedOrigin(origin: string): boolean {
   return EXACT_ALLOWED_ORIGINS.has(origin) ||
     ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
 }
