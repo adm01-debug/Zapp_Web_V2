@@ -209,7 +209,7 @@ test.describe('N-078 · a11y: button-name e list no Inbox e Teams', () => {
     test('Teams (team-chat): zero violacoes button-name e list', async ({ page }) => {
       await mockTeamsComDados(page);
       await page.goto('/?view=team-chat');
-      await expect(page.getByRole('option').first()).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first()).toBeVisible({ timeout: 20_000 });
       await semViolacao(page, 'Teams desktop', ['button-name', 'list']);
     });
   });
@@ -228,7 +228,7 @@ test.describe('N-078 · a11y: button-name e list no Inbox e Teams', () => {
     test('Teams mobile (team-chat): zero violacoes button-name e list', async ({ page }) => {
       await mockTeamsComDados(page);
       await page.goto('/?view=team-chat');
-      await expect(page.getByRole('option').first()).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('list', { name: 'Conversas' }).getByRole('listitem').first()).toBeVisible({ timeout: 20_000 });
       await semViolacao(page, 'Teams mobile', ['button-name', 'list']);
     });
   });
