@@ -1,63 +1,23 @@
-Especialista: worker (testes) (area-testes-do-produto)
+Especialista: senior (area-testes-do-produto)
 
-## Resultado: o defeito do pedido JÁ ESTÁ CORRIGIDO na ponta de dia/2026-10-12 — fecho SEM commit de código (como o cartão manda)
+## Contexto do refazer
+- O trabalho recusado era o commit `c93235039` com o teste de regressão de integração do Ctrl+2.
+- Trouxe a base atual com `hermes-tarefa-iniciar` (`BASE=dia/2026-10-12`) e tentei reaplicar `c93235039` com `git cherry-pick`.
+- O cherry-pick conflitou porque a branch do dia já contém uma versão equivalente do teste em `src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx`; resolvi mantendo a versão já presente na branch do dia e o cherry-pick ficou vazio, portanto não criei commit de código.
 
-Antes de mexer, conferi o código ATUAL de dia/2026-10-12 (a ponta do meu workspace). Os dois
-arquivos do cartão já têm, integrados, exatamente o que o PEDIDO ORIGINAL pedia:
+## Pontos da recusa
+- Ponto 1: refazer sobre a ponta da branch do dia atual. Feito: workspace criado em `dia/2026-10-12`; `git status --short --branch` mostrou `## v2/regressao-ctrl2-dashboard-view-26101217496e57` antes do fechamento.
+- Ponto 2: preservar o que já entrou na branch do dia. Feito: o conflito do `git cherry-pick c93235039` foi resolvido com `git checkout --ours -- src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx`, mantendo a versão já presente na branch do dia; o resultado do cherry-pick ficou vazio e foi pulado.
+- Ponto 3: garantir que o teste de regressão continue provando o bug real, não apenas o aviso/toast. Feito: o teste atual lê a view entregue ao `AppShell` e a URL canônica. Prova vermelha: mutação temporária em `src/hooks/ui/useGlobalKeyboardShortcuts.ts` trocando `navigateToView('dashboard')` por `navigate('/')` fez `npx vitest run src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx` sair com `mutacao_exit=1` e falhar em `expected 'inbox' to be 'dashboard'`. Prova verde: restaurado o arquivo, o mesmo comando saiu com `Test Files  1 passed (1)` e `Tests  3 passed (3)`.
 
-- playwright.config.ts: existe o projeto hermético dedicado `chromium-telefonia`
-  (`testMatch: /telefonia\.spec\.ts/`, `use: { ...devices['Desktop Chrome'], storageState:
-  { cookies: [], origins: [] } }` — sessão salva VAZIA declarada no projeto, sem
-  `dependencies: ['setup']`) e o projeto catch-all `chromium-authenticated` lista
-  `telefonia\.spec\.ts` no `testIgnore` — a spec não roda no projeto que faz login REAL (guarda R1).
-  Veio do commit 523255b95 (`test(e2e): telefonia hermética sem valor sensível no diff`), ancestral
-  de HEAD, e o mesmo conteúdo do trabalho anterior que este cartão manda trazer.
-- e2e/telefonia.spec.ts: a versão de HEAD é a do trabalho anterior já ADAPTADA e mais completa —
-  mesma lista de testes (discador/botão bloqueado, número incompleto, E.164 com o nono, DDI +55,
-  teclado e foco, histórico vazio, histórico semeado, ligar do painel) MAIS o ajuste ao C02
-  (`fix(telefonia): isola diálogo de saída do app`, 09/10), que trocou o caminho antigo `?view=voip`
-  pelo evento `zapp:start-call` real. O `afterEach` real contra rede proibida está lá (lê
-  `ambienteAtual.registro.redeBarrada` e os sockets `.supabase.co` de TODO teste que monta ambiente),
-  e a guarda de rede é genérica (`*.supabase.co`), sem o identificador do banco real no diff.
+## Arquivos no diff deste refazer
+- `.tmp/relato.md` — relato versionado do fechamento.
 
-Ou seja: trazer o commit do trabalho anterior seria reintroduzir uma versão mais antiga (sem o C02)
-por cima da que já entrou — o conflito registrado pelo Claude é justamente porque a entrega já está
-na ponta. Por isso não commitei nada: `git diff --stat` está VAZIO e `git status --short` limpo.
+Não há diff de código contra `dia/2026-10-12`. A resolução correta foi preservar a versão já presente na branch do dia e não duplicar nem afrouxar o teste.
 
-Esta decisão substitui o limite de 1 arquivo do t_c294da87: o coordenador autorizou 2 arquivos
-(spec + projeto dedicado no config) e é exatamente esse par que já está na ponta.
-
-## Prova (executada agora, nesta ponta)
-
-- 3 rodadas seguidas da spec pelo projeto DEDICADO `chromium-telefonia`
-  (`npx playwright test --project=chromium-telefonia e2e/telefonia.spec.ts`), todas no MESMO comando do cartão:
-  - rodada 1: `1 skipped` / `8 passed (39.6s)`
-  - rodada 2: `1 skipped` / `8 passed (42.9s)`
-  - rodada 3: `1 skipped` / `8 passed (55.2s)`
-  (o `1 skipped` é o `test.fixme` do defeito fora do Brasil, listado abaixo — nenhuma rodada falhou.)
-- `npx playwright test --list e2e/telefonia.spec.ts` → `Total: 27 tests in 1 file`; as 9 entradas
-  `[... :190:3 ...]` da spec aparecem sob o projeto dedicado `chromium-telefonia` (e só sob os três
-  projetos `*-telefonia`, nunca sob `chromium-authenticated`).
-- `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO (152s)` (db_guard, tipos, lint, migrations OK).
-- CÓDIGO: `git diff --stat dia/2026-10-12 HEAD -- e2e/telefonia.spec.ts playwright.config.ts` → VAZIO
-  (nenhuma mudança de código nesta entrega). O ÚNICO arquivo versionado por este branch é
-  `.tmp/relato.md` — o relato do fechamento, arquivo de fábrica já versionado nesta ponta (mesmo
-  padrão do commit do retomar do SL-092, `62230859b`): `git diff --stat dia/2026-10-12 HEAD` mostra
-  só `.tmp/relato.md`. `git status --short` → limpo.
-
-## test.fixme existentes na spec (1 de verdade, 0 test.skip)
-
-- `e2e/telefonia.spec.ts:250` — `test.fixme('número fora do Brasil não é aceito (defeito medido: +1… vira +55)')`
-  com o motivo escrito no corpo: `normalizeE164BR` (`src/lib/calls/phone.ts`) só conhece a forma
-  brasileira e apresenta número dos EUA como `+55 (14) 15555-2671`; a spec NÃO pode ficar verde nesse
-  caso enquanto o produto não decidir se disca fora do Brasil. É defeito de código de produto, fora
-  dos arquivos permitidos — vira este `fixme` listado, como o cartão manda.
-- `e2e/telefonia.spec.ts:116` — apenas MENÇÃO a `test.fixme` dentro do comentário do `afterEach`
-  ("teste pulado não monta ambiente e não é conferido aqui"); não é um teste pulado.
-
-## O que NÃO fiz e por quê
-
-- Não commitei: o cartão manda "se já foi corrigido ... feche sem commit de código" e o diff de HEAD
-  já contém o pedido inteiro.
-- Não toquei em guarda R1, fixtures, código de produto, migrations nem outros testes.
-- Não usei sessão salva, credencial real, fixture real, banco remoto, URL real ou chamada de telefonia.
+## Verificações executadas
+- `bun install` — concluiu com dependências instaladas.
+- `git cherry-pick c93235039` — conflito no teste existente; resolvido preservando a versão da branch do dia; `git cherry-pick --continue` informou cherry-pick vazio e o fluxo foi finalizado com skip.
+- Prova vermelha: mutação temporária de `navigateToView('dashboard')` para `navigate('/')` + `npx vitest run src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx` — `mutacao_exit=1`, falha esperada em `expect(viewNoShell()).toBe('dashboard')`.
+- Prova verde: `npx vitest run src/pages/__tests__/Index.keyboard-dashboard-view.test.tsx` — `Test Files  1 passed (1)`; `Tests  3 passed (3)`.
+- `git diff --stat dia/2026-10-12...HEAD -- ':!.tmp/relato.md'` e `git diff --name-only dia/2026-10-12...HEAD -- ':!.tmp/relato.md'` — sem saída, confirmando diff final de código vazio.
