@@ -1,29 +1,31 @@
-Especialista: senior (area-front-hooks)
+Especialista: worker (hooks) (area-front-hooks)
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+## Ponto 1 — a origem da correção e o que o diff traz
+O commit 8f034bb6b ("fix(arquivos): aborta miniaturas PDF em timeout e libera fila", autor Hermes Senior, 11/10/2026 21:22) foi trazido para esta base com `git cherry-pick -x 8f034bb6b`: entrou SEM conflito como 67ee12ad1. O diff de CÓDIGO desta entrega contra `dia/2026-10-11` é exatamente o mesmo do commit citado, nos mesmos dois arquivos:
+- src/lib/pdfThumbnail.ts
+- src/lib/__tests__/pdfThumbnail.test.ts
+Nenhum outro arquivo de código mudou. Não reimplementei nada: a correção é a do senior, verbatim, e a única edição nova deste cartão é este relato.
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+## Ponto 2 — a linha do jev-juiz e a diferença de contagem
+O diff de código tem 2 arquivos; se a linha do jev-juiz fala em 3, é porque ela conta também o próprio relato (.tmp/relato.md), que está versionado na base e entra na conta de caminhos alterados quando eu o reescrevo. A diferença é essa e só essa: o que o cartão chama de "diff" (código de src/lib) tem 2 arquivos; a contagem de caminhos do juiz soma o relato. Não há terceiro arquivo de código escondido — `git diff --stat dia/2026-10-11...HEAD` lista só os dois de src/lib.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## Ponto 3 — o que a correção passou a fazer (e por que os testes cobrem)
+Na src/lib/pdfThumbnail.ts: o fetch recebe o sinal do controlador da execução; a vaga da fila é passada direto ao render (sem intermediário que a prendia); e depois do render há uma checagem explícita de aborto antes de devolver/cachear. Na src/lib/__tests__/pdfThumbnail.test.ts os testes que provam isso:
+- "o prazo de 15 s aborta o fetch pendurado: null, sinal do fetch abortado, sem getDocument e com a vaga de volta" (fetch pendurado);
+- "o prazo de 15 s aborta o DOWNLOAD em voo: null, getDocument nunca chamado e a vaga volta";
+- "abortar enquanto ESPERA a vaga tira a chamada da fila e não ocupa vaga" (a vaga passada direto na fila);
+- "nunca deixa mais de 2 renderizações em andamento e respeita a ordem de chegada" (quarta chamada entrando na fila após a vaga ser liberada).
+Mesmo conjunto de quatro comportamentos que o cartão aponta como pendente de relato.
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+## Ponto 4 — controle interno: origem e não regressão
+O controlador INTERNO por execução já existia na base `dia/2026-10-11` (não foi introduzido por este commit nem por este cartão). O commit apenas o alimenta no fetch e checa o aborto após o render, mantendo o controle interno e o externo (o sinal que o chamador passa) separados. Nada de outro arquivo foi enfraquecido; o teste existente de AbortSignal completo segue passando.
+
+## Prova (ver bloco FATOS MEDIDOS do fechar)
+- Alvo: `npx vitest run src/lib/__tests__/pdfThumbnail.test.ts` — todos os testes do arquivo passam, incluindo os quatro acima.
+- Verificação: `zapp-verify . --rapido` — VERDE (tipos/lint/migrations/db_guard OK; banco_local fora do rápido). Nenhum erro no meu diff.
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- Não alterei src/lib/pdfThumbnail.ts nem o teste: o cartão pede só o relato; a correção já veio pelo cherry-pick do commit do senior.
+- Não "refiz" nada nem toquei em CI/documentação: fora do escopo desta entrega.
+
+CONCLUÍ.
