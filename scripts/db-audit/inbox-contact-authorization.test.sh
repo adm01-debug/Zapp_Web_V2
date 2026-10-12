@@ -41,6 +41,23 @@ expect_failure() {
   printf '[PASS] %s\n' "$label"
 }
 
+expect_failure_matching() {
+  local label="$1" sql="$2" expected_pattern="$3" output status
+  set +e
+  output="$(psql_sql "$sql" 2>&1)"
+  status=$?
+  set -e
+  if (( status == 0 )); then
+    printf '%s\n' "$output" >&2
+    fail "$label deveria falhar"
+  fi
+  if [[ ! "$output" =~ $expected_pattern ]]; then
+    printf '%s\n' "$output" >&2
+    fail "$label falhou por motivo inesperado"
+  fi
+  printf '[PASS] %s\n' "$label"
+}
+
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
@@ -114,7 +131,14 @@ psql_sql "
     AS \$\$ SELECT id FROM public.profiles WHERE user_id=_user_id \$\$;
   CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
-    AS \$\$ SELECT _user_id='20000000-0000-0000-0000-000000000005'::uuid \$\$;
+    AS \$\$
+      SELECT EXISTS (
+        SELECT 1
+        FROM public.user_roles ur
+        WHERE ur.user_id = _user_id
+          AND ur.role IN ('admin', 'supervisor')
+      )
+    \$\$;
   CREATE FUNCTION public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)
     RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
     AS \$\$ SELECT true \$\$;
@@ -136,7 +160,8 @@ psql_sql "
     ('10000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000005'),
     ('10000000-0000-0000-0000-000000000006','20000000-0000-0000-0000-000000000006');
   INSERT INTO public.user_roles VALUES
-    ('20000000-0000-0000-0000-000000000004','special_agent');
+    ('20000000-0000-0000-0000-000000000004','special_agent'),
+    ('20000000-0000-0000-0000-000000000005','supervisor');
   INSERT INTO auth.users (id) VALUES
     ('20000000-0000-0000-0000-000000000001'),
     ('20000000-0000-0000-0000-000000000002'),
@@ -281,13 +306,13 @@ M5='40000000-0000-0000-0000-000000000005'
 # P1 (refazer 2): endurecimento das 4 RPCs — search_path travado e EXECUTE só para authenticated/service_role
 [[ "$(psql_sql "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND p.proconfig::text LIKE '%search_path=pg_catalog, public%';")" == '4' ]] || fail 'RPC nova sem SET search_path = pg_catalog, public'
 [[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_name IN ('toggle_message_favorite','pin_message','unpin_message','report_message') AND grantee='authenticated';")" == '4' ]] || fail 'authenticated sem EXECUTE em alguma RPC nova'
-expect_failure 'anon sem EXECUTE em toggle_message_favorite' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');"
-expect_failure 'anon sem EXECUTE em pin_message' "SET ROLE anon; SELECT public.pin_message('$M1');"
-expect_failure 'anon sem EXECUTE em unpin_message' "SET ROLE anon; SELECT public.unpin_message('$M1');"
-expect_failure 'anon sem EXECUTE em report_message' "SET ROLE anon; SELECT public.report_message('$M1','spam',NULL);"
-expect_failure 'anon sem SELECT em message_favorites' "SET ROLE anon; SELECT count(*) FROM public.message_favorites;"
-expect_failure 'anon sem SELECT em message_pins' "SET ROLE anon; SELECT count(*) FROM public.message_pins;"
-expect_failure 'anon sem SELECT em message_reports' "SET ROLE anon; SELECT count(*) FROM public.message_reports;"
+expect_failure_matching 'anon sem EXECUTE em toggle_message_favorite' "SET ROLE anon; SELECT public.toggle_message_favorite('$M1');" 'permission denied for function toggle_message_favorite'
+expect_failure_matching 'anon sem EXECUTE em pin_message' "SET ROLE anon; SELECT public.pin_message('$M1');" 'permission denied for function pin_message'
+expect_failure_matching 'anon sem EXECUTE em unpin_message' "SET ROLE anon; SELECT public.unpin_message('$M1');" 'permission denied for function unpin_message'
+expect_failure_matching 'anon sem EXECUTE em report_message' "SET ROLE anon; SELECT public.report_message('$M1','spam',NULL);" 'permission denied for function report_message'
+expect_failure_matching 'anon sem SELECT em message_favorites' "SET ROLE anon; SELECT count(*) FROM public.message_favorites;" 'permission denied for table message_favorites'
+expect_failure_matching 'anon sem SELECT em message_pins' "SET ROLE anon; SELECT count(*) FROM public.message_pins;" 'permission denied for table message_pins'
+expect_failure_matching 'anon sem SELECT em message_reports' "SET ROLE anon; SELECT count(*) FROM public.message_reports;" 'permission denied for table message_reports'
 
 # ---- favoritar (toggle) ----
 [[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$U2'; SELECT public.toggle_message_favorite('$M1');")" == 't' ]] || fail 'toggle deveria favoritar'
