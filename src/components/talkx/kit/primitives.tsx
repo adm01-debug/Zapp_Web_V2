@@ -18,7 +18,7 @@ const tileGradient: Record<TileColor, string> = {
 // Flat tiles (legado, default quando glow=false)
 const tileBg: Record<TileColor, string> = {
   blue: 'bg-dash-tile-blue', red: 'bg-dash-tile-red', green: 'bg-dash-tile-green',
-  violet: 'bg-dash-tile-violet', amber: 'bg-dash-tile-amber',
+  violet: 'bg-violeta', amber: 'bg-dash-tile-amber',
 };
 // Soft tiles para linhas de tabela sem mídia
 const tileSoft: Record<TileColor, string> = {

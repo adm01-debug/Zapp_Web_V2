@@ -554,7 +554,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
             <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
-                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violet-500/10 border border-violet-400/20 text-xs font-mono text-violet-300">
+                <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
                   {'{{'}{v}{'}}'}
                   <button type="button" onClick={() => setECustomVars((p) => p.filter((x) => x !== v))} aria-label={`Remover variável ${v}`} className="hover:text-dash-red"><X className="w-3 h-3" /></button>
                 </span>

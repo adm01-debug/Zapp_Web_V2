@@ -29,9 +29,9 @@ function toneTileColor(tone: TalkXTone): TileColor {
 function buttonTone(tone: TalkXTone): 'primary' | 'danger' | 'success' {
   return tone === 'danger' ? 'danger' : tone === 'success' ? 'success' : 'primary';
 }
-/** Violeta do sistema (mesmo tom de `talkx-tile--violet`), não existe no botão do kit. */
+/** Violeta do sistema (token `--violeta`), mesmo tom de `talkx-tile--violet`. */
 function buttonToneClass(tone: TalkXTone): string {
-  return tone === 'violet' ? 'bg-violet-600 hover:bg-violet-600/90' : '';
+  return tone === 'violet' ? 'bg-violeta text-violeta-foreground hover:bg-violeta/90' : '';
 }
 function errorMessage(e: unknown): string {
   if (e instanceof Error && e.message) return e.message;

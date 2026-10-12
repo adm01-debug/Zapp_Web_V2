@@ -142,6 +142,15 @@ describe('TalkXView tab deep links (X007)', () => {
     expect(new URLSearchParams(window.location.search).get('tab')).toBe('suppression');
   });
 
+  it('renderiza o botão Voltar à campanhas com classes válidas na tela de monitor', async () => {
+    window.history.replaceState(null, '', '/?view=talkx&campaign=draft_1&screen=monitor');
+    render(<TalkXView />);
+
+    const back = await screen.findByRole('button', { name: /Voltar à campanhas/ });
+    expect(back).toHaveClass('h-9');
+    expect(back).toHaveClass('hover:bg-muted/50');
+  });
+
   it('Analytics ▾ → Configurações grava tab=analytics&sub=configuracoes', async () => {
     window.history.replaceState(null, '', '/?view=talkx');
     render(<TalkXView />);

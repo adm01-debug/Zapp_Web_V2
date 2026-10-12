@@ -28,7 +28,7 @@ export interface TalkXReportSeriesPoint {
 export const TALKX_REPORT_SERIES_COLORS = {
   sent: 'hsl(var(--primary))',
   delivered: 'hsl(var(--success))',
-  replied: 'hsl(var(--dash-violet))',
+  replied: 'hsl(var(--violeta))',
   conversions: 'hsl(var(--warning))',
 } as const;
 
@@ -93,7 +93,7 @@ export const FUNNEL_STEP_LABELS: Record<TalkXReportFunnelStepKey, string> = {
 export const FUNNEL_STEP_COLORS: Record<TalkXReportFunnelStepKey, string> = {
   sent: 'hsl(var(--primary))',
   delivered: 'hsl(var(--success))',
-  replied: 'hsl(var(--dash-violet))',
+  replied: 'hsl(var(--violeta))',
   clicked: 'hsl(var(--info))',
   converted: 'hsl(var(--warning))',
 };

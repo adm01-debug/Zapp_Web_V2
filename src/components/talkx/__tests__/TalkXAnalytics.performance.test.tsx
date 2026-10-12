@@ -164,7 +164,7 @@ describe('AnalyticsFunnel — degraus proporcionais (X186)', () => {
     { key: 'sent', label: 'Enviadas', value: 18742, token: 'primary' },
     { key: 'delivered', label: 'Entregues', value: 18075, token: 'dash-green' },
     { key: 'read', label: 'Lidas', value: null, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: 3748, token: 'dash-violet' },
+    { key: 'replied', label: 'Respostas', value: 3748, token: 'violeta' },
     { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
   ];
 
@@ -260,6 +260,10 @@ describe('TalkXAnalytics — funil e gráfico na tela (X186)', () => {
     const sentWidth = Number(screen.getByTestId('funnel-bar-sent').getAttribute('width'));
     const deliveredWidth = Number(screen.getByTestId('funnel-bar-delivered').getAttribute('width'));
     expect(deliveredWidth / sentWidth).toBeCloseTo(0.9644, 3);
+    // O refazer troca só Respostas para --violeta: Lidas permanece na cor de info
+    // do funil e não colide com o mesmo grupo de etapas.
+    expect(screen.getByTestId('funnel-bar-read')).toHaveAttribute('stroke', 'hsl(var(--info))');
+    expect(screen.getByTestId('funnel-bar-replied')).toHaveAttribute('stroke', 'hsl(var(--violeta))');
     // Conversão, que o sistema ainda não mede, não vira 0.
     expect(screen.getByText('Conversões: sem dados ainda')).toBeInTheDocument();
 

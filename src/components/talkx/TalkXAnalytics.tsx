@@ -207,7 +207,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
     { key: 'sent', label: 'Enviadas', value: stats.sent, token: 'primary' },
     { key: 'delivered', label: 'Entregues', value: stats.delivered, token: 'dash-green' },
     { key: 'read', label: 'Lidas', value: stats.read, token: 'info' },
-    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'dash-violet' },
+    { key: 'replied', label: 'Respostas', value: repliedTotal, token: 'violeta' },
     { key: 'conversions', label: 'Conversões', value: null, token: 'dash-amber' },
   ]), [stats, repliedTotal]);
 
