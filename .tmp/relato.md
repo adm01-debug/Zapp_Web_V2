@@ -1,29 +1,37 @@
-Especialista: senior (area-front-hooks)
+Especialista: Hugo (area-front-hooks)
 
-## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
+# Entrega original (dd1e9ce80972c2f9841e38759eb9276c44b45edb) — já no código atual
 
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+Reconferi a ponta de trabalho (dia/2026-10-12, base do meu workspace) e o defeito do pedido
+JÁ ESTÁ CORRIGIDO. Não recriei nada e fecho SEM commit de código, conforme o cartão manda.
 
-## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+## O que o pedido manda e onde ele já está
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+- `src/hooks/sip/useSipConnection.ts:79-81` — a guarda do `connect` cobre a tentativa em voo
+  (`if (uaRef.current || attemptRef.current) return;` + `const attempt = { cancelled: false }`).
+- `src/hooks/sip/useSipConnection.ts:223-226` — `disconnect()` marca `attemptRef.current.cancelled = true`
+  e já libera a guarda para um connect novo.
+- `src/hooks/sip/useSipConnection.ts:199-208` — no `catch`, quando a tentativa foi cancelada, o UA/Registerer
+  são limpos (`ua.transport.onDisconnect = () => {}`, `registerer.unregister()`, `ua.stop()`) e os refs/estado
+  NÃO são tocados (`uaRef`/`registererRef`/`setSipStatus('unavailable')`/`toast.error` só acontecem no ramo
+  não cancelado) — exatamente o que o commit original fez.
+- `src/hooks/sip/useSipConnection.ts:238-240` — o teardown neutraliza `onDisconnect` antes de `ua.stop()`,
+  para o transporte não disparar reconexão/toast ao cair.
+
+## Prova (teste que o pedido pede, verde no código atual)
+
+`src/hooks/sip/__tests__/useSipConnection.test.ts:329`
+`it('disconnect() durante register() rejeitado limpa Registerer e UA sem sair de idle', ...)` — resolve o
+`register()` pendente DEPOIS do `disconnect()` e afirma `registerer.unregister` chamado, `ua.stop` chamado,
+`uaRef.current === null`, `sipStatus === 'idle'`, `toast.error` NÃO chamado, e que o `onDisconnect` tardio
+não gera toast nem reconexão.
+
+Comando executado agora no workspace:
+- verde depois: `npx vitest run src/hooks/sip/__tests__/useSipConnection.test.ts` → `Test Files 1 passed (1); Tests 20 passed (20)`
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+
+- Não commitei código: o defeito pedido já está no código da base (`useSipConnection.ts` linhas acima), o
+  diff de código seria vazio. Criar "um controle novo" aqui não é pedido pelo cartão.
+- Não criei teste novo: o teste do pedido já existe e passa (`useSipConnection.test.ts:329`).
+- Não toquei em nenhum arquivo — `git status` limpo.
