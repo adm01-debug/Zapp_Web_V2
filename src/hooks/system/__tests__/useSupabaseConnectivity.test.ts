@@ -228,6 +228,36 @@ describe('useSupabaseConnectivity — retomada explícita e limpeza', () => {
     expect(result.current.consecutiveFailures).toBe(0);
   });
 
+  it('descarta a resposta de uma sonda obsoleta (corrida) sem apagar o estado novo', async () => {
+    const pendentes: Array<(value: { data: null; error: unknown }) => void> = [];
+    mocks.invoke.mockImplementation(
+      () => new Promise<{ data: null; error: unknown }>((resolve) => {
+        pendentes.push(resolve);
+      }),
+    );
+    const { result } = renderHook(() => useSupabaseConnectivity());
+    expect(pendentes).toHaveLength(1);
+
+    // retryNow invalida a sonda 1 e começa a sonda 2.
+    await act(async () => {
+      result.current.retryNow();
+    });
+    expect(pendentes).toHaveLength(2);
+
+    // A sonda NOVA responde primeiro: estado vira online.
+    await act(async () => {
+      pendentes[1](OK);
+    });
+    expect(result.current.status).toBe('online');
+
+    // A sonda ANTIGA responde com falha DEPOIS: deve ser descartada.
+    await act(async () => {
+      pendentes[0](REDE);
+    });
+    expect(result.current.status).toBe('online');
+    expect(result.current.consecutiveFailures).toBe(0);
+  });
+
   it('não sonda mais depois de desmontar', async () => {
     const { unmount } = renderHook(() => useSupabaseConnectivity());
     await flush();
