@@ -221,7 +221,7 @@ A ordem cruza impacto no negócio, risco e esforço. "Destravar" indica quando o
 | 17 | Botões que quebram com a Evolution GO + "Sincronizar histórico" com falso sucesso | P1 | — | 05 |
 | 18 | Segundo número de WhatsApp não opera (token global no proxy, QR, status e entrega) | P1 | Antes de ligar a flag | 05 |
 | 19 | Team Chat: gestão de departamento, contrato novo do banco, "lido", busca, ações mortas | P1 | Ratificar plano F × TC | 03 |
-| 20 | VoIP sem `SIP_PASSWORD` e gravação sem fonte (0 de 22 ligações com gravação; segredos não conferidos no painel) | P1 | Dono (secrets) | 03 |
+| 20 | VoIP sem prova de funcionamento (nenhuma das 22 ligações em produção foi atendida; última tentativa em 26/09, com falha) e gravação sem fonte (0 de 22 com gravação); segredos não conferidos no painel | P1 | Dono (secrets) | 03 |
 | 21 | Custo de IA: fila para tabela inexistente, sem alerta de consumo | P1 | — | 02 |
 | 22 | Talk X: relatório da campanha, bucket de mídia, tela de pausada, vários segmentos, checagem de lançamento | P1 | — | 01 |
 | 23 | Talk X: dados comerciais, RFM, receita e ROI (X036–X041) | P1 | Dono (funil do Bitrix24 — N36) | 01 |
