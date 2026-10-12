@@ -1,6 +1,11 @@
 import { Fragment, useMemo, useState } from 'react';
 import type { KeyboardEvent, MouseEvent, MutableRefObject } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { WorkItemCard } from '../shared/WorkItemCard';
+import { grupoInicial, salvarGrupo } from './gruposRecolhidos';
+import type { GrupoKey } from './gruposRecolhidos';
+import { animacaoDaLinha, transicaoDaLinha } from './animacaoLinha';
+import { useListaEstreita } from './responsivo';
 import {
   AlertTriangle,
   Calendar,
@@ -88,18 +93,17 @@ export interface TasksListTableProps {
 }
 
 interface ListSection {
-  key: string;
+  key: GrupoKey;
   title: string;
   icon: LucideIcon;
   tone: string;
   titleClass?: string;
   items: WorkItem[];
-  /** Concluídas de 8 a 30 dias, reveladas pelo rodapé "ver mais (30 dias)". */
+  /** Concluídas de 8 a 30 dias, reveladas pelo "Ver até 30 dias >" do cabeçalho. */
   olderItems?: WorkItem[];
   /** Subcabeçalhos por dia — usados pela seção "Próximas". */
   groups?: DayGroup[];
   hint?: string;
-  defaultOpen?: boolean;
   /** Subtítulo do dia (etapa 051) — hoje só o grupo "Hoje" carrega. */
   subtitle?: string;
 }
@@ -115,14 +119,20 @@ function GroupRow({
   open,
   count,
   onToggle,
+  showOlder,
+  onVerMais,
 }: {
   section: ListSection;
   open: boolean;
   count: number;
   onToggle: () => void;
+  /** Etapa 066: o "Ver até 30 dias >" vive no cabeçalho (só o Grupo Concluídas). */
+  showOlder?: boolean;
+  onVerMais?: () => void;
 }) {
   const Icon = section.icon;
   const Chevron = open ? ChevronDown : ChevronRight;
+  const temAntigas = (section.olderItems?.length ?? 0) > 0;
 
   return (
     <tr data-testid="list-group-row" data-group={section.key} className="h-9 border-t border-border/60 bg-muted/30">
@@ -157,6 +167,20 @@ function GroupRow({
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[220px] text-xs">{section.hint}</TooltipContent>
             </Tooltip>
+          )}
+          {/* Etapa 066/067 — o "Ver até 30 dias >" revela as concluídas de 8 a 30
+              dias; fica no cabeçalho do grupo, não mais no rodapé da tabela. */}
+          {temAntigas && onVerMais && (
+            <button
+              type="button"
+              data-testid="list-group-ver-mais"
+              onClick={onVerMais}
+              aria-expanded={showOlder === true}
+              className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {showOlder ? 'Ver menos' : 'Ver até 30 dias'}
+              {showOlder ? <ChevronDown className="h-3.5 w-3.5" aria-hidden /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden />}
+            </button>
           )}
         </div>
       </th>
@@ -223,6 +247,9 @@ function ItemRow({
   const ui = useTasksUiOptional();
   const selecionado = ui?.selectedId === item.id;
   const nome = item.contact ? nomeDoContato(item.contact) : null;
+  // Etapa 066: concluída/cancelada sai riscada e em muted — o mesmo par que o
+  // card usa (line-through + text-muted-foreground).
+  const concluido = item.status === 'done' || item.status === 'cancelled';
 
   /** Seleciona no módulo e abre os detalhes — clique e teclado pelo MESMO caminho. */
   const abrir = () => {
@@ -258,10 +285,13 @@ function ItemRow({
       data-item-id={item.id}
       data-selected={selecionado ? 'true' : 'false'}
       tabIndex={0}
-      initial={hasMounted.current ? false : { opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, transition: { duration: reduceMotion ? 0 : 0.2 } }}
-      transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}
+      // Etapa 065/072: a entrada e a saída animam ALTURA (abrir o grupo cresce,
+      // concluir encolhe) + opacidade/deslocamento; em movimento reduzido só a
+      // opacidade permanece — nenhuma animação de altura (ver `animacaoLinha`).
+      initial={hasMounted.current ? false : animacaoDaLinha(reduceMotion).initial}
+      animate={animacaoDaLinha(reduceMotion).animate}
+      exit={animacaoDaLinha(reduceMotion).exit}
+      transition={transicaoDaLinha(reduceMotion, index)}
       onClick={aoClicar}
       onKeyDown={aoTeclar}
       className={[
@@ -273,7 +303,7 @@ function ItemRow({
       {/* Etapa 053 — célula Tarefa: checkbox circular + título numa linha com
           tooltip; etapa 061 — o menu ⋮ fecha a célula; etapa 062 — a barra de
           3 px da linha selecionada é um elemento próprio (não muda a largura). */}
-      <td className="relative px-3 align-middle">
+      <td className="relative h-11 overflow-hidden px-3 align-middle">
         {selecionado && (
           <span
             data-testid="row-selection-bar"
@@ -286,7 +316,7 @@ function ItemRow({
           <div className="min-w-0 flex-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="block truncate text-sm font-medium text-foreground">{item.title}</span>
+                <span className={`block truncate text-sm font-medium ${concluido ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.title}</span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-[320px] text-xs">{item.title}</TooltipContent>
             </Tooltip>
@@ -395,16 +425,33 @@ function SectionRows({
   onReopen?: (item: WorkItem) => void;
   onDelete?: (item: WorkItem) => void;
 }) {
-  const [open, setOpen] = useState(section.defaultOpen ?? true);
+  const [open, setOpen] = useState(() => grupoInicial(section.key));
   const [showOlder, setShowOlder] = useState(false);
 
   const { items, olderItems = [] } = section;
   // A seção existe enquanto houver o que mostrar — inclusive quando só há
-  // concluídas de 8 a 30 dias, que ficam atrás do rodapé.
+  // concluídas de 8 a 30 dias, que ficam atrás do "Ver até 30 dias >".
   if (items.length === 0 && olderItems.length === 0) return null;
 
   const visible = showOlder ? [...items, ...olderItems] : items;
   const groups = section.groups && section.groups.length > 0 ? section.groups : null;
+
+  /** Etapa 065: alterna o grupo e guarda a escolha do usuário no navegador. */
+  const alternar = () => {
+    const novo = !open;
+    setOpen(novo);
+    salvarGrupo(section.key, novo);
+  };
+
+  /** Etapa 066/067: o "Ver até 30 dias >" do cabeçalho — abre o grupo se ele
+   *  estiver recolhido e revela/esconde as concluídas de 8 a 30 dias. */
+  const alternarAntigas = () => {
+    if (!open) {
+      setOpen(true);
+      salvarGrupo(section.key, true);
+    }
+    setShowOlder((s) => !s);
+  };
 
   const renderRow = (item: WorkItem, index: number) => (
     <ItemRow
@@ -430,7 +477,14 @@ function SectionRows({
 
   return (
     <Fragment>
-      <GroupRow section={section} open={open} count={visible.length} onToggle={() => setOpen((o) => !o)} />
+      <GroupRow
+        section={section}
+        open={open}
+        count={visible.length}
+        onToggle={alternar}
+        showOlder={showOlder}
+        onVerMais={olderItems.length > 0 ? alternarAntigas : undefined}
+      />
 
       {open && groups && groups.map((g) => (
         <Fragment key={`dia-${g.label}`}>
@@ -450,44 +504,13 @@ function SectionRows({
           {visible.map((item, index) => renderRow(item, index))}
         </AnimatePresence>
       )}
-
-      {open && olderItems.length > 0 && (
-        <tr>
-          <td colSpan={COLUNAS.length} className="p-0">
-            <button
-              type="button"
-              onClick={() => setShowOlder((s) => !s)}
-              className="w-full rounded-none border-y border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-            >
-              {showOlder ? 'ver menos' : 'ver mais (30 dias)'}
-            </button>
-          </td>
-        </tr>
-      )}
     </Fragment>
   );
 }
 
-export function TasksListTable({
-  byDue,
-  now,
-  onOpen,
-  onToggleDone,
-  onOpenContact,
-  onMoveTo,
-  doingCount,
-  onRequestWaitingReason,
-  onSnooze,
-  onClearReminder,
-  onOpenReminder,
-  onComplete,
-  onReopen,
-  onDelete,
-  hasMounted,
-}: TasksListTableProps) {
-  const ancora = useMemo(() => now ?? new Date(), [now]);
-
-  const secoes: ListSection[] = [
+/** As seções da Lista na ordem do contrato (049) — o mesmo recorte nos dois layouts. */
+function montarSecoes(byDue: BucketsByDue, ancora: Date): ListSection[] {
+  return [
     {
       key: 'atrasadas',
       title: 'Atrasadas',
@@ -527,19 +550,153 @@ export function TasksListTable({
       icon: Circle,
       tone: TONS.neutro,
       items: byDue.noDue,
-      defaultOpen: byDue.noDue.length <= 10,
     },
     {
+      // Etapa 066: o grupo é "Concluídas · últimos 7 dias" e o "Ver até 30 dias >"
+      // (etapa 067) vive no cabeçalho, revelando `doneOlder`.
       key: 'concluidas',
-      title: 'Concluídas (7 dias)',
+      title: 'Concluídas · últimos 7 dias',
       icon: CheckCircle2,
       tone: TONS.concluidas,
       titleClass: 'text-muted-foreground',
       items: byDue.done7d,
       olderItems: byDue.doneOlder,
-      defaultOpen: false,
     },
   ];
+}
+
+/** As ações que a tela entrega aos itens — as mesmas nos dois layouts (070). */
+type AcoesDaLista = Omit<TasksListTableProps, 'byDue' | 'now' | 'hasMounted'>;
+
+/**
+ * Etapa 070 — abaixo de 1024 px a Lista vira uma coluna de cartões compactos
+ * (`WorkItemCard` no modo lista), sem rolagem horizontal em 360 px. Os grupos e
+ * o estado aberto/recolhido são os MESMOS da tabela (etapas 065/067), pelo
+ * `gruposRecolhidos`, e o "Ver até 30 dias >" segue no cabeçalho do grupo.
+ */
+function CartoesDoGrupo({ section, now, ...acoes }: { section: ListSection; now?: Date } & AcoesDaLista) {
+  const [open, setOpen] = useState(() => grupoInicial(section.key));
+  const [showOlder, setShowOlder] = useState(false);
+
+  const { items, olderItems = [] } = section;
+  if (items.length === 0 && olderItems.length === 0) return null;
+
+  const visible = showOlder ? [...items, ...olderItems] : items;
+  const Icon = section.icon;
+  const Chevron = open ? ChevronDown : ChevronRight;
+
+  const alternar = () => {
+    const novo = !open;
+    setOpen(novo);
+    salvarGrupo(section.key, novo);
+  };
+
+  const alternarAntigas = () => {
+    if (!open) {
+      setOpen(true);
+      salvarGrupo(section.key, true);
+    }
+    setShowOlder((s) => !s);
+  };
+
+  return (
+    <section data-testid="list-card-group" data-group={section.key} className="min-w-0">
+      <div className="flex min-w-0 items-center gap-2 rounded-lg bg-muted/30 px-2 py-1">
+        <button
+          type="button"
+          onClick={alternar}
+          aria-expanded={open}
+          className={`flex min-w-0 items-center gap-1.5 text-[13px] font-semibold ${section.titleClass ?? 'text-muted-foreground'} hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded`}
+        >
+          <Chevron className="h-4 w-4 shrink-0" aria-hidden />
+          <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${section.tone}`}>
+            <Icon className="h-3 w-3" aria-hidden />
+          </span>
+          <span className="truncate">{section.title}</span>
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs tabular-nums">{visible.length}</span>
+        </button>
+        {section.subtitle && (
+          <span className="truncate text-xs font-medium text-muted-foreground">{section.subtitle}</span>
+        )}
+        {olderItems.length > 0 && (
+          <button
+            type="button"
+            data-testid="list-group-ver-mais"
+            onClick={alternarAntigas}
+            aria-expanded={showOlder}
+            className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {showOlder ? 'Ver menos' : 'Ver até 30 dias'}
+            {showOlder ? <ChevronDown className="h-3.5 w-3.5" aria-hidden /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden />}
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div className="mt-2 space-y-2">
+          {visible.map((item) => (
+            <WorkItemCard
+              key={item.id}
+              item={item}
+              mode="list"
+              contactName={item.contact?.name ?? null}
+              onOpen={() => acoes.onOpen(item)}
+              onToggleDone={() => acoes.onToggleDone(item)}
+              onOpenContact={acoes.onOpenContact ? () => acoes.onOpenContact?.(item) : undefined}
+              onMoveTo={acoes.onMoveTo ? (to) => acoes.onMoveTo?.(item, to) : undefined}
+              doingCount={acoes.doingCount}
+              onRequestWaitingReason={acoes.onRequestWaitingReason ? () => acoes.onRequestWaitingReason?.(item) : undefined}
+              onSnooze={acoes.onSnooze ? (minutos) => acoes.onSnooze?.(item, minutos) : undefined}
+              onClearReminder={acoes.onClearReminder ? () => acoes.onClearReminder?.(item) : undefined}
+              onOpenReminder={acoes.onOpenReminder ? () => acoes.onOpenReminder?.(item) : undefined}
+              onComplete={acoes.onComplete ? () => acoes.onComplete?.(item) : undefined}
+              onReopen={acoes.onReopen ? () => acoes.onReopen?.(item) : undefined}
+              onDelete={acoes.onDelete ? () => acoes.onDelete?.(item) : undefined}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function TasksListTable({
+  byDue,
+  now,
+  onOpen,
+  onToggleDone,
+  onOpenContact,
+  onMoveTo,
+  doingCount,
+  onRequestWaitingReason,
+  onSnooze,
+  onClearReminder,
+  onOpenReminder,
+  onComplete,
+  onReopen,
+  onDelete,
+  hasMounted,
+}: TasksListTableProps) {
+  const ancora = useMemo(() => now ?? new Date(), [now]);
+  const secoes = useMemo(() => montarSecoes(byDue, ancora), [byDue, ancora]);
+  const estreita = useListaEstreita();
+
+  const acoes: AcoesDaLista = {
+    onOpen, onToggleDone, onOpenContact, onMoveTo, doingCount,
+    onRequestWaitingReason, onSnooze, onClearReminder, onOpenReminder,
+    onComplete, onReopen, onDelete,
+  };
+
+  // Etapa 070 — abaixo de 1024 px: cartões compactos, uma coluna, sem rolagem.
+  if (estreita) {
+    return (
+      <div className="w-full min-w-0 space-y-3 pb-8" data-testid="tasks-list-cards">
+        {secoes.map((secao) => (
+          <CartoesDoGrupo key={secao.key} section={secao} now={now} {...acoes} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-w-0 pb-8" data-testid="tasks-list-table">

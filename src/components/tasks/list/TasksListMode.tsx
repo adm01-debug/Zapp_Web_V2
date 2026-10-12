@@ -1,9 +1,29 @@
-import { WorkItemCardSkeleton } from '../shared/WorkItemCardSkeleton';
 import { TasksEmptyState } from '../TasksEmptyState';
 import { TasksListTable } from './TasksListTable';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import type { BucketsByDue } from '@/hooks/tasks/workItemAggregates';
 import type { WorkItemCardActions } from '../shared/cardActions';
+
+/**
+ * Etapa 071 — o esqueleto do carregamento agora é o DA TABELA: uma faixa de
+ * cabeçalho + 6 linhas de 44 px, na mesma grade, em vez dos cartões do layout
+ * antigo (que já não existe). Grupo vazio continua sumindo, como antes.
+ */
+function TabelaSkeleton() {
+  return (
+    <div className="w-full min-w-0 pb-8" data-testid="tasks-list-skeleton" aria-hidden="true">
+      <div className="mb-2 h-8 rounded-md bg-muted/40" />
+      <div className="overflow-hidden rounded-lg border border-border/40">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-11 border-b border-border/40 px-3 last:border-b-0 animate-shimmer"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface Props extends WorkItemCardActions {
   byDue: BucketsByDue;
@@ -38,11 +58,7 @@ export function TasksListMode({
   onComplete, onReopen, onDelete,
 }: Props) {
   if (isLoading) {
-    return (
-      <div className="w-full min-w-0 space-y-1.5">
-        {Array.from({ length: 6 }).map((_, i) => <WorkItemCardSkeleton key={i} />)}
-      </div>
-    );
+    return <TabelaSkeleton />;
   }
 
   const total = byDue.overdue.length + byDue.today.length + byDue.tomorrow.length + byDue.upcoming.length + byDue.noDue.length;
