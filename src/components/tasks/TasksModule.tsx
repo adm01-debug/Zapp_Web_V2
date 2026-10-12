@@ -8,9 +8,6 @@ import { applyFilters, bucketByDue, bucketByStatus, kpis } from '@/hooks/tasks/w
 import { countDoing } from '@/hooks/tasks/workItemMachine';
 import { useTasksFilters }  from '@/hooks/tasks/useTasksFilters';
 import type { WorkItem, WorkItemStatus } from '@/hooks/tasks/workItem.types';
-// Etapa 069: o estado de UI (seleção/painel/modal/densidade) passa a viver no
-// contexto — as superfícies leem por `useTasksUi` em vez de reabrir este arquivo.
-import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { WIP_LIMITS, KANBAN_COLUMNS } from '@/hooks/tasks/workItem.types';
 import type { WorkItemInput, MoveOpts } from '@/hooks/tasks/useMyWorkItems';
 import { ModeSwitcher, type TaskMode } from './shared/ModeSwitcher';
@@ -21,9 +18,6 @@ import { TasksListMode }    from './list/TasksListMode';
 import { TasksBoardMode }   from './board/TasksBoardMode';
 import { TasksAgendaMode }  from './agenda/TasksAgendaMode';
 import { WorkItemSheet }    from './shared/WorkItemSheet';
-import { TasksHeaderMenu }  from './shared/TasksHeaderMenu';
-import { Switch }            from '@/components/ui/switch';
-import { useNarrowViewport } from './shared/pointerMedia';
 
 const STORAGE_KEY = 'tasks-mode';
 
@@ -55,13 +49,6 @@ export function TasksModule() {
   // B13: uma unica query para os tres modos. A query ja traz `done` dos ultimos
   // 30 dias; o recorte de 7 dias da Lista e local. Trocar de modo nao gera request.
   const hook = useMyWorkItems();
-
-  // Etapa 044 — rótulo único do toggle (o plano nomeia "Concluídas" no Quadro) e
-  // a regra de recolher Prioridade/Contato no popover: no Quadro (imagem 05) e em
-  // telas estreitas (abaixo de `md`, o mesmo corte do Sheet).
-  const narrowViewport = useNarrowViewport();
-  const recolherPrioContato = mode === 'board' || narrowViewport;
-  const rotuloConcluidas = mode === 'board' ? 'Concluídas' : 'Mostrar concluídas';
   const { isLoading, isError, create, move, reorder, complete, reopen, snooze, setReminder, deleteItem } = hook;
 
   // Etapa 45/46: a barra de filtros (estado no reducer, espelhado na URL) e o
@@ -93,12 +80,9 @@ export function TasksModule() {
   // Etapa 43: o subtítulo do cabeçalho mostra números reais em pt-BR (separador
   // de milhar) e com singular correto — "1 aberta", não "1 abertas".
   // Fase F (auditoria): "reais" é literal — o filtro não muda o cabeçalho.
-  // Etapa 013 (plano, linha 251; imagem 05, linha 133): o subtítulo ganha a
-  // chamada "Seu espaço de execução" na frente das duas contagens.
   const openCount = byStatusReal.backlog.length + byStatusReal.todo.length + byStatusReal.doing.length + byStatusReal.waiting.length;
   const subtitleAbertas = `${openCount.toLocaleString('pt-BR')} ${openCount === 1 ? 'aberta' : 'abertas'}`;
   const subtitleHoje = `${kpiReal.dueToday.toLocaleString('pt-BR')} para hoje`;
-  const subtitulo = `Seu espaço de execução · ${subtitleAbertas} · ${subtitleHoje}`;
 
   // Flag de animacao de entrada: saiu da API do hook na etapa 18 e vive aqui.
   const hasMounted = useRef(false);
@@ -198,10 +182,7 @@ export function TasksModule() {
   // `view === 'tasks'` e guarda de input. Aqui só chega o comando,
   // pelo evento `tasks-shortcut` — o módulo não instala listener de teclado.
   const aplicarAtalho = useCallback((id: string, key?: string) => {
-    // `tasks-focus-quickadd` (tecla `N`) NÃO é tratado aqui: desde a etapa 014
-    // o comando abre o modal de criação pelo `TasksUiContext`, e quem está
-    // dentro do provedor é o `TasksHeaderMenu` (este módulo monta o provedor,
-    // então não lê o próprio contexto).
+    if (id === 'tasks-focus-quickadd') { quickAddRef.current?.focus(); return; }
     if (id === 'tasks-mode') {
       setMode(key === '2' ? 'board' : key === '3' ? 'agenda' : 'list');
       return;
@@ -251,7 +232,6 @@ export function TasksModule() {
   }
 
   return (
-    <TasksUiProvider>
     <div data-testid="tasks-module" className="flex flex-col h-full gap-4">
       {/* Etapa 78: região viva única do módulo — narra criar, concluir, mover e
           desfazer sem roubar o foco de quem usa leitor de tela. */}
@@ -267,55 +247,33 @@ export function TasksModule() {
       <PageHeader
         variant="plain"
         title="Tarefas"
-        subtitle={subtitulo}
-        actions={<TasksHeaderMenu />}
+        subtitle={`${subtitleAbertas} · ${subtitleHoje}`}
         breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Tarefas' }]}
       />
 
       {/* KPIs (etapa 44: 5 cards de 88px no padrão ContactKpiCard) */}
       <TasksKpiStrip kpis={{ ...kpiData, doingCount: doingReal }} />
 
-      {/* Etapa 044 — captura com o toggle "Mostrar concluídas" na MESMA linha
-          (imagens 01 e 02). Na Agenda (que traz a captura própria, com o dia
-          selecionado) o toggle continua no popover da barra. */}
-      {mode !== 'agenda' && (
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />
-          </div>
-          <label className="flex shrink-0 items-center gap-2 pt-3.5 text-sm text-muted-foreground">
-            <span>{rotuloConcluidas}</span>
-            <Switch
-              checked={filtros.filters.done}
-              onCheckedChange={filtros.toggleDone}
-              aria-label={rotuloConcluidas}
-            />
-          </label>
-        </div>
-      )}
+      {/* QuickAdd (etapa 57: a Agenda tem o seu, com o dia selecionado) */}
+      {mode !== 'agenda' && <QuickAdd ref={quickAddRef} onAdd={criarComAviso} defaultStatus="backlog" />}
 
-      {/* Toolbar (etapa 044, imagem 01): modos à ESQUERDA; busca, Prioridade,
-          Contato e Filtros à direita. No Quadro e em telas estreitas Prioridade e
-          Contato descem para o popover "Filtros" (imagem 05). */}
+      {/* Toolbar: barra de filtros (etapa 45) + troca de modo */}
       <div className="flex items-center gap-3 flex-wrap">
-        <ModeSwitcher mode={mode} onChange={setMode} />
         <TasksFilterBar
           filters={filtros.filters}
           searchText={filtros.textoDaBusca}
           contactOptions={contactOptions}
-          mode={mode}
-          prioContatoNaBarra={!recolherPrioContato}
-          toggleConcluidas={mode === 'agenda'}
           onSearch={filtros.setSearch}
           onPrio={filtros.setPrio}
           onContact={filtros.setContact}
-          onStatus={filtros.setStatus}
-          onDue={filtros.setDue}
           onToggleAlarm={filtros.toggleAlarm}
           onToggleDone={filtros.toggleDone}
           onClear={filtros.clear}
           isActive={filtros.isActive}
         />
+        <div className="ml-auto">
+          <ModeSwitcher mode={mode} onChange={setMode} />
+        </div>
       </div>
 
       {/* Conteúdo com troca de modo */}
@@ -410,6 +368,5 @@ export function TasksModule() {
         focusField={focusField}
       />
     </div>
-    </TasksUiProvider>
   );
 }
