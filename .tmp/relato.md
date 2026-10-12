@@ -3,6 +3,8 @@
 Especialista: worker (sql) (area-sql-banco)
 
 ## O que mudou e por quê
+- Diff de 5 arquivos: 1 migration (nova), 1 teste `.test.sh` (novo), 1 tipo gerado, 1 ALLOWLIST do
+  inventário de testes e o relato. Nenhum outro arquivo foi tocado.
 - `supabase/migrations/20261012124904_followup_runtime_fila_execucoes.sql` (novo):
   - `followup_executions.reason` (motivo) + `CHECK followup_executions_status_check`
     com o vocabulário `('pendente','enviado','concluido','cancelado','erro')` e default
@@ -19,8 +21,8 @@ Especialista: worker (sql) (area-sql-banco)
   - Gatilho `trg_followup_cancel_on_inbound` em `public.messages`: mensagem recebida
     (`sender='contact'`) cancela as execuções `pendente` daquele contato (`reason='resposta_do_contato'`).
 - `scripts/db-audit/followup-runtime.test.sh` (novo): contrato em Postgres descartável, dois blocos
-  no mesmo run — BLOCO A estado anterior (defeito), BLOCO B migration aplicada, BLOCO C a linha
-  `-- Rollback:` executada — rodando como papel real (`set role authenticated/anon/service_role` +
+  no mesmo run — BLOCO A estado anterior (defeito), BLOCO B migration aplicada, BLOCO C o bloco
+  `-- Rollback (SQL executável, na ordem):` executado — rodando como papel real (`set role authenticated/anon/service_role` +
   `request.jwt.claims`), nunca como postgres.
 - `src/integrations/supabase/types.ts`: tipos gerados acompanham a migration (coluna `reason` e as
   4 funções novas).
@@ -55,6 +57,15 @@ Especialista: worker (sql) (area-sql-banco)
   `scripts/ci/check-test-inventory.mjs` (o mecanismo previsto para prova em container descartável; o
   passo de uma linha em `db-guard.yml` é do dono do workflow — área CI). `node scripts/ci/check-test-inventory.mjs`
   não aponta mais este arquivo como órfão (restam 3 órfãos pré-existentes de outros cartões).
+
+### Arquivos fora da lista "ARQUIVOS QUE PODE TOCAR" do cartão — por que foram indispensáveis
+- `scripts/db-audit/**` é a MINHA área (é onde mora a prova de banco deste perfil; a própria
+  skill `area-sql-banco` manda provar em container descartável com o molde dos `.test.sh` de banco).
+  Sem esse teste não haveria como provar RLS/autorização por papel real — o cartão exige “testes de contrato”.
+- `scripts/ci/check-test-inventory.mjs`: é o ÚNICO mecanismo do repositório para registrar um `.test.sh`
+  de container descartável sem editar workflow (o próprio arquivo diz “agente não edita workflow”);
+  sem a entrada na ALLOWLIST o `check-test-inventory` reprova o arquivo como órfão. Não alterei regra
+  do inventário — acrescentei 1 linha na lista permitida, com justificativa, no formato dos vizinhos.
 
 Concluí o escopo do cartão (migration + RLS + RPCs + gatilho + contrato + tipos), com prova verde e
 rollback executado.
