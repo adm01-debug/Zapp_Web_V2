@@ -237,6 +237,7 @@ export async function handleWhatsappWebhook(req: Request): Promise<Response> {
                 p_media_url: null,
                 p_external_id: message.id,
                 p_created_at: timestampToIso(message.timestamp),
+                p_from_me: false,
               });
               if (rpcError) {
                 log.error("ingest_inbound_message failed", { externalId: message.id, error: rpcError.message });

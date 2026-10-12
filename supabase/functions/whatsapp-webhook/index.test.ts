@@ -265,6 +265,7 @@ Deno.test("(a) inbound de texto de conta conhecida chama ingest_inbound_message 
       assertEquals(args.p_content, "oi, tudo bem?");
       assertEquals(args.p_phone, "5511987654321");
       assertEquals(args.p_push_name, "Maria Silva");
+      assertEquals(args.p_from_me, false);
 
       const lookups = db.calls.filter((c) => c.method === "GET" && c.path === "/rest/v1/channel_connections");
       assert(
