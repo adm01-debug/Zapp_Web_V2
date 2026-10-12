@@ -1,29 +1,17 @@
-Especialista: senior (area-front-hooks)
+Especialista: Hugo (area-front-hooks)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
-
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- Retomada da entrega anterior (branch v2/recuperacao-realtime-queda-refazer-t-0aa-...), que falhou no CI: trouxe o commit de codigo dela para esta branch com `git cherry-pick -x eaf1c56bb` (aplicou limpo, sem conflito).
+- O cherry-pick repoe 6 arquivos: 3 de producao (`src/hooks/realtime/useSupabaseRealtime.ts`, `src/hooks/chat/useMessages.ts`, `src/hooks/chat/useRealtimeMessages.ts`) e 3 de teste em `__tests__/` (revalidacao de conversa e lista apos queda e retorno de rede).
+- Nenhuma linha de producao foi alterada nesta retomada: o codigo e identico ao da entrega anterior, porque o defeito do pedido (guard implicit-any) nao existe no codigo atual.
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
+- guard do cartao, passo real do CI (`.github/workflows/ci.yml:183`): `node scripts/ci/implicit-any-ratchet.mjs` -> `implicit-any errors: 0 (baseline: 0)` / exit 0. Nao reproduz.
+- suite do guard: `node --test scripts/ci/implicit-any-ratchet.unit.mjs` -> `tests 13 / pass 13 / fail 0`.
+- testes da propria entrega: `npx vitest run src/hooks/realtime/__tests__/useSupabaseRealtime.reconexao.test.tsx src/hooks/chat/__tests__/useMessages.reconexao.test.tsx src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx` -> `Test Files 3 passed (3)` / `Tests 11 passed (11)`.
+- verificacao pedida pelo cartao: `zapp-verify full .` -> `OK db_guard / OK tipos / OK lint / OK migrations / OK testes / OK build` -> `VERIFY: VERDE SEM BANCO (1166s)`, rc=0.
 
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
-
-## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+## O que NAO fiz e por que
+- Nao alterei codigo de producao: o guard do cartao passa no codigo atual; o que faltava era repor a entrega na base nova, e o cherry-pick fez isso.
+- Fora do meu diff e da minha area, a bateria de guards do CI mostra dois pontos ja existentes e alheios ao diff (so toco `src/hooks/**`): `scripts/ci/check-test-inventory.mjs` acusa 3 `*.test.sh` de `scripts/db-audit` sem citacao em `db-guard.yml`, e `scripts/qa/medir-tipografia.cjs --check` acusa `tsxFontFamilyLiteral: 4 (teto 1)`. Registro em comentario no cartao; nao corrijo aqui.
+- Nao mexi em migration, Edge Function, CI ou dependencia.
