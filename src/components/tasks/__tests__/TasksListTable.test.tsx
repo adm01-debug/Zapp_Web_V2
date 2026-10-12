@@ -11,7 +11,8 @@
  *  4. a célula Tarefa (053): checkbox que conclui sem abrir + motivo âmbar;
  *  5. a célula Contato (054): avatar + nome, "Sem contato" e o clique que abre
  *     a conversa sem abrir os detalhes;
- *  6. as 4 colunas que as etapas 056–060 vão preencher já existem como célula.
+ *  6. as 4 colunas 056–060 (Prioridade, Prazo, Lembrete e Estado) preenchidas —
+ *     os casos delas estão em `TasksListCells.test.tsx`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within, fireEvent, cleanup } from '@testing-library/react';
@@ -195,12 +196,16 @@ describe('TasksListTable — etapas 050/051/053/054 (estrutura, grupos e as duas
     expect(within(linha).queryByRole('button', { name: /Sem contato/ })).toBeNull();
   });
 
-  it('6) as colunas 056–060 já existem como célula (a preencher em cartão próprio)', () => {
+  it('6) as células 056–060 estão preenchidas na linha (prioridade, prazo, lembrete e estado)', () => {
     renderTabela(buckets({ noDue: [item({ id: 'n1' })] }));
 
     const linha = screen.getByTestId('task-row');
     expect(within(linha).getAllByRole('cell')).toHaveLength(6);
-    expect(within(linha).getAllByTestId('list-cell-pendente')).toHaveLength(4);
+    expect(within(linha).queryAllByTestId('list-cell-pendente')).toHaveLength(0);
+    expect(within(linha).getByTestId('priority-cell').textContent).toBe('Média');
+    expect(within(linha).getByTestId('date-label').textContent).toBe('Sem prazo');
+    expect(within(linha).getByTestId('remind-cell').textContent).toBe('Sem lembrete');
+    expect(within(linha).getByTestId('status-pill').textContent).toBe('A fazer');
   });
 
   it('3) o modo Lista passa a renderizar a tabela, com a linha do item dentro dela', () => {
