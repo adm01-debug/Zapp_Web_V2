@@ -11,9 +11,11 @@ const log = getLogger('SupabaseConnectivity');
  *
  * Complementa o `useNetworkStatus` (que só enxerga `navigator.onLine`): cobre o
  * caso em que a internet do usuário funciona mas o backend Supabase está
- * inacessível. A sonda é leve — uma chamada GET no endpoint de saúde que o
- * projeto já usa (`connection-health-check`, Edge Function) — e NÃO consulta
- * tabela de dados do usuário.
+ * inacessível. A sonda é leve — uma chamada GET no endpoint de saúde do projeto
+ * (`health`, Edge Function; paridade do `health-check` do V3) — e NÃO consulta
+ * tabela de dados do usuário. O `connection-health-check` fica de fora de
+ * propósito: é um job de cron/admin que chama a Evolution API e grava no banco a
+ * cada execução, carga incompatível com uma sonda de navegador a cada 30 s.
  *
  * Estados:
  *  - `checking`  → primeira sonda ainda não respondeu;
@@ -71,8 +73,8 @@ export const CONNECTIVITY_PROBE_TIMEOUT_MS = 6_000;
 export const CONNECTIVITY_DEGRADED_LATENCY_MS = 2_000;
 /** Falhas consecutivas antes de declarar `offline` (backend inacessível). */
 export const CONNECTIVITY_FAILURES_BEFORE_OFFLINE = 3;
-/** Endpoint de saúde já existente no projeto (Edge Function). */
-export const CONNECTIVITY_HEALTH_ENDPOINT = 'connection-health-check';
+/** Endpoint de saúde leve do projeto (Edge `health` — paridade do `health-check` do V3). */
+export const CONNECTIVITY_HEALTH_ENDPOINT = 'health';
 
 /** Delay da próxima tentativa: dobra por falha, limitado ao teto. */
 export function nextBackoffDelay(failures: number): number {

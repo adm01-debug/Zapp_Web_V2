@@ -94,7 +94,7 @@ describe('useSupabaseConnectivity — transições de estado', () => {
     // Sonda leve: só o endpoint de saúde, com GET — nunca uma tabela de dados.
     expect(mocks.invoke).toHaveBeenCalledTimes(1);
     expect(mocks.invoke).toHaveBeenCalledWith(
-      'connection-health-check',
+      'health',
       expect.objectContaining({ method: 'GET' }),
     );
     expect(result.current.status).toBe('online');
