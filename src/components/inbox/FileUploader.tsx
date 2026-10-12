@@ -81,9 +81,9 @@ function QueueFileItem({ queuedFile, onRemove, disabled }: { queuedFile: QueuedF
             {queuedFile.status === 'done' && <Badge variant="outline" className="text-3xs py-0 h-5 bg-success/10 text-success border-success/20"><Check className="w-3 h-3 mr-1" />Enviado</Badge>}
             {queuedFile.status === 'error' && <Badge variant="destructive" className="text-3xs py-0 h-5"><AlertCircle className="w-3 h-3 mr-1" />Erro</Badge>}
           </div>
-          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" />}
+          {(queuedFile.status === 'uploading' || queuedFile.status === 'sending') && <Progress value={queuedFile.progress} className="h-1 mt-2" aria-label={`Progresso de ${queuedFile.file.name}`} />}
         </div>
-        <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7" onClick={onRemove} disabled={disabled}><X className="w-3 h-3" /></Button>
+        <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7" onClick={onRemove} disabled={disabled} aria-label={`Remover ${queuedFile.file.name}`}><X className="w-3 h-3" /></Button>
       </div>
     </motion.div>
   );
@@ -173,7 +173,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
                       <Badge variant="destructive" className="mt-2 text-xs"><AlertCircle className="w-3 h-3 mr-1" />Inválido</Badge>
                     )}
                   </div>
-                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={handleClose} disabled={uploading}><X className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8" onClick={handleClose} disabled={uploading} aria-label="Fechar envio"><X className="w-4 h-4" /></Button>
                 </div>
                 {!filePreview.validation.valid && (
                   <div className="mt-3 p-3 bg-destructive/10 rounded-lg">
@@ -190,7 +190,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
               <AnimatePresence>
                 {uploading && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-                    <Progress value={uploadProgress} className="h-2" />
+                    <Progress value={uploadProgress} className="h-2" aria-label={`Progresso de ${filePreview.file.name}`} />
                     <p className="text-xs text-muted-foreground text-center">
                       {uploadStage === 'uploading' ? `Fazendo upload... ${uploadProgress}%` : `Enviando via WhatsApp... ${uploadProgress}%`}
                     </p>
@@ -218,7 +218,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({
 
           {isMultiMode && uploading && (
             <div className="space-y-2">
-              <Progress value={totalQueueProgress} className="h-2" />
+              <Progress value={totalQueueProgress} className="h-2" aria-label="Progresso total" />
               <p className="text-xs text-muted-foreground text-center">Enviando arquivo {currentQueueIndex + 1} de {fileQueue.length}...</p>
             </div>
           )}
