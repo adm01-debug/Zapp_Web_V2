@@ -33,9 +33,8 @@ de fato) e uma trigger recusa `status`/`status_updated_at` como defesa em profun
      de tabela + GRANT UPDATE por coluna para `authenticated`.
   3. Trigger `trg_guard_message_status_fields` (defesa em profundidade para status).
   4. Prova T1–T7 em Postgres descartável, aplicando a migration real, papéis reais.
-- Divergências do plano: a lista de colunas do cartão não citava `updated_at`; incluí porque
-  `useChatPanelHandlers.ts:199` (edição de mensagem, R2-INB-014) escreve `content, updated_at`
-  juntos — sem o GRANT, o fluxo legítimo quebraria com "permission denied".
+- Divergência: o cartão não citava `updated_at`; incluí porque `useChatPanelHandlers.ts:199`
+  escreve `content, updated_at` juntos — sem o GRANT o fluxo legítimo quebraria.
 
 ## Banco de dados
 
@@ -90,9 +89,8 @@ de INSERT original ("Users can insert messages", nome e corpo do 20260925120000)
   removido para encolher a lista de colunas abertas.
 - `src/components/monitoring/hooks/useMonitoringActions.ts:42` — `.delete()` direto em
   `messages`; o cartão diz "DELETE continua como está", então não mexi.
-- PE-20 (apagar via RPC) e PE-55 (transcrição via Edge): `content`/`is_deleted`/
-  `transcription`/`transcription_status` saem da lista de colunas quando esses cartões
-  integrarem.
+- PE-20 (apagar via RPC) e PE-55 (transcrição via Edge): `content`/`is_deleted`/`transcription`
+  saem da lista de colunas quando esses cartões integrarem.
 
 ## Notas para Reviewer
 
