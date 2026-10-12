@@ -39,9 +39,10 @@ Especialista: iris
   ajustes da barra e dos testes dela (o `TasksModule.tsx` ganhou `mode`, `onStatus` e `onDue` ao
   renderizar a barra), vindos do commit anterior desta mesma entrega e **não alterados nesta rodada**.
   Nesta rodada o diff é só a barra e o teste dela.
-- **Ponto 4 (número da medida):** o número citado na recusa (75746) não é o desta entrega. A medida
-  real é a dos FATOS MEDIDOS PELO FECHAR abaixo (o fechar mede o diff real agora); ele imprime o
-  total de caracteres do diff desta entrega.
+- **Ponto 4 (número da medida):** a medida do diff desta entrega, lida nos FATOS MEDIDOS PELO FECHAR,
+  é **69376 caracteres** (o portão simulado no fechar registra "diff grande (69376 caracteres)").
+  O número 75746 citado antes estava errado; o certo do refazer anterior era 69782, e agora, com o
+  `h-10` nos dois selects, os FATOS medem 69376.
 
 ## O que NÃO fiz e por quê
 
