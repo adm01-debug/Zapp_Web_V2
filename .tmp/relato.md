@@ -28,6 +28,22 @@ Evolution) — e registrando a exclusão na auditoria.
   justificativa (o passo de uma linha em db-guard.yml é do dono do workflow, e o
   script não é meu; sem esse registro a suíte nasceria órfã no inventário do CI).
 
+Contagem real do diff (base dia/2026-10-12): 6 arquivos — o 6º é este próprio
+.tmp/relato.md —, com 2 arquivos de teste: `index.test.ts` (2 casos Deno novos) e
+`connections-delete-admin-only.test.sh` (prova de banco, ~20 asserts em A/B).
+
+## Fora da lista de arquivos do cartão (por que foi indispensável)
+- `scripts/db-audit/connections-delete-admin-only.test.sh`: é a PROVA de contrato
+  que o cartão pede ("Testes de contrato (supervisor não exclui pela tabela)"). Não
+  havia .test.sh de assunto equivalente para estender; a prova precisa rodar em PG
+  descartável com roles reais (authenticated/anon/service_role), e o padrão do
+  repositório para isso é um .test.sh em scripts/db-audit/.
+- `scripts/ci/check-test-inventory.mjs`: um .test.sh novo sem registro no inventário
+  vira órfão e o `check-test-inventory` (ci.yml) reprova o branch. O registro é uma
+  linha na ALLOWLIST com justificativa, no mesmo formato dos demais; o passo em
+  db-guard.yml (que é arquivo de workflow, do worker (ci)) ficou pendente e está
+  anotado na própria linha.
+
 ## Prova
 - Banco (contrato, roles reais) — verde depois:
   `bash scripts/db-audit/connections-delete-admin-only.test.sh`
@@ -61,3 +77,7 @@ Evolution) — e registrando a exclusão na auditoria.
   pronta para a promoção de uma linha.
 - Não mexi no gate de `connect`/`disconnect`/`create-instance` — o cartão pede só
   a exclusão admin-only.
+
+Nota ao portão: o `index.ts` e o `index.test.ts` (prova vermelho→verde) estão no
+mesmo commit f601930f0; o commit seguinte (`docs`) é só este relato. Se o juiz
+apontar "código sem teste neste commit", vale o commit do código.
