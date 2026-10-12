@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Pause, Play, Square, Send, XCircle, AlertTriangle, Clock, BarChart3, ArrowLeft, CheckCircle2, MessageCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,8 @@ import {
   useConfirmMultiplixDispatch, MultiplixDispatchEdgeError,
   fetchMultiplixRecipientsTotal, useMultiplixEstimate,
 } from '@/hooks/integrations/useMultiplixDispatches';
+import { useMultiplixReplies, type MultiplixReplyAttribution } from '@/hooks/integrations/useMultiplixReplies';
+import { openContactChat } from '@/components/catalog/useSendProduct';
 import {
   IconTile, StatusPill, fmtInt, pct, fmtDateTime,
 } from '@/components/talkx/talkxShared';
@@ -83,6 +85,81 @@ function confirmErrorMessage(error: unknown): string {
   const blocker = code ? CONFIRM_BLOCKERS[code] : undefined;
   if (blocker) return `Não foi possível iniciar: ${blocker}.`;
   return error instanceof Error ? error.message : 'Erro ao confirmar disparo';
+}
+
+const REPLY_ATTRIBUTION_TEXT: Record<MultiplixReplyAttribution, string> = {
+  linked: 'Respondeu à mensagem do disparo',
+  inferred: 'Resposta associada pelo telefone e pela janela de tempo',
+};
+
+/**
+ * F84 — Sala de retornos: visao filtrada do Chat com SO quem respondeu ao disparo.
+ * Decide pelo `status` do hook, nunca por `replies.length === 0`: erro de contrato
+ * da edge e carregando NAO sao "ninguem respondeu". Linha sem `contact_id` (telefone
+ * sem contato unico) nao tem botao — nunca abre a conversa de outro contato.
+ */
+function ReturnsRoom({ dispatchId }: { dispatchId: string }) {
+  const { replies, status, error, isRefreshing, refetch } = useMultiplixReplies(dispatchId);
+  return (
+    <section aria-label="Retornos" className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
+          <MessageCircle className="w-4 h-4" />Retornos
+          {status === 'ready' && (
+            <span className="ml-1.5 text-xs font-normal text-foreground-secondary tabular-nums">{fmtInt(replies.length)}</span>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={refetch}
+          disabled={isRefreshing}
+          className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 disabled:opacity-60"
+        >
+          {isRefreshing ? 'Atualizando…' : 'Atualizar'}
+        </button>
+      </div>
+      {status === 'loading' && (
+        <p role="status" className="text-center py-8 text-muted-foreground text-xs motion-safe:animate-pulse">Carregando retornos…</p>
+      )}
+      {error && (
+        <div role="alert" className="flex items-start gap-1.5 px-4 py-2 text-2xs text-dash-red border-b border-dash-red/20 bg-dash-red/5">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span className="min-w-0 break-words">Não foi possível carregar os retornos: {error.message}</span>
+          {status === 'error' && (
+            <button type="button" onClick={refetch} className="ml-auto shrink-0 underline font-medium">Tentar de novo</button>
+          )}
+        </div>
+      )}
+      {status === 'empty' && (
+        <p className="text-center py-8 text-muted-foreground text-xs">Nenhum retorno neste disparo ainda</p>
+      )}
+      {status === 'ready' && (
+        <div className="max-h-[30rem] overflow-auto divide-y divide-border/40">
+          {replies.map((r) => (
+            <div key={r.recipient_id} data-testid="reply-row" className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{r.company_name || 'Empresa'}</p>
+                <p className="text-2xs text-foreground-secondary truncate">{r.destino_e164 ?? 'sem WhatsApp'}</p>
+                {r.reply_attribution && (
+                  <p className="text-3xs text-muted-foreground truncate">{REPLY_ATTRIBUTION_TEXT[r.reply_attribution]}</p>
+                )}
+              </div>
+              <span className="text-3xs text-muted-foreground shrink-0">{fmtDateTime(r.replied_at)}</span>
+              {r.contact_id && (
+                <button
+                  type="button"
+                  onClick={() => openContactChat(r.contact_id as string)}
+                  className="h-8 px-3 rounded-lg border border-primary/40 bg-primary/10 text-primary-glow text-xs font-semibold shrink-0 transition-colors motion-safe:duration-150 hover:bg-primary/20"
+                >
+                  Abrir conversa
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 interface Props { dispatchId: string; onBack: () => void }
@@ -361,6 +438,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
       {processed > 0 && (
         <p className="text-xs text-foreground-secondary flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5" />Taxa de sucesso: <strong className="text-foreground">{successRate}%</strong></p>
       )}
+
+      <ReturnsRoom dispatchId={dispatchId} />
 
       <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
