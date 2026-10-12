@@ -188,3 +188,42 @@ describe('etapa 103 — esqueleto e vazio por coluna', () => {
     expect(screen.queryAllByTestId('board-column-empty')).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regra de tela do plano: TODO controle novo do cartão tem alvo de >= 40 px nas
+// duas medidas. O jsdom não calcula layout, então a medida é lida da classe
+// REALMENTE aplicada ao elemento renderizado e convertida pela escala do
+// Tailwind (n => n*4px): assim `h-8` = 32 e `min-h-[24px]` = 24 reprovam, e o
+// teste fica vermelho sem a correção — não é conferência de string solta.
+// ---------------------------------------------------------------------------
+
+/** Menor alvo garantido em uma dimensão, em px, lido da classe aplicada. */
+function alvoGarantidoPx(el: Element | null, eixo: 'h' | 'w'): number {
+  const cls = el?.className ?? '';
+  // `w-full`/`h-full` ocupam toda a coluna (muito mais que 40 px): vale.
+  if (cls.split(/\s+/).some(c => c === `${eixo}-full` || c === `min-${eixo}-full`)) return Infinity;
+  let px = 0;
+  const re = new RegExp(`(?:min-)?${eixo}-(\[[0-9.]+px\]|[0-9.]+)`, 'g');
+  for (const m of cls.matchAll(re)) {
+    const v = m[1];
+    px = Math.max(px, v.startsWith('[') ? parseFloat(v.slice(1, -3)) : parseFloat(v) * 4);
+  }
+  return px;
+}
+
+describe('regra de tela — alvos de pelo menos 40 px nos controles deste cartão', () => {
+  it('toggle, ⁙ do cabeçalho e rodapé de 30 dias passam de 40 px nas duas medidas', () => {
+    renderQuadro({
+      byStatus: { ...VAZIO, done: [
+        item({ id: 'r1', title: 'Feita hoje', status: 'done', completed_at: dias(0) }),
+        item({ id: 'o1', title: 'Feita ha duas semanas', status: 'done', completed_at: dias(13) }),
+      ] },
+    });
+
+    for (const id of ['board-done-toggle', 'board-collapse-done', 'board-done-older']) {
+      const botao = screen.getByTestId(id);
+      expect(alvoGarantidoPx(botao, 'h'), `${id} altura`).toBeGreaterThanOrEqual(40);
+      expect(alvoGarantidoPx(botao, 'w'), `${id} largura`).toBeGreaterThanOrEqual(40);
+    }
+  });
+});

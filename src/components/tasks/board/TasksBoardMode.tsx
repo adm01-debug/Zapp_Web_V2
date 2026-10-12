@@ -156,7 +156,7 @@ export function TasksBoardMode({
             data-testid="board-done-toggle"
             aria-pressed={mostrarConcluidas}
             onClick={() => { setMostrarConcluidas(v => !v); setColunaVisivel(0); }}
-            className={`h-8 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+            className={`min-h-10 min-w-10 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
               mostrarConcluidas
                 ? 'border-primary/40 bg-primary/10 text-foreground'
                 : 'border-border/70 text-muted-foreground hover:bg-muted'

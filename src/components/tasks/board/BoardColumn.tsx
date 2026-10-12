@@ -113,7 +113,7 @@ export function BoardColumn({
             aria-expanded={!colapsada}
             aria-label={colapsada ? 'Expandir coluna Concluído' : 'Recolher coluna Concluído'}
             onClick={() => setColapsada(c => !c)}
-            className="shrink-0 min-h-[24px] min-w-[24px] max-md:min-h-[44px] max-md:min-w-[44px] rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="shrink-0 min-h-10 min-w-10 rounded flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <span aria-hidden="true">⁙</span>
           </button>
@@ -214,7 +214,7 @@ export function BoardColumn({
             type="button"
             data-testid="board-done-older"
             onClick={() => setShowOlderDone(s => !s)}
-            className="w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+            className="w-full min-h-10 rounded-lg border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
           >
             {showOlderDone ? 'Ver menos' : 'Ver até 30 dias →'}
           </button>
