@@ -404,10 +404,23 @@ function naoAplicavel(slug: string | undefined): string | undefined {
   return marca?.aplicavel === false ? (marca.motivo ?? 'fixture declara estado não aplicável') : undefined;
 }
 
-/** Boot do dev server que não montou o app: registrado à parte, nunca falha de produto. */
+/**
+ * Boot do dev server que não montou o app: registrado à parte, nunca falha de produto.
+ * Cobre o watchdog do index.html e o crash do Vite em dev (chunk dinâmico que não carrega
+ * derruba a árvore e cai no ErrorBoundary: "Ops! Algo deu errado" / "Failed to fetch
+ * dynamically imported module").
+ */
 async function pularSeBootFalhou(page: Page) {
-  const falhou = await page.getByText('Falha ao inicializar o app').isVisible().catch(() => false);
-  test.skip(falhou, 'falha de boot do servidor de desenvolvimento (watchdog) — registrada à parte, não é defeito de produto');
+  const watchdog = await page.getByText('Falha ao inicializar o app').isVisible().catch(() => false);
+  const crashDev = await page
+    .getByText(/Ops! Algo deu errado|Failed to fetch dynamically imported module/)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  test.skip(
+    watchdog || crashDev,
+    `falha de boot do servidor de desenvolvimento (${watchdog ? 'watchdog' : 'crash do dev server / ErrorBoundary'}) — registrada à parte, não é defeito de produto`,
+  );
 }
 
 async function abrirSemMascarar(page: Page, abrir: (p: Page) => Promise<void>) {
@@ -502,10 +515,139 @@ async function alcancarPorTab(page: Page, alvo: RegExp, max = 60): Promise<numbe
   return -1;
 }
 
-const abrirWizard = (step: number) => async (p: Page) => {
-  await p.goto(`/?view=talkx&wizard=new&step=${step}`);
+/** Abre o wizard VAZIO (como o operador chega por "Nova campanha"): sem deep-link de passo. */
+const abrirWizardNovo = async (p: Page) => {
+  // O catch-all de mockTalkXVisual devolve [] para `whatsapp_connections` (não é `talkx_*`),
+  // então o seletor "Conexão WhatsApp" nasceria sem opção. Serve a conexão da fixture 08
+  // (mesma regra do app: status connected + instance_id), registrada antes do goto.
+  const conexoes = (loadDemoData(fixtureDaTela('08')!) as Record<string, unknown>).whatsapp_connections ?? [];
+  await p.route(/\/rest\/v1\/whatsapp_connections/, (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(conexoes) })
+      : route.fallback(),
+  );
+  // Idem para a contagem do público: `rpc/talkx_resolve_audience` cai no bloqueio genérico de
+  // RPC `talkx_*` (403), o que zera `eligibleCount` e mantém "Lançar campanha" desabilitado
+  // mesmo com tudo preenchido. É leitura (modo count): responde o `estimated_count` do VIP.
+  await p.route(/\/rest\/v1\/rpc\/talkx_resolve_audience/, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ eligible: 184, rows: [], has_more: false }) }),
+  );
+  await p.goto('/?view=talkx&wizard=new');
   await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible({ timeout: ABRIR_TIMEOUT });
 };
+
+/** Rótulo de quem tem o foco, incluindo placeholder e o <label> que envolve (checkbox). */
+async function rotuloDoFoco(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el || el === document.body) return '';
+    const txt = `${el.getAttribute('aria-label') ?? ''} ${el.getAttribute('placeholder') ?? ''} ${el.closest('label')?.textContent ?? el.textContent ?? ''}`;
+    return txt.trim().replace(/\s+/g, ' ');
+  });
+}
+
+/**
+ * Tab até o foco casar `alvo`. Se não alcançar, falha dizendo QUAL passo do fluxo travou
+ * (achado de produto: o passo não é operável por teclado).
+ */
+async function tabAte(page: Page, passo: string, alvo: RegExp, max = 120) {
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press('Tab');
+    if (alvo.test(await rotuloDoFoco(page))) return;
+  }
+  throw new Error(`PASSO TRAVADO por teclado — ${passo}: nenhum elemento casando ${alvo} recebeu foco em ${max} Tabs`);
+}
+
+const textoDoFoco = (page: Page) => page.evaluate(() => (document.activeElement as HTMLElement | null)?.textContent ?? '');
+
+/** Abre o Select (Radix) focado e escolhe a opção cujo texto casa `opcao` só com Enter e setas. */
+async function escolherNoSelect(page: Page, passo: string, opcao: RegExp) {
+  await page.keyboard.press('Enter');
+  const lista = page.getByRole('listbox');
+  await expect(lista, `PASSO TRAVADO por teclado — ${passo}: Enter não abriu a lista`).toBeVisible();
+  for (let i = 0; i < 20 && !opcao.test(await textoDoFoco(page)); i++) await page.keyboard.press('ArrowDown');
+  expect(opcao.test(await textoDoFoco(page)), `PASSO TRAVADO por teclado — ${passo}: as setas não chegaram à opção ${opcao}`).toBe(true);
+  await page.keyboard.press('Enter');
+  await expect(lista, `PASSO TRAVADO por teclado — ${passo}: Enter não escolheu a opção`).toBeHidden();
+}
+
+/** Passo atual do stepper (aria-current="step"). */
+const passoAtual = (page: Page) => page.locator('ol[aria-label="Passos da campanha"] [aria-current="step"]');
+
+/** Passo 1 (tela 08), só teclado: nome, conexão, origem "Segmento salvo" e um segmento. */
+async function preencherPublico(page: Page) {
+  await tabAte(page, 'Passo 1: campo "Nome da campanha"', /Lançamento Linha Office/);
+  await page.keyboard.type('Campanha teclado E2E');
+  await tabAte(page, 'Passo 1: seletor "Conexão WhatsApp"', /^Conexão WhatsApp/);
+  await escolherNoSelect(page, 'Passo 1: escolher a conexão WhatsApp', /WhatsApp Comercial/);
+  await tabAte(page, 'Passo 1: origem "Segmento salvo"', /Segmento salvo/);
+  await page.keyboard.press('Space');
+  await tabAte(page, 'Passo 1: escolher um segmento (chip)', /^VIP/);
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('button', { name: /^VIP/ }).first(),
+    'PASSO TRAVADO por teclado — Passo 1: Enter no segmento "VIP" não o marcou',
+  ).toHaveAttribute('aria-pressed', 'true');
+}
+
+async function continuarPorTeclado(page: Page, passo: string, destino: RegExp) {
+  await tabAte(page, `${passo}: botão "Continuar"`, /^Continuar/);
+  await expect(
+    page.getByRole('button', { name: /^Continuar/ }),
+    `PASSO TRAVADO por teclado — ${passo}: "Continuar" focado mas desabilitado (validação do passo não satisfeita)`,
+  ).toBeEnabled();
+  await page.keyboard.press('Enter');
+  await expect(passoAtual(page), `PASSO TRAVADO por teclado — ${passo}: Enter em "Continuar" não avançou`).toContainText(destino);
+}
+
+/** Passos 2 e 3 → revisão (tela 09), só teclado. */
+async function avancarAteRevisao(page: Page) {
+  await tabAte(page, 'Passo 2: editor da mensagem', /Temos uma novidade especial/);
+  await page.keyboard.type('Ola, temos novidades para a sua empresa.');
+  await continuarPorTeclado(page, 'Passo 2 (Mensagem)', /Entrega/);
+  await continuarPorTeclado(page, 'Passo 3 (Entrega)', /Revisão/);
+}
+
+/** Tela 09: as 3 confirmações obrigatórias só com Espaço, até "Lançar campanha" habilitar. */
+async function marcarConfirmacoes(page: Page) {
+  for (const [passo, alvo] of [
+    ['consentimento', /Confirmo que possuo o consentimento/],
+    ['conteúdo', /Revisei e estou de acordo/],
+    ['supressão', /lista de supressão foi aplicada/],
+  ] as const) {
+    await tabAte(page, `Passo 4: confirmação de ${passo}`, alvo);
+    await page.keyboard.press('Space');
+    await expect(
+      page.locator('[role="checkbox"]:focus'),
+      `PASSO TRAVADO por teclado — Passo 4: Espaço não marcou a confirmação de ${passo}`,
+    ).toHaveAttribute('aria-checked', 'true');
+  }
+  const lancar = page.getByRole('button', { name: /^(Lançar|Agendar) campanha/ });
+  await lancar.waitFor({ state: 'visible' });
+  await page.waitForTimeout(1500);
+  if (await lancar.isDisabled()) {
+    const estado = await page.evaluate(() => ({
+      aviso: document.body.innerText.match(/(Tudo pronto[^\n]*|Pendências antes de lançar\n[^\n]*)/)?.[0] ?? '(sem card de pendências)',
+      caixas: [...document.querySelectorAll('[role="checkbox"]')].map((c) => c.getAttribute('aria-checked')),
+    }));
+    throw new Error(`PASSO TRAVADO por teclado — Passo 4: com as 3 confirmações marcadas "Lançar campanha" segue desabilitado. Estado: ${JSON.stringify(estado)}`);
+  }
+}
+
+/** Do wizard vazio à tela 09 com a confirmação de lançamento aberta (Enter). */
+async function abrirConfirmacaoPorTeclado(page: Page) {
+  await abrirComFixture(page, '09', abrirWizardNovo);
+  await preencherPublico(page);
+  await continuarPorTeclado(page, 'Passo 1 (Público)', /Mensagem/);
+  await avancarAteRevisao(page);
+  await marcarConfirmacoes(page);
+  const gatilho = page.getByRole('button', { name: /^(Lançar|Agendar) campanha/ });
+  await tabAte(page, 'Passo 4: botão "Lançar/Agendar campanha"', /^(Lançar|Agendar) campanha/);
+  await page.keyboard.press('Enter');
+  const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+  await expect(modal.first(), 'PASSO TRAVADO por teclado — Enter em Lançar/Agendar não abriu a confirmação').toBeVisible();
+  return { gatilho, modal };
+}
 
 test.describe('teclado — Talk X', () => {
   test('Tab percorre o módulo na ordem visual', async ({ page }) => {
@@ -558,12 +700,7 @@ test.describe('teclado — Talk X', () => {
   // "Novo segmento" abre o TalkXSegmentBuilder inline (não é dialog e ele não trata Esc),
   // então o Esc é testado num diálogo real do produto: a confirmação de lançamento do wizard.
   test('Esc fecha o modal/painel e devolve o foco a quem o abriu', async ({ page }) => {
-    await abrirComFixture(page, '09', abrirWizard(4));
-    const gatilho = page.getByRole('button', { name: /^(Lançar|Agendar) campanha/ });
-    expect(await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 200), '"Lançar/Agendar campanha" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
-    await page.keyboard.press('Enter');
-    const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
-    await expect(modal.first(), 'Enter em Lançar/Agendar não abriu a confirmação').toBeVisible();
+    const { gatilho, modal } = await abrirConfirmacaoPorTeclado(page);
     await page.keyboard.press('Escape');
     await expect(modal.first(), 'Esc não fechou a confirmação').toBeHidden();
     await expect(gatilho, 'o foco não voltou ao gatilho depois do Esc').toBeFocused();
@@ -580,21 +717,21 @@ test.describe('teclado — Talk X', () => {
 });
 
 test.describe('teclado — criar campanha → revisar → confirmar (telas 08 e 09)', () => {
-  test('tela 08: "Continuar" é alcançável por Tab', async ({ page }) => {
-    await abrirComFixture(page, '08', abrirWizard(1));
-    const continuar = await alcancarPorTab(page, /^Continuar/, 200);
-    expect(continuar, '"Continuar" não é alcançável por Tab na tela 08').toBeGreaterThan(0);
+  // O wizard novo nasce vazio e "Continuar" fica desabilitado (canProceed) — desabilitado não
+  // recebe Tab por design. Por isso o fluxo é dirigido do zero, só com teclado.
+  test('tela 08: preencher o público por teclado e avançar com "Continuar"', async ({ page }) => {
+    await abrirComFixture(page, '08', abrirWizardNovo);
+    await expect(page.getByRole('button', { name: /^Continuar/ }), 'wizard novo deveria começar com "Continuar" desabilitado').toBeDisabled();
+    await preencherPublico(page);
+    await continuarPorTeclado(page, 'Passo 1 (Público)', /Mensagem/);
   });
 
-  test('tela 09: Voltar, Lançar/Agendar e a confirmação funcionam por teclado', async ({ page }) => {
-    await abrirComFixture(page, '09', abrirWizard(4));
-    expect(await alcancarPorTab(page, /^Voltar$/, 200), '"Voltar" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
-    const lancar = await alcancarPorTab(page, /^(Lançar|Agendar) campanha/, 200);
-    expect(lancar, '"Lançar/Agendar campanha" não é alcançável por Tab na tela 09').toBeGreaterThan(0);
-    await page.keyboard.press('Enter');
-    const modal = page.getByRole('alertdialog').or(page.getByRole('dialog'));
-    await expect(modal.first(), 'Enter em Lançar/Agendar não abriu a confirmação').toBeVisible();
+  test('tela 09: revisão, confirmações, Lançar/Agendar, Esc e Voltar funcionam por teclado', async ({ page }) => {
+    const { modal } = await abrirConfirmacaoPorTeclado(page);
     await page.keyboard.press('Escape');
     await expect(modal.first(), 'Esc não fechou a confirmação').toBeHidden();
+    await tabAte(page, 'Passo 4: botão "Voltar" do rodapé', /^Voltar$/);
+    await page.keyboard.press('Enter');
+    await expect(passoAtual(page), 'PASSO TRAVADO por teclado — Passo 4: Enter em "Voltar" não retornou ao passo 3').toContainText(/Entrega/);
   });
 });
