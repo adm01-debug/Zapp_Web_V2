@@ -93,7 +93,7 @@ describe('registro do changelog do módulo Multiplix (F99/TL-051)', () => {
 
     expect(linhasMultiplix).toHaveLength(1);
     expect(linhasMultiplix[0]).toMatch(/^- Multiplix/);
-    expect(linhasMultiplix[0]).not.toMatch(/^\+\-/);
+    expect(linhasMultiplix[0]).not.toMatch(/^\+-/);
   });
 
   it('o inventário completo aponta a composição do disparo para um arquivo existente', () => {
