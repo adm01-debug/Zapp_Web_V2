@@ -9,9 +9,12 @@ import { ChatService } from '@/services/chat.service';
 import { RealtimeService } from '@/services/realtime.service';
 import { cn } from '@/lib/utils';
 import { Message, InteractiveButton } from '@/types/chat';
-import { motion } from '@/components/ui/motion';
+import { AnimatePresence, motion } from '@/components/ui/motion';
+import { useReducedMotion } from 'framer-motion';
+import { zappTransition } from '@/lib/motion';
 import { TypingIndicator } from '../TypingIndicator';
 import { isSameDay } from 'date-fns';
+import { agrupaComJanela } from './groupWindow';
 import { formatDateSeparator } from './messageUtils';
 import { MessageBubble } from './MessageBubble';
 import { ReactionsBatchProvider } from '@/hooks/reactions/useBatchReactions';
@@ -70,6 +73,13 @@ export interface ChatMessagesAreaRef {
    * rolando (a leitura acontece antes de a mensagem entrar no DOM).
    */
   scrollToBottom: () => void;
+  /**
+   * Paridade V3: ao ENVIAR mensagem propria, a lista vai ao fim mesmo que o
+   * usuario esteja lendo o historico acima (ele precisa ver o que enviou).
+   * Nao toca na virtualizacao nem na chegada de mensagem alheia: so reposiciona
+   * o fim e acende o selo discreto "Nova mensagem enviada".
+   */
+  scrollToBottomAfterSend: () => void;
   registerMessageRef: (messageId: string, el: HTMLDivElement | null) => void;
   scrollToMessage: (messageId: string) => void;
 }
@@ -82,6 +92,9 @@ const OLDER_ROW_CLASS = 'flex min-h-[2.75rem] items-center justify-center py-1';
  *  conversa". Dentro dela a lista acompanha o fim; acima dela o usuario esta
  *  lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */
 const BOTTOM_FOLLOW_THRESHOLD_PX = 100;
+
+/** Selo "Nova mensagem enviada": fica visivel por 1 s depois do envio. */
+const SELO_ENVIADA_MS = 1000;
 
 function isNearBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_FOLLOW_THRESHOLD_PX;
@@ -234,6 +247,40 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
     el.scrollTop = nextScrollTop;
   });
 
+  // --- Selo "Nova mensagem enviada" (envio proprio leva ao fim) --------------
+  // Estado proprio deste efeito (nao empresta estado da rolagem nem do
+  // historico). O timer tem cleanup no desmonte e o setState so roda enquanto o
+  // componente esta montado.
+  const [seloEnviadaVisivel, setSeloEnviadaVisivel] = useState(false);
+  const seloTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const montadoRef = useRef(true);
+  const reduzirMovimento = useReducedMotion() ?? false;
+  useEffect(() => {
+    montadoRef.current = true;
+    return () => {
+      montadoRef.current = false;
+      if (seloTimerRef.current) clearTimeout(seloTimerRef.current);
+    };
+  }, []);
+
+  const acenderSeloEnviada = useCallback(() => {
+    setSeloEnviadaVisivel(true);
+    if (seloTimerRef.current) clearTimeout(seloTimerRef.current);
+    seloTimerRef.current = setTimeout(() => {
+      if (montadoRef.current) setSeloEnviadaVisivel(false);
+    }, SELO_ENVIADA_MS);
+  }, []);
+
+  // Entrada do grupo mais novo: so o cabecalho do grupo que ACABOU de nascer (o
+  // ultimo da lista) anima. Grupos antigos que entram na tela pela virtualizacao
+  // nao reanimam — rolar o historico nao pisca nada.
+  const ultimoInicioDeGrupo = useMemo(() => {
+    for (let i = messages.length - 1; i >= 1; i -= 1) {
+      if (!agrupaComJanela(messages[i - 1], messages[i])) return i;
+    }
+    return 0;
+  }, [messages]);
+
   useImperativeHandle(ref, () => ({
     scrollToBottom: () => {
       if (!scrollContainerRef.current || messages.length === 0) return;
@@ -244,6 +291,13 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       // behavior:'smooth' nao existe na API do @tanstack/react-virtual v3.x
       virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
     },
+    scrollToBottomAfterSend: () => {
+      if (!scrollContainerRef.current || messages.length === 0) return;
+      // Envio proprio: vai ao fim SEM consultar isNearBottomRef — o usuario pode
+      // estar lendo o historico e ainda assim tem de ver o que acabou de enviar.
+      virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+      acenderSeloEnviada();
+    },
     registerMessageRef: (messageId: string, el: HTMLDivElement | null) => {
       messageRefs.current[messageId] = el;
     },
@@ -253,7 +307,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
         virtualizer.scrollToIndex(index, { align: 'center' });
       }
     },
-  }), [messages, virtualizer]);
+  }), [messages, virtualizer, acenderSeloEnviada]);
 
   // conversationId é o id do contato: estável por toda a vida da conversa e
   // presente mesmo sem telefone. contactJid vem depois só por compatibilidade;
@@ -335,8 +389,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
           const nextMsg = messages[virtualRow.index + 1];
 
           const showDateSeparator = !prevMsg || !isSameDay(message.timestamp, prevMsg.timestamp);
-          const isFirstInGroup = !prevMsg || prevMsg.sender !== message.sender || showDateSeparator;
-          const isLastInGroup = !nextMsg || nextMsg.sender !== message.sender || !isSameDay(message.timestamp, nextMsg.timestamp);
+          // Agrupamento por remetente + janela de 5 min (groupWindow). Timestamp
+          // invalido nunca agrupa; a virada de dia continua quebrando o grupo.
+          const isFirstInGroup = !agrupaComJanela(prevMsg, message);
+          const isLastInGroup = !agrupaComJanela(message, nextMsg);
+          // Cabecalho do grupo mais novo entra com fade curto (so opacidade).
+          const entradaDeGrupo = isFirstInGroup && virtualRow.index === ultimoInicioDeGrupo && virtualRow.index > 0;
 
           return (
             <div
@@ -352,6 +410,12 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
               }}
               className="py-1"
             >
+              <motion.div
+                data-testid={entradaDeGrupo ? 'group-entry-fade' : undefined}
+                initial={entradaDeGrupo ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={zappTransition.fast}
+              >
               {showDateSeparator && (
                 <div className="flex justify-center my-5">
                   <motion.span initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-2xs uppercase tracking-wider font-semibold text-muted-foreground/80 bg-muted/50 backdrop-blur-sm px-4 py-1 rounded-full border border-border/30 shadow-sm">
@@ -384,10 +448,29 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
                 onMessageDeleted={handleMessageDeleted}
                 registerRef={(el) => { messageRefs.current[message.id] = el; }}
               />
+              </motion.div>
             </div>
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {seloEnviadaVisivel && (
+          <motion.div
+            key="selo-nova-mensagem-enviada"
+            data-testid="sent-badge"
+            initial={{ opacity: 0, y: reduzirMovimento ? 0 : 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: reduzirMovimento ? 0 : 4 }}
+            transition={zappTransition.fast}
+            className="pointer-events-none sticky bottom-4 z-20 flex justify-center"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-card/90 px-3 py-1 text-2xs font-medium text-muted-foreground shadow-md backdrop-blur-sm">
+              Nova mensagem enviada
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex justify-start pl-10 mt-4">
         <TypingIndicator isVisible={isContactTyping || isColleagueTyping} userName={typingUserName} />

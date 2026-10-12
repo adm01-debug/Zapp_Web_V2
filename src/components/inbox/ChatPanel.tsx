@@ -212,6 +212,15 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   const messagesAreaRef = useRef<ChatMessagesAreaRef>(null);
   const dragCounterRef = useRef(0);
 
+  // Paridade V3: quando a mensagem e do proprio agente, a lista vai ao fim
+  // mesmo que ele esteja lendo o historico acima — quem envia precisa ver o que
+  // enviou. Envolve o `onSendMessage` no ponto de entrada do painel, sem mexer
+  // no hook de handlers nem na virtualizacao.
+  const handleSendMessage = useCallback(async (content: string, replyToId?: string | null) => {
+    await onSendMessage(content, replyToId);
+    messagesAreaRef.current?.scrollToBottomAfterSend();
+  }, [onSendMessage]);
+
   // R2-INB-026: identidade REAL do agente logado. O literal 'agent' colidia a
   // presença de todos os agentes e `conversation.assignedTo?.name` exibia o nome do
   // agente ATRIBUÍDO à conversa — normalmente quem está olhando a tela — como se
@@ -235,7 +244,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
 
   const handlers = useChatPanelHandlers({
     conversationId: conversation.id, contactId: conversation.contact.id, contactPhone: conversation.contact.phone,
-    instanceName, onSendMessage, editMessageApi: editMessage, applySignature,
+    instanceName, onSendMessage: handleSendMessage, editMessageApi: editMessage, applySignature,
     handleTypingStart, handleTypingStop,
     openDialog: (key: string) => openDialog(key as DialogKey),
     closeDialog: (key: string) => closeDialog(key as DialogKey),
