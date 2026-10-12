@@ -30,7 +30,7 @@ declare global {
  * Contrato de crescimento (X003/X004): a régua só captura a tela cuja fixture
  * tem dados reais (hoje só a 01). Fixture vazia (`{}`) é PULADA, não falha — ela
  * cresce na etapa da própria tela (docs/talkx/v4/etapas/F00-regua-e-governanca.md).
- * Telas cujo componente ainda não existe (hoje 13, 14 e 15) gravam um marcador
+ * Telas cujo componente ainda não existe (hoje 14 e 15) gravam um marcador
  * `nao-existe-NN.txt` em vez de falhar. O `scripts/talkx/lado-a-lado.mjs` monta
  * as duplas (mock | captura) a partir daqui.
  */
@@ -100,7 +100,7 @@ const TELAS: Tela[] = [
   { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Black Friday - VIP') },
   { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
   { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
-  { n: '13', nome: 'Campanha pausada e retomada', existe: false },
+  { n: '13', nome: 'Campanha pausada e retomada', existe: true, abrir: (p) => abrirCampanha(p, 'Campanha Pausada Renova') },
   { n: '14', nome: 'Relatório da campanha concluída', existe: false },
   { n: '15', nome: 'Importação e vinculação CRM360', existe: false },
   { n: '16', nome: 'Ajuda Talk X', existe: true, abrir: (p) => abrirAjuda(p) },
