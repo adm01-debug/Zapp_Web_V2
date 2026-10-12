@@ -23,10 +23,19 @@
 --
 -- VERMELHO sem a migration: a chave inbox.status-fsm nao existe e C2/C3 ficam em
 -- 'open' -- a suite falha com EXCEPTION. VERMELHO sem o predicado da flag no
--- backfill: C5 muda v_c_backfill para 'waiting' mesmo com a flag desligada.
+-- backfill (INSERT ou UPDATE): C5 muda v_c_backfill para 'waiting' com a flag
+-- desligada. VERMELHO com a migration criando a chave LIGADA (o defeito do ponto
+-- 1 da recusa): C0 falha com 'flag nova deveria nascer desligada, veio t'.
 -- Cria dados SINTETICOS e desfaz tudo no ROLLBACK final: nao sobra linha no banco.
 -- Sem EXCEPTION = suite verde.
 BEGIN;
+
+-- C0 (precondicao): a chave inbox.status-fsm pode ja existir no banco local (o
+-- seed local liga a chave a true). O contrato em prova e o da MIGRATION: chave
+-- AUSENTE nasce DESLIGADA. Por isso removemos a chave e reexecutamos a migration
+-- real aqui -- o valor conferido no bloco abaixo e o que a migration cria.
+DELETE FROM public.feature_flags WHERE key = 'inbox.status-fsm';
+\i /tmp/20261011174630_contacts_waiting_por_atribuicao.sql
 
 DO $waiting_attr$
 DECLARE
@@ -71,7 +80,8 @@ BEGIN
   INSERT INTO public.messages (id, contact_id, sender, content, message_type, created_at)
     VALUES (v_msg, v_c_backfill, 'contact', 'mensagem do contato', 'text', v_t_old);
 
-  -- A flag existe, mas nasce DESLIGADA quando a migration cria a chave.
+  -- A chave foi removida e recriada pela migration real logo acima: precisa ter
+  -- nascido DESLIGADA.
   SELECT enabled INTO v_flag_on FROM public.feature_flags WHERE key = 'inbox.status-fsm';
   IF v_flag_on IS NULL THEN
     RAISE EXCEPTION 'fixture invalida: a chave inbox.status-fsm nao existe em feature_flags';

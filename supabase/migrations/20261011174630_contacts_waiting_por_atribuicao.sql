@@ -93,8 +93,11 @@ CREATE TABLE IF NOT EXISTS public._rb_contacts_waiting_por_atribuicao (
 COMMENT ON TABLE public._rb_contacts_waiting_por_atribuicao IS
   'Valores anteriores do backfill contacts_waiting_por_atribuicao, usados apenas pelo rollback da migration 20261011174630.';
 
--- Tabela interna de rollback: nao fica acessivel a clientes via grants padrao.
+-- Tabela interna de rollback: sem grants para clientes E com RLS ligada (sem
+-- policies = negar por padrao), para nenhuma sessao anon/authenticated alcancar a
+-- linha, mesmo que um GRANT futuro a torne alcancavel.
 REVOKE ALL ON TABLE public._rb_contacts_waiting_por_atribuicao FROM PUBLIC, anon, authenticated;
+ALTER TABLE public._rb_contacts_waiting_por_atribuicao ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.contacts DISABLE TRIGGER update_contacts_updated_at;
 
