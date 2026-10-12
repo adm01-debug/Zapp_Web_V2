@@ -93,6 +93,13 @@ CREATE TABLE public.messages (
   updated_at timestamptz NOT NULL DEFAULT statement_timestamp(),
   UNIQUE (whatsapp_connection_id, external_id, sender)
 );
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END $$;
+CREATE TRIGGER update_messages_updated_at BEFORE UPDATE ON public.messages
+FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   contact_id uuid,
@@ -178,12 +185,13 @@ assert_eq 'outcome updated preserva conteudo/media_url canonicos' 'conteudo edit
 deleted_msg='30000000-0000-0000-0000-000000000099'
 psql_exec >/dev/null <<SQL
 SET request.jwt.claim.role = 'service_role';
-INSERT INTO public.messages(id, contact_id, whatsapp_connection_id, content, message_type, media_url, sender, external_id, status)
-VALUES ('$deleted_msg', '$contact', '$conn', '[Mensagem apagada]', 'text', NULL, 'contact', 'deleted-msg-1', 'deleted');
+INSERT INTO public.messages(id, contact_id, whatsapp_connection_id, content, message_type, media_url, sender, external_id, status, updated_at)
+VALUES ('$deleted_msg', '$contact', '$conn', '[Mensagem apagada]', 'text', NULL, 'contact', 'deleted-msg-1', 'deleted', '2026-01-01 00:00:00+00');
 SQL
 deleted_outcome="$(psql_val "SET request.jwt.claim.role = 'service_role'; SELECT outcome FROM public.ingest_inbound_message('$conn', '5511999998888', 'Contato', 'texto que nao deve voltar', 'image', 'https://cdn.local/deleted.jpg', 'deleted-msg-1', statement_timestamp(), false, NULL, NULL)")"
 assert_eq 'mensagem apagada reprocessada retorna updated' 'updated' "$deleted_outcome"
 assert_eq 'mensagem apagada preserva conteudo e atualiza media_url sem reviver texto' '[Mensagem apagada]|deleted|image|https://cdn.local/deleted.jpg' "$(psql_val "SELECT content || '|' || status || '|' || message_type || '|' || coalesce(media_url, '') FROM public.messages WHERE id = '$deleted_msg'")"
+assert_eq 'mensagem atualizada preserva updated_at apesar do trigger' '2026-01-01 00:00:00+00' "$(psql_val "SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') || '+00' FROM public.messages WHERE id = '$deleted_msg'")"
 
 psql_exec >/dev/null <<SQL
 SET request.jwt.claim.role = 'service_role';
