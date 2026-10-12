@@ -92,45 +92,69 @@ export function useGoalsDashboard() {
     queryKey: ['my-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase.from('profiles').select('id, name').eq('user_id', user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name').eq('user_id', user.id).maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
   });
 
-  const { data: messagesData, isLoading: loadingMessages } = useQuery({
+  // As metas só precisam do NÚMERO de linhas do período: `select('id', { count:
+  // 'exact', head: true })` traz `count` sem transferir linha nenhuma. Antes o
+  // hook baixava as linhas inteiras das três tabelas e contava/filtrava no
+  // browser (array de milhares de mensagens por render de Dashboard).
+  const { data: messagesCount, isLoading: loadingMessages } = useQuery({
     queryKey: ['goals-messages', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('messages').select('id, sender, created_at')
-        .eq('agent_id', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('agent_id', profile.id).eq('sender', 'agent')
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return data || [];
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
 
-  const { data: contactsData, isLoading: loadingContacts } = useQuery({
+  const { data: contactsCount, isLoading: loadingContacts } = useQuery({
     queryKey: ['goals-contacts', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('contacts').select('id, created_at')
-        .eq('assigned_to', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('contacts')
+        .select('id', { count: 'exact', head: true })
+        .eq('assigned_to', profile.id)
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return data || [];
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
 
-  const { data: analysesData, isLoading: loadingAnalyses } = useQuery({
+  const { data: analysesTotal, isLoading: loadingAnalysesTotal } = useQuery({
     queryKey: ['goals-analyses', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      const { data, error } = await supabase.from('conversation_analyses').select('id, status, created_at')
-        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('conversation_analyses')
+        .select('id', { count: 'exact', head: true })
+        .eq('analyzed_by', profile.id)
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
-      return data || [];
+      return count ?? 0;
+    },
+    enabled: !!profile?.id,
+  });
+
+  const { data: analysesResolved, isLoading: loadingAnalysesResolved } = useQuery({
+    queryKey: ['goals-analyses-resolvidas', period, profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('conversation_analyses')
+        .select('id', { count: 'exact', head: true })
+        .eq('analyzed_by', profile.id).eq('status', 'resolvido')
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (error) throw error;
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
@@ -147,10 +171,10 @@ export function useGoalsDashboard() {
   });
 
   const goals = useMemo((): Goal[] => {
-    const messagesSent = messagesData?.filter(m => m.sender === 'agent').length || 0;
-    const contactsHandled = contactsData?.length || 0;
-    const totalAnalyses = analysesData?.length || 0;
-    const resolvedAnalyses = analysesData?.filter(a => a.status === 'resolvido').length || 0;
+    const messagesSent = messagesCount ?? 0;
+    const contactsHandled = contactsCount ?? 0;
+    const totalAnalyses = analysesTotal ?? 0;
+    const resolvedAnalyses = analysesResolved ?? 0;
     const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
@@ -178,7 +202,7 @@ export function useGoalsDashboard() {
         icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
     }
     return allGoals;
-  }, [messagesData, contactsData, analysesData, period, customGoals]);
+  }, [messagesCount, contactsCount, analysesTotal, analysesResolved, period, customGoals]);
 
   const overallProgress = useMemo(() => {
     if (goals.length === 0) return 0;
@@ -186,7 +210,7 @@ export function useGoalsDashboard() {
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
+  const isLoading = loadingMessages || loadingContacts || loadingAnalysesTotal || loadingAnalysesResolved;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
