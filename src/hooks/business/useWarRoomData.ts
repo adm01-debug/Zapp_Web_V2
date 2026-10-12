@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
-import { fetchAllRows } from '@/lib/fetchAllRows';
 
 export interface WarRoomAgent {
   id: string;
@@ -11,9 +10,11 @@ export interface WarRoomAgent {
   status: 'online' | 'busy' | 'away' | 'offline';
   activeChats: number;
   maxChats: number;
-  avgResponseTime: number;
+  /** `null` = não houve 1ª resposta medida hoje (não é "0s medido"). */
+  avgResponseTime: number | null;
   resolvedToday: number;
-  satisfaction: number;
+  /** `null` = nenhuma avaliação no dia (não é "0 de satisfação"). */
+  satisfaction: number | null;
 }
 
 export interface WarRoomQueue {
@@ -38,88 +39,91 @@ export interface WarRoomAlert {
   isNew?: boolean;
 }
 
-/** Linha de agente como sai da consulta, antes do status de presença. */
-interface WarRoomAgentBase {
+/** Opções do hook: o intervalo de atualização automática é do chamador. */
+export interface WarRoomDataOptions {
+  /** Milissegundos entre atualizações automáticas; `false` desliga o polling. */
+  refetchInterval?: number | false;
+}
+
+/** Linha do RPC `warroom_agent_today` (números agregados no banco, não no cliente). */
+interface WarRoomAgentRpcRow {
   id: string;
-  user_id: string | null;
   name: string;
-  avatar?: string;
-  activeChats: number;
+  avatar: string | null;
   maxChats: number;
-  avgResponseTime: number;
+  activeChats: number;
   resolvedToday: number;
-  satisfaction: number;
+  avgResponseTime: number | null;
+  satisfaction: number | null;
+}
+
+/** Linha do RPC `warroom_queue_stats`. */
+interface WarRoomQueueRpcRow {
+  id: string;
+  name: string;
+  color: string | null;
+  waiting: number;
+  inProgress: number;
+  slaBreaches: number;
+  slaWarnings: number | null;
+  avgWaitTime: number | null;
+}
+
+/** Linha de agente antes do status de presença (presença é do store, não do banco de métricas). */
+interface WarRoomAgentBase extends Omit<WarRoomAgent, 'status'> {
+  user_id: string | null;
 }
 
 /**
  * War Room.
  *
  * R2-MOD-030: cadastro habilitado (`profiles.is_active`) **não** é presença; contato atribuído
- * **não** é atendimento em curso. Aqui o online/busy vem de `agent_presence` (mesma fonte do
- * Dashboard — `useAgentPresenceMap`), a ocupação conta só o episódio **aberto**
- * (`contacts.conversation_status = 'open'`) e espera/risco que não são medidos saem como `null`
- * em vez de zero, para a supervisão não ler cadastro como disponibilidade nem ausência de medição
- * como "risco zero".
+ * **não** é atendimento em curso. O online/busy vem de `agent_presence` (mesma fonte do Dashboard
+ * — `useAgentPresenceMap`); o resto dos números vem dos RPCs `warroom_agent_today` e
+ * `warroom_queue_stats`, que agregam no banco (a leitura direta pela PostgREST corta em 1000 linhas
+ * de `contacts` e transforma o total em subtotal silencioso). Amostra ausente sai como `null` em vez
+ * de zero, para a supervisão não ler cadastro como disponibilidade nem ausência de medição como
+ * "risco zero" ou "0s de resposta" — a tela mostra '—'.
  *
- * As leituras de `contacts` são paginadas (`fetchAllRows`): sem `range` o PostgREST devolve só a
- * primeira página e as contagens viram subtotais silenciosos.
+ * O RPC não devolve o `user_id`; a presença precisa dele, então mantemos uma leitura mínima de
+ * `profiles` (id → user_id), sem nenhuma varredura de `contacts`/`conversation_sla` no cliente.
  */
-export function useWarRoomData() {
+export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions = {}) {
   const presence = useAgentPresenceMap();
 
-  const { data: agentsBase = [] } = useQuery({
+  const agentsQuery = useQuery({
     queryKey: ['warroom-agents'],
     queryFn: async (): Promise<WarRoomAgentBase[]> => {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, user_id, name, avatar_url, is_active, max_chats')
-        .eq('is_active', true);
-      if (error) throw error;
+      const [today, activeProfiles] = await Promise.all([
+        supabase.rpc('warroom_agent_today'),
+        supabase.from('profiles').select('id, user_id').eq('is_active', true),
+      ]);
+      if (today.error) throw today.error;
+      if (activeProfiles.error) throw activeProfiles.error;
 
-      const { data: stats } = await supabase
-        .from('agent_stats')
-        .select('profile_id, messages_sent, conversations_resolved, avg_response_time_seconds, customer_satisfaction_score');
-
-      // Só o episódio aberto ocupa capacidade: conversa resolvida/arquivada continua com
-      // `assigned_to` preenchido no cadastro e não pode contar como atendimento ativo.
-      const { rows: openContacts } = await fetchAllRows<{ assigned_to: string | null; conversation_status: string }>(
-        (from, to) => supabase
-          .from('contacts')
-          .select('assigned_to, conversation_status')
-          .eq('conversation_status', 'open')
-          .is('deleted_at', null)
-          .order('id')
-          .range(from, to),
+      const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
+      const userIdByProfile = new Map(
+        (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
 
-      const activeChatsByAgent = new Map<string, number>();
-      for (const c of openContacts) {
-        if (!c.assigned_to) continue;
-        activeChatsByAgent.set(c.assigned_to, (activeChatsByAgent.get(c.assigned_to) ?? 0) + 1);
-      }
-
-      const statsMap = new Map((stats || []).map(s => [s.profile_id, s]));
-
-      return (profiles || []).map((p): WarRoomAgentBase => {
-        const agentStats = statsMap.get(p.id);
-        return {
-          id: p.id,
-          user_id: p.user_id ?? null,
-          name: p.name,
-          avatar: p.avatar_url || undefined,
-          activeChats: activeChatsByAgent.get(p.id) ?? 0,
-          maxChats: p.max_chats || 5,
-          avgResponseTime: agentStats?.avg_response_time_seconds || 0,
-          resolvedToday: agentStats?.conversations_resolved || 0,
-          satisfaction: Number(agentStats?.customer_satisfaction_score) || 0,
-        };
-      });
+      return rows.map((r): WarRoomAgentBase => ({
+        id: r.id,
+        user_id: userIdByProfile.get(r.id) ?? null,
+        name: r.name,
+        avatar: r.avatar || undefined,
+        activeChats: r.activeChats,
+        maxChats: r.maxChats,
+        // null do RPC continua null: não medido ≠ zero medido.
+        avgResponseTime: r.avgResponseTime ?? null,
+        resolvedToday: r.resolvedToday,
+        satisfaction: r.satisfaction ?? null,
+      }));
     },
-    refetchInterval: 30000,
+    refetchInterval,
   });
 
   // Status derivado da presença em tempo real (não do cadastro) — atualiza sem refetch.
-  const agents = useMemo<WarRoomAgent[]>(() => agentsBase.map((a) => {
+  const agents = useMemo<WarRoomAgent[]>(() => (agentsQuery.data ?? []).map((a) => {
     const status = a.user_id ? presence[a.user_id] : undefined;
     return {
       id: a.id,
@@ -132,59 +136,46 @@ export function useWarRoomData() {
       resolvedToday: a.resolvedToday,
       satisfaction: a.satisfaction,
     };
-  }), [agentsBase, presence]);
+  }), [agentsQuery.data, presence]);
 
-  const { data: queues = [] } = useQuery({
+  const queuesQuery = useQuery({
     queryKey: ['warroom-queues'],
     queryFn: async (): Promise<WarRoomQueue[]> => {
-      const { data: dbQueues, error } = await supabase
-        .from('queues')
-        .select('id, name, color, is_active')
-        .eq('is_active', true);
+      const { data, error } = await supabase.rpc('warroom_queue_stats');
       if (error) throw error;
 
-      // Fila é episódio em andamento: resolvida/arquivada não é espera nem atendimento.
-      const { rows: queueContacts } = await fetchAllRows<{
-        id: string;
-        queue_id: string | null;
-        assigned_to: string | null;
-        conversation_status: string;
-      }>(
-        (from, to) => supabase
-          .from('contacts')
-          .select('id, queue_id, assigned_to, conversation_status')
-          .not('conversation_status', 'in', '(resolved,archived)')
-          .is('deleted_at', null)
-          .order('id')
-          .range(from, to),
-      );
-
-      const { data: slaData } = await supabase
-        .from('conversation_sla')
-        .select('contact_id, first_response_breached');
-
-      const breachedContacts = new Set(
-        (slaData || []).filter(s => s.first_response_breached).map(s => s.contact_id)
-      );
-
-      return (dbQueues || []).map((q): WarRoomQueue => {
-        const contactsDaFila = queueContacts.filter(c => c.queue_id === q.id);
-        const waiting = contactsDaFila.filter(c => !c.assigned_to).length;
-        const inProgress = contactsDaFila.filter(c => c.assigned_to && c.conversation_status === 'open').length;
-        const slaBreaches = contactsDaFila.filter(c => breachedContacts.has(c.id)).length;
-
-        return {
-          id: q.id, name: q.name, color: q.color,
-          // Espera média e risco não são medidos hoje (sem fonte de tempo de espera nem de
-          // proximidade do prazo): `null` mantém "não calculado" distinto de "zero medido".
-          waiting, avgWaitTime: null, slaBreaches, slaWarnings: null, inProgress,
-        };
-      });
+      const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
+      return rows.map((q): WarRoomQueue => ({
+        id: q.id,
+        name: q.name,
+        color: q.color ?? '',
+        waiting: q.waiting,
+        inProgress: q.inProgress,
+        slaBreaches: q.slaBreaches,
+        // null do RPC continua null (a tela mostra '—', não "risco zero").
+        slaWarnings: q.slaWarnings ?? null,
+        avgWaitTime: q.avgWaitTime ?? null,
+      }));
     },
-    refetchInterval: 30000,
+    refetchInterval,
   });
 
-  return { agents, queues, alerts: [] as WarRoomAlert[] };
+  const queues = queuesQuery.data ?? [];
+
+  const refetch = async () => {
+    await Promise.all([agentsQuery.refetch(), queuesQuery.refetch()]);
+  };
+
+  return {
+    agents,
+    queues,
+    alerts: [] as WarRoomAlert[],
+    isLoading: agentsQuery.isLoading || queuesQuery.isLoading,
+    isError: agentsQuery.isError || queuesQuery.isError,
+    error: agentsQuery.error ?? queuesQuery.error ?? null,
+    dataUpdatedAt: Math.max(agentsQuery.dataUpdatedAt, queuesQuery.dataUpdatedAt),
+    refetch,
+  };
 }
 
 export interface WarRoomMetrics {
@@ -193,6 +184,7 @@ export interface WarRoomMetrics {
   /** `null` quando nenhuma fila tem risco calculado. */
   totalWarnings: number | null;
   onlineAgents: number;
+  /** Média só sobre agentes com amostra; `0` quando nenhum agente tem avaliação no dia. */
   avgSatisfaction: number;
   totalResolved: number;
 }
@@ -206,7 +198,12 @@ export function useWarRoomMetrics(agents: WarRoomAgent[], queues: WarRoomQueue[]
       ? filasComRisco.reduce((acc, q) => acc + (q.slaWarnings ?? 0), 0)
       : null;
     const onlineAgents = agents.filter(a => a.status === 'online' || a.status === 'busy').length;
-    const avgSatisfaction = agents.length > 0 ? agents.reduce((acc, a) => acc + a.satisfaction, 0) / agents.length : 0;
+    // Média só sobre quem tem amostra: agente sem avaliação não puxa a média para baixo como zero.
+    // Se ninguém tem amostra, fica 0 (a tela mostra '—' por `agents[].satisfaction === null`, no card da tela).
+    const avaliados = agents.filter((a): a is WarRoomAgent & { satisfaction: number } => a.satisfaction !== null);
+    const avgSatisfaction = avaliados.length > 0
+      ? avaliados.reduce((acc, a) => acc + a.satisfaction, 0) / avaliados.length
+      : 0;
     const totalResolved = agents.reduce((acc, a) => acc + a.resolvedToday, 0);
     return { totalWaiting, totalBreaches, totalWarnings, onlineAgents, avgSatisfaction, totalResolved };
   }, [agents, queues]);
