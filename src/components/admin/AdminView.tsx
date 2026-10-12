@@ -22,6 +22,7 @@ import { CrisisRoom } from './CrisisRoom';
 import { useAdminData, accessLevelConfig, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -295,15 +296,25 @@ export function AdminView() {
       ) : activeTab === 'audit' ? (
         <AdminAuditTable logs={filteredLogs} />
       ) : activeTab === 'crm' ? (
-        <AdminCRMDashboard />
+        <SectionErrorBoundary key="crm" sectionName="CRM Admin">
+          <AdminCRMDashboard />
+        </SectionErrorBoundary>
       ) : activeTab === 'playbooks' ? (
-        <PlaybooksManager />
+        <SectionErrorBoundary key="playbooks" sectionName="Playbooks">
+          <PlaybooksManager />
+        </SectionErrorBoundary>
       ) : activeTab === 'copilot' ? (
-        <SupervisorCopilot />
+        <SectionErrorBoundary key="copilot" sectionName="Copiloto">
+          <SupervisorCopilot />
+        </SectionErrorBoundary>
       ) : activeTab === 'training' ? (
-        <TrainingMode />
+        <SectionErrorBoundary key="training" sectionName="Modo Treinamento">
+          <TrainingMode />
+        </SectionErrorBoundary>
       ) : activeTab === 'crisis' ? (
-        <CrisisRoom />
+        <SectionErrorBoundary key="crisis" sectionName="Sala de Crise">
+          <CrisisRoom />
+        </SectionErrorBoundary>
       ) : null}
     </div>
   );

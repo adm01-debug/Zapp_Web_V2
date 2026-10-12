@@ -26,6 +26,7 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import {
   goTab,
   parseTalkXRoute,
@@ -391,7 +392,9 @@ export default function TalkXView() {
             <ArrowLeft className="w-4 h-4" />Voltar à campanhas
           </button>
         </div>
-        <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+        <SectionErrorBoundary sectionName="Monitor ao vivo">
+          <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+        </SectionErrorBoundary>
       </div>
     );
   }
@@ -508,7 +511,11 @@ export default function TalkXView() {
         <TabsContent value="analytics" className="mt-4">
           {activeSub === 'configuracoes'
             ? <TalkXSettings />
-            : <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />}
+            : (
+              <SectionErrorBoundary sectionName="Analytics de campanhas">
+                <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />
+              </SectionErrorBoundary>
+            )}
         </TabsContent>
       </Tabs>
     </div>
