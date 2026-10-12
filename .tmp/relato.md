@@ -20,6 +20,10 @@ O QR de pareamento não tinha onde ser auditado no banco: nenhuma linha por tent
 
 Nada foi persistido do QR em si: a tabela só guarda tentativa, status e motivo — nenhum payload/base64.
 Diff desta entrega (vs base): os 4 arquivos acima mais .tmp/relato.md.
+Sobre src/integrations/supabase/types.ts: é arquivo GERADO (o próprio cartão manda atualizá-lo no mesmo
+cartão). Não há teste unitário cabível para um tipo gerado — o que prova o contrato é o teste real
+supabase/tests/qr_attempts.sql (aplica a migration e checa tabela, RLS, status, TTL, retenção), que
+está no mesmo commit da mudança de tipos.
 
 ## Prova (vermelho antes, verde depois)
 Teste em Postgres 17 descartável (docker local), aplicando as migrations REAIS via `\i` e rodando
