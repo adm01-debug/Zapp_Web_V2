@@ -100,7 +100,7 @@ export function JourneyTab({ contactId }: JourneyTabProps) {
         </div>
       </div>
 
-      <SectionCard icon={BarChart3} title="Estatísticas do contato" subtitle="Independe do período abaixo" tone="blue">
+      <SectionCard headingLevel="h3" icon={BarChart3} title="Estatísticas do contato" subtitle="Independe do período abaixo" tone="blue">
         <ContactStatsStrip contactId={contactId} />
       </SectionCard>
 
