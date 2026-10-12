@@ -1,29 +1,19 @@
-Especialista: senior (area-front-hooks)
+Especialista: worker (testes) (area-testes-do-produto)
 
 ## O que mudou e por quê
-- Reapliquei a entrega anterior a partir da branch do commit `f9dbdd125`: o código efetivo veio dos commits de código `41b61467a` e `bb0bf9c4d` da mesma branch, porque `f9dbdd125` só altera o relato da entrega anterior.
-- `src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx`: corrigi o mock de Supabase usado pelo teste de empilhamento para expor `.select()` na cadeia de `insert()`, igual ao cliente real que `useConversationActions.snoozeConversation` chama com `.insert(...).select('id').single()`. A asserção do teste não foi removida nem afrouxada: ele continua compondo os hooks reais e exigindo que a conversa saia da lista ao adiar e volte após o prazo.
-
-## Pontos do refazer
-- Ponto 1: parti da entrega anterior por `git cherry-pick -n 41b61467a bb0bf9c4d` sobre a ponta atual de `dia/2026-10-11`; o sha pedido `f9dbdd125` foi conferido e é o commit de relato no topo da branch anterior.
-- Ponto 2: reproduzi o vermelho sobre a ponta atual com `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` antes da correção → `TypeError: supabase.from(...).insert(...).select is not a function` em `src/hooks/chat/useConversationActions.ts:211`. Corrigi a causa sem afrouxar asserções adicionando a etapa `.select()` ao mock encadeado do teste.
-- Ponto 3: provei verde com o mesmo comando e com `zapp-verify . --rapido` verde; novo commit deste refazer: `e39a937d0`.
+- src/components/tasks/__tests__/TasksFilterBar.test.tsx (NOVO, único arquivo do diff): tranca pela TELA REAL (TasksModule montado com a barra, o useTasksFilters e a URL de verdade) os seis casos do cartão — busca por texto (digitação imediata, debounce de 200ms, "Limpar" que cancela o debounce pendente); dropdowns (Select de Prioridade abre por pointerDown, lista as opções e aplica); popover de filtros (Contato: abre, marca, fecha ao escolher e desmarca); indicador de filtro ativo (o "Limpar"/X aparece, reflete e remove); sincronia com a URL (deep-link lido na montagem + cada controle escrevendo o seu parâmetro e o padrão sem escrever nada); toggle de concluídas respeitando a janela de 7 dias (G-8), com o rodapé "Ver mais antigas (30 dias)" provando que é a janela que esconde a concluída de 13 dias. Cada `it` cita a linha da seção 8-bis que protege.
+- Nenhum arquivo de produção mudou: o diff é só o arquivo de teste (as 4 edições de mutação foram revertidas — `git status --short` mostra apenas o arquivo novo).
 
 ## Prova
-- vermelho antes: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `TypeError: supabase.from(...).insert(...).select is not a function` / `Test Files 1 failed (1)` / `Tests 1 failed (1)`.
-- verde depois: `bun run test src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx` → `Test Files 1 passed (1)` / `Tests 1 passed (1)`.
-- regressão da entrega anterior preservada: `bun run test src/hooks/chat/__tests__/useConversationActions.snooze.test.ts src/hooks/chat/__tests__/snoozeDurations.test.ts src/hooks/chat/__tests__/useConversationActions.test.ts` → `Test Files 3 passed (3)` / `Tests 29 passed (29)`.
-- verificação: `zapp-verify . --rapido` → `VERIFY: VERDE SEM BANCO`.
-
-## Arquivos do diff
-.tmp/relato.md
-src/hooks/chat/__tests__/snoozeDurations.test.ts
-src/hooks/chat/__tests__/useConversationActions.snooze.test.ts
-src/hooks/chat/__tests__/useConversationActions.test.ts
-src/hooks/chat/snoozeDurations.ts
-src/hooks/chat/useConversationActions.ts
-src/hooks/inbox/__tests__/useInboxFilters.snooze-consumo.test.tsx
+- vermelho antes (ADERÊNCIA: mutei 4 comportamentos de produção, rodei, restaurei): `npx vitest run src/components/tasks/__tests__/TasksFilterBar.test.tsx` com
+  (1) debounce removido em src/hooks/tasks/useTasksFilters.ts → `× a digitação anda na hora e o recorte só chega depois do debounce`;
+  (2) `prio` ignorado no parse em src/hooks/tasks/workItemFilters.ts → `AssertionError: expected 'Todas as prioridades' to contain 'Alta'`;
+  (3) `onContact` removido do CommandItem em src/components/tasks/shared/TasksFilterBar.tsx → `AssertionError: expected 'Todos os contatos' to be 'Ana Souza'`;
+  (4) janela 7d→30d em splitDoneByRecency (src/hooks/tasks/workItemAggregates.ts) → `expected <span …(1)></span> to be null` (a "Feita antiga" apareceu sem o rodapé).
+  Resultado da rodada mutada: `Tests 4 failed | 4 passed | 1 todo`.
+- verde depois: `git checkout --` nos 4 arquivos de produção + `npx vitest run src/components/tasks/__tests__/TasksFilterBar.test.tsx` → `Test Files 1 passed (1); Tests 8 passed | 1 todo (9); Duration 6.20s`.
 
 ## O que NÃO fiz e por quê
-- Não mudei código fora do escopo do snooze nem toquei em migration, Edge Function, CI ou dependência.
-- Não removi, pulei nem afrouxei teste: a mudança no teste só faz o mock aceitar o encadeamento real usado pelo código de produção.
+- `it.todo` (1, declarado): "chips de filtro ativo com X". O chip não existe no HEAD — a etapa 044 (iris) é dona do chip/popover "Filtros" (imagem 05 do plano). Hoje o indicador e o remover do filtro ativo é o botão "Limpar" (X), coberto no caso verde. Não criei UI de outro cartão; não fingi teste para elemento ausente. Isto está registrado também em kanban_comment.
+- O dropdown de agrupamento por prazo (D1) não existe no HEAD (é opcional/T08) — não virou teste.
+- Não mexi em produção, não mexi em teste existente (nenhum skip/timeout alterado), não trafeguei dado real.
